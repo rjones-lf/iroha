@@ -151,12 +151,13 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const actio
 // WIP
 long long int getDistance(const std::string& publicKey, const std::string& txHash){
     // I want (node->publicKey && 0xffffff) - (txHash && 0xffffff)
+    
     return 0;
 }
 
 void determineConsensusOrder(const std::unique_ptr<ConsensusEvent>& event/*, std::vector<double> trustVector*/) {
     std::string txHash = event->getHash();
-    std::sort(context->validatingPeers.begin(), context->validatingPeers.end(), 
+    std::sort(std::begin(context->validatingPeers), std::move(context->validatingPeers), 
         [txHash](const std::unique_ptr<peer::Node> &lhs,
            const std::unique_ptr<peer::Node> &rhs) {
             return getDistance(
