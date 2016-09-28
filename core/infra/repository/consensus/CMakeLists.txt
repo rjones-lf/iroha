@@ -1,6 +1,5 @@
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-
 SET(MESSAGE_PACK_PATH ${PROJECT_SOURCE_DIR}/core/vendor/msgpack-c)
 SET(LEVELDB_PATH ${PROJECT_SOURCE_DIR}/core/vendor/leveldb)
 
@@ -20,7 +19,7 @@ target_link_libraries(merkle_transaction_repository
   snappy
   leveldb
   exception
-)  
+)
 
 ADD_LIBRARY(unconfirmed_transaction_repository STATIC unconfirmed_transaction_repository.cpp)
 target_link_libraries(unconfirmed_transaction_repository
