@@ -1,4 +1,5 @@
 config/*.py
+config/*.key
 config/__pycahe__
 **/__pycache__/*
 __pycache__/*
