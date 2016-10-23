@@ -7,11 +7,18 @@
 #include <functional>
 
 namespace connection {
-void initialize_peer(const std::unordered_map<std::string, std::string>& config);
 
-bool sendAll(std::string message);
-bool send(std::string to, std::string message);
-bool receive(std::function<void(std::string from, std::string message)> callback);
+    struct Config{
+        std::string name;
+        std::string ip_addr;
+        std::string port;
+    };
+
+    void initialize_peer(std::unique_ptr<connection::Config> config);
+
+    bool sendAll(const std::string& message);
+    bool send(const std::string& to, const std::string& message);
+    bool receive(const std::function<void(std::string from, std::string message)>& callback);
 
 };  // end connection
 

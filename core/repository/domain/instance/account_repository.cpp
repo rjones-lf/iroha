@@ -3,25 +3,15 @@
 #include "../account_repository.hpp"
 #include "../../world_state_repository.hpp"
 
-#include <msgpack.hpp>
-
 namespace repository{
 namespace account_repository {
 
-    // Umm..., message pack is in infra....
-    // wrong knowledge range? 
-    // I think message pack is some as std::string. Do you think?
     std::unique_ptr<domain::AccountUser> convertAccountUser(const std::string &buffer) {
-        std::unique_ptr<domain::AccountUser>au;
-        msgpack::object_handle unpacked = msgpack::unpack(buffer.data(), buffer.size());
-        msgpack::object obj = unpacked.get();
-        obj.convert(au);
-        return std::move(au);
+        return nullptr; // WIP
     }
+
     std::string convertBuffer(const std::unique_ptr<domain::AccountUser>& au) {
-        msgpack::sbuffer buf;
-        msgpack::pack(buf, au);
-        return std::move(buf.data());
+        return ""; // WIP
     }
 
     // SampleAsset has only quantity no logic, so this value is int.

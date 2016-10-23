@@ -1,22 +1,20 @@
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
-SET(YAML_PATH  "${PROJECT_SOURCE_DIR}/core/vendor/yaml-cpp")
 SET(AERON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/Aeron")
-SET(MESSAGE_PACK_PATH ${PROJECT_SOURCE_DIR}/core/vendor/msgpack-c)
 SET(LEVELDB_PATH ${PROJECT_SOURCE_DIR}/core/vendor/leveldb)
 SET(KECCAK_PATH  "${PROJECT_SOURCE_DIR}/core/vendor/KeccakCodePackage")
 SET(ED25519_PATH "${PROJECT_SOURCE_DIR}/core/vendor/ed25519")
+SET(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/core/server
   ${PROJECT_SOURCE_DIR}/core/peer
 
-  ${YAML_PATH}/include
   ${LEVELDB_PATH}/include
   ${AERON_PATH}/aeron-client/src/main/cpp
-  ${MESSAGE_PACK_PATH}/include
   ${ED25519_PATH}/src
+  ${JSON_PATH}/src
 )
 
 link_directories(
@@ -24,9 +22,7 @@ link_directories(
   ${ED25519_PATH}
   ${KECCAK_PATH}/bin/generic64
   ${PROJECT_SOURCE_DIR}/core/infra/crypto 
-  ${YAML_PATH}/build
   ${AERON_PATH}/cppbuild/Debug/lib
-  ${MESSAGE_PACK_PATH}/
   ${LEVELDB_PATH}/out-static
 )
 
@@ -41,7 +37,6 @@ target_link_libraries(iroha-main
   sumeragi
   snappy
   logger
-  yaml_loader
   http_server_with_crow
   connection_with_aeron
   peer_service

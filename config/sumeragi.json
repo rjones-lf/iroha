@@ -1,0 +1,24 @@
+{
+  "me":{
+    "ip":"",
+    "name":"mizuki",
+    "public_key":""
+  },
+  "group":[
+    {
+      "ip":"",
+      "name":"iori",
+      "public_key":""
+    },
+    {
+      "ip":"",
+      "name":"mizuki",
+      "public_key":""
+    },
+    {
+      "ip":"",
+      "name":"natori",
+      "public_key":""
+    }
+  ]
+}

@@ -40,7 +40,7 @@ def initalize_server():
   print(cyan("#  Java"))
   sudo("apt -y install default-jdk")
   sudo("apt -y install default-jre")
-  print(syan("# snappy"))
+  print(cyan("# snappy"))
   sudo("apt -y install snappy")
   sudo("apt -y install libhdf5-serial-dev libleveldb-dev libsnappy-dev liblmdb-dev")
   print(cyan("# other libs"))
@@ -92,17 +92,6 @@ def initialize_repository():
 
       with cd("core/vendor/ed25519"):
         run("make")
-
-      with cd("core/vendor/msgpack-c"):
-        run("cmake -DMSGPACK_CXX11=ON .")
-        run("cmake -DMSGPACK_CXX11=ON .")
-        sudo("make install")
-
-      with cd("core/vendor/yaml-cpp"):
-        run("mkdir -p build")
-        with cd("build"):
-          run("cmake ..")
-          run("make")
 
       with cd("core/vendor/crow"):
         run("mkdir -p build")

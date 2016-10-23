@@ -14,17 +14,9 @@
   path = core/vendor/Aeron
   url = https://github.com/real-logic/Aeron.git
   ignore = dirty
-[submodule "core/vendor/yaml-cpp"]
-  path = core/vendor/yaml-cpp
-  url = https://github.com/jbeder/yaml-cpp.git
-  ignore = dirty
 [submodule "core/vendor/ed25519"]
 	path = core/vendor/ed25519
 	url = https://github.com/luca3104/ed25519.git
-  ignore = dirty
-[submodule "core/vendor/msgpack-c"]
-	path = core/vendor/msgpack-c
-	url = https://github.com/msgpack/msgpack-c.git
   ignore = dirty
 [submodule "core/vendor/json"]
 	path = core/vendor/json

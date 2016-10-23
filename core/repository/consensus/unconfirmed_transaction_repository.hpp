@@ -2,7 +2,6 @@
 #define CORE_REPOSITORY_UNCONFIRMEDTRANSACTIONREPOSITORY_HPP_
 
 #include <string>
-#include <msgpack.hpp>
 #include "../../model/transactions/abstract_transaction.hpp"
 
 namespace unconfirmed_transaction_repository {

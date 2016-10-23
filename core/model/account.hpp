@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-#include <msgpack.hpp>
-
 #include "sample_asset.hpp"
 #include "../util/random.hpp"
 
 #include <vector>
+#include <string>
+#include <unordered_map>
 
 namespace domain {
 
@@ -32,8 +32,6 @@ namespace domain {
       // This user created asset. 
       std::vector<std::string> myAssetNames;
 
-      // Umm... This is infra range knowledge       
-      MSGPACK_DEFINE( name, publicKeyb64Encoded, uid);
 
       // Use only factory.
       AccountUser(
@@ -44,8 +42,18 @@ namespace domain {
         publicKeyb64Encoded(aPublicKeyb64Encoded),
         uid(random_service::makeRandomHash())
       {}
-      // Use only message pack
-      AccountUser();
+
+      // Use convertor
+      AccountUser(
+              std::string aName,
+              std::string aPublicKeyb64Encoded,
+              std::string aUid
+      ):
+              name(aName),
+              publicKeyb64Encoded(aPublicKeyb64Encoded),
+              uid(aUid)
+      {}
+
 
       // Support move and copy.
       AccountUser(AccountUser const&) = default;

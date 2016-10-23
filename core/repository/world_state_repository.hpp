@@ -11,11 +11,16 @@ namespace repository{
 
   namespace world_state_repository {
 
-      bool add(std::string key, std::string value);
+      bool add(const std::string &key, const std::string &value);
+
       bool update(std::string key, std::string value);
+
       bool remove(std::string key);
+
       std::string find(std::string key);
+
       std::string findOrElse(std::string key, std::string defaultVale);
+
       bool isExist(std::string key);
 
   };

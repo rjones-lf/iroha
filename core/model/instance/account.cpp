@@ -2,18 +2,16 @@
 #include <vector>
 
 #include "../account.hpp"
-#include "../asset.hpp"
-#include "../../util/random.hpp"
 
 // Include some service
-#include "../../../service/url_service.hpp"
+#include "../../service/url_service.hpp"
 
 // Include asset repository
-#include "../../../repository/domain/domain_sample_asset_repository.hpp"
-#include "../../../repository/domain/account_repository.hpp"
+#include "../../repository/domain/domain_sample_asset_repository.hpp"
+#include "../../repository/domain/account_repository.hpp"
 
 // Include asset publisher
-#include "../../../publisher/asset_publisher.hpp"
+#include "../../publisher/asset_publisher.hpp"
 
 #include <vector>
 

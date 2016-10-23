@@ -2,7 +2,6 @@
 #define CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_
 
 #include "abstract_transaction.hpp"
-#include <msgpack.hpp>
 
 namespace transaction {
 
@@ -18,19 +17,10 @@ class TransferTransaction : public abstract_transaction::AbstractTransaction {
     short int precision;
     unsigned long long timestamp;
 
-    MSGPACK_DEFINE(
-        prevTxHash,
-        hash,
-        senderPublicKey,
-        receiverPublicKey,
-        domain,
-        asset,
-        makotos,
-        precision,
-        signature,
-        timestamp
-    );
+public:
+    TransferTransaction(abstract_transaction::AbstractTransaction &&, const std::string &prevTxHash);
 
+private:
     std::string getHash();
     std::string getRawData();
     std::string getAsText();

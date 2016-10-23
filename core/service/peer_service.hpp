@@ -4,9 +4,6 @@
 #include <vector>
 #include <string>
 
-#include "../util/yaml_loader.hpp"
-
-
 namespace peer{
 
     class Node {

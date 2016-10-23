@@ -1,5 +1,4 @@
 
-SET(YAML_PATH "${PROJECT_SOURCE_DIR}/core/vendor/yaml-cpp")
 set(CROW_PATH "${PROJECT_SOURCE_DIR}/core/vendor/crow")
 set(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
 

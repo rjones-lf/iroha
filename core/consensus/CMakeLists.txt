@@ -7,7 +7,6 @@ ADD_LIBRARY(sumeragi STATIC
 target_link_libraries(sumeragi
   event_repository
   crypto
-  yaml_loader
   validator
   merkle_transaction_repository
   unconfirmed_transaction_repository

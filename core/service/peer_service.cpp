@@ -2,7 +2,6 @@
 #include <string>
 #include <memory>
 
-#include "../util/yaml_loader.hpp"
 #include "peer_service.hpp"
 
 namespace peer{
@@ -25,11 +24,7 @@ namespace peer{
 
     std::vector<Node> getPeerList() {  
         std::vector<Node> res;
-        std::unique_ptr<yaml::YamlLoader> yaml(new yaml::YamlLoader(std::string(getenv("IROHA_HOME")) + "/config/config.yml"));
-        auto nodes = yaml->get<std::vector<peer::Node> >("peer", "node");
-        for (std::size_t i=0;i < nodes.size();i++) {
-            res.push_back( nodes[i] );
-        }
+        // WIP use json loadr
         return res;
     }
 };

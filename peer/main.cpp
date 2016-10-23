@@ -3,11 +3,11 @@
 #include <unistd.h>
 #include <atomic>
 
+#include <json.hpp>
+
 #include "../core/server/http_server.hpp"
 #include "../core/consensus/connection/connection.hpp"
 #include "../core/consensus/sumeragi.hpp"
-
-#include "../core/util/yaml_loader.hpp"
 #include "../core/util/logger.hpp"
 
 #include "../core/service/peer_service.hpp"
@@ -24,7 +24,6 @@ void sigIntHandler(int param){
 }
 
 int main() {
-
   signal(SIGINT, sigIntHandler);
 
   if(getenv("IROHA_HOME") == nullptr){
@@ -32,30 +31,23 @@ int main() {
     return 1;
   }
 
-  //std::cout<<"Process ID is "<< getpid() << std::endl;
-  /*
-  std::unique_ptr<connection::Config> config;
-  std::unique_ptr<yaml::YamlLoader>   yamlLoader(new yaml::YamlLoader(std::string(getenv("IROHA_HOME"))+"/config/config.yml"));
+  std::cout<<"Process ID is "<< getpid() << std::endl;
 
-  config->address = std::move(yamlLoader->get<std::string>("mediaDriver", "address"));
-  config->port    = std::move(yamlLoader->get<std::string>("mediaDriver", "port"));
-  config->name    = std::move(yamlLoader->get<std::string>("mediaDriver", "name"));
-  config->publishStreamId    = yamlLoader->get<int>("mediaDriver", "publishStreamId");
-  config->subscribeStreamId  = yamlLoader->get<int>("mediaDriver", "subscribeStreamId");
-  
-  connection::initialize_peer(std::move(config));
-  */
- // std::cout << "(Second) Process ID is " << getpid() << std::endl;
- // std::unique_ptr<yaml::YamlLoader>   yaml(new yaml::YamlLoader(std::string(getenv("IROHA_HOME"))+"/config/config.yml"));
-  std::string myPublicKey = "AA"; //yaml->get<std::string>("peer", "publicKey"); 
+  std::unique_ptr<connection::Config> config;
+
+  config->ip_addr = "WIP";
+  config->port    = "WIP";
+  config->name    = "WIP";
+
+  std::string myPublicKey = "WIP";
+
+
   std::vector<std::unique_ptr<peer::Node>> peer;
   peer.push_back(std::unique_ptr<peer::Node>(new peer::Node("1.2.5.6","AAA")));
   peer.push_back(std::unique_ptr<peer::Node>(new peer::Node("1.2.5.6","AAA")));
   peer.push_back(std::unique_ptr<peer::Node>(new peer::Node("1.2.5.6","AAA")));
 
- //peer::getPeerList();
   sumeragi::initializeSumeragi(myPublicKey, std::move(peer));
-
 
   std::thread http_th( server );
   std::thread sumeragi_th(sumeragi::loop);

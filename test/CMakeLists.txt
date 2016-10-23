@@ -5,5 +5,6 @@ set(GTEST_INCLUDE_DIR ${PROJECT_BINARY_DIR}/gtest/src/googletest/googletest/incl
 
 add_subdirectory(crypto)
 add_subdirectory(smart_contract)
+add_subdirectory(infra/repository)
 #add_subdirectory(connection)
 

@@ -1,7 +1,7 @@
 all: libhash.a
 
 CC = g++
-KECCAK_PATH = $(IROHA_HOME)/core/vendor/KeccakCodePackage
+KECCAK_PATH = ../../vendor/KeccakCodePackage
 
 DEFINE  = -DKeccakP200_excluded -DKeccakP400_excluded -DKeccakP800_excluded
 

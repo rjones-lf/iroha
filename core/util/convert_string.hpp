@@ -2,7 +2,6 @@
 #define __CORE_REPOSITORY_CONVERT_STRING_HPP__
 
 #include <string>
-#include <msgpack.hpp>
 #include <sstream>
 
 namespace convert{

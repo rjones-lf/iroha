@@ -1,6 +1,5 @@
 
 #include <string>
-#include <msgpack.hpp>
 #include "../../model/transactions/abstract_transaction.hpp"
 
 namespace unconfirmed_transaction_repository {

@@ -7,53 +7,74 @@
 #include <leveldb/write_batch.h>
 #include <leveldb/db.h>
 
-
+// +------------------------------------------------+
+// | Repository should save string to any database. |
+// +------------------------------------------------+
+// |                                                |
+// | I know ...                                     |
+// |  - leveldb                                     |
+// |                                                |
+// | I don't know                                   |
+// |  - json library                                |
+// |                                                |
+// +------------------------------------------------+
 namespace repository{
 
   // Level DB is known only to me.
   namespace world_state_repository {
 
-      std::unique_ptr<leveldb::DB> db;
+      namespace detail {
 
-      bool loggerStatus(leveldb::Status const status) {
-          if (!status.ok()) {
-              logger::info("merkle_transaction",status.ToString());
-              return false;
+              static std::unique_ptr<leveldb::DB> db = nullptr;
+
+              bool loggerStatus(leveldb::Status const status) {
+                  if (!status.ok()) {
+                      logger::info(__FILE__, status.ToString());
+                      return false;
+                  }
+                  return true;
+              }
+
+              void loadDb() {
+                  leveldb::DB *tmpDb;
+                  leveldb::Options options;
+                  options.error_if_exists = false;
+                  options.create_if_missing = true;
+                  loggerStatus(leveldb::DB::Open(options, "irohaDB", &tmpDb)); //TODO: This path should be configurable
+                  db.reset(tmpDb);
+              }
           }
-          return true;
+
+      bool add(const std::string &key, const std::string &value) {
+          if (detail::db == nullptr) detail::loadDb();
+
+          return detail::loggerStatus(detail::db->Put(leveldb::WriteOptions(), key, value));
       }
 
-      void loadDb() {
-          leveldb::DB* tmpDb;
-          leveldb::Options options;
-          options.error_if_exists = false;        
-          options.create_if_missing = true;
-          loggerStatus(leveldb::DB::Open(options, "/tmp/irohaDB", &tmpDb)); //TODO: This path should be configurable
-          db.reset(tmpDb);
-      }
+      bool update(const std::string &key, const std::string &value) {
+          if (detail::db == nullptr) detail::loadDb();
 
-      bool add(const std::string& key, const std::string& value){
-          return loggerStatus( db->Put(leveldb::WriteOptions(), key, value));
-      }
-
-      bool update(const std::string& key, const std::string& value){
           std::string dummy;
-          if( loggerStatus(db->Get(leveldb::ReadOptions(), key, &dummy)) ){
+          if (detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &dummy))) {
               leveldb::WriteBatch batch;
               batch.Delete(key);
               batch.Put(key, value);
-              return loggerStatus( db->Write(leveldb::WriteOptions(), &batch));
+              return detail::loggerStatus(detail::db->Write(leveldb::WriteOptions(), &batch));
           }
+          return false;
       }
 
-      bool remove(const std::string& key){
-          return loggerStatus(db->Delete(leveldb::WriteOptions(), key));
+      bool remove(const std::string &key) {
+          if (detail::db == nullptr) detail::loadDb();
+          return detail::loggerStatus(detail::db->Delete(leveldb::WriteOptions(), key));
       }
 
-      std::string find(const std::string& key){
+      std::string find(const std::string &key) {
+          if (detail::db == nullptr) detail::loadDb();
+
           std::string readData;
-          loggerStatus(db->Get(leveldb::ReadOptions(), key, &readData));
-          if(readData != ""){
+          detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &readData));
+          if (readData != "") {
               return readData;
           } else {
               return "";
@@ -61,28 +82,24 @@ namespace repository{
       }
 
       std::string findOrElse(
-        const std::string& key,
-        const std::string& defaultValue
+              const std::string &key,
+              const std::string &defaultValue
       ) {
+          if (detail::db == nullptr) detail::loadDb();
+
           std::string result = "";
-          loggerStatus(db->Get(leveldb::ReadOptions(), key, &result));          
-          if(result == "") {
+          detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &result));
+          if (result == "") {
               return defaultValue;
           } else {
               return result;
           }
       }
 
-      bool isExist(const std::string& key){
+      bool isExist(const std::string &key) {
           std::string result = "";
-          loggerStatus(db->Get(leveldb::ReadOptions(), key, &result));          
-          if(result == "") {
-              return false;
-          } else {
-              return true;
-          }
+          detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &result));
+          return result == "";
       }
-      
   };
-
 };

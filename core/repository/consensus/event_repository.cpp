@@ -2,13 +2,15 @@
 #include "event_repository.hpp"
 #include "../world_state_repository.hpp"
 #include <string>
+
 #include "../../util/convert_string.hpp"
 #include "../../model/transactions/abstract_transaction.hpp"
 
 namespace repository{
+
+std::vector<std::string> cache;
+
 namespace event {
-
-
   bool add(const std::string& hash, std::unique_ptr<abstract_transaction::AbstractTransaction> tx){
     if(tx->getType() == abstract_transaction::TransactionType::message){
        /*
@@ -23,7 +25,7 @@ namespace event {
   }
 
   bool update(const std::string& hash, const abstract_transaction::AbstractTransaction& tx){
-      
+
   }
   bool remove(const std::string& hash){
 
@@ -36,6 +38,7 @@ namespace event {
   > findAll(){
 
   }
+
   std::unique_ptr<abstract_transaction::AbstractTransaction>& find(std::string hash){
 
   }
