@@ -24,7 +24,6 @@ void sigIntHandler(int param){
 }
 
 int main() {
-
   signal(SIGINT, sigIntHandler);
 
   if(getenv("IROHA_HOME") == nullptr){
@@ -55,7 +54,6 @@ int main() {
 
  //peer::getPeerList();
   sumeragi::initializeSumeragi(myPublicKey, std::move(peer));
-
 
   std::thread http_th( server );
   std::thread sumeragi_th(sumeragi::loop);

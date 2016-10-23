@@ -41,10 +41,11 @@ namespace sumeragi {
     using ConsensusEvent = consensus_event::ConsensusEvent;
 
 struct Context {
-    unsigned int maxFaulty;  // f
-    int proxyTailNdx;
+    bool isSumeragi; // am I the leader or not?
+    unsigned long maxFaulty;  // f
+    unsigned long proxyTailNdx;
     int panicCount;
-    unsigned int numValidatingPeers;
+    unsigned long numValidatingPeers;
     std::vector<
         std::unique_ptr<peer::Node>
     > validatingPeers;
@@ -56,10 +57,6 @@ struct Context {
     {}
     //std::unique_ptr<TransactionCache> txCache;
     //std::unique_ptr<TransactionValidator> txValidator;
-    
-    std::queue<
-        std::unique_ptr<ConsensusEvent>
-    > eventCache;
 
     std::map<std::string, std::unique_ptr<ConsensusEvent> > processedCache;    
 };
@@ -80,7 +77,7 @@ void initializeSumeragi(
     context->maxFaulty = context->numValidatingPeers / 3;  // Default to approx. 1/3 of the network. TODO: make this configurable
     context->proxyTailNdx = context->maxFaulty*2 + 1;      
     context->panicCount = 0;
-    logger::info( "sumeragi", "initialize.....  complate!");
+    logger::info( "sumeragi", "initialize.....  complete!");
 }
 
 void processTransaction(
@@ -94,7 +91,7 @@ void processTransaction(
     if (context->validatingPeers[context->proxyTailNdx]->getPublicKey() == peer::getMyPublicKey()) {
         connection::send(context->validatingPeers[context->proxyTailNdx]->getIP(), event->getHash()); // Think In Process
     } else {
-        connection::sendAll(event->getHash());// Think In Process
+        connection::sendAll(event->getHash()); // Think In Process
     }
 
     setAwkTimer(5000, [&](){ 
@@ -122,7 +119,7 @@ void processTransaction(
 *  ________________________    __________
 * /           A            \  /    B     \ 
 * |---|  |---|  |---|  |---|  |---|  |---|
-* | 0 |--| 1 |--| 4 |--| 5 |--| 2 |--| 3 |
+* | 0 |--| 1 |--| 2 |--| 3 |--| 4 |--| 5 |
 * |---|  |---|  |---|  |---|  |---|  |---|.
 */
 void panic(const std::unique_ptr<ConsensusEvent>& event) {
@@ -149,60 +146,54 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const actio
     }).join();
 }
 
-// WIP
-long long int getDistance(const std::string& publicKey, const std::string& txHash){
-    // I want (node->publicKey && 0xffffff) - (txHash && 0xffffff)
-    return 0;
-}
-
-void determineConsensusOrder(const std::unique_ptr<ConsensusEvent>& event/*, std::vector<double> trustVector*/) {
-    std::string txHash = event->getHash();
+/**
+ * The consensus order is based primarily on the trust scores. If two trust scores
+ * are the same, then the order (ascending) of the public keys for the servers are used.
+ */
+void determineConsensusOrder() {
     std::sort(context->validatingPeers.begin(), context->validatingPeers.end(), 
-        [txHash](const std::unique_ptr<peer::Node> &lhs,
+        [](const std::unique_ptr<peer::Node> &lhs,
            const std::unique_ptr<peer::Node> &rhs) {
-            return getDistance(
-                lhs->getPublicKey(),
-                txHash
-            ) < getDistance(
-                lhs->getPublicKey(),
-                txHash
-            );
+            return lhs->getTrustScore() > rhs->getTrustScore()
+                || (lhs->getTrustScore() == rhs->getTrustScore()
+                    && lhs->getPublicKey() < rhs->getPublicKey());
         }
     );
 }
 
 void loop() {
-    logger::info("sumeragi","start main loop");
-    while (true) {  // TODO(M->M): replace with callback linking aeron
+    logger::info("sumeragi", "start main loop");
+    while (true) {  // TODO: replace with callback linking the event repository?
 
-        if(!repository::event::empty()){
-            std::vector<
-                std::unique_ptr<abstract_transaction::AbstractTransaction>
-            > txs = repository::event::findAll();
-            for(auto& tx : txs){
-                // How to convert AbstractTransaction to Consensus Event?
-                // context->eventCache.push( consensus_event );
+        if(!repository::event::empty()) {
+            std::vector<std::unique_ptr<ConsensusEvent>> events = repository::event::findAll();
+            // Sort the events to determine priority to process
+            std::sort(events.begin(), events.end(), 
+                [](const std::unique_ptr<ConsensusEvent> &lhs,
+                   const std::unique_ptr<ConsensusEvent> &rhs) {
+                    return lhs->signatures.size() > rhs->signatures.size()
+                           || (context->isSumeragi && lhs->order == 0)
+                           || lhs->order < rhs->order;
+                }
+            );
+
+            for (auto&& event : events) {
+                if (!transaction_validator::isValid(*event->tx)) {
+                    continue;
+                }
+                // Determine node order
+                determineConsensusOrder();
+
+                // Process transaction
+                processTransaction(std::move(event));
             }
         }
-        
-        if (!context->eventCache.empty()) { //TODO: mutex here?
-            std::unique_ptr<ConsensusEvent> event = std::move(context->eventCache.front());
-            context->eventCache.pop();
-            if (!transaction_validator::isValid(*event->tx)) {
-                continue;
-            } 
-            // Determine node order
-            determineConsensusOrder(event);
 
-            // Process transaction
-            processTransaction(std::move(event));
-        }
-            
-        for (auto&& kv : context->processedCache) {
-            auto event = std::move(kv.second);
+        for (auto&& tuple : context->processedCache) {
+            const auto event = std::move(tuple.second);
 
             // Check if we have at least 2f+1 signatures
-            if (event->txSignatures.size() > context->maxFaulty*2 + 1) {
+            if (event->signatures.size() >= context->maxFaulty*2 + 1) {
                 // Check Merkle roots to see if match for new state
                 //TODO: std::vector<std::string>>const merkleSignatures = event.merkleRootSignatures;
                 //TODO: try applying transaction locally and compute the merkle root

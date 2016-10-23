@@ -2,7 +2,6 @@
 
 #include "../../util/logger.hpp"
 
-
 #include <cstdint>
 #include <cstdio>
 #include <signal.h>

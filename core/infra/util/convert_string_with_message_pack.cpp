@@ -2,7 +2,7 @@
 #include "../../util/convert_string.hpp"
 #include "../../model/transactions/abstract_transaction.hpp"
 
-namespace convert{
+namespace convert {
 
     using Abs_tx = abstract_transaction::AbstractTransaction;
 
@@ -24,5 +24,4 @@ namespace convert{
         deserialized.convert(dst);
         return dst;
     }
-
 };

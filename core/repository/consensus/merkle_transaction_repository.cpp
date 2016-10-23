@@ -16,10 +16,12 @@ using abs_tx = abstract_transaction::AbstractTransaction;
 // WIP
 //std::unique_ptr<merkle::MerkleRoot> merkle_root;
 
-bool commit(std::unique_ptr<consensus_event::ConsensusEvent> event) {
+bool commit(std::unique_ptr<consensus_event::ConsensusEvent> const event) {
+    return false;
 }
 
-bool commit(std::string hash, std::unique_ptr<consensus_event::ConsensusEvent> event) {
+bool commit(std::string hash, std::unique_ptr<consensus_event::ConsensusEvent> const event) {
+    return false;
 }
 
 std::unique_ptr<abs_tx> findLeaf(std::string const hash) {

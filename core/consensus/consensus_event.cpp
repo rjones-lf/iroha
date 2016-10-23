@@ -4,11 +4,11 @@
 
 namespace consensus_event {
 
-    void ConsensusEvent::addSignature(const std::string& signature){
-        txSignatures.push_back(signature);
+    void ConsensusEvent::addSignature(const std::string& signature) {
+        signatures.push_back(signature); //TODO: use std::move here?
     }
 
-    std::string ConsensusEvent::getHash() const{
+    std::string ConsensusEvent::getHash() const {
         return tx->getHash();
     }
 }  // namespace consensus_event

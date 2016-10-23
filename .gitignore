@@ -13,3 +13,4 @@ build/*
 *.o
 .gradle/*
 .vscode/*
+.idea/*

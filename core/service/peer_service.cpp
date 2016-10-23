@@ -15,12 +15,16 @@ namespace peer{
         return publicKey;
     }
 
+    double Node::getTrustScore() const {
+        return 0; // TODO: WIP
+    }
+
     std::string getMyPublicKey() {
-        return "Base64";// WIP
+        return "Base64";// TODO: WIP
     }
 
     std::string getPrivateKey() {
-        return "Base64";// WIP
+        return "Base64";// TODO: WIP
     }
 
     std::vector<Node> getPeerList() {  

@@ -13,15 +13,18 @@ namespace peer{
         public:
             std::string ip;
             std::string publicKey;
+            double trustScore;
 
             Node(){}
 
             Node(
-                std::string aip,
-                std::string apubkey
+                std::string myIP,
+                std::string myPubKey,
+                double myTrustScore
             ):
-                ip(aip),
-                publicKey(apubkey)
+                ip(myIP),
+                publicKey(myPubKey),
+                trustScore(myTrustScore)
             {}
             
             
@@ -34,6 +37,7 @@ namespace peer{
 
             std::string getIP() const;
             std::string getPublicKey() const;
+            double getTrustScore() const;
     };
 
 

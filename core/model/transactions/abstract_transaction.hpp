@@ -16,7 +16,6 @@ enum class TransactionType {
 
 class AbstractTransaction {
   public:
-
     std::string publicKey;
     std::string signature;
 

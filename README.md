@@ -1,8 +1,8 @@
 # いろは(iroha)
-![build status](https://circleci.com/gh/soramitsu/iroha.svg?style=shield&circle-token=80f2601e3bfb42d001e87728326659a0c96e0398)
+![build status](https://circleci.com/gh/soramitsu/iroha.svg?style=shield&circle-token=80f2601e3bfb42d001e87728326659a0c96e0398) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fa0f4ce83e584fc4a32b646536dd40eb)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=soramitsu/iroha&amp;utm_campaign=Badge_Grade) [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=feature-sumeragi)](http://iroha.readthedocs.io/en/feature-sumeragi/?badge=feature-sumeragi)
 
 いろは(iroha) is ...  
-![alt tag](https://github.com/soramitsu/iroha/raw/feature/sumeragi/LGTM.gif)
+![alt tag](https://raw.githubusercontent.com/soramitsu/iroha/master/LGTM.gif)
   
 # Pull Requests
 Please include a developer certificate with pull requests: http://developercertificate.org/
@@ -107,7 +107,7 @@ We adopt a **Domain-Driven Development structure** as much as possible.
 |   consensus  |--------+         +----------------+
 |              |
 |+------------+|
-|| messeging  ||
+|| messaging  ||
 |+------------+|
 +--------------+
 
@@ -115,13 +115,12 @@ We adopt a **Domain-Driven Development structure** as much as possible.
 |infrastructure                                                              |
 |                                                                            |
 |+------------++--------------++-------------++----------------++---------+  |
-|| messaging  || web resr api || repository  || smart contract || crypto  |  |
+|| messaging  || web rest api || repository  || smart contract || crypto  |  |
 ||(use aeron )||  (use crow)  ||(use leveldb)|| (use java vm)  || ed25519 |  |
 |+------------++--------------++-------------++----------------++---------+  |
 +----------------------------------------------------------------------------+
 
 ```
-
 
 #### core/connection (consensus layer)
 It contains the P2P messaging function interface.
@@ -134,18 +133,18 @@ It contains the P2P messaging function interface.
 ```
 
 #### core/consensus (consensus layer)
-It contains consensus algorithm.
+It contains the consensus algorithm(s).
   
 #### core/crypto (service)
-It contains electronic signature, base64, hash function interface...
-  
+It contains digital signature algorithms, base64, hash function interfaces, etc.
+
 #### core/model (domain)
 It contains asset model, transaction logic. independent of infra knowledge.
 
 #### core/infra (infra layer)
 It contains some source depend on vendor (third party) libraries.
 If any source depends on vendor libraries, it should be in infra. 
-  
+
 ##### filename
 basically, filename is `"function"_with_"lib name".cpp`
 ```

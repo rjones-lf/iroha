@@ -3,8 +3,8 @@
 
 #include <memory>
 
-// What's publisher? 
-// publisher is like factory in Domain Driven Development.
+// What's a publisher? 
+// A publisher is like factory in Domain-Driven Development.
 namespace publisher{
 
     template<typename T, typename... Args>

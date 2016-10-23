@@ -8,7 +8,7 @@ namespace service {
 
     namespace url_service {
 
-        // Input assetUtl := <domain> ( <::> <domain> )* . <assetName>
+        // Input assetUtil := <domain> ( <::> <domain> )* . <assetName>
         // sample: rabbit_house::chino.cappucchino
         // domain -> rabbit_house, chino
         // asset  -> cappuccino

@@ -15,7 +15,7 @@ bool isValid(std::string sig) {
 
 
 bool signaturesAreValid(const consensus_event::ConsensusEvent event) {
-    for (auto sig : event.txSignatures) {
+    for (auto sig : event.signatures) {
         if (!consensus_event_validator::isValid(sig)) {
             return false;
         }

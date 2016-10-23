@@ -10,7 +10,6 @@
 
 #include "../service/peer_service.hpp"
 
-
 namespace sumeragi {
     void initializeSumeragi(
         const std::string& myPublicKey,

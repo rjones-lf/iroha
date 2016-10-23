@@ -5,14 +5,14 @@
 #include "../crypto/signature.hpp"
 
 namespace transaction_validator {
-bool isValid(abstract_transaction::AbstractTransaction& tx) {
+bool isValid(const abstract_transaction::AbstractTransaction& tx) {
     return signaturesAreValid(tx) && validForType(tx);
 }
 
 bool signaturesAreValid(const abstract_transaction::AbstractTransaction& tx) {
     if (!signature::verify(tx.signature, tx.signature, tx.publicKey)) {
         return true;
-    }else{
+    } else {
         return false;
     }
 }

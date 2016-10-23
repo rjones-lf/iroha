@@ -5,7 +5,6 @@
 #include <iostream>
 #include <unordered_map>
 
-
 struct JavaContext {
   JNIEnv* env;
   JavaVM* jvm;
