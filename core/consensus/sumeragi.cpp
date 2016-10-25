@@ -58,26 +58,33 @@ struct Context {
     //std::unique_ptr<TransactionCache> txCache;
     //std::unique_ptr<TransactionValidator> txValidator;
 
-    std::map<std::string, std::unique_ptr<ConsensusEvent> > processedCache;    
+    std::vector<std::unique_ptr<ConsensusEvent>> processedCache;
 };
 
 std::unique_ptr<Context> context = nullptr;
 
 void initializeSumeragi(
     const std::string& myPublicKey,
-    std::vector<std::unique_ptr<peer::Node>> peers
-){
-    logger::info( "sumeragi", "initialize");
+    std::vector<std::unique_ptr<peer::Node>> peers) {
 
-    logger::info( "sumeragi", "inp");
+    logger::info("sumeragi", "initialize");
+
     context = std::make_unique<Context>(std::move(peers));
     peers.clear();
 
     context->numValidatingPeers = context->validatingPeers.size();
     context->maxFaulty = context->numValidatingPeers / 3;  // Default to approx. 1/3 of the network. TODO: make this configurable
-    context->proxyTailNdx = context->maxFaulty*2 + 1;      
+    context->proxyTailNdx = context->maxFaulty*2 + 1;
+    if (context->proxyTailNdx >= context->validatingPeers.size()) {
+        context->proxyTailNdx = context->validatingPeers.size()-1;
+    }
     context->panicCount = 0;
-    logger::info( "sumeragi", "initialize.....  complete!");
+
+    //TODO: move the peer service and ordering code to another place
+    determineConsensusOrder(); // side effect is to modify validatingPeers
+
+    context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == myPublicKey;
+    logger::info("sumeragi", "initialize.....  complete!");
 }
 
 void processTransaction(std::unique_ptr<ConsensusEvent> event) {
@@ -86,19 +93,19 @@ void processTransaction(std::unique_ptr<ConsensusEvent> event) {
     }
 
     event->addSignature(signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()));
-    if (context->validatingPeers[context->proxyTailNdx]->getPublicKey() == peer::getMyPublicKey()) {
-        connection::send(context->validatingPeers[context->proxyTailNdx]->getIP(), event->getHash()); // Think In Process
+    if (context->validatingPeers.at(context->proxyTailNdx)->getPublicKey() == peer::getMyPublicKey()) {
+        connection::send(context->validatingPeers.at(context->proxyTailNdx)->getIP(), event->getHash()); // Think In Process
     } else {
         connection::sendAll(event->getHash()); // Think In Process
     }
 
-    setAwkTimer(5000, [&](){ 
-        if (context->processedCache.find(event->getHash()) != context->processedCache.end()) {
+    setAwkTimer(3000, [&](){
+        if (!merkle_transaction_repository::leafExists(event->getHash())) {
             panic(event);
         }
     });
 
-    context->processedCache[event->getHash()] = std::move(event);
+    context->processedCache.push_back(std::move(event));
 }
 
 /**
@@ -160,9 +167,11 @@ void determineConsensusOrder() {
 
 void loop() {
     logger::info("sumeragi", "start main loop");
-    while (true) {  // TODO: replace with callback linking the event repository?
 
+    while (true) {  // TODO: replace with callback linking the event repository?
         if(!repository::event::empty()) {
+
+            logger::info("sumeragi", "not empty");
             std::vector<std::unique_ptr<ConsensusEvent>> events = repository::event::findAll();
             // Sort the events to determine priority to process
             std::sort(events.begin(), events.end(), 
@@ -186,8 +195,8 @@ void loop() {
             }
         }
 
-        for (auto&& tuple : context->processedCache) {
-            auto event = std::move(tuple.second);
+        // warning: processedCache should be ordered by order (ascending)
+        for (auto&& event : context->processedCache) {
 
             // Check if we have at least 2f+1 signatures
             if (event->signatures.size() >= context->maxFaulty*2 + 1) {
@@ -197,7 +206,7 @@ void loop() {
                 //TODO: see if the merkle root matches or not
 
                 // Commit locally
-                merkle_transaction_repository::commit(event->getHash(), std::move(event)); //TODO: add error handling in case not saved
+                merkle_transaction_repository::commit(event->getHash(), std::move(event->tx)); //TODO: add error handling in case not saved
             }
         }
     }

@@ -13,19 +13,17 @@ namespace merkle_transaction_repository {
 
 using abs_tx = abstract_transaction::AbstractTransaction;
 
+std::vector<std::unique_ptr<abs_tx>> transactions;
+
 // WIP
 //std::unique_ptr<merkle::MerkleRoot> merkle_root;
 
-//bool commit(std::unique_ptr<consensus_event::ConsensusEvent> const event) {
-//    return false;
-//}
-
-bool commit(std::string hash, const std::unique_ptr<consensus_event::ConsensusEvent> &event) {
-    return false;
+bool commit(std::string hash, const std::unique_ptr<abs_tx> &tx) {
+    return repository::world_state_repository::add(tx->getHash(), tx->getAsText());
 }
 
-std::unique_ptr<abs_tx> findLeaf(std::string const hash) {
-
+bool leafExists(std::string const hash) {
+    return !repository::world_state_repository::find(hash).empty();
 }
 
 };  // namespace merkle_transaction_repository

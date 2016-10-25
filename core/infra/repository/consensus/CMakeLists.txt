@@ -18,9 +18,3 @@ target_link_libraries(merkle_transaction_repository
   exception
 )  
 
-ADD_LIBRARY(unconfirmed_transaction_repository STATIC unconfirmed_transaction_repository.cpp)
-target_link_libraries(unconfirmed_transaction_repository
-  snappy
-  leveldb
-  exception
-)  

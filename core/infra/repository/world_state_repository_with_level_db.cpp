@@ -18,7 +18,7 @@
 // |  - json library                                |
 // |                                                |
 // +------------------------------------------------+
-namespace repository{
+namespace repository {
 
   // Level DB is known only to me.
   namespace world_state_repository {
@@ -46,13 +46,17 @@ namespace repository{
           }
 
       bool add(const std::string &key, const std::string &value) {
-          if (detail::db == nullptr) detail::loadDb();
+          if (detail::db == nullptr) {
+              detail::loadDb();
+          }
 
           return detail::loggerStatus(detail::db->Put(leveldb::WriteOptions(), key, value));
       }
 
       bool update(const std::string &key, const std::string &value) {
-          if (detail::db == nullptr) detail::loadDb();
+          if (detail::db == nullptr) {
+              detail::loadDb();
+          }
 
           std::string dummy;
           if (detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &dummy))) {
@@ -65,12 +69,16 @@ namespace repository{
       }
 
       bool remove(const std::string &key) {
-          if (detail::db == nullptr) detail::loadDb();
+          if (detail::db == nullptr) {
+              detail::loadDb();
+          }
           return detail::loggerStatus(detail::db->Delete(leveldb::WriteOptions(), key));
       }
 
       std::string find(const std::string &key) {
-          if (detail::db == nullptr) detail::loadDb();
+          if (detail::db == nullptr) {
+              detail::loadDb();
+          }
 
           std::string readData;
           detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &readData));
@@ -85,7 +93,9 @@ namespace repository{
               const std::string &key,
               const std::string &defaultValue
       ) {
-          if (detail::db == nullptr) detail::loadDb();
+          if (detail::db == nullptr) {
+              detail::loadDb();
+          }
 
           std::string result = "";
           detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &result));

@@ -44,12 +44,12 @@ int main() {
 
   std::vector<std::unique_ptr<peer::Node>> peer;
   peer.push_back(std::make_unique<peer::Node>("1.2.5.6","AAA", 100));
-  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","BBB", 100));
-  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","CCC", 100));
+  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","BBB", 90));
+  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","CCC", 80));
 
   sumeragi::initializeSumeragi(myPublicKey, std::move(peer));
 
-  std::thread http_th( server );
+  std::thread http_th(server);
   std::thread sumeragi_th(sumeragi::loop);
 
   while(running){}

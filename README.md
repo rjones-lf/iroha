@@ -1,5 +1,7 @@
 # いろは(iroha)
-![build status](https://circleci.com/gh/soramitsu/iroha.svg?style=shield&circle-token=80f2601e3bfb42d001e87728326659a0c96e0398) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fa0f4ce83e584fc4a32b646536dd40eb)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=soramitsu/iroha&amp;utm_campaign=Badge_Grade) [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=feature-sumeragi)](http://iroha.readthedocs.io/en/feature-sumeragi/?badge=feature-sumeragi)
+[![CircleCI](https://circleci.com/gh/hyperledger/iroha/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/iroha/tree/master)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/fa0f4ce83e584fc4a32b646536dd40eb)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=soramitsu/iroha&amp;utm_campaign=Badge_Grade)
+[![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=latest)](http://iroha.readthedocs.io/en/latest/?badge=latest)
 
 いろは(iroha) is ...  
 ![alt tag](https://raw.githubusercontent.com/soramitsu/iroha/master/LGTM.gif)

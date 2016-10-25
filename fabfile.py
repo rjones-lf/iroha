@@ -30,6 +30,8 @@ def initalize_server():
   print(magenta("# Setup server!! \(^o^)/ #"))
   print(magenta("##########################"))
   print(cyan("#  install usual"))
+  sudo("apt update")
+  sudo("apt -y upgrade")
   sudo("apt -y install gcc g++ make git")
   print(cyan("#  cmake"))
   sudo("apt -y install cmake")
@@ -69,12 +71,16 @@ def check_key_github():
 
 @task
 def initialize_repository():
-  # check_key_github()
+  #check_key_github()
   with cd("/var/www"):
     sudo("rm -rf *")
     run("git clone --recursive "+repo_name)
   with cd("/var/www/iroha"):
     with shell_env(JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64'):
+
+      with cd("core/vendor/Agrona"):
+        run("./gradlew")
+
       with cd("core/vendor/Aeron"):
         run("./gradlew")
         run("mkdir -p cppbuild/Debug")
@@ -82,13 +88,19 @@ def initialize_repository():
           run("cmake ../..")
           run("cmake --build . --clean-first")
           run("ctest")
+
       with cd("core/vendor/leveldb"):
         run("make")
+
       with cd("core/vendor/ed25519"):
         run("make")
 
       with cd("core/vendor/KeccakCodePackage"):
         run(" make generic64/libkeccak.a")
+
+
+      with cd("core/infra/crypto"):
+        run("make")
 
 @task
 def connection_test_dev():

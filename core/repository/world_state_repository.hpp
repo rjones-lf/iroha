@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-namespace repository{
+namespace repository {
 
   // I don't know model.
 
