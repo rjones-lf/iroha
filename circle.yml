@@ -35,7 +35,6 @@ checkout:
     - cd $IROHA_HOME/core/vendor/leveldb; make
     - cd $IROHA_HOME/core/vendor/ed25519; make
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
-    - cd $IROHA_HOME/core/vendor/crow; mkdir build; cd build; cmake ..; make
     - cd $IROHA_HOME/core/infra/crypto/; make
 test:
   override:

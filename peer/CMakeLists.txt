@@ -37,7 +37,7 @@ target_link_libraries(iroha-main
   sumeragi
   snappy
   logger
-  http_server_with_crow
+  http_server_with_cappuccino
   connection_with_aeron
   peer_service
   pthread
