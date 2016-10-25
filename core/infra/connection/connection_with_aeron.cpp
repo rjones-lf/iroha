@@ -42,17 +42,17 @@ namespace connection {
     bool subscription_running(true);
 
     fragment_handler_t receiveMessage() {
-        return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header)
-        {
+        return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header) {
             std::string raw_data = std::string((char *)buffer.buffer() + offset, (unsigned long)length);
             // WIP parse json.
+            logger::info("receive", raw_data);
             for(auto& f : receivers) {
                 f("From", raw_data);
             }
         };
     }
 
-    int initialize_peer(std::unordered_map<std::string,std::string> data){
+    void initialize_peer(std::unique_ptr<connection::Config> config) {
         aeron::Context context;
 
         context.newSubscriptionHandler(
@@ -61,10 +61,9 @@ namespace connection {
             [](const std::string& channel, std::int32_t streamId, std::int32_t sessionId, std::int64_t correlationId){});
 
         aeron = Aeron::connect(context);
-        return 0;
     }
 
-    int exec_subscription(std::string ip){
+    int exec_subscription(std::string ip) {
         try{
             logger::info("connection", "subscript ["+ ip +"]");
 
@@ -147,7 +146,7 @@ namespace connection {
         return false;
     }
 
-    bool receive(std::function<void(std::string from,std::string message)> callback) {
+    bool receive(const std::function<void(std::string from, std::string message)>& callback){
         receivers.push_back(callback);
         return true;
     }

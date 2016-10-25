@@ -7,14 +7,14 @@ include_directories(
   ${AERON_PATH}/aeron-client/src/main/cpp
 )
 link_directories(
-  ${AERON_PATH}/cppbuild/Release/lib
+  ${AERON_PATH}/cppbuild/Debug/lib
 )
 
 # Aeron connection Test
 add_executable(connection_test
   connection_with_aeron_test.cpp
 )
-target_link_libraries(connecti on_test
+target_link_libraries(connection_test
   connection_with_aeron
   aeron_client
   pthread

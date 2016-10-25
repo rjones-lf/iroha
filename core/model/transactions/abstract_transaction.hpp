@@ -19,7 +19,9 @@ class AbstractTransaction {
     std::string publicKey;
     std::string signature;
 
+    AbstractTransaction(){};
     virtual ~AbstractTransaction() = default; // make dtor virtual
+
     AbstractTransaction(AbstractTransaction&&) = default;  // support moving
     AbstractTransaction& operator = (AbstractTransaction&&) = default;
     AbstractTransaction(const AbstractTransaction&) = default; // support copying
