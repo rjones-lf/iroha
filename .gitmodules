@@ -20,3 +20,6 @@
 [submodule "core/vendor/Agrona"]
 	path = core/vendor/Agrona
 	url = https://github.com/real-logic/Agrona.git
+[submodule "core/vendor/Cappuccino"]
+	path = core/vendor/Cappuccino
+	url = https://github.com/MizukiSonoko/Cappuccino.git
