@@ -20,6 +20,10 @@ namespace connection {
     bool send(const std::string& to, const std::string& message);
     bool receive(const std::function<void(std::string from, std::string message)>& callback);
 
+    int exec_subscription(std::string ip);
+    void addPublication(std::string ip);
+
+    void finish();
 };  // end connection
 
 #endif

@@ -20,7 +20,22 @@ class TransferTransaction : public abstract_transaction::AbstractTransaction {
 public:
     TransferTransaction(abstract_transaction::AbstractTransaction &&, const std::string &prevTxHash);
 
-private:
+    TransferTransaction(
+        const std::string &senderPublicKey,
+        const std::string &receiverPublicKey,
+        const std::string &domain,
+        const std::string &asset);
+
+    virtual std::string getHash() const override;
+
+    virtual std::string getRawData() const override;
+
+    virtual std::string getAsText() const override;
+
+    virtual unsigned long long int getTimestamp() const override;
+
+    virtual abstract_transaction::TransactionType getType() const override;
+
     std::string getHash();
     std::string getRawData();
     std::string getAsText();
@@ -31,3 +46,4 @@ private:
 };  // namespace transaction
 
 #endif  // CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_
+

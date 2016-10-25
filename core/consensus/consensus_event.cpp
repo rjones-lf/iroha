@@ -5,7 +5,7 @@
 namespace consensus_event {
 
     void ConsensusEvent::addSignature(const std::string& signature) {
-        signatures.push_back(signature); //TODO: use std::move here?
+        signatures.push_back(signature); //TODO: use std::move here? Makoto: probably no
     }
 
     std::string ConsensusEvent::getHash() const {

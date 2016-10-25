@@ -65,11 +65,10 @@ std::unique_ptr<Context> context = nullptr;
 
 void initializeSumeragi(
     const std::string& myPublicKey,
-    std::vector<std::unique_ptr<peer::Node>> peers
-){
-    logger::info( "sumeragi", "initialize");
+    std::vector<std::unique_ptr<peer::Node>> peers) {
 
-    logger::info( "sumeragi", "inp");
+    logger::info("sumeragi", "initialize");
+
     context = std::make_unique<Context>(std::move(peers));
     peers.clear();
 
@@ -77,7 +76,12 @@ void initializeSumeragi(
     context->maxFaulty = context->numValidatingPeers / 3;  // Default to approx. 1/3 of the network. TODO: make this configurable
     context->proxyTailNdx = context->maxFaulty*2 + 1;      
     context->panicCount = 0;
-    logger::info( "sumeragi", "initialize.....  complete!");
+
+    //TODO: move the peer service and ordering code to another place
+    determineConsensusOrder(); // side effect is to modify validatingPeers
+
+    context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == myPublicKey;
+    logger::info("sumeragi", "initialize.....  complete!");
 }
 
 void processTransaction(std::unique_ptr<ConsensusEvent> event) {
@@ -160,9 +164,11 @@ void determineConsensusOrder() {
 
 void loop() {
     logger::info("sumeragi", "start main loop");
-    while (true) {  // TODO: replace with callback linking the event repository?
 
+    while (true) {  // TODO: replace with callback linking the event repository?
         if(!repository::event::empty()) {
+
+            logger::info("sumeragi", "not empty");
             std::vector<std::unique_ptr<ConsensusEvent>> events = repository::event::findAll();
             // Sort the events to determine priority to process
             std::sort(events.begin(), events.end(), 
@@ -186,6 +192,7 @@ void loop() {
             }
         }
 
+        // warning: processedCache should be ordered by order (ascending)
         for (auto&& tuple : context->processedCache) {
             auto event = std::move(tuple.second);
 
