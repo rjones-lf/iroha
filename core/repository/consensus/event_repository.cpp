@@ -42,7 +42,7 @@ namespace repository {
                             consensusEvents.begin(),
                             consensusEvents.end(),
                             [hash](auto&& event) -> bool {
-                                return event->merkleRootHash == hash;
+                                return event->getHash() == hash;
                             }
                     ),
                     consensusEvents.end()
@@ -67,7 +67,7 @@ namespace repository {
 
         std::unique_ptr<consensus_event::ConsensusEvent> find(std::string hash) {
             for (auto&& event : consensusEvents){
-                if ( event->merkleRootHash == hash) {
+                if ( event->getHash() == hash) {
                     return std::move(event);
                 }
             }

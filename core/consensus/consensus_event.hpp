@@ -27,47 +27,104 @@ limitations under the License.
 
 #include "../crypto/signature.hpp"
 #include "../util/logger.hpp"
-#include "../model/transactions/abstract_transaction.hpp"
+#include "../model/transaction.hpp"
+
+#include "../service/json_parse.hpp"
 
 namespace consensus_event {
 
-struct ConsensusEvent {
+template<
+        typename T, typename U,
+        std::enable_if_t<
+                std::is_base_of<transaction::Transaction<U>, T>::value,std::nullptr_t
+        > = nullptr
+>
+class ConsensusEvent {
 
-    std::unique_ptr<abstract_transaction::AbstractTransaction> tx;
-    std::unordered_map<std::string, std::string> txSignatures; // map of public keys→signatures
 
-    std::string merkleRootHash;
-    std::unordered_map<std::string, std::string> merkleRootSignatures;
+    struct eventSignature{
+        std::string publicKey;
+        std::string signature;
 
+        eventSignature(
+            std::string pubKey,
+            std::string sig
+        ):
+                publicKey(pubKey),
+                signature(sig)
+        {}
+    };
+    T tx;
+    std::vector<eventSignature> eventSignatures;
+
+public:
     unsigned long long order = 0;
 
-    ConsensusEvent(std::unique_ptr<abstract_transaction::AbstractTransaction> atx):
-        tx(std::move(atx))
+    ConsensusEvent(T atx):
+        tx(atx)
     {}
 
-    ConsensusEvent():
-            tx(nullptr)
-    {}
+    // WIP
+    ConsensusEvent(json_parse::Object obj) {}
 
     void addSignature(const std::string& publicKey, const std::string& signature){
-        txSignatures[publicKey] = signature;
+        eventSignatures.push_back(eventSignature(publicKey, signature));
     }
 
     std::string getHash() const {
-        return tx->getHash();
+        return tx.getHash();
+    }
+    T getTx() const{
+        return tx;
     }
 
     int getNumValidSignatures() const {
+        logger::debug("getNumValidSignatures", "eventSignatures:"+ std::to_string(eventSignatures.size()));
         return std::count_if(
-            txSignatures.begin(), txSignatures.end(),
-            [hash = tx->getHash()](std::pair<const std::string, const std::string> record){
-                return signature::verify(record.second, hash, record.first);
+            eventSignatures.begin(), eventSignatures.end(),
+            [hash = getHash()](eventSignature sig){
+                return signature::verify(sig.signature, hash, sig.publicKey);
         });
     }
 
-    operator std::string() const{
-        return "WIP";
+    bool eventSignatureIsEmpty(){
+        return eventSignatures.empty();
     }
+
+
+
+    using Object = json_parse::Object;
+    using Type = json_parse::Type;
+    using Rule = json_parse::Rule;
+
+    Object dump() {
+        json_parse::Object obj = Object(Type::DICT);
+        obj.dictSub["order"] = Object(Type::INT, order);
+        auto eventSigs   = Object(Type::LIST);
+        for(auto&& eSig : eventSignatures) {
+            auto eventSig = Object(Type::DICT);
+            eventSig.dictSub["publicKey"] = Object(Type::STR, eSig.push_back(eSig.publicKey));
+            eventSig.dictSub["signature"] = Object(Type::STR, eSig.push_back(eSig.signature));
+            eventSigs.listSub.push_back(eventSig);
+        }
+        obj.dictSub["eventSignatures"] = eventSigs;
+        obj.dictSub["transaction"] = tx.dump();
+        return obj;
+    }
+
+    static Rule getJsonParseRule() {
+        Rule obj = Rule(Type::DICT);
+        obj.dictSub["order"] = Rule(Type::INT);
+        auto eventSigs   = Rule(Type::LIST);
+        auto eventSig   = Rule(Type::DICT);
+        eventSig.dictSub["publicKey"] = Rule(Type::STR);
+        eventSig.dictSub["signature"] = Rule(Type::STR);
+        eventSigs.listSub = eventSig;
+        obj.dictSub["eventSignatures"] = eventSigs;
+        obj.dictSub["transaction"] = T::getJsonParseRule();
+        return obj;
+    }
+
 };
 };  // namespace ConsensusEvent
 

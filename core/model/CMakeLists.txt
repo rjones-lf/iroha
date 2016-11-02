@@ -1,2 +1,2 @@
-add_subdirectory(instance)
-add_subdirectory(transactions)
+add_subdirectory(objects)
+add_subdirectory(state)

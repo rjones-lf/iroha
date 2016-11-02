@@ -21,7 +21,7 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
-#include "../../model/account.hpp"
+#include "../../model/state/account.hpp"
 
 namespace account_repository {
 

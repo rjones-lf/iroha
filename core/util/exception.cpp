@@ -29,7 +29,7 @@ namespace exception {
     const std::string& functionName,
     const std::string& filename
   ):
-    std::invalid_argument("ToDo. sorry [" + functionName +"] in "+filename+" is implemented, could you contribute to me?")
+    std::invalid_argument("TODO: sorry [" + functionName +"] in " + filename + " is not yet implemented, would you like to contribute it?")
   {};
 
   namespace crypto {

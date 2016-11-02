@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "../sample_asset.hpp"
+#include "sample_asset.hpp"
 
 namespace domain {
 

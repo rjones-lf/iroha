@@ -14,12 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_TRANSACTIONS_SIGNATORYDELETETRANSACTION_HPP_
-#define CORE_DOMAIN_TRANSACTIONS_SIGNATORYDELETETRANSACTION_HPP_
+#include "message.hpp"
 
-#include "abstract_transaction.hpp"
+namespace message {
 
-namespace signatory_delete_transaction {
-};  // namespace signatory_delete_transaction
+    Message::Message(
+            std::string text
+    ):
+            text(text)
+    {}
 
-#endif  // CORE_DOMAIN_TRANSACTIONS_SIGNATORYDELETETRANSACTION_HPP_
+    std::string Message::getAsJSON(){
+        return
+            "{\"text\",\""+text+"\"}";
+    }
+
+    json_parse::Object Message::getJsonParseRule() {
+        json_parse::Object obj = json_parse::Object(json_parse::Type::DICT);
+        //obj.dictSub["text"] =  Object(json_parse::Type::STR, text);
+        return obj;
+    }
+
+}

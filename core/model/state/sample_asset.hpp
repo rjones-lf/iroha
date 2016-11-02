@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+www.soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,31 +15,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "signatory_delete_transaction.hpp"
+#ifndef __CORE_DOMAIN_ASSET_HPP_
+#define __CORE_DOMAIN_ASSET_HPP_
 
-namespace signatory_delete_transaction {
-class SignatoryDeleteTransaction : public AbstractTransaction {
-    std::string hash;
-    AbstractTransaction::TransactionType type;
+#include "asset.hpp"
 
-    std::string getHash() {
-        return hash;
-    }
+namespace domain {
+    namespace asset {
 
-    std::string getRawData() {
-        //TODO
-    }
-    
-    std::string getAsText() {
-        //TODO
-    }
-    
-    unsigned long long  getTimestamp() {
-        return timestamp;
-    }
-    
-    TransactionType getType() {
-        return type;
-    }
-};
-};  // namespace signatory_delete_transaction
+        class SampleAsset : public Asset {
+          public:
+            int maxQuantity;
+
+            SampleAsset(
+              std::string aName,
+              std::string aParentDomainName,
+              int aMaxQuantity
+            ):
+              Asset(aName, aParentDomainName),
+              maxQuantity(aMaxQuantity)
+            {}
+
+        };
+
+    }  // namespace asset
+}  // namespace domain
+
+#endif

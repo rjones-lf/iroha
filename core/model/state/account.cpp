@@ -17,7 +17,7 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "../account.hpp"
+#include "account.hpp"
 
 // Include some service
 #include "../../service/url_service.hpp"

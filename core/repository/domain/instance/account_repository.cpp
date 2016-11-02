@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "../../../model/account.hpp"
+#include "../../../model/state/account.hpp"
 #include "../account_repository.hpp"
 #include "../../world_state_repository.hpp"
 

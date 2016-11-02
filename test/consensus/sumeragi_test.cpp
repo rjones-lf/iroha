@@ -16,7 +16,7 @@ limitations under the License.
 
 #include "../../core/consensus/sumeragi.hpp"
 #include "../../core/repository/consensus/event_repository.hpp"
-#include "../../core/model/transactions/transfer_transaction.hpp"
+#include "../../core/model/transaction.hpp"
 #include "../../core/consensus/connection/connection.hpp"
 #include <iostream>
 #include <string>
@@ -56,14 +56,6 @@ int main(){
         std::cout << "in >> ";
         std::cin>> cmd;
         if(cmd == "quit") break;
-        auto event = std::make_unique<consensus_event::ConsensusEvent>(
-                std::make_unique<transaction::TransferTransaction>(
-                        "fccpkrZyLlxJUQm8RpJXedWVZfbg2Dde0iPphwD+jQ0=",
-                        pubKey,
-                        "domain",
-                        cmd
-                )
-        );
 
         auto su = peer::getPeerList();
 
@@ -72,10 +64,6 @@ int main(){
             std::cout<< n->getPublicKey() << std::endl;
             std::cout<< n->getIP() << std::endl;
         }
-
-        repository::event::add("80084bf2fba02475726feb2cab2d8215eab14bc6bdd8bfb2c8151257032ecd8b",
-           std::move(event)
-        );
 
     }
 

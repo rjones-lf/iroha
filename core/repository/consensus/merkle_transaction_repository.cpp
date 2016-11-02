@@ -17,33 +17,26 @@ limitations under the License.
 
 #include "merkle_transaction_repository.hpp"
 #include "../world_state_repository.hpp"
-#include "../../util/random.hpp"
 
 #include <memory>
 #include <iostream>
 
 #include "../../util/logger.hpp"
-#include "../../crypto/merkle_node.hpp"
-#include "../../crypto/merkle.hpp"
 #include "../../crypto/hash.hpp"
-
-#include <string>
 
 namespace merkle_transaction_repository {
 
-    using abs_tx = abstract_transaction::AbstractTransaction;
-
-    bool commit(const std::unique_ptr<consensus_event::ConsensusEvent> &event) {
-
+    //TODO: change bool to throw an exception instead
+    bool commit(ConsensusEvent<T> &event) {
         std::vector<std::tuple<std::string, std::string>> batchCommit
           = {
                 std::tuple<std::string, std::string>("last_insertion", event->tx->getHash()),
                 std::tuple<std::string, std::string>(event->tx->getHash(), event->tx->getAsText())
         };
 
-        return repository::world_state_repository::addBatch<
-                std::string
-        >(batchCommit);
+        calculateNewRootHash(event, batchCommit);
+
+        return repository::world_state_repository::addBatch<std::string>(batchCommit);
     }
 
     bool leafExists(const std::string& hash) {
@@ -54,60 +47,85 @@ namespace merkle_transaction_repository {
         return repository::world_state_repository::find(hash);
     }
 
-    unsigned long long getLastLeafOrder() {
-        std::string lastAdded = repository::world_state_repository::find("last_insertion");
-        //TODO: convert string->abstract transaction
-        // return ->order; //TODO:
-        return 0l;
-    }
-    
-    void initLeaf(){
-        repository::world_state_repository::add("last_insertion", random_service::makeRandomHash());
-    }
+    std::string calculateNewRootHash(const std::unique_ptr<consensus_event::ConsensusEvent> &event,
+                                     std::vector<std::tuple<std::string, std::string>> &batchCommit) {
 
-    std::unique_ptr<MerkleNode> calculateNewRoot(const std::unique_ptr<consensus_event::ConsensusEvent> &event) {
-        std::unique_ptr<MerkleNode> newMerkleLeaf = std::make_unique<MerkleNode>();
-        std::unique_ptr<MerkleNode> newMerkleRoot = std::make_unique<MerkleNode>();
+        std::unique_ptr<std::string> lastInsertion = repository::world_state_repository::find("last_insertion");
 
-        newMerkleLeaf->hash = event->getHash();
-
-        std::string lastInsertionHash = repository::world_state_repository::find("last_insertion");
         if (lastInsertionHash.empty()) {
-            return newMerkleLeaf;
+            // Note: there is no need to update the tree's DB here, because there is only one transaction--the current!
+            return event->tx->getHash();
         }
 
-        // TODO: to Map
-        std::unordered_map<std::string, std::string> dumpLastInsertion;
-        MerkleNode lastInsertionNode = MerkleNode(dumpLastInsertion); //TODO: create convert function
+        std::unique_ptr<std::string> parent = repository::world_state_repository::find(lastInsertion + "_parent");
+        std::unique_ptr<std::string> leftChild = repository::world_state_repository::find(parent + "_leftChild");
+        std::unique_ptr<std::string> rightChild = repository::world_state_repository::find(parent + "_rightChild");
 
-        std::tuple<std::string, std::string> children = lastInsertionNode.children;
-        std::string right = std::get<1>(children);
-
-        if (right.empty()) {
+        if (rightChild.empty()) {
             // insert the event's transaction as the right child
-            std::string left = std::get<0>(children);
-            lastInsertionNode.children = std::tuple<std::string, std::string>(left, event->tx->getAsText());
+            rightChild = event->tx->getHash();
+            std::string newParentHash = hash::sha3_256_hex(leftChild + rightChild);
+
+            if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
+                batchCommit.push_back(std::tuple<std::string, std::string>(lastInsertion + "_rightChild", rightChild));
+                batchCommit.push_back(std::tuple<std::string, std::string>(lastInsertion + "_parent", rightChild));
+            }
 
             // Propagate up the tree to the root
-            // std::unique_ptr<MerkleNode> currNode = lastInsertionNode.parent;
-            // while (!currNode->isRoot()) {
-                // find insertion point for new node
-            // }
-            // lastInsertionNode.parent = hash::sha3_256_hex(left + event->tx->getHash());
+            while (!parent.empty()) {
+                std::string newParentHash = hash::sha3_256_hex(leftChild + rightChild);
+
+                if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
+                    batchCommit.push_back(std::tuple<std::string, std::string>(newParentHash + "_parent", rightChild));
+                    // TODO: delete old, unused nodes
+                }
+
+                // increment the right child and the parent, to move up the tree
+                rightChild = newParentHash;
+                parent = repository::world_state_repository::find(parent + "_parent");
+            }
+
+            if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
+                batchCommit.push_back(std::tuple<std::string, std::string>("merkle_root", rightChild));
+                // TODO: delete old, unused nodes
+            }
+            return rightChild;
 
         } else {
-            // create a new node and put it on the left
+            std::string newLeftChild = event->tx->getHash();
+            std::string newParentHash = hash::sha3_256_hex(currHash);
 
+            std::string oldParent = parent;
+
+            // Propagate up the tree to the root
+            while (!parent.empty()) {
+
+                if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
+                    batchCommit.push_back(std::tuple<std::string, std::string>(event->tx->getHash() + "_parent",
+                                                                               newParentHash));
+                    batchCommit.push_back(std::tuple<std::string, std::string>(event->tx->getHash() + "_leftChild",
+                                                                               newLeftChild));
+                    // TODO: delete old, unused nodes
+                }
+
+                // increment the right child and the parent, to move up the tree
+                newLeftChild = newParentHash;
+                newParentHash = hash::sha3_256_hex(newLeftChild);
+
+                oldParent = parent;
+                parent = repository::world_state_repository::find(parent + "_parent");
+            }
+
+            newParentHash = hash::sha3_256_hex(oldParent + newLeftChild);
+
+            // save new root
+            if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
+                batchCommit.push_back(std::tuple<std::string, std::string>(event->tx->getHash() + "merkle_root",
+                                                                           newParentHash));
+                // TODO: delete old, unused nodes
+            }
+
+            return newParentHash;
         }
-
-        std::string currRoot = repository::world_state_repository::find("merkle_root");
-        if (currRoot.empty()) {
-            return newMerkleLeaf;
-        }
-        //TODO: convert currRoot string to MerkleNode
-        std::unordered_map<std::string, std::string> dumpCurrRoot;
-        MerkleNode currMerkleRoot = MerkleNode(dumpCurrRoot);  //TODO:
-
-        return newMerkleRoot;
     }
 };  // namespace merkle_transaction_repository

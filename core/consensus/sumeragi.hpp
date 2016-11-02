@@ -35,14 +35,17 @@ namespace sumeragi {
     );
     void loop();
 
+    template<typename T,typename U>
     void getNextOrder(
-            std::unique_ptr<consensus_event::ConsensusEvent> const event
+            std::unique_ptr<consensus_event::ConsensusEvent<T,U>> const event
     );
 
+    template<typename T,typename U>
     void processTransaction(
-        std::unique_ptr<consensus_event::ConsensusEvent> const event
+        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> const event
     );
-    void panic(const std::unique_ptr<consensus_event::ConsensusEvent>& event);
+    template<typename T,typename U>
+    void panic(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>>& event);
     void setAwkTimer(const int sleepMillisecs, const std::function<void(void)> action);
     void determineConsensusOrder(/*std::vector<double> trustVector*/);
 };  // namespace sumeragi

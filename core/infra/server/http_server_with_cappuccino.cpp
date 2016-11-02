@@ -20,13 +20,26 @@ limitations under the License.
 #include <string>
 
 #include "../../server/http_server.hpp"
-
+#include "../../vendor/Cappuccino/cappuccino.hpp"
   
 namespace http {
   
   using nlohmann::json;
+  using Request = Cappuccino::Request;
+  using Response = Cappuccino::Response;
 
   void server() {
+
+    Cappuccino::Cappuccino( 0, nullptr);
+
+    Cappuccino::route("/",[](std::shared_ptr<Request> request) -> Response{
+        auto res =  Response(request);
+        res.file("index.html");
+        return res;
+    });
+
+    // runnning
+    Cappuccino::run();
 
   }
 };  // namespace http
