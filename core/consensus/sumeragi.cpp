@@ -21,13 +21,13 @@ limitations under the License.
 #include "../util/logger.hpp"
 #include "../repository/consensus/merkle_transaction_repository.hpp"
 #include "../repository/consensus/event_repository.hpp"
-#include "../model/transactions/abstract_transaction.hpp"
 #include "../crypto/hash.hpp"
 #include "../crypto/signature.hpp"
 
 #include "../validation/transaction_validator.hpp"
 #include "../service/peer_service.hpp"
 #include "./connection/connection.hpp"
+#include "../model/objects/asset.hpp"
 
 template<class T>
 std::unique_ptr<T> make_unique(){
@@ -47,7 +47,6 @@ std::unique_ptr<T> make_unique(){
 */
 namespace sumeragi {
 
-    using ConsensusEvent = consensus_event::ConsensusEvent;
 
     struct Context {
         bool isSumeragi; // am I the leader or am I not?
@@ -74,7 +73,7 @@ namespace sumeragi {
                             std::vector<std::unique_ptr<peer::Node>> peers) {
 
         logger::info("sumeragi", "initialize");
-        merkle_transaction_repository::initLeaf();
+        //merkle_transaction_repository::initLeaf();
 
         context = std::make_unique<Context>(std::move(peers));
         peers.clear();
@@ -104,13 +103,15 @@ namespace sumeragi {
     }
 
     unsigned long long getNextOrder() {
-        return merkle_transaction_repository::getLastLeafOrder() + 1;
+        return 0l;
+        //return merkle_transaction_repository::getLastLeafOrder() + 1;
     }
 
-    void processTransaction(std::unique_ptr<ConsensusEvent> event) {
+    template <typename T,typename U>
+    void processTransaction(std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event) {
 
         logger::info("sumeragi", "processTransaction()");
-        if (!transaction_validator::isValid<abstract_transaction::AbstractTransaction>(*event->tx)) {
+        if (!transaction_validator::isValid(event->getTx())) {
             return; //TODO-futurework: give bad trust rating to nodes that sent an invalid event
         }
         logger::info("sumeragi", "valied");
@@ -124,26 +125,26 @@ namespace sumeragi {
             )
         );
 
-        logger::info("sumeragi", "event->signatures.empty() :" + std::to_string(event->txSignatures.empty()));
+        logger::info("sumeragi", "");
         logger::info("sumeragi", "context->isSumeragi :" + std::to_string(context->isSumeragi));
 
-        if (event->txSignatures.empty() && context->isSumeragi) {
+        if (event->eventSignatureIsEmpty() && context->isSumeragi) {
             logger::info("sumeragi", "signatures.empty() isSumragi");
             // Determine the order for processing this event
             event->order = getNextOrder();
 
             logger::info("sumeragi", "new  order:" + std::to_string(event->order));
-        } else if (!event->txSignatures.empty()) {
+        } else if (!event->eventSignatureIsEmpty()) {
             logger::info("sumeragi", "signatures.exist()");
             // Check if we have at least 2f+1 signatures needed for Byzantine fault tolerance
-            if (event->getNumValidSignatures() >= context->maxFaulty*2 + 2) {
+            if (event->getNumValidSignatures() >= context->maxFaulty*2 + 1) {
                 logger::info("sumeragi", "event->getNumValidSignatures() >= context->maxFaulty*2 + 1");
                 // Check Merkle roots to see if match for new state
                 //TODO: std::vector<std::string>>const merkleSignatures = event.merkleRootSignatures;
                 //Try applying transaction locally and compute the merkle root
-                std::unique_ptr<merkle_transaction_repository::MerkleNode> newRoot = merkle_transaction_repository::calculateNewRoot(event);
-                logger::info("sumeragi", "newRoot hash:"+newRoot->hash);
-                logger::info("sumeragi", "event hash:"+event->merkleRootHash);
+                //std::unique_ptr<merkle_transaction_repository::MerkleNode> newRoot = merkle_transaction_repository::calculateNewRoot(event);
+                //logger::info("sumeragi", "newRoot hash:"+newRoot->hash);
+                //logger::info("sumeragi", "event hash:"+event->merkleRootHash);
 
                 // See if the merkle root matches or not
                 // if (newRoot->hash != event->merkleRootHash) {
@@ -190,7 +191,8 @@ namespace sumeragi {
     * | 0 |--| 1 |--| 2 |--| 3 |--| 4 |--| 5 |
     * |---|  |---|  |---|  |---|  |---|  |---|.
     */
-    void panic(const std::unique_ptr<ConsensusEvent>& event) {
+    template <typename T,typename U>
+    void panic(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>>& event) {
         context->panicCount++; // TODO: reset this later
         unsigned long broadcastStart = 2 * context->maxFaulty + 1 + context->maxFaulty * context->panicCount;
         unsigned long broadcastEnd = broadcastStart + context->maxFaulty;
@@ -243,17 +245,22 @@ namespace sumeragi {
         logger::info("sumeragi", "start main loop");
 
         while (true) {  // TODO: replace with callback linking the event repository?
-            if(!repository::event::empty()) {
-
+            //if(!repository::event::empty()) { //WIP
+            if(1){
                 // Determine node order
                 determineConsensusOrder();
 
                 logger::info("sumeragi", "event queue not empty");
-                std::vector<std::unique_ptr<ConsensusEvent>> events = repository::event::findAll();
+                std::vector<
+                    std::unique_ptr<
+                        consensus_event::ConsensusEvent<transaction::Transaction<command::Command>, command::Command>
+                    >
+                > events;
+
                 // Sort the events to determine priority to process
                 std::sort(events.begin(), events.end(),
-                          [](const std::unique_ptr<ConsensusEvent> &lhs,
-                             const std::unique_ptr<ConsensusEvent> &rhs) {
+                          [](const auto &lhs,
+                             const auto &rhs) {
                               return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
                                      || (context->isSumeragi && lhs->order == 0)
                                      || lhs->order < rhs->order;
@@ -263,9 +270,8 @@ namespace sumeragi {
                 logger::info("sumeragi", "sorted " + std::to_string(events.size()));
                 for (auto&& event : events) {
 
-
                     logger::info("sumeragi", "evens order:" + std::to_string(event->order));
-                    if (!transaction_validator::isValid(*event->tx)) {
+                    if (!transaction_validator::isValid(event->getTx())) {
                         continue;
                     }
 

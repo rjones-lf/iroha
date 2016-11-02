@@ -32,8 +32,6 @@ add_executable(iroha-main
 target_link_libraries(iroha-main
   leveldb
   snappy
-  event_repository
-  merkle_transaction_repository
   world_state_repo_with_level_db
   sumeragi
   logger

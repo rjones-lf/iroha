@@ -19,7 +19,6 @@ limitations under the License.
 
 #include <string>
 #include <memory>
-#include "../../model/transactions/abstract_transaction.hpp"
 #include "../../consensus/consensus_event.hpp"
 
 #include <algorithm>
@@ -27,20 +26,26 @@ limitations under the License.
 namespace repository{
     namespace event {
 
-        bool add(const std::string &hash, std::unique_ptr<consensus_event::ConsensusEvent> event);
-        bool update(const std::string &hash, const consensus_event::ConsensusEvent &consensusEvent);
+        template <typename T,typename U>
+        bool add(const std::string &hash, std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event);
+
+        template <typename T,typename U>
+        bool update(const std::string &hash, const consensus_event::ConsensusEvent<T,U> &consensusEvent);
 
         bool remove(const std::string &hash);
 
         bool empty();
 
-        std::vector<std::unique_ptr<consensus_event::ConsensusEvent>>&& findAll();
+        template <typename T,typename U>
+        std::vector<std::unique_ptr<consensus_event::ConsensusEvent<T,U>>>&& findAll();
 
+        template <typename T,typename U>
         std::unique_ptr<
-            consensus_event::ConsensusEvent
+            consensus_event::ConsensusEvent<T,U>
         >&& findNext();
 
-        std::unique_ptr<consensus_event::ConsensusEvent> find(std::string hash);
+        template <typename T,typename U>
+        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> find(std::string hash);
     };
 };
 

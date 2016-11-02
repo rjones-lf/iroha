@@ -21,55 +21,80 @@ limitations under the License.
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include "../../model/transactions/abstract_transaction.hpp"
 #include "../../consensus/consensus_event.hpp"
+#include "../../service/json_parse.hpp"
 
 namespace merkle_transaction_repository {
 
-struct MerkleNode {
-    std::string hash;
-    std::string parent;
-    std::tuple<std::string, std::string> children;
+    // Think in progress ^^;
+//struct MerkleNode {
+//    std::string hash;
+//    std::string parent;
+//    std::string leftChild;
+//    std::string rightChild;
+//
+//    MerkleNode() {
+//
+//    }
+//
+//    MerkleNode(
+//        const std::string hash,
+//        const std::string parent,
+//        const std::string leftChild,
+//        const std::string rightChild
+//    ):
+//            hash(hash),
+//            parent(parent),
+//            left(leftChild),
+//            right(rightChild)
+//    {}
+//
+//    bool isRoot() {
+//        return parent.empty();
+//    }
+//
+//    bool isLeaf() {
+//        return leftChild.empty() && rightChild.empty();
+//    }
+//
+//    using Object = json_parse::Object;
+//    using Rule = json_parse::Rule;
+//    using Type = json_parse::Type;
+//    Object dump() {
+//        Object obj = Object(Type::DICT);
+//        obj.dictSub["hash"] =  Object(Type::STR, hash);
+//        obj.dictSub["parent"] =  Object(Type::STR, parent);
+//        obj.dictSub["leftChild"] =  Object(Type::STR, leftChild);
+//        obj.dictSub["rightChild"] =  Object(Type::STR, rightChild);
+//        return obj;
+//    }
+//
+//    static Rule getJsonParseRule() {
+//        Rule obj = Rule(Type::DICT);
+//        obj.dictSub["hash"] =  Rule(Type::STR);
+//        obj.dictSub["parent"] =  Rule(Type::STR);
+//        obj.dictSub["leftChild"] = Rule(Type::STR);
+//        obj.dictSub["rightChild"] = Rule(Type::STR);
+//        return obj;
+//    }
+//};
 
-    explicit MerkleNode(std::unordered_map<std::string, std::string> translateJSON) {
+//TODO: change bool to throw an exception instead
+template <typename T,typename U>
+bool commit(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>> &event){
 
-    }
-
-    MerkleNode() {
-
-    }
-
-    bool isRoot() {
-        return parent.empty();
-    }
-
-    bool isLeaf() {
-        return std::get<0>(children).empty();
-    }
-
-
-    std::string serialize() {
-        std::unordered_map<std::string, std::string> translateJSON; // key: ハッシュ, value: 変数の中身
-        translateJSON.insert(std::make_pair("hash", hash));
-        translateJSON.insert(std::make_pair("parent", parent));
-        translateJSON.insert(std::make_pair("left_child", std::get<0>(children)));
-        translateJSON.insert(std::make_pair("right_child", std::get<1>(children)));
-
-        //TODO: create convertToJSON function
-    }
 };
 
-void initLeaf();
+bool leafExists(const std::string& hash){
 
-bool commit(const std::unique_ptr<consensus_event::ConsensusEvent> &event);
+}
 
-bool leafExists(const std::string& hash);
+std::string getLeaf(const std::string& hash){
 
-std::string getLeaf(const std::string& hash);
+}
 
-unsigned long long getLastLeafOrder();
-
-std::unique_ptr<MerkleNode> calculateNewRoot(const std::unique_ptr<consensus_event::ConsensusEvent> &event);
+template <typename T,typename U>
+std::string calculateNewRoot(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>> &event, std::vector<std::tuple<std::string, std::string>> &batchCommit);
 
 };  // namespace merkle_transaction_repository
 

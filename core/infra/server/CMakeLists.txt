@@ -1,4 +1,3 @@
-
 set(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
 
 include_directories(
@@ -11,3 +10,4 @@ target_link_libraries(http_server_with_cappuccino
   ssl
   crypto
 )
+

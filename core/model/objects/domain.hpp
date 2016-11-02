@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,32 +15,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "domain_definition_transaction.hpp"
+#ifndef CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+#define CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
 
-namespace domain_definition_transaction {
+#include <string>
+#include "object.hpp"
+#include "../../service/json_parse.hpp"
 
-class DomainDefinitionTransaction : public AbstractTransaction {
-    std::string hash;
-    AbstractTransaction::TransactionType type;
+namespace domain {
 
-    std::string getHash() {
-        return hash;
-    }
+class Domain : public Object{
+    std::string ownerPublicKey;
+    std::string name;
 
-    std::string getRawData() {
-        //TODO
-    }
-    
-    std::string getAsText() {
-        //TODO
-    }
-    
-    unsigned long long  getTimestamp() {
-        return timestamp;
-    }
-    
-    TransactionType getType() {
-        return type;
-    }
-};    
-};  // namespace domain_definition_transaction
+public:
+    Domain(
+        std::string ownerPublicKey,
+        std::string name
+    );
+
+    json_parse::Object dump();
+    static json_parse::Rule getJsonParseRule();
+};
+
+};  // namespace domain
+
+#endif  // CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+

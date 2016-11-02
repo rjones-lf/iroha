@@ -21,7 +21,7 @@ limitations under the License.
 #include <vector>
 
 #include "sample_asset.hpp"
-#include "../util/random.hpp"
+#include "../../util/random.hpp"
 
 #include <vector>
 #include <string>
@@ -59,7 +59,7 @@ namespace domain {
         uid(random_service::makeRandomHash())
       {}
 
-      // Use convertor
+      // Use converter
       AccountUser(
               std::string aName,
               std::string aPublicKeyb64Encoded,
@@ -69,7 +69,6 @@ namespace domain {
               publicKeyb64Encoded(aPublicKeyb64Encoded),
               uid(aUid)
       {}
-
 
       // Support move and copy.
       AccountUser(AccountUser const&) = default;

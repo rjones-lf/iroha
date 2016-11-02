@@ -21,7 +21,7 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
-#include "../../model/sample_asset.hpp"
+#include "../../model/state/sample_asset.hpp"
 
 // I know only 'domain' and 'asset'.
 namespace domain_sample_asset_repository {

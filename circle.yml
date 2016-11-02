@@ -21,7 +21,6 @@ dependencies:
     - mkdir build; cd build; cmake ..; make
 checkout:
   post:
-    - sudo apt-get -y install libboost-all-dev
     - sudo apt-get -y install xsltproc
     - sudo apt-get install libhdf5-serial-dev libleveldb-dev libsnappy-dev liblmdb-dev
     - cd /tmp

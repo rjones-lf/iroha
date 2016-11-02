@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,29 +15,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "modify_peer_transaction.hpp"
+#ifndef CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
+#define CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
 
-namespace modify_peer_transaction {
-std::string hash;
-    AbstractTransaction::TransactionType type;
+#include "object.hpp"
+#include "../../service/json_parse.hpp"
+#include <string>
 
-    std::string getHash() {
-        return hash;
-    }
+namespace message {
 
-    std::string getRawData() {
-        //TODO
-    }
-    
-    std::string getAsText() {
-        //TODO
-    }
-    
-    unsigned long long  getTimestamp() {
-        return timestamp;
-    }
-    
-    TransactionType getType() {
-        return type;
-    }
-};  // namespace modify_peer_transaction
+class Message : public Object{
+    std::string text;
+
+public:
+    Message(std::string text);
+
+    std::string getAsJSON();
+    static json_parse::Object getJsonParseRule();
+};
+
+};  // namespace message
+
+#endif  // CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
+

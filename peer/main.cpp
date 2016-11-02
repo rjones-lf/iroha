@@ -51,19 +51,10 @@ int main() {
 
   std::unique_ptr<connection::Config> config;
 
-  config->ip_addr = "WIP";
-  config->port    = "WIP";
-  config->name    = "WIP";
+  config->ip_addr = peer::getMyIp();
+  std::string myPublicKey = peer::getMyPublicKey();
 
-  std::string myPublicKey = "WIP";
-
-
-  std::vector<std::unique_ptr<peer::Node>> peer;
-  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","AAA", 100));
-  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","BBB", 90));
-  peer.push_back(std::make_unique<peer::Node>("1.2.5.6","CCC", 80));
-
-  sumeragi::initializeSumeragi(myPublicKey, std::move(peer));
+  sumeragi::initializeSumeragi(myPublicKey, peer::getPeerList());
 
   std::thread http_th(server);
   std::thread sumeragi_th(sumeragi::loop);

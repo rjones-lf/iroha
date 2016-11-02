@@ -18,8 +18,7 @@ limitations under the License.
 #define CORE_DOMAIN_ASSET_HPP_
 
 #include <string>
-
-#include "../util/random.hpp"
+#include "../../util/random.hpp"
 
 namespace domain {
     namespace asset {
@@ -47,7 +46,6 @@ namespace domain {
           Asset(Asset&&) = default;
           Asset& operator =(Asset const&) = default;
           Asset& operator =(Asset&&) = default;
-
       };
 
     };  // namespace asset
