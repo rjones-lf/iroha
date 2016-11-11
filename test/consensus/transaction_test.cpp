@@ -33,67 +33,35 @@ limitations under the License.
 
 int main(){
     std::string cmd;
-    std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
-
-
-    connection::initialize_peer(nullptr);
-
-    for(const auto& n : nodes){
-        std::cout<< "=========" << std::endl;
-        std::cout<< n->getPublicKey() << std::endl;
-        std::cout<< n->getIP() << std::endl;
-        connection::addPublication(n->getIP());
-    }
-
     std::string pubKey = peer::getMyPublicKey();
 
-    sumeragi::initializeSumeragi( pubKey, std::move(nodes));
-
-    std::thread http_th( []() {
-        sumeragi::loop();
-    });
-
-    connection::exec_subscription(peer::getMyIp());
-    connection::receive([](std::string from, std::string message){
-        std::cout <<" receive :" << message <<" from:"<< from << "\n";
-    });
-
     while(1){
-        std::cout << "name  in >> ";
+        std::cout <<"name  in >> ";
         std::cin>> cmd;
         if(cmd == "quit") break;
 
-        for(const auto& n : nodes){
-            std::cout<< "=========" << std::endl;
-            std::cout<< n->getPublicKey() << std::endl;
-            std::cout<< n->getIP() << std::endl;
-        }
-
         auto tx = std::make_unique<transaction::Transaction<command::Transfer<domain::Domain>>>(
-            std::make_unique<command::Transfer<domain::Domain>>(
-                std::make_unique<domain::Domain>( peer::getMyPublicKey(), "cmd")
-            )
+                std::make_unique<command::Transfer<domain::Domain>>(
+                        std::make_unique<domain::Domain>( peer::getMyPublicKey(), cmd)
+                )
         );
 
         tx->addTxSignature(
-            peer::getMyPublicKey(),
-            signature::sign(tx->getHash(), peer::getMyPublicKey(), peer::getPrivateKey())
+                peer::getMyPublicKey(),
+                signature::sign(tx->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
         );
         auto event = consensus_event::ConsensusEvent<
-            transaction::Transaction<command::Transfer<domain::Domain>>,
-            command::Transfer<domain::Domain>
+                transaction::Transaction<command::Transfer<domain::Domain>>,
+                command::Transfer<domain::Domain>
         >(std::move(tx));
         auto parser = json_parse_with_json_nlohman::JsonParse<
-           consensus_event::ConsensusEvent<
-              transaction::Transaction<command::Transfer<domain::Domain>>,
-              command::Transfer<domain::Domain>
-           >
+                consensus_event::ConsensusEvent<
+                        transaction::Transaction<command::Transfer<domain::Domain>>,
+                        command::Transfer<domain::Domain>
+                >
         >();
         std::cout<<  parser.dump(event.dump()) << std::endl;
-
     }
-
-    http_th.detach();
 
     return 0;
 }

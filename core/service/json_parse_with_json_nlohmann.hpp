@@ -22,47 +22,6 @@
 
 namespace json_parse_with_json_nlohman {
 
-    /*
-    struct Rules {
-        struct violation {};
-        struct false_type { static const bool	value = false; };
-        struct true_type  { static const bool	value = true; };
-
-        template<typename T,json_parse::Object (T::*)()>
-        struct has_dump_helper_t { typedef violation	type; };
-        template<typename T,typename U = violation>
-        struct has_dump : public false_type {};
-        template<typename T>
-        struct has_dump<T,typename has_dump_helper_t<T,&T::dump>::type> : public true_type {};
-
-        template<typename T,json_parse::Rule (T::*)()>
-        struct has_getJsonParseRule_helper_t { typedef violation	type; };
-        template<typename T,typename U = violation>
-        struct has_getJsonParseRule : public false_type {};
-        template<typename T>
-        struct has_getJsonParseRule<T,typename has_getJsonParseRule_helper_t<T,&T::getJsonParseRule>::type> : public true_type {};
-    };
-
-    template<typename... rule_set>
-    struct Requires {
-        template<int, typename rule, typename... rule_set_>
-        struct next {
-            static const bool value = rule::value && next<sizeof...(rule_set_),rule_set_...>::value;
-        };
-        template<typename rule>
-        struct next< 1,rule> {
-            static const bool	value = rule::value;
-        };
-        static const bool	value = next<sizeof...(rule_set),rule_set...>::value;
-    };
-
-    template<typename T> struct validator_json : public Requires<
-        Rules::has_getJsonParseRule<T>,
-        Rules::has_dump<T>
-    > {};
-
-    */
-
     using json = nlohmann::json;
     using Object = json_parse::Object;
     using Rule = json_parse::Rule;
@@ -134,14 +93,14 @@ namespace json_parse_with_json_nlohman {
             return dump_impl(obj).dump();
         }
 
-        T load(std::string s) {
+        std::unique_ptr<T> load(std::string s) {
             json data;
             try{
                 data = json::parse(s);
             }catch (...){}
 
             auto rule = T::getJsonParseRule();
-            return T(load_impl(data,rule));
+            return std::make_unique<T>(load_impl(data,rule));
         }
 
     };

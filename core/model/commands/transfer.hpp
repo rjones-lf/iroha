@@ -35,19 +35,19 @@ namespace command {
         > = nullptr
     >
     class Transfer : public Command{
-        T object;
+        std::unique_ptr<T> object;
     public:
-        Transfer(T object):
-            object(object)
+        Transfer(std::unique_ptr<T> object):
+            object(std::move(object))
         {}
-
-        std::string getAsJson() const{
-            object.getAsJson();
-        }
 
         std::string getCommandName() const{
             return "Transfer";
         }
+
+        ~Transfer() {
+
+        };
 
         using Object = json_parse::Object;
         using Rule = json_parse::Rule;
@@ -56,14 +56,14 @@ namespace command {
         Object dump() {
             Object obj = Object(Type::DICT);
             obj.dictSub.insert( std::make_pair( "command", Object(Type::STR, getCommandName())));
-            obj.dictSub.insert( std::make_pair( "object", object.dump()));
+            obj.dictSub.insert( std::make_pair( "object", object->dump()));
             return obj;
         }
 
-        static Rule getJsonParseRule() {
+        Rule getJsonParseRule() {
             Rule obj = Rule(Type::DICT);
             obj.dictSub.insert( std::make_pair( "command", Rule(Type::STR)));
-            obj.dictSub.insert( std::make_pair( "object", T::getJsonParseRule()));
+            obj.dictSub.insert( std::make_pair( "object", object->getJsonParseRule()));
             return obj;
         }
     };

@@ -53,14 +53,14 @@ class ConsensusEvent {
                 signature(sig)
         {}
     };
-    T tx;
+    std::unique_ptr<T> tx;
     std::vector<eventSignature> eventSignatures;
 
 public:
     unsigned long long order = 0;
 
-    ConsensusEvent(T atx):
-        tx(atx)
+    ConsensusEvent(std::unique_ptr<T> atx):
+        tx(std::move(atx))
     {}
 
     // WIP
@@ -71,10 +71,10 @@ public:
     }
 
     std::string getHash() {
-        return tx.getHash();
+        return tx->getHash();
     }
-    T getTx() const{
-        return tx;
+    T& getTx() const{
+        return &tx;
     }
 
     int getNumValidSignatures() {
@@ -105,20 +105,20 @@ public:
             eventSigs.listSub.push_back(eventSig);
         }
         obj.dictSub.insert( std::make_pair( "eventSignatures", eventSigs));
-        obj.dictSub.insert( std::make_pair( "transaction", tx.dump()));
+        obj.dictSub.insert( std::make_pair( "transaction", tx->dump()));
         return obj;
     }
 
-    static Rule getJsonParseRule() {
+    Rule getJsonParseRule() {
         Rule obj = Rule(Type::DICT);
         obj.dictSub.insert( std::make_pair( "order", Rule(Type::INT)));
-        auto eventSigs   = Rule(Type::LIST);
+        auto eventSigs  = Rule(Type::LIST);
         auto eventSig   = std::make_unique<Rule>(Type::DICT);
         eventSig->dictSub.insert( std::make_pair( "publicKey", Rule(Type::STR)));
         eventSig->dictSub.insert( std::make_pair( "signature", Rule(Type::STR)));
         eventSigs.listSub = std::move(eventSig);
         obj.dictSub.insert( std::make_pair( "eventSignatures", std::move(eventSigs)));
-        obj.dictSub.insert( std::make_pair( "transaction", T::getJsonParseRule()));
+        obj.dictSub.insert( std::make_pair( "transaction", tx->getJsonParseRule()));
         return obj;
     }
 

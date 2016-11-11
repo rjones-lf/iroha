@@ -29,3 +29,19 @@ target_link_libraries(sumeragi_test
     peer_service_with_json
     pthread
 )
+
+add_executable(transaction_test
+    transaction_test.cpp
+)
+target_link_libraries(transaction_test
+        snappy
+        aeron_client
+        objects
+        hash
+        base64
+        signature
+        sumeragi
+        connection_with_aeron
+        peer_service_with_json
+        pthread
+)

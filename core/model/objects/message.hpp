@@ -30,8 +30,8 @@ class Message : public AbsObject{
 public:
     Message(std::string text);
 
-    std::string getAsJSON();
-    static json_parse::Object getJsonParseRule();
+    virtual json_parse::Object dump() override;
+    virtual json_parse::Rule getJsonParseRule() override;
 };
 
 };  // namespace message
