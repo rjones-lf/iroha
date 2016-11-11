@@ -22,8 +22,6 @@ Table of Contents
     consensus_events.rst
     dev_environment.rst
 
-
-
 .. _usage-docs:
 
 

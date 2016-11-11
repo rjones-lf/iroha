@@ -80,10 +80,10 @@ namespace connection {
     }
 
     int exec_subscription(std::string ip) {
-        try{
-            logger::info("connection", "subscript ["+ ip +"]");
+        try {
+            logger::info("connection", "subscript [" + ip + "]");
 
-            std::int64_t sid = aeron->addSubscription("aeron:udp?endpoint="+ip+":40123", streamId);
+            std::int64_t sid = aeron->addSubscription("aeron:udp?endpoint=" + ip + ":40123", streamId);
             auto subscription = aeron->findSubscription(sid);
             
             while (!subscription) {
@@ -108,7 +108,7 @@ namespace connection {
         }
     }
 
-    void addPublication(std::string ip){
+    void addPublication(std::string ip) {
         std::int64_t pid = aeron->addPublication( "aeron:udp?endpoint="+ip+":40123", streamId);
         auto publication =  aeron->findPublication(pid);
         while (!publication) {
@@ -164,7 +164,7 @@ namespace connection {
         return true;
     }
 
-    bool receive(const std::function<void(std::string from, std::string message)>& callback){
+    bool receive(const std::function<void(std::string from, std::string message)>& callback) {
         receivers.push_back(callback);
         return true;
     }

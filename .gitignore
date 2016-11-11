@@ -14,3 +14,4 @@ build/*
 .gradle/*
 .vscode/*
 .idea/*
+*xcworkspace*

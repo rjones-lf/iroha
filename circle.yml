@@ -35,7 +35,6 @@ checkout:
     - cd $IROHA_HOME/core/vendor/ed25519; make
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
     - cd $IROHA_HOME/core/infra/crypto/; make
-    - cd $IROHA_HOME/core/vendor; git clone https://github.com/MizukiSonoko/Cappuccino.git
 test:
   override:
     - ./test.sh

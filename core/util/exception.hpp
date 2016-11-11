@@ -33,10 +33,17 @@ namespace exception {
     );
   };
   
-  namespace crypto{
+  namespace crypto {
     class InvalidKeyException : public std::invalid_argument{
       public: InvalidKeyException(const std::string&);
     };
+  };
+
+  namespace repository {
+      class WriteFailedException : public std::invalid_argument {
+      public:
+          WriteFailedException(const std::string &);
+      };
   };
 };  // namespace exception
 
