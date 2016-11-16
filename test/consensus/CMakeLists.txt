@@ -11,7 +11,7 @@ link_directories(
     ${ED25519_PATH}
     ${KECCAK_PATH}/bin/generic64
     ${PROJECT_SOURCE_DIR}/core/infra/crypto
-    ${AERON_PATH}/cppbuild/Debug/lib
+    ${AERON_PATH}/cppbuild/Release/lib
 )
 
 add_executable(sumeragi_test

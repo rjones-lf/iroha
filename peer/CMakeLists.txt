@@ -2,7 +2,7 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 SET(AERON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/Aeron")
-SET(LEVELDB_PATH ${PROJECT_SOURCE_DIR}/core/vendor/leveldb)
+SET(LEVELDB_PATH "${PROJECT_SOURCE_DIR}/core/vendor/leveldb")
 SET(KECCAK_PATH  "${PROJECT_SOURCE_DIR}/core/vendor/KeccakCodePackage")
 SET(ED25519_PATH "${PROJECT_SOURCE_DIR}/core/vendor/ed25519")
 SET(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
@@ -22,7 +22,7 @@ link_directories(
   ${ED25519_PATH}
   ${KECCAK_PATH}/bin/generic64
   ${PROJECT_SOURCE_DIR}/core/infra/crypto 
-  ${AERON_PATH}/cppbuild/Debug/lib
+  ${AERON_PATH}/cppbuild/Release/lib
   ${LEVELDB_PATH}/out-static
 )
 

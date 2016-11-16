@@ -30,7 +30,7 @@ checkout:
     - git submodule init 
     - git submodule update
     - cd $IROHA_HOME/core/vendor/Agrona; ./gradlew
-    - cd $IROHA_HOME/core/vendor/Aeron;  ./gradlew; mkdir -p cppbuild/Debug; cd cppbuild/Debug; cmake ../..; cmake --build . --clean-first
+    - cd $IROHA_HOME/core/vendor/Aeron;  ./gradlew; ./cppbuild/cppbuild
     - cd $IROHA_HOME/core/vendor/leveldb; make
     - cd $IROHA_HOME/core/vendor/ed25519; make
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a

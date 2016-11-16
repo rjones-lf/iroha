@@ -8,7 +8,7 @@ include_directories(
 )
 
 link_directories(
-    ${AERON_PATH}/cppbuild/Debug/lib
+    ${AERON_PATH}/cppbuild/Release/lib
 )
 # Aeron connection Test
 add_executable(connection_test
