@@ -17,6 +17,8 @@ limitations under the License.
 #include "transfer.hpp"
 
 namespace command {
+    
+using object::Asset;
 
 // We cann't transfer domain.
 template <>
@@ -28,6 +30,17 @@ Transfer<Asset>::Transfer(
    Asset(name,value),
    senderPublicKey(senderPubkey),
    receiverPublicKey(receiverPubkey)
+{}
+
+using Object = json_parse::Object;
+
+template <>
+Transfer<Asset>::Transfer(
+      Object obj
+):
+   Asset(obj),
+   senderPublicKey(obj.dictSub["sender"].str),
+   receiverPublicKey(obj.dictSub["receiver"].str)
 {}
 
 }

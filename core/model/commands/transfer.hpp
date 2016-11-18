@@ -23,7 +23,7 @@ limitations under the License.
 #include "../objects/message.hpp"
 
 #include <string>
-
+#include <iostream>
 #include "../../service/json_parse.hpp"
 
 namespace command {
@@ -40,27 +40,30 @@ class Transfer: public T {
         std::string receiverPubkey,
         std::string name,
         int value
-    ){}
+    );
 
-    auto getCommandName() const{
+    std::string getCommandName() const{
         return "Transfer";
     }
 
-    using Object = json_parse::Object;
     using Rule = json_parse::Rule;
     using Type = json_parse::Type;
+    using Object = json_parse::Object;
+
+    Transfer(
+        Object obj
+    );
 
     Object dump() {
         Object obj = Object(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "name", Object(Type::STR, getCommandName())));
-        obj.dictSub.insert( std::make_pair( "object", T::dump()));
+        obj.dictSub.insert( std::make_pair(    "name", Object(Type::STR, getCommandName())));
+        obj.dictSub.insert( std::make_pair(  "object", T::dump()));
         obj.dictSub.insert( std::make_pair(  "sender", Object(Type::STR, senderPublicKey)));
         obj.dictSub.insert( std::make_pair("receiver", Object(Type::STR, receiverPublicKey)));
-
         return obj;
     }
 
-    Rule getJsonParseRule() {
+    static Rule getJsonParseRule() {
             auto rule = Rule(Type::DICT);
             rule.dictSub.insert( std::make_pair( "name", Rule(Type::STR)));
             rule.dictSub.insert( std::make_pair( "object", T::getJsonParseRule()));

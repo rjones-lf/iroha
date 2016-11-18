@@ -32,7 +32,7 @@ public:
     Message(const std::string& text);
 
     json_parse::Object dump();
-    json_parse::Rule getJsonParseRule();
+    static json_parse::Rule getJsonParseRule();
 };
 
 };  // namespace message

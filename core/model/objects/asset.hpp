@@ -40,8 +40,21 @@ public:
         const unsigned int& precision
     );
 
-    json_parse::Object dump();
-    json_parse::Rule getJsonParseRule();
+    Asset(
+        const std::string& name,
+        const unsigned long long& value
+    );
+
+    using Rule = json_parse::Rule;
+    using Type = json_parse::Type;
+    using Object = json_parse::Object;
+
+    Asset(
+        Object obj
+    );
+
+    Object dump();
+    static Rule getJsonParseRule();
 };
 
 };  // namespace asset

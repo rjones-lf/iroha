@@ -32,21 +32,24 @@ template <typename T>
 class Add: public T {
   public:
 
+    using Object = json_parse::Object;
+    using Rule = json_parse::Rule;
+    using Type = json_parse::Type;
+
     Add(
         const std::string& domain,
         const std::string& name,
         const unsigned long long& value,
         const unsigned int& precision
-    ){}
-    Add(const std::string& ownerPublicKey,const std::string& name){}
+    );
 
-    auto getCommandName() const{
+    Add(const std::string& ownerPublicKey,const std::string& name);
+
+    Add(Object obj);
+
+    std::string getCommandName() const{
         return "Add";
     }
-
-    using Object = json_parse::Object;
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
 
     Object dump() {
         Object obj = Object(Type::DICT);
@@ -55,7 +58,7 @@ class Add: public T {
         return obj;
     }
 
-    Rule getJsonParseRule() {
+    static Rule getJsonParseRule() {
         auto rule = Rule(Type::DICT);
         rule.dictSub.insert(std::make_pair("name", Rule(Type::STR)));
         rule.dictSub.insert(std::make_pair("object", T::getJsonParseRule()));

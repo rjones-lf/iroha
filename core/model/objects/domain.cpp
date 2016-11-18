@@ -20,6 +20,14 @@ namespace object {
 
 using Rule = json_parse::Rule;
 using Type = json_parse::Type;
+using Object = json_parse::Object;
+
+Domain::Domain(
+    Object obj
+){
+    ownerPublicKey = obj.dictSub["ownerPublicKey"].str;
+    name = obj.dictSub["name"].str;
+}
 
 Domain::Domain(
     const std::string& ownerPublicKey,

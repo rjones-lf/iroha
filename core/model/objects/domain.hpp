@@ -33,8 +33,12 @@ public:
         const std::string& name
     );
 
+    Domain(
+        json_parse::Object obj
+    );
+
     json_parse::Object dump();
-    json_parse::Rule getJsonParseRule();
+    static json_parse::Rule getJsonParseRule();
 };
 
 };  // namespace domain
