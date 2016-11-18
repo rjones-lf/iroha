@@ -20,33 +20,31 @@ limitations under the License.
 #include <string>
 #include <memory>
 #include "../../consensus/consensus_event.hpp"
+#include "../../consensus/event.hpp"
 
 #include <algorithm>
 
 namespace repository{
+
     namespace event {
 
-        template <typename T,typename U>
-        bool add(const std::string &hash, std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event);
+        using Object = json_parse::Object;
 
-        template <typename T,typename U>
-        bool update(const std::string &hash, const consensus_event::ConsensusEvent<T,U> &consensusEvent);
+        bool add(const std::string &hash, Object event);
+ 
+        bool update(const std::string &hash, const Object &consensusEvent);
 
         bool remove(const std::string &hash);
 
         bool empty();
 
-        template <typename T,typename U>
-        std::vector<std::unique_ptr<consensus_event::ConsensusEvent<T,U>>>&& findAll();
+        std::vector<
+            std::unique_ptr<::event::Event>
+        >& findAll();
 
-        template <typename T,typename U>
-        std::unique_ptr<
-            consensus_event::ConsensusEvent<T,U>
-        >&& findNext();
+        std::unique_ptr<::event::Event>& findNext();
 
-        template <typename T,typename U>
-        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> find(std::string hash);
+        std::unique_ptr<::event::Event>& find(std::string hash);
     };
 };
-
 #endif  // CORE_REPOSITORY_UNCONFIRMEDTRANSACTIONREPOSITORY_HPP_

@@ -17,47 +17,41 @@ limitations under the License.
 #include "event_repository.hpp"
 
 #include <algorithm>
+#include "../../service/json_parse.hpp"
 
 namespace repository {
     namespace event {
-        std::vector<
-        std::unique_ptr<
-                consensus_event::ConsensusEvent<
-                        transaction::Transaction<
-                                command::Command
-                        >,
-                        command::Command
-                >
-        >
-        > consensusEvents;
 
-        template <typename T,typename U>
-        bool add(const std::string &hash, std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event){
-            consensusEvents.push_back(std::move(event));
+        std::vector<std::unique_ptr<::event::Event>> events;
+
+        bool add(
+            const std::string &hash,
+            std::unique_ptr<::event::Event> event
+        ){
+            events.push_back(std::move(event));
+            return true;
         };
-
-        template <typename T,typename U>
-        bool update(const std::string &hash, const consensus_event::ConsensusEvent<T,U> &consensusEvent);
+        
+        bool update(
+            const std::string &hash,
+            std::unique_ptr<::event::Event> event
+        );
 
         bool remove(const std::string &hash);
 
         bool empty(){
-            return consensusEvents.empty();
+            return events.empty();
         }
 
-        template <typename T,typename U>
-        std::vector<std::unique_ptr<consensus_event::ConsensusEvent<T,U>>>&& findAll(){
-            return std::move(consensusEvents);
+        std::vector<
+            std::unique_ptr<::event::Event>
+        >& findAll(){
+            return events;
         };
 
-        template <typename T,typename U>
-        std::unique_ptr<
-        consensus_event::ConsensusEvent<T,U>
-        >&& findNext(){
+        std::unique_ptr<::event::Event>& findNext();
 
-        }
+        std::unique_ptr<::event::Event>& find(std::string hash);
 
-        template <typename T,typename U>
-        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> find(std::string hash);
     };
 };
