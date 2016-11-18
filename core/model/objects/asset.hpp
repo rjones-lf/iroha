@@ -19,12 +19,12 @@ limitations under the License.
 #define CORE_DOMAIN_OBJECTS_ASSET_HPP_
 
 #include <string>
-#include "object.hpp"
+#include <memory>
 #include "../../service/json_parse.hpp"
 
-namespace asset {
+namespace object {
 
-class Asset : public AbsObject{
+class Asset {
 
     std::string domain;
     std::string name;
@@ -34,14 +34,14 @@ class Asset : public AbsObject{
 public:
 
     Asset(
-        const std::string domain,
-        const std::string name,
-        const unsigned long long value,
-        const unsigned int precision
+        const std::string& domain,
+        const std::string& name,
+        const unsigned long long& value,
+        const unsigned int& precision
     );
 
-    virtual json_parse::Object dump() override;
-    virtual json_parse::Rule getJsonParseRule() override;
+    json_parse::Object dump();
+    json_parse::Rule getJsonParseRule();
 };
 
 };  // namespace asset

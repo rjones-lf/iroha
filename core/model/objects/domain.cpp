@@ -16,30 +16,31 @@ limitations under the License.
 
 #include "domain.hpp"
 
-namespace domain {
+namespace object {
 
-    Domain::Domain(
-            std::string ownerPublicKey,
-            std::string name
-    ):
-        ownerPublicKey(ownerPublicKey),
-        name(name)
-    {}
+using Rule = json_parse::Rule;
+using Type = json_parse::Type;
 
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
-    json_parse::Object Domain::dump() {
-        json_parse::Object obj = json_parse::Object(Type::DICT);
-        obj.dictSub.insert( std::make_pair("ownerPublicKey",  json_parse::Object(Type::STR, ownerPublicKey)));
-        obj.dictSub.insert( std::make_pair("name", json_parse::Object(Type::STR, name)));
-        return obj;
-    }
+Domain::Domain(
+    const std::string& ownerPublicKey,
+    const std::string& name
+):
+    ownerPublicKey(ownerPublicKey),
+    name(name)
+{}
 
-    Rule Domain::getJsonParseRule() {
-        Rule obj = Rule(Type::DICT);
-        obj.dictSub.insert( std::make_pair("ownerPublicKey",  Rule(Type::STR)));
-        obj.dictSub.insert( std::make_pair("name", Rule(Type::STR)));
-        return obj;
-    }
+json_parse::Object Domain::dump() {
+    json_parse::Object obj = json_parse::Object(Type::DICT);
+    obj.dictSub.insert( std::make_pair("ownerPublicKey",  json_parse::Object(Type::STR, ownerPublicKey)));
+    obj.dictSub.insert( std::make_pair("name", json_parse::Object(Type::STR, name)));
+    return obj;
+}
+
+Rule Domain::getJsonParseRule() {
+    auto rule = Rule(Type::DICT);
+    rule.dictSub.insert( std::make_pair("ownerPublicKey",  Rule(Type::STR)));
+    rule.dictSub.insert( std::make_pair("name", Rule(Type::STR)));
+    return rule;
+}
 
 };  // namespace domain

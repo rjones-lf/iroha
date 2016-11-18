@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,31 +14,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include "transfer.hpp"
 
-#include "message.hpp"
+namespace command {
 
-namespace object {
-
-Message::Message(
-        const std::string& text
-):
-        text(text)
+// We cann't transfer domain.
+template <>
+Transfer<Asset>::Transfer(
+      std::string senderPubkey,
+      std::string receiverPubkey,
+      std::string name,
+      int value):
+   Asset(name,value),
+   senderPublicKey(senderPubkey),
+   receiverPublicKey(receiverPubkey)
 {}
-
-using Rule = json_parse::Rule;
-using Type = json_parse::Type;
-using Object = json_parse::Object;
-
-json_parse::Object Message::dump(){
-    json_parse::Object obj = json_parse::Object(Type::DICT);
-    obj.dictSub.insert( std::make_pair( "text", json_parse::Object(Type::STR, text)));
-    return obj;
-}
-
-Rule Message::getJsonParseRule() {
-    auto rule = Rule(Type::DICT);
-    rule.dictSub.insert( std::make_pair( "text", Rule(Type::STR)));
-    return rule;
-}
 
 }

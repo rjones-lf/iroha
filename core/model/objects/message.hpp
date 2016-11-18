@@ -18,20 +18,21 @@ limitations under the License.
 #ifndef CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
 #define CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
 
-#include "object.hpp"
-#include "../../service/json_parse.hpp"
 #include <string>
+#include <memory>
 
-namespace message {
+#include "../../service/json_parse.hpp"
 
-class Message : public AbsObject{
+namespace object {
+
+class Message{
+
     std::string text;
-
 public:
-    Message(std::string text);
+    Message(const std::string& text);
 
-    virtual json_parse::Object dump() override;
-    virtual json_parse::Rule getJsonParseRule() override;
+    json_parse::Object dump();
+    json_parse::Rule getJsonParseRule();
 };
 
 };  // namespace message
