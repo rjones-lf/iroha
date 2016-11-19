@@ -28,12 +28,10 @@ limitations under the License.
 #include "../service/peer_service.hpp"
 #include "./connection/connection.hpp"
 #include "../model/objects/asset.hpp"
+#include "../model/objects/domain.hpp"
 #include "../model/commands/transfer.hpp"
-
-template<class T>
-std::unique_ptr<T> make_unique(){
-    return std::unique_ptr<T>(new T());
-}
+#include "../service/json_parse_with_json_nlohman.hpp"
+#include "../service/json_parse.hpp"
 
 /**
 * |ーーー|　|ーーー|　|ーーー|　|ーーー|
@@ -48,6 +46,11 @@ std::unique_ptr<T> make_unique(){
 */
 namespace sumeragi {
 
+    using Object = json_parse::Object;
+    using event::ConsensusEvent;
+    using transaction::Transaction;
+    using command::Transfer;
+    using command::Add;
 
     struct Context {
         bool isSumeragi; // am I the leader or am I not?
@@ -79,6 +82,26 @@ namespace sumeragi {
         context = std::make_unique<Context>(std::move(peers));
         peers.clear();
 
+        // *****************************
+        // WIP ReWrite in production!!
+        // *****************************
+        logger::info("sumeragi", "Sumeragi ip is " +  context->validatingPeers.at(0)->getIP());
+        logger::info("sumeragi", "My ip address is " + peer::getMyIp());
+        if(peer::getMyIp() == context->validatingPeers.at(0)->getIP()){
+            context->isSumeragi = true;
+            logger::info("sumeragi", "===+==========+===");
+            logger::info("sumeragi", "   |  |=+=|   |");
+            logger::info("sumeragi", "  -+----------+-");
+            logger::info("sumeragi", "   |          |");
+            logger::info("sumeragi", "   |  I  am   |");
+            logger::info("sumeragi", "   | Sumeragi |");
+            logger::info("sumeragi", "   |          |");
+            logger::info("sumeragi", "   A          A");
+            
+        }
+        logger::info("sumeragi", "Sumeragi setted");
+
+        logger::info("sumeragi", "set number of validatingPeer");
         context->numValidatingPeers = context->validatingPeers.size();
         context->maxFaulty = context->numValidatingPeers / 3;  // Default to approx. 1/3 of the network. TODO: make this configurable
 
@@ -89,6 +112,22 @@ namespace sumeragi {
 
         context->panicCount = 0;
         context->myPublicKey = myPublicKey;
+
+        connection::receive([&](std::string from, std::string message){
+            logger::info("sumeragi", "received message! [" + message +"]");
+            if(message.find("Transfer") != std::string::npos){
+                auto ex = json_parse_with_json_nlohman::parser::load<
+                    ConsensusEvent<
+                        Transaction<
+                            Transfer<object::Asset>
+                        >
+                    >
+                >(message);
+                logger::info("sumeragi", "hash is "+ ex->getHash());
+                // WIP currently, unuse hash in event repository,
+                repository::event::add( "dummy", std::move(ex));
+            }
+        });
 
         logger::info("sumeragi", "initialize numValidatingPeers :" + std::to_string(context->numValidatingPeers));
         logger::info("sumeragi", "initialize maxFaulty :" + std::to_string(context->maxFaulty));
@@ -108,8 +147,7 @@ namespace sumeragi {
         //return merkle_transaction_repository::getLastLeafOrder() + 1;
     }
 
-    template <typename T,typename U>
-    void processTransaction(std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event) {
+    void processTransaction(const std::unique_ptr<event::Event>& event) {
 
         logger::info("sumeragi", "processTransaction()");
         //if (!transaction_validator::isValid(event->getTx())) {
@@ -126,7 +164,6 @@ namespace sumeragi {
             )
         );
 
-        logger::info("sumeragi", "");
         logger::info("sumeragi", "context->isSumeragi :" + std::to_string(context->isSumeragi));
 
         if (event->eventSignatureIsEmpty() && context->isSumeragi) {
@@ -192,8 +229,7 @@ namespace sumeragi {
     * | 0 |--| 1 |--| 2 |--| 3 |--| 4 |--| 5 |
     * |---|  |---|  |---|  |---|  |---|  |---|.
     */
-    template <typename T,typename U>
-    void panic(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>>& event) {
+    void panic(const std::unique_ptr<event::Event>& event) {
         context->panicCount++; // TODO: reset this later
         unsigned long broadcastStart = 2 * context->maxFaulty + 1 + context->maxFaulty * context->panicCount;
         unsigned long broadcastEnd = broadcastStart + context->maxFaulty;
@@ -234,7 +270,7 @@ namespace sumeragi {
 
         logger::info("sumeragi", "determineConsensusOrder sorted!");
         logger::info("sumeragi", "determineConsensusOrder myPubkey:"+context->myPublicKey);
-        for(const auto& peer : context->validatingPeers){
+        for(const auto& peer : context->validatingPeers) {
             logger::info("sumeragi", "determineConsensusOrder PublicKey:"+peer->getPublicKey());
             logger::info("sumeragi", "determineConsensusOrder ip:"+peer->getIP());
         }
@@ -251,16 +287,16 @@ namespace sumeragi {
                 determineConsensusOrder();
 
                 logger::info("sumeragi", "event queue not empty");
-                std::vector<
-                    std::unique_ptr<
-                        consensus_event::ConsensusEvent<transaction::Transaction<command::Transfer<asset::Asset>>, command::Transfer<asset::Asset>>
-                    >
-                > events;
 
+                auto&& events = repository::event::findAll();
+                logger::info("sumeragi", "event's size " + std::to_string(events.size()));
+                
                 // Sort the events to determine priority to process
                 std::sort(events.begin(), events.end(),
-                          [](const auto &lhs,
+                          [&](const auto &lhs,
                              const auto &rhs) {
+                              logger::info("sumeragi", "lhs->getNumValidSignatures:" + std::to_string(lhs->getNumValidSignatures()));
+                              logger::info("sumeragi", "rhs->getNumValidSignatures:" + std::to_string(rhs->getNumValidSignatures()));
                               return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
                                      || (context->isSumeragi && lhs->order == 0)
                                      || lhs->order < rhs->order;
