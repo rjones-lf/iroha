@@ -13,7 +13,7 @@ namespace peer {
     using json = nlohmann::json;
 
     std::string openConfig(){
-        if(getenv("IROHA_HOME") == ""){
+        if(std::string(getenv("IROHA_HOME")) == ""){
             std::cerr << "IROHA_HOMEをセットして" << std::endl;
         }
         std::ifstream ifs(std::string(getenv("IROHA_HOME"))+"/config/sumeragi.json");
@@ -30,7 +30,6 @@ namespace peer {
     std::string getMyPublicKey(){
         try{
             auto data = json::parse(openConfig());
-            std::cout << data.dump() <<std::endl;
             return data["me"]["publicKey"].get<std::string>();
         }catch(...){
             return "";
@@ -39,7 +38,7 @@ namespace peer {
 
     std::string getPrivateKey(){
         try{
-            auto data = json::parse(openConfig());
+            auto data = json::parse(openConfig());    
             return data["me"]["privateKey"].get<std::string>();
         }catch(...){
             return "";

@@ -142,7 +142,7 @@ namespace json_parse_with_json_nlohman {
             >(detail::load_impl(data, rule));
         }
 
-                template<>
+        template<>
         std::unique_ptr<
             ConsensusEvent<
                 Transaction<
