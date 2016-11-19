@@ -17,18 +17,25 @@ limitations under the License.
 #include "event_repository.hpp"
 
 #include <algorithm>
+#include <thread>
+#include <mutex>
 #include "../../service/json_parse.hpp"
+
+std::mutex m;
 
 namespace repository {
     namespace event {
 
-        std::vector<std::unique_ptr<::event::Event>> events;
+        static std::vector<std::unique_ptr<::event::Event>> events;
 
         bool add(
             const std::string &hash,
             std::unique_ptr<::event::Event> event
         ){
+            logger::info("repo::event", "event::add");
+            std::lock_guard<std::mutex> lock(m);
             events.push_back(std::move(event));
+            logger::info("repo::event", "events size = "+std::to_string(events.size()));
             return true;
         };
         
@@ -45,8 +52,16 @@ namespace repository {
 
         std::vector<
             std::unique_ptr<::event::Event>
-        >& findAll(){
-            return events;
+        >&& findAll(){
+            std::lock_guard<std::mutex> lock(m);
+            std::vector<
+                std::unique_ptr<::event::Event>
+            > res;
+            for(auto&& e : events){
+                res.push_back(std::move(e));
+            }
+            logger::info("repo::event", "events size = "+std::to_string(res.size()));
+            return std::move(res);
         };
 
         std::unique_ptr<::event::Event>& findNext();

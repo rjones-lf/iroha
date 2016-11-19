@@ -30,9 +30,9 @@ namespace repository{
 
         using Object = json_parse::Object;
 
-        bool add(const std::string &hash, Object event);
+        bool add(const std::string &hash,std::unique_ptr<::event::Event> event);
  
-        bool update(const std::string &hash, const Object &consensusEvent);
+        bool update(const std::string &hash, const std::unique_ptr<::event::Event> &consensusEvent);
 
         bool remove(const std::string &hash);
 
@@ -40,7 +40,7 @@ namespace repository{
 
         std::vector<
             std::unique_ptr<::event::Event>
-        >& findAll();
+        >&& findAll();
 
         std::unique_ptr<::event::Event>& findNext();
 

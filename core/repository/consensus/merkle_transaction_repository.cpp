@@ -27,8 +27,7 @@ limitations under the License.
 namespace merkle_transaction_repository {
 
     //TODO: change bool to throw an exception instead
-    template<typename T>
-    bool commit(ConsensusEvent<T> &event) {
+    bool commit(const std::unique_ptr<event::Event>& event) {
         std::vector<std::tuple<std::string, std::string>> batchCommit
           = {
                 std::tuple<std::string, std::string>("last_insertion", event->tx->getHash()),
@@ -48,7 +47,8 @@ namespace merkle_transaction_repository {
         return repository::world_state_repository::find(hash);
     }
 
-    std::string calculateNewRootHash(const std::unique_ptr<consensus_event::ConsensusEvent> &event,
+
+    std::string calculateNewRootHash(const std::unique_ptr<event::Event>& event,
                                      std::vector<std::tuple<std::string, std::string>> &batchCommit) {
 
         std::unique_ptr<std::string> lastInsertion = repository::world_state_repository::find("last_insertion");
@@ -64,7 +64,7 @@ namespace merkle_transaction_repository {
 
         if (rightChild.empty()) {
             // insert the event's transaction as the right child
-            rightChild = event->tx->getHash();
+            rightChild = event->getHash();
             std::string newParentHash = hash::sha3_256_hex(leftChild + rightChild);
 
             if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
@@ -93,7 +93,7 @@ namespace merkle_transaction_repository {
             return rightChild;
 
         } else {
-            std::string newLeftChild = event->tx->getHash();
+            std::string newLeftChild = event->getHash();
             std::string newParentHash = hash::sha3_256_hex(currHash);
 
             std::string oldParent = parent;
