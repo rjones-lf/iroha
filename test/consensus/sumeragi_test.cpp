@@ -26,15 +26,26 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
-#include "../../core/service/json_parse_with_json_nlohmann.hpp"
+#include "../../core/service/json_parse_with_json_nlohman.hpp"
 
 #include "../../core/service/peer_service.hpp"
 #include "../../core/crypto/hash.hpp"
 
+template<typename T>
+using Transaction = transaction::Transaction<T>;
+template<typename T>
+using ConsensusEvent = event::ConsensusEvent<T>;
+template<typename T>
+using Add = command::Add<T>;
+template<typename T>
+using Transfer = command::Transfer<T>;
+
 int main(){
+    std::string value;
+    std::string senderPublicKey;
+    std::string receiverPublicKey;
     std::string cmd;
     std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
-
 
     connection::initialize_peer(nullptr);
 
@@ -54,46 +65,54 @@ int main(){
     });
 
     connection::exec_subscription(peer::getMyIp());
-    connection::receive([](std::string from, std::string message){
-        std::cout <<" receive :" << message <<" from:"<< from << "\n";
-    });
 
     while(1){
-        std::cout << "name  in >> ";
+        std::cout <<"name  in >> ";
         std::cin>> cmd;
         if(cmd == "quit") break;
 
-        for(const auto& n : nodes){
-            std::cout<< "=========" << std::endl;
-            std::cout<< n->getPublicKey() << std::endl;
-            std::cout<< n->getIP() << std::endl;
+        if(cmd == "transfer") {
+            std::cout <<"(transfer) in >> ";
+            std::cin >> value;
+
+            auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
+                senderPublicKey,
+                receiverPublicKey,
+                value,
+                100
+            );
+            std::cout <<" created event\n";
+            event->addTxSignature(
+                    peer::getMyPublicKey(),
+                    signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+            );
+            auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
+            std::cout << text << std::endl;
+            connection::send(peer::getMyIp(), text);
+        }else if(cmd == "add"){
+            std::cout <<"(add) in >> ";
+            std::cin >> value;
+
+            auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+                senderPublicKey,
+                "mizuki",
+                value,
+                100,
+                100
+            );
+            std::cout <<" created event\n";
+            event->addTxSignature(
+                    peer::getMyPublicKey(),
+                    signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+            );
+            auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
+            std::cout << text << std::endl;
+            connection::send(peer::getMyIp(), text);
         }
 
-        auto tx = std::make_unique<transaction::Transaction<command::Transfer<domain::Domain>>>(
-            std::make_unique<command::Transfer<domain::Domain>>(
-                std::make_unique<domain::Domain>( peer::getMyPublicKey(), "cmd")
-            )
-        );
-
-        tx->addTxSignature(
-            peer::getMyPublicKey(),
-            signature::sign(tx->getHash(), peer::getMyPublicKey(), peer::getPrivateKey())
-        );
-        auto event = consensus_event::ConsensusEvent<
-            transaction::Transaction<command::Transfer<domain::Domain>>,
-            command::Transfer<domain::Domain>
-        >(std::move(tx));
-        auto parser = json_parse_with_json_nlohman::JsonParse<
-           consensus_event::ConsensusEvent<
-              transaction::Transaction<command::Transfer<domain::Domain>>,
-              command::Transfer<domain::Domain>
-           >
-        >();
-        std::cout<<  parser.dump(event.dump()) << std::endl;
-
+        
     }
 
     http_th.detach();
-
     return 0;
 }
