@@ -127,8 +127,8 @@ namespace connection {
         }
         try{
             char* message = const_cast<char*>(msg.c_str());
-            AERON_DECL_ALIGNED(std::uint8_t buffer[512], 16);        
-            AtomicBuffer srcBuffer(&buffer[0], 512);
+            AERON_DECL_ALIGNED(std::uint8_t buffer[4096], 16);        
+            AtomicBuffer srcBuffer(&buffer[0], 4096);
             srcBuffer.putBytes(0, reinterpret_cast<std::uint8_t *>(message), strlen(message));
             const std::int64_t result = publications[to]->offer(srcBuffer, 0, strlen(message));
             if (result < 0){

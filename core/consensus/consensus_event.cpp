@@ -36,6 +36,7 @@ namespace event{
         order = obj.dictSub["order"].floating;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
         for(auto&& sig : eventSigs){
+            std::cout <<"construct:"<< sig.dictSub["publicKey"].str <<std::endl;
             eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
         }
     }

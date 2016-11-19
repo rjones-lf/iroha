@@ -40,7 +40,7 @@ namespace repository{
 
         std::vector<
             std::unique_ptr<::event::Event>
-        >&& findAll();
+        > findAll();
 
         std::unique_ptr<::event::Event>& findNext();
 

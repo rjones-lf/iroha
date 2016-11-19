@@ -52,7 +52,7 @@ namespace repository {
 
         std::vector<
             std::unique_ptr<::event::Event>
-        >&& findAll(){
+        > findAll(){
             std::lock_guard<std::mutex> lock(m);
             std::vector<
                 std::unique_ptr<::event::Event>
@@ -60,6 +60,7 @@ namespace repository {
             for(auto&& e : events){
                 res.push_back(std::move(e));
             }
+            events.clear();
             logger::info("repo::event", "events size = "+std::to_string(res.size()));
             return std::move(res);
         };
