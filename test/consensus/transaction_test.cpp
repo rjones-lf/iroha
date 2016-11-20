@@ -40,6 +40,13 @@ using Add = command::Add<T>;
 template<typename T>
 using Transfer = command::Transfer<T>;
 
+void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
+    std::thread([action, sleepMillisecs]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+        action();
+    }).join();
+}
+
 int main(){
     std::string value;
     std::string senderPublicKey;
@@ -48,18 +55,11 @@ int main(){
     std::string pubKey = peer::getMyPublicKey();
 
     while(1){
-        std::cout <<"name  in >> ";
-        std::cin>> cmd;
-        if(cmd == "quit") break;
-
-        if(cmd == "transfer") {
-            std::cout <<"(transfer) in >> ";
-            std::cin >> value;
-
+        setAwkTimer(3000, [&](){
             auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
                 senderPublicKey,
                 receiverPublicKey,
-                value,
+                "Dummy transaction",
                 100
             );
             std::cout <<" created event\n";
@@ -71,27 +71,8 @@ int main(){
             std::cout << text << std::endl;
             auto ex = json_parse_with_json_nlohman::parser::load<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(text);
             std::cout << json_parse_with_json_nlohman::parser::dump(ex->dump()) << std::endl;
-        }else if(cmd == "add"){
-            std::cout <<"(add) in >> ";
-            std::cin >> value;
 
-            auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
-                senderPublicKey,
-                "mizuki",
-                value,
-                100,
-                100
-            );
-            std::cout <<" created event\n";
-            event->addTxSignature(
-                    peer::getMyPublicKey(),
-                    signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
-            );
-            auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-            std::cout << text << std::endl;
-            auto ex = json_parse_with_json_nlohman::parser::load<ConsensusEvent<Transaction<Add<object::Asset>>>>(text);
-            std::cout << json_parse_with_json_nlohman::parser::dump(ex->dump()) << std::endl;
-        }
+        });
     }
 
     return 0;
