@@ -36,6 +36,12 @@ namespace repository{
 
         bool remove(const std::string &hash);
 
+        bool addSignature(
+            const std::string &hash,
+            const std::string &publicKey,
+            const std::string &signature
+        );
+
         bool empty();
 
         std::vector<

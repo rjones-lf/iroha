@@ -19,6 +19,7 @@ limitations under the License.
 #include <algorithm>
 #include <thread>
 #include <mutex>
+#include <tuple>
 #include "../../service/json_parse.hpp"
 
 std::mutex m;
@@ -26,7 +27,9 @@ std::mutex m;
 namespace repository {
     namespace event {
 
-        static std::vector<std::unique_ptr<::event::Event>> events;
+        static std::vector<
+            std::tuple<std::string,std::unique_ptr<::event::Event>>
+        > events;
 
         bool add(
             const std::string &hash,
@@ -34,7 +37,7 @@ namespace repository {
         ){
             logger::info("repo::event", "event::add");
             std::lock_guard<std::mutex> lock(m);
-            events.push_back(std::move(event));
+            events.push_back(std::make_tuple( hash, std::move(event)));
             logger::info("repo::event", "events size = "+std::to_string(events.size()));
             return true;
         };
@@ -43,6 +46,22 @@ namespace repository {
             const std::string &hash,
             std::unique_ptr<::event::Event> event
         );
+        
+        bool addSignature(
+            const std::string &hash,
+            const std::string &publicKey,
+            const std::string &signature
+        ){
+            logger::info("repo::event", "event::add");
+            std::lock_guard<std::mutex> lock(m);
+            for(auto&& event : events){
+                if(std::get<0>(event) == hash){
+                    std::get<1>(event)->addSignature(publicKey, signature);
+                    return true;
+                }
+            }
+            return false;
+        }
 
         bool remove(const std::string &hash);
 
@@ -58,7 +77,7 @@ namespace repository {
                 std::unique_ptr<::event::Event>
             > res;
             for(auto&& e : events){
-                res.push_back(std::move(e));
+                res.push_back(std::move(std::get<1>(e)));
             }
             events.clear();
             logger::info("repo::event", "events size = "+std::to_string(res.size()));
