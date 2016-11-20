@@ -18,11 +18,7 @@ limitations under the License.
 
 #include "../../core/consensus/connection/connection.hpp"
 #include "../../core/model/commands/transfer.hpp"
-<<<<<<< HEAD
 #include "../../core/model/commands/add.hpp"
-=======
-#include "../../core/model/objects/domain.hpp"
->>>>>>> master
 
 #include <iostream>
 #include <string>
@@ -30,16 +26,12 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
-<<<<<<< HEAD
 #include "../../core/service/json_parse_with_json_nlohman.hpp"
-=======
-#include "../../core/service/json_parse_with_json_nlohmann.hpp"
->>>>>>> master
+
 
 #include "../../core/service/peer_service.hpp"
 #include "../../core/crypto/hash.hpp"
 
-<<<<<<< HEAD
 template<typename T>
 using Transaction = transaction::Transaction<T>;
 template<typename T>
@@ -60,14 +52,11 @@ int main(){
     std::string value;
     std::string senderPublicKey;
     std::string receiverPublicKey;
-=======
-int main(){
->>>>>>> master
+
     std::string cmd;
     std::string pubKey = peer::getMyPublicKey();
 
     while(1){
-<<<<<<< HEAD
         setAwkTimer(3000, [&](){
             auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
                 senderPublicKey,
@@ -86,33 +75,6 @@ int main(){
             std::cout << json_parse_with_json_nlohman::parser::dump(ex->dump()) << std::endl;
 
         });
-=======
-        std::cout <<"name  in >> ";
-        std::cin>> cmd;
-        if(cmd == "quit") break;
-
-        auto tx = std::make_unique<transaction::Transaction<command::Transfer<domain::Domain>>>(
-                std::make_unique<command::Transfer<domain::Domain>>(
-                        std::make_unique<domain::Domain>( peer::getMyPublicKey(), cmd)
-                )
-        );
-
-        tx->addTxSignature(
-                peer::getMyPublicKey(),
-                signature::sign(tx->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
-        );
-        auto event = consensus_event::ConsensusEvent<
-                transaction::Transaction<command::Transfer<domain::Domain>>,
-                command::Transfer<domain::Domain>
-        >(std::move(tx));
-        auto parser = json_parse_with_json_nlohman::JsonParse<
-                consensus_event::ConsensusEvent<
-                        transaction::Transaction<command::Transfer<domain::Domain>>,
-                        command::Transfer<domain::Domain>
-                >
-        >();
-        std::cout<<  parser.dump(event.dump()) << std::endl;
->>>>>>> master
     }
 
     return 0;
