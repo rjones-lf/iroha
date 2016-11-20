@@ -47,7 +47,7 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const actio
     }).join();
 }
 
-int main(){
+int main(int argc, char *argv[]){
     std::string value;
     std::string senderPublicKey;
     std::string receiverPublicKey;
@@ -71,24 +71,30 @@ int main(){
         sumeragi::loop();
     });
 
-    connection::exec_subscription(peer::getMyIp());
-    std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    while(1){
-        setAwkTimer(3000, [&](){
-            auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-                senderPublicKey,
-                receiverPublicKey,
-                "Dummy transaction",
-                100
-            );
-            std::cout <<" created event\n";
-            event->addTxSignature(
-                    peer::getMyPublicKey(),
-                    signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
-            );
-            auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-            connection::send(peer::getMyIp(), text);
-        });
+    connection::exec_subscription(peer::getMyIp());    
+    if( argc >= 2 && std::string(argv[1]) == "public"){
+        std::cout<<"start publish tx\n";
+        while(1){
+            
+            setAwkTimer(100, [&](){
+                auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
+                    senderPublicKey,
+                    receiverPublicKey,
+                    "Dummy transaction",
+                    100
+                );
+                std::cout <<" created event\n";
+                event->addTxSignature(
+                        peer::getMyPublicKey(),
+                        signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                );
+                auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
+                connection::send(peer::getMyIp(), text);
+            });
+        }
+    }else{
+        std::cout<<"I'm only node\n";
+        while(1);
     }
 
     http_th.detach();

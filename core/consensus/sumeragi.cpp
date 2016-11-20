@@ -183,7 +183,6 @@ namespace sumeragi {
 
         connection::receive([&](std::string from, std::string message){
             if(message.find("Transfer") != std::string::npos){
-                logger::info( "sumeragi", "receive "+ message);
                 auto ex = json_parse_with_json_nlohman::parser::load<
                     ConsensusEvent<
                         Transaction<
