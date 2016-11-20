@@ -37,8 +37,8 @@ public:
         json_parse::Object obj
     );
 
-    json_parse::Object dump();
-    static json_parse::Rule getJsonParseRule();
+    virtual json_parse::Object dump() override;
+    virtual json_parse::Rule getJsonParseRule() override;
 };
 
 };  // namespace domain

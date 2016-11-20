@@ -33,6 +33,7 @@ public:
 
     json_parse::Object dump();
     static json_parse::Rule getJsonParseRule();
+
 };
 
 };  // namespace message

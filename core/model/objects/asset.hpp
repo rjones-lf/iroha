@@ -55,6 +55,7 @@ public:
 
     Object dump();
     static Rule getJsonParseRule();
+
 };
 
 };  // namespace asset
