@@ -21,25 +21,20 @@ limitations under the License.
 #include <string>
 #include <functional>
 #include <memory>
-#include <type_traits>
 #include <unordered_map>
 #include <algorithm>
+
+#include "event.hpp"
 
 #include "../crypto/signature.hpp"
 #include "../util/logger.hpp"
 #include "../model/transaction.hpp"
 #include "../service/json_parse.hpp"
 
-namespace consensus_event {
+namespace event {
 
-template<
-    typename T, typename U,
-    std::enable_if_t<
-        std::is_base_of<transaction::Transaction<U>, T>::value,std::nullptr_t
-    > = nullptr
- >
-class ConsensusEvent {
-
+template <typename T>
+class ConsensusEvent: public T, public Event {
 
     struct eventSignature{
         std::string publicKey;
@@ -53,32 +48,49 @@ class ConsensusEvent {
                 signature(sig)
         {}
     };
-    std::unique_ptr<T> tx;
+
     std::vector<eventSignature> eventSignatures;
 
 public:
     unsigned long long order = 0;
 
-    ConsensusEvent(std::unique_ptr<T> atx):
-        tx(std::move(atx))
-    {}
+    ConsensusEvent(
+        const std::string& senderPubkey,
+        const std::string& receiverPubkey,
+        const std::string& name,
+        const int& value
+    );
+    ConsensusEvent(
+        const std::string& senderPubkey,
+        const std::string& domain,
+        const std::string& name,
+        const unsigned long long& value,
+        const unsigned int& precision
+    );
+    ConsensusEvent(
+        const std::string& senderPubkey,
+        const std::string& ownerPublicKey,
+        const std::string& name
+    );
+
+
+    using Rule = json_parse::Rule;
+    using Type = json_parse::Type;
+    using Object = json_parse::Object;
+
 
     // WIP
-    ConsensusEvent(json_parse::Object obj) {}
+    ConsensusEvent(Object obj);
 
     void addSignature(const std::string& publicKey, const std::string& signature){
         eventSignatures.push_back(eventSignature(publicKey, signature));
     }
 
     std::string getHash() {
-        return tx->getHash();
-    }
-    T& getTx() const{
-        return &tx;
+        return T::getHash();
     }
 
     int getNumValidSignatures() {
-        logger::debug("getNumValidSignatures", "eventSignatures:"+ std::to_string(eventSignatures.size()));
         return std::count_if(
             eventSignatures.begin(), eventSignatures.end(),
             [hash = getHash()](eventSignature sig){
@@ -90,12 +102,8 @@ public:
         return eventSignatures.empty();
     }
 
-    using Object = json_parse::Object;
-    using Type = json_parse::Type;
-    using Rule = json_parse::Rule;
-
-    json_parse::Object dump() {
-        json_parse::Object obj = Object(Type::DICT);
+    Object dump() {
+        Object obj = Object(Type::DICT);
         obj.dictSub.insert( std::make_pair( "order", Object(Type::INT, (int)order)));
         auto eventSigs   = Object(Type::LIST);
         for(auto&& eSig : eventSignatures) {
@@ -105,21 +113,21 @@ public:
             eventSigs.listSub.push_back(eventSig);
         }
         obj.dictSub.insert( std::make_pair( "eventSignatures", eventSigs));
-        obj.dictSub.insert( std::make_pair( "transaction", tx->dump()));
+        obj.dictSub.insert( std::make_pair( "transaction", T::dump()));
         return obj;
     }
 
-    Rule getJsonParseRule() {
-        Rule obj = Rule(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "order", Rule(Type::INT)));
+    static Rule getJsonParseRule() {
+        auto rule = Rule(Type::DICT);
+        rule.dictSub.insert( std::make_pair( "order", Rule(Type::INT)));
         auto eventSigs  = Rule(Type::LIST);
-        auto eventSig   = std::make_unique<Rule>(Type::DICT);
-        eventSig->dictSub.insert( std::make_pair( "publicKey", Rule(Type::STR)));
-        eventSig->dictSub.insert( std::make_pair( "signature", Rule(Type::STR)));
-        eventSigs.listSub = std::move(eventSig);
-        obj.dictSub.insert( std::make_pair( "eventSignatures", std::move(eventSigs)));
-        obj.dictSub.insert( std::make_pair( "transaction", tx->getJsonParseRule()));
-        return obj;
+        auto eventSig   = Rule(Type::DICT);
+        eventSig.dictSub.insert( std::make_pair( "publicKey", Rule(Type::STR)));
+        eventSig.dictSub.insert( std::make_pair( "signature", Rule(Type::STR)));
+        eventSigs.listSub.push_back(eventSig);
+        rule.dictSub.insert( std::make_pair( "eventSignatures", eventSigs));
+        rule.dictSub.insert( std::make_pair( "transaction", T::getJsonParseRule()));
+        return rule;
     }
 
 };

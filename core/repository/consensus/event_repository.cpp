@@ -17,47 +17,76 @@ limitations under the License.
 #include "event_repository.hpp"
 
 #include <algorithm>
+#include <thread>
+#include <mutex>
+#include <tuple>
+#include "../../service/json_parse.hpp"
+
+std::mutex m;
 
 namespace repository {
     namespace event {
-        std::vector<
-        std::unique_ptr<
-                consensus_event::ConsensusEvent<
-                        transaction::Transaction<
-                                command::Command
-                        >,
-                        command::Command
-                >
-        >
-        > consensusEvents;
 
-        template <typename T,typename U>
-        bool add(const std::string &hash, std::unique_ptr<consensus_event::ConsensusEvent<T,U>> event){
-            consensusEvents.push_back(std::move(event));
+        static std::vector<
+            std::tuple<std::string,std::unique_ptr<::event::Event>>
+        > events;
+
+        bool add(
+            const std::string &hash,
+            std::unique_ptr<::event::Event> event
+        ){
+            logger::info("repo::event", "event::add");
+            std::lock_guard<std::mutex> lock(m);
+            events.push_back(std::make_tuple( hash, std::move(event)));
+            logger::info("repo::event", "events size = "+std::to_string(events.size()));
+            return true;
         };
-
-        template <typename T,typename U>
-        bool update(const std::string &hash, const consensus_event::ConsensusEvent<T,U> &consensusEvent);
+        
+        bool update(
+            const std::string &hash,
+            std::unique_ptr<::event::Event> event
+        );
+        
+        bool addSignature(
+            const std::string &hash,
+            const std::string &publicKey,
+            const std::string &signature
+        ){
+            logger::info("repo::event", "event::add");
+            std::lock_guard<std::mutex> lock(m);
+            for(auto&& event : events){
+                if(std::get<0>(event) == hash){
+                    std::get<1>(event)->addSignature(publicKey, signature);
+                    return true;
+                }
+            }
+            return false;
+        }
 
         bool remove(const std::string &hash);
 
         bool empty(){
-            return consensusEvents.empty();
+            return events.empty();
         }
 
-        template <typename T,typename U>
-        std::vector<std::unique_ptr<consensus_event::ConsensusEvent<T,U>>>&& findAll(){
-            return std::move(consensusEvents);
+        std::vector<
+            std::unique_ptr<::event::Event>
+        > findAll(){
+            std::lock_guard<std::mutex> lock(m);
+            std::vector<
+                std::unique_ptr<::event::Event>
+            > res;
+            for(auto&& e : events){
+                res.push_back(std::move(std::get<1>(e)));
+            }
+            events.clear();
+            logger::info("repo::event", "events size = "+std::to_string(res.size()));
+            return std::move(res);
         };
 
-        template <typename T,typename U>
-        std::unique_ptr<
-        consensus_event::ConsensusEvent<T,U>
-        >&& findNext(){
+        std::unique_ptr<::event::Event>& findNext();
 
-        }
+        std::unique_ptr<::event::Event>& find(std::string hash);
 
-        template <typename T,typename U>
-        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> find(std::string hash);
     };
 };

@@ -16,27 +16,28 @@ limitations under the License.
 
 #include "message.hpp"
 
-namespace message {
+namespace object {
 
-    Message::Message(
-            std::string text
-    ):
-            text(text)
-    {}
+Message::Message(
+        const std::string& text
+):
+        text(text)
+{}
 
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
+using Rule = json_parse::Rule;
+using Type = json_parse::Type;
+using Object = json_parse::Object;
 
-    json_parse::Object Message::dump(){
-        json_parse::Object obj = json_parse::Object(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "text", json_parse::Object(Type::STR, text)));
-        return obj;
-    }
+json_parse::Object Message::dump(){
+    json_parse::Object obj = json_parse::Object(Type::DICT);
+    obj.dictSub.insert( std::make_pair( "text", json_parse::Object(Type::STR, text)));
+    return obj;
+}
 
-    json_parse::Rule Message::getJsonParseRule(){
-        Rule obj = Rule(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "text", Rule(Type::STR)));
-        return obj;
-    }
+Rule Message::getJsonParseRule() {
+    auto rule = Rule(Type::DICT);
+    rule.dictSub.insert( std::make_pair( "text", Rule(Type::STR)));
+    return rule;
+}
 
 }

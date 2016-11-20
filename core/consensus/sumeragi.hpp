@@ -24,6 +24,7 @@ limitations under the License.
 #include <memory>
 
 #include "consensus_event.hpp"
+#include "event.hpp"
 
 #include "../service/peer_service.hpp"
 
@@ -35,19 +36,16 @@ namespace sumeragi {
     );
     void loop();
 
-    template<typename T,typename U>
     void getNextOrder(
-            std::unique_ptr<consensus_event::ConsensusEvent<T,U>> const event
+        const std::unique_ptr<event::Event> event
     );
 
-    template<typename T,typename U>
-    void processTransaction(
-        std::unique_ptr<consensus_event::ConsensusEvent<T,U>> const event
-    );
-    template<typename T,typename U>
-    void panic(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>>& event);
+    void processTransaction(const std::unique_ptr<event::Event>& event);
+
+    void panic(const std::unique_ptr<event::Event>& event);
     void setAwkTimer(const int sleepMillisecs, const std::function<void(void)> action);
     void determineConsensusOrder(/*std::vector<double> trustVector*/);
+    
 };  // namespace sumeragi
 
 #endif  // CORE_CONSENSUS_SUMERAGI_HPP_

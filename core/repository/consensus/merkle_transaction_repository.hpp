@@ -22,6 +22,7 @@ limitations under the License.
 #include <memory>
 #include <unordered_map>
 #include "../../consensus/consensus_event.hpp"
+#include "../../consensus/event.hpp"
 #include "../../service/json_parse.hpp"
 
 namespace merkle_transaction_repository {
@@ -60,6 +61,7 @@ struct MerkleNode {
     using Object = json_parse::Object;
     using Rule = json_parse::Rule;
     using Type = json_parse::Type;
+
     Object dump() {
         Object obj = Object(Type::DICT);
         obj.dictSub.insert( std::make_pair( "hash", Object(Type::STR, hash)));
@@ -69,19 +71,18 @@ struct MerkleNode {
         return obj;
     }
 
-    static Rule getJsonParseRule() {
-        Rule obj = Rule(Type::DICT);
-        obj.dictSub.insert( std::make_pair("hash",  Rule(Type::STR)));
-        obj.dictSub.insert( std::make_pair("parent",  Rule(Type::STR)));
-        obj.dictSub.insert( std::make_pair("leftChild", Rule(Type::STR)));
-        obj.dictSub.insert( std::make_pair("rightChild", Rule(Type::STR)));
-        return obj;
+    Rule getJsonParseRule() {
+        auto rule = Rule(Type::DICT);
+        rule.dictSub.insert( std::make_pair("hash", Rule(Type::STR)));
+        rule.dictSub.insert( std::make_pair("parent", Rule(Type::STR)));
+        rule.dictSub.insert( std::make_pair("leftChild", Rule(Type::STR)));
+        rule.dictSub.insert( std::make_pair("rightChild", Rule(Type::STR)));
+        return std::move(rule);
     }
 };
 
 //TODO: change bool to throw an exception instead
-template <typename T,typename U>
-bool commit(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>> &event){
+bool commit(const std::unique_ptr<event::Event>& event){
 
 };
 
@@ -93,8 +94,11 @@ std::string getLeaf(const std::string& hash){
 
 }
 
-template <typename T,typename U>
-std::string calculateNewRoot(const std::unique_ptr<consensus_event::ConsensusEvent<T,U>> &event, std::vector<std::tuple<std::string, std::string>> &batchCommit);
+template <typename T>
+std::string calculateNewRoot(
+    const std::unique_ptr<event::Event>& event,
+    std::vector<std::tuple<std::string,std::string>> &batchCommit
+);
 
 };  // namespace merkle_transaction_repository
 

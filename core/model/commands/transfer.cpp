@@ -14,29 +14,33 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include "transfer.hpp"
 
-#ifndef CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
-#define CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
+namespace command {
+    
+using object::Asset;
 
-#include <string>
-#include <memory>
+// We cann't transfer domain.
+template <>
+Transfer<Asset>::Transfer(
+      std::string senderPubkey,
+      std::string receiverPubkey,
+      std::string name,
+      int value):
+   Asset(name,value),
+   senderPublicKey(senderPubkey),
+   receiverPublicKey(receiverPubkey)
+{}
 
-#include "../../service/json_parse.hpp"
+using Object = json_parse::Object;
 
-namespace object {
+template <>
+Transfer<Asset>::Transfer(
+      Object obj
+):
+   Asset(obj),
+   senderPublicKey(obj.dictSub["sender"].str),
+   receiverPublicKey(obj.dictSub["receiver"].str)
+{}
 
-class Message{
-
-    std::string text;
-public:
-    Message(const std::string& text);
-
-    json_parse::Object dump();
-    static json_parse::Rule getJsonParseRule();
-
-};
-
-};  // namespace message
-
-#endif  // CORE_DOMAIN_OBJECTS_MESSAGE_HPP_
-
+}

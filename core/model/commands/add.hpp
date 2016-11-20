@@ -15,56 +15,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_
-#define CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_
-
-#include "transaction.hpp"
-#include "command.hpp"
-#include "objects.hpp"
+#ifndef CORE_DOMAIN_COMMANDS_ADD_HPP_
+#define CORE_DOMAIN_COMMANDS_ADD_HPP_
 
 #include "../../service/json_parse.hpp"
 
+#include "../objects/domain.hpp"
+#include "../objects/asset.hpp"
+#include "../objects/message.hpp"
+
 #include <string>
-#include <type_traits>
 
 namespace command {
 
-template<typename T, std::enable_if_t<std::is_base_of<AbsObject, T>::value,std::nullptr_t> = nullptr>
-class Add : public Command{
-    T object;
+template <typename T>
+class Add: public T {
   public:
-    Add(T object) :
-        object(object)
-    {}
-
-    std::string getAsJson() const{
-        object.getAsJson();
-    }
-
-    std::string getCommandName() const{
-        return "Add";
-    }
 
     using Object = json_parse::Object;
     using Rule = json_parse::Rule;
     using Type = json_parse::Type;
 
+    Add(
+        const std::string& domain,
+        const std::string& name,
+        const unsigned long long& value,
+        const unsigned int& precision
+    );
+
+    Add(const std::string& ownerPublicKey,const std::string& name);
+
+    Add(Object obj);
+
+    std::string getCommandName() const{
+        return "Add";
+    }
+
     Object dump() {
-        Object obj = Object(Object::Type::DICT);
-        obj.dictSub["command"] = Object(Object::Type::STR, getCommandName());
-        obj.dictSub["object"] = object.getJsonParseRule();
+        Object obj = Object(Type::DICT);
+        obj.dictSub.insert( std::make_pair( "name", Object(Type::STR, getCommandName())));
+        obj.dictSub.insert( std::make_pair( "object", T::dump()));
         return obj;
     }
 
     static Rule getJsonParseRule() {
-        Rule obj = Rule(Type::DICT);
-        obj.dictSub["command"] = Rule(Type::STR);
-        obj.dictSub["object"] = T::getJsonParseRule();
-        return obj;
+        auto rule = Rule(Type::DICT);
+        rule.dictSub.insert(std::make_pair("name", Rule(Type::STR)));
+        rule.dictSub.insert(std::make_pair("object", T::getJsonParseRule()));
+        return rule;
     }
-
 };
-
 };  // namespace command
 
 #endif  // CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_

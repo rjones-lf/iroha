@@ -14,52 +14,57 @@ namespace json_parse {
         INT,
         FLOAT,
         LIST,
-        DICT
+        DICT,
+        INVELIED
     };
 
     struct Object {
-        Type type;
+        const Type type;
         int integer;
         std::string str;
         bool boolean;
         float floating;
 
-        Object(Type t,int i) :
-            type(t), integer(i)
+        std::map<std::string, Object> dictSub;
+        std::vector<Object> listSub;
+
+        Object(const Type& t,const int& i) :
+            type(std::move(t)), integer(std::move(i))
         {
             if(t != Type::INT) throw "TypeError"; //WIP
         }
 
-        Object(Type t,std::string s) :
+        Object(const Type& t,const std::string& s) :
             type(t), str(s)
         {
             if(t != Type::STR) throw "TypeError"; //WIP
         }
 
-        Object(Type t,bool s) :
+        Object(const Type& t,const bool& s) :
             type(t), boolean(s)
         {
             if(t != Type::BOOL) throw "TypeError"; //WIP
         }
 
-        Object(Type t,float f) :
+        Object(const Type& t,const float& f) :
                 type(t), floating(f)
         {
             if(t != Type::FLOAT) throw "TypeError"; //WIP
         }
 
+        Object():type(Type::INVELIED){};
 
         Object(Type t) :
-                type(t) {}
+            type(t)
+        {}
 
         Type getType() const {
             return type;
         }
 
-        std::map<std::string, Object> dictSub;
-        std::vector<Object> listSub;
     };
 
+    struct Rule;
     struct Rule {
         Type type;
 
@@ -71,7 +76,28 @@ namespace json_parse {
             return type;
         }
         std::map<std::string, Rule> dictSub;
-        std::unique_ptr<Rule> listSub;
+        std::vector<Rule> listSub;
+
+        operator std::string() const { 
+            std::string res;
+            switch(type){
+                case Type::BOOL: return "bool";
+                case Type::STR:  return "string";
+                case Type::INT:  return "int";
+                case Type::FLOAT:return "float";
+                case Type::LIST:
+                    return "[" + std::string(listSub.at(0)) + "]";
+                case Type::DICT:
+                    res = "{";
+                    for(auto&& s : dictSub){
+                        res += "\"" + s.first + "\":" + std::string(s.second) + ",";
+                    }
+                    res += "}";
+                    return res;
+                case Type::INVELIED:
+                    return "invalied";
+            }    
+        }
     };
 };
 #endif //IROHA_JSON_PARSE_H
