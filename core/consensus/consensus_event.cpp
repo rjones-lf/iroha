@@ -22,8 +22,15 @@ namespace event{
     {
         order = obj.dictSub["order"].floating;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
+        std::cout << eventSigs.size() << std::endl; 
         for(auto&& sig : eventSigs){
-            eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+            std::cout <<"Oh "<< sig.dictSub["publicKey"].str << " " << sig.dictSub["signature"].str << std::endl;
+            if(
+                sig.dictSub["publicKey"].str != "" &&
+                sig.dictSub["signature"].str != ""
+            ){
+                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+            }
         }
     }
 
@@ -36,8 +43,12 @@ namespace event{
         order = obj.dictSub["order"].floating;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
         for(auto&& sig : eventSigs){
-            std::cout <<"construct:"<< sig.dictSub["publicKey"].str <<std::endl;
-            eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+            if(
+                sig.dictSub["publicKey"].str != "" &&
+                sig.dictSub["signature"].str != ""
+            ){
+                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+            }
         }
     }
 

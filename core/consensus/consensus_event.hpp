@@ -89,7 +89,6 @@ public:
     }
 
     int getNumValidSignatures() {
-        logger::debug("getNumValidSignatures", "eventSignatures:"+ std::to_string(eventSignatures.size()));
         return std::count_if(
             eventSignatures.begin(), eventSignatures.end(),
             [hash = getHash()](eventSignature sig){

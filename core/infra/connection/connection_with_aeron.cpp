@@ -17,6 +17,7 @@ limitations under the License.
 #include "../../consensus/connection/connection.hpp"
 
 #include "../../util/logger.hpp"
+#include "../../service/peer_service.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -61,9 +62,9 @@ namespace connection {
         return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header) {
             std::string raw_data = std::string((char *)buffer.buffer() + offset, (unsigned long)length);
             // WIP parse json.
-            logger::info("receive", raw_data);
+            // logger::info("receive", raw_data);
             for(auto& f : receivers) {
-                f("From", raw_data);
+                f( peer::getMyIp(), raw_data);
             }
         };
     }
@@ -120,7 +121,7 @@ namespace connection {
     }
 
     bool send(const std::string& to,const std::string& msg) {
-        logger::info("connection", "Start send()");
+        logger::info("connection", "Start send");
         if(publications.find(to) == publications.end()){
             logger::error("connection", to + " is not registerd");
             return false;
@@ -159,7 +160,9 @@ namespace connection {
         logger::info("connection", "send mesage"+ msg);
         logger::info("connection", "send mesage publlications "+ std::to_string(publications.size()));
         for(auto& p : publications){
-            send( p.first, msg);
+            if(p.first != peer::getMyIp()){
+                send( p.first, msg);
+            }
         }
         return true;
     }
