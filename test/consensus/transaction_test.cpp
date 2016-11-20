@@ -28,7 +28,6 @@ limitations under the License.
 
 #include "../../core/service/json_parse_with_json_nlohman.hpp"
 
-
 #include "../../core/service/peer_service.hpp"
 #include "../../core/crypto/hash.hpp"
 

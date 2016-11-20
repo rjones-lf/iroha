@@ -81,6 +81,7 @@ public:
         return txSignatures;
     }
 
+
     void addTxSignature(const std::string& pubKey,const std::string& signature){
         txSignatures.push_back(txSignature(pubKey, signature));
     }

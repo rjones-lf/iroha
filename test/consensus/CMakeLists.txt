@@ -31,7 +31,6 @@ target_link_libraries(sumeragi_test
     consensus_event
     json_parse_with_nlohman
     transaction
-
 )
 
 add_executable(transaction_test

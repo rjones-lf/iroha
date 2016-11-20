@@ -70,7 +70,6 @@ class Transfer: public T {
             rule.dictSub.insert( std::make_pair( "sender", Rule(Type::STR)));
             rule.dictSub.insert( std::make_pair("receiver", Rule(Type::STR)));
             return rule;
-
         }
     };
 

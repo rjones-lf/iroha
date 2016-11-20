@@ -39,5 +39,4 @@ Rule Message::getJsonParseRule() {
     rule.dictSub.insert( std::make_pair( "text", Rule(Type::STR)));
     return rule;
 }
-
 }

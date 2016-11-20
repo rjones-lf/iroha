@@ -49,6 +49,7 @@ class ConsensusEvent: public T, public Event {
         {}
     };
 
+
     std::vector<eventSignature> eventSignatures;
 
 public:
@@ -77,6 +78,7 @@ public:
     using Rule = json_parse::Rule;
     using Type = json_parse::Type;
     using Object = json_parse::Object;
+
 
 
     // WIP
