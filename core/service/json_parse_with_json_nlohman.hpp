@@ -30,7 +30,7 @@ namespace json_parse_with_json_nlohman {
 
         namespace detail {
             json dump_impl(Object obj);
-            Object load_impl(json& j,Rule& r);
+            Object load_impl(json& j,const Rule& r);
         }
 
         std::string dump(Object obj);

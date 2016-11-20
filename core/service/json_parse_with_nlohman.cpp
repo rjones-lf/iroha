@@ -51,7 +51,7 @@ namespace json_parse_with_json_nlohman {
                 return res;
             }
  
-            Object load_impl(json& j,Rule& r){
+            Object load_impl(json& j,const Rule& r){
                 if(r.getType() == Type::DICT) {
                     std::map<std::string, Rule> dict = std::move(r.dictSub);
                     Object res = Object(Type::DICT);
@@ -62,7 +62,7 @@ namespace json_parse_with_json_nlohman {
                 }else if(r.getType() == Type::LIST){
                     auto list = std::move(r.listSub.at(0));
                     Object res = Object(Type::LIST);
-                    for(auto&& v : j.get<std::vector<json>>()){
+                    for(auto& v : j.get<std::vector<json>>()){
                         res.listSub.push_back(load_impl( v, list));
                     }
                     return res;

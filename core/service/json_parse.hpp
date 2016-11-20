@@ -77,6 +77,27 @@ namespace json_parse {
         }
         std::map<std::string, Rule> dictSub;
         std::vector<Rule> listSub;
+
+        operator std::string() const { 
+            std::string res;
+            switch(type){
+                case Type::BOOL: return "bool";
+                case Type::STR:  return "string";
+                case Type::INT:  return "int";
+                case Type::FLOAT:return "float";
+                case Type::LIST:
+                    return "[" + std::string(listSub.at(0)) + "]";
+                case Type::DICT:
+                    res = "{";
+                    for(auto&& s : dictSub){
+                        res += "\"" + s.first + "\":" + std::string(s.second) + ",";
+                    }
+                    res += "}";
+                    return res;
+                case Type::INVELIED:
+                    return "invalied";
+            }    
+        }
     };
 };
 #endif //IROHA_JSON_PARSE_H
