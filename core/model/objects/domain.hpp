@@ -28,12 +28,12 @@ class Domain{
     std::string ownerPublicKey;
     std::string name;
 public:
-    Domain(
+    explicit Domain(
         const std::string& ownerPublicKey,
         const std::string& name
     );
 
-    Domain(
+    explicit Domain(
         json_parse::Object obj
     );
 

@@ -36,16 +36,16 @@ class Add: public T {
     using Rule = json_parse::Rule;
     using Type = json_parse::Type;
 
-    Add(
+    explicit Add(
         const std::string& domain,
         const std::string& name,
         const unsigned long long& value,
         const unsigned int& precision
     );
 
-    Add(const std::string& ownerPublicKey,const std::string& name);
+    explicit Add(const std::string& ownerPublicKey,const std::string& name);
 
-    Add(Object obj);
+    explicit Add(Object obj);
 
     std::string getCommandName() const{
         return "Add";

@@ -20,10 +20,10 @@ namespace json_parse {
 
     struct Object {
         const Type type;
-        int integer;
-        std::string str;
-        bool boolean;
-        float floating;
+        int integer = -1;
+        std::string str = "";
+        bool boolean = false;
+        float floating = 0.0f;
 
         std::map<std::string, Object> dictSub;
         std::vector<Object> listSub;

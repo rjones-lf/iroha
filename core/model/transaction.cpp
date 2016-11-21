@@ -12,10 +12,11 @@ namespace transaction{
     ):
         Transfer(
             obj
-        )
+        ),
+        senderPubkey(obj.dictSub["senderPublicKey"].str),
+        hash(obj.dictSub["hash"].str)
     {
-        senderPubkey = obj.dictSub["senderPublicKey"].str;
-        hash = obj.dictSub["hash"].str;
+        
         std::vector<Object> txSigs = obj.dictSub["txSignatures"].listSub;
         for(auto&& sig : txSigs){
             txSignatures.push_back(txSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));

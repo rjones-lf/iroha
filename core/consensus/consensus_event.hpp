@@ -49,26 +49,27 @@ class ConsensusEvent: public T, public Event {
         {}
     };
 
-
     std::vector<eventSignature> eventSignatures;
 
 public:
     unsigned long long order = 0;
 
-    ConsensusEvent(
+    explicit ConsensusEvent(
         const std::string& senderPubkey,
         const std::string& receiverPubkey,
         const std::string& name,
         const int& value
     );
-    ConsensusEvent(
+
+    explicit ConsensusEvent(
         const std::string& senderPubkey,
         const std::string& domain,
         const std::string& name,
         const unsigned long long& value,
         const unsigned int& precision
     );
-    ConsensusEvent(
+
+    explicit ConsensusEvent(
         const std::string& senderPubkey,
         const std::string& ownerPublicKey,
         const std::string& name
@@ -81,8 +82,7 @@ public:
 
 
 
-    // WIP
-    ConsensusEvent(Object obj);
+    explicit ConsensusEvent(Object obj);
 
     void addSignature(const std::string& publicKey, const std::string& signature){
         eventSignatures.push_back(eventSignature(publicKey, signature));

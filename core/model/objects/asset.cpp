@@ -47,8 +47,10 @@ Asset::Asset(
     const std::string& name,
     const unsigned long long& value
 ):
+    domain(""),
     name(name),
-    value(value)
+    value(value),
+    precision(-1)
 {}
 
 json_parse::Object Asset::dump() {
