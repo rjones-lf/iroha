@@ -32,11 +32,29 @@ namespace http {
 
     Cappuccino::Cappuccino( 0, nullptr);
 
-    Cappuccino::route("/",[](std::shared_ptr<Request> request) -> Response{
-        auto res =  Response(request);
-        res.file("index.html");
+    Cappuccino::route("/asset/operation",[](std::shared_ptr<Request> request) -> Response{
+      auto data = request->json();
+  		auto res = Response(request);
+      if(data.empty()) {
+        res.json(responseError("不正なJsonです"));
         return res;
-    });
+      }
+      for(auto key : { "command", "", "sender", "receiver", "signature", "timestamp"}) {
+        if(data.find(key) == data.end()){
+          res.json(responseError("必要な要素が不足しています"));
+          return res;
+        }
+      }
+      if(
+        ! data["command"].is_string() || ! data["amount"].is_number() ||
+        ! data["sender"].is_string() || ! data["receiver"].is_number() ||
+        ! data["signature"].is_string() || ! data["timestamp"].is_string()
+      ) {
+        res.json(responseError("入力データの種類が違います"));
+        return res;
+      }
+          return res;
+      });
 
     // runnning
     Cappuccino::run();

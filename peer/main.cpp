@@ -43,27 +43,24 @@ int main() {
   signal(SIGINT, sigIntHandler);
 
   if(getenv("IROHA_HOME") == nullptr){
-    std::cout << "You must set IROHA_HOME!" << std::endl;
+    logger::error("main", "You must set IROHA_HOME!");
     return 1;
   }
 
-  std::cout<<"Process ID is "<< getpid() << std::endl;
+  logger::error("main","process id is :"+std::to_string(getpid()));
 
-  std::unique_ptr<connection::Config> config;
+  connection::initialize_peer(nullptr);
+  sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
 
-  config->ip_addr = peer::getMyIp();
-  std::string myPublicKey = peer::getMyPublicKey();
+  std::thread sumeragi_thread(sumeragi::loop);
+  std::thread http_thread(http::server);
 
-  sumeragi::initializeSumeragi(myPublicKey, peer::getPeerList());
+  connection::exec_subscription(peer::getMyIp());
 
-  std::thread http_th(server);
-  std::thread sumeragi_th(sumeragi::loop);
-
-  while(running){}
-
-  http_th.detach();
-  sumeragi_th.detach();
+  while(running);
   
+  sumeragi_thread.detach();
+  http_thread.detach();
+
   return 0;
 }
-
