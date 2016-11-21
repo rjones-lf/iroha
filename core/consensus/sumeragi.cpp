@@ -386,7 +386,7 @@ namespace sumeragi {
 
                 logger::info("sumeragi", "event queue not empty");
 
-                auto events = std::move(repository::event::findAll());
+                auto events = repository::event::findAll();
                 logger::info("sumeragi", "event's size " + std::to_string(events.size()));
                 
                 // Sort the events to determine priority to process

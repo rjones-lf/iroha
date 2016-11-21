@@ -66,9 +66,9 @@ namespace peer {
                     1
                 ));
             }
-            return std::move(nodes);
+            return nodes;
         }catch(...){
-            return std::move(nodes);
+            return nodes;
         }
     }
 };

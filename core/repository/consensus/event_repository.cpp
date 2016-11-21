@@ -81,7 +81,7 @@ namespace repository {
             }
             events.clear();
             logger::info("repo::event", "events size = "+std::to_string(res.size()));
-            return std::move(res);
+            return res;
         };
 
         std::unique_ptr<::event::Event>& findNext();

@@ -77,7 +77,7 @@ struct MerkleNode {
         rule.dictSub.insert( std::make_pair("parent", Rule(Type::STR)));
         rule.dictSub.insert( std::make_pair("leftChild", Rule(Type::STR)));
         rule.dictSub.insert( std::make_pair("rightChild", Rule(Type::STR)));
-        return std::move(rule);
+        return rule;
     }
 };
 
