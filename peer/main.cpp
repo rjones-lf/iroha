@@ -47,7 +47,7 @@ int main() {
     return 1;
   }
 
-  logger::error("main","process id is :"+std::to_string(getpid()));
+  logger::error("main","process is :"+std::to_string(getpid()));
 
   connection::initialize_peer(nullptr);
   sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
