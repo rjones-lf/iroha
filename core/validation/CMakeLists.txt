@@ -13,10 +13,13 @@ link_directories(
 )
 
 ADD_LIBRARY(validator  STATIC
-  consensus_event_validator.cpp
+  #consensus_event_validator.cpp
+  transaction_validator.cpp
 )
 target_link_libraries(validator
   signature
   transfer_transaction
+  commands
+  objects
 )
 

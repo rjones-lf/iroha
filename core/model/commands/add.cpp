@@ -14,34 +14,48 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include "add.hpp"
 
-#ifndef CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
-#define CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+namespace command {
 
-#include <string>
-#include <memory>
-#include "../../service/json_parse.hpp"
+using Object = json_parse::Object;
+using Rule = json_parse::Rule;
+using Type = json_parse::Type;
 
-namespace object {
+template <>
+Add<object::Domain>::Add(
+    Object obj
+):Domain(obj){}
 
-class Domain{
-    std::string ownerPublicKey;
-    std::string name;
-public:
-    explicit Domain(
+template <>
+Add<object::Asset>::Add(
+    Object obj
+):Asset(obj){}
+
+template <>
+Add<object::Domain>::Add(
         const std::string& ownerPublicKey,
         const std::string& name
-    );
+):
+    object::Domain(
+        ownerPublicKey,
+        name
+    )
+{}
 
-    explicit Domain(
-        json_parse::Object obj
-    );
+template <>
+Add<object::Asset>::Add(
+    const std::string& domain,
+    const std::string& name,
+    const unsigned long long& value,
+    const unsigned int& precision
+):
+    object::Asset(
+        domain,
+        name,
+        value,
+        precision
+    )
+{}
 
-    json_parse::Object dump();
-    static json_parse::Rule getJsonParseRule();
-};
-
-};  // namespace domain
-
-#endif  // CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
-
+}

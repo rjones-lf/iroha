@@ -14,41 +14,18 @@ limitations under the License.
 #ifndef CORE_DOMAIN_TRANSACTIONS_TRANSACTION_HPP_
 #define CORE_DOMAIN_TRANSACTIONS_TRANSACTION_HPP_
 
-#include "commands/command.hpp"
+#include "commands/add.hpp"
+#include "commands/transfer.hpp"
 
-#include "../service/json_parse_with_json_nlohmann.hpp"
+#include "../service/json_parse.hpp"
+#include "../service/json_parse_with_json_nlohman.hpp"
 #include "../crypto/hash.hpp"
 #include <algorithm>
 
 namespace transaction {
 
-enum class TransactionType {
-    addPeer = 0,
-    modifyPeer = 1,
-    removePeer = 2,
-    transfer = 3,
-    signatory = 4,
-    signatoryAdd = 5,
-    signatoryDelete = 6,
-    domainDefinition = 7,
-    domainRenewal = 8,
-    aliasDefinition = 9,
-    aliasRenewal = 10,
-    assetDefinition = 11,
-    message = 12,
-    chaincodeInit = 13,
-    chaincodeInvoke = 14,
-    chaincodeUpdate  = 15,
-    chaincodeDestroy = 16,
-    interchain = 17
-};
-
-template<typename T,
-    std::enable_if_t<
-    std::is_base_of<command::Command, T>::value,std::nullptr_t
-    > = nullptr
->
-class Transaction {
+template <typename T>
+class Transaction: public T {
 
     struct txSignature{
         std::string publicKey;
@@ -63,31 +40,48 @@ class Transaction {
         {}
     };
 
-    std::unique_ptr<T> command;
     std::string hash;
     std::vector<txSignature> txSignatures;
-
+    std::string senderPubkey;
 public:
 
-    Transaction(std::unique_ptr<T> command):
-        command(std::move(command))
-    {}
+    using Object = json_parse::Object;
+    using Rule = json_parse::Rule;
+    using Type = json_parse::Type;
 
-    std::string getHash() {
-        auto parser = json_parse_with_json_nlohman::JsonParse<T>();
-        return hash::sha3_256_hex(parser.dump(command->dump()));
-    }
+    Transaction(
+        Object obj
+    );
 
-    std::string getAsJSON() const{
-        return command.getAsJson();
+    Transaction(
+        const std::string& senderPubkey,
+        const std::string& receiverPubkey,
+        const std::string& name,
+        const int& value
+    );
+    Transaction(
+        const std::string& senderPubkey,
+        const std::string& domain,
+        const std::string& name,
+        const unsigned long long& value,
+        const unsigned int& precision
+    );
+    Transaction(
+        const std::string& senderPubkey,
+        const std::string& ownerPublicKey,
+        const std::string& name
+    );
+
+
+    auto getHash() {
+        return hash::sha3_256_hex(json_parse_with_json_nlohman::parser::dump(T::dump()));
     }
 
     std::vector<txSignature> getTxSignatures(){
         return txSignatures;
     }
 
-    void addTxSignature(std::string pubKey,std::string signature){
-        std::cout <<"+"<< pubKey << std::endl;
+    void addTxSignature(const std::string& pubKey,const std::string& signature){
         txSignatures.push_back(txSignature(pubKey, signature));
     }
 
@@ -100,11 +94,7 @@ public:
         ) == txSignatures.size();
     }
 
-
-    using Object = json_parse::Object;
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type ;
-    json_parse::Object dump() {
+    Object dump() {
         Object obj = Object(Type::DICT);
         auto txSigs   = Object(Type::LIST);
         for(auto&& tSig : txSignatures) {
@@ -114,22 +104,24 @@ public:
             txSigs.listSub.push_back(txSig);
         }
         obj.dictSub.insert( std::make_pair( "txSignatures", txSigs));
+        obj.dictSub.insert( std::make_pair( "senderPublicKey", Object(Type::STR,senderPubkey)));
         obj.dictSub.insert( std::make_pair( "hash",  Object(Type::STR, getHash())));
-        obj.dictSub.insert( std::make_pair( "command", command->dump()));
+        obj.dictSub.insert( std::make_pair( "command", T::dump()));
         return obj;
     }
 
     static Rule getJsonParseRule() {
-        Rule obj = Rule(Type::DICT);
-        auto txSigs   = Rule(Type::LIST);
-        auto txSig = Rule(Type::DICT);
+        auto rule   = Rule(Type::DICT);
+        auto txSigs = Rule(Type::LIST);
+        auto txSig  = Rule(Type::DICT);
         txSig.dictSub.insert( std::make_pair( "publicKey", Rule(Type::STR)));
         txSig.dictSub.insert( std::make_pair( "signature", Rule(Type::STR)));
-        txSigs.listSub.reset(&txSig);
-        obj.dictSub.insert( std::make_pair( "txSignatures", std::move(txSigs)));
-        obj.dictSub.insert( std::make_pair( "hash",  Rule(Type::STR)));
-        obj.dictSub.insert( std::make_pair( "command", T::getJsonParseRule()));
-        return obj;
+        txSigs.listSub.push_back(txSig);
+        rule.dictSub.insert( std::make_pair( "txSignatures", txSigs));
+        rule.dictSub.insert( std::make_pair( "senderPublicKey", Rule(Type::STR)));
+        rule.dictSub.insert( std::make_pair( "hash",  Rule(Type::STR)));
+        rule.dictSub.insert( std::make_pair( "command", T::getJsonParseRule()));
+        return rule;
     }
 
 };

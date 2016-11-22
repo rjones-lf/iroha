@@ -17,6 +17,7 @@ limitations under the License.
 #include "../../consensus/connection/connection.hpp"
 
 #include "../../util/logger.hpp"
+#include "../../service/peer_service.hpp"
 
 #include <cstdint>
 #include <cstdio>
@@ -61,9 +62,9 @@ namespace connection {
         return [&](AtomicBuffer& buffer, util::index_t offset, util::index_t length, Header& header) {
             std::string raw_data = std::string((char *)buffer.buffer() + offset, (unsigned long)length);
             // WIP parse json.
-            logger::info("receive", raw_data);
+            // logger::info("receive", raw_data);
             for(auto& f : receivers) {
-                f("From", raw_data);
+                f( peer::getMyIp(), raw_data);
             }
         };
     }
@@ -120,15 +121,15 @@ namespace connection {
     }
 
     bool send(const std::string& to,const std::string& msg) {
-        logger::info("connection", "Start send()");
+        logger::info("connection", "Start send");
         if(publications.find(to) == publications.end()){
             logger::error("connection", to + " is not registerd");
             return false;
         }
         try{
             char* message = const_cast<char*>(msg.c_str());
-            AERON_DECL_ALIGNED(std::uint8_t buffer[512], 16);        
-            AtomicBuffer srcBuffer(&buffer[0], 512);
+            AERON_DECL_ALIGNED(std::uint8_t buffer[4096], 16);        
+            AtomicBuffer srcBuffer(&buffer[0], 4096);
             srcBuffer.putBytes(0, reinterpret_cast<std::uint8_t *>(message), strlen(message));
             const std::int64_t result = publications[to]->offer(srcBuffer, 0, strlen(message));
             if (result < 0){
@@ -159,7 +160,9 @@ namespace connection {
         logger::info("connection", "send mesage"+ msg);
         logger::info("connection", "send mesage publlications "+ std::to_string(publications.size()));
         for(auto& p : publications){
-            send( p.first, msg);
+            if(p.first != peer::getMyIp()){
+                send( p.first, msg);
+            }
         }
         return true;
     }

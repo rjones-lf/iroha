@@ -13,40 +13,33 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-#ifndef CORE_VALIDATION_TRANSACTIONVALIDATOR_HPP_
-#define CORE_VALIDATION_TRANSACTIONVALIDATOR_HPP_
-
-#include "../model/transaction.hpp"
-#include "../model/commands/add.hpp"
-#include "../model/commands/transfer.hpp"
-
-#include "../model/objects/domain.hpp"
-#include "../model/objects/asset.hpp"
-#include "../model/objects/message.hpp"
-
-#include <memory>
-#include <type_traits>
+#include "transaction_validator.hpp"
 
 namespace transaction_validator {
 
     using transaction::Transaction;
+    using command::Add;
+    using command::Transfer;
 
-    template<typename T>
-    bool isValid(const Transaction<T>& tx){
+    template<>
+    bool isValid<Transaction<Add<object::Asset>>>(
+        const Transaction<Transaction<Add<object::Asset>>>& tx
+    ){
         return true;
     }
 
-    template<typename T>
-    bool signaturesAreValid(const Transaction<T>& tx){
+    template<>
+    bool signaturesAreValid<Transaction<Add<object::Asset>>>(
+        const Transaction<Transaction<Add<object::Asset>>>& tx
+    ){
         return true;
     }
 
-    template<typename T>
-    bool validForType(const Transaction<T>& tx){
+    template<>
+    bool validForType<Transaction<Add<object::Asset>>>(
+        const Transaction<Transaction<Add<object::Asset>>>& tx
+    ){
         return true;
     }
 
-};  // namespace transaction_validator
-
-#endif  // CORE_VALIDATION_TRANSACTIONVALIDATOR_HPP_
+};  
