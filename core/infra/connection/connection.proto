@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+option cc_generic_services = false;
+
+package connection;
+
+service IrohaConnection {
+  rpc Operation(ConsensusEvent) returns (StatusResponse) {}
+}
+
+message Asset {
+  string domain = 1;
+  string name = 2;
+  uint64 value = 3;
+  uint64 precision = 4;
+}
+message Domain {
+  string ownerPublicKey = 1;
+  string name = 2;
+}
+
+message TxSignatures {
+  string publicKey = 1;
+  string signature = 2;
+}
+message EventSignature {
+  string publicKey = 1;
+  string signature = 2;
+}
+
+message Transaction {
+  repeated TxSignatures txSignatures = 1;
+  string type = 2;
+  google.protobuf.Any objects = 3;
+  string senderPubkey = 4;
+  string hash = 5;
+  string value = 6;
+}
+
+message ConsensusEvent {
+  repeated EventSignature eventSignatures = 1;
+  Transaction transaction = 2;
+}
+
+message StatusResponse {
+  string value = 1;
+}
