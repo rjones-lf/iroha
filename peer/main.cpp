@@ -47,9 +47,14 @@ int main() {
     return 1;
   }
 
-  logger::error("main","process is :"+std::to_string(getpid()));
+  logger::info("main","process is :"+std::to_string(getpid()));
 
+  std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
   connection::initialize_peer(nullptr);
+  for(const auto& n : nodes){
+      connection::addPublication(n->getIP());
+  }
+  
   sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
 
   std::thread sumeragi_thread(sumeragi::loop);

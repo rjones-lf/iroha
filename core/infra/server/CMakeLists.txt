@@ -8,5 +8,6 @@ ADD_LIBRARY(http_server_with_cappuccino STATIC http_server_with_cappuccino.cpp)
 target_link_libraries(http_server_with_cappuccino
   ssl
   crypto
+  logger
 )
 

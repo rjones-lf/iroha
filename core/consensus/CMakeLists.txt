@@ -19,6 +19,7 @@ ADD_LIBRARY(consensus_event STATIC
   consensus_event.cpp
 )
 target_link_libraries(consensus_event
+  hash
   commands
   objects
   transaction

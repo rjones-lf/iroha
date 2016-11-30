@@ -140,7 +140,6 @@ namespace sumeragi {
             for(auto&& p : peers){
                 validatingPeers.push_back(std::move(p));
             }
-
         }
     };
 
@@ -182,6 +181,7 @@ namespace sumeragi {
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
 
         connection::receive([&](std::string from, std::string message){
+            logger::info("sumeragi", "receive!" + message);
             if(message.find("Transfer") != std::string::npos){
                 auto ex = json_parse_with_json_nlohman::parser::load<
                     ConsensusEvent<

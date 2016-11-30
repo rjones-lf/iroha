@@ -12,7 +12,7 @@ include_directories(
   ${KECCAK_PATH}/bin/generic64/libkeccak.a.headers  
 )
 link_directories(
-  ${ED25519_PATH}
+  ${ED25519_PATH}/lib
   ${PROJECT_BINARY_DIR}/lib
   ${KECCAK_PATH}/bin/generic64
   # Bad solution
@@ -27,7 +27,8 @@ target_link_libraries(hash_test hash
   keccak
   crypto
   ssl
-  ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a pthread)
+  ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a pthread
+)
 add_test(
   NAME hash_test
   COMMAND $<TARGET_FILE:hash_test>
@@ -49,6 +50,7 @@ add_executable(signature_test signature_test.cpp)
 target_link_libraries(signature_test signature
   base64
   hash
+  ed25519
   ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a pthread)
 add_test(
   NAME signature_test

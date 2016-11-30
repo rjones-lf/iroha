@@ -7,7 +7,7 @@ include_directories(
   ${ED25519_PATH}/src
 )
 link_directories(
-  ${ED25519_PATH}
+  ${ED25519_PATH}/lib
   ${KECCAK_PATH}/bin/generic64
   ${PROJECT_SOURCE_DIR}/core/infra/crypto
 )

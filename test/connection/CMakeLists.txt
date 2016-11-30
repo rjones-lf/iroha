@@ -16,6 +16,6 @@ add_executable(connection_test
 )
 target_link_libraries(connection_test
   aeron_client
-  connection_with_aeron
+  connection_with_grpc
   pthread
 )

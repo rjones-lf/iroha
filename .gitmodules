@@ -16,7 +16,7 @@
   ignore = dirty
 [submodule "core/vendor/json"]
 	path = core/vendor/json
-	url = https://github.com/nlohmann/json.git
+	url = g
 [submodule "core/vendor/Agrona"]
 	path = core/vendor/Agrona
 	url = https://github.com/real-logic/Agrona.git

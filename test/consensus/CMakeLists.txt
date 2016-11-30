@@ -8,7 +8,7 @@ SET(AERON_PATH  "${PROJECT_SOURCE_DIR}/core/vendor/Aeron")
 
 link_directories(
     ${PROJECT_BINARY_DIR}/lib
-    ${ED25519_PATH}
+    ${ED25519_PATH}/lib
     ${KECCAK_PATH}/bin/generic64
     ${PROJECT_SOURCE_DIR}/core/infra/crypto
     ${AERON_PATH}/cppbuild/Release/lib
@@ -25,7 +25,7 @@ target_link_libraries(sumeragi_test
     base64
     signature
     sumeragi
-    connection_with_aeron
+    connection_with_grpc
     peer_service_with_json
     pthread
     consensus_event
@@ -44,7 +44,7 @@ target_link_libraries(transaction_test
         base64
         signature
         sumeragi
-        connection_with_aeron
+        connection_with_grpc
         peer_service_with_json
         pthread
         consensus_event

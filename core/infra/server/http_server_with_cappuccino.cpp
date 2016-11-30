@@ -16,30 +16,101 @@ limitations under the License.
 
 #include <json.hpp>
 
-#include <iostream>
-#include <string>
-
 #include "../../server/http_server.hpp"
 #include "../../vendor/Cappuccino/cappuccino.hpp"
+#include "../../util/logger.hpp"
+
+#include "../../consensus/connection/connection.hpp"
+#include "../../consensus/consensus_event.hpp"
+#include "../../model/commands/transfer.hpp"
+#include "../../model/objects/domain.hpp"
+#include "../../model/transaction.hpp"
+#include "../../service/json_parse_with_json_nlohman.hpp"
+#include "../../service/peer_service.hpp"
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <thread>
+
+
+
   
 namespace http {
   
   using nlohmann::json;
   using Request = Cappuccino::Request;
   using Response = Cappuccino::Response;
+  
+  template<typename T>
+  using Transaction = transaction::Transaction<T>;
+  template<typename T>
+  using ConsensusEvent = event::ConsensusEvent<T>;
+  template<typename T>
+  using Add = command::Add<T>;
+  template<typename T>
+  using Transfer = command::Transfer<T>;
+
+  json responseError(std::string message){
+    return json({
+      {"message", message},
+      {"status", 400}
+    });
+  }
 
   void server() {
-
+    logger::info("server", "initialize server!");
     Cappuccino::Cappuccino( 0, nullptr);
 
+    Cappuccino::route("/",[](std::shared_ptr<Request> request) -> Response{
+      auto data = request->json();
+      auto res = Response(request);
+      if(data.empty()) {
+        res.json(responseError("Invalied JSON"));
+        return res;
+      }
+      for(auto key : { "command" }) {
+        if(data.find(key) == data.end()){
+          res.json(responseError("必要な要素が不足しています"));
+          return res;
+        }
+      }
+      if(
+        ! data["command"].is_string() 
+      ) {
+        res.json(responseError("Incalied data type"));
+        return res;
+      }
+
+      auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
+          "dummy",
+          "dummy",
+          data["command"],
+          100
+      );
+      event->addTxSignature(
+              peer::getMyPublicKey(),
+              signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+      );
+      auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
+      connection::send(peer::getMyIp(), text);
+      logger::info("server", "sent data to sumeragi!"); 
+      res.json( json({
+        {"message", "OK"},
+        {"status", 200}
+      }));
+      return res;
+    });
+    
     Cappuccino::route("/asset/operation",[](std::shared_ptr<Request> request) -> Response{
       auto data = request->json();
   		auto res = Response(request);
       if(data.empty()) {
-        res.json(responseError("不正なJsonです"));
+        res.json(responseError("Invalied JSON"));
         return res;
       }
-      for(auto key : { "command", "", "sender", "receiver", "signature", "timestamp"}) {
+      for(auto key : { "command", "amount", "sender", "receiver", "signature", "timestamp"}) {
         if(data.find(key) == data.end()){
           res.json(responseError("必要な要素が不足しています"));
           return res;
@@ -50,12 +121,13 @@ namespace http {
         ! data["sender"].is_string() || ! data["receiver"].is_number() ||
         ! data["signature"].is_string() || ! data["timestamp"].is_string()
       ) {
-        res.json(responseError("入力データの種類が違います"));
+        res.json(responseError("Incalied data type"));
         return res;
       }
           return res;
       });
 
+    logger::info("server", "start server!");
     // runnning
     Cappuccino::run();
 
