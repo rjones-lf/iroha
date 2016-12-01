@@ -4,7 +4,7 @@ import "google/protobuf/any.proto";
 
 option cc_generic_services = false;
 
-package connection;
+package connection_objec;
 
 service IrohaConnection {
   rpc Operation(ConsensusEvent) returns (StatusResponse) {}

@@ -13,10 +13,10 @@
 #include <grpc++/impl/codegen/rpc_service_method.h>
 #include <grpc++/impl/codegen/service_type.h>
 #include <grpc++/impl/codegen/sync_stream.h>
-namespace connection {
+namespace connection_object {
 
 static const char* IrohaConnection_method_names[] = {
-  "/connection.IrohaConnection/Operation",
+  "/connection_object.IrohaConnection/Operation",
 };
 
 std::unique_ptr< IrohaConnection::Stub> IrohaConnection::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -28,12 +28,12 @@ IrohaConnection::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& ch
   : channel_(channel), rpcmethod_Operation_(IrohaConnection_method_names[0], ::grpc::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status IrohaConnection::Stub::Operation(::grpc::ClientContext* context, const ::connection::ConsensusEvent& request, ::connection::StatusResponse* response) {
+::grpc::Status IrohaConnection::Stub::Operation(::grpc::ClientContext* context, const ::connection_object::ConsensusEvent& request, ::connection_object::StatusResponse* response) {
   return ::grpc::BlockingUnaryCall(channel_.get(), rpcmethod_Operation_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::connection::StatusResponse>* IrohaConnection::Stub::AsyncOperationRaw(::grpc::ClientContext* context, const ::connection::ConsensusEvent& request, ::grpc::CompletionQueue* cq) {
-  return new ::grpc::ClientAsyncResponseReader< ::connection::StatusResponse>(channel_.get(), cq, rpcmethod_Operation_, context, request);
+::grpc::ClientAsyncResponseReader< ::connection_object::StatusResponse>* IrohaConnection::Stub::AsyncOperationRaw(::grpc::ClientContext* context, const ::connection_object::ConsensusEvent& request, ::grpc::CompletionQueue* cq) {
+  return new ::grpc::ClientAsyncResponseReader< ::connection_object::StatusResponse>(channel_.get(), cq, rpcmethod_Operation_, context, request);
 }
 
 IrohaConnection::Service::Service() {
@@ -41,14 +41,14 @@ IrohaConnection::Service::Service() {
   AddMethod(new ::grpc::RpcServiceMethod(
       IrohaConnection_method_names[0],
       ::grpc::RpcMethod::NORMAL_RPC,
-      new ::grpc::RpcMethodHandler< IrohaConnection::Service, ::connection::ConsensusEvent, ::connection::StatusResponse>(
+      new ::grpc::RpcMethodHandler< IrohaConnection::Service, ::connection_object::ConsensusEvent, ::connection_object::StatusResponse>(
           std::mem_fn(&IrohaConnection::Service::Operation), this)));
 }
 
 IrohaConnection::Service::~Service() {
 }
 
-::grpc::Status IrohaConnection::Service::Operation(::grpc::ServerContext* context, const ::connection::ConsensusEvent* request, ::connection::StatusResponse* response) {
+::grpc::Status IrohaConnection::Service::Operation(::grpc::ServerContext* context, const ::connection_object::ConsensusEvent* request, ::connection_object::StatusResponse* response) {
   (void) context;
   (void) request;
   (void) response;
@@ -56,5 +56,5 @@ IrohaConnection::Service::~Service() {
 }
 
 
-}  // namespace connection
+}  // namespace connection_object
 

@@ -35,19 +35,28 @@ using grpc::ServerContext;
 using grpc::ClientContext;
 using grpc::Status;
 
-using connection::Asset;
-using connection::ConsensusEvent;
-using connection::Domain;
-using connection::EventSignature;
-using connection::StatusResponse;
-using connection::Transaction;
-using connection::TxSignatures;
-using connection::IrohaConnection;
+using connection_object::IrohaConnection;
+
+template<typename T>
+using ConsensusEvent = event::ConsensusEvent<T>;
+template<typename T>
+using Transaction = transaction::Transaction<T>;
+template<typename T>
+using Transfer = command::Transfer<T>;
+template<typename T>
+using Add = command::Add<T>;
+using object::Asset;
+using object::Domain;
 
 namespace connection {
 
     std::vector<std::string> receiver_ips;
-    std::vector<std::function<void(std::string from,std::string message)>> receivers;
+    std::vector<
+        std::function<void(
+            std::string from,
+            std::unique_ptr<::event::Event> message)
+        >
+    > receivers;
 
     class IrohaConnectionClient {
         public:
@@ -55,8 +64,8 @@ namespace connection {
             : stub_(IrohaConnection::NewStub(channel)) {}
 
         std::string Operation(const std::string& message) {
-            StatusResponse response;
-            ConsensusEvent event;
+            connection_object::StatusResponse response;
+            connection_object::ConsensusEvent event;
             ClientContext context;
 
             Status status = stub_->Operation(&context, event, &response);
@@ -73,45 +82,39 @@ namespace connection {
         std::unique_ptr<IrohaConnection::Stub> stub_;
     };
 
-
     class IrohaConnectionServiceImpl final : public IrohaConnection::Service {
         public:
-        Status Operation(ServerContext* context, const ConsensusEvent* event,
-                        StatusResponse* response) override {
-            // WIP add to consensus event repository.
-            // receive();
+        Status Operation(ServerContext* context,
+            const connection_object::ConsensusEvent* event,
+            connection_object::StatusResponse* response
+        ) override {
+            logger::info("connection", "operation");
+            for(auto& f: receivers){
+                //f("from",event->DebugString());
+            }
+            response->set_value("OK");
             return Status::OK;
         }
     };
 
-
     IrohaConnectionServiceImpl service;
     ServerBuilder builder;
-    bool subscription_running(true);
 
-    void initialize_peer(std::unique_ptr<connection::Config> config) {
+    void initialize_peer() {
         std::string server_address("0.0.0.0:50051");
         builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
     }
 
-    int exec_subscription(std::string ip) {
-        std::unique_ptr<Server> server(builder.BuildAndStart());
-        server->Wait();
-        return 0;
-    }
-
-    void addPublication(std::string ip) {
-        receiver_ips.push_back(ip);
-    }
-
-    bool send(const std::string& ip,const std::string& msg) {
+    bool send(const std::string& ip,
+        const std::unique_ptr<event::Event>& event) {
+        
         if(find( receiver_ips.begin(), receiver_ips.end() , ip) != receiver_ips.end()){
             IrohaConnectionClient client(grpc::CreateChannel(
                 ip + ":50051", grpc::InsecureChannelCredentials())
             );
-            std::string reply = client.Operation(msg);
-            logger::info("connection", "send successfull :"+ reply);
+            //std::string reply = client.Operation(event);
+            //logger::info("connection", "send successfull :"+ reply);
             return true;
         }else{
             logger::error("connection", "not found");
@@ -119,19 +122,38 @@ namespace connection {
         }
     }
 
-    bool sendAll(const std::string& msg) {
-        logger::info("connection", "send mesage"+ msg);
-        logger::info("connection", "send mesage publlications "+ std::to_string( receiver_ips.size()));
+    bool sendAll(
+        const std::unique_ptr<
+            event::Event
+        >& msg
+    ) {
+        // WIP
+        //logger::info("connection", "send mesage"+ msg);
         for(auto& ip : receiver_ips){
             if( ip != peer::getMyIp()){
-                send( ip, msg);
+        //        send( ip, msg);
             }
         }
         return true;
     }
 
-    bool receive(const std::function<void(std::string from, std::string message)>& callback) {
+    bool receive(const std::function<void(
+        const std::string& from,
+        std::unique_ptr<
+            event::Event
+        >&& message)>& callback) {
         receivers.push_back(callback);
         return true;
     }
+
+    void addSubscriber(std::string ip) {
+        receiver_ips.push_back(ip);
+    }
+
+    int run() {
+        std::unique_ptr<Server> server(builder.BuildAndStart());
+        server->Wait();
+        return 0;
+    }
+
 };

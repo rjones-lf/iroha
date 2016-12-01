@@ -180,21 +180,17 @@ namespace sumeragi {
 
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
 
-        connection::receive([&](std::string from, std::string message){
-            logger::info("sumeragi", "receive!" + message);
-            if(message.find("Transfer") != std::string::npos){
-                auto ex = json_parse_with_json_nlohman::parser::load<
-                    ConsensusEvent<
-                        Transaction<
-                            Transfer<object::Asset>
-                        >
-                    >
-                >(message);
-                auto hash = ex->getHash();
-                logger::info("sumeragi", "received message! sig:[" + std::to_string(ex->getNumValidSignatures()) +"]");
-                // WIP currently, unuse hash in event repository,
-                repository::event::add( hash, std::move(ex));
-            }
+        connection::receive([&](
+            const std::string& from,
+            std::unique_ptr<
+                event::Event
+            >&& event
+        ){
+            logger::info("sumeragi", "receive!");
+            auto hash = event->getHash();
+            logger::info("sumeragi", "received message! sig:[" + std::to_string(event->getNumValidSignatures()) +"]");
+            // WIP currently, unuse hash in event repository,
+            repository::event::add( hash, std::move(event));
         });
 
         logger::info("sumeragi", "initialize numValidatingPeers :" + std::to_string(context->numValidatingPeers));
@@ -278,10 +274,10 @@ namespace sumeragi {
                 
                 if (context->validatingPeers.at(context->proxyTailNdx)->getPublicKey() == peer::getMyPublicKey()) {
                     logger::info("sumeragi", "I will send event to "+context->validatingPeers.at(context->proxyTailNdx)->getIP());
-                    connection::send(context->validatingPeers.at(context->proxyTailNdx)->getIP(), json_parse_with_json_nlohman::parser::dump(event->dump())); // Think In Process
+                    connection::send(context->validatingPeers.at(context->proxyTailNdx)->getIP(), std::move(event)); // Think In Process
                 } else {           
                     logger::info("sumeragi", "Send All! sig:[" + std::to_string(event->getNumValidSignatures()) +"]");                     
-                    connection::sendAll(json_parse_with_json_nlohman::parser::dump(event->dump())); // TODO: Think In Process
+                    connection::sendAll(std::move(event)); // TODO: Think In Process
                 }
 
                 detail::printReject();
@@ -328,7 +324,8 @@ namespace sumeragi {
         }
         logger::info( "sumeragi", "broadcastEnd:"+ std::to_string(broadcastEnd));
         logger::info( "sumeragi", "broadcastStart:"+ std::to_string(broadcastStart));
-        connection::sendAll(event->getHash()); //TODO: change this to only broadcast to peer range between broadcastStart and broadcastEnd
+        // WIP issue hash event
+        //connection::sendAll(event->getHash()); //TODO: change this to only broadcast to peer range between broadcastStart and broadcastEnd
     }
 
     void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {

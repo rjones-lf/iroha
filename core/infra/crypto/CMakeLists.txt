@@ -56,6 +56,4 @@ ADD_LIBRARY(signature STATIC
 target_link_libraries(signature
   ed25519
   base64
-  keccak
-
 )

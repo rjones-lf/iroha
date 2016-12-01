@@ -17,7 +17,7 @@
 #include <google/protobuf/wire_format.h>
 // @@protoc_insertion_point(includes)
 
-namespace connection {
+namespace connection_object {
 
 namespace {
 
@@ -227,24 +227,25 @@ void protobuf_AddDesc_connection_2eproto() {
 
   ::google::protobuf::protobuf_AddDesc_google_2fprotobuf_2fany_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\020connection.proto\022\nconnection\032\031google/p"
-    "rotobuf/any.proto\"G\n\005Asset\022\016\n\006domain\030\001 \001"
-    "(\t\022\014\n\004name\030\002 \001(\t\022\r\n\005value\030\003 \001(\004\022\021\n\tpreci"
-    "sion\030\004 \001(\004\".\n\006Domain\022\026\n\016ownerPublicKey\030\001"
-    " \001(\t\022\014\n\004name\030\002 \001(\t\"4\n\014TxSignatures\022\021\n\tpu"
-    "blicKey\030\001 \001(\t\022\021\n\tsignature\030\002 \001(\t\"6\n\016Even"
-    "tSignature\022\021\n\tpublicKey\030\001 \001(\t\022\021\n\tsignatu"
-    "re\030\002 \001(\t\"\245\001\n\013Transaction\022.\n\014txSignatures"
-    "\030\001 \003(\0132\030.connection.TxSignatures\022\014\n\004type"
-    "\030\002 \001(\t\022%\n\007objects\030\003 \001(\0132\024.google.protobu"
-    "f.Any\022\024\n\014senderPubkey\030\004 \001(\t\022\014\n\004hash\030\005 \001("
-    "\t\022\r\n\005value\030\006 \001(\t\"s\n\016ConsensusEvent\0223\n\017ev"
-    "entSignatures\030\001 \003(\0132\032.connection.EventSi"
-    "gnature\022,\n\013transaction\030\002 \001(\0132\027.connectio"
-    "n.Transaction\"\037\n\016StatusResponse\022\r\n\005value"
-    "\030\001 \001(\t2X\n\017IrohaConnection\022E\n\tOperation\022\032"
-    ".connection.ConsensusEvent\032\032.connection."
-    "StatusResponse\"\000B\003\200\001\000b\006proto3", 709);
+    "\n\020connection.proto\022\021connection_object\032\031g"
+    "oogle/protobuf/any.proto\"G\n\005Asset\022\016\n\006dom"
+    "ain\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022\r\n\005value\030\003 \001(\004\022\021"
+    "\n\tprecision\030\004 \001(\004\".\n\006Domain\022\026\n\016ownerPubl"
+    "icKey\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\"4\n\014TxSignature"
+    "s\022\021\n\tpublicKey\030\001 \001(\t\022\021\n\tsignature\030\002 \001(\t\""
+    "6\n\016EventSignature\022\021\n\tpublicKey\030\001 \001(\t\022\021\n\t"
+    "signature\030\002 \001(\t\"\254\001\n\013Transaction\0225\n\014txSig"
+    "natures\030\001 \003(\0132\037.connection_object.TxSign"
+    "atures\022\014\n\004type\030\002 \001(\t\022%\n\007objects\030\003 \001(\0132\024."
+    "google.protobuf.Any\022\024\n\014senderPubkey\030\004 \001("
+    "\t\022\014\n\004hash\030\005 \001(\t\022\r\n\005value\030\006 \001(\t\"\201\001\n\016Conse"
+    "nsusEvent\022:\n\017eventSignatures\030\001 \003(\0132!.con"
+    "nection_object.EventSignature\0223\n\013transac"
+    "tion\030\002 \001(\0132\036.connection_object.Transacti"
+    "on\"\037\n\016StatusResponse\022\r\n\005value\030\001 \001(\t2f\n\017I"
+    "rohaConnection\022S\n\tOperation\022!.connection"
+    "_object.ConsensusEvent\032!.connection_obje"
+    "ct.StatusResponse\"\000B\003\200\001\000b\006proto3", 752);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "connection.proto", &protobuf_RegisterTypes);
   Asset::default_instance_ = new Asset();
@@ -283,7 +284,7 @@ const int Asset::kPrecisionFieldNumber;
 Asset::Asset()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.Asset)
+  // @@protoc_insertion_point(constructor:connection_object.Asset)
 }
 
 void Asset::InitAsDefaultInstance() {
@@ -295,7 +296,7 @@ Asset::Asset(const Asset& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.Asset)
+  // @@protoc_insertion_point(copy_constructor:connection_object.Asset)
 }
 
 void Asset::SharedCtor() {
@@ -309,7 +310,7 @@ void Asset::SharedCtor() {
 }
 
 Asset::~Asset() {
-  // @@protoc_insertion_point(destructor:connection.Asset)
+  // @@protoc_insertion_point(destructor:connection_object.Asset)
   SharedDtor();
 }
 
@@ -346,7 +347,7 @@ Asset* Asset::New(::google::protobuf::Arena* arena) const {
 }
 
 void Asset::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.Asset)
+// @@protoc_insertion_point(message_clear_start:connection_object.Asset)
 #if defined(__clang__)
 #define ZR_HELPER_(f) \
   _Pragma("clang diagnostic push") \
@@ -376,7 +377,7 @@ bool Asset::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.Asset)
+  // @@protoc_insertion_point(parse_start:connection_object.Asset)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -390,7 +391,7 @@ bool Asset::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->domain().data(), this->domain().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Asset.domain"));
+            "connection_object.Asset.domain"));
         } else {
           goto handle_unusual;
         }
@@ -407,7 +408,7 @@ bool Asset::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->name().data(), this->name().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Asset.name"));
+            "connection_object.Asset.name"));
         } else {
           goto handle_unusual;
         }
@@ -458,23 +459,23 @@ bool Asset::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.Asset)
+  // @@protoc_insertion_point(parse_success:connection_object.Asset)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.Asset)
+  // @@protoc_insertion_point(parse_failure:connection_object.Asset)
   return false;
 #undef DO_
 }
 
 void Asset::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.Asset)
+  // @@protoc_insertion_point(serialize_start:connection_object.Asset)
   // optional string domain = 1;
   if (this->domain().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->domain().data(), this->domain().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Asset.domain");
+      "connection_object.Asset.domain");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->domain(), output);
   }
@@ -484,7 +485,7 @@ void Asset::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Asset.name");
+      "connection_object.Asset.name");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->name(), output);
   }
@@ -499,18 +500,18 @@ void Asset::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->precision(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.Asset)
+  // @@protoc_insertion_point(serialize_end:connection_object.Asset)
 }
 
 ::google::protobuf::uint8* Asset::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.Asset)
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.Asset)
   // optional string domain = 1;
   if (this->domain().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->domain().data(), this->domain().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Asset.domain");
+      "connection_object.Asset.domain");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->domain(), target);
@@ -521,7 +522,7 @@ void Asset::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Asset.name");
+      "connection_object.Asset.name");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->name(), target);
@@ -537,12 +538,12 @@ void Asset::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->precision(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.Asset)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.Asset)
   return target;
 }
 
 int Asset::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.Asset)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.Asset)
   int total_size = 0;
 
   // optional string domain = 1;
@@ -580,7 +581,7 @@ int Asset::ByteSize() const {
 }
 
 void Asset::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.Asset)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.Asset)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -588,16 +589,16 @@ void Asset::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const Asset>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.Asset)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.Asset)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.Asset)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.Asset)
     MergeFrom(*source);
   }
 }
 
 void Asset::MergeFrom(const Asset& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.Asset)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.Asset)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -618,14 +619,14 @@ void Asset::MergeFrom(const Asset& from) {
 }
 
 void Asset::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.Asset)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.Asset)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void Asset::CopyFrom(const Asset& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.Asset)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.Asset)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -665,32 +666,32 @@ void Asset::clear_domain() {
   domain_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Asset::domain() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.domain)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.domain)
   return domain_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Asset::set_domain(const ::std::string& value) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.domain)
 }
  void Asset::set_domain(const char* value) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_char:connection_object.Asset.domain)
 }
  void Asset::set_domain(const char* value, size_t size) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Asset.domain)
 }
  ::std::string* Asset::mutable_domain() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Asset.domain)
+  // @@protoc_insertion_point(field_mutable:connection_object.Asset.domain)
   return domain_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Asset::release_domain() {
-  // @@protoc_insertion_point(field_release:connection.Asset.domain)
+  // @@protoc_insertion_point(field_release:connection_object.Asset.domain)
   
   return domain_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -701,7 +702,7 @@ void Asset::clear_domain() {
     
   }
   domain_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), domain);
-  // @@protoc_insertion_point(field_set_allocated:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Asset.domain)
 }
 
 // optional string name = 2;
@@ -709,32 +710,32 @@ void Asset::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Asset::name() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.name)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.name)
   return name_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Asset::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Asset.name)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.name)
 }
  void Asset::set_name(const char* value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_char:connection_object.Asset.name)
 }
  void Asset::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Asset.name)
 }
  ::std::string* Asset::mutable_name() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Asset.name)
+  // @@protoc_insertion_point(field_mutable:connection_object.Asset.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Asset::release_name() {
-  // @@protoc_insertion_point(field_release:connection.Asset.name)
+  // @@protoc_insertion_point(field_release:connection_object.Asset.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -745,7 +746,7 @@ void Asset::clear_name() {
     
   }
   name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Asset.name)
 }
 
 // optional uint64 value = 3;
@@ -753,13 +754,13 @@ void Asset::clear_value() {
   value_ = GOOGLE_ULONGLONG(0);
 }
  ::google::protobuf::uint64 Asset::value() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.value)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.value)
   return value_;
 }
  void Asset::set_value(::google::protobuf::uint64 value) {
   
   value_ = value;
-  // @@protoc_insertion_point(field_set:connection.Asset.value)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.value)
 }
 
 // optional uint64 precision = 4;
@@ -767,13 +768,13 @@ void Asset::clear_precision() {
   precision_ = GOOGLE_ULONGLONG(0);
 }
  ::google::protobuf::uint64 Asset::precision() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.precision)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.precision)
   return precision_;
 }
  void Asset::set_precision(::google::protobuf::uint64 value) {
   
   precision_ = value;
-  // @@protoc_insertion_point(field_set:connection.Asset.precision)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.precision)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -788,7 +789,7 @@ const int Domain::kNameFieldNumber;
 Domain::Domain()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.Domain)
+  // @@protoc_insertion_point(constructor:connection_object.Domain)
 }
 
 void Domain::InitAsDefaultInstance() {
@@ -800,7 +801,7 @@ Domain::Domain(const Domain& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.Domain)
+  // @@protoc_insertion_point(copy_constructor:connection_object.Domain)
 }
 
 void Domain::SharedCtor() {
@@ -812,7 +813,7 @@ void Domain::SharedCtor() {
 }
 
 Domain::~Domain() {
-  // @@protoc_insertion_point(destructor:connection.Domain)
+  // @@protoc_insertion_point(destructor:connection_object.Domain)
   SharedDtor();
 }
 
@@ -849,7 +850,7 @@ Domain* Domain::New(::google::protobuf::Arena* arena) const {
 }
 
 void Domain::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.Domain)
+// @@protoc_insertion_point(message_clear_start:connection_object.Domain)
   ownerpublickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -858,7 +859,7 @@ bool Domain::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.Domain)
+  // @@protoc_insertion_point(parse_start:connection_object.Domain)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -872,7 +873,7 @@ bool Domain::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->ownerpublickey().data(), this->ownerpublickey().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Domain.ownerPublicKey"));
+            "connection_object.Domain.ownerPublicKey"));
         } else {
           goto handle_unusual;
         }
@@ -889,7 +890,7 @@ bool Domain::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->name().data(), this->name().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Domain.name"));
+            "connection_object.Domain.name"));
         } else {
           goto handle_unusual;
         }
@@ -910,23 +911,23 @@ bool Domain::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.Domain)
+  // @@protoc_insertion_point(parse_success:connection_object.Domain)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.Domain)
+  // @@protoc_insertion_point(parse_failure:connection_object.Domain)
   return false;
 #undef DO_
 }
 
 void Domain::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.Domain)
+  // @@protoc_insertion_point(serialize_start:connection_object.Domain)
   // optional string ownerPublicKey = 1;
   if (this->ownerpublickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->ownerpublickey().data(), this->ownerpublickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Domain.ownerPublicKey");
+      "connection_object.Domain.ownerPublicKey");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->ownerpublickey(), output);
   }
@@ -936,23 +937,23 @@ void Domain::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Domain.name");
+      "connection_object.Domain.name");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->name(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.Domain)
+  // @@protoc_insertion_point(serialize_end:connection_object.Domain)
 }
 
 ::google::protobuf::uint8* Domain::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.Domain)
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.Domain)
   // optional string ownerPublicKey = 1;
   if (this->ownerpublickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->ownerpublickey().data(), this->ownerpublickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Domain.ownerPublicKey");
+      "connection_object.Domain.ownerPublicKey");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->ownerpublickey(), target);
@@ -963,18 +964,18 @@ void Domain::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Domain.name");
+      "connection_object.Domain.name");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->name(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.Domain)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.Domain)
   return target;
 }
 
 int Domain::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.Domain)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.Domain)
   int total_size = 0;
 
   // optional string ownerPublicKey = 1;
@@ -998,7 +999,7 @@ int Domain::ByteSize() const {
 }
 
 void Domain::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.Domain)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.Domain)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1006,16 +1007,16 @@ void Domain::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const Domain>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.Domain)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.Domain)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.Domain)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.Domain)
     MergeFrom(*source);
   }
 }
 
 void Domain::MergeFrom(const Domain& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.Domain)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.Domain)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1030,14 +1031,14 @@ void Domain::MergeFrom(const Domain& from) {
 }
 
 void Domain::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.Domain)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.Domain)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void Domain::CopyFrom(const Domain& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.Domain)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.Domain)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -1075,32 +1076,32 @@ void Domain::clear_ownerpublickey() {
   ownerpublickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Domain::ownerpublickey() const {
-  // @@protoc_insertion_point(field_get:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_get:connection_object.Domain.ownerPublicKey)
   return ownerpublickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Domain::set_ownerpublickey(const ::std::string& value) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set:connection_object.Domain.ownerPublicKey)
 }
  void Domain::set_ownerpublickey(const char* value) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.Domain.ownerPublicKey)
 }
  void Domain::set_ownerpublickey(const char* value, size_t size) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Domain.ownerPublicKey)
 }
  ::std::string* Domain::mutable_ownerpublickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.Domain.ownerPublicKey)
   return ownerpublickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Domain::release_ownerpublickey() {
-  // @@protoc_insertion_point(field_release:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_release:connection_object.Domain.ownerPublicKey)
   
   return ownerpublickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1111,7 +1112,7 @@ void Domain::clear_ownerpublickey() {
     
   }
   ownerpublickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ownerpublickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Domain.ownerPublicKey)
 }
 
 // optional string name = 2;
@@ -1119,32 +1120,32 @@ void Domain::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Domain::name() const {
-  // @@protoc_insertion_point(field_get:connection.Domain.name)
+  // @@protoc_insertion_point(field_get:connection_object.Domain.name)
   return name_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Domain::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Domain.name)
+  // @@protoc_insertion_point(field_set:connection_object.Domain.name)
 }
  void Domain::set_name(const char* value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_char:connection_object.Domain.name)
 }
  void Domain::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Domain.name)
 }
  ::std::string* Domain::mutable_name() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Domain.name)
+  // @@protoc_insertion_point(field_mutable:connection_object.Domain.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Domain::release_name() {
-  // @@protoc_insertion_point(field_release:connection.Domain.name)
+  // @@protoc_insertion_point(field_release:connection_object.Domain.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1155,7 +1156,7 @@ void Domain::clear_name() {
     
   }
   name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Domain.name)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -1170,7 +1171,7 @@ const int TxSignatures::kSignatureFieldNumber;
 TxSignatures::TxSignatures()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.TxSignatures)
+  // @@protoc_insertion_point(constructor:connection_object.TxSignatures)
 }
 
 void TxSignatures::InitAsDefaultInstance() {
@@ -1182,7 +1183,7 @@ TxSignatures::TxSignatures(const TxSignatures& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.TxSignatures)
+  // @@protoc_insertion_point(copy_constructor:connection_object.TxSignatures)
 }
 
 void TxSignatures::SharedCtor() {
@@ -1194,7 +1195,7 @@ void TxSignatures::SharedCtor() {
 }
 
 TxSignatures::~TxSignatures() {
-  // @@protoc_insertion_point(destructor:connection.TxSignatures)
+  // @@protoc_insertion_point(destructor:connection_object.TxSignatures)
   SharedDtor();
 }
 
@@ -1231,7 +1232,7 @@ TxSignatures* TxSignatures::New(::google::protobuf::Arena* arena) const {
 }
 
 void TxSignatures::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.TxSignatures)
+// @@protoc_insertion_point(message_clear_start:connection_object.TxSignatures)
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1240,7 +1241,7 @@ bool TxSignatures::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.TxSignatures)
+  // @@protoc_insertion_point(parse_start:connection_object.TxSignatures)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -1254,7 +1255,7 @@ bool TxSignatures::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->publickey().data(), this->publickey().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.TxSignatures.publicKey"));
+            "connection_object.TxSignatures.publicKey"));
         } else {
           goto handle_unusual;
         }
@@ -1271,7 +1272,7 @@ bool TxSignatures::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->signature().data(), this->signature().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.TxSignatures.signature"));
+            "connection_object.TxSignatures.signature"));
         } else {
           goto handle_unusual;
         }
@@ -1292,23 +1293,23 @@ bool TxSignatures::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.TxSignatures)
+  // @@protoc_insertion_point(parse_success:connection_object.TxSignatures)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.TxSignatures)
+  // @@protoc_insertion_point(parse_failure:connection_object.TxSignatures)
   return false;
 #undef DO_
 }
 
 void TxSignatures::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.TxSignatures)
+  // @@protoc_insertion_point(serialize_start:connection_object.TxSignatures)
   // optional string publicKey = 1;
   if (this->publickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->publickey().data(), this->publickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.TxSignatures.publicKey");
+      "connection_object.TxSignatures.publicKey");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->publickey(), output);
   }
@@ -1318,23 +1319,23 @@ void TxSignatures::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->signature().data(), this->signature().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.TxSignatures.signature");
+      "connection_object.TxSignatures.signature");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->signature(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.TxSignatures)
+  // @@protoc_insertion_point(serialize_end:connection_object.TxSignatures)
 }
 
 ::google::protobuf::uint8* TxSignatures::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.TxSignatures)
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.TxSignatures)
   // optional string publicKey = 1;
   if (this->publickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->publickey().data(), this->publickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.TxSignatures.publicKey");
+      "connection_object.TxSignatures.publicKey");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->publickey(), target);
@@ -1345,18 +1346,18 @@ void TxSignatures::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->signature().data(), this->signature().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.TxSignatures.signature");
+      "connection_object.TxSignatures.signature");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->signature(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.TxSignatures)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.TxSignatures)
   return target;
 }
 
 int TxSignatures::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.TxSignatures)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.TxSignatures)
   int total_size = 0;
 
   // optional string publicKey = 1;
@@ -1380,7 +1381,7 @@ int TxSignatures::ByteSize() const {
 }
 
 void TxSignatures::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.TxSignatures)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.TxSignatures)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1388,16 +1389,16 @@ void TxSignatures::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const TxSignatures>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.TxSignatures)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.TxSignatures)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.TxSignatures)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.TxSignatures)
     MergeFrom(*source);
   }
 }
 
 void TxSignatures::MergeFrom(const TxSignatures& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.TxSignatures)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.TxSignatures)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1412,14 +1413,14 @@ void TxSignatures::MergeFrom(const TxSignatures& from) {
 }
 
 void TxSignatures::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.TxSignatures)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.TxSignatures)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void TxSignatures::CopyFrom(const TxSignatures& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.TxSignatures)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.TxSignatures)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -1457,32 +1458,32 @@ void TxSignatures::clear_publickey() {
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& TxSignatures::publickey() const {
-  // @@protoc_insertion_point(field_get:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_get:connection_object.TxSignatures.publicKey)
   return publickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void TxSignatures::set_publickey(const ::std::string& value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set:connection_object.TxSignatures.publicKey)
 }
  void TxSignatures::set_publickey(const char* value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.TxSignatures.publicKey)
 }
  void TxSignatures::set_publickey(const char* value, size_t size) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.TxSignatures.publicKey)
 }
  ::std::string* TxSignatures::mutable_publickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.TxSignatures.publicKey)
   return publickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* TxSignatures::release_publickey() {
-  // @@protoc_insertion_point(field_release:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_release:connection_object.TxSignatures.publicKey)
   
   return publickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1493,7 +1494,7 @@ void TxSignatures::clear_publickey() {
     
   }
   publickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), publickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.TxSignatures.publicKey)
 }
 
 // optional string signature = 2;
@@ -1501,32 +1502,32 @@ void TxSignatures::clear_signature() {
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& TxSignatures::signature() const {
-  // @@protoc_insertion_point(field_get:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_get:connection_object.TxSignatures.signature)
   return signature_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void TxSignatures::set_signature(const ::std::string& value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set:connection_object.TxSignatures.signature)
 }
  void TxSignatures::set_signature(const char* value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_char:connection_object.TxSignatures.signature)
 }
  void TxSignatures::set_signature(const char* value, size_t size) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.TxSignatures.signature)
 }
  ::std::string* TxSignatures::mutable_signature() {
   
-  // @@protoc_insertion_point(field_mutable:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_mutable:connection_object.TxSignatures.signature)
   return signature_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* TxSignatures::release_signature() {
-  // @@protoc_insertion_point(field_release:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_release:connection_object.TxSignatures.signature)
   
   return signature_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1537,7 +1538,7 @@ void TxSignatures::clear_signature() {
     
   }
   signature_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), signature);
-  // @@protoc_insertion_point(field_set_allocated:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.TxSignatures.signature)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -1552,7 +1553,7 @@ const int EventSignature::kSignatureFieldNumber;
 EventSignature::EventSignature()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.EventSignature)
+  // @@protoc_insertion_point(constructor:connection_object.EventSignature)
 }
 
 void EventSignature::InitAsDefaultInstance() {
@@ -1564,7 +1565,7 @@ EventSignature::EventSignature(const EventSignature& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.EventSignature)
+  // @@protoc_insertion_point(copy_constructor:connection_object.EventSignature)
 }
 
 void EventSignature::SharedCtor() {
@@ -1576,7 +1577,7 @@ void EventSignature::SharedCtor() {
 }
 
 EventSignature::~EventSignature() {
-  // @@protoc_insertion_point(destructor:connection.EventSignature)
+  // @@protoc_insertion_point(destructor:connection_object.EventSignature)
   SharedDtor();
 }
 
@@ -1613,7 +1614,7 @@ EventSignature* EventSignature::New(::google::protobuf::Arena* arena) const {
 }
 
 void EventSignature::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.EventSignature)
+// @@protoc_insertion_point(message_clear_start:connection_object.EventSignature)
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1622,7 +1623,7 @@ bool EventSignature::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.EventSignature)
+  // @@protoc_insertion_point(parse_start:connection_object.EventSignature)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -1636,7 +1637,7 @@ bool EventSignature::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->publickey().data(), this->publickey().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.EventSignature.publicKey"));
+            "connection_object.EventSignature.publicKey"));
         } else {
           goto handle_unusual;
         }
@@ -1653,7 +1654,7 @@ bool EventSignature::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->signature().data(), this->signature().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.EventSignature.signature"));
+            "connection_object.EventSignature.signature"));
         } else {
           goto handle_unusual;
         }
@@ -1674,23 +1675,23 @@ bool EventSignature::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.EventSignature)
+  // @@protoc_insertion_point(parse_success:connection_object.EventSignature)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.EventSignature)
+  // @@protoc_insertion_point(parse_failure:connection_object.EventSignature)
   return false;
 #undef DO_
 }
 
 void EventSignature::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.EventSignature)
+  // @@protoc_insertion_point(serialize_start:connection_object.EventSignature)
   // optional string publicKey = 1;
   if (this->publickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->publickey().data(), this->publickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.EventSignature.publicKey");
+      "connection_object.EventSignature.publicKey");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->publickey(), output);
   }
@@ -1700,23 +1701,23 @@ void EventSignature::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->signature().data(), this->signature().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.EventSignature.signature");
+      "connection_object.EventSignature.signature");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->signature(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.EventSignature)
+  // @@protoc_insertion_point(serialize_end:connection_object.EventSignature)
 }
 
 ::google::protobuf::uint8* EventSignature::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.EventSignature)
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.EventSignature)
   // optional string publicKey = 1;
   if (this->publickey().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->publickey().data(), this->publickey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.EventSignature.publicKey");
+      "connection_object.EventSignature.publicKey");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->publickey(), target);
@@ -1727,18 +1728,18 @@ void EventSignature::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->signature().data(), this->signature().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.EventSignature.signature");
+      "connection_object.EventSignature.signature");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->signature(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.EventSignature)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.EventSignature)
   return target;
 }
 
 int EventSignature::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.EventSignature)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.EventSignature)
   int total_size = 0;
 
   // optional string publicKey = 1;
@@ -1762,7 +1763,7 @@ int EventSignature::ByteSize() const {
 }
 
 void EventSignature::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.EventSignature)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.EventSignature)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1770,16 +1771,16 @@ void EventSignature::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const EventSignature>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.EventSignature)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.EventSignature)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.EventSignature)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.EventSignature)
     MergeFrom(*source);
   }
 }
 
 void EventSignature::MergeFrom(const EventSignature& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.EventSignature)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.EventSignature)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -1794,14 +1795,14 @@ void EventSignature::MergeFrom(const EventSignature& from) {
 }
 
 void EventSignature::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.EventSignature)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.EventSignature)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void EventSignature::CopyFrom(const EventSignature& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.EventSignature)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.EventSignature)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -1839,32 +1840,32 @@ void EventSignature::clear_publickey() {
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& EventSignature::publickey() const {
-  // @@protoc_insertion_point(field_get:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_get:connection_object.EventSignature.publicKey)
   return publickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void EventSignature::set_publickey(const ::std::string& value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set:connection_object.EventSignature.publicKey)
 }
  void EventSignature::set_publickey(const char* value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.EventSignature.publicKey)
 }
  void EventSignature::set_publickey(const char* value, size_t size) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.EventSignature.publicKey)
 }
  ::std::string* EventSignature::mutable_publickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.EventSignature.publicKey)
   return publickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* EventSignature::release_publickey() {
-  // @@protoc_insertion_point(field_release:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_release:connection_object.EventSignature.publicKey)
   
   return publickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1875,7 +1876,7 @@ void EventSignature::clear_publickey() {
     
   }
   publickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), publickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.EventSignature.publicKey)
 }
 
 // optional string signature = 2;
@@ -1883,32 +1884,32 @@ void EventSignature::clear_signature() {
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& EventSignature::signature() const {
-  // @@protoc_insertion_point(field_get:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_get:connection_object.EventSignature.signature)
   return signature_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void EventSignature::set_signature(const ::std::string& value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set:connection_object.EventSignature.signature)
 }
  void EventSignature::set_signature(const char* value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_char:connection_object.EventSignature.signature)
 }
  void EventSignature::set_signature(const char* value, size_t size) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.EventSignature.signature)
 }
  ::std::string* EventSignature::mutable_signature() {
   
-  // @@protoc_insertion_point(field_mutable:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_mutable:connection_object.EventSignature.signature)
   return signature_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* EventSignature::release_signature() {
-  // @@protoc_insertion_point(field_release:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_release:connection_object.EventSignature.signature)
   
   return signature_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1919,7 +1920,7 @@ void EventSignature::clear_signature() {
     
   }
   signature_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), signature);
-  // @@protoc_insertion_point(field_set_allocated:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.EventSignature.signature)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -1938,7 +1939,7 @@ const int Transaction::kValueFieldNumber;
 Transaction::Transaction()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.Transaction)
+  // @@protoc_insertion_point(constructor:connection_object.Transaction)
 }
 
 void Transaction::InitAsDefaultInstance() {
@@ -1951,7 +1952,7 @@ Transaction::Transaction(const Transaction& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.Transaction)
+  // @@protoc_insertion_point(copy_constructor:connection_object.Transaction)
 }
 
 void Transaction::SharedCtor() {
@@ -1966,7 +1967,7 @@ void Transaction::SharedCtor() {
 }
 
 Transaction::~Transaction() {
-  // @@protoc_insertion_point(destructor:connection.Transaction)
+  // @@protoc_insertion_point(destructor:connection_object.Transaction)
   SharedDtor();
 }
 
@@ -2006,7 +2007,7 @@ Transaction* Transaction::New(::google::protobuf::Arena* arena) const {
 }
 
 void Transaction::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.Transaction)
+// @@protoc_insertion_point(message_clear_start:connection_object.Transaction)
   type_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == NULL && objects_ != NULL) delete objects_;
   objects_ = NULL;
@@ -2020,13 +2021,13 @@ bool Transaction::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.Transaction)
+  // @@protoc_insertion_point(parse_start:connection_object.Transaction)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .connection.TxSignatures txSignatures = 1;
+      // repeated .connection_object.TxSignatures txSignatures = 1;
       case 1: {
         if (tag == 10) {
           DO_(input->IncrementRecursionDepth());
@@ -2051,7 +2052,7 @@ bool Transaction::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->type().data(), this->type().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Transaction.type"));
+            "connection_object.Transaction.type"));
         } else {
           goto handle_unusual;
         }
@@ -2081,7 +2082,7 @@ bool Transaction::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->senderpubkey().data(), this->senderpubkey().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Transaction.senderPubkey"));
+            "connection_object.Transaction.senderPubkey"));
         } else {
           goto handle_unusual;
         }
@@ -2098,7 +2099,7 @@ bool Transaction::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->hash().data(), this->hash().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Transaction.hash"));
+            "connection_object.Transaction.hash"));
         } else {
           goto handle_unusual;
         }
@@ -2115,7 +2116,7 @@ bool Transaction::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->value().data(), this->value().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.Transaction.value"));
+            "connection_object.Transaction.value"));
         } else {
           goto handle_unusual;
         }
@@ -2136,18 +2137,18 @@ bool Transaction::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.Transaction)
+  // @@protoc_insertion_point(parse_success:connection_object.Transaction)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.Transaction)
+  // @@protoc_insertion_point(parse_failure:connection_object.Transaction)
   return false;
 #undef DO_
 }
 
 void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.Transaction)
-  // repeated .connection.TxSignatures txSignatures = 1;
+  // @@protoc_insertion_point(serialize_start:connection_object.Transaction)
+  // repeated .connection_object.TxSignatures txSignatures = 1;
   for (unsigned int i = 0, n = this->txsignatures_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, this->txsignatures(i), output);
@@ -2158,7 +2159,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->type().data(), this->type().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.type");
+      "connection_object.Transaction.type");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->type(), output);
   }
@@ -2174,7 +2175,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->senderpubkey().data(), this->senderpubkey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.senderPubkey");
+      "connection_object.Transaction.senderPubkey");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       4, this->senderpubkey(), output);
   }
@@ -2184,7 +2185,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->hash().data(), this->hash().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.hash");
+      "connection_object.Transaction.hash");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       5, this->hash(), output);
   }
@@ -2194,18 +2195,18 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->value().data(), this->value().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.value");
+      "connection_object.Transaction.value");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       6, this->value(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.Transaction)
+  // @@protoc_insertion_point(serialize_end:connection_object.Transaction)
 }
 
 ::google::protobuf::uint8* Transaction::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.Transaction)
-  // repeated .connection.TxSignatures txSignatures = 1;
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.Transaction)
+  // repeated .connection_object.TxSignatures txSignatures = 1;
   for (unsigned int i = 0, n = this->txsignatures_size(); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
@@ -2217,7 +2218,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->type().data(), this->type().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.type");
+      "connection_object.Transaction.type");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         2, this->type(), target);
@@ -2235,7 +2236,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->senderpubkey().data(), this->senderpubkey().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.senderPubkey");
+      "connection_object.Transaction.senderPubkey");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         4, this->senderpubkey(), target);
@@ -2246,7 +2247,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->hash().data(), this->hash().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.hash");
+      "connection_object.Transaction.hash");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         5, this->hash(), target);
@@ -2257,18 +2258,18 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->value().data(), this->value().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.Transaction.value");
+      "connection_object.Transaction.value");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         6, this->value(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.Transaction)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.Transaction)
   return target;
 }
 
 int Transaction::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.Transaction)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.Transaction)
   int total_size = 0;
 
   // optional string type = 2;
@@ -2306,7 +2307,7 @@ int Transaction::ByteSize() const {
         this->value());
   }
 
-  // repeated .connection.TxSignatures txSignatures = 1;
+  // repeated .connection_object.TxSignatures txSignatures = 1;
   total_size += 1 * this->txsignatures_size();
   for (int i = 0; i < this->txsignatures_size(); i++) {
     total_size +=
@@ -2321,7 +2322,7 @@ int Transaction::ByteSize() const {
 }
 
 void Transaction::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.Transaction)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.Transaction)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -2329,16 +2330,16 @@ void Transaction::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const Transaction>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.Transaction)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.Transaction)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.Transaction)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.Transaction)
     MergeFrom(*source);
   }
 }
 
 void Transaction::MergeFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.Transaction)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.Transaction)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -2365,14 +2366,14 @@ void Transaction::MergeFrom(const Transaction& from) {
 }
 
 void Transaction::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.Transaction)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.Transaction)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void Transaction::CopyFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.Transaction)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.Transaction)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -2409,33 +2410,33 @@ void Transaction::InternalSwap(Transaction* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // Transaction
 
-// repeated .connection.TxSignatures txSignatures = 1;
+// repeated .connection_object.TxSignatures txSignatures = 1;
 int Transaction::txsignatures_size() const {
   return txsignatures_.size();
 }
 void Transaction::clear_txsignatures() {
   txsignatures_.Clear();
 }
-const ::connection::TxSignatures& Transaction::txsignatures(int index) const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.txSignatures)
+const ::connection_object::TxSignatures& Transaction::txsignatures(int index) const {
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.txSignatures)
   return txsignatures_.Get(index);
 }
-::connection::TxSignatures* Transaction::mutable_txsignatures(int index) {
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.txSignatures)
+::connection_object::TxSignatures* Transaction::mutable_txsignatures(int index) {
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.txSignatures)
   return txsignatures_.Mutable(index);
 }
-::connection::TxSignatures* Transaction::add_txsignatures() {
-  // @@protoc_insertion_point(field_add:connection.Transaction.txSignatures)
+::connection_object::TxSignatures* Transaction::add_txsignatures() {
+  // @@protoc_insertion_point(field_add:connection_object.Transaction.txSignatures)
   return txsignatures_.Add();
 }
-::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >*
+::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >*
 Transaction::mutable_txsignatures() {
-  // @@protoc_insertion_point(field_mutable_list:connection.Transaction.txSignatures)
+  // @@protoc_insertion_point(field_mutable_list:connection_object.Transaction.txSignatures)
   return &txsignatures_;
 }
-const ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >&
+const ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >&
 Transaction::txsignatures() const {
-  // @@protoc_insertion_point(field_list:connection.Transaction.txSignatures)
+  // @@protoc_insertion_point(field_list:connection_object.Transaction.txSignatures)
   return txsignatures_;
 }
 
@@ -2444,32 +2445,32 @@ void Transaction::clear_type() {
   type_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Transaction::type() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.type)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.type)
   return type_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Transaction::set_type(const ::std::string& value) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.type)
 }
  void Transaction::set_type(const char* value) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.type)
 }
  void Transaction::set_type(const char* value, size_t size) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.type)
 }
  ::std::string* Transaction::mutable_type() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.type)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.type)
   return type_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Transaction::release_type() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.type)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.type)
   
   return type_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -2480,7 +2481,7 @@ void Transaction::clear_type() {
     
   }
   type_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), type);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.type)
 }
 
 // optional .google.protobuf.Any objects = 3;
@@ -2492,7 +2493,7 @@ void Transaction::clear_objects() {
   objects_ = NULL;
 }
 const ::google::protobuf::Any& Transaction::objects() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.objects)
   return objects_ != NULL ? *objects_ : *default_instance_->objects_;
 }
 ::google::protobuf::Any* Transaction::mutable_objects() {
@@ -2500,11 +2501,11 @@ const ::google::protobuf::Any& Transaction::objects() const {
   if (objects_ == NULL) {
     objects_ = new ::google::protobuf::Any;
   }
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.objects)
   return objects_;
 }
 ::google::protobuf::Any* Transaction::release_objects() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.objects)
   
   ::google::protobuf::Any* temp = objects_;
   objects_ = NULL;
@@ -2518,7 +2519,7 @@ void Transaction::set_allocated_objects(::google::protobuf::Any* objects) {
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.objects)
 }
 
 // optional string senderPubkey = 4;
@@ -2526,32 +2527,32 @@ void Transaction::clear_senderpubkey() {
   senderpubkey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Transaction::senderpubkey() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.senderPubkey)
   return senderpubkey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Transaction::set_senderpubkey(const ::std::string& value) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.senderPubkey)
 }
  void Transaction::set_senderpubkey(const char* value) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.senderPubkey)
 }
  void Transaction::set_senderpubkey(const char* value, size_t size) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.senderPubkey)
 }
  ::std::string* Transaction::mutable_senderpubkey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.senderPubkey)
   return senderpubkey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Transaction::release_senderpubkey() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.senderPubkey)
   
   return senderpubkey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -2562,7 +2563,7 @@ void Transaction::clear_senderpubkey() {
     
   }
   senderpubkey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), senderpubkey);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.senderPubkey)
 }
 
 // optional string hash = 5;
@@ -2570,32 +2571,32 @@ void Transaction::clear_hash() {
   hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Transaction::hash() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.hash)
   return hash_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Transaction::set_hash(const ::std::string& value) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.hash)
 }
  void Transaction::set_hash(const char* value) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.hash)
 }
  void Transaction::set_hash(const char* value, size_t size) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.hash)
 }
  ::std::string* Transaction::mutable_hash() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.hash)
   return hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Transaction::release_hash() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.hash)
   
   return hash_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -2606,7 +2607,7 @@ void Transaction::clear_hash() {
     
   }
   hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), hash);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.hash)
 }
 
 // optional string value = 6;
@@ -2614,32 +2615,32 @@ void Transaction::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& Transaction::value() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.value)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.value)
   return value_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void Transaction::set_value(const ::std::string& value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.value)
 }
  void Transaction::set_value(const char* value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.value)
 }
  void Transaction::set_value(const char* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.value)
 }
  ::std::string* Transaction::mutable_value() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.value)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.value)
   return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* Transaction::release_value() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.value)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.value)
   
   return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -2650,7 +2651,7 @@ void Transaction::clear_value() {
     
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.value)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -2665,12 +2666,12 @@ const int ConsensusEvent::kTransactionFieldNumber;
 ConsensusEvent::ConsensusEvent()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.ConsensusEvent)
+  // @@protoc_insertion_point(constructor:connection_object.ConsensusEvent)
 }
 
 void ConsensusEvent::InitAsDefaultInstance() {
   _is_default_instance_ = true;
-  transaction_ = const_cast< ::connection::Transaction*>(&::connection::Transaction::default_instance());
+  transaction_ = const_cast< ::connection_object::Transaction*>(&::connection_object::Transaction::default_instance());
 }
 
 ConsensusEvent::ConsensusEvent(const ConsensusEvent& from)
@@ -2678,7 +2679,7 @@ ConsensusEvent::ConsensusEvent(const ConsensusEvent& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.ConsensusEvent)
+  // @@protoc_insertion_point(copy_constructor:connection_object.ConsensusEvent)
 }
 
 void ConsensusEvent::SharedCtor() {
@@ -2688,7 +2689,7 @@ void ConsensusEvent::SharedCtor() {
 }
 
 ConsensusEvent::~ConsensusEvent() {
-  // @@protoc_insertion_point(destructor:connection.ConsensusEvent)
+  // @@protoc_insertion_point(destructor:connection_object.ConsensusEvent)
   SharedDtor();
 }
 
@@ -2724,7 +2725,7 @@ ConsensusEvent* ConsensusEvent::New(::google::protobuf::Arena* arena) const {
 }
 
 void ConsensusEvent::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(message_clear_start:connection_object.ConsensusEvent)
   if (GetArenaNoVirtual() == NULL && transaction_ != NULL) delete transaction_;
   transaction_ = NULL;
   eventsignatures_.Clear();
@@ -2734,13 +2735,13 @@ bool ConsensusEvent::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.ConsensusEvent)
+  // @@protoc_insertion_point(parse_start:connection_object.ConsensusEvent)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .connection.EventSignature eventSignatures = 1;
+      // repeated .connection_object.EventSignature eventSignatures = 1;
       case 1: {
         if (tag == 10) {
           DO_(input->IncrementRecursionDepth());
@@ -2756,7 +2757,7 @@ bool ConsensusEvent::MergePartialFromCodedStream(
         break;
       }
 
-      // optional .connection.Transaction transaction = 2;
+      // optional .connection_object.Transaction transaction = 2;
       case 2: {
         if (tag == 18) {
          parse_transaction:
@@ -2782,65 +2783,65 @@ bool ConsensusEvent::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.ConsensusEvent)
+  // @@protoc_insertion_point(parse_success:connection_object.ConsensusEvent)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.ConsensusEvent)
+  // @@protoc_insertion_point(parse_failure:connection_object.ConsensusEvent)
   return false;
 #undef DO_
 }
 
 void ConsensusEvent::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.ConsensusEvent)
-  // repeated .connection.EventSignature eventSignatures = 1;
+  // @@protoc_insertion_point(serialize_start:connection_object.ConsensusEvent)
+  // repeated .connection_object.EventSignature eventSignatures = 1;
   for (unsigned int i = 0, n = this->eventsignatures_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, this->eventsignatures(i), output);
   }
 
-  // optional .connection.Transaction transaction = 2;
+  // optional .connection_object.Transaction transaction = 2;
   if (this->has_transaction()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, *this->transaction_, output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.ConsensusEvent)
+  // @@protoc_insertion_point(serialize_end:connection_object.ConsensusEvent)
 }
 
 ::google::protobuf::uint8* ConsensusEvent::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.ConsensusEvent)
-  // repeated .connection.EventSignature eventSignatures = 1;
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.ConsensusEvent)
+  // repeated .connection_object.EventSignature eventSignatures = 1;
   for (unsigned int i = 0, n = this->eventsignatures_size(); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         1, this->eventsignatures(i), false, target);
   }
 
-  // optional .connection.Transaction transaction = 2;
+  // optional .connection_object.Transaction transaction = 2;
   if (this->has_transaction()) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageNoVirtualToArray(
         2, *this->transaction_, false, target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.ConsensusEvent)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.ConsensusEvent)
   return target;
 }
 
 int ConsensusEvent::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.ConsensusEvent)
   int total_size = 0;
 
-  // optional .connection.Transaction transaction = 2;
+  // optional .connection_object.Transaction transaction = 2;
   if (this->has_transaction()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         *this->transaction_);
   }
 
-  // repeated .connection.EventSignature eventSignatures = 1;
+  // repeated .connection_object.EventSignature eventSignatures = 1;
   total_size += 1 * this->eventsignatures_size();
   for (int i = 0; i < this->eventsignatures_size(); i++) {
     total_size +=
@@ -2855,7 +2856,7 @@ int ConsensusEvent::ByteSize() const {
 }
 
 void ConsensusEvent::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.ConsensusEvent)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -2863,34 +2864,34 @@ void ConsensusEvent::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const ConsensusEvent>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.ConsensusEvent)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.ConsensusEvent)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.ConsensusEvent)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.ConsensusEvent)
     MergeFrom(*source);
   }
 }
 
 void ConsensusEvent::MergeFrom(const ConsensusEvent& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.ConsensusEvent)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
   eventsignatures_.MergeFrom(from.eventsignatures_);
   if (from.has_transaction()) {
-    mutable_transaction()->::connection::Transaction::MergeFrom(from.transaction());
+    mutable_transaction()->::connection_object::Transaction::MergeFrom(from.transaction());
   }
 }
 
 void ConsensusEvent::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.ConsensusEvent)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void ConsensusEvent::CopyFrom(const ConsensusEvent& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.ConsensusEvent)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.ConsensusEvent)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -2923,37 +2924,37 @@ void ConsensusEvent::InternalSwap(ConsensusEvent* other) {
 #if PROTOBUF_INLINE_NOT_IN_HEADERS
 // ConsensusEvent
 
-// repeated .connection.EventSignature eventSignatures = 1;
+// repeated .connection_object.EventSignature eventSignatures = 1;
 int ConsensusEvent::eventsignatures_size() const {
   return eventsignatures_.size();
 }
 void ConsensusEvent::clear_eventsignatures() {
   eventsignatures_.Clear();
 }
-const ::connection::EventSignature& ConsensusEvent::eventsignatures(int index) const {
-  // @@protoc_insertion_point(field_get:connection.ConsensusEvent.eventSignatures)
+const ::connection_object::EventSignature& ConsensusEvent::eventsignatures(int index) const {
+  // @@protoc_insertion_point(field_get:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Get(index);
 }
-::connection::EventSignature* ConsensusEvent::mutable_eventsignatures(int index) {
-  // @@protoc_insertion_point(field_mutable:connection.ConsensusEvent.eventSignatures)
+::connection_object::EventSignature* ConsensusEvent::mutable_eventsignatures(int index) {
+  // @@protoc_insertion_point(field_mutable:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Mutable(index);
 }
-::connection::EventSignature* ConsensusEvent::add_eventsignatures() {
-  // @@protoc_insertion_point(field_add:connection.ConsensusEvent.eventSignatures)
+::connection_object::EventSignature* ConsensusEvent::add_eventsignatures() {
+  // @@protoc_insertion_point(field_add:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Add();
 }
-::google::protobuf::RepeatedPtrField< ::connection::EventSignature >*
+::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >*
 ConsensusEvent::mutable_eventsignatures() {
-  // @@protoc_insertion_point(field_mutable_list:connection.ConsensusEvent.eventSignatures)
+  // @@protoc_insertion_point(field_mutable_list:connection_object.ConsensusEvent.eventSignatures)
   return &eventsignatures_;
 }
-const ::google::protobuf::RepeatedPtrField< ::connection::EventSignature >&
+const ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >&
 ConsensusEvent::eventsignatures() const {
-  // @@protoc_insertion_point(field_list:connection.ConsensusEvent.eventSignatures)
+  // @@protoc_insertion_point(field_list:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_;
 }
 
-// optional .connection.Transaction transaction = 2;
+// optional .connection_object.Transaction transaction = 2;
 bool ConsensusEvent::has_transaction() const {
   return !_is_default_instance_ && transaction_ != NULL;
 }
@@ -2961,26 +2962,26 @@ void ConsensusEvent::clear_transaction() {
   if (GetArenaNoVirtual() == NULL && transaction_ != NULL) delete transaction_;
   transaction_ = NULL;
 }
-const ::connection::Transaction& ConsensusEvent::transaction() const {
-  // @@protoc_insertion_point(field_get:connection.ConsensusEvent.transaction)
+const ::connection_object::Transaction& ConsensusEvent::transaction() const {
+  // @@protoc_insertion_point(field_get:connection_object.ConsensusEvent.transaction)
   return transaction_ != NULL ? *transaction_ : *default_instance_->transaction_;
 }
-::connection::Transaction* ConsensusEvent::mutable_transaction() {
+::connection_object::Transaction* ConsensusEvent::mutable_transaction() {
   
   if (transaction_ == NULL) {
-    transaction_ = new ::connection::Transaction;
+    transaction_ = new ::connection_object::Transaction;
   }
-  // @@protoc_insertion_point(field_mutable:connection.ConsensusEvent.transaction)
+  // @@protoc_insertion_point(field_mutable:connection_object.ConsensusEvent.transaction)
   return transaction_;
 }
-::connection::Transaction* ConsensusEvent::release_transaction() {
-  // @@protoc_insertion_point(field_release:connection.ConsensusEvent.transaction)
+::connection_object::Transaction* ConsensusEvent::release_transaction() {
+  // @@protoc_insertion_point(field_release:connection_object.ConsensusEvent.transaction)
   
-  ::connection::Transaction* temp = transaction_;
+  ::connection_object::Transaction* temp = transaction_;
   transaction_ = NULL;
   return temp;
 }
-void ConsensusEvent::set_allocated_transaction(::connection::Transaction* transaction) {
+void ConsensusEvent::set_allocated_transaction(::connection_object::Transaction* transaction) {
   delete transaction_;
   transaction_ = transaction;
   if (transaction) {
@@ -2988,7 +2989,7 @@ void ConsensusEvent::set_allocated_transaction(::connection::Transaction* transa
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:connection.ConsensusEvent.transaction)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.ConsensusEvent.transaction)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -3002,7 +3003,7 @@ const int StatusResponse::kValueFieldNumber;
 StatusResponse::StatusResponse()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:connection.StatusResponse)
+  // @@protoc_insertion_point(constructor:connection_object.StatusResponse)
 }
 
 void StatusResponse::InitAsDefaultInstance() {
@@ -3014,7 +3015,7 @@ StatusResponse::StatusResponse(const StatusResponse& from)
     _internal_metadata_(NULL) {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:connection.StatusResponse)
+  // @@protoc_insertion_point(copy_constructor:connection_object.StatusResponse)
 }
 
 void StatusResponse::SharedCtor() {
@@ -3025,7 +3026,7 @@ void StatusResponse::SharedCtor() {
 }
 
 StatusResponse::~StatusResponse() {
-  // @@protoc_insertion_point(destructor:connection.StatusResponse)
+  // @@protoc_insertion_point(destructor:connection_object.StatusResponse)
   SharedDtor();
 }
 
@@ -3061,7 +3062,7 @@ StatusResponse* StatusResponse::New(::google::protobuf::Arena* arena) const {
 }
 
 void StatusResponse::Clear() {
-// @@protoc_insertion_point(message_clear_start:connection.StatusResponse)
+// @@protoc_insertion_point(message_clear_start:connection_object.StatusResponse)
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -3069,7 +3070,7 @@ bool StatusResponse::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:connection.StatusResponse)
+  // @@protoc_insertion_point(parse_start:connection_object.StatusResponse)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
@@ -3083,7 +3084,7 @@ bool StatusResponse::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->value().data(), this->value().length(),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "connection.StatusResponse.value"));
+            "connection_object.StatusResponse.value"));
         } else {
           goto handle_unusual;
         }
@@ -3104,50 +3105,50 @@ bool StatusResponse::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:connection.StatusResponse)
+  // @@protoc_insertion_point(parse_success:connection_object.StatusResponse)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:connection.StatusResponse)
+  // @@protoc_insertion_point(parse_failure:connection_object.StatusResponse)
   return false;
 #undef DO_
 }
 
 void StatusResponse::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:connection.StatusResponse)
+  // @@protoc_insertion_point(serialize_start:connection_object.StatusResponse)
   // optional string value = 1;
   if (this->value().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->value().data(), this->value().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.StatusResponse.value");
+      "connection_object.StatusResponse.value");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->value(), output);
   }
 
-  // @@protoc_insertion_point(serialize_end:connection.StatusResponse)
+  // @@protoc_insertion_point(serialize_end:connection_object.StatusResponse)
 }
 
 ::google::protobuf::uint8* StatusResponse::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:connection.StatusResponse)
+  // @@protoc_insertion_point(serialize_to_array_start:connection_object.StatusResponse)
   // optional string value = 1;
   if (this->value().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->value().data(), this->value().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "connection.StatusResponse.value");
+      "connection_object.StatusResponse.value");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->value(), target);
   }
 
-  // @@protoc_insertion_point(serialize_to_array_end:connection.StatusResponse)
+  // @@protoc_insertion_point(serialize_to_array_end:connection_object.StatusResponse)
   return target;
 }
 
 int StatusResponse::ByteSize() const {
-// @@protoc_insertion_point(message_byte_size_start:connection.StatusResponse)
+// @@protoc_insertion_point(message_byte_size_start:connection_object.StatusResponse)
   int total_size = 0;
 
   // optional string value = 1;
@@ -3164,7 +3165,7 @@ int StatusResponse::ByteSize() const {
 }
 
 void StatusResponse::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:connection.StatusResponse)
+// @@protoc_insertion_point(generalized_merge_from_start:connection_object.StatusResponse)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -3172,16 +3173,16 @@ void StatusResponse::MergeFrom(const ::google::protobuf::Message& from) {
       ::google::protobuf::internal::DynamicCastToGenerated<const StatusResponse>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection.StatusResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:connection_object.StatusResponse)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection.StatusResponse)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:connection_object.StatusResponse)
     MergeFrom(*source);
   }
 }
 
 void StatusResponse::MergeFrom(const StatusResponse& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:connection.StatusResponse)
+// @@protoc_insertion_point(class_specific_merge_from_start:connection_object.StatusResponse)
   if (GOOGLE_PREDICT_FALSE(&from == this)) {
     ::google::protobuf::internal::MergeFromFail(__FILE__, __LINE__);
   }
@@ -3192,14 +3193,14 @@ void StatusResponse::MergeFrom(const StatusResponse& from) {
 }
 
 void StatusResponse::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:connection.StatusResponse)
+// @@protoc_insertion_point(generalized_copy_from_start:connection_object.StatusResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 void StatusResponse::CopyFrom(const StatusResponse& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:connection.StatusResponse)
+// @@protoc_insertion_point(class_specific_copy_from_start:connection_object.StatusResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
@@ -3236,32 +3237,32 @@ void StatusResponse::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  const ::std::string& StatusResponse::value() const {
-  // @@protoc_insertion_point(field_get:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_get:connection_object.StatusResponse.value)
   return value_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  void StatusResponse::set_value(const ::std::string& value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set:connection_object.StatusResponse.value)
 }
  void StatusResponse::set_value(const char* value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_char:connection_object.StatusResponse.value)
 }
  void StatusResponse::set_value(const char* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.StatusResponse.value)
 }
  ::std::string* StatusResponse::mutable_value() {
   
-  // @@protoc_insertion_point(field_mutable:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_mutable:connection_object.StatusResponse.value)
   return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
  ::std::string* StatusResponse::release_value() {
-  // @@protoc_insertion_point(field_release:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_release:connection_object.StatusResponse.value)
   
   return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -3272,13 +3273,13 @@ void StatusResponse::clear_value() {
     
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.StatusResponse.value)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace connection
+}  // namespace connection_object
 
 // @@protoc_insertion_point(global_scope)

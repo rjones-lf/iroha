@@ -34,8 +34,6 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
-
-
   
 namespace http {
   
@@ -93,8 +91,8 @@ namespace http {
               peer::getMyPublicKey(),
               signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
       );
-      auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-      connection::send(peer::getMyIp(), text);
+      connection::send(peer::getMyIp(), std::move(event));
+
       logger::info("server", "sent data to sumeragi!"); 
       res.json( json({
         {"message", "OK"},

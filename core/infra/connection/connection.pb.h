@@ -30,7 +30,7 @@
 #include <google/protobuf/any.pb.h>
 // @@protoc_insertion_point(includes)
 
-namespace connection {
+namespace connection_object {
 
 // Internal implementation detail -- do not call these.
 void protobuf_AddDesc_connection_2eproto();
@@ -47,7 +47,7 @@ class TxSignatures;
 
 // ===================================================================
 
-class Asset : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.Asset) */ {
+class Asset : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.Asset) */ {
  public:
   Asset();
   virtual ~Asset();
@@ -141,7 +141,7 @@ class Asset : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::google::protobuf::uint64 precision() const;
   void set_precision(::google::protobuf::uint64 value);
 
-  // @@protoc_insertion_point(class_scope:connection.Asset)
+  // @@protoc_insertion_point(class_scope:connection_object.Asset)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -160,7 +160,7 @@ class Asset : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 };
 // -------------------------------------------------------------------
 
-class Domain : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.Domain) */ {
+class Domain : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.Domain) */ {
  public:
   Domain();
   virtual ~Domain();
@@ -242,7 +242,7 @@ class Domain : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
   ::std::string* release_name();
   void set_allocated_name(::std::string* name);
 
-  // @@protoc_insertion_point(class_scope:connection.Domain)
+  // @@protoc_insertion_point(class_scope:connection_object.Domain)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -259,7 +259,7 @@ class Domain : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
 };
 // -------------------------------------------------------------------
 
-class TxSignatures : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.TxSignatures) */ {
+class TxSignatures : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.TxSignatures) */ {
  public:
   TxSignatures();
   virtual ~TxSignatures();
@@ -341,7 +341,7 @@ class TxSignatures : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_signature();
   void set_allocated_signature(::std::string* signature);
 
-  // @@protoc_insertion_point(class_scope:connection.TxSignatures)
+  // @@protoc_insertion_point(class_scope:connection_object.TxSignatures)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -358,7 +358,7 @@ class TxSignatures : public ::google::protobuf::Message /* @@protoc_insertion_po
 };
 // -------------------------------------------------------------------
 
-class EventSignature : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.EventSignature) */ {
+class EventSignature : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.EventSignature) */ {
  public:
   EventSignature();
   virtual ~EventSignature();
@@ -440,7 +440,7 @@ class EventSignature : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_signature();
   void set_allocated_signature(::std::string* signature);
 
-  // @@protoc_insertion_point(class_scope:connection.EventSignature)
+  // @@protoc_insertion_point(class_scope:connection_object.EventSignature)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -457,7 +457,7 @@ class EventSignature : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.Transaction) */ {
+class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.Transaction) */ {
  public:
   Transaction();
   virtual ~Transaction();
@@ -517,16 +517,16 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
 
   // accessors -------------------------------------------------------
 
-  // repeated .connection.TxSignatures txSignatures = 1;
+  // repeated .connection_object.TxSignatures txSignatures = 1;
   int txsignatures_size() const;
   void clear_txsignatures();
   static const int kTxSignaturesFieldNumber = 1;
-  const ::connection::TxSignatures& txsignatures(int index) const;
-  ::connection::TxSignatures* mutable_txsignatures(int index);
-  ::connection::TxSignatures* add_txsignatures();
-  ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >*
+  const ::connection_object::TxSignatures& txsignatures(int index) const;
+  ::connection_object::TxSignatures* mutable_txsignatures(int index);
+  ::connection_object::TxSignatures* add_txsignatures();
+  ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >*
       mutable_txsignatures();
-  const ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >&
+  const ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >&
       txsignatures() const;
 
   // optional string type = 2;
@@ -582,12 +582,12 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // @@protoc_insertion_point(class_scope:connection.Transaction)
+  // @@protoc_insertion_point(class_scope:connection_object.Transaction)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures > txsignatures_;
+  ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures > txsignatures_;
   ::google::protobuf::internal::ArenaStringPtr type_;
   ::google::protobuf::Any* objects_;
   ::google::protobuf::internal::ArenaStringPtr senderpubkey_;
@@ -603,7 +603,7 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
 };
 // -------------------------------------------------------------------
 
-class ConsensusEvent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.ConsensusEvent) */ {
+class ConsensusEvent : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.ConsensusEvent) */ {
  public:
   ConsensusEvent();
   virtual ~ConsensusEvent();
@@ -663,34 +663,34 @@ class ConsensusEvent : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // repeated .connection.EventSignature eventSignatures = 1;
+  // repeated .connection_object.EventSignature eventSignatures = 1;
   int eventsignatures_size() const;
   void clear_eventsignatures();
   static const int kEventSignaturesFieldNumber = 1;
-  const ::connection::EventSignature& eventsignatures(int index) const;
-  ::connection::EventSignature* mutable_eventsignatures(int index);
-  ::connection::EventSignature* add_eventsignatures();
-  ::google::protobuf::RepeatedPtrField< ::connection::EventSignature >*
+  const ::connection_object::EventSignature& eventsignatures(int index) const;
+  ::connection_object::EventSignature* mutable_eventsignatures(int index);
+  ::connection_object::EventSignature* add_eventsignatures();
+  ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >*
       mutable_eventsignatures();
-  const ::google::protobuf::RepeatedPtrField< ::connection::EventSignature >&
+  const ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >&
       eventsignatures() const;
 
-  // optional .connection.Transaction transaction = 2;
+  // optional .connection_object.Transaction transaction = 2;
   bool has_transaction() const;
   void clear_transaction();
   static const int kTransactionFieldNumber = 2;
-  const ::connection::Transaction& transaction() const;
-  ::connection::Transaction* mutable_transaction();
-  ::connection::Transaction* release_transaction();
-  void set_allocated_transaction(::connection::Transaction* transaction);
+  const ::connection_object::Transaction& transaction() const;
+  ::connection_object::Transaction* mutable_transaction();
+  ::connection_object::Transaction* release_transaction();
+  void set_allocated_transaction(::connection_object::Transaction* transaction);
 
-  // @@protoc_insertion_point(class_scope:connection.ConsensusEvent)
+  // @@protoc_insertion_point(class_scope:connection_object.ConsensusEvent)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   bool _is_default_instance_;
-  ::google::protobuf::RepeatedPtrField< ::connection::EventSignature > eventsignatures_;
-  ::connection::Transaction* transaction_;
+  ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature > eventsignatures_;
+  ::connection_object::Transaction* transaction_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_connection_2eproto();
   friend void protobuf_AssignDesc_connection_2eproto();
@@ -701,7 +701,7 @@ class ConsensusEvent : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
-class StatusResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection.StatusResponse) */ {
+class StatusResponse : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:connection_object.StatusResponse) */ {
  public:
   StatusResponse();
   virtual ~StatusResponse();
@@ -772,7 +772,7 @@ class StatusResponse : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_value();
   void set_allocated_value(::std::string* value);
 
-  // @@protoc_insertion_point(class_scope:connection.StatusResponse)
+  // @@protoc_insertion_point(class_scope:connection_object.StatusResponse)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -799,32 +799,32 @@ inline void Asset::clear_domain() {
   domain_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Asset::domain() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.domain)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.domain)
   return domain_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Asset::set_domain(const ::std::string& value) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.domain)
 }
 inline void Asset::set_domain(const char* value) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_char:connection_object.Asset.domain)
 }
 inline void Asset::set_domain(const char* value, size_t size) {
   
   domain_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Asset.domain)
 }
 inline ::std::string* Asset::mutable_domain() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Asset.domain)
+  // @@protoc_insertion_point(field_mutable:connection_object.Asset.domain)
   return domain_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Asset::release_domain() {
-  // @@protoc_insertion_point(field_release:connection.Asset.domain)
+  // @@protoc_insertion_point(field_release:connection_object.Asset.domain)
   
   return domain_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -835,7 +835,7 @@ inline void Asset::set_allocated_domain(::std::string* domain) {
     
   }
   domain_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), domain);
-  // @@protoc_insertion_point(field_set_allocated:connection.Asset.domain)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Asset.domain)
 }
 
 // optional string name = 2;
@@ -843,32 +843,32 @@ inline void Asset::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Asset::name() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.name)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.name)
   return name_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Asset::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Asset.name)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.name)
 }
 inline void Asset::set_name(const char* value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_char:connection_object.Asset.name)
 }
 inline void Asset::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Asset.name)
 }
 inline ::std::string* Asset::mutable_name() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Asset.name)
+  // @@protoc_insertion_point(field_mutable:connection_object.Asset.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Asset::release_name() {
-  // @@protoc_insertion_point(field_release:connection.Asset.name)
+  // @@protoc_insertion_point(field_release:connection_object.Asset.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -879,7 +879,7 @@ inline void Asset::set_allocated_name(::std::string* name) {
     
   }
   name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:connection.Asset.name)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Asset.name)
 }
 
 // optional uint64 value = 3;
@@ -887,13 +887,13 @@ inline void Asset::clear_value() {
   value_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 Asset::value() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.value)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.value)
   return value_;
 }
 inline void Asset::set_value(::google::protobuf::uint64 value) {
   
   value_ = value;
-  // @@protoc_insertion_point(field_set:connection.Asset.value)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.value)
 }
 
 // optional uint64 precision = 4;
@@ -901,13 +901,13 @@ inline void Asset::clear_precision() {
   precision_ = GOOGLE_ULONGLONG(0);
 }
 inline ::google::protobuf::uint64 Asset::precision() const {
-  // @@protoc_insertion_point(field_get:connection.Asset.precision)
+  // @@protoc_insertion_point(field_get:connection_object.Asset.precision)
   return precision_;
 }
 inline void Asset::set_precision(::google::protobuf::uint64 value) {
   
   precision_ = value;
-  // @@protoc_insertion_point(field_set:connection.Asset.precision)
+  // @@protoc_insertion_point(field_set:connection_object.Asset.precision)
 }
 
 // -------------------------------------------------------------------
@@ -919,32 +919,32 @@ inline void Domain::clear_ownerpublickey() {
   ownerpublickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Domain::ownerpublickey() const {
-  // @@protoc_insertion_point(field_get:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_get:connection_object.Domain.ownerPublicKey)
   return ownerpublickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Domain::set_ownerpublickey(const ::std::string& value) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set:connection_object.Domain.ownerPublicKey)
 }
 inline void Domain::set_ownerpublickey(const char* value) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.Domain.ownerPublicKey)
 }
 inline void Domain::set_ownerpublickey(const char* value, size_t size) {
   
   ownerpublickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Domain.ownerPublicKey)
 }
 inline ::std::string* Domain::mutable_ownerpublickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.Domain.ownerPublicKey)
   return ownerpublickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Domain::release_ownerpublickey() {
-  // @@protoc_insertion_point(field_release:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_release:connection_object.Domain.ownerPublicKey)
   
   return ownerpublickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -955,7 +955,7 @@ inline void Domain::set_allocated_ownerpublickey(::std::string* ownerpublickey) 
     
   }
   ownerpublickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ownerpublickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.Domain.ownerPublicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Domain.ownerPublicKey)
 }
 
 // optional string name = 2;
@@ -963,32 +963,32 @@ inline void Domain::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Domain::name() const {
-  // @@protoc_insertion_point(field_get:connection.Domain.name)
+  // @@protoc_insertion_point(field_get:connection_object.Domain.name)
   return name_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Domain::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Domain.name)
+  // @@protoc_insertion_point(field_set:connection_object.Domain.name)
 }
 inline void Domain::set_name(const char* value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_char:connection_object.Domain.name)
 }
 inline void Domain::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Domain.name)
 }
 inline ::std::string* Domain::mutable_name() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Domain.name)
+  // @@protoc_insertion_point(field_mutable:connection_object.Domain.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Domain::release_name() {
-  // @@protoc_insertion_point(field_release:connection.Domain.name)
+  // @@protoc_insertion_point(field_release:connection_object.Domain.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -999,7 +999,7 @@ inline void Domain::set_allocated_name(::std::string* name) {
     
   }
   name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:connection.Domain.name)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Domain.name)
 }
 
 // -------------------------------------------------------------------
@@ -1011,32 +1011,32 @@ inline void TxSignatures::clear_publickey() {
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxSignatures::publickey() const {
-  // @@protoc_insertion_point(field_get:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_get:connection_object.TxSignatures.publicKey)
   return publickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void TxSignatures::set_publickey(const ::std::string& value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set:connection_object.TxSignatures.publicKey)
 }
 inline void TxSignatures::set_publickey(const char* value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.TxSignatures.publicKey)
 }
 inline void TxSignatures::set_publickey(const char* value, size_t size) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.TxSignatures.publicKey)
 }
 inline ::std::string* TxSignatures::mutable_publickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.TxSignatures.publicKey)
   return publickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxSignatures::release_publickey() {
-  // @@protoc_insertion_point(field_release:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_release:connection_object.TxSignatures.publicKey)
   
   return publickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1047,7 +1047,7 @@ inline void TxSignatures::set_allocated_publickey(::std::string* publickey) {
     
   }
   publickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), publickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.TxSignatures.publicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.TxSignatures.publicKey)
 }
 
 // optional string signature = 2;
@@ -1055,32 +1055,32 @@ inline void TxSignatures::clear_signature() {
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& TxSignatures::signature() const {
-  // @@protoc_insertion_point(field_get:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_get:connection_object.TxSignatures.signature)
   return signature_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void TxSignatures::set_signature(const ::std::string& value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set:connection_object.TxSignatures.signature)
 }
 inline void TxSignatures::set_signature(const char* value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_char:connection_object.TxSignatures.signature)
 }
 inline void TxSignatures::set_signature(const char* value, size_t size) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.TxSignatures.signature)
 }
 inline ::std::string* TxSignatures::mutable_signature() {
   
-  // @@protoc_insertion_point(field_mutable:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_mutable:connection_object.TxSignatures.signature)
   return signature_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* TxSignatures::release_signature() {
-  // @@protoc_insertion_point(field_release:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_release:connection_object.TxSignatures.signature)
   
   return signature_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1091,7 +1091,7 @@ inline void TxSignatures::set_allocated_signature(::std::string* signature) {
     
   }
   signature_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), signature);
-  // @@protoc_insertion_point(field_set_allocated:connection.TxSignatures.signature)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.TxSignatures.signature)
 }
 
 // -------------------------------------------------------------------
@@ -1103,32 +1103,32 @@ inline void EventSignature::clear_publickey() {
   publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& EventSignature::publickey() const {
-  // @@protoc_insertion_point(field_get:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_get:connection_object.EventSignature.publicKey)
   return publickey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void EventSignature::set_publickey(const ::std::string& value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set:connection_object.EventSignature.publicKey)
 }
 inline void EventSignature::set_publickey(const char* value) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_char:connection_object.EventSignature.publicKey)
 }
 inline void EventSignature::set_publickey(const char* value, size_t size) {
   
   publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.EventSignature.publicKey)
 }
 inline ::std::string* EventSignature::mutable_publickey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_mutable:connection_object.EventSignature.publicKey)
   return publickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* EventSignature::release_publickey() {
-  // @@protoc_insertion_point(field_release:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_release:connection_object.EventSignature.publicKey)
   
   return publickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1139,7 +1139,7 @@ inline void EventSignature::set_allocated_publickey(::std::string* publickey) {
     
   }
   publickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), publickey);
-  // @@protoc_insertion_point(field_set_allocated:connection.EventSignature.publicKey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.EventSignature.publicKey)
 }
 
 // optional string signature = 2;
@@ -1147,32 +1147,32 @@ inline void EventSignature::clear_signature() {
   signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& EventSignature::signature() const {
-  // @@protoc_insertion_point(field_get:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_get:connection_object.EventSignature.signature)
   return signature_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void EventSignature::set_signature(const ::std::string& value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set:connection_object.EventSignature.signature)
 }
 inline void EventSignature::set_signature(const char* value) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_char:connection_object.EventSignature.signature)
 }
 inline void EventSignature::set_signature(const char* value, size_t size) {
   
   signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.EventSignature.signature)
 }
 inline ::std::string* EventSignature::mutable_signature() {
   
-  // @@protoc_insertion_point(field_mutable:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_mutable:connection_object.EventSignature.signature)
   return signature_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* EventSignature::release_signature() {
-  // @@protoc_insertion_point(field_release:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_release:connection_object.EventSignature.signature)
   
   return signature_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1183,40 +1183,40 @@ inline void EventSignature::set_allocated_signature(::std::string* signature) {
     
   }
   signature_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), signature);
-  // @@protoc_insertion_point(field_set_allocated:connection.EventSignature.signature)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.EventSignature.signature)
 }
 
 // -------------------------------------------------------------------
 
 // Transaction
 
-// repeated .connection.TxSignatures txSignatures = 1;
+// repeated .connection_object.TxSignatures txSignatures = 1;
 inline int Transaction::txsignatures_size() const {
   return txsignatures_.size();
 }
 inline void Transaction::clear_txsignatures() {
   txsignatures_.Clear();
 }
-inline const ::connection::TxSignatures& Transaction::txsignatures(int index) const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.txSignatures)
+inline const ::connection_object::TxSignatures& Transaction::txsignatures(int index) const {
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.txSignatures)
   return txsignatures_.Get(index);
 }
-inline ::connection::TxSignatures* Transaction::mutable_txsignatures(int index) {
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.txSignatures)
+inline ::connection_object::TxSignatures* Transaction::mutable_txsignatures(int index) {
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.txSignatures)
   return txsignatures_.Mutable(index);
 }
-inline ::connection::TxSignatures* Transaction::add_txsignatures() {
-  // @@protoc_insertion_point(field_add:connection.Transaction.txSignatures)
+inline ::connection_object::TxSignatures* Transaction::add_txsignatures() {
+  // @@protoc_insertion_point(field_add:connection_object.Transaction.txSignatures)
   return txsignatures_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >*
+inline ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >*
 Transaction::mutable_txsignatures() {
-  // @@protoc_insertion_point(field_mutable_list:connection.Transaction.txSignatures)
+  // @@protoc_insertion_point(field_mutable_list:connection_object.Transaction.txSignatures)
   return &txsignatures_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::connection::TxSignatures >&
+inline const ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures >&
 Transaction::txsignatures() const {
-  // @@protoc_insertion_point(field_list:connection.Transaction.txSignatures)
+  // @@protoc_insertion_point(field_list:connection_object.Transaction.txSignatures)
   return txsignatures_;
 }
 
@@ -1225,32 +1225,32 @@ inline void Transaction::clear_type() {
   type_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Transaction::type() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.type)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.type)
   return type_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Transaction::set_type(const ::std::string& value) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.type)
 }
 inline void Transaction::set_type(const char* value) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.type)
 }
 inline void Transaction::set_type(const char* value, size_t size) {
   
   type_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.type)
 }
 inline ::std::string* Transaction::mutable_type() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.type)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.type)
   return type_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Transaction::release_type() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.type)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.type)
   
   return type_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1261,7 +1261,7 @@ inline void Transaction::set_allocated_type(::std::string* type) {
     
   }
   type_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), type);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.type)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.type)
 }
 
 // optional .google.protobuf.Any objects = 3;
@@ -1273,7 +1273,7 @@ inline void Transaction::clear_objects() {
   objects_ = NULL;
 }
 inline const ::google::protobuf::Any& Transaction::objects() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.objects)
   return objects_ != NULL ? *objects_ : *default_instance_->objects_;
 }
 inline ::google::protobuf::Any* Transaction::mutable_objects() {
@@ -1281,11 +1281,11 @@ inline ::google::protobuf::Any* Transaction::mutable_objects() {
   if (objects_ == NULL) {
     objects_ = new ::google::protobuf::Any;
   }
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.objects)
   return objects_;
 }
 inline ::google::protobuf::Any* Transaction::release_objects() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.objects)
   
   ::google::protobuf::Any* temp = objects_;
   objects_ = NULL;
@@ -1299,7 +1299,7 @@ inline void Transaction::set_allocated_objects(::google::protobuf::Any* objects)
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.objects)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.objects)
 }
 
 // optional string senderPubkey = 4;
@@ -1307,32 +1307,32 @@ inline void Transaction::clear_senderpubkey() {
   senderpubkey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Transaction::senderpubkey() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.senderPubkey)
   return senderpubkey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Transaction::set_senderpubkey(const ::std::string& value) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.senderPubkey)
 }
 inline void Transaction::set_senderpubkey(const char* value) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.senderPubkey)
 }
 inline void Transaction::set_senderpubkey(const char* value, size_t size) {
   
   senderpubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.senderPubkey)
 }
 inline ::std::string* Transaction::mutable_senderpubkey() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.senderPubkey)
   return senderpubkey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Transaction::release_senderpubkey() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.senderPubkey)
   
   return senderpubkey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1343,7 +1343,7 @@ inline void Transaction::set_allocated_senderpubkey(::std::string* senderpubkey)
     
   }
   senderpubkey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), senderpubkey);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.senderPubkey)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.senderPubkey)
 }
 
 // optional string hash = 5;
@@ -1351,32 +1351,32 @@ inline void Transaction::clear_hash() {
   hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Transaction::hash() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.hash)
   return hash_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Transaction::set_hash(const ::std::string& value) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.hash)
 }
 inline void Transaction::set_hash(const char* value) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.hash)
 }
 inline void Transaction::set_hash(const char* value, size_t size) {
   
   hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.hash)
 }
 inline ::std::string* Transaction::mutable_hash() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.hash)
   return hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Transaction::release_hash() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.hash)
   
   return hash_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1387,7 +1387,7 @@ inline void Transaction::set_allocated_hash(::std::string* hash) {
     
   }
   hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), hash);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.hash)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.hash)
 }
 
 // optional string value = 6;
@@ -1395,32 +1395,32 @@ inline void Transaction::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& Transaction::value() const {
-  // @@protoc_insertion_point(field_get:connection.Transaction.value)
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.value)
   return value_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void Transaction::set_value(const ::std::string& value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.value)
 }
 inline void Transaction::set_value(const char* value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.value)
 }
 inline void Transaction::set_value(const char* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.value)
 }
 inline ::std::string* Transaction::mutable_value() {
   
-  // @@protoc_insertion_point(field_mutable:connection.Transaction.value)
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.value)
   return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* Transaction::release_value() {
-  // @@protoc_insertion_point(field_release:connection.Transaction.value)
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.value)
   
   return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1431,44 +1431,44 @@ inline void Transaction::set_allocated_value(::std::string* value) {
     
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:connection.Transaction.value)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.value)
 }
 
 // -------------------------------------------------------------------
 
 // ConsensusEvent
 
-// repeated .connection.EventSignature eventSignatures = 1;
+// repeated .connection_object.EventSignature eventSignatures = 1;
 inline int ConsensusEvent::eventsignatures_size() const {
   return eventsignatures_.size();
 }
 inline void ConsensusEvent::clear_eventsignatures() {
   eventsignatures_.Clear();
 }
-inline const ::connection::EventSignature& ConsensusEvent::eventsignatures(int index) const {
-  // @@protoc_insertion_point(field_get:connection.ConsensusEvent.eventSignatures)
+inline const ::connection_object::EventSignature& ConsensusEvent::eventsignatures(int index) const {
+  // @@protoc_insertion_point(field_get:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Get(index);
 }
-inline ::connection::EventSignature* ConsensusEvent::mutable_eventsignatures(int index) {
-  // @@protoc_insertion_point(field_mutable:connection.ConsensusEvent.eventSignatures)
+inline ::connection_object::EventSignature* ConsensusEvent::mutable_eventsignatures(int index) {
+  // @@protoc_insertion_point(field_mutable:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Mutable(index);
 }
-inline ::connection::EventSignature* ConsensusEvent::add_eventsignatures() {
-  // @@protoc_insertion_point(field_add:connection.ConsensusEvent.eventSignatures)
+inline ::connection_object::EventSignature* ConsensusEvent::add_eventsignatures() {
+  // @@protoc_insertion_point(field_add:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::connection::EventSignature >*
+inline ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >*
 ConsensusEvent::mutable_eventsignatures() {
-  // @@protoc_insertion_point(field_mutable_list:connection.ConsensusEvent.eventSignatures)
+  // @@protoc_insertion_point(field_mutable_list:connection_object.ConsensusEvent.eventSignatures)
   return &eventsignatures_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::connection::EventSignature >&
+inline const ::google::protobuf::RepeatedPtrField< ::connection_object::EventSignature >&
 ConsensusEvent::eventsignatures() const {
-  // @@protoc_insertion_point(field_list:connection.ConsensusEvent.eventSignatures)
+  // @@protoc_insertion_point(field_list:connection_object.ConsensusEvent.eventSignatures)
   return eventsignatures_;
 }
 
-// optional .connection.Transaction transaction = 2;
+// optional .connection_object.Transaction transaction = 2;
 inline bool ConsensusEvent::has_transaction() const {
   return !_is_default_instance_ && transaction_ != NULL;
 }
@@ -1476,26 +1476,26 @@ inline void ConsensusEvent::clear_transaction() {
   if (GetArenaNoVirtual() == NULL && transaction_ != NULL) delete transaction_;
   transaction_ = NULL;
 }
-inline const ::connection::Transaction& ConsensusEvent::transaction() const {
-  // @@protoc_insertion_point(field_get:connection.ConsensusEvent.transaction)
+inline const ::connection_object::Transaction& ConsensusEvent::transaction() const {
+  // @@protoc_insertion_point(field_get:connection_object.ConsensusEvent.transaction)
   return transaction_ != NULL ? *transaction_ : *default_instance_->transaction_;
 }
-inline ::connection::Transaction* ConsensusEvent::mutable_transaction() {
+inline ::connection_object::Transaction* ConsensusEvent::mutable_transaction() {
   
   if (transaction_ == NULL) {
-    transaction_ = new ::connection::Transaction;
+    transaction_ = new ::connection_object::Transaction;
   }
-  // @@protoc_insertion_point(field_mutable:connection.ConsensusEvent.transaction)
+  // @@protoc_insertion_point(field_mutable:connection_object.ConsensusEvent.transaction)
   return transaction_;
 }
-inline ::connection::Transaction* ConsensusEvent::release_transaction() {
-  // @@protoc_insertion_point(field_release:connection.ConsensusEvent.transaction)
+inline ::connection_object::Transaction* ConsensusEvent::release_transaction() {
+  // @@protoc_insertion_point(field_release:connection_object.ConsensusEvent.transaction)
   
-  ::connection::Transaction* temp = transaction_;
+  ::connection_object::Transaction* temp = transaction_;
   transaction_ = NULL;
   return temp;
 }
-inline void ConsensusEvent::set_allocated_transaction(::connection::Transaction* transaction) {
+inline void ConsensusEvent::set_allocated_transaction(::connection_object::Transaction* transaction) {
   delete transaction_;
   transaction_ = transaction;
   if (transaction) {
@@ -1503,7 +1503,7 @@ inline void ConsensusEvent::set_allocated_transaction(::connection::Transaction*
   } else {
     
   }
-  // @@protoc_insertion_point(field_set_allocated:connection.ConsensusEvent.transaction)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.ConsensusEvent.transaction)
 }
 
 // -------------------------------------------------------------------
@@ -1515,32 +1515,32 @@ inline void StatusResponse::clear_value() {
   value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline const ::std::string& StatusResponse::value() const {
-  // @@protoc_insertion_point(field_get:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_get:connection_object.StatusResponse.value)
   return value_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline void StatusResponse::set_value(const ::std::string& value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set:connection_object.StatusResponse.value)
 }
 inline void StatusResponse::set_value(const char* value) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_char:connection_object.StatusResponse.value)
 }
 inline void StatusResponse::set_value(const char* value, size_t size) {
   
   value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_pointer:connection_object.StatusResponse.value)
 }
 inline ::std::string* StatusResponse::mutable_value() {
   
-  // @@protoc_insertion_point(field_mutable:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_mutable:connection_object.StatusResponse.value)
   return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 inline ::std::string* StatusResponse::release_value() {
-  // @@protoc_insertion_point(field_release:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_release:connection_object.StatusResponse.value)
   
   return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1551,7 +1551,7 @@ inline void StatusResponse::set_allocated_value(::std::string* value) {
     
   }
   value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:connection.StatusResponse.value)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.StatusResponse.value)
 }
 
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
@@ -1570,7 +1570,7 @@ inline void StatusResponse::set_allocated_value(::std::string* value) {
 
 // @@protoc_insertion_point(namespace_scope)
 
-}  // namespace connection
+}  // namespace connection_object
 
 // @@protoc_insertion_point(global_scope)
 
