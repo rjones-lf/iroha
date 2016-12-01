@@ -34,6 +34,8 @@ limitations under the License.
 #include "../service/json_parse_with_json_nlohman.hpp"
 #include "../service/json_parse.hpp"
 
+#include "../repository/domain/account_repository.hpp"
+
 /**
 * |ーーー|　|ーーー|　|ーーー|　|ーーー|
 * |　ス　|ー|　メ　|ー|　ラ　|ー|　ギ　|
@@ -57,20 +59,20 @@ namespace sumeragi {
 
         void printIsSumeragi(bool isSumeragi){
             if(isSumeragi){
-                logger::info("sumeragi", "===+==========+===");
-                logger::info("sumeragi", "   |  |=+=|   |");
-                logger::info("sumeragi", "  -+----------+-");
-                logger::info("sumeragi", "   |          |");
-                logger::info("sumeragi", "   |  I  am   |");
-                logger::info("sumeragi", "   | Sumeragi |");
-                logger::info("sumeragi", "   |          |");
-                logger::info("sumeragi", "   A          A");
+                logger::explore("sumeragi", "===+==========+===");
+                logger::explore("sumeragi", "   |  |=+=|   |");
+                logger::explore("sumeragi", "  -+----------+-");
+                logger::explore("sumeragi", "   |          |");
+                logger::explore("sumeragi", "   |  I  am   |");
+                logger::explore("sumeragi", "   | Sumeragi |");
+                logger::explore("sumeragi", "   |          |");
+                logger::explore("sumeragi", "   A          A");
             }else{
-                logger::info("sumeragi", "   /\\         /\\");
-                logger::info("sumeragi", "   ||  I  am  ||");
-                logger::info("sumeragi", "   ||   peer  ||");
-                logger::info("sumeragi", "   ||         ||");
-                logger::info("sumeragi", "   AA         AA");
+                logger::explore("sumeragi", "   /\\         /\\");
+                logger::explore("sumeragi", "   ||  I  am  ||");
+                logger::explore("sumeragi", "   ||   peer  ||");
+                logger::explore("sumeragi", "   ||         ||");
+                logger::explore("sumeragi", "   AA         AA");
             }
         }
         void printJudge(int numValidSignatures,int numValidationPeer,int faulty){
@@ -92,32 +94,32 @@ namespace sumeragi {
                 }
             }
             for(int i=0;i<5;i++){
-                logger::info("sumeragi", lines[i]);
+                logger::explore("sumeragi", lines[i]);
             }
             std::string line = "";
             for(int i=0;i<numValidationPeer;i++) line += "==＝==";
-            logger::info("sumeragi", line);
+            logger::explore("sumeragi", line);
 
         
-            logger::info("sumeragi",
+            logger::explore("sumeragi",
                 "numValidSignatures:" + std::to_string(numValidSignatures)+
                 " faulty:" + std::to_string(faulty));
         }
 
         void printAgree(){
-                logger::info("sumeragi", "\033[1m\033[92m+==ーー==+\033[0m");
-                logger::info("sumeragi", "\033[1m\033[92m|+-ーー-+|\033[0m");
-                logger::info("sumeragi", "\033[1m\033[92m|| 承認 ||\033[0m");
-                logger::info("sumeragi", "\033[1m\033[92m|+-ーー-+|\033[0m");
-                logger::info("sumeragi", "\033[1m\033[92m+==ーー==+\033[0m");
+                logger::explore("sumeragi", "\033[1m\033[92m+==ーー==+\033[0m");
+                logger::explore("sumeragi", "\033[1m\033[92m|+-ーー-+|\033[0m");
+                logger::explore("sumeragi", "\033[1m\033[92m|| 承認 ||\033[0m");
+                logger::explore("sumeragi", "\033[1m\033[92m|+-ーー-+|\033[0m");
+                logger::explore("sumeragi", "\033[1m\033[92m+==ーー==+\033[0m");
         }
 
         void printReject(){
-                logger::info("sumeragi", "\033[91m+==ーー==+\033[0m");
-                logger::info("sumeragi", "\033[91m|+-ーー-+|\033[0m");
-                logger::info("sumeragi", "\033[91m|| 否認 ||\033[0m");
-                logger::info("sumeragi", "\033[91m|+-ーー-+|\033[0m");
-                logger::info("sumeragi", "\033[91m+==ーー==+\033[0m");
+                logger::explore("sumeragi", "\033[91m+==ーー==+\033[0m");
+                logger::explore("sumeragi", "\033[91m|+-ーー-+|\033[0m");
+                logger::explore("sumeragi", "\033[91m|| 否認 ||\033[0m");
+                logger::explore("sumeragi", "\033[91m|+-ーー-+|\033[0m");
+                logger::explore("sumeragi", "\033[91m+==ーー==+\033[0m");
         }
     }
 
@@ -147,16 +149,16 @@ namespace sumeragi {
 
     void initializeSumeragi(const std::string& myPublicKey,
                             std::vector<std::unique_ptr<peer::Node>> peers) {
-        logger::info("sumeragi", "\033[95m+==ーーーーーーーーー==+\033[0m");
-        logger::info("sumeragi", "\033[95m|+-ーーーーーーーーー-+|\033[0m");
-        logger::info("sumeragi", "\033[95m|| 　　　　　　　　　 ||\033[0m");
-        logger::info("sumeragi", "\033[95m|| いろは合意形成機構 ||\033[0m");
-        logger::info("sumeragi", "\033[95m|| 　　　\033[1mすめらぎ\033[0m\033[95m　　 ||\033[0m");
-        logger::info("sumeragi", "\033[95m|| 　　　　　　　　　 ||\033[0m");
-        logger::info("sumeragi", "\033[95m|+-ーーーーーーーーー-+|\033[0m");
-        logger::info("sumeragi", "\033[95m+==ーーーーーーーーー==+\033[0m");
-        logger::info("sumeragi", "- 起動/setup");
-        logger::info("sumeragi", "- 初期設定/initialize");
+        logger::explore("sumeragi", "\033[95m+==ーーーーーーーーー==+\033[0m");
+        logger::explore("sumeragi", "\033[95m|+-ーーーーーーーーー-+|\033[0m");
+        logger::explore("sumeragi", "\033[95m|| 　　　　　　　　　 ||\033[0m");
+        logger::explore("sumeragi", "\033[95m|| いろは合意形成機構 ||\033[0m");
+        logger::explore("sumeragi", "\033[95m|| 　　　\033[1mすめらぎ\033[0m\033[95m　　 ||\033[0m");
+        logger::explore("sumeragi", "\033[95m|| 　　　　　　　　　 ||\033[0m");
+        logger::explore("sumeragi", "\033[95m|+-ーーーーーーーーー-+|\033[0m");
+        logger::explore("sumeragi", "\033[95m+==ーーーーーーーーー==+\033[0m");
+        logger::explore("sumeragi", "- 起動/setup");
+        logger::explore("sumeragi", "- 初期設定/initialize");
         //merkle_transaction_repository::initLeaf();
 
         context = std::make_unique<Context>(std::move(peers));
@@ -221,7 +223,7 @@ namespace sumeragi {
         logger::info("sumeragi", "valied");
         logger::info("sumeragi", "Add my signature...");
         
-        detail::printIsSumeragi(context->isSumeragi);
+        //detail::printIsSumeragi(context->isSumeragi);
         // Really need? blow "if statement" will be false anytime.
         event->addSignature( peer::getMyPublicKey(), signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str());
 
@@ -236,17 +238,16 @@ namespace sumeragi {
             if (event->getNumValidSignatures() >= context->maxFaulty*2 + 1) {
 
                 logger::info("sumeragi", "Signature exists");
-                logger::info("sumeragi", "0--------------------------0");
-                logger::info("sumeragi", "+~~~~~~~~~~~~~~~~~~~~~~~~~~+");
-                logger::info("sumeragi", "|Would you agree with this?|");
-                logger::info("sumeragi", "+~~~~~~~~~~~~~~~~~~~~~~~~~~+");
-                logger::info("sumeragi", "\033[93m0================================================================0\033[0m");
-                logger::info("sumeragi", "\033[93m0\033[1m"+ event->getHash() +"0\033[0m");
-                logger::info("sumeragi", "\033[93m0================================================================0\033[0m");
+                logger::explore("sumeragi", "0--------------------------0");
+                logger::explore("sumeragi", "+~~~~~~~~~~~~~~~~~~~~~~~~~~+");
+                logger::explore("sumeragi", "|Would you agree with this?|");
+                logger::explore("sumeragi", "+~~~~~~~~~~~~~~~~~~~~~~~~~~+");
+                logger::explore("sumeragi", "\033[93m0================================================================0\033[0m");
+                logger::explore("sumeragi", "\033[93m0\033[1m"+ event->getHash() +"0\033[0m");
+                logger::explore("sumeragi", "\033[93m0================================================================0\033[0m");
 
                 detail::printJudge( event->getNumValidSignatures(), context->numValidatingPeers, context->maxFaulty*2 + 1);
-                
-                
+
                 detail::printAgree();
                 // Check Merkle roots to see if match for new state
                 //TODO: std::vector<std::string>>const merkleSignatures = event.merkleRootSignatures;
@@ -262,8 +263,12 @@ namespace sumeragi {
                 // }
 
                 // Commit locally
-                logger::info("sumeragi", "commit");
+                logger::explore("sumeragi", "commit");
                 merkle_transaction_repository::commit(event); //TODO: add error handling in case not saved
+
+                // Write exec code smart contract
+
+
             } else {
                 // This is a new event, so we should verify, sign, and broadcast it
                 event->addSignature( peer::getMyPublicKey(), signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str());
@@ -280,9 +285,8 @@ namespace sumeragi {
                     connection::sendAll(std::move(event)); // TODO: Think In Process
                 }
 
-                detail::printReject();
-
-                setAwkTimer(3000, [&](){
+                setAwkTimer(3, [&](){
+                //setAwkTimer(3000, [&](){
                     if (!merkle_transaction_repository::leafExists(event->getHash())) {
                         panic(event);
                     }
@@ -399,12 +403,13 @@ namespace sumeragi {
                 for (auto& event : events) {
 
                     logger::info("sumeragi", "evens order:" + std::to_string(event->order));
-                    //if (!transaction_validator::isValid(event->getTx())) {
-                    //    continue;
-                    //}
+
+                    if (!transaction_validator::isValid(event)) {
+                        continue;
+                    }
 
                     // Process transaction
-                    processTransaction(std::move(event));
+                    std::thread([&event]{ processTransaction(std::move(event)); }).join();
                 }
             }
         }

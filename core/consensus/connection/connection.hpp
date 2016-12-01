@@ -49,7 +49,7 @@ namespace connection {
         const std::unique_ptr<
             ::event::Event
         >& msg);
-    
+
     bool sendAll(
         const std::unique_ptr<
             ::event::Event

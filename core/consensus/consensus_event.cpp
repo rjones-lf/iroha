@@ -18,9 +18,9 @@ namespace event{
     ConsensusEvent<Transaction<Transfer<object::Asset>>>::ConsensusEvent(
         Object obj
     ):
-        Transaction(obj)
+        Transaction(obj.dictSub["transaction"])
     {
-        order = obj.dictSub["order"].floating;
+        order = obj.dictSub["order"].integer;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
         std::cout << eventSigs.size() << std::endl; 
         for(auto&& sig : eventSigs){
@@ -29,7 +29,7 @@ namespace event{
                 sig.dictSub["publicKey"].str != "" &&
                 sig.dictSub["signature"].str != ""
             ){
-                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+                _eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
             }
         }
     }
@@ -38,17 +38,12 @@ namespace event{
     ConsensusEvent<Transaction<Add<object::Asset>>>::ConsensusEvent(
         Object obj
     ):
-        Transaction(obj)
+        Transaction(obj.dictSub["transaction"])
     {
-        order = obj.dictSub["order"].floating;
+        order = obj.dictSub["order"].integer;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
         for(auto&& sig : eventSigs){
-            if(
-                sig.dictSub["publicKey"].str != "" &&
-                sig.dictSub["signature"].str != ""
-            ){
-                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
-            }
+            _eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str, sig.dictSub["signature"].str));
         }
     }
 
@@ -61,10 +56,9 @@ namespace event{
         order = obj.dictSub["order"].floating;
         std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
         for(auto&& sig : eventSigs){
-            eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
+            _eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
         }
     }
-
 
     template <>
     ConsensusEvent<Transaction<Transfer<object::Asset>>>::ConsensusEvent(

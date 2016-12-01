@@ -49,7 +49,7 @@ class ConsensusEvent: public T, public Event {
         {}
     };
 
-    std::vector<eventSignature> eventSignatures;
+    std::vector<eventSignature> _eventSignatures;
 
 public:
     unsigned long long order = 0;
@@ -84,7 +84,7 @@ public:
     explicit ConsensusEvent(Object obj);
 
     void addSignature(const std::string& publicKey, const std::string& signature){
-        eventSignatures.push_back(eventSignature(publicKey, signature));
+        _eventSignatures.push_back(eventSignature(publicKey, signature));
     }
 
     std::string getHash() {
@@ -93,21 +93,29 @@ public:
 
     int getNumValidSignatures() {
         return std::count_if(
-            eventSignatures.begin(), eventSignatures.end(),
+                _eventSignatures.begin(), _eventSignatures.end(),
             [hash = getHash()](eventSignature sig){
                 return signature::verify(sig.signature, hash, sig.publicKey);
         });
     }
 
     bool eventSignatureIsEmpty(){
-        return eventSignatures.empty();
+        return _eventSignatures.empty();
     }
+
+    std::vector<std::tuple<std::string,std::string>> eventSignatures(){
+        std::vector<std::tuple<std::string,std::string>> res;
+        for(const auto& sig: _eventSignatures){
+            res.push_back(std::make_tuple(sig.publicKey,sig.signature));
+        }
+        return res;
+    };
 
     Object dump() {
         Object obj = Object(Type::DICT);
         obj.dictSub.insert( std::make_pair( "order", Object(Type::INT, (int)order)));
         auto eventSigs   = Object(Type::LIST);
-        for(auto&& eSig : eventSignatures) {
+        for(auto&& eSig : _eventSignatures) {
             auto eventSig = Object(Type::DICT);
             eventSig.dictSub.insert( std::make_pair( "publicKey", Object(Type::STR, eSig.publicKey)));
             eventSig.dictSub.insert( std::make_pair( "signature", Object(Type::STR, eSig.signature)));

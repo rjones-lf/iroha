@@ -18,6 +18,8 @@ limitations under the License.
 #define CORE_CONSENSUS_EVENT_HPP_
 
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "../service/json_parse.hpp"
 
@@ -29,6 +31,7 @@ public:
   virtual void addSignature(const std::string& publicKey, const std::string& signature) = 0;
   virtual int getNumValidSignatures() = 0;
   virtual bool eventSignatureIsEmpty() = 0;
+  virtual std::vector<std::tuple<std::string,std::string>> eventSignatures() = 0;
   virtual std::string getHash() = 0;
   virtual json_parse::Object dump() = 0;
 };
