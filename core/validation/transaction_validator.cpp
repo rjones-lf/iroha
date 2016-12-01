@@ -17,14 +17,20 @@ limitations under the License.
 
 namespace transaction_validator {
 
-    using transaction::Transaction;
-    using command::Add;
-    using command::Transfer;
+    template<typename T>
+    using Transaction = transaction::Transaction<T>;
+    template<typename T>
+    using ConsensusEvent = event::ConsensusEvent<T>;
+    template<typename T>
+    using Add = command::Add<T>;
+    template<typename T>
+    using Transfer = command::Transfer<T>;
 
     template<>
-    bool isValid<Transaction<Add<object::Asset>>>(
-        const Transaction<Transaction<Add<object::Asset>>>& tx
+    bool isValid<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+        const std::unique_ptr<ConsensusEvent<Transaction<Add<object::Asset>>>>& tx
     ){
+        // Write domain logic
         return true;
     }
 

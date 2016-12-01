@@ -33,19 +33,13 @@ namespace transaction_validator {
     using transaction::Transaction;
 
     template<typename T>
-    bool isValid(const Transaction<T>& tx){
-        return true;
-    }
+    bool isValid(const std::unique_ptr<T>& tx);
 
     template<typename T>
-    bool signaturesAreValid(const Transaction<T>& tx){
-        return true;
-    }
+    bool signaturesAreValid(const std::unique_ptr<T>& tx);
 
     template<typename T>
-    bool validForType(const Transaction<T>& tx){
-        return true;
-    }
+    bool validForType(const std::unique_ptr<T>& tx);
 
 };  // namespace transaction_validator
 
