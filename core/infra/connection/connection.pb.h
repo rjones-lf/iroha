@@ -27,7 +27,6 @@
 #include <google/protobuf/repeated_field.h>
 #include <google/protobuf/extension_set.h>
 #include <google/protobuf/unknown_field_set.h>
-#include <google/protobuf/any.pb.h>
 // @@protoc_insertion_point(includes)
 
 namespace connection_object {
@@ -540,15 +539,6 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_type();
   void set_allocated_type(::std::string* type);
 
-  // optional .google.protobuf.Any objects = 3;
-  bool has_objects() const;
-  void clear_objects();
-  static const int kObjectsFieldNumber = 3;
-  const ::google::protobuf::Any& objects() const;
-  ::google::protobuf::Any* mutable_objects();
-  ::google::protobuf::Any* release_objects();
-  void set_allocated_objects(::google::protobuf::Any* objects);
-
   // optional string senderPubkey = 4;
   void clear_senderpubkey();
   static const int kSenderPubkeyFieldNumber = 4;
@@ -571,16 +561,34 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::std::string* release_hash();
   void set_allocated_hash(::std::string* hash);
 
-  // optional string value = 6;
-  void clear_value();
-  static const int kValueFieldNumber = 6;
-  const ::std::string& value() const;
-  void set_value(const ::std::string& value);
-  void set_value(const char* value);
-  void set_value(const char* value, size_t size);
-  ::std::string* mutable_value();
-  ::std::string* release_value();
-  void set_allocated_value(::std::string* value);
+  // optional .connection_object.Asset asset = 6;
+  bool has_asset() const;
+  void clear_asset();
+  static const int kAssetFieldNumber = 6;
+  const ::connection_object::Asset& asset() const;
+  ::connection_object::Asset* mutable_asset();
+  ::connection_object::Asset* release_asset();
+  void set_allocated_asset(::connection_object::Asset* asset);
+
+  // optional .connection_object.Domain domain = 7;
+  bool has_domain() const;
+  void clear_domain();
+  static const int kDomainFieldNumber = 7;
+  const ::connection_object::Domain& domain() const;
+  ::connection_object::Domain* mutable_domain();
+  ::connection_object::Domain* release_domain();
+  void set_allocated_domain(::connection_object::Domain* domain);
+
+  // optional string receivePubkey = 8;
+  void clear_receivepubkey();
+  static const int kReceivePubkeyFieldNumber = 8;
+  const ::std::string& receivepubkey() const;
+  void set_receivepubkey(const ::std::string& value);
+  void set_receivepubkey(const char* value);
+  void set_receivepubkey(const char* value, size_t size);
+  ::std::string* mutable_receivepubkey();
+  ::std::string* release_receivepubkey();
+  void set_allocated_receivepubkey(::std::string* receivepubkey);
 
   // @@protoc_insertion_point(class_scope:connection_object.Transaction)
  private:
@@ -589,10 +597,11 @@ class Transaction : public ::google::protobuf::Message /* @@protoc_insertion_poi
   bool _is_default_instance_;
   ::google::protobuf::RepeatedPtrField< ::connection_object::TxSignatures > txsignatures_;
   ::google::protobuf::internal::ArenaStringPtr type_;
-  ::google::protobuf::Any* objects_;
   ::google::protobuf::internal::ArenaStringPtr senderpubkey_;
   ::google::protobuf::internal::ArenaStringPtr hash_;
-  ::google::protobuf::internal::ArenaStringPtr value_;
+  ::connection_object::Asset* asset_;
+  ::connection_object::Domain* domain_;
+  ::google::protobuf::internal::ArenaStringPtr receivepubkey_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_connection_2eproto();
   friend void protobuf_AssignDesc_connection_2eproto();
@@ -1264,44 +1273,6 @@ inline void Transaction::set_allocated_type(::std::string* type) {
   // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.type)
 }
 
-// optional .google.protobuf.Any objects = 3;
-inline bool Transaction::has_objects() const {
-  return !_is_default_instance_ && objects_ != NULL;
-}
-inline void Transaction::clear_objects() {
-  if (GetArenaNoVirtual() == NULL && objects_ != NULL) delete objects_;
-  objects_ = NULL;
-}
-inline const ::google::protobuf::Any& Transaction::objects() const {
-  // @@protoc_insertion_point(field_get:connection_object.Transaction.objects)
-  return objects_ != NULL ? *objects_ : *default_instance_->objects_;
-}
-inline ::google::protobuf::Any* Transaction::mutable_objects() {
-  
-  if (objects_ == NULL) {
-    objects_ = new ::google::protobuf::Any;
-  }
-  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.objects)
-  return objects_;
-}
-inline ::google::protobuf::Any* Transaction::release_objects() {
-  // @@protoc_insertion_point(field_release:connection_object.Transaction.objects)
-  
-  ::google::protobuf::Any* temp = objects_;
-  objects_ = NULL;
-  return temp;
-}
-inline void Transaction::set_allocated_objects(::google::protobuf::Any* objects) {
-  delete objects_;
-  objects_ = objects;
-  if (objects) {
-    
-  } else {
-    
-  }
-  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.objects)
-}
-
 // optional string senderPubkey = 4;
 inline void Transaction::clear_senderpubkey() {
   senderpubkey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -1390,48 +1361,124 @@ inline void Transaction::set_allocated_hash(::std::string* hash) {
   // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.hash)
 }
 
-// optional string value = 6;
-inline void Transaction::clear_value() {
-  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// optional .connection_object.Asset asset = 6;
+inline bool Transaction::has_asset() const {
+  return !_is_default_instance_ && asset_ != NULL;
 }
-inline const ::std::string& Transaction::value() const {
-  // @@protoc_insertion_point(field_get:connection_object.Transaction.value)
-  return value_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void Transaction::clear_asset() {
+  if (GetArenaNoVirtual() == NULL && asset_ != NULL) delete asset_;
+  asset_ = NULL;
 }
-inline void Transaction::set_value(const ::std::string& value) {
+inline const ::connection_object::Asset& Transaction::asset() const {
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.asset)
+  return asset_ != NULL ? *asset_ : *default_instance_->asset_;
+}
+inline ::connection_object::Asset* Transaction::mutable_asset() {
   
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:connection_object.Transaction.value)
+  if (asset_ == NULL) {
+    asset_ = new ::connection_object::Asset;
+  }
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.asset)
+  return asset_;
 }
-inline void Transaction::set_value(const char* value) {
+inline ::connection_object::Asset* Transaction::release_asset() {
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.asset)
   
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.value)
+  ::connection_object::Asset* temp = asset_;
+  asset_ = NULL;
+  return temp;
 }
-inline void Transaction::set_value(const char* value, size_t size) {
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.value)
-}
-inline ::std::string* Transaction::mutable_value() {
-  
-  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.value)
-  return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Transaction::release_value() {
-  // @@protoc_insertion_point(field_release:connection_object.Transaction.value)
-  
-  return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Transaction::set_allocated_value(::std::string* value) {
-  if (value != NULL) {
+inline void Transaction::set_allocated_asset(::connection_object::Asset* asset) {
+  delete asset_;
+  asset_ = asset;
+  if (asset) {
     
   } else {
     
   }
-  value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.value)
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.asset)
+}
+
+// optional .connection_object.Domain domain = 7;
+inline bool Transaction::has_domain() const {
+  return !_is_default_instance_ && domain_ != NULL;
+}
+inline void Transaction::clear_domain() {
+  if (GetArenaNoVirtual() == NULL && domain_ != NULL) delete domain_;
+  domain_ = NULL;
+}
+inline const ::connection_object::Domain& Transaction::domain() const {
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.domain)
+  return domain_ != NULL ? *domain_ : *default_instance_->domain_;
+}
+inline ::connection_object::Domain* Transaction::mutable_domain() {
+  
+  if (domain_ == NULL) {
+    domain_ = new ::connection_object::Domain;
+  }
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.domain)
+  return domain_;
+}
+inline ::connection_object::Domain* Transaction::release_domain() {
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.domain)
+  
+  ::connection_object::Domain* temp = domain_;
+  domain_ = NULL;
+  return temp;
+}
+inline void Transaction::set_allocated_domain(::connection_object::Domain* domain) {
+  delete domain_;
+  domain_ = domain;
+  if (domain) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.domain)
+}
+
+// optional string receivePubkey = 8;
+inline void Transaction::clear_receivepubkey() {
+  receivepubkey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& Transaction::receivepubkey() const {
+  // @@protoc_insertion_point(field_get:connection_object.Transaction.receivePubkey)
+  return receivepubkey_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Transaction::set_receivepubkey(const ::std::string& value) {
+  
+  receivepubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:connection_object.Transaction.receivePubkey)
+}
+inline void Transaction::set_receivepubkey(const char* value) {
+  
+  receivepubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:connection_object.Transaction.receivePubkey)
+}
+inline void Transaction::set_receivepubkey(const char* value, size_t size) {
+  
+  receivepubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:connection_object.Transaction.receivePubkey)
+}
+inline ::std::string* Transaction::mutable_receivepubkey() {
+  
+  // @@protoc_insertion_point(field_mutable:connection_object.Transaction.receivePubkey)
+  return receivepubkey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Transaction::release_receivepubkey() {
+  // @@protoc_insertion_point(field_release:connection_object.Transaction.receivePubkey)
+  
+  return receivepubkey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Transaction::set_allocated_receivepubkey(::std::string* receivepubkey) {
+  if (receivepubkey != NULL) {
+    
+  } else {
+    
+  }
+  receivepubkey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), receivepubkey);
+  // @@protoc_insertion_point(field_set_allocated:connection_object.Transaction.receivePubkey)
 }
 
 // -------------------------------------------------------------------

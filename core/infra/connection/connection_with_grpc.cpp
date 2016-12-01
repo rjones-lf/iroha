@@ -19,6 +19,10 @@ limitations under the License.
 #include "../../util/logger.hpp"
 #include "../../service/peer_service.hpp"
 
+#include "../../service/json_parse_with_json_nlohman.hpp"
+#include "../../service/json_parse.hpp"
+#include "../../service/json_parse.hpp"
+
 #include <grpc++/grpc++.h>
 
 #include "connection.grpc.pb.h"
@@ -58,18 +62,114 @@ namespace connection {
         >
     > receivers;
 
+
+    template<typename T>
+    connection_object::ConsensusEvent encodeConsensusEvent(std::unique_ptr<T>&& event){
+        logger::error("connection","No implements error :"+ std::string(typeid(T).name()));
+        throw "No implements";
+    }
+
+    template<>
+    connection_object::ConsensusEvent encodeConsensusEvent(
+        std::unique_ptr<
+            ConsensusEvent<
+                Transaction<
+                    Add<Asset>
+                >
+            >
+        >&& event
+    ) {
+        connection_object::Asset asset;
+        auto txObj = event->dump().dictSub["transaction"];
+        auto assetObj = txObj.dictSub["command"].dictSub["object"];
+
+        asset.set_domain(assetObj.dictSub["domain"].str);
+        asset.set_name(assetObj.dictSub["name"].str);
+        asset.set_value(static_cast<google::protobuf::uint64>(assetObj.dictSub["value"].integer));
+        asset.set_precision(static_cast<google::protobuf::uint64>(assetObj.dictSub["precision"].integer));
+
+        connection_object::Transaction tx;
+        tx.set_type(event->getCommandName());
+        tx.set_senderpubkey(event->dump().dictSub["transaction"].dictSub["senderPublicKey"].str);
+        tx.mutable_asset()->CopyFrom(asset);
+
+        connection_object::ConsensusEvent consensusEvent;
+        consensusEvent.mutable_transaction()->CopyFrom(tx);
+
+        if(!event->eventSignatures().empty()) {
+            for (auto &esig: event->eventSignatures()) {
+                connection_object::EventSignature eventSig;
+                eventSig.set_publickey(std::get<0>(esig));
+                eventSig.set_signature(std::get<1>(esig));
+                consensusEvent.add_eventsignatures()->CopyFrom(eventSig);
+            }
+        }
+
+        return consensusEvent;
+    }
+
+    template<typename T>
+    T decodeConsensusEvent(const connection_object::ConsensusEvent* event){
+        logger::error("connection","No implements error :"+ std::string(typeid(T).name()));
+        throw "No implements";
+    }
+
+    template<>
+    std::unique_ptr<
+        ConsensusEvent<
+            Transaction<
+                Add<Asset>
+            >
+        >
+    > decodeConsensusEvent(
+        const connection_object::ConsensusEvent* event
+    ) {
+        auto tx = event->transaction();
+        auto asset = tx.asset();
+
+        auto consensusEvent =  std::make_unique<ConsensusEvent<
+            Transaction<
+                    Add<Asset>
+            >
+        >>(
+            tx.senderpubkey(),
+            asset.domain(),
+            asset.name(),
+            asset.value(),
+            asset.precision()
+        );
+        for(const auto& esig: event->eventsignatures()){
+            consensusEvent->addSignature(esig.publickey(), esig.signature());
+        }
+        for(const auto& txsig: event->transaction().txsignatures()){
+            consensusEvent->addTxSignature(txsig.publickey(), txsig.signature());
+        }
+        return consensusEvent;
+    }
+
     class IrohaConnectionClient {
         public:
         IrohaConnectionClient(std::shared_ptr<Channel> channel)
             : stub_(IrohaConnection::NewStub(channel)) {}
 
-        std::string Operation(const std::string& message) {
+        std::string Operation(const std::unique_ptr<event::Event>& event) {
             connection_object::StatusResponse response;
-            connection_object::ConsensusEvent event;
+
+            // ToDo refactoring it's only add asset. separate funciton event -> some transaction ... = _ =
+            connection_object::ConsensusEvent consensusEvent = encodeConsensusEvent(
+                json_parse_with_json_nlohman::parser::load<
+                    ConsensusEvent<
+                        Transaction<
+                           Add<object::Asset>
+                        >
+                    >
+             >(json_parse_with_json_nlohman::parser::dump(event->dump())));
+
             ClientContext context;
 
-            Status status = stub_->Operation(&context, event, &response);
+            Status status = stub_->Operation(&context, consensusEvent, &response);
             if (status.ok()) {
+                logger::info("connection", "response:" + response.value());
                 return response.value();
             } else {
                 std::cout << status.error_code() << ": "
@@ -88,9 +188,14 @@ namespace connection {
             const connection_object::ConsensusEvent* event,
             connection_object::StatusResponse* response
         ) override {
-            logger::info("connection", "operation");
             for(auto& f: receivers){
-                //f("from",event->DebugString());
+                f("from",
+                  std::move(decodeConsensusEvent<std::unique_ptr<ConsensusEvent<
+                    Transaction<
+                        Add<Asset>
+                    >
+                  >>>(event))
+                );
             }
             response->set_value("OK");
             return Status::OK;
@@ -107,14 +212,14 @@ namespace connection {
     }
 
     bool send(const std::string& ip,
-        const std::unique_ptr<event::Event>& event) {
-        
+        const std::unique_ptr<event::Event>& event
+    ) {
+
         if(find( receiver_ips.begin(), receiver_ips.end() , ip) != receiver_ips.end()){
             IrohaConnectionClient client(grpc::CreateChannel(
                 ip + ":50051", grpc::InsecureChannelCredentials())
             );
-            //std::string reply = client.Operation(event);
-            //logger::info("connection", "send successfull :"+ reply);
+            std::string reply = client.Operation(event);
             return true;
         }else{
             logger::error("connection", "not found");
@@ -125,23 +230,23 @@ namespace connection {
     bool sendAll(
         const std::unique_ptr<
             event::Event
-        >& msg
+        >& event
     ) {
         // WIP
-        //logger::info("connection", "send mesage"+ msg);
+        logger::info("connection", "send mesage:"+ event->getHash());
         for(auto& ip : receiver_ips){
             if( ip != peer::getMyIp()){
-        //        send( ip, msg);
+                send( ip, event);
             }
         }
         return true;
     }
 
     bool receive(const std::function<void(
-        const std::string& from,
+        const std::string&,
         std::unique_ptr<
             event::Event
-        >&& message)>& callback) {
+        >&&)>& callback) {
         receivers.push_back(callback);
         return true;
     }

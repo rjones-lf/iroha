@@ -30,7 +30,6 @@ namespace peer {
     std::string getMyPublicKey(){
         try{
             auto data = json::parse(openConfig());
-            std::cout << data.dump() <<std::endl;
             return data["me"]["publicKey"].get<std::string>();
         }catch(...){
             return "";

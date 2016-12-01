@@ -1,10 +1,8 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
-
 option cc_generic_services = false;
 
-package connection_objec;
+package connection_object;
 
 service IrohaConnection {
   rpc Operation(ConsensusEvent) returns (StatusResponse) {}
@@ -20,7 +18,6 @@ message Domain {
   string ownerPublicKey = 1;
   string name = 2;
 }
-
 message TxSignatures {
   string publicKey = 1;
   string signature = 2;
@@ -33,10 +30,12 @@ message EventSignature {
 message Transaction {
   repeated TxSignatures txSignatures = 1;
   string type = 2;
-  google.protobuf.Any objects = 3;
   string senderPubkey = 4;
   string hash = 5;
-  string value = 6;
+
+  Asset asset = 6;
+  Domain domain = 7;
+  string receivePubkey = 8;
 }
 
 message ConsensusEvent {
