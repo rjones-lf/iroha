@@ -23,8 +23,9 @@ link_directories(
 add_executable(hash_test
   hash_test.cpp
 )
-target_link_libraries(hash_test hash
-  keccak
+target_link_libraries(hash_test
+  #keccak
+  hash
   crypto
   ssl
   ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a pthread

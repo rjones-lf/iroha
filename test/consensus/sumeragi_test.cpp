@@ -54,13 +54,13 @@ int main(int argc, char *argv[]){
     std::string cmd;
     std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
 
-    connection::initialize_peer(nullptr);
+    connection::initialize_peer();
 
     for(const auto& n : nodes){
         std::cout<< "=========" << std::endl;
         std::cout<< n->getPublicKey() << std::endl;
         std::cout<< n->getIP() << std::endl;
-        connection::addPublication(n->getIP());
+        connection::addSubscriber(n->getIP());
     }
 
     std::string pubKey = peer::getMyPublicKey();
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
         sumeragi::loop();
     });
 
-    connection::exec_subscription(peer::getMyIp());    
+    connection::run();    
     if( argc >= 2 && std::string(argv[1]) == "public"){
         std::cout<<"start publish tx\n";
         while(1){
@@ -88,8 +88,7 @@ int main(int argc, char *argv[]){
                         peer::getMyPublicKey(),
                         signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
                 );
-                auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-                connection::send(peer::getMyIp(), text);
+                connection::send(peer::getMyIp(), std::move(event));
             });
         }
     }else{
