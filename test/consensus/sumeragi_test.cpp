@@ -29,6 +29,7 @@ limitations under the License.
 #include "../../core/service/json_parse_with_json_nlohman.hpp"
 
 #include "../../core/service/peer_service.hpp"
+#include "../../core/util/logger.hpp"
 #include "../../core/crypto/hash.hpp"
 
 template<typename T>
@@ -56,6 +57,8 @@ int main(int argc, char *argv[]){
 
     connection::initialize_peer();
 
+    logger::setLogLevel(logger::LogLevel::EXPLORE);
+
     for(const auto& n : nodes){
         std::cout<< "=========" << std::endl;
         std::cout<< n->getPublicKey() << std::endl;
@@ -71,19 +74,20 @@ int main(int argc, char *argv[]){
         sumeragi::loop();
     });
 
-    connection::run();    
+    std::thread connection_th( []() {
+        connection::run();
+    });
+
     if( argc >= 2 && std::string(argv[1]) == "public"){
-        std::cout<<"start publish tx\n";
         while(1){
-            
-            setAwkTimer(100, [&](){
-                auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-                    senderPublicKey,
-                    receiverPublicKey,
-                    "Dummy transaction",
-                    100
+            setAwkTimer(1, [&](){
+                auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+                        peer::getMyPublicKey(),
+                        "domain",
+                        "Dummy transaction",
+                        100,
+                        0
                 );
-                std::cout <<" created event\n";
                 event->addTxSignature(
                         peer::getMyPublicKey(),
                         signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
@@ -94,9 +98,8 @@ int main(int argc, char *argv[]){
     }else{
         std::cout<<"I'm only node\n";
         while(1);
-
     }
-
+    connection_th.detach();
     http_th.detach();
     return 0;
 }

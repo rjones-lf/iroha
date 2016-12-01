@@ -39,5 +39,4 @@ target_link_libraries(connection_grpc_test
   consensus_event
   signature
   peer_service_with_json
-  json_parse_with_nlohman
 )

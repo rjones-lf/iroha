@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "../../core/consensus/connection/connection.hpp"
-
 #include <string>
 #include <iostream>
 
@@ -47,8 +45,12 @@ int main(int argc, char* argv[]){
     if(std::string(argv[1]) == "sender"){
         connection::addSubscriber(argv[2]);
         while(1){
-            auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-                "dummy","dummy","command",100
+            auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+                    "sender",
+                    "domain",
+                    "Dummy transaction",
+                    100,
+                    0
             );
             event->addTxSignature(
                     peer::getMyPublicKey(),
@@ -57,10 +59,11 @@ int main(int argc, char* argv[]){
             connection::sendAll(std::move(event));
         }
     }else if(std::string(argv[1]) == "public"){
-        connection::run();
+
         connection::receive([](std::string from,std::unique_ptr<event::Event> event){
-            std::cout <<" receive : !" << "\n";
+            std::cout <<" receive : !" << event->getHash() <<" "<< event->getNumValidSignatures()  << "\n";
         });
+        connection::run();
     }
 
     while(1){}
