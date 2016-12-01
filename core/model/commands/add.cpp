@@ -25,12 +25,12 @@ using Type = json_parse::Type;
 template <>
 Add<object::Domain>::Add(
     Object obj
-):Domain(obj){}
+):Domain(obj.dictSub["object"]){}
 
 template <>
 Add<object::Asset>::Add(
     Object obj
-):Asset(obj){}
+):Asset(obj.dictSub["object"]){}
 
 template <>
 Add<object::Domain>::Add(

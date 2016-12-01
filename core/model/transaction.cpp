@@ -11,7 +11,7 @@ namespace transaction{
         Object obj
     ):
         Transfer(
-            obj
+            obj.dictSub["command"]
         ),
         senderPubkey(obj.dictSub["senderPublicKey"].str),
         hash(obj.dictSub["hash"].str)
@@ -28,7 +28,7 @@ namespace transaction{
         Object obj
     ):
         Add(
-            obj
+            obj.dictSub["command"]
         )
     {
         senderPubkey = obj.dictSub["senderPublicKey"].str;
@@ -44,7 +44,7 @@ namespace transaction{
         Object obj
     ):
         Add(
-            obj
+            obj.dictSub["command"]
         )
     {
         senderPubkey = obj.dictSub["senderPublicKey"].str;
