@@ -8,7 +8,7 @@ include_directories(
 
 ADD_LIBRARY(json_parse_with_nlohman  STATIC
   json_parse_with_nlohman.cpp
-)
+        )
 
 target_link_libraries(json_parse_with_nlohman
   consensus_event

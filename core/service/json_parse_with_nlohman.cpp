@@ -60,10 +60,10 @@ namespace json_parse_with_json_nlohman {
                     }
                     return res;
                 }else if(r.getType() == Type::LIST){
-                    auto list = std::move(r.listSub.at(0));
+                    const auto& list = r.listSub.at(0);
                     Object res = Object(Type::LIST);
-                    for(auto& v : j.get<std::vector<json>>()){
-                        res.listSub.push_back(load_impl( v, list));
+                    for(auto& v : j.get<std::vector<json>>()) {
+                        res.listSub.push_back(load_impl(v, list));
                     }
                     return res;
                 }else{
