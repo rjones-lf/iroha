@@ -37,7 +37,11 @@ dependencies:
 checkout:
   post:
     - cd $IROHA_HOME
-    - rm -rf core/vendor/*
+    - rm -rf core/vendor/KeccakCodePackage
+    - rm -rf core/vendor/leveldb
+    - rm -rf core/vendor/ed25519
+    - rm -rf core/vendor/json
+    - rm -rf core/vendor/Cappuccino
     - git clone https://github.com/gvanas/KeccakCodePackage.git core/vendor/KeccakCodePackage
     - git clone https://github.com/google/leveldb.git core/vendor/leveldb
     - git clone https://github.com/MizukiSonoko/ed25519.git core/vendor/ed25519
