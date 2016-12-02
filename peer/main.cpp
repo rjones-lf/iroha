@@ -28,10 +28,51 @@ limitations under the License.
 
 #include "../core/service/peer_service.hpp"
 
-std::atomic_bool running(true); 
+std::atomic_bool running(true);
+
+template<typename T>
+using Transaction = transaction::Transaction<T>;
+template<typename T>
+using ConsensusEvent = event::ConsensusEvent<T>;
+template<typename T>
+using Add = command::Add<T>;
+template<typename T>
+using Transfer = command::Transfer<T>;
 
 void server(){
-  http::server();
+
+    // Start server and keep on runing.
+    using Object = json_parse::Object;
+
+
+  std::map<std::string,std::function<int(Object)>> apis;
+
+  apis.insert(std::make_pair("/asset/operation", [](Object obj) -> int{
+
+      if(obj.dictSub.find("command") != obj.dictSub.end() && obj.dictSub.at("command").str == "add") {
+
+          if(obj.dictSub.find("domain") != obj.dictSub.end() &&
+              obj.dictSub.find("name") != obj.dictSub.end()
+          ) {
+              auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+                      peer::getMyPublicKey(),
+                      "domain",
+                      "Dummy transaction",
+                      100,
+                      0
+              );
+              event->addTxSignature(
+                      peer::getMyPublicKey(),
+                      signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+              );
+              connection::send(peer::getMyIp(), std::move(event));
+          }
+
+      }
+      return 0;
+  }));
+
+  http::server(apis);
 }
 
 void sigIntHandler(int param){
@@ -50,17 +91,17 @@ int main() {
   logger::info("main","process is :"+std::to_string(getpid()));
 
   std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
-  connection::initialize_peer(nullptr);
+  connection::initialize_peer();
   for(const auto& n : nodes){
-      connection::addPublication(n->getIP());
+      connection::addSubscriber(n->getIP());
   }
   
   sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
 
   std::thread sumeragi_thread(sumeragi::loop);
-  std::thread http_thread(http::server);
+  std::thread http_thread(server);
 
-  connection::exec_subscription(peer::getMyIp());
+  connection::run();
 
   while(running);
   
