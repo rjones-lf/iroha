@@ -25,22 +25,12 @@ dependencies:
   cache_directories:
     - ~/iroha/core/vendor/
   pre:
-    - cd /tmp
-    - git clone -b v3.0.0 https://github.com/google/protobuf.git
-    - cd protobuf
-    - (git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue)
-    - ls -l
-    - ./autogen.sh
-    - ./configure --prefix=/usr
-    - make -j 16
-    - sudo make install
+    - cd /tmp; git clone -b v3.0.0 https://github.com/google/protobuf.git
+    - cd /tmp/protobuf;(git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue)
+    - cd /tmp/protobuf; ./autogen.sh; ./configure --prefix=/usr; make -j 16; sudo make install
     - protoc --version
-    - cd /tmp
-    - git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
-    - cd grpc
-    - git submodule update --init
-    - make
-    - sudo make install
+    - cd /tmp; git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
+    - cd /tmp/grpc; git submodule update --init; make; sudo make install
     - which grpc_cpp_plugin
   override:
     - mkdir build; cd build; cmake ..; make
