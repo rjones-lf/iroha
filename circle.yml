@@ -46,7 +46,8 @@ dependencies:
 checkout:
   post:
     - cd $IROHA_HOME
-    - git submodule init 
+    - git submodule init
+    - git submodule foreach git fetch
     - git submodule update
     - cd $IROHA_HOME/core/vendor/leveldb; make
     - cd $IROHA_HOME/core/vendor/ed25519; make
