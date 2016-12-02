@@ -34,7 +34,6 @@ dependencies:
     - make -j 16
     - sudo make install
     - protoc --version
-
     - cd /tmp
     - git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
     - cd grpc
@@ -42,7 +41,6 @@ dependencies:
     - make
     - sudo make install
     - which grpc_cpp_plugin
-
   override:
     - mkdir build; cd build; cmake ..; make
 checkout:

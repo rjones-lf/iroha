@@ -6,10 +6,6 @@
   path = core/vendor/leveldb
   url = https://github.com/google/leveldb.git
   ignore = dirty
-[submodule "core/vendor/Aeron"]
-  path = core/vendor/Aeron
-  url = https://github.com/real-logic/Aeron.git
-  ignore = dirty
 [submodule "core/vendor/ed25519"]
 	path = core/vendor/ed25519
 	url = https://github.com/luca3104/ed25519.git
@@ -17,9 +13,6 @@
 [submodule "core/vendor/json"]
 	path = core/vendor/json
 	url = g
-[submodule "core/vendor/Agrona"]
-	path = core/vendor/Agrona
-	url = https://github.com/real-logic/Agrona.git
 [submodule "core/vendor/Cappuccino"]
 	path = core/vendor/Cappuccino
 	url = https://github.com/MizukiSonoko/Cappuccino.git
