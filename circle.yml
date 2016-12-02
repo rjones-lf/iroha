@@ -46,10 +46,10 @@ dependencies:
 checkout:
   post:
     - cd $IROHA_HOME
-    - git submodule init
-    - git submodule foreach git fetch
-    - git fetch --recurse-submodules
-    - git submodule update
+    - git clone https://github.com/gvanas/KeccakCodePackage.git core/vendor/KeccakCodePackage
+    - git clone https://github.com/google/leveldb.git core/vendor/leveldb
+    - git clone https://github.com/luca3104/ed25519.git core/vendor/ed25519
+    - git clone --recursive https://github.com/MizukiSonoko/Cappuccino.git core/vendor/Cappuccino
     - cd $IROHA_HOME/core/vendor/leveldb; make
     - cd $IROHA_HOME/core/vendor/ed25519; make
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
