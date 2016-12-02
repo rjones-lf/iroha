@@ -38,6 +38,7 @@ namespace json_parse_with_json_nlohman {
         template<typename T>
         std::unique_ptr<T> load(std::string s);
 
+        Object load(json j);
     };
 
 };

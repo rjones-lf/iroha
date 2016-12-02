@@ -20,5 +20,6 @@ target_link_libraries(consensus_event
   commands
   objects
   transaction
+  validator
   hash
 )

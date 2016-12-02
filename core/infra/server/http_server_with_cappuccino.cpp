@@ -40,6 +40,7 @@ namespace http {
   using nlohmann::json;
   using Request = Cappuccino::Request;
   using Response = Cappuccino::Response;
+
   
   template<typename T>
   using Transaction = transaction::Transaction<T>;
@@ -50,6 +51,8 @@ namespace http {
   template<typename T>
   using Transfer = command::Transfer<T>;
 
+  using Object = json_parse::Object;
+
   json responseError(std::string message){
     return json({
       {"message", message},
@@ -57,73 +60,34 @@ namespace http {
     });
   }
 
-  void server() {
+  enum class RequestType{
+      Int,
+      Str,
+      Bool,
+      Float
+  };
+
+  void server(std::map<std::string,std::function<int(Object)>> apis) {
     logger::info("server", "initialize server!");
     Cappuccino::Cappuccino( 0, nullptr);
 
-    Cappuccino::route("/",[](std::shared_ptr<Request> request) -> Response{
-      auto data = request->json();
-      auto res = Response(request);
-      if(data.empty()) {
-        res.json(responseError("Invalied JSON"));
-        return res;
-      }
-      for(auto key : { "command" }) {
-        if(data.find(key) == data.end()){
-          res.json(responseError("必要な要素が不足しています"));
-          return res;
-        }
-      }
-      if(
-        ! data["command"].is_string() 
-      ) {
-        res.json(responseError("Incalied data type"));
-        return res;
-      }
+    for(const auto api: apis){
+        Cappuccino::route( api.first,[api](std::shared_ptr<Request> request) -> Response{
+            auto data = request->json();
+            auto res = Response(request);
+            if(data.empty()) {
+              res.json(responseError("Invalied JSON"));
+              return res;
+            }
+            api.second(json_parse_with_json_nlohman::parser::load(data));
 
-      auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-          "dummy",
-          "dummy",
-          data["command"],
-          100
-      );
-      event->addTxSignature(
-              peer::getMyPublicKey(),
-              signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
-      );
-      connection::send(peer::getMyIp(), std::move(event));
-
-      logger::info("server", "sent data to sumeragi!"); 
-      res.json( json({
-        {"message", "OK"},
-        {"status", 200}
-      }));
-      return res;
-    });
-    
-    Cappuccino::route("/asset/operation",[](std::shared_ptr<Request> request) -> Response{
-      auto data = request->json();
-  		auto res = Response(request);
-      if(data.empty()) {
-        res.json(responseError("Invalied JSON"));
-        return res;
-      }
-      for(auto key : { "command", "amount", "sender", "receiver", "signature", "timestamp"}) {
-        if(data.find(key) == data.end()){
-          res.json(responseError("必要な要素が不足しています"));
-          return res;
-        }
-      }
-      if(
-        ! data["command"].is_string() || ! data["amount"].is_number() ||
-        ! data["sender"].is_string() || ! data["receiver"].is_number() ||
-        ! data["signature"].is_string() || ! data["timestamp"].is_string()
-      ) {
-        res.json(responseError("Incalied data type"));
-        return res;
-      }
-          return res;
-      });
+            res.json({
+                {"message", "OK"},
+                {"status", 200}
+            });
+            return res;
+        });
+    };
 
     logger::info("server", "start server!");
     // runnning

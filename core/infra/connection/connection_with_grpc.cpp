@@ -109,7 +109,7 @@ namespace connection {
     }
 
     template<typename T>
-    T decodeConsensusEvent(const connection_object::ConsensusEvent* event){
+    T decodeConsensusEvent(const connection_object::ConsensusEvent& event){
         logger::error("connection","No implements error :"+ std::string(typeid(T).name()));
         throw "No implements";
     }
@@ -122,9 +122,9 @@ namespace connection {
             >
         >
     > decodeConsensusEvent(
-        const connection_object::ConsensusEvent* event
+        const connection_object::ConsensusEvent& event
     ) {
-        auto tx = event->transaction();
+        auto tx = event.transaction();
         auto asset = tx.asset();
 
         auto consensusEvent =  std::make_unique<ConsensusEvent<
@@ -138,10 +138,10 @@ namespace connection {
             asset.value(),
             asset.precision()
         );
-        for(const auto& esig: event->eventsignatures()){
+        for(const auto& esig: event.eventsignatures()){
             consensusEvent->addSignature(esig.publickey(), esig.signature());
         }
-        for(const auto& txsig: event->transaction().txsignatures()){
+        for(const auto& txsig: event.transaction().txsignatures()){
             consensusEvent->addTxSignature(txsig.publickey(), txsig.signature());
         }
         return consensusEvent;
@@ -194,7 +194,7 @@ namespace connection {
                     Transaction<
                         Add<Asset>
                     >
-                  >>>(event))
+                  >>>(*event))
                 );
             }
             response->set_value("OK");
@@ -215,10 +215,13 @@ namespace connection {
         const std::unique_ptr<event::Event>& event
     ) {
 
+
         if(find( receiver_ips.begin(), receiver_ips.end() , ip) != receiver_ips.end()){
+            logger::info("connection", "create client");
             IrohaConnectionClient client(grpc::CreateChannel(
                 ip + ":50051", grpc::InsecureChannelCredentials())
             );
+            logger::info("connection", "invoke client Operation");
             std::string reply = client.Operation(event);
             return true;
         }else{

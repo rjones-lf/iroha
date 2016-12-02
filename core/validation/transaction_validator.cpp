@@ -34,18 +34,14 @@ namespace transaction_validator {
         return true;
     }
 
+
     template<>
-    bool signaturesAreValid<Transaction<Add<object::Asset>>>(
-        const Transaction<Transaction<Add<object::Asset>>>& tx
+    bool isValid<event::Event>(
+        const std::unique_ptr<event::Event>& tx
     ){
+        // Write domain logic
         return true;
     }
 
-    template<>
-    bool validForType<Transaction<Add<object::Asset>>>(
-        const Transaction<Transaction<Add<object::Asset>>>& tx
-    ){
-        return true;
-    }
 
 };  
