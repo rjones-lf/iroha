@@ -29,6 +29,7 @@ dependencies:
     - git clone -b v3.0.0 https://github.com/google/protobuf.git
     - cd protobuf
     - (git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue)
+    - ls -l
     - ./autogen.sh
     - ./configure --prefix=/usr
     - make -j 16
