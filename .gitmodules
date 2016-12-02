@@ -8,11 +8,11 @@
   ignore = dirty
 [submodule "core/vendor/ed25519"]
 	path = core/vendor/ed25519
-	url = https://github.com/luca3104/ed25519.git
+	url = https://github.com/MizukiSonoko/ed25519.git
   ignore = dirty
 [submodule "core/vendor/json"]
 	path = core/vendor/json
-	url = g
+	url = https://github.com/nlohmann/json.git
 [submodule "core/vendor/Cappuccino"]
 	path = core/vendor/Cappuccino
 	url = https://github.com/MizukiSonoko/Cappuccino.git
