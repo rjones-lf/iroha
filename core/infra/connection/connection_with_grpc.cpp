@@ -62,7 +62,6 @@ namespace connection {
         >
     > receivers;
 
-
     template<typename T>
     connection_object::ConsensusEvent encodeConsensusEvent(std::unique_ptr<T>&& event){
         logger::error("connection","No implements error :"+ std::string(typeid(T).name()));
@@ -149,7 +148,7 @@ namespace connection {
 
     class IrohaConnectionClient {
         public:
-        IrohaConnectionClient(std::shared_ptr<Channel> channel)
+        explicit IrohaConnectionClient(std::shared_ptr<Channel> channel)
             : stub_(IrohaConnection::NewStub(channel)) {}
 
         std::string Operation(const std::unique_ptr<event::Event>& event) {
@@ -214,8 +213,6 @@ namespace connection {
     bool send(const std::string& ip,
         const std::unique_ptr<event::Event>& event
     ) {
-
-
         if(find( receiver_ips.begin(), receiver_ips.end() , ip) != receiver_ips.end()){
             logger::info("connection", "create client");
             IrohaConnectionClient client(grpc::CreateChannel(

@@ -41,7 +41,7 @@ using Add = command::Add<T>;
 template<typename T>
 using Transfer = command::Transfer<T>;
 
-void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
+void setAwkTimer(int const sleepMillisecs, const std::function<void(void)>& action) {
     std::thread([action, sleepMillisecs]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
         action();

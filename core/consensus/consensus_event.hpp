@@ -52,8 +52,6 @@ class ConsensusEvent: public T, public Event {
     std::vector<eventSignature> _eventSignatures;
 
 public:
-    unsigned long long order = 0;
-
     explicit ConsensusEvent(
         const std::string& senderPubkey,
         const std::string& receiverPubkey,
