@@ -48,6 +48,7 @@ checkout:
     - cd $IROHA_HOME
     - git submodule init
     - git submodule foreach git fetch
+    - git fetch --recurse-submodules
     - git submodule update
     - cd $IROHA_HOME/core/vendor/leveldb; make
     - cd $IROHA_HOME/core/vendor/ed25519; make
