@@ -37,7 +37,7 @@ namespace tools {
         using json = nlohmann::json;
 
         string interface = "eth0";
-        string name = "mizuki";
+        string name;
         string filename = "";
 
         void parse_option(int argc, char *argv[]) {
@@ -46,15 +46,17 @@ namespace tools {
                 switch (c) {
                     case 'i':
                         interface = string(optarg);
-                        return;
+                        break;
                     case 'n':
                         name = string(optarg);
-                        return;
+                       std::cout<<"set peer name: "<< name <<std::endl;
+                        break;
                     case 'o':
                         filename = string(optarg);
-                        return;
+                        break;
                     default:
                         std::cerr << "usage: " << argv[0] << " -o outputFileName -n peerName  -i interface" << std::endl;
+                        exit(1);
                 }
             }
         }
@@ -79,7 +81,11 @@ namespace tools {
             signature::KeyPair keyPair = signature::generateKeyPair();
             config["publicKey"] = base64::encode(keyPair.publicKey).c_str();
             config["privateKey"] = base64::encode(keyPair.privateKey).c_str();
-            config["name"] = tools::make_sumeragi::name;
+            if( tools::make_sumeragi::name != "") {
+                config["name"] = tools::make_sumeragi::name;
+            }else{
+                config["name"] = "mizuki";
+            }
             std::cout << config.dump(4) << std::endl;
             return config.dump();
         }
@@ -88,6 +94,7 @@ namespace tools {
 }
 int main(int argc, char* argv[]) {
     tools::make_sumeragi::parse_option(argc, argv);
+
     std::string config = tools::make_sumeragi::getConfigStr();
     if(tools::make_sumeragi::filename != ""){
         std::cout << "============" << std::endl;

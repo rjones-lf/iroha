@@ -12,6 +12,8 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-lpthread -lssl")
 add_subdirectory(core)
 add_subdirectory(peer)
 
+add_subdirectory(tools)
+
 if(NOT without-test)
   enable_testing()
   include(test/gtest.cmake)
