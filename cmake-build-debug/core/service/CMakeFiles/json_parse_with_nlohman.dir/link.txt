@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libjson_parse_with_nlohman.a  CMakeFiles/json_parse_with_nlohman.dir/json_parse_with_nlohman.cpp.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libjson_parse_with_nlohman.a

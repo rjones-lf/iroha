@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc ../../../lib/libobjects.a  CMakeFiles/objects.dir/asset.cpp.o CMakeFiles/objects.dir/domain.cpp.o CMakeFiles/objects.dir/message.cpp.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib ../../../lib/libobjects.a
