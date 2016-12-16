@@ -27,7 +27,7 @@ dependencies:
   pre:
     - cd /tmp; git clone -b v3.0.0 https://github.com/google/protobuf.git
     - cd /tmp/protobuf;(git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue)
-    - cd /tmp/protobuf; ./autogen.sh; ./configure --prefix=/usr; make -j 16; sudo make install
+    - cd /tmp/protobuf; ./autogen.sh; ./configure --prefix=/usr; make -j 4; sudo make install
     - protoc --version
     - cd /tmp; git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
     - cd /tmp/grpc; git submodule update --init; make; sudo make install
@@ -42,13 +42,9 @@ checkout:
     - rm -rf core/vendor/ed25519
     - rm -rf core/vendor/json
     - rm -rf core/vendor/Cappuccino
-    - git clone https://github.com/gvanas/KeccakCodePackage.git core/vendor/KeccakCodePackage
-    - git clone https://github.com/google/leveldb.git core/vendor/leveldb
-    - git clone https://github.com/MizukiSonoko/ed25519.git core/vendor/ed25519
-    - git clone https://github.com/nlohmann/json.git core/vendor/json
-    - git clone --recursive https://github.com/MizukiSonoko/Cappuccino.git core/vendor/Cappuccino
-    - cd $IROHA_HOME/core/vendor/leveldb; make -j 14
-    - cd $IROHA_HOME/core/vendor/ed25519; make -j 14
+    - git submodule update --init --recursive
+    - cd $IROHA_HOME/core/vendor/leveldb; make -j 4
+    - cd $IROHA_HOME/core/vendor/ed25519; make -j 4
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
     - cd $IROHA_HOME/core/infra/crypto/; make
 test:
