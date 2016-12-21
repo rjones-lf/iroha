@@ -18,6 +18,18 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+using smart_contract::SmartContract;
+
 TEST(SmartContract, createVM){
-  // ToDo
+
+    std::string contractName = "SampleCurrency";
+    std::string functionName = "remit";
+    std::unordered_map<std::string, std::string> params;
+    SmartContract smartContract = SmartContract();
+    smartContract.initializeVM(contractName);
+    smartContract.invokeFunction(
+        contractName,
+        functionName,
+        params
+    );
 }

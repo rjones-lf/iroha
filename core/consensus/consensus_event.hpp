@@ -24,17 +24,23 @@ limitations under the License.
 #include <unordered_map>
 #include <algorithm>
 
-#include "event.hpp"
-
 #include "../crypto/signature.hpp"
 #include "../util/logger.hpp"
 #include "../model/transaction.hpp"
-#include "../service/json_parse.hpp"
+
+#include "../model/commands/add.hpp"
+#include "../model/commands/transfer.hpp"
+#include "../model/commands/update.hpp"
+
+#include "../model/objects/account.hpp"
+#include "../model/objects/asset.hpp"
+#include "../model/objects/domain.hpp"
+
 
 namespace event {
 
 template <typename T>
-class ConsensusEvent: public T, public Event {
+class ConsensusEvent: public T {
 
     struct eventSignature{
         std::string publicKey;
@@ -49,87 +55,33 @@ class ConsensusEvent: public T, public Event {
         {}
     };
 
-    std::vector<eventSignature> eventSignatures;
+    std::vector<eventSignature> _eventSignatures;
 
 public:
-    unsigned long long order = 0;
 
-    explicit ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& receiverPubkey,
-        const std::string& name,
-        const int& value
-    );
+    int order;
 
-    explicit ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& domain,
-        const std::string& name,
-        const unsigned long long& value,
-        const unsigned int& precision
-    );
-
-    explicit ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& ownerPublicKey,
-        const std::string& name
-    );
-
-
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
-    using Object = json_parse::Object;
-
-
-
-    explicit ConsensusEvent(Object obj);
+    template<typename... Args>
+    ConsensusEvent(
+        Args&&... args
+    ):
+        T(std::forward<Args>(args)...)
+    {}
 
     void addSignature(const std::string& publicKey, const std::string& signature){
-        eventSignatures.push_back(eventSignature(publicKey, signature));
+        _eventSignatures.push_back(eventSignature(publicKey, signature));
     }
 
-    std::string getHash() {
-        return T::getHash();
-    }
-
-    int getNumValidSignatures() {
-        return std::count_if(
-            eventSignatures.begin(), eventSignatures.end(),
-            [hash = getHash()](eventSignature sig){
-                return signature::verify(sig.signature, hash, sig.publicKey);
-        });
-    }
-
-    bool eventSignatureIsEmpty(){
-        return eventSignatures.empty();
-    }
-
-    Object dump() {
-        Object obj = Object(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "order", Object(Type::INT, (int)order)));
-        auto eventSigs   = Object(Type::LIST);
-        for(auto&& eSig : eventSignatures) {
-            auto eventSig = Object(Type::DICT);
-            eventSig.dictSub.insert( std::make_pair( "publicKey", Object(Type::STR, eSig.publicKey)));
-            eventSig.dictSub.insert( std::make_pair( "signature", Object(Type::STR, eSig.signature)));
-            eventSigs.listSub.push_back(eventSig);
+    std::vector<std::tuple<std::string,std::string>> eventSignatures() const{
+        std::vector<std::tuple<std::string,std::string>> res;
+        for(const auto& sig: _eventSignatures){
+            res.push_back(std::make_tuple(sig.publicKey,sig.signature));
         }
-        obj.dictSub.insert( std::make_pair( "eventSignatures", eventSigs));
-        obj.dictSub.insert( std::make_pair( "transaction", T::dump()));
-        return obj;
-    }
+        return res;
+    };
 
-    static Rule getJsonParseRule() {
-        auto rule = Rule(Type::DICT);
-        rule.dictSub.insert( std::make_pair( "order", Rule(Type::INT)));
-        auto eventSigs  = Rule(Type::LIST);
-        auto eventSig   = Rule(Type::DICT);
-        eventSig.dictSub.insert( std::make_pair( "publicKey", Rule(Type::STR)));
-        eventSig.dictSub.insert( std::make_pair( "signature", Rule(Type::STR)));
-        eventSigs.listSub.push_back(eventSig);
-        rule.dictSub.insert( std::make_pair( "eventSignatures", eventSigs));
-        rule.dictSub.insert( std::make_pair( "transaction", T::getJsonParseRule()));
-        return rule;
+    void execution(){
+        T::execution();
     }
 
 };

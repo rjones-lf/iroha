@@ -45,7 +45,10 @@ TEST(Signature, keyPair){
     keyPair
   );
 
-  ASSERT_TRUE(signature::verify(
+  std::cout << base64::encode(keyPair.publicKey) << std::endl;
+  std::cout << signature_b64 << std::endl;
+
+ASSERT_TRUE(signature::verify(
     signature_b64,
     nonce,
     base64::encode(keyPair.publicKey))
@@ -71,3 +74,20 @@ TEST(Signature, generatedByAndroid){
     public_key_b64
   ));
 }
+
+
+TEST(Signature, generatedByiOS){
+
+std::string public_key_b64  = "slyr7oz2+EU6dh2dY9+jNeO/hVrXCkT3rGhcNZo5rrE=";
+std::string signature_b64   = "gdMUgjyo++4QpF1xDJNdk1a5zmDAEPM67WD4cn6CVZqDxC8nShb/L1Tokgo53HSOPDB0qXAVzcBvfcJ1WLjrAQ==";
+std::string message = "46ed8c250356759f68930a94996faaa8f8c98ecbe0dcc58c479c8fad71e30096";
+
+ASSERT_TRUE(signature::verify(
+        signature_b64,
+        message,
+        public_key_b64
+));
+}
+
+
+

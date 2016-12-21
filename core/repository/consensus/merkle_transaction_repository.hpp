@@ -22,8 +22,6 @@ limitations under the License.
 #include <memory>
 #include <unordered_map>
 #include "../../consensus/consensus_event.hpp"
-#include "../../consensus/event.hpp"
-#include "../../service/json_parse.hpp"
 
 namespace merkle_transaction_repository {
 
@@ -58,45 +56,24 @@ struct MerkleNode {
        return left.empty() && right.empty();
     }
 
-    using Object = json_parse::Object;
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
-
-    Object dump() {
-        Object obj = Object(Type::DICT);
-        obj.dictSub.insert( std::make_pair( "hash", Object(Type::STR, hash)));
-        obj.dictSub.insert( std::make_pair( "parent", Object(Type::STR, parent)));
-        obj.dictSub.insert( std::make_pair( "leftChild",  Object(Type::STR, left)));
-        obj.dictSub.insert( std::make_pair( "rightChild", Object(Type::STR, right)));
-        return obj;
-    }
-
-    Rule getJsonParseRule() {
-        auto rule = Rule(Type::DICT);
-        rule.dictSub.insert( std::make_pair("hash", Rule(Type::STR)));
-        rule.dictSub.insert( std::make_pair("parent", Rule(Type::STR)));
-        rule.dictSub.insert( std::make_pair("leftChild", Rule(Type::STR)));
-        rule.dictSub.insert( std::make_pair("rightChild", Rule(Type::STR)));
-        return std::move(rule);
-    }
 };
 
 //TODO: change bool to throw an exception instead
-bool commit(const std::unique_ptr<event::Event>& event){
-
+bool commit(const Event::ConsensusEvent& event){
+    return false; // TODO: fill this function
 };
 
 bool leafExists(const std::string& hash){
-
+    return false; // TODO: fill this function
 }
 
 std::string getLeaf(const std::string& hash){
-
+    return ""; // TODO: fill this function
 }
 
 template <typename T>
 std::string calculateNewRoot(
-    const std::unique_ptr<event::Event>& event,
+    const Event::ConsensusEvent& event,
     std::vector<std::tuple<std::string,std::string>> &batchCommit
 );
 

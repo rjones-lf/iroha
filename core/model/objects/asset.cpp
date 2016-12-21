@@ -18,24 +18,11 @@ limitations under the License.
 
 namespace object {
 
-using Rule = json_parse::Rule;
-using Type = json_parse::Type;
-using Object = json_parse::Object;
-
 Asset::Asset(
-    Object obj
-):
-    domain(obj.dictSub["domain"].str),
-    name(obj.dictSub["name"].str),
-    value(obj.dictSub["value"].integer),
-    precision(obj.dictSub["precision"].integer)
-{}
-
-Asset::Asset(
-    const std::string& domain,
-    const std::string& name,
-    const unsigned long long& value,
-    const unsigned int& precision
+    std::string&& domain,
+    std::string&&  name,
+    unsigned long long&& value,
+    unsigned int&& precision
 ):
     domain(domain),
     name(name),
@@ -44,31 +31,13 @@ Asset::Asset(
 {}
 
 Asset::Asset(
-    const std::string& name,
-    const unsigned long long& value
+    std::string&& name,
+    unsigned long long&& value
 ):
     domain(""),
     name(name),
     value(value),
     precision(-1)
 {}
-
-json_parse::Object Asset::dump() {
-    json_parse::Object obj = Object(Type::DICT);
-    obj.dictSub.insert( std::make_pair( "name", Object(Type::STR, name)));
-    obj.dictSub.insert( std::make_pair( "domain", Object(Type::STR, domain)));
-    obj.dictSub.insert( std::make_pair( "value",  Object(Type::INT, (int)value)));
-    obj.dictSub.insert( std::make_pair( "precision", Object(Type::INT, (int)precision)));
-    return obj;
-}
-
-Rule Asset::getJsonParseRule() {
-    auto rule = Rule(Type::DICT);
-    rule.dictSub.insert( std::make_pair( "name", Rule(Type::STR)));
-    rule.dictSub.insert( std::make_pair( "domain", Rule(Type::STR)));
-    rule.dictSub.insert( std::make_pair( "value", Rule(Type::INT)));
-    rule.dictSub.insert( std::make_pair( "precision", Rule(Type::INT)));
-    return rule;
-}
 
 };  // namespace asset

@@ -33,7 +33,7 @@ ENDIF()
 
 add_executable(java_vm_test java_vm_test.cpp)
 target_link_libraries(java_vm_test
-  smart_contract
+  smart_contract_with_java
   jvm
   ${GTEST_LIBS_DIR}/libgtest.a ${GTEST_LIBS_DIR}/libgtest_main.a pthread)
 add_test(

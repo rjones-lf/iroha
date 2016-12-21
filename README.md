@@ -8,7 +8,7 @@
 ![alt tag](Iroha_3_sm.png)
 
 # Pull Requests
-Please include a developer certificate with pull requests: http://developercertificate.org/
+Please include a developer certificate with pull requests: https://www.clahub.com/agreements/hyperledger/iroha
 
 # Architecture (Draft)
 
@@ -185,6 +185,8 @@ IROHA_HOME := iroha's root
 ## Requirement
 ```
 cmake(3.5.2)
+gRPC
+LevelDB
 ```
   
 ## Recommended
@@ -192,9 +194,15 @@ cmake(3.5.2)
 fabric3 (python library, not hyperledger/fabric)
 ```
 
+## Using docker and docker-compose for development
+Refer to [this guide](./docs/using_docker.md).
+
 ## Installation
 ```
+$ git submodule init
+$ git submodule update
 $ mkdir build
+$ cd build
 $ cmake ..
 $ make
 ```
@@ -204,6 +212,16 @@ or
 $ fab deploy
 ```
 (in local)  
+
+### Rebuilding gRPC stubs
+
+This step should only be necessary if protobuf definitions changes, or version of gRPC or protoc has been updated.
+
+(invoked from $IROHA_HOME)
+```
+protoc  --cpp_out=core/infra/connection core/infra/connection/connection.proto
+protoc  --grpc_out=core/infra/connection  --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` core/infra/connection/connection.proto
+```
   
 ## Authors
 

@@ -22,15 +22,17 @@ limitations under the License.
 
 namespace smart_contract {
 
-  template<typename T>
   class SmartContract {
+   public:
+      void initializeVM(const std::string& contractName);
 
-    void initializeVM(std::string contractName);
-    void finishVM();    
-    void invokeFunction(
-        std::string functionName,
-          std::unordered_map<std::string, std::string> params);
-            
+      void finishVM(const std::string& contractName);
+
+      void invokeFunction(
+        const std::string& contractName,
+        const std::string& functionName,
+        const std::unordered_map<std::string, std::string>& params
+      );
   };
 };
 

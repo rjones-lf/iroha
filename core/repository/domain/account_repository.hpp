@@ -21,22 +21,26 @@ limitations under the License.
 #include <memory>
 #include <vector>
 
+#include "../../model/objects/account.hpp"
 #include "../../model/state/account.hpp"
 
-namespace account_repository {
+namespace repository{
+    namespace account {
 
-    // SampleAsset has only quantity no logic, so this value is int.
-    bool update_quantity( 
-        std::string accountUid,
-        int newValue,
-        std::string assetName);
+        // SampleAsset has only quantity no logic, so this value is int.
+        bool update_quantity(
+            const std::string& uuid,
+            const std::string& assetName,
+            long newValue
+        );
 
-    std::unique_ptr<domain::AccountUser> findByUid(std::string);
-    
-    bool add_my_domain(
-        const std::string& accountUid,
-        const std::string& domainName
-    );
+        object::Account findByUuid(const std::string& uuid);
 
+        bool add(
+            std::string &publicKey,
+            std::string &alias
+        );
+
+    };
 };
 #endif  // CORE_REPOSITORY_MERKLETRANSACTIONREPOSITORY_HPP_

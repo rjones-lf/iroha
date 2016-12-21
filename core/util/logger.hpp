@@ -23,39 +23,61 @@ limitations under the License.
 namespace logger{
 
   enum class LogLevel{
-    DEBUG,
+    DEBUG = 0,
     INFO,
     WARNING,
     ERROR,
-    FITAL
+    FITAL,
+    EXPLORE
   };
 
-  const LogLevel LOG_LEVEL = LogLevel::DEBUG;
+  void setLogLevel(LogLevel lv);
 
   void debug(
     const std::string &name,
     const std::string &message,
-    std::ostream &out = std::cout);
+    std::ostream &out);
+
+  void debug(
+    const std::string &name,
+    const std::string &message);
 
   void info(
     const std::string &name,
     const std::string &message,
-    std::ostream &out = std::cout);
+    std::ostream &out);
 
-  void warning(
+  void info(
+    const std::string &name,
+    const std::string &message);
+
+    void warning(
     const std::string &name,
     const std::string &message,
-    std::ostream &out = std::cout);
+    std::ostream &out);
 
   void error(
     const std::string &name,
     const std::string &message,
-    std::ostream &out = std::cout);
+    std::ostream &out);
+
+  void error(
+    const std::string &name,
+    const std::string &message);
 
   void fital(
     const std::string &name,
     const std::string &message,
-    std::ostream& out = std::cout);
+    std::ostream& out);
+
+  void explore(
+    const std::string &name,
+    const std::string &message,
+    std::ostream &out);
+
+  void explore(
+    const std::string &name,
+    const std::string &message);
 
 };
 #endif

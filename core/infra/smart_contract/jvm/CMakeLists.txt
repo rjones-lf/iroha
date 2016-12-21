@@ -7,18 +7,27 @@ ELSE()
   SET(CMAKE_CXX_FLAGS_DEBUG   "-Wall -Wextra -DDEBUG -O0 -std=c++11 -Wl,-rpath $ENV{JAVA_HOME}/jre/lib/amd64/server")
 ENDIF()
 
-include_directories($ENV{JAVA_HOME}/include)
-
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  include_directories($ENV{JAVA_HOME}/include/darwin)
-  link_directories($ENV{JAVA_HOME}/jre/lib/server)
+  include_directories(
+    $ENV{JAVA_HOME}/include/darwin/
+    $ENV{JAVA_HOME}/include/
+  )
+  link_directories(
+    $ENV{JAVA_HOME}/jre/lib/server
+    $ENV{JAVA_HOME}/jre/lib/amd64/server
+  )
 ELSE()
-  include_directories($ENV{JAVA_HOME}/include/linux)
-  link_directories($ENV{JAVA_HOME}/jre/lib/amd64/server)
+  include_directories(
+    $ENV{JAVA_HOME}/include/linux
+    $ENV{JAVA_HOME}/include
+  )
+  link_directories(
+    $ENV{JAVA_HOME}/jre/lib/amd64/server/
+  )
 ENDIF()
 
-ADD_LIBRARY(smart_contract STATIC java_virtual_machine.cpp)
-target_link_libraries(smart_contract
-  jvm
+ADD_LIBRARY(java_virtual_machine STATIC java_virtual_machine.cpp)
+target_link_libraries(java_virtual_machine
+  $ENV{JAVA_HOME}/jre/lib/amd64/server/libjvm.so
 )  
 

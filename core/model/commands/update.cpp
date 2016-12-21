@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,20 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include "update.hpp"
 
-package samplecurrency;
+namespace command {
 
-import java.util.Map;
-
-// no package declaration
-public class SampleCurrency {
-
-    public static void remit(Map<String,String> params){
-        System.out.println("Hello in JAVA! in contract");
-    }
-  
-    public static void main(String[] argv){
-        System.out.println("Hello in JAVA! in contract main");
-    }
 }
-

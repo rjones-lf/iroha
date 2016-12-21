@@ -11,104 +11,20 @@ namespace event{
     template<typename T>
     using Add = command::Add<T>;
 
-    using Type = json_parse::Type;
-    using Object = json_parse::Object;
-    
+    template<typename T>
+    using Update = command::Update<T>;
+
     template <>
-    ConsensusEvent<Transaction<Transfer<object::Asset>>>::ConsensusEvent(
-        Object obj
-    ):
-        Transaction(obj)
-    {
-        order = obj.dictSub["order"].floating;
-        std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
-        std::cout << eventSigs.size() << std::endl; 
-        for(auto&& sig : eventSigs){
-            std::cout <<"Oh "<< sig.dictSub["publicKey"].str << " " << sig.dictSub["signature"].str << std::endl;
-            if(
-                sig.dictSub["publicKey"].str != "" &&
-                sig.dictSub["signature"].str != ""
-            ){
-                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
-            }
-        }
+    void ConsensusEvent<Transaction<Update<object::Asset>>>::execution(){
+        logger::info("execution","update! Asset");
     }
-
     template <>
-    ConsensusEvent<Transaction<Add<object::Asset>>>::ConsensusEvent(
-        Object obj
-    ):
-        Transaction(obj)
-    {
-        order = obj.dictSub["order"].floating;
-        std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
-        for(auto&& sig : eventSigs){
-            if(
-                sig.dictSub["publicKey"].str != "" &&
-                sig.dictSub["signature"].str != ""
-            ){
-                eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
-            }
-        }
+    void ConsensusEvent<Transaction<Add<object::Asset>>>::execution(){
+        logger::info("execution","add! Asset");
     }
-
     template <>
-    ConsensusEvent<Transaction<Add<object::Domain>>>::ConsensusEvent(
-        Object obj
-    ):
-        Transaction(obj)
-    {
-        order = obj.dictSub["order"].floating;
-        std::vector<Object> eventSigs = obj.dictSub["eventSignatures"].listSub;
-        for(auto&& sig : eventSigs){
-            eventSignatures.push_back(eventSignature(sig.dictSub["publicKey"].str,sig.dictSub["signature"].str));
-        }
+    void ConsensusEvent<Transaction<Add<object::Domain>>>::execution(){
+        logger::info("execution","add! Asset");
     }
-
-
-    template <>
-    ConsensusEvent<Transaction<Transfer<object::Asset>>>::ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& receiverPubkey,
-        const std::string& name,
-        const int& value
-    ):
-        Transaction(
-            senderPubkey,
-            receiverPubkey,
-            name,
-            value
-        )
-    {}
-
-    template <>
-    ConsensusEvent<Transaction<Add<object::Asset>>>::ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& domain,
-        const std::string& name,
-        const unsigned long long& value,
-        const unsigned int& precision
-    ):
-        Transaction(
-            senderPubkey,
-            domain,
-            name,
-            value,
-            precision
-        )    
-    {}
-
-    template <>
-    ConsensusEvent<Transaction<Add<object::Domain>>>::ConsensusEvent(
-        const std::string& senderPubkey,
-        const std::string& ownerPublicKey,
-        const std::string& name
-    ):
-        Transaction(
-            senderPubkey,
-            ownerPublicKey,
-            name
-        )    
-    {}
 
 };

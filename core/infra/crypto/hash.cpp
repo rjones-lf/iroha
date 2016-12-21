@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "../../crypto/hash.hpp"
 
+
 #include <SimpleFIPS202.h>
 #include <string>
 
@@ -28,9 +29,9 @@ namespace hash {
     unsigned char output[64];
 
     SHA3_256(
-      output,
+      reinterpret_cast<unsigned char *>(output),
       reinterpret_cast<const unsigned char *>(message.c_str()),
-      (size_t)message.size()
+      reinterpret_cast<size_t>(message.size())
     );
 
     std::string res = "";
@@ -52,7 +53,8 @@ namespace hash {
     SHA3_512(
       output,
       (const unsigned char *)message.c_str(),
-      message.size());
+      message.size()
+    );
 
     std::string res = "";
     unsigned char front, back;

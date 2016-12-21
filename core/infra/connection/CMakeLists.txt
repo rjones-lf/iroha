@@ -1,17 +1,18 @@
 
-SET(AERON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/Aeron")
+SET(CMAKE_CXX_FLAGS "-std=c++14 -L/usr/local/lib `pkg-config --libs grpc++ grpc` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -lprotobuf -lpthread -ldl")
+SET(CRYPTO_PATH  "${PROJECT_SOURCE_DIR}/core/crypto")
 
-include_directories(
-  ${AERON_PATH}/aeron-client/src/main/cpp
-)
+
 link_directories(
-    ${AERON_PATH}/cppbuild/Release/lib
+    ${CRYPTO_PATH}
+    /usr/local/lib
 )
 
-ADD_LIBRARY(connection_with_aeron STATIC connection_with_aeron.cpp)
-target_link_libraries(connection_with_aeron
-  aeron_client
-  logger
-  peer_service_with_json
+
+ADD_LIBRARY(connection_with_grpc STATIC
+  connection_with_grpc.cpp
 )
 
+target_link_libraries(connection_with_grpc
+  event_with_grpc
+)

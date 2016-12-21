@@ -20,7 +20,6 @@ limitations under the License.
 #include <thread>
 #include <mutex>
 #include <tuple>
-#include "../../service/json_parse.hpp"
 
 std::mutex m;
 
@@ -28,23 +27,23 @@ namespace repository {
     namespace event {
 
         static std::vector<
-            std::tuple<std::string,std::unique_ptr<::event::Event>>
+            std::tuple<std::string,Event::ConsensusEvent>
         > events;
 
         bool add(
             const std::string &hash,
-            std::unique_ptr<::event::Event> event
+            const Event::ConsensusEvent& event
         ){
-            logger::info("repo::event", "event::add");
+            logger::debug("repo::event", "event::add");
             std::lock_guard<std::mutex> lock(m);
             events.push_back(std::make_tuple( hash, std::move(event)));
-            logger::info("repo::event", "events size = "+std::to_string(events.size()));
+            logger::debug("repo::event", "events size = "+std::to_string(events.size()));
             return true;
         };
         
         bool update(
             const std::string &hash,
-            std::unique_ptr<::event::Event> event
+            const Event::ConsensusEvent& event
         );
         
         bool addSignature(
@@ -52,6 +51,7 @@ namespace repository {
             const std::string &publicKey,
             const std::string &signature
         ){
+            /*
             logger::info("repo::event", "event::add");
             std::lock_guard<std::mutex> lock(m);
             for(auto&& event : events){
@@ -60,6 +60,7 @@ namespace repository {
                     return true;
                 }
             }
+            */
             return false;
         }
 
@@ -70,23 +71,21 @@ namespace repository {
         }
 
         std::vector<
-            std::unique_ptr<::event::Event>
+            Event::ConsensusEvent
         > findAll(){
             std::lock_guard<std::mutex> lock(m);
-            std::vector<
-                std::unique_ptr<::event::Event>
-            > res;
+            std::vector<Event::ConsensusEvent> res;
             for(auto&& e : events){
                 res.push_back(std::move(std::get<1>(e)));
             }
             events.clear();
-            logger::info("repo::event", "events size = "+std::to_string(res.size()));
-            return std::move(res);
+            logger::debug("repo::event", "events size = "+std::to_string(res.size()));
+            return res;
         };
 
-        std::unique_ptr<::event::Event>& findNext();
+        Event::ConsensusEvent findNext();
 
-        std::unique_ptr<::event::Event>& find(std::string hash);
+        Event::ConsensusEvent find(std::string hash);
 
     };
 };

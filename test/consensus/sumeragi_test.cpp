@@ -26,10 +26,10 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
-#include "../../core/service/json_parse_with_json_nlohman.hpp"
-
 #include "../../core/service/peer_service.hpp"
+#include "../../core/util/logger.hpp"
 #include "../../core/crypto/hash.hpp"
+#include "../../core/infra/protobuf/convertor.hpp"
 
 template<typename T>
 using Transaction = transaction::Transaction<T>;
@@ -39,8 +39,10 @@ template<typename T>
 using Add = command::Add<T>;
 template<typename T>
 using Transfer = command::Transfer<T>;
+template<typename T>
+using Update = command::Update<T>;
 
-void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
+void setAwkTimer(int const sleepMillisecs, const std::function<void(void)>& action) {
     std::thread([action, sleepMillisecs]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
         action();
@@ -48,55 +50,62 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const actio
 }
 
 int main(int argc, char *argv[]){
-    std::string value;
-    std::string senderPublicKey;
-    std::string receiverPublicKey;
-    std::string cmd;
-    std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
 
-    connection::initialize_peer(nullptr);
+    try {
+        std::string value;
+        std::string senderPublicKey;
+        std::string receiverPublicKey;
+        std::string cmd;
+        std::vector <std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
 
-    for(const auto& n : nodes){
-        std::cout<< "=========" << std::endl;
-        std::cout<< n->getPublicKey() << std::endl;
-        std::cout<< n->getIP() << std::endl;
-        connection::addPublication(n->getIP());
-    }
+        connection::initialize_peer();
 
-    std::string pubKey = peer::getMyPublicKey();
+        logger::setLogLevel(logger::LogLevel::DEBUG);
 
-    sumeragi::initializeSumeragi( pubKey, std::move(nodes));
-
-    std::thread http_th( []() {
-        sumeragi::loop();
-    });
-
-    connection::exec_subscription(peer::getMyIp());    
-    if( argc >= 2 && std::string(argv[1]) == "public"){
-        std::cout<<"start publish tx\n";
-        while(1){
-            
-            setAwkTimer(100, [&](){
-                auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-                    senderPublicKey,
-                    receiverPublicKey,
-                    "Dummy transaction",
-                    100
-                );
-                std::cout <<" created event\n";
-                event->addTxSignature(
-                        peer::getMyPublicKey(),
-                        signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
-                );
-                auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-                connection::send(peer::getMyIp(), text);
-            });
+        for (const auto &n : nodes) {
+            std::cout << "=========" << std::endl;
+            std::cout << n->getPublicKey() << std::endl;
+            std::cout << n->getIP() << std::endl;
+            connection::addSubscriber(n->getIP());
         }
-    }else{
-        std::cout<<"I'm only node\n";
-        while(1);
+
+        std::string pubKey = peer::getMyPublicKey();
+
+        sumeragi::initializeSumeragi(pubKey, std::move(nodes));
+
+        std::thread connection_th([]() {
+            connection::run();
+        });
+
+        std::thread http_th([]() {
+            sumeragi::loop();
+        });
+
+        if (argc >= 2 && std::string(argv[1]) == "public") {
+            while (1) {
+                setAwkTimer(10, [&]() {
+                    auto event = std::make_unique<ConsensusEvent<Transaction<Update<object::Asset>>>>(
+                            peer::getMyPublicKey(),
+                            peer::getMyPublicKey(),
+                            "AssetName",
+                            100
+                    );
+                    event->addTxSignature(
+                            peer::getMyPublicKey(),
+                            signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                    );
+                    connection::send(peer::getMyIp(), convertor::encode(*event));
+                });
+            }
+        } else {
+            std::cout << "I'm only node\n";
+            while (1);
+        }
+        http_th.detach();
+        connection_th.detach();
+    }catch(char const *e){
+        std::cout << e << std::endl;
     }
 
-    http_th.detach();
     return 0;
 }

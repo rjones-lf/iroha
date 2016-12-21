@@ -5,4 +5,10 @@ include_directories(
         ${JSON_PATH}/src
 )
 
-ADD_LIBRARY(peer_service_with_json STATIC peer_service_with_json.cpp)
+ADD_LIBRARY(peer_service_with_json STATIC
+    peer_service_with_json.cpp
+)
+
+target_link_libraries(peer_service_with_json
+    logger
+)

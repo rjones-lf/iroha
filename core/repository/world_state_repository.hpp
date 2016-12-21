@@ -40,6 +40,10 @@ namespace repository {
 
       bool remove(const std::string &key);
 
+      std::vector<std::string> findAll();
+
+      std::vector<std::string> findByPrefix(const std::string& prefix);
+
       std::string find(const std::string &key);
 
       std::string findOrElse(

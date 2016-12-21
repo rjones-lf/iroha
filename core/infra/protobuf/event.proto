@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option cc_generic_services = false;
+
+package Event;
+
+service IrohaConnection {
+  rpc Operation(ConsensusEvent) returns (StatusResponse) {}
+}
+
+message Asset {
+  string domain = 1;
+  string name = 2;
+  uint64 value = 3;
+  uint64 precision = 4;
+}
+message Domain {
+  string ownerPublicKey = 1;
+  string name = 2;
+}
+message Account {
+  string publicKey = 1;
+  string name = 2;
+  repeated Asset assets = 3;
+}
+
+
+message TxSignatures {
+  string publicKey = 1;
+  string signature = 2;
+}
+message EventSignature {
+  string publicKey = 1;
+  string signature = 2;
+}
+
+message Transaction {
+  repeated TxSignatures txSignatures = 1;
+  string type = 2;
+  string senderPubkey = 3;
+  string hash = 4;
+
+  uint64 timestamp = 5;
+
+  Asset asset = 6;
+  Domain domain = 7;
+  Account account = 8;
+  string receivePubkey = 9;
+}
+
+message ConsensusEvent {
+  repeated EventSignature eventSignatures = 1;
+  Transaction transaction = 2;
+  uint64 order = 3;
+}
+
+message StatusResponse {
+  string value = 1;
+}

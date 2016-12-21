@@ -45,7 +45,7 @@ namespace repository {
 
               bool loggerStatus(leveldb::Status const status) {
                   if (!status.ok()) {
-                      logger::info(__FILE__, status.ToString());
+                      logger::info("WorldStateRepositoryWithLeveldb", status.ToString());
                       return false;
                   }
                   return true;
@@ -56,7 +56,7 @@ namespace repository {
                   leveldb::Options options;
                   options.error_if_exists = false;
                   options.create_if_missing = true;
-                  loggerStatus(leveldb::DB::Open(options, "/tmp/irohaDB", &tmpDb)); //TODO: This path should be configurable
+                  loggerStatus(leveldb::DB::Open(options, "/tmp/iroha_ledger", &tmpDb)); //TODO: This path should be configurable
                   db.reset(tmpDb);
               }
           }
@@ -65,7 +65,6 @@ namespace repository {
           if (nullptr == detail::db) {
               detail::loadDb();
           }
-
           return detail::loggerStatus(detail::db->Put(leveldb::WriteOptions(), key, value));
       }
 
@@ -74,7 +73,6 @@ namespace repository {
           if (nullptr == detail::db) {
               detail::loadDb();
           }
-
           leveldb::WriteBatch batch;
 
           for (auto&& tuple : tuples) {
@@ -82,6 +80,35 @@ namespace repository {
           }
 
           return detail::loggerStatus(detail::db->Write(leveldb::WriteOptions(), &batch));
+      }
+
+      std::vector<std::string> findAll(){
+          if (nullptr == detail::db) {
+              detail::loadDb();
+          }
+          std::vector<std::string> res;
+          leveldb::Iterator* it = detail::db->NewIterator(leveldb::ReadOptions());
+          for (it->SeekToFirst(); it->Valid(); it->Next()) {
+              res.push_back( it->value().ToString() );
+          }
+          delete it;
+          return res;
+      }
+
+      std::vector<std::string> findByPrefix(const std::string& prefix){
+          if (nullptr == detail::db) {
+              detail::loadDb();
+          }
+          std::vector<std::string> res;
+          leveldb::Iterator* it = detail::db->NewIterator(leveldb::ReadOptions());
+          for(it->Seek(prefix);
+               it->Valid() && it->key().ToString() < prefix + "~";
+               it->Next()
+          ){
+              res.push_back( it->value().ToString() );
+          }
+          delete it;
+          return res;
       }
 
       template <typename T>

@@ -21,19 +21,14 @@ limitations under the License.
 #include <string>
 #include <memory>
 
-#include "../../service/json_parse.hpp"
-
 namespace object {
 
 class Message{
 
-    std::string text;
 public:
-    explicit Message(const std::string& text);
+    std::string text;
 
-    json_parse::Object dump();
-    static json_parse::Rule getJsonParseRule();
-
+    explicit Message(std::string&& text);
 };
 
 };  // namespace message

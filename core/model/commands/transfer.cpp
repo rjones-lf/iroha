@@ -15,32 +15,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include "transfer.hpp"
+#include "../../repository/domain/account_repository.hpp"
+#include "../../crypto/hash.hpp"
+
+#include "../../util/logger.hpp"
 
 namespace command {
-    
-using object::Asset;
 
-// We cann't transfer domain.
-template <>
-Transfer<Asset>::Transfer(
-      std::string senderPubkey,
-      std::string receiverPubkey,
-      std::string name,
-      int value):
-   Asset(name,value),
-   senderPublicKey(senderPubkey),
-   receiverPublicKey(receiverPubkey)
-{}
+    template <>
+    void Transfer<object::Asset>::execution() {
+        logger::debug("Transfer<Asset>", "| from publicKey :" + senderPublicKey + " |  -"+std::to_string(object::Asset::value)+"-> | to publicKey : " + receiverPublicKey +"| ");
+        object::Account sender = repository::account::findByUuid(hash::sha3_256_hex(senderPublicKey));
+        object::Account receiver = repository::account::findByUuid(hash::sha3_256_hex(receiverPublicKey));
 
-using Object = json_parse::Object;
+        auto senderUuid = hash::sha3_256_hex(senderPublicKey);
+        auto receiverUuid = hash::sha3_256_hex(receiverPublicKey);
+        for(auto& as1: sender.assets){
+            if(object::Asset::name == std::get<0>(as1)){
+                for(auto& as2: sender.assets){
+                    if(object::Asset::name == std::get<0>(as2)){
+                        repository::account::update_quantity(
+                                senderUuid,object::Asset::name,std::get<1>(as1) - object::Asset::value
+                        );
+                        repository::account::update_quantity(
+                                receiverUuid,object::Asset::name,std::get<1>(as2) + object::Asset::value
+                        );
+                    }
+                }
+            }
+        }
 
-template <>
-Transfer<Asset>::Transfer(
-      Object obj
-):
-   Asset(obj),
-   senderPublicKey(obj.dictSub["sender"].str),
-   receiverPublicKey(obj.dictSub["receiver"].str)
-{}
+
+    }
 
 }

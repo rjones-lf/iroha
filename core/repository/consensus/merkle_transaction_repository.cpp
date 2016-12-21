@@ -24,14 +24,16 @@ limitations under the License.
 #include "../../util/logger.hpp"
 #include "../../crypto/hash.hpp"
 
+#include "../../infra/protobuf/event.grpc.pb.h"
+
 namespace merkle_transaction_repository {
 
     //TODO: change bool to throw an exception instead
-    bool commit(const std::unique_ptr<event::Event>& event) {
+    bool commit(const Event::ConsensusEvent& event) {
         std::vector<std::tuple<std::string, std::string>> batchCommit
           = {
-                std::tuple<std::string, std::string>("last_insertion", event->tx->getHash()),
-                std::tuple<std::string, std::string>(event->tx->getHash(), event->tx->getAsText())
+                std::tuple<std::string, std::string>("last_insertion", pevent->transaction().hash()),
+                std::tuple<std::string, std::string>(pevent->transaction().hash(), event->tx->getAsText())
         };
 
         calculateNewRootHash(event, batchCommit);
@@ -48,14 +50,14 @@ namespace merkle_transaction_repository {
     }
 
 
-    std::string calculateNewRootHash(const std::unique_ptr<event::Event>& event,
+    std::string calculateNewRootHash(const Event::ConsensusEvent& event,
                                      std::vector<std::tuple<std::string, std::string>> &batchCommit) {
 
         std::unique_ptr<std::string> lastInsertion = repository::world_state_repository::find("last_insertion");
 
         if (lastInsertionHash.empty()) {
             // Note: there is no need to update the tree's DB here, because there is only one transaction--the current!
-            return event->tx->getHash();
+            return pevent->transaction().hash();
         }
 
         std::unique_ptr<std::string> parent = repository::world_state_repository::find(lastInsertion + "_parent");
@@ -64,7 +66,7 @@ namespace merkle_transaction_repository {
 
         if (rightChild.empty()) {
             // insert the event's transaction as the right child
-            rightChild = event->getHash();
+            rightChild = pevent->transaction().hash();
             std::string newParentHash = hash::sha3_256_hex(leftChild + rightChild);
 
             if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
@@ -93,7 +95,7 @@ namespace merkle_transaction_repository {
             return rightChild;
 
         } else {
-            std::string newLeftChild = event->getHash();
+            std::string newLeftChild =  pevent->transaction().hash();
             std::string newParentHash = hash::sha3_256_hex(currHash);
 
             std::string oldParent = parent;
@@ -102,9 +104,9 @@ namespace merkle_transaction_repository {
             while (!parent.empty()) {
 
                 if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
-                    batchCommit.push_back(std::tuple<std::string, std::string>(event->tx->getHash() + "_parent",
+                    batchCommit.push_back(std::tuple<std::string, std::string>(pevent->transaction().hash() + "_parent",
                                                                                newParentHash));
-                    batchCommit.push_back(std::tuple<std::string, std::string>(event->tx->getHash() + "_leftChild",
+                    batchCommit.push_back(std::tuple<std::string, std::string>(pevent->transaction().hash() + "_leftChild",
                                                                                newLeftChild));
                     // TODO: delete old, unused nodes
                 }

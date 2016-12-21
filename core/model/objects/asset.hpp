@@ -20,41 +20,37 @@ limitations under the License.
 
 #include <string>
 #include <memory>
-#include "../../service/json_parse.hpp"
 
 namespace object {
 
 class Asset {
 
+public:
     std::string domain;
     std::string name;
     unsigned long long value;
     unsigned int precision;
 
-public:
 
-    Asset(
-        const std::string& domain,
-        const std::string& name,
-        const unsigned long long& value,
-        const unsigned int& precision
+    explicit Asset():
+        domain(""),
+        name(""),
+        value(-1),
+        precision(-1)
+    {}
+
+
+    explicit Asset(
+        std::string&& domain,
+        std::string&&  name,
+        unsigned long long&& value,
+        unsigned int&& precision
     );
 
-    Asset(
-        const std::string& name,
-        const unsigned long long& value
+    explicit Asset(
+        std::string&&  name,
+        unsigned long long&& value
     );
-
-    using Rule = json_parse::Rule;
-    using Type = json_parse::Type;
-    using Object = json_parse::Object;
-
-    Asset(
-        Object obj
-    );
-
-    Object dump();
-    static Rule getJsonParseRule();
 
 };
 

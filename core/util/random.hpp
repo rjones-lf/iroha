@@ -22,10 +22,7 @@ limitations under the License.
 
 namespace random_service{
 
-  std::string makeRandomHash(){
-    std::random_device rd;
-    return hash::sha3_256_hex(std::to_string(rd()));  
-  }
+  std::string makeRandomHash();
 
 };  // namespace random_service
 

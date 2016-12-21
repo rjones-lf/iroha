@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8)
 PROJECT(iroha CXX)
 
 ENABLE_LANGUAGE(C)
@@ -11,6 +11,8 @@ SET(CMAKE_SHARED_LINKER_FLAGS "-lpthread -lssl")
 
 add_subdirectory(core)
 add_subdirectory(peer)
+
+add_subdirectory(tools)
 
 if(NOT without-test)
   enable_testing()

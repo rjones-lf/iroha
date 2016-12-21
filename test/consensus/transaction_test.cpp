@@ -26,10 +26,9 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
-#include "../../core/service/json_parse_with_json_nlohman.hpp"
-
 #include "../../core/service/peer_service.hpp"
 #include "../../core/crypto/hash.hpp"
+#include "../../core/infra/protobuf/convertor.hpp"
 
 template<typename T>
 using Transaction = transaction::Transaction<T>;
@@ -49,28 +48,23 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const &acti
 
 int main(){
     std::string senderPublicKey;
-    std::string receiverPublicKey;
 
     std::string pubKey = peer::getMyPublicKey();
 
     while(1){
         setAwkTimer(3000, [&](){
-            auto event = std::make_unique<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(
-                senderPublicKey,
-                receiverPublicKey,
+            auto event = std::make_unique<ConsensusEvent<Transaction<Add<object::Asset>>>>(
+                senderPublicKey.c_str(),
+                "domain",
                 "Dummy transaction",
-                100
+                100,
+                0
             );
             std::cout <<" created event\n";
             event->addTxSignature(
                     peer::getMyPublicKey(),
                     signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
             );
-            auto text = json_parse_with_json_nlohman::parser::dump(event->dump());
-            std::cout << text << std::endl;
-            auto ex = json_parse_with_json_nlohman::parser::load<ConsensusEvent<Transaction<Transfer<object::Asset>>>>(text);
-            std::cout << json_parse_with_json_nlohman::parser::dump(ex->dump()) << std::endl;
-
         });
     }
 

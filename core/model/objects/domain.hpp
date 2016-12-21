@@ -19,26 +19,23 @@ limitations under the License.
 #define CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
 
 #include <string>
-#include <memory>
-#include "../../service/json_parse.hpp"
 
 namespace object {
 
 class Domain{
+public:
     std::string ownerPublicKey;
     std::string name;
-public:
-    explicit Domain(
-        const std::string& ownerPublicKey,
-        const std::string& name
-    );
 
     explicit Domain(
-        json_parse::Object obj
+        std::string&& ownerPublicKey,
+        std::string&& name
     );
 
-    json_parse::Object dump();
-    static json_parse::Rule getJsonParseRule();
+    explicit Domain():
+        ownerPublicKey(""),
+        name("")
+    {}
 };
 
 };  // namespace domain

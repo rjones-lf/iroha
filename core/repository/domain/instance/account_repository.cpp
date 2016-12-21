@@ -14,56 +14,63 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "../../../infra/protobuf/convertor.hpp"
+
 #include "../../../model/state/account.hpp"
+
 #include "../account_repository.hpp"
 #include "../../world_state_repository.hpp"
 
+
 namespace repository{
-namespace account_repository {
+    namespace account {
 
-    std::unique_ptr<domain::AccountUser> convertAccountUser(const std::string &buffer) {
-        return nullptr; // WIP
-    }
-
-    std::string convertBuffer(const std::unique_ptr<domain::AccountUser>& au) {
-        return ""; // WIP
-    }
-
-    // SampleAsset has only quantity no logic, so this value is int.
-    bool update_quantity( 
-        std::string accountUid,
-        int newValue,
-        std::string assetName) {
-        std::unique_ptr<domain::AccountUser> accountUser = convertAccountUser(
-            world_state_repository::find(accountUid)
-        );
-        if(
-            accountUser->sampleAssetQuantitiesWhatIHaveAccount.find(assetName) != 
-            accountUser->sampleAssetQuantitiesWhatIHaveAccount.end()
+        // SampleAsset has only quantity no logic, so this value is int.
+        bool update_quantity(
+                const std::string& uuid,
+                const std::string& assetName,
+                long newValue
         ){
-            accountUser->sampleAssetQuantitiesWhatIHaveAccount.at(assetName) = newValue;
-            return world_state_repository::update(accountUid, convertBuffer(std::move(accountUser)));
-        } else {
-            return false;
+            auto account = world_state_repository::find(uuid);
+            Event::Account protoAccount;
+            protoAccount.ParseFromString(account);
+
+            for(int i = 0;i < protoAccount.assets_size(); i++){
+                if(protoAccount.assets(i).name() == assetName){
+                    protoAccount.mutable_assets(i)->set_value(newValue);
+                }
+            }
+
+            std::string strAccount;
+            protoAccount.SerializeToString(&strAccount);
+            world_state_repository::update(uuid, strAccount);
         }
-    }
 
-    std::unique_ptr<domain::AccountUser> findByUid(std::string accountUid) {
-        return convertAccountUser(
-            world_state_repository::find(accountUid)
-        );
-    }
-    
-    bool add_my_domain(
-        const std::string& accountUid,
-        const std::string& domainName
-    ){
-        std::unique_ptr<domain::AccountUser> accountUser = convertAccountUser(
-            world_state_repository::find(accountUid)
-        );
-        accountUser->hasDomainNames.push_back(domainName);
-        return world_state_repository::update(accountUid, convertBuffer(std::move(accountUser)));
-    }
+        object::Account findByUuid(const std::string& uuid){
+            auto serializedAccount = world_state_repository::find(uuid);
+            auto account = world_state_repository::find(uuid);
+            logger::debug("AccountRepository", " data:"+ account);
+            if(account != "") {
+                Event::Account protoAccount;
+                protoAccount.ParseFromString(account);
+                return convertor::detail::decodeObject(protoAccount);
+            }else{
+                return object::Account();
+            }
+        }
 
-};
+        bool add(
+            std::string &publicKey,
+            std::string &alias
+        ){
+            logger::debug("AccountRepository", "Add publicKey:" + publicKey + " alias:"+ alias);
+            object::Account ac(publicKey.c_str(),alias.c_str());
+            auto protoAccount = convertor::detail::encodeObject(ac);
+            std::string strAccount;
+            protoAccount.SerializeToString(&strAccount);
+            logger::debug("AccountRepository", "Save key:" + hash::sha3_256_hex(publicKey) + " alias:"+ alias);
+            world_state_repository::add(hash::sha3_256_hex(publicKey), strAccount);
+        }
+
+    };
 };

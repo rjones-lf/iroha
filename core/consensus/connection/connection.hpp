@@ -14,7 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 #ifndef __CONNECTION__
 #define __CONNECTION__
 
@@ -22,6 +21,9 @@ limitations under the License.
 #include <unordered_map>
 #include <memory>
 #include <functional>
+
+#include "../../infra/protobuf/event.grpc.pb.h"
+#include "../consensus_event.hpp"
 
 namespace connection {
 
@@ -31,16 +33,30 @@ namespace connection {
         std::string port;
     };
 
-    void initialize_peer(std::unique_ptr<connection::Config> config);
+    void initialize_peer();
 
-    bool sendAll(const std::string& message);
-    bool send(const std::string& to, const std::string& message);
-    bool receive(const std::function<void(std::string from, std::string message)>& callback);
+    bool send(
+        const std::string& ip,
+        const Event::ConsensusEvent& msg)
+    ;
 
-    int exec_subscription(std::string ip);
-    void addPublication(std::string ip);
+    bool sendAll(
+        const Event::ConsensusEvent& msg
+    );
+
+    bool receive(const std::function<void(
+        const std::string&,
+        Event::ConsensusEvent&)
+    >& callback);
+
+
+    void addSubscriber(std::string ip);
+
+    int run();
 
     void finish();
+
 };  // end connection
 
+// implements
 #endif

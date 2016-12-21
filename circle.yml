@@ -12,29 +12,37 @@ machine:
     - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
     - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
     - g++ -v
+
+    - sudo apt-get -y install build-essential libtcmalloc-minimal4 && sudo ln -s /usr/lib/libtcmalloc_minimal.so.4 /usr/lib/libtcmalloc_minimal.so
+    - sudo apt-get -y install xsltproc
+    - sudo apt-get -y install libhdf5-serial-dev libleveldb-dev libsnappy-dev liblmdb-dev
+    - sudo apt-get -y install autoconf automake libtool unzip
+
+checkout:
+  post:
+    - cd $IROHA_HOME
+    - cd $IROHA_HOME/core/vendor/leveldb; make -j 4
+    - cd $IROHA_HOME/core/vendor/ed25519; make -j 4
+    - cd $IROHA_HOME/core/vendor/Cappuccino; git pull
+    - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
+    - cd $IROHA_HOME/core/infra/crypto/; make
+
 dependencies:
   cache_directories:
     - ~/iroha/core/vendor/
+    - /tmp/protobuf
+    - /tmp/grpc
   pre:
-    - sudo apt-get -y install build-essential libtcmalloc-minimal4 && sudo ln -s /usr/lib/libtcmalloc_minimal.so.4 /usr/lib/libtcmalloc_minimal.so
-  override:
-    - mkdir build; cd build; cmake ..; make
-checkout:
-  post:
-    - sudo apt-get -y install xsltproc
-    - sudo apt-get install libhdf5-serial-dev libleveldb-dev libsnappy-dev liblmdb-dev
-    - cd /tmp
-    - sudo apt-get -y purge cmake
-    - curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | sudo tar -xzC /opt
-    - cd $IROHA_HOME
-    - git submodule init 
-    - git submodule update
-    - cd $IROHA_HOME/core/vendor/Agrona; ./gradlew
-    - cd $IROHA_HOME/core/vendor/Aeron;  ./gradlew; ./cppbuild/cppbuild
-    - cd $IROHA_HOME/core/vendor/leveldb; make
-    - cd $IROHA_HOME/core/vendor/ed25519; make
-    - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
-    - cd $IROHA_HOME/core/infra/crypto/; make
+    - if [[ ! -e /tmp/protobuf ]]; then git clone -b v3.0.0 https://github.com/google/protobuf.git /tmp/protobuf; cd /tmp/protobuf; (git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue); cd /tmp/protobuf; ./autogen.sh; ./configure --prefix=/usr; make -j 4; fi;
+    -  cd /tmp/protobuf; sudo make install
+    - protoc --version
+
+    - if [[ ! -e /tmp/grpc ]]; then git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc /tmp/grpc; cd /tmp/grpc; git submodule update --init; make -j 4; fi;
+    - cd /tmp/grpc; sudo make install
+    - which grpc_cpp_plugin
+
 test:
+  pre:
+    - mkdir build; cd build; cmake ..; make
   override:
     - ./test.sh

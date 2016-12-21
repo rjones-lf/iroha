@@ -16,46 +16,20 @@ limitations under the License.
 */
 #include "add.hpp"
 
+#include "../objects/account.hpp"
+#include "../objects/asset.hpp"
+#include "../../util/logger.hpp"
+
 namespace command {
 
-using Object = json_parse::Object;
-using Rule = json_parse::Rule;
-using Type = json_parse::Type;
+    template <>
+    void Add<object::Account>::execution() {
+        logger::debug("Add<Account>", "save publicKey:" + object::Account::publicKey + " name:" + object::Account::name);
+        repository::account::add(object::Account::publicKey, object::Account::name);
+    }
 
-template <>
-Add<object::Domain>::Add(
-    Object obj
-):Domain(obj){}
+    template <>
+    void Add<object::Asset>::execution() {
 
-template <>
-Add<object::Asset>::Add(
-    Object obj
-):Asset(obj){}
-
-template <>
-Add<object::Domain>::Add(
-        const std::string& ownerPublicKey,
-        const std::string& name
-):
-    object::Domain(
-        ownerPublicKey,
-        name
-    )
-{}
-
-template <>
-Add<object::Asset>::Add(
-    const std::string& domain,
-    const std::string& name,
-    const unsigned long long& value,
-    const unsigned int& precision
-):
-    object::Asset(
-        domain,
-        name,
-        value,
-        precision
-    )
-{}
-
+    }
 }

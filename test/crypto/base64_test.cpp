@@ -20,10 +20,10 @@ limitations under the License.
 #include <gtest/gtest.h>
 
 template<typename T>
-  std::unique_ptr<T> vector2UnsignedCharPointer(
+  std::unique_ptr<T[]> vector2UnsignedCharPointer(
   std::vector<T> vec
 ){
-  std::unique_ptr<T> res(new T[sizeof(T)*vec.size()+1]);
+  std::unique_ptr<T[]> res(new T[sizeof(T)*vec.size()+1]);
   size_t pos = 0;
   for(auto c : vec){
     res.get()[pos] = c;

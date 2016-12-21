@@ -28,10 +28,19 @@ limitations under the License.
 
 #include "../core/service/peer_service.hpp"
 
-std::atomic_bool running(true); 
+std::atomic_bool running(true);
+
+template<typename T>
+using Transaction = transaction::Transaction<T>;
+template<typename T>
+using ConsensusEvent = event::ConsensusEvent<T>;
+template<typename T>
+using Add = command::Add<T>;
+template<typename T>
+using Transfer = command::Transfer<T>;
 
 void server(){
-  http::server();
+    http::server();
 }
 
 void sigIntHandler(int param){
@@ -43,27 +52,30 @@ int main() {
   signal(SIGINT, sigIntHandler);
 
   if(getenv("IROHA_HOME") == nullptr){
-    std::cout << "You must set IROHA_HOME!" << std::endl;
+    logger::error("main", "You must set IROHA_HOME!");
     return 1;
   }
 
-  std::cout<<"Process ID is "<< getpid() << std::endl;
+  logger::info("main","process is :"+std::to_string(getpid()));
+  logger::setLogLevel(logger::LogLevel::DEBUG);
 
-  std::unique_ptr<connection::Config> config;
-
-  config->ip_addr = peer::getMyIp();
-  std::string myPublicKey = peer::getMyPublicKey();
-
-  sumeragi::initializeSumeragi(myPublicKey, peer::getPeerList());
-
-  std::thread http_th(server);
-  std::thread sumeragi_th(sumeragi::loop);
-
-  while(running){}
-
-  http_th.detach();
-  sumeragi_th.detach();
+  std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
+  connection::initialize_peer();
+  for(const auto& n : nodes){
+      connection::addSubscriber(n->getIP());
+  }
   
+  sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
+
+  std::thread sumeragi_thread(sumeragi::loop);
+  std::thread http_thread(server);
+
+  connection::run();
+
+  while(running);
+  
+  sumeragi_thread.detach();
+  http_thread.detach();
+
   return 0;
 }
-
