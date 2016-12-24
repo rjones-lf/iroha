@@ -1,2 +1,0 @@
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc ../../../lib/libworld_state_repo_with_level_db.a  CMakeFiles/world_state_repo_with_level_db.dir/world_state_repository_with_level_db.cpp.o
-/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib ../../../lib/libworld_state_repo_with_level_db.a

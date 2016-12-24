@@ -7,7 +7,9 @@ Advantages:
  - very easy to start development without dependencies conflicts
 
 ***Note***: permissions and ownership will be transfered 1-to-1 from host to container and backwards. It means, that file owned by `user:user` (**id=1000**) will be owned inside container by some other user (probably the same) **with id=1000**.
+
 It means, that file created inside container by `root` will be owned by `root` on the host! 
+
 -----
 
 First of all, you should clone `iroha` repository with all submodules to your host machine:

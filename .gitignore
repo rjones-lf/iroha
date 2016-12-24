@@ -17,3 +17,5 @@ build/*
 *xcworkspace*
 .vscode/*
 *cmake-build-debug*
+cmake-build-debu/*
+config/sumeragi.json

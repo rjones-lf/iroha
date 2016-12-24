@@ -20,4 +20,6 @@
 [submodule "core/vendor/Cappuccino/lib/json"]
   path = core/vendor/Cappuccino/lib/json
   url = https://github.com/nlohmann/json.git
-
+[submodule "core/vendor/thread_pool_cpp"]
+    path = core/vendor/thread_pool_cpp
+    url = https://github.com/Warchant/thread-pool-cpp.git

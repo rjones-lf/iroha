@@ -9,11 +9,12 @@ SET(LEVELDB_PATH "${PROJECT_SOURCE_DIR}/core/vendor/leveldb")
 SET(KECCAK_PATH  "${PROJECT_SOURCE_DIR}/core/vendor/KeccakCodePackage")
 SET(ED25519_PATH "${PROJECT_SOURCE_DIR}/core/vendor/ed25519")
 SET(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
+SET(THREAD_POOL_PATH "${PROJECT_SOURCE_DIR}/core/vendor/thread_pool_cpp")
 
 include_directories(
   ${PROJECT_SOURCE_DIR}/core/server
   ${PROJECT_SOURCE_DIR}/core/peer
-
+  ${THREAD_POOL_PATH}/thread_pool
   ${LEVELDB_PATH}/include
   ${AERON_PATH}/aeron-client/src/main/cpp
   ${ED25519_PATH}/src

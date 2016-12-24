@@ -21,6 +21,7 @@ limitations under the License.
 #define COMPARATOR(code) [](auto && l, auto && r) -> bool { return code ; }
 
 #include <vector>
+#include <thread>
 #include <memory>
 
 #include "consensus_event.hpp"
@@ -53,7 +54,7 @@ namespace sumeragi {
     void panic(const Event::ConsensusEvent& event);
     void setAwkTimer(const int sleepMillisecs, const std::function<void(void)> action);
     void determineConsensusOrder(/*std::vector<double> trustVector*/);
-    
+
 };  // namespace sumeragi
 
 #endif  // CORE_CONSENSUS_SUMERAGI_HPP_
