@@ -94,7 +94,7 @@ namespace merkle_transaction_repository {
             }
             return rightChild;
 
-        } else {
+        } else { // we need to create a new node
             std::string newLeftChild =  pevent->transaction().hash();
             std::string newParentHash = hash::sha3_256_hex(currHash);
 
