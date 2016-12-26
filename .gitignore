@@ -16,4 +16,5 @@ build/*
 *xcworkspace*
 .vscode/*
 *cmake-build-debug*
-cmake-build-debu/*
+cmake-build-debug/*
+docker/build/iroha.tar

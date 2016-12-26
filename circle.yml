@@ -20,6 +20,9 @@ machine:
 
 checkout:
   post:
+    - git submodule init
+    - git submodule update
+
     - cd $IROHA_HOME
     - cd $IROHA_HOME/core/vendor/leveldb; make -j 4
     - cd $IROHA_HOME/core/vendor/ed25519; make -j 4

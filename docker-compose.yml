@@ -1,10 +1,43 @@
 version: '2'
 
+# TODO: in future warchantua should changed to hyperledger
+
+## How to run 4 nodes?
+## docker-compose up
+## (open another terminal)
+## docker-compose scale iroha=4
+
+## How to get container's IP?
+## docker inspect <container name/id> | grep IPAddress
+
 services:
-  iroha-dev:
-    build: ./iroha-dev
-    volumes:
-      # mounts current folder into container's /opt. 
-      # Note: permissions and ownership will be transfered 1-to-1. 
-      # It means, that file owned by user:user (id=1000) will be owned by user:user (id=1000) inside container!
-      - "../iroha:/opt/iroha"
+  configdiscovery:
+    image: warchantua/configdiscovery
+    command: "4" # number of nodes (actually, 4 by default. But it is good to explicitly show)
+    expose:
+      - 8000
+
+  iroha:
+    image: warchantua/iroha
+    depends_on: 
+      - configdiscovery
+    ## you can mount the most recent iroha-main binary to container for testing 
+    #volumes:
+    #  - "${IROHA_HOME}/build/bin/iroha-main:/usr/local/iroha/bin/iroha-main"
+    expose:
+      - 1204
+
+    # this allows any iroha container communicate with configdiscovery by name 
+    links:
+      - configdiscovery
+
+    environment:
+      - IROHA_HOME=/usr/local/iroha
+
+    ## if you run configdiscovery server, use /configure-then-run.sh
+    ## All options: 
+    ## /configure.sh
+    ## /run.sh
+    ## /configure-then-run.sh
+    command: /configure-then-run.sh 
+

@@ -10,22 +10,19 @@ FROM ubuntu
 
 MAINTAINER Takeshi Yonezu <yonezu@soramitsu.co.jp> / Bogdan Vaneev <bogdan@soramitsu.co.jp>
 
+LABEL BUILD="docker build -t hyperledger/iroha-dev ."
+LABEL RUN="docker run -it --rm hyperledger/iroha-dev bash"
+
 USER root
 
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV IROHA_HOME /opt/iroha
+ENV IROHA_BUILD /tmp/build
+ENV IROHA_RELEASE /usr/local/iroha
 
 # we use single RUN instruction to reduce number of "layers" in docker image: https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices
-RUN groupadd -g 168 iroha && \
-    useradd -u 168 -c "IROHA Administrator" -s /bin/bash -m -p $(perl -e "print(crypt('passw0rd', 'sa'));") -g iroha iroha && \
-    usermod -G adm,sudo iroha && \
-    echo "export IROHA_HOME=${IROHA_HOME}" >>/home/iroha/.bashrc && \
-    echo "export JAVA_HOME=${JAVA_HOME}" >>/home/iroha/.bashrc && \
-    echo "export IROHA_HOME=${IROHA_HOME}" >>/root/.bashrc && \
-    echo "export JAVA_HOME=${JAVA_HOME}" >>/root/.bashrc; \
-    
-    # install dependencies
-    apt-get update && apt-get -y upgrade; \
+# install dependencies
+RUN apt-get update && apt-get -y upgrade; \
     apt-get -y install \
         software-properties-common \
         python-software-properties \
@@ -71,5 +68,5 @@ RUN groupadd -g 168 iroha && \
     cd grpc; \
     make && make install
 
-
-CMD ["/bin/bash"]
+# build and mktar scripts
+ADD ./scripts /

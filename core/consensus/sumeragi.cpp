@@ -20,9 +20,10 @@ limitations under the License.
 #include <deque>
 #include <cmath>
 
+#include <thread_pool.hpp>
+
 #include "../util/logger.hpp"
 #include "../repository/consensus/merkle_transaction_repository.hpp"
-#include "../repository/consensus/event_repository.hpp"
 #include "../crypto/hash.hpp"
 #include "../crypto/signature.hpp"
 
@@ -55,6 +56,21 @@ namespace sumeragi {
     using transaction::Transaction;
     using namespace command;
     using namespace object;
+
+
+    static size_t concurrency = 
+        std::thread::hardware_concurrency() <= 0
+        ? 1
+        : std::thread::hardware_concurrency();
+
+    //thread pool and a storage of events 
+    static ThreadPool pool(
+        ThreadPoolOptions{
+            .threads_count = concurrency,
+            .worker_queue_size = 1024
+        }
+    );
+
 
     namespace detail{
 
@@ -147,7 +163,7 @@ namespace sumeragi {
                 logger::explore("sumeragi", "\033[91m|+-ーー-+|\033[0m");
                 logger::explore("sumeragi", "\033[91m+==ーー==+\033[0m");
         }
-    }
+    } // namespace detail
 
     struct Context {
         bool isSumeragi; // am I the leader or am I not?
@@ -212,16 +228,16 @@ namespace sumeragi {
 
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
 
-        connection::receive([&](
-            const std::string& from,
-            Event::ConsensusEvent& event
-        ){
+        connection::receive([](const std::string& from, Event::ConsensusEvent& event){
             logger::info("sumeragi", "receive!");
-            auto hash = event.transaction().hash();
-
             logger::info("sumeragi", "received message! sig:[" + std::to_string(event.eventsignatures_size()) +"]");
-            // WIP currently, unuse hash in event repository,
-            repository::event::add( hash, event);
+        
+            // send processTransaction(event) as a task to processing pool
+            // this returns std::future<void> object
+            // (std::future).get() method locks processing until result of processTransaction will be available
+            // but processTransaction returns void, so we don't have to call it and wait
+            std::function<void()> &&task = std::bind(processTransaction, std::ref(event)); 
+            pool.process(std::move(task)); 
         });
 
         logger::info("sumeragi", "initialize numValidatingPeers :" + std::to_string(context->numValidatingPeers));
@@ -236,6 +252,7 @@ namespace sumeragi {
         logger::info("sumeragi", "initialize is sumeragi :" + std::to_string(context->isSumeragi));
         logger::info("sumeragi", "initialize.....  complete!");
     }
+
 
     unsigned long long getNextOrder() {
         return 0l;
@@ -439,44 +456,45 @@ namespace sumeragi {
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
     }
 
+
     void loop() {
         logger::info("sumeragi", "=+=");
         logger::info("sumeragi", "start main loop");
 
-        while (true) {  // 千五百秋　TODO: replace with callback linking the event repository?
-            if(!repository::event::empty()) {
-                // Determine node order
-                determineConsensusOrder();
-
-                logger::info("sumeragi", "event queue not empty");
-
-                auto events = repository::event::findAll();
-                /*
-                logger::info("sumeragi", "event's size " + std::to_string(events.size()));
-                
-                // Sort the events to determine priority to process
-                std::sort(events.begin(), events.end(),
-                    [&](const auto &lhs,const auto &rhs) {
-                        return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
-                            || (context->isSumeragi && lhs->order == 0)
-                            || lhs->order < rhs->order;
-                    }
-                );
-                */
-                logger::info("sumeragi", "sorted " + std::to_string(events.size()));
-                for (auto& event : events) {
-
-                    logger::info("sumeragi", "evens order:" + std::to_string(event.order()));
-                    /*
-                    if (!transaction_validator::isValid(event)) {
-                        continue;
-                    }
-                    */
-                    // Process transaction
-                    std::thread([&event]{ processTransaction(event); }).join();
-                }
-            }
-        }
+//        while (true) {  // 千五百秋　TODO: replace with callback linking the event repository?
+//            if(!repository::event::empty()) {
+//                // Determine node order
+//                determineConsensusOrder();
+//
+//                logger::info("sumeragi", "event queue not empty");
+//
+//                auto events = repository::event::findAll();
+//                /*
+//                logger::info("sumeragi", "event's size " + std::to_string(events.size()));
+//                
+//                // Sort the events to determine priority to process
+//                std::sort(events.begin(), events.end(),
+//                    [&](const auto &lhs,const auto &rhs) {
+//                        return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
+//                            || (context->isSumeragi && lhs->order == 0)
+//                            || lhs->order < rhs->order;
+//                    }
+//                );
+//                */
+//                logger::info("sumeragi", "sorted " + std::to_string(events.size()));
+//                for (auto& event : events) {
+//
+//                    logger::info("sumeragi", "evens order:" + std::to_string(event.order()));
+//                    /*
+//                    if (!transaction_validator::isValid(event)) {
+//                        continue;
+//                    }
+//                    */
+//                    // Process transaction
+//                    std::thread([&event]{ processTransaction(event); }).join();
+//                }
+//            }
+//        }
     }
 
 };  // namespace sumeragi
