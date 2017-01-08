@@ -23,10 +23,10 @@ limitations under the License.
 
 namespace signature {
 
-  class KeyPair {
-   public:
+  struct KeyPair {
     std::vector<unsigned char> publicKey;
     std::vector<unsigned char> privateKey;
+	
     KeyPair(
       std::vector<unsigned char>&& pub,
       std::vector<unsigned char>&& pri

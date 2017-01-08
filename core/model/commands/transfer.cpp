@@ -24,28 +24,27 @@ namespace command {
 
     template <>
     void Transfer<object::Asset>::execution() {
-        logger::debug("Transfer<Asset>", "| from publicKey :" + senderPublicKey + " |  -"+std::to_string(object::Asset::value)+"-> | to publicKey : " + receiverPublicKey +"| ");
-        object::Account sender = repository::account::findByUuid(hash::sha3_256_hex(senderPublicKey));
-        object::Account receiver = repository::account::findByUuid(hash::sha3_256_hex(receiverPublicKey));
+        LOG_DEBUG("Transfer<Asset>") << "| from publicKey :" << senderPublicKey << " |  -" << object::Asset::value << "-> | to publicKey : " << receiverPublicKey << "| ";
+        object::Account sender      = repository::account::findByUuid(hash::sha3_256_hex(senderPublicKey));
+        object::Account receiver    = repository::account::findByUuid(hash::sha3_256_hex(receiverPublicKey));
 
         auto senderUuid = hash::sha3_256_hex(senderPublicKey);
         auto receiverUuid = hash::sha3_256_hex(receiverPublicKey);
-        for(auto& as1: sender.assets){
-            if(object::Asset::name == std::get<0>(as1)){
-                for(auto& as2: sender.assets){
-                    if(object::Asset::name == std::get<0>(as2)){
+        for (auto& as1: sender.assets) {
+            if (object::Asset::name == std::get<0>(as1)) {
+                for (auto& as2: sender.assets) {
+                    if (object::Asset::name == std::get<0>(as2)) {
                         repository::account::update_quantity(
-                                senderUuid,object::Asset::name,std::get<1>(as1) - object::Asset::value
+                            senderUuid,object::Asset::name, std::get<1>(as1) - object::Asset::value
                         );
                         repository::account::update_quantity(
-                                receiverUuid,object::Asset::name,std::get<1>(as2) + object::Asset::value
+                            receiverUuid,object::Asset::name, std::get<1>(as2) + object::Asset::value
                         );
                     }
                 }
             }
         }
-
-
+        
     }
 
 }

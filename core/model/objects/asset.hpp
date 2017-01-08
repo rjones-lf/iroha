@@ -26,10 +26,10 @@ namespace object {
 class Asset {
 
 public:
-    std::string domain;
-    std::string name;
-    unsigned long long value;
-    unsigned int precision;
+    std::string     domain;
+    std::string     name;
+    std::uint64_t   value;
+    std::int32_t    precision;
 
 
     explicit Asset():
@@ -41,15 +41,15 @@ public:
 
 
     explicit Asset(
-        std::string domain,
-        std::string name,
-        unsigned long long value,
-        unsigned int precision
+        std::string     domain,
+        std::string     name,
+        std::uint64_t   value,
+        std::uint32_t   precision
     );
 
     explicit Asset(
-        std::string name,
-        unsigned long long value
+        std::string     name,
+        std::uint64_t   value
     );
 
 };

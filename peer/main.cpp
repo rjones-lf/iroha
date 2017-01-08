@@ -44,40 +44,40 @@ void server(){
 }
 
 void sigIntHandler(int param){
-  running = false;
-  logger::info("main", "will halt");
+    running = false;
+    LOG_INFO("main") << "will halt";
 }
 
 int main() {
-  signal(SIGINT, sigIntHandler);
+    signal(SIGINT, sigIntHandler);
 
-  if(getenv("IROHA_HOME") == nullptr){
-    logger::error("main", "You must set IROHA_HOME!");
-    return 1;
-  }
+    if (getenv("IROHA_HOME") == nullptr){
+      LOG_ERROR("main") << "You must set IROHA_HOME!";
+      return 1;
+    }
 
-  logger::info("main","process is :"+std::to_string(getpid()));
-  logger::setLogLevel(logger::LogLevel::DEBUG);
+    LOG_INFO("main") << "process is :" << getpid();
+    logger::setLogLevel(logger::LogLevel::DEBUG);
 
-  std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
-  connection::initialize_peer();
-  for(const auto& n : nodes){
-      connection::addSubscriber(n->getIP());
-  }
+    std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
+    connection::initialize_peer();
+    for (const auto& n : nodes){
+        connection::addSubscriber(n->getIP());
+    }
   
-  sumeragi::initializeSumeragi( peer::getMyPublicKey(), peer::getPeerList());
+    sumeragi::initializeSumeragi(peer::getMyPublicKey(), peer::getPeerList());
 
-  // since we have thread pool, it sets all necessary callbacks in 
-  // sumeragi::initializeSumeragi.
-  // std::thread sumeragi_thread(sumeragi::loop);
-  std::thread http_thread(server);
+    // since we have thread pool, it sets all necessary callbacks in 
+    // sumeragi::initializeSumeragi.
+    // std::thread sumeragi_thread(sumeragi::loop);
+    std::thread http_thread(server);
 
-  connection::run();
+    connection::run();
 
-  while(running);
-  
-  // sumeragi_thread.detach();
-  http_thread.detach();
+    while(running);
 
-  return 0;
+    // sumeragi_thread.detach();
+    http_thread.detach();
+
+    return 0;
 }

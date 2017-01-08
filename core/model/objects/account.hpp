@@ -19,6 +19,7 @@ limitations under the License.
 #define IROHA_ACCOUNT_HPP
 
 #include <string>
+#include <cstdint>
 
 namespace object {
     
@@ -29,7 +30,7 @@ namespace object {
         std::string name;
 
         std::vector<
-            std::tuple<std::string, long>
+            std::tuple<std::string, std::int64_t>
         > assets;
 
         explicit Account():
@@ -41,7 +42,7 @@ namespace object {
             std::string publicKey,
             std::string name,
             std::vector<
-                std::tuple<std::string, long>
+                std::tuple<std::string, std::int64_t>
             > assets
         ):
             publicKey(std::move(publicKey)),
@@ -52,7 +53,7 @@ namespace object {
         explicit Account(
             std::string publicKey,
             std::string name,
-            std::tuple<std::string, long> asset
+            std::tuple<std::string, std::int64_t> asset
         ):
             publicKey(std::move(publicKey)),
             name(std::move(name))

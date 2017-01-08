@@ -20,64 +20,48 @@ limitations under the License.
 #include <string>
 #include <iostream>
 
-namespace logger{
+#include "datetime.hpp"
 
-  enum class LogLevel{
-    DEBUG = 0,
-    INFO,
-    WARNING,
-    ERROR,
-    FITAL,
-    EXPLORE
-  };
+namespace logger {
 
-  void setLogLevel(LogLevel lv);
+    enum class LogLevel {
+        DEBUG = 0,
+        INFO,
+        WARNING,
+        ERROR,
+        FITAL,
+        EXPLORE
+    };
 
-  void debug(
-    const std::string &name,
-    const std::string &message,
-    std::ostream &out);
+    namespace detail {
+        static LogLevel LOG_LEVEL = LogLevel::DEBUG;
+    }
 
-  void debug(
-    const std::string &name,
-    const std::string &message);
+    inline void setLogLevel(LogLevel lv) {
+        detail::LOG_LEVEL = lv;
+    }
 
-  void info(
-    const std::string &name,
-    const std::string &message,
-    std::ostream &out);
+    struct __AttachMessage {
+        void operator = (std::ostream& ost) {
+            ost << std::endl;
+        }
+    };
 
-  void info(
-    const std::string &name,
-    const std::string &message);
+}
 
-    void warning(
-    const std::string &name,
-    const std::string &message,
-    std::ostream &out);
+#define LOG_BASE_PREFIX(logLevel) \
+      if (static_cast<int>(logger::detail::LOG_LEVEL) <= logLevel)  \
+        logger::__AttachMessage() = std::cout << datetime::unixtime_str()
 
-  void error(
-    const std::string &name,
-    const std::string &message,
-    std::ostream &out);
+#define LOG_BASE_MESSAGE(type, where, logLevel) \
+      LOG_BASE_PREFIX(logLevel) << " " << type << " [" << where << "] "
 
-  void error(
-    const std::string &name,
-    const std::string &message);
+#define LOG_DEBUG(where)    LOG_BASE_MESSAGE("DEBUG",       where, 0)
+#define LOG_INFO(where)     LOG_BASE_MESSAGE("INFO",        where, 1)
+#define LOG_WARNING(where)  LOG_BASE_MESSAGE("WARNING",     where, 2)
+#define LOG_ERROR(where)    LOG_BASE_MESSAGE("ERROR (-A-)", where, 3)
+#define LOG_FATAL(where)    LOG_BASE_MESSAGE("FATAL (`o')", where, 4)
+#define LOG_EXPLORE(where) \
+      LOG_BASE_PREFIX(5) << "[" << where << "] "
 
-  void fital(
-    const std::string &name,
-    const std::string &message,
-    std::ostream& out);
-
-  void explore(
-    const std::string &name,
-    const std::string &message,
-    std::ostream &out);
-
-  void explore(
-    const std::string &name,
-    const std::string &message);
-
-};
 #endif

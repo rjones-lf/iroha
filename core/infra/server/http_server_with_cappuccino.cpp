@@ -72,13 +72,14 @@ namespace http {
     }
 
     void server() {
-        logger::info("server", "initialize server!");
+        LOG_INFO("server") << "initialize server!";
         Cappuccino::Cappuccino( 0, nullptr);
 
-        Cappuccino::route<Cappuccino::Method::POST>( "/account/register",[](std::shared_ptr<Request> request) -> Response{
+        Cappuccino::route<Cappuccino::Method::POST>("/account/register", [](std::shared_ptr<Request> request) -> Response {
             auto res = Response(request);
             auto data = request->json();
-            std::string uuid = "";
+            std::string uuid;
+
             if(!data.empty()){
                 try{
 
@@ -136,11 +137,11 @@ namespace http {
             std::string uuid = request->params("uuid");
             auto res = Response(request);
 
-            logger::debug("Cappuccino", "param's uuid is " + uuid);
+            LOG_DEBUG("Cappuccino") << "param's uuid is " << uuid;
             object::Account account = repository::account::findByUuid(uuid);
 
-            logger::debug("Cappuccino", "name: " + account.name);
-            logger::debug("Cappuccino", "publicKey: " + account.publicKey);
+            LOG_DEBUG("Cappuccino") << "name: "         << account.name;
+            LOG_DEBUG("Cappuccino") << "publicKey: "    << account.publicKey;
 
             json assets = json::array();
             for(auto&& as: account.assets){
@@ -262,7 +263,7 @@ namespace http {
             return res;
         });
 
-        logger::info("server", "start server!");
+        LOG_INFO("server") << "start server!";
         // runnning
         Cappuccino::run();
 

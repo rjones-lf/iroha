@@ -27,16 +27,16 @@ namespace repository{
 
         // SampleAsset has only quantity no logic, so this value is int.
         bool update_quantity(
-                const std::string& uuid,
-                const std::string& assetName,
-                long newValue
+            const std::string&  uuid,
+            const std::string&  assetName,
+            std::int64_t        newValue
         ){
             auto account = world_state_repository::find(uuid);
             Event::Account protoAccount;
             protoAccount.ParseFromString(account);
 
-            for(int i = 0;i < protoAccount.assets_size(); i++){
-                if(protoAccount.assets(i).name() == assetName){
+            for (int i = 0;i < protoAccount.assets_size(); i++) {
+                if (protoAccount.assets(i).name() == assetName) {
                     protoAccount.mutable_assets(i)->set_value(newValue);
                 }
             }
@@ -46,29 +46,29 @@ namespace repository{
             world_state_repository::update(uuid, strAccount);
         }
 
-        object::Account findByUuid(const std::string& uuid){
+        object::Account findByUuid(const std::string& uuid) {
             auto serializedAccount = world_state_repository::find(uuid);
             auto account = world_state_repository::find(uuid);
-            logger::debug("AccountRepository", " data:"+ account);
-            if(account != "") {
+            LOG_DEBUG("AccountRepository") << " data:" << account;
+            if (account != "") {
                 Event::Account protoAccount;
                 protoAccount.ParseFromString(account);
                 return convertor::detail::decodeObject(protoAccount);
-            }else{
+            } else {
                 return object::Account();
             }
         }
 
         bool add(
-            std::string &publicKey,
-            std::string &alias
-        ){
-            logger::debug("AccountRepository", "Add publicKey:" + publicKey + " alias:"+ alias);
+            std::string& publicKey,
+            std::string& alias
+        ) {
+            LOG_DEBUG("AccountRepository") << "Add publicKey:" << publicKey << " alias:" << alias;
             object::Account ac(publicKey.c_str(),alias.c_str());
             auto protoAccount = convertor::detail::encodeObject(ac);
             std::string strAccount;
             protoAccount.SerializeToString(&strAccount);
-            logger::debug("AccountRepository", "Save key:" + hash::sha3_256_hex(publicKey) + " alias:"+ alias);
+            LOG_DEBUG("AccountRepository") << "Save key:" << hash::sha3_256_hex(publicKey) << " alias:" << alias;
             world_state_repository::add(hash::sha3_256_hex(publicKey), strAccount);
         }
 

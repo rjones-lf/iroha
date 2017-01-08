@@ -45,7 +45,7 @@ namespace repository {
 
               bool loggerStatus(leveldb::Status const status) {
                   if (!status.ok()) {
-                      logger::info("WorldStateRepositoryWithLeveldb", status.ToString());
+                      LOG_INFO("WorldStateRepositoryWithLeveldb") << status.ToString();
                       return false;
                   }
                   return true;

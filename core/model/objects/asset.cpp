@@ -15,14 +15,15 @@ limitations under the License.
 */
 #include "asset.hpp"
 #include <iostream>
+#include <cstdint>
 
 namespace object {
 
 Asset::Asset(
-    std::string domain,
-    std::string name,
-    unsigned long long value,
-    unsigned int precision
+    std::string     domain,
+    std::string     name,
+    std::uint64_t   value,
+    std::uint32_t   precision
 ):
     domain(std::move(domain)),
     name(std::move(name)),
@@ -31,8 +32,8 @@ Asset::Asset(
 {}
 
 Asset::Asset(
-    std::string name,
-    unsigned long long value
+    std::string     name,
+    std::uint64_t   value
 ):
     domain(""),
     name(std::move(name)),
