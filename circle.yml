@@ -26,7 +26,7 @@ checkout:
     - cd $IROHA_HOME
     - cd $IROHA_HOME/core/vendor/leveldb; make -j 4
     - cd $IROHA_HOME/core/vendor/ed25519; make -j 4
-    - cd $IROHA_HOME/core/vendor/Cappuccino; git pull
+    - cd $IROHA_HOME/core/vendor/Cappuccino; git pull origin master
     - cd $IROHA_HOME/core/vendor/KeccakCodePackage; make; make generic64/libkeccak.a
     - cd $IROHA_HOME/core/infra/crypto/; make
 
