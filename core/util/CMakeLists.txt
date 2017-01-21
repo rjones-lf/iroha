@@ -15,8 +15,8 @@ target_link_libraries(logger
 ADD_LIBRARY(random  STATIC random.cpp)
 
 
-# Datetime
+# Exception
 ADD_LIBRARY(exception  STATIC exception.cpp)
 
-# Datetime
+# Terminate
 ADD_LIBRARY(terminate  STATIC terminate.cpp)

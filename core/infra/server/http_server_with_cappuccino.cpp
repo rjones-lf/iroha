@@ -21,6 +21,7 @@ limitations under the License.
 #include "../../util/logger.hpp"
 #include "../../service/peer_service.hpp"
 #include "../../infra/protobuf/convertor.hpp"
+#include "../../infra/config/peer_service_with_json.hpp"
 
 #include "../../consensus/connection/connection.hpp"
 
@@ -97,11 +98,13 @@ namespace http {
                         );
 
                         event.addTxSignature(
-                            peer::getMyPublicKey(),
-                            signature::sign(event.getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                            signature::sign(event.getHash(),
+                                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                            config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
                         );
 
-                        connection::send(peer::getMyIp(), convertor::encode(event));
+                        connection::send(config::PeerServiceConfig::getInstance().getMyIp(), convertor::encode(event));
 
                     }else{
                         res.json(json({
@@ -182,11 +185,13 @@ namespace http {
                     );
 
                     event.addTxSignature(
-                        peer::getMyPublicKey(),
-                        signature::sign(event.getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                        config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                        signature::sign(event.getHash(),
+                                        config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                        config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
                     );
 
-                    connection::send(peer::getMyIp(), convertor::encode(event));
+                    connection::send(config::PeerServiceConfig::getInstance().getMyIp(), convertor::encode(event));
 
                 }catch(...) {
                     res.json(json({

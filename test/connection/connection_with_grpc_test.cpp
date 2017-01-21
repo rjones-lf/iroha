@@ -29,6 +29,8 @@ limitations under the License.
 #include "../../core/infra/protobuf/convertor.hpp"
 #include "../../core/infra/protobuf/event.grpc.pb.h"
 
+#include "../../core/infra/config/peer_service_with_json.hpp"
+
 template<typename T>
 using Transaction = transaction::Transaction<T>;
 template<typename T>
@@ -61,13 +63,17 @@ int main(int argc, char* argv[]){
 
             logger::debug("main") << "issued event";
             event.addSignature(
-                    peer::getMyPublicKey(),
-                    signature::sign(event.getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                    signature::sign(event.getHash(),
+                                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                    config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
             );
 
             event.addSignature(
-                    peer::getMyPublicKey(),
-                    signature::sign(event.getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                    signature::sign(event.getHash(),
+                                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                    config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
             );
 
 

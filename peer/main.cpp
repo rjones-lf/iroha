@@ -27,6 +27,7 @@ limitations under the License.
 #include "../core/util/logger.hpp"
 
 #include "../core/service/peer_service.hpp"
+#include "../core/infra/config/peer_service_with_json.hpp"
 
 std::atomic_bool running(true);
 
@@ -59,13 +60,15 @@ int main() {
     logger::info("main") << "process is :" << getpid();
     logger::setLogLevel(logger::LogLevel::DEBUG);
 
-    std::vector<std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
+    std::vector<std::unique_ptr<peer::Node>> nodes = config::PeerServiceConfig::getInstance().getPeerList();
     connection::initialize_peer();
     for (const auto& n : nodes){
         connection::addSubscriber(n->getIP());
     }
   
-    sumeragi::initializeSumeragi(peer::getMyPublicKey(), peer::getPeerList());
+    sumeragi::initializeSumeragi(
+                config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                config::PeerServiceConfig::getInstance().getPeerList());
 
     // since we have thread pool, it sets all necessary callbacks in 
     // sumeragi::initializeSumeragi.

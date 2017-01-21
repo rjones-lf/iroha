@@ -30,6 +30,7 @@ limitations under the License.
 #include "../../core/util/logger.hpp"
 #include "../../core/crypto/hash.hpp"
 #include "../../core/infra/protobuf/convertor.hpp"
+#include "../../core/infra/config/peer_service_with_json.hpp"
 
 template<typename T>
 using Transaction = transaction::Transaction<T>;
@@ -56,7 +57,7 @@ int main(int argc, char *argv[]){
         std::string senderPublicKey;
         std::string receiverPublicKey;
         std::string cmd;
-        std::vector <std::unique_ptr<peer::Node>> nodes = peer::getPeerList();
+        std::vector <std::unique_ptr<peer::Node>> nodes = config::PeerServiceConfig::getInstance().getPeerList();
 
         connection::initialize_peer();
 
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]){
             connection::addSubscriber(n->getIP());
         }
 
-        std::string pubKey = peer::getMyPublicKey();
+        std::string pubKey = config::PeerServiceConfig::getInstance().getMyPublicKey();
 
         sumeragi::initializeSumeragi(pubKey, std::move(nodes));
 
@@ -87,16 +88,18 @@ int main(int argc, char *argv[]){
             while (1) {
                 setAwkTimer(10, [&]() {
                     auto event = std::make_unique<ConsensusEvent<Transaction<Update<object::Asset>>>>(
-                            peer::getMyPublicKey(),
-                            peer::getMyPublicKey(),
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
                             "AssetName",
                             100
                     );
                     event->addTxSignature(
-                            peer::getMyPublicKey(),
-                            signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                            signature::sign(event->getHash(),
+                                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                            config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
                     );
-                    connection::send(peer::getMyIp(), convertor::encode(*event));
+                    connection::send(config::PeerServiceConfig::getInstance().getMyIp(), convertor::encode(*event));
                 });
             }
         } else {

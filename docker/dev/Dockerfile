@@ -54,6 +54,7 @@ RUN apt-get update && apt-get -y upgrade; \
     update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-5 20; \
     curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | tar -xzC /opt; \
     ln -s /opt/cmake*/bin/c* /usr/local/bin; \
+    mkdir -p ${IROHA_RELEASE}; \
 
     # install protobuf v3.0.0
     cd /tmp; \

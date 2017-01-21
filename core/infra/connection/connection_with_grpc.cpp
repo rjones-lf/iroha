@@ -30,6 +30,8 @@ limitations under the License.
 #include "../../model/objects/domain.hpp"
 #include "../../model/objects/account.hpp"
 
+#include "../../infra/config/peer_service_with_json.hpp"
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -149,7 +151,7 @@ namespace connection {
     ) {
         // WIP
         for (auto& ip : receiver_ips){
-            if (ip != peer::getMyIp()){
+            if (ip != config::PeerServiceConfig::getInstance().getMyIp()){
                 send( ip, event);
             }
         }

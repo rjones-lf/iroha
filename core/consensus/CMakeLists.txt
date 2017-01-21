@@ -10,6 +10,7 @@ include_directories(
 
 target_link_libraries(sumeragi
   peer_service_with_json
+  iroha_config_with_json
   connection_with_grpc
   signature
   event_repository
