@@ -34,6 +34,8 @@ limitations under the License.
 
 #include "../repository/consensus/transaction_repository.hpp"
 #include "../repository/domain/account_repository.hpp"
+#include "../infra/config/peer_service_with_json.hpp"
+#include "../infra/config/iroha_config_with_json.hpp"
 
 /**
 * |ーーー|　|ーーー|　|ーーー|　|ーーー|
@@ -53,9 +55,8 @@ namespace sumeragi {
     using namespace command;
     using namespace object;
 
-
     static size_t concurrency =
-        std::thread::hardware_concurrency() <= 0
+        config::IrohaConfigManager::getInstance().getParam("concurrency", 0) <= 0
         ? 1
         : std::thread::hardware_concurrency();
 
@@ -66,7 +67,6 @@ namespace sumeragi {
             .worker_queue_size = 1024
         }
     );
-
 
     namespace detail {
 
@@ -84,7 +84,7 @@ namespace sumeragi {
         }
 
         void printIsSumeragi(bool isSumeragi) {
-            if (isSumeragi){
+            if (isSumeragi) {
                 logger::explore("sumeragi") <<  "===+==========+===";
                 logger::explore("sumeragi") <<  "   |  |=+=|   |";
                 logger::explore("sumeragi") <<  "  -+----------+-";
@@ -183,12 +183,14 @@ namespace sumeragi {
         context = std::make_unique<Context>(std::move(peers));
         peers.clear();
 
-        logger::info("sumeragi")    <<  "My key is " << peer::getMyIp();
+        logger::info("sumeragi")    <<  "My key is " << config::PeerServiceConfig::getInstance().getMyIp();
         logger::info("sumeragi")    <<  "Sumeragi setted";
         logger::info("sumeragi")    <<  "set number of validatingPeer";
 
         context->numValidatingPeers = context->validatingPeers.size();
-        context->maxFaulty = context->numValidatingPeers / 3;  // Default to approx. 1/3 of the network. TODO: make this configurable
+        context->maxFaulty = context->numValidatingPeers / (
+                config::IrohaConfigManager::getInstance().getParam("numValidatingPeers", 3)
+        );  // Default to approx. 1/3 of the network.
 
         context->proxyTailNdx = context->maxFaulty * 2 + 1;
 
@@ -209,6 +211,9 @@ namespace sumeragi {
         connection::receive([](const std::string& from, Event::ConsensusEvent& event) {
             logger::info("sumeragi") << "receive!";
             logger::info("sumeragi") << "received message! sig:[" << event.eventsignatures_size() << "]";
+            // TODO:
+            // TODO: 1) sign event
+            // TODO: 2) reply to "from" with signature of event
 
             // send processTransaction(event) as a task to processing pool
             // this returns std::future<void> object
@@ -225,15 +230,13 @@ namespace sumeragi {
         logger::info("sumeragi")    <<  "initialize panicCount :"           << context->panicCount;
         logger::info("sumeragi")    <<  "initialize myPublicKey :"          << context->myPublicKey;
 
-        //TODO: move the peer service and ordering code to another place
-        //determineConsensusOrder(); // side effect is to modify validatingPeers
         logger::info("sumeragi")    <<  "initialize is sumeragi :"          << static_cast<int>(context->isSumeragi);
         logger::info("sumeragi")    <<  "initialize.....  complete!";
     }
 
 
     std::uint64_t getNextOrder() {
-        return 0l;
+        return 0l; //TODO: get the order from ametsuchi
         //return merkle_transaction_repository::getLastLeafOrder() + 1;
     }
 
@@ -248,19 +251,21 @@ namespace sumeragi {
         logger::info("sumeragi")    <<  "Add my signature...";
 
         logger::info("sumeragi")    <<  "hash:" <<  event.transaction().hash();
-        logger::info("sumeragi")    <<  "pub:"  <<  peer::getMyPublicKey();
-        logger::info("sumeragi")    <<  "pro:"  <<  peer::getPrivateKey();
+        logger::info("sumeragi")    <<  "pub:"  <<  config::PeerServiceConfig::getInstance().getMyPublicKey();
+        logger::info("sumeragi")    <<  "pro:"  <<  config::PeerServiceConfig::getInstance().getPrivateKey();
         logger::info("sumeragi")    <<  "sog:"  <<  signature::sign(
                                                     event.transaction().hash(),
-                                                    peer::getMyPublicKey(),
-                                                    peer::getPrivateKey()
+                                                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                                    config::PeerServiceConfig::getInstance().getPrivateKey()
                                                 );
 
         //detail::printIsSumeragi(context->isSumeragi);
         // Really need? blow "if statement" will be false anytime.
         detail::addSignature(event,
-            peer::getMyPublicKey(),
-            signature::sign(event.transaction().hash(), peer::getMyPublicKey(), peer::getPrivateKey())
+            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+            signature::sign(event.transaction().hash(),
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                            config::PeerServiceConfig::getInstance().getPrivateKey())
         );
 
         if (detail::eventSignatureIsEmpty(event) && context->isSumeragi) {
@@ -344,13 +349,17 @@ namespace sumeragi {
                 // event->execution();
             } else {
                 // This is a new event, so we should verify, sign, and broadcast it
-                detail::addSignature(event, peer::getMyPublicKey(), signature::sign(event.transaction().hash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str());
+                detail::addSignature(event,
+                                     config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                     signature::sign(event.transaction().hash(),
+                                                     config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                                     config::PeerServiceConfig::getInstance().getPrivateKey()).c_str());
 
                 logger::info("sumeragi")        <<  "tail public key is "   <<  context->validatingPeers.at(context->proxyTailNdx)->getPublicKey();
                 logger::info("sumeragi")        <<  "tail is "              <<  context->proxyTailNdx;
-                logger::info("sumeragi")        <<  "my public key is "     <<  peer::getMyPublicKey();
+                logger::info("sumeragi")        <<  "my public key is "     <<  config::PeerServiceConfig::getInstance().getMyPublicKey();
 
-                if (context->validatingPeers.at(context->proxyTailNdx)->getPublicKey() == peer::getMyPublicKey()) {
+                if (context->validatingPeers.at(context->proxyTailNdx)->getPublicKey() == config::PeerServiceConfig::getInstance().getMyPublicKey()) {
                     logger::info("sumeragi")    <<  "I will send event to " <<  context->validatingPeers.at(context->proxyTailNdx)->getIP();
                     connection::send(context->validatingPeers.at(context->proxyTailNdx)->getIP(), std::move(event)); // Think In Process
                 } else {
@@ -358,8 +367,7 @@ namespace sumeragi {
                     connection::sendAll(std::move(event)); // TODO: Think In Process
                 }
 
-                setAwkTimer(3, [&](){
-                //setAwkTimer(3000, [&](){
+                setAwkTimer(3000, [&](){
                     if (!merkle_transaction_repository::leafExists( event.transaction().hash())) {
                         panic(event);
                     }
@@ -403,7 +411,8 @@ namespace sumeragi {
         logger::info("sumeragi")    <<  "broadcastEnd:"     <<  broadcastEnd;
         logger::info("sumeragi")    <<  "broadcastStart:"   <<  broadcastStart;
         // WIP issue hash event
-        //connection::sendAll(event->transaction().hash()); //TODO: change this to only broadcast to peer range between broadcastStart and broadcastEnd
+        //TODO: create panic event
+        // connection::sendAll(event->transaction().hash()); //TODO: change this to only broadcast to peer range between broadcastStart and broadcastEnd
     }
 
     void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
@@ -418,7 +427,7 @@ namespace sumeragi {
      * are the same, then the order (ascending) of the public keys for the servers are used.
      */
     void determineConsensusOrder() {
-        // WIP We creat getTrustScore() function. till then circle list
+        // TODO: create getTrustScore() function. until then go in order of the public key
         /*
         std::deque<
                 std::unique_ptr<peer::Node>
@@ -448,47 +457,6 @@ namespace sumeragi {
         }
         */
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
-    }
-
-
-    void loop() {
-        logger::info("sumeragi")    <<  "=+=";
-        logger::info("sumeragi")    <<  "start main loop";
-
-//        while (true) {  // 千五百秋　TODO: replace with callback linking the event repository?
-//            if(!repository::event::empty()) {
-//                // Determine node order
-//                determineConsensusOrder();
-//
-//                logger::info("sumeragi")  <<  "event queue not empty";
-//
-//                auto events = repository::event::findAll();
-//                /*
-//                logger::info("sumeragi")  <<  "event's size " <<  events.size();
-//
-//                // Sort the events to determine priority to process
-//                std::sort(events.begin(), events.end(),
-//                    [&](const auto &lhs,const auto &rhs) {
-//                        return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
-//                            || (context->isSumeragi && lhs->order == 0)
-//                            || lhs->order < rhs->order;
-//                    }
-//                );
-//                */
-//                logger::info("sumeragi")  <<  "sorted "   <<  events.size();
-//                for (auto& event : events) {
-//
-//                    logger::info("sumeragi")  <<  "evens order:"  <<  event.order();
-//                    /*
-//                    if (!transaction_validator::isValid(event)) {
-//                        continue;
-//                    }
-//                    */
-//                    // Process transaction
-//                    std::thread([&event]{ processTransaction(event); }).join();
-//                }
-//            }
-//        }
     }
 
 };  // namespace sumeragi

@@ -21,6 +21,7 @@ limitations under the License.
 #include "../../util/logger.hpp"
 #include "../../service/peer_service.hpp"
 #include "../../infra/protobuf/convertor.hpp"
+#include "../../infra/config/peer_service_with_json.hpp"
 
 #include "../../consensus/connection/connection.hpp"
 
@@ -90,11 +91,13 @@ namespace http {
                         );
 
                         event.addTxSignature(
-                            peer::getMyPublicKey(),
-                            signature::sign(event.getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                            signature::sign(event.getHash(),
+                                            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                            config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
                         );
 
-                        connection::send(peer::getMyIp(), convertor::encode(event));
+                        connection::send(config::PeerServiceConfig::getInstance().getMyIp(), convertor::encode(event));
 
                     }else{
                         res.json(responseError("duplicate user"));
@@ -149,7 +152,31 @@ namespace http {
             auto res = Response(request);
             auto data = request->json();
             if(!data.empty()){
-                try{
+                try {
+                    const auto assetUuid = data["asset-uuid"].get<std::string>();
+                    const auto timestamp = data["timestamp"].get<int>();
+                    const auto signature = data["signature"].get<std::string>();
+                    const auto command   = data["params"]["command"].get<std::string>();
+                    const auto value     = data["params"]["value"].get<std::string>();
+                    const auto sender    = data["params"]["sender"].get<std::string>();
+                    const auto receiver  = data["params"]["receiver"].get<std::string>();
+
+                    auto event = ConsensusEvent<Transaction<Transfer<Asset>>>(
+                        sender.c_str(),
+                        sender.c_str(),
+                        receiver.c_str(),
+                        assetName,
+                        std::atoi(value.c_str())
+                    );
+
+                    event.addTxSignature(
+                        config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                        signature::sign(event.getHash(),
+                                        config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                        config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
+                    );
+
+                    connection::send(config::PeerServiceConfig::getInstance().getMyIp(), convertor::encode(event));
 
                     auto assetUuid = data["asset-uuid"].get<std::string>();
                     auto timestamp = data["timestamp"].get<int>();

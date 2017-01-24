@@ -8,7 +8,6 @@ machine:
   java:
       version: 'oraclejdk8'
 
-
 checkout:
   post:
     - git submodule sync
@@ -20,9 +19,11 @@ dependencies:
     - ~/docker
   override:
     # one way to cache iroha-dev container is to save it to tar image. 2 mins vs 10 mins without caching.
-    - if [[ -e ~/docker/iroha-dev.tar ]]; then docker load -i ~/docker/iroha-dev.tar; fi
-    # build iroha-dev (if it is in cache, this step will be skipped) and iroha-docker (production) images
-    - ${IROHA_HOME}/docker/build.sh
+    - if [[ -e ~/docker/iroha-dev.tar ]]; then docker load -i ~/docker/iroha-dev.tar; else docker build --rm=false -t hyperledger/iroha-dev ${IROHA_HOME}/docker/dev; fi
+    # build iroha. Result of this instruction is ${IROHA_HOME}/docker/build/iroha.tar
+    - docker run -i -v ${IROHA_HOME}/docker/build:/build -v ${IROHA_HOME}:/opt/iroha hyperledger/iroha-dev sh <<< "cd /opt/iroha; /build-iroha.sh || exit 2; /mktar-iroha.sh || exit 3; cp /tmp/iroha.tar /build/iroha.tar || exit 4"
+    # build iroha-docker image
+    - docker build --rm=false -t hyperledger/iroha-docker ${IROHA_HOME}/docker/build
     # cache iroha-dev image. takes 30 sec to save into file
     - mkdir -p ~/docker; docker save hyperledger/iroha-dev > ~/docker/iroha-dev.tar
 
@@ -33,13 +34,13 @@ test:
     # first, run ctest inside a container
     - docker run -p 1204:1204 hyperledger/iroha-docker /test.sh 
     # then, run iroha with dummy config (1 node) and test curl request
-    - docker run -d -p 1204:1204 hyperledger/iroha-docker /run.sh && sleep 5 && curl -X POST http://127.0.0.1:1204/account/register -d '{"publicKey":"WdvM/DPabapmtA7ISbTYPywbHxk8gWu2221LzmcmAgw=","alias":"yonezu","timestamp":1482053586}'
+    - docker run -d -p 1204:1204 hyperledger/iroha-docker /run.sh && sleep 5 
+    - curl -X POST http://127.0.0.1:1204/account/register -d '{"publicKey":"WdvM/DPabapmtA7ISbTYPywbHxk8gWu2221LzmcmAgw=","alias":"yonezu","timestamp":1482053586}'
 
 
 deployment:
   hub:
     branch: master
     commands:
-      - docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-      - docker push hyperledger/iroha-docker
-
+      # makes docker login and docker push $1
+      - ${IROHA_HOME}/deploy.sh hyperledger/iroha-docker

@@ -16,4 +16,5 @@ target_link_libraries(world_state_repo_with_level_db
   leveldb
   logger
   exception
+  iroha_config_with_json
 )

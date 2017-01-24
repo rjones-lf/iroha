@@ -36,13 +36,12 @@ limitations under the License.
 #include "../model/objects/asset.hpp"
 #include "../model/objects/domain.hpp"
 
-
 namespace event {
 
 template <typename T>
 class ConsensusEvent: public T {
 
-    struct eventSignature{
+    struct eventSignature {
         std::string publicKey;
         std::string signature;
 
@@ -67,23 +66,23 @@ public:
         T(std::forward<Args>(args)...)
     {}
 
-    void addSignature(const std::string& publicKey, const std::string& signature){
+    void addSignature(const std::string& publicKey, const std::string& signature) {
         _eventSignatures.push_back(eventSignature(publicKey, signature));
     }
 
-    std::vector<std::tuple<std::string,std::string>> eventSignatures() const{
+    std::vector<std::tuple<std::string,std::string>> eventSignatures() const {
         std::vector<std::tuple<std::string,std::string>> res;
-        for(const auto& sig: _eventSignatures){
+        for(const auto& sig: _eventSignatures) {
             res.push_back(std::make_tuple(sig.publicKey,sig.signature));
         }
         return res;
     };
 
-    void execution(){
+    void execution() {
         T::execution();
     }
 
 };
-};  // namespace ConsensusEvent
+};  // namespace event
 
 #endif  // CORE_CONSENSUS_CONSENSUSEVENT_HPP_

@@ -29,6 +29,7 @@ limitations under the License.
 #include "../../core/service/peer_service.hpp"
 #include "../../core/crypto/hash.hpp"
 #include "../../core/infra/protobuf/convertor.hpp"
+#include "../../core/infra/config/peer_service_with_json.hpp"
 
 template<typename T>
 using Transaction = transaction::Transaction<T>;
@@ -49,7 +50,7 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const &acti
 int main(){
     std::string senderPublicKey;
 
-    std::string pubKey = peer::getMyPublicKey();
+    std::string pubKey = config::PeerServiceConfig::getInstance().getMyPublicKey();
 
     while(1){
         setAwkTimer(3000, [&](){
@@ -62,8 +63,10 @@ int main(){
             );
             std::cout <<" created event\n";
             event->addTxSignature(
-                    peer::getMyPublicKey(),
-                    signature::sign(event->getHash(), peer::getMyPublicKey(), peer::getPrivateKey()).c_str()
+                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                    signature::sign(event->getHash(),
+                                    config::PeerServiceConfig::getInstance().getMyPublicKey(),
+                                    config::PeerServiceConfig::getInstance().getPrivateKey()).c_str()
             );
         });
     }

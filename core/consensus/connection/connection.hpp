@@ -27,7 +27,7 @@ limitations under the License.
 
 namespace connection {
 
-    struct Config{
+    struct Config {
         std::string name;
         std::string ip_addr;
         std::string port;
