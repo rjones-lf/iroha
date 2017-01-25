@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "../../repository/world_state_repository.hpp"
 #include "../../util/exception.hpp"
+#include "../../infra/config/iroha_config_with_json.hpp"
 
 #include "../../../util/logger.hpp"
 
@@ -56,7 +57,10 @@ namespace repository {
                   leveldb::Options options;
                   options.error_if_exists = false;
                   options.create_if_missing = true;
-                  loggerStatus(leveldb::DB::Open(options, "/tmp/iroha_ledger", &tmpDb)); //TODO: This path should be configurable
+
+                  loggerStatus(leveldb::DB::Open(options,
+                            config::IrohaConfigManager::getInstance().getParam("database_path", std::string("/tmp")) + "/iroha_ledger",
+                            &tmpDb));
                   db.reset(tmpDb);
               }
           }

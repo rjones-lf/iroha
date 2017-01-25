@@ -42,8 +42,8 @@ As a result, you will have a tarball with compiled iroha binaries and libs: `${I
 Then you have to build production image. It has minimal size and ready for production. The only thing you need is to upload your `sumeragi.json` inside.
 
 ```bash
-# build hyperledger/iroha container
-docker build -t hyperledger/iroha ${IROHA_HOME}/docker/build
+# build hyperledger/iroha-docker container
+docker build -t hyperledger/iroha-docker ${IROHA_HOME}/docker/build
 ```
 
 #### Or, if you are lazy
@@ -64,7 +64,7 @@ iroha container has several scripts:
  You can use them instead default `CMD`:
  
 ```bash
-docker run -d --name iroha hyperledger/iroha /configure-then-run.sh
+docker run -d --name iroha hyperledger/iroha-docker /configure-then-run.sh
 ```
 
 #### Good luck!

@@ -1,8 +1,6 @@
-
-
 #include "consensus_event.hpp"
 
-namespace event{
+namespace event {
 
     template<typename T>
     using Transaction = transaction::Transaction<T>;
@@ -13,5 +11,4 @@ namespace event{
 
     template<typename T>
     using Update = command::Update<T>;
-
 };

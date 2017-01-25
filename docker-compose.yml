@@ -2,9 +2,15 @@ version: '2'
 
 ## How to run 4 nodes?
 ## docker-compose up
+## docker-compose scale iroha=4
 
 ## How to get container's IP?
 ## docker inspect <container name/id> | grep IPAddress
+
+## What should I change to run more nodes?
+## command: "4" to command: "N"
+## docker-compose up
+## docker-compose scale iroha=N
 
 ## How to destroy created containers?
 ## docker-compose down
@@ -17,7 +23,7 @@ services:
     expose:
       - 8000
 
-  iroha1:
+  iroha:
     image: hyperledger/iroha-docker
     depends_on: 
       - configdiscovery
@@ -35,42 +41,3 @@ services:
     ## /run.sh
     ## /configure-then-run.sh
     command: /configure-then-run.sh 
-
-
-  iroha2:
-    image: hyperledger/iroha-docker
-    depends_on: 
-      - configdiscovery
-    expose:
-      - 1204
-    links:
-      - configdiscovery
-    environment:
-      - IROHA_HOME=/usr/local/iroha
-    command: /configure-then-run.sh
-
-
-  iroha3:
-    image: hyperledger/iroha-docker
-    depends_on: 
-      - configdiscovery
-    expose:
-      - 1204
-    links:
-      - configdiscovery
-    environment:
-      - IROHA_HOME=/usr/local/iroha
-    command: /configure-then-run.sh
-
-
-  iroha4:
-    image: hyperledger/iroha-docker
-    depends_on: 
-      - configdiscovery
-    expose:
-      - 1204
-    links:
-      - configdiscovery
-    environment:
-      - IROHA_HOME=/usr/local/iroha
-    command: /configure-then-run.sh
