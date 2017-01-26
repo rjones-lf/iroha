@@ -16,7 +16,7 @@ LABEL BUILD "docker build -t warchantua/configdiscovery ."
 LABEL RUN "docker run --name configdiscovery warchantua/configdiscovery 4" 
 
 
-ADD ["config-server.py", "/server.py"]
+COPY ["config-server.py", "/server.py"]
 
 EXPOSE 8000
 

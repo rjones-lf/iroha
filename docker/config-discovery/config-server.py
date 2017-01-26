@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import json
-import sys
 import socket
 import threading
 import argparse
@@ -11,11 +10,11 @@ from threading import Lock
 
 
 # returns new dict with the same key-value pairs, but without key 'privateKey'
-def extract(config): 
+def extract(config):
     return {i:config[i] for i in config if i != 'privateKey'}
 
 
-# newtork is the array of dicts, which are json-parsed outputs of make_sumeragi 
+# newtork is the array of dicts, which are json-parsed outputs of make_sumeragi
 def make_configs(network):
     result = {}
     for id_, config1 in network.items():
@@ -50,7 +49,7 @@ class ThreadedServer(object):
 
     def listen(self):
         self.sock.listen(5)
-        for thread_n in range(self.args.number):
+        for _ in range(self.args.number):
             client, address = self.sock.accept()
             tid = client.fileno()
             print("[+] Got connection from {0}".format(address))
@@ -73,7 +72,7 @@ class ThreadedServer(object):
                                 # we may try to release unlocked locks
                                 self.locks[id_].release()
                             except:
-                                # we don't care about it 
+                                # we don't care about it
                                 pass
                         break
                     else:
@@ -83,7 +82,7 @@ class ThreadedServer(object):
                 # if program is here, then we received all configs
                 config = make_configs(self.network)
                 client.send(config[tid].encode('utf-8'))
-                
+
             except Exception as e:
                 print("[-] Something went wrong for {0}:\n{1}\n\n".format(address, data))
                 print(str(e))

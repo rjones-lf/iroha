@@ -2,7 +2,7 @@
 
 total=0
 for file in ${IROHA_HOME}/test_bin/*; do
-  ./${file}
+  ${file}
   total=$((total + $?)) 
 done
-exit 0
+exit $total

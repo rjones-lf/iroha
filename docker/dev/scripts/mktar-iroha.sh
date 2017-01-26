@@ -17,7 +17,7 @@ if [ -z ${IROHA_HOME} ]; then
 	exit 1
 fi
 
-
+mkdir -p $IROHA_RELEASE
 cd ${IROHA_RELEASE} || (echo "[-] No folder ${IROHA_RELEASE}" && exit 1)
 
 rsync -av ${IROHA_BUILD}/bin $IROHA_RELEASE && \

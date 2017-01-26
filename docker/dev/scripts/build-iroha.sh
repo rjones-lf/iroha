@@ -31,10 +31,10 @@ make clean 2>/dev/null 1>&2
 make -j4 || error "Can't build crypto submodule"
 
 # build iroha (important: build using single thread!)
-mkdir -p $IROHA_BUILD && \
+(mkdir -p $IROHA_BUILD && \
 cd $IROHA_BUILD && \
 cmake $IROHA_HOME && \
-make || error "Can't build iroha"
+make) || error "Can't build iroha"
 
 
 mkdir -p $IROHA_BUILD/config

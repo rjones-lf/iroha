@@ -8,7 +8,7 @@ fi
 
 
 if [[ ! -e ~/.docker/config.json ]]; then
-	expect -c '\
+	expect -c "\
 	set timeout 5
 	spawn docker login
 	expect "Username:*"
@@ -18,7 +18,7 @@ if [[ ! -e ~/.docker/config.json ]]; then
 	expect "Email:*"
 	send -- "$env(DOCKER_EMAIL)\r"
 	expect "*WARNING:*Login Succeeded*"
-	expect eof' 1>/dev/null || exit 1
+	expect eof" 1>/dev/null || exit 1
 fi
 
 docker push $1
