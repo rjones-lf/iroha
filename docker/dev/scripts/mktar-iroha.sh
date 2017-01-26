@@ -29,5 +29,3 @@ rsync -av ${IROHA_HOME}/core/vendor/ed25519/lib $IROHA_RELEASE
 tar cvf /tmp/iroha.tar \
 	/usr/lib/libproto* \
 	/usr/local
-
-exit 0
