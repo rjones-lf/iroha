@@ -34,9 +34,11 @@ namespace repository{
             long newValue
         );
 
+        bool attach(const std::string& uuid,const std::string& assetName, long assetDefault);
+
         object::Account findByUuid(const std::string& uuid);
 
-        bool add(
+        std::string add(
             std::string &publicKey,
             std::string &alias
         );

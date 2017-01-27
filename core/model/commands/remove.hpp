@@ -15,8 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_UPDATE_HPP_
-#define CORE_DOMAIN_UPDATE_HPP_
+#ifndef CORE_DOMAIN_REMOVE_HPP_
+#define CORE_DOMAIN_REMOVE_HPP_
 
 #include "../objects/domain.hpp"
 #include "../objects/asset.hpp"
@@ -28,24 +28,24 @@ limitations under the License.
 namespace command {
 
     template <typename T>
-    class Update: public T {
+    class Remove: public T {
     public:
 
         template<typename... Args>
-        constexpr Update(
+        constexpr Remove(
             Args&&... args
         ):
             T(std::forward<Args>(args)...)
         {}
 
         constexpr auto getCommandName() const {
-            return "Update";
+            return "Remove";
         }
 
         void execution();
 
     };
 
-}
-#endif  // CORE_DOMAIN_UPDATE_HPP_
+};
+#endif  // CORE_DOMAIN_REMOVE_HPP_
 

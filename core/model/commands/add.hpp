@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <utility>
 #include "../../repository/domain/account_repository.hpp"
+#include "../../repository/domain/asset_repository.hpp"
 
 namespace command {
 

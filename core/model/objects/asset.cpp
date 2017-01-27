@@ -32,6 +32,17 @@ Asset::Asset(
 {}
 
 Asset::Asset(
+    std::string     domain,
+    std::string     name,
+    std::uint64_t   value
+):
+    domain(std::move(domain)),
+    name(std::move(name)),
+    value(value)
+{}
+
+
+Asset::Asset(
     std::string     name,
     std::uint64_t   value
 ):

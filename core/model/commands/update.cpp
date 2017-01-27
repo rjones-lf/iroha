@@ -15,7 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include "update.hpp"
+#include "../../repository/domain/account_repository.hpp"
+#include "../../crypto/hash.hpp"
+
+#include "../../util/logger.hpp"
 
 namespace command {
+
+    template <>
+    void Update<object::Account>::execution() {
+        logger::debug("Update<Account>") << " publicKey:" << object::Account::publicKey << " name:" << object::Account::name;
+        // TODO: repository::account::update? ...
+    }
 
 }

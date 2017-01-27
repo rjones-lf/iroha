@@ -31,7 +31,6 @@ public:
     std::uint64_t   value;
     std::int32_t    precision;
 
-
     explicit Asset():
         domain(""),
         name(""),
@@ -45,6 +44,13 @@ public:
         std::string     name,
         std::uint64_t   value,
         std::uint32_t   precision
+    );
+
+    // What should be updated?
+    explicit Asset(
+        std::string     domain,
+        std::string     name,
+        std::uint64_t   value
     );
 
     explicit Asset(

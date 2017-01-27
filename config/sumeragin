@@ -1,0 +1,15 @@
+{
+  "me":{
+    "ip": "127.0.0.1",
+    "name": "natori",
+    "privateKey": "OD56uOAfOGQgYqy4eDpDaaZq66RsweVx/63Sr6jdCkmuTv2rSK0ny5V7SV4X2zf5MhlkcIC/xNvIhiVb8S8Azg==",
+    "publicKey": "tT2rkwo/wX3dzzkFnY+vXmfCkWk6Z3nfqI/fTO+nfIs="
+  },
+  "group":[
+    {
+      "ip":"127.0.0.1",
+      "name":"natori",
+      "publicKey":"tT2rkwo/wX3dzzkFnY+vXmfCkWk6Z3nfqI/fTO+nfIs="
+    }
+  ]
+}

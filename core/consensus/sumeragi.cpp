@@ -59,15 +59,12 @@ namespace sumeragi {
     using namespace command;
     using namespace object;
 
-
     static size_t concurrency =
         config::IrohaConfigManager::getInstance().getParam("concurrency", 0) <= 0
         ? 1
         : std::thread::hardware_concurrency();
 
-
-
-    //thread pool and a storage of events 
+    //thread pool and a storage of events
     static ThreadPool pool(
         ThreadPoolOptions{
             .threads_count = concurrency,
@@ -75,14 +72,13 @@ namespace sumeragi {
         }
     );
 
-
     namespace detail {
 
         std::uint32_t getNumValidSignatures(const Event::ConsensusEvent& event) {
             std::uint32_t sum = 0;
             for (auto&& esig: event.eventsignatures()) {
                 if (signature::verify(esig.signature(), event.transaction().hash(), esig.publickey())) {
-                    sum++;
+                    ++sum;
                 }
             }
             return sum;
@@ -138,7 +134,7 @@ namespace sumeragi {
             std::string line;
             for (int i=0; i<numValidationPeer; i++) line += "==＝==";
             logger::explore("sumeragi") <<  line;
-            
+
             logger::explore("sumeragi") <<  "numValidSignatures:"
                                     <<  numValidSignatures
                                     <<  " faulty:"
@@ -227,13 +223,16 @@ namespace sumeragi {
         connection::receive([](const std::string& from, Event::ConsensusEvent& event) {
             logger::info("sumeragi") << "receive!";
             logger::info("sumeragi") << "received message! sig:[" << event.eventsignatures_size() << "]";
-        
+            // TODO:
+            // TODO: 1) sign event
+            // TODO: 2) reply to "from" with signature of event
+
             // send processTransaction(event) as a task to processing pool
             // this returns std::future<void> object
             // (std::future).get() method locks processing until result of processTransaction will be available
             // but processTransaction returns void, so we don't have to call it and wait
-            std::function<void()> &&task = std::bind(processTransaction, event); 
-            pool.process(std::move(task)); 
+            std::function<void()> &&task = std::bind(processTransaction, event);
+            pool.process(std::move(task));
         });
 
         logger::info("sumeragi")    <<  "initialize numValidatingPeers :"   << context->numValidatingPeers;
@@ -254,7 +253,7 @@ namespace sumeragi {
         return 0l;
         //return merkle_transaction_repository::getLastLeafOrder() + 1;
     }
-    
+
 
     void processTransaction(Event::ConsensusEvent& event) {
 
@@ -273,7 +272,7 @@ namespace sumeragi {
                                                     config::PeerServiceConfig::getInstance().getMyPublicKey(),
                                                     config::PeerServiceConfig::getInstance().getPrivateKey()
                                                 );
-        
+
         //detail::printIsSumeragi(context->isSumeragi);
         // Really need? blow "if statement" will be false anytime.
         detail::addSignature(event,
@@ -332,29 +331,30 @@ namespace sumeragi {
 //                std::string strTx;
 //                event.SerializeToString(&strTx);
 
-                const auto key = event.transaction().asset().name() + "_" + datetime::unixtime_str();
-                repository::transaction::add(key, event);
+                std::string key = event.transaction().asset().name() + "_" + datetime::unixtime_str();
+                logger::info("sumeragi") <<  "value: " << event.transaction().asset().value();
+                repository::transaction::add( key, event);
+                logger::debug("sumeragi") << "key[" <<  key << "]";
 
                 logger::debug("sumeragi")   <<  "key[" << key << "]";
                 //logger::debug("sumeragi")   <<  "\033[91m+-ーーーーーーーーーーーー-+\033[0m";
                 std::cout << "\033[91m+-ーーーーーーーーーーーー-+\033[0m" << std::endl;
                 logger::debug("sumeragi")   <<  "tx:" << event.transaction().type();
 
+                logger::info("sumeragi")<< "my pubkey is " << peer::getMyPublicKey();
+                logger::debug("sumeragi") << "tx:" << event.transaction().type();
                 // I want to separate it function from sumeragi.
-                if (event.transaction().type() == "Add") {
-
-                    if (event.transaction().asset().ByteSize() != 0) {
-                        logger::debug("sumeragi")   <<  "exec <Add<Asset>>";
+                if(event.transaction().type() == "Add"){
+                    if(event.transaction().has_asset()) {
+                        logger::debug("sumeragi") << "exec <Add<Asset>>";
                         convertor::decode<Add<Asset>>(event).execution();
-                    } else if (event.transaction().account().ByteSize() != 0){
-                        logger::debug("sumeragi")   <<  "exec <Add<Account>>";
+                    }else if(event.transaction().has_account()){
+                        logger::debug("sumeragi")<< "exec <Add<Account>>";
                         convertor::decode<Add<Account>>(event).execution();
                     }
-
-                } else if (event.transaction().type() == "Transfer"){
-
-                    if (event.transaction().asset().ByteSize() != 0) {
-                        logger::debug("sumeragi")   <<  "exec <Transfer<Asset>>";
+                }else if(event.transaction().type() == "Transfer"){
+                    if(event.transaction().has_asset()) {
+                        logger::debug("sumeragi") << "exec <Transfer<Asset>>";
                         convertor::decode<Transfer<Asset>>(event).execution();
                     }
 
@@ -372,7 +372,7 @@ namespace sumeragi {
                 logger::info("sumeragi")        <<  "tail public key is "   <<  context->validatingPeers.at(context->proxyTailNdx)->getPublicKey();
                 logger::info("sumeragi")        <<  "tail is "              <<  context->proxyTailNdx;
                 logger::info("sumeragi")        <<  "my public key is "     <<  config::PeerServiceConfig::getInstance().getMyPublicKey();
-                
+
                 if (context->validatingPeers.at(context->proxyTailNdx)->getPublicKey() == config::PeerServiceConfig::getInstance().getMyPublicKey()) {
                     logger::info("sumeragi")    <<  "I will send event to " <<  context->validatingPeers.at(context->proxyTailNdx)->getIP();
                     connection::send(context->validatingPeers.at(context->proxyTailNdx)->getIP(), std::move(event)); // Think In Process
@@ -381,8 +381,7 @@ namespace sumeragi {
                     connection::sendAll(std::move(event)); // TODO: Think In Process
                 }
 
-                setAwkTimer(3, [&](){
-                //setAwkTimer(3000, [&](){
+                setAwkTimer(3000, [&](){
                     if (!merkle_transaction_repository::leafExists( event.transaction().hash())) {
                         panic(event);
                     }
@@ -422,7 +421,7 @@ namespace sumeragi {
         if (broadcastEnd > context->numValidatingPeers - 1) {
             broadcastEnd = context->numValidatingPeers - 1;
         }
-        
+
         logger::info("sumeragi")    <<  "broadcastEnd:"     <<  broadcastEnd;
         logger::info("sumeragi")    <<  "broadcastStart:"   <<  broadcastStart;
         // WIP issue hash event
@@ -441,7 +440,7 @@ namespace sumeragi {
      * are the same, then the order (ascending) of the public keys for the servers are used.
      */
     void determineConsensusOrder() {
-        // WIP We creat getTrustScore() function. till then circle list
+        // TODO: create getTrustScore() function. until then go in order of the public key
         /*
         std::deque<
                 std::unique_ptr<peer::Node>
@@ -452,8 +451,8 @@ namespace sumeragi {
         tmp_deq.push_back(std::move(context->validatingPeers[0]));
         context->validatingPeers.clear();
         context->validatingPeers = std::move(tmp_deq);
-        
-        
+
+
         std::sort(context->validatingPeers.begin(), context->validatingPeers.end(),
               [](const std::unique_ptr<peer::Node> &lhs,
                  const std::unique_ptr<peer::Node> &rhs) {
@@ -471,47 +470,6 @@ namespace sumeragi {
         }
         */
         context->isSumeragi = context->validatingPeers.at(0)->getPublicKey() == context->myPublicKey;
-    }
-
-
-    void loop() {
-        logger::info("sumeragi")    <<  "=+=";
-        logger::info("sumeragi")    <<  "start main loop";
-
-//        while (true) {  // 千五百秋　TODO: replace with callback linking the event repository?
-//            if(!repository::event::empty()) {
-//                // Determine node order
-//                determineConsensusOrder();
-//
-//                logger::info("sumeragi")  <<  "event queue not empty";
-//
-//                auto events = repository::event::findAll();
-//                /*
-//                logger::info("sumeragi")  <<  "event's size " <<  events.size();
-//                
-//                // Sort the events to determine priority to process
-//                std::sort(events.begin(), events.end(),
-//                    [&](const auto &lhs,const auto &rhs) {
-//                        return lhs->getNumValidSignatures() > rhs->getNumValidSignatures()
-//                            || (context->isSumeragi && lhs->order == 0)
-//                            || lhs->order < rhs->order;
-//                    }
-//                );
-//                */
-//                logger::info("sumeragi")  <<  "sorted "   <<  events.size();
-//                for (auto& event : events) {
-//
-//                    logger::info("sumeragi")  <<  "evens order:"  <<  event.order();
-//                    /*
-//                    if (!transaction_validator::isValid(event)) {
-//                        continue;
-//                    }
-//                    */
-//                    // Process transaction
-//                    std::thread([&event]{ processTransaction(event); }).join();
-//                }
-//            }
-//        }
     }
 
 };  // namespace sumeragi

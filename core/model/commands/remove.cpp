@@ -1,5 +1,6 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,13 +14,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+#include "remove.hpp"
+#include "../../repository/domain/account_repository.hpp"
+#include "../../crypto/hash.hpp"
 
-package repository;
+#include "../../util/logger.hpp"
 
-public class Repository {
-    public static native void save(String key,String value);
-    public static native void find(String key);
-    public static native void update(String key,String value);
-    public static native void remove(String key);
+namespace command {
+    
+    template <>
+    void Remove<object::Account>::execution() {
+        logger::debug("Remove<Account>") << " publicKey:" << object::Account::publicKey << " name:" << object::Account::name;
+        repository::account::add(object::Account::publicKey, object::Account::name);
+    }
+
+
 }
-

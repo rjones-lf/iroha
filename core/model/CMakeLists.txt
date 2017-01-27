@@ -10,4 +10,5 @@ target_link_libraries(transaction
   objects
   datetime
   hash
+  logger
 )

@@ -15,8 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_UPDATE_HPP_
-#define CORE_DOMAIN_UPDATE_HPP_
+#ifndef CORE_DOMAIN_UNBATCH_HPP_
+#define CORE_DOMAIN_UNBATCH_HPP_
 
 #include "../objects/domain.hpp"
 #include "../objects/asset.hpp"
@@ -27,25 +27,32 @@ limitations under the License.
 
 namespace command {
 
-    template <typename T>
-    class Update: public T {
+    template<typename T>
+    class Unbatch : public T {
+
     public:
 
+        std::string senderPublicKey;
+        std::string receiverPublicKey;
+
         template<typename... Args>
-        constexpr Update(
-            Args&&... args
+        explicit Unbatch(
+                std::string&& sender,
+                std::string&& receiver,
+                Args&&... args
         ):
-            T(std::forward<Args>(args)...)
+                T(std::forward<Args>(args)...),
+                senderPublicKey(std::move(sender)),
+                receiverPublicKey(std::move(receiver))
         {}
-
-        constexpr auto getCommandName() const {
-            return "Update";
+        
+        auto getCommandName() const {
+            return "Batch";
         }
-
+        
         void execution();
 
-    };
-
-}
-#endif  // CORE_DOMAIN_UPDATE_HPP_
+    };  // namespace command
+};
+#endif  // CORE_DOMAIN_UNBATCH_HPP_
 

@@ -38,6 +38,9 @@ namespace repository{
 
         std::vector<std::string> split(const std::string& str, const std::string& delim) noexcept{
             std::vector<std::string> result;
+            if(str == ""){
+                return result;
+            }
             std::string::size_type pos = 0;
             while(pos != std::string::npos) {
                 auto p = str.find(delim, pos);
@@ -53,12 +56,11 @@ namespace repository{
         }
 
         std::string t2s(Event::Transaction tx){
-
             std::string tsigs = "";
             for(const Event::TxSignatures& ts: tx.txsignatures()){
                 tsigs += ts.publickey() + s3 + ts.signature() + s2;
             }
-            std::string transaction = tx.type() + s + tx.hash() + s + tsigs + s + std::to_string(tx.timestamp()) + s + tx.senderpubkey() + s;
+            std::string transaction = tx.type() + s2 + tx.receivepubkey() + s + tx.hash() + s + tsigs + s + std::to_string(tx.timestamp()) + s + tx.senderpubkey() + s;
 
             if(tx.has_account()){
                 std::string assets = "";
@@ -82,10 +84,17 @@ namespace repository{
         Event::Transaction s2t(std::string message){
             auto main = split(message, s);
             Event::Transaction tx;
-            tx.set_type(main[0]);
+            if(main.size() < 7){ return tx; }
+
+            auto transfer_resv = split(main[0],s2);
+            if(transfer_resv.size() == 2){
+                tx.set_receivepubkey(transfer_resv[1]);
+            }
+            tx.set_type(transfer_resv[0]);
             tx.set_hash(main[1]);
-            for(auto&& sig: split(main[2], s2)){
-                auto pub_sig = split(sig, s3);
+
+            for(auto&& sig: split( main[2], s2)){
+                auto pub_sig = split( sig, s3);
                 if(pub_sig.size() != 2){
                     break;
                 }
@@ -100,8 +109,8 @@ namespace repository{
                 auto account = split(main[6], s2);
                 tx.mutable_account()->set_publickey(account[0]);
                 tx.mutable_account()->set_name(account[1]);
-                for(auto&& as: split(account[3], s3)){
-                    auto asset = split(as, s4);
+                for(auto&& as: split(account[2], s3)){
+                    auto asset = split(as,s4);
                     if(asset.size() != 2){
                         break;
                     }
@@ -112,12 +121,14 @@ namespace repository{
                 }
             }else if(main[5] == "ASSET"){
                 auto asset = split(main[6], s2);
+                if(asset.size() != 4){ return tx; }
                 tx.mutable_asset()->set_domain(asset[0]);
                 tx.mutable_asset()->set_name(asset[1]);
                 tx.mutable_asset()->set_value(std::atoi(asset[2].c_str()));
                 tx.mutable_asset()->set_precision(std::atoi(asset[3].c_str()));
             }else if(main[5] == "DOMAIN"){
                 auto domain = split(main[6], s2);
+                if(domain.size() != 2){ return tx; }
                 tx.mutable_domain()->set_ownerpublickey(domain[0]);
                 tx.mutable_domain()->set_name(domain[1]);
             }
@@ -128,7 +139,9 @@ namespace repository{
         // ====================================
 
 
+
         void add(const std::string &key,const Event::ConsensusEvent& tx){
+            logger::debug("sumeragi") << "addvalue:" << tx.transaction().asset().value();
             world_state_repository::add("transaction_" + key, t2s(tx.transaction()));
         }
 
@@ -136,7 +149,9 @@ namespace repository{
             auto data = world_state_repository::findByPrefix("transaction_");
             std::vector<Event::Transaction> res;
             for(auto& s: data){
+                auto tx = s2t(s);
                 res.push_back(s2t(s));
+                logger::info("tx repo") << "find All value:" << tx.asset().value();
             }
             return res;
         }
