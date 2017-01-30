@@ -170,9 +170,9 @@ namespace sumeragi {
         std::int64_t    commitedCount = 0;
         std::uint64_t   numValidatingPeers;
         std::string     myPublicKey;
-        std::deque<std::unique_ptr<peer::Node>> validatingPeers;
+        std::deque<std::unique_ptr<object::Peer>> validatingPeers;
 
-        Context(std::vector<std::unique_ptr<peer::Node>>&& peers)
+        Context(std::vector<std::unique_ptr<object::Peer>>&& peers)
         {
             for (auto&& p : peers) {
                 validatingPeers.push_back(std::move(p));
@@ -183,7 +183,7 @@ namespace sumeragi {
     std::unique_ptr<Context> context = nullptr;
 
     void initializeSumeragi(const std::string& myPublicKey,
-                            std::vector<std::unique_ptr<peer::Node>> peers) {
+                            std::vector<std::unique_ptr<object::Peer>> peers) {
         logger::explore("sumeragi") <<  "\033[95m+==ーーーーーーーーー==+\033[0m";
         logger::explore("sumeragi") <<  "\033[95m|+-ーーーーーーーーー-+|\033[0m";
         logger::explore("sumeragi") <<  "\033[95m|| 　　　　　　　　　 ||\033[0m";

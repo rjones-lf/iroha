@@ -32,6 +32,8 @@ limitations under the License.
 #include "../../core/infra/protobuf/convertor.hpp"
 #include "../../core/infra/config/peer_service_with_json.hpp"
 
+#include "../../core/model/model.hpp"
+
 template<typename T>
 using Transaction = transaction::Transaction<T>;
 template<typename T>
@@ -57,7 +59,7 @@ int main(int argc, char *argv[]){
         std::string senderPublicKey;
         std::string receiverPublicKey;
         std::string cmd;
-        std::vector <std::unique_ptr<peer::Node>> nodes = config::PeerServiceConfig::getInstance().getPeerList();
+        std::vector <std::unique_ptr<object::Peer>> nodes = config::PeerServiceConfig::getInstance().getPeerList();
 
         connection::initialize_peer();
 

@@ -5,4 +5,5 @@ ADD_LIBRARY(objects STATIC
   domain.cpp
   message.cpp
   account.cpp
+  peer.cpp
 )

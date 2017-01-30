@@ -14,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#include "add.hpp"
+#include "remove.hpp"
 
 #include "../objects/account.hpp"
 #include "../objects/asset.hpp"
@@ -28,31 +28,24 @@ limitations under the License.
 namespace command {
 
     template <>
-    void Add<object::Account>::execution() {
-        logger::debug("Add<Account>") << "save publicKey:" << object::Account::publicKey << " name:" << object::Account::name;
-        //repository::account::add(object::Account::publicKey, object::Account::name);  // replace ametsuchi
+    void Remove<object::Account>::execution() {
+        logger::debug("Remove<Account>") << "save publicKey:" << object::Account::publicKey << " name:" << object::Account::name;
+        //repository::account::remove(object::Account::publicKey, object::Account::name);  // replace ametsuchi
     }
 
     template <>
-    void Add<object::Asset>::execution() {
+    void Remove<object::Asset>::execution() {
 
     }
 
     template<>
-    void Add<object::Peer>::execution() {
-        logger::debug("Add<Peer>") << "save ip:" << object::Peer::getIP() << " publicKey:" << object::Peer::getPublicKey();
+    void Remove<object::Peer>::execution() {
+        logger::debug("Remove<Peer>") << "save ip:" << object::Peer::getIP() << " publicKey:" << object::Peer::getPublicKey();
 
-        // save all Data and Consensus another peer
+        // delete all database
         // TODO
 
-        // Valuation new peer trustScore
-        // TODO
-
-        // add peerList
-        //double trustScore = 0.4; // calclation trust score
-        config::PeerServiceConfig::getInstance().addPeer( object::Peer::getInstance() );
-
-        // add local
-        //repository::peer::add(object::Peer::ip, object::Peer::publicKey); // replace ametsuchi
+        // remove peerList
+        config::PeerServiceConfig::getInstance().removePeer( object::Peer::getInstance() );
     }
 }

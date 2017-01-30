@@ -1,6 +1,5 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
-http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,35 +13,36 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef CORE_DOMAIN_COMMANDS_ADD_HPP_
-#define CORE_DOMAIN_COMMANDS_ADD_HPP_
 
-#include <utility>
-#include "../../repository/domain/account_repository.hpp"
+#include "peer.hpp"
+#include <iostream>
+#include <cstdint>
+
+namespace object {
 
 
-namespace command {
+Peer::Peer(
+    std::string     ip,
+    std::string     publicKey
+):
+    ip ( std::move( ip ) ),
+    publicKey ( std::move( publicKey ) ),
+    trustScore ( 1.0 )
+{}
 
-template <typename T>
-class Add: public T {
-  public:
+Peer::Peer(
+    std::string     ip,
+    std::string     publicKey,
+    double          trustScore
+):
+    ip ( std::move( ip ) ),
+    publicKey ( std::move( publicKey ) ),
+    trustScore ( trustScore )
+{}
 
-    template<typename... Args>
-    constexpr Add(
-        Args&&... args
-    ):
-        T(std::forward<Args>(args)...)
-    {}
+Peer Peer::getInstance() const{
+    return *this;
+}
 
-    constexpr auto getCommandName() const{
-        return "Add";
-    }
 
-    void execution();
-
-};
-
-};  // namespace command
-
-#endif  // CORE_DOMAIN_TRANSACTIONS_TRANSFERTRANSACTION_HPP_
-
+};  // namespace peer

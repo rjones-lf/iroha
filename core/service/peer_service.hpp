@@ -48,6 +48,11 @@ namespace peer
         Node& operator = (Node&&) = default;
         Node(const Node&) = default; // support copying
         Node& operator = (const Node&) = default;
+
+        bool operator < (const Node& node) const {
+            if( ip == node.ip ) return publicKey < node.publicKey;
+            return ip < node.ip;
+        }
        
 
         std::string getIP() const {

@@ -20,6 +20,7 @@ limitations under the License.
 #include "../objects/domain.hpp"
 #include "../objects/asset.hpp"
 #include "../objects/message.hpp"
+#include "../objects/peer.hpp"
 
 #include <iostream>
 #include "../../util/logger.hpp"
@@ -45,9 +46,7 @@ namespace command {
             return "Update";
         }
 
-        void execution(){
-
-        }
+        void execution();
 
     };
 

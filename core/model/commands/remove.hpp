@@ -14,28 +14,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef CORE_DOMAIN_COMMANDS_ADD_HPP_
-#define CORE_DOMAIN_COMMANDS_ADD_HPP_
+#ifndef CORE_DOMAIN_COMMANDS_REMOVE_HPP_
+#define CORE_DOMAIN_COMMANDS_REMOVE_HPP_
 
 #include <utility>
-#include "../../repository/domain/account_repository.hpp"
+#include <vector>
+#include <memory>
+#include <string>
 
 
 namespace command {
 
 template <typename T>
-class Add: public T {
+class Remove: public T {
   public:
 
     template<typename... Args>
-    constexpr Add(
+    constexpr Remove(
         Args&&... args
     ):
         T(std::forward<Args>(args)...)
     {}
 
     constexpr auto getCommandName() const{
-        return "Add";
+        return "Remove";
     }
 
     void execution();

@@ -28,7 +28,7 @@ limitations under the License.
 
 #include "../service/peer_service.hpp"
 #include "../infra/protobuf/event.grpc.pb.h"
-
+/*
 #include "../model/commands/add.hpp"
 #include "../model/commands/transfer.hpp"
 #include "../model/commands/update.hpp"
@@ -36,12 +36,14 @@ limitations under the License.
 #include "../model/objects/account.hpp"
 #include "../model/objects/asset.hpp"
 #include "../model/objects/domain.hpp"
+*/
+#include "../model/model.hpp"
 
 namespace sumeragi {
 
     void initializeSumeragi(
         const std::string& myPublicKey,
-        std::vector<std::unique_ptr<peer::Node>> peers
+        std::vector<std::unique_ptr<object::Peer>> peers
     );
     void loop();
 
