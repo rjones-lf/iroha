@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef CORE_VALIDATION_TRANSACTIONVALIDATOR_HPP_
 #define CORE_VALIDATION_TRANSACTIONVALIDATOR_HPP_
 
+
 #include "../consensus/consensus_event.hpp"
 #include "../infra/protobuf/event.grpc.pb.h"
 

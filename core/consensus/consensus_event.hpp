@@ -58,6 +58,7 @@ class ConsensusEvent: public T {
     std::vector<eventSignature> _eventSignatures;
 
 public:
+
     int order;
 
     template<typename... Args>
