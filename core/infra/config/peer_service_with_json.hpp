@@ -29,6 +29,10 @@ namespace config {
         PeerServiceConfig(const PeerServiceConfig&);
         PeerServiceConfig& operator=(const PeerServiceConfig&);
 
+    // Is config data type always std::string? Do we have to use template?
+    // TODO: Separate it from PeerServiceConfig
+    public: bool ensureConfigFormat(const std::string&);
+
     public:
         static PeerServiceConfig &getInstance();
 

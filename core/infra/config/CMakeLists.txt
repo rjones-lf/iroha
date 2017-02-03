@@ -12,8 +12,13 @@ ADD_LIBRARY(peer_service_with_json STATIC
     peer_service_with_json.cpp
 )
 
+ADD_LIBRARY(format_regex_config_with_json STATIC
+  format_regex_config_with_json.cpp
+)
+
 target_link_libraries(
   iroha_config_with_json
   peer_service_with_json
+  format_regex_config_with_json
   logger
 )

@@ -52,8 +52,8 @@ namespace logger {
         detail::LOG_LEVEL = lv;
     }
 
-    // http://stackoverflow.com/questions/40273809/how-to-write-iostream-like-interface-to-logging-library
-    #define LOGGER_DEF(LoggerName, LogLevel, HasPrefix, LogType)                        \
+    // I think this code is ugly.
+    #define LOGGER_DEF(LoggerName, UseLevel, HasPrefix, LogType)                        \
     struct LoggerName                                                                   \
     {                                                                                   \
         LoggerName(std::string&& caller) noexcept                                       \
@@ -63,12 +63,16 @@ namespace logger {
         ~LoggerName() {                                                                 \
             if  ( COND_UNC_EXC                                                          \
                   &&                                                                    \
-                  static_cast<int>(detail::LOG_LEVEL) <= static_cast<int>(LogLevel)     \
+                  static_cast<int>(detail::LOG_LEVEL) <= static_cast<int>(UseLevel)     \
                 ) {                                                                     \
-                std::cout << datetime::unixtime_str()                                   \
-                          << (HasPrefix ? std::string(" ") + LogType + " [" + caller + "] "  \
-                                        : "[" + caller + "] ")                  \
-                          << stream.str() << std::endl;                         \
+                const auto useCErr = static_cast<int>(LogLevel::ERROR) <= static_cast<int>(UseLevel);   \
+                ( useCErr ? std::cerr : std::cout )                                     \
+                            << datetime::unixtime_str()                                 \
+                            << (HasPrefix ?                                             \
+                                std::string(" ") + LogType + " [" + caller + "] "       \
+                                :                            "["  + caller + "] "       \
+                               )                                                        \
+                            << stream.str() << std::endl;                       \
             }                                                                   \
         }                                                                       \
         const std::string   caller;                                             \

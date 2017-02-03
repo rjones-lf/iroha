@@ -1,0 +1,15 @@
+{
+  "me":{
+    "ip":"ip",
+    "name":"*",
+    "publicKey":"publicKey",
+    "privateKey":"privateKey"
+  },
+  "group":[
+    {
+      "ip":"ip",
+      "name":"*",
+      "publicKey":"publicKey"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "me":{
+    "ip":"172.17.0.6",
+    "name":"samari",
+    "publicKey":"Sht5opDIxbyK+oNuEnXUs5rLbrvVgb2GjSPfqIYGFdU=",
+    "privateKey":"aGIuSZRhnGfFyeoKNm/NbTylnAvRfMu3KumOEfyT2HPf36jSF22m2JXWrdCmKiDoshVqjFtZPX3WXaNuo9L8WA=="
+  },
+  "group":[
+    {
+      "ip":"172.17.0.3",
+      "name":"mizuki",
+      "publicKey":"jDQTiJ1dnTSdGH+yuOaPPZIepUj1Xt3hYOvLQTME3V0="
+    },
+    {
+      "ip":"172.17.0.4",
+      "name":"natori",
+      "publicKey":"Q5PaQEBPQLALfzYmZyz9P4LmCNfgM5MdN1fOuesw3HY="
+    },
+    {
+      "ip":"172.17.0.5",
+      "name":"kabohara",
+      "publicKey":"f5MWZUZK9Ga8XywDia68pH1HLY/Ts0TWBHsxiFDR0ig="
+    },
+    {
+      "ip":"172.17.0.6",
+      "name":"samari",
+      "publicKey":"Sht5opDIxbyK+oNuEnXUs5rLbrvVgb2GjSPfqIYGFdU="
+    }
+  ]
+}
