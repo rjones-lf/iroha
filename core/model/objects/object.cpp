@@ -39,7 +39,7 @@ namespace object {
 			type(ObjectValueT::null)
 		{};	// ctor for ValueT::null
 
-    Object::Object(SimpleAsset&& rhs):
+    Object::Object(const SimpleAsset& rhs):
 			type(ObjectValueT::simpleAsset)
 		{
         simpleAsset = new SimpleAsset(rhs);

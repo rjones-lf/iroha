@@ -1,6 +1,5 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
-http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,30 +14,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
-#define CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
-
-#include <string>
-#include <vector>
+#include "peer.hpp"
+#include <iostream>
+#include <cstdint>
 
 namespace object {
 
-class Domain{
-public:
-    std::vector<std::string> ownerPublicKey;
-    std::string name;
 
-    explicit Domain(
-        std::vector<std::string> ownerPublicKey,
-        std::string name
-    ):
-        ownerPublicKey(std::move(ownerPublicKey)),
-        name(std::move(name))
-    {}
+Peer::Peer(
+    std::string     ip,
+    std::string     publicKey
+):
+    ip ( std::move( ip ) ),
+    publicKey ( std::move( publicKey ) ),
+    trustScore ( 1.0 )
+{}
 
-    Domain() = default;
-};
+Peer::Peer(
+    std::string     ip,
+    std::string     publicKey,
+    double          trustScore
+):
+    ip ( std::move( ip ) ),
+    publicKey ( std::move( publicKey ) ),
+    trustScore ( trustScore )
+{}
 
-};  // namespace domain
+Peer Peer::getInstance() const{
+    return *this;
+}
 
-#endif  // CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+
+}  // namespace peer

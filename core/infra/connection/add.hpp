@@ -27,7 +27,7 @@ class Add: public Command {
   public:
 
     Add(
-        Object o
+        object::Object o
     ):
         object(o)
     {}

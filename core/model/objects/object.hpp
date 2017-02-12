@@ -58,7 +58,7 @@ namespace object {
 
         Object();
 
-        Object(SimpleAsset&& rhs);
+        Object(const SimpleAsset& rhs);
         Object(const Asset& rhs);
         Object(const Domain& rhs);
         Object(const Account& rhs);

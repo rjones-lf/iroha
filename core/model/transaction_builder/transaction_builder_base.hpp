@@ -1,6 +1,5 @@
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
-http://soramitsu.co.jp
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,30 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
-#define CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+#ifndef CORE_MODEL_TRANSACTION_BUILDER_BASE_HPP
+#define CORE_MODEL_TRANSACTION_BUILDER_BASE_HPP
 
-#include <string>
-#include <vector>
+namespace transaction {
 
-namespace object {
+/*
+template <template<class> class CommandT>
+class TransactionBuilder {};
+*/
 
-class Domain{
-public:
-    std::vector<std::string> ownerPublicKey;
-    std::string name;
+template <typename CommandT>
+class TransactionBuilder {};
 
-    explicit Domain(
-        std::vector<std::string> ownerPublicKey,
-        std::string name
-    ):
-        ownerPublicKey(std::move(ownerPublicKey)),
-        name(std::move(name))
-    {}
+}
 
-    Domain() = default;
-};
-
-};  // namespace domain
-
-#endif  // CORE_DOMAIN_OBJECTS_DOMAIN_HPP_
+#endif
