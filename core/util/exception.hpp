@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <typeinfo>
 
@@ -47,14 +48,22 @@ namespace exception {
     class InvalidKeyException : public std::invalid_argument{
       public: InvalidKeyException(const std::string&);
     };
-  };
+  }
 
   namespace repository {
-      class WriteFailedException : public std::invalid_argument {
-      public:
-          WriteFailedException(const std::string &);
-      };
-  };
+    class WriteFailedException : public std::invalid_argument {
+    public:
+      WriteFailedException(const std::string&);
+    };
+  }
+
+  namespace transaction {
+    class UnsetBuildArgmentsException : public std::domain_error {
+    public:
+      UnsetBuildArgmentsException(const std::string&, const std::string&);
+    };
+  }
+
 };  // namespace exception
 
 #endif

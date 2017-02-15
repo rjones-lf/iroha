@@ -17,6 +17,7 @@ limitations under the License.
 
 #include <stdexcept>
 #include <string>
+#include <stdexcept>
 
 #include "exception.hpp"
 
@@ -38,18 +39,24 @@ namespace exception {
 			const std::string&   to,
       const std::string& filename
   ):
-		std::domain_error("InvalidCastException in "+ filename + ". I can not cast from " + from + " to " + to ) {
+		std::domain_error("InvalidCastException in " + filename + ". I can not cast from " + from + " to " + to ) {
   };
 
 	namespace crypto {
 		InvalidKeyException::InvalidKeyException(const std::string& message):
 			std::invalid_argument("keyfile is invalid cause:" + message) {
 		}
-	};  // namespace crypto
+	}  // namespace crypto
 
-    namespace repository {
-        WriteFailedException::WriteFailedException(const std::string& message):
-                std::invalid_argument("Data could note be saved:" + message) {
-		}
-    };  // namespace crypto
-};  // namespace exception
+  namespace repository {
+    WriteFailedException::WriteFailedException(const std::string& message):
+      std::invalid_argument("Data could note be saved:" + message) {
+    }
+  }  // namespace crypto
+
+  namespace transaction {
+    UnsetBuildArgmentsException::UnsetBuildArgmentsException(const std::string& buildTarget, const std::string& unsetMembers):
+      std::domain_error("UnsetBuildArgmentsException: argments " + unsetMembers) {
+    }
+  }  // namespace transaction
+}  // namespace exception

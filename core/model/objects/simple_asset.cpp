@@ -16,7 +16,7 @@ limitations under the License.
 #include <iostream>
 #include <cstdint>
 #include <unordered_map>
-#include "asset.hpp"
+#include "simple_asset.hpp"
 
 namespace object {
 

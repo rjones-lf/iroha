@@ -18,9 +18,9 @@ limitations under the License.
 #ifndef IROHA_BASE_OBJECT_HPP
 #define IROHA_BASE_OBJECT_HPP
 
+#include <iostream>
 #include <string>
 #include <cstdint>
-
 #include "../../util/exception.hpp"
 
 namespace object {
@@ -52,7 +52,16 @@ namespace object {
           }
         }
 
+        BaseObject() {
+          object_type = Object_type::NONE;
+        }
+
         explicit BaseObject(std::string s):
+          str_(s),
+          object_type(Object_type::STRING)
+        {}
+
+        explicit BaseObject(const char* s):
           str_(s),
           object_type(Object_type::STRING)
         {}
@@ -102,6 +111,29 @@ namespace object {
             return float_;
           }else{
             throw exception::InvalidCastException( type2str(object_type), "float", __FILE__);
+          }
+        }
+
+        bool operator == (const BaseObject& rhs) const {
+          if (object_type != rhs.object_type) return false;
+          switch (object_type) {
+            case Object_type::STRING: {
+              return static_cast<std::string>(*this) == static_cast<std::string>(rhs);
+            }
+            case Object_type::INTEGER: {
+              return static_cast<int>(*this) == static_cast<int>(rhs);
+            }
+            case Object_type::BOOLEAN: {
+              return static_cast<bool>(*this) == static_cast<bool>(rhs);
+            }
+            case Object_type::FLOAT: {
+              return static_cast<float>(*this) == static_cast<float>(rhs);
+            }
+            case Object_type::NONE: {
+              return true;
+            }
+            default:
+              throw std::domain_error("Cannot identify Object_type: " + std::to_string(static_cast<int>(object_type)));
           }
         }
     };
