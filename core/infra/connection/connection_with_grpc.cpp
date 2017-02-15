@@ -31,6 +31,7 @@ limitations under the License.
 #include <model/objects/account.hpp>
 
 #include <infra/config/peer_service_with_json.hpp>
+#include <infra/config/iroha_config_with_json.hpp>
 
 #include <string>
 #include <vector>
@@ -121,7 +122,7 @@ namespace connection {
     ServerBuilder builder;
 
     void initialize_peer() {
-        std::string server_address("0.0.0.0:50051");
+        std::string server_address("0.0.0.0:" + std::to_string(config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051)));
         builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
     }
@@ -134,7 +135,8 @@ namespace connection {
         if (find(receiver_ips.begin(), receiver_ips.end(), ip) != receiver_ips.end()){
             logger::info("connection")  <<  "create client";
             IrohaConnectionClient client(grpc::CreateChannel(
-                ip + ":50051", grpc::InsecureChannelCredentials())
+                ip + ":" + std::to_string(config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051)),
+                grpc::InsecureChannelCredentials())
             );
             logger::info("connection")  <<  "invoke client Operation";
             logger::info("connection")  <<  "size " <<  event.eventsignatures_size();

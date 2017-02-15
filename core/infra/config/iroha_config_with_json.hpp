@@ -35,6 +35,8 @@ class IrohaConfigManager : config::AbstractConfigManager {
   size_t getConcurrency(size_t defaultValue);
   size_t getMaxFaultyPeers(size_t defaultValue);
   size_t getPoolWorkerQueueSize(size_t defaultValue);
+  uint16_t getGrpcPortNumber(uint16_t defaultValue);
+  uint16_t getHttpPortNumber(uint16_t defaultValue);
 };
 }
 

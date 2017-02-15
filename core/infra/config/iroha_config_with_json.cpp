@@ -52,3 +52,11 @@ size_t IrohaConfigManager::getMaxFaultyPeers(size_t defaultValue) {
 size_t IrohaConfigManager::getPoolWorkerQueueSize(size_t defaultValue) {
   return this->getParam<size_t>("pool_worker_queue_size", defaultValue);
 }
+
+uint16_t IrohaConfigManager::getGrpcPortNumber(uint16_t defaultValue) {
+    return this->getParam<uint16_t>("grpc_port", defaultValue);
+}
+
+uint16_t IrohaConfigManager::getHttpPortNumber(uint16_t defaultValue) {
+    return this->getParam<uint16_t>("http_port", defaultValue);
+}
