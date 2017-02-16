@@ -76,25 +76,12 @@ namespace http {
     void server() {
         logger::info("server") << "initialize server!";
 
-        // well, I know this is ugly but I had to pass char* (without const)
-        std::string param1 = "";
-        char *param1_c = new char[param1.length() + 1];
-        strcpy(param1_c, param1.c_str());
-
-        std::string param2 = "-p";
-        char *param2_c = new char[param2.length() + 1];
-        strcpy(param2_c, param2.c_str());
-
-        std::string port = std::to_string(config::IrohaConfigManager::getInstance().getHttpPortNumber(1204));
-        char *port_c = new char[port.length() + 1];
-        strcpy(port_c, port.c_str());
-
-        char *params[] = {param1_c, param2_c, port_c};
-        Cappuccino::Cappuccino( 3, params);
-
-        delete[] param1_c;
-        delete[] param2_c;
-        delete[] port_c;
+        std::vector<std::string> params = {"", "-p", std::to_string(config::IrohaConfigManager::getInstance().getHttpPortNumber(1204))};
+        std::vector<char*> argv;
+        for (const auto& arg : params)
+            argv.push_back((char*)arg.data());
+        argv.push_back(nullptr);
+        Cappuccino::Cappuccino( argv.size() - 1, argv.data() );
 
         Cappuccino::route<Cappuccino::Method::POST>("/account/register", [](std::shared_ptr<Request> request) -> Response {
             auto res = Response(request);
