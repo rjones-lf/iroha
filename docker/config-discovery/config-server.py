@@ -57,8 +57,9 @@ class ThreadedServer(object):
 
 
     def listenToClient(self, tid, client, address):
-        data = client.recv(2**30) # 1 MB at max
+        data = client.recv(2**20) # 1 MB at max
         if data: # we received something
+            print(data)
             try:
                 self.LOCK.acquire()
                 self.network[tid] = json.loads(data.decode('utf-8'))
