@@ -1,5 +1,13 @@
 # How to build `iroha` using docker
 
+Clone `iroha.git` on your directory.
+
+```
+cd <some place>
+git clone --recursive https://github.com/hyperledger/iroha.git
+```
+You should set environment variable `IROHA_HOME=<some place>/iroha`.
+
 Run build script and wait for completion. 
 ```
 ${IROHA_HOME}/docker/build.sh
@@ -20,7 +28,7 @@ You have two options:
  2. To run iroha containers and setup configs by yourself. To do this, run bash in iroha container:
 ```bash
 # run bash instead of default /run.sh
-ID=docker run -it -d hyperledger/iroha-docker bash
+ID=$(docker run -it -d hyperledger/iroha-docker bash)
 # attach to container
 docker exec -it $ID bash
 # setup config now and then execute /run.sh
