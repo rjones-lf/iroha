@@ -11,9 +11,11 @@ error(){
 }
 
 # build iroha-dev image
-docker build --rm=false -t hyperledger/iroha-dev ${IROHA_HOME}/docker/dev 
-if [ ! $? ]; then 
-    error "can not build iroha-dev; exit code: $?"
+if ! docker images hyperledger/iroha-dev | grep -q hyperledger/iroha-dev; then
+  docker build --rm=false -t hyperledger/iroha-dev ${IROHA_HOME}/docker/dev 
+  if [ ! $? ]; then 
+      error "can not build iroha-dev; exit code: $?"
+  fi
 fi
 
 # run dev container to build iroha
