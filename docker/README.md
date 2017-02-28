@@ -3,10 +3,13 @@
 Clone `iroha.git` on your directory.
 
 ```
-cd <some place>
 git clone --recursive https://github.com/hyperledger/iroha.git
+cd iroha
 ```
-You should set environment variable `IROHA_HOME=<some place>/iroha`.
+
+Build depends on the environment variable `IROHA_HOME` so you need to set it:
+
+`export IROHA_HOME=$(pwd)`
 
 Run build script and wait for completion. 
 ```
