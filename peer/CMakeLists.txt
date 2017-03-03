@@ -1,8 +1,4 @@
-
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-
-
-SET(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
 
 include_directories(
   ${LEVELDB_PATH}/include

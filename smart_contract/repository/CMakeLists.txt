@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.3.0 FATAL_ERROR)
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
 
 include_directories(
   ${LEVELDB_PATH}/include

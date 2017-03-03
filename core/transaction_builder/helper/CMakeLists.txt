@@ -1,5 +1,3 @@
-SET(CMAKE_CXX_FLAGS "-g -Wall -std=c++1y -fPIC")
-
 link_directories(
   ${PROJECT_BINARY_DIR}/lib
 )

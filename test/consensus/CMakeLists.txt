@@ -1,7 +1,5 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/my_test_bin)
 
-SET(CMAKE_CXX_FLAGS_DEBUG "-g")
-
 SET(LEVELDB_PATH "${PROJECT_SOURCE_DIR}/core/vendor/leveldb")
 
 add_executable(sumeragi_test
