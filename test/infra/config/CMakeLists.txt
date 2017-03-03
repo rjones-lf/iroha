@@ -2,10 +2,6 @@ SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
 
 SET(CMAKE_BUILD_TYPE Debug)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/core
-)
-
 add_executable(ensure_sumeragi_json_format_test
     ensure_sumeragi_json_format.cpp
 )

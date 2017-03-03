@@ -4,13 +4,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
 
 include_directories(
-  ${PROJECT_SOURCE_DIR}/core
   ${LEVELDB_PATH}/include
 )
 
 link_directories(
   ${PROJECT_BINARY_DIR}/lib
-  ${PROJECT_SOURCE_DIR}/core/infra/crypto
   ${LEVELDB_PATH}/out-shared
   ${LEVELDB_PATH}/out-static
 )

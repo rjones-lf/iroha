@@ -2,10 +2,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/core
-)
-
 add_executable(transaction_builder_test
     transaction_builder_add_test.cpp
     transaction_builder_transfer_test.cpp

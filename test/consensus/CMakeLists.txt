@@ -4,10 +4,6 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 SET(LEVELDB_PATH "${PROJECT_SOURCE_DIR}/core/vendor/leveldb")
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/core
-)
-
 add_executable(sumeragi_test
     sumeragi_test.cpp
 )

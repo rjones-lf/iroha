@@ -1,10 +1,6 @@
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/core
-)
-
 add_library(datetime STATIC datetime.cpp)
 
 add_library(logger STATIC logger.cpp)

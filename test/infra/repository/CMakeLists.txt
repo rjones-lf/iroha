@@ -2,9 +2,6 @@ SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
 
 set(CMAKE_BUILD_TYPE Debug)
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/core
-)
 link_directories(
     ${PROJECT_BINARY_DIR}/lib
 )

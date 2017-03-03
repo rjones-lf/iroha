@@ -17,7 +17,7 @@ message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 message(STATUS "-DTESTING=${TESTING}")
 message(STATUS "-DBENCHMARKING=${BENCHMARKING}")
 
-
+include_directories(${PROJECT_SOURCE_DIR}/core)
 include("dependencies.cmake")
 
 add_subdirectory(protos)
