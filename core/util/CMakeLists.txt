@@ -1,5 +1,4 @@
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(JSON_PATH "${PROJECT_SOURCE_DIR}/core/vendor/json")
 
 add_library(datetime STATIC datetime.cpp)
 

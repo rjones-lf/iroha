@@ -1,9 +1,5 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
-include_directories(
-  ${LEVELDB_PATH}/include
-)
-
 link_directories(
   ${PROJECT_BINARY_DIR}/lib
   ${LEVELDB_PATH}/out-static

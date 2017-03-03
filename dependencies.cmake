@@ -19,7 +19,7 @@ endif ()
 ExternalProject_Add(gvanas_keccak
   GIT_REPOSITORY    "https://github.com/gvanas/KeccakCodePackage.git"
   BUILD_IN_SOURCE   1
-  BUILD_COMMAND     bash -c "CFLAGS='-fPIC -fpermissive -DKeccakP200_excluded -DKeccakP400_excluded -DKeccakP800_excluded'\
+  BUILD_COMMAND     bash -c "CFLAGS='-fPIC -DKeccakP200_excluded -DKeccakP400_excluded -DKeccakP800_excluded'\
     $(MAKE) CC='${CMAKE_C_COMPILER}' generic64/libkeccak.a"
   CONFIGURE_COMMAND "" # remove configure step
   INSTALL_COMMAND   "" # remove install step
