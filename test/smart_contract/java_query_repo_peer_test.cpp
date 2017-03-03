@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <../smart_contract/repository/jni_constants.hpp>
 #include <infra/protobuf/api.pb.h>
 #include <infra/virtual_machine/jvm/java_data_structure.hpp>

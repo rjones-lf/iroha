@@ -20,7 +20,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DKeccakP200_excluded -DKeccakP400_excluded 
 ExternalProject_Add(gvanas_keccak
   GIT_REPOSITORY    "https://github.com/gvanas/KeccakCodePackage.git"
   BUILD_IN_SOURCE   1
-  BUILD_COMMAND     bash -c "CFLAGS='-fPIC -fpermissive' $(MAKE) CC='${CMAKE_CXX_COMPILER}' generic64/libkeccak.a"
+  BUILD_COMMAND     bash -c "CFLAGS='-fPIC -fpermissive' $(MAKE) CC='${CMAKE_C_COMPILER}' generic64/libkeccak.a"
   CONFIGURE_COMMAND "" # remove configure step
   INSTALL_COMMAND   "" # remove install step
   TEST_COMMAND      "" # remove test step
@@ -255,6 +255,7 @@ if (DEFINED ENV{JAVA_HOME})
       $ENV{JAVA_HOME}/jre/lib/amd64/server/
     )
   endif()
+  set(JAVA_JVM_LIBRARY jvm)
 else()
   find_package(JNI)
   # link_directories(${JAVA_JVM_LIBRARY})

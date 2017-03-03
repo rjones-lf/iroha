@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <../smart_contract/repository/jni_constants.hpp>
 #include <infra/protobuf/api.pb.h>
 #include <infra/virtual_machine/jvm/java_data_structure.hpp>
@@ -55,9 +56,9 @@ void ensureIntegrityOfSimpleAssetValue(
     const auto lhsValue = std::stod(value["value"]);
     const auto rhsValue = std::stod(outputValue["value"]);
     std::cout << lhsValue << " vs " << rhsValue << std::endl;
-    std::cout << "Warning: Double error is " << abs(lhsValue - rhsValue)
+    std::cout << "Warning: Double error is " << std::abs(lhsValue - rhsValue)
               << std::endl;
-    ASSERT_TRUE(abs(lhsValue - rhsValue) < 1e-5);
+    ASSERT_TRUE(std::abs(lhsValue - rhsValue) < 1e-5);
   } else {
     std::cout << value["value"] << " vs " << outputValue["value"]
               << std::endl;

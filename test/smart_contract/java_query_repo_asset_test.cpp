@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <../smart_contract/repository/jni_constants.hpp>
 #include <infra/protobuf/api.pb.h>
 #include <repository/domain/asset_repository.hpp>
@@ -60,7 +61,7 @@ void ensureIntegrityOfAsset(const std::string& assetUuid) {
     if (lhs["type"] == "double") {
       const auto lhsValue = std::stod(lhs["value"]);
       const auto rhsValue = std::stod(rhs["value"]);
-      ASSERT_TRUE(abs(lhsValue - rhsValue) < 1e-5);
+      ASSERT_TRUE(std::abs(lhsValue - rhsValue) < 1e-5);
     } else {
       ASSERT_TRUE(lhs["value"] == rhs["value"]);
     }
@@ -81,7 +82,7 @@ void ensureIntegrityOfAsset(const std::string& assetUuid) {
     if (lhs["type"] == "double") {
       const auto lhsValue = std::stod(lhs["value"]);
       const auto rhsValue = std::stod(rhs["value"]);
-      ASSERT_TRUE(abs(lhsValue - rhsValue) < 1e-5);
+      ASSERT_TRUE(std::abs(lhsValue - rhsValue) < 1e-5);
     } else {
       ASSERT_TRUE(lhs["value"] == rhs["value"]);
     }

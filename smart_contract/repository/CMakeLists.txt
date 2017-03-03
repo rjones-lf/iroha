@@ -4,10 +4,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 set(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
 
 include_directories(
-  /usr/lib/jvm/java-1.8.0-openjdk-amd64/include
-  /usr/lib/jvm/java-1.8.0-openjdk-amd64/include/linux
-  ${JAVA_HOME}/include
-  ${JAVA_HOME}/include/linux
   ${PROJECT_SOURCE_DIR}/core
   ${LEVELDB_PATH}/include
 )
