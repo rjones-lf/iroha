@@ -235,6 +235,7 @@ add_dependencies(leveldb google_leveldb)
 # JNI
 ########################################################
 
+add_library(jvm SHARED IMPORTED)
 if (DEFINED ENV{JAVA_HOME})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/darwin")
@@ -242,21 +243,17 @@ if (DEFINED ENV{JAVA_HOME})
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/linux")
   endif()
 
-  add_library(jvm SHARED IMPORTED)
   set_target_properties(jvm PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
-    # on x64 system there should be amd64 in the path. Should it be on x32 system?
     IMPORTED_LOCATION "$ENV{JAVA_HOME}/jre/lib/amd64/server/libjvm.so"
   )
-  # probably for x32: 
-  #  $ENV{JAVA_HOME}/jre/lib/server
 else()
-  ## THIS WAS NOT TESTED:
-  ## IT MUST export `jvm` lib as above
   find_package(JNI)
-  # link_directories(${JAVA_JVM_LIBRARY})
-  include_directories(${JAVA_INCLUDE_PATH})
   if (!JNI_FOUND)
     message(FATAL_ERROR "JVM not found")
   endif()
+  set_target_properties(jvm PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${JAVA_INCLUDE_PATH}"
+    IMPORTED_LOCATION "${JAVA_JVM_LIBRARY}"
+  )
 endif()
