@@ -28,5 +28,4 @@ add_library(java_virtual_machine STATIC
 target_link_libraries(java_virtual_machine
   java_data_structure
   json
-  jvm
 )

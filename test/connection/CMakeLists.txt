@@ -13,11 +13,3 @@ add_test(
     NAME connection_grpc_test
     COMMAND $<TARGET_FILE:connection_grpc_test>
 )
-
-
-
-
-
-
-
-

@@ -4,7 +4,7 @@ PROJECT(iroha C CXX)
 SET(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-Wextra -Wno-unused-parameter -O0")
-SET(CMAKE_SHARED_LINKER_FLAGS "-lpthread -lssl")
+#SET(CMAKE_SHARED_LINKER_FLAGS "-lpthread -lssl")
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 option(BENCHMARKING "Build benchmarks" OFF)

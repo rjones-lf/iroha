@@ -14,5 +14,4 @@ target_link_libraries(virtual_machine_with_java
   java_virtual_machine
   logger
   json
-  jvm
 )

@@ -260,12 +260,10 @@ if (DEFINED ENV{JAVA_HOME})
 
   add_library(jvm STATIC IMPORTED)
   set_target_properties(jvm PROPERTIES
-    # $ENV{JAVA_HOME}/include;
-    INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
+    INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
     # is it necessary to link x32 + x64 libs?
-    IMPORTED_LINK_INTERFACE_LIBRARIES "$ENV{JAVA_HOME}/jre/lib/server;$ENV{JAVA_HOME}/jre/lib/amd64/server"
+    #IMPORTED_LINK_INTERFACE_LIBRARIES "$ENV{JAVA_HOME}/jre/lib/server;$ENV{JAVA_HOME}/jre/lib/amd64/server"
   )
-  #target_include_directories(jvm INTERFACE $ENV{JAVA_HOME}/include)
 else()
   find_package(JNI)
   # link_directories(${JAVA_JVM_LIBRARY})
