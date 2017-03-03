@@ -1,8 +1,6 @@
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-
 add_library(datetime STATIC datetime.cpp)
-
 add_library(logger STATIC logger.cpp)
+
 target_link_libraries(logger
   datetime
 )

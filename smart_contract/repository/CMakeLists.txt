@@ -1,13 +1,5 @@
 cmake_minimum_required(VERSION 3.3.0 FATAL_ERROR)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-
-link_directories(
-  ${PROJECT_BINARY_DIR}/lib
-  ${LEVELDB_PATH}/out-shared
-  ${LEVELDB_PATH}/out-static
-)
-
 add_library(Repository SHARED
   repository_jni.cpp
 )

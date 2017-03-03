@@ -1,5 +1,3 @@
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-
 link_directories(
     /usr/local/lib
 )

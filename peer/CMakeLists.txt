@@ -1,10 +1,5 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
-link_directories(
-  ${PROJECT_BINARY_DIR}/lib
-  ${LEVELDB_PATH}/out-static
-)
-
 add_executable(iroha-main
   main.cpp
 )

@@ -1,10 +1,7 @@
-link_directories(
-    ${PROJECT_BINARY_DIR}/lib
-)
-
 add_executable(world_state_repository_with_leveldb_test
     world_state_repository_with_leveldb_test.cpp
 )
+
 target_link_libraries(world_state_repository_with_leveldb_test
     leveldb
     snappy
