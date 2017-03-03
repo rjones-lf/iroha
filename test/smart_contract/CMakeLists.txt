@@ -1,28 +1,4 @@
 SET(CMAKE_BUILD_TYPE Debug)
-SET(CMAKE_CXX_FLAGS "-g -std=c++1y -Wall -fPIC")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -std=c++1y -Wall -fPIC -Wl,-rpath $ENV{JAVA_HOME}/jre/lib/server")
-  SET(CMAKE_CXX_FLAGS_DEBUG   "-Wall -Wextra -DDEBUG -O0 -g -std=c++1y -Wall -fPIC -Wl,-rpath $ENV{JAVA_HOME}/jre/lib/server")
-
-  include_directories(
-    $ENV{JAVA_HOME}/include/darwin
-  )
-  link_directories(
-    $ENV{JAVA_HOME}/jre/lib/server
-  )
-ELSE()
-  SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -std=c++1y -Wall -fPIC -Wl,-rpath $ENV{JAVA_HOME}/jre/lib/amd64")
-  SET(CMAKE_CXX_FLAGS_DEBUG   "-Wall -Wextra -DDEBUG -O0 -g -std=c++1y -Wall -fPIC -Wl,-rpath $ENV{JAVA_HOME}/jre/lib/amd64")
-
-  include_directories(
-    $ENV{JAVA_HOME}/include/linux
-    $ENV{JAVA_HOME}/include
-  )
-  link_directories(
-    $ENV{JAVA_HOME}/jre/lib/amd64/server
-  )
-ENDIF()
 
 ########################################################################################
 # Executable java_query_repo_invocation_test
