@@ -1,7 +1,3 @@
-link_directories(
-  ${PROJECT_BINARY_DIR}/lib
-)
-
 add_library(create_objects_helper STATIC
   create_objects_helper.cpp
 )

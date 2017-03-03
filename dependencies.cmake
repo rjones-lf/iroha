@@ -224,7 +224,7 @@ file(MAKE_DIRECTORY ${leveldb_SOURCE_DIR}/out-shared)
 file(MAKE_DIRECTORY ${leveldb_SOURCE_DIR}/out-static)
 set_target_properties(leveldb PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${leveldb_SOURCE_DIR}/include
-  # IMPORTED_LINK_INTERFACE_LIBRARIES "${leveldb_SOURCE_DIR}/out-static/libmemenv.a"
+  IMPORTED_LINK_INTERFACE_LIBRARIES "snappy"
   IMPORTED_LOCATION ${leveldb_SOURCE_DIR}/out-static/libleveldb.a
   )
 add_dependencies(leveldb google_leveldb)
@@ -236,26 +236,36 @@ add_dependencies(leveldb google_leveldb)
 ########################################################
 
 if (DEFINED ENV{JAVA_HOME})
-  include_directories($ENV{JAVA_HOME}/include/)
+  # include_directories($ENV{JAVA_HOME}/include/)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    include_directories(
-      $ENV{JAVA_HOME}/include/darwin/
-      ${PROJECT_SOURCE_DIR}/core
-    )
-    link_directories(
-      $ENV{JAVA_HOME}/jre/lib/server
-      $ENV{JAVA_HOME}/jre/lib/amd64/server
-    )
+    set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/darwin")
+    #include_directories(
+    #  $ENV{JAVA_HOME}/include/darwin/
+    #  ${PROJECT_SOURCE_DIR}/core
+    #)
+    #link_directories(
+    #  $ENV{JAVA_HOME}/jre/lib/server
+    #  $ENV{JAVA_HOME}/jre/lib/amd64/server
+    #)
   else()
-    include_directories(
-      $ENV{JAVA_HOME}/include/linux
-    )
-    link_directories(
-      $ENV{JAVA_HOME}/jre/lib/server
-      $ENV{JAVA_HOME}/jre/lib/amd64/server/
-    )
+    set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/linux")
+    #include_directories(
+    #  $ENV{JAVA_HOME}/include/linux
+    #)
+    #link_directories(
+    #  $ENV{JAVA_HOME}/jre/lib/server
+    #  $ENV{JAVA_HOME}/jre/lib/amd64/server/
+    #)
   endif()
-  set(JAVA_JVM_LIBRARY jvm)
+
+  add_library(jvm STATIC IMPORTED)
+  set_target_properties(jvm PROPERTIES
+    # $ENV{JAVA_HOME}/include;
+    INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
+    # is it necessary to link x32 + x64 libs?
+    IMPORTED_LINK_INTERFACE_LIBRARIES "$ENV{JAVA_HOME}/jre/lib/server;$ENV{JAVA_HOME}/jre/lib/amd64/server"
+  )
+  #target_include_directories(jvm INTERFACE $ENV{JAVA_HOME}/include)
 else()
   find_package(JNI)
   # link_directories(${JAVA_JVM_LIBRARY})

@@ -4,7 +4,6 @@ add_executable(sumeragi_test
 
 target_link_libraries(sumeragi_test
     leveldb
-    snappy
     base64
     signature
     sumeragi
@@ -17,7 +16,6 @@ add_executable(transaction_test
 )
 
 target_link_libraries(transaction_test
-    snappy
     base64
     signature
     sumeragi

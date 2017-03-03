@@ -4,11 +4,7 @@
 add_executable(java_query_repo_invocation_test java_query_repo_invocation_test.cpp)
 target_link_libraries(java_query_repo_invocation_test
   Repository
-  
-  # LevelDB depends on snappy
   leveldb
-  snappy
-  
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
@@ -27,11 +23,7 @@ add_test(
 add_executable(java_query_repo_account_test java_query_repo_account_test.cpp)
 target_link_libraries(java_query_repo_account_test
   Repository
-  
-  # LevelDB depends on snappy
   leveldb
-  snappy
-  
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
@@ -48,11 +40,7 @@ add_test(
 add_executable(java_query_repo_asset_test java_query_repo_asset_test.cpp)
 target_link_libraries(java_query_repo_asset_test
   Repository
-
-  # LevelDB depends on snappy
   leveldb
-  snappy
-
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
@@ -70,11 +58,7 @@ add_executable(java_query_repo_simple_asset_test java_query_repo_simple_asset_te
 
 target_link_libraries(java_query_repo_simple_asset_test
   Repository
-
-  # LevelDB depends on snappy
   leveldb
-  snappy
-  
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
@@ -92,11 +76,7 @@ add_executable(java_query_repo_domain_test java_query_repo_domain_test.cpp)
 
 target_link_libraries(java_query_repo_domain_test
   Repository
-
-  # LevelDB depends on snappy
   leveldb
-  snappy
-  
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
@@ -114,11 +94,7 @@ add_executable(java_query_repo_peer_test java_query_repo_peer_test.cpp)
 
 target_link_libraries(java_query_repo_peer_test
   Repository
-
-  # LevelDB depends on snappy
   leveldb
-  snappy
-  
   virtual_machine_with_java
   world_state_repo_with_level_db
   jvm
