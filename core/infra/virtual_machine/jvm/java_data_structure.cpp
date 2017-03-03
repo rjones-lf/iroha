@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <../smart_contract/repository/jni_constants.hpp>
+#include <smart_contract/repository/jni_constants.hpp>
 #include <iostream>
 #include <map>
 #include <transaction_builder/helper/create_objects_helper.hpp>

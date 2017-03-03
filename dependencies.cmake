@@ -228,3 +228,38 @@ set_target_properties(leveldb PROPERTIES
   IMPORTED_LOCATION ${leveldb_SOURCE_DIR}/out-static/libleveldb.a
   )
 add_dependencies(leveldb google_leveldb)
+
+
+
+########################################################
+# JNI
+########################################################
+
+if (DEFINED ENV{JAVA_HOME})
+  include_directories($ENV{JAVA_HOME}/include/)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    include_directories(
+      $ENV{JAVA_HOME}/include/darwin/
+      ${PROJECT_SOURCE_DIR}/core
+    )
+    link_directories(
+      $ENV{JAVA_HOME}/jre/lib/server
+      $ENV{JAVA_HOME}/jre/lib/amd64/server
+    )
+  else()
+    include_directories(
+      $ENV{JAVA_HOME}/include/linux
+    )
+    link_directories(
+      $ENV{JAVA_HOME}/jre/lib/server
+      $ENV{JAVA_HOME}/jre/lib/amd64/server/
+    )
+  endif()
+else()
+  find_package(JNI)
+  # link_directories(${JAVA_JVM_LIBRARY})
+  include_directories(${JAVA_INCLUDE_PATH})
+  if (!JNI_FOUND)
+    message(FATAL_ERROR "JVM not found")
+  endif()
+endif()
