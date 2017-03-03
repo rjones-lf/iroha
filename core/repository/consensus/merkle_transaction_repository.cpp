@@ -32,12 +32,12 @@ namespace merkle_transaction_repository {
     std::string hash(const T&);
 
     template<>
-    std::string hash<Api::Transaction>(const Api::Transaction& tx){
+    inline std::string hash<Api::Transaction>(const Api::Transaction& tx){
         return hash::sha3_256_hex(tx.SerializeAsString());
     }
 
     template<>
-    std::string hash<std::string>(const std::string& s){
+    inline std::string hash<std::string>(const std::string& s){
         return hash::sha3_256_hex(s);
     }
 
