@@ -13,6 +13,7 @@ target_link_libraries(java_query_repo_invocation_test
   world_state_repo_with_level_db
   jvm
   gtest
+  config_manager
 )
 add_test(
   NAME java_query_repo_invocation_test
