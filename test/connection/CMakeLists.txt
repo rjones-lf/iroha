@@ -1,6 +1,3 @@
-
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
 # Grpc connection Test
 add_executable(connection_grpc_test
     connection_with_grpc_test.cpp

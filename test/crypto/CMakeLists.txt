@@ -1,5 +1,3 @@
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
 # Hash Test
 add_executable(hash_test
   hash_test.cpp

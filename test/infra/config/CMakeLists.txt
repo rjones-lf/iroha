@@ -1,7 +1,3 @@
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
-SET(CMAKE_BUILD_TYPE Debug)
-
 add_executable(ensure_sumeragi_json_format_test
     ensure_sumeragi_json_format.cpp
 )

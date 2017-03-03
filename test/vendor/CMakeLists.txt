@@ -1,5 +1,3 @@
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
 # thread_pool_test
 add_executable(thread_pool_test
   thread_pool_test.cpp

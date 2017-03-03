@@ -1,5 +1,3 @@
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/my_test_bin)
-
 add_executable(sumeragi_test
     sumeragi_test.cpp
 )
