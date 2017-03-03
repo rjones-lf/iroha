@@ -236,35 +236,23 @@ add_dependencies(leveldb google_leveldb)
 ########################################################
 
 if (DEFINED ENV{JAVA_HOME})
-  # include_directories($ENV{JAVA_HOME}/include/)
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/darwin")
-    #include_directories(
-    #  $ENV{JAVA_HOME}/include/darwin/
-    #  ${PROJECT_SOURCE_DIR}/core
-    #)
-    #link_directories(
-    #  $ENV{JAVA_HOME}/jre/lib/server
-    #  $ENV{JAVA_HOME}/jre/lib/amd64/server
-    #)
   else()
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/linux")
-    #include_directories(
-    #  $ENV{JAVA_HOME}/include/linux
-    #)
-    #link_directories(
-    #  $ENV{JAVA_HOME}/jre/lib/server
-    #  $ENV{JAVA_HOME}/jre/lib/amd64/server/
-    #)
   endif()
 
-  add_library(jvm STATIC IMPORTED)
+  add_library(jvm SHARED IMPORTED)
   set_target_properties(jvm PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
-    # is it necessary to link x32 + x64 libs?
-    #IMPORTED_LINK_INTERFACE_LIBRARIES "$ENV{JAVA_HOME}/jre/lib/server;$ENV{JAVA_HOME}/jre/lib/amd64/server"
+    # on x64 system there should be amd64 in the path. Should it be on x32 system?
+    IMPORTED_LOCATION "$ENV{JAVA_HOME}/jre/lib/amd64/server/libjvm.so"
   )
+  # probably for x32: 
+  #  $ENV{JAVA_HOME}/jre/lib/server
 else()
+  ## THIS WAS NOT TESTED:
+  ## IT MUST export `jvm` lib as above
   find_package(JNI)
   # link_directories(${JAVA_JVM_LIBRARY})
   include_directories(${JAVA_INCLUDE_PATH})

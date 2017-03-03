@@ -12,6 +12,7 @@ target_link_libraries(java_data_structure
   create_objects_helper
   exception
   jvm
+  config_manager
 )
 
 ###################################################
