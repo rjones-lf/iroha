@@ -51,3 +51,10 @@ deployment:
     commands:
       # makes docker login and docker push $1
       - ${IROHA_HOME}/deploy.sh hyperledger/iroha-docker
+
+    branch: develop
+    commands:
+      # makes docker login and docker push $1
+      - ${IROHA_HOME}/deploy.sh hyperledger/iroha-docker-develop
+ 
+
