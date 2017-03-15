@@ -27,97 +27,89 @@ limitations under the License.
 #include <crypto/base64.hpp>
 #include <crypto/hash.hpp>
 
+#include <cassert>
+
 namespace signature {
 
-  template<typename T>
-    std::unique_ptr<T[]> vector2UnsignedCharPointer(
-    const std::vector<T> &vec
-  ){
-    std::unique_ptr<T[]> res(new T[sizeof(T)*vec.size()+1]);
-    size_t pos = 0;
-    auto* v = res.get();
-    for(auto c : vec){
-      v[pos++] = c;
-    }
-    v[pos] = '\0';
+template<typename T>
+std::vector<T> vector2UnsignedCharPointer(const std::vector<T> &vec) {
+  std::vector<T> res(vec.size() + 1);
+  std::copy(vec.begin(), vec.end(), res.begin());
+  res[res.size() - 1] = '\0';
+  return res;
+}
+
+template<typename T>
+std::vector<T> pointer2Vector(std::unique_ptr<T[]>&& array, size_t length) {
+    std::vector<T> res(length);
+    res.assign(array.get(),array.get()+length);
     return res;
-  }
+}
 
-  template<typename T>
-  std::vector<T> pointer2Vector(
-    std::unique_ptr<T[]>&& array,
-    size_t length
-  ) {
-      std::vector<T> res(length);
-      res.assign(array.get(),array.get()+length);
-      return res;
-  }
+std::string sign(const std::string &message,
+                 const KeyPair &keyPair) {
+  std::vector<unsigned char> pub(keyPair.publicKey.begin(), keyPair.publicKey.end());
+  std::vector<unsigned char> pri(keyPair.privateKey.begin(), keyPair.privateKey.end());
+  return base64::encode(sign(message, pub, pri));
+}
 
-  bool verify(
-    const std::string &signature,
-    const std::string &message,
-    const std::string &publicKey) {
-    return ed25519_verify(
-      vector2UnsignedCharPointer(base64::decode(signature)).get(),
-      reinterpret_cast<const unsigned char*>(message.c_str()),
-      message.size(),
-      vector2UnsignedCharPointer(base64::decode(publicKey)).get());
-  }
+std::string sign(const std::string &message,
+                 const std::string &publicKey_b64,
+                 const std::string &privateKey_b64) {
+  auto pub_decoded = base64::decode(publicKey_b64);
+  auto pri_decoded = base64::decode(privateKey_b64);
+  std::vector<unsigned char> pub(pub_decoded.begin(), pub_decoded.end());
+  std::vector<unsigned char> pri(pri_decoded.begin(), pri_decoded.end());
+  return base64::encode(sign(message, pub, pri));
+}
 
-  
 
-  std::string sign(
-    std::string message,
-    KeyPair     keyPair
-  ){
-    std::unique_ptr<unsigned char[]> signature(new unsigned char[sizeof(unsigned char)*64]);
-    ed25519_sign(
-      signature.get(),
-      reinterpret_cast<const unsigned char*>(message.c_str()),
-      message.size(),
-      vector2UnsignedCharPointer(keyPair.publicKey).get(),
-      vector2UnsignedCharPointer(keyPair.privateKey).get()
-    );
-    return base64::encode(pointer2Vector(std::move(signature), 64));
-  }
+std::vector<unsigned char> sign(const std::string &message,
+                                const std::vector<unsigned char> &publicKey,
+                                const std::vector<unsigned char> &privateKey) {
+  std::vector<unsigned char> signature(SIG_SIZE);
+  ed25519_sign(signature.data(),
+             reinterpret_cast<const unsigned char*>(message.c_str()),
+             message.size(),
+             publicKey.data(),
+             privateKey.data());
+  return signature;
+}
 
-  std::string sign(
-    std::string message,
-    std::string publicKey_b64,
-    std::string privateKey_b64
-  ){
-    std::unique_ptr<unsigned char[]> signatureRaw(new unsigned char[sizeof(unsigned char)*64]);
-    ed25519_sign(
-      signatureRaw.get(),
-      reinterpret_cast<const unsigned char*>(message.c_str()),
-      message.size(),
-      vector2UnsignedCharPointer<unsigned char>(
-        base64::decode(publicKey_b64)
-      ).get(),
-      vector2UnsignedCharPointer<unsigned char>(
-        base64::decode(privateKey_b64)
-      ).get()
-    );
-    return base64::encode(
-      pointer2Vector(std::move(signatureRaw), 64)
-    );
-  }
+bool verify(const std::string &signature_b64,
+            const std::string &message,
+            const std::string &publicKey_b64) {
+  return ed25519_verify(base64::decode(signature_b64).data(),
+                        reinterpret_cast<const unsigned char*>(message.c_str()),
+                        message.size(),
+                        base64::decode(publicKey_b64).data());
+}
 
-  KeyPair generateKeyPair() {
-    std::unique_ptr<unsigned char[]> publicKeyRaw(new unsigned char[sizeof(unsigned char)*32]);
-    std::unique_ptr<unsigned char[]> privateKeyRaw(new unsigned char[sizeof(unsigned char)*64]);
-    std::unique_ptr<unsigned char[]> seed(new unsigned char[sizeof(unsigned char)*32]);
+bool verify(const std::vector<unsigned char> &signature,
+            const std::string &message,
+            const std::vector<unsigned char> &publicKey) {
+  return ed25519_verify(signature.data(),
+                        reinterpret_cast<const unsigned char*>(message.c_str()),
+                        message.size(),
+                        publicKey.data());
+}
 
-    ed25519_create_seed(seed.get());
-    ed25519_create_keypair(
-      publicKeyRaw.get(),
-      privateKeyRaw.get(),
-      seed.get()
-    );
+KeyPair generateKeyPair() {
+  std::unique_ptr<unsigned char[]> publicKeyRaw(new unsigned char[sizeof(unsigned char)*32]);
+  std::unique_ptr<unsigned char[]> privateKeyRaw(new unsigned char[sizeof(unsigned char)*64]);
+  std::unique_ptr<unsigned char[]> seed(new unsigned char[sizeof(unsigned char)*32]);
 
-    return KeyPair(
-       pointer2Vector(std::move(publicKeyRaw), 32),
-       pointer2Vector(std::move(privateKeyRaw), 64)
-     );
-  }
+  ed25519_create_seed(seed.get());
+  ed25519_create_keypair(
+    publicKeyRaw.get(),
+    privateKeyRaw.get(),
+    seed.get()
+  );
+
+  return KeyPair(
+     pointer2Vector(std::move(publicKeyRaw), 32),
+     pointer2Vector(std::move(privateKeyRaw), 64)
+   );
+}
+
 };  // namespace signature

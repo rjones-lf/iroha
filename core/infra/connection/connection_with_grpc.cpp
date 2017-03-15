@@ -78,8 +78,8 @@ namespace connection {
         Signature signature;
         signature.set_publickey(config::PeerServiceConfig::getInstance().getMyPublicKey());
         signature.set_signature(signature::sign(
-            config::PeerServiceConfig::getInstance().getMyPublicKey(),
             hash,
+            config::PeerServiceConfig::getInstance().getMyPublicKey(),
             config::PeerServiceConfig::getInstance().getMyPrivateKey())
         );
         confirm.set_hash(hash);

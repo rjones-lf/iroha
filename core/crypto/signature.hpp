@@ -23,36 +23,38 @@ limitations under the License.
 
 namespace signature {
 
-  struct KeyPair {
-    std::vector<unsigned char> publicKey;
-    std::vector<unsigned char> privateKey;
-	
-    KeyPair(
-      std::vector<unsigned char>&& pub,
-      std::vector<unsigned char>&& pri
-    ):
-      publicKey(std::move(pub)),
-      privateKey(std::move(pri))
-    {}
-  };
+constexpr size_t PRI_KEY_SIZE = 64;
+constexpr size_t PUB_KEY_SIZE = 32;
+constexpr size_t SIG_SIZE = 64;
 
-  std::string sign(
-    std::string message,
-    KeyPair keyPair
-  );
+struct KeyPair {
+  std::vector<unsigned char> publicKey;
+  std::vector<unsigned char> privateKey;
 
-  std::string sign(
-    std::string message,
-    std::string publicKey_b64,
-    std::string privateKey_b64
-  );
+  KeyPair(std::vector<unsigned char>&& pub,
+          std::vector<unsigned char>&& pri) : publicKey(std::move(pub)),
+                                              privateKey(std::move(pri)) {}
+};
 
-  bool verify(
-    const std::string &signature_b64,
-    const std::string &message,
-    const std::string &publicKey_b64);
+std::string sign(const std::string &message, const KeyPair &keyPair);
 
-  KeyPair generateKeyPair();
+std::string sign(const std::string &message,
+                 const std::string &publicKey_b64,
+                 const std::string &privateKey_b64);
+
+std::vector<unsigned char> sign(const std::string &message,
+                                const std::vector<unsigned char> &publicKey,
+                                const std::vector<unsigned char> &privateKey);
+
+bool verify(const std::string &signature_b64,
+            const std::string &message,
+            const std::string &publicKey_b64);
+
+bool verify(const std::string &signature,
+            const std::vector<unsigned char> &message,
+            const std::vector<unsigned char> &publicKey);
+
+KeyPair generateKeyPair();
 
 };  // namespace signature
 
