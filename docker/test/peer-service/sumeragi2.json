@@ -1,0 +1,13 @@
+{
+    "group": [{
+        "ip": "10.0.1.2",
+        "name": "iroha2",
+        "publicKey": "LYk5Cr8UeVcyLBY11NuWynY87tFcMxZ75Ia6s9AAkOs="
+    }],
+    "me": {
+        "ip": "10.0.1.2",
+        "name": "iroha2",
+        "privateKey": "sJiZb4mmpT4hJpt57AiSZXa25Ltw4LT/Qrh6uSDhdX69Bs9Zjt90zC9MTvw8A6zim/Woc+ft4FNqJ5DZbFDZKw==",
+        "publicKey": "LYk5Cr8UeVcyLBY11NuWynY87tFcMxZ75Ia6s9AAkOs="
+    }
+}

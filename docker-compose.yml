@@ -29,15 +29,6 @@ services:
       - configdiscovery
     expose:
       - 1204
-    # this allows any iroha container communicate with configdiscovery by name 
     links:
       - configdiscovery
-    environment:
-      - IROHA_HOME=/usr/local/iroha
 
-    ## if you run configdiscovery server, use /configure-then-run.sh
-    ## All options: 
-    ## /configure.sh
-    ## /run.sh
-    ## /configure-then-run.sh
-    command: /configure-then-run.sh 

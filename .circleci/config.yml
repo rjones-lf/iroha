@@ -10,7 +10,6 @@ jobs:
           IROHA_BUILD: /tmp/build
       - image: ubuntu:16.04
     steps:
-      # if image has no git, this will fail
       - checkout
       - run:
           name: ensure, required folders created
@@ -30,8 +29,14 @@ jobs:
       - run:
           name: run tests
           command: |
-            cd $IROHA_BUILD
-            ctest
+            cd $IROHA_BUILD/test_bin
+            total=0
+            for file in $(ls); do
+                # run test
+                ${file}
+                total=$((total + $?)) 
+            done
+            exit $total
 
       # integrated into circle 2.0
       - setup_docker_engine
@@ -81,9 +86,20 @@ jobs:
               expect "*Login Succeeded*"'
             # and push
             docker push hyperledger/iroha-docker:$TAG
+            # clean up
+            rm -rf $RELEASE
 
       ## At this step we have hyperledger/iroha-docker image, we can test it now
-      # TODO
+      ## you can use it by tag: 
+      ##   hyperledger/iroha-docker:$TAG
+      ##
+      ## put your tests here as separate run command, here is the template:
+      #- run:
+      #    name: test name
+      #    command: |
+      #      test body (bash)
+      #      test body (bash)
+      #      don't forget to clean up after tests (if needed)
 
 
 

@@ -18,9 +18,8 @@ USER root
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /tmp/build
-ENV IROHA_RELEASE /usr/local/iroha
+ENV IROHA_RELEASE /iroha
 
-# we use single RUN instruction to reduce number of "layers" in docker image: https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices
 # install dependencies
 RUN apt-get update && apt-get -y upgrade; \
     apt-get -yqq install \
@@ -74,6 +73,3 @@ RUN apt-get update && apt-get -y upgrade; \
     git clone --recursive -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc; \
     cd grpc; \
     make -j4 && make install
-
-# build and mktar scripts
-ADD ./scripts /
