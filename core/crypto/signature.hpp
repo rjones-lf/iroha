@@ -27,13 +27,16 @@ constexpr size_t PRI_KEY_SIZE = 64;
 constexpr size_t PUB_KEY_SIZE = 32;
 constexpr size_t SIG_SIZE = 64;
 
-struct KeyPair {
-  std::vector<unsigned char> publicKey;
-  std::vector<unsigned char> privateKey;
+using byte_t = unsigned char;
+using byte_array_t = std::vector<byte_t>;
 
-  KeyPair(std::vector<unsigned char>&& pub,
-          std::vector<unsigned char>&& pri) : publicKey(std::move(pub)),
-                                              privateKey(std::move(pri)) {}
+struct KeyPair {
+  byte_array_t publicKey;
+  byte_array_t privateKey;
+
+  KeyPair(byte_array_t&& pub,
+          byte_array_t&& pri) : publicKey(std::move(pub)),
+                           privateKey(std::move(pri)) {}
 };
 
 std::string sign(const std::string &message, const KeyPair &keyPair);
@@ -42,17 +45,17 @@ std::string sign(const std::string &message,
                  const std::string &publicKey_b64,
                  const std::string &privateKey_b64);
 
-std::vector<unsigned char> sign(const std::string &message,
-                                const std::vector<unsigned char> &publicKey,
-                                const std::vector<unsigned char> &privateKey);
+byte_array_t sign(const std::string &message,
+             const byte_array_t &publicKey,
+             const byte_array_t &privateKey);
 
 bool verify(const std::string &signature_b64,
             const std::string &message,
             const std::string &publicKey_b64);
 
 bool verify(const std::string &signature,
-            const std::vector<unsigned char> &message,
-            const std::vector<unsigned char> &publicKey);
+            const byte_array_t &message,
+            const byte_array_t &publicKey);
 
 KeyPair generateKeyPair();
 
