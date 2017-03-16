@@ -26,6 +26,7 @@ namespace signature {
 constexpr size_t PRI_KEY_SIZE = 64;
 constexpr size_t PUB_KEY_SIZE = 32;
 constexpr size_t SIG_SIZE = 64;
+constexpr size_t SEED_SIZE = 32;
 
 using byte_t = unsigned char;
 using byte_array_t = std::vector<byte_t>;

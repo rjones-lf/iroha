@@ -83,7 +83,7 @@ bool verify(const byte_array_t &signature,
 KeyPair generateKeyPair() {
   byte_array_t pub(PUB_KEY_SIZE);
   byte_array_t pri(PRI_KEY_SIZE);
-  byte_array_t seed(SIG_SIZE);
+  byte_array_t seed(SEED_SIZE);
 
   // ed25519_create_seed may return 1 in case if it can not open /dev/urandom
   if(ed25519_create_seed(seed.data()) == 1){
