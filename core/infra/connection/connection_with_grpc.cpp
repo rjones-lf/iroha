@@ -542,6 +542,7 @@ namespace connection {
                         TransactionResponse&)
                 > &callback) {
                     receivers.push_back(callback);
+                    return true;
                 }
             }
         }
