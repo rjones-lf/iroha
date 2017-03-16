@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include <unistd.h>
+#include <getopt.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -30,68 +31,64 @@ limitations under the License.
 #include <fstream>
 
 namespace tools {
+namespace make_sumeragi {
 
-    namespace make_sumeragi {
+std::string interface = "eth0";
+std::string name = "default";
+std::string filename;
 
-        using std::string;
-        using json = nlohmann::json;
-
-        string interface = "eth0";
-        string name;
-        string filename = "";
-
-        void parse_option(int argc, char *argv[]) {
-            char c;
-            while ((c = getopt(argc, argv, "o:i:n:")) != -1) {
-                switch (c) {
-                    case 'i':
-                        interface = string(optarg);
-                        break;
-                    case 'n':
-                        name = string(optarg);
-                       std::cout<<"set peer name: "<< name <<std::endl;
-                        break;
-                    case 'o':
-                        filename = string(optarg);
-                        break;
-                    default:
-                        std::cerr << "usage: " << argv[0] << " -o outputFileName -n peerName  -i interface" << std::endl;
-                        exit(1);
-                }
-            }
+void parse_option(int argc, char *argv[]) {
+    char c;
+    while ((c = getopt(argc, argv, "o:i:n:h")) != -1) {
+        switch (c) {
+            case 'i':
+                interface = optarg;
+                break;
+            case 'n':
+                name = optarg;
+                break;
+            case 'o':
+                filename = optarg;
+                break;
+            case 'h':
+            default:
+                std::cout << "Usage: " << argv[0] << " "
+                          << "-o outputFileName "
+                          << "-n peerName "
+                          << "-i interface" << std::endl;
+                exit(1);
         }
-
-        string getMyIp() {
-            int sockfd;
-            struct ifreq ifr;
-
-            sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-            ifr.ifr_addr.sa_family = AF_INET;
-            strncpy(ifr.ifr_name, interface.c_str(), IFNAMSIZ - 1);
-            ioctl(sockfd, SIOCGIFADDR, &ifr);
-            close(sockfd);
-            return inet_ntoa(((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr);
-        }
-
-        string getConfigStr(){
-            json config;
-            std::cout <<"IP: "<< getMyIp() << std::endl;
-            config["ip"] = getMyIp();
-
-            signature::KeyPair keyPair = signature::generateKeyPair();
-            config["publicKey"] = base64::encode(keyPair.publicKey).c_str();
-            config["privateKey"] = base64::encode(keyPair.privateKey).c_str();
-            if( tools::make_sumeragi::name != "") {
-                config["name"] = tools::make_sumeragi::name;
-            }else{
-                config["name"] = "mizuki";
-            }
-            std::cout << config.dump(4) << std::endl;
-            return config.dump();
-        }
-
     }
 }
+
+std::string getMyIp() {
+    int sockfd;
+    struct ifreq ifr;
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, interface.c_str(), IFNAMSIZ - 1);
+    ioctl(sockfd, SIOCGIFADDR, &ifr);
+    close(sockfd);
+    return inet_ntoa(((struct sockaddr_in *) &ifr.ifr_addr)->sin_addr);
+}
+
+std::string getConfigStr() {
+    nlohmann::json config;
+    config["group"]["ip"] = config["me"]["ip"] = getMyIp();
+    config["group"]["name"] = config["me"]["name"] = name;
+
+    signature::KeyPair keyPair = signature::generateKeyPair();
+    config["group"]["publicKey"] = config["me"]["publicKey"] = base64::encode(keyPair.publicKey);
+    config["me"]["privateKey"] = base64::encode(keyPair.privateKey);
+
+    std::cout << config.dump(2) << std::endl;
+    return config.dump();
+}
+
+}
+}
+
 int main(int argc, char* argv[]) {
     tools::make_sumeragi::parse_option(argc, argv);
 
