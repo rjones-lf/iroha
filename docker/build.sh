@@ -12,12 +12,6 @@ if [ -z ${IROHA_HOME} ]; then
 fi
 
 
-error(){
-	echo "[Error] $1"
-	exit 1
-}
-
-
 SOURCE=${IROHA_HOME}
 BUILD=${SOURCE}/build
 TINY=${IROHA_HOME}/docker/tiny
@@ -36,7 +30,8 @@ mkdir -p $RELEASE/lib
 cp -H $LIBS $RELEASE/lib
 
 rsync -avr ${BUILD}/bin ${RELEASE} && \
-rsync -avr ${IROHA_HOME}/config ${RELEASE} || error "Can not copy release files"
+rsync -avr ${TINY}/scripts ${RELEASE} && \
+rsync -avr ${IROHA_HOME}/config ${RELEASE}
 
 
 docker build -t hyperledger/iroha-docker ${TINY}

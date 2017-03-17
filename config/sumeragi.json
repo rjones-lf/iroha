@@ -1,15 +1,1 @@
-{
-  "group": [
-    {
-      "ip": "127.0.0.1",
-      "name": "da77880a3da4",
-      "publicKey": "u7X/zQ/Dq21WW7YH4rbkpiCYJXjPxk5t3qNDKiVwBx8="
-    }
-  ],
-  "me": {
-    "ip": "127.0.0.1",
-    "name": "da77880a3da4",
-    "privateKey": "cPY84e0BXGUHBjT4QdlPI0LI3BPIfUfSZjB8jdWURkNQ+pEagT/ysrewbt2YUo/Qbfd5vczW5oDooGSNUBTj9g==",
-    "publicKey": "u7X/zQ/Dq21WW7YH4rbkpiCYJXjPxk5t3qNDKiVwBx8="
-  }
-}
+{"group":[{"ip":"188.130.155.34","name":"bogdan","publicKey":"IaDYg2mKk2u1JQcKw5PL4qgdDKVKyj+l74rvu7xrS1k="}],"me":{"ip":"188.130.155.34","name":"bogdan","privateKey":"IBUs5nbuyJDC3VPG6Dtp+knMRDnUwNgztkNc5dZH0Uk12OVNbGRxanDRBcXwuFyMSAwFx2pjH8L0QWuQHRTEDg==","publicKey":"IaDYg2mKk2u1JQcKw5PL4qgdDKVKyj+l74rvu7xrS1k="}}
