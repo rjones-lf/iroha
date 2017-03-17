@@ -238,14 +238,18 @@ add_library(jni SHARED IMPORTED)
 if (DEFINED ENV{JAVA_HOME})
   if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/darwin")
+    set_target_properties(jni PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
+            IMPORTED_LOCATION "$ENV{JAVA_HOME}/jre/lib/server/libjvm.dylib"
+            )
   else()
     set(_JVM_INCLUDE_PATH "$ENV{JAVA_HOME}/include/linux")
+    set_target_properties(jni PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
+            IMPORTED_LOCATION "$ENV{JAVA_HOME}/jre/lib/amd64/server/libjvm.so"
+            )
   endif()
 
-  set_target_properties(jni PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${_JVM_INCLUDE_PATH};$ENV{JAVA_HOME}/include"
-    IMPORTED_LOCATION "$ENV{JAVA_HOME}/jre/lib/amd64/server/libjvm.so"
-  )
 else()
   find_package(JNI)
   if (!JNI_FOUND)

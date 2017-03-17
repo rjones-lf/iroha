@@ -7,6 +7,8 @@ add_library(Repository SHARED
 target_link_libraries(Repository
   core_repository
   jni
+  create_objects_helper
+  java_data_structure
 )
 
 add_custom_command(TARGET Repository

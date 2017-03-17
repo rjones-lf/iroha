@@ -1,49 +1,28 @@
-/*
-Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-#include <crypto/base64.hpp>
-
-namespace base64 {
-
-/*
- base64_encode(), base64_decode()
- Copyright (C) 2004-2008 René Nyffenegger
- This source code is provided 'as-is', without any express or implied
- warranty. In no event will the author be held liable for any damages
- arising from the use of this software.
- Permission is granted to anyone to use this software for any purpose,
- including commercial applications, and to alter it and redistribute it
- freely, subject to the following restrictions:
- 1. The origin of this source code must not be misrepresented; you must not
- claim that you wrote the original source code. If you use this source code
- in a product, an acknowledgment in the product documentation would be
- appreciated but is not required.
- 2. Altered source versions must be plainly marked as such, and must not be
- misrepresented as being the original source code.
- 3. This notice may not be removed or altered from any source distribution.
- René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+/**
+ * Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+ * http://soramitsu.co.jp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
 
+#include <benchmark/benchmark.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <infra/crypto/base64.cpp>
 
-
-namespace vendor {
-  /* 
+namespace v1 {
+    /* 
     base64.cpp and base64.h
 
     Copyright (C) 2004-2008 René Nyffenegger
@@ -70,12 +49,10 @@ namespace vendor {
 
   */
 
-  static const char *base64_chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "abcdefghijklmnopqrstuvwxyz"
-      "0123456789+/";
-
-  static const size_t base64_chars_len = strlen(base64_chars);
+  static const std::string base64_chars = 
+              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              "abcdefghijklmnopqrstuvwxyz"
+              "0123456789+/";
 
 
   static inline bool is_base64(unsigned char c) {
@@ -125,37 +102,26 @@ namespace vendor {
 
   }
 
-  // add find function instead of string's find()
-  inline int base64_chars_find(char c){
-    for(size_t i=0;i < base64_chars_len; i++){
-      if(c == base64_chars[i]) return i;
-    }
-    return -1;
-  }
-
-  std::vector<unsigned char> base64_decode(std::string const& encoded_string) {
+  std::string base64_decode(std::string const& encoded_string) {
     int in_len = encoded_string.size();
     int i = 0;
     int j = 0;
     int in_ = 0;
     unsigned char char_array_4[4], char_array_3[3];
-    std::vector<unsigned char> ret;
-    // changes capacity, not size
-    // push_back becomes O(1)
-    ret.reserve(encoded_string.size()); 
+    std::string ret;
 
     while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
       char_array_4[i++] = encoded_string[in_]; in_++;
       if (i ==4) {
         for (i = 0; i <4; i++)
-          char_array_4[i] = base64_chars_find(char_array_4[i]);
+          char_array_4[i] = base64_chars.find(char_array_4[i]);
 
         char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
         char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
         char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
 
         for (i = 0; (i < 3); i++)
-          ret.push_back(char_array_3[i]);
+          ret += char_array_3[i];
         i = 0;
       }
     }
@@ -165,26 +131,47 @@ namespace vendor {
         char_array_4[j] = 0;
 
       for (j = 0; j <4; j++)
-        char_array_4[j] = base64_chars_find(char_array_4[j]);
+        char_array_4[j] = base64_chars.find(char_array_4[j]);
 
       char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
       char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
       char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
 
-      for (j = 0; (j < i - 1); j++) 
-        ret.push_back(char_array_3[j]);
+      for (j = 0; (j < i - 1); j++) ret += char_array_3[j];
     }
 
     return ret;
   }
-} // namespace vendor
+} // namespace v1
 
-  const std::string encode(const std::vector<unsigned char> &message) {
-    return vendor::base64_encode(message.data(), message.size());
+
+
+static std::vector<unsigned char> generate_sequence(size_t size){
+  std::vector<unsigned char> v(size);
+  unsigned int seed = 0;
+  for(int i=0; i<v[i]; i++){
+    v[i] = rand_r(&seed) & 0xFF;
   }
+  return v;
+}
 
-  std::vector<unsigned char> decode(const std::string &enc) {
-    return vendor::base64_decode(enc);
+#define MIN_SIZE (1 << 5)
+#define MAX_SIZE (1 << 10)
+
+static const std::vector<unsigned char> data = generate_sequence(MAX_SIZE);
+
+static void base64_v1_encode(benchmark::State& state) {
+  while (state.KeepRunning()) {
+    v1::base64_encode(data.data(), state.range(0));
   }
+}
 
-}  // namespace base64
+static void base64_iroha_encode(benchmark::State& state) {
+  while (state.KeepRunning()) {
+    base64::vendor::base64_encode(data.data(), state.range(0));
+  }
+}
+
+BENCHMARK(base64_iroha_encode)->Range(MIN_SIZE, MAX_SIZE);
+BENCHMARK(base64_v1_encode)->Range(MIN_SIZE, MAX_SIZE);
+BENCHMARK_MAIN();

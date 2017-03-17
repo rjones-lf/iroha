@@ -403,10 +403,12 @@ namespace sumeragi {
     }
 
     void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
-        std::thread([action, sleepMillisecs]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
-            action();
-        }).join();
+    //    std::thread([action, sleepMillisecs]() {
+    //        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+    //        action();
+    //    }).join();
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+        action();
     }
 
     /**
