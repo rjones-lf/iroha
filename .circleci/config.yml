@@ -29,9 +29,9 @@ jobs:
       - run:
           name: run tests
           command: |
-            cd $IROHA_BUILD/test_bin
+            TEST_FOLDER=$IROHA_BUILD/test_bin
             total=0
-            for file in $(ls); do
+            for file in ${TEST_FOLDER}/*; do
                 # run test
                 ${file}
                 total=$((total + $?)) 
@@ -90,7 +90,7 @@ jobs:
             rm -rf $RELEASE
 
       ## At this step we have hyperledger/iroha-docker image, we can test it now
-      
+
       ## you can use it by tag: 
       ##   hyperledger/iroha-docker:$TAG
       ##
