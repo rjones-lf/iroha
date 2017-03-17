@@ -66,7 +66,7 @@ jobs:
             export RELEASE=$IROHA_HOME/docker/tiny/iroha
             mkdir -p $RELEASE/lib
             # extract all libraries which use iroha:
-            LIBS=$(ldd $RELEASE/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
+            LIBS=$(ldd $IROHA_BUILD/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
             # copy libraries (-H = follow links)
             cp -H $LIBS $RELEASE/lib
             # copy build artifacts
