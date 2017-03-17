@@ -39,7 +39,7 @@ namespace peer {
     using type_signatures::Remove;
     using type_signatures::Peer;
 
-    std::vector<peer::Node> peerList;
+    Nodes peerList;
     bool is_active;
 
 
@@ -77,27 +77,30 @@ namespace peer {
         void initialize(){
             if (!peerList.empty()) return;
             for (const auto& peer : PeerServiceConfig::getInstance().getGroup() ) {
-                peerList.emplace_back( peer["ip"].get<std::string>(),
-                                       peer["publicKey"].get<std::string>(),
-                                       PeerServiceConfig::getInstance().getMaxTrustScore() );
+              peerList.emplace_back(std::make_shared<peer::Node>(
+                  peer["ip"].get<std::string>(),
+                  peer["publicKey"].get<std::string>(),
+                  PeerServiceConfig::getInstance().getMaxTrustScore()));
             }
         }
 
         size_t getMaxFaulty(){
             return std::max( 0, ((int)getPeerList().size()-1) / 3 );
         }
-        std::vector<std::unique_ptr<peer::Node>> getPeerList() {
+
+        Nodes getPeerList() {
             initialize();
 
-            std::vector<std::unique_ptr<peer::Node>> nodes;
+            Nodes nodes;
             for(const auto &node : peerList) {
-                if(node.isOK()) {
-                    nodes.push_back(std::make_unique<peer::Node>(node.getIP(),
-                                                                 node.getPublicKey(),
-                                                                 node.getTrustScore()));
+                if(node->isOK()) {
+                  nodes.push_back(std::make_unique<peer::Node>(
+                      node->getIP(), node->getPublicKey(),
+                      node->getTrustScore()));
                 }
             }
 
+            // TODO: maintain nodes already sorted
             sort(nodes.begin(), nodes.end(), [](const auto &a, const auto &b) {
                 return a->getTrustScore() > b->getTrustScore();
             } );
@@ -106,8 +109,9 @@ namespace peer {
         }
         std::vector<std::string> getIpList(){
             std::vector<std::string> ret_ips;
-            for(const auto &node : getPeerList() )
-                ret_ips.push_back( node->getIP() );
+            for(const auto &node : getPeerList()) {
+                ret_ips.push_back(node->getIP());
+            }
             return ret_ips;
         }
         // is exist which peer?
@@ -117,17 +121,17 @@ namespace peer {
         bool isExistPublicKey(const std::string &publicKey){
             return findPeerPublicKey( std::move(publicKey) ) != peerList.end();
         }
-        std::vector<peer::Node>::iterator findPeerIP(const std::string &ip){
+        Nodes::iterator findPeerIP(const std::string &ip){
             initialize();
             return std::find_if( peerList.begin(), peerList.end(),
-                                 [&ip]( const peer::Node& p ) { return p.getIP() == ip; } );
+                                 [&ip]( const auto& p ) { return p->getIP() == ip; } );
         }
-        std::vector<peer::Node>::iterator findPeerPublicKey(const std::string &publicKey){
+        Nodes::iterator findPeerPublicKey(const std::string &publicKey){
             initialize();
             return std::find_if( peerList.begin(), peerList.end(),
-                                 [&publicKey]( const peer::Node& p ) { return p.getPublicKey() == publicKey; } );
+                                 [&publicKey]( const auto& p ) { return p->getPublicKey() == publicKey; } );
         }
-        std::unique_ptr<peer::Node> leaderPeer(){
+        std::shared_ptr<peer::Node> leaderPeer(){
             return std::move( *getPeerList().begin() );
         }
     }
@@ -149,7 +153,10 @@ namespace peer {
             bool started(const Node& peer){
                 logger::debug("peer-service") << "in sendAllTransactionToNewPeer";
                 // when my node is not active, it don't send data.
-                if( !(service::findPeerPublicKey( myself::getPublicKey() )->isOK()) ) return false;
+                if (!(*service::findPeerPublicKey(myself::getPublicKey()))
+                          ->isOK()) {
+                  return false;
+                }
 
                 uint64_t code = 0UL;
                 {   // Send PeerList data ( Reason: Can't do to construct peerList for only transaction infomation. )
@@ -224,7 +231,10 @@ namespace peer {
             }
             void credit(const std::string &publicKey){
                 if( !service::isExistPublicKey(publicKey) ) return;
-                if( service::findPeerPublicKey(publicKey)->getTrustScore() == PeerServiceConfig::getInstance().getMaxTrustScore() ) return;
+                if ((*service::findPeerPublicKey(publicKey))->getTrustScore() ==
+                    PeerServiceConfig::getInstance().getMaxTrustScore()) {
+                  return;
+                }
                 auto txPeer = TransactionBuilder<Update<Peer>>()
                         .setSenderPublicKey(myself::getPublicKey())
                         .setPeer(txbuilder::createPeer(publicKey, peer::Node::defaultIP(),
@@ -241,7 +251,7 @@ namespace peer {
                         throw exception::service::DuplicationIPException(peer.getIP());
                     if( service::isExistPublicKey( peer.getPublicKey() ) )
                         throw exception::service::DuplicationPublicKeyException(peer.getPublicKey());
-                    peerList.emplace_back( std::move(peer));
+                    peerList.emplace_back( std::make_shared<peer::Node>(peer));
                 } catch( exception::service::DuplicationPublicKeyException& e ) {
                     logger::warning("addPeer") << e.what();
                     return false;
@@ -270,24 +280,25 @@ namespace peer {
                     if (it == peerList.end() )
                         throw exception::service::UnExistFindPeerException( publicKey );
 
+                    auto pk = *it;
                     if ( !peer.isDefaultPublicKey() ) {
                         auto upd_it = service::findPeerPublicKey(peer.getPublicKey());
                         if( upd_it != it && upd_it != peerList.end() ) throw exception::service::DuplicationPublicKeyException(peer.getPublicKey());
-                        it->setPublicKey( peer.getPublicKey() );
+                        pk->setPublicKey( peer.getPublicKey() );
                     }
 
                     if ( !peer.isDefaultIP() ) {
                         auto upd_it = service::findPeerIP(peer.getIP());
                         if( upd_it != it && upd_it != peerList.end() ) throw exception::service::DuplicationIPException(peer.getIP());
-                        it->setIP( peer.getIP() );
+                        pk->setIP( peer.getIP() );
                     }
 
-                    if ( it->getTrustScore() != 0.0 ) {
-                        it->setTrustScore( std::min( PeerServiceConfig::getInstance().getMaxTrustScore(), it->getTrustScore()+peer.getTrustScore()) );
+                    if ( pk->getTrustScore() != 0.0 ) {
+                        pk->setTrustScore( std::min( PeerServiceConfig::getInstance().getMaxTrustScore(), pk->getTrustScore()+peer.getTrustScore()) );
                     }
 
-                    if( it->isOK() != peer.isOK() ) {
-                        it->setOK( peer.isOK() );
+                    if( pk->isOK() != peer.isOK() ) {
+                        pk->setOK( peer.isOK() );
                     }
 
                 } catch ( exception::service::UnExistFindPeerException& e ) {

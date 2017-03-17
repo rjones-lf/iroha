@@ -26,7 +26,7 @@ namespace peer {
         // check are broken? peer
         void check(const std::string &ip) {
             if (!service::isExistIP(ip)) return;
-            auto check_peer_it = service::findPeerIP( ip );
+            auto check_peer_it = *service::findPeerIP( ip );
             if ( !connection::iroha::PeerService::Sumeragi::ping( ip )) {
                 if( check_peer_it->getTrustScore() < 0.0 ) {
                     transaction::isssue::remove( check_peer_it->getPublicKey() );

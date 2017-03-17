@@ -13,12 +13,10 @@ limitations under the License.
 */
 
 #include "sumeragi.hpp"
-#include <queue>
 #include <map>
 #include <thread>
 #include <string>
 #include <atomic>
-#include <deque>
 #include <cmath>
 #include <iterator>
 
@@ -159,7 +157,7 @@ namespace sumeragi {
         std::int64_t    commitedCount = 0;
         std::uint64_t   numValidatingPeers;
         std::string     myPublicKey;
-        std::deque<std::unique_ptr<peer::Node>> validatingPeers;
+        peer::Nodes validatingPeers;
 
         Context()
         {
@@ -169,31 +167,26 @@ namespace sumeragi {
         void update()
         {
             logger::debug("sumeragi") << "Context update!";
-            auto peers = ::peer::service::getPeerList();
-            validatingPeers.clear();
-            validatingPeers.resize( peers.size() );
-            std::copy(std::make_move_iterator(peers.begin()),
-                      std::make_move_iterator(peers.end()),
-                      validatingPeers.begin());
+            validatingPeers = ::peer::service::getPeerList();
 
-            this->numValidatingPeers = this->validatingPeers.size();
+            numValidatingPeers = validatingPeers.size();
             // maxFaulty = Default to approx. 1/3 of the network.
-            this->maxFaulty = ::peer::service::getMaxFaulty();
-            this->proxyTailNdx = this->maxFaulty * 2 + 1;
+            maxFaulty = ::peer::service::getMaxFaulty();
+            proxyTailNdx = this->maxFaulty * 2 + 1;
 
-            if (this->validatingPeers.empty()) {
+            if (validatingPeers.empty()) {
                 logger::error("sumeragi") << "could not find any validating peers.";
                 exit(EXIT_FAILURE);
             }
 
-            if (this->proxyTailNdx >= this->validatingPeers.size()) {
-                this->proxyTailNdx = this->validatingPeers.size() - 1;
+            if (proxyTailNdx >= validatingPeers.size()) {
+                proxyTailNdx = validatingPeers.size() - 1;
             }
 
-            this->panicCount = 0;
-            this->myPublicKey = ::peer::myself::getPublicKey();
+            panicCount = 0;
+            myPublicKey = ::peer::myself::getPublicKey();
 
-            this->isSumeragi = this->validatingPeers.at(0)->getPublicKey() == this->myPublicKey;
+            isSumeragi = validatingPeers.at(0)->getPublicKey() == myPublicKey;
         }
     };
 

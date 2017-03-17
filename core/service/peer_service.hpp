@@ -31,10 +31,10 @@ namespace peer
 
     public:
 
-        static std::string defaultIP() {
+        inline static const std::string defaultIP() {
             return "";
         }
-        static std::string defaultPublicKey() {
+        inline static const std::string defaultPublicKey() {
             return "";
         }
 
@@ -95,13 +95,15 @@ namespace peer
         }
 
         bool isDefaultIP() const {
-            return ip == "";
+            return ip == defaultIP();
         }
         bool isDefaultPublicKey() const {
-            return publicKey == "";
+            return publicKey == defaultPublicKey();
         }
 
     };
+
+    using Nodes = std::vector<std::shared_ptr<Node>>;
 
     namespace myself {
         std::string getPublicKey();
@@ -117,14 +119,14 @@ namespace peer
     namespace service {
         void initialize();//void initialziePeerList_from_json();
         size_t getMaxFaulty();
-        std::vector<std::unique_ptr<peer::Node>> getPeerList();
+        Nodes getPeerList();
         std::vector<std::string> getIpList();
         // is exist which peer?
         bool isExistIP(const std::string &);
         bool isExistPublicKey(const std::string &);
-        std::vector<peer::Node>::iterator findPeerIP(const std::string &ip);
-        std::vector<peer::Node>::iterator findPeerPublicKey(const std::string &publicKey);
-        std::unique_ptr<peer::Node> leaderPeer();
+        Nodes::iterator findPeerIP(const std::string &ip);
+        Nodes::iterator findPeerPublicKey(const std::string &publicKey);
+        std::shared_ptr<peer::Node> leaderPeer();
     }
 
     namespace transaction {
