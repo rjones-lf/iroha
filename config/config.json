@@ -9,5 +9,6 @@
   "max_faulty_peers" : 1,
   "pool_worker_queue_size": 1024,
   "http_port": 1204,
-  "grpc_port": 50051
+  "grpc_port": 50051,
+  "active_start": false
 }

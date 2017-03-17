@@ -14,25 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef CONFIG_FORMAT_HPP
-#define CONFIG_FORMAT_HPP
+//
+// Created by Takumi Yamashita on 2017/03/10.
+//
 
-#include <regex>
-#include <json.hpp>
-#include <util/exception.hpp>
+#ifndef TOOLS_ISSUE_TRANSACTION_COMMAND_NAME_C_HPP
+#define TOOLS_ISSUE_TRANSACTION_COMMAND_NAME_C_HPP
+
+#include <iostream>
+#include <vector>
+#include <stdexcept>
 #include <util/logger.hpp>
+#include <transaction_builder/transaction_builder.hpp>
+#include <consensus/connection/connection.hpp>
+#include <infra/config/peer_service_with_json.hpp>
 
-namespace config {
-  class ConfigFormat {
-  public:
-    static ConfigFormat& getInstance();
-    bool ensureFormatSumeragi(const std::string& configStr);
 
-  private:
-    ConfigFormat();
-    bool ensureFormat(const std::string& configStr, const std::string& formatConfigStr);
-    bool ensureFormat(nlohmann::json& actualConfig, nlohmann::json& formatConfig, const std::string& history);
-  };
+namespace tools {
+    namespace issue_transaction {
+
+        namespace COMMAND_NAME_A {
+##CODE
+        }
+    }
 }
 
-#endif
+#endif // TOOLS_ISSUE_TRANSACTION_COMMAND_NAME_C_HPP

@@ -16,5 +16,5 @@ target_link_libraries(izanami
     config_manager
     executor
     event_with_grpc
-    transaction_repostiory
+    transaction_repository
 )

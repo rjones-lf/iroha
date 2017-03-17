@@ -76,3 +76,7 @@ uint16_t IrohaConfigManager::getGrpcPortNumber(uint16_t defaultValue) {
 uint16_t IrohaConfigManager::getHttpPortNumber(uint16_t defaultValue) {
     return this->getParam<uint16_t>("http_port", defaultValue);
 }
+
+bool IrohaConfigManager::getActiveStart(bool defaultValue = false) {
+    return this->getParam<bool>("active_start", defaultValue);
+}

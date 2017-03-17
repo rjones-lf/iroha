@@ -28,6 +28,7 @@ limitations under the License.
 
 #include <service/peer_service.hpp>
 #include <infra/config/peer_service_with_json.hpp>
+#include <service/izanami.hpp>
 
 #include <repository/world_state_repository.hpp>
 
@@ -58,6 +59,7 @@ int main() {
 
     connection::initialize_peer();
     sumeragi::initializeSumeragi();
+    izanami::startIzanami();
 
     std::thread http_thread(server);
 

@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef __CORE_URL_SERVICE_HPP__
-#define __CORE_URL_SERVICE_HPP__
+#ifndef __CORE_PEER_SERVICE_HPP__
+#define __CORE_PEER_SERVICE_HPP__
 
 #include <vector>
 #include <string>

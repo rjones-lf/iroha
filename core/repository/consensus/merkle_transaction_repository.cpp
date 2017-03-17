@@ -44,7 +44,7 @@ namespace merkle_transaction_repository {
     std::string calculateNewRootHash(const ConsensusEvent& event,
                                      std::vector<std::tuple<std::string, std::string>> &batchCommit) {
         std::string lastInsertion = repository::world_state_repository::find("last_insertion");
-
+        
         if (lastInsertion.empty()) {
             // Note: there is no need to update the tree's DB here, because there is only one transaction--the current!
             return hash(event.transaction());
@@ -89,8 +89,9 @@ namespace merkle_transaction_repository {
             std::string newParentHash = hash(newLeftChild);
 
             std::string oldParent = parent;
-
+            /*
             // Propagate up the tree to the root
+            // That code shouldn't even be used right now because we are moving all the Merkle root code to ametsuchi.
             while (!parent.empty()) {
 
                 if (!batchCommit.empty()) { // TODO: this may not be the best comparison to use
@@ -108,7 +109,7 @@ namespace merkle_transaction_repository {
                 oldParent = parent;
                 parent = repository::world_state_repository::find(parent + "_parent");
             }
-
+            */
             newParentHash = hash(oldParent + newLeftChild);
 
             // save new root

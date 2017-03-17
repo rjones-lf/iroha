@@ -9,7 +9,6 @@ target_link_libraries(world_state_repo_with_level_db
 )
 
 ADD_LIBRARY(transaction_repository STATIC transaction_repository.cpp)
-target_link_libraries(
-    transaction_repository
+target_link_libraries(transaction_repository
     world_state_repo_with_level_db
 )

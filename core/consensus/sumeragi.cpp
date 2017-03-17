@@ -20,6 +20,7 @@ limitations under the License.
 #include <atomic>
 #include <deque>
 #include <cmath>
+#include <iterator>
 
 #include <thread_pool.hpp>
 
@@ -165,19 +166,15 @@ namespace sumeragi {
             update();
         }
 
-        Context(std::vector<std::unique_ptr<peer::Node>>&& peers)
-        {
-            for (auto&& p : peers) {
-                validatingPeers.push_back(std::move(p));
-            }
-        }
-
         void update()
         {
+            logger::debug("sumeragi") << "Context update!";
             auto peers = config::PeerServiceConfig::getInstance().getPeerList();
-            for (auto&& p : peers ) {
-                validatingPeers.push_back( std::move(p) );
-            }
+            validatingPeers.clear();
+            validatingPeers.resize( peers.size() );
+            std::copy(std::make_move_iterator(peers.begin()),
+                      std::make_move_iterator(peers.end()),
+                      validatingPeers.begin());
 
             this->numValidatingPeers = this->validatingPeers.size();
             // maxFaulty = Default to approx. 1/3 of the network.
@@ -226,6 +223,7 @@ namespace sumeragi {
             ConsensusEvent event;
             event.set_status("uncommit");
             event.mutable_transaction()->CopyFrom(transaction);
+            context->update();
             // send processTransaction(event) as a task to processing pool
             // this returns std::future<void> object
             // (std::future).get() method locks processing until result of processTransaction will be available
@@ -407,10 +405,12 @@ namespace sumeragi {
     }
 
     void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const action) {
-        std::thread([action, sleepMillisecs]() {
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
-            action();
-        }).join();
+    //    std::thread([action, sleepMillisecs]() {
+    //        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+    //        action();
+    //    }).join();
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+        action();
     }
 
     /**

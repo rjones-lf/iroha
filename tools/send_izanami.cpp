@@ -13,26 +13,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+//
+// Created by Takumi Yamashita on 2017/03/15.
+//
 
-#ifndef CONFIG_FORMAT_HPP
-#define CONFIG_FORMAT_HPP
+#include <string>
+#include <service/peer_service.hpp>
+#include <infra/config/peer_service_with_json.hpp>
 
-#include <regex>
-#include <json.hpp>
-#include <util/exception.hpp>
-#include <util/logger.hpp>
-
-namespace config {
-  class ConfigFormat {
-  public:
-    static ConfigFormat& getInstance();
-    bool ensureFormatSumeragi(const std::string& configStr);
-
-  private:
-    ConfigFormat();
-    bool ensureFormat(const std::string& configStr, const std::string& formatConfigStr);
-    bool ensureFormat(nlohmann::json& actualConfig, nlohmann::json& formatConfig, const std::string& history);
-  };
+int main(int argc, char* argv[]) {
+    peer::Node peer (
+            config::PeerServiceConfig::getInstance().getMyIp(),
+            config::PeerServiceConfig::getInstance().getMyPublicKey(),
+            1.0,
+            false
+    );
+    config::PeerServiceConfig::getInstance().sendAllTransactionToNewPeer( peer );
+    return 0;
 }
 
-#endif

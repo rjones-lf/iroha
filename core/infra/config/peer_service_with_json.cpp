@@ -40,6 +40,7 @@ using nlohmann::json;
 std::vector<peer::Node> PeerServiceConfig::peerList;
 
 PeerServiceConfig::PeerServiceConfig() {
+    is_active = true;
     initialziePeerList_from_json();
 }
 
@@ -113,12 +114,25 @@ std::string PeerServiceConfig::getMyIp() {
 }
 
 double PeerServiceConfig::getMaxTrustScore() {
-  return this->getMaxTrustScoreWithDefault(1.0); // WIP to support trustRate = 1.0
+  return this->getMaxTrustScoreWithDefault(10.0); // WIP to support trustRate = 10.0
 }
 
 size_t PeerServiceConfig::getMaxFaulty() {
   return std::max( 0, ((int)this->getPeerList().size()-1) / 3 );
 }
+
+bool PeerServiceConfig::isMyActive() {
+    return is_active;
+}
+
+void PeerServiceConfig::activate() {
+    is_active = true;
+}
+
+void PeerServiceConfig::stop(){
+    is_active = false;
+}
+
 
 // TODO: this is temporary solution
 std::vector<json> PeerServiceConfig::getGroup() {
@@ -155,7 +169,7 @@ void PeerServiceConfig::initialziePeerList_from_json(){
   for (const auto& peer : getGroup()) {
     peerList.emplace_back( peer["ip"].get<std::string>(),
                            peer["publicKey"].get<std::string>(),
-                           1.0);
+                           getMaxTrustScore() );
   }
 }
 
@@ -181,16 +195,29 @@ std::vector<std::unique_ptr<peer::Node>> PeerServiceConfig::getPeerList() {
   initialziePeerList_from_json();
 
   std::vector<std::unique_ptr<peer::Node>> nodes;
-  for( auto &&node : peerList )
-    nodes.push_back( std::make_unique<peer::Node>( node.getIP(), node.getPublicKey(), node.getTrustScore() ) );
-  sort( nodes.begin(), nodes.end(),
-        []( const std::unique_ptr<peer::Node> &a, const std::unique_ptr<peer::Node> &b ) { return a->getTrustScore() > b->getTrustScore(); } );
+  for(const auto &node : peerList) {
+    if(node.isOK()) {
+        nodes.push_back(std::make_unique<peer::Node>(node.getIP(),
+                                                     node.getPublicKey(),
+                                                     node.getTrustScore()));
+    }
+  }
+
+  sort(nodes.begin(), nodes.end(), [](const auto &a, const auto &b) {
+    return a->getTrustScore() > b->getTrustScore();
+  } );
+  logger::debug("getPeerList") << std::to_string(nodes.size());
+  for(const auto &node : nodes ) {
+      logger::debug("getPeerList") << ("ip: " + node->getIP());
+      logger::debug("getPeerList") << ("pubkey: " + node->getPublicKey() );
+  }
   return nodes;
 }
+
 std::vector<std::string> PeerServiceConfig::getIpList() {
   std::vector<std::string> ret_ips;
-  for( auto &&node : peerList )
-    ret_ips.push_back( node.getIP() );
+  for(const auto &node : getPeerList() )
+    ret_ips.push_back( node->getIP() );
   return ret_ips;
 }
 
@@ -217,6 +244,7 @@ void PeerServiceConfig::finishedInitializePeer() {
             .setPeer(txbuilder::createPeer( getMyPublicKey(), getMyIp(), txbuilder::createTrust(0.0, true)))
             .build();
     connection::iroha::PeerService::Sumeragi::send( leader_ip, txPeer );
+    activate();
 }
 
 // invoke to issue transaction
@@ -271,6 +299,7 @@ bool PeerServiceConfig::addPeer( const peer::Node &peer ) {
     logger::warning("addPeer") << e.what();
     return false;
   }
+  return true;
 }
 
 bool PeerServiceConfig::removePeer( const std::string& publicKey ) {
@@ -327,16 +356,18 @@ bool PeerServiceConfig::updatePeer( const std::string& publicKey, const peer::No
 
 //invoke next to addPeer
 bool PeerServiceConfig::sendAllTransactionToNewPeer( const peer::Node& peer ) {
+    logger::debug("peer-service") << "in sendAllTransactionToNewPeer";
     // when my node is not active, it don't send data.
     if( !(findPeerPublicKey( getMyPublicKey() )->isOK()) ) return false;
 
     uint64_t code = 0UL;
     {   // Send PeerList data ( Reason: Can't do to construct peerList for only transaction infomation. )
+        logger::debug("peer-service") << "send all peer infomation";
         auto sorted_peerList = getPeerList();
         auto txResponse = Api::TransactionResponse();
+        txResponse.set_message( "Initilize send now Active PeerList info" );
+        txResponse.set_code( code++ );
         for (auto &&peer : sorted_peerList) {
-            txResponse.set_message( "Initilize send now Active PeerList info" );
-            txResponse.set_code( code++ );
             auto txPeer = TransactionBuilder<Add<Peer>>()
                     .setSenderPublicKey(getMyPublicKey())
                     .setPeer(txbuilder::createPeer(peer->getPublicKey(), peer->getIP(),
@@ -347,7 +378,8 @@ bool PeerServiceConfig::sendAllTransactionToNewPeer( const peer::Node& peer ) {
         if( !connection::iroha::PeerService::Izanami::send( peer.getIP(), txResponse ) ) return false;
     }
 
-    {   // Send transaction data separated block to new peer.
+    if(0){   // WIP(leveldb don't active) Send transaction data separated block to new peer.
+        logger::debug("peer-service") << "send all transaction infomation";
         auto transactions = repository::transaction::findAll();
         int block_size = 500;
         for (int i = 0; i < transactions.size(); i += block_size) {
@@ -362,6 +394,7 @@ bool PeerServiceConfig::sendAllTransactionToNewPeer( const peer::Node& peer ) {
     }
 
     {   // end-point
+        logger::debug("peer-service") << "send end-point";
         auto txResponse = Api::TransactionResponse();
         txResponse.set_message("Finished send Transactions");
         txResponse.set_code(code++);

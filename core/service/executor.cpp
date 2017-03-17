@@ -24,6 +24,7 @@ namespace executor{
 
     using Api::Transaction;
     void add(const Transaction &tx) {
+        logger::info("executor") << "tx has peer?" << (tx.has_peer()?"yes":"no");
         if (tx.has_asset()) {
             // Add<Asset>
             const auto asset = tx.asset();
@@ -37,6 +38,7 @@ namespace executor{
             repository::account::add(account.publickey(), account);
             logger::info("executor") << "add account";
         } else if( tx.has_peer() ) {
+            logger::info("executor") << "add peer";
             // Temporary - to operate peer service
             peer::Node query_peer(
                     tx.peer().address(),
@@ -44,13 +46,10 @@ namespace executor{
                     tx.peer().trust().value(),
                     tx.peer().trust().isok()
             );
-            if( tx.type() == "Add" ) {
-                config::PeerServiceConfig::getInstance().addPeer( query_peer );
-            } else if( tx.type() == "Remove" ) {
-                config::PeerServiceConfig::getInstance().removePeer( query_peer.getPublicKey() );
-            } else if( tx.type() == "Update" ) {
-                config::PeerServiceConfig::getInstance().updatePeer( query_peer.getPublicKey(), query_peer );
-            }
+            config::PeerServiceConfig::getInstance().addPeer( query_peer );
+            if( config::PeerServiceConfig::getInstance().getMyIp() != query_peer.getIP() &&
+                    config::PeerServiceConfig::getInstance().isMyActive() )
+                config::PeerServiceConfig::getInstance().sendAllTransactionToNewPeer( query_peer );
         }
     }
 
@@ -77,6 +76,7 @@ namespace executor{
             // Add<Account>
         }else if(tx.has_peer()){
             // Transfer<Peer>
+            // nothing this transaction
         }
     }
 
@@ -90,6 +90,14 @@ namespace executor{
             const auto account = tx.account();
             repository::account::update(account.publickey(), account);
         }else if(tx.has_peer()){
+            // Temporary - to operate peer service
+            peer::Node query_peer(
+                    tx.peer().address(),
+                    tx.peer().publickey(),
+                    tx.peer().trust().value(),
+                    tx.peer().trust().isok()
+            );
+            config::PeerServiceConfig::getInstance().updatePeer( query_peer.getPublicKey(), query_peer );
             // Update<Peer>
         }
     }
@@ -106,7 +114,14 @@ namespace executor{
             const auto account = tx.account();
             repository::account::remove(account.publickey());
         }else if(tx.has_peer()){
-            // Remove<Peer>
+            // Temporary - to operate peer service
+            peer::Node query_peer(
+                    tx.peer().address(),
+                    tx.peer().publickey(),
+                    tx.peer().trust().value(),
+                    tx.peer().trust().isok()
+            );
+            config::PeerServiceConfig::getInstance().removePeer( query_peer.getPublicKey() );
         }
     }
 
@@ -119,21 +134,26 @@ namespace executor{
             // Contract<Account>
         }else if(tx.has_peer()){
             // Contract<Peer>
+            // nothing this transaction
         }
     }
 
     void execute(const Transaction& tx){
         logger::info("executor") << "Executor";
         logger::info("executor")  << "DebugString:"<< tx.DebugString();
-        if(tx.type() == "add"){
+        logger::info("executor") << "tx type(): " << tx.type();
+        std::string type = tx.type();
+        std::transform(cbegin(type), cend(type), begin(type), ::tolower);
+
+        if(type == "add"){
             add(tx);
-        }else if(tx.type() == "transfer"){
+        }else if(type == "transfer"){
             transfer(tx);
-        }else if(tx.type() == "update"){
+        }else if(type == "update"){
             update(tx);
-        }else if(tx.type() == "remove"){
+        }else if(type == "remove"){
             remove(tx);
-        }else if(tx.type() == "contract"){
+        }else if(type == "contract"){
             contract(tx);
         }
     }

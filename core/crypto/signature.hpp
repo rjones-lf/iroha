@@ -23,36 +23,42 @@ limitations under the License.
 
 namespace signature {
 
-  struct KeyPair {
-    std::vector<unsigned char> publicKey;
-    std::vector<unsigned char> privateKey;
-	
-    KeyPair(
-      std::vector<unsigned char>&& pub,
-      std::vector<unsigned char>&& pri
-    ):
-      publicKey(std::move(pub)),
-      privateKey(std::move(pri))
-    {}
-  };
+constexpr size_t PRI_KEY_SIZE = 64;
+constexpr size_t PUB_KEY_SIZE = 32;
+constexpr size_t SIG_SIZE = 64;
+constexpr size_t SEED_SIZE = 32;
 
-  std::string sign(
-    std::string message,
-    KeyPair keyPair
-  );
+using byte_t = unsigned char;
+using byte_array_t = std::vector<byte_t>;
 
-  std::string sign(
-    std::string message,
-    std::string publicKey_b64,
-    std::string privateKey_b64
-  );
+struct KeyPair {
+  byte_array_t publicKey;
+  byte_array_t privateKey;
 
-  bool verify(
-    const std::string &signature_b64,
-    const std::string &message,
-    const std::string &publicKey_b64);
+  KeyPair(byte_array_t&& pub,
+          byte_array_t&& pri) : publicKey(std::move(pub)),
+                           privateKey(std::move(pri)) {}
+};
 
-  KeyPair generateKeyPair();
+std::string sign(const std::string &message, const KeyPair &keyPair);
+
+std::string sign(const std::string &message,
+                 const std::string &publicKey_b64,
+                 const std::string &privateKey_b64);
+
+byte_array_t sign(const std::string &message,
+             const byte_array_t &publicKey,
+             const byte_array_t &privateKey);
+
+bool verify(const std::string &signature_b64,
+            const std::string &message,
+            const std::string &publicKey_b64);
+
+bool verify(const std::string &signature,
+            const byte_array_t &message,
+            const byte_array_t &publicKey);
+
+KeyPair generateKeyPair();
 
 };  // namespace signature
 
