@@ -11,6 +11,13 @@ Build depends on the environment variable `IROHA_HOME` so you need to set it:
 
 `export IROHA_HOME=$(pwd)`
 
+If you have built the project locally, remove external dependencies.
+This is needed because CMake-generated files still contain information about the local environment.
+
+```sh
+rm -rf $IROHA_HOME/external
+```
+
 Run build script and wait for completion. 
 ```
 ${IROHA_HOME}/docker/build.sh

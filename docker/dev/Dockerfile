@@ -62,7 +62,7 @@ RUN apt-get update && apt-get -y upgrade; \
     cd protobuf; \
     (git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue) && \
     ./autogen.sh && \
-    ./configure --prefix=/usr && \
+    ./configure && \
     make -j4 && make install; \
 
     # install grpc
