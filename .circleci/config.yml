@@ -90,6 +90,7 @@ jobs:
             rm -rf $RELEASE
 
       ## At this step we have hyperledger/iroha-docker image, we can test it now
+      
       ## you can use it by tag: 
       ##   hyperledger/iroha-docker:$TAG
       ##

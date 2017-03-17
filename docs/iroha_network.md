@@ -1,4 +1,4 @@
-# How to run network of N iroha nodes without docker swarm?
+# How to run network of N iroha nodes?
 
 1. Make sure you have the latest `iroha-docker` image:
 
@@ -21,7 +21,7 @@
      -d \
      -p 1204:1204 \
      -it \
-     -v /tmp/sumeragi.json:/usr/local/iroha/config/sumeragi.json \
+     -v /tmp/sumeragi.json:/iroha/config/sumeragi.json \
      hyperledger/iroha-docker
    ```
 
@@ -34,7 +34,7 @@
    -it                       -- not necessary but help us to get rid of some errors
                                 i - keep STDIN open even if not attached
                                 t - allocate TTY
-   -v /tmp/sumeragi.json:/usr/local/iroha/config/sumeragi.json 
+   -v /tmp/sumeragi.json:/iroha/config/sumeragi.json 
                              -- mount config from host to container 
                                 (semantics: -v from:to, only absolute paths)
    hyperledger/iroha-docker  -- image tag

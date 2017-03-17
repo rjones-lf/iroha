@@ -17,9 +17,7 @@ Please include a developer certificate with pull requests: https://www.clahub.co
  - [Architecture](./docs/architecture.md)
  - [Build iroha in local environment](./docs/how_to_build.rst)
  - [Using docker to build iroha container](./docker/README.md)
- - [Using docker-compose to setup test network of N nodes on a single computer](./docs/docker_compose.md)
- - [Deploying a network of N nodes using docker swarm](./docs/docker_swarm.md)
- - [Deploying a network of N nodes without docker swarm](./docs/iroha_network.md)
+ - [Deploying a network of N nodes](./docs/iroha_network.md)
 
 # Authors
 

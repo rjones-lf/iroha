@@ -5,25 +5,30 @@ set -o errtrace  # trace ERR through 'time command' and other functions
 set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
 set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
 
+
 if [ -z ${IROHA_HOME} ]; then
     echo "[FATAL] Empty variable IROHA_HOME"
     exit 1
 fi
+
 
 error(){
 	echo "[Error] $1"
 	exit 1
 }
 
+
 SOURCE=${IROHA_HOME}
-BUILD=/tmp/iroha-build
+BUILD=${SOURCE}/build
 TINY=${IROHA_HOME}/docker/tiny
 RELEASE=${TINY}/iroha
 
-mkdir -p ${BUILD}
+
+mkdir -p ${BUILD} || echo "${BUILD} folder exists"
 cd ${BUILD}
 cmake ${IROHA_HOME} -DCMAKE_BUILD_TYPE=Release
 make -j 10
+
 
 # copy libs used by iroha
 LIBS=$(ldd $BUILD/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
@@ -35,6 +40,7 @@ rsync -avr ${IROHA_HOME}/config ${RELEASE} || error "Can not copy release files"
 
 
 docker build -t hyperledger/iroha-docker ${TINY}
+
 
 # clean up
 rm -rf ${TINY}/iroha
