@@ -170,6 +170,8 @@ namespace sumeragi {
         {
             logger::debug("sumeragi") << "Context update!";
             auto peers = config::PeerServiceConfig::getInstance().getPeerList();
+            validatingPeers.clear();
+            validatingPeers.resize( peers.size() );
             std::copy(std::make_move_iterator(peers.begin()),
                       std::make_move_iterator(peers.end()),
                       validatingPeers.begin());
