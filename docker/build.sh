@@ -29,10 +29,14 @@ LIBS=$(ldd $BUILD/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
 mkdir -p $RELEASE/lib
 cp -H $LIBS $RELEASE/lib
 
-rsync -avr ${BUILD}/bin ${RELEASE} && \
-rsync -avr ${TINY}/scripts ${RELEASE} && \
-rsync -avr ${IROHA_HOME}/config ${RELEASE}
+# copy config
+mkdir -p ${RELEASE}/config
+cp ${IROHA_HOME}/config/sumeragi.json ${RELEASE}/config/sumeragi.json
+cp ${IROHA_HOME}/config/config.json ${RELEASE}/config/config.json
 
+
+rsync -avr ${BUILD}/bin ${RELEASE}
+rsync -avr ${TINY}/scripts ${RELEASE}
 
 docker build -t hyperledger/iroha-docker ${TINY}
 
