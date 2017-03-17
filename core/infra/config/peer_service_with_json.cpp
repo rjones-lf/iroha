@@ -208,7 +208,8 @@ std::vector<std::unique_ptr<peer::Node>> PeerServiceConfig::getPeerList() {
   } );
   logger::debug("getPeerList") << std::to_string(nodes.size());
   for(const auto &node : nodes ) {
-      logger::debug("getPeerList") << node->getIP() + " " <<node->getPublicKey();
+      logger::debug("getPeerList") << ("ip: " + node->getIP());
+      logger::debug("getPeerList") << ("pubkey: " + node->getPublicKey() );
   }
   return nodes;
 }

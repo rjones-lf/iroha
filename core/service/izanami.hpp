@@ -45,7 +45,7 @@ namespace izanami {
 
         bool isExistTransactionFromHash( const std::string& );
 
-        void finished();
+        void finish();
         bool isFinished() const;
 
     };

@@ -27,7 +27,7 @@ def make_configs(network):
             if config1 == config2:
                 continue
 
-#            c['group'].append(extract(config2))
+            c['group'].append(extract(config2))
 
         result[id_] = json.dumps(c)
 

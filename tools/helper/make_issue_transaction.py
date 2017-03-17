@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
+# gm = function_name ( dust )
+# ca = command_name lower_case
+# da = datamodel_name lower_case
 (gm, ca, da, index) = sys.argv
 
 cb = (ca[0]).upper() + ca[1:]

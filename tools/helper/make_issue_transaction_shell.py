@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
+# gm = function name ( dust )
+# ca = command name - lowwer_case
 (gm, ca) = sys.argv
 
 cb = (ca[0]).upper() + ca[1:]

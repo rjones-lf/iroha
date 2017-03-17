@@ -20,6 +20,7 @@ limitations under the License.
 #include <atomic>
 #include <deque>
 #include <cmath>
+#include <iterator>
 
 #include <thread_pool.hpp>
 
@@ -168,13 +169,10 @@ namespace sumeragi {
         void update()
         {
             logger::debug("sumeragi") << "Context update!";
-            validatingPeers.clear();
-            {
-                auto peers = config::PeerServiceConfig::getInstance().getPeerList();
-                for (auto &&p : peers) {
-                    validatingPeers.push_back(std::move(p));
-                }
-            }
+            auto peers = config::PeerServiceConfig::getInstance().getPeerList();
+            std::copy(std::make_move_iterator(peers.begin()),
+                      std::make_move_iterator(peers.end()),
+                      validatingPeers.begin());
 
             this->numValidatingPeers = this->validatingPeers.size();
             // maxFaulty = Default to approx. 1/3 of the network.
