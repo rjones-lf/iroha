@@ -27,205 +27,208 @@ limitations under the License.
 #include <vector>
 
 namespace peer {
-    namespace izanami {
-        using Api::TransactionResponse;
+namespace izanami {
+using Api::TransactionResponse;
 
+void setAwkTimer(int const sleepMillisecs,
+                 const std::function<void(void)> &action) {
+  std::thread([action, sleepMillisecs]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+    action();
+  }).join();
+}
 
-        void setAwkTimer(int const sleepMillisecs, const std::function<void(void)> &action) {
-            std::thread([action, sleepMillisecs]() {
-                std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
-                action();
-            }).join();
-        }
+InitializeEvent::InitializeEvent() {
+  now_progress = 0;
+  ::peer::myself::stop();
+}
 
+void InitializeEvent::add_transactionResponse(
+    std::unique_ptr<TransactionResponse> txResponse) {
+  if (now() > txResponse->code())
+    return; // management index of progress is TransactionResponse.code()
 
-        InitializeEvent::InitializeEvent() {
-            now_progress = 0;
-            ::peer::myself::stop();
-        }
+  // make TransactionResponse hash - temporary
+  std::string hash = "";
+  for (auto &&tx : txResponse->transaction()) {
+    hash = hash::sha3_256_hex(hash + tx.hash());
+  }
+  hashes[txResponse->code()].emplace_back(hash);
+  txResponses[hash] = std::move(txResponse);
+}
 
-        void InitializeEvent::add_transactionResponse(std::unique_ptr<TransactionResponse> txResponse) {
-            if (now() > txResponse->code()) return; // management index of progress is TransactionResponse.code()
+const std::vector<std::string> &InitializeEvent::getHashes(uint64_t progress) {
+  return hashes[progress];
+}
 
-            // make TransactionResponse hash - temporary
-            std::string hash = "";
-            for (auto &&tx : txResponse->transaction()) {
-                hash = hash::sha3_256_hex(hash + tx.hash());
-            }
-            hashes[txResponse->code()].emplace_back(hash);
-            txResponses[hash] = std::move(txResponse);
-        }
+const std::unique_ptr<TransactionResponse>
+InitializeEvent::getTransactionResponse(const std::string &hash) {
+  return std::move(txResponses[hash]);
+}
 
-        const std::vector<std::string> &InitializeEvent::getHashes(uint64_t progress) {
-            return hashes[progress];
-        }
+void InitializeEvent::next_progress() {
+  logger::debug("izanami") << "next_progress : " << std::to_string(now());
+  for (auto &&hash : hashes[now()]) {
+    txResponses.erase(hash);
+  }
+  logger::debug("izanami") << "txResponses erase";
+  hashes.erase(now());
+  now_progress++;
+  logger::debug("izanami") << "nexted : " << std::to_string(now());
+}
 
-        const std::unique_ptr<TransactionResponse> InitializeEvent::getTransactionResponse(const std::string &hash) {
-            return std::move(txResponses[hash]);
-        }
+uint64_t InitializeEvent::now() const { return now_progress; }
 
-        void InitializeEvent::next_progress() {
-            logger::debug("izanami") << "next_progress : " << std::to_string(now());
-            for (auto &&hash : hashes[now()]) {
-                txResponses.erase(hash);
-            }
-            logger::debug("izanami") << "txResponses erase";
-            hashes.erase(now());
-            now_progress++;
-            logger::debug("izanami") << "nexted : " << std::to_string(now());
-        }
+void InitializeEvent::storeTxResponse(const std::string &hash) {
+  for (auto &&tx : txResponses[hash]->transaction()) {
+    // WIP repository::transaction::add( tx.hash(), tx );
+  }
+}
 
-        uint64_t InitializeEvent::now() const {
-            return now_progress;
-        }
+void InitializeEvent::executeTxResponse(const std::string &hash) {
+  for (auto &&tx : txResponses[hash]->transaction()) {
+    executor::execute(std::move(tx));
+  }
+}
 
-        void InitializeEvent::storeTxResponse(const std::string &hash) {
-            for (auto &&tx : txResponses[hash]->transaction()) {
-                //WIP repository::transaction::add( tx.hash(), tx );
-            }
-        }
+bool InitializeEvent::isExistTransactionFromHash(const std::string &hash) {
+  for (auto &&tx : txResponses[hash]->transaction())
+    return true;
+  return false;
+}
 
-        void InitializeEvent::executeTxResponse(const std::string &hash) {
-            for (auto &&tx : txResponses[hash]->transaction()) {
-                executor::execute(std::move(tx));
-            }
-        }
+bool InitializeEvent::isFinished() const { return is_finished; }
 
-        bool InitializeEvent::isExistTransactionFromHash(const std::string &hash) {
-            for (auto &&tx : txResponses[hash]->transaction()) return true;
-            return false;
-        }
+void InitializeEvent::finish() {
+  now_progress = 0;
+  txResponses.clear();
+  hashes.clear();
+  is_finished = true;
+}
 
-        bool InitializeEvent::isFinished() const {
-            return is_finished;
-        }
+namespace detail {
+bool isFinishedReceiveAll(InitializeEvent &event) {
+  std::string hash = getCorrectHash(event);
+  if (event.isExistTransactionFromHash(hash))
+    return false;
+  return true;
+}
 
-        void InitializeEvent::finish() {
-            now_progress = 0;
-            txResponses.clear();
-            hashes.clear();
-            is_finished = true;
-        }
+bool isFinishedReceive(InitializeEvent &event) {
+  std::unordered_map<std::string, std::size_t> hash_counter;
+  for (std::string hash : event.getHashes(event.now())) {
+    hash_counter[hash]++;
+  }
+  std::size_t res = 0;
+  for (auto counter : hash_counter) {
+    res = std::max(res, counter.second);
+  }
+  if (res >= 2 * ::peer::service::getMaxFaulty() + 1)
+    return true;
+  return false;
+}
 
-        namespace detail {
-            bool isFinishedReceiveAll(InitializeEvent &event) {
-                std::string hash = getCorrectHash(event);
-                if (event.isExistTransactionFromHash(hash)) return false;
-                return true;
-            }
+std::string getCorrectHash(InitializeEvent &event) {
+  std::unordered_map<std::string, std::size_t> hash_counter;
+  for (std::string hash : event.getHashes(event.now())) {
+    hash_counter[hash]++;
+  }
+  std::size_t res = 0;
+  std::string res_hash;
+  for (auto counter : hash_counter) {
+    if (res < counter.second) {
+      res = counter.second;
+      res_hash = counter.first;
+    }
+  }
+  if (res >= 2 * ::peer::service::getMaxFaulty() + 1)
+    return res_hash;
+  return "";
+}
 
-            bool isFinishedReceive(InitializeEvent &event) {
-                std::unordered_map<std::string, int> hash_counter;
-                for (std::string hash : event.getHashes(event.now())) {
-                    hash_counter[hash]++;
-                }
-                int res = 0;
-                for (auto counter : hash_counter) {
-                    res = std::max(res, counter.second);
-                }
-                if (res >= 2 * ::peer::service::getMaxFaulty() + 1) return true;
-                return false;
-            }
+void storeTransactionResponse(InitializeEvent &event) {
+  std::string hash = getCorrectHash(event);
+  event.storeTxResponse(hash);
+  event.executeTxResponse(hash);
+  event.next_progress();
+}
+}
 
-            std::string getCorrectHash(InitializeEvent &event) {
-                std::unordered_map<std::string, int> hash_counter;
-                for (std::string hash : event.getHashes(event.now())) {
-                    hash_counter[hash]++;
-                }
-                int res = 0;
-                std::string res_hash;
-                for (auto counter : hash_counter) {
-                    if (res < counter.second) {
-                        res = counter.second;
-                        res_hash = counter.first;
-                    }
-                }
-                if (res >= 2 * ::peer::service::getMaxFaulty() + 1) return res_hash;
-                return "";
-            }
+// invoke when receive TransactionResponse.
+void receiveTransactionResponse(TransactionResponse &txResponse) {
+  static InitializeEvent event;
+  logger::debug("izanami") << "in receiveTransactionResponse event = "
+                           << std::to_string(event.now());
+  if (event.isFinished())
+    return;
+  logger::debug("izanami") << "event is not finished";
+  event.add_transactionResponse(
+      std::make_unique<TransactionResponse>(txResponse));
+  if (detail::isFinishedReceive(event)) {
+    logger::debug("izanami") << "is finished receive";
+    if (detail::isFinishedReceiveAll(event)) {
+      logger::debug("izanami") << "is finished receive all";
+      ::peer::transaction::izanami::finished();
+      event.finish();
+      logger::explore("izanami") << "Finished Receive ALl Transaction";
+      logger::explore("izanami") << "Closed Izanami";
+      for (const auto &p : ::peer::service::getPeerList()) {
+        logger::explore("izanami") << ("ip: " + p->ip);
+        logger::explore("izanami") << ("pubkey: " + p->publicKey);
+        logger::explore("izanami")
+            << ("trust: " + std::to_string(p->trustScore));
+      }
+    } else {
+      detail::storeTransactionResponse(event);
+    }
+  }
+  if (!event.isFinished() && txResponse.transaction().empty())
+    setAwkTimer(1000, [&txResponse]() {
+      connection::iroha::PeerService::Izanami::send(::peer::myself::getIp(),
+                                                    txResponse);
+    });
+}
 
-            void storeTransactionResponse(InitializeEvent &event) {
-                std::string hash = getCorrectHash(event);
-                event.storeTxResponse(hash);
-                event.executeTxResponse(hash);
-                event.next_progress();
-            }
-        }
+static ThreadPool pool(ThreadPoolOptions{
+    .threads_count =
+        config::IrohaConfigManager::getInstance().getConcurrency(0),
+    .worker_queue_size =
+        config::IrohaConfigManager::getInstance().getPoolWorkerQueueSize(1024),
+}
 
-        //invoke when receive TransactionResponse.
-        void receiveTransactionResponse(TransactionResponse &txResponse) {
-            static InitializeEvent event;
-            logger::debug("izanami") << "in receiveTransactionResponse event = " << std::to_string(event.now());
-            if (event.isFinished()) return;
-            logger::debug("izanami") << "event is not finished";
-            event.add_transactionResponse(std::make_unique<TransactionResponse>(txResponse));
-            if (detail::isFinishedReceive(event)) {
-                logger::debug("izanami") << "is finished receive";
-                if (detail::isFinishedReceiveAll(event)) {
-                    logger::debug("izanami") << "is finished receive all";
-                    ::peer::transaction::izanami::finished();
-                    event.finish();
-                    logger::explore("izanami") << "Finished Receive ALl Transaction";
-                    logger::explore("izanami") << "Closed Izanami";
-                    for (const auto &p : ::peer::service::getPeerList() ) {
-                        logger::explore("izanami") << ("ip: " + p->getIP());
-                        logger::explore("izanami") << ("pubkey: " + p->getPublicKey());
-                        logger::explore("izanami") << ("trust: " + std::to_string(p->getTrustScore()));
-                    }
-                } else {
-                    detail::storeTransactionResponse(event);
-                }
-            }
-            if (!event.isFinished() && txResponse.transaction().empty())
-                setAwkTimer(1000, [&txResponse]() {
-                    connection::iroha::PeerService::Izanami::send(
-                            ::peer::myself::getIp(),
-                            txResponse
-                    );
-                });
-        }
+                       );
 
+// invoke when initialize Peer that to config Participation on the way
+void startIzanami() {
+  logger::explore("izanami") << "startIzanami";
+  if (config::IrohaConfigManager::getInstance().getActiveStart(false)) {
+    logger::explore("izanami") << "I am Active Start Iroha Peer.";
+    logger::explore("izanami") << "Closed Izanami";
+    return;
+  }
 
-        static ThreadPool pool(
-                ThreadPoolOptions {
-            .threads_count = config::IrohaConfigManager::getInstance()
-                    .getConcurrency(0),
-            .worker_queue_size = config::IrohaConfigManager::getInstance()
-                    .getPoolWorkerQueueSize(1024),
-        }
+  logger::explore("izanami") << "\033[95m+==ーーーーーーーーーー==+\033[0m";
+  logger::explore("izanami") << "\033[95m|+-ーーーーーーーーーー-+|\033[0m";
+  logger::explore("izanami") << "\033[95m||  　　　　　　　　　 ||\033[0m";
+  logger::explore("izanami") << "\033[95m||初回取引履歴構築機構 ||\033[0m";
+  logger::explore("izanami") << "\033[95m||　　　イザナミ　　　　||\033[0m";
+  logger::explore("izanami") << "\033[95m|| 　　　　　　 　　　 ||\033[0m";
+  logger::explore("izanami") << "\033[95m|+-ーーーーーーーーーー-+|\033[0m";
+  logger::explore("izanami") << "\033[95m+==ーーーーーーーーーー==+\033[0m";
+  logger::explore("izanami") << "- 起動/setup";
 
-        );
+  logger::info("izanami") << "My PublicKey is "
+                          << ::peer::myself::getPublicKey();
+  logger::info("izanami") << "My key is " << ::peer::myself::getIp();
 
-        //invoke when initialize Peer that to config Participation on the way
-        void startIzanami() {
-            logger::explore("izanami") << "startIzanami";
-            if (config::IrohaConfigManager::getInstance().getActiveStart(false)) {
-                logger::explore("izanami") << "I am Active Start Iroha Peer.";
-                logger::explore("izanami") << "Closed Izanami";
-                return;
-            }
-
-            logger::explore("izanami") << "\033[95m+==ーーーーーーーーーー==+\033[0m";
-            logger::explore("izanami") << "\033[95m|+-ーーーーーーーーーー-+|\033[0m";
-            logger::explore("izanami") << "\033[95m||  　　　　　　　　　 ||\033[0m";
-            logger::explore("izanami") << "\033[95m||初回取引履歴構築機構 ||\033[0m";
-            logger::explore("izanami") << "\033[95m||　　　イザナミ　　　　||\033[0m";
-            logger::explore("izanami") << "\033[95m|| 　　　　　　 　　　 ||\033[0m";
-            logger::explore("izanami") << "\033[95m|+-ーーーーーーーーーー-+|\033[0m";
-            logger::explore("izanami") << "\033[95m+==ーーーーーーーーーー==+\033[0m";
-            logger::explore("izanami") << "- 起動/setup";
-
-            logger::info("izanami") << "My PublicKey is " << ::peer::myself::getPublicKey();
-            logger::info("izanami") << "My key is " << ::peer::myself::getIp();
-
-
-            connection::iroha::Izanami::Izanagi::receive([](const std::string &from, TransactionResponse &txResponse) {
-                logger::info("izanami") << "receive! Transactions!!";
-                logger::info("izanami") << txResponse.message();
-                std::function<void()> &&task = std::bind(receiveTransactionResponse, txResponse);
-                pool.process(std::move(task));
-            });
-
+  connection::iroha::Izanami::Izanagi::receive(
+      [](const std::string &from, TransactionResponse &txResponse) {
+        logger::info("izanami") << "receive! Transactions!!";
+        logger::info("izanami") << txResponse.message();
+        std::function<void()> &&task =
+            std::bind(receiveTransactionResponse, txResponse);
+        pool.process(std::move(task));
+      });
         }
 
     }

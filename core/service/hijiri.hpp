@@ -17,24 +17,20 @@ limitations under the License.
 #ifndef __CORE_HIJIRI_SERVICE_HPP__
 #define __CORE_HIJIRI_SERVICE_HPP__
 
-
-#include <vector>
-#include <set>
 #include <map>
 #include <queue>
-
-
+#include <set>
+#include <vector>
 
 namespace peer {
-    namespace hijiri {
-        // This is reputation System.
+namespace hijiri {
+// This is reputation System.
 
-
-        // check are broken? peer
-        void check(const std::string &ip); // void checkBrokenPeer(const std::string &ip);
-        // [WIPn] does we need it? void checkAll();
-    }
+// check are broken? peer
+void check(
+    const std::string &ip); // void checkBrokenPeer(const std::string &ip);
+                            // [WIPn] does we need it? void checkAll();
 }
-
+}
 
 #endif

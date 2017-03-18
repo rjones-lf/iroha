@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
             1.0,
             false
     );
-    ::peer::transaction::izanami::started( peer );
+    ::peer::transaction::izanami::start(peer);
     return 0;
 }
 

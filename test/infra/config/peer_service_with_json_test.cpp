@@ -27,9 +27,9 @@ limitations under the License.
 TEST(peer_service_with_json_test, initialize_peer_test) {
   peer::Nodes peers = ::peer::service::getPeerList();
   for (auto&& peer : peers) {
-    std::cout << peer->getIP() << std::endl;
-    std::cout << peer->getPublicKey() << std::endl;
-    std::cout << peer->getTrustScore() << std::endl;
+    std::cout << peer->ip << std::endl;
+    std::cout << peer->publicKey << std::endl;
+    std::cout << peer->trustScore << std::endl;
   }
   std::cout << "API:: address = " << Api::Peer::default_instance().address()
             << std::endl;
@@ -53,9 +53,9 @@ TEST(peer_service_with_json_test, add_peer_test) {
   ASSERT_TRUE(::peer::transaction::executor::add(peer4));
   peer::Nodes peers = ::peer::service::getPeerList();
   for (auto&& peer : peers) {
-    std::cout << peer->getIP() << std::endl;
-    std::cout << peer->getPublicKey() << std::endl;
-    std::cout << peer->getTrustScore() << std::endl;
+    std::cout << peer->ip << std::endl;
+    std::cout << peer->publicKey << std::endl;
+    std::cout << peer->trustScore << std::endl;
   }
   ASSERT_TRUE(peers.size() == n + 3);
 }
@@ -74,12 +74,12 @@ TEST(peer_service_with_json_test, update_peer_test) {
   ASSERT_FALSE(::peer::transaction::executor::update(upd_ng_key, peer_ng));
   peer::Nodes peers = ::peer::service::getPeerList();
   for (auto&& peer : peers) {
-    std::cout << peer->getIP() << std::endl;
-    std::cout << peer->getPublicKey() << std::endl;
-    std::cout << peer->getTrustScore() << std::endl;
-    if (peer->getPublicKey() == upd_key) {
-      ASSERT_TRUE(peer->getTrustScore() == -0.5);
-      ASSERT_TRUE(peer->getIP() == upd_ip);
+    std::cout << peer->ip << std::endl;
+    std::cout << peer->publicKey << std::endl;
+    std::cout << peer->trustScore << std::endl;
+    if (peer->publicKey == upd_key) {
+      ASSERT_TRUE(peer->trustScore == -0.5);
+      ASSERT_TRUE(peer->ip == upd_ip);
     }
   }
   ASSERT_TRUE(peers.size() == n);
@@ -94,9 +94,9 @@ TEST(peer_service_with_json_test, remove_peer_test) {
   ASSERT_FALSE(::peer::transaction::executor::remove(rm_key));
   peer::Nodes peers = ::peer::service::getPeerList();
   for (auto&& peer : peers) {
-    std::cout << peer->getIP() << std::endl;
-    std::cout << peer->getPublicKey() << std::endl;
-    std::cout << peer->getTrustScore() << std::endl;
+    std::cout << peer->ip << std::endl;
+    std::cout << peer->publicKey << std::endl;
+    std::cout << peer->trustScore << std::endl;
   }
   ASSERT_TRUE(peers.size() == n - 1);
 }
@@ -105,8 +105,8 @@ TEST(peer_service_with_json_test, leader_peer_check_test) {
   peer::Nodes peers = ::peer::service::getPeerList();
   ASSERT_FALSE(::peer::myself::isLeader());
   for (auto&& peer : peers) {
-    if (peer->getPublicKey() != ::peer::myself::getPublicKey()) {
-      ASSERT_TRUE(::peer::transaction::executor::remove(peer->getPublicKey()));
+    if (peer->publicKey != ::peer::myself::getPublicKey()) {
+      ASSERT_TRUE(::peer::transaction::executor::remove(peer->publicKey));
     }
   }
   ASSERT_TRUE(::peer::myself::isLeader());

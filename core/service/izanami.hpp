@@ -14,65 +14,67 @@ limitations under the License.
 #ifndef __CORE_IZANAMI_SERVICE_HPP__
 #define __CORE_IZANAMI_SERVICE_HPP__
 
-#include <vector>
-#include <string>
-#include <memory>
 #include <infra/protobuf/api.pb.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace peer {
-    namespace izanami {
-        using Api::TransactionResponse;
+namespace izanami {
+using Api::TransactionResponse;
 
-        class InitializeEvent {
-        private:
-            uint64_t now_progress;
-            std::unordered_map<std::string, std::unique_ptr<TransactionResponse> > txResponses;
-            std::unordered_map<uint64_t, std::vector<std::string>> hashes;
-            bool is_finished;
-        public:
+class InitializeEvent {
+private:
+  uint64_t now_progress;
+  std::unordered_map<std::string, std::unique_ptr<TransactionResponse>>
+      txResponses;
+  std::unordered_map<uint64_t, std::vector<std::string>> hashes;
+  bool is_finished;
 
-            InitializeEvent();
+public:
+  InitializeEvent();
 
-            void add_transactionResponse(std::unique_ptr<TransactionResponse>);
+  void add_transactionResponse(std::unique_ptr<TransactionResponse>);
 
-            const std::vector<std::string> &getHashes(uint64_t);
+  const std::vector<std::string> &getHashes(uint64_t);
 
-            const std::unique_ptr<TransactionResponse> getTransactionResponse(const std::string &);
+  const std::unique_ptr<TransactionResponse>
+  getTransactionResponse(const std::string &);
 
-            void next_progress();
+  void next_progress();
 
-            uint64_t now() const;
+  uint64_t now() const;
 
-            void storeTxResponse(const std::string &);
+  void storeTxResponse(const std::string &);
 
-            void executeTxResponse(const std::string &);
+  void executeTxResponse(const std::string &);
 
-            bool isExistTransactionFromHash(const std::string &);
+  bool isExistTransactionFromHash(const std::string &);
 
-            void finish();
+  void finish();
 
-            bool isFinished() const;
+  bool isFinished() const;
+};
 
-        };
+namespace detail {
+bool isFinishedReceiveAll(InitializeEvent &event);
 
-        namespace detail {
-            bool isFinishedReceiveAll(InitializeEvent &event);
+bool isFinishedReceive(InitializeEvent &);
 
-            bool isFinishedReceive(InitializeEvent &);
+std::string getCorrectHash(InitializeEvent &);
 
-            std::string getCorrectHash(InitializeEvent &);
+void storeTransactionResponse(InitializeEvent &);
+}
 
-            void storeTransactionResponse(InitializeEvent &);
-        }
+// invoke when receive TransactionResponse.
+void receiveTransactionResponse(TransactionResponse &);
 
-        //invoke when receive TransactionResponse.
-        void receiveTransactionResponse(TransactionResponse &);
+// invoke when initialize Peer that to config Participation on the way
+void startIzanami();
 
-        //invoke when initialize Peer that to config Participation on the way
-        void startIzanami();
-
-        void setAwkTimer(int const sleepMillisecs, const std::function<void(void)> &action);
-    }
+void setAwkTimer(int const sleepMillisecs,
+                 const std::function<void(void)> &action);
+}
 }
 
 #endif
