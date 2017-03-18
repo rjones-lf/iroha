@@ -43,7 +43,7 @@ protected:
 
   double getMaxTrustScore();
 
-  virtual std::string getConfigName();
+  virtual std::string getConfigName() override;
 };
 }
 

@@ -34,31 +34,31 @@ PeerServiceConfig& PeerServiceConfig::getInstance() {
 }
 
 std::string PeerServiceConfig::getMyPublicKeyWithDefault(const std::string& defaultValue) {
-  auto config = this->getConfigData();
+  auto config = getConfigData();
   if (!config.is_null()) {
-    return this->getConfigData()["me"].value("publicKey", defaultValue);
+    return getConfigData()["me"].value("publicKey", defaultValue);
   }
   return defaultValue;
 }
 
 std::string PeerServiceConfig::getMyPrivateKeyWithDefault(const std::string& defaultValue) {
-  auto config = this->getConfigData();
+  auto config = getConfigData();
   if (!config.is_null()) {
-    return this->getConfigData()["me"].value("privateKey", defaultValue);
+    return getConfigData()["me"].value("privateKey", defaultValue);
   }
   return defaultValue;
 }
 
 std::string PeerServiceConfig::getMyIpWithDefault(const std::string& defaultValue) {
-  auto config = this->getConfigData();
+  auto config = getConfigData();
   if (!config.is_null()) {
-    return this->getConfigData()["me"].value("ip", defaultValue);
+    return getConfigData()["me"].value("ip", defaultValue);
   }
   return defaultValue;
 }
 
 double PeerServiceConfig::getMaxTrustScoreWithDefault(double defaultValue) {
-  return this->getConfigData().value("max_trust_score", defaultValue);
+  return getConfigData().value("max_trust_score", defaultValue);
 }
 
 void PeerServiceConfig::parseConfigDataFromString(std::string&& jsonStr) {
@@ -82,7 +82,7 @@ double PeerServiceConfig::getMaxTrustScore() {
 }
 
 std::vector<json> PeerServiceConfig::getGroup() {
-  auto config = this->getConfigData();
+  auto config = getConfigData();
   if (!config.is_null()) {
      return getConfigData()["group"].get<std::vector<json>>();
   }
