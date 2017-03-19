@@ -31,20 +31,23 @@ limitations under the License.
 
 namespace sumeragi {
 
-    using Api::ConsensusEvent;
+  using Api::ConsensusEvent;
 
-    void initializeSumeragi();
-    void loop();
+  void initializeSumeragi();
 
-    void getNextOrder(
-        const ConsensusEvent& event
-    );
+  void loop();
 
-    void processTransaction(ConsensusEvent& event);
+  void getNextOrder(
+      const ConsensusEvent &event
+  );
 
-    void panic(const ConsensusEvent& event);
-    void setAwkTimer(const int sleepMillisecs, const std::function<void(void)> action);
-    void determineConsensusOrder(/*std::vector<double> trustVector*/);
+  void processTransaction(ConsensusEvent &event);
+
+  void panic(const ConsensusEvent &event);
+
+  void setAwkTimer(const int sleepMillisecs, const std::function<void(void)> action);
+
+  void determineConsensusOrder(/*std::vector<double> trustVector*/);
 
 };  // namespace sumeragi
 

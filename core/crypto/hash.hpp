@@ -22,6 +22,7 @@ limitations under the License.
 namespace hash {
 
   std::string sha3_256_hex(std::string message);
+
   std::string sha3_512_hex(std::string message);
 
 };

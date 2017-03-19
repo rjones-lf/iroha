@@ -23,99 +23,111 @@ limitations under the License.
 
 namespace peer {
 
-inline static const std::string defaultIP() { return ""; }
+  inline static const std::string defaultIP() { return ""; }
 
-inline static const std::string defaultPubKey() { return ""; }
+  inline static const std::string defaultPubKey() { return ""; }
 
-struct Node {
-  std::string ip;
-  std::string publicKey;
-  double trustScore;
-  bool isok;
+  struct Node {
+    std::string ip;
+    std::string publicKey;
+    double trustScore;
+    bool isok;
 
-  Node(std::string myIP = defaultIP(), std::string myPubKey = defaultPubKey(),
-       double myTrustScore = 1.0, bool isok = true)
-      : ip(myIP), publicKey(myPubKey), trustScore(myTrustScore), isok(isok) {}
-  bool isDefaultIP() const { return ip == defaultIP(); }
-  bool isDefaultPubKey() const { return publicKey == defaultPubKey(); }
-};
+    Node(std::string myIP = defaultIP(), std::string myPubKey = defaultPubKey(),
+         double myTrustScore = 1.0, bool isok = true)
+        : ip(myIP), publicKey(myPubKey), trustScore(myTrustScore), isok(isok) {}
 
-using Nodes = std::vector<std::shared_ptr<Node>>;
+    bool isDefaultIP() const { return ip == defaultIP(); }
 
-namespace myself {
+    bool isDefaultPubKey() const { return publicKey == defaultPubKey(); }
+  };
 
-std::string getPublicKey();
-std::string getPrivateKey();
-std::string getIp();
+  using Nodes = std::vector<std::shared_ptr<Node>>;
 
-bool isActive();
-void activate();
-void stop();
+  namespace myself {
+
+    std::string getPublicKey();
+
+    std::string getPrivateKey();
+
+    std::string getIp();
+
+    bool isActive();
+
+    void activate();
+
+    void stop();
 
 // equatl to isSumeragi
-bool isLeader();
+    bool isLeader();
 
-} // namespace myself
+  } // namespace myself
 
-namespace service {
+  namespace service {
 
-void initialize();
+    void initialize();
 
-size_t getMaxFaulty();
-Nodes getPeerList();
-std::vector<std::string> getIpList();
+    size_t getMaxFaulty();
+
+    Nodes getPeerList();
+
+    std::vector<std::string> getIpList();
 
 // is exist which peer?
-bool isExistIP(const std::string &);
-bool isExistPublicKey(const std::string &);
+    bool isExistIP(const std::string &);
 
-Nodes::iterator findPeerIP(const std::string &ip);
-Nodes::iterator findPeerPublicKey(const std::string &publicKey);
-std::shared_ptr<peer::Node> leader();
+    bool isExistPublicKey(const std::string &);
 
-} // namespace service
+    Nodes::iterator findPeerIP(const std::string &ip);
 
-namespace transaction {
-namespace izanami {
+    Nodes::iterator findPeerPublicKey(const std::string &publicKey);
 
-void finished();
+    std::shared_ptr<peer::Node> leader();
+
+  } // namespace service
+
+  namespace transaction {
+    namespace izanami {
+
+      void finished();
+
 // invoke next to addPeer
-bool start(const Node &peer);
+      bool start(const Node &peer);
 
-} // namespace izanami
+    } // namespace izanami
 
-namespace isssue {
+    namespace isssue {
 
 // invoke to issue transaction
-void add(const peer::Node &); // void toIssue_addPeer( const peer::Node& );
-void distruct(const std::string &); // void toIssue_distructPeer( const
-                                    // std::string &publicKey );
-void remove(const std::string
-                &); // void toIssue_removePeer( const std::string &publicKey );
-void credit(const std::string
-                &); // void toIssue_creditPeer( const std::string &publicKey );
-} // namespace isssue
+      void add(const peer::Node &); // void toIssue_addPeer( const peer::Node& );
+      void distruct(const std::string &); // void toIssue_distructPeer( const
+      // std::string &publicKey );
+      void remove(const std::string
+                  &); // void toIssue_removePeer( const std::string &publicKey );
+      void credit(const std::string
+                  &); // void toIssue_creditPeer( const std::string &publicKey );
+    } // namespace isssue
 
-namespace executor {
+    namespace executor {
 // invoke when execute transaction
-bool add(const peer::Node &); // bool addPeer( const peer::Node& );
-bool remove(
-    const std::string &); // bool removePeer( const std::string &publicKey );
-bool update(const std::string &,
-            const peer::Node &); // bool updatePeer( const std::string&
-                                 // publicKey, const peer::Node& peer );
-} // namespace executor
+      bool add(const peer::Node &); // bool addPeer( const peer::Node& );
+      bool remove(
+          const std::string &); // bool removePeer( const std::string &publicKey );
+      bool update(const std::string &,
+                  const peer::Node &); // bool updatePeer( const std::string&
+      // publicKey, const peer::Node& peer );
+    } // namespace executor
 
-namespace validator {
+    namespace validator {
 // invoke when validator transaction
-bool add(const peer::Node &); // bool validate_addPeer( const peer::Node& );
-bool remove(const std::string
-                &); // bool validate_removePeer( const std::string &publicKey );
-bool update(const std::string &,
-            const peer::Node &); // bool validate_updatePeer( const std::string&
-                                 // publicKey, const peer::Node& peer );
-} // namespace validator
-} // namespace transaction
+      bool add(const peer::Node &); // bool validate_addPeer( const peer::Node& );
+      bool remove(const std::string
+                  &); // bool validate_removePeer( const std::string &publicKey );
+      bool update(const std::string &,
+                  const peer::Node &); // bool validate_updatePeer( const std::string&
+      // publicKey, const peer::Node& peer );
+    } // namespace validator
+  } // namespace transaction
 } // namespace peer
 
 #endif

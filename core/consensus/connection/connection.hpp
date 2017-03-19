@@ -27,130 +27,130 @@ limitations under the License.
 
 namespace connection {
 
-    using Api::ConsensusEvent;
-    using Api::Transaction;
-    using Api::Query;
-    using Api::TransactionResponse;
+  using Api::ConsensusEvent;
+  using Api::Transaction;
+  using Api::Query;
+  using Api::TransactionResponse;
 
 
-    struct Config {
-        std::string name;
-        std::string ip_addr;
-        std::string port;
+  struct Config {
+    std::string name;
+    std::string ip_addr;
+    std::string port;
+  };
+
+  void initialize_peer();
+
+  namespace iroha {
+    namespace Sumeragi {
+
+      namespace Verify {
+
+        bool send(
+            const std::string &ip,
+            const ConsensusEvent &msg
+        );
+
+        bool sendAll(const ConsensusEvent &msg);
+
+        bool receive(const std::function<void(
+            const std::string &,
+            ConsensusEvent &)
+        > &callback);
+
+      };
+
+      namespace Torii {
+
+        bool receive(const std::function<void(
+            const std::string &,
+            Transaction &)
+        > &callback);
+
+      };
+      // This only reply pong.
+      namespace Kagami {}
     };
 
-    void initialize_peer();
+    namespace PeerService {
 
-    namespace iroha {
-        namespace Sumeragi {
+      namespace Sumeragi {
 
-            namespace Verify {
+        bool send(
+            const std::string &ip,
+            const Transaction &transaction
+        );
 
-                bool send(
-                        const std::string &ip,
-                        const ConsensusEvent &msg
-                );
+        bool ping(
+            const std::string &ip
+        );
 
-                bool sendAll(const ConsensusEvent &msg);
+      }
 
-                bool receive(const std::function<void(
-                    const std::string &,
-                    ConsensusEvent &)
-                > &callback);
-
-            };
-
-            namespace Torii {
-
-                bool receive(const std::function<void(
-                    const std::string &,
-                    Transaction&)
-                > &callback);
-
-            };
-            // This only reply pong.
-            namespace Kagami{}
-        };
-
-        namespace PeerService {
-
-            namespace Sumeragi {
-
-                bool send(
-                        const std::string &ip,
-                        const Transaction &transaction
-                );
-
-                bool ping(
-                        const std::string &ip
-                );
-
-            }
-
-            namespace Izanami {
-                bool send(
-                        const std::string& ip,
-                        const TransactionResponse &txResponse
-                );
-            }
-        }
-
-        namespace Izanami {
-            namespace Izanagi {
-                bool receive(const std::function<void(
-                        const std::string &,
-                        TransactionResponse&)
-                > &callback);
-            }
-        }
-
-        namespace TransactionRepository {
-
-            namespace find {
-
-                bool receive(const std::function<void(
-                        const std::string &,
-                        const Query &)
-                > &callback);
-
-            };
-
-            namespace fetch {
-
-                bool receive(const std::function<void(
-                        const std::string &,
-                        const Query &)
-                > &callback);
-
-            };
-
-            namespace fetchStream {
-
-                bool receive(const std::function<void(
-                        const std::string &,
-                        const Query &)
-                > &callback);
-
-            };
-
-        }
-
-        namespace AssetRepository {
-
-            namespace find {
-
-                bool receive(const std::function<void(
-                        const std::string &,
-                        const Query &)
-                > &callback);
-
-            };
-        };
+      namespace Izanami {
+        bool send(
+            const std::string &ip,
+            const TransactionResponse &txResponse
+        );
+      }
     }
 
-    int run();
+    namespace Izanami {
+      namespace Izanagi {
+        bool receive(const std::function<void(
+            const std::string &,
+            TransactionResponse &)
+        > &callback);
+      }
+    }
 
-    void finish();
+    namespace TransactionRepository {
+
+      namespace find {
+
+        bool receive(const std::function<void(
+            const std::string &,
+            const Query &)
+        > &callback);
+
+      };
+
+      namespace fetch {
+
+        bool receive(const std::function<void(
+            const std::string &,
+            const Query &)
+        > &callback);
+
+      };
+
+      namespace fetchStream {
+
+        bool receive(const std::function<void(
+            const std::string &,
+            const Query &)
+        > &callback);
+
+      };
+
+    }
+
+    namespace AssetRepository {
+
+      namespace find {
+
+        bool receive(const std::function<void(
+            const std::string &,
+            const Query &)
+        > &callback);
+
+      };
+    };
+  }
+
+  int run();
+
+  void finish();
 
 };  // end connection
 

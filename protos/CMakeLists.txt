@@ -5,14 +5,14 @@ execute_process(COMMAND bash "-c" "cd $IROHA_HOME/protos; protoc  --cpp_out=${PR
 execute_process(COMMAND bash "-c" "cd $IROHA_HOME/protos; protoc -I./  --grpc_out=${PROTOBUF_SRC_DIR}/ --plugin=protoc-gen-grpc=/usr/local/bin/grpc_cpp_plugin *.proto")
 
 add_library(event_with_grpc STATIC
-    ${PROTOBUF_SRC_DIR}/api.grpc.pb.cc
-    ${PROTOBUF_SRC_DIR}/api.pb.cc
-)
+        ${PROTOBUF_SRC_DIR}/api.grpc.pb.cc
+        ${PROTOBUF_SRC_DIR}/api.pb.cc
+        )
 
 target_link_libraries(event_with_grpc
-    grpc++
-    grpc++_reflection
-    protobuf
-    ed25519
-    hash
-)
+        grpc++
+        grpc++_reflection
+        protobuf
+        ed25519
+        hash
+        )

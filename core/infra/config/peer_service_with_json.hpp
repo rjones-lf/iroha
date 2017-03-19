@@ -25,26 +25,33 @@ limitations under the License.
 
 namespace config {
 
-class PeerServiceConfig : config::AbstractConfigManager {
- private:
-  PeerServiceConfig();
-protected:
-  void parseConfigDataFromString(std::string&& jsonStr) override;
+  class PeerServiceConfig : config::AbstractConfigManager {
+  private:
+    PeerServiceConfig();
 
- public:
+  protected:
+    void parseConfigDataFromString(std::string &&jsonStr) override;
 
-  std::string getMyPublicKeyWithDefault(const std::string& defaultValue);
-  std::string getMyPrivateKeyWithDefault(const std::string& defaultValue);
-  std::string getMyIpWithDefault(const std::string& defaultValue);
-  double getMaxTrustScoreWithDefault(double defaultValue);
-  size_t getMaxFaultyScoreWithDefault(size_t defaultValue);
-  std::vector<json> getGroup();
-  static PeerServiceConfig &getInstance();
+  public:
 
-  double getMaxTrustScore();
+    std::string getMyPublicKeyWithDefault(const std::string &defaultValue);
 
-  virtual std::string getConfigName() override;
-};
+    std::string getMyPrivateKeyWithDefault(const std::string &defaultValue);
+
+    std::string getMyIpWithDefault(const std::string &defaultValue);
+
+    double getMaxTrustScoreWithDefault(double defaultValue);
+
+    size_t getMaxFaultyScoreWithDefault(size_t defaultValue);
+
+    std::vector<json> getGroup();
+
+    static PeerServiceConfig &getInstance();
+
+    double getMaxTrustScore();
+
+    virtual std::string getConfigName() override;
+  };
 }
 
 #endif  // PEER_SERVICE_WITH_JSON_HPP

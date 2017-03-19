@@ -20,45 +20,45 @@ limitations under the License.
 #include <vector>
 
 namespace convert_string {
-std::string to_string(const std::vector<std::string> &vs) {
-  std::string ret = "[";
-  for (std::size_t i = 0; i < vs.size(); i++) {
-    if (i)
-      ret += ", ";
-    ret += vs[i];
-  }
-  ret += "]";
-  return ret;
-}
-
-std::string stringifyVector(const std::vector<std::string> &vs) {
-  std::string ret;
-  for (std::size_t i = 0; i < vs.size(); i++) {
-    ret += "[" + std::to_string(vs[i].size()) + "]";
-    ret += vs[i];
-  }
-  return ret;
-}
-
-std::vector<std::string> parseVector(const std::string &s) {
-  std::vector<std::string> ret;
-  const char* cstr = s.c_str();
-  const std::size_t size = s.size();
-  for (std::size_t index = 0; index < size;) {
-    if (s[index] == '[') {
-      std::string buf;
-      index++;
-      char* e = nullptr;
-      int num = std::strtol(&cstr[index], &e, 10);
-      index += e - &cstr[index];
-      index++;
-      for (int k = index; k < static_cast<int>(index) + num; k++) {
-        buf += cstr[k];
-      }
-      ret.push_back(buf);
-      index += num;
+  std::string to_string(const std::vector<std::string> &vs) {
+    std::string ret = "[";
+    for (std::size_t i = 0; i < vs.size(); i++) {
+      if (i)
+        ret += ", ";
+      ret += vs[i];
     }
+    ret += "]";
+    return ret;
   }
-  return ret;
-}
+
+  std::string stringifyVector(const std::vector<std::string> &vs) {
+    std::string ret;
+    for (std::size_t i = 0; i < vs.size(); i++) {
+      ret += "[" + std::to_string(vs[i].size()) + "]";
+      ret += vs[i];
+    }
+    return ret;
+  }
+
+  std::vector<std::string> parseVector(const std::string &s) {
+    std::vector<std::string> ret;
+    const char *cstr = s.c_str();
+    const std::size_t size = s.size();
+    for (std::size_t index = 0; index < size;) {
+      if (s[index] == '[') {
+        std::string buf;
+        index++;
+        char *e = nullptr;
+        int num = std::strtol(&cstr[index], &e, 10);
+        index += e - &cstr[index];
+        index++;
+        for (int k = index; k < static_cast<int>(index) + num; k++) {
+          buf += cstr[k];
+        }
+        ret.push_back(buf);
+        index += num;
+      }
+    }
+    return ret;
+  }
 }

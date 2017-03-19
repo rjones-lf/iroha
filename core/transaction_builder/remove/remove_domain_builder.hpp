@@ -24,62 +24,64 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Remove<type_signatures::Domain>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Remove<type_signatures::Domain>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Remove<Domain>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string sender) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Remove<Domain>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(sender);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(sender);
-    return *this;
-  }
 
-  TransactionBuilder& setDomain(Api::Domain object) {
-    if (_isSetDomain) {
-      throw exception::txbuilder::DuplicateSetArgmentException("Remove<Domain>",
-                                                               "Domain");
+    TransactionBuilder &setDomain(Api::Domain object) {
+      if (_isSetDomain) {
+        throw exception::txbuilder::DuplicateSetArgmentException("Remove<Domain>",
+                                                                 "Domain");
+      }
+      _isSetDomain = true;
+      _domain = std::move(object);
+      return *this;
     }
-    _isSetDomain = true;
-    _domain = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException("Remove<Domain>",
-                                                              unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException("Remove<Domain>",
+                                                                unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_type("Remove");
+      auto ptr = std::make_unique<Api::Domain>();
+      ptr->CopyFrom(_domain);
+      ret.set_allocated_domain(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_type("Remove");
-    auto ptr = std::make_unique<Api::Domain>();
-    ptr->CopyFrom(_domain);
-    ret.set_allocated_domain(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetDomain) ret += std::string(" ") + "Domain";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetDomain) ret += std::string(" ") + "Domain";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  Api::Domain _domain;
+    std::string _senderPublicKey;
+    Api::Domain _domain;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetDomain = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetDomain = false;
+  };
 }
 
 #endif

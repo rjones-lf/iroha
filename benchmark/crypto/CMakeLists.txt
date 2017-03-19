@@ -1,21 +1,21 @@
 include_directories(
-  ${PROJECT_SOURCE_DIR}/core
+        ${PROJECT_SOURCE_DIR}/core
 )
 
 # hash benchmark
 add_executable(hash_benchmark
-  hash.cpp
-)
+        hash.cpp
+        )
 target_link_libraries(hash_benchmark
-  benchmark
-  hash
-)
+        benchmark
+        hash
+        )
 
 
 # base64 benchmark
 add_executable(base64_benchmark
-  base64.cpp
-)
+        base64.cpp
+        )
 target_link_libraries(base64_benchmark
-  benchmark
-)
+        benchmark
+        )

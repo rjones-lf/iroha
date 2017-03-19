@@ -17,7 +17,6 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <infra/protobuf/api.pb.h>
 #include <transaction_builder/transaction_builder.hpp>
-#include <util/exception.hpp>
 
 using txbuilder::TransactionBuilder;
 using type_signatures::Add;
@@ -39,9 +38,9 @@ TEST(transaction_builder, create_add_domain) {
   const auto name = "name";
 
   auto txDomain = TransactionBuilder<Add<Domain>>()
-    .setSenderPublicKey(senderPublicKey)
-    .setDomain(txbuilder::createDomain(ownerPublicKey, name))
-    .build();
+      .setSenderPublicKey(senderPublicKey)
+      .setDomain(txbuilder::createDomain(ownerPublicKey, name))
+      .build();
 
   ASSERT_STREQ(txDomain.senderpubkey().c_str(), senderPublicKey);
   ASSERT_STREQ(txDomain.type().c_str(), commandType);
@@ -56,14 +55,14 @@ TEST(transaction_builder, create_add_account) {
   const auto publicKey = "public key";
   const auto name = "name";
   const std::vector<std::string> assets = {
-    "asset1",
-    "asset2"
+      "asset1",
+      "asset2"
   };
 
   auto txAccount = TransactionBuilder<Add<Account>>()
-    .setSenderPublicKey(senderPublicKey)
-    .setAccount(txbuilder::createAccount(publicKey, name, assets))
-    .build();
+      .setSenderPublicKey(senderPublicKey)
+      .setAccount(txbuilder::createAccount(publicKey, name, assets))
+      .build();
 
   ASSERT_STREQ(txAccount.senderpubkey().c_str(), senderPublicKey);
   ASSERT_STREQ(txAccount.type().c_str(), commandType);
@@ -93,9 +92,9 @@ TEST(transaction_builder, create_add_asset) {
       txbuilder::createAsset(domainID, name, value, scName);
 
   auto txAsset = TransactionBuilder<Add<Asset>>()
-                     .setSenderPublicKey(senderPublicKey)
-                     .setAsset(std::move(asset))
-                     .build();
+      .setSenderPublicKey(senderPublicKey)
+      .setAsset(std::move(asset))
+      .build();
 
   // Verify
   ASSERT_STREQ(txAsset.senderpubkey().c_str(), senderPublicKey);
@@ -114,15 +113,15 @@ TEST(transaction_builder, create_add_asset) {
 TEST(transaction_builder, create_add_peer) {
 
   auto peer = txbuilder::createPeer(
-    "publickey",
-    "address",
-    txbuilder::createTrust(1.23, true)
+      "publickey",
+      "address",
+      txbuilder::createTrust(1.23, true)
   );
 
   auto txPeer = TransactionBuilder<Add<Peer>>()
-    .setSenderPublicKey(senderPublicKey)
-    .setPeer(std::move(peer))
-    .build();
+      .setSenderPublicKey(senderPublicKey)
+      .setPeer(std::move(peer))
+      .build();
 
   // Verify
   ASSERT_STREQ(txPeer.senderpubkey().c_str(), senderPublicKey);
@@ -132,22 +131,22 @@ TEST(transaction_builder, create_add_peer) {
   ASSERT_STREQ(obj.publickey().c_str(), "publickey");
   ASSERT_STREQ(obj.address().c_str(), "address");
   ASSERT_TRUE(obj.trust().value() == 1.23);
-  ASSERT_TRUE(obj.trust().isok()  == true);
+  ASSERT_TRUE(obj.trust().isok() == true);
 }
 
 TEST(transaction_builder, create_add_simpleasset) {
 
   auto simpleAsset = txbuilder::createSimpleAsset(
-    "domainID",
-    "name",
-    txbuilder::createValueInt(123456),
-    "contract_func"
+      "domainID",
+      "name",
+      txbuilder::createValueInt(123456),
+      "contract_func"
   );
 
   auto txSimpleAsset = TransactionBuilder<Add<SimpleAsset>>()
-    .setSenderPublicKey(senderPublicKey)
-    .setSimpleAsset(std::move(simpleAsset))
-    .build();
+      .setSenderPublicKey(senderPublicKey)
+      .setSimpleAsset(std::move(simpleAsset))
+      .build();
 
   // Verify
   ASSERT_STREQ(txSimpleAsset.senderpubkey().c_str(), senderPublicKey);

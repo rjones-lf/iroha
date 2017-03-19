@@ -33,8 +33,12 @@ namespace tag = jni_constants;
  * from Java exec cannot be caught.
  */
 
-TEST(SmartContractSample, weightedRate) {
-  virtual_machine::initializeVM(PackageName, ContractName);
-  virtual_machine::invokeFunction(PackageName, ContractName, "testMain");
-  virtual_machine::finishVM(PackageName, ContractName);
+TEST(SmartContractSample, weightedRate
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testMain");
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

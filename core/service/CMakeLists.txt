@@ -1,38 +1,38 @@
 ADD_LIBRARY(executor STATIC
-    executor.cpp
-)
+        executor.cpp
+        )
 target_link_libraries(executor
-    peer_service
-    core_repository
-)
+        peer_service
+        core_repository
+        )
 
 ADD_LIBRARY(izanami STATIC
-    izanami.cpp
-)
+        izanami.cpp
+        )
 
 target_link_libraries(izanami
-    hash
-    thread_pool
-    config_manager
-    peer_service
-    executor
-    connection_with_grpc
-    transaction_repository
-)
+        hash
+        thread_pool
+        config_manager
+        peer_service
+        executor
+        connection_with_grpc
+        transaction_repository
+        )
 
 ADD_LIBRARY(peer_service STATIC
-    peer_service.cpp
-    hijiri.cpp
-)
+        peer_service.cpp
+        hijiri.cpp
+        )
 
 target_link_libraries(peer_service
-    exception
-    logger
-    config_manager
-    transaction_builder
-    connection_with_grpc
-    transaction_repository
+        exception
+        logger
+        config_manager
+        transaction_builder
+        connection_with_grpc
+        transaction_repository
 
-    # I wonder why this linkage is needed. If it's removed, linker error occurs.
-    http_server_with_cappuccino
-)
+        # I wonder why this linkage is needed. If it's removed, linker error occurs.
+        http_server_with_cappuccino
+        )

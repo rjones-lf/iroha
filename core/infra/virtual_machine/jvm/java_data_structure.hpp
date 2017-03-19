@@ -25,27 +25,37 @@ limitations under the License.
 #include <transaction_builder/helper/create_objects_helper.hpp>
 
 namespace virtual_machine {
-namespace jvm {
+  namespace jvm {
 
-JNIEXPORT jobject JNICALL JavaMakeBoolean(JNIEnv *env, jboolean value);
-JNIEXPORT jobject JNICALL JavaMakeMap(JNIEnv *env, std::map<std::string, std::string> mMap);
-JNIEXPORT jobject JNICALL JavaMakeMap(JNIEnv *env, std::map<std::string, std::map<std::string, std::string>> mMap);
-JNIEXPORT jobject JNICALL JavaMakeAssetValueMap(JNIEnv *env, const txbuilder::Map& value);
+    JNIEXPORT jobject JNICALL JavaMakeBoolean(JNIEnv *env, jboolean value);
 
-std::vector<std::string>  convertJavaStringArrayRelease(JNIEnv *env, jobjectArray javaArray_);
-JNIEXPORT jobjectArray JNICALL JavaMakeStringArray(JNIEnv *env, const std::vector<std::string>& vec);
-std::map<std::string, std::string> convertJavaHashMapValueString(JNIEnv *env, jobject hashMapObj_);
-std::map<std::string, std::map<std::string, std::string>> convertJavaHashMapValueHashMap(JNIEnv *env, jobject hashMapObj_);
-txbuilder::Map convertAssetValueHashMap(JNIEnv *env, jobject value_);
-Api::BaseObject convertSimpleAssetValueHashMap(JNIEnv *env, jobject value_);
+    JNIEXPORT jobject JNICALL JavaMakeMap(JNIEnv *env, std::map<std::string, std::string> mMap);
 
-std::map<std::string, std::string> convertBaseObjectToMapString(const Api::BaseObject &value);
+    JNIEXPORT jobject JNICALL JavaMakeMap(JNIEnv *env, std::map<std::string, std::map<std::string, std::string>> mMap);
+
+    JNIEXPORT jobject JNICALL JavaMakeAssetValueMap(JNIEnv *env, const txbuilder::Map &value);
+
+    std::vector<std::string> convertJavaStringArrayRelease(JNIEnv *env, jobjectArray javaArray_);
+
+    JNIEXPORT jobjectArray JNICALL JavaMakeStringArray(JNIEnv *env, const std::vector<std::string> &vec);
+
+    std::map<std::string, std::string> convertJavaHashMapValueString(JNIEnv *env, jobject hashMapObj_);
+
+    std::map<std::string, std::map<std::string, std::string>>
+    convertJavaHashMapValueHashMap(JNIEnv *env, jobject hashMapObj_);
+
+    txbuilder::Map convertAssetValueHashMap(JNIEnv *env, jobject value_);
+
+    Api::BaseObject convertSimpleAssetValueHashMap(JNIEnv *env, jobject value_);
+
+    std::map<std::string, std::string> convertBaseObjectToMapString(const Api::BaseObject &value);
 //Api::BaseObject convertMapStringToBaseObject(const std::map<std::string, std::string> &value);
 
-std::map<std::string, std::string> convertTrustToMapString(const Api::Trust& trust);
-Api::Trust convertMapStringToTrust(const std::map<std::string, std::string>& trustMap);
+    std::map<std::string, std::string> convertTrustToMapString(const Api::Trust &trust);
 
-}
+    Api::Trust convertMapStringToTrust(const std::map<std::string, std::string> &trustMap);
+
+  }
 }
 
 #endif

@@ -29,31 +29,31 @@ namespace repository {
 
   namespace world_state_repository {
 
-      bool add(const std::string &key, const std::string &value);
+    bool add(const std::string &key, const std::string &value);
 
-      template <typename T>
-      bool addBatch(const std::vector<std::tuple<T, T>> &tuples);
+    template<typename T>
+    bool addBatch(const std::vector<std::tuple<T, T>> &tuples);
 
-      bool addBatch(const std::vector<std::tuple<std::string, std::string>> &tuples);
+    bool addBatch(const std::vector<std::tuple<std::string, std::string>> &tuples);
 
-      bool update(const std::string &key, const std::string &value);
+    bool update(const std::string &key, const std::string &value);
 
-      bool remove(const std::string &key);
+    bool remove(const std::string &key);
 
-      std::vector<std::string> findAll();
+    std::vector<std::string> findAll();
 
-      std::vector<std::string> findByPrefix(const std::string& prefix);
+    std::vector<std::string> findByPrefix(const std::string &prefix);
 
-      std::string find(const std::string &key);
+    std::string find(const std::string &key);
 
-      std::string findOrElse(
-          const std::string &key,
-          const std::string &defaultValue
-      );
+    std::string findOrElse(
+        const std::string &key,
+        const std::string &defaultValue
+    );
 
-      bool exists(const std::string &key);
+    bool exists(const std::string &key);
 
-      void finish();
+    void finish();
   };
 
 }; // namespace repository

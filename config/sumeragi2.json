@@ -3,7 +3,8 @@
     "ip": "172.20.0.3",
     "name": "iroha2",
     "privateKey": "SGjvIKNb9sh3H48/Lnid/slxt0H479kpDhZJu/xSfU8sX26lztYqFZTB8pSWL4eLLpx2nDqNr9n44sYkIRYzNQ==",
-    "publicKey": "yUAFTYNh6qkhBMiNgNdg45Wk/XHOGYanuIroY9skfPQ="},
+    "publicKey": "yUAFTYNh6qkhBMiNgNdg45Wk/XHOGYanuIroY9skfPQ="
+  },
   "group": [
     {
       "ip": "172.20.0.3",

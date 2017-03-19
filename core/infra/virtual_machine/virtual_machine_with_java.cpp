@@ -20,101 +20,101 @@ limitations under the License.
 
 namespace virtual_machine {
 
-static std::map<std::string, std::unique_ptr<jvm::JavaContext>> vmSet;
+  static std::map<std::string, std::unique_ptr<jvm::JavaContext>> vmSet;
 
-namespace detail {
-inline std::string pack(const std::string &packageName,
-                        const std::string &contractName) {
-  return packageName + "." + contractName;
-}
-}
-
-using detail::pack;
-
-void initializeVM(const std::string &packageName,
-                  const std::string &contractName) {
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4479303
-    // fork() or exec() needed? ref:
-    // http://stackoverflow.com/questions/2259947/creating-a-jvm-from-within-a-jni-method
-    logger::fatal("virtual machine with java")
-        << "Currently, not supported for initializing VM twice.";
-    exit(EXIT_FAILURE);
-    //            vmSet.at(NameId)->jvm->DestroyJavaVM();
-    //            vmSet.erase(NameId);
+  namespace detail {
+    inline std::string pack(const std::string &packageName,
+                            const std::string &contractName) {
+      return packageName + "." + contractName;
+    }
   }
-  vmSet.emplace(NameId, jvm::initializeVM(packageName, contractName));
-}
 
-void finishVM(const std::string &packageName, const std::string &contractName) {
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    vmSet.at(NameId)->jvm->DestroyJavaVM();
-    //            vmSet.erase(NameId);
+  using detail::pack;
+
+  void initializeVM(const std::string &packageName,
+                    const std::string &contractName) {
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4479303
+      // fork() or exec() needed? ref:
+      // http://stackoverflow.com/questions/2259947/creating-a-jvm-from-within-a-jni-method
+      logger::fatal("virtual machine with java")
+          << "Currently, not supported for initializing VM twice.";
+      exit(EXIT_FAILURE);
+      //            vmSet.at(NameId)->jvm->DestroyJavaVM();
+      //            vmSet.erase(NameId);
+    }
+    vmSet.emplace(NameId, jvm::initializeVM(packageName, contractName));
   }
-}
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName) {
-
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    const auto &context = vmSet.at(NameId);
-    jvm::execFunction(context, functionName);
+  void finishVM(const std::string &packageName, const std::string &contractName) {
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      vmSet.at(NameId)->jvm->DestroyJavaVM();
+      //            vmSet.erase(NameId);
+    }
   }
-}
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params) {
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName) {
 
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    const auto &context = vmSet.at(NameId);
-    jvm::execFunction(context, functionName, params);
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      const auto &context = vmSet.at(NameId);
+      jvm::execFunction(context, functionName);
+    }
   }
-}
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::map<std::string, std::map<std::string, std::string>>& params2) {
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params) {
 
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    const auto &context = vmSet.at(NameId);
-    jvm::execFunction(context, functionName, params1, params2);
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      const auto &context = vmSet.at(NameId);
+      jvm::execFunction(context, functionName, params);
+    }
   }
-}
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::map<std::string, std::string>& params2) {
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::map<std::string, std::map<std::string, std::string>> &params2) {
 
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    const auto &context = vmSet.at(NameId);
-    jvm::execFunction(context, functionName, params1, params2);
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      const auto &context = vmSet.at(NameId);
+      jvm::execFunction(context, functionName, params1, params2);
+    }
   }
-}
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::vector<std::string>& params2) {
-  
-  const auto NameId = pack(packageName, contractName);
-  if (vmSet.find(NameId) != vmSet.end()) {
-    const auto &context = vmSet.at(NameId);
-    jvm::execFunction(context, functionName, params1, params2);
-  } 
-}
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::map<std::string, std::string> &params2) {
+
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      const auto &context = vmSet.at(NameId);
+      jvm::execFunction(context, functionName, params1, params2);
+    }
+  }
+
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::vector<std::string> &params2) {
+
+    const auto NameId = pack(packageName, contractName);
+    if (vmSet.find(NameId) != vmSet.end()) {
+      const auto &context = vmSet.at(NameId);
+      jvm::execFunction(context, functionName, params1, params2);
+    }
+  }
 
 }

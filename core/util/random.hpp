@@ -20,7 +20,7 @@ limitations under the License.
 #include <random>
 #include "../crypto/hash.hpp"
 
-namespace random_service{
+namespace random_service {
 
   std::string makeHashByMT19937();
 

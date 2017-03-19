@@ -30,21 +30,21 @@ limitations under the License.
 
 
 void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const &action) {
-    std::thread([action, sleepMillisecs]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
-        action();
-    }).join();
+  std::thread([action, sleepMillisecs]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+    action();
+  }).join();
 }
 
-int main(){
-    std::string senderPublicKey;
+int main() {
+  std::string senderPublicKey;
 
-    std::string pubKey = ::peer::myself::getPublicKey();
+  std::string pubKey = ::peer::myself::getPublicKey();
 
-    while(1){
-        setAwkTimer(3000, [&](){
-        });
-    }
+  while (1) {
+    setAwkTimer(3000, [&]() {
+    });
+  }
 
-    return 0;
+  return 0;
 }

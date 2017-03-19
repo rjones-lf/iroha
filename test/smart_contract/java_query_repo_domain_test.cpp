@@ -29,119 +29,186 @@ namespace tag = jni_constants;
 /*********************************************************************************************************
  * Test Account
  *********************************************************************************************************/
-TEST(JavaQueryRepoDomain, initializeVM) {
-  virtual_machine::initializeVM(PackageName, ContractName);
+TEST(JavaQueryRepoDomain, initializeVM
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
 }
 
-TEST(JavaQueryRepoDomain, invokeAddDomain) {
+TEST(JavaQueryRepoDomain, invokeAddDomain
+) {
 
-  /*****************************************************************
-   * Remove chache
-   *****************************************************************/
-  const auto uuid =
-      "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
+/*****************************************************************
+ * Remove chache
+ *****************************************************************/
+const auto uuid =
+    "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
 
-  if (repository::domain::exists(uuid)) {
-    repository::domain::remove(uuid);
-  }
-
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  const std::string FunctionName = "testAddDomain";
-
-  std::map<std::string, std::string> params;
-  {
-    params[tag::OwnerPublicKey] =
-        "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
-    params[tag::DomainName] = "domain name";
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params);
-
-  const auto domain = repository::domain::findByUuid(uuid);
-
-  ASSERT_STREQ(params[tag::OwnerPublicKey].c_str(),
-               domain.ownerpublickey().c_str());
-  ASSERT_STREQ(params[tag::DomainName].c_str(), domain.name().c_str());
-
-  // Remove cache again
-  ASSERT_TRUE(repository::domain::remove(uuid));
+if (
+repository::domain::exists(uuid)
+) {
+repository::domain::remove(uuid);
 }
 
-TEST(JavaQueryRepoDomain, invokeUpdateDomain) {
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+const std::string FunctionName = "testAddDomain";
 
-  /*****************************************************************
-   * Remove cache & initialize
-   *****************************************************************/
-  const auto uuid =
-      "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
-
-  if (repository::domain::exists(uuid)) {
-    repository::domain::remove(uuid);
-  }
-
-  repository::domain::add("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
-                          "domain name");
-
-  ASSERT_TRUE(repository::domain::exists(uuid));
-
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  const std::string FunctionName = "testUpdateDomain";
-
-  std::map<std::string, std::string> params;
-  {
-    params[tag::Uuid] = uuid;
-    params[tag::DomainName] = "Updated Domain Name";
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params);
-
-  const auto domain = repository::domain::findByUuid(uuid);
-
-  ASSERT_STREQ("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
-               domain.ownerpublickey().c_str());
-  ASSERT_STREQ(params[tag::DomainName].c_str(), domain.name().c_str());
-
-  // Remove chache again
-  repository::domain::remove(uuid);
+std::map<std::string, std::string> params;
+{
+params[tag::OwnerPublicKey] =
+"MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+params[tag::DomainName] = "domain name";
 }
 
-TEST(JavaQueryRepoDomain, invokeRemoveDomain) {
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params
+);
 
-  /*****************************************************************
-  * Remove cache & initialize
-  *****************************************************************/
-  const std::string uuid =
-      "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
+const auto domain = repository::domain::findByUuid(uuid);
 
-  if (repository::domain::exists(uuid)) {
-    repository::domain::remove(uuid);
-  }
+ASSERT_STREQ(params[tag::OwnerPublicKey]
+.
 
-  repository::domain::add("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
-                          "domain name");
+c_str(),
+    domain
 
-  ASSERT_TRUE(repository::domain::exists(uuid));
+.
 
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  const std::string FunctionName = "testRemoveDomain";
+ownerpublickey()
 
-  std::map<std::string, std::string> params;
-  { params[tag::Uuid] = uuid; }
+.
 
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params);
+c_str()
 
-  ASSERT_FALSE(repository::domain::exists(uuid));
+);
+ASSERT_STREQ(params[tag::DomainName]
+.
+
+c_str(), domain
+
+.
+
+name()
+
+.
+
+c_str()
+
+);
+
+// Remove cache again
+ASSERT_TRUE(repository::domain::remove(uuid));
 }
 
-TEST(JavaQueryRepoDomain, finishVM) {
-  virtual_machine::finishVM(PackageName, ContractName);
+TEST(JavaQueryRepoDomain, invokeUpdateDomain
+) {
+
+/*****************************************************************
+ * Remove cache & initialize
+ *****************************************************************/
+const auto uuid =
+    "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
+
+if (
+repository::domain::exists(uuid)
+) {
+repository::domain::remove(uuid);
+}
+
+repository::domain::add("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
+"domain name");
+
+ASSERT_TRUE(repository::domain::exists(uuid));
+
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+const std::string FunctionName = "testUpdateDomain";
+
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+uuid;
+params[tag::DomainName] = "Updated Domain Name";
+}
+
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params
+);
+
+const auto domain = repository::domain::findByUuid(uuid);
+
+ASSERT_STREQ("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
+domain.
+
+ownerpublickey()
+
+.
+
+c_str()
+
+);
+ASSERT_STREQ(params[tag::DomainName]
+.
+
+c_str(), domain
+
+.
+
+name()
+
+.
+
+c_str()
+
+);
+
+// Remove chache again
+repository::domain::remove(uuid);
+}
+
+TEST(JavaQueryRepoDomain, invokeRemoveDomain
+) {
+
+/*****************************************************************
+* Remove cache & initialize
+*****************************************************************/
+const std::string uuid =
+    "eeeada754cb39bff9f229bca75c4eb8e743f0a77649bfedcc47513452c9324f5";
+
+if (
+repository::domain::exists(uuid)
+) {
+repository::domain::remove(uuid);
+}
+
+repository::domain::add("MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=",
+"domain name");
+
+ASSERT_TRUE(repository::domain::exists(uuid));
+
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+const std::string FunctionName = "testRemoveDomain";
+
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+uuid;
+}
+
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params
+);
+
+ASSERT_FALSE(repository::domain::exists(uuid));
+}
+
+TEST(JavaQueryRepoDomain, finishVM
+) {
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

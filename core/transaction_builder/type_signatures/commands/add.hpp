@@ -6,16 +6,16 @@
 
 namespace type_signatures {
 
-template <class... Ts>
-struct Add {
-  using type = typename detail::head< Ts... >::type;
-};
+  template<class... Ts>
+  struct Add {
+    using type = typename detail::head<Ts...>::type;
+  };
 
-template <>
-struct Add<type_signatures::Add<Asset, To<Account>>> {};
+  template<>
+  struct Add<type_signatures::Add<Asset, To<Account>>> {
+  };
 
 }
-
 
 
 #endif

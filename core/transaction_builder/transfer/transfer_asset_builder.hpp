@@ -24,77 +24,79 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Transfer<type_signatures::Asset>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Transfer<type_signatures::Asset>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<Asset>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string sender) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<Asset>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(sender);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(sender);
-    return *this;
-  }
 
-  TransactionBuilder& setReceiverPublicKey(std::string receiverPublicKey) {
-    if (_isSetReceiverPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<Asset>", "receiverPublicKey");
+    TransactionBuilder &setReceiverPublicKey(std::string receiverPublicKey) {
+      if (_isSetReceiverPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<Asset>", "receiverPublicKey");
+      }
+      _isSetReceiverPublicKey = true;
+      _receiverPublicKey = std::move(receiverPublicKey);
+      return *this;
     }
-    _isSetReceiverPublicKey = true;
-    _receiverPublicKey = std::move(receiverPublicKey);
-    return *this;
-  }
 
-  TransactionBuilder& setAsset(Api::Asset object) {
-    if (_isSetAsset) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<Asset>", "Asset");
+    TransactionBuilder &setAsset(Api::Asset object) {
+      if (_isSetAsset) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<Asset>", "Asset");
+      }
+      _isSetAsset = true;
+      _asset = std::move(object);
+      return *this;
     }
-    _isSetAsset = true;
-    _asset = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException("Transfer<Asset>",
-                                                              unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException("Transfer<Asset>",
+                                                                unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_receivepubkey(_receiverPublicKey);
+      ret.set_type("Transfer");
+      auto ptr = std::make_unique<Api::Asset>();
+      ptr->CopyFrom(_asset);
+      ret.set_allocated_asset(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_receivepubkey(_receiverPublicKey);
-    ret.set_type("Transfer");
-    auto ptr = std::make_unique<Api::Asset>();
-    ptr->CopyFrom(_asset);
-    ret.set_allocated_asset(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetReceiverPublicKey)
-      ret += std::string(" ") + "receiverPublicKey";
-    if (not _isSetAsset) ret += std::string(" ") + "Asset";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetReceiverPublicKey)
+        ret += std::string(" ") + "receiverPublicKey";
+      if (not _isSetAsset) ret += std::string(" ") + "Asset";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  std::string _receiverPublicKey;
-  Api::Asset _asset;
+    std::string _senderPublicKey;
+    std::string _receiverPublicKey;
+    Api::Asset _asset;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetReceiverPublicKey = false;
-  bool _isSetAsset = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetReceiverPublicKey = false;
+    bool _isSetAsset = false;
+  };
 }
 
 #endif

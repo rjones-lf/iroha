@@ -23,13 +23,17 @@ limitations under the License.
 #include <vector>
 
 namespace repository {
-namespace domain {
-std::string add(const std::string &ownerPublicKey, const std::string &name);
-bool update(const std::string &uuid, const std::string &name);
-bool remove(const std::string &uuid);
-Api::Domain findByUuid(const std::string &uuid);
-bool exists(const std::string &uuid);
-}
+  namespace domain {
+    std::string add(const std::string &ownerPublicKey, const std::string &name);
+
+    bool update(const std::string &uuid, const std::string &name);
+
+    bool remove(const std::string &uuid);
+
+    Api::Domain findByUuid(const std::string &uuid);
+
+    bool exists(const std::string &uuid);
+  }
 }
 
 #endif // __CORE_REPOSITORY_DOMAIN_REPOSITORY_HPP__

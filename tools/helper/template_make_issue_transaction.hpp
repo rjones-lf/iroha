@@ -31,14 +31,13 @@ limitations under the License.
 #include <service/peer_service.hpp>
 
 
-
 namespace tools {
-    namespace issue_transaction {
+  namespace issue_transaction {
 
-        namespace COMMAND_NAME_A {
-##CODE
-        }
+    namespace COMMAND_NAME_A {
+      ##CODE
     }
+  }
 }
 
 #endif // TOOLS_ISSUE_TRANSACTION_COMMAND_NAME_C_HPP

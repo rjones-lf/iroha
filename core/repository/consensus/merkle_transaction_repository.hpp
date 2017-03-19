@@ -26,9 +26,9 @@ limitations under the License.
 
 namespace merkle_transaction_repository {
 
-using Api::ConsensusEvent;
+  using Api::ConsensusEvent;
 
-struct MerkleNode {
+  struct MerkleNode {
     std::string hash;
     std::string parent;
     std::string left;
@@ -43,29 +43,29 @@ struct MerkleNode {
         std::string parent,
         std::string leftChild,
         std::string rightChild
-    ):
+    ) :
         hash(std::move(hash)),
         parent(std::move(parent)),
         left(std::move(leftChild)),
-        right(std::move(rightChild))
-    {}
+        right(std::move(rightChild)) {}
 
     bool isRoot();
+
     bool isLeaf();
 
-};
+  };
 
 //TODO: change bool to throw an exception instead
-bool commit(const ConsensusEvent& event);
+  bool commit(const ConsensusEvent &event);
 
-bool leafExists(const std::string& hash);
+  bool leafExists(const std::string &hash);
 
-std::string getLeaf(const std::string& hash);
+  std::string getLeaf(const std::string &hash);
 
-std::string calculateNewRoot(
-    const ConsensusEvent& event,
-    std::vector<std::tuple<std::string,std::string>> &batchCommit
-);
+  std::string calculateNewRoot(
+      const ConsensusEvent &event,
+      std::vector<std::tuple<std::string, std::string>> &batchCommit
+  );
 
 };  // namespace merkle_transaction_repository
 

@@ -30,45 +30,54 @@ namespace txbuilder {
   Primitives
 */
 
-Api::BaseObject createValueString(std::string val);
-Api::BaseObject createValueInt(int val);
-Api::BaseObject createValueBool(bool val);
-Api::BaseObject createValueDouble(double val);
-Api::Trust createTrust(double value, bool isOk);
+  Api::BaseObject createValueString(std::string val);
+
+  Api::BaseObject createValueInt(int val);
+
+  Api::BaseObject createValueBool(bool val);
+
+  Api::BaseObject createValueDouble(double val);
+
+  Api::Trust createTrust(double value, bool isOk);
 
 /*
   Map
 */
 
-using Map = std::map<std::string, Api::BaseObject>;
-std::string stringify(::txbuilder::Map m);
+  using Map = std::map<std::string, Api::BaseObject>;
+
+  std::string stringify(::txbuilder::Map m);
 
 /*
   BaseObject
 */
 
-std::string stringify(Api::BaseObject obj);
+  std::string stringify(Api::BaseObject obj);
 
 /*
   Vector
 */
-template <typename T> using Vector = ::google::protobuf::RepeatedPtrField<T>;
+  template<typename T> using Vector = ::google::protobuf::RepeatedPtrField<T>;
 
-template <typename T>
-inline std::vector<T> createStandardVector(const ::txbuilder::Vector<T> &protov) {
-  return std::vector<T>(protov.begin(), protov.end());
-}
+  template<typename T>
+  inline std::vector<T> createStandardVector(const ::txbuilder::Vector<T> &protov) {
+    return std::vector<T>(protov.begin(), protov.end());
+  }
 
-Api::Domain createDomain(std::string ownerPublicKey, std::string name);
-Api::Account createAccount(std::string publicKey, std::string name,
-                           std::vector<std::string> assets);
-Api::Asset createAsset(std::string domain, std::string name,
-                       ::txbuilder::Map value, std::string smartContractName);
-Api::SimpleAsset createSimpleAsset(std::string domain, std::string name,
-                                   Api::BaseObject value,
-                                   std::string smartContractName);
-Api::Peer createPeer(std::string publicKey, std::string address,
-                     Api::Trust trust);
+  Api::Domain createDomain(std::string ownerPublicKey, std::string name);
+
+  Api::Account createAccount(std::string publicKey, std::string name,
+                             std::vector<std::string> assets);
+
+  Api::Asset createAsset(std::string domain, std::string name,
+                         ::txbuilder::Map value, std::string smartContractName);
+
+  Api::SimpleAsset createSimpleAsset(std::string domain, std::string name,
+                                     Api::BaseObject value,
+                                     std::string smartContractName);
+
+  Api::Peer createPeer(std::string publicKey, std::string address,
+                       Api::Trust trust);
 } // namespace txbuilder
 
 #endif

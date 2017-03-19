@@ -23,16 +23,20 @@ limitations under the License.
 #include <vector>
 
 namespace repository {
-namespace peer {
-std::string add(const std::string &publicKey, const std::string &address,
+  namespace peer {
+    std::string add(const std::string &publicKey, const std::string &address,
+                    const Api::Trust &trust);
+
+    bool update(const std::string &uuid, const std::string &address,
                 const Api::Trust &trust);
-bool update(const std::string &uuid, const std::string &address,
-            const Api::Trust &trust);
-bool remove(const std::string &uuid);
+
+    bool remove(const std::string &uuid);
+
 //std::vector<Api::Peer> findAll(const std::string &uuid);
-Api::Peer findByUuid(const std::string &uuid);
-bool exists(const std::string &uuid);
-}
+    Api::Peer findByUuid(const std::string &uuid);
+
+    bool exists(const std::string &uuid);
+  }
 }
 
 #endif // __CORE_REPOSITORY_DOMAIN_PEER_REPOSITORY_HPP__

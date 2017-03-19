@@ -5,13 +5,12 @@
 
 namespace type_signatures {
 
-template <class... Ts>
-struct Remove {
-  using type = typename detail::head< Ts... >::type;
-};
+  template<class... Ts>
+  struct Remove {
+    using type = typename detail::head<Ts...>::type;
+  };
 
 }
-
 
 
 #endif

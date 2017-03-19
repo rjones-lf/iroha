@@ -18,8 +18,6 @@ limitations under the License.
 #include "common_repository.hpp"
 #include <crypto/hash.hpp>
 #include <repository/world_state_repository.hpp>
-#include <transaction_builder/transaction_builder.hpp>
-#include <util/exception.hpp>
 #include <util/logger.hpp>
 
 namespace common = ::repository::common;
@@ -28,101 +26,101 @@ const std::string NameSpaceID = "peer repository";
 const auto ValuePrefix = common::Prefix("Peer::");
 
 namespace repository {
-namespace peer {
+  namespace peer {
 
-namespace detail {
+    namespace detail {
 /********************************************************************************************
  * stringify / parse
  ********************************************************************************************/
-std::string stringifyPeer(const Api::Peer &obj) {
-  std::string ret;
-  obj.SerializeToString(&ret);
-  return ret;
-}
+      std::string stringifyPeer(const Api::Peer &obj) {
+        std::string ret;
+        obj.SerializeToString(&ret);
+        return ret;
+      }
 
-Api::Peer parsePeer(const std::string &str) {
-  Api::Peer ret;
-  ret.ParseFromString(str);
-  return ret;
-}
+      Api::Peer parsePeer(const std::string &str) {
+        Api::Peer ret;
+        ret.ParseFromString(str);
+        return ret;
+      }
 
-std::string createPeerUuid(const std::string &publicKey) {
-  return hash::sha3_256_hex(publicKey);
-}
-}
+      std::string createPeerUuid(const std::string &publicKey) {
+        return hash::sha3_256_hex(publicKey);
+      }
+    }
 
 /********************************************************************************************
  * Add<Peer>
  ********************************************************************************************/
-std::string add(const std::string &publicKey, const std::string &address,
-                const Api::Trust &trust) {
+    std::string add(const std::string &publicKey, const std::string &address,
+                    const Api::Trust &trust) {
 
-  logger::explore(NameSpaceID) << "Add<Peer> publicKey: " << publicKey
-                               << " address: " << address
-                               << " trust: " << trust.value();
+      logger::explore(NameSpaceID) << "Add<Peer> publicKey: " << publicKey
+                                   << " address: " << address
+                                   << " trust: " << trust.value();
 
-  const auto uuid = detail::createPeerUuid(publicKey);
+      const auto uuid = detail::createPeerUuid(publicKey);
 
-  if (!exists(uuid)) {
-    const auto strPeer =
-        common::stringify<Api::Peer>(txbuilder::createPeer(publicKey, address, trust), ValuePrefix);
-    if (world_state_repository::add(uuid, strPeer)) {
-      return uuid;
+      if (!exists(uuid)) {
+        const auto strPeer =
+            common::stringify<Api::Peer>(txbuilder::createPeer(publicKey, address, trust), ValuePrefix);
+        if (world_state_repository::add(uuid, strPeer)) {
+          return uuid;
+        }
+      }
+
+      return "";
     }
-  }
-
-  return "";
-}
 
 /********************************************************************************************
  * Update<Peer>
  ********************************************************************************************/
-bool update(const std::string &uuid, const std::string &address,
-            const Api::Trust &trust) {
-  if (exists(uuid)) {
-    const auto rval = world_state_repository::find(uuid);
-    logger::explore(NameSpaceID) << "Update<Peer> uuid: " << uuid
-                                 << ", address: " << address
+    bool update(const std::string &uuid, const std::string &address,
+                const Api::Trust &trust) {
+      if (exists(uuid)) {
+        const auto rval = world_state_repository::find(uuid);
+        logger::explore(NameSpaceID) << "Update<Peer> uuid: " << uuid
+                                     << ", address: " << address
 
-                                 << ", trust: " << trust.value();
-    auto peer = common::parse<Api::Peer>(rval, ValuePrefix);
-    *peer.mutable_address() = address;
-    *peer.mutable_trust() = trust;
-    const auto strPeer = common::stringify<Api::Peer>(peer, ValuePrefix);
-    return world_state_repository::update(uuid, strPeer);
-  }
-  return false;
-}
+                                     << ", trust: " << trust.value();
+        auto peer = common::parse<Api::Peer>(rval, ValuePrefix);
+        *peer.mutable_address() = address;
+        *peer.mutable_trust() = trust;
+        const auto strPeer = common::stringify<Api::Peer>(peer, ValuePrefix);
+        return world_state_repository::update(uuid, strPeer);
+      }
+      return false;
+    }
 
 /********************************************************************************************
  * Remove<Peer>
  ********************************************************************************************/
-bool remove(const std::string &uuid) {
-  if (exists(uuid)) {
-    logger::explore(NameSpaceID) << "Remove<Peer> uuid: " << uuid;
-    return world_state_repository::remove(uuid);
-  }
-  return false;
-}
+    bool remove(const std::string &uuid) {
+      if (exists(uuid)) {
+        logger::explore(NameSpaceID) << "Remove<Peer> uuid: " << uuid;
+        return world_state_repository::remove(uuid);
+      }
+      return false;
+    }
 
 /********************************************************************************************
  * find
  ********************************************************************************************/
-Api::Peer findByUuid(const std::string &uuid) {
+    Api::Peer findByUuid(const std::string &uuid) {
 
-  logger::explore(NameSpaceID + "::findByUuid") << "";
-  auto strPeer = world_state_repository::find(uuid);
-  if (not strPeer.empty()) {
-    return common::parse<Api::Peer>(strPeer, ValuePrefix);
+      logger::explore(NameSpaceID + "::findByUuid") << "";
+      auto strPeer = world_state_repository::find(uuid);
+      if (not strPeer.empty()) {
+        return common::parse<Api::Peer>(strPeer, ValuePrefix);
+      }
+
+      return Api::Peer();
+    }
+
+    bool exists(const std::string &uuid) {
+      const auto result = world_state_repository::exists(uuid);
+      logger::explore(NameSpaceID + "::exists") << (result ? "true" : "false");
+      return result;
+    }
   }
-
-  return Api::Peer();
-}
-
-bool exists(const std::string &uuid) {
-  const auto result = world_state_repository::exists(uuid);
-  logger::explore(NameSpaceID + "::exists") << (result ? "true" : "false");
-  return result;
-}
-}
 }

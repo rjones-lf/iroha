@@ -23,16 +23,16 @@ limitations under the License.
 namespace consensus_event_validator {
 
   template<typename T>
-  bool isValid(const T& event) {
+  bool isValid(const T &event) {
 
   };
 
   template<typename T>
-  bool signaturesAreValid(const T& event) {
+  bool signaturesAreValid(const T &event) {
     for (auto sig : event.signatures) {
-        if (!consensus_event_validator::isValid(sig)) {
-            return false;
-        }
+      if (!consensus_event_validator::isValid(sig)) {
+        return false;
+      }
     }
   }
 };  // namespace consensus_event_validator

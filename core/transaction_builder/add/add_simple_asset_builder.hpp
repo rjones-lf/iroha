@@ -24,62 +24,64 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Add<type_signatures::SimpleAsset>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Add<type_signatures::SimpleAsset>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string senderPublicKey) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Add<SimpleAsset>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string senderPublicKey) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Add<SimpleAsset>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(senderPublicKey);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(senderPublicKey);
-    return *this;
-  }
 
-  TransactionBuilder& setSimpleAsset(Api::SimpleAsset object) {
-    if (_isSetSimpleAsset) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Add<SimpleAsset>", "SimpleAsset");
+    TransactionBuilder &setSimpleAsset(Api::SimpleAsset object) {
+      if (_isSetSimpleAsset) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Add<SimpleAsset>", "SimpleAsset");
+      }
+      _isSetSimpleAsset = true;
+      _simple_asset = std::move(object);
+      return *this;
     }
-    _isSetSimpleAsset = true;
-    _simple_asset = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException(
-          "Add<SimpleAsset>", unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException(
+            "Add<SimpleAsset>", unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_type("Add");
+      auto ptr = std::make_unique<Api::SimpleAsset>();
+      ptr->CopyFrom(_simple_asset);
+      ret.set_allocated_simpleasset(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_type("Add");
-    auto ptr = std::make_unique<Api::SimpleAsset>();
-    ptr->CopyFrom(_simple_asset);
-    ret.set_allocated_simpleasset(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetSimpleAsset) ret += std::string(" ") + "SimpleAsset";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetSimpleAsset) ret += std::string(" ") + "SimpleAsset";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  Api::SimpleAsset _simple_asset;
+    std::string _senderPublicKey;
+    Api::SimpleAsset _simple_asset;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetSimpleAsset = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetSimpleAsset = false;
+  };
 }
 
 #endif

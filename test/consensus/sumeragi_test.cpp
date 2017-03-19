@@ -30,53 +30,52 @@ limitations under the License.
 #include<service/peer_service.hpp>
 
 
-
-void setAwkTimer(int const sleepMillisecs, const std::function<void(void)>& action) {
-    std::thread([action, sleepMillisecs]() {
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
-        action();
-    }).join();
+void setAwkTimer(int const sleepMillisecs, const std::function<void(void)> &action) {
+  std::thread([action, sleepMillisecs]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMillisecs));
+    action();
+  }).join();
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 
-    try {
-        std::string value;
-        std::string senderPublicKey;
-        std::string receiverPublicKey;
-        std::string cmd;
+  try {
+    std::string value;
+    std::string senderPublicKey;
+    std::string receiverPublicKey;
+    std::string cmd;
 
-        connection::initialize_peer();
+    connection::initialize_peer();
 
-        logger::setLogLevel(logger::LogLevel::Debug);
+    logger::setLogLevel(logger::LogLevel::Debug);
 
-        sumeragi::initializeSumeragi();
+    sumeragi::initializeSumeragi();
 
-        std::thread connection_th([]() {
-            connection::run();
+    std::thread connection_th([]() {
+      connection::run();
+    });
+
+    // since we have thread pool, it sets all necessary callbacks in
+    // sumeragi::initializeSumeragi.
+    // std::thread http_th([]() {
+    //     sumeragi::loop();
+    // });
+
+    if (argc >= 2 && std::string(argv[1]) == "public") {
+      while (1) {
+        setAwkTimer(10, [&]() {
+
         });
-
-        // since we have thread pool, it sets all necessary callbacks in 
-        // sumeragi::initializeSumeragi.
-        // std::thread http_th([]() {
-        //     sumeragi::loop();
-        // });
-
-        if (argc >= 2 && std::string(argv[1]) == "public") {
-            while (1) {
-                setAwkTimer(10, [&]() {
-
-                });
-            }
-        } else {
-            std::cout << "I'm only node\n";
-            while (1);
-        }
-        // http_th.detach();
-        connection_th.detach();
-    }catch(char const *e){
-        std::cout << e << std::endl;
+      }
+    } else {
+      std::cout << "I'm only node\n";
+      while (1);
     }
+    // http_th.detach();
+    connection_th.detach();
+  } catch (char const *e) {
+    std::cout << e << std::endl;
+  }
 
-    return 0;
+  return 0;
 }

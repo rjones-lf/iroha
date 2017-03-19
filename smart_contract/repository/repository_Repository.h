@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (Ljava/util/HashMap;[Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
-  (JNIEnv *, jclass, jobject, jobjectArray);
+    (JNIEnv *, jclass, jobject, jobjectArray);
 
 /*
  * Class:     repository_Repository
@@ -21,7 +21,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountAttach
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -29,7 +29,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountAttach
  * Signature: (Ljava/util/HashMap;[Ljava/lang/String;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountUpdate
-  (JNIEnv *, jclass, jobject, jobjectArray);
+    (JNIEnv *, jclass, jobject, jobjectArray);
 
 /*
  * Class:     repository_Repository
@@ -37,7 +37,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountUpdate
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountRemove
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -45,7 +45,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountRemove
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountInfoFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -53,7 +53,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountInfoFindByUuid
  * Signature: (Ljava/util/HashMap;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_repository_Repository_accountValueFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -61,7 +61,7 @@ JNIEXPORT jobjectArray JNICALL Java_repository_Repository_accountValueFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountExists
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -69,7 +69,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountExists
  * Signature: (Ljava/util/HashMap;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_repository_Repository_domainAdd
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -77,7 +77,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_domainAdd
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainUpdate
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -85,7 +85,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainUpdate
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainRemove
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -93,7 +93,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainRemove
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -101,7 +101,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainExists
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -109,7 +109,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainExists
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_repository_Repository_assetAdd
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -117,7 +117,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_assetAdd
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetUpdate
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -125,7 +125,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetUpdate
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetRemove
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -133,7 +133,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetRemove
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetInfoFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -141,7 +141,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetInfoFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetValueFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -149,7 +149,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetValueFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetExists
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -157,7 +157,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetExists
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_repository_Repository_simpleAssetAdd
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -165,7 +165,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_simpleAssetAdd
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetUpdate
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -173,7 +173,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetUpdate
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetRemove
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -181,7 +181,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetRemove
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetInfoFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -189,7 +189,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetInfoFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetValueFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -197,7 +197,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetValueFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetExists
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -205,7 +205,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetExists
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_repository_Repository_peerAdd
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -213,7 +213,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_peerAdd
  * Signature: (Ljava/util/HashMap;Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerUpdate
-  (JNIEnv *, jclass, jobject, jobject);
+    (JNIEnv *, jclass, jobject, jobject);
 
 /*
  * Class:     repository_Repository
@@ -221,7 +221,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerUpdate
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerRemove
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -229,7 +229,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerRemove
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerInfoFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -237,7 +237,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerInfoFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/util/HashMap;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerTrustFindByUuid
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 /*
  * Class:     repository_Repository
@@ -245,7 +245,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerTrustFindByUuid
  * Signature: (Ljava/util/HashMap;)Ljava/lang/Boolean;
  */
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerExists
-  (JNIEnv *, jclass, jobject);
+    (JNIEnv *, jclass, jobject);
 
 #ifdef __cplusplus
 }

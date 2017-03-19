@@ -1,12 +1,12 @@
 
 ADD_LIBRARY(http_client STATIC
-    http_client.cpp
-)
+        http_client.cpp
+        )
 
 
 target_link_libraries(http_client
-    ssl
-    crypto
-    logger
-    json
-)
+        ssl
+        crypto
+        logger
+        json
+        )

@@ -24,62 +24,64 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Add<type_signatures::Account>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Add<type_signatures::Account>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string senderPublicKey) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Add<Account>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string senderPublicKey) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Add<Account>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(senderPublicKey);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(senderPublicKey);
-    return *this;
-  }
 
-  TransactionBuilder& setAccount(Api::Account object) {
-    if (_isSetAccount) {
-      throw exception::txbuilder::DuplicateSetArgmentException("Add<Account>",
-                                                               "Account");
+    TransactionBuilder &setAccount(Api::Account object) {
+      if (_isSetAccount) {
+        throw exception::txbuilder::DuplicateSetArgmentException("Add<Account>",
+                                                                 "Account");
+      }
+      _isSetAccount = true;
+      _account = std::move(object);
+      return *this;
     }
-    _isSetAccount = true;
-    _account = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException("Add<Account>",
-                                                              unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException("Add<Account>",
+                                                                unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_type("Add");
+      auto ptr = std::make_unique<Api::Account>();
+      ptr->CopyFrom(_account);
+      ret.set_allocated_account(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_type("Add");
-    auto ptr = std::make_unique<Api::Account>();
-    ptr->CopyFrom(_account);
-    ret.set_allocated_account(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetAccount) ret += std::string(" ") + "Account";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetAccount) ret += std::string(" ") + "Account";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  Api::Account _account;
+    std::string _senderPublicKey;
+    Api::Account _account;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetAccount = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetAccount = false;
+  };
 }
 
 #endif

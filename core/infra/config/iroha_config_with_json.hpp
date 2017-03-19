@@ -20,31 +20,42 @@ limitations under the License.
 #include "abstract_config_manager.hpp"
 
 namespace config {
-class IrohaConfigManager : config::AbstractConfigManager {
- private:
-  IrohaConfigManager();
+  class IrohaConfigManager : config::AbstractConfigManager {
+  private:
+    IrohaConfigManager();
 
-  template <typename T>
-  T getParam(const std::string& param, const T& defaultValue);
+    template<typename T>
+    T getParam(const std::string &param, const T &defaultValue);
 
- public:
-  static IrohaConfigManager& getInstance();
-  std::string getConfigName();
+  public:
+    static IrohaConfigManager &getInstance();
 
-  std::string getDatabasePath(const std::string& defaultValue);
-  std::string getJavaClassPath(const std::string& defaultValue);
-  std::string getJavaClassPathLocal(const std::string& defaultValue);
-  std::string getJavaLibraryPath(const std::string& defaultValue);
-  std::string getJavaLibraryPathLocal(const std::string& defaultValue);
+    std::string getConfigName();
 
-  std::string getJavaPolicyPath(const std::string& defaultValue);
-  size_t getConcurrency(size_t defaultValue);
-  size_t getMaxFaultyPeers(size_t defaultValue);
-  size_t getPoolWorkerQueueSize(size_t defaultValue);
-  uint16_t getGrpcPortNumber(uint16_t defaultValue);
-  uint16_t getHttpPortNumber(uint16_t defaultValue);
-  bool getActiveStart(bool defaultValue);
-};
+    std::string getDatabasePath(const std::string &defaultValue);
+
+    std::string getJavaClassPath(const std::string &defaultValue);
+
+    std::string getJavaClassPathLocal(const std::string &defaultValue);
+
+    std::string getJavaLibraryPath(const std::string &defaultValue);
+
+    std::string getJavaLibraryPathLocal(const std::string &defaultValue);
+
+    std::string getJavaPolicyPath(const std::string &defaultValue);
+
+    size_t getConcurrency(size_t defaultValue);
+
+    size_t getMaxFaultyPeers(size_t defaultValue);
+
+    size_t getPoolWorkerQueueSize(size_t defaultValue);
+
+    uint16_t getGrpcPortNumber(uint16_t defaultValue);
+
+    uint16_t getHttpPortNumber(uint16_t defaultValue);
+
+    bool getActiveStart(bool defaultValue);
+  };
 }
 
 #endif  // IROHA_CONFIG_WITH_JSON_HPP

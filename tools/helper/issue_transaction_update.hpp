@@ -31,105 +31,105 @@ limitations under the License.
 #include <service/peer_service.hpp>
 
 
-
 namespace tools {
-    namespace issue_transaction {
+  namespace issue_transaction {
 
-        namespace update {
-            namespace account {
-                void issue_transaction(std::vector <std::string> &argv) {
-                    try {
-                        auto
-                        tx = txbuilder::TransactionBuilder < type_signatures::Update < type_signatures::Account >> ()
-                                .setSenderPublicKey(::peer::myself::getPublicKey())
+    namespace update {
+      namespace account {
+        void issue_transaction(std::vector<std::string> &argv) {
+          try {
+            auto
+                tx = txbuilder::TransactionBuilder<type_signatures::Update<type_signatures::Account >>()
+                .setSenderPublicKey(::peer::myself::getPublicKey())
 //TODO                                txbuilder::createAccount( argv[0], argv[1], txbuilder::createTrust( stod(argv[2]), argv[3]=="true" ) )
-                                .build();
-                        connection::iroha::PeerService::Sumeragi::send(
-                                ::peer::myself::getIp(),
-                                tx
-                        );
-                    } catch (const std::out_of_range &oor) {
-                        logger::error("issue_transaction") << "Not enough elements.";
-                        logger::error("issue_transaction") << oor.what();
-                        exit(1);
-                    } catch (...) {
-                        logger::error("issue_transaction") << "etc exception";
-                        exit(1);
-                    }
-                }
-            }
-            namespace asset {
-                void issue_transaction(std::vector <std::string> &argv) {
-                    try {
-                        auto
-                        tx = txbuilder::TransactionBuilder < type_signatures::Update < type_signatures::Asset >> ()
-                                .setSenderPublicKey(::peer::myself::getPublicKey())
-//TODO                                txbuilder::createAsset( argv[0], argv[1], txbuilder::createTrust( stod(argv[2]), argv[3]=="true" ) )
-                                .build();
-                        connection::iroha::PeerService::Sumeragi::send(
-                                ::peer::myself::getIp(),
-                                tx
-                        );
-                    } catch (const std::out_of_range &oor) {
-                        logger::error("issue_transaction") << "Not enough elements.";
-                        logger::error("issue_transaction") << oor.what();
-                        exit(1);
-                    } catch (...) {
-                        logger::error("issue_transaction") << "etc exception";
-                        exit(1);
-                    }
-                }
-            }
-            namespace peer {
-                void issue_transaction(std::vector <std::string> &argv) {
-                    try {
-                        auto
-                        tx = txbuilder::TransactionBuilder < type_signatures::Update < type_signatures::Peer >> ()
-                                .setSenderPublicKey(::peer::myself::getPublicKey())
-                            .setPeer(
-                                txbuilder::createPeer( argv.at(0), argv.at(1), txbuilder::createTrust( stod(argv.at(2)), argv.at(3)=="true" ) )
-                            )
-                                .build();
-                        connection::iroha::PeerService::Sumeragi::send(
-                                ::peer::myself::getIp(),
-                                tx
-                        );
-                    } catch (const std::out_of_range &oor) {
-                        logger::error("issue_transaction") << "Not enough elements.";
-                        logger::error("issue_transaction") << oor.what();
-                        exit(1);
-                    } catch (...) {
-                        logger::error("issue_transaction") << "etc exception";
-                        exit(1);
-                    }
-                }
-            }
-            namespace domain {
-                void issue_transaction(std::vector <std::string> &argv) {
-                    try {
-                        auto
-                        tx = txbuilder::TransactionBuilder < type_signatures::Update < type_signatures::Domain >> ()
-                                .setSenderPublicKey(::peer::myself::getPublicKey())
-                            .setDomain(
-                                txbuilder::createDomain( argv.at(0), argv.at(1) )
-                            )
-                                .build();
-                        connection::iroha::PeerService::Sumeragi::send(
-                                ::peer::myself::getIp(),
-                                tx
-                        );
-                    } catch (const std::out_of_range &oor) {
-                        logger::error("issue_transaction") << "Not enough elements.";
-                        logger::error("issue_transaction") << oor.what();
-                        exit(1);
-                    } catch (...) {
-                        logger::error("issue_transaction") << "etc exception";
-                        exit(1);
-                    }
-                }
-            }
+                .build();
+            connection::iroha::PeerService::Sumeragi::send(
+                ::peer::myself::getIp(),
+                tx
+            );
+          } catch (const std::out_of_range &oor) {
+            logger::error("issue_transaction") << "Not enough elements.";
+            logger::error("issue_transaction") << oor.what();
+            exit(1);
+          } catch (...) {
+            logger::error("issue_transaction") << "etc exception";
+            exit(1);
+          }
         }
+      }
+      namespace asset {
+        void issue_transaction(std::vector<std::string> &argv) {
+          try {
+            auto
+                tx = txbuilder::TransactionBuilder<type_signatures::Update<type_signatures::Asset >>()
+                .setSenderPublicKey(::peer::myself::getPublicKey())
+//TODO                                txbuilder::createAsset( argv[0], argv[1], txbuilder::createTrust( stod(argv[2]), argv[3]=="true" ) )
+                .build();
+            connection::iroha::PeerService::Sumeragi::send(
+                ::peer::myself::getIp(),
+                tx
+            );
+          } catch (const std::out_of_range &oor) {
+            logger::error("issue_transaction") << "Not enough elements.";
+            logger::error("issue_transaction") << oor.what();
+            exit(1);
+          } catch (...) {
+            logger::error("issue_transaction") << "etc exception";
+            exit(1);
+          }
+        }
+      }
+      namespace peer {
+        void issue_transaction(std::vector<std::string> &argv) {
+          try {
+            auto
+                tx = txbuilder::TransactionBuilder<type_signatures::Update<type_signatures::Peer >>()
+                .setSenderPublicKey(::peer::myself::getPublicKey())
+                .setPeer(
+                    txbuilder::createPeer(argv.at(0), argv.at(1),
+                                          txbuilder::createTrust(stod(argv.at(2)), argv.at(3) == "true"))
+                )
+                .build();
+            connection::iroha::PeerService::Sumeragi::send(
+                ::peer::myself::getIp(),
+                tx
+            );
+          } catch (const std::out_of_range &oor) {
+            logger::error("issue_transaction") << "Not enough elements.";
+            logger::error("issue_transaction") << oor.what();
+            exit(1);
+          } catch (...) {
+            logger::error("issue_transaction") << "etc exception";
+            exit(1);
+          }
+        }
+      }
+      namespace domain {
+        void issue_transaction(std::vector<std::string> &argv) {
+          try {
+            auto
+                tx = txbuilder::TransactionBuilder<type_signatures::Update<type_signatures::Domain >>()
+                .setSenderPublicKey(::peer::myself::getPublicKey())
+                .setDomain(
+                    txbuilder::createDomain(argv.at(0), argv.at(1))
+                )
+                .build();
+            connection::iroha::PeerService::Sumeragi::send(
+                ::peer::myself::getIp(),
+                tx
+            );
+          } catch (const std::out_of_range &oor) {
+            logger::error("issue_transaction") << "Not enough elements.";
+            logger::error("issue_transaction") << oor.what();
+            exit(1);
+          } catch (...) {
+            logger::error("issue_transaction") << "etc exception";
+            exit(1);
+          }
+        }
+      }
     }
+  }
 }
 
 #endif // TOOLS_ISSUE_TRANSACTION_UPDATE_HPP

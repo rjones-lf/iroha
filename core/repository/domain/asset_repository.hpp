@@ -23,34 +23,35 @@ limitations under the License.
 #include <vector>
 
 namespace repository {
-    namespace asset {
+  namespace asset {
 
-        bool add(
-            const std::string &publicKey,
-            const std::string &assetName,
-            const Api::Asset &asset
-        );
+    bool add(
+        const std::string &publicKey,
+        const std::string &assetName,
+        const Api::Asset &asset
+    );
 
-        bool update(
-            const std::string &publicKey,
-            const std::string &assetName,
-            const Api::Asset &asset
-        );
+    bool update(
+        const std::string &publicKey,
+        const std::string &assetName,
+        const Api::Asset &asset
+    );
 
-        bool remove(
-            const std::string &publicKey,
-            const std::string &assetName
-        );
+    bool remove(
+        const std::string &publicKey,
+        const std::string &assetName
+    );
 
-        Api::Asset find(
-            const std::string &publicKey,
-            const std::string &assetName
-        );
-        bool exists(
-            const std::string &publicKey,
-            const std::string &assetName
-        );
-    }
+    Api::Asset find(
+        const std::string &publicKey,
+        const std::string &assetName
+    );
+
+    bool exists(
+        const std::string &publicKey,
+        const std::string &assetName
+    );
+  }
 }
 
 #endif // __CORE_REPOSITORY_DOMAIN_ASSET_REPOSITORY_HPP__

@@ -16,44 +16,44 @@ limitations under the License.
 extern "C" {
 #include <SimpleFIPS202.h>
 }
+
 #include <crypto/hash.hpp>
-#include <string>
 
 namespace hash {
 
-static inline std::string digest_to_hexdigest(const unsigned char *digest,
-                                       size_t size) {
-  char code[] = {'0', '1', '2', '3', '4', '5', '6', '7',
-                 '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-  std::string res = "";
-  unsigned char front, back;
-  for (unsigned int i = 0; i < size; i++) {
-    front = (digest[i] & 0xF0) >> 4;
-    back = digest[i] & 0xF;
-    res += code[front];
-    res += code[back];
+  static inline std::string digest_to_hexdigest(const unsigned char *digest,
+                                                size_t size) {
+    char code[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                   '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    std::string res = "";
+    unsigned char front, back;
+    for (unsigned int i = 0; i < size; i++) {
+      front = (digest[i] & 0xF0) >> 4;
+      back = digest[i] & 0xF;
+      res += code[front];
+      res += code[back];
+    }
+    return res;
   }
-  return res;
-}
 
-std::string sha3_256_hex(std::string message) {
-  const int sha256_size = 32;  // bytes
-  unsigned char digest[sha256_size];
+  std::string sha3_256_hex(std::string message) {
+    const int sha256_size = 32;  // bytes
+    unsigned char digest[sha256_size];
 
-  SHA3_256(digest, reinterpret_cast<const unsigned char *>(message.c_str()),
-           message.size());
+    SHA3_256(digest, reinterpret_cast<const unsigned char *>(message.c_str()),
+             message.size());
 
-  return digest_to_hexdigest(digest, sha256_size);
-}
+    return digest_to_hexdigest(digest, sha256_size);
+  }
 
-std::string sha3_512_hex(std::string message) {
-  const int sha512_size = 64;  // bytes
-  unsigned char digest[sha512_size];
+  std::string sha3_512_hex(std::string message) {
+    const int sha512_size = 64;  // bytes
+    unsigned char digest[sha512_size];
 
-  SHA3_512(digest, reinterpret_cast<const unsigned char *>(message.c_str()),
-           message.size());
+    SHA3_512(digest, reinterpret_cast<const unsigned char *>(message.c_str()),
+             message.size());
 
-  return digest_to_hexdigest(digest, sha512_size);
-}
+    return digest_to_hexdigest(digest, sha512_size);
+  }
 
 }  // namespace hash

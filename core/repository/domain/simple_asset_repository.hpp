@@ -23,18 +23,24 @@ limitations under the License.
 #include <vector>
 
 namespace repository {
-namespace simple_asset {
-std::string add(const std::string &domain, const std::string &name,
-                const Api::BaseObject &value,
-                const std::string &smartContractName);
-bool update(const std::string &uuid, const Api::BaseObject &value);
-bool remove(const std::string &uuid);
-std::vector<Api::SimpleAsset> findAll(const std::string &uuid);
-Api::SimpleAsset findByUuid(const std::string &uuid);
-Api::SimpleAsset findByUuidOrElse(const std::string &uuid,
-                                  const Api::SimpleAsset &defaultValue);
-bool exists(const std::string &uuid);
-}
+  namespace simple_asset {
+    std::string add(const std::string &domain, const std::string &name,
+                    const Api::BaseObject &value,
+                    const std::string &smartContractName);
+
+    bool update(const std::string &uuid, const Api::BaseObject &value);
+
+    bool remove(const std::string &uuid);
+
+    std::vector<Api::SimpleAsset> findAll(const std::string &uuid);
+
+    Api::SimpleAsset findByUuid(const std::string &uuid);
+
+    Api::SimpleAsset findByUuidOrElse(const std::string &uuid,
+                                      const Api::SimpleAsset &defaultValue);
+
+    bool exists(const std::string &uuid);
+  }
 }
 
 #endif // __CORE_REPOSITORY_DOMAIN_SIMPLE_ASSET_REPOSITORY_HPP__

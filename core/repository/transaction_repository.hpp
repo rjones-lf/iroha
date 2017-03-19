@@ -24,17 +24,17 @@ See the License for the specific language governing permissions and
 
 namespace Api { class Transaction; }
 
-namespace repository{
+namespace repository {
 
-   namespace transaction {
+  namespace transaction {
 
-        bool add(const std::string &hash, const Api::Transaction& tx);
+    bool add(const std::string &hash, const Api::Transaction &tx);
 
-        std::vector<Api::Transaction> findAll();
+    std::vector<Api::Transaction> findAll();
 
-        Api::Transaction find(const std::string& key);
+    Api::Transaction find(const std::string &key);
 
-    }
+  }
 }
 
 
