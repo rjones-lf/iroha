@@ -20,37 +20,37 @@ limitations under the License.
 
 namespace virtual_machine {
 
-void initializeVM(const std::string &packageName,
-                  const std::string &contractName);
+  void initializeVM(const std::string &packageName,
+                    const std::string &contractName);
 
-void finishVM(const std::string &packageName, const std::string &contractName);
+  void finishVM(const std::string &packageName, const std::string &contractName);
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName);
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName);
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params);
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params);
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::map<std::string, std::map<std::string, std::string>>& params2);
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::map<std::string, std::map<std::string, std::string>> &params2);
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::map<std::string, std::string>& params2);
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::map<std::string, std::string> &params2);
 
-void invokeFunction(const std::string &packageName,
-                    const std::string &contractName,
-                    const std::string &functionName,
-                    const std::map<std::string, std::string>& params1,
-                    const std::vector<std::string>& params2);
+  void invokeFunction(const std::string &packageName,
+                      const std::string &contractName,
+                      const std::string &functionName,
+                      const std::map<std::string, std::string> &params1,
+                      const std::vector<std::string> &params2);
 }
 
 #endif

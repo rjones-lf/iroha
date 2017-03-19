@@ -1,3 +1,4 @@
-                            .setDomain(
-                                txbuilder::createDomain( argv.at(0), argv.at(1) )
-                            )
+.
+setDomain(
+    txbuilder::createDomain(argv.at(0), argv.at(1))
+)

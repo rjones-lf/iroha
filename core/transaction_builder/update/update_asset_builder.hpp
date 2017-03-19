@@ -24,62 +24,64 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Update<type_signatures::Asset>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Update<type_signatures::Asset>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Update<Asset>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string sender) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Update<Asset>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(sender);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(sender);
-    return *this;
-  }
 
-  TransactionBuilder& setAsset(Api::Asset object) {
-    if (_isSetAsset) {
-      throw exception::txbuilder::DuplicateSetArgmentException("Update<Asset>",
-                                                               "Asset");
+    TransactionBuilder &setAsset(Api::Asset object) {
+      if (_isSetAsset) {
+        throw exception::txbuilder::DuplicateSetArgmentException("Update<Asset>",
+                                                                 "Asset");
+      }
+      _isSetAsset = true;
+      _asset = std::move(object);
+      return *this;
     }
-    _isSetAsset = true;
-    _asset = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException("Update<Asset>",
-                                                              unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException("Update<Asset>",
+                                                                unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_type("Update");
+      auto ptr = std::make_unique<Api::Asset>();
+      ptr->CopyFrom(_asset);
+      ret.set_allocated_asset(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_type("Update");
-    auto ptr = std::make_unique<Api::Asset>();
-    ptr->CopyFrom(_asset);
-    ret.set_allocated_asset(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetAsset) ret += std::string(" ") + "Asset";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetAsset) ret += std::string(" ") + "Asset";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  Api::Asset _asset;
+    std::string _senderPublicKey;
+    Api::Asset _asset;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetAsset = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetAsset = false;
+  };
 }
 
 #endif

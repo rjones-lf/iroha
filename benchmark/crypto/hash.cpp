@@ -20,14 +20,14 @@
 #include <crypto/hash.hpp>
 
 
-static void HASH_Sha3_256_with_keccak(benchmark::State& state) {
+static void HASH_Sha3_256_with_keccak(benchmark::State &state) {
   std::string s = "0123456789";  // length = 10
   while (state.KeepRunning()) {
     hash::sha3_256_hex(s);
   }
 }
 
-static void HASH_Sha3_512_with_keccak(benchmark::State& state) {
+static void HASH_Sha3_512_with_keccak(benchmark::State &state) {
   std::string s = "0123456789";  // length = 10
   while (state.KeepRunning()) {
     hash::sha3_512_hex(s);

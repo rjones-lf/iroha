@@ -15,20 +15,18 @@ limitations under the License.
 */
 
 #include <cappuccino.hpp>
-#include <json.hpp>
 
 #include <consensus/connection/connection.hpp>
 #include <crypto/hash.hpp>
 #include <infra/config/iroha_config_with_json.hpp>
 #include <infra/config/peer_service_with_json.hpp>
-#include <infra/protobuf/api.pb.h>
 #include <server/http_server.hpp>
 #include <service/peer_service.hpp>
 #include <transaction_builder/transaction_builder.hpp>
-#include <util/logger.hpp>
 
 // -- WIP --
 #include <grpc++/grpc++.h>
+
 using grpc::Channel;
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -38,150 +36,152 @@ using grpc::Status;
 // -------
 
 namespace http {
-    using namespace Api;
+  using namespace Api;
 
-    using txbuilder::TransactionBuilder;
-    using type_signatures::Remove;
-    using type_signatures::Domain;
-    using type_signatures::Account;
-    using type_signatures::Asset;
-    using type_signatures::SimpleAsset;
-    using type_signatures::Peer;
+  using txbuilder::TransactionBuilder;
+  using type_signatures::Remove;
+  using type_signatures::Domain;
+  using type_signatures::Account;
+  using type_signatures::Asset;
+  using type_signatures::SimpleAsset;
+  using type_signatures::Peer;
 
-    const auto assetName = "PointDemo";
+  const auto assetName = "PointDemo";
 
-    using nlohmann::json;
-    using Request = Cappuccino::Request;
-    using Response = Cappuccino::Response;
+  using nlohmann::json;
+  using Request = Cappuccino::Request;
+  using Response = Cappuccino::Response;
 
 
-    json responseError(std::string message){
-        return json({
-                            {"message", std::move(message)},
-                            {"status", 400}
-                    });
+  json responseError(std::string message) {
+    return json({
+                    {"message", std::move(message)},
+                    {"status",  400}
+                });
+  }
+
+  enum class RequestType {
+    Int,
+    Str,
+    Bool,
+    Float
+  };
+
+  std::vector<std::string> split(const std::string &str, const std::string &delim) noexcept {
+    std::vector<std::string> result;
+    std::string::size_type pos = 0;
+    while (pos != std::string::npos) {
+      auto p = str.find(delim, pos);
+      if (p == std::string::npos) {
+        result.push_back(str.substr(pos));
+        break;
+      } else {
+        result.push_back(str.substr(pos, p - pos));
+      }
+      pos = p + delim.size();
     }
+    return result;
+  }
 
-    enum class RequestType{
-        Int,
-        Str,
-        Bool,
-        Float
-    };
+  std::string Torii(std::unique_ptr<Sumeragi::Stub> stub_, const Transaction &transaction) {
+    StatusResponse response;
 
-    std::vector<std::string> split(const std::string& str, const std::string& delim) noexcept{
-        std::vector<std::string> result;
-        std::string::size_type pos = 0;
-        while(pos != std::string::npos) {
-            auto p = str.find(delim, pos);
-            if(p == std::string::npos){
-                result.push_back(str.substr(pos));
-                break;
-            }else{
-                result.push_back(str.substr(pos, p - pos));
-            }
-            pos = p + delim.size();
-        }
-        return result;
+    ClientContext context;
+
+    Status status = stub_->Torii(&context, transaction, &response);
+
+    if (status.ok()) {
+      logger::info("connection") << "response: " << response.value();
+      return response.value();
+    } else {
+      logger::error("connection") << status.error_code() << ": " << status.error_message();
+      //std::cout << status.error_code() << ": " << status.error_message();
+      return "RPC failed";
     }
+  }
 
-    std::string Torii(std::unique_ptr<Sumeragi::Stub> stub_,const Transaction& transaction) {
-        StatusResponse response;
+  void server() {
+    logger::info("server") << "initialize server!";
 
-        ClientContext context;
+    std::vector<std::string> params = {"", "-p", std::to_string(
+        config::IrohaConfigManager::getInstance().getHttpPortNumber(1204))};
+    std::vector<char *> argv;
+    for (const auto &arg : params)
+      argv.push_back((char *) arg.data());
+    argv.push_back(nullptr);
+    Cappuccino::Cappuccino(argv.size() - 1, argv.data());
 
-        Status status = stub_->Torii(&context, transaction, &response);
+    Cappuccino::route<Cappuccino::Method::POST>("/account/register", [](std::shared_ptr<Request> request) -> Response {
+      auto res = Response(request);
+      auto data = request->json();
+      std::string uuid = hash::sha3_256_hex(data["publicKey"].get<std::string>());
 
-        if (status.ok()) {
-            logger::info("connection")  << "response: " << response.value();
-            return response.value();
-        } else {
-            logger::error("connection") << status.error_code() << ": " << status.error_message();
-            //std::cout << status.error_code() << ": " << status.error_message();
-            return "RPC failed";
-        }
-    }
+      Api::Domain domain;
+      domain.set_ownerpublickey("pubkey1");
+      domain.set_name("name");
+      auto txDomain = TransactionBuilder < Remove < Domain >> ()
+          .setSenderPublicKey("karin")
+          .setDomain(domain)
+          .build();
 
-    void server() {
-        logger::info("server") << "initialize server!";
+      Torii(
+          Sumeragi::NewStub(grpc::CreateChannel(
+              ::peer::myself::getIp() + ":" +
+              std::to_string(config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051)),
+              grpc::InsecureChannelCredentials()
+          )),
+          txDomain
+      );
 
-        std::vector<std::string> params = {"", "-p", std::to_string(config::IrohaConfigManager::getInstance().getHttpPortNumber(1204))};
-        std::vector<char*> argv;
-        for (const auto& arg : params)
-            argv.push_back((char*)arg.data());
-        argv.push_back(nullptr);
-        Cappuccino::Cappuccino( argv.size() - 1, argv.data() );
+      res.json(json({
+                        {"status",  200},
+                        {"message", "successful"},
+                        {"uuid",    uuid}
+                    }));
 
-        Cappuccino::route<Cappuccino::Method::POST>("/account/register", [](std::shared_ptr<Request> request) -> Response {
-            auto res = Response(request);
-            auto data = request->json();
-            std::string uuid = hash::sha3_256_hex(data["publicKey"].get<std::string>());
+      return res;
+    });
 
-            Api::Domain domain;
-            domain.set_ownerpublickey("pubkey1");
-            domain.set_name("name");
-            auto txDomain = TransactionBuilder<Remove<Domain>>()
-                .setSenderPublicKey("karin")
-                .setDomain(domain)
-                .build();
+    Cappuccino::route<Cappuccino::Method::GET>("/account", [](std::shared_ptr<Request> request) -> Response {
+      std::string uuid = request->params("uuid");
+      auto res = Response(request);
 
-            Torii(
-                Sumeragi::NewStub(grpc::CreateChannel(
-                    ::peer::myself::getIp() + ":" +
-                    std::to_string(config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051)),
-                    grpc::InsecureChannelCredentials()
-                )),
-                txDomain
-            );
+      res.json(json({
+                        {"status", 200}
+                    }));
 
-            res.json(json({
-              {"status",  200},
-              {"message", "successful"},
-              {"uuid",   uuid}
-            }));
+      return res;
+    });
 
-            return res;
-        });
+    Cappuccino::route<Cappuccino::Method::POST>("/asset/operation", [](std::shared_ptr<Request> request) -> Response {
+      auto res = Response(request);
+      auto data = request->json();
+      if (!data.empty()) {
 
-        Cappuccino::route<Cappuccino::Method::GET>( "/account",[](std::shared_ptr<Request> request) -> Response{
-            std::string uuid = request->params("uuid");
-            auto res = Response(request);
+      }
+      res.json(json({
+                        {"status",  200},
+                        {"message", "Ok"}
+                    }));
+      return res;
+    });
 
-            res.json(json({
-                  {"status",  200}
-            }));
+    Cappuccino::route<Cappuccino::Method::GET>("/history/transaction",
+                                               [](std::shared_ptr<Request> request) -> Response {
+                                                 std::string uuid = request->params("uuid");
+                                                 auto res = Response(request);
+                                                 auto tx_json = json::array();
 
-            return res;
-        });
+                                                 res.json(json({
+                                                                   {"status",  200},
+                                                                   {"history", tx_json}
+                                                               }));
+                                                 return res;
+                                               });
 
-        Cappuccino::route<Cappuccino::Method::POST>( "/asset/operation",[](std::shared_ptr<Request> request) -> Response{
-            auto res = Response(request);
-            auto data = request->json();
-            if(!data.empty()) {
+    logger::info("server") << "start server!";
+    // runnning
+    Cappuccino::run();
 
-            }
-            res.json(json({
-              {"status",  200},
-              {"message", "Ok"}
-            }));
-            return res;
-        });
-
-        Cappuccino::route<Cappuccino::Method::GET>( "/history/transaction",[](std::shared_ptr<Request> request) -> Response{
-            std::string uuid = request->params("uuid");
-            auto res = Response(request);
-            auto tx_json = json::array();
-
-            res.json(json({
-              {"status",  200},
-              {"history", tx_json}
-            }));
-            return res;
-        });
-
-        logger::info("server") << "start server!";
-        // runnning
-        Cappuccino::run();
-
-    }
+  }
 };  // namespace http

@@ -15,40 +15,38 @@ limitations under the License.
 */
 #include <gtest/gtest.h>
 
-#include <string>
 #include <fstream>
 #include <regex>
-#include <vector>
 #include <json.hpp>
 #include <service/http_client.hpp>
 
 using nlohmann::json;
 
-std::vector<std::string> split(const std::string& str, char splitter = '\n', unsigned int time = 0) {
-    std::vector<std::string> res;
-    std::stringstream ss(str);
-    std::string tmp;
-    unsigned int count = 0;
-    while(getline(ss, tmp, splitter)) {
-        if(!tmp.empty()){
-            res.push_back(tmp);
-        }
-        if(time != 0 && count >= time){
-            res.push_back(ss.str());
-            break;
-        }
-        count++;
+std::vector<std::string> split(const std::string &str, char splitter = '\n', unsigned int time = 0) {
+  std::vector<std::string> res;
+  std::stringstream ss(str);
+  std::string tmp;
+  unsigned int count = 0;
+  while (getline(ss, tmp, splitter)) {
+    if (!tmp.empty()) {
+      res.push_back(tmp);
     }
-    return res;
+    if (time != 0 && count >= time) {
+      res.push_back(ss.str());
+      break;
+    }
+    count++;
+  }
+  return res;
 }
 
 TEST(config, isSystemConfigValid) {
 
-    auto req = http_client::Request("GET","/", "");
-    req.addHeader("Accept", "*/*");
+  auto req = http_client::Request("GET", "/", "");
+  req.addHeader("Accept", "*/*");
 
-    auto res = http_client::request( "example.com", 443, req);
-    ASSERT_EQ( std::get<0>(res), 0);
-    ASSERT_STREQ( split(std::get<1>(res)).at(0).c_str(), "HTTP/1.1 200 OK\r");
+  auto res = http_client::request("example.com", 443, req);
+  ASSERT_EQ(std::get<0>(res), 0);
+  ASSERT_STREQ(split(std::get<1>(res)).at(0).c_str(), "HTTP/1.1 200 OK\r");
 
 }

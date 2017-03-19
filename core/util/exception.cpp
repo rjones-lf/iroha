@@ -22,87 +22,93 @@ limitations under the License.
 
 namespace exception {
 
-  FileOpenException::FileOpenException(const std::string& filename):
-    std::invalid_argument("file " + filename + " is not found!") {
+  FileOpenException::FileOpenException(const std::string &filename) :
+      std::invalid_argument("file " + filename + " is not found!") {
   }
 
   NotImplementedException::NotImplementedException(
-    const std::string& functionName,
-    const std::string& filename
-  ):
-    std::invalid_argument("TODO: sorry [" + functionName + "] in " + filename + " is not yet implemented, would you like to contribute it?") {
+      const std::string &functionName,
+      const std::string &filename
+  ) :
+      std::invalid_argument("TODO: sorry [" + functionName + "] in " + filename +
+                            " is not yet implemented, would you like to contribute it?") {
   }
 
   BaseMethodException::BaseMethodException(
-    const std::string& functionName,
-    const std::string& filename
-  ):
-    std::domain_error("BaseMethodException [" + functionName + "] in " + filename) {
+      const std::string &functionName,
+      const std::string &filename
+  ) :
+      std::domain_error("BaseMethodException [" + functionName + "] in " + filename) {
   }
 
   namespace config {
     ConfigException::ConfigException(
-      const std::string& message
-    ):
-      std::domain_error("ConfigException: " + message) {
+        const std::string &message
+    ) :
+        std::domain_error("ConfigException: " + message) {
     }
   }
 
   ParseFromStringException::ParseFromStringException(
-    const std::string& filename
-  ):
-    std::domain_error("ParseFromStringException in " + filename) {
+      const std::string &filename
+  ) :
+      std::domain_error("ParseFromStringException in " + filename) {
   }
 
   InvalidCastException::InvalidCastException(
-    const std::string& from,
-    const std::string&   to,
-    const std::string& filename
-  ):
-    std::domain_error("InvalidCastException in " + filename + ". Cannot cast from " + from + " to " + to ) {
+      const std::string &from,
+      const std::string &to,
+      const std::string &filename
+  ) :
+      std::domain_error("InvalidCastException in " + filename + ". Cannot cast from " + from + " to " + to) {
   }
 
   InvalidCastException::InvalidCastException(
-    const std::string &meg,
-    const std::string &filename
-  ):
-    std::domain_error("InvalidCastException in " + filename + ". " + meg )
-  {}
+      const std::string &meg,
+      const std::string &filename
+  ) :
+      std::domain_error("InvalidCastException in " + filename + ". " + meg) {}
 
   namespace service {
-      DuplicationIPException::DuplicationIPException(const std::string& ip) :
+    DuplicationIPException::DuplicationIPException(const std::string &ip) :
         std::domain_error("DuplicationIPException : IP = " + ip + "\n") {
-      }
-      DuplicationPublicKeyException::DuplicationPublicKeyException(const std::string& publicKey) :
+    }
+
+    DuplicationPublicKeyException::DuplicationPublicKeyException(const std::string &publicKey) :
         std::domain_error("DuplicationPublicKeyException : publicKey = " + publicKey + "\n") {
-      }
-      UnExistFindPeerException::UnExistFindPeerException(const std::string& publicKey) :
-        std::domain_error("UnExistFindPeerException : publicKey = " + publicKey + "\n")  {
-      }
+    }
+
+    UnExistFindPeerException::UnExistFindPeerException(const std::string &publicKey) :
+        std::domain_error("UnExistFindPeerException : publicKey = " + publicKey + "\n") {
+    }
   }
 
 
   namespace crypto {
-    InvalidKeyException::InvalidKeyException(const std::string& message):
-      std::invalid_argument("keyfile is invalid cause:" + message) {
+    InvalidKeyException::InvalidKeyException(const std::string &message) :
+        std::invalid_argument("keyfile is invalid cause:" + message) {
     }
   }  // namespace crypto
 
   namespace repository {
-    WriteFailedException::WriteFailedException(const std::string& message):
-      std::invalid_argument("Data could note be saved:" + message) {
+    WriteFailedException::WriteFailedException(const std::string &message) :
+        std::invalid_argument("Data could note be saved:" + message) {
     }
-    DuplicateAddException::DuplicateAddException(const std::string& object):
-      std::invalid_argument("DuplicateAddException: " + object) {
+
+    DuplicateAddException::DuplicateAddException(const std::string &object) :
+        std::invalid_argument("DuplicateAddException: " + object) {
     }
   }  // namespace crypto
-  
+
   namespace txbuilder {
-    DuplicateSetArgmentException::DuplicateSetArgmentException(const std::string& buildTarget, const std::string& duplicateMember):
-      std::domain_error("DuplicateSetArgmentException in " + buildTarget + ", argment: " + duplicateMember) {
+    DuplicateSetArgmentException::DuplicateSetArgmentException(const std::string &buildTarget,
+                                                               const std::string &duplicateMember) :
+        std::domain_error("DuplicateSetArgmentException in " + buildTarget + ", argment: " + duplicateMember) {
     }
-    UnsetBuildArgmentsException::UnsetBuildArgmentsException(const std::string& buildTarget, const std::string& unsetMembers):
-      std::domain_error("UnsetBuildArgmentsException in " + buildTarget + ", argments: " + unsetMembers) {
+
+    UnsetBuildArgmentsException::UnsetBuildArgmentsException(const std::string &buildTarget,
+                                                             const std::string &unsetMembers) :
+        std::domain_error("UnsetBuildArgmentsException in " + buildTarget + ", argments: " + unsetMembers) {
     }
   }  // namespace transaction
 }  // namespace exception

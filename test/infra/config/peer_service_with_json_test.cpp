@@ -21,12 +21,11 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <infra/protobuf/api.pb.h>
 #include <service/peer_service.hpp>
-#include <vector>
 
 
 TEST(peer_service_with_json_test, initialize_peer_test) {
   peer::Nodes peers = ::peer::service::getPeerList();
-  for (auto&& peer : peers) {
+  for (auto &&peer : peers) {
     std::cout << peer->ip << std::endl;
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trustScore << std::endl;
@@ -52,7 +51,7 @@ TEST(peer_service_with_json_test, add_peer_test) {
   ASSERT_TRUE(::peer::transaction::validator::add(peer4));
   ASSERT_TRUE(::peer::transaction::executor::add(peer4));
   peer::Nodes peers = ::peer::service::getPeerList();
-  for (auto&& peer : peers) {
+  for (auto &&peer : peers) {
     std::cout << peer->ip << std::endl;
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trustScore << std::endl;
@@ -73,7 +72,7 @@ TEST(peer_service_with_json_test, update_peer_test) {
   ASSERT_FALSE(::peer::transaction::validator::update(upd_ng_key, peer));
   ASSERT_FALSE(::peer::transaction::executor::update(upd_ng_key, peer_ng));
   peer::Nodes peers = ::peer::service::getPeerList();
-  for (auto&& peer : peers) {
+  for (auto &&peer : peers) {
     std::cout << peer->ip << std::endl;
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trustScore << std::endl;
@@ -93,7 +92,7 @@ TEST(peer_service_with_json_test, remove_peer_test) {
   ASSERT_FALSE(::peer::transaction::validator::remove(rm_key));
   ASSERT_FALSE(::peer::transaction::executor::remove(rm_key));
   peer::Nodes peers = ::peer::service::getPeerList();
-  for (auto&& peer : peers) {
+  for (auto &&peer : peers) {
     std::cout << peer->ip << std::endl;
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trustScore << std::endl;
@@ -104,7 +103,7 @@ TEST(peer_service_with_json_test, remove_peer_test) {
 TEST(peer_service_with_json_test, leader_peer_check_test) {
   peer::Nodes peers = ::peer::service::getPeerList();
   ASSERT_FALSE(::peer::myself::isLeader());
-  for (auto&& peer : peers) {
+  for (auto &&peer : peers) {
     if (peer->publicKey != ::peer::myself::getPublicKey()) {
       ASSERT_TRUE(::peer::transaction::executor::remove(peer->publicKey));
     }

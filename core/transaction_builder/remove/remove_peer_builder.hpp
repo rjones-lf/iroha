@@ -24,62 +24,64 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Remove<type_signatures::Peer>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Remove<type_signatures::Peer>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Remove<Peer>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string sender) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Remove<Peer>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(sender);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(sender);
-    return *this;
-  }
 
-  TransactionBuilder& setPeer(Api::Peer object) {
-    if (_isSetPeer) {
-      throw exception::txbuilder::DuplicateSetArgmentException("Remove<Peer>",
-                                                               "Peer");
+    TransactionBuilder &setPeer(Api::Peer object) {
+      if (_isSetPeer) {
+        throw exception::txbuilder::DuplicateSetArgmentException("Remove<Peer>",
+                                                                 "Peer");
+      }
+      _isSetPeer = true;
+      _peer = std::move(object);
+      return *this;
     }
-    _isSetPeer = true;
-    _peer = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException("Remove<Peer>",
-                                                              unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException("Remove<Peer>",
+                                                                unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_type("Remove");
+      auto ptr = std::make_unique<Api::Peer>();
+      ptr->CopyFrom(_peer);
+      ret.set_allocated_peer(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_type("Remove");
-    auto ptr = std::make_unique<Api::Peer>();
-    ptr->CopyFrom(_peer);
-    ret.set_allocated_peer(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetPeer) ret += std::string(" ") + "Peer";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetPeer) ret += std::string(" ") + "Peer";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  Api::Peer _peer;
+    std::string _senderPublicKey;
+    Api::Peer _peer;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetPeer = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetPeer = false;
+  };
 }
 
 #endif

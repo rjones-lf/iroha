@@ -64,128 +64,167 @@ void ensureIntegrityOfSimpleAssetValue(
 /*********************************************************************************************************
  * Test SimpleAsset
  *********************************************************************************************************/
-TEST(JavaQueryRepoSimpleAsset, initializeVM) {
-  virtual_machine::initializeVM(PackageName, ContractName);
+TEST(JavaQueryRepoSimpleAsset, initializeVM
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
 }
 
-TEST(JavaQueryRepoSimpleAsset, invokeAddSimpleAssetQuery) {
+TEST(JavaQueryRepoSimpleAsset, invokeAddSimpleAssetQuery
+) {
 
-  /***********************************************************************
-   * 1. Initialize
-   ***********************************************************************/
-  // Remove cache
-  const auto uuid =
-      "6adb762d04a3744f32ec2027e820efeb543c79cd86e9b0cd51c8469cd25a453e";
-  if (repository::simple_asset::exists(uuid)) {
-    ASSERT_TRUE(repository::simple_asset::remove(uuid));
-  }
-
-  std::map<std::string, std::string> params;
-  {
-    params[tag::Uuid] = uuid;
-    params[tag::DomainId] = "domain id";
-    params[tag::SimpleAssetName] = "simple asset";
-    params[tag::SmartContractName] = "smartContractFunc";
-  }
-
-  std::map<std::string, std::string> value;
-  {
-    value["type"] = "double";
-    value["value"] = "98765.432101234567890987654321";
-  }
-
-  /***********************************************************************
-   * 2. Invoke Java
-   ***********************************************************************/
-  virtual_machine::invokeFunction(PackageName, ContractName,
-                                  "testAddSimpleAsset", params, value);
-
-  /***********************************************************************
-   * 3. Test
-   ***********************************************************************/
-  ensureIntegrityOfSimpleAssetValue(uuid, params, value);
-
-  // Remove chache again.
-  ASSERT_TRUE(repository::simple_asset::remove(uuid));
+/***********************************************************************
+ * 1. Initialize
+ ***********************************************************************/
+// Remove cache
+const auto uuid =
+    "6adb762d04a3744f32ec2027e820efeb543c79cd86e9b0cd51c8469cd25a453e";
+if (
+repository::simple_asset::exists(uuid)
+) {
+ASSERT_TRUE(repository::simple_asset::remove(uuid));
 }
 
-TEST(JavaQueryRepoSimpleAsset, invokeUpdateSimpleAssetQuery) {
-
-  /***********************************************************************
-   * 1. Initialize
-   ***********************************************************************/
-
-  std::map<std::string, std::string> inputInfo;
-  {
-    inputInfo[tag::DomainId] = "this is domain id";
-    inputInfo[tag::SimpleAssetName] = "this is simple asset name";
-    inputInfo[tag::SmartContractName] = "this is smart contract tag";
-  }
-
-  const auto uuid = repository::simple_asset::add(
-      inputInfo[tag::DomainId], inputInfo[tag::SimpleAssetName],
-      txbuilder::createValueBool(true), inputInfo[tag::SmartContractName]);
-
-  ASSERT_FALSE(uuid.empty());
-
-  std::map<std::string, std::string> params;
-  {
-    params[tag::Uuid] = uuid;
-  }
-
-  std::map<std::string, std::string> inputUpdatedValue;
-  { 
-    inputUpdatedValue["type"] = "string";
-    inputUpdatedValue["value"] = "updated from double to string";
-  }
-
-  /***********************************************************************
-   * 2. Invocation Java.
-   ***********************************************************************/
-  virtual_machine::invokeFunction(PackageName, ContractName,
-                                  "testUpdateSimpleAsset", params,
-                                  inputUpdatedValue);
-
-  /***********************************************************************
-   * 3. Test
-   ***********************************************************************/
-  const auto simpleAsset = repository::simple_asset::findByUuid(uuid);
-
-  std::map<std::string, std::string> info;
-  // info doesn't change.
-  info.emplace(tag::DomainId, simpleAsset.domain());
-  info.emplace(tag::SimpleAssetName, simpleAsset.name());
-  info.emplace(tag::SmartContractName, simpleAsset.smartcontractname());
-
-  ensureIntegrityOfSimpleAssetValue(uuid, info, inputUpdatedValue);
-
-  // Remove chache again.
-  ASSERT_TRUE(repository::simple_asset::remove(uuid));
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+uuid;
+params[tag::DomainId] = "domain id";
+params[tag::SimpleAssetName] = "simple asset";
+params[tag::SmartContractName] = "smartContractFunc";
 }
 
-TEST(JavaQueryRepoSimpleAsset, invokeRemoveSimpleAssetQuery) {
-
-  auto uuid = repository::simple_asset::add(
-      "domain id", "simple asset", txbuilder::createValueString("smpl value"),
-      "");
-  ASSERT_TRUE(repository::simple_asset::exists(uuid));
-
-  /***********************************************************************
-   * 1. Invocation Java.
-   ***********************************************************************/
-
-  std::map<std::string, std::string> params;
-  { params[tag::Uuid] = uuid; }
-
-  virtual_machine::invokeFunction(PackageName, ContractName,
-                                  "testRemoveSimpleAsset", params);
-  /***********************************************************************
-   * 2. Test
-   ***********************************************************************/
-  ASSERT_FALSE(repository::simple_asset::exists(uuid));
-  ASSERT_FALSE(repository::simple_asset::remove(uuid));
+std::map<std::string, std::string> value;
+{
+value["type"] = "double";
+value["value"] = "98765.432101234567890987654321";
 }
 
-TEST(JavaQueryRepoSimpleAsset, finishVM) {
-  virtual_machine::finishVM(PackageName, ContractName);
+/***********************************************************************
+ * 2. Invoke Java
+ ***********************************************************************/
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddSimpleAsset", params, value);
+
+/***********************************************************************
+ * 3. Test
+ ***********************************************************************/
+ensureIntegrityOfSimpleAssetValue(uuid, params, value
+);
+
+// Remove chache again.
+ASSERT_TRUE(repository::simple_asset::remove(uuid));
+}
+
+TEST(JavaQueryRepoSimpleAsset, invokeUpdateSimpleAssetQuery
+) {
+
+/***********************************************************************
+ * 1. Initialize
+ ***********************************************************************/
+
+std::map<std::string, std::string> inputInfo;
+{
+inputInfo[tag::DomainId] = "this is domain id";
+inputInfo[tag::SimpleAssetName] = "this is simple asset name";
+inputInfo[tag::SmartContractName] = "this is smart contract tag";
+}
+
+const auto uuid = repository::simple_asset::add(
+    inputInfo[tag::DomainId], inputInfo[tag::SimpleAssetName],
+    txbuilder::createValueBool(true), inputInfo[tag::SmartContractName]);
+
+ASSERT_FALSE(uuid
+.
+
+empty()
+
+);
+
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+uuid;
+}
+
+std::map<std::string, std::string> inputUpdatedValue;
+{
+inputUpdatedValue["type"] = "string";
+inputUpdatedValue["value"] = "updated from double to string";
+}
+
+/***********************************************************************
+ * 2. Invocation Java.
+ ***********************************************************************/
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testUpdateSimpleAsset", params,
+inputUpdatedValue);
+
+/***********************************************************************
+ * 3. Test
+ ***********************************************************************/
+const auto simpleAsset = repository::simple_asset::findByUuid(uuid);
+
+std::map<std::string, std::string> info;
+// info doesn't change.
+info.
+emplace(tag::DomainId, simpleAsset
+.
+
+domain()
+
+);
+info.
+emplace(tag::SimpleAssetName, simpleAsset
+.
+
+name()
+
+);
+info.
+emplace(tag::SmartContractName, simpleAsset
+.
+
+smartcontractname()
+
+);
+
+ensureIntegrityOfSimpleAssetValue(uuid, info, inputUpdatedValue
+);
+
+// Remove chache again.
+ASSERT_TRUE(repository::simple_asset::remove(uuid));
+}
+
+TEST(JavaQueryRepoSimpleAsset, invokeRemoveSimpleAssetQuery
+) {
+
+auto uuid = repository::simple_asset::add(
+    "domain id", "simple asset", txbuilder::createValueString("smpl value"),
+    "");
+ASSERT_TRUE(repository::simple_asset::exists(uuid));
+
+/***********************************************************************
+ * 1. Invocation Java.
+ ***********************************************************************/
+
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+uuid;
+}
+
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testRemoveSimpleAsset", params);
+/***********************************************************************
+ * 2. Test
+ ***********************************************************************/
+ASSERT_FALSE(repository::simple_asset::exists(uuid));
+ASSERT_FALSE(repository::simple_asset::remove(uuid));
+}
+
+TEST(JavaQueryRepoSimpleAsset, finishVM
+) {
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

@@ -17,7 +17,6 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <infra/protobuf/api.pb.h>
 #include <transaction_builder/transaction_builder.hpp>
-#include <util/exception.hpp>
 
 using txbuilder::TransactionBuilder;
 using type_signatures::Transfer;
@@ -36,12 +35,12 @@ TEST(transaction_builder, create_unset_valid_various_order) {
   domain.set_name("name");
 
   ASSERT_NO_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .setDomain(domain)
-    .setReceiverPublicKey("receiver pubkey")
-    .setSenderPublicKey("karin")
-    .build();
-  });
+                    auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                        .setDomain(domain)
+                        .setReceiverPublicKey("receiver pubkey")
+                        .setSenderPublicKey("karin")
+                        .build();
+                  });
 }
 
 TEST(transaction_builder, create_unset_sender) {
@@ -50,11 +49,11 @@ TEST(transaction_builder, create_unset_sender) {
   domain.set_name("name");
 
   ASSERT_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .setReceiverPublicKey("receiver pubkey")
-    .setDomain(domain)
-    .build();
-  }, exception::txbuilder::UnsetBuildArgmentsException);
+                 auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                     .setReceiverPublicKey("receiver pubkey")
+                     .setDomain(domain)
+                     .build();
+               }, exception::txbuilder::UnsetBuildArgmentsException);
 }
 
 TEST(transaction_builder, create_unset_receiver) {
@@ -63,11 +62,11 @@ TEST(transaction_builder, create_unset_receiver) {
   domain.set_name("name");
 
   ASSERT_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .setSenderPublicKey("karin")
-    .setDomain(domain)
-    .build();
-  }, exception::txbuilder::UnsetBuildArgmentsException);
+                 auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                     .setSenderPublicKey("karin")
+                     .setDomain(domain)
+                     .build();
+               }, exception::txbuilder::UnsetBuildArgmentsException);
 }
 
 TEST(transaction_builder, create_unset_object) {
@@ -76,11 +75,11 @@ TEST(transaction_builder, create_unset_object) {
   domain.set_name("name");
 
   ASSERT_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .setSenderPublicKey("karin")
-    .setReceiverPublicKey("receiver pubkey")
-    .build();
-  }, exception::txbuilder::UnsetBuildArgmentsException);
+                 auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                     .setSenderPublicKey("karin")
+                     .setReceiverPublicKey("receiver pubkey")
+                     .build();
+               }, exception::txbuilder::UnsetBuildArgmentsException);
 }
 
 TEST(transaction_builder, create_unset_noset) {
@@ -89,9 +88,9 @@ TEST(transaction_builder, create_unset_noset) {
   domain.set_name("name");
 
   ASSERT_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .build();
-  }, exception::txbuilder::UnsetBuildArgmentsException);
+                 auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                     .build();
+               }, exception::txbuilder::UnsetBuildArgmentsException);
 }
 
 TEST(transaction_builder, create_unset_invalid_double_set) {
@@ -100,11 +99,11 @@ TEST(transaction_builder, create_unset_invalid_double_set) {
   domain.set_name("name");
 
   ASSERT_THROW({
-  auto txDomain = TransactionBuilder<Transfer<Domain>>()
-    .setReceiverPublicKey("receiver pubkey")
-    .setDomain(domain)
-    .setSenderPublicKey("karin")
-    .setReceiverPublicKey("receiver pubkey")
-    .build();
-  }, exception::txbuilder::DuplicateSetArgmentException);
+                 auto txDomain = TransactionBuilder<Transfer<Domain>>()
+                     .setReceiverPublicKey("receiver pubkey")
+                     .setDomain(domain)
+                     .setSenderPublicKey("karin")
+                     .setReceiverPublicKey("receiver pubkey")
+                     .build();
+               }, exception::txbuilder::DuplicateSetArgmentException);
 }

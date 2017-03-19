@@ -16,9 +16,7 @@ limitations under the License.
 
 #include "../account_repository.hpp"
 #include "common_repository.hpp"
-#include <crypto/hash.hpp>
 #include <repository/world_state_repository.hpp>
-#include <transaction_builder/transaction_builder.hpp>
 #include <util/logger.hpp>
 
 namespace common = ::repository::common;
@@ -27,7 +25,7 @@ const std::string NameSpaceID = "account repository";
 const auto ValuePrefix = common::Prefix("Account::");
 
 namespace repository {
-namespace account {
+  namespace account {
 
     /********************************************************************************************
      * Add<Account>
@@ -35,7 +33,7 @@ namespace account {
     bool add(
         const std::string &publicKey,
         const Api::Account &account
-    ){
+    ) {
       return world_state_repository::add("account_" + publicKey, account.SerializeAsString());
     }
 
@@ -45,8 +43,8 @@ namespace account {
     bool update(
         const std::string &publicKey,
         const Api::Account &account
-    ){
-      if(world_state_repository::exists("account_" + publicKey)){
+    ) {
+      if (world_state_repository::exists("account_" + publicKey)) {
         return world_state_repository::update("account_" + publicKey, account.SerializeAsString());
       }
       return false;
@@ -57,8 +55,8 @@ namespace account {
      ********************************************************************************************/
     bool remove(
         const std::string &publicKey
-    ){
-      if(world_state_repository::exists("account_" + publicKey)){
+    ) {
+      if (world_state_repository::exists("account_" + publicKey)) {
         return world_state_repository::remove("account_" + publicKey);
       }
       return false;
@@ -66,9 +64,9 @@ namespace account {
 
     Api::Account find(
         const std::string &publicKey
-    ){
+    ) {
       Api::Account res;
-      if(world_state_repository::exists("account_" + publicKey)){
+      if (world_state_repository::exists("account_" + publicKey)) {
         res.ParseFromString(world_state_repository::find("account_" + publicKey));
       }
       return res;
@@ -76,9 +74,9 @@ namespace account {
 
     bool exists(
         const std::string &publicKey
-    ){
+    ) {
       return world_state_repository::exists("account_" + publicKey);
     }
 
-};
+  };
 };

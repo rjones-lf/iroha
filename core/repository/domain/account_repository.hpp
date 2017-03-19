@@ -24,30 +24,31 @@ limitations under the License.
 
 namespace repository {
 
-    namespace account {
+  namespace account {
 
-        bool add(
-            const std::string &publicKey,
-            const Api::Account &account
-        );
+    bool add(
+        const std::string &publicKey,
+        const Api::Account &account
+    );
 
-        bool update(
-            const std::string &publicKey,
-            const Api::Account &account
-        );
+    bool update(
+        const std::string &publicKey,
+        const Api::Account &account
+    );
 
-        bool remove(
-            const std::string &publicKey
-        );
+    bool remove(
+        const std::string &publicKey
+    );
 
-        Api::Account find(
-            const std::string &publicKey
-        );
-        bool exists(
-            const std::string &uuid
-        );
+    Api::Account find(
+        const std::string &publicKey
+    );
 
-    }
+    bool exists(
+        const std::string &uuid
+    );
+
+  }
 
 }
 #endif // __CORE_REPOSITORY_DOMAIN_ACCOUNT_REPOSITORY_HPP__

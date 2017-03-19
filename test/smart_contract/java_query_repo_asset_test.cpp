@@ -30,7 +30,7 @@ namespace tag = jni_constants;
 std::map<std::string, std::string> assetInfo;
 std::map<std::string, std::map<std::string, std::string>> assetValue;
 
-void ensureIntegrityOfAsset(const std::string& publicKey,const std::string& assetName) {
+void ensureIntegrityOfAsset(const std::string &publicKey, const std::string &assetName) {
   // Restore asset.
   const auto asset = repository::asset::find(publicKey, assetName);
 
@@ -65,7 +65,7 @@ void ensureIntegrityOfAsset(const std::string& publicKey,const std::string& asse
     std::map<std::string, std::string> lhs = assetValue.find(e.first)->second;
     Api::BaseObject rhsObj = e.second;
     std::map<std::string, std::string> rhs = convertBaseObjectToMapString(rhsObj);
-    
+
     std::cout << "(" << lhs["type"] << ", " << lhs["value"] << ") vs "
               << "(" << rhs["type"] << ", " << rhs["value"] << ")\n";
 
@@ -86,225 +86,279 @@ void ensureIntegrityOfAsset(const std::string& publicKey,const std::string& asse
 /*********************************************************************************************************
  * Test Asset
  *********************************************************************************************************/
-TEST(JavaQueryRepoAsset, InitializeVM) {
-  virtual_machine::initializeVM(PackageName, ContractName);
+TEST(JavaQueryRepoAsset, InitializeVM
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
 }
 
-TEST(JavaQueryRepoAsset, invokeAddAssetQuery) {
+TEST(JavaQueryRepoAsset, invokeAddAssetQuery
+) {
 
-  /***********************************************************************
-   * 1. Initial guess
-   ***********************************************************************/
-  const auto publicKey =
-      "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+/***********************************************************************
+ * 1. Initial guess
+ ***********************************************************************/
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
 
-  assetInfo[tag::DomainId] = "A domain id";
-  assetInfo[tag::AssetName] = "Currency";
-  assetInfo[tag::SmartContractName] = "smartContractFunc";
+assetInfo[tag::DomainId] = "A domain id";
+assetInfo[tag::AssetName] = "Currency";
+assetInfo[tag::SmartContractName] = "smartContractFunc";
 
-  assetValue["ownerName"] = {
-      {"type", "string"},
-      {"value", "karin"}
-  };
+assetValue["ownerName"] = {
+{
+"type", "string"},
+{
+"value", "karin"}
+};
 
-  assetValue["my_money"] = {
-      {"type", "int"},
-      {"value", "123456"}
-  };
+assetValue["my_money"] = {
+{
+"type", "int"},
+{
+"value", "123456"}
+};
 
-  assetValue["rate"] = {
-      {"type", "double"},
-      {"value", "0.12345678901234567890123456789"}
-  };
+assetValue["rate"] = {
+{
+"type", "double"},
+{
+"value", "0.12345678901234567890123456789"}
+};
 
-  /***********************************************************************
-   * 2. Invoke Java
-   ***********************************************************************/
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAsset",
-                                  assetInfo, assetValue);
+/***********************************************************************
+ * 2. Invoke Java
+ ***********************************************************************/
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddAsset",
+assetInfo, assetValue);
 
-  /***********************************************************************
-   * 3. Test
-   ***********************************************************************/
-  std::cout << "In c++:" << std::endl;
-  ensureIntegrityOfAsset(publicKey,"Currency");
+/***********************************************************************
+ * 3. Test
+ ***********************************************************************/
+std::cout << "In c++:" <<
+std::endl;
+ensureIntegrityOfAsset(publicKey,
+"Currency");
 
-  // Remove chache.
-  ASSERT_TRUE(repository::asset::remove(publicKey,"Currency"));
+// Remove chache.
+ASSERT_TRUE(repository::asset::remove(publicKey, "Currency"));
 }
 
-TEST(JavaQueryRepoAsset, invokeUpdateAssetQuery) {
-  /***********************************************************************
-   * 1. Initial guess
-   ***********************************************************************/
-  const auto publicKey =
-          "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+TEST(JavaQueryRepoAsset, invokeUpdateAssetQuery
+) {
+/***********************************************************************
+ * 1. Initial guess
+ ***********************************************************************/
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
 
-  assetInfo[tag::DomainId] = "A domain id";
-  assetInfo[tag::AssetName] = "Currency";
-  assetInfo[tag::SmartContractName] = "smartContractFunc";
+assetInfo[tag::DomainId] = "A domain id";
+assetInfo[tag::AssetName] = "Currency";
+assetInfo[tag::SmartContractName] = "smartContractFunc";
 
-  assetValue["ownerName"] = {
-      {"type", "string"},
-      {"value", "karin"}
-  };
+assetValue["ownerName"] = {
+{
+"type", "string"},
+{
+"value", "karin"}
+};
 
-  assetValue["my_money"] = {
-      {"type", "int"},
-      {"value", "123456"}
-  };
+assetValue["my_money"] = {
+{
+"type", "int"},
+{
+"value", "123456"}
+};
 
-  assetValue["rate"] = {
-      {"type", "double"},
-      {"value", "0.12345678901234567890123456789"}
-  };
+assetValue["rate"] = {
+{
+"type", "double"},
+{
+"value", "0.12345678901234567890123456789"}
+};
 
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAsset",
-                                  assetInfo, assetValue);
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddAsset",
+assetInfo, assetValue);
 
-  std::map<std::string, std::string> params;
-  {
-    params[tag::Uuid] = "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
-  }
-
-  assetValue["ownerName"] = {
-      {"type", "string"},
-      {"value", "asuka"}
-  };
-
-  assetValue["my_money"] = {
-      {"type", "int"},
-      {"value", "98765"}
-  };
-
-  assetValue["updated_value"] = {
-      {"type", "string"},
-      {"value", "アセット更新のテスト"}
-  };
-
-  /***********************************************************************
-   * 2. Invocation Java.
-   ***********************************************************************/
-  virtual_machine::invokeFunction(PackageName, ContractName, "testUpdateAsset",
-                                  params, assetValue);
-
-  /***********************************************************************
-   * 3. Test
-   ***********************************************************************/
-  std::cout << "In c++:" << std::endl;
-  ensureIntegrityOfAsset(publicKey,"Currency");
-
-  // Remove chache.
-  ASSERT_TRUE(repository::asset::remove(publicKey,"Currency"));
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] = "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
 }
 
-TEST(JavaQueryRepoAsset, invokeRemoveAssetQuery) {
-  /***********************************************************************
-   * 1. Invocation Java.
-   ***********************************************************************/
-  const auto assetUuid = "3f8ba1e5df7f1587defc8fae4789207c8719c7b6d86ce299821b8a83fe08b5a9";
-  const auto publicKey =
+assetValue["ownerName"] = {
+{
+"type", "string"},
+{
+"value", "asuka"}
+};
+
+assetValue["my_money"] = {
+{
+"type", "int"},
+{
+"value", "98765"}
+};
+
+assetValue["updated_value"] = {
+{
+"type", "string"},
+{
+"value", "アセット更新のテスト"}
+};
+
+/***********************************************************************
+ * 2. Invocation Java.
+ ***********************************************************************/
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testUpdateAsset",
+params, assetValue);
+
+/***********************************************************************
+ * 3. Test
+ ***********************************************************************/
+std::cout << "In c++:" <<
+std::endl;
+ensureIntegrityOfAsset(publicKey,
+"Currency");
+
+// Remove chache.
+ASSERT_TRUE(repository::asset::remove(publicKey, "Currency"));
+}
+
+TEST(JavaQueryRepoAsset, invokeRemoveAssetQuery
+) {
+/***********************************************************************
+ * 1. Invocation Java.
+ ***********************************************************************/
+const auto assetUuid = "3f8ba1e5df7f1587defc8fae4789207c8719c7b6d86ce299821b8a83fe08b5a9";
+const auto publicKey =
     "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
 
 
-  assetInfo[tag::DomainId] = "A domain id";
-  assetInfo[tag::AssetName] = "Currency";
-  assetInfo[tag::SmartContractName] = "smartContractFunc";
+assetInfo[tag::DomainId] = "A domain id";
+assetInfo[tag::AssetName] = "Currency";
+assetInfo[tag::SmartContractName] = "smartContractFunc";
 
-  assetValue["ownerName"] = {
-      {"type", "string"},
-      {"value", "karin"}
-  };
+assetValue["ownerName"] = {
+{
+"type", "string"},
+{
+"value", "karin"}
+};
 
-  assetValue["my_money"] = {
-      {"type", "int"},
-      {"value", "123456"}
-  };
+assetValue["my_money"] = {
+{
+"type", "int"},
+{
+"value", "123456"}
+};
 
-  assetValue["rate"] = {
-      {"type", "double"},
-      {"value", "0.12345678901234567890123456789"}
-  };
+assetValue["rate"] = {
+{
+"type", "double"},
+{
+"value", "0.12345678901234567890123456789"}
+};
 
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAsset",
-                                  assetInfo, assetValue);
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddAsset",
+assetInfo, assetValue);
 
-  std::map<std::string, std::string> params;
-  {
-    params[tag::Uuid] = assetUuid;
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, "testRemoveAsset",
-                                  params);
-  /***********************************************************************
-   * 2. Test
-   ***********************************************************************/
-  ASSERT_FALSE(repository::asset::exists(publicKey,"Currency")); // cache has removed.
+std::map<std::string, std::string> params;
+{
+params[tag::Uuid] =
+assetUuid;
 }
 
-TEST(JavaQueryRepoAsset, reinvokeAddAssetQuery) {
-  /***********************************************************************
-   * 1. Invocation Java.
-   ***********************************************************************/
-  const auto assetUuid = "3f8ba1e5df7f1587defc8fae4789207c8719c7b6d86ce299821b8a83fe08b5a9";
-  const auto publicKey =
-    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
-
-  assetInfo[tag::DomainId] = "A domain id";
-  assetInfo[tag::AssetName] = "Currency";
-  assetInfo[tag::SmartContractName] = "smartContractFunc";
-
-  assetValue["ownerName"] = {
-      {"type", "string"},
-      {"value", "karin"}
-  };
-
-  assetValue["my_money"] = {
-      {"type", "int"},
-      {"value", "123456"}
-  };
-
-  assetValue["rate"] = {
-      {"type", "double"},
-      {"value", "0.12345678901234567890123456789"}
-  };
-
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAsset",
-                                  assetInfo, assetValue);
-
-  ASSERT_TRUE(repository::asset::remove( publicKey, "Currency"));
-
-  assetInfo[tag::DomainId] = "組織";
-  assetInfo[tag::AssetName] = "アセット";
-  assetInfo[tag::SmartContractName] = "SCFunc";
-
-  assetValue["key1"] = {
-      {"type", "int"},
-      {"value", "1234567"}
-  };
-
-  assetValue["aaaaa"] = {
-      {"type", "double"},
-      {"value", "0.987654321234567890"}
-  };
-
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAsset",
-                                  assetInfo, assetValue);
-
-  /***********************************************************************
-   * 2. Test
-   ***********************************************************************/
-  const auto newAssetUuid = "7cdd09dff5f8f586a64a8948cac4937ccc1c7e3362de3125861966cfc7d177d7";
-  const auto publicKey =
-    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
-
-ASSERT_FALSE(repository::asset::exists(publicKey,"Currency"));
-  ASSERT_TRUE(repository::asset::exists(publicKey,"Currency"));
-
-  // Remove chache
-  ASSERT_TRUE(repository::asset::remove(publicKey,"Currency"));
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testRemoveAsset",
+params);
+/***********************************************************************
+ * 2. Test
+ ***********************************************************************/
+ASSERT_FALSE(repository::asset::exists(publicKey, "Currency")); // cache has removed.
 }
 
-TEST(JavaQueryRepoAsset, FinishVM) {
-  virtual_machine::finishVM(PackageName, ContractName);
+TEST(JavaQueryRepoAsset, reinvokeAddAssetQuery
+) {
+/***********************************************************************
+ * 1. Invocation Java.
+ ***********************************************************************/
+const auto assetUuid = "3f8ba1e5df7f1587defc8fae4789207c8719c7b6d86ce299821b8a83fe08b5a9";
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+
+assetInfo[tag::DomainId] = "A domain id";
+assetInfo[tag::AssetName] = "Currency";
+assetInfo[tag::SmartContractName] = "smartContractFunc";
+
+assetValue["ownerName"] = {
+{
+"type", "string"},
+{
+"value", "karin"}
+};
+
+assetValue["my_money"] = {
+{
+"type", "int"},
+{
+"value", "123456"}
+};
+
+assetValue["rate"] = {
+{
+"type", "double"},
+{
+"value", "0.12345678901234567890123456789"}
+};
+
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddAsset",
+assetInfo, assetValue);
+
+ASSERT_TRUE(repository::asset::remove(publicKey, "Currency"));
+
+assetInfo[tag::DomainId] = "組織";
+assetInfo[tag::AssetName] = "アセット";
+assetInfo[tag::SmartContractName] = "SCFunc";
+
+assetValue["key1"] = {
+{
+"type", "int"},
+{
+"value", "1234567"}
+};
+
+assetValue["aaaaa"] = {
+{
+"type", "double"},
+{
+"value", "0.987654321234567890"}
+};
+
+virtual_machine::invokeFunction(PackageName, ContractName,
+"testAddAsset",
+assetInfo, assetValue);
+
+/***********************************************************************
+ * 2. Test
+ ***********************************************************************/
+const auto newAssetUuid = "7cdd09dff5f8f586a64a8948cac4937ccc1c7e3362de3125861966cfc7d177d7";
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+
+ASSERT_FALSE(repository::asset::exists(publicKey, "Currency"));
+ASSERT_TRUE(repository::asset::exists(publicKey, "Currency"));
+
+// Remove chache
+ASSERT_TRUE(repository::asset::remove(publicKey, "Currency"));
+}
+
+TEST(JavaQueryRepoAsset, FinishVM
+) {
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

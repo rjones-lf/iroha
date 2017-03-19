@@ -87,7 +87,7 @@ private:  \
   bool _isSetSenderPublicKey = false; \
   bool _isSet##ObjectType = false;
 
-#define BUILDER_CUSTOM_MEMBER(type,name) \
+#define BUILDER_CUSTOM_MEMBER(type, name) \
   type _##name;
 
 #define BUILDER_CUSTOM_MEMBER_BOOL(capitalizedName) \
@@ -99,20 +99,20 @@ private:  \
 }
 BUILDER_NAMESPACE_BEGIN
 
-BUILDER_BEGIN(__CommandType__,__ObjectType__)
+  BUILDER_BEGIN(__CommandType__, __ObjectType__)
 
-BUILDER_SET_SENDERPUBLICKEY(__CommandType__,__ObjectType__)
+  BUILDER_SET_SENDERPUBLICKEY(__CommandType__, __ObjectType__)
 
-BUILDER_SET_OBJECT(__CommandType__,__ObjectType__,__objectType__)
+  BUILDER_SET_OBJECT(__CommandType__, __ObjectType__, __objectType__)
 
-BUILDER_BUILD(__CommandType__,__ObjectType__,__objectType__,__objtype__)
+  BUILDER_BUILD(__CommandType__, __ObjectType__, __objectType__, __objtype__)
 
-BUILDER_UNSET_MEMBERS_BEGIN(__ObjectType__)
-BUILDER_UNSET_MEMBERS_END
+  BUILDER_UNSET_MEMBERS_BEGIN(__ObjectType__)
+  BUILDER_UNSET_MEMBERS_END
 
-BUILDER_MEMBERS(__ObjectType__,__objectType__)
+  BUILDER_MEMBERS(__ObjectType__, __objectType__)
 
-BUILDER_MEMBERS_BOOL(__ObjectType__)
+  BUILDER_MEMBERS_BOOL(__ObjectType__)
 
 BUILDER_END
 BUILDER_NAMESPACE_END

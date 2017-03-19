@@ -18,20 +18,20 @@ limitations under the License.
 
 namespace jni_constants {
 
-static const auto Uuid = "uuid";
-static const auto PublicKey = "publicKey";
-static const auto AccountName = "accountName";
-static const auto AttachedAssetUuid = "attachedAssetUuid";
-static const auto DomainId = "domainId";
-static const auto AssetName = "assetName";
-static const auto SimpleAssetName = "simpleAssetName";
-static const auto Value = "assetValue";
-static const auto SmartContractName = "smartContractName";
-static const auto OwnerPublicKey = "ownerPublicKey";
-static const auto DomainName = "domainName";
-static const auto PeerTrustValue = "peerTrustValue";
-static const auto PeerAddress = "peerAddress";
-static const auto PeerTrustIsOk = "peerTrustIsOk";
+  static const auto Uuid = "uuid";
+  static const auto PublicKey = "publicKey";
+  static const auto AccountName = "accountName";
+  static const auto AttachedAssetUuid = "attachedAssetUuid";
+  static const auto DomainId = "domainId";
+  static const auto AssetName = "assetName";
+  static const auto SimpleAssetName = "simpleAssetName";
+  static const auto Value = "assetValue";
+  static const auto SmartContractName = "smartContractName";
+  static const auto OwnerPublicKey = "ownerPublicKey";
+  static const auto DomainName = "domainName";
+  static const auto PeerTrustValue = "peerTrustValue";
+  static const auto PeerAddress = "peerAddress";
+  static const auto PeerTrustIsOk = "peerTrustIsOk";
 
 }
 

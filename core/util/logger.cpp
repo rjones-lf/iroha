@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 #include <iostream>
-#include <string>
 
 #include "datetime.hpp"
 #include "logger.hpp"
@@ -71,106 +70,123 @@ namespace logger {
 
 namespace logger {
 
-debug::debug(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-debug::debug(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-debug::~debug() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <=
-          static_cast<int>(LogLevel::Debug)) {
-    const auto useCErr =
-        static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Debug);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (true ? std::string(" ") + "DEBUG" + " [" + caller + "] "
-                 : "[" + caller + "] ")
-        << stream.str() << std::endl;
+  debug::debug(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  debug::debug(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  debug::~debug() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <=
+        static_cast<int>(LogLevel::Debug)) {
+      const auto useCErr =
+          static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Debug);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (true ? std::string(" ") + "DEBUG" + " [" + caller + "] "
+                   : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
-info::info(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-info::info(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-info::~info() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <= static_cast<int>(LogLevel::Info)) {
-    const auto useCErr =
-        static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Info);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (true ? std::string(" ") + "INFO" + " [" + caller + "] "
-                 : "[" + caller + "] ")
-        << stream.str() << std::endl;
+
+  info::info(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  info::info(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  info::~info() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <= static_cast<int>(LogLevel::Info)) {
+      const auto useCErr =
+          static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Info);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (true ? std::string(" ") + "INFO" + " [" + caller + "] "
+                   : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
-warning::warning(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-warning::warning(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-warning::~warning() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <=
-          static_cast<int>(LogLevel::Warning)) {
-    const auto useCErr = static_cast<int>(LogLevel::Error) <=
-                         static_cast<int>(LogLevel::Warning);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (true ? std::string(" ") + "WARNING" + " [" + caller + "] "
-                 : "[" + caller + "] ")
-        << stream.str() << std::endl;
+
+  warning::warning(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  warning::warning(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  warning::~warning() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <=
+        static_cast<int>(LogLevel::Warning)) {
+      const auto useCErr = static_cast<int>(LogLevel::Error) <=
+                           static_cast<int>(LogLevel::Warning);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (true ? std::string(" ") + "WARNING" + " [" + caller + "] "
+                   : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
-error::error(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-error::error(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-error::~error() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <=
-          static_cast<int>(LogLevel::Error)) {
-    const auto useCErr =
-        static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Error);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (true ? std::string(" ") + "ERROR (-A-)" + " [" + caller + "] "
-                 : "[" + caller + "] ")
-        << stream.str() << std::endl;
+
+  error::error(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  error::error(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  error::~error() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <=
+        static_cast<int>(LogLevel::Error)) {
+      const auto useCErr =
+          static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Error);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (true ? std::string(" ") + "ERROR (-A-)" + " [" + caller + "] "
+                   : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
-fatal::fatal(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-fatal::fatal(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-fatal::~fatal() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <=
-          static_cast<int>(LogLevel::Fatal)) {
-    const auto useCErr =
-        static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Fatal);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (true ? std::string(" ") + "FATAL (`o')" + " [" + caller + "] "
-                 : "[" + caller + "] ")
-        << stream.str() << std::endl;
+
+  fatal::fatal(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  fatal::fatal(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  fatal::~fatal() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <=
+        static_cast<int>(LogLevel::Fatal)) {
+      const auto useCErr =
+          static_cast<int>(LogLevel::Error) <= static_cast<int>(LogLevel::Fatal);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (true ? std::string(" ") + "FATAL (`o')" + " [" + caller + "] "
+                   : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
-explore::explore(std::string &&caller) noexcept
-    : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
-explore::explore(const std::string &caller) noexcept
-    : caller(caller), uncaught(std::uncaught_exception()) {}
-explore::~explore() {
-  if (!std::uncaught_exception() &&
-      static_cast<int>(detail::LOG_LEVEL) <=
-          static_cast<int>(LogLevel::Explore)) {
-    const auto useCErr = static_cast<int>(LogLevel::Error) <=
-                         static_cast<int>(LogLevel::Explore);
-    (useCErr ? std::cerr : std::cout)
-        << datetime::unixtime_str()
-        << (false ? std::string(" ") + "(EXPLORE)" + " [" + caller + "] "
-                  : "[" + caller + "] ")
-        << stream.str() << std::endl;
+
+  explore::explore(std::string &&caller) noexcept
+      : caller(std::move(caller)), uncaught(std::uncaught_exception()) {}
+
+  explore::explore(const std::string &caller) noexcept
+      : caller(caller), uncaught(std::uncaught_exception()) {}
+
+  explore::~explore() {
+    if (!std::uncaught_exception() &&
+        static_cast<int>(detail::LOG_LEVEL) <=
+        static_cast<int>(LogLevel::Explore)) {
+      const auto useCErr = static_cast<int>(LogLevel::Error) <=
+                           static_cast<int>(LogLevel::Explore);
+      (useCErr ? std::cerr : std::cout)
+          << datetime::unixtime_str()
+          << (false ? std::string(" ") + "(EXPLORE)" + " [" + caller + "] "
+                    : "[" + caller + "] ")
+          << stream.str() << std::endl;
+    }
   }
-}
 
 }

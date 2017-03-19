@@ -27,43 +27,53 @@ const std::string ContractName = "TestInvocation";
 /*********************************************************************************************************
  * Test Invocation
  *********************************************************************************************************/
-TEST(JavaQueryRepoInvoke, InitializeVM) {
-  virtual_machine::initializeVM(PackageName, ContractName);
+TEST(JavaQueryRepoInvoke, InitializeVM
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
 }
 
-TEST(JavaQueryRepoInvoke, Invoke_JAVA_function) {
-  const std::string FunctionName = "test1";
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName);
+TEST(JavaQueryRepoInvoke, Invoke_JAVA_function
+) {
+const std::string FunctionName = "test1";
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName
+);
 }
 
-TEST(JavaQueryRepoInvoke, Invoke_JAVA_function_map_argv) {
+TEST(JavaQueryRepoInvoke, Invoke_JAVA_function_map_argv
+) {
 
-  const std::string FunctionName = "test2";
+const std::string FunctionName = "test2";
 
-  std::map<std::string, std::string> params;
-  {
-    params["key1"] = "Mizuki";
-    params["key2"] = "Sonoko";
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params);
+std::map<std::string, std::string> params;
+{
+params["key1"] = "Mizuki";
+params["key2"] = "Sonoko";
 }
 
-TEST(JavaQueryRepoInvoke, Invoke_JAVA_function_map_utf_8) {
-
-  const std::string FunctionName = "test3";
-
-  std::map<std::string, std::string> params;
-  {
-    params["key1"] = "水樹";
-    params["key2"] = "素子";
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params);
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params
+);
 }
 
-TEST(JavaQueryRepoInvoke, FinishVM) {
-  virtual_machine::finishVM(PackageName, ContractName);
+TEST(JavaQueryRepoInvoke, Invoke_JAVA_function_map_utf_8
+) {
+
+const std::string FunctionName = "test3";
+
+std::map<std::string, std::string> params;
+{
+params["key1"] = "水樹";
+params["key2"] = "素子";
+}
+
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params
+);
+}
+
+TEST(JavaQueryRepoInvoke, FinishVM
+) {
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

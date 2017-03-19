@@ -16,8 +16,6 @@ limitations under the License.
 #include <assert.h>
 #include <iostream>
 #include <map>
-#include <memory>
-#include <string>
 #include <vector>
 
 #include <infra/protobuf/api.pb.h>
@@ -27,11 +25,8 @@ limitations under the License.
 #include <repository/domain/domain_repository.hpp>
 #include <repository/domain/simple_asset_repository.hpp>
 #include <repository/domain/peer_repository.hpp>
-#include <transaction_builder/helper/create_objects_helper.hpp>
 //#include <util/convert_string.hpp>
-#include <util/exception.hpp>
 #include <util/logger.hpp>
-#include <assert.h>
 
 #include "jni_constants.hpp"
 #include "repository_Repository.h"
@@ -57,7 +52,7 @@ namespace tag = jni_constants;
  ***************************************************************************************/
 
 JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
-  (JNIEnv *env, jclass, jobject mMap_, jobjectArray assets_) {
+    (JNIEnv *env, jclass, jobject mMap_, jobjectArray assets_) {
 
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
   const std::vector<std::string> assets = convertJavaStringArrayRelease(env, assets_);
@@ -66,7 +61,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
   const std::string publicKey = mMap.find(tag::PublicKey)->second;
 
   IROHA_ASSERT_FALSE(mMap.find(tag::AccountName) == mMap.end());
-  const std::string name      = mMap.find(tag::AccountName)->second;
+  const std::string name = mMap.find(tag::AccountName)->second;
 
   logger::debug(NameSpaceID + "::accountAdd")
       << "pubkey: " << publicKey << " name: " << name;
@@ -74,7 +69,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
 
   Api::Account account;
 
-  for(auto asset: assets)
+  for (auto asset: assets)
     account.add_assets(asset);
 
   account.set_name(name);
@@ -86,7 +81,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
 
 // accountAttach is deprecated
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountAttach
-  (JNIEnv *env, jclass, jobject mMap_) {
+    (JNIEnv *env, jclass, jobject mMap_) {
 
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
 
@@ -104,7 +99,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountAttach
 
 // accountAttach is deprecated
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountUpdate
-  (JNIEnv *env, jclass, jobject mMap_, jobjectArray assets_) {
+    (JNIEnv *env, jclass, jobject mMap_, jobjectArray assets_) {
 
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
   const auto assets = convertJavaStringArrayRelease(env, assets_);
@@ -121,17 +116,17 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountUpdate
 
   Api::Account account;
 
-  for(auto asset: assets)
+  for (auto asset: assets)
     account.add_assets(asset);
 
   account.set_name(name);
   account.set_publickey(publicKey);
 
-  return JavaMakeBoolean(env, (jboolean)repository::account::update(publicKey, account));
+  return JavaMakeBoolean(env, (jboolean) repository::account::update(publicKey, account));
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountRemove
-  (JNIEnv *env, jclass, jobject mMap_) {
+    (JNIEnv *env, jclass, jobject mMap_) {
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
 
   IROHA_ASSERT_FALSE(mMap.find(tag::Uuid) == mMap.end());
@@ -142,7 +137,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountRemove
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountInfoFindByUuid
-  (JNIEnv *env, jclass, jobject mMap_) {
+    (JNIEnv *env, jclass, jobject mMap_) {
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
 
   IROHA_ASSERT_FALSE(mMap.find(tag::PublicKey) == mMap.end());
@@ -164,7 +159,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountInfoFindByUuid
 }
 
 JNIEXPORT jobjectArray JNICALL Java_repository_Repository_accountValueFindByUuid
-  (JNIEnv *env, jclass, jobject mMap_) {
+    (JNIEnv *env, jclass, jobject mMap_) {
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
 
   IROHA_ASSERT_FALSE(mMap.find(tag::Uuid) == mMap.end());
@@ -181,7 +176,7 @@ JNIEXPORT jobjectArray JNICALL Java_repository_Repository_accountValueFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_accountExists
-  (JNIEnv *env, jclass, jobject mMap_) {
+    (JNIEnv *env, jclass, jobject mMap_) {
   const auto mMap = convertJavaHashMapValueString(env, mMap_);
 
   IROHA_ASSERT_FALSE(mMap.find(tag::Uuid) == mMap.end());
@@ -195,15 +190,15 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountExists
  * Domain
  ***************************************************************************************/
 JNIEXPORT jstring JNICALL Java_repository_Repository_domainAdd
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::OwnerPublicKey) == params.end());
   const auto ownerPublicKey = params.find(tag::OwnerPublicKey)->second;
-  
+
   IROHA_ASSERT_FALSE(params.find(tag::DomainName) == params.end());
   const auto name = params.find(tag::DomainName)->second;
-  
+
   logger::debug(NameSpaceID + "::domainAdd")
       << "ownerPublicKey: " << ownerPublicKey << ", name: " << name;
 
@@ -213,12 +208,12 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_domainAdd
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainUpdate
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
   const auto uuid = params.find(tag::Uuid)->second;
-  
+
   IROHA_ASSERT_FALSE(params.find(tag::DomainName) == params.end());
   const auto name = params.find(tag::DomainName)->second;
 
@@ -229,7 +224,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainUpdate
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainRemove
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -240,7 +235,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainRemove
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -258,7 +253,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_domainExists
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -273,22 +268,22 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_domainExists
  ***************************************************************************************/
 
 JNIEXPORT jstring JNICALL Java_repository_Repository_assetAdd
-  (JNIEnv *env, jclass, jobject params_, jobject value_) {
+    (JNIEnv *env, jclass, jobject params_, jobject value_) {
 
   const auto params = convertJavaHashMapValueString(env, params_);
 
 
   IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
-  const auto publicKey   = params.find(tag::PublicKey)->second;
+  const auto publicKey = params.find(tag::PublicKey)->second;
 
   IROHA_ASSERT_FALSE(params.find(tag::DomainId) == params.end());
   const auto domain = params.find(tag::DomainId)->second;
 
   IROHA_ASSERT_FALSE(params.find(tag::AssetName) == params.end());
-  const auto name   = params.find(tag::AssetName)->second;
+  const auto name = params.find(tag::AssetName)->second;
 
 
-  const auto value  = convertAssetValueHashMap(env, value_);
+  const auto value = convertAssetValueHashMap(env, value_);
 
   logger::debug(NameSpaceID + "::assetAdd")
       << "domainId: " << domain << ", assetName: " << name;
@@ -304,7 +299,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_assetAdd
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetUpdate
-  (JNIEnv *env, jclass, jobject params_, jobject value_) {
+    (JNIEnv *env, jclass, jobject params_, jobject value_) {
 /*
   const auto params = convertJavaHashMapValueString(env, params_);
   IROHA_ASSERT_FALSE(params.find(tag::DomainId) == params.end());
@@ -321,13 +316,13 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetUpdate
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
   const auto uuid = params.find(tag::Uuid)->second;
 
-  const auto value  = convertAssetValueHashMap(env, value_);
+  const auto value = convertAssetValueHashMap(env, value_);
   // WIP
   return JavaMakeBoolean(env, (jboolean) false);  // Updates value only.
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetRemove
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
@@ -341,14 +336,14 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetRemove
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetInfoFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
-IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
-const auto publicKey = params.find(tag::PublicKey)->second;
+  IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
+  const auto publicKey = params.find(tag::PublicKey)->second;
 
-IROHA_ASSERT_FALSE(params.find(tag::AssetName) == params.end());
-const auto assetName = params.find(tag::AssetName)->second;
+  IROHA_ASSERT_FALSE(params.find(tag::AssetName) == params.end());
+  const auto assetName = params.find(tag::AssetName)->second;
 
   logger::debug(NameSpaceID + "::assetInfoFindByUuid") << "publicKey: " << publicKey;
 
@@ -371,7 +366,7 @@ const auto assetName = params.find(tag::AssetName)->second;
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetValueFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
@@ -382,7 +377,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetValueFindByUuid
 
   logger::debug(NameSpaceID + "::assetValueFindByUuid") << "publicKey: " << publicKey;
 
-  auto asset = repository::asset::find( publicKey, assetName);
+  auto asset = repository::asset::find(publicKey, assetName);
 
   ::txbuilder::Map value(asset.value().begin(), asset.value().end());
   // std::map<std::string, Api::BaseObject>
@@ -409,7 +404,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetValueFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_assetExists
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::AssetName) == params.end());
@@ -426,13 +421,13 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_assetExists
  * SimpleAsset
  ***************************************************************************************/
 JNIEXPORT jstring JNICALL Java_repository_Repository_simpleAssetAdd
-  (JNIEnv *env, jclass, jobject params_, jobject value_) {
+    (JNIEnv *env, jclass, jobject params_, jobject value_) {
   const auto params = convertJavaHashMapValueString(env, params_);
   IROHA_ASSERT_FALSE(params.find(tag::DomainId) == params.end());
   const auto domain = params.find(tag::DomainId)->second;
 
   IROHA_ASSERT_FALSE(params.find(tag::SimpleAssetName) == params.end());
-  const auto name   = params.find(tag::SimpleAssetName)->second;
+  const auto name = params.find(tag::SimpleAssetName)->second;
 
   IROHA_ASSERT_FALSE(params.find(tag::SmartContractName) == params.end());
   const auto smartContractName = params.find(tag::SmartContractName)->second;
@@ -450,7 +445,7 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_simpleAssetAdd
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetUpdate
-  (JNIEnv *env, jclass, jobject params_, jobject value_) {
+    (JNIEnv *env, jclass, jobject params_, jobject value_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -462,7 +457,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetUpdate
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetRemove
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -474,7 +469,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetRemove
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetInfoFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -502,7 +497,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetInfoFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetValueFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -516,7 +511,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetValueFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetExists
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -530,17 +525,17 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetExists
  * Peer
  ***************************************************************************************/
 JNIEXPORT jstring JNICALL Java_repository_Repository_peerAdd
-  (JNIEnv *env, jclass, jobject params_, jobject trust_) {
+    (JNIEnv *env, jclass, jobject params_, jobject trust_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::PublicKey) == params.end());
   const auto publicKey = params.find(tag::PublicKey)->second;
-  
+
   IROHA_ASSERT_FALSE(params.find(tag::PeerAddress) == params.end());
   const auto address = params.find(tag::PeerAddress)->second;
 
   const auto trust = convertMapStringToTrust(convertJavaHashMapValueString(env, trust_));
-  
+
   logger::debug(NameSpaceID + "::peerAdd")
       << "publicKey: " << publicKey << ", address: " << address;
 
@@ -550,12 +545,12 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_peerAdd
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerUpdate
-  (JNIEnv *env, jclass, jobject params_, jobject trust_) {
+    (JNIEnv *env, jclass, jobject params_, jobject trust_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
   const auto uuid = params.find(tag::Uuid)->second;
-  
+
   IROHA_ASSERT_FALSE(params.find(tag::PeerAddress) == params.end());
   const auto address = params.find(tag::PeerAddress)->second;
 
@@ -570,7 +565,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerUpdate
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerRemove
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -581,7 +576,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerRemove
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerInfoFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -599,7 +594,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerInfoFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerTrustFindByUuid
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());
@@ -612,7 +607,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_peerTrustFindByUuid
 }
 
 JNIEXPORT jobject JNICALL Java_repository_Repository_peerExists
-  (JNIEnv *env, jclass, jobject params_) {
+    (JNIEnv *env, jclass, jobject params_) {
   const auto params = convertJavaHashMapValueString(env, params_);
 
   IROHA_ASSERT_FALSE(params.find(tag::Uuid) == params.end());

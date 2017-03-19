@@ -25,13 +25,16 @@ limitations under the License.
 namespace config {
   class ConfigFormat {
   public:
-    static ConfigFormat& getInstance();
-    bool ensureFormatSumeragi(const std::string& configStr);
+    static ConfigFormat &getInstance();
+
+    bool ensureFormatSumeragi(const std::string &configStr);
 
   private:
     ConfigFormat();
-    bool ensureFormat(const std::string& configStr, const std::string& formatConfigStr);
-    bool ensureFormat(nlohmann::json& actualConfig, nlohmann::json& formatConfig, const std::string& history);
+
+    bool ensureFormat(const std::string &configStr, const std::string &formatConfigStr);
+
+    bool ensureFormat(nlohmann::json &actualConfig, nlohmann::json &formatConfig, const std::string &history);
   };
 }
 

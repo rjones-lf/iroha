@@ -25,46 +25,44 @@ limitations under the License.
 #include <repository/world_state_repository.hpp>
 #include <server/http_server.hpp>
 #include <service/izanami.hpp>
-#include <service/peer_service.hpp>
-#include <util/logger.hpp>
 
 std::atomic_bool running(true);
 
-void server(){
-    http::server();
+void server() {
+  http::server();
 }
 
-void sigHandler(int param){
-    running = false;
-    repository::world_state_repository::finish();
-    logger::info("main") << "will halt";
+void sigHandler(int param) {
+  running = false;
+  repository::world_state_repository::finish();
+  logger::info("main") << "will halt";
 }
 
 int main() {
-    signal(SIGINT,  sigHandler);
-    signal(SIGHUP,  sigHandler);
-    signal(SIGTERM, sigHandler);
+  signal(SIGINT, sigHandler);
+  signal(SIGHUP, sigHandler);
+  signal(SIGTERM, sigHandler);
 
-    if (getenv("IROHA_HOME") == nullptr){
-      logger::error("main") << "You must set IROHA_HOME!";
-      return 1;
-    }
+  if (getenv("IROHA_HOME") == nullptr) {
+    logger::error("main") << "You must set IROHA_HOME!";
+    return 1;
+  }
 
-    logger::info("main") << "process is :" << getpid();
-    logger::setLogLevel(logger::LogLevel::Debug);
+  logger::info("main") << "process is :" << getpid();
+  logger::setLogLevel(logger::LogLevel::Debug);
 
-    connection::initialize_peer();
-    sumeragi::initializeSumeragi();
-    peer::izanami::startIzanami();
+  connection::initialize_peer();
+  sumeragi::initializeSumeragi();
+  peer::izanami::startIzanami();
 
-    std::thread http_thread(server);
+  std::thread http_thread(server);
 
-    connection::run();
+  connection::run();
 
-    while(running);
+  while (running);
 
-    // sumeragi_thread.detach();
-    http_thread.detach();
+  // sumeragi_thread.detach();
+  http_thread.detach();
 
-    return 0;
+  return 0;
 }

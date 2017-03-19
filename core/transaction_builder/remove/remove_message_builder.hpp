@@ -23,14 +23,20 @@ limitations under the License.
 
 namespace transaction {
 
-template <>
-class TransactionBuilder<type_signatures::Remove<object::Message>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Remove < object::Message>>
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
+{
+  public:
+
+  TransactionBuilder() = default;
+
+  TransactionBuilder(const TransactionBuilder &) = default;
+
+  TransactionBuilder(TransactionBuilder
+  &&) = default;
+
+  TransactionBuilder &setSenderPublicKey(std::string sender) {
     if (_isSetSenderPublicKey) {
       throw std::domain_error(std::string("Duplicate sender in ") +
                               "remove/remove_message_builder_template.hpp");
@@ -40,7 +46,7 @@ class TransactionBuilder<type_signatures::Remove<object::Message>> {
     return *this;
   }
 
-  TransactionBuilder& setMessage(object::Message object) {
+  TransactionBuilder &setMessage(object::Message object) {
     if (_isSetMessage) {
       throw std::domain_error(std::string("Duplicate ") + "Message" + " in " +
                               "remove/remove_message_builder_template.hpp");
@@ -59,7 +65,8 @@ class TransactionBuilder<type_signatures::Remove<object::Message>> {
     return transaction::Transaction(_sender, command::Remove(_message));
   }
 
- private:
+  private:
+
   std::string enumerateUnsetMembers() {
     std::string ret;
     if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";

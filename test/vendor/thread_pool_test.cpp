@@ -16,21 +16,15 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-#include <cassert>
 #include <fixed_function.hpp>
-#include <functional>
 #include <mpsc_bounded_queue.hpp>
-#include <mutex>
 #include <queue>
-#include <string>
 #include <thread_pool.hpp>
-#include <type_traits>
-#include <worker.hpp>
 
 //-----------------------------------------------------------------------------
 int test_free_func(int i) { return i; }
 
-template <typename T>
+template<typename T>
 T test_free_func_template(T p) {
   return p;
 }
@@ -39,12 +33,13 @@ void test_void(int &p, int v) { p = v; }
 
 struct A {
   int b(const int &p) { return p; }
+
   void c(int &i) { i = 43; }
 };
 
-template <typename T>
+template<typename T>
 struct Foo {
-  template <typename U>
+  template<typename U>
   U bar(U p) {
     return p + payload;
   }
@@ -66,26 +61,33 @@ TEST(FixedFunction, AllocDealloc) {
   // STRUCT
   struct cnt {
     std::string payload;
+
     cnt() { def++; }
+
     cnt(const cnt &o) {
       payload = o.payload;
       cop++;
     }
+
     cnt(cnt &&o) {
       payload = std::move(o.payload);
       mov++;
     }
+
     cnt &operator=(const cnt &o) {
       payload = o.payload;
       cop_ass++;
       return *this;
     }
+
     cnt &operator=(cnt &&o) {
       payload = std::move(o.payload);
       mov_ass++;
       return *this;
     }
+
     ~cnt() { destroyed++; }
+
     std::string operator()() { return payload; }
   };
 
@@ -114,7 +116,7 @@ TEST(FixedFunction, AllocDealloc) {
     ASSERT_STREQ(std::string("qwe").c_str(), f4().c_str());
   }
 
-  ASSERT_EQ((unsigned int)(def + cop + mov), destroyed);
+  ASSERT_EQ((unsigned int) (def + cop + mov), destroyed);
   ASSERT_EQ(2u, def);
   ASSERT_EQ(0u, cop);
   ASSERT_EQ(6u, mov);
@@ -210,7 +212,8 @@ TEST(ThreadPool, ProcessJob) {
 TEST(ThreadPool, ProcessJobWithException) {
   ThreadPool pool;
 
-  struct CustomException {};
+  struct CustomException {
+  };
 
   std::future<int> r = pool.process([]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -226,7 +229,7 @@ TEST(ThreadPool, Parallel_HeavyJob) {
   ThreadPool pool;  // by default uses N_threads = 'hardware_concurrency'
 
   // in this test we add jobs faster than process them
-  const int repetitions = (int)100;
+  const int repetitions = (int) 100;
 
   // 128 = queue size, must be power of 2
   MPMCBoundedQueue<std::future<int>> queue(128);

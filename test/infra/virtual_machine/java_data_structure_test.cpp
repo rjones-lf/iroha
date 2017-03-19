@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 #include <gtest/gtest.h>
-#include <map>
 
 #include <infra/virtual_machine/jvm/java_data_structure.hpp>
 
@@ -28,7 +27,7 @@ TEST(java_data_structure_test, initializeJavaVM) {
   vm_args.nOptions = 0;
   vm_args.ignoreUnrecognized = JNI_FALSE;
 
-  int res = JNI_CreateJavaVM(&jvm, (void **)&env, &vm_args);
+  int res = JNI_CreateJavaVM(&jvm, (void **) &env, &vm_args);
   if (res) {
     throw "cannot run JavaVM";
   }
@@ -36,7 +35,9 @@ TEST(java_data_structure_test, initializeJavaVM) {
 
 TEST(java_data_structure_test, JavaMakeMap) {
   std::map<std::string, std::string> params = {
-      {"key1", "value1"}, {"key2", "value2"}, {"key3", "value3"},
+      {"key1", "value1"},
+      {"key2", "value2"},
+      {"key3", "value3"},
   };
 
   auto javaHashMap = virtual_machine::jvm::JavaMakeMap(env, params);
@@ -53,11 +54,15 @@ TEST(java_data_structure_test, JavaMakeMap) {
 TEST(java_data_structure_test, JavaMakeMapInMap) {
 
   std::map<std::string, std::string> params1 = {
-      {"key1", "value1"}, {"key2", "value2"}, {"key3", "value3"},
+      {"key1", "value1"},
+      {"key2", "value2"},
+      {"key3", "value3"},
   };
 
   std::map<std::string, std::string> params2 = {
-      {"Key1", "Value1"}, {"Key2", "Value2"}, {"Key3", "Value3"},
+      {"Key1", "Value1"},
+      {"Key2", "Value2"},
+      {"Key3", "Value3"},
   };
 
   std::map<std::string, std::map<std::string, std::string>> paramsInParams;

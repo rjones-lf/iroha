@@ -24,8 +24,9 @@ template <template<class> class CommandT>
 class TransactionBuilder {};
 */
 
-template <typename CommandT>
-class TransactionBuilder {};
+  template<typename CommandT>
+  class TransactionBuilder {
+  };
 
 }
 

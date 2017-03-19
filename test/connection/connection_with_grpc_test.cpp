@@ -15,8 +15,6 @@ limitations under the License.
 */
 
 #include <gtest/gtest.h>
-#include <iostream>
-#include <string>
 #include <thread>
 #include <unordered_map>
 
@@ -96,9 +94,9 @@ TEST_F(connection_with_grpc_test, Transaction_Add_Domain) {
   domain.set_ownerpublickey(verifyDomainOwnerPubKey);
   domain.set_name(verifyDomainName);
   auto tx = TransactionBuilder<Add<Domain>>()
-                .setSenderPublicKey(verifySenderPubKey)
-                .setDomain(domain)
-                .build();
+      .setSenderPublicKey(verifySenderPubKey)
+      .setDomain(domain)
+      .build();
 
   Api::ConsensusEvent sampleEvent;
   sampleEvent.mutable_transaction()->CopyFrom(tx);

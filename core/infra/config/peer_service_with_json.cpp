@@ -28,12 +28,12 @@ using nlohmann::json;
 PeerServiceConfig::PeerServiceConfig() {
 }
 
-PeerServiceConfig& PeerServiceConfig::getInstance() {
+PeerServiceConfig &PeerServiceConfig::getInstance() {
   static PeerServiceConfig serviceConfig;
   return serviceConfig;
 }
 
-std::string PeerServiceConfig::getMyPublicKeyWithDefault(const std::string& defaultValue) {
+std::string PeerServiceConfig::getMyPublicKeyWithDefault(const std::string &defaultValue) {
   auto config = getConfigData();
   if (!config.is_null()) {
     return getConfigData()["me"].value("publicKey", defaultValue);
@@ -41,7 +41,7 @@ std::string PeerServiceConfig::getMyPublicKeyWithDefault(const std::string& defa
   return defaultValue;
 }
 
-std::string PeerServiceConfig::getMyPrivateKeyWithDefault(const std::string& defaultValue) {
+std::string PeerServiceConfig::getMyPrivateKeyWithDefault(const std::string &defaultValue) {
   auto config = getConfigData();
   if (!config.is_null()) {
     return getConfigData()["me"].value("privateKey", defaultValue);
@@ -49,7 +49,7 @@ std::string PeerServiceConfig::getMyPrivateKeyWithDefault(const std::string& def
   return defaultValue;
 }
 
-std::string PeerServiceConfig::getMyIpWithDefault(const std::string& defaultValue) {
+std::string PeerServiceConfig::getMyIpWithDefault(const std::string &defaultValue) {
   auto config = getConfigData();
   if (!config.is_null()) {
     return getConfigData()["me"].value("ip", defaultValue);
@@ -61,13 +61,13 @@ double PeerServiceConfig::getMaxTrustScoreWithDefault(double defaultValue) {
   return getConfigData().value("max_trust_score", defaultValue);
 }
 
-void PeerServiceConfig::parseConfigDataFromString(std::string&& jsonStr) {
+void PeerServiceConfig::parseConfigDataFromString(std::string &&jsonStr) {
   try {
     if (!ConfigFormat::getInstance().ensureFormatSumeragi(jsonStr)) {
       throw exception::ParseFromStringException(getConfigName());
     }
     _configData = json::parse(std::move(jsonStr));
-  } catch (exception::ParseFromStringException& e) {
+  } catch (exception::ParseFromStringException &e) {
     logger::warning("peer service config") << e.what();
     logger::warning("peer service config") << getConfigName() << " is set to be default.";
   }
@@ -84,30 +84,30 @@ double PeerServiceConfig::getMaxTrustScore() {
 std::vector<json> PeerServiceConfig::getGroup() {
   auto config = getConfigData();
   if (!config.is_null()) {
-     return getConfigData()["group"].get<std::vector<json>>();
+    return getConfigData()["group"].get<std::vector<json>>();
   }
 
   // default value
   return std::vector<json>({
-      json({
-        {"ip","172.17.0.3"},
-        {"name","mizuki"},
-        {"publicKey","jDQTiJ1dnTSdGH+yuOaPPZIepUj1Xt3hYOvLQTME3V0="}
-      }),
-      json({
-        {"ip","172.17.0.4"},
-        {"name","natori"},
-        {"publicKey","Q5PaQEBPQLALfzYmZyz9P4LmCNfgM5MdN1fOuesw3HY="}
-      }),
-      json({
-        {"ip","172.17.0.5"},
-        {"name","kabohara"},
-        {"publicKey","f5MWZUZK9Ga8XywDia68pH1HLY/Ts0TWBHsxiFDR0ig="}
-      }),
-      json({
-        {"ip","172.17.0.6"},
-        {"name","samari"},
-        {"publicKey","Sht5opDIxbyK+oNuEnXUs5rLbrvVgb2GjSPfqIYGFdU="}
-      })
-    });
+                               json({
+                                        {"ip",        "172.17.0.3"},
+                                        {"name",      "mizuki"},
+                                        {"publicKey", "jDQTiJ1dnTSdGH+yuOaPPZIepUj1Xt3hYOvLQTME3V0="}
+                                    }),
+                               json({
+                                        {"ip",        "172.17.0.4"},
+                                        {"name",      "natori"},
+                                        {"publicKey", "Q5PaQEBPQLALfzYmZyz9P4LmCNfgM5MdN1fOuesw3HY="}
+                                    }),
+                               json({
+                                        {"ip",        "172.17.0.5"},
+                                        {"name",      "kabohara"},
+                                        {"publicKey", "f5MWZUZK9Ga8XywDia68pH1HLY/Ts0TWBHsxiFDR0ig="}
+                                    }),
+                               json({
+                                        {"ip",        "172.17.0.6"},
+                                        {"name",      "samari"},
+                                        {"publicKey", "Sht5opDIxbyK+oNuEnXUs5rLbrvVgb2GjSPfqIYGFdU="}
+                                    })
+                           });
 }

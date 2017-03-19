@@ -3,14 +3,16 @@
 
 namespace type_signatures {
 
-namespace detail {
-template <class T, class... Rest>
-struct head {
-  using type = T;
-};
-}
+  namespace detail {
+    template<class T, class... Rest>
+    struct head {
+      using type = T;
+    };
+  }
 
-template<class T> struct To {};
+  template<class T>
+  struct To {
+  };
 
 }
 

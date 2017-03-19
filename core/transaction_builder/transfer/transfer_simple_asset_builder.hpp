@@ -24,78 +24,80 @@ limitations under the License.
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<
-    type_signatures::Transfer<type_signatures::SimpleAsset>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<
+      type_signatures::Transfer<type_signatures::SimpleAsset>> {
+  public:
+    TransactionBuilder() = default;
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
-    if (_isSetSenderPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<SimpleAsset>", "senderPublicKey");
+    TransactionBuilder(const TransactionBuilder &) = default;
+
+    TransactionBuilder(TransactionBuilder &&) = default;
+
+    TransactionBuilder &setSenderPublicKey(std::string sender) {
+      if (_isSetSenderPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<SimpleAsset>", "senderPublicKey");
+      }
+      _isSetSenderPublicKey = true;
+      _senderPublicKey = std::move(sender);
+      return *this;
     }
-    _isSetSenderPublicKey = true;
-    _senderPublicKey = std::move(sender);
-    return *this;
-  }
 
-  TransactionBuilder& setReceiverPublicKey(std::string receiverPublicKey) {
-    if (_isSetReceiverPublicKey) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<SimpleAsset>", "receiverPublicKey");
+    TransactionBuilder &setReceiverPublicKey(std::string receiverPublicKey) {
+      if (_isSetReceiverPublicKey) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<SimpleAsset>", "receiverPublicKey");
+      }
+      _isSetReceiverPublicKey = true;
+      _receiverPublicKey = std::move(receiverPublicKey);
+      return *this;
     }
-    _isSetReceiverPublicKey = true;
-    _receiverPublicKey = std::move(receiverPublicKey);
-    return *this;
-  }
 
-  TransactionBuilder& setSimpleAsset(Api::SimpleAsset object) {
-    if (_isSetSimpleAsset) {
-      throw exception::txbuilder::DuplicateSetArgmentException(
-          "Transfer<SimpleAsset>", "SimpleAsset");
+    TransactionBuilder &setSimpleAsset(Api::SimpleAsset object) {
+      if (_isSetSimpleAsset) {
+        throw exception::txbuilder::DuplicateSetArgmentException(
+            "Transfer<SimpleAsset>", "SimpleAsset");
+      }
+      _isSetSimpleAsset = true;
+      _simple_asset = std::move(object);
+      return *this;
     }
-    _isSetSimpleAsset = true;
-    _simple_asset = std::move(object);
-    return *this;
-  }
 
-  Api::Transaction build() {
-    const auto unsetMembers = enumerateUnsetMembers();
-    if (not unsetMembers.empty()) {
-      throw exception::txbuilder::UnsetBuildArgmentsException(
-          "Transfer<SimpleAsset>", unsetMembers);
+    Api::Transaction build() {
+      const auto unsetMembers = enumerateUnsetMembers();
+      if (not unsetMembers.empty()) {
+        throw exception::txbuilder::UnsetBuildArgmentsException(
+            "Transfer<SimpleAsset>", unsetMembers);
+      }
+      Api::Transaction ret;
+      ret.set_senderpubkey(_senderPublicKey);
+      ret.set_receivepubkey(_receiverPublicKey);
+      ret.set_type("Transfer");
+      auto ptr = std::make_unique<Api::SimpleAsset>();
+      ptr->CopyFrom(_simple_asset);
+      ret.set_allocated_simpleasset(ptr.release());
+      return ret;
     }
-    Api::Transaction ret;
-    ret.set_senderpubkey(_senderPublicKey);
-    ret.set_receivepubkey(_receiverPublicKey);
-    ret.set_type("Transfer");
-    auto ptr = std::make_unique<Api::SimpleAsset>();
-    ptr->CopyFrom(_simple_asset);
-    ret.set_allocated_simpleasset(ptr.release());
-    return ret;
-  }
 
- private:
-  std::string enumerateUnsetMembers() {
-    std::string ret;
-    if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
-    if (not _isSetReceiverPublicKey)
-      ret += std::string(" ") + "receiverPublicKey";
-    if (not _isSetSimpleAsset) ret += std::string(" ") + "SimpleAsset";
-    return ret;
-  }
+  private:
+    std::string enumerateUnsetMembers() {
+      std::string ret;
+      if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";
+      if (not _isSetReceiverPublicKey)
+        ret += std::string(" ") + "receiverPublicKey";
+      if (not _isSetSimpleAsset) ret += std::string(" ") + "SimpleAsset";
+      return ret;
+    }
 
-  std::string _senderPublicKey;
-  std::string _receiverPublicKey;
-  Api::SimpleAsset _simple_asset;
+    std::string _senderPublicKey;
+    std::string _receiverPublicKey;
+    Api::SimpleAsset _simple_asset;
 
-  bool _isSetSenderPublicKey = false;
-  bool _isSetReceiverPublicKey = false;
-  bool _isSetSimpleAsset = false;
-};
+    bool _isSetSenderPublicKey = false;
+    bool _isSetReceiverPublicKey = false;
+    bool _isSetSimpleAsset = false;
+  };
 }
 
 #endif

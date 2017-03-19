@@ -19,9 +19,9 @@ limitations under the License.
 
 namespace executor {
 
-using Api::Transaction;
+  using Api::Transaction;
 
-void execute(const Transaction &tx);
+  void execute(const Transaction &tx);
 };
 
 #endif // IROHA_EXECUTOR_HPP_HPP

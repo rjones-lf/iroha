@@ -29,14 +29,17 @@ namespace tag = jni_constants;
 /*********************************************************************************************************
  * Test Account
  *********************************************************************************************************/
-TEST(JavaQueryRepoAccount, initializeVM) {
-  virtual_machine::initializeVM(PackageName, ContractName);
+TEST(JavaQueryRepoAccount, initializeVM
+) {
+virtual_machine::initializeVM(PackageName, ContractName
+);
 }
 
-TEST(JavaQueryRepoAccount, invokeAddAccount) {
-  // *******************************************************
-  // Sorry... Interface is big chaned
-  // *******************************************************
+TEST(JavaQueryRepoAccount, invokeAddAccount
+) {
+// *******************************************************
+// Sorry... Interface is big chaned
+// *******************************************************
 /*
   /*****************************************************************
    * Remove chache
@@ -82,164 +85,228 @@ TEST(JavaQueryRepoAccount, invokeAddAccount) {
 */
 }
 
-TEST(JavaQueryRepoAccount, invokeAttachAssetToAccount) {
+TEST(JavaQueryRepoAccount, invokeAttachAssetToAccount
+) {
 
-  /*****************************************************************
-   * Remove chache
-   *****************************************************************/
-  const auto publicKey =
-          "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
-
-  if (repository::account::exists(publicKey)) {
-    repository::account::remove(publicKey);
-  }
-
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  std::map<std::string, std::string> params;
-  {
-    params[tag::PublicKey]   = publicKey;
-    params[tag::AccountName] = "MizukiSonoko";
-  }
-
-  std::vector<std::string> assets;
-  {
-    assets.push_back("asset1");
-    assets.push_back("asset2");
-    assets.push_back("asset3");
-  }
-
-  virtual_machine::invokeFunction(
-          PackageName, ContractName, "testAddAccount",
-                                  params, assets);
-
-  params = std::map<std::string, std::string>();
-  {
-    params[tag::PublicKey] = publicKey;
-    params[tag::AttachedAssetUuid] = "NEW ATTACHED UUID";
-  }
-
-  virtual_machine::invokeFunction(
-      PackageName, ContractName, "testAttachAssetToAccount",
-      params
-  );
-
-  const auto account = repository::account::find(publicKey);
-
-  ASSERT_STREQ("NEW ATTACHED UUID", params[tag::AttachedAssetUuid].c_str());
-
-  // Remove cache again
-  ASSERT_TRUE(repository::account::remove(publicKey));
-}
-
-TEST(JavaQueryRepoAccount, invokeUpdateAccount) {
-
-  /*****************************************************************
-   * Remove cache & initialize
-   *****************************************************************/
-  const auto publicKey =
+/*****************************************************************
+ * Remove chache
+ *****************************************************************/
+const auto publicKey =
     "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
 
-  if (repository::account::exists(publicKey)) {
-    repository::account::remove(publicKey);
-  }
-
-  Api::Account account_add;
-  account_add.set_name("MizukiSonoko");
-  account_add.set_publickey(publicKey);
-  account_add.add_assets("asset1");
-  account_add.add_assets("asset1");
-
-  repository::account::add(
-    publicKey,
-    account_add
-  );
-
-  ASSERT_TRUE(repository::account::exists(publicKey));
-
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  const std::string FunctionName = "testUpdateAccount";
-
-  std::map<std::string, std::string> params;
-  {
-    params[tag::PublicKey] = publicKey;
-    params[tag::AccountName] = "Mi Nazuki Sonoko";
-  }
-
-  std::vector<std::string> assets;
-  {
-    assets.push_back("aaaaaa");
-    assets.push_back("bbbbbb");
-    assets.push_back("cccccc");
-    assets.push_back("dddddd");
-  }
-
-  virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
-                                  params, assets);
-
-  const auto account = repository::account::find(publicKey);
-
-  ASSERT_STREQ(
-        publicKey,
-        account.publickey().c_str()
-  );
-  ASSERT_STREQ(params[tag::AccountName].c_str(), account.name().c_str());
-  for (std::size_t i = 0; i < assets.size(); i++) {
-    ASSERT_STREQ(assets[i].c_str(), account.assets(i).c_str());
-  }
-
-  // Remove chache again
-  repository::account::remove(publicKey);
+if (
+repository::account::exists(publicKey)
+) {
+repository::account::remove(publicKey);
 }
 
-TEST(JavaQueryRepoAccount, invokeRemoveAccount) {
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+std::map<std::string, std::string> params;
+{
+params[tag::PublicKey]   =
+publicKey;
+params[tag::AccountName] = "MizukiSonoko";
+}
 
-  /*****************************************************************
-  * Remove cache & initialize
-  *****************************************************************/
-  const auto publicKey =
-      "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+std::vector<std::string> assets;
+{
+assets.push_back("asset1");
+assets.push_back("asset2");
+assets.push_back("asset3");
+}
 
-  std::map<std::string, std::string> params;
-  {
-    params[tag::PublicKey] = publicKey;
-  }
+virtual_machine::invokeFunction(
+    PackageName, ContractName,
+"testAddAccount",
+params, assets);
 
-  if (repository::account::exists(publicKey)) {
-    repository::account::remove(publicKey);
-  }
+params = std::map<std::string, std::string>();
+{
+params[tag::PublicKey] =
+publicKey;
+params[tag::AttachedAssetUuid] = "NEW ATTACHED UUID";
+}
 
-  Api::Account account;
-  account.set_name("MizukiSonoko");
-  account.set_publickey(publicKey);
-  account.add_assets("asset1");
-  account.add_assets("asset1");
+virtual_machine::invokeFunction(
+    PackageName, ContractName,
+"testAttachAssetToAccount",
+params
+);
 
-  repository::account::add(
-     publicKey,
-     account
-  );
+const auto account = repository::account::find(publicKey);
 
-  ASSERT_TRUE(repository::account::exists(publicKey));
+ASSERT_STREQ("NEW ATTACHED UUID", params[tag::AttachedAssetUuid].
 
-  /*****************************************************************
-   * Invoke Java method
-   *****************************************************************/
-  const std::string FunctionName = "testRemoveAccount";
+c_str()
 
-  virtual_machine::invokeFunction(
+);
+
+// Remove cache again
+ASSERT_TRUE(repository::account::remove(publicKey));
+}
+
+TEST(JavaQueryRepoAccount, invokeUpdateAccount
+) {
+
+/*****************************************************************
+ * Remove cache & initialize
+ *****************************************************************/
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+
+if (
+repository::account::exists(publicKey)
+) {
+repository::account::remove(publicKey);
+}
+
+Api::Account account_add;
+account_add.set_name("MizukiSonoko");
+account_add.
+set_publickey(publicKey);
+account_add.add_assets("asset1");
+account_add.add_assets("asset1");
+
+repository::account::add(
+    publicKey,
+    account_add
+);
+
+ASSERT_TRUE(repository::account::exists(publicKey));
+
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+const std::string FunctionName = "testUpdateAccount";
+
+std::map<std::string, std::string> params;
+{
+params[tag::PublicKey] =
+publicKey;
+params[tag::AccountName] = "Mi Nazuki Sonoko";
+}
+
+std::vector<std::string> assets;
+{
+assets.push_back("aaaaaa");
+assets.push_back("bbbbbb");
+assets.push_back("cccccc");
+assets.push_back("dddddd");
+}
+
+virtual_machine::invokeFunction(PackageName, ContractName, FunctionName,
+    params, assets
+);
+
+const auto account = repository::account::find(publicKey);
+
+ASSERT_STREQ(
+    publicKey,
+    account
+.
+
+publickey()
+
+.
+
+c_str()
+
+);
+ASSERT_STREQ(params[tag::AccountName]
+.
+
+c_str(), account
+
+.
+
+name()
+
+.
+
+c_str()
+
+);
+for (
+std::size_t i = 0;
+i<assets.
+
+size();
+
+i++) {
+ASSERT_STREQ(assets[i]
+.
+
+c_str(), account
+
+.
+assets(i)
+.
+
+c_str()
+
+);
+}
+
+// Remove chache again
+repository::account::remove(publicKey);
+}
+
+TEST(JavaQueryRepoAccount, invokeRemoveAccount
+) {
+
+/*****************************************************************
+* Remove cache & initialize
+*****************************************************************/
+const auto publicKey =
+    "MPTt3ULszCLGQqAqRgHj2gQHVnxn/DuNlRXR/iLMAn4=";
+
+std::map<std::string, std::string> params;
+{
+params[tag::PublicKey] =
+publicKey;
+}
+
+if (
+repository::account::exists(publicKey)
+) {
+repository::account::remove(publicKey);
+}
+
+Api::Account account;
+account.set_name("MizukiSonoko");
+account.
+set_publickey(publicKey);
+account.add_assets("asset1");
+account.add_assets("asset1");
+
+repository::account::add(
+    publicKey,
+    account
+);
+
+ASSERT_TRUE(repository::account::exists(publicKey));
+
+/*****************************************************************
+ * Invoke Java method
+ *****************************************************************/
+const std::string FunctionName = "testRemoveAccount";
+
+virtual_machine::invokeFunction(
     PackageName,
     ContractName,
     FunctionName,
     params
-  );
+);
 
-  ASSERT_TRUE(!repository::account::exists(publicKey));
+ASSERT_TRUE(!
+repository::account::exists(publicKey)
+);
 }
 
-TEST(JavaQueryRepoAccount, finishVM) {
-  virtual_machine::finishVM(PackageName, ContractName);
+TEST(JavaQueryRepoAccount, finishVM
+) {
+virtual_machine::finishVM(PackageName, ContractName
+);
 }

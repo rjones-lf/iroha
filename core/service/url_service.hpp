@@ -22,18 +22,18 @@ limitations under the License.
 
 namespace service {
 
-    namespace url_service {
+  namespace url_service {
 
-        // Input assetUtil := <domain> ( <::> <domain> )* . <assetName>
-        // sample: rabbit_house::chino.cappucchino
-        // domain -> rabbit_house, chino
-        // asset  -> cappuccino
-        std::pair<
-            std::vector<std::string>,
-            std::string
-        > getAssetNameFromUrl(std::string assetUrl);
+    // Input assetUtil := <domain> ( <::> <domain> )* . <assetName>
+    // sample: rabbit_house::chino.cappucchino
+    // domain -> rabbit_house, chino
+    // asset  -> cappuccino
+    std::pair<
+        std::vector<std::string>,
+        std::string
+    > getAssetNameFromUrl(std::string assetUrl);
 
-    };
+  };
 };
 
 #endif

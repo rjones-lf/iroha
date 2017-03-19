@@ -16,10 +16,7 @@ limitations under the License.
 
 #include "../asset_repository.hpp"
 #include "common_repository.hpp"
-#include <crypto/hash.hpp>
 #include <repository/world_state_repository.hpp>
-#include <transaction_builder/transaction_builder.hpp>
-#include <util/exception.hpp>
 #include <util/logger.hpp>
 
 namespace common = ::repository::common;
@@ -28,13 +25,13 @@ const std::string NameSpaceID = "asset repository";
 const auto ValuePrefix = common::Prefix("Asset::");
 
 namespace repository {
-namespace asset {
+  namespace asset {
 
     bool add(
         const std::string &publicKey,
         const std::string &assetName,
-        const Api::Asset  &asset
-    ){
+        const Api::Asset &asset
+    ) {
       return world_state_repository::add("asset_" + publicKey + '_' + assetName, asset.SerializeAsString());
     }
 
@@ -42,8 +39,8 @@ namespace asset {
         const std::string &publicKey,
         const std::string &assetName,
         const Api::Asset &asset
-    ){
-      if(world_state_repository::exists("asset_" + publicKey + '_' + assetName)){
+    ) {
+      if (world_state_repository::exists("asset_" + publicKey + '_' + assetName)) {
         return world_state_repository::update("asset_" + publicKey + '_' + assetName, asset.SerializeAsString());
       }
       return false;
@@ -52,35 +49,35 @@ namespace asset {
     bool remove(
         const std::string &publicKey,
         const std::string &assetName
-    ){
-      if(world_state_repository::exists("asset_" + publicKey + '_' + assetName)){
+    ) {
+      if (world_state_repository::exists("asset_" + publicKey + '_' + assetName)) {
         return world_state_repository::remove("asset_" + publicKey + '_' + assetName);
       }
       return false;
     }
 
     Api::Asset find(
-            const std::string &publicKey,
-            const std::string &assetName
-    ){
-        Api::Asset res;
-        logger::info("AssetRepository") << "Find:" << "asset_" + publicKey + '_' + assetName;
-        logger::info("AssetRepository") << "Find:" << "pub:" + publicKey;
-        logger::info("AssetRepository") << "Find:" << "name:" + assetName;
-        if(world_state_repository::exists("asset_" + publicKey + '_' + assetName)){
-            logger::info("AssetRepository") << "Ok exists";
+        const std::string &publicKey,
+        const std::string &assetName
+    ) {
+      Api::Asset res;
+      logger::info("AssetRepository") << "Find:" << "asset_" + publicKey + '_' + assetName;
+      logger::info("AssetRepository") << "Find:" << "pub:" + publicKey;
+      logger::info("AssetRepository") << "Find:" << "name:" + assetName;
+      if (world_state_repository::exists("asset_" + publicKey + '_' + assetName)) {
+        logger::info("AssetRepository") << "Ok exists";
 
-            res.ParseFromString(world_state_repository::find("asset_" + publicKey + '_' + assetName));
-        }
-        return res;
+        res.ParseFromString(world_state_repository::find("asset_" + publicKey + '_' + assetName));
+      }
+      return res;
     }
 
     bool exists(
-            const std::string &publicKey,
-            const std::string &assetName
-    ){
-        return world_state_repository::exists("asset_" + publicKey + '_' + assetName);
+        const std::string &publicKey,
+        const std::string &assetName
+    ) {
+      return world_state_repository::exists("asset_" + publicKey + '_' + assetName);
     }
 
-};
+  };
 };

@@ -12,32 +12,36 @@ extern "C" {
  * Method:    updateQuantity
  * Signature: (Ljava/lang/String;Ljava/lang/String;J)V
  */
-JNIEXPORT void JNICALL Java_repository_AccountRepository_updateQuantity
-  (JNIEnv *, jclass, jstring, jstring, jlong);
+JNIEXPORT void JNICALL
+Java_repository_AccountRepository_updateQuantity
+(JNIEnv * , jclass , jstring , jstring , jlong ) ;
 
 /*
  * Class:     repository_AccountRepository
  * Method:    attach
  * Signature: (Ljava/lang/String;Ljava/lang/String;J)V
  */
-JNIEXPORT void JNICALL Java_repository_AccountRepository_attach
-  (JNIEnv *, jclass, jstring, jstring, jlong);
+JNIEXPORT void JNICALL
+Java_repository_AccountRepository_attach
+(JNIEnv * , jclass , jstring , jstring , jlong ) ;
 
 /*
  * Class:     repository_AccountRepository
  * Method:    findByUuid
  * Signature: (Ljava/lang/String;)Ljava/util/HashMap;
  */
-JNIEXPORT jobject JNICALL Java_repository_AccountRepository_findByUuid
-  (JNIEnv *, jclass, jstring);
+JNIEXPORT jobject
+JNICALL Java_repository_AccountRepository_findByUuid
+    (JNIEnv * , jclass, jstring);
 
 /*
  * Class:     repository_AccountRepository
  * Method:    add
  * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_repository_AccountRepository_add
-  (JNIEnv *, jclass, jstring, jstring);
+JNIEXPORT void JNICALL
+Java_repository_AccountRepository_add
+(JNIEnv * , jclass , jstring , jstring ) ;
 
 #ifdef __cplusplus
 }

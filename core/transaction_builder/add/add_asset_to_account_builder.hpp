@@ -27,14 +27,20 @@ using type_signatures::To;
 
 namespace txbuilder {
 
-template <>
-class TransactionBuilder<type_signatures::Add<object::Asset, To<object::Account>>> {
- public:
-  TransactionBuilder() = default;
-  TransactionBuilder(const TransactionBuilder&) = default;
-  TransactionBuilder(TransactionBuilder&&) = default;
+  template<>
+  class TransactionBuilder<type_signatures::Add < object::Asset, To < object::Account>>
 
-  TransactionBuilder& setSenderPublicKey(std::string sender) {
+  > {
+  public:
+
+  TransactionBuilder() = default;
+
+  TransactionBuilder(const TransactionBuilder &) = default;
+
+  TransactionBuilder(TransactionBuilder
+  &&) = default;
+
+  TransactionBuilder &setSenderPublicKey(std::string sender) {
     if (_isSetSenderPublicKey) {
       throw std::domain_error(std::string("Duplicate sender in ") +
                               "add/add_asset_builder_template.hpp");
@@ -44,7 +50,7 @@ class TransactionBuilder<type_signatures::Add<object::Asset, To<object::Account>
     return *this;
   }
 
-  TransactionBuilder& setAsset(object::Asset object) {
+  TransactionBuilder &setAsset(object::Asset object) {
     if (_isSetAsset) {
       throw std::domain_error(std::string("Duplicate ") + "Asset" + " in " +
                               "add/add_asset_builder_template.hpp");
@@ -54,7 +60,7 @@ class TransactionBuilder<type_signatures::Add<object::Asset, To<object::Account>
     return *this;
   }
 
-  TransactionBuilder& setToAccount(object::Account object) {
+  TransactionBuilder &setToAccount(object::Account object) {
     if (_isSetToAccount) {
       throw std::domain_error(std::string("Duplicate ") + "Account" + " in " +
                               "add/add_asset_builder_template.hpp");
@@ -76,7 +82,8 @@ class TransactionBuilder<type_signatures::Add<object::Asset, To<object::Account>
     return transaction::Transaction(_sender, command::Add(_account));
   }
 
- private:
+  private:
+
   std::string enumerateUnsetMembers() {
     std::string ret;
     if (not _isSetSenderPublicKey) ret += std::string(" ") + "sender";

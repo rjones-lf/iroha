@@ -23,42 +23,44 @@ limitations under the License.
 #include <vector>
 
 namespace repository {
-namespace common {
+  namespace common {
 
 /********************************************************************************************
  * stringify / parse
  ********************************************************************************************/
 
-struct Prefix {
-  explicit Prefix(const char* rhs) : prefix_(rhs) {}
-  const std::string& operator*() const { return prefix_; }
-  std::string prefix_;
-};
+    struct Prefix {
+      explicit Prefix(const char *rhs) : prefix_(rhs) {}
 
-inline void assertPrefix(const std::string &str, const Prefix &prefix) {
-  IROHA_ASSERT_TRUE(str.size() > (*prefix).size());
-  IROHA_ASSERT_TRUE(*prefix == str.substr(0, (*prefix).size()));
-}
+      const std::string &operator*() const { return prefix_; }
 
-inline std::string eliminatePrefix(const std::string &str, const Prefix &prefix) {
-  assertPrefix(str, prefix);
-  return str.substr((*prefix).size());
-}
+      std::string prefix_;
+    };
 
-template <typename ApiObjectT>
-std::string stringify(const ApiObjectT &obj, const Prefix &prefix) {
-  std::string str;
-  obj.SerializeToString(&str);
-  return *prefix + str;
-}
+    inline void assertPrefix(const std::string &str, const Prefix &prefix) {
+      IROHA_ASSERT_TRUE(str.size() > (*prefix).size());
+      IROHA_ASSERT_TRUE(*prefix == str.substr(0, (*prefix).size()));
+    }
 
-template <typename ApiObjectT>
-ApiObjectT parse(const std::string &str_, const Prefix &prefix) {
-  const auto str = eliminatePrefix(str_, prefix);
-  ApiObjectT ret;
-  ret.ParseFromString(str);
-  return ret;
-}
-}
+    inline std::string eliminatePrefix(const std::string &str, const Prefix &prefix) {
+      assertPrefix(str, prefix);
+      return str.substr((*prefix).size());
+    }
+
+    template<typename ApiObjectT>
+    std::string stringify(const ApiObjectT &obj, const Prefix &prefix) {
+      std::string str;
+      obj.SerializeToString(&str);
+      return *prefix + str;
+    }
+
+    template<typename ApiObjectT>
+    ApiObjectT parse(const std::string &str_, const Prefix &prefix) {
+      const auto str = eliminatePrefix(str_, prefix);
+      ApiObjectT ret;
+      ret.ParseFromString(str);
+      return ret;
+    }
+  }
 }
 #endif // __CORE_REPOSITORY_DOMAIN_COMMON_REPOSITORY_HPP__

@@ -27,6 +27,7 @@ limitations under the License.
 
 namespace base64 {
   const std::string encode(const std::vector<unsigned char> &message);
+
   std::vector<unsigned char> decode(const std::string &enc);
 };
 

@@ -23,14 +23,14 @@ limitations under the License.
 #include <vector>
 
 namespace peer {
-namespace hijiri {
+  namespace hijiri {
 // This is reputation System.
 
 // check are broken? peer
-void check(
-    const std::string &ip); // void checkBrokenPeer(const std::string &ip);
-                            // [WIPn] does we need it? void checkAll();
-}
+    void check(
+        const std::string &ip); // void checkBrokenPeer(const std::string &ip);
+    // [WIPn] does we need it? void checkAll();
+  }
 }
 
 #endif

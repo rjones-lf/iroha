@@ -23,17 +23,17 @@ limitations under the License.
 
 #include <json.hpp>
 
-namespace util{
-    class JsonLoader{
-    public:
-        JsonLoader(std::string filename);
+namespace util {
+  class JsonLoader {
+  public:
+    JsonLoader(std::string filename);
 
-        template<typename T>
-        T get(std::string key);
+    template<typename T>
+    T get(std::string key);
 
-        bool exist(std::string key);
+    bool exist(std::string key);
 
-    };
+  };
 };
 
 #endif //IROHA_JSON_LOADER_HPP_H
