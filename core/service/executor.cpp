@@ -106,15 +106,15 @@ namespace executor{
                         ) {
                         if ((*senderValue).second.valueint() > (*value).second.valueint() ) {
                             (*senderAsset.mutable_value())["value"].set_valueint(
-                                    (google::protobuf::int64) (
-                                            (*senderValue).second.valueint() - (*value).second.valueint() * (1 - (*percent).second.valuedouble())
-                                    )
+                                (google::protobuf::int64) (
+                                    (*senderValue).second.valueint() - (*value).second.valueint()
+                                )
                             );
                             (*receiverAsset.mutable_value())["value"].set_valueint(
-                                    (*receiverValue).second.valueint() + ((*value).second.valueint() * (1-(*percent).second.valuedouble()))
+                                (*receiverValue).second.valueint() + ((*value).second.valueint() * (1-(*percent).second.valuedouble()))
                             );
                             (*authorAsset.mutable_value())["value"].set_valueint(
-                                    (google::protobuf::int64)((*value).second.valueint() * (*percent).second.valuedouble())
+                                (google::protobuf::int64)((*value).second.valueint() * (*percent).second.valuedouble())
                             );
                             repository::asset::update(sender, assetName, senderAsset);
                             repository::asset::update(receiver, assetName, receiverAsset);
@@ -203,7 +203,7 @@ namespace executor{
                         senderValue != senderAsset.value().end() &&
                         receiverValue != receiverAsset.value().end()
                     ){
-                        if((*senderValue).second.valueint() > (*value).second.valueint()) {
+                        if((*senderValue).second.valueint() >= (*value).second.valueint()) {
                             (*senderAsset.mutable_value())["value"].set_valueint(
                                 (*senderValue).second.valueint() - (*value).second.valueint()
                             );
