@@ -371,7 +371,7 @@ TEST(ScenarioTest, CurrencyTransfer) {
         Api::Account account = repository::account::find(publicKey1);
         ASSERT_STREQ(account.publickey().c_str(), publicKey1);
         ASSERT_STREQ(account.name().c_str(), name1);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -399,7 +399,7 @@ TEST(ScenarioTest, CurrencyTransfer) {
         Api::Account account = repository::account::find(publicKey2);
         ASSERT_STREQ(account.publickey().c_str(), publicKey2);
         ASSERT_STREQ(account.name().c_str(), name2);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -473,7 +473,7 @@ TEST(ScenarioTest, CurrencyTransferFailedNotEnoughValue) {
         Api::Account account = repository::account::find(publicKey1);
         ASSERT_STREQ(account.publickey().c_str(), publicKey1);
         ASSERT_STREQ(account.name().c_str(), name1);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -501,7 +501,7 @@ TEST(ScenarioTest, CurrencyTransferFailedNotEnoughValue) {
         Api::Account account = repository::account::find(publicKey2);
         ASSERT_STREQ(account.publickey().c_str(), publicKey2);
         ASSERT_STREQ(account.name().c_str(), name2);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -574,7 +574,7 @@ TEST(ScenarioTest, CurrencyTransferEqualValue) {
         Api::Account account = repository::account::find(publicKey1);
         ASSERT_STREQ(account.publickey().c_str(), publicKey1);
         ASSERT_STREQ(account.name().c_str(), name1);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -602,7 +602,7 @@ TEST(ScenarioTest, CurrencyTransferEqualValue) {
         Api::Account account = repository::account::find(publicKey2);
         ASSERT_STREQ(account.publickey().c_str(), publicKey2);
         ASSERT_STREQ(account.name().c_str(), name2);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
@@ -676,7 +676,7 @@ TEST(ScenarioTest, MultiChatMessanger) {
         Api::Account account = repository::account::find(publicKey1);
         ASSERT_STREQ(account.publickey().c_str(), publicKey1);
         ASSERT_STREQ(account.name().c_str(), name1);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         std::unordered_map<std::string,Api::BaseObject> prop;
@@ -709,7 +709,7 @@ TEST(ScenarioTest, MultiChatMessanger) {
         Api::Account account = repository::account::find(publicKey2);
         ASSERT_STREQ(account.publickey().c_str(), publicKey2);
         ASSERT_STREQ(account.name().c_str(), name2);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
+        ASSERT_TRUE(account.assets_size() == 1);
         ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         std::unordered_map<std::string,Api::BaseObject> prop;

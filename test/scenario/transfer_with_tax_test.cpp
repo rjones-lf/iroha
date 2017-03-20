@@ -49,7 +49,7 @@ void removeData(const std::string& publicKey,
                 const std::string& assetName2 = "kayanocoin") {
   repository::account::remove(publicKey);
   Api::Account checkAccount = repository::account::find(publicKey);
-  IROHA_ASSERT_TRUE(checkAccount.name().empty());
+  ASSERT_TRUE(checkAccount.name().empty());
   repository::asset::remove(publicKey, assetName1);
   repository::asset::remove(publicKey, assetName2);
 }
