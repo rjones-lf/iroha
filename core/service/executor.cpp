@@ -171,8 +171,14 @@ namespace executor{
 
                         repository::asset::update(sender, assetName, senderAsset);
                         repository::asset::update(receiver, assetName, receiverAsset);
+                    }else{
+                        logger::error("executor") << "sender or receiver does not have target "<< (*targetName).second.valuestring();
                     }
+                }else{
+                    logger::error("executor") << "sender or receiver does not have asset "<< assetName;
                 }
+            }else{
+                logger::error("executor") << "Tx does not contain targetName ";
             }
         }
     };
