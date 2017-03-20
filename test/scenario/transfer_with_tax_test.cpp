@@ -16,43 +16,11 @@
  */
 #include <gtest/gtest.h>
 #include <infra/protobuf/api.grpc.pb.h>
-#include <memory>
 #include <repository/domain/account_repository.hpp>
 #include <repository/domain/asset_repository.hpp>
 #include <service/executor.hpp>
-#include <unordered_map>
 
-Api::Account makeAccount(const std::string& publicKey, const std::string& name,
-                         const std::initializer_list<std::string> assets) {
-  Api::Account account;
-  account.set_name(name);
-  account.set_publickey(publicKey);
-  for (const auto ac : assets) {
-    account.add_assets(ac);
-  }
-  return account;
-}
-
-Api::Asset makeAsset(
-    const std::string& name,
-    const std::unordered_map<std::string, Api::BaseObject> prop) {
-  Api::Asset asset;
-  asset.set_name(name);
-  for (const auto p : prop) {
-    (*asset.mutable_value())[p.first] = p.second;
-  }
-  return asset;
-}
-
-void removeData(const std::string& publicKey,
-                const std::string& assetName1 = "naocoin",
-                const std::string& assetName2 = "kayanocoin") {
-  repository::account::remove(publicKey);
-  Api::Account checkAccount = repository::account::find(publicKey);
-  ASSERT_TRUE(checkAccount.name().empty());
-  repository::asset::remove(publicKey, assetName1);
-  repository::asset::remove(publicKey, assetName2);
-}
+#include "test_utils.hpp"
 
 TEST(ScenarioTest, TransferWithTax) {
   const auto name1 = "mizuki";
