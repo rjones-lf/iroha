@@ -2,7 +2,7 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/my_test_bin)
 
 add_executable(sumeragi_test
-    sumeragi_test.cpp
+        sumeragi_test.cpp
 )
 
 target_link_libraries(sumeragi_test
@@ -17,7 +17,7 @@ target_link_libraries(sumeragi_test
 )
 
 add_executable(transaction_test
-    transaction_test.cpp
+        transaction_test.cpp
 )
 
 target_link_libraries(transaction_test

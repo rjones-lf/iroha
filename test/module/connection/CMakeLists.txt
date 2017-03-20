@@ -1,6 +1,6 @@
 # Grpc connection Test
 add_executable(connection_grpc_test
-    connection_with_grpc_test.cpp
+        connection_with_grpc_test.cpp
 )
 target_link_libraries(connection_grpc_test
     connection_with_grpc

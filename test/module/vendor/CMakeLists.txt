@@ -1,6 +1,6 @@
 # thread_pool_test
 add_executable(thread_pool_test
-  thread_pool_test.cpp
+        thread_pool_test.cpp
 )
 
 target_link_libraries(thread_pool_test
@@ -15,7 +15,7 @@ add_test(
 
 # json test
 add_executable(json_test
-    json_test.cpp
+        json_test.cpp
 )
 
 target_link_libraries(json_test

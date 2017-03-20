@@ -1,5 +1,5 @@
 add_executable(config_test
-    config_test.cpp
+        config_test.cpp
 )
 
 target_link_libraries(config_test
@@ -14,7 +14,7 @@ add_test(
 
 
 add_executable(http_client_test
-    http_client_test.cpp
+        http_client_test.cpp
 )
 target_link_libraries(http_client_test
     http_client

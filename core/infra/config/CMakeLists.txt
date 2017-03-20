@@ -8,4 +8,5 @@ target_link_libraries(config_manager
   json
   exception
   logger
+  connection_with_grpc
 )
