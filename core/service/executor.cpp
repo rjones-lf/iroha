@@ -31,7 +31,6 @@ namespace executor{
             repository::asset::add(tx.senderpubkey(),asset.name(),asset);
         } else if (tx.has_domain()) {
             // Add<Domain>
-            const auto domain = tx.domain();
         } else if (tx.has_account()) {
             // Add<Account>
             const auto account = tx.account();
@@ -157,5 +156,4 @@ namespace executor{
             contract(tx);
         }
     }
-
 };
