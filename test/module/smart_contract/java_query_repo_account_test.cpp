@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 
-#include <../smart_contract/repository/jni_constants.hpp>
+#include "../../../smart_contract/repository/jni_constants.hpp"
 #include <infra/virtual_machine/jvm/java_data_structure.hpp>
 #include <repository/domain/account_repository.hpp>
 #include <virtual_machine/virtual_machine.hpp>

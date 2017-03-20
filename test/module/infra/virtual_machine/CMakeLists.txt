@@ -1,5 +1,5 @@
 add_executable(java_data_structure_test
-    java_data_structure_test.cpp
+        java_data_structure_test.cpp
 )
 target_link_libraries(java_data_structure_test
   hash

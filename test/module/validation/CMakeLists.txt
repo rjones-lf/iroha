@@ -1,6 +1,6 @@
 # Grpc connection Test
 add_executable(transaction_validator_test
-    transaction_validator_test.cpp
+        transaction_validator_test.cpp
 )
 target_link_libraries(transaction_validator_test
     signature
