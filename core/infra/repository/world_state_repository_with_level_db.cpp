@@ -77,7 +77,8 @@ namespace repository {
               detail::loadDb();
           }
           if(nullptr != detail::db) {
-              logger::info("WorldStateRepositoryWithLeveldb") << "Add";
+
+              logger::info("WorldStateRepositoryWithLeveldb") << "Add:" << key;
               return detail::loggerStatus(detail::db->Put(leveldb::WriteOptions(), key, value));
           }
           logger::error("WorldStateRepositoryWithLeveldb") << "Error DB already held by process";
@@ -123,8 +124,8 @@ namespace repository {
           std::vector<std::string> res;
           leveldb::Iterator* it = detail::db->NewIterator(leveldb::ReadOptions());
           for(it->Seek(prefix);
-               it->Valid() && it->key().ToString() < prefix + "~";
-               it->Next()
+           it->Valid() && it->key().ToString() < prefix + "~";
+           it->Next()
           ){
               res.push_back( it->value().ToString() );
           }
@@ -185,6 +186,7 @@ namespace repository {
               detail::loadDb();
           }
           if(nullptr != detail::db) {
+              logger::info("WorldStateRepositoryWithLeveldb") << "Find:" << key;
               std::string readData;
               detail::loggerStatus(detail::db->Get(leveldb::ReadOptions(), key, &readData));
               if (!readData.empty()) {

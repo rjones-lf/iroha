@@ -64,7 +64,12 @@ namespace asset {
             const std::string &assetName
     ){
         Api::Asset res;
+        logger::info("AssetRepository") << "Find:" << "asset_" + publicKey + '_' + assetName;
+        logger::info("AssetRepository") << "Find:" << "pub:" + publicKey;
+        logger::info("AssetRepository") << "Find:" << "name:" + assetName;
         if(world_state_repository::exists("asset_" + publicKey + '_' + assetName)){
+            logger::info("AssetRepository") << "Ok exists";
+
             res.ParseFromString(world_state_repository::find("asset_" + publicKey + '_' + assetName));
         }
         return res;

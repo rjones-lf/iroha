@@ -110,7 +110,8 @@ TEST(JavaQueryRepoAccount, invokeAttachAssetToAccount) {
     assets.push_back("asset3");
   }
 
-  virtual_machine::invokeFunction(PackageName, ContractName, "testAddAccount",
+  virtual_machine::invokeFunction(
+          PackageName, ContractName, "testAddAccount",
                                   params, assets);
 
   params = std::map<std::string, std::string>();

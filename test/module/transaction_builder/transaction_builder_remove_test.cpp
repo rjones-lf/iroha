@@ -104,7 +104,6 @@ TEST(transaction_builder, create_remove_asset) {
   ASSERT_TRUE(obj.value().find("key2")->second.value_case() == Api::BaseObject::ValueCase::kValueInt);
   ASSERT_STREQ(obj.value().find("key1")->second.valuestring().c_str(), "value1");
   ASSERT_TRUE(obj.value().find("key2")->second.valueint() == 123456);
-  ASSERT_STREQ(obj.smartcontractname().c_str(), contract_name);
 }
 
 TEST(transaction_builder, create_remove_peer) {
@@ -149,5 +148,4 @@ TEST(transaction_builder, create_remove_simpleasset) {
 
   ASSERT_TRUE(obj.value().value_case() == Api::BaseObject::ValueCase::kValueInt);
   ASSERT_TRUE(obj.value().valueint() == 123456);
-  ASSERT_STREQ(obj.smartcontractname().c_str(), "contract_func");
 }

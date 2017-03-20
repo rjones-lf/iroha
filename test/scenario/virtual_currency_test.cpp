@@ -1,4 +1,43 @@
-//
-// Created by 五十嵐太清 on 2017/03/20.
-//
+/**
+ * Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+ * http://soramitsu.co.jp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+#include <gtest/gtest.h>
+#include <memory>
+#include <service/executor.hpp>
+#include <repository/domain/asset_repository.hpp>
+#include <repository/domain/account_repository.hpp>
+#include <infra/protobuf/api.grpc.pb.h>
+
+Api::Account makeAccount(
+    const std::string& publicKey,
+    const std::string& name,
+    const std::initializer_list<std::string> assets
+){
+    Api::Account account;
+    account.set_name("mizuki");
+    account.set_publickey(publicKey);
+    for(const auto ac: assets){
+        account.add_assets(ac);
+    }
+
+    return account;
+}
+
+
+
+TEST(ScenarioTest, AddNewAccountNoAsset) {
+}

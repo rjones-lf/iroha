@@ -287,14 +287,11 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_assetAdd
   IROHA_ASSERT_FALSE(params.find(tag::AssetName) == params.end());
   const auto name   = params.find(tag::AssetName)->second;
 
-  IROHA_ASSERT_FALSE(params.find(tag::SmartContractName) == params.end());
-  const auto smartContractName = params.find(tag::SmartContractName)->second;
 
   const auto value  = convertAssetValueHashMap(env, value_);
 
   logger::debug(NameSpaceID + "::assetAdd")
-      << "domainId: " << domain << ", assetName: " << name
-      << ", smartContractName: " << smartContractName;
+      << "domainId: " << domain << ", assetName: " << name;
 
   Api::Asset asset;
   asset.set_name(name);
@@ -361,7 +358,7 @@ const auto assetName = params.find(tag::AssetName)->second;
   {
     assetMap[tag::DomainId] = asset.domain();
     assetMap[tag::AssetName] = asset.name();
-    assetMap[tag::SmartContractName] = asset.smartcontractname();
+    assetMap[tag::SmartContractName] = "none";
   }
 
   logger::debug(NameSpaceID + "::assetInfoFindByUuid")
@@ -492,7 +489,7 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_simpleAssetInfoFindByUuid
   {
     simpleAssetInfo[tag::DomainId] = simpleAsset.domain();
     simpleAssetInfo[tag::AssetName] = simpleAsset.name();
-    simpleAssetInfo[tag::SmartContractName] = simpleAsset.smartcontractname();
+    simpleAssetInfo[tag::SmartContractName] = "";
   }
 
   logger::debug(NameSpaceID + "::simpleAssetInfoFindByUuid")

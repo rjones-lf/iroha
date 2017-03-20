@@ -396,11 +396,10 @@ namespace connection {
             auto sender = q.senderpubkey();
             if(q.type() == "asset"){
                 response->mutable_asset()->CopyFrom(repository::asset::find(sender, name));
-                logger::info("connection") << "AssetRepositoryService: " << response->asset().DebugString();
+                logger::info("connection") << "-AssetRepositoryService: " << response->asset().DebugString();
             }else if(q.type() == "account"){
-                auto account = repository::account::find(sender);
-
-                response->mutable_account()->CopyFrom(account);
+                response->mutable_account()->CopyFrom(repository::account::find(sender));
+                logger::info("connection") << "-AccountRepositoryService: " << response->account().DebugString();
             }
             response->set_message("OK");
             return Status::OK;

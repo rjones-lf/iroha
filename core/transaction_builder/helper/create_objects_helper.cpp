@@ -119,14 +119,15 @@ Api::Account createAccount(std::string publicKey, std::string name,
   return ret;
 }
 
-Api::Asset createAsset(std::string domain, std::string name,
-                       ::txbuilder::Map value, std::string smartContractName) {
+Api::Asset createAsset(
+  std::string domain,
+  std::string name,
+  ::txbuilder::Map value, std::string smartContractName) {
   Api::Asset ret;
   ret.set_domain(std::move(domain));
   ret.set_name(std::move(name));
   *ret.mutable_value() = ::google::protobuf::Map<std::string, Api::BaseObject>(
       value.begin(), value.end());
-  ret.set_smartcontractname(std::move(smartContractName));
   return ret;
 }
 
@@ -137,7 +138,6 @@ Api::SimpleAsset createSimpleAsset(std::string domain, std::string name,
   ret.set_domain(std::move(domain));
   ret.set_name(std::move(name));
   *ret.mutable_value() = std::move(value);
-  ret.set_smartcontractname(std::move(smartContractName));
   return ret;
 }
 
