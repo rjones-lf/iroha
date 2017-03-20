@@ -5,6 +5,7 @@ add_executable(transaction_validator_test
 target_link_libraries(transaction_validator_test
     signature
     config_manager
+    peer_service
     gtest
     validator
     connection_with_grpc

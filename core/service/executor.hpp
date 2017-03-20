@@ -17,12 +17,11 @@ limitations under the License.
 
 #include <infra/protobuf/api.pb.h>
 
-namespace executor{
+namespace executor {
 
-    using Api::Transaction;
+using Api::Transaction;
 
-    void execute(const Transaction& tx);
-
+void execute(const Transaction &tx);
 };
 
-#endif //IROHA_EXECUTOR_HPP_HPP
+#endif // IROHA_EXECUTOR_HPP_HPP

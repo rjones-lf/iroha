@@ -28,7 +28,7 @@ limitations under the License.
 #include <repository/domain/simple_asset_repository.hpp>
 #include <repository/domain/peer_repository.hpp>
 #include <transaction_builder/helper/create_objects_helper.hpp>
-#include <util/convert_string.hpp>
+//#include <util/convert_string.hpp>
 #include <util/exception.hpp>
 #include <util/logger.hpp>
 #include <assert.h>
@@ -69,8 +69,8 @@ JNIEXPORT jstring JNICALL Java_repository_Repository_accountAdd
   const std::string name      = mMap.find(tag::AccountName)->second;
 
   logger::debug(NameSpaceID + "::accountAdd")
-      << "pubkey: " << publicKey << " name: " << name
-      << " assets: " << convert_string::to_string(assets);
+      << "pubkey: " << publicKey << " name: " << name;
+//      << " assets: " << convert_string::to_string(assets);
 
   Api::Account account;
 
@@ -116,8 +116,8 @@ JNIEXPORT jobject JNICALL Java_repository_Repository_accountUpdate
   const auto name = mMap.find(tag::AccountName)->second;
 
   logger::debug(NameSpaceID + "::accountUpdate")
-      << " publicKey: " << publicKey << ", name: " << name
-      << ", assets: " << convert_string::to_string(assets);
+      << " publicKey: " << publicKey << ", name: " << name;
+//      << ", assets: " << convert_string::to_string(assets);
 
   Api::Account account;
 
@@ -174,8 +174,8 @@ JNIEXPORT jobjectArray JNICALL Java_repository_Repository_accountValueFindByUuid
 
   const auto assets = txbuilder::createStandardVector(account.assets());
 
-  logger::debug(NameSpaceID + "::accountValueFindByUuid")
-      << "value: " << convert_string::to_string(assets);
+  logger::debug(NameSpaceID + "::accountValueFindByUuid");
+//      << "value: " << convert_string::to_string(assets);
 
   return JavaMakeStringArray(env, assets);
 }

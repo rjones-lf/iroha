@@ -18,15 +18,16 @@ USER root
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /tmp/build
-ENV IROHA_RELEASE /usr/local/iroha
+ENV IROHA_RELEASE /iroha
 
-# we use single RUN instruction to reduce number of "layers" in docker image: https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices
 # install dependencies
 RUN apt-get update && apt-get -y upgrade; \
-    apt-get -y install \
+    apt-get -yqq install \
+        sudo \
         software-properties-common \
         python-software-properties \
         curl \
+        expect \
         git \
         make \
         build-essential \
@@ -46,6 +47,7 @@ RUN apt-get update && apt-get -y upgrade; \
         autoconf \
         automake \
         libtool \
+        jq \
         pkg-config ; \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20; \
@@ -55,6 +57,8 @@ RUN apt-get update && apt-get -y upgrade; \
     curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | tar -xzC /opt; \
     ln -s /opt/cmake*/bin/c* /usr/local/bin; \
     mkdir -p ${IROHA_RELEASE}; \
+    mkdir -p ${IROHA_BUILD}; \
+    mkdir -p ${IROHA_HOME}; \
 
     # install protobuf v3.0.0
     cd /tmp; \
@@ -70,6 +74,3 @@ RUN apt-get update && apt-get -y upgrade; \
     git clone --recursive -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc; \
     cd grpc; \
     make -j4 && make install
-
-# build and mktar scripts
-ADD ./scripts /

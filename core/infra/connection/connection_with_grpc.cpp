@@ -17,21 +17,20 @@ limitations under the License.
 #include <grpc++/grpc++.h>
 
 #include <consensus/connection/connection.hpp>
-#include <util/logger.hpp>
-#include <util/datetime.hpp>
-#include <service/peer_service.hpp>
-
-#include <infra/config/peer_service_with_json.hpp>
 #include <infra/config/iroha_config_with_json.hpp>
+#include <infra/config/peer_service_with_json.hpp>
+#include <service/peer_service.hpp>
+#include <util/datetime.hpp>
+#include <util/logger.hpp>
 
-#include <repository/transaction_repository.hpp>
-#include <repository/domain/asset_repository.hpp>
 #include <repository/domain/account_repository.hpp>
+#include <repository/domain/asset_repository.hpp>
+#include <repository/transaction_repository.hpp>
 
+#include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <algorithm>
 
 using grpc::Channel;
 using grpc::Server;
@@ -76,11 +75,11 @@ namespace connection {
     std::function<RecieverConfirmation(const std::string&)> sign = [](const std::string &hash) {
         RecieverConfirmation confirm;
         Signature signature;
-        signature.set_publickey(config::PeerServiceConfig::getInstance().getMyPublicKey());
+        signature.set_publickey(::peer::myself::getPublicKey());
         signature.set_signature(signature::sign(
             hash,
-            config::PeerServiceConfig::getInstance().getMyPublicKey(),
-            config::PeerServiceConfig::getInstance().getMyPrivateKey())
+            ::peer::myself::getPublicKey(),
+            ::peer::myself::getPrivateKey())
         );
         confirm.set_hash(hash);
         confirm.mutable_signature()->Swap(&signature);
@@ -427,7 +426,7 @@ namespace connection {
                     const std::string &ip,
                     const ConsensusEvent &event
                 ) {
-                    auto receiver_ips = config::PeerServiceConfig::getInstance().getIpList();
+                    auto receiver_ips = ::peer::service::getIpList();
                     if (find(receiver_ips.begin(), receiver_ips.end(), ip) != receiver_ips.end()) {
                         SumeragiConnectionClient client(
                             grpc::CreateChannel(
@@ -446,7 +445,7 @@ namespace connection {
                 bool sendAll(
                     const ConsensusEvent &event
                 ) {
-                    auto receiver_ips = config::PeerServiceConfig::getInstance().getIpList();
+                    auto receiver_ips = ::peer::service::getIpList();
                     for (auto &ip : receiver_ips) {
                         send(ip, event);
                     }
@@ -478,7 +477,7 @@ namespace connection {
                         const std::string &ip,
                         const Transaction &transaction
                 ) {
-                    auto receiver_ips = config::PeerServiceConfig::getInstance().getIpList();
+                    auto receiver_ips = ::peer::service::getIpList();
                     if (find(receiver_ips.begin(), receiver_ips.end(), ip) != receiver_ips.end()) {
                         SumeragiConnectionClient client(
                                 grpc::CreateChannel(
@@ -498,7 +497,7 @@ namespace connection {
                 bool ping(
                         const std::string &ip
                 ) {
-                    auto receiver_ips = config::PeerServiceConfig::getInstance().getIpList();
+                    auto receiver_ips = ::peer::service::getIpList();
                     if (find(receiver_ips.begin(), receiver_ips.end(), ip) != receiver_ips.end()) {
                         SumeragiConnectionClient client(
                                 grpc::CreateChannel(

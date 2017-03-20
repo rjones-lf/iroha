@@ -1,3 +1,6 @@
-#!/bin/bash
+#!/bin/sh
+# gemerate single sumeragi.json
+${IROHA_HOME}/bin/make_sumeragi -i eth0 -n $(hostname) > ${IROHA_HOME}/config/sumeragi.json
 
-su - iroha -c 'env IROHA_HOME=/usr/local/iroha /usr/local/iroha/bin/iroha-main'
+# run iroha
+${IROHA_HOME}/bin/iroha-main

@@ -13,8 +13,6 @@ target_link_libraries(event_with_grpc
     grpc++
     grpc++_reflection
     protobuf
-    pthread
-    dl
     ed25519
     hash
 )

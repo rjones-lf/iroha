@@ -10,6 +10,7 @@ target_link_libraries(java_query_repo_invocation_test
   jni
   gtest
   config_manager
+  peer_service
 )
 add_test(
   NAME java_query_repo_invocation_test

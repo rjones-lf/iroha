@@ -75,11 +75,11 @@ std::string getMyIp() {
 
 std::string getConfigStr() {
     nlohmann::json config;
-    config["group"]["ip"] = config["me"]["ip"] = getMyIp();
-    config["group"]["name"] = config["me"]["name"] = name;
+    config["group"][0]["ip"] = config["me"]["ip"] = getMyIp();
+    config["group"][0]["name"] = config["me"]["name"] = name;
 
     signature::KeyPair keyPair = signature::generateKeyPair();
-    config["group"]["publicKey"] = config["me"]["publicKey"] = base64::encode(keyPair.publicKey);
+    config["group"][0]["publicKey"] = config["me"]["publicKey"] = base64::encode(keyPair.publicKey);
     config["me"]["privateKey"] = base64::encode(keyPair.privateKey);
 
     std::cout << config.dump(2) << std::endl;

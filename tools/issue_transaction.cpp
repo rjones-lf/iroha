@@ -20,16 +20,16 @@ limitations under the License.
 
 #include <iostream>
 #include <string>
+
 #include <infra/config/peer_service_with_json.hpp>
 #include <service/peer_service.hpp>
 #include <util/logger.hpp>
 
 #include "helper/issue_transaction_add.hpp"
 //#include "helper/issue_transaction_contract.hpp"
-#include "helper/issue_transaction_update.hpp"
 #include "helper/issue_transaction_remove.hpp"
 #include "helper/issue_transaction_transfer.hpp"
-
+#include "helper/issue_transaction_update.hpp"
 
 namespace tools {
     namespace issue_transaction {

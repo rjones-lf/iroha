@@ -5,6 +5,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/fa0f4ce83e584fc4a32b646536dd40eb)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=soramitsu/iroha&amp;utm_campaign=Badge_Grade)
 [![Documentation Status](https://readthedocs.org/projects/iroha/badge/?version=latest)](http://docs.iroha.tech)
 
+Please see the [**wiki**](https://github.com/hyperledger/iroha/wiki) for information about developing for Iroha and explanation of our algorithms.
+
 いろは (Iroha) is a simple, distributed ledger.
 
 ![alt tag](Iroha_3_sm.png)
@@ -17,9 +19,7 @@ Please include a developer certificate with pull requests: https://www.clahub.co
  - [Architecture](./docs/architecture.md)
  - [Build iroha in local environment](./docs/how_to_build.rst)
  - [Using docker to build iroha container](./docker/README.md)
- - [Using docker-compose to setup test network of N nodes on a single computer](./docs/docker_compose.md)
- - [Deploying a network of N nodes using docker swarm](./docs/docker_swarm.md)
- - [Deploying a network of N nodes without docker swarm](./docs/iroha_network.md)
+ - [Deploying a network of N nodes](./docs/iroha_network.md)
 
 # Authors
 

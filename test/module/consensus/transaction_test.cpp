@@ -26,6 +26,8 @@ limitations under the License.
 #include <service/peer_service.hpp>
 #include <crypto/hash.hpp>
 #include <infra/config/peer_service_with_json.hpp>
+#include<service/peer_service.hpp>
+
 
 void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const &action) {
     std::thread([action, sleepMillisecs]() {
@@ -37,7 +39,7 @@ void setAwkTimer(int const sleepMillisecs, std::function<void(void)> const &acti
 int main(){
     std::string senderPublicKey;
 
-    std::string pubKey = config::PeerServiceConfig::getInstance().getMyPublicKey();
+    std::string pubKey = ::peer::myself::getPublicKey();
 
     while(1){
         setAwkTimer(3000, [&](){

@@ -14,21 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cappuccino.hpp>
 #include <json.hpp>
 
-#include <crypto/hash.hpp>
-#include <server/http_server.hpp>
-#include <cappuccino.hpp>
-#include <util/logger.hpp>
-#include <service/peer_service.hpp>
-#include <infra/config/peer_service_with_json.hpp>
-#include <infra/config/iroha_config_with_json.hpp>
-
-
-#include <transaction_builder/transaction_builder.hpp>
 #include <consensus/connection/connection.hpp>
-
+#include <crypto/hash.hpp>
+#include <infra/config/iroha_config_with_json.hpp>
+#include <infra/config/peer_service_with_json.hpp>
 #include <infra/protobuf/api.pb.h>
+#include <server/http_server.hpp>
+#include <service/peer_service.hpp>
+#include <transaction_builder/transaction_builder.hpp>
+#include <util/logger.hpp>
 
 // -- WIP --
 #include <grpc++/grpc++.h>
@@ -130,7 +127,7 @@ namespace http {
 
             Torii(
                 Sumeragi::NewStub(grpc::CreateChannel(
-                    config::PeerServiceConfig::getInstance().getMyIp() + ":" +
+                    ::peer::myself::getIp() + ":" +
                     std::to_string(config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051)),
                     grpc::InsecureChannelCredentials()
                 )),
