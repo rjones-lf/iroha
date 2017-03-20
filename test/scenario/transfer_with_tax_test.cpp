@@ -83,10 +83,6 @@ TEST(ScenarioTest, TransferWithTax) {
         ));
         executor::execute(tx);
         Api::Account account = repository::account::find(publicKey1);
-        ASSERT_STREQ(account.publickey().c_str(), publicKey1);
-        ASSERT_STREQ(account.name().c_str(), name1);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
-        ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
         bobj.set_valueint(100);
@@ -110,11 +106,6 @@ TEST(ScenarioTest, TransferWithTax) {
                 publicKey2, name2, {assetName1}
         ));
         executor::execute(tx);
-        Api::Account account = repository::account::find(publicKey2);
-        ASSERT_STREQ(account.publickey().c_str(), publicKey2);
-        ASSERT_STREQ(account.name().c_str(), name2);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
-        ASSERT_STREQ(account.assets(0).c_str(), assetName1);
 
         Api::BaseObject bobj;
         bobj.set_valueint(100);
@@ -125,7 +116,7 @@ TEST(ScenarioTest, TransferWithTax) {
         tx.set_senderpubkey(publicKey2);
         tx.set_type(type);
         tx.mutable_asset()->CopyFrom(makeAsset(
-                assetName1, prop
+            assetName1, prop
         ));
         executor::execute(tx);
     }
@@ -135,14 +126,22 @@ TEST(ScenarioTest, TransferWithTax) {
         tx.set_senderpubkey(publicKey3);
         tx.set_type(type);
         tx.mutable_account()->CopyFrom(makeAccount(
-                publicKey3, name3, {assetName1}
+            publicKey3, name3, {assetName1}
         ));
         executor::execute(tx);
-        Api::Account account = repository::account::find(publicKey3);
-        ASSERT_STREQ(account.publickey().c_str(), publicKey3);
-        ASSERT_STREQ(account.name().c_str(), name3);
-        IROHA_ASSERT_TRUE(account.assets_size() == 1);
-        ASSERT_STREQ(account.assets(0).c_str(), assetName1);
+
+        Api::BaseObject bobj;
+        bobj.set_valueint(5);
+        std::unordered_map<std::string,Api::BaseObject> prop;
+        prop["value"] = bobj;
+
+        tx.Clear();
+        tx.set_senderpubkey(publicKey3);
+        tx.set_type(type);
+        tx.mutable_asset()->CopyFrom(makeAsset(
+                assetName1, prop
+        ));
+        executor::execute(tx);
     }
 
     {
@@ -177,7 +176,7 @@ TEST(ScenarioTest, TransferWithTax) {
     {
         Api::Asset asset1 = repository::asset::find(publicKey3, assetName1);
         ASSERT_STREQ(asset1.name().c_str(), assetName1);
-        ASSERT_TRUE(asset1.value().at("value").valueint() == 5);
+        ASSERT_TRUE(asset1.value().at("value").valueint() == 10);
     }
     {
         Api::Asset asset1 = repository::asset::find(publicKey2, assetName1);
@@ -200,7 +199,7 @@ TEST(ScenarioTest, TransferWithTax) {
         author.set_valuestring(publicKey3);
 
         Api::BaseObject percent;
-        percent.set_valuedouble(0.6);
+        percent.set_valuedouble(0.06);
 
         Api::BaseObject assetType;
         assetType.set_valuestring("tax");
@@ -222,7 +221,8 @@ TEST(ScenarioTest, TransferWithTax) {
     {
         Api::Asset asset1 = repository::asset::find(publicKey3, assetName1);
         ASSERT_STREQ(asset1.name().c_str(), assetName1);
-        ASSERT_TRUE(asset1.value().at("value").valueint() == 8);
+        std::cout << asset1.value().at("value").valueint() ;
+        ASSERT_TRUE(asset1.value().at("value").valueint() == 13);
     }
     {
         Api::Asset asset1 = repository::asset::find(publicKey2, assetName1);
