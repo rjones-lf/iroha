@@ -22,7 +22,7 @@ Docker image with tag `hyperledger/iroha-docker` will be built.
 # How to run
 
 ```
-docker run hyperledger/iroha-docker
+$ sudo docker run -d -it --name=iroha -p 50051:50051 hyperledger/iroha-docker
 ```
 
 
