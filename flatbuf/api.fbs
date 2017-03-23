@@ -6,7 +6,7 @@ file_identifier "IRH";
 file_extension "iroha";
 
 union Object { Currency, KeyValueListAsset, Domain, Account, Peer, Message }
-union Command { Add, Transfer, Update, Remove, Batch, Contract, ChaincodeBatch }
+enum Command : byte { Add = 1, Transfer, Update, Remove, Batch, Contract, ChaincodeBatch }
 
 table Permission {
     readable: bool(required); // queryable
@@ -50,7 +50,6 @@ table KeyValueListAsset {
   name: string;
   description: string;
   tag: string;
-  ledgerId: string;
   keyValueList: [Api.KeyValueObject];
   permissions: Api.Permission;
   isEditable: bool;
@@ -59,6 +58,7 @@ table KeyValueListAsset {
 table Domain {
   name: string(required);
   permissions: [Permission];
+  ledgerId: string;
 }
 
 table Account {
@@ -83,9 +83,14 @@ table Signature {
   signature:string;
 }
 
+table QueryFilter {
+  value: string;
+  condition: string;
+}
 table Query {
   type: string;
   senderPubkey: string;
+  filter: [QueryFilter]
 }
 
 table ConsensusEvent {
@@ -95,38 +100,23 @@ table ConsensusEvent {
   status:string;
 }
 
-// Commands
-
-table Add {
-    object: Object(required);
+table CommandOption {
+  optionList: [Api.KeyValueObject];
 }
-
-table Transfer {
-    object: Object(required);
-    receiver: string(required);
-}
-
-table Update {
-    object: Object(required);
-}
-
-table Remove {
-    object: Object(required);
-}
-
 table Transaction {
-  command: Command(required);
+  creatorPubKey: string(required);
+  command: string(required);
+  commandOption: CommandOption;
+  object:  Object;
 
   signatures: [Api.Signature];
   tag: string;
-  creatorPubKey: string;
   hash: string;
   timestamp: ulong;
   message: string;
 }
 
 // Communication
-
 table TransactionResponse {
   message: string;
   code: ushort;
