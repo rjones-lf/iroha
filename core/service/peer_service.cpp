@@ -100,7 +100,7 @@ Nodes getPeerList() {
   Nodes nodes;
   for (const auto &node : peerList) {
     if (node->isok) {
-      nodes.push_back(std::make_unique<peer::Node>(
+      nodes.push_back(std::make_shared<peer::Node>(
           node->ip, node->publicKey, node->trustScore));
     }
   }
