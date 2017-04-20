@@ -302,8 +302,19 @@ class TransactionRepositoryServiceImpl final
               TransactionResponse* response) override {
     Query q;
     q.CopyFrom(*query);
-    // ToDo use query
-    auto transactions = repository::transaction::findAll();
+
+    std::string name = "default";
+    if(q.value().find("name")!=q.value().end()){
+      name = q.value().at("name").valuestring();
+    }
+
+    std::vector<Api::Transaction> transactions;
+    if (q.type() == "account") {
+      transactions = repository::transaction::findByPubkey(q.senderpubkey());
+    } else {
+      transactions = repository::transaction::findAll();
+    }
+
     for (auto tx : transactions) {
       response->add_transaction()->CopyFrom(tx);
     }

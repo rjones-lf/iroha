@@ -18,7 +18,9 @@
 #include <infra/protobuf/api.grpc.pb.h>
 #include <repository/domain/account_repository.hpp>
 #include <repository/domain/asset_repository.hpp>
+#include <repository/transaction_repository.hpp>
 #include <service/executor.hpp>
+#include <crypto/hash.hpp>
 
 Api::Account makeAccount(const std::string& publicKey, const std::string& name,
                          const std::initializer_list<std::string> assets) {
@@ -712,4 +714,54 @@ TEST(ScenarioTest, MultiChatMessanger) {
   }
   removeData(publicKey1);
   removeData(publicKey2);
+}
+
+TEST(ScenarioTest, FindTransactionByPubkey) {
+  const auto name1 = "user1";
+  const auto publicKey1 = "L82UnWOYJigkzJT3diTMpOrxoH8xdGwmq8xKIfdyzQE=";
+
+  const auto name2 = "user2";
+  const auto publicKey2 = "h6C5PKO3xRmCGz69ISQsYkWUIuwD2yPzD7Y2OV33pZw=";
+
+  const auto name3 = "user3";
+  const auto publicKey3 = "d969a9bd79d0d9ecd560a44f6edbd6d658bb7439666=";
+
+  const auto assetName1 = "mycoin";
+  const auto assetName2 = "yourcoin";
+
+  const auto type = "add";
+
+  Api::Transaction tx1;
+  tx1.set_senderpubkey(publicKey1);
+  tx1.set_type(type);
+  tx1.mutable_account()->CopyFrom(makeAccount(publicKey1, name1, {assetName1, assetName2}));
+  repository::transaction::add(hash::sha3_256_hex(tx1.SerializeAsString()), tx1);
+
+  Api::Transaction tx2_1;
+  tx2_1.set_senderpubkey(publicKey2);
+  tx2_1.set_type(type);
+  tx2_1.mutable_account()->CopyFrom(makeAccount(publicKey2, name2, {assetName1}));
+  repository::transaction::add(hash::sha3_256_hex(tx2_1.SerializeAsString()), tx2_1);
+
+  Api::Transaction tx2_2;
+  tx2_2.set_senderpubkey(publicKey2);
+  tx2_2.set_type(type);
+  tx2_2.mutable_account()->CopyFrom(makeAccount(publicKey2, name2, {assetName2}));
+  repository::transaction::add(hash::sha3_256_hex(tx2_2.SerializeAsString()), tx2_2);
+
+  Api::Transaction tx3;
+  tx3.set_senderpubkey(publicKey3);
+  tx3.set_type(type);
+  tx3.mutable_account()->CopyFrom(makeAccount(publicKey3, name3, {assetName1}));
+  repository::transaction::add(hash::sha3_256_hex(tx3.SerializeAsString()), tx3);
+
+  auto transactions0 = repository::transaction::findAll();
+  auto transactions1 = repository::transaction::findByPubkey(publicKey1);
+  auto transactions2 = repository::transaction::findByPubkey(publicKey2);
+  auto transactions3 = repository::transaction::findByPubkey(publicKey3);
+
+  ASSERT_TRUE(transactions0.size() == 4);
+  ASSERT_TRUE(transactions1.size() == 1);
+  ASSERT_TRUE(transactions2.size() == 2);
+  ASSERT_TRUE(transactions3.size() == 1);
 }
