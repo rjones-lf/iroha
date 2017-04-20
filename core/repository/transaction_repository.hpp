@@ -34,6 +34,8 @@ bool add(const std::string& hash, const Api::Transaction& tx);
 
 std::vector<Api::Transaction> findAll();
 
+std::vector<Api::Transaction> findByPubkey(const std::string& pubkey);
+
 Api::Transaction find(const std::string& key);
 }
 }

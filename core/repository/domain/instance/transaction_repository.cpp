@@ -18,7 +18,6 @@ See the License for the specific language governing permissions and
 #include <repository/transaction_repository.hpp>
 
 #include <infra/protobuf/api.pb.h>
-#include <consensus/consensus_event.hpp>
 #include <crypto/base64.hpp>
 #include <repository/world_state_repository.hpp>
 
@@ -43,13 +42,26 @@ std::vector<Transaction> findAll() {
   return res;
 }
 
-Transaction find(std::string hash) {
+Transaction find(const std::string& hash) {
   std::vector<Transaction> res;
   Transaction tx;
   if (world_state_repository::exists("transaction_" + hash)) {
     tx.ParseFromString(world_state_repository::find("transaction_" + hash));
   }
   return tx;
+}
+
+std::vector<Transaction> findByPubkey(const std::string& pubkey) {
+  std::vector<Transaction> res;
+  auto txstr = world_state_repository::findByPrefix("transaction_");
+  for (auto txs : txstr) {
+    Transaction tx;
+    tx.ParseFromString(txs);
+    if (tx.senderpubkey() == pubkey || tx.receivepubkey() == pubkey) {
+      res.push_back(tx);
+    }
+  }
+  return res;
 }
 }
 }
