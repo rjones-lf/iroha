@@ -25,3 +25,4 @@ cmake-build-debug/*
 external/*
 core/infra/protobuf
 docker/tiny/iroha/
+.scannerwork/

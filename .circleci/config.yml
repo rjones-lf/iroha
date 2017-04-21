@@ -10,13 +10,6 @@ jobs:
           IROHA_BUILD: /tmp/build
       - image: ubuntu:16.04
     steps:
-      - run:
-          name: build and install grpc (WIP) I want to move it to dependencies.cmake
-          command: |
-            apt-get -qq update; apt-get -y install golang
-            cd /tmp; rm -rf grpc; git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
-            cd grpc && git submodule update --init && make && make install
-            cd
       - checkout
 
       - run:
@@ -45,6 +38,23 @@ jobs:
                 total=$((total + $?)) 
             done
             exit $total
+
+      - run:
+          name: analyze source code with cppcheck and sonarqube
+          command: |
+            cd $IROHA_HOME
+            cppcheck --enable=all --inconclusive --xml --xml-version=2 core/ peer/ smart_contract/ test/ tools/ 2>/tmp/cppcheck.xml || true
+            
+            # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
+            /opt/sonar-scanner/bin/sonar-scanner \
+              -Dsonar.sourceEncoding=UTF-8 \
+              -Dsonar.sources=benchmark,core,peer,smart_contract,test,tools \
+              -Dsonar.host.url=https://sonar.innoctf.com \
+              -Dsonar.projectKey=hyperledger:iroha \
+              -Dsonar.projectName="Iroha" \
+              -Dsonar.projectVersion="$CIRCLE_BUILD_NUM" \
+              -Dsonar.cxx.cppcheck.reportPath=/tmp/cppcheck.xml || true
+
 
       # integrated into circle 2.0
       - setup_docker_engine
