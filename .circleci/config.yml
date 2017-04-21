@@ -47,7 +47,7 @@ jobs:
             # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
             /opt/sonar-scanner/bin/sonar-scanner \
               -Dsonar.sourceEncoding=UTF-8 \
-              -Dsonar.sources=benchmark,core,peer,smart_contract,test,tools \
+              -Dsonar.sources=benchmark,core,peer,test,tools \
               -Dsonar.host.url=https://sonar.innoctf.com \
               -Dsonar.projectKey=hyperledger:iroha \
               -Dsonar.projectName="Iroha" \
