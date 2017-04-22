@@ -51,7 +51,8 @@ RUN apt-get update && apt-get -y upgrade; \
         jq \
         pkg-config \
         cppcheck \
-        valgrind 
+        valgrind \
+        clang-tidy
     
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20; \

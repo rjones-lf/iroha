@@ -24,3 +24,4 @@ external/*
 core/infra/protobuf
 docker/tiny/iroha/
 include/generated/*
+.scannerwork/
