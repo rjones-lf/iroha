@@ -69,7 +69,8 @@ jobs:
               -Dsonar.projectKey=hyperledger:iroha \
               -Dsonar.projectName="Iroha" \
               -Dsonar.projectVersion="$CIRCLE_BUILD_NUM" \
-              -Dsonar.login=$SONAR_TOKEN \
+              -Dsonar.login="$SONAR_TOKEN" \
+              -Dsonar.cxx.valgrind.reportPath="$VALGRIND_XML"
               -Dsonar.cxx.cppcheck.reportPath=/tmp/cppcheck.xml || true
 
 
