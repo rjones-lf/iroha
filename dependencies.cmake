@@ -289,25 +289,38 @@ add_dependencies(asio chriskohlhoff_asio)
 ###############################
 #         flatbuffers         #
 ###############################
+set(flatbuffers_CMAKE_ARGS
+  -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+  -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+  -DFLATBUFFERS_BUILD_TESTS=OFF
+  -DFLATBUFFERS_INSTALL=OFF
+  -DFLATBUFFERS_BUILD_FLATHASH=OFF
+  -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+  -DFLATBUFFERS_BUILD_FLATC=ON
+  )
 ExternalProject_Add(google_flatbuffers
   GIT_REPOSITORY "https://github.com/google/flatbuffers.git"
   GIT_TAG "master"
-  BUILD_IN_SOURCE 1
+  CMAKE_ARGS     ${flatbuffers_CMAKE_ARGS}
   UPDATE_COMMAND ""
-  CMAKE_GENERATOR "Unix Makefiles"
-  BUILD_COMMAND "make"
+  TEST_COMMAND   ""
   INSTALL_COMMAND ""
 )
 
-ExternalProject_Get_Property(google_flatbuffers source_dir)
-set(flatbuffers_SOURCE_DIR "${source_dir}")
+ExternalProject_Get_Property(google_flatbuffers source_dir binary_dir)
+set(flatbuffers_INCLUDE_DIRS ${source_dir}/include)
+set(flatbuffers_LIBRARIES ${binary_dir}/libflatbuffers.a)
+set(flatc_EXECUTABLE ${binary_dir}/flatc)
+file(MAKE_DIRECTORY ${flatbuffers_INCLUDE_DIRS})
 
-add_library(flatbuffers INTERFACE IMPORTED)
-file(MAKE_DIRECTORY ${flatbuffers_SOURCE_DIR}/include)
+add_custom_target(flatc DEPENDS google_flatbuffers)
+
+add_library(flatbuffers STATIC IMPORTED)
 set_target_properties(flatbuffers PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${flatbuffers_SOURCE_DIR}/include
-)
-add_dependencies(flatbuffers google_flatbuffers)
+  INTERFACE_INCLUDE_DIRECTORIES ${flatbuffers_INCLUDE_DIRS}
+  IMPORTED_LOCATION ${flatbuffers_LIBRARIES}
+  )
+add_dependencies(flatbuffers google_flatbuffers flatc)
 
 
 
@@ -337,7 +350,7 @@ add_dependencies(spdlog gabime_spdlog)
 
 
 ###############################
-#         flatbuffers         #
+#         ametsuchi           #
 ###############################
 ExternalProject_Add(hyperledger_iroha_ametsuchi
   GIT_REPOSITORY "https://github.com/hyperledger/iroha-ametsuchi.git"
