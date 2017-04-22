@@ -376,21 +376,65 @@ add_dependencies(iroha_ametsuchi hyperledger_iroha_ametsuchi)
 #########################
 #         GRPC          #
 #########################
-#ExternalProject_Add(grpc_grpc
-#  GIT_REPOSITORY "https://github.com/grpc/grpc.git"
-#  GIT_TAG           "master"
-#  BUILD_IN_SOURCE 1
-#  UPDATE_COMMAND ""
-#  BUILD_COMMAND make
-#  INSTALL_COMMAND bash "-c" "make install"
-#)
+# Include path for C core library.
+find_path(GRPC_INCLUDE_DIR grpc/grpc.h)
 
-#ExternalProject_Get_Property(grpc_grpc source_dir)
-#set(flatbuffers_SOURCE_DIR "${source_dir}")
+if (NOT GRPC_INCLUDE_DIR)
+  ExternalProject_Add(grpc_grpc
+    GIT_REPOSITORY "https://github.com/grpc/grpc.git"
+    GIT_TAG           "v1.2.0"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND bash -c $(MAKE)
+    CONFIGURE_COMMAND "" # remove configure step
+    INSTALL_COMMAND   "" # remove install step
+    TEST_COMMAND      "" # remove test step
+    UPDATE_COMMAND    "" # remove update step
+    )
 
-#add_library(grpc INTERFACE IMPORTED)
-#file(MAKE_DIRECTORY ${grpc_SOURCE_DIR}/include)
-#set_target_properties(grpc PROPERTIES
-#  INTERFACE_INCLUDE_DIRECTORIES ${grpc_SOURCE_DIR}/include
-#)
-#add_dependencies(grpc grpc_grpc)
+  ExternalProject_Get_Property(grpc_grpc source_dir)
+  set(grpc_INCLUDE_DIRS ${source_dir}/include)
+  file(MAKE_DIRECTORY ${grpc_INCLUDE_DIRS})
+
+  add_library(grpc STATIC IMPORTED)
+  set_target_properties(grpc PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+    IMPORTED_LOCATION ${source_dir}/libs/opt/libgrpc.a
+    )
+  add_dependencies(grpc grpc_grpc)
+
+  add_library(grpc_unsecure STATIC IMPORTED)
+  set_target_properties(grpc_unsecure PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${source_dir}/libs/opt/libgrpc_unsecure.a
+      )
+  add_dependencies(grpc_unsecure grpc_grpc)
+
+  add_library(grpc++ STATIC IMPORTED)
+  set_target_properties(grpc++ PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${source_dir}/libs/opt/libgrpc++.a
+      )
+  add_dependencies(grpc++ grpc_grpc)
+
+  add_library(grpc++_unsecure STATIC IMPORTED)
+  set_target_properties(grpc++_unsecure PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${source_dir}/libs/opt/libgrpc++_unsecure.a
+      )
+  add_dependencies(grpc++_unsecure grpc_grpc)
+
+  add_library(grpc++_reflection STATIC IMPORTED)
+  set_target_properties(grpc++_reflection PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${source_dir}/libs/opt/libgrpc++_reflection.a
+      )
+  add_dependencies(grpc++_reflection grpc_grpc)
+
+  add_library(gpr STATIC IMPORTED)
+  set_target_properties(gpr PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${source_dir}/libs/opt/libgpr.a
+      )
+  add_dependencies(gpr grpc_grpc)
+endif ()
+
