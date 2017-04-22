@@ -85,3 +85,6 @@ RUN cd /tmp; \
     wget -O /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.1.733-linux.zip; \
     unzip -d /opt /tmp/sonar.zip; \
     mv /opt/sonar-scanner* /opt/sonar-scanner
+
+# clean up
+RUN rm -rf /tmp/*
