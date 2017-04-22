@@ -29,7 +29,7 @@ jobs:
       - run:
           name: run tests
           command: |
-            TEST_FOLDER=$IROHA_BUILD/test_bin
+            export TEST_FOLDER=$IROHA_BUILD/test_bin
             total=0
             for file in ${TEST_FOLDER}/*; do
                 # run test
@@ -41,9 +41,26 @@ jobs:
       - run:
           name: analyze source code with cppcheck and sonarqube
           command: |
+            export TEST_FOLDER=$IROHA_BUILD/test_bin
+
             cd $IROHA_HOME
             cppcheck --enable=all --inconclusive --xml --xml-version=2 core/ peer/ smart_contract/ test/ tools/ 2>/tmp/cppcheck.xml || true
             
+            # run valgrind for tests
+            VALGRIND_XML=
+            mkdir -p valgrind_report
+            for test in $(ls $TEST_FOLDER); do
+              xml=valgrind_report/$test.xml
+              bin=$TEST_FOLDER/$test
+              valgrind --xml=yes --xml-file=$xml --trace-children=yes --demangle=yes --leak-check=full $bin || true
+
+              if [ -z "$VALGRIND_XML" ]; then
+                VALGRIND_XML=$xml
+              else
+                VALGRIND_XML=$xml,$VALGRIND_XML
+              fi
+            done
+
             # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
             /opt/sonar-scanner/bin/sonar-scanner \
               -Dsonar.sourceEncoding=UTF-8 \
