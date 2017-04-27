@@ -91,7 +91,7 @@ table PeerAdd {
 }
 
 table PeerRemove {
-    peer: [ubyte] (required, nested_flatbuffer: "Peer");
+    peerPubKey: string  (required);
 }
 
 // set new peer trust (with specific value)
