@@ -14,14 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <generated/main_generated.h>
+#include <main_generated.h>
 #include <gtest/gtest.h>
 #include <service/flatbuffer_service.h>
-#include <iostream>
 #include <membership_service/peer_service.hpp>
+#include <utils/datetime.hpp>
+#include <utils/expected.hpp>
+
+#include <iostream>
 #include <memory>
 #include <unordered_map>
-
 
 TEST(FlatbufferServiceTest, toString) {
   auto publicKey = "SamplePublicKey";
@@ -68,7 +70,7 @@ TEST(FlatbufferServiceTest, toString) {
     fbb, publicKey, signed_message.get(), 1234567));
 
   auto tx_offset = iroha::CreateTransactionDirect(
-    fbb, publicKey, iroha::Command::Command_AccountAdd, command.Union(),
+    fbb, publicKey, iroha::Command::AccountAdd, command.Union(),
     signature_vec.get(), nullptr, 0);
   fbb.Finish(tx_offset);
   auto tx = flatbuffers::BufferRef<iroha::Transaction>(fbb.GetBufferPointer(),
@@ -77,173 +79,118 @@ TEST(FlatbufferServiceTest, toString) {
   std::cout << flatbuffer_service::toString(*tx.GetRoot()) << std::endl;
 }
 
-TEST(FlatbufferServicePeerTest, PeerService) {
+TEST(FlatbufferServicePeerTest, PeerServiceCreateAdd) {
   auto np = ::peer::Node("ip", "pubKey");
   flatbuffers::FlatBufferBuilder fbb;
   auto addPeer = flatbuffer_service::peer::CreateAdd(np);
+  fbb.Finish(addPeer);
+
+  auto addPeerPtr = flatbuffers::GetRoot<iroha::PeerAdd>(fbb.GetBufferPointer());
+
+  auto peerRoot = addPeerPtr->peer_nested_root();
+  ASSERT_STREQ(peerRoot->ip()->c_str(), "ip");
+  ASSERT_STREQ(peerRoot->publicKey()->c_str(), "pubKey");
+  ASSERT_STREQ(peerRoot->ip()->c_str(), np.ip.c_str());
+  ASSERT_STREQ(peerRoot->publicKey()->c_str(), np.publicKey.c_str());
+  ASSERT_EQ(peerRoot->trust(), np.trust);
+  ASSERT_EQ(peerRoot->join_network(), np.join_network);
+  ASSERT_EQ(peerRoot->join_validation(), np.join_validation);
 }
 
-TEST(FlatbufferServiceTest, toConsensusEvent) {
+TEST(FlatbufferServicePeerTest, PeerServiceCreateRemove) {
   flatbuffers::FlatBufferBuilder fbb;
-
-  const auto accountBuf = [&] {
-    return flatbuffer_service::CreateAccountBuffer("PublicKey", "Alias\u30e6",
-                                                   {"sig1", "sig2", "sig3"}, 1);
-  }();
-
-  const auto signatureOffsets = [&] {
-    std::vector<uint8_t> sigblob1 = {'a', 'b'};
-    std::vector<uint8_t> sigblob2 = {'\0', 'a', '\0', 'b'};
-    return std::vector<flatbuffers::Offset<::iroha::Signature>>{
-      ::iroha::CreateSignatureDirect(fbb, "TxPubKey1", &sigblob1, 100000),
-      ::iroha::CreateSignatureDirect(fbb, "TxPubKey2", &sigblob2, 100001)};
-  }();
-
-  const auto _hash = std::vector<uint8_t>{'h', '\0', '?', '\0'};
-
-  const auto attachmentOffset = [&] {
-    auto data = std::vector<uint8_t>{'d', '\0', '!'};
-    return ::iroha::CreateAttachmentDirect(
-      fbb, "=?ISO-2022-JP?B?VG95YW1hX05hbw==?=", &data);
-  }();
-
-  const auto txOffset = ::iroha::CreateTransactionDirect(
-    fbb, "Creator PubKey", iroha::Command_AccountAdd,
-    ::iroha::CreateAccountAddDirect(fbb, &accountBuf).Union(),
-    &signatureOffsets, &_hash, attachmentOffset);
-
-  fbb.Finish(txOffset);
-
-  const auto ptr = fbb.ReleaseBufferPointer();
-  const auto txptr = flatbuffers::GetRoot<::iroha::Transaction>(ptr.get());
-
-  auto consensusEvent = flatbuffer_service::toConsensusEvent(*txptr);
-  ASSERT_TRUE(consensusEvent);
-
-  flatbuffers::unique_ptr_t uptr;
-  consensusEvent.move_value(uptr);
-
-  const auto root = flatbuffers::GetRoot<::iroha::ConsensusEvent>(uptr.get());
-
-  // validate peerSignatures()
-  ASSERT_TRUE(root->peerSignatures()->size() == 0);
-
-  // validate transactions()
-  const auto txptrFromEvent =
-    root->transactions()->Get(0);  // toConsensusEvent() receives 1 tx.
-
-  ASSERT_STREQ(txptrFromEvent->creatorPubKey()->c_str(), "Creator PubKey");
-  ASSERT_EQ(txptrFromEvent->command_type(), ::iroha::Command_AccountAdd);
-
-  // validate nested account
-  const auto accroot =
-    txptrFromEvent->command_as_AccountAdd()->account_nested_root();
-  ASSERT_STREQ(accroot->pubKey()->c_str(), "PublicKey");
-  ASSERT_STREQ(accroot->alias()->c_str(), "Alias\u30e6");
-  ASSERT_STREQ(accroot->signatories()->Get(0)->c_str(), "sig1");
-  ASSERT_STREQ(accroot->signatories()->Get(1)->c_str(), "sig2");
-  ASSERT_STREQ(accroot->signatories()->Get(2)->c_str(), "sig3");
-  ASSERT_EQ(accroot->useKeys(), 1);
-
-  // validate signatures
-  ASSERT_STREQ(txptrFromEvent->signatures()->Get(0)->publicKey()->c_str(),
-               "TxPubKey1");
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(0)->signature()->Get(0), 'a');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(0)->signature()->Get(1), 'b');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(0)->signature()->size(), 2);
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(0)->timestamp(), 100000);
-
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->signature()->Get(0), '\0');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->signature()->Get(1), 'a');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->signature()->Get(2), '\0');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->signature()->Get(3), 'b');
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->signature()->size(), 4);
-  ASSERT_EQ(txptrFromEvent->signatures()->Get(1)->timestamp(), 100001);
-
-  ASSERT_EQ(txptrFromEvent->hash()->Get(0), 'h');
-  ASSERT_EQ(txptrFromEvent->hash()->Get(1), '\0');
-  ASSERT_EQ(txptrFromEvent->hash()->Get(2), '?');
-  ASSERT_EQ(txptrFromEvent->hash()->Get(3), '\0');
-  ASSERT_EQ(txptrFromEvent->hash()->size(), 4);
-
-  ASSERT_STREQ(txptrFromEvent->attachment()->mime()->c_str(),
-               "=?ISO-2022-JP?B?VG95YW1hX05hbw==?=");
-
-  // validate attachment
-  ASSERT_EQ(txptrFromEvent->attachment()->data()->Get(0), 'd');
-  ASSERT_EQ(txptrFromEvent->attachment()->data()->Get(1), '\0');
-  ASSERT_EQ(txptrFromEvent->attachment()->data()->Get(2), '!');
-  ASSERT_EQ(txptrFromEvent->attachment()->data()->size(), 3);
+  auto removePeer = flatbuffer_service::peer::CreateRemove("pubKey");
+  fbb.Finish(removePeer);
+  auto removePeerPtr = flatbuffers::GetRoot<iroha::PeerRemove>(fbb.GetBufferPointer());
+  //ASSERT_EQ(removePeerPtr->command_type(), iroha::Command::PeerRemove);
+  ASSERT_STREQ(removePeerPtr->peerPubKey()->c_str(), "pubKey");
 }
 
-TEST(FlatbufferServiceTest, addSignature) {
+TEST(FlatbufferServicePeerTest, PeerServiceCreateSetTrust) {
   flatbuffers::FlatBufferBuilder fbb;
+  auto trust = 3.14159265;
+  auto changeTrust = flatbuffer_service::peer::CreateChangeTrust("pubKey", trust);
+  fbb.Finish(changeTrust);
+  auto changeTrustPtr = flatbuffers::GetRoot<iroha::PeerChangeTrust>(fbb.GetBufferPointer());
+  //ASSERT_EQ(changeTrustPtr->command_type(), ::iroha::Command::PeerChangeTrust);
+  ASSERT_STREQ(changeTrustPtr->peerPubKey()->c_str(), "pubKey");
+  ASSERT_EQ(changeTrustPtr->delta(), 3.14159265);
+}
 
-  const auto accountBuf = [&] {
-    return flatbuffer_service::CreateAccountBuffer("PublicKey", "Alias\u30e6",
-                                                   {"sig1", "sig2", "sig3"}, 1);
-  }();
+TEST(FlatbufferServicePeerTest, PeerServiceCreateChangeTrust) {
+  flatbuffers::FlatBufferBuilder fbb;
+  auto trust = 1.41421356;
+  auto changeTrust = flatbuffer_service::peer::CreateChangeTrust("pubKey", trust);
+  fbb.Finish(changeTrust);
+  auto changeTrustPtr = flatbuffers::GetRoot<iroha::PeerChangeTrust>(fbb.GetBufferPointer());
+  //ASSERT_EQ(changeTrustPtr->command_type(), ::iroha::Command::PeerChangeTrust);
+  ASSERT_STREQ(changeTrustPtr->peerPubKey()->c_str(), "pubKey");
+  ASSERT_EQ(changeTrustPtr->delta(), 1.41421356);
+}
 
-  const auto signatureOffsets = [&] {
-    std::vector<uint8_t> sigblob1 = {'a', 'b'};
-    std::vector<uint8_t> sigblob2 = {'\0', 'a', '\0', 'b'};
-    return std::vector<flatbuffers::Offset<::iroha::Signature>>{
-      ::iroha::CreateSignatureDirect(fbb, "TxPubKey1", &sigblob1, 100000),
-      ::iroha::CreateSignatureDirect(fbb, "TxPubKey2", &sigblob2, 100001)};
-  }();
+TEST(FlatbufferServicePeerTest, PeerServiceCreateSetActive) {
+  flatbuffers::FlatBufferBuilder fbb;
+  auto setActive = flatbuffer_service::peer::CreateSetActive("pubKey", true);
+  fbb.Finish(setActive);
+  auto setActivePtr = flatbuffers::GetRoot<iroha::PeerSetActive>(fbb.GetBufferPointer());
+  ASSERT_STREQ(setActivePtr->peerPubKey()->c_str(), "pubKey");
+  ASSERT_EQ(setActivePtr->active(), true);
+}
 
-  const auto _hash = std::vector<uint8_t>{'h', '\0', '?', '\0'};
+TEST(FlatbufferServiceTest, PrimitivesCreatePeer) {
+  ::peer::Node np("ip", "pubKey");
+  auto peer = flatbuffer_service::primitives::CreatePeer(np);
+  auto peerRoot = flatbuffers::GetRoot<::iroha::Peer>(peer.data());
+  ASSERT_STREQ(peerRoot->ip()->c_str(), "ip");
+  ASSERT_STREQ(peerRoot->publicKey()->c_str(), "pubKey");
+  ASSERT_STREQ(peerRoot->ip()->c_str(), np.ip.c_str());
+  ASSERT_STREQ(peerRoot->publicKey()->c_str(), np.publicKey.c_str());
+  ASSERT_EQ(peerRoot->trust(), np.trust);
+  ASSERT_EQ(peerRoot->join_network(), np.join_network);
+  ASSERT_EQ(peerRoot->join_validation(), np.join_validation);
+}
 
-  const auto attachmentOffset = [&] {
-    auto data = std::vector<uint8_t>{'d', '\0', '!'};
-    return ::iroha::CreateAttachmentDirect(
-      fbb, "=?ISO-2022-JP?B?VG95YW1hX05hbw==?=", &data);
-  }();
+TEST(FlatbufferServiceTest, PrimitivesCreateSignature) {
+  // TODO: NO IMPLEMENTATION
+}
 
-  const auto txOffset = ::iroha::CreateTransactionDirect(
-    fbb, "Creator PubKey", iroha::Command_AccountAdd,
-    ::iroha::CreateAccountAddDirect(fbb, &accountBuf).Union(),
-    &signatureOffsets, &_hash, attachmentOffset);
+TEST(FlatbufferServiceTest, PrimitivesCreateTransaction) {
 
-  fbb.Finish(txOffset);
+  flatbuffers::FlatBufferBuilder xbb;
 
-  const auto ptr = fbb.ReleaseBufferPointer();
-  const auto txptr = flatbuffers::GetRoot<::iroha::Transaction>(ptr.get());
+  ::peer::Node np("ip", "pubKey");
+  auto peer = flatbuffer_service::primitives::CreatePeer(np);
+  auto peerAdd = iroha::CreatePeerAdd(xbb, xbb.CreateVector(peer));
 
-  auto consensusEvent = flatbuffer_service::toConsensusEvent(*txptr);
-  ASSERT_TRUE(consensusEvent);
+  // TODO: Replace with primitives::CreateSignature()
+  std::vector<flatbuffers::Offset<iroha::Signature>> signatures;
 
-  /*
-   * WIP
-  flatbuffers::unique_ptr_t uptr;
-  consensusEvent.move_value(uptr);
+  std::vector<uint8_t> sig {'a','b','c','d'};
+  auto sigoffset = iroha::CreateSignatureDirect(xbb, "PUBKEY", &sig, 1234567);
+  signatures.push_back(sigoffset);
 
-  auto root = flatbuffers::GetRoot<::iroha::ConsensusEvent>(uptr.get());
+  auto txptr = flatbuffer_service::transaction::CreateTransaction(
+    xbb,
+    iroha::Command::PeerAdd,
+    peerAdd.Union(),
+    "Creator",
+    signatures
+  );
 
-  auto eventAddedSig1 = flatbuffer_service::addSignature(*root, "NEW PEER PUBLICKEY 1",
-                                                         "NEW PEER SIGNATURE 1");
-  root = flatbuffers::GetRoot<::iroha::ConsensusEvent>(eventAddedSig1.value().get());
+  ASSERT_STREQ(txptr->creatorPubKey()->c_str(), "Creator");
+  ASSERT_EQ(txptr->command_type(), iroha::Command::PeerAdd);
+  ASSERT_STREQ(txptr->signatures()->Get(0)->publicKey()->c_str(), "PUBKEY");
+  ASSERT_EQ(txptr->signatures()->Get(0)->signature()->Get(0), 'a');
+  ASSERT_EQ(txptr->signatures()->Get(0)->signature()->Get(1), 'b');
+  ASSERT_EQ(txptr->signatures()->Get(0)->signature()->Get(2), 'c');
+  ASSERT_EQ(txptr->signatures()->Get(0)->signature()->Get(3), 'd');
+  ASSERT_EQ(txptr->signatures()->Get(0)->timestamp(), 1234567);
+//  ASSERT_STREQ() // ハッシュ未テスト
 
-  auto eventAddedSig2 = flatbuffer_service::addSignature(*root, "`1234567890-=",
-                                                         "NEW PEER SIGNATURE\'\n\t2");
-  root = flatbuffers::GetRoot<::iroha::ConsensusEvent>(eventAddedSig2.value().get());
-
-  auto eventAddedSig3 = flatbuffer_service::addSignature(*root, "NEW\\ PEER PUBLICKEY\'\n\t3",
-                                                         "NEW PEER SIGNATURE 3");
-  root = flatbuffers::GetRoot<::iroha::ConsensusEvent>(eventAddedSig3.get());
-
-  // validate peerSignatures()
-  ASSERT_TRUE(root->peerSignatures()->size() == 3);
-
-  ASSERT_STREQ(root->peerSignatures()->Get(0)->publicKey()->c_str(), "NEW PEER PUBLICKEY 1");
-  ASSERT_STREQ(root->peerSignatures()->Get(1)->publicKey()->c_str(), "`1234567890-=");
-  ASSERT_STREQ(root->peerSignatures()->Get(2)->publicKey()->c_str(), "NEW\\ PEER PUBLICKEY\'\n\t3");
-
-  //ASSERT_STREQ(root->peerSignatures()->Get(0)->()->c_str(), "NEW PEER PUBLICKEY 1");
-  //ASSERT_STREQ(root->peerSignatures()->Get(1)->publicKey()->c_str(), "NEW PEER PUBLICKEY 2");
-  //ASSERT_STREQ(root->peerSignatures()->Get(2)->publicKey()->c_str(), "NEW PEER PUBLICKEY 3");
-
-  // validate peer signatures
-  //ASSERT_STREQ(root->peerSignatures()->signature());
-*/
+  auto peerRoot = txptr->command_as_PeerAdd()->peer_nested_root();
+  ASSERT_STREQ(peerRoot->ip()->c_str(), np.ip.c_str());
+  ASSERT_STREQ(peerRoot->publicKey()->c_str(), np.publicKey.c_str());
+  ASSERT_EQ(peerRoot->trust(), np.trust);
+  ASSERT_EQ(peerRoot->join_network(), np.join_network);
+  ASSERT_EQ(peerRoot->join_validation(), np.join_validation);
 }

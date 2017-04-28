@@ -18,4 +18,4 @@ add_subdirectory(membership_service)
 #add_subdirectory(connection)
 #add_subdirectory(transaction_builder)
 
-#add_subdirectory(service)
+add_subdirectory(service)
