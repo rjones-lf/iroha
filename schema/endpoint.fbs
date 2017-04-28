@@ -1,0 +1,32 @@
+include "main.fbs";
+
+namespace iroha;
+
+file_identifier "IROH";
+file_extension  "iroha";
+
+table Response {
+  message:   string;
+  code:      Code;
+  signature: Signature;
+}
+
+table Ping {
+  message:  string;
+  sender:   string;
+}
+
+// Used by sending transaction
+rpc_service Sumeragi {
+
+    Torii(Transaction):Response (streaming: "none");
+    // ToDo rename it.
+
+    // sumeragi uses.
+    Verify(ConsensusEvent):Response (streaming: "none");
+}
+
+rpc_service Hijiri {
+    // Kagami means ping
+    Kagami(Ping):Response    (streaming: "none");
+}

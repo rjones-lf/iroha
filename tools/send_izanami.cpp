@@ -17,18 +17,13 @@ limitations under the License.
 // Created by Takumi Yamashita on 2017/03/15.
 //
 
+#include <membership_service/peer_service.hpp>
 #include <string>
-#include <service/peer_service.hpp>
 
 
 int main(int argc, char* argv[]) {
-    peer::Node peer (
-            ::peer::myself::getIp(),
-            ::peer::myself::getPublicKey(),
-            1.0,
-            false
-    );
-    ::peer::transaction::izanami::start(peer);
-    return 0;
+  peer::Node peer(::peer::myself::getIp(), ::peer::myself::getPublicKey(), 1.0,
+                  false);
+  ::peer::transaction::izanami::start(peer);
+  return 0;
 }
-

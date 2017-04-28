@@ -20,16 +20,13 @@ limitations under the License.
 #include "abstract_config_manager.hpp"
 
 namespace config {
-class IrohaConfigManager : config::AbstractConfigManager {
+class IrohaConfigManager : public AbstractConfigManager {
  private:
   IrohaConfigManager();
-
-  template <typename T>
-  T getParam(const std::string& param, const T& defaultValue);
+  std::string getConfigName() { return "config/config.json"; }
 
  public:
   static IrohaConfigManager& getInstance();
-  std::string getConfigName();
 
   std::string getDatabasePath(const std::string& defaultValue);
   std::string getJavaClassPath(const std::string& defaultValue);
@@ -44,7 +41,9 @@ class IrohaConfigManager : config::AbstractConfigManager {
   uint16_t getGrpcPortNumber(uint16_t defaultValue);
   uint16_t getHttpPortNumber(uint16_t defaultValue);
   bool getActiveStart(bool defaultValue);
+  std::vector<std::string> getTrustedHosts(
+      const std::vector<std::string>& defaultValue);
 };
-}
+}  // namespace config
 
 #endif  // IROHA_CONFIG_WITH_JSON_HPP

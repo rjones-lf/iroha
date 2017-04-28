@@ -1,3 +1,11 @@
+add_library(config_utils STATIC
+  config_utils.cpp
+)
+
+target_link_libraries(config_utils
+  logger
+)
+
 add_library(config_manager STATIC
   peer_service_with_json.cpp
   iroha_config_with_json.cpp
@@ -5,8 +13,9 @@ add_library(config_manager STATIC
 )
 
 target_link_libraries(config_manager
-  json
-  exception
+  config_utils
+  expected
   logger
-  connection_with_grpc
+  json
+  ip_tools
 )

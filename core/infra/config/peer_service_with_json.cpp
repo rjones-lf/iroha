@@ -16,98 +16,52 @@ limitations under the License.
 */
 
 #include <json.hpp>
-#include <util/exception.hpp>
-#include <util/logger.hpp>
+#include <utils/expected.hpp>
+#include <utils/logger.hpp>
 
-#include "peer_service_with_json.hpp"
-#include "config_format.hpp"
+#include <infra/config/config_format.hpp>
+#include <infra/config/peer_service_with_json.hpp>
 
 using PeerServiceConfig = config::PeerServiceConfig;
 using nlohmann::json;
 
-PeerServiceConfig::PeerServiceConfig() {
-}
+PeerServiceConfig::PeerServiceConfig() noexcept {}
 
-PeerServiceConfig& PeerServiceConfig::getInstance() {
+PeerServiceConfig& PeerServiceConfig::getInstance() noexcept {
   static PeerServiceConfig serviceConfig;
   return serviceConfig;
 }
 
-std::string PeerServiceConfig::getMyPublicKeyWithDefault(const std::string& defaultValue) {
-  auto config = getConfigData();
-  if (!config.is_null()) {
-    return getConfigData()["me"].value("publicKey", defaultValue);
-  }
-  return defaultValue;
+std::string PeerServiceConfig::getMyPublicKey() {
+  return getParamWithAssert<std::string>({"me", "publicKey"});
 }
 
-std::string PeerServiceConfig::getMyPrivateKeyWithDefault(const std::string& defaultValue) {
-  auto config = getConfigData();
-  if (!config.is_null()) {
-    return getConfigData()["me"].value("privateKey", defaultValue);
-  }
-  return defaultValue;
+
+std::string PeerServiceConfig::getMyPrivateKey() {
+  return getParamWithAssert<std::string>({"me","privateKey"});
 }
 
-std::string PeerServiceConfig::getMyIpWithDefault(const std::string& defaultValue) {
-  auto config = getConfigData();
-  if (!config.is_null()) {
-    return getConfigData()["me"].value("ip", defaultValue);
-  }
-  return defaultValue;
+std::string PeerServiceConfig::getMyIp() {
+  return getParamWithAssert<std::string>({"me","ip"});
 }
 
-double PeerServiceConfig::getMaxTrustScoreWithDefault(double defaultValue) {
-  return getConfigData().value("max_trust_score", defaultValue);
+double PeerServiceConfig::getMaxTrustScore(double defaultValue) {
+  return getParam<double>({"max_trust_score"}, defaultValue);
 }
 
-void PeerServiceConfig::parseConfigDataFromString(std::string&& jsonStr) {
-  try {
-    if (!ConfigFormat::getInstance().ensureFormatSumeragi(jsonStr)) {
-      throw exception::ParseFromStringException(getConfigName());
-    }
+VoidHandler PeerServiceConfig::parseConfigDataFromString(
+    const std::string& jsonStr) {
+  auto res = ConfigFormat::getInstance().ensureFormatSumeragi(jsonStr);
+
+  if (res) {
     _configData = json::parse(std::move(jsonStr));
-  } catch (exception::ParseFromStringException& e) {
-    logger::warning("peer service config") << e.what();
-    logger::warning("peer service config") << getConfigName() << " is set to be default.";
+    return {};
+  } else {
+    return makeUnexpected(
+        exception::config::ParseException(getConfigPath(), true));
   }
-}
-
-std::string PeerServiceConfig::getConfigName() {
-  return "config/sumeragi.json";
-}
-
-double PeerServiceConfig::getMaxTrustScore() {
-  return this->getMaxTrustScoreWithDefault(10.0); // WIP to support trustRate = 10.0
 }
 
 std::vector<json> PeerServiceConfig::getGroup() {
-  auto config = getConfigData();
-  if (!config.is_null()) {
-     return getConfigData()["group"].get<std::vector<json>>();
-  }
-
-  // default value
-  return std::vector<json>({
-      json({
-        {"ip","172.17.0.3"},
-        {"name","mizuki"},
-        {"publicKey","jDQTiJ1dnTSdGH+yuOaPPZIepUj1Xt3hYOvLQTME3V0="}
-      }),
-      json({
-        {"ip","172.17.0.4"},
-        {"name","natori"},
-        {"publicKey","Q5PaQEBPQLALfzYmZyz9P4LmCNfgM5MdN1fOuesw3HY="}
-      }),
-      json({
-        {"ip","172.17.0.5"},
-        {"name","kabohara"},
-        {"publicKey","f5MWZUZK9Ga8XywDia68pH1HLY/Ts0TWBHsxiFDR0ig="}
-      }),
-      json({
-        {"ip","172.17.0.6"},
-        {"name","samari"},
-        {"publicKey","Sht5opDIxbyK+oNuEnXUs5rLbrvVgb2GjSPfqIYGFdU="}
-      })
-    });
+  return getParamWithAssert<std::vector<json>>({"group"}); // WIP ASSERT FALSE;
 }

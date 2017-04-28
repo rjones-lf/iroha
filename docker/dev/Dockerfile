@@ -31,6 +31,7 @@ RUN apt-get update && apt-get -y upgrade; \
         git \
         make \
         build-essential \
+        wget \
         cmake \
         g++-5 \
         gcc-5 \
@@ -48,8 +49,12 @@ RUN apt-get update && apt-get -y upgrade; \
         automake \
         libtool \
         jq \
-        pkg-config ; \
-    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+        pkg-config \
+        cppcheck \
+        valgrind \
+        clang-tidy
+    
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20; \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-5 20; \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20; \
@@ -58,10 +63,10 @@ RUN apt-get update && apt-get -y upgrade; \
     ln -s /opt/cmake*/bin/c* /usr/local/bin; \
     mkdir -p ${IROHA_RELEASE}; \
     mkdir -p ${IROHA_BUILD}; \
-    mkdir -p ${IROHA_HOME}; \
+    mkdir -p ${IROHA_HOME}
 
-    # install protobuf v3.0.0
-    cd /tmp; \
+# install protobuf 3.0.0
+RUN cd /tmp; \
     git clone -b v3.0.0 https://github.com/google/protobuf.git; \
     cd protobuf; \
     (git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue) && \
@@ -69,8 +74,17 @@ RUN apt-get update && apt-get -y upgrade; \
     ./configure --prefix=/usr && \
     make -j4 && make install; \
 
-    # install grpc
-    cd /tmp; \
+# install grpc
+RUN cd /tmp; \
     git clone --recursive -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc; \
     cd grpc; \
-    make -j4 && make install
+    make -j4 && make install; \
+
+# install sonar-scanner
+RUN cd /tmp; \ 
+    wget -O /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.1.733-linux.zip; \
+    unzip -d /opt /tmp/sonar.zip; \
+    mv /opt/sonar-scanner* /opt/sonar-scanner
+
+# clean up
+RUN rm -rf /tmp/*
