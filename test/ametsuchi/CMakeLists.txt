@@ -1,7 +1,7 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/test_bin)
 
-include(${PROJECT_SOURCE_DIR}/cmake/functions.cmake)
-include_directories(${PROJECT_SOURCE_DIR}/core/infra/ametsuchi/include)
+include(../../../../cmake/functions.cmake)
+include_directories(../include)
 
 add_library(tx_generator generator/tx_generator.h)
 set_target_properties(tx_generator PROPERTIES LINKER_LANGUAGE CXX)

@@ -19,9 +19,9 @@
 #define AMETSUCHI_COMPARATOR_H
 
 #include <ametsuchi/exception.h>
-#include <asset_generated.h>
 #include <lmdb.h>
 #include <string>
+#include <asset_generated.h>
 
 namespace ametsuchi {
 namespace comparator {

@@ -16,16 +16,35 @@ limitations under the License.
 #define IROHA_FLATBUFFER_SERVICE_H
 
 #include <utils/expected.hpp>
-#include <commands_generated.h>
-#include "flatbuf/nested_flatbuffer_service.h"
-#include <commands_generated.h>
-#include <primitives_generated.h>
-#include <transaction_generated.h>
-#include <membership_service/peer_service.hpp>
+#include <vector>
+#include <functional>
+#include <memory>
 
 namespace iroha {
 struct Transaction;
+struct TransactionWrapper;
 struct ConsensusEvent;
+struct Peer;
+struct PeerAdd;
+struct PeerRemove;
+struct PeerChangeTrust;
+struct PeerSetTrust;
+struct PeerSetActive;
+struct Signature;
+struct Sumeragi;
+enum class Command : uint8_t;
+}
+
+namespace peer {
+struct Node;
+}
+
+namespace flatbuffers {
+template<class T> class Offset;
+class FlatBufferBuilder;
+
+// FIXME: this typedef is dirty and unstable solution. (might be able to be solved by setting dependency for this header)
+typedef std::unique_ptr<uint8_t, std::function<void(uint8_t * /* unused */)>> unique_ptr_t;
 }
 
 namespace flatbuffer_service {
@@ -40,7 +59,10 @@ using ::iroha::Transaction;
 
 flatbuffers::Offset<void> CreateCommandDirect(
     flatbuffers::FlatBufferBuilder &_fbb, const void *obj,
-    iroha::Command  /* Command */ type);
+    iroha::Command type);
+
+Expected<flatbuffers::Offset<::iroha::Transaction>> copyTransaction(
+  flatbuffers::FlatBufferBuilder& fbb, const ::iroha::Transaction& fromTx);
 
 Expected<flatbuffers::Offset<::iroha::ConsensusEvent>> copyConsensusEvent(
     flatbuffers::FlatBufferBuilder &fbb, const ::iroha::ConsensusEvent &);
@@ -60,12 +82,13 @@ VoidHandler ensureNotNull(T *value) {
 
 std::string toString(const iroha::Transaction &tx);
 
-flatbuffers::unique_ptr_t addSignature(const iroha::ConsensusEvent &event,
-                                       const std::string &publicKey,
-                                       const std::string &signature);
+Expected<flatbuffers::unique_ptr_t> addSignature(const iroha::ConsensusEvent &event,
+                                                 const std::string &publicKey,
+                                                 const std::string &signature);
 
+Expected<flatbuffers::Offset<::iroha::TransactionWrapper>> toTransactionWrapper(flatbuffers::FlatBufferBuilder&, const ::iroha::Transaction&);
 Expected<flatbuffers::unique_ptr_t> toConsensusEvent(const iroha::Transaction &tx);
-flatbuffers::unique_ptr_t makeCommit(const iroha::ConsensusEvent &event);
+Expected<flatbuffers::unique_ptr_t> makeCommit(const iroha::ConsensusEvent &event);
 
 namespace peer { // namespace peer
 

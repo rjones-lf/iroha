@@ -23,6 +23,8 @@
 #include <utils/logger.hpp>
 #include <utils/timer.hpp>
 
+#include <main_generated.h>
+
 #include <atomic>
 #include <cmath>
 #include <deque>
@@ -129,13 +131,10 @@ struct Context {
     this->panicCount = 0;
 
     this->myPublicKey =
-    config::PeerServiceConfig::getInstance().getMyPublicKey();
-
-    this->myIp =
-      config::PeerServiceConfig::getInstance().getMyIp();
+        config::PeerServiceConfig::getInstance().getMyPublicKey();
+    this->myIp = config::PeerServiceConfig::getInstance().getMyIp();
     this->myPrivateKey =
-      config::PeerServiceConfig::getInstance().getMyPrivateKey();
-
+        config::PeerServiceConfig::getInstance().getMyPrivateKey();
     this->isSumeragi =
         this->validatingPeers.at(0)->publicKey == this->myPublicKey;
     logger::info("sumeragi") << "update finished";
@@ -156,61 +155,61 @@ void initializeSumeragi() {
       [](const std::string& from, flatbuffers::unique_ptr_t&& transaction) {
         context->printProgress.print(1, "receive transaction!");
 
-          flatbuffers::unique_ptr_t eventUniqPtr(
-            flatbuffer_service::toConsensusEvent(
-                *flatbuffers::GetRoot<::iroha::Transaction>(transaction.get())).value_move()
-            );
+        auto eventUniqPtr = flatbuffer_service::toConsensusEvent(
+            *flatbuffers::GetRoot<::iroha::Transaction>(transaction.get()));
 
-          context->printProgress.print( 2, "make tx consensusEvent");
-
-        if (eventUniqPtr != nullptr) {
+        if (eventUniqPtr) {
           context->printProgress.print(2, "make tx consensusEvent");
           flatbuffers::unique_ptr_t ptr;
+          eventUniqPtr.move_value(ptr);
           // send processTransaction(event) as a task to processing pool
           // this returns std::future<void> object
           // (std::future).get() method locks processing until result of
           // processTransaction will be available but processTransaction returns
           // void, so we don't have to call it and wait
-          auto&& task = [e = std::move(eventUniqPtr)]() mutable {
+          auto&& task = [e = std::move(ptr)]() mutable {
             processTransaction(std::move(e));
           };
           context->printProgress.print(3, "send event to processTransaction");
           pool.process(std::move(task));
         } else {
-          //logger::error("sumeragi") << eventUniqPtr.error();
+          logger::error("sumeragi") << eventUniqPtr.error();
         }
       });
 
-  connection::iroha::SumeragiImpl::Verify::receive([](
-      const std::string& from, flatbuffers::unique_ptr_t&& eventUniqPtr) {
-      context->printProgress.print( 16, "receive transaction form other sumeragi");
-      auto eventPtr =
-          flatbuffers::GetRoot<::iroha::ConsensusEvent>(eventUniqPtr.get());
+  connection::iroha::SumeragiImpl::Verify::receive(
+      [](const std::string& from, flatbuffers::unique_ptr_t&& eventUniqPtr) {
+        context->printProgress.print(15,
+                                     "receive transaction form other sumeragi");
 
-      if (eventPtr->code() == iroha::Code::COMMIT) {
-        context->printProgress.print( 20, "receive commited event");
-        if (txCache.find(detail::hash(*eventPtr->transactions()->Get(0)->tx_nested_root())) ==
-            txCache.end()) {
-          // ToDo executor
-          txCache[detail::hash(*eventPtr->transactions()->Get(0)->tx_nested_root())] = "commited";
+        auto eventPtr =
+            flatbuffers::GetRoot<::iroha::ConsensusEvent>(eventUniqPtr.get());
+
+        if (eventPtr->code() == iroha::Code::COMMIT) {
+          context->printProgress.print(19, "receive commited event");
+          // ToDo #(tx) = 1
+          const auto txptr = eventPtr->transactions()->Get(0)->tx_nested_root();
+          if (txCache.find(detail::hash(*txptr)) == txCache.end()) {
+            // ToDo executor
+            txCache[detail::hash(*txptr)] = "commited";
+          }
+        } else {
+          // send processTransaction(event) as a task to processing pool
+          // this returns std::future<void> object
+          // (std::future).get() method locks processing until result of
+          // processTransaction will be available but processTransaction returns
+          // void, so we don't have to call it and wait
+          // std::function<void()>&& task =
+          //    std::bind(processTransaction, std::move(event));
+          // pool.process(std::move(task));
+
+          // Copy ConsensusEvent
+          auto&& task = [e = std::move(eventUniqPtr)]() mutable {
+            processTransaction(std::move(e));
+          };
+          pool.process(std::move(task));
         }
-      } else {
-        // send processTransaction(event) as a task to processing pool
-        // this returns std::future<void> object
-        // (std::future).get() method locks processing until result of
-        // processTransaction will be available but processTransaction returns
-        // void, so we don't have to call it and wait
-        // std::function<void()>&& task =
-        //    std::bind(processTransaction, std::move(event));
-        // pool.process(std::move(task));
-
-        // Copy ConsensusEvent
-        auto&& task = [e = std::move(eventUniqPtr)]() mutable {
-          processTransaction(std::move(e));
-        };
-        pool.process(std::move(task));
-      }
-  });
+      });
 
   logger::info("sumeragi") << "initialize numValidatingPeers :"
                            << context->numValidatingPeers;
@@ -237,42 +236,48 @@ std::uint64_t getNextOrder() {
 }
 
 void processTransaction(flatbuffers::unique_ptr_t&& eventUniqPtr) {
-    // Do not touch directly
-    flatbuffers::unique_ptr_t storageUniqPtr;
-    ::iroha::ConsensusEvent* storageRawPtrRef;
+  // Do not touch directly
+  flatbuffers::unique_ptr_t storageUniqPtr;
+  ::iroha::ConsensusEvent const* storageRawPtrRef;
 
-    // Helper to set unique_ptr_t
-    auto resetUniqPtr = [&](flatbuffers::unique_ptr_t&& uptr) {
-        storageUniqPtr = std::move(uptr);
-        storageRawPtrRef = flatbuffers::GetMutableRoot<::iroha::ConsensusEvent>(
-                storageUniqPtr.get());
-    };
+  // Helper to set unique_ptr_t
+  auto resetUniqPtr = [&](flatbuffers::unique_ptr_t&& uptr) {
+    storageUniqPtr = std::move(uptr);
+    storageRawPtrRef = flatbuffers::GetRoot<::iroha::ConsensusEvent>(
+        storageUniqPtr.get());
+  };
 
-    // Convenient accessor
-    auto getRoot = [&] { return storageRawPtrRef; };
+  // Convenient accessor
+  const auto getRoot = [&] { return storageRawPtrRef; };
 
-  context->printProgress.print( 4, "start processTransaction");
+  context->printProgress.print(4, "start processTransaction");
 
-  context->printProgress.print( 5, "convert eventUniqPtr to eventPtr");
+  context->printProgress.print(5, "set input's event unique ptr");
   resetUniqPtr(std::move(eventUniqPtr));
 
-  context->printProgress.print( 6, "generate hash");
-  const auto hash = detail::hash(*getRoot()->transactions()->Get(0)->tx_nested_root());
+  context->printProgress.print(6, "generate hash");
 
-  context->printProgress.print( 7, "sign hash using my key-pair");
-  const auto signature = signature::sign(
-    hash,
-    context->myPublicKey,
-    context->myPrivateKey
-  );
-  explore::sumeragi::printInfo("hash:" + hash + " signature:" + signature);
+  {
+    const auto hash = detail::hash(
+      *getRoot()->transactions()->Get(0)->tx_nested_root());  // ToDo: #(tx) = 1
+    context->printProgress.print(7, "sign hash using my key-pair");
 
-  context->printProgress.print( 8, "Add own signature");
-  auto newEventUniqPtr = flatbuffer_service::addSignature(
-      *getRoot(),
-      context->myPublicKey,
-      signature
-  );
+    const auto signature =
+      signature::sign(hash, context->myPublicKey, context->myPrivateKey);
+    explore::sumeragi::printInfo("hash:" + hash + " signature:" + signature);
+
+    context->printProgress.print(8, "Add own signature");
+
+    auto sigAddPtr = flatbuffer_service::addSignature(
+        *getRoot(), context->myPublicKey, signature);
+    if (!sigAddPtr) {
+      logger::error("sumeragi") << "Failed to process transaction.";
+      return;  // ToDo: If processTx fails, is it ok to return immediately?
+    }
+    flatbuffers::unique_ptr_t uptr;
+    sigAddPtr.move_value(uptr);
+    resetUniqPtr(std::move(uptr));
+  }
 
   context->printProgress.print(9, "if statement");
   if (detail::eventSignatureIsEmpty(*getRoot()) && context->isSumeragi) {
@@ -290,38 +295,78 @@ void processTransaction(flatbuffers::unique_ptr_t&& eventUniqPtr) {
 
     context->printProgress.print(11, "if statement");
     // Check if we have at least 2f+1 signatures needed for Byzantine fault
-    // tolerance ToDo re write
+    // tolerance
+    // ToDo re write transaction_validator
     if (getRoot()->peerSignatures()->size() >= context->maxFaulty * 2 + 1) {
       explore::sumeragi::printInfo("Signature exists and sig > 2*f + 1");
-
       explore::sumeragi::printJudge(getRoot()->peerSignatures()->size(),
                                     context->numValidatingPeers,
                                     context->maxFaulty * 2 + 1);
       explore::sumeragi::printAgree();
 
       context->printProgress.print(16, "commit");
+
       context->commitedCount++;
 
       explore::sumeragi::printInfo("commit count:" +
                                    std::to_string(context->commitedCount));
 
       context->printProgress.print(17, "update event commit");
-      resetUniqPtr(flatbuffer_service::makeCommit(*getRoot()));
+
+      {
+        auto committedEvent = flatbuffer_service::makeCommit(*getRoot());
+        if (!committedEvent) {
+          logger::error("sumeragi") << "Failed to process transaction.";
+          return;  // ToDo: If processTx fails, is it ok to return immediately?
+        }
+        flatbuffers::unique_ptr_t uptr;
+        committedEvent.move_value(uptr);
+        resetUniqPtr(std::move(uptr));
+      }
 
       context->printProgress.print(18, "SendAll");
       connection::iroha::SumeragiImpl::Verify::sendAll(*getRoot());
 
     } else {
+
+      {
+        const auto hash = detail::hash(
+          *getRoot()->transactions()->Get(0)->tx_nested_root());  // ToDo: #(tx) = 1
+        context->printProgress.print(7, "sign hash using my key-pair");
+
+        const auto signature =
+          signature::sign(hash, context->myPublicKey, context->myPrivateKey);
+        explore::sumeragi::printInfo("hash:" + hash + " signature:" + signature);
+
+        context->printProgress.print(8, "Add own signature");
+
+        auto sigAddPtr = flatbuffer_service::addSignature(
+          *getRoot(), context->myPublicKey, signature);
+        if (!sigAddPtr) {
+          logger::error("sumeragi") << "Failed to process transaction.";
+          return;  // ToDo: If processTx fails, is it ok to return immediately?
+        }
+        flatbuffers::unique_ptr_t uptr;
+        sigAddPtr.move_value(uptr);
+        resetUniqPtr(std::move(uptr));
+      }
+
       explore::sumeragi::printInfo("Signature exists and sig not enough");
-      context->printProgress.print( 13, "make eventPtr event");
+      context->printProgress.print(12, "add peer signature to event");
 
-      explore::sumeragi::printInfo("tail public key is " + context->validatingPeers.at(context->proxyTailNdx)->publicKey);
+      explore::sumeragi::printInfo(
+          "tail public key is " +
+          context->validatingPeers.at(context->proxyTailNdx)->publicKey);
 
-      context->printProgress.print( 14, "If statements [ Am I tail or not?");
-      if (context->validatingPeers.at(context->proxyTailNdx)->publicKey == context->myPublicKey
-      ) {
-        explore::sumeragi::printInfo("currently signature number:" + std::to_string(getRoot()->peerSignatures()->size()));
-        context->printProgress.print( 15, "send to " + context->validatingPeers.at(context->proxyTailNdx)->ip);
+      context->printProgress.print(13, "If statements [ Am I tail or not?");
+      if (context->validatingPeers.at(context->proxyTailNdx)->publicKey ==
+          context->myPublicKey) {
+        explore::sumeragi::printInfo(
+            "currently signature number:" +
+            std::to_string(getRoot()->peerSignatures()->size()));
+        context->printProgress.print(
+            14, "send to " +
+                    context->validatingPeers.at(context->proxyTailNdx)->ip);
 
         connection::iroha::SumeragiImpl::Verify::send(
             context->validatingPeers.at(context->proxyTailNdx)->ip,

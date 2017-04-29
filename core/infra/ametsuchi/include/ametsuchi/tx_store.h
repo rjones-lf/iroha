@@ -22,7 +22,7 @@
 #include <lmdb.h>
 #include <unordered_map>
 #include <ametsuchi/merkle_tree/merkle_tree.h>
-#include "common.h"
+#include <ametsuchi/common.h>
 
 namespace ametsuchi {
 

@@ -19,13 +19,13 @@
 
 
 #include <ametsuchi/common.h>
-#include <commands_generated.h>
 #include <flatbuffers/flatbuffers.h>
 #include <lmdb.h>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <commands_generated.h>
 
 namespace ametsuchi {
 
@@ -56,10 +56,13 @@ class WSV {
                          const flatbuffers::String *asset_name,
                          bool uncommitted = false, MDB_env *env = nullptr);
 
-
   std::vector<AM_val> accountGetAllAssets(const flatbuffers::String *pubKey,
                                           bool uncommitted = true,
                                           MDB_env *env = nullptr);
+
+  AM_val pubKeyGetPeer(const flatbuffers::String *pubKey,
+                       bool uncommitted = false, MDB_env *env = nullptr);
+
   /*
    * Get total number of trees
    */

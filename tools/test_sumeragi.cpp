@@ -15,12 +15,12 @@ limitations under the License.
 */
 #include <flatbuffers/flatbuffers.h>
 #include <grpc++/grpc++.h>
-#include <main_generated.h>
-#include <endpoint.grpc.fb.h>
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
+#include <endpoint.grpc.fb.h>
+#include <main_generated.h>
 
 using grpc::Channel;
 using grpc::Server;
@@ -29,91 +29,85 @@ using grpc::ServerContext;
 using grpc::ClientContext;
 using grpc::Status;
 
-int main(int argc,char* argv[]){
-    if(argc != 2){
-        std::cout<<"Plz IP "<< std::endl;
-        std::cout<<"Usage: test_sumeragi  ip-address "<< std::endl;
-        return 1;
-    }
-    std::cout<<"IP:"<< argv[1] << std::endl;
+int main(int argc, char* argv[]) {
+  if (argc != 2) {
+    std::cout << "Plz IP " << std::endl;
+    std::cout << "Usage: test_sumeragi  ip-address " << std::endl;
+    return 1;
+  }
+  std::cout << "IP:" << argv[1] << std::endl;
 
 
-    auto channel = grpc::CreateChannel(std::string(argv[1]) + ":50051",
-       grpc::InsecureChannelCredentials());
-    auto stub = iroha::Sumeragi::NewStub(channel);
+  auto channel = grpc::CreateChannel(std::string(argv[1]) + ":50051",
+                                     grpc::InsecureChannelCredentials());
+  auto stub = iroha::Sumeragi::NewStub(channel);
 
-    grpc::ClientContext context;
+  grpc::ClientContext context;
 
-    auto publicKey = "SamplePublicKey";
-    // Build a request with the name set.
-    flatbuffers::FlatBufferBuilder fbb;
+  auto publicKey = "SamplePublicKey";
+  // Build a request with the name set.
+  flatbuffers::FlatBufferBuilder fbb;
 
-    auto account_vec = [&] {
-        flatbuffers::FlatBufferBuilder fbbAccount;
+  auto account_vec = [&] {
+    flatbuffers::FlatBufferBuilder fbbAccount;
 
-        std::unique_ptr<std::vector<flatbuffers::Offset<flatbuffers::String>>> signatories(
-            new std::vector<flatbuffers::Offset<flatbuffers::String>>( {fbbAccount.CreateString("publicKey1")})
-        );
+    std::unique_ptr<std::vector<flatbuffers::Offset<flatbuffers::String>>>
+        signatories(new std::vector<flatbuffers::Offset<flatbuffers::String>>(
+            {fbbAccount.CreateString("publicKey1")}));
 
-        auto account = iroha::CreateAccountDirect(fbbAccount, publicKey, "alias", signatories.get(), 1);
-        fbbAccount.Finish(account);
+    auto account = iroha::CreateAccountDirect(fbbAccount, publicKey, "alias",
+                                              signatories.get(), 1);
+    fbbAccount.Finish(account);
 
-        std::unique_ptr<std::vector<uint8_t>> account_vec(
-            new std::vector<uint8_t>()
-        );
+    std::unique_ptr<std::vector<uint8_t>> account_vec(
+        new std::vector<uint8_t>());
 
-        auto buf = fbbAccount.GetBufferPointer();
+    auto buf = fbbAccount.GetBufferPointer();
 
-        account_vec->assign(
-            buf, buf + fbbAccount.GetSize()
-        );
+    account_vec->assign(buf, buf + fbbAccount.GetSize());
 
-        return account_vec;
-    }();
+    return account_vec;
+  }();
 
-    auto command = iroha::CreateAccountAddDirect(fbb, account_vec.get());
-/*
-    std::unique_ptr<std::vector<flatbuffers::Offset<iroha::Signature>>> signature_vec(
-        new std::vector<flatbuffers::Offset<iroha::Signature>>()
-    );
-    signature_vec->emplace_back(iroha::CreateSignatureDirect(fbb,publicKey, nullptr,1234567));
-*/
-    std::vector<uint8_t> signatureBlob{'a','b','c','d'};
-    std::vector<uint8_t> hashBlob{'b','e','e','f'};
-    std::vector<uint8_t> dataBlob{'d','e','a','d'};
+  auto command = iroha::CreateAccountAddDirect(fbb, account_vec.get());
+  /*
+      std::unique_ptr<std::vector<flatbuffers::Offset<iroha::Signature>>>
+     signature_vec(
+          new std::vector<flatbuffers::Offset<iroha::Signature>>()
+      );
+      signature_vec->emplace_back(iroha::CreateSignatureDirect(fbb,publicKey,
+     nullptr,1234567));
+  */
+  std::vector<uint8_t> signatureBlob{'a', 'b', 'c', 'd'};
+  std::vector<uint8_t> hashBlob{'b', 'e', 'e', 'f'};
+  std::vector<uint8_t> dataBlob{'d', 'e', 'a', 'd'};
 
-    std::vector<flatbuffers::Offset<iroha::Signature>> signatureOffset_vec{iroha::CreateSignatureDirect(fbb,publicKey,&signatureBlob)};
-    auto tx_offset = iroha::CreateTransactionDirect(
-        fbb,
-        publicKey,
-        iroha::Command::AccountAdd,
-        command.Union(),
-        &signatureOffset_vec,
-        &hashBlob,
-        iroha::CreateAttachmentDirect(fbb, "none", &dataBlob)
-    );
-    fbb.Finish(tx_offset);
-    auto tx = flatbuffers::BufferRef<iroha::Transaction>(
-        fbb.GetBufferPointer(),
-        fbb.GetSize()
-    );
+  std::vector<flatbuffers::Offset<iroha::Signature>> signatureOffset_vec{
+      iroha::CreateSignatureDirect(fbb, publicKey, &signatureBlob)};
+  auto tx_offset = iroha::CreateTransactionDirect(
+      fbb, publicKey, iroha::Command::AccountAdd, command.Union(),
+      &signatureOffset_vec, &hashBlob,
+      iroha::CreateAttachmentDirect(fbb, "none", &dataBlob));
+  fbb.Finish(tx_offset);
+  auto tx = flatbuffers::BufferRef<iroha::Transaction>(fbb.GetBufferPointer(),
+                                                       fbb.GetSize());
 
-    flatbuffers::BufferRef<iroha::Response> response;
-    /*
-    {
-            message:   string;
-            code:      Code;
-            signature: Signature;
-    }
-    */
+  flatbuffers::BufferRef<iroha::Response> response;
+  /*
+  {
+          message:   string;
+          code:      Code;
+          signature: Signature;
+  }
+  */
 
-    // The actual RPC.
-    auto status = stub->Torii(&context, tx, &response);
-    if (status.ok()) {
-        auto msg = response.GetRoot()->message();
-        std::cout << "RPC response: " << msg->str() << std::endl;
-    } else {
-        std::cout << "RPC failed" << std::endl;
-    }
-    return 0;
+  // The actual RPC.
+  auto status = stub->Torii(&context, tx, &response);
+  if (status.ok()) {
+    auto msg = response.GetRoot()->message();
+    std::cout << "RPC response: " << msg->str() << std::endl;
+  } else {
+    std::cout << "RPC failed" << std::endl;
+  }
+  return 0;
 }

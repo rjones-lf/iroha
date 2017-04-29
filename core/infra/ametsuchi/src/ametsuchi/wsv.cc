@@ -17,8 +17,9 @@
 
 #include <ametsuchi/comparator.h>
 #include <ametsuchi/currency.h>
-#include <transaction_generated.h>
 #include <ametsuchi/wsv.h>
+#include <iostream>
+#include <transaction_generated.h>
 
 namespace ametsuchi {
 
@@ -39,7 +40,8 @@ void WSV::init(MDB_txn *append_tx) {
       init_btree(append_tx_, "wsv_assetid_asset", MDB_CREATE);
 
   // [ip] => peer (NODUP)
-  trees_["wsv_ip_peer"] = init_btree(append_tx_, "wsv_ip_peer", MDB_CREATE);
+  trees_["wsv_pubkey_peer"] =
+      init_btree(append_tx_, "wsv_pubkey_peer", MDB_CREATE);
 
   // we should know created assets, so read entire table in memory
   read_created_assets();
@@ -381,17 +383,17 @@ void WSV::account_remove(const iroha::AccountRemove *command) {
 }
 
 void WSV::peer_add(const iroha::PeerAdd *command) {
-  MDB_cursor *cursor = trees_.at("wsv_ip_peer").second;
+  MDB_cursor *cursor = trees_.at("wsv_pubkey_peer").second;
   MDB_val c_key, c_val;
   int res;
 
   auto peer = flatbuffers::GetRoot<iroha::Peer>(command->peer()->data());
-  auto ip = peer->ip();
+  auto pubkey = peer->publicKey();
 
   flatbuffers::GetRoot<iroha::Peer>(peer);
 
-  c_key.mv_data = (void *)(ip->data());
-  c_key.mv_size = ip->size();
+  c_key.mv_data = (void *)(pubkey->data());
+  c_key.mv_size = pubkey->size();
   c_val.mv_data = (void *)command->peer()->data();
   c_val.mv_size = command->peer()->size();
 
@@ -409,19 +411,14 @@ void WSV::peer_add(const iroha::PeerAdd *command) {
 
 
 void WSV::peer_remove(const iroha::PeerRemove *command) {
-  auto cursor = trees_.at("wsv_ip_peer").second;
+  auto cursor = trees_.at("wsv_pubkey_peer").second;
   MDB_val c_key, c_val;
   int res;
-/*
-  auto peer = flatbuffers::GetRoot<iroha::Peer>(command->peer()->data());
-  auto ip = peer->ip();
 
-  flatbuffers::GetRoot<iroha::Peer>(peer);
+  auto pubkey = command->peerPubKey();
 
-  c_key.mv_data = (void *)(ip->data());
-  c_key.mv_size = ip->size();
-  c_val.mv_data = (void *)command->peer()->data();
-  c_val.mv_size = command->peer()->size();
+  c_key.mv_data = (void *)(pubkey->data());
+  c_key.mv_size = pubkey->size();
 
   if ((res = mdb_cursor_get(cursor, &c_key, &c_val, MDB_SET))) {
     if (res == MDB_NOTFOUND) {
@@ -435,7 +432,6 @@ void WSV::peer_remove(const iroha::PeerRemove *command) {
     AMETSUCHI_CRITICAL(res, EACCES);
     AMETSUCHI_CRITICAL(res, EINVAL);
   }
-*/
 }
 
 AM_val WSV::accountGetAsset(const flatbuffers::String *pubKey,
@@ -569,6 +565,50 @@ std::vector<AM_val> WSV::accountGetAllAssets(const flatbuffers::String *pubKey,
     mdb_txn_abort(tx);
   }
   return ret;
+}
+
+AM_val WSV::pubKeyGetPeer(const flatbuffers::String *pubKey, bool uncommitted,
+                          MDB_env *env) {
+  MDB_val c_key, c_val;
+  MDB_cursor *cursor;
+  MDB_txn *tx;
+  int res;
+
+  // query peer by public key
+  c_key.mv_data = (void *)pubKey->data();
+  c_key.mv_size = pubKey->size();
+
+  if (uncommitted) {
+    cursor = trees_.at("wsv_pubkey_peer").second;
+    tx = append_tx_;
+  } else {
+    // create read-only transaction, create new RO cursor
+    if ((res = mdb_txn_begin(env, NULL, MDB_RDONLY, &tx))) {
+      AMETSUCHI_CRITICAL(res, MDB_PANIC);
+      AMETSUCHI_CRITICAL(res, MDB_MAP_RESIZED);
+      AMETSUCHI_CRITICAL(res, MDB_READERS_FULL);
+      AMETSUCHI_CRITICAL(res, ENOMEM);
+    }
+
+    if ((res = mdb_cursor_open(tx, trees_.at("wsv_pubkey_peer").first,
+                               &cursor))) {
+      AMETSUCHI_CRITICAL(res, EINVAL);
+    }
+  }
+
+  // if pubKey is not fount, throw exception
+  if ((res = mdb_cursor_get(cursor, &c_key, &c_val, MDB_SET))) {
+    if (res == MDB_NOTFOUND) {
+      throw exception::InvalidTransaction::PEER_NOT_FOUND;
+    }
+    AMETSUCHI_CRITICAL(res, EINVAL);
+  }
+
+  if (!uncommitted) {
+    mdb_cursor_close(cursor);
+    mdb_txn_abort(tx);
+  }
+  return AM_val(c_val);
 }
 
 void WSV::close_dbi(MDB_env *env) {

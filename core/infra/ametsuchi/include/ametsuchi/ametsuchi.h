@@ -19,7 +19,6 @@
 #define AMETSUCHI_DB_H
 
 #include <ametsuchi/currency.h>
-#include <commands_generated.h>
 #include <ametsuchi/merkle_tree/merkle_tree.h>
 #include <ametsuchi/tx_store.h>
 #include <ametsuchi/wsv.h>
@@ -31,6 +30,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <commands_generated.h>
 
 extern "C" {
 #include <SimpleFIPS202.h>
@@ -108,6 +108,9 @@ class Ametsuchi {
                          const flatbuffers::String *domain_name,
                          const flatbuffers::String *asset_name,
                          bool uncommitted = false);
+
+  AM_val pubKeyGetPeer(const flatbuffers::String *pubKey,
+                       bool uncommitted = false);
 
   std::vector<AM_val> getAssetTransferBySender(
       const flatbuffers::String *senderKey, bool uncommitted = false);

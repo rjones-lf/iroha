@@ -18,12 +18,12 @@
 #ifndef AMETSUCHI_TX_GENERATOR_H
 #define AMETSUCHI_TX_GENERATOR_H
 
-#include <transaction_generated.h>
 #include <algorithm>
 #include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <transaction_generated.h>
 
 namespace generator {
 
@@ -175,24 +175,26 @@ std::vector<uint8_t> random_asset_wrapper_currency(
 
   // May be erased commen :
   /*
-   * Even though that two asset has same currency_name and domain_name and ledgername,
+   * Even though that two asset has same currency_name and domain_name and
+   * ledgername,
    * not necessary two asset same size.
    */
-  //printf("in rando gen\n");
-  //printf("%d %d %s %s %s %s\n",amount,precision,currency_name.c_str(),domain_name.c_str(),ledger_name.c_str(),description.c_str());
+  // printf("in rando gen\n");
+  // printf("%d %d %s %s %s
+  // %s\n",amount,precision,currency_name.c_str(),domain_name.c_str(),ledger_name.c_str(),description.c_str());
   auto asset = iroha::CreateAsset(
-      fbb,
-      iroha::AnyAsset::Currency,
-      iroha::CreateCurrency(
-          fbb, fbb.CreateString(currency_name), fbb.CreateString(domain_name),
-          fbb.CreateString(ledger_name), fbb.CreateString(description), amount,
-          precision).Union());
+      fbb, iroha::AnyAsset::Currency,
+      iroha::CreateCurrency(fbb, fbb.CreateString(currency_name),
+                            fbb.CreateString(domain_name),
+                            fbb.CreateString(ledger_name),
+                            fbb.CreateString(description), amount, precision)
+          .Union());
 
   fbb.Finish(asset);
 
   uint8_t* ptr = fbb.GetBufferPointer();
-  //printf("random_asset_wrapper_currency size: %d\n",fbb.GetSize());
-  //fflush(stdout);
+  // printf("random_asset_wrapper_currency size: %d\n",fbb.GetSize());
+  // fflush(stdout);
   return {ptr, ptr + fbb.GetSize()};
 }
 
@@ -270,7 +272,11 @@ flatbuffers::Offset<iroha::PeerAdd> random_PeerAdd(
 flatbuffers::Offset<iroha::PeerRemove> random_PeerRemove(
     flatbuffers::FlatBufferBuilder& fbb,
     std::vector<uint8_t> peer = random_peer()) {
-  return iroha::CreatePeerRemove(fbb, fbb.CreateVector(peer));
+  // very sorry for this tempolary changes... please change peer to peerPubkey.
+  // (ref schema: iroha feature/cmake-fixes)
+  auto pubkey = flatbuffers::GetRoot<iroha::Peer>(peer.data())->publicKey();
+  return iroha::CreatePeerRemove(
+      fbb, /*fbb.CreateVector(peer)*/ fbb.CreateString(pubkey));
 }
 
 /**

@@ -43,7 +43,6 @@ Ametsuchi::~Ametsuchi() {
 
 
 merkle::hash_t Ametsuchi::append(const std::vector<uint8_t> *blob) {
-
   // 1. Append to TX_store
   auto mt_root = tx_store.append(blob);
   // 2. Update WSV
@@ -180,6 +179,11 @@ AM_val Ametsuchi::accountGetAsset(const flatbuffers::String *pubKey,
                                   bool uncommitted) {
   return wsv.accountGetAsset(pubKey, ledger_name, domain_name, asset_name,
                              uncommitted, env);
+}
+
+AM_val Ametsuchi::pubKeyGetPeer(const flatbuffers::String *pubKey,
+                                bool uncommitted) {
+  return wsv.pubKeyGetPeer(pubKey, uncommitted, env);
 }
 
 std::vector<AM_val> Ametsuchi::getAssetTransferBySender(

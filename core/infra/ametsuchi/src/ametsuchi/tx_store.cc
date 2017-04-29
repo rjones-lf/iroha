@@ -16,9 +16,9 @@
  */
 
 #include <ametsuchi/exception.h>
+#include <ametsuchi/tx_store.h>
 #include <asset_generated.h>
 #include <transaction_generated.h>
-#include <ametsuchi/tx_store.h>
 
 namespace ametsuchi {
 
@@ -388,30 +388,29 @@ std::vector<AM_val> TxStore::getPeerSetTrustByKey(
     const flatbuffers::String *pubKey, bool uncommitted, MDB_env *env) {
   return getTxByKey("index_peer_set_trust", pubKey, uncommitted, env);
 }
-merkle::hash_t TxStore::merkle_root() {
-  return merkleTree_.root();
-}
+merkle::hash_t TxStore::merkle_root() { return merkleTree_.root(); }
 
 void TxStore::commit() {
   int res;
   MDB_val c_key, c_val;
 
   // Clear old hashes
-  if ((res = mdb_drop(append_tx_, trees_.at("merkle_tree").first, 0))){
+  if ((res = mdb_drop(append_tx_, trees_.at("merkle_tree").first, 0))) {
     AMETSUCHI_CRITICAL(res, EINVAL);
   }
 
   auto last_block = merkleTree_.last_block();
   auto begin = merkleTree_.last_block_begin(),
-      end = merkleTree_.last_block_end();
+       end = merkleTree_.last_block_end();
 
-  for (; begin < end; ++begin){
-    c_key.mv_data = (void *) &begin;
+  for (; begin < end; ++begin) {
+    c_key.mv_data = (void *)&begin;
     c_key.mv_size = sizeof(begin);
     c_val.mv_data = (void *)last_block.at(begin).data();
     c_val.mv_size = merkle::HASH_LEN;
 
-    if ((res = mdb_cursor_put(trees_.at("merkle_tree").second, &c_key, &c_val, MDB_APPEND))) { // ???
+    if ((res = mdb_cursor_put(trees_.at("merkle_tree").second, &c_key, &c_val,
+                              MDB_APPEND))) {  // ???
       AMETSUCHI_CRITICAL(res, MDB_MAP_FULL);
       AMETSUCHI_CRITICAL(res, MDB_TXN_FULL);
       AMETSUCHI_CRITICAL(res, EACCES);
@@ -424,10 +423,12 @@ void TxStore::init_merkle_tree() {
   for (auto &record : records) {
     merkle::hash_t hash;
     assert(record.second.size == merkle::HASH_LEN);
-    std::copy(static_cast<const uint8_t *>(record.second.data),
-              static_cast<const uint8_t *>(record.second.data) + record.second.size, hash.data());
+    std::copy(
+        static_cast<const uint8_t *>(record.second.data),
+        static_cast<const uint8_t *>(record.second.data) + record.second.size,
+        hash.data());
     merkleTree_.push(hash);
-    assert((merkleTree_.last_block_end() - 1) == *(size_t*)record.first.data);
+    assert((merkleTree_.last_block_end() - 1) == *(size_t *)record.first.data);
   }
 }
 }
