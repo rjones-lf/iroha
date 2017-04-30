@@ -913,7 +913,7 @@ std::vector<uint8_t> CreatePeer(const ::peer::Node &peer) {
 
 namespace transaction { // namespace transaction
 
-const Transaction& CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha::Command cmd_type,
+const Transaction* CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha::Command cmd_type,
                               flatbuffers::Offset<void> command,
                               std::string creator,
                               std::vector<flatbuffers::Offset<iroha::Signature>> sigs) {
@@ -926,7 +926,7 @@ const Transaction& CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha:
                                    cmd_type, command, fbb.CreateVector(sigs),
                                    fbb.CreateVector( static_cast<std::vector<uint8_t>>( base64::decode(hash) ) ) );
   fbb.Finish( tx );
-  return *flatbuffers::GetRoot<Transaction>(fbb.GetBufferPointer());
+  return flatbuffers::GetRoot<Transaction>(fbb.GetBufferPointer());
 }
 
 };

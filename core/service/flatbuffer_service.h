@@ -118,7 +118,7 @@ namespace primitives {
 
 namespace transaction { // namespace transaction
 
-const Transaction& CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha::Command cmd_type,
+const Transaction* CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha::Command cmd_type,
                               flatbuffers::Offset<void> command,
                               std::string creator,
                               std::vector<flatbuffers::Offset<iroha::Signature>> sigs);
