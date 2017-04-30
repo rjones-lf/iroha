@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <transaction_generated.h>
+#include <account_generated.h>
 
 namespace generator {
 
@@ -121,7 +122,7 @@ std::vector<uint8_t> random_account(std::string pubkey = random_public_key(),
   std::generate_n(sign.begin(), signatories, random_public_key);
 
   auto account = iroha::CreateAccount(
-      fbb, fbb.CreateString(pubkey), fbb.CreateString(alias),
+      fbb, fbb.CreateString(pubkey), fbb.CreateString(""), fbb.CreateString(alias),
       fbb.CreateVectorOfStrings(sign), signatories);
 
   fbb.Finish(account);
@@ -131,13 +132,15 @@ std::vector<uint8_t> random_account(std::string pubkey = random_public_key(),
 }
 
 
-std::vector<uint8_t> random_peer(std::string pubkey = random_public_key(),
+std::vector<uint8_t> random_peer(std::string ledger_name = random_string(10),
+                                 std::string pubkey = random_public_key(),
                                  std::string ip = random_ip(),
                                  double trust = random_number(0, 10)) {
   flatbuffers::FlatBufferBuilder fbb(2048);
 
 
-  auto peer = iroha::CreatePeer(fbb, fbb.CreateString(pubkey),
+  auto peer = iroha::CreatePeer(fbb, fbb.CreateString(ledger_name),
+                                fbb.CreateString(pubkey),
                                 fbb.CreateString(ip), trust);
 
   fbb.Finish(peer);
@@ -156,7 +159,7 @@ std::vector<uint8_t> random_currency(
 
   auto currency = iroha::CreateCurrency(
       fbb, fbb.CreateString(currency_name), fbb.CreateString(domain_name),
-      fbb.CreateString(ledger_name), fbb.CreateString(description), amount,
+      fbb.CreateString(ledger_name), fbb.CreateString(description), fbb.CreateString(std::to_string(amount)),
       precision);
 
   fbb.Finish(currency);
@@ -187,7 +190,7 @@ std::vector<uint8_t> random_asset_wrapper_currency(
       iroha::CreateCurrency(fbb, fbb.CreateString(currency_name),
                             fbb.CreateString(domain_name),
                             fbb.CreateString(ledger_name),
-                            fbb.CreateString(description), amount, precision)
+                            fbb.CreateString(description), fbb.CreateString(std::to_string(amount)), precision)
           .Union());
 
   fbb.Finish(asset);
@@ -209,7 +212,7 @@ flatbuffers::Offset<iroha::Signature> random_signature(
 }
 
 
-flatbuffers::Offset<iroha::AccountAdd> random_AccountAdd(
+flatbuffers::Offset<iroha::AccountAdd> random_Add(
     flatbuffers::FlatBufferBuilder& fbb,
     const std::vector<uint8_t> account = random_account()) {
   return iroha::CreateAccountAdd(fbb, fbb.CreateVector(account));
@@ -223,20 +226,20 @@ flatbuffers::Offset<iroha::AccountRemove> random_AccountRemove(
 }
 
 
-flatbuffers::Offset<iroha::AssetAdd> random_AssetAdd(
+flatbuffers::Offset<iroha::AssetAdd> random_Add(
     flatbuffers::FlatBufferBuilder& fbb,
     std::string accPubKey = random_public_key(),
     std::vector<uint8_t> asset = random_asset_wrapper_currency()) {
-  return iroha::CreateAssetAdd(fbb, fbb.CreateString(accPubKey),
+  return iroha::CreateAdd(fbb, fbb.CreateString(accPubKey),
                                fbb.CreateVector(asset));
 }
 
 
-flatbuffers::Offset<iroha::AssetRemove> random_AssetRemove(
+flatbuffers::Offset<iroha::AssetRemove> random_Subtract(
     flatbuffers::FlatBufferBuilder& fbb,
     std::string accPubKey = random_public_key(),
     std::vector<uint8_t> asset = random_asset_wrapper_currency()) {
-  return iroha::CreateAssetRemove(fbb, fbb.CreateString(accPubKey),
+  return iroha::CreateSubtract(fbb, fbb.CreateString(accPubKey),
                                   fbb.CreateVector(asset));
 }
 
@@ -251,12 +254,12 @@ flatbuffers::Offset<iroha::AssetCreate> random_AssetCreate(
 }
 
 
-flatbuffers::Offset<iroha::AssetTransfer> random_AssetTransfer(
+flatbuffers::Offset<iroha::AssetTransfer> random_Transfer(
     flatbuffers::FlatBufferBuilder& fbb,
     std::vector<uint8_t> asset = random_asset_wrapper_currency(),
     std::string sender = random_public_key(),
     std::string receiver = random_public_key()) {
-  return iroha::CreateAssetTransfer(fbb, fbb.CreateVector(asset),
+  return iroha::CreateTransfer(fbb, fbb.CreateVector(asset),
                                     fbb.CreateString(sender),
                                     fbb.CreateString(receiver));
 }
@@ -271,12 +274,8 @@ flatbuffers::Offset<iroha::PeerAdd> random_PeerAdd(
 
 flatbuffers::Offset<iroha::PeerRemove> random_PeerRemove(
     flatbuffers::FlatBufferBuilder& fbb,
-    std::vector<uint8_t> peer = random_peer()) {
-  // very sorry for this tempolary changes... please change peer to peerPubkey.
-  // (ref schema: iroha feature/cmake-fixes)
-  auto pubkey = flatbuffers::GetRoot<iroha::Peer>(peer.data())->publicKey();
-  return iroha::CreatePeerRemove(
-      fbb, /*fbb.CreateVector(peer)*/ fbb.CreateString(pubkey));
+    std::string pubkey = random_string(10) ) {
+  return iroha::CreatePeerRemove(fbb, fbb.CreateString(pubkey));
 }
 
 /**

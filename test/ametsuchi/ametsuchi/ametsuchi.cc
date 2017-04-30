@@ -60,7 +60,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
   // Add currency to account 1
   blob = generator::random_transaction(
       fbb, iroha::Command::AssetAdd,
-      generator::random_AssetAdd(
+      generator::random_Add(
           fbb, "1", generator::random_asset_wrapper_currency(200, 2, "Dollar",
                                                              "USA", "l1"))
           .Union());
@@ -72,7 +72,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
         flatbuffers::GetRoot<iroha::Transaction>(
             generator::random_transaction(
                 fbb2, iroha::Command::AssetTransfer,
-                generator::random_AssetTransfer(
+                generator::random_Transfer(
                     fbb2, generator::random_asset_wrapper_currency(
                               100, 2, "Dollar", "USA", "l1"),
                     "1", "2")
@@ -99,7 +99,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
   // Transfer from 1 to 2
   blob = generator::random_transaction(
       fbb, iroha::Command::AssetTransfer,
-      generator::random_AssetTransfer(fbb,
+      generator::random_Transfer(fbb,
                                       generator::random_asset_wrapper_currency(
                                           100, 2, "Dollar", "USA", "l1"),
                                       "1", "2")
@@ -112,7 +112,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
         flatbuffers::GetRoot<iroha::Transaction>(
             generator::random_transaction(
                 fbb2, iroha::Command::AssetTransfer,
-                generator::random_AssetTransfer(
+                generator::random_Transfer(
                     fbb2, generator::random_asset_wrapper_currency(
                               100, 2, "Dollar", "USA", "l1"),
                     "1", "2")
@@ -142,7 +142,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
         flatbuffers::GetRoot<iroha::Transaction>(
             generator::random_transaction(
                 fbb2, iroha::Command::AssetTransfer,
-                generator::random_AssetTransfer(
+                generator::random_Transfer(
                     fbb2, generator::random_asset_wrapper_currency(
                               100, 2, "Dollar", "USA", "l1"),
                     "1", "2")
@@ -174,7 +174,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
         flatbuffers::GetRoot<iroha::Transaction>(
             generator::random_transaction(
                 fbb2, iroha::Command::AssetTransfer,
-                generator::random_AssetTransfer(
+                generator::random_Transfer(
                     fbb2, generator::random_asset_wrapper_currency(
                               100, 2, "Dollar", "USA", "l1"),
                     "1", "2")
@@ -204,7 +204,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
         flatbuffers::GetRoot<iroha::Transaction>(
             generator::random_transaction(
                 fbb2, iroha::Command::AssetTransfer,
-                generator::random_AssetTransfer(
+                generator::random_Transfer(
                     fbb2, generator::random_asset_wrapper_currency(
                               100, 2, "Dollar", "USA", "l1"),
                     "1", "2")
@@ -232,6 +232,7 @@ TEST_F(Ametsuchi_Test, AssetTest) {
 }
 
 TEST_F(Ametsuchi_Test, PeerTest) {
+  std::string ledger = "ShinkaiHideo";
   std::string pubkey1 = "SOULCATCHER_S";
   std::string ip1 = "KamineShota";
   std::string pubkey2 = "LIGHTWING";
@@ -249,7 +250,7 @@ TEST_F(Ametsuchi_Test, PeerTest) {
     flatbuffers::FlatBufferBuilder fbb(2048);
     auto blob = generator::random_transaction(
         fbb, iroha::Command::PeerAdd,
-        generator::random_PeerAdd(fbb, generator::random_peer(pubkey1, ip1))
+        generator::random_PeerAdd(fbb, generator::random_peer(ledger,pubkey1, ip1))
             .Union());
     ametsuchi_.append(&blob);
   }
@@ -258,7 +259,7 @@ TEST_F(Ametsuchi_Test, PeerTest) {
     flatbuffers::FlatBufferBuilder fbb(2048);
     auto blob = generator::random_transaction(
         fbb, iroha::Command::PeerAdd,
-        generator::random_PeerAdd(fbb, generator::random_peer(pubkey2, ip2))
+        generator::random_PeerAdd(fbb, generator::random_peer(ledger,pubkey2, ip2))
             .Union());
     ametsuchi_.append(&blob);
   }

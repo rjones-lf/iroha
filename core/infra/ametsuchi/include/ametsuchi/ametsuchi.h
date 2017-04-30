@@ -22,6 +22,7 @@
 #include <ametsuchi/merkle_tree/merkle_tree.h>
 #include <ametsuchi/tx_store.h>
 #include <ametsuchi/wsv.h>
+#include <commands_generated.h>
 #include <flatbuffers/flatbuffers.h>
 #include <lmdb.h>
 #include <cstdint>
@@ -30,7 +31,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <commands_generated.h>
 
 extern "C" {
 #include <SimpleFIPS202.h>
@@ -118,35 +118,9 @@ class Ametsuchi {
   std::vector<AM_val> getAssetTransferByReceiver(
       const flatbuffers::String *receiverKey, bool uncommitted = false);
 
-  std::vector<AM_val> getAssetCreateByKey(const flatbuffers::String *pubKey,
-                                          bool uncommitted = false);
-
-  std::vector<AM_val> getAssetAddByKey(const flatbuffers::String *pubKey,
-                                       bool uncommitted = false);
-  std::vector<AM_val> getAssetRemoveByKey(const flatbuffers::String *pubKey,
-                                          bool uncommitted = false);
-  std::vector<AM_val> getAssetTransferByKey(const flatbuffers::String *pubKey,
-                                            bool uncommitted = false);
-  std::vector<AM_val> getAccountAddByKey(const flatbuffers::String *pubKey,
-                                         bool uncommitted = false);
-  std::vector<AM_val> getAccountAddSignByKey(const flatbuffers::String *pubKey,
-                                             bool uncommitted = false);
-  std::vector<AM_val> getAccountRemoveByKey(const flatbuffers::String *pubKey,
-                                            bool uncommitted = false);
-  std::vector<AM_val> getAccountRemoveSignByKey(
-      const flatbuffers::String *pubKey, bool uncommitted = false);
-  std::vector<AM_val> getAccountSetUseKeysByKey(
-      const flatbuffers::String *pubKey, bool uncommitted = false);
-  std::vector<AM_val> getPeerAddByKey(const flatbuffers::String *pubKey,
+  std::vector<AM_val> getCommandByKey(const flatbuffers::String *pubKey,
+                                      iroha::Command command,
                                       bool uncommitted = false);
-  std::vector<AM_val> getPeerChangeTrustByKey(const flatbuffers::String *pubKey,
-                                              bool uncommitted = false);
-  std::vector<AM_val> getPeerRemoveByKey(const flatbuffers::String *pubKey,
-                                         bool uncommitted = false);
-  std::vector<AM_val> getPeerSetActiveByKey(const flatbuffers::String *pubKey,
-                                            bool uncommitted = false);
-  std::vector<AM_val> getPeerSetTrustByKey(const flatbuffers::String *pubKey,
-                                           bool uncommitted = false);
 
  private:
   /* for internal use only */

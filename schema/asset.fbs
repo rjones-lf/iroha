@@ -18,7 +18,7 @@ table ComplexAsset {
 
 table ComplexAssetLogic {
   add:      Chaincode;
-  remove:   Chaincode;
+  subtract:   Chaincode;
   transfer: Chaincode;
 }
 

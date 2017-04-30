@@ -95,8 +95,9 @@ table AssetCreate {
 }
 
 table AssetRemove {
-    accPubKey: string    (required);
-    asset:     [ubyte]   (required, nested_flatbuffer: "Asset");
+    asset_name:  string (required);
+    domain_name: string (required);
+    ledger_name: string (required);
 }
 //////////////////////////////////////////
 

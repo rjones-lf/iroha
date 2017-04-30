@@ -197,88 +197,11 @@ std::vector<AM_val> Ametsuchi::getAssetTransferByReceiver(
   return tx_store.getAssetTransferByReceiver(receiverKey, uncommitted, env);
 }
 
-
-std::vector<AM_val> Ametsuchi::getAssetCreateByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAssetCreateByKey(pubKey, uncommitted);
+std::vector<AM_val> Ametsuchi::getCommandByKey(
+    const flatbuffers::String *pubKey, iroha::Command command,
+    bool uncommitted = false) {
+  return tx_store.getCommandByKey(pubKey, command, uncommitted);
 }
 
-
-std::vector<AM_val> Ametsuchi::getAssetAddByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAssetAddByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAssetRemoveByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAssetRemoveByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAssetTransferByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAssetTransferByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAccountAddByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAccountAddByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAccountAddSignByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAccountAddSignByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAccountRemoveByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAccountRemoveByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAccountRemoveSignByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAccountRemoveSignByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getAccountSetUseKeysByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getAccountSetUseKeysByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getPeerAddByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getPeerAddByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getPeerChangeTrustByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getPeerChangeTrustByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getPeerRemoveByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getPeerRemoveByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getPeerSetActiveByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getPeerSetActiveByKey(pubKey, uncommitted, env);
-}
-
-
-std::vector<AM_val> Ametsuchi::getPeerSetTrustByKey(
-    const flatbuffers::String *pubKey, bool uncommitted) {
-  return tx_store.getPeerSetTrustByKey(pubKey, uncommitted, env);
-}
 
 }  // namespace ametsuchi
