@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 #include <gtest/gtest.h>
+#include <main_generated.h>
 #include <service/flatbuffer_service.h>
 #include <membership_service/peer_service.hpp>
 #include <utils/datetime.hpp>
-#include <main_generated.h>
 
 #include <iostream>
 #include <memory>
@@ -33,28 +33,10 @@ TEST(FlatbufferServiceTest, toString) {
       signatories(new std::vector<flatbuffers::Offset<flatbuffers::String>>());
   signatories->emplace_back(fbb.CreateString(publicKey));
 
-  auto account_vec = [&] {
-    flatbuffers::FlatBufferBuilder fbbAccount;
+  auto account_vec = flatbuffer_service::account::CreateAccount(
+      publicKey, "alias", "prevPubKey", {"sig1", "sig2"}, 1);
 
-    std::unique_ptr<std::vector<flatbuffers::Offset<flatbuffers::String>>>
-        signatories(new std::vector<flatbuffers::Offset<flatbuffers::String>>(
-            {fbbAccount.CreateString("publicKey1")}));
-
-    auto account = iroha::CreateAccountDirect(fbbAccount, publicKey, "alias",
-                                              signatories.get(), 1);
-    fbbAccount.Finish(account);
-
-    std::unique_ptr<std::vector<uint8_t>> account_vec(
-        new std::vector<uint8_t>());
-
-    auto buf = fbbAccount.GetBufferPointer();
-
-    account_vec->assign(buf, buf + fbbAccount.GetSize());
-
-    return account_vec;
-  }();
-
-  auto command = iroha::CreateAccountAddDirect(fbb, account_vec.get());
+  auto command = iroha::CreateAccountAddDirect(fbb, &account_vec);
 
   std::unique_ptr<std::vector<flatbuffers::Offset<iroha::Signature>>>
       signature_vec(new std::vector<flatbuffers::Offset<iroha::Signature>>());
@@ -78,19 +60,11 @@ TEST(FlatbufferServiceTest, toString) {
   std::cout << flatbuffer_service::toString(*tx.GetRoot()) << std::endl;
 }
 
-TEST(FlatbufferServicePeerTest, PeerService) {
-  auto np = ::peer::Node("ip", "pubKey");
-  flatbuffers::FlatBufferBuilder fbb;
-  auto addPeer = flatbuffer_service::peer::CreateAdd(np);
-}
-
 TEST(FlatbufferServiceTest, toConsensusEvent_AccountAdd) {
   flatbuffers::FlatBufferBuilder fbb;
 
-  const auto accountBuf = [&] {
-    return flatbuffer_service::CreateAccountBuffer("PublicKey", "Alias\u30e6",
-                                                   {"sig1", "sig2", "sig3"}, 1);
-  }();
+  const auto accountBuf = flatbuffer_service::account::CreateAccount(
+      "PublicKey", "Alias\u30e6", "PrevPubKey", {"sig1", "sig2", "sig3"}, 1);
 
   const auto signatureOffsets = [&] {
     std::vector<uint8_t> sigblob1 = {'a', 'b'};
@@ -102,6 +76,8 @@ TEST(FlatbufferServiceTest, toConsensusEvent_AccountAdd) {
 
   const auto _hash = std::vector<uint8_t>{'h', '\0', '?', '\0'};
 
+  const auto stamp = datetime::unixtime();
+
   const auto attachmentOffset = [&] {
     auto data = std::vector<uint8_t>{'d', '\0', '!'};
     return ::iroha::CreateAttachmentDirect(
@@ -111,7 +87,7 @@ TEST(FlatbufferServiceTest, toConsensusEvent_AccountAdd) {
   const auto txOffset = ::iroha::CreateTransactionDirect(
       fbb, "Creator PubKey", iroha::Command::AccountAdd,
       ::iroha::CreateAccountAddDirect(fbb, &accountBuf).Union(),
-      &signatureOffsets, &_hash, attachmentOffset);
+      &signatureOffsets, &_hash, stamp, attachmentOffset);
 
   fbb.Finish(txOffset);
 
@@ -183,10 +159,8 @@ TEST(FlatbufferServiceTest, toConsensusEvent_AccountAdd) {
 TEST(FlatbufferServiceTest, addSignature_AccountAdd) {
   flatbuffers::FlatBufferBuilder fbb;
 
-  const auto accountBuf = [&] {
-    return flatbuffer_service::CreateAccountBuffer("PublicKey", "Alias\u30e6",
-                                                   {"sig1", "sig2", "sig3"}, 1);
-  }();
+  const auto accountBuf = flatbuffer_service::account::CreateAccount(
+      "PublicKey", "Alias\u30e6", "PrevPubKey", {"sig1", "sig2", "sig3"}, 1);
 
   const auto signatureOffsets = [&] {
     std::vector<uint8_t> sigblob1 = {'a', 'b'};
@@ -198,6 +172,8 @@ TEST(FlatbufferServiceTest, addSignature_AccountAdd) {
 
   const auto _hash = std::vector<uint8_t>{'h', '\0', '?', '\0'};
 
+  const auto stamp = datetime::unixtime();
+
   const auto attachmentOffset = [&] {
     auto data = std::vector<uint8_t>{'d', '\0', '!'};
     return ::iroha::CreateAttachmentDirect(
@@ -207,7 +183,7 @@ TEST(FlatbufferServiceTest, addSignature_AccountAdd) {
   const auto txOffset = ::iroha::CreateTransactionDirect(
       fbb, "Creator PubKey", iroha::Command::AccountAdd,
       ::iroha::CreateAccountAddDirect(fbb, &accountBuf).Union(),
-      &signatureOffsets, &_hash, attachmentOffset);
+      &signatureOffsets, &_hash, stamp, attachmentOffset);
 
   fbb.Finish(txOffset);
 
@@ -328,10 +304,8 @@ TEST(FlatbufferServiceTest, addSignature_AccountAdd) {
 TEST(FlatbufferServiceTest, makeCommit_AccountAdd) {
   flatbuffers::FlatBufferBuilder fbb;
 
-  const auto accountBuf = [&] {
-    return flatbuffer_service::CreateAccountBuffer("PublicKey", "Alias\u30e6",
-                                                   {"sig1", "sig2", "sig3"}, 1);
-  }();
+  const auto accountBuf = flatbuffer_service::account::CreateAccount(
+      "PublicKey", "Alias\u30e6", "PrevPubKey", {"sig1", "sig2", "sig3"}, 1);
 
   const auto signatureOffsets = [&] {
     std::vector<uint8_t> sigblob1 = {'a', 'b'};
@@ -343,6 +317,8 @@ TEST(FlatbufferServiceTest, makeCommit_AccountAdd) {
 
   const auto _hash = std::vector<uint8_t>{'h', '\0', '?', '\0'};
 
+  const auto stamp = datetime::unixtime();
+
   const auto attachmentOffset = [&] {
     auto data = std::vector<uint8_t>{'d', '\0', '!'};
     return ::iroha::CreateAttachmentDirect(
@@ -352,7 +328,7 @@ TEST(FlatbufferServiceTest, makeCommit_AccountAdd) {
   const auto txOffset = ::iroha::CreateTransactionDirect(
       fbb, "Creator PubKey", iroha::Command::AccountAdd,
       ::iroha::CreateAccountAddDirect(fbb, &accountBuf).Union(),
-      &signatureOffsets, &_hash, attachmentOffset);
+      &signatureOffsets, &_hash, stamp, attachmentOffset);
 
   fbb.Finish(txOffset);
 
@@ -443,46 +419,47 @@ TEST(FlatbufferServiceTest, copyConsensusEvent) {
       ::iroha::CreateSignatureDirect(xbb, "PUBKEY2", &signature, 200000));
 
   std::vector<std::string> signatories{"123", "-=[p"};
-  auto account = flatbuffer_service::CreateAccountBuffer("accpubkey", "alias",
-                                                         signatories, 1);
-  auto command = ::iroha::CreateAccountAddDirect(xbb, &account);
+  const auto account = flatbuffer_service::account::CreateAccount(
+      "accpubkey", "alias", "PrevPubKey", signatories, 1);
+  const auto command = ::iroha::CreateAccountAddDirect(xbb, &account);
   std::vector<flatbuffers::Offset<::iroha::Signature>> tx_signatures;
   std::vector<uint8_t> txsig = {'a', 'b', 'c'};
   tx_signatures.push_back(
       ::iroha::CreateSignatureDirect(xbb, "txsig pubkey 1", &txsig, 99999));
   std::vector<uint8_t> hash = {'h', 's'};
   std::vector<uint8_t> data = {'d', 't'};
-  auto attachment = ::iroha::CreateAttachmentDirect(xbb, "mime", &data);
-  auto txoffset = ::iroha::CreateTransactionDirect(
+  const auto stamp = datetime::unixtime();
+  const auto attachment = ::iroha::CreateAttachmentDirect(xbb, "mime", &data);
+  const auto txoffset = ::iroha::CreateTransactionDirect(
       xbb, "creator", ::iroha::Command::AccountAdd, command.Union(),
-      &tx_signatures, &hash, attachment);
+      &tx_signatures, &hash, stamp, attachment);
   xbb.Finish(txoffset);
   std::vector<uint8_t> txbuf(xbb.GetBufferPointer(),
                              xbb.GetBufferPointer() + xbb.GetSize());
 
   flatbuffers::FlatBufferBuilder ebb;
-  auto txw = ::iroha::CreateTransactionWrapperDirect(ebb, &txbuf);
+  const auto txw = ::iroha::CreateTransactionWrapperDirect(ebb, &txbuf);
   std::vector<flatbuffers::Offset<::iroha::TransactionWrapper>> txwrappers;
   txwrappers.push_back(txw);
-  auto eventofs = ::iroha::CreateConsensusEventDirect(
+  const auto eventofs = ::iroha::CreateConsensusEventDirect(
       ebb, &peerSignatures, &txwrappers, ::iroha::Code::UNDECIDED);
   ebb.Finish(eventofs);
 
-  auto eflatbuf = ebb.ReleaseBufferPointer();
-  auto eventptr = flatbuffers::GetRoot<::iroha::ConsensusEvent>(eflatbuf.get());
+  const auto eflatbuf = ebb.ReleaseBufferPointer();
+  const auto eventptr = flatbuffers::GetRoot<::iroha::ConsensusEvent>(eflatbuf.get());
 
   flatbuffers::FlatBufferBuilder copyebb;
-  auto copyeventofs =
+  const auto copyeventofs =
       flatbuffer_service::copyConsensusEvent(copyebb, *eventptr);
   ASSERT_TRUE(copyeventofs);
   copyebb.Finish(copyeventofs.value());
 
-  auto copyeventbuf = copyebb.ReleaseBufferPointer();
-  auto copyeventptr =
+  const auto copyeventbuf = copyebb.ReleaseBufferPointer();
+  const auto copyeventptr =
       flatbuffers::GetRoot<::iroha::ConsensusEvent>(copyeventbuf.get());
 
   ASSERT_EQ(copyeventptr->code(), ::iroha::Code::UNDECIDED);
-  auto revPeerSigs = copyeventptr->peerSignatures();
+  const auto revPeerSigs = copyeventptr->peerSignatures();
   ASSERT_STREQ(revPeerSigs->Get(0)->publicKey()->c_str(), "PUBKEY1");
   ASSERT_STREQ(revPeerSigs->Get(1)->publicKey()->c_str(), "PUBKEY2");
   std::vector<uint8_t> sig1(revPeerSigs->Get(0)->signature()->begin(),
@@ -495,10 +472,11 @@ TEST(FlatbufferServiceTest, copyConsensusEvent) {
   ASSERT_EQ(revPeerSigs->Get(0)->timestamp(), 100000);
   ASSERT_EQ(revPeerSigs->Get(1)->timestamp(), 200000);
 
-  auto txnested = copyeventptr->transactions()->Get(0)->tx_nested_root();
+  const auto txnested = copyeventptr->transactions()->Get(0)->tx_nested_root();
   ASSERT_STREQ(txnested->creatorPubKey()->c_str(), "creator");
   ASSERT_EQ(txnested->command_type(), ::iroha::Command::AccountAdd);
-  auto txnestedsig = txnested->signatures()->Get(0);
+
+  const auto txnestedsig = txnested->signatures()->Get(0);
   ASSERT_STREQ(txnestedsig->publicKey()->c_str(), "txsig pubkey 1");
   ASSERT_EQ(txnestedsig->signature()->size(), 3);
   ASSERT_EQ(txnestedsig->signature()->Get(0), 'a');
@@ -510,10 +488,13 @@ TEST(FlatbufferServiceTest, copyConsensusEvent) {
   ASSERT_STREQ(txnested->attachment()->mime()->c_str(), "mime");
   ASSERT_EQ(txnested->attachment()->data()->Get(0), 'd');
   ASSERT_EQ(txnested->attachment()->data()->Get(1), 't');
-  auto accnested = txnested->command_as_AccountAdd()->account_nested_root();
+
+  const auto accnested = txnested->command_as_AccountAdd()->account_nested_root();
   ASSERT_STREQ(accnested->pubKey()->c_str(), "accpubkey");
   ASSERT_STREQ(accnested->alias()->c_str(), "alias");
   ASSERT_STREQ(accnested->signatories()->Get(0)->c_str(), "123");
   ASSERT_STREQ(accnested->signatories()->Get(1)->c_str(), "-=[p");
   ASSERT_EQ(accnested->useKeys(), 1);
 }
+
+

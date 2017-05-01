@@ -67,9 +67,9 @@ void initialize() {
   }
   for (const auto &json_peer : PeerServiceConfig::getInstance().getGroup()) {
     peerList.push_back(std::make_shared<Node>(
-        json_peer["ip"].get<std::string>(),
-        json_peer["publicKey"].get<std::string>(),
-        PeerServiceConfig::getInstance().getMaxTrustScore()));
+      json_peer["ip"].get<std::string>(),
+      json_peer["publicKey"].get<std::string>(),
+       PeerServiceConfig::getInstance().getMaxTrustScore()));
   }
   is_active = false;
 }
@@ -111,11 +111,11 @@ std::vector<std::string> getIpList() {
 
 // is exist which peer?
 bool isExistIP(const std::string &ip) {
-  return findPeerIP(std::move(ip)) != peerList.end();
+  return findPeerIP(ip) != peerList.end();
 }
 
 bool isExistPublicKey(const std::string &publicKey) {
-  return findPeerPublicKey(std::move(publicKey)) != peerList.end();
+  return findPeerPublicKey(publicKey) != peerList.end();
 }
 
 Nodes::iterator findPeerIP(const std::string &ip) {
@@ -257,10 +257,10 @@ namespace validator {
 bool add(const peer::Node &peer) {
   try {
     if (service::isExistIP(peer.ip))
-      throw exception::service::DuplicationIPException(std::move(peer.ip));
+      throw exception::service::DuplicationIPException(peer.ip);
     if (service::isExistPublicKey(peer.publicKey))
       throw exception::service::DuplicationPublicKeyException(
-          std::move(peer.publicKey));
+          peer.publicKey);
   } catch (exception::service::DuplicationPublicKeyException &e) {
     logger::warning("validate addPeer") << e.what();
     return false;

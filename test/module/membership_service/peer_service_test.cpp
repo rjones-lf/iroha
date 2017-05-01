@@ -31,8 +31,9 @@ TEST(peer_service_test, initialize_peer_test) {
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trust << std::endl;
     std::cout << peer->active << std::endl;
-    std::cout << peer->join_network << std::endl;
-    std::cout << peer->join_validation << std::endl;
+    // ToDo: Follow new schema
+//    std::cout << peer->join_network << std::endl;
+//    std::cout << peer->join_validation << std::endl;
   }
   std::cout << "my address = " << ::peer::myself::getIp() << std::endl;
   std::cout << "my publicKey = " << ::peer::myself::getPublicKey() << std::endl;
@@ -53,10 +54,10 @@ TEST(peer_service_test, activate_peer_test) {
 
 TEST(peer_service_test, add_peer_test) {
   std::size_t n = ::peer::service::getActivePeerList().size();
-  peer::Node peer1 = peer::Node("ip_low", "publicKey1", 5.0, true);
-  peer::Node peer2 = peer::Node("ip_high", "publicKey2", 15.0, true);
-  peer::Node peer3 = peer::Node("ip_high", "publicKey1", 15.0, true);
-  peer::Node peer4 = peer::Node("ip_4", "0_publicKey4", 100.0, true);
+  peer::Node peer1 = peer::Node("ip_low", "publicKey1", 5.0, "ledger", true);
+  peer::Node peer2 = peer::Node("ip_high", "publicKey2", 15.0, "ledger", true);
+  peer::Node peer3 = peer::Node("ip_high", "publicKey1", 15.0, "ledger", true);
+  peer::Node peer4 = peer::Node("ip_4", "0_publicKey4", 100.0, "ledger", true);
   ASSERT_TRUE(::peer::transaction::validator::add(peer1));
   ASSERT_TRUE(::peer::transaction::executor::add(peer1));
   ASSERT_TRUE(::peer::transaction::validator::add(peer2));
@@ -71,8 +72,9 @@ TEST(peer_service_test, add_peer_test) {
     std::cout << peer->publicKey << std::endl;
     std::cout << peer->trust << std::endl;
     std::cout << peer->active << std::endl;
-    std::cout << peer->join_network << std::endl;
-    std::cout << peer->join_validation << std::endl;
+    // ToDo: Follow new schema
+//    std::cout << peer->join_network << std::endl;
+//    std::cout << peer->join_validation << std::endl;
   }
   ASSERT_TRUE(peers.size() == n + 3);
 }

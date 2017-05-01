@@ -15,10 +15,10 @@ limitations under the License.
 #ifndef IROHA_FLATBUFFER_SERVICE_H
 #define IROHA_FLATBUFFER_SERVICE_H
 
-#include <utils/expected.hpp>
-#include <vector>
 #include <functional>
 #include <memory>
+#include <utils/expected.hpp>
+#include <vector>
 
 namespace iroha {
 struct Transaction;
@@ -33,96 +33,134 @@ struct PeerSetActive;
 struct Signature;
 struct Sumeragi;
 enum class Command : uint8_t;
-}
+}  // namespace iroha
 
 namespace peer {
 struct Node;
 }
 
 namespace flatbuffers {
-template<class T> class Offset;
+template <class T>
+class Offset;
 class FlatBufferBuilder;
 
-// FIXME: this typedef is dirty and unstable solution. (might be able to be solved by setting dependency for this header)
-typedef std::unique_ptr<uint8_t, std::function<void(uint8_t * /* unused */)>> unique_ptr_t;
-}
+// FIXME: this typedef is dirty and unstable solution. (might be able to be
+// solved by setting dependency for this header)
+typedef std::unique_ptr<uint8_t, std::function<void(uint8_t* /* unused */)>>
+    unique_ptr_t;
+}  // namespace flatbuffers
 
 namespace flatbuffer_service {
 
-using ::iroha::Peer;
-using ::iroha::PeerAdd;
-using ::iroha::PeerRemove;
-using ::iroha::PeerChangeTrust;
-using ::iroha::PeerSetTrust;
-using ::iroha::PeerSetActive;
-using ::iroha::Transaction;
+  using ::iroha::Peer;
+  using ::iroha::PeerAdd;
+  using ::iroha::PeerRemove;
+  using ::iroha::PeerChangeTrust;
+  using ::iroha::PeerSetTrust;
+  using ::iroha::PeerSetActive;
+  using ::iroha::Transaction;
 
-Expected<int> hasRequreMember(const iroha::Transaction &tx);
+  Expected<int> hasRequreMember(const iroha::Transaction &tx);
 
-flatbuffers::Offset<void> CreateCommandDirect(
-    flatbuffers::FlatBufferBuilder &_fbb, const void *obj,
-    iroha::Command type);
+  flatbuffers::Offset<void> CreateCommandDirect(
+    flatbuffers::FlatBufferBuilder &_fbb, const void *obj, iroha::Command type);
 
-Expected<flatbuffers::Offset<::iroha::Transaction>> copyTransaction(
-  flatbuffers::FlatBufferBuilder& fbb, const ::iroha::Transaction& fromTx);
+  Expected<flatbuffers::Offset<::iroha::Transaction>> copyTransaction(
+    flatbuffers::FlatBufferBuilder &fbb, const ::iroha::Transaction &fromTx);
 
-Expected<flatbuffers::Offset<::iroha::ConsensusEvent>> copyConsensusEvent(
+  Expected<flatbuffers::Offset<::iroha::ConsensusEvent>> copyConsensusEvent(
     flatbuffers::FlatBufferBuilder &fbb, const ::iroha::ConsensusEvent &);
 
-std::vector<uint8_t> CreateAccountBuffer(
-  const char* publicKey, const char* alias,
-  const std::vector<std::string>& signatories, uint16_t useKeys);
-
-std::vector<uint8_t > GetTxPointer(const iroha::Transaction& tx);
+  std::vector<uint8_t> GetTxPointer(const iroha::Transaction &tx);
 
 
-template <typename T>
-VoidHandler ensureNotNull(T *value) {
-  if (value == nullptr) {
-    return makeUnexpected(
+  template<typename T>
+  VoidHandler ensureNotNull(T *value) {
+    if (value == nullptr) {
+      return makeUnexpected(
         exception::connection::NullptrException(typeid(T).name()));
+    }
+    return {};
   }
-  return {};
-}
 
-std::string toString(const iroha::Transaction &tx);
+  std::string toString(const iroha::Transaction &tx);
 
-Expected<flatbuffers::unique_ptr_t> addSignature(const iroha::ConsensusEvent &event,
-                                                 const std::string &publicKey,
-                                                 const std::string &signature);
+  Expected<flatbuffers::unique_ptr_t> addSignature(
+    const iroha::ConsensusEvent &event, const std::string &publicKey,
+    const std::string &signature);
 
-Expected<flatbuffers::Offset<::iroha::TransactionWrapper>> toTransactionWrapper(flatbuffers::FlatBufferBuilder&, const ::iroha::Transaction&);
-Expected<flatbuffers::unique_ptr_t> toConsensusEvent(const iroha::Transaction &tx);
-Expected<flatbuffers::unique_ptr_t> makeCommit(const iroha::ConsensusEvent &event);
+  Expected<flatbuffers::Offset<::iroha::TransactionWrapper>> toTxWrapper(
+    flatbuffers::FlatBufferBuilder &, const ::iroha::Transaction &);
 
-namespace peer { // namespace peer
+  Expected<flatbuffers::unique_ptr_t> toConsensusEvent(
+    const iroha::Transaction &tx);
 
-flatbuffers::Offset<PeerAdd> CreateAdd(const ::peer::Node &peer);
+  Expected<flatbuffers::unique_ptr_t> makeCommit(
+    const iroha::ConsensusEvent &event);
 
-flatbuffers::Offset<PeerRemove> CreateRemove(const std::string &pubKey);
+  namespace peer {  // namespace peer
 
-flatbuffers::Offset<PeerChangeTrust> CreateChangeTrust(const std::string &pubKey, double &delta);
+    flatbuffers::Offset<PeerAdd> CreateAdd(flatbuffers::FlatBufferBuilder &fbb, const ::peer::Node &peer);
 
-flatbuffers::Offset<PeerSetTrust> CreateSetTrust(const std::string &pubKey, double &trust);
+    flatbuffers::Offset<PeerRemove> CreateRemove(flatbuffers::FlatBufferBuilder &fbb, const std::string &pubKey);
 
-flatbuffers::Offset<PeerSetActive> CreateSetActive(const std::string &pubKey, bool active);
+    flatbuffers::Offset<PeerChangeTrust> CreateChangeTrust(
+      flatbuffers::FlatBufferBuilder &fbb,
+      const std::string &pubKey, double delta);
 
-};
+    flatbuffers::Offset<PeerSetTrust> CreateSetTrust(
+      flatbuffers::FlatBufferBuilder &fbb,
+      const std::string &pubKey,
+      double trust);
 
-namespace primitives {
-  std::vector<uint8_t> CreatePeer(const ::peer::Node &peer);
-  std::vector<uint8_t> CreateSignature(const std::string &publicKey,
-                                       std::vector<uint8_t> signature,
-                                       uint64_t timestamp);
-}
+    flatbuffers::Offset<PeerSetActive> CreateSetActive(
+      flatbuffers::FlatBufferBuilder &fbb,
+      const std::string &pubKey,
+      bool active);
 
-namespace transaction { // namespace transaction
+  };  // namespace peer
 
-const Transaction& CreateTransaction(flatbuffers::FlatBufferBuilder& fbb, iroha::Command cmd_type,
-                              flatbuffers::Offset<void> command,
-                              std::string creator,
-                              std::vector<flatbuffers::Offset<iroha::Signature>> sigs);
+  namespace primitives {
+    std::vector<uint8_t> CreatePeer(const ::peer::Node &peer);
 
-}
-};
+    std::vector<uint8_t> CreateSignature(const std::string &publicKey,
+                                         std::vector<uint8_t> signature,
+                                         uint64_t timestamp);
+  }  // namespace primitives
+
+
+  namespace account {
+
+    // Note: This function is used mainly for debug because Sumeragi doesn't create
+    // Account.
+    std::vector<uint8_t> CreateAccount(const std::string &publicKey,
+                                       const std::string &alias,
+                                       const std::string &prevPubKey,
+                                       const std::vector<std::string> &signatories,
+                                       uint16_t useKeys);
+
+  }  // namespace account
+
+  namespace asset {
+
+    // Note: This function is used mainly for debug because Sumeragi doesn't create
+    // Currency.
+    std::vector<uint8_t> CreateCurrency(const std::string &currencyName,
+                                        const std::string &domainName,
+                                        const std::string &ledgerName,
+                                        const std::string &description,
+                                        const std::string &amount,
+                                        uint8_t precision);
+
+  }  // namespace asset
+
+
+  namespace transaction {  // namespace transaction
+
+    const Transaction &CreateTransaction(
+      flatbuffers::FlatBufferBuilder &fbb, iroha::Command cmd_type,
+      const flatbuffers::Offset<void>& command, const std::string& creator,
+      const std::vector<flatbuffers::Offset<iroha::Signature>>& sigs);
+  }
+};      // namespace flatbuffer_service
 #endif  // IROHA_FLATBUFFER_SERVICE_H

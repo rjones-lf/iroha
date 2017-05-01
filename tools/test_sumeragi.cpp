@@ -15,6 +15,7 @@ limitations under the License.
 */
 #include <flatbuffers/flatbuffers.h>
 #include <grpc++/grpc++.h>
+#include <utils/datetime.hpp>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -55,7 +56,7 @@ int main(int argc, char* argv[]) {
         signatories(new std::vector<flatbuffers::Offset<flatbuffers::String>>(
             {fbbAccount.CreateString("publicKey1")}));
 
-    auto account = iroha::CreateAccountDirect(fbbAccount, publicKey, "alias",
+    auto account = iroha::CreateAccountDirect(fbbAccount, publicKey, "PrevPubKey", "alias",
                                               signatories.get(), 1);
     fbbAccount.Finish(account);
 
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
       iroha::CreateSignatureDirect(fbb, publicKey, &signatureBlob)};
   auto tx_offset = iroha::CreateTransactionDirect(
       fbb, publicKey, iroha::Command::AccountAdd, command.Union(),
-      &signatureOffset_vec, &hashBlob,
+      &signatureOffset_vec, &hashBlob, datetime::unixtime(),
       iroha::CreateAttachmentDirect(fbb, "none", &dataBlob));
   fbb.Finish(tx_offset);
   auto tx = flatbuffers::BufferRef<iroha::Transaction>(fbb.GetBufferPointer(),
