@@ -408,3 +408,13 @@ set_target_properties(LMDB PROPERTIES
 if(NOT LMDB_FOUND)
   add_dependencies(LMDB lmdb_LMDB)
 endif()
+
+
+#################
+##   アメツチ   ##
+#################
+
+set(source_dir "${EP_PREFIX}/src/ametsuchi")
+execute_process(COMMAND git clone https://github.com/hyperledger/iroha-ametsuchi.git ${source_dir})
+execute_process(COMMAND ln -s ${source_dir}/src ${PROJECT_SOURCE_DIR}/core/infra/ametsuchi/src)
+execute_process(COMMAND ln -s ${source_dir}/include ${PROJECT_SOURCE_DIR}/core/infra/ametsuchi/include)
