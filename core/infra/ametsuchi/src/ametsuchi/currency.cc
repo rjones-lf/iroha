@@ -62,7 +62,7 @@ std::string Currency::to_string(__int128_t x){
   bool mf = (x<0);
   while( x ) {
     res += (char)((x%10)+'0');
-    x %= 10;
+    x /= 10;
   }
   if( mf ) res += "-";
   reverse( res.begin(), res.end() );

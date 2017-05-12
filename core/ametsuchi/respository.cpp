@@ -71,10 +71,7 @@ bool checkUserCanPermission(const flatbuffers::String &key) {
   return false;
 }
 
-const std::string getMerkleRoot() {
-  return hash::sha3_256_hex("root");
-  //return db->getMerkleRoot();
-}
+const std::string getMerkleRoot() { return db->getMerkleRoot(); }
 
 namespace permission {
 

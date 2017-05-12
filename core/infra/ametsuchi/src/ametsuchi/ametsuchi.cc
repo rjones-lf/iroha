@@ -135,6 +135,7 @@ void Ametsuchi::init() {
     AMETSUCHI_CRITICAL(res, ENOENT);
     AMETSUCHI_CRITICAL(res, EACCES);
     AMETSUCHI_CRITICAL(res, EAGAIN);
+    AMETSUCHI_CRITICAL(res, EBUSY);
   }
 
   // stats about db
