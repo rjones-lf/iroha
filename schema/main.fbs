@@ -1,0 +1,39 @@
+include "transaction.fbs";
+include "commands.fbs";
+
+namespace iroha;
+
+file_identifier "IROH";
+file_extension  "iroha";
+
+enum Code: ubyte {COMMIT, FAIL, UNDECIDED} // TODO: maybe more?
+
+table ConsensusEvent {
+  peerSignatures: [Signature];
+  transactions:   [TransactionWrapper];
+  code:           Code;
+}
+
+// to make an array of nested flatbuffers, we should use this:
+table TransactionWrapper {
+  tx: [ubyte] (nested_flatbuffer: "Transaction");
+}
+
+// TODO
+table TransactionResponse {
+  message:      string;
+  code:         Code;
+  transaction:  Transaction;
+}
+
+table ReceiverConfirmation {
+  signature: Signature;
+  hash:      [ubyte];
+}
+
+// what is Response?
+//table Response {
+//  message:   [Object];
+//  code:      Code;
+//  signature: Signature;
+//}

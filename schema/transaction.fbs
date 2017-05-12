@@ -1,0 +1,25 @@
+include "commands.fbs";
+include "primitives.fbs";
+
+namespace iroha;
+
+table Transaction {
+  creatorPubKey:   string      (required);
+  command:         Command     (required);
+  signatures:      [Signature] (required);
+  hash:            [ubyte];
+// sha256(
+//    creatorPubKey + command + timestamp + attachment
+// ),
+// * Without signatures and hash
+
+  timestamp:       ulong;
+  attachment:      Attachment;
+}
+
+
+table Attachment {
+  mime: string;
+  data: [ubyte];
+}
+

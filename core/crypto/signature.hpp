@@ -17,8 +17,8 @@ limitations under the License.
 #ifndef CORE_CRYPTO_SIGNATURE_HPP_
 #define CORE_CRYPTO_SIGNATURE_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace signature {
@@ -35,27 +35,22 @@ struct KeyPair {
   byte_array_t publicKey;
   byte_array_t privateKey;
 
-  KeyPair(byte_array_t&& pub,
-          byte_array_t&& pri) : publicKey(std::move(pub)),
-                           privateKey(std::move(pri)) {}
+  KeyPair(byte_array_t &&pub, byte_array_t &&pri)
+      : publicKey(std::move(pub)), privateKey(std::move(pri)) {}
 };
 
 std::string sign(const std::string &message, const KeyPair &keyPair);
 
-std::string sign(const std::string &message,
-                 const std::string &publicKey_b64,
+std::string sign(const std::string &message, const std::string &publicKey_b64,
                  const std::string &privateKey_b64);
 
-byte_array_t sign(const std::string &message,
-             const byte_array_t &publicKey,
-             const byte_array_t &privateKey);
+byte_array_t sign(const std::string &message, const byte_array_t &publicKey,
+                  const byte_array_t &privateKey);
 
-bool verify(const std::string &signature_b64,
-            const std::string &message,
+bool verify(const std::string &signature_b64, const std::string &message,
             const std::string &publicKey_b64);
 
-bool verify(const std::string &signature,
-            const byte_array_t &message,
+bool verify(const std::string &signature, const byte_array_t &message,
             const byte_array_t &publicKey);
 
 KeyPair generateKeyPair();

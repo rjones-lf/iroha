@@ -1,0 +1,44 @@
+include "primitives.fbs";
+
+namespace iroha;
+
+table ComplexAsset {
+  // (ledger:domain:asset) = composite primary key for any asset
+  asset_name:    string (key, required);  // sorted; name should be unique inside a domain
+  domain_name:   string (required);       // domain should be unique inside a ledger
+  ledger_name:   string (required);       // unique worldwide
+
+  description:   string;
+
+  // amount and precision should be encoded in properties
+  prop:  [KeyValueObject]; // using this, you can create complex assets
+
+  logic: ComplexAssetLogic;
+}
+
+table ComplexAssetLogic {
+  add:      Chaincode;
+  subtract:   Chaincode;
+  transfer: Chaincode;
+}
+
+// currency is a simple asset, like USD.
+table Currency {
+  currency_name: string  (required, key);
+  domain_name:   string  (required);
+  ledger_name:   string  (required);
+
+  description: string;
+
+  // 100.39 => amount = 10039, precision = 2
+  amount:    string;
+  precision: ubyte;
+}
+
+
+union AnyAsset {ComplexAsset, Currency}
+
+table Asset {
+  asset: AnyAsset;
+}
+
