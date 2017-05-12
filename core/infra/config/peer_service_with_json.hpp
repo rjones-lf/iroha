@@ -17,34 +17,35 @@ limitations under the License.
 #ifndef PEER_SERVICE_WITH_JSON_HPP
 #define PEER_SERVICE_WITH_JSON_HPP
 
-#include <vector>
-#include <set>
 #include <map>
 #include <queue>
-#include "abstract_config_manager.hpp"
+#include <set>
+#include <vector>
+
+#include <infra/config/abstract_config_manager.hpp>
+
+class VoidHandler;
 
 namespace config {
 
-class PeerServiceConfig : config::AbstractConfigManager {
+class PeerServiceConfig : public AbstractConfigManager {
  private:
-  PeerServiceConfig();
-protected:
-  void parseConfigDataFromString(std::string&& jsonStr) override;
+  PeerServiceConfig() noexcept;
+  std::string getConfigName() override { return "config/sumeragi.json"; }
+
+ protected:
+  VoidHandler parseConfigDataFromString(const std::string& jsonStr) override;
 
  public:
-
-  std::string getMyPublicKeyWithDefault(const std::string& defaultValue);
-  std::string getMyPrivateKeyWithDefault(const std::string& defaultValue);
-  std::string getMyIpWithDefault(const std::string& defaultValue);
-  double getMaxTrustScoreWithDefault(double defaultValue);
-  size_t getMaxFaultyScoreWithDefault(size_t defaultValue);
+  std::string getMyPublicKey();
+  std::string getMyPrivateKey();
+  std::string getMyIp();
+  double getMaxTrustScore(double defaultValue=100.0);
   std::vector<json> getGroup();
-  static PeerServiceConfig &getInstance();
 
-  double getMaxTrustScore();
+  static PeerServiceConfig& getInstance() noexcept;
 
-  virtual std::string getConfigName() override;
 };
-}
+}  // namespace config
 
 #endif  // PEER_SERVICE_WITH_JSON_HPP

@@ -1,0 +1,106 @@
+namespace iroha;
+
+
+/////////////////////////////////////
+enum ProgrammingLanguage: ubyte {Java8} // Really we use Java8?
+
+table Chaincode {
+  // (ledger:domain:chaincode) is a primary key
+  code_name:   string  (required, key);  // sorted
+  domain_name: string  (required);
+  ledger_name: string  (required);
+
+  language:    ProgrammingLanguage;
+  code:        [ubyte];   // .class, whatever
+  hash:        [ubyte];   // hash of .class
+}
+
+/////////////////////////////////////
+/// Key-Value object
+
+table KeyValueObject {
+  key:   string (key, required);  // primary key, sorted
+  value: [ubyte];                 // arbitrary data
+}
+
+/////////////////////////////////////
+/// Permissions
+
+
+table AccountPermissionRoot {
+  ledger_add:    bool;  // ability to create new ledgers
+  ledger_remove: bool;  // ability to remove ledgers
+}
+
+table AccountPermissionLedger {
+  ledger_name:          string (required, key);
+
+  domain_add:           bool;  // ability to add new domain
+  domain_remove:        bool;  // ability to remove existing domain
+  peer_read:            bool;  // ability to read peer information
+  peer_write:           bool;  // ability to write(operate) peer
+  account_add:             bool;  // ability to create new account
+  account_remove:          bool;  // ability to remove account
+  account_give_permission: bool;  // ability to give permissions to account globally
+}
+
+table AccountPermissionDomain {
+  // identify domain:
+  domain_name:  string (key, required);  // sorted
+  ledger_name:  string (required);
+
+  account_give_permission: bool;  // ability to give permissions to account in this domain
+  account_add:             bool;  // ability to add existing account to domain
+  account_remove:          bool;  // ability to remove existing account from domain
+
+  asset_create:         bool;
+  asset_remove:         bool;
+  asset_update:         bool;
+}
+
+table AccountPermissionAsset {
+  // identify asset by its primary key:
+  asset_name:  string (key, required); // sorted
+  domain_name: string (required);
+  ledger_name: string (required);
+
+  account_give_permission: bool;  // ability to give permissions to account in this asset
+  transfer: bool;  // ability to transfer an asset
+  add:      bool;  // ability to add some amount to account
+  subtract: bool;  // ability to remove some amount from account
+  read:     bool;  // ability to access some amount from account
+}
+
+table AccountPermissionLedgerWrapper {
+  permission: [ubyte] (nested_flatbuffer: "AccountPermissionLedger");
+}
+table AccountPermissionDomainWrapper {
+  permission: [ubyte] (nested_flatbuffer: "AccountPermissionDomain");
+}
+table AccountPermissionAssetWrapper {
+  permission: [ubyte] (nested_flatbuffer: "AccountPermissionAsset");
+}
+
+
+union AccountPermission { AccountPermissionRoot, AccountPermissionLedger, AccountPermissionDomain, AccountPermissionAsset}
+
+/////////////////////////////////////
+/// Peer
+
+table Peer {
+  ledger_name:     string (required);
+
+  publicKey:       string (required);  // sorted; primary key.
+  ip:              string;
+  trust:           double;
+  active:          bool;
+  join_ledger:     bool; // Suggest It is always true.
+}
+/////////////////////////////////////
+
+table Signature {
+  publicKey:  string;
+  signature:  [ubyte];   // signature is sign(sha256(tx.hash + timestamp))
+  timestamp:   ulong;
+}
+

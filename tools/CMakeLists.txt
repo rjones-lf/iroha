@@ -1,41 +1,41 @@
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
+
+
 ###########################
-#      make sumeragi      #
+#      Sumeragi test      #
 ###########################
-add_executable(make_sumeragi make_sumeragi.cpp)
+
+add_executable(test_sumeragi
+    test_sumeragi.cpp
+)
+
+target_link_libraries(test_sumeragi
+    connection_with_grpc_flatbuffer
+)
+
+###########################
+#      Ametsuchi test      #
+###########################
+
+add_executable(check_ametsuchi
+    check_ametsuchi.cpp
+)
+
+target_link_libraries(check_ametsuchi
+    connection_with_grpc_flatbuffer
+)
+
+###########################
+#      Makesumeragi test  #
+###########################
+
+add_executable(make_sumeragi
+  make_sumeragi.cpp
+)
+
 target_link_libraries(make_sumeragi
-    base64
-    signature
-    json
-)
-
-###########################
-#    issue transaction    #
-###########################
-
-# automatic generation source files by using templates
-execute_process(COMMAND bash "-c" "cd $IROHA_HOME/tools/helper; ./allbuild.sh")
-
-add_executable(issue_transaction
-    issue_transaction.cpp
-)
-
-target_link_libraries(issue_transaction
-    config_manager
-    peer_service
-    logger
-    transaction_builder
-)
-
-###########################
-#      send izanami       #
-###########################
-
-add_executable(send_izanami_test
-    send_izanami.cpp
-)
-
-target_link_libraries(send_izanami_test
-    peer_service
+  json
+  hash
+  signature
 )

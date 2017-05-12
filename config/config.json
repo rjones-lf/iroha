@@ -10,5 +10,11 @@
   "pool_worker_queue_size": 1024,
   "http_port": 1204,
   "grpc_port": 50051,
-  "active_start": false
+  "active_start": false,
+  "trusted_hosts": [
+    "172.17.0.2",
+    "172.17.0.3",
+    "172.17.0.4",
+    "172.17.0.5"
+  ]
 }

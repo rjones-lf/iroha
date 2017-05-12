@@ -17,12 +17,11 @@ extern "C" {
 #include <SimpleFIPS202.h>
 }
 #include <crypto/hash.hpp>
-#include <string>
 
 namespace hash {
 
 static inline std::string digest_to_hexdigest(const unsigned char *digest,
-                                       size_t size) {
+                                              size_t size) {
   char code[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
   std::string res = "";

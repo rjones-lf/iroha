@@ -1,0 +1,53 @@
+include "main.fbs";
+
+namespace iroha;
+
+file_identifier "IROH";
+file_extension  "iroha";
+
+table Response {
+  message:   string;
+  code:      Code;
+  signature: Signature;
+}
+
+table Ping {
+  message:  string;
+  sender:   string;
+}
+
+table AssetQuery{
+  pubKey:      string;
+  ledger_name: string;
+  domain_name: string;
+  asset_name:  string;
+  uncommitted:   bool;
+}
+
+table AssetResponse {
+  message:      string  (required);
+  code:         Code;
+  assets:       [Asset];
+}
+
+// Used by sending transaction
+rpc_service Sumeragi {
+
+    Torii(Transaction):Response (streaming: "none");
+    // ToDo rename it.
+
+    // sumeragi uses.
+    Verify(ConsensusEvent):Response (streaming: "none");
+}
+
+// Used by sending transaction
+rpc_service AssetRepository {
+
+    AccountGetAsset(AssetQuery):AssetResponse (streaming: "none");
+
+}
+
+rpc_service Hijiri {
+    // Kagami means ping
+    Kagami(Ping):Response    (streaming: "none");
+}

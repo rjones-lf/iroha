@@ -18,9 +18,10 @@ limitations under the License.
 #define IROHA_CONFIG_H
 
 #include <fstream>  // ifstream, ofstream
-#include <util/logger.hpp>
-#include <util/exception.hpp>
 #include <json.hpp>
+#include <utils/expected.hpp>
+#include <utils/logger.hpp>
+#include "config_utils.hpp"
 
 namespace config {
 
@@ -28,10 +29,10 @@ using json = nlohmann::json;
 
 class AbstractConfigManager {
  private:
-  std::string readConfigData(const std::string& pathToJSONFile, const std::string& defaultValue) {
+  Expected<std::string> readConfigData(const std::string& pathToJSONFile) {
     std::ifstream ifs(pathToJSONFile);
     if (ifs.fail()) {
-      return defaultValue;
+      return makeUnexpected(exception::NotFoundPathException(pathToJSONFile));
     }
 
     std::istreambuf_iterator<char> it(ifs);
@@ -39,41 +40,81 @@ class AbstractConfigManager {
   }
 
   json openConfigData() {
-
-    auto iroha_home = getenv("IROHA_HOME");
-    if (iroha_home == nullptr) {
-      logger::error("config") << "Set environment variable IROHA_HOME";
-      exit(EXIT_FAILURE);
-    }
-
-    auto configFolderPath = std::string(iroha_home) + "/";
-    auto jsonStr = readConfigData(configFolderPath + this->getConfigName(), "");
-
-    if (jsonStr.empty()) {
-      logger::warning("config") << "there is no config '" << getConfigName() << "', we will use default values.";
+    auto res = readConfigData(getConfigPath());
+    if (res) {
+      logger::debug("config") << "load json is " << *res;
+      parseConfigDataFromString(*res);
     } else {
-      logger::debug("config") << "load json is " << jsonStr;
-      parseConfigDataFromString(std::move(jsonStr));
+      try {
+        std::rethrow_exception(res.excptr());
+      } catch (exception::NotFoundPathException& e) {
+        logger::warning("config") << res.error();
+        logger::warning("config") << "There is no config '" << getConfigPath()
+                                  << "', we will use default values.";
+      }
     }
 
     return _configData;
   }
 
  protected:
-  virtual void parseConfigDataFromString(std::string&& jsonStr) {
+  template <typename T>
+  T getParam(std::initializer_list<const std::string> params,
+             const T& defaultValue) {
+    auto tempConfigData = getConfigData();
+    try {
+      size_t i = 0;
+      for (auto& param : params) {
+        ++i;
+        if (i == params.size()) {
+          return tempConfigData.value(param, defaultValue);
+        }
+        tempConfigData = tempConfigData[param];
+      }
+      return tempConfigData;
+    } catch (...) {
+      return defaultValue;
+    }
+  }
+
+  template <typename T>
+  T getParamWithAssert(std::initializer_list<std::string> params) {
+    auto tempConfigData = getConfigData();
+    auto defaultValue = T();
+    try {
+      size_t i = 0;
+      for (auto& param : params) {
+        ++i;
+        if (i == params.size()) {
+          return tempConfigData.value(param,defaultValue);
+        }
+        tempConfigData = tempConfigData[param];
+      }
+      return tempConfigData;
+    } catch (...) {
+      std::string list_name = "";
+      for( auto s : params ) list_name += "\"" + s + "\", ";
+      list_name.erase(list_name.end()-2,list_name.end());
+      logger::error("config") << "not Found { " << list_name << " } in " << getConfigName();
+      assert(false);
+    }
+  }
+
+  virtual VoidHandler parseConfigDataFromString(const std::string& jsonStr) {
     try {
       _configData = json::parse(std::move(jsonStr));
+      return {};
     } catch (...) {
-      throw exception::config::ConfigException("Can't parse json: " + getConfigName());
+      return makeUnexpected(exception::config::ParseException(getConfigPath()));
     }
   }
 
  public:
   virtual std::string getConfigName() = 0;
+  std::string getConfigPath() { return get_iroha_home() + getConfigName(); }
 
   json getConfigData() {
     if (_loaded) {
-      // If defaultValue is used, _configData is empty, but _loaded = true. It's cofusing. Any good solution?
       return this->_configData;
     } else {
       _loaded = true;
@@ -84,8 +125,7 @@ class AbstractConfigManager {
  protected:
   bool _loaded = false;
   json _configData;
-
 };
-}
+}  // namespace config
 
 #endif  // IROHA_CONFIG_H

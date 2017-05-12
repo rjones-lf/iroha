@@ -6,8 +6,6 @@
 
 今回は"sudo"を書きたくないのでrootで行いましたが普通のユーザーの方がいいと思います。よしなにお願いします
 
-I could not write "sudo" in this time and I executed as root, but I
-think normal user is better, Do as you think best.
 
 OS
 --
@@ -26,7 +24,7 @@ Compiler & Maketool
 
 基本的にC++14がコンパイルできる物が必要
 
-I need C++14 compilable compiler
+You need C++14 compilable compiler
 
 ::
 
@@ -43,44 +41,9 @@ I need C++14 compilable compiler
 
 ::
 
-    # apt -y install xsltproc libhdf5-serial-dev libsnappy-dev liblmdb-dev autoconf automake libtool unzip libssl-dev
+    # apt -y install build-essential wget xsltproc autoconf automake libtool shtool unzip libssl-dev
 
 
-protobuf のインストール / Install protobuf
-------------------------------------------
-
-buildは時間かかる あと\ **バージョンは3.0.0でなければいけない**
-
-**Version should be 3.0.0!!**
-
-::
-
-    # cd /tmp; git clone -b v3.0.0 https://github.com/google/protobuf.git
-    # cd /tmp/protobuf;(git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598; echo Force continue)
-    # cd /tmp/protobuf; ./autogen.sh; ./configure --prefix=/usr;
-    # make -j 16;
-    # make install
-    # protoc --version
-
-::
-
-    root@mizuki # protoc --version
-    libprotoc 3.0.0
-
-grpc のインストール / Install grpc
-----------------------------------
-
-buildに時間かかるのでBinaryがほしい
-
-::
-
-    cd /tmp; git clone -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc
-    cd /tmp/grpc; git submodule update --init; make -j 14; make install
-
-::
-
-    root@mizuki # which grpc_cpp_plugin
-    /usr/local/bin/grpc_cpp_plugin
 
 java のインストール / Install java
 ----------------------------------
@@ -99,7 +62,7 @@ Could you decide place you will install iroha as you think best.
 
 ::
 
-    ~ # git clone --recursive https://github.com/hyperledger/iroha.git
+    ~ # git clone https://github.com/hyperledger/iroha.git
     ~ # ls -l
     total 4
     drwxr-xr-x 8 root root 4096 Dec  8 17:15 iroha

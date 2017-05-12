@@ -17,22 +17,24 @@ limitations under the License.
 #ifndef CONFIG_FORMAT_HPP
 #define CONFIG_FORMAT_HPP
 
-#include <regex>
 #include <json.hpp>
-#include <util/exception.hpp>
-#include <util/logger.hpp>
+#include <regex>
+#include <utils/exception.hpp>
+#include <utils/logger.hpp>
 
 namespace config {
-  class ConfigFormat {
-  public:
-    static ConfigFormat& getInstance();
-    bool ensureFormatSumeragi(const std::string& configStr);
+class ConfigFormat {
+ public:
+  static ConfigFormat& getInstance();
+  bool ensureFormatSumeragi(const std::string& configStr);
 
-  private:
-    ConfigFormat();
-    bool ensureFormat(const std::string& configStr, const std::string& formatConfigStr);
-    bool ensureFormat(nlohmann::json& actualConfig, nlohmann::json& formatConfig, const std::string& history);
-  };
+ private:
+  ConfigFormat();
+  bool ensureFormat(const std::string& configStr,
+                    const std::string& formatConfigStr);
+  bool ensureFormat(nlohmann::json& actualConfig, nlohmann::json& formatConfig,
+                    const std::string& history);
+};
 }
 
 #endif
