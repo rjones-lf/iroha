@@ -38,12 +38,12 @@ iroha-build:
 	  hyperledger/iroha-dev /opt/iroha/build/scripts/iroha-build.sh
 
 iroha:
-	rm -fr docker/tiny/release
-	rsync -av ${IROHA_HOME}/build/release docker/tiny
+	rm -fr docker/tiny/iroha
+	rsync -av ${IROHA_HOME}/build/iroha docker/tiny
 	docker build --rm -t hyperledger/iroha docker/tiny
 
 clean:
-	rm -fr build external docker/tiny/release
+	rm -fr build external docker/tiny/iroha
 
 run:
 	docker run -d --name iroha -p 50051:50051 hyperledger/iroha
