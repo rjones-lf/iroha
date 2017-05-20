@@ -13,24 +13,22 @@ ENV IROHA_HOME /usr/local/iroha
 ENV IROHA_BUILD ${IROHA_HOME}/build
 ENV IROHA_RELEASE ${IROHA_BUILD}/release
 
-RUN apt update && apt -y upgrade && \
-    apt -y install \
+RUN apt update && apt -y upgrade
+
+RUN apt -y install \
         software-properties-common \
         python-software-properties \
-        curl git wget make g++-5 gcc-5 default-jdk \
+        curl git wget make cmake g++-5 gcc-5 default-jdk \
         libhdf5-serial-dev libleveldb-dev libsnappy-dev \
         liblmdb-dev libssl-dev unzip xsltproc zlib1g-dev \
         autoconf automake libtool jq pkg-config cppcheck \
         valgrind clang-tidy
-    
+
 RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-5 20 && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20 && \
-    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-5 20 && \
-    curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | \
-      tar -xzC /opt && \
-    ln -s /opt/cmake*/bin/c* /usr/local/bin
+    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-5 20
 
 RUN mkdir -p ${IROHA_RELEASE}; \
     mkdir -p ${IROHA_BUILD}; \
@@ -49,6 +47,7 @@ RUN cd /tmp; \
 RUN cd /tmp; \
     git clone --recursive -b $(curl -L http://grpc.io/release) https://github.com/grpc/grpc; \
     cd grpc; \
+    patch -p1 <scripts/grpc.patch; \
     make -j4 && make install
 
 # install sonar-scanner
