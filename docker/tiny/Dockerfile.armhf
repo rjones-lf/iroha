@@ -1,0 +1,17 @@
+FROM armv7/armhf-ubuntu
+
+ENV IROHA_HOME=/usr/local/iroha
+ENV LD_LIBRARY_PATH=/lib/arm-linux-gnueabihf:/usr/lib/arm-linux-gnueabihf:/usr/lib:/usr/local/lib:${IROHA_HOME}/lib
+
+COPY iroha ${IROHA_HOME}
+## COPY libstdc /usr/lib/arm-linux-gnueabihf
+
+RUN apt update && apt upgrade -y; \
+    useradd -ms /bin/bash iroha; \
+    chown -R iroha:iroha $IROHA_HOME
+
+USER iroha
+
+WORKDIR ${IROHA_HOME}
+
+CMD ["/usr/local/iroha/bin/iroha-main"]

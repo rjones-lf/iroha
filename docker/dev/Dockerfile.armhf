@@ -1,0 +1,28 @@
+#-----------------------------------------------------------------------
+# iroha-dev - IROHA development container (base image for iroha)
+#
+# build : docker build -t hyperledger/iroha-dev .
+#
+# Copyright (c) 2016, 2017 Soramitsu,Co.,Ltd.
+# All Rights Reserved.
+#-----------------------------------------------------------------------
+FROM armv7/armhf-ubuntu
+
+RUN apt update && apt -y upgrade
+
+RUN apt -y install \
+        software-properties-common \
+        python-software-properties \
+        curl git wget make cmake g++-5 gcc-5 default-jdk \
+        libhdf5-serial-dev libleveldb-dev libsnappy-dev \
+        liblmdb-dev libssl-dev unzip xsltproc zlib1g-dev \
+        autoconf automake libtool jq pkg-config cppcheck \
+        valgrind clang-tidy
+
+RUN add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-5 20 && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-5 20
+
+CMD ["/bin/bash"]
