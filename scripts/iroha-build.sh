@@ -6,6 +6,8 @@ export IROHA_RELEASE=${IROHA_BUILD}/iroha
 
 clone_protobuf() {
   git clone -b v3.0.0 https://github.com/google/protobuf.git
+
+  cd protobuf
   git cherry-pick 1760feb621a913189b90fe8595fffb74bce84598
 
   ./autogen.sh
