@@ -69,8 +69,6 @@ make install
 #
 cd ${IROHA_BUILD}
 
-cd ${IROHA_BUILD}
-
 if [[ ! -x ${IROHA_BUILD}/opt/sonar-scanner/bin/sonar-scanner ]]; then
   wget -O sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.1.733-linux.zip
 
@@ -82,6 +80,16 @@ fi
 #
 # install Iroha
 #
+if [[ "$(uname -m)" == "armv7l" ]]; then
+  cd ${IROHA_HOME}/core/infra/ametsuchi
+
+  if grep -q __int128_t include/ametsuchi/currency.h; then
+    sed -i -e 's/__int128_t/int64_t/g'  -e 's/__uint128_t/uint64_t/g' \
+      include/ametsuci/currency.h src/ametsuchi/currency.cc \
+      src/ametsuchi/wsv.cc
+  fi
+fi
+
 cd ${IROHA_BUILD}
 
 cmake ${IROHA_HOME} -DCMAKE_BUILD_TYPE=Release
