@@ -35,21 +35,21 @@ ifeq ($(DOCKER_FILE), )
 $(error "This platform \"$(UKERNEL)/$(UMACHINE)\" in not supported.")
 endif
 
-all: builddir scripts iroha-dev iroha-build iroha
+all: builddir iroha-dev iroha-build iroha
 
 builddir:
 	mkdir -p build
-
-scripts:
-	rsync -av scripts build
 
 iroha-dev:
 	docker build --rm -t hyperledger/iroha-dev -f docker/dev/$(DOCKER_FILE) docker/dev
 
 iroha-build:
+ifeq ($(UMACHINE),armv7l)
+	scripts/patch-dependencies.sh
+endif
 	docker run -t --rm --name iroha-build \
 	  -v $(IROHA_HOME):/opt/iroha \
-	  hyperledger/iroha-dev /opt/iroha/build/scripts/iroha-build.sh
+	  hyperledger/iroha-dev /opt/iroha/scripts/iroha-build.sh
 
 iroha:
 	rm -fr docker/tiny/iroha
