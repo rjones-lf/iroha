@@ -19,9 +19,4 @@ if ! grep -q generic32 fabfile.py; then
     -e 's/amd64/armhf/' fabfile.py
 fi
 
-# Don't make this kind of mistake again.
-if grep -q 'char c' tools/make_sumeragi.cpp; then
-  sed -i '/^void parse_option/{n;s/char c/int c/}' tools/make_sumeragi.cpp
-fi
-
 exit 0
