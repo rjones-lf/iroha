@@ -84,8 +84,13 @@ if [[ "$(uname -m)" == "armv7l" ]]; then
   cd ${IROHA_HOME}/core/infra/ametsuchi
 
   if grep -q __int128_t include/ametsuchi/currency.h; then
-    sed -i -e 's/__int128_t/int64_t/g'  -e 's/__uint128_t/uint64_t/g' \
-      include/ametsuci/currency.h src/ametsuchi/currency.cc \
+    sed -i \
+      -e 's/1024L /1024LL /' \
+      -e 's/__int128_t/int64_t/g'  \
+      -e 's/__uint128_t/uint64_t/g' \
+      include/ametsuchi/ametsuchi.h \
+      include/ametsuchi/currency.h \
+      src/ametsuchi/currency.cc \
       src/ametsuchi/wsv.cc
   fi
 fi
@@ -94,6 +99,19 @@ cd ${IROHA_BUILD}
 
 cmake ${IROHA_HOME} -DCMAKE_BUILD_TYPE=Release
 make -j 10
+
+if [[ "$(uname -m)" == "armv7l" ]]; then
+  # Dirty fix to build libkeccak.a
+  if [ ! -f ${IROHA_HOME}/external/src/gvanas_keccak/bin/generic32/libkeccak.a ]; then
+    echo "$(date +"%Y/%m/%d %H:%M:%S") >>> Retry Build libkeccak.a"
+    cd ${IROHA_HOME}/external/src/gvanas_keccak
+    make -j4
+    make -j4 generic32/libkeccak.a
+
+    cd ${IROHA_BUILD}
+    make -j 10
+  fi
+fi
 
 if [[ $? != 0 ]]; then
   exit 1
