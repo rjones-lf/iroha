@@ -1,0 +1,70 @@
+version: 2
+jobs:
+  build:
+    # must be IROHA_HOME:
+    working_directory: /opt/iroha
+    docker:
+      - image: warchantua/iroha-dev
+        environment:
+          IROHA_HOME: /opt/iroha
+          IROHA_BUILD: /tmp/build
+    steps:
+      - checkout
+
+      - run:
+          name: ensure, required folders created
+          command: |
+            mkdir -p $IROHA_HOME
+            mkdir -p $IROHA_BUILD
+      - run:
+          name: cmake
+          command: |
+            cd $IROHA_BUILD
+            cmake $IROHA_HOME
+      - run:
+          name: make
+          command: |
+            cd $IROHA_BUILD
+            make -j2
+      - run:
+          name: run tests
+          command: |
+            export TEST_FOLDER=$IROHA_BUILD/test_bin
+            total=0
+            for file in ${TEST_FOLDER}/*; do
+                # run test
+                ${file}
+                total=$((total + $?))
+            done
+            exit $total
+      - run:
+          name: analyze source code with cppcheck and sonarqube
+          command: |
+            export TEST_FOLDER=$IROHA_BUILD/test_bin
+            cd $IROHA_HOME
+            cppcheck --enable=all --inconclusive --xml --xml-version=2 core/ peer/ smart_contract/ test/ tools/ 2>/tmp/cppcheck.xml || true
+
+            # run valgrind for tests
+            VALGRIND_XML=
+            mkdir -p valgrind_report
+            for test in $(ls $TEST_FOLDER); do
+              xml=valgrind_report/$test.xml
+              bin=$TEST_FOLDER/$test
+              valgrind --xml=yes --xml-file=$xml --trace-children=yes --demangle=yes --leak-check=full $bin || true
+              if [ -z "$VALGRIND_XML" ]; then
+                VALGRIND_XML=$xml
+              else
+                VALGRIND_XML=$xml,$VALGRIND_XML
+              fi
+            done
+            # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
+            /opt/sonar-scanner/bin/sonar-scanner \
+              -Dsonar.sourceEncoding=UTF-8 \
+              -Dsonar.sources=benchmark,core,peer,test,tools \
+              -Dsonar.host.url=https://sonar.innoctf.com \
+              -Dsonar.projectKey=hyperledger:iroha \
+              -Dsonar.projectName="Iroha" \
+              -Dsonar.projectVersion="$CIRCLE_BUILD_NUM" \
+              -Dsonar.login="$SONAR_TOKEN" \
+              -Dsonar.cxx.valgrind.reportPath="$VALGRIND_XML" \
+              -Dsonar.cxx.cppcheck.reportPath=/tmp/cppcheck.xml || true

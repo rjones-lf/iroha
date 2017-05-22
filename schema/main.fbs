@@ -1,0 +1,36 @@
+include "transaction.fbs";
+include "actions.fbs";
+
+namespace protocol;
+
+file_identifier "IROH";
+file_extension  "iroha";
+
+enum Code: ubyte {COMMIT, FAIL, UNDECIDED} // TODO: maybe more?
+
+table Block {
+  txs:          [TransactionWrapper] (required);
+  peer_sigs:    [Signature] (required);
+  prev_hash:    [ubyte] (required);
+  length:       uint;
+  merkle_root:  [ubyte] (required);
+  height:       ulong;
+  created:      [ubyte] (required);
+}
+
+// to make an array of nested flatbuffers, we should use this:
+table TransactionWrapper {
+  tx: [ubyte] (nested_flatbuffer: "Transaction");
+}
+
+table TransactionResponse {
+  message:              string  (required);
+  index:                ulong;
+  code:                 Code;
+  transactions:         [Transaction];
+}
+
+table ReceiverConfirmation {
+  signature: Signature;
+  hash:      [ubyte];
+}

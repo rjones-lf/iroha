@@ -1,0 +1,33 @@
+include "primitives.fbs";
+
+namespace protocol;
+
+// table ComplexAsset {
+//   // (ledger:domain:asset) = composite primary key for any asset
+//   asset_name:    string (key, required);  // sorted; name should be unique inside a domain
+//   domain_name:   string (required);       // domain should be unique inside a ledger
+//   ledger_name:   string (required);       // unique worldwide
+//
+//   description:   string;
+//
+//   // amount and precision should be encoded in properties
+//   prop:  [KeyValueObject]; // using this, you can create complex assets
+//
+//   logic: ComplexAssetLogic;
+// }
+
+// table ComplexAssetLogic {
+//   add:        Chaincode;
+//   subtract:   Chaincode;
+//   transfer:   Chaincode;
+// }
+
+
+table Asset {
+  name:         string;
+  uuid:         [ubyte];
+  amount:       [ubyte]; // limited to 256 bytes. Is this required?
+  precision:    ubyte;
+  options:      string;
+  domain_uuid:  string;
+}

@@ -1,0 +1,120 @@
+include "main.fbs";
+
+namespace protocol;
+
+// namespace protocol.query.account; // flatbuffers+grpc doesn't support namespace
+
+table AccountAccountRequest {
+  account:     string (required);
+}
+
+table AccountAccountResponse {
+  account:     Account (required);
+}
+
+table AccountSignaturesRequest {
+  account:     string (required);
+}
+
+table AccountSignaturesResponse {
+  signatures:  [Signature] (required);
+}
+
+table AccountQuorumRequest {
+  account:     string (required);
+}
+
+table AccountQuorumResponse {
+  quorum:      ubyte;
+}
+
+// namespace protocol.query.account_has_permission;
+
+table AccountPermissionAssetRequest {
+  account:     string (required);
+}
+
+table AccountPermissionAssetResponse {
+  permission:  ulong; // bitstring max: 64 (should be [ubyte]?)
+}
+
+table AccountPermissionDomainRequest {
+  account: string (required);
+  domain:  string (required);
+}
+
+table AccountPermissionDomainResponse {
+  account: string (required);
+  domain:  string (required);
+}
+
+// namespace protocol.query.asset;
+
+table AssetAssetRequest {
+  account: string (required);
+  asset:   string (required);
+}
+
+table AssetAssetResponse {
+  asset:   Asset  (required);
+}
+
+// namespace protocol.query.domain;
+
+table DomainDomainRequest {
+  domain:  string (required);
+}
+
+table DomainDomainResponse {
+  domain:  [string] (required);
+}
+
+table DomainAccountsRequest {
+  domain:  string (required);
+}
+
+table DomainAccountsResponse {
+  accounts: [Account] (required);
+}
+
+// namespace protocol.query.transaction;
+
+table TransactionTxRequest {
+  account:  string (required);
+}
+
+table TransactionTxRespnose {
+  txs: [Transaction] (required);
+}
+
+// namespace protocol.query;
+
+table Query {
+  creator:      Signature (required);
+  createrd:     ulong; // 8 bytes
+  nonce:        uint;  // 4 bytes
+  is_committed: bool;
+  limit:        uint;
+  offset:       ulong;
+  order:        ubyte;
+  query:        QueryRequestWrapper (required);
+}
+
+union QueryRequest {
+  AccountAccountRequest,
+  AccountSignaturesRequest
+}
+
+// rpc request and response types must be tables
+table QueryRequestWrapper {
+  request: QueryRequest (required);
+}
+
+union QueryResponse {
+  AccountAccountResponse,
+  AccountSignaturesResponse
+}
+
+table QueryResponseWrapper {
+  request: QueryResponse (required);
+}

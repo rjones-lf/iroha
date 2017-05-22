@@ -1,0 +1,180 @@
+include "asset.fbs";
+include "account.fbs";
+include "primitives.fbs";
+
+namespace protocol;
+
+//////////////////////////////////////////
+/// Commands for Account
+table AccountAddAccount {
+  username:    string (required);
+  signatories: [Signature] (required);
+  quorum:      ubyte;
+}
+
+table AccountAddSignatories {
+  to_account:  [ubyte] (required); // uuid, username@domain, username
+  signatories: [Signature] (required);
+}
+
+table AccountRemoveSignatories {
+  from_account: [ubyte] (required);
+  signatories:  [Signature] (required);
+}
+
+table AccountSetQuorum {
+  to_account:   [ubyte] (required);
+  quorum:       ubyte;
+}
+
+table AssetCreate {
+  asset_id: string (required);
+}
+
+table AssetRemove {
+  asset_id: string (required);
+}
+
+table AssetTransfer {
+  sender: string (required);
+  receiver: string (required);
+  asset: Asset (required);
+}
+
+table AssetAdd {
+  receiver: string (required);
+  asset: Asset (required);
+}
+
+table AssetSubtract {
+  receiver: string (required);
+  asset: Asset (required);
+}
+
+table DomainCreate {
+  domain_name: string (required);
+}
+
+table DomainRemove {
+  domain_remove: string (required);
+}
+
+table DomainRegisterAsset {
+  domain_name: string (required);
+  asset_name: string (required);
+}
+
+table PeerAdd {
+  object: Peer (required);
+}
+
+table PeerRemove {
+  pubkey: string (required);
+}
+
+table PeerSetTrust {
+  pubkey: string (required);
+  trust:  double;
+}
+
+table PeerChangeTrust {
+  pubkey: string (required);
+  delta:  double;
+}
+
+table PeerActivate {
+  pubkey: string (required);
+}
+
+table PeerDeactivate {
+  pubkey: string (required);
+}
+
+// used by root, It is needed private key lost. Register new key-pair
+//table AccountMigrate{
+//    account:    [ubyte] (required, nested_flatbuffer: "Account");
+//    prevPubKey: string;
+//}
+
+// users are able to store custom data in their accounts
+//table AccountStore {
+//    accPubKey: string           (required);
+//    data:      [KeyValueObject] (required);
+//}
+//////////////////////////////////////////
+
+//////////////////////////////////////////
+/// Commands for Chaincode
+//table ChaincodeAdd {
+//    code: [ubyte] (required, nested_flatbuffer: "Chaincode");
+//}
+//
+//table ChaincodeRemove {
+//    code_name: string (required);
+//    domain_name: string  (required);
+//    ledger_name: string  (required);
+//}
+//
+//table ChaincodeExecute {
+//  code_name:   string  (required);
+//  domain_name: string  (required);
+//  ledger_name: string  (required);
+//}
+//////////////////////////////////////////
+
+
+//////////////////////////////////////////
+/// Commands for Permission
+
+table PermissionAdd {
+    // This account will be changed permission. If targetAccount is null, All account will be changed
+    targetAccount:   string;
+    permission:      AccountPermission;
+}
+table PermissionRemove {
+
+    // This account will be changed permission. If targetAccount is null, All account will be changed
+    targetAccount:   string;
+    permission:      AccountPermission;
+}
+//////////////////////////////////////////
+
+
+union Action {
+  AccountAddAccount,
+  AccountAddSignatories,
+  AccountRemoveSignatories,
+  AccountSetQuorum,
+//  AccountMigrate,
+
+  AssetCreate,
+  AssetRemove,
+  AssetTransfer,
+  AssetAdd,
+  AssetSubtract,
+
+  DomainCreate,
+  DomainRemove,
+  DomainRegisterAsset,
+
+  PeerAdd,
+  PeerRemove,
+  PeerSetTrust,
+  PeerChangeTrust,
+  PeerActivate,
+  PeerDeactivate,
+
+// ChaincodeAdd,
+// ChaincodeRemove,
+// ChaincodeExecute,
+
+  PermissionRemove,
+  PermissionAdd
+}
+
+// union vector is supported in C++ only.
+// And, Transaction contains array of objects Action. So, Action needs to be wrapped by ActionWrapper.
+// https://github.com/google/flatbuffers/commit/b0752e179bdbae516125cccacd7aebcfd83033a9
+table ActionWrapper {
+    action: Action;
+}

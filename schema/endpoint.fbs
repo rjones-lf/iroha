@@ -1,0 +1,73 @@
+include "main.fbs";
+include "query.fbs";
+
+namespace protocol;
+
+file_identifier "IROH";
+file_extension  "iroha";
+
+enum RPCResponseCode: short {
+  OK, InternalError, BadRequest
+}
+
+table SumeragiResponse {
+  message:   string;
+  code:      RPCResponseCode;
+  signature: Signature;
+}
+
+table HijiriResponse {
+ // Not defined yet.
+}
+
+table Ping {
+  message:  string;
+  sender:   string;
+}
+
+table CheckHashResponse {
+  isCorrect: bool;
+  isRoot: bool;
+  isExist: bool;
+}
+
+table PeersResponse {
+  message:    string;
+  peers:      [Peer];
+  sender:     string;
+}
+
+table TxWithIndex {
+  tx: Transaction (required);
+  index: ulong;
+}
+
+table TxRequest {
+  index: ulong;
+  sender: string (required);
+}
+
+rpc_service Sumeragi {
+  // Used by sending transaction
+  Torii(Transaction): SumeragiResponse (streaming: "none");
+
+  // Used by sending block in consensus.
+  Consensus(Block):   SumeragiResponse (streaming: "none");
+}
+
+rpc_service DataStore {
+  Query(QueryRequestWrapper): QueryRequestWrapper (streaming: "none");
+}
+
+rpc_service Hijiri {
+  // Kagami means ping
+  Kagami(Ping): HijiriResponse (streaming: "none");
+}
+
+rpc_service Sync {
+  checkHash(Ping): CheckHashResponse  (streaming: "none");
+  getPeers(Ping):  PeersResponse      (streaming: "none");
+
+  getTransactions(Ping):             TransactionResponse (streaming: "none");
+  fetchStreamTransaction(TxRequest): TxWithIndex (streaming: "server", idempotent);
+}

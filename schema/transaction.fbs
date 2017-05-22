@@ -1,0 +1,21 @@
+include "actions.fbs";
+include "primitives.fbs";
+
+namespace protocol;
+
+table Transaction {
+  creator: Signature (required);
+  sigs:    [Signature];
+  created: ulong;   // 64 bit(8 bytes)
+  nonce:   uint;    // 32 bit(4 bytes)
+
+  // union vector is supported in C++ only.
+  // And, Transaction contains array of objects Action. So, Action needs to be wrapped by ActionWrapper.
+  // https://github.com/google/flatbuffers/commit/b0752e179bdbae516125cccacd7aebcfd83033a9
+  actions: [ActionWrapper] (required);
+}
+
+table Attachment {
+  mime: string;
+  data: [ubyte];
+}
