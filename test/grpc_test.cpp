@@ -22,7 +22,6 @@
 #include <endpoint.grpc.fb.h>
 #include <memory>
 #include <assert.h>
-
 #include <thread>
 
 using Block            = ::protocol::Block;
@@ -238,7 +237,8 @@ TEST_F(grpc_test, SecondTry) {
 }
 
 TEST_F(grpc_test, StressTestServer) {
-  for (int i = 0; i < 50 /* 1000 */; i++) { // We can do 1000 times, but it's too large for CI.
+  // We can do it many times, but it's too hard for CI.
+  for (int i = 0; i < 10 /* 1000 */; i++) {
     std::cout << "Times " << i + 1 << ": ";
     SetUpServer(ServerStartType::NoWait);
     WaitForServerReady();
