@@ -77,7 +77,7 @@ if [[ ! -x ${IROHA_BUILD}/opt/sonar-scanner/bin/sonar-scanner ]]; then
   mv ${IROHA_BUILD}/opt/sonar-scanner* ${IROHA_BUILD}/opt/sonar-scanner
 
   if [[ "$(uname -m)" == "armv7l" ]]; then
-    sed -i 's/JAVA_HOME=.*/JAVA_HOME=usr\/lib\/jvm\/java-8-openjdk-armhf/' \
+    sed -i 's/JAVA_HOME=.*/JAVA_HOME=\/usr\/lib\/jvm\/java-8-openjdk-armhf/' \
       ${IROHA_BUILD}/opt/sonar-scanner/bin/sonar-scanner
   fi
 fi
@@ -139,3 +139,4 @@ cp ${IROHA_HOME}/config/config.json   ${IROHA_RELEASE}/config/config.json
 
 rsync -av ${IROHA_HOME}/build/bin      ${IROHA_RELEASE}
 rsync -av ${IROHA_HOME}/build/test_bin ${IROHA_RELEASE}
+rsync -av ${IROHA_BUILD}/opt           ${IROHA_RELEASE}
