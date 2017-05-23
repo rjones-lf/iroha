@@ -75,6 +75,11 @@ if [[ ! -x ${IROHA_BUILD}/opt/sonar-scanner/bin/sonar-scanner ]]; then
   unzip -d ${IROHA_BUILD}/opt sonar.zip && rm sonar.zip
 
   mv ${IROHA_BUILD}/opt/sonar-scanner* ${IROHA_BUILD}/opt/sonar-scanner
+
+  if [[ "$(uname -m)" == "armv7l" ]]; then
+    sed -i 's/JAVA_HOME=.*/JAVA_HOME=usr\/lib\/jvm\/java-8-openjdk-armhf/' \
+      ${IROHA_BUILD}/opt/sonar-scanner/bin/sonar-scanner
+  fi
 fi
 
 #
@@ -120,7 +125,6 @@ fi
 #
 # copy Iroha binary and configuration file to release directory
 #
-
 rm -fr ${IROHA_RELEASE}
 
 mkdir -p ${IROHA_RELEASE}/lib
