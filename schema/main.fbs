@@ -6,7 +6,7 @@ namespace protocol;
 file_identifier "IROH";
 file_extension  "iroha";
 
-enum Code: ubyte {COMMIT, FAIL, UNDECIDED} // TODO: maybe more?
+enum BlockState: ubyte {COMMIT, FAIL, UNDECIDED}
 
 table Block {
   txs:          [TransactionWrapper] (required);
@@ -26,7 +26,6 @@ table TransactionWrapper {
 table TransactionResponse {
   message:              string  (required);
   index:                ulong;
-  code:                 Code;
   transactions:         [Transaction];
 }
 

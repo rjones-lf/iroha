@@ -7,7 +7,6 @@ namespace protocol;
 //////////////////////////////////////////
 /// Commands for Account
 table AccountAddAccount {
-  username:    string (required);
   signatories: [Signature] (required);
   quorum:      ubyte;
 }
@@ -42,26 +41,34 @@ table AssetTransfer {
 }
 
 table AssetAdd {
-  receiver: string (required);
+  account: string (required);
   asset: Asset (required);
 }
 
 table AssetSubtract {
-  receiver: string (required);
-  asset: Asset (required);
+  account: string (required);
+  asset:   Asset (required);
+}
+
+table AssetSetPermissions {
+  account_id:  string (required);
+  asset_id:    string (required);
+  permissions: ulong;
 }
 
 table DomainCreate {
-  domain_name: string (required);
+  domain: string (required);
+  root_account: string (required);
 }
 
 table DomainRemove {
-  domain_remove: string (required);
+  domain: string (required);
 }
 
-table DomainRegisterAsset {
-  domain_name: string (required);
-  asset_name: string (required);
+table DomainSetPermissions {
+  domain_id: string (required);
+  account_id: string (required);
+  permissions: ulong; // bitstring
 }
 
 table PeerAdd {
@@ -90,29 +97,27 @@ table PeerDeactivate {
   pubkey: string (required);
 }
 
-// used by root, It is needed private key lost. Register new key-pair
-//table AccountMigrate{
-//    account:    [ubyte] (required, nested_flatbuffer: "Account");
-//    prevPubKey: string;
+//table AccountMigrate {
+//  account:    [ubyte] (required, nested_flatbuffer: "Account");
+//  prevPubKey: string;
 //}
 
-// users are able to store custom data in their accounts
 //table AccountStore {
-//    accPubKey: string           (required);
-//    data:      [KeyValueObject] (required);
+//  uuid: string (required);
+//  data:        [KeyValueObject] (required);
 //}
 //////////////////////////////////////////
 
 //////////////////////////////////////////
 /// Commands for Chaincode
 //table ChaincodeAdd {
-//    code: [ubyte] (required, nested_flatbuffer: "Chaincode");
+//  code: [ubyte] (required, nested_flatbuffer: "Chaincode");
 //}
 //
 //table ChaincodeRemove {
-//    code_name: string (required);
-//    domain_name: string  (required);
-//    ledger_name: string  (required);
+//  code_name: string (required);
+//  domain_name: string  (required);
+//  ledger_name: string  (required);
 //}
 //
 //table ChaincodeExecute {
@@ -145,36 +150,33 @@ union Action {
   AccountAddSignatories,
   AccountRemoveSignatories,
   AccountSetQuorum,
-//  AccountMigrate,
+
+//  AccountMigrate, // ** pending **
 
   AssetCreate,
   AssetRemove,
   AssetTransfer,
   AssetAdd,
   AssetSubtract,
+  AssetSetPermissions,
 
   DomainCreate,
   DomainRemove,
-  DomainRegisterAsset,
+//  DomainSetPermissionsDomainId,
+//  DomainSetPermissionsAccountId,
+//  DomainSetPermissionsBitString,
 
   PeerAdd,
   PeerRemove,
   PeerSetTrust,
   PeerChangeTrust,
   PeerActivate,
-  PeerDeactivate,
-
-// ChaincodeAdd,
-// ChaincodeRemove,
-// ChaincodeExecute,
-
-  PermissionRemove,
-  PermissionAdd
+  PeerDeactivate
 }
 
 // union vector is supported in C++ only.
 // And, Transaction contains array of objects Action. So, Action needs to be wrapped by ActionWrapper.
 // https://github.com/google/flatbuffers/commit/b0752e179bdbae516125cccacd7aebcfd83033a9
 table ActionWrapper {
-    action: Action;
+  action: Action;
 }

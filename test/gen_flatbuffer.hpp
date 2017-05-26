@@ -50,7 +50,7 @@ inline std::vector <uint8_t> CreateTx() {
     protocol::CreateActionWrapper(
       fbb, protocol::Action::AccountAddAccount,
       protocol::CreateAccountAddAccount(
-        fbb, fbb.CreateString("user"), sigs, uint8_t(16)
+        fbb, sigs, uint8_t(16)
       ).Union()
     )
   });

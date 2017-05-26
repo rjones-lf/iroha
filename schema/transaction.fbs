@@ -3,6 +3,11 @@ include "primitives.fbs";
 
 namespace protocol;
 
+table Attachment {
+  mime: string;
+  data: [ubyte];
+}
+
 table Transaction {
   creator: Signature (required);
   sigs:    [Signature];
@@ -13,9 +18,6 @@ table Transaction {
   // And, Transaction contains array of objects Action. So, Action needs to be wrapped by ActionWrapper.
   // https://github.com/google/flatbuffers/commit/b0752e179bdbae516125cccacd7aebcfd83033a9
   actions: [ActionWrapper] (required);
-}
 
-table Attachment {
-  mime: string;
-  data: [ubyte];
+  attachment: Attachment; // optional
 }

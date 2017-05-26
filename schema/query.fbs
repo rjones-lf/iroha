@@ -5,37 +5,37 @@ namespace protocol;
 // namespace protocol.query.account; // flatbuffers+grpc doesn't support namespace
 
 table AccountAccountRequest {
-  account:     string (required);
+  account: string (required);
 }
 
 table AccountAccountResponse {
-  account:     Account (required);
+  account: Account (required);
 }
 
 table AccountSignaturesRequest {
-  account:     string (required);
+  account: string (required);
 }
 
 table AccountSignaturesResponse {
-  signatures:  [Signature] (required);
+  signatures: [Signature] (required);
 }
 
 table AccountQuorumRequest {
-  account:     string (required);
+  account: string (required);
 }
 
 table AccountQuorumResponse {
-  quorum:      ubyte;
+  quorum: ubyte;
 }
 
 // namespace protocol.query.account_has_permission;
 
 table AccountPermissionAssetRequest {
-  account:     string (required);
+  account: string (required);
 }
 
 table AccountPermissionAssetResponse {
-  permission:  ulong; // bitstring max: 64 (should be [ubyte]?)
+  permission: ulong; // bitstring
 }
 
 table AccountPermissionDomainRequest {
@@ -44,8 +44,7 @@ table AccountPermissionDomainRequest {
 }
 
 table AccountPermissionDomainResponse {
-  account: string (required);
-  domain:  string (required);
+  permission: ulong; // bitstring
 }
 
 // namespace protocol.query.asset;
@@ -56,21 +55,21 @@ table AssetAssetRequest {
 }
 
 table AssetAssetResponse {
-  asset:   Asset  (required);
+  asset: Asset (required);
 }
 
 // namespace protocol.query.domain;
 
-table DomainDomainRequest {
-  domain:  string (required);
+table DomainDomainsRequest {
+  domain: string (required);
 }
 
-table DomainDomainResponse {
-  domain:  [string] (required);
+table DomainDomainsResponse {
+  domain: [string] (required);
 }
 
 table DomainAccountsRequest {
-  domain:  string (required);
+  domain: string (required);
 }
 
 table DomainAccountsResponse {
@@ -80,7 +79,7 @@ table DomainAccountsResponse {
 // namespace protocol.query.transaction;
 
 table TransactionTxRequest {
-  account:  string (required);
+  account: string (required);
 }
 
 table TransactionTxRespnose {
@@ -91,7 +90,7 @@ table TransactionTxRespnose {
 
 table Query {
   creator:      Signature (required);
-  createrd:     ulong; // 8 bytes
+  created:      ulong; // 8 bytes
   nonce:        uint;  // 4 bytes
   is_committed: bool;
   limit:        uint;
