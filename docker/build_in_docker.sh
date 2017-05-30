@@ -24,7 +24,7 @@ docker run -i \
     -v ${IROHA_HOME}:/opt/iroha \
     -v ${TINY}:/tiny \
     -v ${RELEASE}:/release \
-    warchant/iroha-dev \
+    warchantua/iroha-dev \
     sh << "COMMANDS"
     # everything between COMMANDS will be executed inside a container
 
