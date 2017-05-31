@@ -408,3 +408,28 @@ set_target_properties(LMDB PROPERTIES
 if(NOT LMDB_FOUND)
   add_dependencies(LMDB lmdb_LMDB)
 endif()
+
+
+# find_package(libFuzz)
+
+if (NOT LIBFUZZER_FOUND)
+  ExternalProject_Add(libFuzzer
+    GIT_REPOSITORY    "https://chromium.googlesource.com/chromium/llvm-project/llvm/lib/Fuzzer"
+    GIT_TAG           "master"
+    CONFIGURE_COMMAND ""
+    BUILD_IN_SOURCE   1
+    BUILD_ALWAYS      1
+    BUILD_COMMAND     "./build.sh"
+    INSTALL_COMMAND   "" # remove install step
+    TEST_COMMAND      "" # remove test step
+    UPDATE_COMMAND    "" # remove update step
+    )
+  ExternalProject_Get_Property(libFuzzer source_dir)
+  set(LIBFUZZER_LIBRARIES ${source_dir}/libFuzzer.a)
+endif()
+
+add_library(fuzzer STATIC IMPORTED)
+set_target_properties(fuzzer PROPERTIES
+  IMPORTED_LOCATION ${LIBFUZZER_LIBRARIES}
+  IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+  )

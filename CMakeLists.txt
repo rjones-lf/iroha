@@ -9,6 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks" OFF)
 option(TESTING "Build tests" ON)
+option(FUZZING "Build fuzzing binaries" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
@@ -16,6 +17,7 @@ endif()
 message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 message(STATUS "-DTESTING=${TESTING}")
 message(STATUS "-DBENCHMARKING=${BENCHMARKING}")
+message(STATUS "-DFUZZING=${FUZZING}")
 
 set(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 
@@ -41,4 +43,12 @@ endif()
 
 if(BENCHMARKING)
   add_subdirectory(benchmark)
+endif()
+
+if (FUZZING)
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_subdirectory(fuzz)
+  else()
+    message(Fuzzing with compilers other than clang does not supported yet)
+  endif()
 endif()
