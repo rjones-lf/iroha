@@ -12,35 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: all pwd build scripts
+.PHONY: all builddir scripts iroha-dev iroha-build iroha clean logs stop
 
 IROHA_HOME := $(if $(IROHA_HOME),$(IROHA_HOME),$(shell pwd))
 
-DUMMY = .dummy
+UKERNEL := $(shell uname -s)
+UMACHINE := $(shell uname -m)
 
-all: pwd build scripts iroha-dev iroha-build iroha
+ifeq ($(UKERNEL),Linux)
+  ifeq ($(UMACHINE),x86_64)
+    DOCKER_FILE := Dockerfile
+  endif
+  ifeq ($(UMACHINE),armv7l)
+    DOCKER_FILE := Dockerfile.armhf
+  endif
+endif
+ifeq ($(UKERNEL),Darwin)
+  DOCKER_FILE := Dockerfile
+endif
 
-pwd:
-	@echo "IROHA_HOME=$(IROHA_HOME)"
+ifeq ($(DOCKER_FILE), )
+$(error "This platform \"$(UKERNEL)/$(UMACHINE)\" in not supported.")
+endif
 
-build:
-	mkdir -p $@
+all: builddir iroha-dev iroha-build iroha
 
-scripts:
-	rsync -av scripts build
+builddir:
+	mkdir -p build
 
 iroha-dev:
-	docker build -t hyperledger/iroha-dev docker/dev
+	docker build --rm -t hyperledger/iroha-dev -f docker/dev/$(DOCKER_FILE) docker/dev
 
 iroha-build:
+ifeq ($(UMACHINE),armv7l)
+	scripts/patch-dependencies.sh
+endif
 	docker run -t --rm --name iroha-build \
 	  -v $(IROHA_HOME):/opt/iroha \
-	  hyperledger/iroha-dev /opt/iroha/build/scripts/iroha-build.sh
+	  hyperledger/iroha-dev /opt/iroha/scripts/iroha-build.sh
 
 iroha:
 	rm -fr docker/tiny/iroha
 	rsync -av ${IROHA_HOME}/build/iroha docker/tiny
-	docker build --rm -t hyperledger/iroha docker/tiny
+	docker build --rm -t hyperledger/iroha -f docker/tiny/$(DOCKER_FILE) docker/tiny
 
 clean:
 	rm -fr build external docker/tiny/iroha

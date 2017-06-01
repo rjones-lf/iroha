@@ -32,7 +32,7 @@ std::string name = "default";
 std::string filename;
 
 void parse_option(int argc, char *argv[]) {
-  char c;
+  int c;
   while ((c = getopt(argc, argv, "o:i:n:h")) != -1) {
     switch (c) {
       case 'i':
