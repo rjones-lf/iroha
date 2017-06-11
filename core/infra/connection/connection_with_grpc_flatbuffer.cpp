@@ -37,6 +37,7 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <vector>
+#include <thread>
 
 namespace connection {
   /**
@@ -649,7 +650,7 @@ namespace connection {
       flatbuffers::BufferRef<::iroha::CheckHashResponse> responseRef;
       auto res = stub_->checkHash(&clientContext, reqPingRef, &responseRef);
 
-      logger::info("Connection with grpc") << "Send!";
+      logger::info("connection") << "Send!";
 
       if (res.ok()) {
         logger::info("connection")
@@ -680,7 +681,7 @@ namespace connection {
 
       auto res =
           stub_->getTransactions(&clientContext, reqPingRef, &responseRef);
-      logger::info("Connection with grpc") << "Send!";
+      logger::info("connection") << "Send!";
 
       if (res.ok()) {
         logger::info("connection")
@@ -710,7 +711,7 @@ namespace connection {
       flatbuffers::BufferRef<::iroha::PeersResponse> responseRef;
 
       auto res = stub_->getPeers(&clientContext, reqPingRef, &responseRef);
-      logger::info("Connection with grpc") << "Send!";
+      logger::info("connection") << "Send!";
 
       if (res.ok()) {
         logger::info("connection")
@@ -874,8 +875,8 @@ namespace connection {
     namespace SyncImpl {
       namespace checkHash {
         bool send(const std::string &ip, const ::iroha::Ping &ping) {
-          logger::info("Connection with grpc") << "Send!";
-          logger::info("Connection with grpc") << "IP: " << ip;
+          logger::info("connection") << "Send!";
+          logger::info("connection") << "IP: " << ip;
           SyncConnectionClient client(grpc::CreateChannel(
               ip + ":" +
                   std::to_string(config::IrohaConfigManager::getInstance()
@@ -888,8 +889,8 @@ namespace connection {
 
       namespace getTransactions {
         bool send(const std::string &ip, const ::iroha::Ping &ping) {
-          logger::info("Connection with grpc") << "getTransactions Send!";
-          logger::info("Connection with grpc") << "IP: " << ip;
+          logger::info("connection") << "getTransactions Send!";
+          logger::info("connection") << "IP: " << ip;
           SyncConnectionClient client(grpc::CreateChannel(
               ip + ":" +
                   std::to_string(config::IrohaConfigManager::getInstance()
@@ -907,8 +908,8 @@ namespace connection {
 
       namespace getPeers {
         bool send(const std::string &ip, const ::iroha::Ping &ping) {
-          logger::info("Connection with grpc") << "Send!";
-          logger::info("Connection with grpc") << "IP: " << ip;
+          logger::info("connection") << "Send!";
+          logger::info("connection") << "IP: " << ip;
           SyncConnectionClient client(grpc::CreateChannel(
               ip + ":" +
                   std::to_string(config::IrohaConfigManager::getInstance()
@@ -939,7 +940,7 @@ namespace connection {
       namespace fetch {
         std::vector<uint8_t> fetchStreamTransaction(const std::string &ip,
                                                     const TxRequest &request) {
-          logger::info("Connection with grpc") << "Fetch stream transaction";
+          logger::info("connection") << "Fetch stream transaction";
           SyncConnectionClient client(grpc::CreateChannel(
               ip + ":" +
                   std::to_string(config::IrohaConfigManager::getInstance()
@@ -953,56 +954,54 @@ namespace connection {
   }      // namespace memberShipService
 
   /************************************************************************************
-   * Run server
+   * server interface
    ************************************************************************************/
   std::mutex wait_for_server;
   ServerBuilder builder;
   grpc::Server *server = nullptr;
   std::condition_variable server_cv;
-  bool server_ready = false;
 
-  void initialize_peer() {
-    // ToDo catch exception of to_string
-
-
-    logger::info("Connection GRPC") << " initialize_peer ";
+  void initialize() {
+    logger::info("connection") << "initialize connection";
   }
 
-  void wait_till_ready() {
-    std::unique_lock<std::mutex> lk(wait_for_server);
-    server_cv.wait(lk, [] { return server_ready; });
+  void waitForReady() {
+    std::unique_lock<std::mutex> lock(wait_for_server);
+    while (!server) server_cv.wait(lock);
   }
 
-  int run() {
-    logger::info("Connection GRPC") << " RUN ";
-    auto address =
-        "0.0.0.0:" +
-        std::to_string(
-            config::IrohaConfigManager::getInstance().getGrpcPortNumber(50051));
+  void run() {
+    logger::info("connection") << "run gRPC server";
+
+    const auto address =
+      "0.0.0.0:" +
+      std::to_string(
+          config::IrohaConfigManager::getInstance()
+            .getGrpcPortNumber(50051));
+
     SumeragiConnectionServiceImpl service;
     AssetRepositoryConnectionServiceImpl service_asset;
     SyncConnectionServiceImpl service_sync;
+
     grpc::ServerBuilder builder;
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+
     builder.RegisterService(&service);
     builder.RegisterService(&service_asset);
-    builder.RegisterService(&service_sync);  // TODO WIP Is it OK?
+    builder.RegisterService(&service_sync);
 
-    {
-      std::lock_guard<std::mutex> lk(wait_for_server);
-      // wait_for_server.lock();
-      server = builder.BuildAndStart().release();
-      server_ready = true;
-      // wait_for_server.unlock();
-    }
+    wait_for_server.lock();
+    server = builder.BuildAndStart().release();
+    wait_for_server.unlock();
     server_cv.notify_one();
 
     server->Wait();
-    return 0;
   }
 
   void finish() {
     server->Shutdown();
     delete server;
+    server = nullptr;
   }
+
 }  // namespace connection

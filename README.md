@@ -11,6 +11,10 @@ Please see the [**wiki**](https://github.com/hyperledger/iroha/wiki) for informa
 ![alt tag](Iroha_3_sm.png)
 
 
+# Current Status
+
+Currently Hyperledger Iroha is in development, with an estimate v1.0 beta release in a few weeks. The current version is undergoing significant changes and it is likely there will be problems with use! If you have any issues or questions, please [open an issue](https://github.com/hyperledger/iroha/issues).
+
 # Pull Requests
 Please include a developer certificate with pull requests: https://www.clahub.com/agreements/hyperledger/iroha
 

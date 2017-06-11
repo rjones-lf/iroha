@@ -35,7 +35,7 @@ using Transaction = iroha::Transaction;
 
 class peer_service_to_issue_transaction_test : public ::testing::Test {
  protected:
-  void serverToriiReceive() {
+  void runServer() {
     connection::iroha::SumeragiImpl::Torii::receive([](
         const std::string& from, flatbuffers::unique_ptr_t&& transaction) {
       auto tx = flatbuffers::GetRoot<::iroha::Transaction>(transaction.get());
@@ -81,24 +81,24 @@ class peer_service_to_issue_transaction_test : public ::testing::Test {
     });
     connection::run();
   }
-  std::thread server_thread_torii;
-
-  static void SetUpTestCase() { connection::initialize_peer(); }
-
-  static void TearDownTestCase() { connection::finish(); }
+  std::thread serverThread;
 
   virtual void SetUp() {
-    server_thread_torii = std::thread(
-        &peer_service_to_issue_transaction_test::serverToriiReceive, this);
+    connection::initialize();
+    serverThread = std::thread(
+      &peer_service_to_issue_transaction_test::runServer, this);
+    connection::waitForReady();
   }
 
-  virtual void TearDown() { server_thread_torii.detach(); }
+  virtual void TearDown() {
+    connection::finish();
+    serverThread.join();
+  }
 };
 
 
 TEST_F(peer_service_to_issue_transaction_test, PeerAddTest) {
   ::peer::service::initialize();
-  connection::wait_till_ready();
   ::peer::myself::activate();
   const auto peer = ::peer::Node("new_ip", "new_pubkey", "ledger");
   ::peer::transaction::isssue::add(::peer::myself::getIp(), peer);

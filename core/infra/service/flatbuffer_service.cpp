@@ -507,13 +507,13 @@ namespace flatbuffer_service {
         VoidHandler handler;
         handler = ensureNotNull(aPeerSig);
         if (!handler) {
-          logger::error("Connection with grpc") << "Peer signature is null";
+          logger::error("connection") << "Peer signature is null";
           return makeUnexpected(handler.excptr());
         }
 
         handler = ensureNotNull(aPeerSig->signature());
         if (!handler) {
-          logger::error("Connection with grpc") << "Peer signature is null";
+          logger::error("connection") << "Peer signature is null";
           return makeUnexpected(handler.excptr());
         }
 
@@ -534,14 +534,14 @@ namespace flatbuffer_service {
 
       auto handler = ensureNotNull(fromTx.signatures());
       if (!handler) {
-        logger::error("Connection with grpc") << "Transaction signature is null";
+        logger::error("connection") << "Transaction signature is null";
         return makeUnexpected(handler.excptr());
       }
 
       for (auto&& txSig : *fromTx.signatures()) {
         auto handler = ensureNotNull(txSig->signature());
         if (!handler) {
-          logger::error("Connection with grpc") << "Transaction signature is null";
+          logger::error("connection") << "Transaction signature is null";
           return makeUnexpected(handler.excptr());
         }
 
@@ -559,7 +559,7 @@ namespace flatbuffer_service {
       const ::iroha::Transaction& fromTx) {
       auto handler = ensureNotNull(fromTx.hash());
       if (!handler) {
-        logger::error("Connection with grpc") << "Transaction hash is null";
+        logger::error("connection") << "Transaction hash is null";
         return makeUnexpected(handler.excptr());
       }
       return std::vector<uint8_t>(fromTx.hash()->begin(), fromTx.hash()->end());

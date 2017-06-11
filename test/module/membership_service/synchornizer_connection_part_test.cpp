@@ -35,22 +35,25 @@
 
 class synchornizer_connection_part_test : public ::testing::Test {
  protected:
-  void serverSyncReceive() { connection::run(); }
-  std::thread server_thread_torii;
+  void runServer() {
+    connection::run();
+  }
 
-  static void SetUpTestCase() { connection::initialize_peer(); }
-
-  static void TearDownTestCase() { connection::finish(); }
+  std::thread serverThread;
 
   virtual void SetUp() {
     repository::init();
-    server_thread_torii = std::thread(
-      &synchornizer_connection_part_test::serverSyncReceive, this);
-    connection::initialize_peer();
-    connection::wait_till_ready();
+    connection::initialize();
+    serverThread = std::thread(
+      &synchornizer_connection_part_test::runServer, this);
+    connection::waitForReady();
   }
 
-  virtual void TearDown() { server_thread_torii.detach(); system("rm -rf /tmp/ametsuchi/"); }
+  virtual void TearDown() {
+    connection::finish();
+    serverThread.join();
+    system("rm -rf /tmp/ametsuchi/");
+  }
 };
 
 
