@@ -1,8 +1,8 @@
-FROM ubuntu:16.04
+FROM armv7/armhf-ubuntu
 
 ENV IROHA_HOME=/usr/local/iroha
-ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-ENV LD_LIBRARY_PATH=${IROHA_HOME}/lib
+ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-armhf
+ENV LD_LIBRARY_PATH=/lib/arm-linux-gnueabihf:/usr/lib/arm-linux-gnueabihf:/usr/lib:/usr/local/lib:${IROHA_HOME}/lib
 
 COPY iroha ${IROHA_HOME}
 COPY iroha/opt /opt

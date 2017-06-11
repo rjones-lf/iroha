@@ -6,7 +6,7 @@
 # Copyright (c) 2016, 2017 Soramitsu,Co.,Ltd.
 # All Rights Reserved.
 #-----------------------------------------------------------------------
-FROM ubuntu:16.04
+FROM armv7/armhf-ubuntu
 
 RUN apt update && apt -y upgrade
 
