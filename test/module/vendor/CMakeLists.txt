@@ -29,6 +29,5 @@
 
 AddTest(uvw_test uvw_test.cpp)
 target_link_libraries(uvw_test
-    uv
     uvw
     )
