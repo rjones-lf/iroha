@@ -14,23 +14,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//
+// Created by bogdan on 20.06.17.
+//
 
-#ifndef IROHA_INDEX_MEDIATOR_HPP
-#define IROHA_INDEX_MEDIATOR_HPP
+#ifndef IROHA_CONTEXT_H
+#define IROHA_CONTEXT_H
 
-#include <ametsuchi/storage.hpp>
+#include <string>
 
-namespace iroha {
+namespace iroha{
 
-  class IndexMediator {
-   public:
-    IndexMediator(ametsuchi::Storage* ametsuchi);
-    void synchronize();
+// forward declarations
+struct PostgresConnection;
+struct Connection;
+struct Context;
 
-   private:
-    ametsuchi::Storage* ametsuchi_;
-  };
 
-}  // namespace iroha
+struct Context{
+  PostgresConnection wsv;
+  Connection index;
+  Connection ordering;
+};
 
-#endif  // IROHA_INDEX_MEDIATOR_HPP
+
+struct Connection {
+  std::string host;
+  uint16_t port;
+};
+
+
+struct PostgresConnection: public Connection {
+  std::string user;
+  std::string password;
+};
+
+}
+
+#endif //IROHA_CONTEXT_H
