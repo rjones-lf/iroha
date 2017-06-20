@@ -2,4 +2,7 @@ add_library(index OBJECT
     backend/redis.cpp
     )
 
-target_include_directories(index PUBLIC ${CPP_REDIS_INCLUDE_DIRS})
+target_include_directories(index PUBLIC
+    ${CPP_REDIS_INCLUDE_DIRS}
+    ${any_INCLUDE_DIRS}
+    )
