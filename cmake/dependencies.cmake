@@ -313,8 +313,6 @@ set_target_properties(optional PROPERTIES
 
 add_dependencies(optional martinmoene_optional)
 
-include_directories(${optional_INCLUDE_DIRS})
-
 ########################
 #         any          #
 ########################
@@ -337,8 +335,6 @@ set_target_properties(any PROPERTIES
     )
 
 add_dependencies(any martinmoene_any)
-
-include_directories(${any_INCLUDE_DIRS})
 
 ################################
 #            libuv             #

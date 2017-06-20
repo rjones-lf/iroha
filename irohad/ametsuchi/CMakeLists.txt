@@ -8,9 +8,6 @@ add_subdirectory(wsv)
 add_library(storage
     impl/ametsuchi.cpp
     index_mediator.cpp
-    $<TARGET_OBJECTS:block_store>
-    $<TARGET_OBJECTS:index>
-    $<TARGET_OBJECTS:wsv>
     )
 
 target_link_libraries(storage PUBLIC
@@ -18,4 +15,7 @@ target_link_libraries(storage PUBLIC
     cpp_redis
     pqxx
     optional
+    block_store
+    index
+    wsv
     )
