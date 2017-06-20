@@ -17,4 +17,5 @@ target_link_libraries(storage PUBLIC
     schema
     cpp_redis
     pqxx
+    optional
     )

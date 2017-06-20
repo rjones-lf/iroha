@@ -304,6 +304,14 @@ ExternalProject_Add(martinmoene_optional
         )
 ExternalProject_Get_Property(martinmoene_optional source_dir)
 set(optional_INCLUDE_DIRS ${source_dir}/include)
+file(MAKE_DIRECTORY ${optional_INCLUDE_DIRS})
+
+add_library(optional INTERFACE IMPORTED)
+set_target_properties(optional PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${optional_INCLUDE_DIRS}
+    )
+
+add_dependencies(optional martinmoene_optional)
 
 include_directories(${optional_INCLUDE_DIRS})
 
@@ -321,6 +329,14 @@ ExternalProject_Add(martinmoene_any
         )
 ExternalProject_Get_Property(martinmoene_any source_dir)
 set(any_INCLUDE_DIRS ${source_dir}/include)
+file(MAKE_DIRECTORY ${any_INCLUDE_DIRS})
+
+add_library(any INTERFACE IMPORTED)
+set_target_properties(any PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${any_INCLUDE_DIRS}
+    )
+
+add_dependencies(any martinmoene_any)
 
 include_directories(${any_INCLUDE_DIRS})
 

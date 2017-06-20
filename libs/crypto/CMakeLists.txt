@@ -10,4 +10,6 @@ add_library(crypto STATIC
 target_link_libraries(crypto PUBLIC
     keccak
     ed25519
+    optional
+    any
 )
