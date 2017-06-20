@@ -4,5 +4,5 @@ add_library(index OBJECT
 
 target_include_directories(index PUBLIC
     ${CPP_REDIS_INCLUDE_DIRS}
-    ${any_INCLUDE_DIRS}
+    ${optional_INCLUDE_DIRS}
     )
