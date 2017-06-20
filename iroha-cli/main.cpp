@@ -57,5 +57,5 @@ void create_account() {
   std::cout << "Define quorum:" << std::endl;
   std::cin >> quorum;
 
-  ed2
+
 }
