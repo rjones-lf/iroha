@@ -31,3 +31,8 @@ AddTest(uvw_test uvw_test.cpp)
 target_link_libraries(uvw_test
     uvw
     )
+
+AddTest(observable_test observable_test.cpp)
+target_link_libraries(observable_test
+    observable
+    )
