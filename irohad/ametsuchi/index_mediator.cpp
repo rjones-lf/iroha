@@ -20,7 +20,7 @@
 
 namespace iroha {
 
-  IndexMediator::IndexMediator(ametsuchi::Ametsuchi *ametsuchi)
+  IndexMediator::IndexMediator(ametsuchi::Storage *ametsuchi)
       : ametsuchi_(ametsuchi) {}
 
   void IndexMediator::synchronize() {

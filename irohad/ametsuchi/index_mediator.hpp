@@ -18,17 +18,17 @@
 #ifndef IROHA_INDEX_MEDIATOR_HPP
 #define IROHA_INDEX_MEDIATOR_HPP
 
-#include <ametsuchi/ametsuchi.hpp>
+#include <ametsuchi/storage.hpp>
 
 namespace iroha {
 
   class IndexMediator {
    public:
-    IndexMediator(ametsuchi::Ametsuchi* ametsuchi);
+    IndexMediator(ametsuchi::Storage* ametsuchi);
     void synchronize();
 
    private:
-    ametsuchi::Ametsuchi* ametsuchi_;
+    ametsuchi::Storage* ametsuchi_;
   };
 
 }  // namespace iroha

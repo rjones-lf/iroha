@@ -304,14 +304,8 @@ ExternalProject_Add(martinmoene_optional
         )
 ExternalProject_Get_Property(martinmoene_optional source_dir)
 set(optional_INCLUDE_DIRS ${source_dir}/include)
-file(MAKE_DIRECTORY ${optional_INCLUDE_DIRS})
 
-add_library(optional INTERFACE IMPORTED)
-set_target_properties(optional PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${optional_INCLUDE_DIRS}
-        )
-
-add_dependencies(optional martinmoene_optional)
+include_directories(${optional_INCLUDE_DIRS})
 
 ########################
 #         any          #
@@ -327,39 +321,8 @@ ExternalProject_Add(martinmoene_any
         )
 ExternalProject_Get_Property(martinmoene_any source_dir)
 set(any_INCLUDE_DIRS ${source_dir}/include)
-file(MAKE_DIRECTORY ${any_INCLUDE_DIRS})
 
-add_library(any INTERFACE IMPORTED)
-set_target_properties(any PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${any_INCLUDE_DIRS}
-        )
-
-add_dependencies(any martinmoene_any)
-
-#########
-#  天地  #
-#########
-ExternalProject_Add(hyperledger_iroha-ametsuchi
-    GIT_REPOSITORY "https://github.com/hyperledger/iroha-ametsuchi"
-    GIT_TAG "develop"
-    CMAKE_ARGS -DTESTING=OFF
-    INSTALL_COMMAND "" # remove install step
-    TEST_COMMAND "" # remove test step
-    UPDATE_COMMAND "" # remove update step
-    )
-ExternalProject_Get_Property(hyperledger_iroha-ametsuchi source_dir binary_dir)
-set(ametsuchi_INCLUDE_DIR ${source_dir}/include)
-set(ametsuchi_LIBRARY ${binary_dir}/lib/libametsuchi.a)
-
-add_library(ametsuchi STATIC IMPORTED)
-file(MAKE_DIRECTORY ${ametsuchi_INCLUDE_DIR})
-
-set_target_properties(ametsuchi PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${ametsuchi_INCLUDE_DIR}
-    IMPORTED_LOCATION ${ametsuchi_LIBRARY}
-    )
-add_dependencies(ametsuchi hyperledger_iroha-ametsuchi)
-
+include_directories(${any_INCLUDE_DIRS})
 
 ################################
 #            libuv             #
@@ -411,3 +374,67 @@ set_target_properties(uvw PROPERTIES
     )
 
 add_dependencies(uvw skypjack_uvw)
+
+##########################
+#       cpp_redis        #
+##########################
+find_package(CPP_redis)
+if (NOT CPP_redis_FOUND)
+  ExternalProject_Add(cylix_cpp_redis
+      GIT_REPOSITORY "https://github.com/Cylix/cpp_redis.git"
+      CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+      -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+      INSTALL_COMMAND "" # remove install step
+      UPDATE_COMMAND "" # remove update step
+      TEST_COMMAND "" # remove test step
+      )
+  ExternalProject_Get_Property(cylix_cpp_redis source_dir binary_dir)
+  set(CPP_REDIS_INCLUDE_DIRS ${source_dir}/includes)
+  set(CPP_REDIS_LIBRARIES ${binary_dir}/lib/libcpp_redis.a)
+  set(TACOPIE_LIBRARIES ${binary_dir}/lib/libtacopie.a)
+  file(MAKE_DIRECTORY ${CPP_REDIS_INCLUDE_DIRS})
+
+  add_library(cpp_redis STATIC IMPORTED)
+  set_target_properties(cpp_redis PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${CPP_REDIS_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${CPP_REDIS_LIBRARIES}
+      IMPORTED_LINK_INTERFACE_LIBRARIES "${TACOPIE_LIBRARIES};pthread"
+      )
+
+  add_dependencies(cpp_redis cylix_cpp_redis)
+endif ()
+
+##########################
+#          pqxx          #
+##########################
+find_package(PQxx)
+if (NOT PQxx_FOUND)
+  find_package(PostgreSQL QUIET)
+  if (NOT PostgreSQL_LIBRARY)
+    message(FATAL_ERROR "libpq not found")
+  endif ()
+
+  ExternalProject_Add(jtv_libpqxx
+      GIT_REPOSITORY "https://github.com/jtv/libpqxx.git"
+      CONFIGURE_COMMAND ./configure --disable-documentation --with-pic
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND $(MAKE)
+      INSTALL_COMMAND "" # remove install step
+      TEST_COMMAND "" # remove test step
+      UPDATE_COMMAND "" # remove update step
+      )
+  ExternalProject_Get_Property(jtv_libpqxx source_dir)
+  set(pqxx_INCLUDE_DIRS ${source_dir}/include)
+  set(pqxx_LIBRARIES ${source_dir}/src/.libs/libpqxx.a)
+  file(MAKE_DIRECTORY ${pqxx_INCLUDE_DIRS})
+
+  add_library(pqxx STATIC IMPORTED)
+  set_target_properties(pqxx PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${pqxx_INCLUDE_DIRS}
+      IMPORTED_LOCATION ${pqxx_LIBRARIES}
+      INTERFACE_LINK_LIBRARIES "pq"
+      )
+
+  add_dependencies(pqxx jtv_libpqxx)
+endif ()
