@@ -30,6 +30,7 @@ include(cmake/functions.cmake)
 add_subdirectory(schema)
 add_subdirectory(libs)
 add_subdirectory(irohad)
+add_subdirectory(iroha-cli)
 
 link_directories(${PROJECT_BINARY_DIR}/lib)
 

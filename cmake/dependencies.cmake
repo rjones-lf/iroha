@@ -421,6 +421,7 @@ file(MAKE_DIRECTORY ${gflags_INCLUDE_DIR})
 set_target_properties(gflags PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${gflags_INCLUDE_DIR}
     IMPORTED_LOCATION ${gflags_LIBRARY}
+    IMPORTED_LINK_INTERFACE_LIBRARIES "pthread"
     )
 add_dependencies(gflags gflags_gflags)
 
