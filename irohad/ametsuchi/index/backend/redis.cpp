@@ -47,10 +47,11 @@ namespace iroha {
       }
 
       bool Redis::add_pubkey_txhash(std::string pubkey, std::string txhash) {
-        bool res = true;
+        bool res;
         std::vector<std::string> txhashes(
             {txhash});  // cpp redis requires to put vector into rpush
-        client_.rpush("account_pubkey:" + pubkey, txhashes);
+        client_.rpush("account_pubkey:" + pubkey, txhashes,
+                      [&res](cpp_redis::reply &reply) { res = reply.ok(); });
         client_.sync_commit();
         return res;
       }
@@ -74,8 +75,7 @@ namespace iroha {
         return res;
       }
 
-      nonstd::optional<uint64_t> Redis::get_txid_by_txhash(
-          std::string txhash) {
+      nonstd::optional<uint64_t> Redis::get_txid_by_txhash(std::string txhash) {
         nonstd::optional<uint64_t> res;
         read_client_.hget("tx:" + txhash, "txid",
                           [&res](cpp_redis::reply &reply) {
@@ -100,13 +100,14 @@ namespace iroha {
         return res;
       }
 
-      nonstd::optional<std::vector<std::string>>
-      Redis::get_txhashes_by_pubkey(std::string pubkey) {
+      nonstd::optional<std::vector<std::string>> Redis::get_txhashes_by_pubkey(
+          std::string pubkey) {
         nonstd::optional<std::vector<std::string>> res;
         read_client_.lrange("account_pubkey:" + pubkey, 0, -1,
                             [&res](cpp_redis::reply &reply) {
                               if (reply.ok() && reply.is_array()) {
                                 auto replies = reply.as_array();
+                                res = std::vector<std::string>();
                                 for (const auto &one_reply : replies) {
                                   res->push_back(one_reply.as_string());
                                 }
