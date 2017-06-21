@@ -55,7 +55,7 @@ namespace iroha {
                   std::back_inserter(concat));
 
         // txnumber
-        concat += std::to_string(block.tx_number);
+        concat += std::to_string(block.txs_number);
 
         // merkle root
         std::copy(block.merkle_root.begin(), block.merkle_root.end(),

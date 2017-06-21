@@ -59,7 +59,7 @@ iroha::dao::Block create_block() {
   block.created_ts = 0;
   block.height = 0;
   memset(block.prev_hash.data(), 0x0, iroha::crypto::ed25519::PUBLEN);
-  block.tx_number = 0;
+  block.txs_number = 0;
   memset(block.merkle_root.data(), 0x0, iroha::crypto::ed25519::PUBLEN);
   block.transactions.push_back(create_transaction());
   return block;

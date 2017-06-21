@@ -51,7 +51,7 @@ namespace iroha {
        * Public key of a transaction creator.
        * META field
        */
-      ed25519::pubkey_t creator;
+      crypto::ed25519::pubkey_t creator;
 
       /**
        * Number for protecting against replay attack.
