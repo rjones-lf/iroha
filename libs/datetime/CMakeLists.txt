@@ -2,3 +2,4 @@
 
 # time64 is currently not used
 
+add_subdirectory(time64)

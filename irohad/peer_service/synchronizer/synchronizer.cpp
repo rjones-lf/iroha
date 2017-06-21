@@ -18,7 +18,6 @@ limitations under the License.
 // Created by Takumi Yamashita on 2017/04/28.
 //
 
-#include <datetime/time.hpp>
 #include <map_queue/map_queue.hpp>
 #include <peer_service/monitor.hpp>
 #include <peer_service/self_state.hpp>

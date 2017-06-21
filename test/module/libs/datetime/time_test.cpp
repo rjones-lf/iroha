@@ -16,7 +16,7 @@
  */
 
 
-#include "datetime/time.h"
+#include <datetime/time.hpp>
 #include <gtest/gtest.h>
 
 TEST(Time, Now32) {

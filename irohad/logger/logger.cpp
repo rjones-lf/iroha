@@ -14,47 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// This file is used to link dependencies library
 #include "logger.hpp"
-
-namespace logger {
-
-    //enum class LogLevel { Debug = 0, Explore, Info, Warning, Error, Fatal };
-    static const std::string level_names[]{
-        "DEBUG", "INFO", "WARNING", "ERROR (-A-)"
-    };
-
-    Logger::Logger(std::string &&name):
-      log_name(name)
-    {};
-    Logger::Logger(const std::string &name):
-      log_name(name)
-    {};
-
-    void Logger::debug(std::string &&msg){
-      console->debug(msg);
-    }
-    void Logger::debug(const std::string &msg){
-      console->debug(msg);
-    }
-
-    void Logger::info(std::string &&msg){
-      console->info(msg);
-    }
-    void Logger::info(const std::string &msg){
-      console->info(msg);
-    }
-
-    void Logger::warning(std::string &&msg){
-      console->warn(msg);
-    }
-    void Logger::warning(const std::string &msg){
-      console->warn(msg);
-    }
-
-    void Logger::error(std::string &&msg){
-      console->error(msg);
-    }
-    void Logger::error(const std::string &msg){
-      console->error(msg);
-    }
-}

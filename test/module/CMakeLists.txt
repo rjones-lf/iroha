@@ -1,8 +1,6 @@
 set(CMAKE_BUILD_TYPE Debug)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
 # Reusable tests
-add_subdirectory(crypto)
-#add_subdirectory(utils)
+add_subdirectory(irohad)
+add_subdirectory(libs)
 add_subdirectory(vendor)

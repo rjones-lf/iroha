@@ -92,6 +92,9 @@ class MapQueue {
     data_[k] = std::move(v);
     return data_.size();
   }
+  size_t set(const Key& k, const Value& v) {
+    return set(k,std::move(v));
+  }
 
   // [] oprator
   const Value& operator[](const Key& k) {

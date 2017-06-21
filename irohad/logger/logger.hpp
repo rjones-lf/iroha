@@ -24,26 +24,56 @@ limitations under the License.
 namespace logger {
 
 struct Logger {
-    std::string log_name;
     std::shared_ptr<spdlog::logger> console;
 
-    explicit Logger(std::string &&name);
-    explicit Logger(const std::string &name);
+    Logger(std::string &&name):
+            console(spdlog::stdout_color_mt(name))
+    {};
 
-    void debug(std::string &&msg);
-    void debug(const std::string &msg);
+    Logger(const std::string &name):
+            console(spdlog::stdout_color_mt(name))
+    {};
 
-    void info(std::string &&msg);
-    void info(const std::string &msg);
+    template <typename ... Args>
+    void debug(const char* fmt, const Args&... args){
+        console->debug(fmt,args...);
+    }
+    template <typename ... Args>
+    void debug(const std::string& fmt, const Args&... args){
+        console->debug(fmt,args...);
+    }
 
-    void warning(std::string &&msg);
-    void warning(const std::string &msg);
+    template <typename ... Args>
+    void info(const char* fmt, const Args&... args){
+        console->info(fmt,args...);
+    }
+    template <typename ... Args>
+    void info(const std::string& fmt, const Args&... args){
+        console->info(fmt,args...);
+    }
 
-    void error(std::string &&msg);
-    void error(const std::string &msg);
+    template <typename ... Args>
+    void warning(const char* fmt, const Args&... args){
+        console->warn(fmt,args...);
+    }
+    template <typename ... Args>
+    void warning(const std::string& fmt, const Args&... args){
+        console->warn(fmt,args...);
+    }
+
+    template <typename ... Args>
+    void error(const char* fmt, const Args&... args){
+        console->error(fmt,args...);
+    }
+    template <typename ... Args>
+    void error(const std::string& fmt, const Args&... args){
+        console->error(fmt,args...);
+    }
 
 };
 
 }  // namespace logger
+
+#include "logger.cpp"
 
 #endif

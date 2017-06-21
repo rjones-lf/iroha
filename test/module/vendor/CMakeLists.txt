@@ -29,6 +29,10 @@
 
 AddTest(uvw_test uvw_test.cpp)
 target_link_libraries(uvw_test
-    uv
     uvw
+    )
+
+AddTest(observable_test observable_test.cpp)
+target_link_libraries(observable_test
+    observable
     )

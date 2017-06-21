@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,24 +15,21 @@
  * limitations under the License.
  */
 
-//
-// Created by Takumi Yamashita on 2017/04/28.
-//
-
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
-#include <utils/cache_map.hpp>
+#include <map_queue/map_queue.hpp>
 
-TEST(CacheMapTest, CacheMapTest) {
-  const int N = 10;
-  structure::CacheMap<int, std::string> cmap(N);
+const int N = 10;
+structure::MapQueue<int, std::string> cmap(N);
+int is[] = {100, 321, 2, 4, 31, 32, 55, 66, 44, 88};
+std::string vs[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
 
-  int is[] = {100, 321, 2, 4, 31, 32, 55, 66, 44, 88};
-  std::string vs[] = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
-
+TEST(MapQueue, initialize) {
   ASSERT_TRUE(cmap.max_size() == N);
+}
 
+TEST(MapQueue, add_and_getMaxKey) {
   // add and getMaxKey Test
   int maxi = 0;
   for (int i = 0; i < N; i++) {
@@ -40,11 +37,16 @@ TEST(CacheMapTest, CacheMapTest) {
     cmap.set(is[i], vs[i]);
     ASSERT_TRUE(cmap.getMaxKey() == maxi);
   }
+}
 
+TEST(MapQueue, check_key_eq_value) {
   // check key = value Test
   for (int i = 0; i < N; i++) {
     ASSERT_TRUE(cmap[is[i]] == vs[i]);
   }
+}
+
+TEST(MapQueue, change_size){
   // change size Test
   ASSERT_TRUE(cmap.size() == N);
   cmap.set_cache_size(5);

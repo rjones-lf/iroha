@@ -16,30 +16,30 @@ limitations under the License.
 #ifndef __IROHA_PEER_SERVICE_SELF_STATE_HPP__
 #define __IROHA_PEER_SERVICE_SELF_STATE_HPP__
 
-#include <string>
 #include <peer_service/peer_service.hpp>
 
-namespace peer_service{
-    namespace self_state{
+namespace peer_service {
+  namespace self_state {
 
-        void initializeMyKey();
-        void initializeMyIp();
+    void initializeMyKey();
+    void initializeMyIp();
 
-        std::string getPublicKey();
-        std::string getPrivateKey();
-        std::string getIp();
-        std::string getName();
-        double getTrust();
-        State getState();
+    std::string getPublicKey();
+    std::string getPrivateKey();
+    std::string getIp();
+    std::string getName();
+    double getTrust();
+    State getState();
 
-        bool  isLeader();
+    bool isLeader();
 
-        uint64_t getActiveTime();
+    uint64_t getActiveTime();
 
-        void activate();
-        void stop();
-
-    };
+    void setName(const std::string &name);
+    void setName(std::string &&name);
+    void activate();
+    void stop();
+  };
 };
 
-#endif //__IROHA_PEER_SERVICE_SELF_STATE_HPP__
+#endif  //__IROHA_PEER_SERVICE_SELF_STATE_HPP__

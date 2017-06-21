@@ -24,8 +24,6 @@ namespace peer_service {
     std::shared_ptr<Node> getCurrentLeader();
     std::string getCurrentLeaderIp();
 
-    void initialize();
-
     size_t getMaxFaulty();
 
     Nodes getAllPeerList();

@@ -1,12 +1,11 @@
 include(ExternalProject)
 set(EP_PREFIX "${PROJECT_SOURCE_DIR}/external")
 set_directory_properties(PROPERTIES
-  EP_PREFIX ${EP_PREFIX}
-)
+    EP_PREFIX ${EP_PREFIX}
+    )
 
 # Project dependencies.
 find_package(Threads REQUIRED)
-
 
 ###########################
 #         keccak          #
@@ -17,15 +16,15 @@ if (NOT LIBXSLT_XSLTPROC_EXECUTABLE)
 endif ()
 
 ExternalProject_Add(gvanas_keccak
-  GIT_REPOSITORY    "https://github.com/gvanas/KeccakCodePackage.git"
-  BUILD_IN_SOURCE   1
-  BUILD_COMMAND     bash -c "CFLAGS='-fPIC -DKeccakP200_excluded -DKeccakP400_excluded -DKeccakP800_excluded'\
+    GIT_REPOSITORY "https://github.com/gvanas/KeccakCodePackage.git"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND bash -c "CFLAGS='-fPIC -DKeccakP200_excluded -DKeccakP400_excluded -DKeccakP800_excluded'\
     $(MAKE) CC='${CMAKE_C_COMPILER}' generic64/libkeccak.a"
-  CONFIGURE_COMMAND "" # remove configure step
-  INSTALL_COMMAND   "" # remove install step
-  TEST_COMMAND      "" # remove test step
-  UPDATE_COMMAND    "" # remove update step
-)
+    CONFIGURE_COMMAND "" # remove configure step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(gvanas_keccak source_dir)
 set(keccak_SOURCE_DIR "${source_dir}")
 
@@ -33,50 +32,46 @@ set(keccak_SOURCE_DIR "${source_dir}")
 add_library(keccak STATIC IMPORTED)
 file(MAKE_DIRECTORY ${keccak_SOURCE_DIR}/bin/generic64/libkeccak.a.headers)
 set_target_properties(keccak PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${keccak_SOURCE_DIR}/bin/generic64/libkeccak.a.headers"
-  IMPORTED_LOCATION "${keccak_SOURCE_DIR}/bin/generic64/libkeccak.a"
-  )
+    INTERFACE_INCLUDE_DIRECTORIES "${keccak_SOURCE_DIR}/bin/generic64/libkeccak.a.headers"
+    IMPORTED_LOCATION "${keccak_SOURCE_DIR}/bin/generic64/libkeccak.a"
+    )
 
 add_dependencies(keccak gvanas_keccak)
-
-
 
 ############################
 #         ed25519          #
 ############################
 ExternalProject_Add(mizukisonoko_ed25519
-  GIT_REPOSITORY    "https://github.com/MizukiSonoko/ed25519.git"
-  BUILD_IN_SOURCE   1
-  BUILD_COMMAND     $(MAKE)
-  CONFIGURE_COMMAND "" # remove configure step
-  INSTALL_COMMAND   "" # remove install step
-  TEST_COMMAND      "" # remove test step
-  UPDATE_COMMAND    "" # remove update step
-  )
+    GIT_REPOSITORY "https://github.com/MizukiSonoko/ed25519.git"
+    BUILD_IN_SOURCE 1
+    BUILD_COMMAND $(MAKE)
+    CONFIGURE_COMMAND "" # remove configure step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(mizukisonoko_ed25519 source_dir)
 set(ed25519_SOURCE_DIR "${source_dir}")
 
 add_library(ed25519 STATIC IMPORTED)
 file(MAKE_DIRECTORY ${ed25519_SOURCE_DIR}/src)
 set_target_properties(ed25519 PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${ed25519_SOURCE_DIR}/src
-  IMPORTED_LOCATION ${ed25519_SOURCE_DIR}/lib/libed25519.a
-  )
+    INTERFACE_INCLUDE_DIRECTORIES ${ed25519_SOURCE_DIR}/src
+    IMPORTED_LOCATION ${ed25519_SOURCE_DIR}/lib/libed25519.a
+    )
 add_dependencies(ed25519 mizukisonoko_ed25519)
-
-
 
 ####################################
 #         thread-pool-cpp          #
 ####################################
 ExternalProject_Add(warchant_thread_pool
-  GIT_REPOSITORY    "https://github.com/Warchant/thread-pool-cpp.git"
-  BUILD_COMMAND     "" # remove build step, header only lib
-  CONFIGURE_COMMAND "" # remove configure step
-  INSTALL_COMMAND   "" # remove install step
-  TEST_COMMAND      "" # remove test step
-  UPDATE_COMMAND    "" # remove update step
-  )
+    GIT_REPOSITORY "https://github.com/Warchant/thread-pool-cpp.git"
+    BUILD_COMMAND "" # remove build step, header only lib
+    CONFIGURE_COMMAND "" # remove configure step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(warchant_thread_pool source_dir)
 set(thread_pool_SOURCE_DIR "${source_dir}")
 
@@ -84,28 +79,27 @@ set(thread_pool_SOURCE_DIR "${source_dir}")
 add_library(thread_pool INTERFACE IMPORTED)
 file(MAKE_DIRECTORY ${thread_pool_SOURCE_DIR}/thread_pool)
 set_target_properties(thread_pool PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${thread_pool_SOURCE_DIR}/thread_pool
-  )
+    INTERFACE_INCLUDE_DIRECTORIES ${thread_pool_SOURCE_DIR}/thread_pool
+    )
 add_dependencies(thread_pool warchant_thread_pool)
-
 
 ##########################
 #         gtest          #
 ##########################
 # testing is an option. Look at the main CMakeLists.txt for details.
-if(TESTING)
+if (TESTING)
   ExternalProject_Add(google_test
-    GIT_REPOSITORY    "https://github.com/google/googletest.git"
-    CMAKE_ARGS        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                      -Dgtest_force_shared_crt=ON
-                      -Dgtest_disable_pthreads=OFF
-                      -DBUILD_GTEST=ON
-                      -DBUILD_GMOCK=OFF
-    INSTALL_COMMAND   "" # remove install step
-    UPDATE_COMMAND    "" # remove update step
-    TEST_COMMAND      "" # remove test step
-    )
+      GIT_REPOSITORY "https://github.com/google/googletest.git"
+      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      -Dgtest_force_shared_crt=ON
+      -Dgtest_disable_pthreads=OFF
+      -DBUILD_GTEST=ON
+      -DBUILD_GMOCK=OFF
+      INSTALL_COMMAND "" # remove install step
+      UPDATE_COMMAND "" # remove update step
+      TEST_COMMAND "" # remove test step
+      )
   ExternalProject_Get_Property(google_test source_dir binary_dir)
   set(gtest_SOURCE_DIR ${source_dir})
   set(gtest_BINARY_DIR ${binary_dir})
@@ -114,36 +108,34 @@ if(TESTING)
   file(MAKE_DIRECTORY ${gtest_SOURCE_DIR}/googletest/include)
 
   set_target_properties(gtest
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${gtest_SOURCE_DIR}/googletest/include
-    IMPORTED_LINK_INTERFACE_LIBRARIES "pthread;${gtest_BINARY_DIR}/googletest/libgtest_main.a"
-    IMPORTED_LOCATION ${gtest_BINARY_DIR}/googletest/libgtest.a
-  )
+      PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${gtest_SOURCE_DIR}/googletest/include
+      IMPORTED_LINK_INTERFACE_LIBRARIES "pthread;${gtest_BINARY_DIR}/googletest/libgtest_main.a"
+      IMPORTED_LOCATION ${gtest_BINARY_DIR}/googletest/libgtest.a
+      )
   add_dependencies(gtest google_test)
-endif()
-
-
+endif ()
 
 #############################
 #         speedlog          #
 #############################
 ExternalProject_Add(gabime_spdlog
-  GIT_REPOSITORY    "https://github.com/gabime/spdlog.git"
-  GIT_TAG           "v0.13.0"
-  CONFIGURE_COMMAND "" # remove configure step
-  BUILD_COMMAND     "" # remove build step
-  INSTALL_COMMAND   "" # remove install step
-  TEST_COMMAND      "" # remove test step
-  UPDATE_COMMAND    "" # remove update step
-  )
+    GIT_REPOSITORY "https://github.com/gabime/spdlog.git"
+    GIT_TAG "v0.13.0"
+    CONFIGURE_COMMAND "" # remove configure step
+    BUILD_COMMAND "" # remove build step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(gabime_spdlog source_dir)
 set(spdlog_INCLUDE_DIRS ${source_dir}/include)
 file(MAKE_DIRECTORY ${spdlog_INCLUDE_DIRS})
 
 add_library(spdlog INTERFACE IMPORTED)
 set_target_properties(spdlog PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES ${spdlog_INCLUDE_DIRS}
-  )
+    INTERFACE_INCLUDE_DIRECTORIES ${spdlog_INCLUDE_DIRS}
+    )
 
 add_dependencies(spdlog gabime_spdlog)
 
@@ -177,14 +169,14 @@ add_dependencies(spdlog gabime_spdlog)
 find_package(Protobuf 3.0.0)
 if (NOT PROTOBUF_FOUND OR NOT PROTOBUF_PROTOC_EXECUTABLE)
   ExternalProject_Add(google_protobuf
-          URL https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
-          CONFIGURE_COMMAND ./configure
-          BUILD_IN_SOURCE 1
-          BUILD_COMMAND $(MAKE)
-          INSTALL_COMMAND "" # remove install step
-          TEST_COMMAND "" # remove test step
-          UPDATE_COMMAND "" # remove update step
-          )
+      URL https://github.com/google/protobuf/releases/download/v3.0.0/protobuf-cpp-3.0.0.tar.gz
+      CONFIGURE_COMMAND ./configure
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND $(MAKE)
+      INSTALL_COMMAND "" # remove install step
+      TEST_COMMAND "" # remove test step
+      UPDATE_COMMAND "" # remove update step
+      )
   ExternalProject_Get_Property(google_protobuf source_dir)
   set(protobuf_INCLUDE_DIRS ${source_dir}/src)
   set(protobuf_LIBRARIES ${source_dir}/src/.libs/libprotobuf.a)
@@ -200,9 +192,9 @@ endif ()
 
 add_library(protobuf STATIC IMPORTED)
 set_target_properties(protobuf PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${protobuf_INCLUDE_DIRS}
-        IMPORTED_LOCATION ${protobuf_LIBRARIES}
-        )
+    INTERFACE_INCLUDE_DIRECTORIES ${protobuf_INCLUDE_DIRS}
+    IMPORTED_LOCATION ${protobuf_LIBRARIES}
+    )
 
 if (NOT PROTOBUF_FOUND OR NOT PROTOBUF_PROTOC_EXECUTABLE)
   add_dependencies(protobuf google_protobuf protoc)
@@ -214,15 +206,15 @@ endif ()
 find_package(GRPC)
 if (NOT GRPC_FOUND)
   ExternalProject_Add(grpc_grpc
-          GIT_REPOSITORY "https://github.com/grpc/grpc.git"
-          GIT_TAG "v1.3.0"
-          BUILD_IN_SOURCE 1
-          BUILD_COMMAND $(MAKE)
-          CONFIGURE_COMMAND "" # remove configure step
-          INSTALL_COMMAND "" # remove install step
-          TEST_COMMAND "" # remove test step
-          UPDATE_COMMAND "" # remove update step
-          )
+      GIT_REPOSITORY "https://github.com/grpc/grpc.git"
+      GIT_TAG "v1.3.0"
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND $(MAKE)
+      CONFIGURE_COMMAND "" # remove configure step
+      INSTALL_COMMAND "" # remove install step
+      TEST_COMMAND "" # remove test step
+      UPDATE_COMMAND "" # remove update step
+      )
   ExternalProject_Get_Property(grpc_grpc source_dir)
   set(grpc_INCLUDE_DIR ${source_dir}/include)
   set(grpc_LIBRARY ${source_dir}/libs/opt/libgrpc.so)
@@ -243,23 +235,23 @@ endif ()
 # libgrpc
 add_library(grpc SHARED IMPORTED)
 set_target_properties(grpc PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
-        IMPORTED_LOCATION ${grpc_LIBRARY}
-        )
+    INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
+    IMPORTED_LOCATION ${grpc_LIBRARY}
+    )
 
 # libgrpc++
 add_library(grpc++ SHARED IMPORTED)
 set_target_properties(grpc++ PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
-        IMPORTED_LOCATION ${grpc_grpc++_LIBRARY}
-        )
+    INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
+    IMPORTED_LOCATION ${grpc_grpc++_LIBRARY}
+    )
 
 # libgrpc++_reflection
 add_library(grpc++_reflection SHARED IMPORTED)
 set_target_properties(grpc++_reflection PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
-        IMPORTED_LOCATION ${grpc_grpc++_reflection_LIBRARY}
-        )
+    INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
+    IMPORTED_LOCATION ${grpc_grpc++_reflection_LIBRARY}
+    )
 
 if (NOT GRPC_FOUND)
   add_dependencies(grpc grpc_grpc)
@@ -267,26 +259,25 @@ if (NOT GRPC_FOUND)
   add_dependencies(grpc++_reflection grpc_grpc)
 endif ()
 
-
 ################################
 #          rapidjson           #
 ################################
 ExternalProject_Add(miloyip_rapidjson
-        GIT_REPOSITORY    "https://github.com/miloyip/rapidjson"
-        BUILD_COMMAND     "" # remove build step, header only lib
-        CONFIGURE_COMMAND "" # remove configure step
-        INSTALL_COMMAND   "" # remove install step
-        TEST_COMMAND      "" # remove test step
-        UPDATE_COMMAND    "" # remove update step
-        )
+    GIT_REPOSITORY "https://github.com/miloyip/rapidjson"
+    BUILD_COMMAND "" # remove build step, header only lib
+    CONFIGURE_COMMAND "" # remove configure step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(miloyip_rapidjson source_dir)
 set(rapidjson_INCLUDE_DIR "${source_dir}/include")
 
 add_library(rapidjson INTERFACE IMPORTED)
 file(MAKE_DIRECTORY ${rapidjson_INCLUDE_DIR})
 set_target_properties(rapidjson PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES ${rapidjson_INCLUDE_DIR}
-        )
+    INTERFACE_INCLUDE_DIRECTORIES ${rapidjson_INCLUDE_DIR}
+    )
 
 add_dependencies(rapidjson miloyip_rapidjson)
 
@@ -294,14 +285,14 @@ add_dependencies(rapidjson miloyip_rapidjson)
 #         optional          #
 #############################
 ExternalProject_Add(martinmoene_optional
-        GIT_REPOSITORY "https://github.com/martinmoene/optional-lite"
-        GIT_TAG "v2.0.0"
-        CONFIGURE_COMMAND "" # remove configure step
-        BUILD_COMMAND "" # remove build step
-        INSTALL_COMMAND "" # remove install step
-        TEST_COMMAND "" # remove test step
-        UPDATE_COMMAND "" # remove update step
-        )
+    GIT_REPOSITORY "https://github.com/martinmoene/optional-lite"
+    GIT_TAG "v2.0.0"
+    CONFIGURE_COMMAND "" # remove configure step
+    BUILD_COMMAND "" # remove build step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(martinmoene_optional source_dir)
 set(optional_INCLUDE_DIRS ${source_dir}/include)
 file(MAKE_DIRECTORY ${optional_INCLUDE_DIRS})
@@ -317,14 +308,14 @@ add_dependencies(optional martinmoene_optional)
 #         any          #
 ########################
 ExternalProject_Add(martinmoene_any
-        GIT_REPOSITORY "https://github.com/martinmoene/any-lite"
-        GIT_TAG "v0.0.0"
-        CONFIGURE_COMMAND "" # remove configure step
-        BUILD_COMMAND "" # remove build step
-        INSTALL_COMMAND "" # remove install step
-        TEST_COMMAND "" # remove test step
-        UPDATE_COMMAND "" # remove update step
-        )
+    GIT_REPOSITORY "https://github.com/martinmoene/any-lite"
+    GIT_TAG "v0.0.0"
+    CONFIGURE_COMMAND "" # remove configure step
+    BUILD_COMMAND "" # remove build step
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
 ExternalProject_Get_Property(martinmoene_any source_dir)
 set(any_INCLUDE_DIRS ${source_dir}/include)
 file(MAKE_DIRECTORY ${any_INCLUDE_DIRS})
@@ -450,3 +441,49 @@ if (NOT PQxx_FOUND)
 
   add_dependencies(pqxx jtv_libpqxx)
 endif ()
+
+################################
+#            gflags            #
+################################
+externalproject_add(gflags_gflags
+    URL "https://github.com/gflags/gflags/archive/v2.2.0.tar.gz"
+    INSTALL_COMMAND "" # remove install step
+    TEST_COMMAND "" # remove test step
+    UPDATE_COMMAND "" # remove update step
+    )
+externalproject_get_property(gflags_gflags binary_dir)
+set(gflags_INCLUDE_DIR ${binary_dir}/include)
+set(gflags_LIBRARY ${binary_dir}/lib/libgflags.a)
+
+add_library(gflags STATIC IMPORTED)
+file(MAKE_DIRECTORY ${gflags_INCLUDE_DIR})
+
+set_target_properties(gflags PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${gflags_INCLUDE_DIR}
+    IMPORTED_LOCATION ${gflags_LIBRARY}
+    IMPORTED_LINK_INTERFACE_LIBRARIES "pthread"
+    )
+add_dependencies(gflags gflags_gflags)
+
+##########################
+#       observable       #
+##########################
+
+ExternalProject_Add(ddinu_observable
+    GIT_REPOSITORY "https://github.com/ddinu/observable"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND "" # remove install step
+    UPDATE_COMMAND "" # remove update step
+    TEST_COMMAND "" # remove test step
+    )
+ExternalProject_Get_Property(ddinu_observable source_dir)
+set(OBSERVABLE_INCLUDE_DIRS ${source_dir}/include)
+file(MAKE_DIRECTORY ${OBSERVABLE_INCLUDE_DIRS})
+
+add_library(observable INTERFACE IMPORTED)
+set_target_properties(observable PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${OBSERVABLE_INCLUDE_DIRS}
+    )
+
+add_dependencies(observable ddinu_observable)
