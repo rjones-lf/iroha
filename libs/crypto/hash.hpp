@@ -24,6 +24,7 @@ extern "C" {
 
 #include <nonstd/optional.hpp>
 #include <vector>
+#include "common.hpp"
 
 namespace iroha {
   namespace crypto {

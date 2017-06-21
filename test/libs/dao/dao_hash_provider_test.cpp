@@ -17,6 +17,10 @@ limitations under the License.
 #include <gtest/gtest.h>
 #include <dao/dao_hash_provider_impl.hpp>
 
+iroha::dao::Signature create_signature();
+iroha::dao::Transaction create_transaction();
+iroha::dao::Proposal create_proposal();
+
 iroha::dao::Signature create_signature() {
   iroha::dao::Signature signature{};
   memset(signature.signature.data(), 0x0, 64);
@@ -38,14 +42,39 @@ iroha::dao::Transaction create_transaction() {
   return tx;
 }
 
+iroha::dao::Proposal create_proposal(){
+  std::vector<iroha::dao::Transaction> txs;
+  txs.push_back(create_transaction());
+  txs.push_back(create_transaction());
+
+  iroha::dao::Proposal proposal(txs);
+  return proposal;
+}
+
+TEST(DaoHashProviderTest, DaoHashProviderWhenProposalTransactionIsCalled){
+  using iroha::dao::HashProviderImpl;
+  using iroha::dao::HashProvider;
+
+  std::unique_ptr<HashProvider<iroha::crypto::ed25519::PUBLEN>> hash_provider =
+      std::make_unique<HashProviderImpl>();
+
+  iroha::dao::Proposal proposal = create_proposal();
+
+  auto res = hash_provider->get_hash(proposal);
+  std::cout << "proposal hash: " << iroha::crypto::digest_to_hexdigest(res.data(), 32)
+            << std::endl;
+}
+
 TEST(DaoHashProviderTest, DaoHashProviderWhenHashTransactionIsCalled) {
   using iroha::dao::HashProviderImpl;
   using iroha::dao::HashProvider;
 
-  std::unique_ptr<HashProvider<iroha::crypto::ed25519::PUBLEN>> hash_provider = std::make_unique<HashProviderImpl>();
+  std::unique_ptr<HashProvider<iroha::crypto::ed25519::PUBLEN>> hash_provider =
+      std::make_unique<HashProviderImpl>();
 
   iroha::dao::Transaction tx = create_transaction();
   auto res = hash_provider->get_hash(tx);
 
-  std::cout << "hash: " << iroha::crypto::digest_to_hexdigest(res.data(), 32) << std::endl;
+  std::cout << "transaction hash: " << iroha::crypto::digest_to_hexdigest(res.data(), 32)
+            << std::endl;
 }

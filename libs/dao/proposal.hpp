@@ -23,7 +23,9 @@ limitations under the License.
 namespace iroha {
   namespace dao {
     struct Proposal {
-      const std::vector<Transaction> transactions;
+      explicit Proposal(std::vector<Transaction> txs) : transactions(txs){}
+
+      const std::vector<Transaction> transactions{};
     };
   }
 }

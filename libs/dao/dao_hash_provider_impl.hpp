@@ -17,33 +17,44 @@ limitations under the License.
 #ifndef IROHA_DAO_HASH_PROVIDER_IMPL_HPP
 #define IROHA_DAO_HASH_PROVIDER_IMPL_HPP
 
-#include "dao_hash_provider.hpp"
 #include <common.hpp>
-#include <crypto/hash.hpp>
 #include <crypto/base64.hpp>
+#include <crypto/hash.hpp>
+#include "dao_hash_provider.hpp"
 
 namespace iroha {
   namespace dao {
     class HashProviderImpl : public HashProvider<crypto::ed25519::PUBLEN> {
      public:
-      iroha::hash256_t get_hash(const Proposal& proposal) override {};
-      iroha::hash256_t get_hash(const Block& block) override {};
+      iroha::hash256_t get_hash(const Proposal& proposal) override {
+        std::string tx_concat_hash;
+        for (auto tx : proposal.transactions) {
+          auto tx_hash_arr = get_hash(tx);
+          std::string tx_hash_str = crypto::digest_to_hexdigest(
+              tx_hash_arr.data(), crypto::ed25519::PUBLEN);
+
+          tx_concat_hash += tx_hash_str;
+        }
+        std::string tx_concat_hash_hex = crypto::sha3_256_hex(tx_concat_hash);
+        auto concat_hash_digest = crypto::hexdigest_to_digest(tx_concat_hash_hex);
+
+        iroha::hash256_t res;
+        std::copy_n(concat_hash_digest->begin(), res.size(), res.begin());
+        return res;
+      };
+
+      iroha::hash256_t get_hash(const Block& block) override{};
 
       iroha::hash256_t get_hash(const Transaction& tx) {
-        std::string concat_hash_commands = "";
+        std::string concat_hash_commands;
         for (auto command : tx.commands) {
-          std::string command_str = command.SerializeAsString();
-          std::string command_hash = crypto::sha3_256_hex(command_str);
-          concat_hash_commands += command_hash;
+          command.AppendToString(&concat_hash_commands);
         }
-        // + concatenate pubkey
-        auto tx_creator_hash = crypto::sha3_256(tx.creator.data(), crypto::ed25519::PUBLEN);
-        std::string tx_creator_hash_hex = crypto::digest_to_hexdigest(tx_creator_hash->data(), crypto::ed25519::PUBLEN);
-//        free(tx_creator_hash);
+        std::copy(tx.creator.begin(), tx.creator.end(),
+                  std::back_inserter(concat_hash_commands));
 
-        concat_hash_commands += tx_creator_hash_hex;
-
-        std::string concat_hash_hex = crypto::sha3_256_hex(concat_hash_commands);
+        std::string concat_hash_hex =
+            crypto::sha3_256_hex(concat_hash_commands);
         auto concat_hash_digest = crypto::hexdigest_to_digest(concat_hash_hex);
         iroha::hash256_t res;
         std::copy_n(concat_hash_digest->begin(), res.size(), res.begin());
