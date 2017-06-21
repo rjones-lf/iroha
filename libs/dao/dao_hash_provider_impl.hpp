@@ -36,14 +36,45 @@ namespace iroha {
           tx_concat_hash += tx_hash_str;
         }
         std::string tx_concat_hash_hex = crypto::sha3_256_hex(tx_concat_hash);
-        auto concat_hash_digest = crypto::hexdigest_to_digest(tx_concat_hash_hex);
+        auto concat_hash_digest =
+            crypto::hexdigest_to_digest(tx_concat_hash_hex);
 
         iroha::hash256_t res;
         std::copy_n(concat_hash_digest->begin(), res.size(), res.begin());
         return res;
       };
 
-      iroha::hash256_t get_hash(const Block& block) override{};
+      iroha::hash256_t get_hash(const Block& block) override {
+        std::string concat;
+
+        // block height
+        concat += std::to_string(block.height);
+
+        // prev_hash
+        std::copy(block.prev_hash.begin(), block.prev_hash.end(),
+                  std::back_inserter(concat));
+
+        // txnumber
+        concat += std::to_string(block.tx_number);
+
+        // merkle root
+        std::copy(block.merkle_root.begin(), block.merkle_root.end(),
+                  std::back_inserter(concat));
+
+        for (auto tx : block.transactions) {
+          auto tx_hash_arr = get_hash(tx);
+          std::string tx_hash_str = crypto::digest_to_hexdigest(
+              tx_hash_arr.data(), crypto::ed25519::PUBLEN);
+
+          concat += tx_hash_str;
+        }
+        std::string concat_hash_hex = crypto::sha3_256_hex(concat);
+        auto concat_hash_digest = crypto::hexdigest_to_digest(concat_hash_hex);
+
+        iroha::hash256_t res;
+        std::copy_n(concat_hash_digest->begin(), res.size(), res.begin());
+        return res;
+      };
 
       iroha::hash256_t get_hash(const Transaction& tx) {
         std::string concat_hash_commands;
