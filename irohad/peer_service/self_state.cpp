@@ -39,7 +39,8 @@ namespace peer_service {
 
     void initializeMyKey() {
       if (public_key_.empty() || private_key_.empty()) {
-        iroha::Keypair keypair = iroha::Keypair::generate_keypair();
+        iroha::crypto::Keypair keypair =
+            iroha::crypto::Keypair::generate_keypair();
         public_key_ = keypair.pub_base64();
         private_key_ = *keypair.priv_base64();
       }
