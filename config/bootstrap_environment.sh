@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# this is temporal solution
+# this is temporary solution
 export IROHA_PEER_PUBKEY_PATH=/home/bogdan/iroha/testbase.pub
 export IROHA_PEER_PRIVKEY_PATH=/home/bogdan/iroha/testbase.priv
 export IROHA_POSTGRES_HOST=localhost

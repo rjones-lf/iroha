@@ -1,0 +1,81 @@
+version: '3'
+
+# How to run:
+# docker-compose -f docker-compose-dev.yml up
+#
+# This file creates persistent redis and postgres containers.
+# Even after container removal stored data will be available.
+#
+# redis:
+#   - host: 192.168.9.3
+#   - port: 6379
+# postgres:
+#   - host: 192.168.9.4
+#   - port: 5432
+#   - user: kek
+#   - password: helloworld
+
+services:
+  node:
+    image: lebdron/iroha-dev
+    environment:
+      - IROHA_PEER_PUBKEY_PATH=/home/bogdan/iroha/testbase.pub
+      - IROHA_PEER_PRIVKEY_PATH=/home/bogdan/iroha/testbase.priv
+      - IROHA_POSTGRES_HOST=192.168.9.4
+      - IROHA_POSTGRES_PORT=5432
+      - IROHA_POSTGRES_USER=kek
+      - IROHA_POSTGRES_PASSWORD=helloworld
+      - IROHA_REDIS_HOST=192.168.9.3
+      - IROHA_REDIS_PORT=6379
+      - IROHA_KAFKA_HOST=localhost
+      - IROHA_KAFKA_PORT=2181
+      - IROHA_PATH=/home/bogdan/iroha
+      - IROHA_VERBOSITY=debug # debug, info, warning, error, critical, debug, trace, off
+    volumes:
+      - ../:/iroha
+    stdin_open: true
+    tty: true
+    user: $UID:$UID
+    working_dir: /iroha
+    networks:
+      peernet:
+        ipv4_address: 192.168.9.2
+
+
+  redis:
+    image: redis:3.2.8
+    volumes:
+      - redis_data:/data
+    networks:
+      peernet:
+        ipv4_address: 192.168.9.3
+
+
+  postgres:
+    image: postgres:9.5
+    environment:
+      - POSTGRES_USER=kek
+      - POSTGRES_PASSWORD=helloworld
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+    networks:
+      peernet:
+        ipv4_address: 192.168.9.4
+
+
+# network for single peer
+networks:
+  peernet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.9.0/24
+
+
+# make persistence for docker containers
+volumes:
+  redis_data:
+  postgresql:
+  postgresql_data:
