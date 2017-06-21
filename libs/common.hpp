@@ -19,7 +19,7 @@
 #define AMETSUCHI_COMMON_HPP
 
 #include <dirent.h>
-#include <stdio.h>
+#include <cstdio>
 #include <array>
 
 namespace iroha {

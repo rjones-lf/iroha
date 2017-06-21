@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef IROHA_DAO_HASH_PROVIDER_IMPL_HPP
 #define IROHA_DAO_HASH_PROVIDER_IMPL_HPP
 
+#include <algorithm>
 #include <common.hpp>
 #include <crypto/base64.hpp>
 #include <crypto/hash.hpp>
