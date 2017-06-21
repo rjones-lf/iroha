@@ -58,8 +58,8 @@ namespace ordering {
               altanative leader peer)
               auto state = sendPingDaisPeers();
               if( state == ALLTIMEOUT ) {
-                //   ToDo sumeragi.processBlock();
-                //   ToDo send block to replica();
+               auto block = queue::getBlock();
+               connection::consensus::send(::peer_service::self_state::getIp(),block);
               }
                */
             }

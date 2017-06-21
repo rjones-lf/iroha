@@ -18,8 +18,8 @@ limitations under the License.
 // Created by Takumi Yamashita on 2017/04/28.
 //
 
-#ifndef IROHA_SYNCHRONIZER_H
-#define IROHA_SYNCHRONIZER_H
+#ifndef IROHA_PEER_SERVICE_SYNCHRONIZER_SYNCHRONIZER_H
+#define IROHA_PEER_SERVICE_SYNCHRONIZER_SYNCHRONIZER_H
 
 #include <block.pb.h>
 #include <string>
@@ -49,4 +49,4 @@ namespace peer_service {
   }  // namespace sync
 }  // namespace peer
 
-#endif  // IROHA_SYNCHRONIZER_H
+#endif  // IROHA_PEER_SERVICE_SYNCHRONIZER_SYNCHRONIZER_H

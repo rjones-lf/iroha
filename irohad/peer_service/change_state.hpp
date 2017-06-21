@@ -17,7 +17,6 @@ limitations under the License.
 #define __IROHA_PEER_SERVICE_CHANGE_STATE_HPP__
 
 #include <peer_service/peer_service.hpp>
-#include <string>
 
 namespace peer_service {
   namespace change_state {
@@ -49,7 +48,8 @@ namespace peer_service {
       bool remove(const std::string &);
       bool setTrust(const std::string &, const double &);
       bool changeTrust(const std::string &, const double &);
-      bool setActive(const std::string &, const State state);
+      bool setActive(const std::string &, const State state,
+                     uint64_t created = 0);
 
       void update();
     }
@@ -60,6 +60,8 @@ namespace peer_service {
       void eraseActive(const std::string &publicKey);
       void changeActive(const std::shared_ptr<Node> node);
     }
+
+    void initialize();
   };
 };
 

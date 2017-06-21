@@ -13,7 +13,6 @@
 #)
 
 ADD_LIBRARY(peer_service STATIC
-    peer_service.cpp
     monitor.cpp
     change_state.cpp
     self_state.cpp
@@ -22,10 +21,8 @@ ADD_LIBRARY(peer_service STATIC
 
 target_link_libraries(peer_service
     timer
-    exception
+    time64
     logger
     crypto
     schema
-    ametsuchi
-    datetime
 )

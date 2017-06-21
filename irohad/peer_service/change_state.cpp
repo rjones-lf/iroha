@@ -15,10 +15,16 @@ limitations under the License.
 */
 #include <peer_service/change_state.hpp>
 #include <peer_service/monitor.hpp>
+#include <peer_service/self_state.hpp>
 
+#include <iostream>
 #include <unordered_set>
 
 namespace peer_service {
+
+  extern Nodes peer_list_;
+  extern Nodes active_peer_list_;
+
   namespace change_state {
 
     // This scope is issue transaction
@@ -97,23 +103,27 @@ namespace peer_service {
         if (node->getState() == ACTIVE) detail::changeActive(node);
         return true;
       }
-      bool setActive(const std::string &publicKey, const State state) {
+      bool setActive(const std::string &publicKey, const State state,
+                     uint64_t created) {
         if (!monitor::isExistPublicKey(publicKey)) return false;
 
         auto node = *monitor::findPeerPublicKey(publicKey);
         if (node->getState() == PREPARE) {
-          if (state == ACTIVE)  // PRPARE -> ACTIVE
+          if (state == ACTIVE) {  // PRPARE -> ACTIVE
+            node->setCreated(created);
             detail::insertActive(node);
+          }
         } else if (node->getState() == ACTIVE) {
           if (state == PREPARE)  // ACTIVE -> PREPARE
             detail::eraseActive(publicKey);
         }
-        node->state_ = state;
+        node->setState(state);
+
+        return true;
       }
     };
 
     namespace detail {
-
       void insertActive(const std::shared_ptr<Node> node) {
         for (auto it = active_peer_list_.begin(); it != active_peer_list_.end();
              it++) {
@@ -122,6 +132,7 @@ namespace peer_service {
             break;
           }
         }
+        active_peer_list_.emplace_back(node);
       }
 
       void eraseActive(const std::string &publicKey) {
@@ -138,6 +149,17 @@ namespace peer_service {
         eraseActive(node->getPublicKey());
         insertActive(node);
       }
+    }
+
+    void initialize() {
+      if (!peer_list_.empty()) return;
+      // TODO Read config.json
+
+      // At First myself only
+      peer_list_.emplace_back(std::make_shared<Node>(
+          self_state::getIp(), self_state::getPublicKey(),
+          self_state::getName(), self_state::getTrust(),
+          self_state::getActiveTime(), self_state::getState()));
     }
   }
 };
