@@ -15,6 +15,7 @@ limitations under the License.
 */
 #include "validator.hpp"
 #include <datetime/time.hpp>
+#include <dao/dao_hash_provider_impl.hpp>
 
 namespace validaton {
   namespace stateless {

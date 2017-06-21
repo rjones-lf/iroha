@@ -14,23 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef IROHA_DAO_HASH_PROVIDER_HPP
-#define IROHA_DAO_HASH_PROVIDER_HPP
-#include <crypto/common.hpp>
-#include "dao.hpp"
-#include <common.hpp>
+#include <gtest/gtest.h>
+#include <dao/dao_hash_provider_impl.hpp>
 
-namespace iroha {
-  namespace dao {
-    template<int T>
-    class HashProvider {
-     public:
-      virtual iroha::hash_t<T> get_hash(const Proposal& proposal) = 0;
+TEST(DaoHashProviderTest, DaoHashProviderWhenHashTransactionIsCalled){
+  using iroha::dao::HashProviderImpl;
 
-      virtual iroha::hash_t<T> get_hash(const Block& block) = 0;
-
-      virtual iroha::hash_t<T> get_hash(const Transaction& tx) = 0;
-    };
-  }
+  HashProviderImpl hash_provider;
 }
-#endif  // IROHA_DAO_HASH_PROVIDER_HPP

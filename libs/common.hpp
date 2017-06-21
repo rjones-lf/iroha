@@ -37,10 +37,10 @@ namespace iroha {
   template <size_t size>
   using hash_t = blob_t<size>;
 
-  using hash224_t = blob_t<224 / 8>;
-  using hash256_t = blob_t<256 / 8>;
-  using hash384_t = blob_t<384 / 8>;
-  using hash512_t = blob_t<512 / 8>;
+  using hash224_t = hash_t<224 / 8>;
+  using hash256_t = hash_t<256 / 8>;
+  using hash384_t = hash_t<384 / 8>;
+  using hash512_t = hash_t<512 / 8>;
 
   namespace ed25519 {
     using sign_t = blob_t<64>;  // ed25519 sig is 64 bytes length

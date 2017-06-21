@@ -20,6 +20,7 @@ limitations under the License.
 #include <common.hpp>
 #include <vector>
 #include "singature.hpp"
+#include <block.pb.h>
 
 namespace iroha {
   namespace dao {
@@ -43,7 +44,15 @@ namespace iroha {
 
       // BODY
       std::vector<iroha::protocol::Command> commands;
+      static Transaction create(iroha::protocol::Transaction);
     };
+
+    Transaction Transaction::create(iroha::protocol::Transaction) {
+      //TODO implement
+      std::cerr << "Not implemented" << std::endl;
+      Transaction res;
+      return res;
+    }
   }
 }
 #endif  // IROHA_TRANSACTION_HPP
