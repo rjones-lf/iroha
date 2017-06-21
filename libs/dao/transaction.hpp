@@ -16,11 +16,11 @@ limitations under the License.
 
 #ifndef IROHA_TRANSACTION_HPP
 #define IROHA_TRANSACTION_HPP
+#include <block.pb.h>
 #include <commands.pb.h>
 #include <common.hpp>
 #include <vector>
 #include "singature.hpp"
-#include <block.pb.h>
 
 namespace iroha {
   namespace dao {
@@ -40,19 +40,12 @@ namespace iroha {
 
       // META
       // transaction creator
-      ed25519::pubkey_t creator;
+      crypto::ed25519::pubkey_t creator;
 
       // BODY
       std::vector<iroha::protocol::Command> commands;
-      static Transaction create(iroha::protocol::Transaction);
+      static Transaction create(iroha::protocol::Transaction tx);
     };
-
-    Transaction Transaction::create(iroha::protocol::Transaction) {
-      //TODO implement
-      std::cerr << "Not implemented" << std::endl;
-      Transaction res;
-      return res;
-    }
   }
 }
 #endif  // IROHA_TRANSACTION_HPP

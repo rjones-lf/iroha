@@ -32,7 +32,7 @@ namespace iroha {
    */
 
   template <size_t size>
-  using blob_t= std::array<uint8_t, size>;
+  using blob_t = std::array<uint8_t, size>;
 
   template <size_t size>
   using hash_t = blob_t<size>;
@@ -42,10 +42,12 @@ namespace iroha {
   using hash384_t = hash_t<384 / 8>;
   using hash512_t = hash_t<512 / 8>;
 
-  namespace ed25519 {
-    using sign_t = blob_t<64>;  // ed25519 sig is 64 bytes length
-    using pubkey_t = blob_t<32>;
-    using privkey_t = blob_t<64>;
+  namespace crypto {
+    namespace ed25519 {
+      using sign_t = blob_t<64>;  // ed25519 sig is 64 bytes length
+      using pubkey_t = blob_t<32>;
+      using privkey_t = blob_t<64>;
+    }
   }
 
   // timestamps

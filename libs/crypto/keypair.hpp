@@ -29,6 +29,8 @@
 
 namespace iroha {
   namespace crypto {
+  using namespace ed25519;
+
     /**
      * Represents a keypair: public and private key.
      */

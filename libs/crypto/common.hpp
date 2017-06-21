@@ -30,7 +30,9 @@ namespace iroha {
     /**
      * Standard lengths for ed25519. Keypair strongly depends on these values.
      */
-    enum ed25519 { SIGNATURELEN = 64, PUBLEN = 32, PRIVLEN = 64 };
+    namespace ed25519 {
+      const int8_t SIGNATURELEN = 64, PUBLEN = 32, PRIVLEN = 64;
+    }
 
     /**
      * Convert hex string into bytes.

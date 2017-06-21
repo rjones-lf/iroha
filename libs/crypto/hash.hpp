@@ -20,7 +20,7 @@
 
 extern "C" {
 #include <SimpleFIPS202.h>
-};
+}
 
 #include <nonstd/optional.hpp>
 #include <vector>
@@ -55,7 +55,7 @@ namespace iroha {
                   : nonstd::nullopt;
     }
 
-    nonstd::optional<std::vector<uint8_t>> sha3_256(uint8_t *input,
+    nonstd::optional<std::vector<uint8_t>> sha3_256(const uint8_t *input,
                                                     size_t in_size) {
       std::vector<uint8_t> out(256 / 8);
       int res = SHA3_256(out.data(), input, in_size);
