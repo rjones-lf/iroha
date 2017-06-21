@@ -36,3 +36,26 @@ docker run -d --name=iroha -p 50051:50051 hyperledger/iroha-docker:latest
 # Troubleshooting
 
 To successfully build docker image, you should be able to build it locally: [follow this guilde](../docs/how_to_build.rst) in case of troubles.
+
+
+# Development environments
+Dev environments aimed to deploy different configurations for development purpose. 
+
+## Ametsuchi
+Start different containers:
+    * node - container for deploy irohad binary and build project 
+    * postgre - container for WSW
+    * redis - container for indexes
+
+For run use:
+```sh
+sh run-ametsuchi-dev.sh
+```
+
+## Consnesus
+Currently starts only one container - node, but in future it should deploy also container with ordering service.
+ 
+ For run use:
+```sh
+sh run-consensus-dev.sh
+```

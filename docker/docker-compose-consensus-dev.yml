@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  node:
+    image: lebdron/iroha-dev
+    volumes:
+      - ../:/iroha
+    stdin_open: true
+    tty: true
+    user: $UID:$UID
+    working_dir: /iroha
