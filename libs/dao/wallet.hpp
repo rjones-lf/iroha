@@ -13,28 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef IROHA_PEER_H
-#define IROHA_PEER_H
-
-#include <common.hpp>
+#ifndef IROHA_WALLET_HPP
+#define IROHA_WALLET_HPP
 
 namespace iroha {
   namespace dao {
-
     /**
-     * Peer is DAO, which contains information about network participants
-     */
-    struct Peer {
-      /**
-       * Address of peer for connection
-       */
-      const std::string address;
-
-      /**
-       * Public key of peer
-       */
-      const iroha::ed25519::pubkey_t pubkey;
+      * Wallet Data Access Object
+      */
+    struct Wallet {
+      // TODO: implement
     };
   }
 }
-#endif  // IROHA_PEER_H
+
+#endif  // IROHA_WALLET_HPP

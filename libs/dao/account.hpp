@@ -19,34 +19,34 @@ limitations under the License.
 #include "singature.hpp"
 
 namespace iroha {
-namespace dao {
+  namespace dao {
 
-/**
- * Account Data Access Object
- */
-struct Account {
-  enum State { ACTIVE, SUSPENDED };
+    /**
+     * Account Data Access Object
+     */
+    struct Account {
+      enum State { ACTIVE, SUSPENDED };
 
-  /**
-   * Account State.
-   * ACTIVE - active account
-   * SUSPENDED - not active account
-   * //TODO: review
-   */
-  const State state;
+      /**
+       * Account State.
+       * ACTIVE - active account
+       * SUSPENDED - not active account
+       * //TODO: review
+       */
+      const State state;
 
-  /*
-   * Get all signature of this account
-   * // TODO: do we need this ?
-   */
-  const std::vector<Signature> get_signatures();
+      /*
+       * Get all signature of this account
+       * // TODO: do we need this ?
+       */
+      const std::vector<Signature> signatures;
 
-  /*
-   * Minimum quorum of signatures need for transactions
-   */
-  const uint32_t quorum;
-};
+      /*
+       * Minimum quorum of signatures need for transactions
+       */
+      const uint32_t quorum;
+    };
+  }
 }
-}
 
-#endif //IROHA_ACCOUNT_HPP
+#endif  // IROHA_ACCOUNT_HPP

@@ -13,28 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-#ifndef IROHA_PEER_H
-#define IROHA_PEER_H
-
-#include <common.hpp>
+#ifndef IROHA_DOMAIN_HPP
+#define IROHA_DOMAIN_HPP
 
 namespace iroha {
   namespace dao {
-
     /**
-     * Peer is DAO, which contains information about network participants
+     * Domain Data Access Object
      */
-    struct Peer {
-      /**
-       * Address of peer for connection
-       */
-      const std::string address;
-
-      /**
-       * Public key of peer
-       */
-      const iroha::ed25519::pubkey_t pubkey;
+    struct Domain {
+      // TODO: implement
     };
   }
 }
-#endif  // IROHA_PEER_H
+
+#endif  // IROHA_DOMAIN_HPP
