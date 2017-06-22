@@ -23,7 +23,7 @@ namespace iroha {
   namespace dao {
 
     /**
-     * Signature is a structure to store crypto information
+     * Signature is a DAO structure to store crypto information
      */
     struct Signature {
       iroha::crypto::ed25519::sign_t signature;

@@ -26,14 +26,14 @@ namespace iroha {
      * Asset Data Access Object
      */
     struct Asset {
-      enum Visibility { PUB, PRIV, PROTECT };
-
       /**
        * Asset visibility.
        * PUB - everyone from any domain can use this asset
        * PROTECT - account in this domain and it's subdomain can use this asset
        * PRIV - accounts only in this domain can use this asset
        */
+      enum Visibility { PUB, PRIV, PROTECT };
+
       const Visibility visibility;
       /*
        * Asset name

@@ -25,21 +25,17 @@ namespace iroha {
      * Account Data Access Object
      */
     struct Account {
-      enum State { ACTIVE, SUSPENDED };
-
       /**
-       * Account State.
        * ACTIVE - active account
        * SUSPENDED - not active account
-       * //TODO: review
+       *
        */
-      const State state;
+      enum State { ACTIVE, SUSPENDED };
 
       /*
-       * Get all signature of this account
-       * // TODO: do we need this ?
+       * Account state
        */
-      const std::vector<Signature> signatures;
+      const State state;
 
       /*
        * Minimum quorum of signatures need for transactions

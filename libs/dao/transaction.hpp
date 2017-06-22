@@ -32,7 +32,6 @@ namespace iroha {
      * Transaction can be divided to {Header, Meta, Body}.
      */
     struct Transaction {
-
       static Transaction create(iroha::protocol::Transaction tx);
 
       /**
