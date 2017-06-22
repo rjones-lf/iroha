@@ -20,6 +20,8 @@
 #include "block.hpp"
 #include "proposal.hpp"
 #include "transaction.hpp"
+#include "asset.hpp"
+#include "account.hpp"
 
 /**
  * DAO - Data Access Object.

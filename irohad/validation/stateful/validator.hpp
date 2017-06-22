@@ -23,7 +23,8 @@ namespace validaton {
     class Validator {
      public:
       using Propsal = iroha::dao::Proposal;
-      virtual Propsal validate(const Propsal &propsal) = 0;
+      using Block = iroha::dao::Block;
+      virtual Block validate(const Propsal &propsal) = 0;
     };
   };
 };
