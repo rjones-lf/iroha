@@ -20,6 +20,8 @@ limitations under the License.
 #include <endpoint.grpc.pb.h>
 #include <endpoint.pb.h>
 
+#include <logger/logger.hpp>
+
 namespace connection {
   namespace api {
 
@@ -28,9 +30,10 @@ namespace connection {
     class CommandService final
         : public iroha::protocol::CommandService::Service {
      public:
-      grpc::Status Torii(grpc::ClientContext* context,
-                         const iroha::protocol::Transaction& request,
-                         iroha::protocol::ToriiResponse* response);
+      grpc::Status Torii(grpc::ServerContext* context,
+                         const ::iroha::protocol::Transaction* request,
+                         ::iroha::protocol::ToriiResponse* response);
+      ~CommandService(){}
     };
 
   }  // namespace api

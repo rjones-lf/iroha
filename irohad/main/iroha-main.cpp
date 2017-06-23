@@ -18,22 +18,35 @@ limitations under the License.
 #include <api/query_service.hpp>
 #include <consensus/connection/service.hpp>
 #include <ordering/connection/service.hpp>
+#include <logger/logger.hpp>
 
 #include "server_runner.hpp"
 
+
 int main(int argc,char* argv[]) {
+  auto log = logger::Logger("main");
+
+  log.info(R"( dP  888888ba   .88888.  dP     dP   .d888888 )");
+  log.info(R"( 88  88    `8b d8'   `8b 88     88  d8'    88 )");
+  log.info(R"( 88 a88aaaa8P' 88     88 88aaaaa88a 88aaaaa88a)");
+  log.info(R"( 88  88   `8b. 88     88 88     88  88     88 )");
+  log.info(R"( 88  88     88 Y8.   .8P 88     88  88     88 )");
+  log.info(R"( dP  dP     dP  `8888P'  dP     dP  88     88 )");
+  log.info(R"( ---------o=========================o---------)");
+  log.info(R"(         = 分散台帳Application いろは =         )");
+  log.info(R"( ---------o=========================o---------)");
 
   connection::api::CommandService commandService;
   connection::api::QueryService queryService;
   connection::consensus::SumeragiService sumeragiService;
   connection::ordering::OrderingService orderingService;
 
-  connection::ServerRunner serverRunner("0.0.0.0", {
+  connection::ServerRunner serverRunner({
       &commandService,
       &queryService,
       &sumeragiService,
       &orderingService
-  });
+  },"0.0.0.0",50051);
 
   return 0;
 }

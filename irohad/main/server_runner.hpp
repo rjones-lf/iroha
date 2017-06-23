@@ -15,13 +15,15 @@ limitations under the License.
 */
 
 #include <grpc++/server_builder.h>
+#include <logger/logger.hpp>
 
 namespace connection {
 
     class ServerRunner {
     public:
-        ServerRunner(const std::string& ip,
-                     const std::vector<grpc::Service*>& services);
+        ServerRunner(
+                const std::vector<grpc::Service*>& services,
+                const std::string& address,int port);
     };
 
 }  // namespace connection

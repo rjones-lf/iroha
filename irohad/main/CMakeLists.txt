@@ -16,9 +16,14 @@ add_library(connection server_runner.cpp)
 target_link_libraries(connection
     endpoint
     schema
+
+    logger
 )
 
 add_executable(iroha-main iroha-main.cpp)
 target_link_libraries(iroha-main
+    command_service
     connection
+    logger
+    pthread
 )
