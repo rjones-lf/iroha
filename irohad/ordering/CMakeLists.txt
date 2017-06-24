@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_subdirectory(connection)
+add_subdirectory(connection)
 
 add_library(ordering STATIC queue.cpp observer.cpp)
 
 target_link_libraries(ordering
   peer_service
+  command_client
   command_service
-  ordering_service
-  consensus_service
   ordering_connection
+  consensus_connection
 )
