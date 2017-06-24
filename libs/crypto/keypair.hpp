@@ -29,16 +29,14 @@
 
 namespace iroha {
   namespace crypto {
-  using namespace ed25519;
-
     /**
      * Represents a keypair: public and private key.
      */
     class Keypair {
      public:
-      using signature_t = std::array<uint8_t, SIGNATURELEN>;
-      using pubkey_t = std::array<uint8_t, PUBLEN>;
-      using privkey_t = std::array<uint8_t, PRIVLEN>;
+      using signature_t = std::array<uint8_t, ed25519::SIGNATURELEN>;
+      using pubkey_t = std::array<uint8_t, ed25519::PUBLEN>;
+      using privkey_t = std::array<uint8_t, ed25519::PRIVLEN>;
 
       //  using signature_t = std::basic_string<uint8_t>;
       //  using pubkey_t = std::basic_string<uint8_t>;
@@ -62,8 +60,8 @@ namespace iroha {
       explicit Keypair(const std::vector<uint8_t> &pub,
                        const std::vector<uint8_t> &priv)
           : has_private(true) {
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
-        std::copy(&pub[0], &pub[PUBLEN], &privkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &privkey[0]);
       }
 
       /**
@@ -71,7 +69,7 @@ namespace iroha {
        * @param pub
        */
       explicit Keypair(const std::vector<uint8_t> &pub) : has_private(false) {
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
       }
 
       /**
@@ -81,16 +79,16 @@ namespace iroha {
        */
       explicit Keypair(const uint8_t *pub, const uint8_t *priv)
           : has_private(true) {
-        std::copy(pub, pub + PUBLEN, &pubkey[0]);
-        std::copy(priv, priv + PUBLEN, &privkey[0]);
+        std::copy(pub, pub + ed25519::PUBLEN, &pubkey[0]);
+        std::copy(priv, priv + ed25519::PUBLEN, &privkey[0]);
       }
 
       /**
-        * Build a keypair with public key in binary format
-        * @param pub
-        */
+       * Build a keypair with public key in binary format
+       * @param pub
+       */
       explicit Keypair(const uint8_t *pub) : has_private(false) {
-        std::copy(pub, pub + PUBLEN, &pubkey[0]);
+        std::copy(pub, pub + ed25519::PUBLEN, &pubkey[0]);
       }
 
       /**
@@ -100,16 +98,16 @@ namespace iroha {
        */
       explicit Keypair(const std::string &pub, const std::string &priv)
           : has_private(true) {
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
-        std::copy(&priv[0], &priv[PUBLEN], &privkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
+        std::copy(&priv[0], &priv[ed25519::PUBLEN], &privkey[0]);
       }
 
       /**
-        * Build a keypair with public key in binary format
-        * @param pub
-        */
+       * Build a keypair with public key in binary format
+       * @param pub
+       */
       explicit Keypair(const std::string &pub) : has_private(false) {
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
       }
 
       /**
@@ -132,18 +130,18 @@ namespace iroha {
           : has_private(true) {
         auto pub = base64_decode(pub_base64);
         auto priv = base64_decode(priv_base64);
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
-        std::copy(&priv[0], &priv[PUBLEN], &privkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
+        std::copy(&priv[0], &priv[ed25519::PUBLEN], &privkey[0]);
       }
 
       /**
-        * Build a keypair with public key in base64 encoded format (string)
-        * @param pub
-        */
+       * Build a keypair with public key in base64 encoded format (string)
+       * @param pub
+       */
       explicit Keypair(const std::string &pub_base64, tag_base64_encoded)
           : has_private(false) {
         auto pub = base64_decode(pub_base64);
-        std::copy(&pub[0], &pub[PUBLEN], &pubkey[0]);
+        std::copy(&pub[0], &pub[ed25519::PUBLEN], &pubkey[0]);
       }
 
       /**
@@ -214,10 +212,10 @@ namespace iroha {
        * @return
        */
       std::string pub_hexdigest() {
-        return digest_to_hexdigest(&pubkey[0], PUBLEN);
+        return digest_to_hexdigest(&pubkey[0], ed25519::PUBLEN);
       }
       nonstd::optional<std::string> priv_hexdigest() {
-        auto r = digest_to_hexdigest(&privkey[0], PRIVLEN);
+        auto r = digest_to_hexdigest(&privkey[0], ed25519::PRIVLEN);
         return has_private ? nonstd::optional<std::string>(r) : nonstd::nullopt;
       }
 
@@ -225,9 +223,9 @@ namespace iroha {
        * Getters for public and private keys in "base64" (string) format
        * @return
        */
-      std::string pub_base64() { return base64_encode(&pubkey[0], PUBLEN); }
+      std::string pub_base64() { return base64_encode(&pubkey[0], ed25519::PUBLEN); }
       nonstd::optional<std::string> priv_base64() {
-        auto r = base64_encode(&privkey[0], PRIVLEN);
+        auto r = base64_encode(&privkey[0], ed25519::PRIVLEN);
         return has_private ? nonstd::optional<std::string>(r) : nonstd::nullopt;
       }
 
@@ -268,7 +266,7 @@ namespace iroha {
 
       bool has_private;
     };
-  }
-}
+  }  // namespace crypto
+}  // namespace iroha
 
 #endif  // IROHA_KEYPAIR_H
