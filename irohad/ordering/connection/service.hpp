@@ -30,8 +30,8 @@ namespace ordering {
         : public iroha::protocol::OrderingService::Service {
      public:
       grpc::Status QueueTransaction(
-          grpc::ClientContext* context,
-          const iroha::protocol::Transaction& request,
+          grpc::ServerContext* context,
+          const iroha::protocol::Transaction* request,
           iroha::protocol::QueueTransactionResponse* response);
     };
 

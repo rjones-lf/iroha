@@ -29,8 +29,8 @@ namespace ordering {
     }
 
     grpc::Status OrderingService::QueueTransaction(
-        grpc::ClientContext* context,
-        const iroha::protocol::Transaction& request,
+        grpc::ServerContext* context,
+        const iroha::protocol::Transaction* request,
         QueueTransactionResponse* response) {
       dispatchToOrdering(request);
 
