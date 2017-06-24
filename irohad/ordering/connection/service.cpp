@@ -32,7 +32,7 @@ namespace ordering {
         grpc::ServerContext* context,
         const iroha::protocol::Transaction* request,
         QueueTransactionResponse* response) {
-      dispatchToOrdering(request);
+      dispatchToOrdering(*request);
 
       return grpc::Status::OK;
     }

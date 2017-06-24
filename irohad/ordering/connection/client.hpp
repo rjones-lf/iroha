@@ -18,11 +18,16 @@ limitations under the License.
 #define __IROHA_CONNECTION_ORDERING_CLIENT_HPP__
 
 #include <block.pb.h>
+#include <endpoint.pb.h>
+#include <endpoint.grpc.pb.h>
 
 namespace ordering {
   namespace connection {
 
-    bool send(std::string ip, const iroha::protocol::Transaction& tx);
+    iroha::protocol::QueueTransactionResponse sendTransaction(
+      const iroha::protocol::Transaction& tx,
+      const std::string& targetIp);
+
     class OrderingClient {
      public:
       OrderingClient(const std::string& ip, int port);
