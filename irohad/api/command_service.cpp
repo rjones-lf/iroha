@@ -39,12 +39,10 @@ namespace api {
     if (validation::stateless::validate(*request)) {
       dispatchToOrdering(*request);
       // TODO: Return tracking log number (hash)
-      *response = ToriiResponse();
       response->set_code(ResponseCode::OK);
       response->set_message("successfully dispatching to ordering.");
     } else {
       // TODO: Return validation failed message
-      *response = ToriiResponse();
       response->set_code(ResponseCode::FAIL);
       response->set_message("failed stateless validation.");
     }
