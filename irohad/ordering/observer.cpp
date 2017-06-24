@@ -20,6 +20,7 @@ limitations under the License.
 #include "queue.hpp"
 
 #include <api/command_service.hpp>
+#include <consensus/connection/client.hpp>
 #include <ordering/connection/client.hpp>
 #include <ordering/connection/service.hpp>
 
@@ -33,7 +34,7 @@ namespace ordering {
         // Verified State-less validate Tx
         // TODO : [WIP] temp implement Send to Leader-group
         for (std::string ip : ::peer_service::monitor::getActiveIpList()) {
-          ordering::connection::send(ip, tx);
+          ordering::connection::sendTransaction(tx, ip);
         }
       });
 
@@ -46,25 +47,23 @@ namespace ordering {
     // This is invoked in thread.
     void observe() {
       while (1) {
-        timer::setAwkTimer(5000, []() {
-          if (queue::isCreateBlock()) {
-            if (peer_service::self_state::isLeader()) {
-              auto block = queue::getBlock();
-              //   ToDo send leader node
-              // connection::consensus::send(::peer_service::self_state::getIp(),block);
-            } else {
-              /* TODO send ping Dais Peers -> (if all timeout, this peer is
-              altanative leader peer)
-              auto state = sendPingDaisPeers();
-              if( state == ALLTIMEOUT ) {
-               auto block = queue::getBlock();
-               connection::consensus::send(::peer_service::self_state::getIp(),block);
-              }
-               */
+        if (queue::isCreateBlock()) {
+          if (peer_service::self_state::isLeader()) {
+            auto block = queue::getBlock();
+            // ToDo send leader node
+            consensus::connection::sendBlock(block, ::peer_service::self_state::getIp());
+          } else {
+            /* TODO send ping Dais Peers -> (if all timeout, this peer is altanative leader peer)
+            auto state = sendPingDaisPeers();
+            if( state == ALLTIMEOUT ) {
+             auto block = queue::getBlock();
+            consensus::connection::sendBlock(block, ::peer_service::self_state::getIp());
             }
+            */
           }
-        });
-      }
+        }
+        timer::waitTimer(5000);
+      };
     }
   }  // namespace observer
 }  // namespace ordering
