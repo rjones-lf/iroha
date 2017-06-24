@@ -48,7 +48,7 @@ protected:
 
 private:
   bool running_;
-  api::OrderingService service_;
+  ordering::connection::OrderingService service_;
   std::unique_ptr<IServerRunner> serverRunner_;
   std::thread serverThread_;
 };
@@ -56,7 +56,7 @@ private:
 /**
  * fails connection because server isn't running.
  */
-TEST_F(CommandConnectionTest, FailConnectionWhenNotRunningServer) {
+TEST_F(OrderingConnectionTest, FailConnectionWhenNotRunningServer) {
   Transaction tx;
   auto response = ordering::connection::sendTransaction(tx, "0.0.0.0");
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
@@ -66,7 +66,7 @@ TEST_F(CommandConnectionTest, FailConnectionWhenNotRunningServer) {
 /**
  * success connection, but fails stateful validation.
  */
-TEST_F(CommandConnectionTest, SuccessConnectionWhenRunningServer) {
+TEST_F(OrderingConnectionTest, SuccessConnectionWhenRunningServer) {
   RunServer();
 
   ordering::observer::initialize();
