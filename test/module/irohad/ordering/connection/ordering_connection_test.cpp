@@ -60,7 +60,6 @@ TEST_F(OrderingConnectionTest, FailConnectionWhenNotRunningServer) {
   Transaction tx;
   auto response = ordering::connection::sendTransaction(tx, "0.0.0.0");
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
-  ASSERT_STREQ(response.message().c_str(), "connection failed. cannot send transaction.");
 }
 
 /**
@@ -72,6 +71,5 @@ TEST_F(OrderingConnectionTest, SuccessConnectionWhenRunningServer) {
   ordering::observer::initialize();
   Transaction tx;
   auto response = ordering::connection::sendTransaction(tx, "0.0.0.0");
-  ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
-  ASSERT_STREQ(response.message().c_str(), "failed stateless validation.");
+  ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
 }

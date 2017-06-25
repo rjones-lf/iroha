@@ -13,10 +13,11 @@
 # limitations under the License.
 
 add_library(ordering_connection
-    client.cpp
-    service.cpp
+  client.cpp
+  service.cpp
 )
 target_link_libraries(ordering_connection
-    endpoint
-    schema
+  endpoint
+  logger
+  schema
 )
