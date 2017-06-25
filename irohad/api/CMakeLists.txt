@@ -21,4 +21,5 @@ add_library(command_service command_service.cpp)
 target_link_libraries(command_service
   endpoint
   stateless_validator
+  logger
 )
