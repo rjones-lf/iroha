@@ -23,7 +23,6 @@ message QueryResponse {}
 
 message QueueTransactionResponse {
   ResponseCode code = 1;
-  string message = 2;
 }
 
 service CommandService {
