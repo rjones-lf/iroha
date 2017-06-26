@@ -21,6 +21,7 @@ limitations under the License.
 #include <main/server_runner.hpp>
 #include <thread>
 #include <endpoint.grpc.pb.h>
+#include <peer_service/self_state.hpp>
 
 using iroha::protocol::Transaction;
 
@@ -58,7 +59,7 @@ private:
  */
 TEST_F(OrderingConnectionTest, FailConnectionWhenNotRunningServer) {
   Transaction tx;
-  auto response = ordering::connection::sendTransaction(tx, "0.0.0.0");
+  auto response = ordering::connection::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
 }
 
@@ -70,6 +71,6 @@ TEST_F(OrderingConnectionTest, SuccessConnectionWhenRunningServer) {
 
   ordering::observer::initialize();
   Transaction tx;
-  auto response = ordering::connection::sendTransaction(tx, "0.0.0.0");
+  auto response = ordering::connection::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
 }

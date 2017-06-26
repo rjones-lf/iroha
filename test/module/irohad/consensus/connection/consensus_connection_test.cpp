@@ -20,6 +20,7 @@ limitations under the License.
 #include <main/server_runner.hpp>
 #include <thread>
 #include <endpoint.grpc.pb.h>
+#include <peer_service/self_state.hpp>
 
 namespace conn = consensus::connection;
 using iroha::protocol::Block;
@@ -59,13 +60,13 @@ class ConsensusConnectionTest : public ::testing::Test {
  */
 TEST_F(ConsensusConnectionTest, FailConnectionWhenNotStandingServer) {
   Block block;
-  auto response = conn::sendBlock(block, "0.0.0.0");
+  auto response = conn::sendBlock(block, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
 }
 
 TEST_F(ConsensusConnectionTest, SuccessConnectionWhenStandingServer) {
   RunServer();
   Block block;
-  auto response = conn::sendBlock(block, "0.0.0.0");
+  auto response = conn::sendBlock(block, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
 }

@@ -21,6 +21,7 @@ target_link_libraries(consensus_connection_test
   consensus_connection
   schema
   endpoint
+  peer_service
   gtest
 )
 add_test(

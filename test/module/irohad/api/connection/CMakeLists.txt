@@ -22,6 +22,7 @@ target_link_libraries(command_connection_test
   command_service
   schema
   endpoint
+  peer_service
   gtest
 )
 add_test(
