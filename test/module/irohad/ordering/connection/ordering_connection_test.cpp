@@ -15,18 +15,18 @@ limitations under the License.
 */
 
 #include <gtest/gtest.h>
-#include <consensus/connection/service.hpp>
-#include <consensus/connection/client.hpp>
+#include <ordering/connection/client.hpp>
+#include <ordering/connection/service.hpp>
+#include <ordering/observer.hpp>
 #include <main/server_runner.hpp>
 #include <thread>
 #include <endpoint.grpc.pb.h>
 #include <peer_service/self_state.hpp>
 
-namespace conn = consensus::connection;
-using iroha::protocol::Block;
+using iroha::protocol::Transaction;
 
-class ConsensusConnectionTest : public ::testing::Test {
- protected:
+class OrderingConnectionTest : public ::testing::Test {
+protected:
   virtual void SetUp() {
     serverRunner_.reset(new ServerRunner("0.0.0.0", 50051, {
       &service_
@@ -47,26 +47,30 @@ class ConsensusConnectionTest : public ::testing::Test {
     running_ = true;
   }
 
- private:
+private:
   bool running_;
-  conn::SumeragiService service_;
+  ordering::connection::OrderingService service_;
   std::unique_ptr<IServerRunner> serverRunner_;
   std::thread serverThread_;
 };
 
 /**
- * Note: Async connection is WIP.
- *       Temporarily, we tests sync connection.
+ * fails connection because server isn't running.
  */
-TEST_F(ConsensusConnectionTest, FailConnectionWhenNotStandingServer) {
-  Block block;
-  auto response = conn::sendBlock(block, peer_service::self_state::getIp());
+TEST_F(OrderingConnectionTest, FailConnectionWhenNotRunningServer) {
+  Transaction tx;
+  auto response = ordering::connection::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
 }
 
-TEST_F(ConsensusConnectionTest, SuccessConnectionWhenStandingServer) {
+/**
+ * success connection, but fails stateful validation.
+ */
+TEST_F(OrderingConnectionTest, SuccessConnectionWhenRunningServer) {
   RunServer();
-  Block block;
-  auto response = conn::sendBlock(block, peer_service::self_state::getIp());
+
+  ordering::observer::initialize();
+  Transaction tx;
+  auto response = ordering::connection::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
 }

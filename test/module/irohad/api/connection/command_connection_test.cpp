@@ -20,6 +20,7 @@ limitations under the License.
 #include <main/server_runner.hpp>
 #include <thread>
 #include <endpoint.grpc.pb.h>
+#include <peer_service/self_state.hpp>
 
 using iroha::protocol::Transaction;
 
@@ -58,7 +59,7 @@ class CommandConnectionTest : public ::testing::Test {
  */
 TEST_F(CommandConnectionTest, FailConnectionWhenNotStandingServer) {
   Transaction tx;
-  auto response = api::sendTransaction(tx, "0.0.0.0");
+  auto response = api::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
   ASSERT_STREQ(response.message().c_str(), "connection failed. cannot send transaction.");
 }
@@ -67,7 +68,7 @@ TEST_F(CommandConnectionTest, SuccessConnectionWhenStandingServer) {
   RunServer();
 
   Transaction tx;
-  auto response = api::sendTransaction(tx, "0.0.0.0");
+  auto response = api::sendTransaction(tx, peer_service::self_state::getIp());
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
   ASSERT_STREQ(response.message().c_str(), "failed stateless validation.");
 }

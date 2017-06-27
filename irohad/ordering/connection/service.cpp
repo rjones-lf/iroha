@@ -15,6 +15,9 @@ limitations under the License.
 */
 
 #include "service.hpp"
+#include <logger/logger.hpp>
+
+static logger::Logger Log("OrderingConnectionService");
 
 namespace ordering {
   namespace connection {
@@ -29,10 +32,17 @@ namespace ordering {
     }
 
     grpc::Status OrderingService::QueueTransaction(
-        grpc::ClientContext* context,
-        const iroha::protocol::Transaction& request,
+        grpc::ServerContext* context,
+        const iroha::protocol::Transaction* request,
         QueueTransactionResponse* response) {
-      dispatchToOrdering(request);
+
+      try {
+        dispatchToOrdering(*request);
+        response->set_code(iroha::protocol::ResponseCode::OK);
+      } catch (...) {
+        Log.error("Call ordering::connection::initialize()");
+        assert(false);
+      }
 
       return grpc::Status::OK;
     }

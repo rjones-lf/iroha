@@ -19,14 +19,16 @@ limitations under the License.
 
 #include "client.hpp"
 
-namespace connection {
-  namespace ordering {
+namespace ordering {
+  namespace connection {
 
     using iroha::protocol::QueueTransactionResponse;
     using iroha::protocol::Transaction;
 
-    bool send(std::string ip, const Transaction& tx) {
-      // TODO
+    QueueTransactionResponse sendTransaction(const Transaction& tx,
+                                             const std::string& targetIp) {
+      OrderingClient client(targetIp, 50051);
+      return client.QueueTransaction(tx);
     }
 
     OrderingClient::OrderingClient(const std::string& ip, int port) {
@@ -42,5 +44,5 @@ namespace connection {
       return response;
     }
 
-  }  // namespace ordering
-}  // namespace connection
+  }  // namespace connection
+}  // namespace ordering

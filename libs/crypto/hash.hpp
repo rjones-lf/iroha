@@ -48,7 +48,7 @@ namespace iroha {
       return SHA3_512(output, input, in_size);
     }
 
-    nonstd::optional<std::vector<uint8_t>> sha3_224(uint8_t *input,
+    inline nonstd::optional<std::vector<uint8_t>> sha3_224(uint8_t *input,
                                                     size_t in_size) {
       std::vector<uint8_t> out(224 / 8);
       int res = SHA3_224(out.data(), input, in_size);
@@ -56,7 +56,7 @@ namespace iroha {
                   : nonstd::nullopt;
     }
 
-    nonstd::optional<std::vector<uint8_t>> sha3_256(const uint8_t *input,
+    inline nonstd::optional<std::vector<uint8_t>> sha3_256(const uint8_t *input,
                                                     size_t in_size) {
       std::vector<uint8_t> out(256 / 8);
       int res = SHA3_256(out.data(), input, in_size);
@@ -64,7 +64,7 @@ namespace iroha {
                   : nonstd::nullopt;
     }
 
-    nonstd::optional<std::vector<uint8_t>> sha3_384(uint8_t *input,
+    inline nonstd::optional<std::vector<uint8_t>> sha3_384(uint8_t *input,
                                                     size_t in_size) {
       std::vector<uint8_t> out(384 / 8);
       int res = SHA3_384(out.data(), input, in_size);
@@ -72,7 +72,7 @@ namespace iroha {
                   : nonstd::nullopt;
     }
 
-    nonstd::optional<std::vector<uint8_t>> sha3_512(uint8_t *input,
+    inline nonstd::optional<std::vector<uint8_t>> sha3_512(uint8_t *input,
                                                     size_t in_size) {
       std::vector<uint8_t> out(512 / 8);
       int res = SHA3_512(out.data(), input, in_size);
@@ -80,7 +80,7 @@ namespace iroha {
                   : nonstd::nullopt;
     }
 
-    std::string sha3_256_hex(const std::string &message) {
+    inline std::string sha3_256_hex(const std::string &message) {
       const int sha256_size = 256 / 8;
       unsigned char digest[sha256_size];
 
@@ -90,7 +90,7 @@ namespace iroha {
       return digest_to_hexdigest(digest, sha256_size);
     }
 
-    std::string sha3_256_hex(const std::vector<uint8_t> &message) {
+    inline std::string sha3_256_hex(const std::vector<uint8_t> &message) {
       const int sha256_size = 256 / 8;
       unsigned char digest[sha256_size];
 
@@ -99,7 +99,7 @@ namespace iroha {
       return digest_to_hexdigest(digest, sha256_size);
     }
 
-    std::string sha3_512_hex(const std::string &message) {
+    inline std::string sha3_512_hex(const std::string &message) {
       const int sha512_size = 512 / 8;
       unsigned char digest[sha512_size];
 

@@ -17,7 +17,10 @@ limitations under the License.
 #include "command_service.hpp"
 #include <grpc++/server_context.h>
 #include <ordering/queue.hpp>
+#include <logger/logger.hpp>
 #include <validation/stateless/validator.hpp>
+
+static logger::Logger Log("CommandService");
 
 namespace api {
 
@@ -25,26 +28,40 @@ namespace api {
 
   std::function<void(const Transaction&)> dispatchToOrdering;
 
+  /**
+   * Sets function to dispatch tx to ordering queue.
+   * @param func
+   */
   void receive(
       std::function<void(const iroha::protocol::Transaction&)> const& func) {
     dispatchToOrdering = func;
   }
 
+  /**
+   * Receives tx from clients then pass it to the ordering service's server.
+   * @param context - used by getting client's ip and port.
+   * @param tx - tx to be sent.
+   * @param response - used for replying tx status (failed with connection,
+   *                   stateless validation / successfully send tx)
+   * @return grpc::Status
+   */
   grpc::Status CommandService::Torii(grpc::ServerContext* context,
-                                     const Transaction* request,
+                                     const Transaction* tx,
                                      ToriiResponse* response) {
     // TODO: Use this to get client's ip and port.
     (void)context;
 
-    if (validation::stateless::validate(*request)) {
-      dispatchToOrdering(*request);
+    if (validation::stateless::validate(*tx)) {
       // TODO: Return tracking log number (hash)
-      *response = ToriiResponse();
-      response->set_code(ResponseCode::OK);
-      response->set_message("successfully dispatching to ordering.");
+      try {
+        dispatchToOrdering(*tx);
+        response->set_code(ResponseCode::OK);
+        response->set_message("successfully dispatching tx to ordering.");
+      } catch(...) {
+        Log.error("ordering::::initialize()");
+      }
     } else {
       // TODO: Return validation failed message
-      *response = ToriiResponse();
       response->set_code(ResponseCode::FAIL);
       response->set_message("failed stateless validation.");
     }
