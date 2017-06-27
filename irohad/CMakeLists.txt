@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_subdirectory(ametsuchi)
-add_subdirectory(api)
+#add_subdirectory(api)
 add_subdirectory(common)
 add_subdirectory(consensus)
 add_subdirectory(logger)
