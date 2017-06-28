@@ -19,13 +19,13 @@ target_link_libraries(server_runner
     logger
     endpoint
     schema
-    storage
-    networking
-    dao
-    torii
+    #storage
+    #networking
+    #dao
+    #torii
     )
 
 add_executable(iroha-main iroha-main.cpp)
 target_link_libraries(iroha-main
-    server_runner
+    #server_runner
     )

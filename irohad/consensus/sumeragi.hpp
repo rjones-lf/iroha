@@ -15,24 +15,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef __IROHA_CONSENSUS_SUMERAGI_HPP__
-#define __IROHA_CONSENSUS_SUMERAGI_HPP__
+#ifndef IROHAD_CONSENSUS_SUMERAGI_HPP
+#define IROHAD_CONSENSUS_SUMERAGI_HPP
 
 #include <memory>
 #include <thread>
 #include <vector>
+#include <consensus/consensus_algorithm.hpp>
 
 #include <block.pb.cc>
 
 namespace consensus {
-    namespace sumeragi {
+  /**
+   * Sumeragi consensus algorithm
+   * consensus algorithm should derive interface ConsensusAlgorithm
+   */
+  class Sumeragi : public ConsensusAlgorithm {
+  public:
+    /**
+     * Event is triggered when proposal arrives.
+     */
+    void onProposal(iroha::dao::Proposal const& proposal) override;
 
-        void initialize();
-
-        void processBlock(const iroha::protocol::Block &block);
-
-        void panic(const iroha::protocol::Block &block);
-
-    };  // namespace sumeragi
-};
-#endif  // CORE_CONSENSUS_SUMERAGI_HPP_
+    /**
+     * Event is triggered when commit block arrives.
+     */
+    void onCommit(iroha::dao::Block const& block) override;
+  };
+}
+#endif  // IROHAD_CONSENSUS_SUMERAGI_HPP

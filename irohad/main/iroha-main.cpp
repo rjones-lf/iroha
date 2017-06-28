@@ -14,26 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <api/command_service.hpp>
-#include <api/query_service.hpp>
-#include <consensus/connection/service.hpp>
-#include <ordering/connection/service.hpp>
-
-#include "server_runner.hpp"
-
 int main(int argc,char* argv[]) {
-/*
-  connection::api::CommandService commandService;
-  connection::api::QueryService queryService;
-  consensus::connection::SumeragiService sumeragiService;
-  ordering::connection::OrderingService orderingService;
 
-  ServerRunner serverRunner("0.0.0.0", 50051, {
-      &commandService,
-      &queryService,
-      &sumeragiService,
-      &orderingService
-  });
-*/
   return 0;
 }
