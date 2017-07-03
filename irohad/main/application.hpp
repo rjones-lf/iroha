@@ -27,17 +27,25 @@ namespace main {
   /**
    * Contains instances of global services and shared providers
    */
+  using namespace iroha;
   class Irohad {
    public:
-
     ametsuchi::Ametsuchi &ametsuchi;
 
     network::PeerCommunicationService &peerService;
 
     dao::DaoCryptoProvider &cryptoProvider;
 
-    dao::HashProvider &hashProvider;
+    dao::HashProvider<32> &hashProvider;
 
+   private:
+    Irohad();
+
+    static dao::HashProvider<32> &initialize_hash_provider();
+
+    static dao::DaoCryptoProvider &initialize_crypto_provider();
+
+    static ametsuchi::Ametsuchi &initialize_ametsuchi();
   };
-} // namespace iroha
-#endif //IROHA_APPLICATION_HPP
+}  // namespace iroha
+#endif  // IROHA_APPLICATION_HPP
