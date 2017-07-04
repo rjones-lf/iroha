@@ -22,7 +22,7 @@ limitations under the License.
 #include <crypto/base64.hpp>
 #include <crypto/crypto.hpp>
 #include <crypto/hash.hpp>
-#include "dao_hash_provider.hpp"
+#include <dao/dao_hash_provider.hpp>
 
 namespace iroha {
   namespace dao {
@@ -33,6 +33,10 @@ namespace iroha {
       iroha::hash256_t get_hash(const Block &block) override;
 
       iroha::hash256_t get_hash(const Transaction &tx);
+
+     private:
+      std::string hash_to_string(iroha::hash256_t);
+
     };
   }
 }

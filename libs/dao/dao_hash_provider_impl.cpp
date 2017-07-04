@@ -26,12 +26,17 @@ namespace iroha {
       for (auto tx : proposal.transactions) {
         for (auto command : tx.commands) {
           std::array<char, sizeof(*command)> command_blob;
-          std::copy_n((char *)command.get(), sizeof(*command), command_blob.begin());
+          std::copy_n((char *)command.get(), sizeof(*command),
+                      command_blob.begin());
+          // Append command blob to the end of the string
           std::copy(command_blob.begin(), command_blob.end(),
                     std::back_inserter(concat_));
         }
+        // Append meta data: Transaction creator
         std::copy(tx.creator.begin(), tx.creator.end(),
                   std::back_inserter(concat_));
+        // TODO: append other fields: tx_counter
+        // TODO: should we also append head?
       }
       std::vector<uint8_t> concat(concat_.begin(), concat_.end());
 
@@ -55,12 +60,13 @@ namespace iroha {
       // merkle root
       std::copy(block.merkle_root.begin(), block.merkle_root.end(),
                 std::back_inserter(concat_));
-
+      //Append transactions data
       // transactions
       for (auto tx : block.transactions) {
         for (auto command : tx.commands) {
           std::array<char, sizeof(*command)> command_blob;
-          std::copy_n((char *)command.get(), sizeof(*command), command_blob.begin());
+          std::copy_n((char *)command.get(), sizeof(*command),
+                      command_blob.begin());
           std::copy(command_blob.begin(), command_blob.end(),
                     std::back_inserter(concat_));
         }
@@ -89,7 +95,8 @@ namespace iroha {
       for (auto command : tx.commands) {
         // convert command to blob and concat it to result string
         std::array<char, sizeof(*command)> command_blob;
-        std::copy_n((char *)command.get(), sizeof(*command), command_blob.begin());
+        std::copy_n((char *)command.get(), sizeof(*command),
+                    command_blob.begin());
         std::copy(command_blob.begin(), command_blob.end(),
                   std::back_inserter(concat_hash_commands_));
       }
