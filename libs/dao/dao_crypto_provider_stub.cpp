@@ -24,6 +24,7 @@ namespace iroha {
     }
 
     Transaction &DaoCryptoProviderStub::sign(Transaction &tx) {
+      std::cout << "[CryptoProvider] sign transaction" << std::endl;
       return tx;
     }
   }// namespace dao

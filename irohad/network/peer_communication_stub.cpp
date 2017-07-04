@@ -42,6 +42,7 @@ namespace iroha {
 
     void PeerCommunicationServiceStub::propagate_transaction(
         const dao::Transaction &tx) {
+      std::cout << "[PCS] sharing tx to ordering service" << std::endl;
       orderer_.propagate_transaction(tx);
     }
 

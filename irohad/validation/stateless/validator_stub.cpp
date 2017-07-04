@@ -17,12 +17,14 @@
 
 #include <validation/stateless/validator_stub.hpp>
 #include <validation/stateless/transaction_validator_stub.hpp>
+#include <iostream>
 
 namespace iroha {
   namespace validation {
 
     bool StatelessValidatorStub::validate(
         const dao::Transaction &transaction) const {
+      std::cout << "[Stateless validation] validate transaction" << std::endl;
       TransactionValidatorStub validator;
       return validator.validate(transaction);
     }
