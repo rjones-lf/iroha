@@ -35,8 +35,9 @@ namespace iroha {
 
     void QueryProcessorStub::query_handle(dao::Client client,
                                           const dao::Query &query) {
+      std::cout << "[\033[32mQueryProcessor\033[0m] find handler... ";
       auto handle = handler_.find(query).value_or([](auto &) {
-        std::cout << "[Q] Handler not found" << std::endl;
+        std::cout << "handler not found" << std::endl;
         return;
       });
       handle(query);
@@ -49,6 +50,8 @@ namespace iroha {
     }
 
     void QueryProcessorStub::handle_get_blocks(const dao::GetBlocks &blocks) {
+      std::cout << "handler found - get_blocks()" << std::endl;
+      block_.get_blocks_in_range(blocks.from, blocks.to);
       subject_.get_subscriber().on_next(
           std::make_shared<dao::GetBlocksResponse>());
     }

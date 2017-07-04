@@ -66,13 +66,18 @@ int main(int argc, char *argv[]) {
   iroha::torii::ToriiStub torii(tp, qp);
   // shows required order of execution, since callbacks are called synchronously
   peer_communication_service.subscribe_on_proposal();
+
+  // ***** test starts here *****
+
   iroha::dao::GetBlocks query;
   query.from = 32;
   query.to = 64;
+  std::cout << "Query pipeline" << std::endl << std::endl;
   torii.get_query({}, query);
 
   iroha::dao::Transaction transaction;
   transaction.commands.push_back(std::make_shared<iroha::dao::AddPeer>());
+  std::cout << std::endl << "Transaction pipeline" << std::endl << std::endl;
   torii.get_transaction({}, transaction);
 
   return 0;

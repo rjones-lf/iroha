@@ -19,6 +19,7 @@
 #include <dao/dao.hpp>
 #include <numeric>
 #include <validation/stateful/stub_command_validator.hpp>
+#include <iostream>
 
 namespace iroha {
   namespace validation {
@@ -28,6 +29,7 @@ namespace iroha {
      */
     dao::Proposal StatefulValidatorStub::validate(const dao::Proposal &proposal,
                                           ametsuchi::TemporaryWsv &wsv) {
+      std::cout << "[\033[34mStatefulValidator\033[0m] validating proposal" << std::endl;
       auto command_validator = CommandValidatorStub(wsv);
       auto
           checking_transaction =
