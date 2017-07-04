@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "dao_hash_provider_impl.hpp"
+#include <dao/dao_hash_provider_impl.hpp>
 
 namespace iroha {
   namespace dao {
@@ -23,23 +23,14 @@ namespace iroha {
     iroha::hash256_t HashProviderImpl::get_hash(const Proposal &proposal) {
       std::string concat_;  // string representation of the proposal, made of
       // proposals meta and body fields
-      for (auto tx : proposal.transactions) {
-        for (auto command : tx.commands) {
-          std::array<char, sizeof(*command)> command_blob;
-          std::copy_n((char *)command.get(), sizeof(*command),
-                      command_blob.begin());
-          // Append command blob to the end of the string
-          std::copy(command_blob.begin(), command_blob.end(),
-                    std::back_inserter(concat_));
-        }
-        // Append meta data: Transaction creator
-        std::copy(tx.creator.begin(), tx.creator.end(),
-                  std::back_inserter(concat_));
-        // TODO: append other fields: tx_counter
-        // TODO: should we also append head?
-      }
-      std::vector<uint8_t> concat(concat_.begin(), concat_.end());
 
+      // Append body data
+      for (auto tx : proposal.transactions) {
+        // Append each transaction hash
+        concat_ += get_hash(tx).to_string();
+      }
+
+      std::vector<uint8_t> concat(concat_.begin(), concat_.end());
       auto concat_hash = sha3_256(concat.data(), concat.size());
       return concat_hash;
     }
@@ -47,42 +38,22 @@ namespace iroha {
     iroha::hash256_t HashProviderImpl::get_hash(const Block &block) {
       std::string concat_;
 
-      // block height
+      // Append block height
       concat_ += std::to_string(block.height);
 
-      // prev_hash
+      // Append prev_hash
       std::copy(block.prev_hash.begin(), block.prev_hash.end(),
                 std::back_inserter(concat_));
 
-      // txnumber
+      // Append txnumber
       concat_ += std::to_string(block.txs_number);
 
-      // merkle root
+      // Append merkle root
       std::copy(block.merkle_root.begin(), block.merkle_root.end(),
                 std::back_inserter(concat_));
-      //Append transactions data
-      // transactions
+      // Append transactions data
       for (auto tx : block.transactions) {
-        for (auto command : tx.commands) {
-          std::array<char, sizeof(*command)> command_blob;
-          std::copy_n((char *)command.get(), sizeof(*command),
-                      command_blob.begin());
-          std::copy(command_blob.begin(), command_blob.end(),
-                    std::back_inserter(concat_));
-        }
-        std::copy(tx.creator.begin(), tx.creator.end(),
-                  std::back_inserter(concat_));
-
-        concat_ += std::to_string(tx.created_ts);
-
-        concat_ += std::to_string(tx.tx_counter);
-
-        for (auto sig : tx.signatures) {
-          std::copy(sig.pubkey.begin(), sig.pubkey.end(),
-                    std::back_inserter(concat_));
-          std::copy(sig.signature.begin(), sig.signature.end(),
-                    std::back_inserter(concat_));
-        }
+        concat_ += get_hash(tx).to_string();
       }
       std::vector<uint8_t> concat(concat_.begin(), concat_.end());
 
@@ -91,6 +62,7 @@ namespace iroha {
     }
 
     iroha::hash256_t HashProviderImpl::get_hash(const Transaction &tx) {
+      // Resulting string for the hash
       std::string concat_hash_commands_;
       for (auto command : tx.commands) {
         // convert command to blob and concat it to result string
@@ -100,8 +72,22 @@ namespace iroha {
         std::copy(command_blob.begin(), command_blob.end(),
                   std::back_inserter(concat_hash_commands_));
       }
+      // Append transaction creator
       std::copy(tx.creator.begin(), tx.creator.end(),
                 std::back_inserter(concat_hash_commands_));
+
+      // TODO: Decide if the header should be included
+      /*
+      for (auto sig : tx.signatures) {
+        std::copy(sig.pubkey.begin(), sig.pubkey.end(),
+                  std::back_inserter(concat_));
+        std::copy(sig.signature.begin(), sig.signature.end(),
+                  std::back_inserter(concat_));
+      }
+       */
+      // Append tx counter
+      concat_hash_commands_ += tx.tx_counter;
+
       std::vector<uint8_t> concat_hash_commands(concat_hash_commands_.begin(),
                                                 concat_hash_commands_.end());
 
@@ -109,5 +95,6 @@ namespace iroha {
           sha3_256(concat_hash_commands.data(), concat_hash_commands.size());
       return concat_hash;
     }
-  }
-}
+
+  }  // namespace dao
+}  // namespace iroha

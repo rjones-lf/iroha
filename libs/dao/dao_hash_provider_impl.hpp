@@ -34,8 +34,6 @@ namespace iroha {
 
       iroha::hash256_t get_hash(const Transaction &tx);
 
-     private:
-      std::string hash_to_string(iroha::hash256_t);
 
     };
   }
