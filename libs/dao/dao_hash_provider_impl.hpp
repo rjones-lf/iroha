@@ -28,89 +28,11 @@ namespace iroha {
   namespace dao {
     class HashProviderImpl : public HashProvider<ed25519::pubkey_t::size()> {
      public:
-      iroha::hash256_t get_hash(const Proposal &proposal) override {
-        std::string concat_;
-        for (auto tx : proposal.transactions) {
-          for (auto command : tx.commands) {
-            auto command_chars = new char[sizeof(*command)];
-            std::memcpy(command_chars, command.get(), sizeof(*command));
-            std::string command_string(command_chars);
-            concat_ += command_chars;
-            delete command_chars;
-          }
-          std::copy(tx.creator.begin(), tx.creator.end(),
-                    std::back_inserter(concat_));
-        }
-        std::vector<uint8_t> concat(concat_.begin(), concat_.end());
+      iroha::hash256_t get_hash(const Proposal &proposal) override;
 
-        auto concat_hash = sha3_256(concat.data(), concat.size());
-        return concat_hash;
-      };
+      iroha::hash256_t get_hash(const Block &block) override;
 
-      iroha::hash256_t get_hash(const Block &block) override {
-        std::string concat_;
-
-        // block height
-        concat_ += std::to_string(block.height);
-
-        // prev_hash
-        std::copy(block.prev_hash.begin(), block.prev_hash.end(),
-                  std::back_inserter(concat_));
-
-        // txnumber
-        concat_ += std::to_string(block.txs_number);
-
-        // merkle root
-        std::copy(block.merkle_root.begin(), block.merkle_root.end(),
-                  std::back_inserter(concat_));
-
-        // transactions
-        for (auto tx : block.transactions) {
-          for (auto command : tx.commands) {
-            auto command_chars = new char[sizeof(*command)];
-            std::memcpy(command_chars, command.get(), sizeof(*command));
-            std::string command_string(command_chars);
-            concat_ += command_chars;
-            delete command_chars;
-          }
-          std::copy(tx.creator.begin(), tx.creator.end(),
-                    std::back_inserter(concat_));
-
-          concat_ += std::to_string(tx.created_ts);
-
-          concat_ += std::to_string(tx.tx_counter);
-
-          for (auto sig : tx.signatures) {
-            std::copy(sig.pubkey.begin(), sig.pubkey.end(),
-                      std::back_inserter(concat_));
-            std::copy(sig.signature.begin(), sig.signature.end(),
-                      std::back_inserter(concat_));
-          }
-        }
-        std::vector<uint8_t> concat(concat_.begin(), concat_.end());
-
-        auto concat_hash = sha3_256(concat.data(), concat.size());
-        return concat_hash;
-      };
-
-      iroha::hash256_t get_hash(const Transaction &tx) {
-        std::string concat_hash_commands_;
-        for (auto command : tx.commands) {
-          auto command_chars = new char[sizeof(*command)];
-          std::memcpy(command_chars, command.get(), sizeof(*command));
-          std::string command_string(command_chars);
-          concat_hash_commands_ += command_chars;
-          delete command_chars;
-        }
-        std::copy(tx.creator.begin(), tx.creator.end(),
-                  std::back_inserter(concat_hash_commands_));
-        std::vector<uint8_t> concat_hash_commands(concat_hash_commands_.begin(),
-                                                  concat_hash_commands_.end());
-
-        auto concat_hash =
-            sha3_256(concat_hash_commands.data(), concat_hash_commands.size());
-        return concat_hash;
-      }
+      iroha::hash256_t get_hash(const Transaction &tx);
     };
   }
 }

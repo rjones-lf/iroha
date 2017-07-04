@@ -25,18 +25,11 @@ iroha::dao::Transaction create_transaction() {
 
   tx.tx_counter = 0;
   tx.created_ts = 0;
-
-
-//  iroha::dao::Signature signature1{};
-//  signature1.pubkey = pubkey;
-//  signature1.signature = sign;
-//  tx.signatures.push_back(signature1);
-
-  //  tx.commands
   return tx;
 }
 
 TEST(CryptoProvider, SignAndVerify){
+  // generate privkey/pubkey keypair
   auto seed = iroha::create_seed();
   auto keypair = iroha::create_keypair(seed);
 
@@ -46,6 +39,7 @@ TEST(CryptoProvider, SignAndVerify){
   crypto_provider.sign(dao_tx);
   ASSERT_TRUE(crypto_provider.verify(dao_tx));
 
+  // now modify transaction's meta, so verify should fail
   memset(dao_tx.creator.data(), 0x123, iroha::ed25519::pubkey_t::size());
   ASSERT_FALSE(crypto_provider.verify(dao_tx));
 }
