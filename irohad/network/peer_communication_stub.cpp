@@ -30,7 +30,7 @@ namespace iroha {
     rxcpp::observable<rxcpp::observable<dao::Block>>
     PeerCommunicationServiceStub::on_commit() {
       return consensus_.on_commit().take_while([this](auto commit) {
-        std::cout << "[PCS] chain validation" << std::endl;
+        std::cout << "[PeerCommunicationService] commit received" << std::endl;
         auto storage = storage_.createMutableStorage();
         auto result = chain_validator_.validate(commit, *storage);
         if (result) {
@@ -42,7 +42,7 @@ namespace iroha {
 
     void PeerCommunicationServiceStub::propagate_transaction(
         const dao::Transaction &tx) {
-      std::cout << "[PCS] sharing tx to ordering service" << std::endl;
+      std::cout << "[PeerCommunicationService] sharing tx to ordering service" << std::endl;
       orderer_.propagate_transaction(tx);
     }
 
@@ -65,7 +65,7 @@ namespace iroha {
 
     void PeerCommunicationServiceStub::subscribe_on_proposal() {
       on_proposal().subscribe([this](auto proposal) {
-        std::cout << "[PCS] stateful validation" << std::endl;
+        std::cout << "[PeerCommunicationService] proposal received" << std::endl;
         auto wsv = storage_.createTemporaryWsv();
         auto validated_proposal = stateful_validator_.validate(proposal, *wsv);
         Block block;
@@ -75,6 +75,7 @@ namespace iroha {
                         block.transactions.push_back(transaction);
                       });
         // TODO hash and sign
+        std::cout << "[PeerCommunicationService] forming block from verified proposal" << std::endl;
         consensus_.vote_block(block);
       });
     }

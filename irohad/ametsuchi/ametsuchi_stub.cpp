@@ -18,19 +18,25 @@
 #include <ametsuchi/ametsuchi_stub.hpp>
 #include <ametsuchi/mutable_storage_stub.hpp>
 #include <ametsuchi/temporary_wsv_stub.hpp>
+#include <iostream>
 
 namespace iroha {
   namespace ametsuchi {
 
     std::unique_ptr<TemporaryWsv> AmetsuchiStub::createTemporaryWsv() {
+      std::cout << "[Ametsuchi] creating temporary wsv" << std::endl;
       return std::make_unique<TemporaryWsvStub>(*this);
     }
 
     std::unique_ptr<MutableStorage> AmetsuchiStub::createMutableStorage() {
+      std::cout << "[Ametsuchi] creating mutable storage" << std::endl;
       return std::make_unique<MutableStorageStub>(*this);
     }
 
-    void AmetsuchiStub::commit(MutableStorage &mutableStorage) { return; }
+    void AmetsuchiStub::commit(MutableStorage &mutableStorage) {
+      std::cout << "[Ametsuchi] committing mutable storage" << std::endl;
+      return;
+    }
 
     rxcpp::observable<dao::Transaction> AmetsuchiStub::get_account_transactions(
         ed25519::pubkey_t pub_key) {
@@ -60,6 +66,8 @@ namespace iroha {
     }
     rxcpp::observable<dao::Block> AmetsuchiStub::get_blocks_in_range(
         uint32_t from, uint32_t to) {
+      std::cout << "[Ametsuchi] get_blocks(" << from << ", " << to << ")"
+                << std::endl;
       return rxcpp::observable<>::create<dao::Block>(
           [](rxcpp::subscriber<dao::Block> s) {
             s.on_next(dao::Block{});

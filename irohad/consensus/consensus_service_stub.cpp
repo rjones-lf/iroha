@@ -16,6 +16,7 @@
  */
 
 #include <consensus/consensus_service_stub.hpp>
+#include <iostream>
 
 namespace iroha {
   namespace consensus {
@@ -30,6 +31,7 @@ namespace iroha {
     }
 
     void ConsensusServiceStub::vote_block(dao::Block &block) {
+      std::cout << "[Consensus] voting for block" << std::endl;
       commits_.get_subscriber().on_next(rxcpp::observable<>::from(block));
     }
 

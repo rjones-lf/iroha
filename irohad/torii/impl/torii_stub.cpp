@@ -36,14 +36,12 @@ namespace iroha {
     }
 
     void ToriiStub::get_query(dao::Client client, dao::Query &query) {
-      query_processor_.query_handle(client, query);
       std::cout << "[Torii] query received" << std::endl;
-      processor_.query_handle(client, query);
+      query_processor_.query_handle(client, query);
     }
 
     void ToriiStub::get_transaction(dao::Client client, dao::Transaction &tx) {
       std::cout << "[Torii] transaction received" << std::endl;
-      processor_.transaction_handle(client, tx);
       transaction_processor_.transaction_handle(client, tx);
     }
   } // namespace torii
