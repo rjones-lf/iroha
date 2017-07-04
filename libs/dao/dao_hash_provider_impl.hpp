@@ -32,7 +32,11 @@ namespace iroha {
         std::string concat_;
         for (auto tx : proposal.transactions) {
           for (auto command : tx.commands) {
-//          command.AppendToString(&concat_hash_commands); TODO implement
+            auto command_chars = new char[sizeof(*command)];
+            std::memcpy(command_chars, command.get(), sizeof(*command));
+            std::string command_string(command_chars);
+            concat_ += command_chars;
+            delete command_chars;
           }
           std::copy(tx.creator.begin(), tx.creator.end(),
                     std::back_inserter(concat_));
@@ -60,9 +64,14 @@ namespace iroha {
         std::copy(block.merkle_root.begin(), block.merkle_root.end(),
                   std::back_inserter(concat_));
 
+        // transactions
         for (auto tx : block.transactions) {
           for (auto command : tx.commands) {
-//            command.AppendToString(&concat_); TODO implement
+            auto command_chars = new char[sizeof(*command)];
+            std::memcpy(command_chars, command.get(), sizeof(*command));
+            std::string command_string(command_chars);
+            concat_ += command_chars;
+            delete command_chars;
           }
           std::copy(tx.creator.begin(), tx.creator.end(),
                     std::back_inserter(concat_));
@@ -87,7 +96,11 @@ namespace iroha {
       iroha::hash256_t get_hash(const Transaction &tx) {
         std::string concat_hash_commands_;
         for (auto command : tx.commands) {
-//          command.AppendToString(&concat_hash_commands_); TODO implement
+          auto command_chars = new char[sizeof(*command)];
+          std::memcpy(command_chars, command.get(), sizeof(*command));
+          std::string command_string(command_chars);
+          concat_hash_commands_ += command_chars;
+          delete command_chars;
         }
         std::copy(tx.creator.begin(), tx.creator.end(),
                   std::back_inserter(concat_hash_commands_));
