@@ -31,7 +31,7 @@ namespace iroha {
     }
 
     void ConsensusServiceStub::vote_block(dao::Block &block) {
-      std::cout << "[Consensus] voting for block" << std::endl;
+      std::cout << "[\033[35mConsensus\033[0m] voting for block" << std::endl;
       commits_.get_subscriber().on_next(rxcpp::observable<>::from(block));
     }
 

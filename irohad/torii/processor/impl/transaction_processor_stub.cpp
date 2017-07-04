@@ -73,7 +73,7 @@ namespace iroha {
 
     void TransactionProcessorStub::transaction_handle(dao::Client client,
                                           dao::Transaction &transaction) {
-      std::cout << "[Transaction processor] transaction received" << std::endl;
+      std::cout << "[\033[32mTransaction processor\033[0m] transaction received" << std::endl;
       if (validator_.validate(transaction)) {
         // TODO accumulate client-tx map
         transaction = provider_.sign(transaction);

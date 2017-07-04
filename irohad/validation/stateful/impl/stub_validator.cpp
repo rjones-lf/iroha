@@ -29,7 +29,7 @@ namespace iroha {
      */
     dao::Proposal StatefulValidatorStub::validate(const dao::Proposal &proposal,
                                           ametsuchi::TemporaryWsv &wsv) {
-      std::cout << "[StatefulValidator] validating proposal" << std::endl;
+      std::cout << "[\033[34mStatefulValidator\033[0m] validating proposal" << std::endl;
       auto command_validator = CommandValidatorStub(wsv);
       auto
           checking_transaction =

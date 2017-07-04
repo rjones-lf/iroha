@@ -23,7 +23,7 @@ namespace iroha {
 
     bool ChainValidatorStub::validate(rxcpp::observable<dao::Block>& blocks,
                                       ametsuchi::MutableStorage& storage) {
-      std::cout << "[Chain validator] validating commit" << std::endl;
+      std::cout << "[\033[34mChain validator\033[0m] validating commit" << std::endl;
       auto block_validator = BlockValidatorStub(storage);
       auto apply_block = [](const auto& block, auto& executor, auto& query) {
         for (const auto& tx : block.transactions) {

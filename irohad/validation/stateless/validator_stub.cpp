@@ -24,7 +24,7 @@ namespace iroha {
 
     bool StatelessValidatorStub::validate(
         const dao::Transaction &transaction) const {
-      std::cout << "[Stateless validation] validate transaction" << std::endl;
+      std::cout << "[\033[34mStateless validation\033[0m] validate transaction" << std::endl;
       TransactionValidatorStub validator;
       return validator.validate(transaction);
     }

@@ -23,13 +23,13 @@ namespace iroha {
     bool CommandExecutorStub::execute(const dao::Command &command) {
       auto handler = map_.find(command);
       return handler.value_or([](const dao::Command &) {
-        std::cout << "[Command executor] handler not found" << std::endl;
+        std::cout << "[\033[32mCommand executor\033[0m] handler not found" << std::endl;
         return false;
       })(command);
     }
 
     bool CommandExecutorStub::executeAddPeer(const dao::AddPeer &command) {
-      std::cout << "[Command executor] add peer executed" << std::endl;
+      std::cout << "[\033[32mCommand executor\033[0m] add peer executed" << std::endl;
       return true;
     }
 
