@@ -1,0 +1,20 @@
+syntax = "proto3";
+package iroha.api;
+
+import "api.proto";
+
+message TxStatus {
+    enum ValidationCode {
+        VALID = 0;
+        HEADER_WRONG_HASH = 1;
+        HEADER_OLD_SIG = 2;
+        HEADER_WRONG_SIG = 3;
+    }
+
+    ValidationCode code = 1;
+}
+
+service Torii{
+    rpc SendTransaction(Transaction) returns (TxStatus);
+}
+

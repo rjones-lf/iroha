@@ -1,5 +1,0 @@
-table Sample {
-  strvalue: string (required);
-  intvalue: int;
-  doublevalue: double;
-}

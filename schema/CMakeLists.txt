@@ -1,36 +1,32 @@
-message(STATUS "Schema is at: ${IROHA_SCHEMA_DIR}")
+# Temporary comment-outed for compilation
+#compile_proto_to_cpp     (api.proto)
+#compile_proto_to_grpc_cpp(api_service.proto)
 
-function(compile_fbs_to_cpp FBS)
-    string(REGEX REPLACE "\\.fbs$" "_generated.h" GEN_HEADER ${FBS})
-    string(REGEX REPLACE "\\.fbs$" ".grpc.fb.cc" GEN_GRPC ${FBS})
-    string(REGEX REPLACE "\\.fbs$" ".grpc.fb.h" GEN_GRPC_HEADER ${FBS})
-    string(REGEX REPLACE "\\.fbs$" "_h" GEN_TARGET ${FBS})
-    add_custom_command(
-            OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_GRPC} ${IROHA_SCHEMA_DIR}/${GEN_GRPC_HEADER}
-            COMMAND "${flatc_EXECUTABLE}" --gen-mutable --cpp --grpc --scoped-enums --no-prefix
-            -o "${IROHA_SCHEMA_DIR}" "${IROHA_SCHEMA_DIR}/${FBS}"
-            DEPENDS flatc)
-    add_custom_target(${GEN_TARGET} DEPENDS "${IROHA_SCHEMA_DIR}/${GEN_HEADER}")
-    add_dependencies(flatbuffers ${GEN_TARGET})
-endfunction()
+compile_proto_to_cpp(block.proto)
+compile_proto_to_cpp(primitive.proto)
+compile_proto_to_cpp(commands.proto)
+compile_proto_to_grpc_cpp(endpoint.proto)
 
-compile_fbs_to_cpp(account.fbs)
-compile_fbs_to_cpp(asset.fbs)
-compile_fbs_to_cpp(commands.fbs)
-compile_fbs_to_cpp(endpoint.fbs)
-compile_fbs_to_cpp(main.fbs)
-compile_fbs_to_cpp(primitives.fbs)
-compile_fbs_to_cpp(transaction.fbs)
+add_dependencies(commandsproto_h primitiveproto_h)
+add_dependencies(blockproto_h commandsproto_h)
+add_dependencies(endpointproto_h blockproto_h)
 
-add_library(endpoint_fbs STATIC
-    ${IROHA_SCHEMA_DIR}/endpoint.grpc.fb.cc
-    )
+add_library(schema
+    block.pb.cc
+    commands.pb.cc
+    primitive.pb.cc
+)
+target_link_libraries(schema
+    protobuf
+)
 
-target_link_libraries(endpoint_fbs
-    grpc++
+add_library(endpoint
+    endpoint.pb.cc
+    endpoint.grpc.pb.cc
+)
+target_link_libraries(endpoint
+    protobuf
     grpc
-    gpr
-    pthread
-    dl
-    flatbuffers
-    )
+    grpc++
+    grpc++_reflection
+)

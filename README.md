@@ -8,7 +8,7 @@ Please see the [**wiki**](https://github.com/hyperledger/iroha/wiki) for informa
 
 いろは (Iroha) is a simple, distributed ledger.
 
-![alt tag](Iroha_3_sm.png)
+![alt tag](docs/Iroha_3_sm.png)
 
 # Current Status
 

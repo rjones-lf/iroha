@@ -1,0 +1,7 @@
+syntax = "proto3";
+package iroha.protocol;
+
+message Signature {
+   bytes pubkey    = 1;
+   bytes signature = 2;
+}

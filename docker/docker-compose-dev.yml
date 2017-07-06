@@ -1,0 +1,59 @@
+version: '3'
+
+# How to run:
+# docker-compose -f docker-compose-dev.yml up
+#
+# This file creates persistent redis and postgres containers.
+# Even after container removal stored data will be available.
+#
+# redis:
+#   - host: 192.168.9.2 or 127.0.0.1 or localhost
+#   - port: 6379
+# postgres:
+#   - host: 192.168.9.3 or 127.0.0.1 or localhost
+#   - port: 5432
+#   - user: kek
+#   - password: helloworld
+
+services:
+  redis:
+    image: redis:3.2.8
+    ports:
+      - 127.0.0.1:6379:6379
+    volumes:
+      - redis_data:/data
+    networks:
+      peernet:
+        ipv4_address: 192.168.9.2
+
+
+  postgres:
+    image: postgres:9.5
+    ports:
+      - 127.0.0.1:5432:5432
+    environment:
+      - POSTGRES_USER=kek
+      - POSTGRES_PASSWORD=helloworld
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+    networks:
+      peernet:
+        ipv4_address: 192.168.9.3
+
+
+# network for single peer
+networks:
+  peernet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.9.0/24
+
+
+# make persistence for docker containers
+volumes:
+  redis_data:
+  postgresql:
+  postgresql_data:

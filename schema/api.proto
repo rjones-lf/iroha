@@ -1,0 +1,58 @@
+syntax = "proto3";
+package iroha.proto;
+
+import "primitive.proto";
+import "actions.proto";
+
+
+// may be reused in transaction or block
+message Header{
+    uint32             created_ts = 1;
+    repeated Signature sig        = 2;
+    bytes              hash       = 3;
+};
+
+
+message Transaction {
+    // HEADER
+    // concat all serialized actions:
+    // python: actions_str = "".join([x.SerializeAsString() for x in actions])
+    // hash = sha3_256(meta->SerializeasString() + actions_str)
+    Header header = 1;
+
+    message Meta {
+        bytes creator_pubkey = 1;
+
+        // used to prevent replay attacks.
+        uint64_t  tx_counter = 2;
+    }
+
+    // META
+    Meta meta = 3;
+
+    // BODY
+    repeated Command actions = 4;
+}
+
+
+message Block {
+    // HEADER
+
+    // hash inside header is calculated as =>
+    // hash = sha3_256(meta->SerializeasString())
+    Header header = 1;
+
+    message Meta {
+        uint16_t tx_n = 1;
+        uint64_t height = 2;
+        bytes    merkle_root = 3;
+        uint64_t created_ts = 4;
+    }
+
+    // META
+    Meta meta = 2;
+
+    // BODY
+    repeated Transaction transactions = 3;
+}
+

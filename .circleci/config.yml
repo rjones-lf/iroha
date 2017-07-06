@@ -4,10 +4,12 @@ jobs:
     # must be IROHA_HOME:
     working_directory: /opt/iroha
     docker:
-      - image: warchantua/iroha-dev
+      - image: lebdron/iroha-dev
         environment:
           IROHA_HOME: /opt/iroha
           IROHA_BUILD: /tmp/build
+      - image: postgres:9.5
+      - image: redis:3.2.8
     steps:
       - checkout
 
@@ -18,155 +20,143 @@ jobs:
             mkdir -p $IROHA_BUILD
       - run:
           name: cmake
-          command: |
-            cd $IROHA_BUILD
-            cmake $IROHA_HOME
+          command: cmake -H$IROHA_HOME -B$IROHA_BUILD
       - run:
           name: make
-          command: |
-            cd $IROHA_BUILD
-            make -j2
+          command: cmake --build $IROHA_BUILD -- -j4
       - run:
           name: run tests
-          command: |
-            export TEST_FOLDER=$IROHA_BUILD/test_bin
-            total=0
-            for file in ${TEST_FOLDER}/*; do
-                # run test
-                ${file}
-                total=$((total + $?)) 
-            done
-            exit $total
+          command: cmake --build $IROHA_BUILD --target test
 
-      - run:
-          name: analyze source code with cppcheck and sonarqube
-          command: |
-            export TEST_FOLDER=$IROHA_BUILD/test_bin
-
-            cd $IROHA_HOME
-            cppcheck --enable=all --inconclusive --xml --xml-version=2 core/ peer/ smart_contract/ test/ tools/ 2>/tmp/cppcheck.xml || true
-            
-            # run valgrind for tests
-            VALGRIND_XML=
-            mkdir -p valgrind_report
-            for test in $(ls $TEST_FOLDER); do
-              xml=valgrind_report/$test.xml
-              bin=$TEST_FOLDER/$test
-              valgrind --xml=yes --xml-file=$xml --trace-children=yes --demangle=yes --leak-check=full $bin || true
-
-              if [ -z "$VALGRIND_XML" ]; then
-                VALGRIND_XML=$xml
-              else
-                VALGRIND_XML=$xml,$VALGRIND_XML
-              fi
-            done
-
-            # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
-            /opt/sonar-scanner/bin/sonar-scanner \
-              -Dsonar.sourceEncoding=UTF-8 \
-              -Dsonar.sources=benchmark,core,peer,test,tools \
-              -Dsonar.host.url=https://sonar.innoctf.com \
-              -Dsonar.projectKey=hyperledger:iroha \
-              -Dsonar.projectName="Iroha" \
-              -Dsonar.projectVersion="$CIRCLE_BUILD_NUM" \
-              -Dsonar.login="$SONAR_TOKEN" \
-              -Dsonar.cxx.valgrind.reportPath="$VALGRIND_XML" \
-              -Dsonar.cxx.cppcheck.reportPath=/tmp/cppcheck.xml || true
-
-
-      # integrated into circle 2.0
-      - setup_docker_engine
-
-      ## At this step we have compiled and tested iroha. 
-      - run:
-          name: setup docker
-          command: |
-            set -ex
-            curl -L -o /tmp/docker.tgz https://get.docker.com/builds/Linux/x86_64/docker-17.03.0-ce.tgz
-            tar -xz -C /tmp -f /tmp/docker.tgz
-            mv /tmp/docker/* /usr/bin
-
-      - run:
-          name: setup docker-compose
-          command: |
-            set -ex
-            curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
-
-      - run:
-          name: build and push hyperledger/iroha-docker:$CIRCLE_BRANCH image
-          command: |
-            # replace all invalid characters to dots
-            TAG=$(echo $CIRCLE_BRANCH | sed "s/[^a-zA-Z0-9_\-\.]/./g")
-            export TAG=$TAG 
-
-            if [ "$TAG" == "master" ]; then
-              TAG="latest"
-            fi
-
-            # directory, where iroha build files will reside
-            export RELEASE=$IROHA_HOME/docker/tiny/iroha
-            mkdir -p $RELEASE/lib
-            
-            # extract all libraries which use iroha:
-            LIBS=$(ldd $IROHA_BUILD/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
-            
-            # copy libraries (-H = follow links)
-            cp -H $LIBS $RELEASE/lib
-            
-            # copy build artifacts
-            rsync -avr ${IROHA_BUILD}/bin ${RELEASE}
-            rsync -avr ${IROHA_HOME}/docker/tiny/scripts ${RELEASE}
-            mkdir -p ${RELEASE}/config
-            cp ${IROHA_HOME}/config/config.json ${RELEASE}/config/config.json
-            
-            # build image
-            cd $IROHA_HOME/docker/tiny
-            docker build -t hyperledger/iroha-docker:$TAG .
-            
-            # login
-            expect -c '\
-              set timeout 10
-              spawn docker login
-              expect "Username:*"
-              send -- "$env(DOCKER_USER)\r"
-              expect "Password:*"
-              send -- "$env(DOCKER_PASS)\r"
-              expect "*Login Succeeded*"'
-            
-            # and push
-            docker push hyperledger/iroha-docker:$TAG
-            
-            # clean up
-            rm -rf $RELEASE
-
-      ## At this step we have hyperledger/iroha-docker:$TAG image, we can test it now
-
-      ## you can use it by tag: 
-      ##   hyperledger/iroha-docker:$TAG
-      ## don't forget, that call docker run hyperledger/iroha-docker:$TAG is blocking. 
-      ## to make in unblocking, run with -d
-      ##
-      ## put your tests here as separate run command, here is the template:
-      #- run:
-      #    name: test name
-      #    command: |
-      #      test body (bash)
-      #      test body (bash)
-      #      don't forget to clean up after tests (if needed)
-
-      - run:
-          name: template test using docker compose
-          command: |
-            docker-compose up -d
-            docker-compose scale iroha=4
-            IP=$(docker inspect --format "{{ .NetworkSettings.Networks.iroha_private.IPAddress }}" $(docker ps -lq))
-            TAG=$(echo $CIRCLE_BRANCH | sed "s/[^a-zA-Z0-9_\-\.]/./g")
-
-            #docker run --rm -it hyperledger/iroha-docker:$TAG sh -c "/iroha/bin/add_peer key $(IP) ledger"
-
-            docker stop $(docker ps -qln 4)
-            docker rm $(docker ps -qln 4)
+#      - run:
+#          name: analyze source code with cppcheck and sonarqube
+#          command: |
+#            export TEST_FOLDER=$IROHA_BUILD/test_bin
+#
+#            cd $IROHA_HOME
+#            cppcheck --enable=all --inconclusive --xml --xml-version=2 core/ peer/ smart_contract/ test/ tools/ 2>/tmp/cppcheck.xml || true
+#
+#            # run valgrind for tests
+#            VALGRIND_XML=
+#            mkdir -p valgrind_report
+#            for test in $(ls $TEST_FOLDER); do
+#              xml=valgrind_report/$test.xml
+#              bin=$TEST_FOLDER/$test
+#              valgrind --xml=yes --xml-file=$xml --trace-children=yes --demangle=yes --leak-check=full $bin || true
+#
+#              if [ -z "$VALGRIND_XML" ]; then
+#                VALGRIND_XML=$xml
+#              else
+#                VALGRIND_XML=$xml,$VALGRIND_XML
+#              fi
+#            done
+#
+#            # sonarqube is at /opt/sonar-scanner in warchantua/iroha-dev
+#            /opt/sonar-scanner/bin/sonar-scanner \
+#              -Dsonar.sourceEncoding=UTF-8 \
+#              -Dsonar.sources=benchmark,core,peer,test,tools \
+#              -Dsonar.host.url=https://sonar.innoctf.com \
+#              -Dsonar.projectKey=hyperledger:iroha \
+#              -Dsonar.projectName="Iroha" \
+#              -Dsonar.projectVersion="$CIRCLE_BUILD_NUM" \
+#              -Dsonar.login="$SONAR_TOKEN" \
+#              -Dsonar.cxx.valgrind.reportPath="$VALGRIND_XML" \
+#              -Dsonar.cxx.cppcheck.reportPath=/tmp/cppcheck.xml || true
+#
+#
+#      # integrated into circle 2.0
+#      - setup_docker_engine
+#
+#      ## At this step we have compiled and tested iroha.
+#      - run:
+#          name: setup docker
+#          command: |
+#            set -ex
+#            curl -L -o /tmp/docker.tgz https://get.docker.com/builds/Linux/x86_64/docker-17.03.0-ce.tgz
+#            tar -xz -C /tmp -f /tmp/docker.tgz
+#            mv /tmp/docker/* /usr/bin
+#
+#      - run:
+#          name: setup docker-compose
+#          command: |
+#            set -ex
+#            curl -L https://github.com/docker/compose/releases/download/1.11.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+#            chmod +x /usr/local/bin/docker-compose
+#
+#      - run:
+#          name: build and push hyperledger/iroha-docker:$CIRCLE_BRANCH image
+#          command: |
+#            # replace all invalid characters to dots
+#            TAG=$(echo $CIRCLE_BRANCH | sed "s/[^a-zA-Z0-9_\-\.]/./g")
+#            export TAG=$TAG
+#
+#            if [ "$TAG" == "master" ]; then
+#              TAG="latest"
+#            fi
+#
+#            # directory, where iroha build files will reside
+#            export RELEASE=$IROHA_HOME/docker/tiny/iroha
+#            mkdir -p $RELEASE/lib
+#
+#            # extract all libraries which use iroha:
+#            LIBS=$(ldd $IROHA_BUILD/bin/iroha-main | cut -f 2 | cut -d " " -f 3)
+#
+#            # copy libraries (-H = follow links)
+#            cp -H $LIBS $RELEASE/lib
+#
+#            # copy build artifacts
+#            rsync -avr ${IROHA_BUILD}/bin ${RELEASE}
+#            rsync -avr ${IROHA_HOME}/docker/tiny/scripts ${RELEASE}
+#            mkdir -p ${RELEASE}/config
+#            cp ${IROHA_HOME}/config/config.json ${RELEASE}/config/config.json
+#
+#            # build image
+#            cd $IROHA_HOME/docker/tiny
+#            docker build -t hyperledger/iroha-docker:$TAG .
+#
+#            # login
+#            expect -c '\
+#              set timeout 10
+#              spawn docker login
+#              expect "Username:*"
+#              send -- "$env(DOCKER_USER)\r"
+#              expect "Password:*"
+#              send -- "$env(DOCKER_PASS)\r"
+#              expect "*Login Succeeded*"'
+#
+#            # and push
+#            docker push hyperledger/iroha-docker:$TAG
+#
+#            # clean up
+#            rm -rf $RELEASE
+#
+#      ## At this step we have hyperledger/iroha-docker:$TAG image, we can test it now
+#
+#      ## you can use it by tag:
+#      ##   hyperledger/iroha-docker:$TAG
+#      ## don't forget, that call docker run hyperledger/iroha-docker:$TAG is blocking.
+#      ## to make in unblocking, run with -d
+#      ##
+#      ## put your tests here as separate run command, here is the template:
+#      #- run:
+#      #    name: test name
+#      #    command: |
+#      #      test body (bash)
+#      #      test body (bash)
+#      #      don't forget to clean up after tests (if needed)
+#
+#      - run:
+#          name: template test using docker compose
+#          command: |
+#            docker-compose up -d
+#            docker-compose scale iroha=4
+#            IP=$(docker inspect --format "{{ .NetworkSettings.Networks.iroha_private.IPAddress }}" $(docker ps -lq))
+#            TAG=$(echo $CIRCLE_BRANCH | sed "s/[^a-zA-Z0-9_\-\.]/./g")
+#
+#            #docker run --rm -it hyperledger/iroha-docker:$TAG sh -c "/iroha/bin/add_peer key $(IP) ledger"
+#
+#            docker stop $(docker ps -qln 4)
+#            docker rm $(docker ps -qln 4)
 
 
         

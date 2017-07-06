@@ -1,0 +1,33 @@
+# Copyright 2017 Soramitsu Co., Ltd.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#add_subdirectory(connection)
+
+add_library(ordering STATIC queue.cpp observer.cpp)
+
+target_link_libraries(ordering
+  peer_service
+  command_service
+  ordering_service
+  consensus_service
+  ordering_connection
+)
+
+add_library(ordering_service
+    ordering_service_stub.cpp
+    )
+
+target_link_libraries(ordering_service
+    rxcpp
+    )

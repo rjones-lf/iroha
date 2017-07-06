@@ -1,0 +1,37 @@
+syntax = "proto3";
+package iroha.protocol;
+import "commands.proto";
+import "primitive.proto";
+
+message Transaction {
+  message Header {
+    uint64             created_time    = 1;
+    repeated Signature signature       = 2;
+    uint32             version         = 3; // show scheme version like 1, 1.1, ... added by mizuki
+  }
+
+  message Body {
+    bytes            creator_pubkey  = 1;
+    repeated Command command          = 2;
+  }
+
+  Header header = 1;
+  Body   body   = 2;
+}
+
+message Block {
+  message Header {
+    uint32             tx_n           = 1;  // the number of transactions inside. Maximum 16384 or 2^14
+    uint32             height         = 2;  // the current block number in a ledger
+    bytes              merkle_root    = 3;  // global merkle root
+    uint64             created_time   = 4;  // block creation time
+    repeated Signature peer_signature = 5;  // peers' signatures
+  }
+
+  message Body {
+    repeated Transaction txs = 1;
+  }
+
+  Header header = 1;
+  Body   body   = 2;
+}

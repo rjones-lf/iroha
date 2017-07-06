@@ -1,0 +1,293 @@
+syntax = "proto3";
+package iroha.protocol;
+import "primitive.proto";
+
+
+message Asset {
+
+  // defines visibility for asset in nested domains (like class inheritance)
+  enum Visibility {
+    public = 0; // everyone from any domain can use this asset
+    protected = 1; // everyone in nested domains (subdomains) can use this asset
+    private = 2; // accounts only in given domain can use this asset
+  }
+
+  // transaction creator should have permissions to create assets in domains
+  message Create {
+    // asset_id will be: <name>#<domain>, example: USD#sberkek.ru
+    string name = 1;
+    string domain = 2;
+    // optional, JSON-encoded data to create complex assets. Description of asset can be placed here as well.
+    string data = 3;
+    // defines default visibility for asset in nested domains (like class inheritance)
+    Visibility visibility = 4;
+    // if asset is open, then everyone can create wallet with this asset.
+    // if asset is closed, then only creator (or accounts with according permissions) can create wallets with this asset
+    bool isOpen = 5;
+    // Precision for asset representation
+    uint32 precision = 6;
+
+  }
+}
+
+message Wallet {
+
+  enum Premissions {
+    add = 0; // permission to add assets to this wallet
+    remove = 1; // permission to remove wallet
+    transfer = 2; // permision to transfer
+  }
+
+  // create wallet with given asset, by default it will have amount = 0.0
+  // Wallet creator "account" must have presmission to create a wallet
+  message Create {
+    string wallet_id = 1;
+    // Full asset name like asset_name#domain
+    string asset_name = 2;
+  }
+
+  // account who created transaction ("creator") must have permission to close this wallet
+  message Close {
+    string wallet_id = 1;
+  }
+
+  // Assign ownership of wallet "wallet_id" to accout "account_id" with permissions
+  message AttachAccount {
+    string account_id = 1;
+    string wallet_id = 2;
+    uint32 permissions = 3; // Logical or of permissions
+  }
+
+  // Remove ownership of wallet "wallet_id" to accout "account_id" with permissions
+  message DetachAccount {
+    string account_id = 1;
+    string wallet_id = 2;
+  }
+
+  // Add amount of asset of the wallet with id "wallet_id"
+  message Add {
+    string wallet_id = 1;
+    uint64 amount = 2;
+  }
+
+  // Subtract amount of asset of the wallet with id "wallet_id"
+  message Subtract {
+    string wallet_id = 1;
+    uint64 amount = 2;
+  }
+
+  // Transfer from one wallet to another
+  // Wallet can have only one asset type.
+  // If wallet sender asset is not the same as in reciever - Exchange will be executed
+  message Transfer {
+    string sender_wallet_id = 1;
+    string reciever_wallet_id = 2;
+    uint64 amount = 3;
+  }
+}
+
+
+message Domain {
+
+  // create new domain
+  message Create {
+
+    // full domain name, soramitsu.co.jp for example
+    string domain = 1;
+
+    // if domain is open, then any user can join the domain.
+    // in closed domains accounts can be added only by invite
+    bool isOpen = 2;
+  }
+
+  // note: you can remove only empty domains (without assets and accounts)
+  message Remove {
+    string domain = 1; // full domain name
+  }
+
+  // usage example ( | is logical or):
+  // uint32 p = createAsset | createSubdomain | inviteAccounts
+  enum Permissions {
+    noPermissions = 0;
+    createAsset = 1;
+    createSubdomain = 2; // create
+    inviteAccounts = 4; // invite other accounts to this domain
+    givePermissions = 8; // account with this permission is able to give any permission to other account
+    removeAccountsFromDomain = 16; // account with this permission is able to remove any other account from a domain
+  }
+
+  // transaction "creator" invites account with account_id to the domain
+  message InviteAccount {
+    string account_id = 1; // invitee
+    string domain = 2; // invite to this domain
+    uint32 permissions = 3; // logical or of Permissions enum
+    string username = 4; // account will join with this username: <username>@soramitsu.co.jp
+  }
+
+  // remove account from a domain (creator should have according permissions)
+  // this is for domain admins to kick accounts from a domain
+  message RemoveAccount {
+    string username = 1; // full username with full domain name: username@domain
+  }
+
+  // set permissions for the account in domain
+  message SetPermissions {
+    string username = 1; // full username with full domain name: username@domain
+    uint32 permissions = 2;
+  }
+}
+
+
+message Account {
+  // create new account with quorum and signatories
+  // account id is defined as the first public key
+  // account id = sigs[0].pubkey
+  message Create {
+    uint32 quorum = 1;
+    repeated Signature sigs = 2;
+  }
+
+  // account who created transaction ("creator") sets quorum
+  message SetQuorum {
+    int32 quorum = 1;
+  }
+
+  // account who created transaction ("creator") registers signatories
+  message RegisterSignatories {
+    repeated Signature sigs = 1;
+  }
+
+  // account who created transaction ("creator") derregisters signatories
+  message DeregisterSignatories {
+    repeated Signature sigs = 1;
+  }
+
+  enum State {
+    active = 0;
+    suspended = 1; // banned
+    // not_approved = 2; // whatever
+  }
+
+  // set account state
+  message SetState {
+    string account_id = 1;
+    State state = 2;
+  }
+
+  // account who created transaction ("creator") joins a domain
+  message JoinDomain {
+    string domain = 1;
+    string username = 2;
+  }
+
+  // account who created transaction ("creator") leaves domain
+  message LeaveDomain {
+    string domain = 1;
+  }
+}
+
+
+message Peer {
+  enum Role {
+    validator = 0; // now all peers are validators, but this is for future versions
+    member = 1;
+  }
+
+  // add peer to the network
+  message Add {
+    string ip = 1;
+    string account_id = 2;
+    Role role = 3;
+  }
+
+  // remove peer from the network
+  message Remove {
+    string ip = 1;
+  }
+
+  // set peer role in the network
+  message SetRole {
+    string ip = 1;
+    Role role = 2;
+  }
+}
+
+
+message Command {
+  // Asset Commands
+  message AssetCommand {
+    oneof asset_command {
+      // Create specific asset
+      Asset.Create asset_create = 1;
+      // create wallet with given asset, by default it will have amount = 0.0
+      Wallet.Create wallet_create = 2;
+      // account who created transaction ("creator") must have permission to close this wallet
+      Wallet.Close wallet_close = 3;
+      // Assign ownership of wallet "wallet_id" to accout "account_id" with permissions
+      Wallet.AttachAccount wallet_attach_account = 4;
+      // Remove ownership of wallet "wallet_id" to accout "account_id" with permissions
+      Wallet.DetachAccount wallet_detach_account = 5;
+      // Add amount of asset of the wallet with id "wallet_id"
+      Wallet.Add wallet_add = 6;
+      // Subtract amount of asset of the wallet with id "wallet_id"
+      Wallet.Subtract wallet_subtract = 7;
+      // Transfer from one wallet to another
+      // Exchange is the same transfer
+      Wallet.Transfer wallet_transfer = 8;
+    }
+  }
+
+  // Account Commands
+  message AccountCommand {
+    oneof account_command {
+      // create new account with quorum and signatories
+      Account.Create account_create = 1;
+      // account who created transaction ("creator") sets quorum
+      Account.SetQuorum account_set_quorum = 2;
+      // account who created transaction ("creator") registers signatories
+      Account.RegisterSignatories account_register_signatories = 3;
+      // account who created transaction ("creator") derregisters signatories
+      Account.DeregisterSignatories account_deregister_signatories = 4;
+      // set account state
+      Account.SetState account_set_state = 5;
+      // account who created transaction ("creator") joins a domain
+      Account.JoinDomain account_join_domain = 6;
+      // account who created transaction ("creator") leaves domain
+      Account.LeaveDomain account_leave_domain = 7;
+    }
+  }
+
+  // DomainCommand
+  message DomainCommand {
+    oneof domain_command {
+      // Create new domain
+      Domain.Create domain_create = 1;
+      // Remove domain. Will work only for empty domain!
+      Domain.Remove domain_remove = 2;
+      // Invite account to domain
+      Domain.InviteAccount account_invite_domain = 3;
+      // Remove account from domain
+      Domain.RemoveAccount account_remove_domain = 4;
+      // Set permission for domain in account
+      Domain.SetPermissions account_set_permission = 5;
+    }
+  }
+
+  // PeerCommand
+  message PeerCommand {
+    oneof peer_command {
+      // add peer to the network
+      Peer.Add peer_add = 1;
+      // remove peer from the network
+      Peer.Remove peer_remove = 2;
+      // set peer role in the network
+      Peer.SetRole peer_set_state = 3;
+    }
+  }
+  oneof command {
+    AssetCommand asset_command = 1;
+    AccountCommand account_command = 2;
+    DomainCommand domain_command = 3;
+    PeerCommand peer_command = 4;
+  }
+}

@@ -9,4 +9,4 @@ find_package(PackageHandleStandardArgs REQUIRED)
 find_package_handle_standard_args(spdlog
   REQUIRED_VARS spdlog_INCLUDE_DIRS
   VERSION_VAR spdlog_VERSION
-  )
+)
