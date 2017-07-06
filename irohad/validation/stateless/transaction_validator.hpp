@@ -25,7 +25,7 @@ namespace iroha {
     /**
      * Interface for performing validation of a transaction
      */
-    class TransactionValidator {
+    class TransactionValidator { // TODO: this shouldn't be a class as there is no state. Just use a function
      public:
       virtual bool validate(const dao::Transaction &transaction) const = 0;
     };

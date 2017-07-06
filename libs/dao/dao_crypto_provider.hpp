@@ -40,7 +40,7 @@ namespace iroha {
        * @param tx - transaction without signature
        * @return signed transaction by crypto provider
        */
-      virtual Transaction &sign(Transaction &tx) = 0;
+      virtual Transaction &sign(Transaction &tx) = 0; // TODO: how do you sign the tx? Where is th key?
     };
   }
 }

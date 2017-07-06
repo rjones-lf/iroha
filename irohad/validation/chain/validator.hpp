@@ -1,3 +1,4 @@
+// TODO: this file should be called chain_validator.cpp
 /**
  * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
  * http://soramitsu.co.jp

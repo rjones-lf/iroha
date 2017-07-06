@@ -1,3 +1,4 @@
+//TODO: please call this file stateful_validator.hpp
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
 
@@ -25,7 +26,7 @@ namespace iroha {
     /**
      * Interface for performing stateful validation
      */
-    class StatefulValidator {
+    class StatefulValidator { // TODO: this shouldn't be a class as there is no state. Just use a function
      public:
 
       /**

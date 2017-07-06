@@ -1,3 +1,4 @@
+//TODO: please call this file stateless_validator.hpp
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
 
@@ -24,7 +25,7 @@ namespace iroha {
     /**
      * Interface for performing stateless validation
      */
-    class StatelessValidator {
+    class StatelessValidator { // TODO: this shouldn't be a class as there is no state. Just use a function
      public:
       /**
        * Perform stateless validation on a given transaction

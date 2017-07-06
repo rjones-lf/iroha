@@ -26,7 +26,7 @@ namespace iroha {
     /**
      * Interface for checking invariant after performing command
      */
-    class CommandValidator {
+    class CommandValidator { // TODO: this shouldn't be a class as there is no state. Just use a function
      public:
 
       /**

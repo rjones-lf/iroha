@@ -1,3 +1,4 @@
+//TODO: this file should be stateful_validator_impl.cpp
 /*
 Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
 

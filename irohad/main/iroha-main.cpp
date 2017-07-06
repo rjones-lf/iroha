@@ -48,8 +48,9 @@ int main(int argc, char *argv[]) {
     });
   */
 //  iroha::Irohad irohad;
+//TODO: in the list of objects below, anything that has no state should probably not be a class. Please review.
   iroha::ametsuchi::AmetsuchiStub ametsuchi;
-  iroha::dao::DaoCryptoProviderStub crypto_provider;
+  iroha::dao::DaoCryptoProviderStub crypto_provider; // TODO: I like the name Crypto. Perhaps this doesn't need to be an object, but just some public static function.
   iroha::validation::StatelessValidatorStub stateless_validator;
   iroha::validation::StatefulValidatorStub stateful_validator;
   iroha::validation::ChainValidatorStub chain_validator;
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
   iroha::torii::TransactionProcessorStub tp(stateless_validator,
                                             peer_communication_service,
                                             crypto_provider);
-  iroha::torii::QueryProcessorStub qp(ametsuchi, ametsuchi);
+  iroha::torii::QueryProcessorStub qp(ametsuchi, ametsuchi); // TODO: I don't like sending ametsuchi here twice ^^
 
   iroha::torii::ToriiStub torii(tp, qp);
   // shows required order of execution, since callbacks are called synchronously
