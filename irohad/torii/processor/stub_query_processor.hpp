@@ -20,6 +20,8 @@
 
 #include <torii/processor/query_processor.hpp>
 #include <handler_map/handler_map.hpp>
+#include <ametsuchi/block_query.hpp>
+#include <ametsuchi/wsv_query.hpp>
 
 namespace iroha {
   namespace torii {
@@ -30,7 +32,8 @@ namespace iroha {
     class QueryProcessorStub : public QueryProcessor {
      public:
 
-      explicit QueryProcessorStub();
+      explicit QueryProcessorStub(ametsuchi::WsvQuery &wsv,
+                                  ametsuchi::BlockQuery &block);
 
       /**
        * Register client query
@@ -48,6 +51,8 @@ namespace iroha {
      private:
       HandlerMap<dao::Query, void> handler_;
       rxcpp::subjects::subject<std::shared_ptr<dao::QueryResponse>> subject_;
+      ametsuchi::WsvQuery &wsv_;
+      ametsuchi::BlockQuery &block_;
 
       void handle_get_blocks(const dao::GetBlocks &blocks);
 

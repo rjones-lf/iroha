@@ -25,7 +25,9 @@ namespace iroha {
     using dao::QueryResponse;
     using dao::Client;
 
-    QueryProcessorStub::QueryProcessorStub() {
+    QueryProcessorStub::QueryProcessorStub(ametsuchi::WsvQuery &wsv,
+                                           ametsuchi::BlockQuery &block) :
+        wsv_(wsv), block_(block) {
       handler_.insert<dao::GetBlocks>([this](const auto &query) {
         return this->handle_get_blocks(query);
       });

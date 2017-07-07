@@ -20,24 +20,27 @@
 
 namespace iroha {
   namespace torii {
-    ToriiStub::ToriiStub(ClientProcessor
-                         &processor) : processor_(processor) {
-      processor_.query_notifier()
+    ToriiStub::ToriiStub(TransactionProcessor &transaction_processor,
+                         QueryProcessor &query_processor) :
+        transaction_processor_(transaction_processor),
+        query_processor_(query_processor) {
+      query_processor_.query_notifier()
           .subscribe([](auto q_response) {
             std::cout << "[Q] response received" << std::endl;
           });
-      processor.transaction_notifier()
+      transaction_processor_.transaction_notifier()
           .subscribe([](auto t_response) {
-            std::cout << "[T] response received, msg: " << t_response.msg << std::endl;
+            std::cout << "[T] response received, msg: " << t_response.msg
+                      << std::endl;
           });
     }
 
     void ToriiStub::get_query(dao::Client client, dao::Query &query) {
-      processor_.query_handle(client, query);
+      query_processor_.query_handle(client, query);
     }
 
     void ToriiStub::get_transaction(dao::Client client, dao::Transaction &tx) {
-      processor_.transaction_handle(client, tx);
+      transaction_processor_.transaction_handle(client, tx);
     }
   } // namespace torii
 } // namespace iroha
