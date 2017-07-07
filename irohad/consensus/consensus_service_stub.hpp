@@ -27,11 +27,11 @@ namespace iroha {
   namespace consensus {
     class ConsensusServiceStub : public ConsensusService {
      public:
-      void vote_block(dao::Block &block) override;
-      rxcpp::observable<rxcpp::observable<dao::Block>> on_commit() override;
+      void vote_block(model::Block &block) override;
+      rxcpp::observable<rxcpp::observable<model::Block>> on_commit() override;
 
      private:
-      rxcpp::subjects::subject<rxcpp::observable<dao::Block>> commits_;
+      rxcpp::subjects::subject<rxcpp::observable<model::Block>> commits_;
     };
   }  // namespace consensus
 }  // namespace iroha

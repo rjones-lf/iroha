@@ -20,22 +20,22 @@
 namespace iroha {
   namespace ametsuchi {
 
-    bool CommandExecutorStub::execute(const dao::Command &command) {
+    bool CommandExecutorStub::execute(const model::Command &command) {
       auto handler = map_.find(command);
-      return handler.value_or([](const dao::Command &) {
+      return handler.value_or([](const model::Command &) {
         std::cout << "[CE] handler not found" << std::endl;
         return false;
       })(command);
     }
 
-    bool CommandExecutorStub::executeAddPeer(const dao::AddPeer &command) {
+    bool CommandExecutorStub::executeAddPeer(const model::AddPeer &command) {
       std::cout << "[CE] add peer executed" << std::endl;
       return true;
     }
 
     CommandExecutorStub::CommandExecutorStub(WsvQuery &query) : query_(query) {
       // https://stackoverflow.com/questions/9998402/c11-does-not-deduce-type-when-stdfunction-or-lambda-functions-are-involved
-      map_.insert<dao::AddPeer>(std::bind(&CommandExecutorStub::executeAddPeer,
+      map_.insert<model::AddPeer>(std::bind(&CommandExecutorStub::executeAddPeer,
                                           this, std::placeholders::_1));
     }
   }  // namespace ametsuchi

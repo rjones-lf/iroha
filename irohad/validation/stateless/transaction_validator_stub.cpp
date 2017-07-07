@@ -21,7 +21,7 @@ namespace iroha {
   namespace validation {
 
     bool TransactionValidatorStub::validate(
-        const dao::Transaction &transaction) const {
+        const model::Transaction &transaction) const {
       return true;
     }
   }  // namespace validation

@@ -40,21 +40,21 @@ namespace iroha {
        * @param client - query emitter
        * @param query - client intent
        */
-      void query_handle(dao::Client client, const dao::Query &query) override;
+      void query_handle(model::Client client, const model::Query &query) override;
 
       /**
        * Subscribe for query responses
        * @return observable with query responses
        */
-      rxcpp::observable<std::shared_ptr<dao::QueryResponse>> query_notifier() override;
+      rxcpp::observable<std::shared_ptr<model::QueryResponse>> query_notifier() override;
 
      private:
-      HandlerMap<dao::Query, void> handler_;
-      rxcpp::subjects::subject<std::shared_ptr<dao::QueryResponse>> subject_;
+      HandlerMap<model::Query, void> handler_;
+      rxcpp::subjects::subject<std::shared_ptr<model::QueryResponse>> subject_;
       ametsuchi::WsvQuery &wsv_;
       ametsuchi::BlockQuery &block_;
 
-      void handle_get_blocks(const dao::GetBlocks &blocks);
+      void handle_get_blocks(const model::GetBlocks &blocks);
 
     };
   } //namespace torii

@@ -24,10 +24,10 @@ namespace iroha {
   namespace ordering {
     class OrderingServiceStub : public OrderingService {
      public:
-      void propagate_transaction(const dao::Transaction &transaction) override;
-      rxcpp::observable<dao::Proposal> on_proposal() override;
+      void propagate_transaction(const model::Transaction &transaction) override;
+      rxcpp::observable<model::Proposal> on_proposal() override;
      private:
-      rxcpp::subjects::subject<dao::Proposal> proposals_;
+      rxcpp::subjects::subject<model::Proposal> proposals_;
     };
   }//namespace ordering
 }// namespace iroha

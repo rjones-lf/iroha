@@ -35,11 +35,11 @@ namespace iroha {
           });
     }
 
-    void ToriiStub::get_query(dao::Client client, dao::Query &query) {
+    void ToriiStub::get_query(model::Client client, model::Query &query) {
       query_processor_.query_handle(client, query);
     }
 
-    void ToriiStub::get_transaction(dao::Client client, dao::Transaction &tx) {
+    void ToriiStub::get_transaction(model::Client client, model::Transaction &tx) {
       transaction_processor_.transaction_handle(client, tx);
     }
   } // namespace torii

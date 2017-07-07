@@ -18,7 +18,7 @@
 #ifndef IROHA_BLOCK_VALIDATOR_STUB_HPP
 #define IROHA_BLOCK_VALIDATOR_STUB_HPP
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <validation/chain/block_validator.hpp>
 #include <ametsuchi/mutable_storage.hpp>
 
@@ -27,7 +27,7 @@ namespace iroha {
     class BlockValidatorStub : public BlockValidator {
      public:
       BlockValidatorStub(ametsuchi::MutableStorage &storage);
-      bool validate(const dao::Block &block) const override;
+      bool validate(const model::Block &block) const override;
      private:
       ametsuchi::MutableStorage& storage_;
     };

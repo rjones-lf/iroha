@@ -20,8 +20,8 @@
 
 #include <ametsuchi/command_executor.hpp>
 #include <ametsuchi/wsv_query.hpp>
-#include <dao/block.hpp>
-#include <dao/transaction.hpp>
+#include <model/block.hpp>
+#include <model/transaction.hpp>
 #include <functional>
 
 namespace iroha {
@@ -49,8 +49,8 @@ namespace iroha {
        * @return True if transaction was successfully applied, false otherwise
        *
        */
-      virtual bool apply(const dao::Transaction &transaction,
-                         std::function<bool(const dao::Transaction &,
+      virtual bool apply(const model::Transaction &transaction,
+                         std::function<bool(const model::Transaction &,
                                             CommandExecutor &, WsvQuery &)>
                              function) = 0;
     };

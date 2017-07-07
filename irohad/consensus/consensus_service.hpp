@@ -18,8 +18,8 @@
 #ifndef IROHA_CONSENSUS_SERVICE_HPP
 #define IROHA_CONSENSUS_SERVICE_HPP
 
-#include <dao/proposal.hpp>
-#include <dao/block.hpp>
+#include <model/proposal.hpp>
+#include <model/block.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 namespace iroha {
@@ -34,13 +34,13 @@ namespace iroha {
        * Vote for a block formed from proposal
        * @param block
        */
-      virtual void vote_block(dao::Block &block) = 0;
+      virtual void vote_block(model::Block &block) = 0;
 
       /**
        * Return observable of all commits from the consensus
        * @return
        */
-      virtual rxcpp::observable<rxcpp::observable<dao::Block>> on_commit() = 0;
+      virtual rxcpp::observable<rxcpp::observable<model::Block>> on_commit() = 0;
     };
   } // namespace consensus
 } // namespace iroha

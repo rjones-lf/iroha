@@ -26,26 +26,26 @@ namespace iroha {
 
     class AmetsuchiStub : public Ametsuchi {
      public:
-      dao::Peer get_peer(
+      model::Peer get_peer(
           iroha::ed25519::pubkey_t pub_key) override;
       std::unique_ptr<TemporaryWsv> createTemporaryWsv() override;
       std::unique_ptr<MutableStorage> createMutableStorage() override;
       void commit(MutableStorage &mutableStorage) override;
-      rxcpp::observable<dao::Transaction> get_account_transactions(
+      rxcpp::observable<model::Transaction> get_account_transactions(
           ed25519::pubkey_t pub_key) override;
-      rxcpp::observable<dao::Transaction> get_asset_transactions(
+      rxcpp::observable<model::Transaction> get_asset_transactions(
           std::string asset_full_name) override;
-      rxcpp::observable<dao::Transaction> get_wallet_transactions(
+      rxcpp::observable<model::Transaction> get_wallet_transactions(
           std::string wallet_id) override;
-      rxcpp::observable<iroha::dao::Block> get_blocks_in_range(
+      rxcpp::observable<iroha::model::Block> get_blocks_in_range(
           uint32_t from, uint32_t to) override;
-      dao::Account get_account(ed25519::pubkey_t pub_key) override;
-      dao::Asset get_asset(std::string asset_full_name) override;
-      dao::Domain get_domain(std::string domain_full_name) override;
-      dao::Wallet get_wallet(std::string wallet_id) override;
-      std::vector<dao::Wallet> get_account_wallets(
+      model::Account get_account(ed25519::pubkey_t pub_key) override;
+      model::Asset get_asset(std::string asset_full_name) override;
+      model::Domain get_domain(std::string domain_full_name) override;
+      model::Wallet get_wallet(std::string wallet_id) override;
+      std::vector<model::Wallet> get_account_wallets(
           ed25519::pubkey_t pub_key) override;
-      std::vector<dao::Asset> get_domain_assets(
+      std::vector<model::Asset> get_domain_assets(
           std::string domain_full_name) override;
       ~AmetsuchiStub() override;
     };

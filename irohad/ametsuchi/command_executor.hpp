@@ -18,7 +18,7 @@
 #ifndef IROHA_COMMANDEXECUTOR_HPP
 #define IROHA_COMMANDEXECUTOR_HPP
 
-#include <dao/command.hpp>
+#include <model/command.hpp>
 
 namespace iroha {
 
@@ -34,7 +34,7 @@ namespace iroha {
        * @param command Command to execute
        * @return True if the command is successfully executed, false otherwise
        */
-      virtual bool execute(const dao::Command& command) = 0;
+      virtual bool execute(const model::Command& command) = 0;
     };
 
   } // namespace ametsuchi

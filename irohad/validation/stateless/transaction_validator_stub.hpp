@@ -24,7 +24,7 @@ namespace iroha {
   namespace validation {
     class TransactionValidatorStub : public TransactionValidator {
      public:
-      bool validate(const dao::Transaction &transaction) const override;
+      bool validate(const model::Transaction &transaction) const override;
     };
   }  // namespace validation
 }  // namespace iroha

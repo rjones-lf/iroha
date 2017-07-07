@@ -20,7 +20,7 @@
 
 #include <ametsuchi/command_executor.hpp>
 #include <ametsuchi/wsv_query.hpp>
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <functional>
 #include <handler_map/handler_map.hpp>
 #include <memory>
@@ -32,12 +32,12 @@ namespace iroha {
     class CommandExecutorStub : public CommandExecutor {
      public:
       CommandExecutorStub(WsvQuery &query);
-      bool execute(const dao::Command &command) override;
+      bool execute(const model::Command &command) override;
 
      private:
-      bool executeAddPeer(const dao::AddPeer &command);
+      bool executeAddPeer(const model::AddPeer &command);
       WsvQuery &query_;
-      HandlerMap<dao::Command, bool> map_;
+      HandlerMap<model::Command, bool> map_;
     };
 
   }  // namespace ametsuchi

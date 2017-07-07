@@ -18,7 +18,7 @@
 #ifndef IROHA_QUERY_PROCESSOR_HPP
 #define IROHA_QUERY_PROCESSOR_HPP
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <rxcpp/rx.hpp>
 
 namespace iroha {
@@ -35,14 +35,14 @@ namespace iroha {
        * @param client - query emitter
        * @param query - client intent
        */
-      virtual void query_handle(dao::Client client,
-                                const dao::Query &query) = 0;
+      virtual void query_handle(model::Client client,
+                                const model::Query &query) = 0;
 
       /**
        * Subscribe for query responses
        * @return observable with query responses
        */
-      virtual rxcpp::observable<std::shared_ptr<dao::QueryResponse>> query_notifier() = 0;
+      virtual rxcpp::observable<std::shared_ptr<model::QueryResponse>> query_notifier() = 0;
 
       virtual ~QueryProcessor() {
       };

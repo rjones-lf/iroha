@@ -18,7 +18,7 @@
 #ifndef IROHA_COMMAND_VALIDATOR_HPP
 #define IROHA_COMMAND_VALIDATOR_HPP
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 
 namespace iroha {
   namespace validation {
@@ -34,7 +34,7 @@ namespace iroha {
        * @param command to be applied
        * @return true if invariant correct, otherwise false
        */
-      virtual bool validate(const dao::Command &command) = 0;
+      virtual bool validate(const model::Command &command) = 0;
     };
   } // namespace validation
 } // namespace iroha

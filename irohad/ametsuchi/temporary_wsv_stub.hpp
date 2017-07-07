@@ -28,19 +28,19 @@ namespace iroha {
     class TemporaryWsvStub : public TemporaryWsv {
      public:
       TemporaryWsvStub(AmetsuchiStub &ametsuchi);
-      bool apply(const dao::Transaction &transaction,
-                 std::function<bool(const dao::Transaction &, CommandExecutor &,
+      bool apply(const model::Transaction &transaction,
+                 std::function<bool(const model::Transaction &, CommandExecutor &,
                                     WsvQuery &)>
                      function) override;
-      dao::Account get_account(ed25519::pubkey_t pub_key) override;
-      dao::Asset get_asset(std::string asset_full_name) override;
-      dao::Domain get_domain(std::string domain_full_name) override;
-      dao::Wallet get_wallet(std::string wallet_id) override;
-      std::vector<dao::Wallet> get_account_wallets(
+      model::Account get_account(ed25519::pubkey_t pub_key) override;
+      model::Asset get_asset(std::string asset_full_name) override;
+      model::Domain get_domain(std::string domain_full_name) override;
+      model::Wallet get_wallet(std::string wallet_id) override;
+      std::vector<model::Wallet> get_account_wallets(
           ed25519::pubkey_t pub_key) override;
-      std::vector<dao::Asset> get_domain_assets(
+      std::vector<model::Asset> get_domain_assets(
           std::string domain_full_name) override;
-      iroha::dao::Peer get_peer(iroha::ed25519::pubkey_t pub_key) override;
+      iroha::model::Peer get_peer(iroha::ed25519::pubkey_t pub_key) override;
 
      private:
       AmetsuchiStub &ametsuchi_;

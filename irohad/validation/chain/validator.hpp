@@ -19,7 +19,7 @@
 #define IROHA_CHAIN_VALIDATOR_HPP
 
 #include <ametsuchi/mutable_storage.hpp>
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 namespace iroha {
@@ -43,7 +43,7 @@ namespace iroha {
        * @param storage - storage that may be modified during loading
        * @return true if commit is valid, false otherwise
        */
-      virtual bool validate(rxcpp::observable<dao::Block> &blocks,
+      virtual bool validate(rxcpp::observable<model::Block> &blocks,
                             ametsuchi::MutableStorage &storage) = 0;
     };
   }  // namespace validation

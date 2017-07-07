@@ -18,7 +18,7 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_HPP
 #define IROHA_TRANSACTION_PROCESSOR_HPP
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <rxcpp/rx.hpp>
 
 namespace iroha {
@@ -36,14 +36,14 @@ namespace iroha {
        * @param client - transaction owner
        * @param transaction - transaction for processing
        */
-      virtual void transaction_handle(dao::Client client,
-                                      dao::Transaction &transaction) = 0;
+      virtual void transaction_handle(model::Client client,
+                                      model::Transaction &transaction) = 0;
 
       /**
        * Subscribers will be notified with transaction status
        * @return observable for subscribing
        */
-      virtual rxcpp::observable<dao::TransactionResponse>
+      virtual rxcpp::observable<model::TransactionResponse>
       transaction_notifier() = 0;
     };
   }  // namespace torii

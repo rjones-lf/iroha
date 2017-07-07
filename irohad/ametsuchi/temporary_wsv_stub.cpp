@@ -23,35 +23,35 @@ namespace iroha {
   namespace ametsuchi {
 
     bool TemporaryWsvStub::apply(
-        const dao::Transaction &transaction,
-        std::function<bool(const dao::Transaction &, CommandExecutor &,
+        const model::Transaction &transaction,
+        std::function<bool(const model::Transaction &, CommandExecutor &,
                            WsvQuery &)>
             function) {
       return function(transaction, executor_, ametsuchi_);
     }
 
-    dao::Account TemporaryWsvStub::get_account(ed25519::pubkey_t pub_key) {
+    model::Account TemporaryWsvStub::get_account(ed25519::pubkey_t pub_key) {
       return ametsuchi_.get_account(pub_key);
     }
 
-    dao::Asset TemporaryWsvStub::get_asset(std::string asset_full_name) {
+    model::Asset TemporaryWsvStub::get_asset(std::string asset_full_name) {
       return ametsuchi_.get_asset(asset_full_name);
     }
 
-    dao::Domain TemporaryWsvStub::get_domain(std::string domain_full_name) {
+    model::Domain TemporaryWsvStub::get_domain(std::string domain_full_name) {
       return ametsuchi_.get_domain(domain_full_name);
     }
 
-    dao::Wallet TemporaryWsvStub::get_wallet(std::string wallet_id) {
+    model::Wallet TemporaryWsvStub::get_wallet(std::string wallet_id) {
       return ametsuchi_.get_wallet(wallet_id);
     }
 
-    std::vector<dao::Wallet> TemporaryWsvStub::get_account_wallets(
+    std::vector<model::Wallet> TemporaryWsvStub::get_account_wallets(
         ed25519::pubkey_t pub_key) {
       return ametsuchi_.get_account_wallets(pub_key);
     }
 
-    std::vector<dao::Asset> TemporaryWsvStub::get_domain_assets(
+    std::vector<model::Asset> TemporaryWsvStub::get_domain_assets(
         std::string domain_full_name) {
       return ametsuchi_.get_domain_assets(domain_full_name);
     }
@@ -59,7 +59,7 @@ namespace iroha {
     TemporaryWsvStub::TemporaryWsvStub(AmetsuchiStub &ametsuchi)
         : ametsuchi_(ametsuchi), executor_(*this) {}
 
-    iroha::dao::Peer TemporaryWsvStub::get_peer(
+    iroha::model::Peer TemporaryWsvStub::get_peer(
         iroha::ed25519::pubkey_t pub_key) {
       return ametsuchi_.get_peer(pub_key);
     }

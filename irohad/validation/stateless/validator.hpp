@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef IROHA_VALIDATION_STATELESS_VALIDATOR_HPP
 #define IROHA_VALIDATION_STATELESS_VALIDATOR_HPP
 
-#include <dao/transaction.hpp>
+#include <model/transaction.hpp>
 
 namespace iroha {
   namespace validation {
@@ -31,7 +31,7 @@ namespace iroha {
        * @param transaction transaction to be validated
        * @return true if given transaction is valid, false otherwise
        */
-      virtual bool validate(const dao::Transaction &transaction) const = 0;
+      virtual bool validate(const model::Transaction &transaction) const = 0;
     };
   }  // namespace validation
 }  // namespace iroha

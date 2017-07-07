@@ -18,8 +18,8 @@
 #ifndef IROHA_ORDERING_SERVICE_HPP
 #define IROHA_ORDERING_SERVICE_HPP
 
-#include <dao/transaction.hpp>
-#include <dao/proposal.hpp>
+#include <model/transaction.hpp>
+#include <model/proposal.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 namespace iroha {
@@ -34,13 +34,13 @@ namespace iroha {
        * Propagate a signed transaction for further processing
        * @param transaction
        */
-      virtual void propagate_transaction(const dao::Transaction &transaction) = 0;
+      virtual void propagate_transaction(const model::Transaction &transaction) = 0;
 
       /**
        * Return observable of all proposals in the consensus
        * @return
        */
-      virtual rxcpp::observable<dao::Proposal> on_proposal() = 0;
+      virtual rxcpp::observable<model::Proposal> on_proposal() = 0;
     };
   }//namespace ordering
 }// namespace iroha

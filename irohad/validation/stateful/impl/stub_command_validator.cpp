@@ -22,19 +22,19 @@ namespace iroha {
 
     CommandValidatorStub::CommandValidatorStub(
         ametsuchi::TemporaryWsv &wsv) : wsv(wsv) {
-      this->handler.insert<dao::AddPeer>(std::bind(&CommandValidatorStub::validateAddPeer,
+      this->handler.insert<model::AddPeer>(std::bind(&CommandValidatorStub::validateAddPeer,
                                                    this,
                                                    std::placeholders::_1));
     }
 
-    bool CommandValidatorStub::validate(const dao::Command &command) {
+    bool CommandValidatorStub::validate(const model::Command &command) {
       return handler.find(command).value_or([](auto &) {
         std::cout << "[CVS] handler not found" << std::endl;
         return false;
       })(command);
     }
 
-    bool CommandValidatorStub::validateAddPeer(const dao::AddPeer &addPeer) {
+    bool CommandValidatorStub::validateAddPeer(const model::AddPeer &addPeer) {
       return true;
     }
   } // namespace validation

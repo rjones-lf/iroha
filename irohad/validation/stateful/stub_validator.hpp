@@ -28,7 +28,7 @@ namespace iroha {
       StatefulValidatorStub() {
       }
 
-      dao::Proposal validate(const dao::Proposal &proposal,
+      model::Proposal validate(const model::Proposal &proposal,
                              ametsuchi::TemporaryWsv &wsv);
     };
   } // namespace validation

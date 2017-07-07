@@ -18,7 +18,7 @@
 #ifndef IROHA_BLOCK_LOADER_HPP
 #define IROHA_BLOCK_LOADER_HPP
 
-#include "dao/dao.hpp"
+#include "model/model.hpp"
 #include "rxcpp/rx-observable.hpp"
 
 namespace iroha {
@@ -39,8 +39,8 @@ namespace iroha {
        * @param topBlock - your last actual block
        * @return observable with blocks
        */
-      virtual rxcpp::observable <dao::Block> requestBlocks(
-          dao::Peer &target_peer, dao::Block &topBlock) = 0;
+      virtual rxcpp::observable <model::Block> requestBlocks(
+          model::Peer &target_peer, model::Block &topBlock) = 0;
     };
   } // namespace network
 } // namespace iroha

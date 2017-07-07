@@ -25,9 +25,9 @@ namespace iroha {
     using validation::ChainValidator;
     using ordering::OrderingService;
     using consensus::ConsensusService;
-    using dao::Block;
+    using model::Block;
 
-    rxcpp::observable<rxcpp::observable<dao::Block>>
+    rxcpp::observable<rxcpp::observable<model::Block>>
     PeerCommunicationServiceStub::on_commit() {
       return consensus_.on_commit().take_while([this](auto commit) {
         std::cout << "[PCS] chain validation" << std::endl;
@@ -41,11 +41,11 @@ namespace iroha {
     }
 
     void PeerCommunicationServiceStub::propagate_transaction(
-        const dao::Transaction &tx) {
+        const model::Transaction &tx) {
       orderer_.propagate_transaction(tx);
     }
 
-    rxcpp::observable<dao::Proposal>
+    rxcpp::observable<model::Proposal>
     PeerCommunicationServiceStub::on_proposal() {
       return orderer_.on_proposal();
     }
@@ -53,7 +53,7 @@ namespace iroha {
     PeerCommunicationServiceStub::PeerCommunicationServiceStub(
         Ametsuchi &storage, StatefulValidator &stateful_validator,
         ChainValidator &chain_validator, OrderingService &orderer,
-        ConsensusService &consensus, dao::DaoCryptoProvider &crypto_provider)
+        ConsensusService &consensus, model::ModelCryptoProvider &crypto_provider)
         : storage_(storage),
           stateful_validator_(stateful_validator),
           chain_validator_(chain_validator),

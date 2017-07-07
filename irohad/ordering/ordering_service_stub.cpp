@@ -20,17 +20,17 @@
 namespace iroha {
   namespace ordering {
 
-    using dao::Transaction;
-    using dao::Proposal;
+    using model::Transaction;
+    using model::Proposal;
 
     void OrderingServiceStub::propagate_transaction(
-        const dao::Transaction &transaction) {
+        const model::Transaction &transaction) {
       std::vector<Transaction> transactions{transaction};
       Proposal proposal(transactions);
       proposals_.get_subscriber().on_next(proposal);
     }
 
-    rxcpp::observable<dao::Proposal> OrderingServiceStub::on_proposal() {
+    rxcpp::observable<model::Proposal> OrderingServiceStub::on_proposal() {
       return proposals_.get_observable();
     }
   }  // namespace ordering

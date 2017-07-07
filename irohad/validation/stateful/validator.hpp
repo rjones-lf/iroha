@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef IROHA_VALIDATION_STATEFUL_VALIDATOR_HPP
 #define IROHA_VALIDATION_STATEFUL_VALIDATOR_HPP
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <ametsuchi/temporary_wsv.hpp>
 
 namespace iroha {
@@ -37,7 +37,7 @@ namespace iroha {
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions
        */
-      virtual dao::Proposal validate(const dao::Proposal &proposal,
+      virtual model::Proposal validate(const model::Proposal &proposal,
                                      ametsuchi::TemporaryWsv &wsv) = 0;
     };
   } // namespace validation

@@ -16,7 +16,7 @@
  */
 
 #include <validation/stateful/stub_validator.hpp>
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <numeric>
 #include <validation/stateful/stub_command_validator.hpp>
 
@@ -26,7 +26,7 @@ namespace iroha {
     /**
      * Interface for performing stateful validation
      */
-    dao::Proposal StatefulValidatorStub::validate(const dao::Proposal &proposal,
+    model::Proposal StatefulValidatorStub::validate(const model::Proposal &proposal,
                                           ametsuchi::TemporaryWsv &wsv) {
       auto command_validator = CommandValidatorStub(wsv);
       auto
@@ -54,7 +54,7 @@ namespace iroha {
       auto &txs = proposal.transactions;
       decltype(txs) valid = {};
 
-      return dao::Proposal(std::accumulate(txs.begin(), txs.end(),
+      return model::Proposal(std::accumulate(txs.begin(), txs.end(),
                                            valid, filter));
     }
   } // namespace validation

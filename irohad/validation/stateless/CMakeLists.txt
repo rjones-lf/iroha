@@ -8,5 +8,5 @@ target_link_libraries(stateless_validator
     optional
     ed25519
     rxcpp
-    dao
+    model
     )

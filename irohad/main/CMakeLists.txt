@@ -24,7 +24,7 @@ target_link_libraries(server_runner
 add_executable(iroha-main iroha-main.cpp application.cpp)
 target_link_libraries(iroha-main
     server_runner
-    dao
+    model
     ametsuchi
     networking
     ordering_service

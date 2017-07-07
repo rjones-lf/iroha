@@ -21,20 +21,20 @@ namespace iroha {
   namespace torii {
     using rxcpp::subscriber;
     using std::shared_ptr;
-    using dao::Query;
-    using dao::QueryResponse;
-    using dao::Client;
+    using model::Query;
+    using model::QueryResponse;
+    using model::Client;
 
     QueryProcessorStub::QueryProcessorStub(ametsuchi::WsvQuery &wsv,
                                            ametsuchi::BlockQuery &block) :
         wsv_(wsv), block_(block) {
-      handler_.insert<dao::GetBlocks>([this](const auto &query) {
+      handler_.insert<model::GetBlocks>([this](const auto &query) {
         return this->handle_get_blocks(query);
       });
     }
 
-    void QueryProcessorStub::query_handle(dao::Client client,
-                                          const dao::Query &query) {
+    void QueryProcessorStub::query_handle(model::Client client,
+                                          const model::Query &query) {
       auto handle = handler_.find(query).value_or([](auto &) {
         std::cout << "[Q] Handler not found" << std::endl;
         return;
@@ -48,9 +48,9 @@ namespace iroha {
       return subject_.get_observable();
     }
 
-    void QueryProcessorStub::handle_get_blocks(const dao::GetBlocks &blocks) {
+    void QueryProcessorStub::handle_get_blocks(const model::GetBlocks &blocks) {
       subject_.get_subscriber().on_next(
-          std::make_shared<dao::GetBlocksResponse>());
+          std::make_shared<model::GetBlocksResponse>());
     }
 
   }  // namespace torii

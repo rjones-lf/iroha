@@ -20,7 +20,7 @@
 
 #include <network/network_api.h>
 #include <ametsuchi/ametsuchi.hpp>
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 
 namespace iroha {
 
@@ -34,14 +34,14 @@ namespace iroha {
 
     ametsuchi::Ametsuchi &ametsuchi;
 
-    dao::DaoCryptoProvider &cryptoProvider;
+    model::ModelCryptoProvider &cryptoProvider;
 
-    dao::HashProvider<32> &hashProvider;
+    model::HashProvider<32> &hashProvider;
 
    private:
-    static std::shared_ptr<dao::HashProvider<32>> initialize_hash_provider();
+    static std::shared_ptr<model::HashProvider<32>> initialize_hash_provider();
 
-    static std::shared_ptr<dao::DaoCryptoProvider> initialize_crypto_provider();
+    static std::shared_ptr<model::ModelCryptoProvider> initialize_crypto_provider();
 
     static std::shared_ptr<ametsuchi::Ametsuchi> initialize_ametsuchi();
   };

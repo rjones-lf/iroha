@@ -18,8 +18,8 @@
 #include "application.hpp"
 
 #include <ametsuchi/ametsuchi_stub.hpp>
-#include "dao/dao_crypto_provider_stub.hpp"
-#include "dao/dao_hash_provider_impl.hpp"
+#include "model/model_crypto_provider_stub.hpp"
+#include "model/model_hash_provider_impl.hpp"
 
 namespace iroha {
 
@@ -29,11 +29,11 @@ namespace iroha {
         cryptoProvider(*initialize_crypto_provider()),
         hashProvider(*initialize_hash_provider()) {}
 
-  std::shared_ptr<dao::HashProvider<32>> Irohad::initialize_hash_provider() {
-    return std::make_shared<dao::HashProviderImpl>();
+  std::shared_ptr<model::HashProvider<32>> Irohad::initialize_hash_provider() {
+    return std::make_shared<model::HashProviderImpl>();
   }
-  std::shared_ptr<dao::DaoCryptoProvider> Irohad::initialize_crypto_provider() {
-    return std::make_shared<dao::DaoCryptoProviderStub>();
+  std::shared_ptr<model::ModelCryptoProvider> Irohad::initialize_crypto_provider() {
+    return std::make_shared<model::ModelCryptoProviderStub>();
   }
   std::shared_ptr<ametsuchi::Ametsuchi> Irohad::initialize_ametsuchi() {
     return std::make_shared<ametsuchi::AmetsuchiStub>();

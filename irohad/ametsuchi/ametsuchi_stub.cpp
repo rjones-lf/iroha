@@ -32,69 +32,69 @@ namespace iroha {
 
     void AmetsuchiStub::commit(MutableStorage &mutableStorage) { return; }
 
-    rxcpp::observable<dao::Transaction> AmetsuchiStub::get_account_transactions(
+    rxcpp::observable<model::Transaction> AmetsuchiStub::get_account_transactions(
         ed25519::pubkey_t pub_key) {
-      return rxcpp::observable<>::create<dao::Transaction>(
-          [](rxcpp::subscriber<dao::Transaction> s) {
-            s.on_next(dao::Transaction{});
+      return rxcpp::observable<>::create<model::Transaction>(
+          [](rxcpp::subscriber<model::Transaction> s) {
+            s.on_next(model::Transaction{});
             s.on_completed();
           });
     }
 
-    rxcpp::observable<dao::Transaction> AmetsuchiStub::get_asset_transactions(
+    rxcpp::observable<model::Transaction> AmetsuchiStub::get_asset_transactions(
         std::string asset_full_name) {
-      return rxcpp::observable<>::create<dao::Transaction>(
-          [](rxcpp::subscriber<dao::Transaction> s) {
-            s.on_next(dao::Transaction{});
+      return rxcpp::observable<>::create<model::Transaction>(
+          [](rxcpp::subscriber<model::Transaction> s) {
+            s.on_next(model::Transaction{});
             s.on_completed();
           });
     }
 
-    rxcpp::observable<dao::Transaction> AmetsuchiStub::get_wallet_transactions(
+    rxcpp::observable<model::Transaction> AmetsuchiStub::get_wallet_transactions(
         std::string wallet_id) {
-      return rxcpp::observable<>::create<dao::Transaction>(
-          [](rxcpp::subscriber<dao::Transaction> s) {
-            s.on_next(dao::Transaction{});
+      return rxcpp::observable<>::create<model::Transaction>(
+          [](rxcpp::subscriber<model::Transaction> s) {
+            s.on_next(model::Transaction{});
             s.on_completed();
           });
     }
-    rxcpp::observable<dao::Block> AmetsuchiStub::get_blocks_in_range(
+    rxcpp::observable<model::Block> AmetsuchiStub::get_blocks_in_range(
         uint32_t from, uint32_t to) {
-      return rxcpp::observable<>::create<dao::Block>(
-          [](rxcpp::subscriber<dao::Block> s) {
-            s.on_next(dao::Block{});
+      return rxcpp::observable<>::create<model::Block>(
+          [](rxcpp::subscriber<model::Block> s) {
+            s.on_next(model::Block{});
             s.on_completed();
           });
     }
-    dao::Account AmetsuchiStub::get_account(ed25519::pubkey_t pub_key) {
-      return dao::Account{};
+    model::Account AmetsuchiStub::get_account(ed25519::pubkey_t pub_key) {
+      return model::Account{};
     }
 
-    dao::Asset AmetsuchiStub::get_asset(std::string asset_full_name) {
-      return dao::Asset{};
+    model::Asset AmetsuchiStub::get_asset(std::string asset_full_name) {
+      return model::Asset{};
     }
 
-    dao::Domain AmetsuchiStub::get_domain(std::string domain_full_name) {
-      return dao::Domain{};
+    model::Domain AmetsuchiStub::get_domain(std::string domain_full_name) {
+      return model::Domain{};
     }
 
-    dao::Wallet AmetsuchiStub::get_wallet(std::string wallet_id) {
-      return dao::Wallet{};
+    model::Wallet AmetsuchiStub::get_wallet(std::string wallet_id) {
+      return model::Wallet{};
     }
 
-    std::vector<dao::Wallet> AmetsuchiStub::get_account_wallets(
+    std::vector<model::Wallet> AmetsuchiStub::get_account_wallets(
         ed25519::pubkey_t pub_key) {
-      return std::vector<dao::Wallet>{dao::Wallet{}};
+      return std::vector<model::Wallet>{model::Wallet{}};
     }
 
-    std::vector<dao::Asset> AmetsuchiStub::get_domain_assets(
+    std::vector<model::Asset> AmetsuchiStub::get_domain_assets(
         std::string domain_full_name) {
-      return std::vector<dao::Asset>{dao::Asset{}};
+      return std::vector<model::Asset>{model::Asset{}};
     }
 
-    dao::Peer AmetsuchiStub::get_peer(
+    model::Peer AmetsuchiStub::get_peer(
         iroha::ed25519::pubkey_t pub_key) {
-      return dao::Peer{};
+      return model::Peer{};
     }
 
     AmetsuchiStub::~AmetsuchiStub() {

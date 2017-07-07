@@ -4,6 +4,6 @@ add_library(client_processor
     )
 
 target_link_libraries(client_processor PUBLIC
-    dao
+    model
     rxcpp
     )

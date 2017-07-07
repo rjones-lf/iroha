@@ -46,8 +46,8 @@ namespace iroha {
        *
        */
       virtual bool apply(
-          const dao::Block &block,
-          std::function<bool(const dao::Block &, CommandExecutor &, WsvQuery &)>
+          const model::Block &block,
+          std::function<bool(const model::Block &, CommandExecutor &, WsvQuery &)>
               function) = 0;
     };
 

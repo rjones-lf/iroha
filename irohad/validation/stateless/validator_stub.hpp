@@ -26,7 +26,7 @@ namespace iroha {
     class StatelessValidatorStub : public StatelessValidator {
      public:
       StatelessValidatorStub();
-      bool validate(const dao::Transaction &transaction) const override;
+      bool validate(const model::Transaction &transaction) const override;
     };
 
   }  // namespace validation

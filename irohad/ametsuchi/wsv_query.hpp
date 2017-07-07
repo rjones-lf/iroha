@@ -19,7 +19,7 @@
 #define IROHA_WSVQUERY_HPP
 
 #include <common/types.hpp>
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <string>
 #include <vector>
 
@@ -35,54 +35,54 @@ namespace iroha {
       /**
        * Get peer by it pub key
        * @param pub_key
-       * @return Peer DAO
+       * @return Peer Model
        */
-      virtual iroha::dao::Peer get_peer(
+      virtual iroha::model::Peer get_peer(
           iroha::ed25519::pubkey_t pub_key) = 0;
 
       /**
        * Get account by it's first public key.
        * @param pub_key
-       * @return DAO Account
+       * @return Model Account
        */
-      virtual dao::Account get_account(
+      virtual model::Account get_account(
           ed25519::pubkey_t pub_key) = 0;
 
       /**
        * Get asset by full name. For example USD#soramitsu.co.jp
        * @param full_name of an asset (name#domain)
-       * @return DAO Asset
+       * @return Model Asset
        */
-      virtual dao::Asset get_asset(std::string asset_full_name) = 0;
+      virtual model::Asset get_asset(std::string asset_full_name) = 0;
 
       /**
        * Get domain by domain's full name. For example soramitsu.co.jp
        * @param full_name of a domain
-       * @return DAO Domain
+       * @return Model Domain
        */
-      virtual dao::Domain get_domain(std::string domain_full_name) = 0;
+      virtual model::Domain get_domain(std::string domain_full_name) = 0;
 
       /**
        * Get wallet by wallet_id
        * @param wallet_id
-       * @return DAO Wallet
+       * @return Model Wallet
        */
-      virtual dao::Wallet get_wallet(std::string wallet_id) = 0;
+      virtual model::Wallet get_wallet(std::string wallet_id) = 0;
 
       /**
        * Get all wallets of a account.
        * @param pub_key of a account
-       * @return vector of DAO Wallet
+       * @return vector of Model Wallet
        */
-      virtual std::vector<dao::Wallet> get_account_wallets(
+      virtual std::vector<model::Wallet> get_account_wallets(
           ed25519::pubkey_t pub_key) = 0;
 
       /**
        * Get all asset of a domain.
        * @param  full_name of a domain
-       * @return vector of DAO Asset
+       * @return vector of Model Asset
        */
-      virtual std::vector<dao::Asset> get_domain_assets(
+      virtual std::vector<model::Asset> get_domain_assets(
           std::string domain_full_name) = 0;
     };
 

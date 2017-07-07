@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-#include <dao/dao.hpp>
+#include <model/model.hpp>
 #include <validation/chain/block_validator_stub.hpp>
 
 namespace iroha {
   namespace validation {
 
-    bool BlockValidatorStub::validate(const dao::Block &block) const { return true; }
+    bool BlockValidatorStub::validate(const model::Block &block) const { return true; }
 
     BlockValidatorStub::BlockValidatorStub(ametsuchi::MutableStorage &storage)
         : storage_(storage) {}

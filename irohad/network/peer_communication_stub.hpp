@@ -23,8 +23,8 @@
 #include <ordering/ordering_service.hpp>
 #include <validation/chain/validator.hpp>
 #include <validation/stateful/validator.hpp>
-#include <dao/dao_crypto_provider.hpp>
-#include <dao/dao_hash_provider.hpp>
+#include <model/model_crypto_provider.hpp>
+#include <model/model_hash_provider.hpp>
 
 namespace iroha {
   namespace network {
@@ -36,13 +36,13 @@ namespace iroha {
           validation::ChainValidator &chain_validator,
           ordering::OrderingService &orderer,
           consensus::ConsensusService &consensus,
-          dao::DaoCryptoProvider &crypto_provider);
+          model::ModelCryptoProvider &crypto_provider);
 
-      rxcpp::observable<dao::Proposal> on_proposal() override;
+      rxcpp::observable<model::Proposal> on_proposal() override;
 
-      rxcpp::observable<rxcpp::observable<dao::Block>> on_commit() override;
+      rxcpp::observable<rxcpp::observable<model::Block>> on_commit() override;
 
-      void propagate_transaction(const dao::Transaction &tx) override;
+      void propagate_transaction(const model::Transaction &tx) override;
 
       void subscribe_on_proposal();
 
@@ -52,7 +52,7 @@ namespace iroha {
       validation::ChainValidator &chain_validator_;
       ordering::OrderingService &orderer_;
       consensus::ConsensusService &consensus_;
-      dao::DaoCryptoProvider &crypto_provider_;
+      model::ModelCryptoProvider &crypto_provider_;
       // TODO add hash provider
     };
   }

@@ -22,12 +22,12 @@ namespace iroha {
 
     using validation::StatelessValidator;
     using network::PeerCommunicationService;
-    using dao::TransactionResponse;
-    using dao::DaoCryptoProvider;
+    using model::TransactionResponse;
+    using model::ModelCryptoProvider;
 
     TransactionProcessorStub::TransactionProcessorStub(
         const StatelessValidator &validator, PeerCommunicationService &service,
-        DaoCryptoProvider &provider)
+        ModelCryptoProvider &provider)
         : validator_(validator), service_(service), provider_(provider) {
       // Handle on_proposal
       auto proposal_tx_filter = [](const auto &tx) {
@@ -36,7 +36,7 @@ namespace iroha {
       };
       auto proposal_tx_map = [](const auto &tx) {
         // TODO form response
-        dao::TransactionResponse res;
+        model::TransactionResponse res;
         res.msg = "proposal";
         return res;
       };
@@ -54,7 +54,7 @@ namespace iroha {
       };
       auto commit_tx_map = [](const auto &tx) {
         // TODO form response;
-        dao::TransactionResponse res;
+        model::TransactionResponse res;
         res.msg = "commit";
         return res;
       };
@@ -71,8 +71,8 @@ namespace iroha {
                   commit_response));
     }
 
-    void TransactionProcessorStub::transaction_handle(dao::Client client,
-                                          dao::Transaction &transaction) {
+    void TransactionProcessorStub::transaction_handle(model::Client client,
+                                          model::Transaction &transaction) {
       if (validator_.validate(transaction)) {
         // TODO accumulate client-tx map
         transaction = provider_.sign(transaction);

@@ -20,16 +20,16 @@
 namespace iroha {
   namespace consensus {
 
-    using dao::Transaction;
-    using dao::Proposal;
-    using dao::Block;
+    using model::Transaction;
+    using model::Proposal;
+    using model::Block;
 
-    rxcpp::observable<rxcpp::observable<dao::Block>>
+    rxcpp::observable<rxcpp::observable<model::Block>>
     ConsensusServiceStub::on_commit() {
       return commits_.get_observable();
     }
 
-    void ConsensusServiceStub::vote_block(dao::Block &block) {
+    void ConsensusServiceStub::vote_block(model::Block &block) {
       commits_.get_subscriber().on_next(rxcpp::observable<>::from(block));
     }
 
