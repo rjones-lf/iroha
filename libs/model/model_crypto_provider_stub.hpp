@@ -18,8 +18,8 @@
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_STUB_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_STUB_HPP
 
-#include "model_crypto_provider.hpp"
-#include "transaction.hpp"
+#include <model/model_crypto_provider.hpp>
+#include <model/transaction.hpp>
 
 namespace iroha {
   namespace model {

@@ -16,11 +16,11 @@
  */
 
 #include <gtest/gtest.h>
-#include <dao/dao_crypto_provider_impl.hpp>
+#include <model/model_crypto_provider_impl.hpp>
 #include <crypto/crypto.hpp>
 
-iroha::dao::Transaction create_transaction() {
-  iroha::dao::Transaction tx{};
+iroha::model::Transaction create_transaction() {
+  iroha::model::Transaction tx{};
   memset(tx.creator.data(), 0x1, 32);
 
   tx.tx_counter = 0;
@@ -33,13 +33,13 @@ TEST(CryptoProvider, SignAndVerify){
   auto seed = iroha::create_seed();
   auto keypair = iroha::create_keypair(seed);
 
-  auto dao_tx = create_transaction();
+  auto model_tx = create_transaction();
 
-  iroha::dao::DaoCryptoProviderImpl crypto_provider(keypair.privkey, keypair.pubkey);
-  crypto_provider.sign(dao_tx);
-  ASSERT_TRUE(crypto_provider.verify(dao_tx));
+  iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey, keypair.pubkey);
+  crypto_provider.sign(model_tx);
+  ASSERT_TRUE(crypto_provider.verify(model_tx));
 
   // now modify transaction's meta, so verify should fail
-  memset(dao_tx.creator.data(), 0x123, iroha::ed25519::pubkey_t::size());
-  ASSERT_FALSE(crypto_provider.verify(dao_tx));
+  memset(model_tx.creator.data(), 0x123, iroha::ed25519::pubkey_t::size());
+  ASSERT_FALSE(crypto_provider.verify(model_tx));
 }

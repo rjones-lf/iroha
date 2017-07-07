@@ -8,3 +8,10 @@ target_link_libraries(model_hash_provider_test
     optional
     hash
     )
+
+addtest(model_crypto_provider_test model/model_crypto_provider_test.cpp)
+target_link_libraries(model_crypto_provider_test
+    model
+    hash
+    crypto
+)

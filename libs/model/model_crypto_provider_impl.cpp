@@ -16,19 +16,19 @@
  */
 
 
-#include "dao_crypto_provider_impl.hpp"
-#include "dao_hash_provider_impl.hpp"
+#include <model/model_crypto_provider_impl.hpp>
+#include <model/model_hash_provider_impl.hpp>
 
 namespace iroha {
-  namespace dao {
+  namespace model {
 
-  DaoCryptoProviderImpl::DaoCryptoProviderImpl(ed25519::privkey_t privkey,
+  ModelCryptoProviderImpl::ModelCryptoProviderImpl(ed25519::privkey_t privkey,
   ed25519::pubkey_t pubkey)
   : privkey_(privkey), pubkey_(pubkey) {}
 
 
-  bool DaoCryptoProviderImpl::verify(const Transaction &tx) {
-    dao::HashProviderImpl hash_provider;
+  bool ModelCryptoProviderImpl::verify(const Transaction &tx) {
+    HashProviderImpl hash_provider;
     auto tx_hash = hash_provider.get_hash(tx);
     for (auto sign: tx.signatures) {
       auto verified = iroha::verify(tx_hash.data(), tx_hash.size(), sign.pubkey, sign.signature);
@@ -38,8 +38,8 @@ namespace iroha {
     return true;
   }
 
-  Transaction &DaoCryptoProviderImpl::sign(Transaction &tx) {
-    dao::HashProviderImpl hash_provider;
+  Transaction &ModelCryptoProviderImpl::sign(Transaction &tx) {
+    model::HashProviderImpl hash_provider;
     auto tx_hash = hash_provider.get_hash(tx);
 
     auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey_, privkey_);

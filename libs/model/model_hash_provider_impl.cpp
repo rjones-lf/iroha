@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#include <dao/dao_hash_provider_impl.hpp>
+#include <model/model_hash_provider_impl.hpp>
 
 namespace iroha {
-  namespace dao {
+  namespace model {
 
     iroha::hash256_t HashProviderImpl::get_hash(const Proposal &proposal) {
       std::string concat_;  // string representation of the proposal, made of
