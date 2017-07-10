@@ -15,29 +15,24 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
-#define IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
+#ifndef IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
+#define IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
 
-#include <model/model_crypto_provider.hpp>
-#include <model/model_hash_provider.hpp>
+#include <model/model.hpp>
+#include <validation/stateless/transaction_validator.hpp>
 
 namespace iroha {
-  namespace model {
-
-    class ModelCryptoProviderImpl : public ModelCryptoProvider {
+  namespace validation {
+    class TransactionValidatorImpl : public TransactionValidator {
      public:
-      ModelCryptoProviderImpl(ed25519::privkey_t privkey,
-                            ed25519::pubkey_t pubkey);
-
-      bool verify(const Transaction &tx) const override;
-
-      Transaction &sign(Transaction &tx) override;
+      explicit TransactionValidatorImpl(model::ModelCryptoProvider& crypto_provider);
+      bool validate(const model::Transaction& transaction) const override;
 
      private:
-      ed25519::privkey_t privkey_;
-      ed25519::pubkey_t pubkey_;
+      uint64_t max_delay_;  // max-delay between tx creation and validation
+      const model::ModelCryptoProvider& crypto_provider_;
     };
-  }
-}
+  }  // namespace validation
+}  // namespace iroha
 
-#endif  // IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
+#endif  // IROHA_TRANSACTION_VALIDATOR_IMPL_HPP

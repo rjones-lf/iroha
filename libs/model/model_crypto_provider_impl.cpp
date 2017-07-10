@@ -27,7 +27,7 @@ namespace iroha {
   : privkey_(privkey), pubkey_(pubkey) {}
 
 
-  bool ModelCryptoProviderImpl::verify(const Transaction &tx) {
+  bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
     HashProviderImpl hash_provider;
     auto tx_hash = hash_provider.get_hash(tx);
     for (auto sign: tx.signatures) {
