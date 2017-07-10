@@ -15,43 +15,44 @@
  * limitations under the License.
  */
 
-
 #include <model/model_crypto_provider_impl.hpp>
 #include <model/model_hash_provider_impl.hpp>
 
 namespace iroha {
   namespace model {
 
-  ModelCryptoProviderImpl::ModelCryptoProviderImpl(ed25519::privkey_t privkey,
-  ed25519::pubkey_t pubkey)
-  : privkey_(privkey), pubkey_(pubkey) {}
+    ModelCryptoProviderImpl::ModelCryptoProviderImpl(ed25519::privkey_t privkey,
+                                                     ed25519::pubkey_t pubkey)
+        : privkey_(privkey), pubkey_(pubkey) {}
 
+    bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
+      HashProviderImpl hash_provider;
+      auto tx_hash = hash_provider.get_hash(tx);
 
-  bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
-    HashProviderImpl hash_provider;
-    auto tx_hash = hash_provider.get_hash(tx);
-    for (auto sign: tx.signatures) {
-      auto verified = iroha::verify(tx_hash.data(), tx_hash.size(), sign.pubkey, sign.signature);
-      if (!verified)
-        return false;
+      if (tx.signatures.size() == 0) return false;
+
+      for (auto sign : tx.signatures) {
+        auto verified = iroha::verify(tx_hash.data(), tx_hash.size(),
+                                      sign.pubkey, sign.signature);
+        if (!verified) return false;
+      }
+      return true;
     }
-    return true;
-  }
 
-  Transaction &ModelCryptoProviderImpl::sign(Transaction &tx) {
-    model::HashProviderImpl hash_provider;
-    auto tx_hash = hash_provider.get_hash(tx);
+    Transaction &ModelCryptoProviderImpl::sign(Transaction &tx) {
+      model::HashProviderImpl hash_provider;
+      auto tx_hash = hash_provider.get_hash(tx);
 
-    auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey_, privkey_);
+      auto sign =
+          iroha::sign(tx_hash.data(), tx_hash.size(), pubkey_, privkey_);
 
-    Signature signature{};
-    signature.signature = sign;
-    signature.pubkey = pubkey_;
+      Signature signature{};
+      signature.signature = sign;
+      signature.pubkey = pubkey_;
 
-    tx.signatures.push_back(signature);
+      tx.signatures.push_back(signature);
 
-    return tx;
-  }
-
+      return tx;
+    }
   }
 }

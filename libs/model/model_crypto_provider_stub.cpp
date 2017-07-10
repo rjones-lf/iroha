@@ -19,12 +19,10 @@
 
 namespace iroha {
   namespace model {
-    bool ModelCryptoProviderStub::verify(const Transaction &tx) {
+    bool ModelCryptoProviderStub::verify(const Transaction &tx) const {
       return true;
     }
 
-    Transaction &ModelCryptoProviderStub::sign(Transaction &tx) {
-      return tx;
-    }
-  }// namespace model
-}// namespace iroha
+    Transaction &ModelCryptoProviderStub::sign(Transaction &tx) { return tx; }
+  }  // namespace model
+}  // namespace iroha

@@ -26,8 +26,7 @@ namespace iroha {
 
     class ModelCryptoProviderStub : public ModelCryptoProvider {
      public:
-
-      bool verify(const Transaction &tx) override;
+      bool verify(const Transaction &tx) const override;
 
       Transaction &sign(Transaction &tx) override;
     };
