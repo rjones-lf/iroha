@@ -38,21 +38,5 @@ namespace iroha {
       }
       return true;
     }
-
-    Transaction &ModelCryptoProviderImpl::sign(Transaction &tx) {
-      model::HashProviderImpl hash_provider;
-      auto tx_hash = hash_provider.get_hash(tx);
-
-      auto sign =
-          iroha::sign(tx_hash.data(), tx_hash.size(), pubkey_, privkey_);
-
-      Signature signature{};
-      signature.signature = sign;
-      signature.pubkey = pubkey_;
-
-      tx.signatures.push_back(signature);
-
-      return tx;
-    }
   }
 }

@@ -31,8 +31,6 @@ namespace iroha {
 
       bool verify(const Transaction &tx) const override;
 
-      Transaction &sign(Transaction &tx) override;
-
      private:
       ed25519::privkey_t privkey_;
       ed25519::pubkey_t pubkey_;

@@ -18,6 +18,9 @@
 #include <gtest/gtest.h>
 #include <model/model_crypto_provider_impl.hpp>
 #include <crypto/crypto.hpp>
+#include <model/model_hash_provider_impl.hpp>
+
+using namespace iroha::model;
 
 iroha::model::Transaction create_transaction() {
   iroha::model::Transaction tx{};
@@ -25,6 +28,21 @@ iroha::model::Transaction create_transaction() {
 
   tx.tx_counter = 0;
   tx.created_ts = 0;
+  return tx;
+}
+
+Transaction sign(Transaction &tx, iroha::ed25519::privkey_t privkey, iroha::ed25519::pubkey_t pubkey) {
+  HashProviderImpl hash_provider;
+  auto tx_hash = hash_provider.get_hash(tx);
+
+  auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey, privkey);
+
+  Signature signature{};
+  signature.signature = sign;
+  signature.pubkey = pubkey;
+
+  tx.signatures.push_back(signature);
+
   return tx;
 }
 
@@ -36,7 +54,7 @@ TEST(CryptoProvider, SignAndVerify){
   auto model_tx = create_transaction();
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey, keypair.pubkey);
-  crypto_provider.sign(model_tx);
+  sign(model_tx, keypair.privkey, keypair.pubkey);
   ASSERT_TRUE(crypto_provider.verify(model_tx));
 
   // now modify transaction's meta, so verify should fail

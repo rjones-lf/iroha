@@ -40,7 +40,6 @@ namespace iroha {
        * @param tx - transaction without signature
        * @return signed transaction by crypto provider
        */
-      virtual Transaction &sign(Transaction &tx) = 0;
     };
   }
 }

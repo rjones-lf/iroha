@@ -18,7 +18,25 @@
 #include <gtest/gtest.h>
 #include <crypto/crypto.hpp>
 #include <model/model_crypto_provider_impl.hpp>
+#include <model/model_hash_provider_impl.hpp>
 #include <validation/stateless/validator_impl.hpp>
+
+using namespace iroha::model;
+
+Transaction sign(Transaction &tx, iroha::ed25519::privkey_t privkey, iroha::ed25519::pubkey_t pubkey) {
+  HashProviderImpl hash_provider;
+  auto tx_hash = hash_provider.get_hash(tx);
+
+  auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey, privkey);
+
+  Signature signature{};
+  signature.signature = sign;
+  signature.pubkey = pubkey;
+
+  tx.signatures.push_back(signature);
+
+  return tx;
+}
 
 iroha::model::Transaction create_transaction() {
   iroha::model::Transaction tx{};
@@ -43,7 +61,7 @@ TEST(stateless_validation, stateless_validation_when_valid) {
       crypto_provider);
 
   auto tx = create_transaction();
-  crypto_provider.sign(tx);
+  sign(tx, keypair.privkey, keypair.pubkey);
 
   ASSERT_TRUE(transaction_validator.validate(tx));
 }
@@ -58,14 +76,15 @@ TEST(stateless_validation, stateless_validation_when_invalid_wrong_signature) {
       crypto_provider);
 
   auto tx = create_transaction();
-  crypto_provider.sign(tx);
+  sign(tx, keypair.privkey, keypair.pubkey);
 
   memset(tx.creator.data(), 0x123, iroha::ed25519::pubkey_t::size());
 
   ASSERT_FALSE(transaction_validator.validate(tx));
 }
 
-TEST(stateless_validation, stateless_validation_when_invalid_due_to_big_time_delay) {
+TEST(stateless_validation,
+     stateless_validation_when_invalid_due_to_big_time_delay) {
   auto seed = iroha::create_seed();
   auto keypair = iroha::create_keypair(seed);
 
@@ -79,13 +98,15 @@ TEST(stateless_validation, stateless_validation_when_invalid_due_to_big_time_del
   std::chrono::milliseconds now =
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::system_clock::now().time_since_epoch());
-  tx.created_ts = (iroha::ts64_t) (now.count() - 1000*3600*25); // tx created 25 hours ago
-  crypto_provider.sign(tx);
+  tx.created_ts = (iroha::ts64_t)(now.count() -
+                                  1000 * 3600 * 25);  // tx created 25 hours ago
+  sign(tx, keypair.privkey, keypair.pubkey);
 
   ASSERT_FALSE(transaction_validator.validate(tx));
 }
 
-TEST(stateless_validation, stateless_validation_when_invalid_due_to_tx_from_future) {
+TEST(stateless_validation,
+     stateless_validation_when_invalid_due_to_tx_from_future) {
   auto seed = iroha::create_seed();
   auto keypair = iroha::create_keypair(seed);
 
@@ -99,8 +120,9 @@ TEST(stateless_validation, stateless_validation_when_invalid_due_to_tx_from_futu
   std::chrono::milliseconds now =
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::system_clock::now().time_since_epoch());
-  tx.created_ts = (iroha::ts64_t) (now.count() + 1000*3600); // tx created 1 hour later
-  crypto_provider.sign(tx);
+  tx.created_ts =
+      (iroha::ts64_t)(now.count() + 1000 * 3600);  // tx created 1 hour later
+  sign(tx, keypair.privkey, keypair.pubkey);
 
   ASSERT_FALSE(transaction_validator.validate(tx));
 }

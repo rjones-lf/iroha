@@ -75,7 +75,6 @@ namespace iroha {
                                           model::Transaction &transaction) {
       if (validator_.validate(transaction)) {
         // TODO accumulate client-tx map
-        transaction = provider_.sign(transaction);
         service_.propagate_transaction(transaction);
       }
     }
