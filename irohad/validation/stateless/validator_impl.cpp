@@ -24,11 +24,7 @@ namespace iroha {
 
     StatelessValidatorImpl::StatelessValidatorImpl(
         model::ModelCryptoProvider& crypto_provider)
-        : crypto_provider_(crypto_provider) {
-      max_delay_ =
-          1000 * 3600 *
-          24;  // Maximum delay between tx creation and validation is one day
-    }
+        : crypto_provider_(crypto_provider) {}
 
     bool StatelessValidatorImpl::validate(
         const model::Transaction& transaction) const {
@@ -42,7 +38,7 @@ namespace iroha {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch());
       {
-        if (now.count() - transaction.created_ts > max_delay_) {
+        if (now.count() - transaction.created_ts > MAX_DELAY) {
           return false;
         }
       }

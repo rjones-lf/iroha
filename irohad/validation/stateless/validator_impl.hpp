@@ -25,11 +25,13 @@ namespace iroha {
   namespace validation {
     class StatelessValidatorImpl : public StatelessValidator {
      public:
-      explicit StatelessValidatorImpl(model::ModelCryptoProvider& crypto_provider);
+      explicit StatelessValidatorImpl(
+          model::ModelCryptoProvider& crypto_provider);
       bool validate(const model::Transaction& transaction) const override;
 
      private:
-      uint64_t max_delay_;  // max-delay between tx creation and validation
+      static constexpr uint64_t MAX_DELAY =
+          1000 * 3600 * 24;  // max-delay between tx creation and validation
       const model::ModelCryptoProvider& crypto_provider_;
     };
   }  // namespace validation
