@@ -15,21 +15,24 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_TRANSACTION_VALIDATOR_HPP
-#define IROHA_TRANSACTION_VALIDATOR_HPP
+#ifndef IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
+#define IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
 
-#include <model/transaction.hpp>
+#include <model/model.hpp>
+#include <validation/stateless/validator.hpp>
 
 namespace iroha {
   namespace validation {
-    /**
-     * Interface for performing validation of a transaction
-     */
-    class TransactionValidator {
+    class StatelessValidatorImpl : public StatelessValidator {
      public:
-      virtual bool validate(const model::Transaction &transaction) const = 0;
+      explicit StatelessValidatorImpl(model::ModelCryptoProvider& crypto_provider);
+      bool validate(const model::Transaction& transaction) const override;
+
+     private:
+      uint64_t max_delay_;  // max-delay between tx creation and validation
+      const model::ModelCryptoProvider& crypto_provider_;
     };
   }  // namespace validation
 }  // namespace iroha
 
-#endif  // IROHA_TRANSACTION_VALIDATOR_HPP
+#endif  // IROHA_TRANSACTION_VALIDATOR_IMPL_HPP

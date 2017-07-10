@@ -21,7 +21,7 @@ target_link_libraries(server_runner
     schema
     )
 
-add_executable(iroha-main iroha-main.cpp application.cpp)
+add_executable(iroha-main iroha-main.cpp)
 target_link_libraries(iroha-main
     server_runner
     model
@@ -35,4 +35,5 @@ target_link_libraries(iroha-main
     stateless_validator
     client_processor
     torii
+    crypto
     )

@@ -17,12 +17,12 @@
 
 #include <chrono>
 #include <model/model_crypto_provider_impl.hpp>
-#include <validation/stateless/transaction_validator_impl.hpp>
+#include <validation/stateless/validator_impl.hpp>
 
 namespace iroha {
   namespace validation {
 
-    TransactionValidatorImpl::TransactionValidatorImpl(
+    StatelessValidatorImpl::StatelessValidatorImpl(
         model::ModelCryptoProvider& crypto_provider)
         : crypto_provider_(crypto_provider) {
       max_delay_ =
@@ -30,7 +30,7 @@ namespace iroha {
           24;  // Maximum delay between tx creation and validation is one day
     }
 
-    bool TransactionValidatorImpl::validate(
+    bool StatelessValidatorImpl::validate(
         const model::Transaction& transaction) const {
       // signatures are correct
       {

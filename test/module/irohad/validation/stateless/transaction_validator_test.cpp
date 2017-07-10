@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <crypto/crypto.hpp>
 #include <model/model_crypto_provider_impl.hpp>
-#include <validation/stateless/transaction_validator_impl.hpp>
+#include <validation/stateless/validator_impl.hpp>
 
 iroha::model::Transaction create_transaction() {
   iroha::model::Transaction tx{};
@@ -39,7 +39,7 @@ TEST(stateless_validation, stateless_validation_when_valid) {
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey,
                                                         keypair.pubkey);
-  iroha::validation::TransactionValidatorImpl transaction_validator(
+  iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
   auto tx = create_transaction();
@@ -54,7 +54,7 @@ TEST(stateless_validation, stateless_validation_when_invalid_wrong_signature) {
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey,
                                                         keypair.pubkey);
-  iroha::validation::TransactionValidatorImpl transaction_validator(
+  iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
   auto tx = create_transaction();
@@ -71,7 +71,7 @@ TEST(stateless_validation, stateless_validation_when_invalid_due_to_big_time_del
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey,
                                                         keypair.pubkey);
-  iroha::validation::TransactionValidatorImpl transaction_validator(
+  iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
   auto tx = create_transaction();
@@ -91,7 +91,7 @@ TEST(stateless_validation, stateless_validation_when_invalid_due_to_tx_from_futu
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey,
                                                         keypair.pubkey);
-  iroha::validation::TransactionValidatorImpl transaction_validator(
+  iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
   auto tx = create_transaction();

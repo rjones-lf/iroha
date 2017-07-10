@@ -17,7 +17,6 @@ limitations under the License.
 #include <network/network_api.h>
 #include <consensus/connection/service.hpp>
 #include <consensus/consensus_service_stub.hpp>
-#include <main/application.hpp>
 #include <network/peer_communication_stub.hpp>
 #include <ordering/ordering_service_stub.hpp>
 #include <torii/processor/stub_query_processor.hpp>
@@ -25,10 +24,11 @@ limitations under the License.
 #include <torii/torii_stub.hpp>
 #include <validation/chain/validator_stub.hpp>
 #include <validation/stateful/stub_validator.hpp>
-#include <validation/stateless/validator_stub.hpp>
+#include <validation/stateless/validator_impl.hpp>
 
 #include <model/model.hpp>
-#include <model/model_crypto_provider_stub.hpp>
+#include <model/model_crypto_provider_impl.hpp>
+#include <crypto/crypto.hpp>
 #include <ametsuchi/ametsuchi_stub.hpp>
 
 #include "server_runner.hpp"
@@ -49,8 +49,13 @@ int main(int argc, char *argv[]) {
   */
 //  iroha::Irohad irohad;
   iroha::ametsuchi::AmetsuchiStub ametsuchi;
-  iroha::model::ModelCryptoProviderStub crypto_provider;
-  iroha::validation::StatelessValidatorStub stateless_validator;
+
+  // TODO replace with actual public private keys
+  auto seed = iroha::create_seed("some passphrase");
+  auto keypair = iroha::create_keypair(seed);
+  iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey, keypair.pubkey);
+
+  iroha::validation::StatelessValidatorImpl stateless_validator(crypto_provider);
   iroha::validation::StatefulValidatorStub stateful_validator;
   iroha::validation::ChainValidatorStub chain_validator;
   iroha::ordering::OrderingServiceStub ordering_service;
