@@ -14,53 +14,51 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef __IROHA_PEER_SERVICE_PEER_SERVIEC_HPP__
-#define __IROHA_PEER_SERVICE_PEER_SERVIEC_HPP__
+#include <peer_service/peer_service.hpp>
 
-#include <algorithm>
-#include <cmath>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include <commands.pb.h>
-#include <model/block.hpp>
-#include <model/peer.hpp>
-#include <peer_service/self_status.hpp>
-
+// TODO
 namespace peer_service {
 
-  using Peer = iroha::model::Peer;
-  using Command = iroha::protocol::Command;
+  void initialize() {
+    detail::self_ = SelfStatus();
 
-  void initialize();
+    // detail::peers_ = ametsuchi::getPeers()
+  }
 
   /**
    * @return List of peers that therefore permutation.
    */
-  std::vector<std::shared_ptr<Peer>> getPermutationPeers();
+  std::vector<std::shared_ptr<Peer>> getPermutationPeers() {
+    return std::vector<std::shared_ptr<Peer>>();
+  }
 
   /**
    * @param i index
    * @return A i-th peer that therefore permutation.
    */
-  Peer getPermutationAt(int i);
+  Peer getPermutationAt(int i) {
+    return Peer();
+  }
 
   /**
    * @return List of peers that is used by ordering service.
    */
-  std::vector<std::shared_ptr<Peer>> getOrderingPeers();
+  std::vector<std::shared_ptr<Peer>> getOrderingPeers() {
+    return std::vector<std::shared_ptr<Peer>>();
+  }
 
   /**
    * @return List of peers that is used by ordering service and is that will
    * be send sumeragi.
    */
-  std::vector<std::shared_ptr<Peer>> getActiveOrderingPeers();
+  std::vector<std::shared_ptr<Peer>> getActiveOrderingPeers() {
+    return std::vector<std::shared_ptr<Peer>>();
+  }
 
   /**
    * @return self status
    */
-  const SelfStatus& self();
+  const SelfStatus& self() { return detail::self_; }
 
   /**
    * When on_porposal sends on_commit, it is called.
@@ -68,55 +66,46 @@ namespace peer_service {
    * issue Peer::Remove transaction.
    * @param commited_block commited block with signs
    */
-  void RemoveDeadPeers(const iroha::model::Block& commited_block);
+  void RemoveDeadPeers(const iroha::model::Block& commited_block) {}
 
   /**
    * When on_commit, it is called.
    * It change peer oreder.
    */
-  void changePermutation();
+  void changePermutation() {}
 
   /**
    * When commit fails, it is called.
    * It throw to issue Peer::Stop(Self) transaction.
    */
-  void selfStop();
+  void selfStop() {}
 
   /**
    * When commit successes and state of self peer is UnSynced, It is called.
    * It throw to issue Peer::Activate(self) transaction.
    */
-  void selfActivate();
+  void selfActivate() {}
 
   /**
    * validate command
    */
-  void validate(const Command::Peer::Add&);
-  void validate(const Command::Peer::Remove&);
-  void validate(const Command::Peer::Activate&);
-  void validate(const Command::Peer::Stop&);
-  void validate(const Command::Peer::ChangeRole&);
+  void validate(const Command::Peer::Add& cmd) {}
+  void validate(const Command::Peer::Remove& cmd) {}
+  void validate(const Command::Peer::Activate& cmd) {}
+  void validate(const Command::Peer::Stop& cmd) {}
+  void validate(const Command::Peer::ChangeRole& cmd) {}
 
   /**
    * execute command
    */
-  void execute(const Command::Peer::Add&);
-  void execute(const Command::Peer::Remove&);
-  void execute(const Command::Peer::Activate&);
-  void execute(const Command::Peer::Stop&);
-  void execute(const Command::Peer::ChangeRole&);
+  void execute(const Command::Peer::Add& cmd) {}
+  void execute(const Command::Peer::Remove& cmd) {}
+  void execute(const Command::Peer::Activate& cmd) {}
+  void execute(const Command::Peer::Stop& cmd) {}
+  void execute(const Command::Peer::ChangeRole& cmd) {}
 
   namespace detail {
-    void issueStop(const std::string& ip, const Peer& stop_peer);
-    void issueActivate(const std::string& ip, const Peer& activate_peer);
-
-    SelfStatus self_;
-    std::vector<int> permutation_;
-    std::vector<int> active_ordering_permutation_;
-
-    std::vector<std::shared_ptr<Peer>> peers_;
-  }
-
-}  // namespace peer_service
-
-#endif
+    void issueStop(const std::string& ip, const Peer& stop_peer) {}
+    void issueActivate(const std::string& ip, const Peer& activate_peer) {}
+  }  // namespace detail
+}  // namespace peer_servince

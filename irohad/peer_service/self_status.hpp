@@ -16,30 +16,39 @@ limitations under the License.
 #ifndef __IROHA_PEER_SERVICE_SELF_STATE_HPP__
 #define __IROHA_PEER_SERVICE_SELF_STATE_HPP__
 
-#include <peer_service/peer_service.hpp>
-
+#include <ed25519.h>
+#include <memory>
+#include <model/peer.hpp>
 namespace peer_service {
-  namespace self_state {
 
-    void initializeMyKey();
-    void initializeMyIp();
+  using Peer = iroha::model::Peer;
+  class SelfStatus {
+   public:
+    SelfStatus();
 
-    std::string getPublicKey();
-    std::string getPrivateKey();
-    std::string getIp();
-    std::string getName();
-    double getTrust();
-    State getState();
+    std::string getIp() const;
+    std::string getPublicKey() const;
+    std::string getPrivateKey() const;
+    uint64_t getActiveTime() const;
+    Peer::PeerStatus getStatus() const;
+    Peer::PeerRole getRole() const;
 
-    bool isLeader();
-
-    uint64_t getActiveTime();
-
-    void setName(const std::string &name);
-    void setName(std::string &&name);
+    /**
+     * When commit successes and state of self peer is UnSynced, It is called.
+     * It throw to issue Peer::Activate(self) transaction.
+     */
     void activate();
+
+    /**
+     * When commit fails, it is called.
+     * It throw to issue Peer::Stop(Self) transaction.
+     */
     void stop();
+
+   private:
+    std::unique_ptr<Peer> self_;
+    iroha::ed25519::privkey_t private_key_;
   };
-};
+}  // namespace peer_service
 
 #endif  //__IROHA_PEER_SERVICE_SELF_STATE_HPP__

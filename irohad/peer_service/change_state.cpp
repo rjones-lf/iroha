@@ -15,7 +15,7 @@ limitations under the License.
 */
 #include <peer_service/change_state.hpp>
 #include <peer_service/monitor.hpp>
-#include <peer_service/self_state.hpp>
+#include <peer_service/self_status.hpp>
 
 #include <iostream>
 #include <unordered_set>

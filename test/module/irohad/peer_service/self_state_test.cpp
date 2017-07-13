@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <gtest/gtest.h>
 #include <logger/logger.hpp>
-#include <peer_service/self_state.hpp>
+#include <peer_service/self_status.hpp>
 
 TEST(PeerServiceSelfState, CheckStatus) {
   static auto log = logger::Logger("PeerServiceSelfState");

@@ -16,7 +16,6 @@ limitations under the License.
 #ifndef __IROHA_PEER_SERVICE_CHANGE_STATE_HPP__
 #define __IROHA_PEER_SERVICE_CHANGE_STATE_HPP__
 
-#include <peer_service/peer_service.hpp>
 
 namespace peer_service {
   namespace change_state {

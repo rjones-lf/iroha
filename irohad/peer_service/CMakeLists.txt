@@ -13,10 +13,8 @@
 #)
 
 ADD_LIBRARY(peer_service STATIC
-    monitor.cpp
-    change_state.cpp
-    self_state.cpp
-    synchronizer/synchronizer.cpp
+    self_status.cpp
+    peer_service.cpp
 )
 
 target_link_libraries(peer_service
@@ -24,5 +22,6 @@ target_link_libraries(peer_service
     time64
     logger
     crypto
+    model
     schema
 )

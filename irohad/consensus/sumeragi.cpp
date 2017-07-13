@@ -16,8 +16,6 @@
 #include <validation/stateful/validator.hpp>
 #include <torii/command_service.hpp>
 #include <logger/logger.hpp>
-#include <peer_service/self_state.hpp>
-#include <peer_service/monitor.hpp>
 #include <timer/timer.hpp>
 #include <datetime/time.hpp>
 #include <vector>
@@ -56,7 +54,8 @@ namespace consensus {
     }
 
     size_t getMaxFaulty() {
-      return (size_t) peer_service::monitor::getActivePeerSize() / 3;
+      return 1;
+//      return (size_t) peer_service::monitor::getActivePeerSize() / 3;
     }
 
     size_t getNumValidatingPeers() {
@@ -64,10 +63,13 @@ namespace consensus {
     }
 
     bool unicast(const iroha::protocol::Block &block, size_t peerOrder) {
+      /*
       auto peer =
           peer_service::monitor::getActivePeerAt((unsigned int) peerOrder);
       auto response = connection::sendBlock(block, peer->ip_);
       return response.code() == iroha::protocol::ResponseCode::OK;
+       */
+      return true;
     }
 
     bool leaderMulticast(const iroha::protocol::Block &block) {
@@ -99,7 +101,7 @@ namespace consensus {
 
     Block createSignedBlock(const Block &block,
                             const std::vector<uint8_t> &merkleRoot) {
-
+/*
       // TODO: Use Keypair in peer service.
       std::string pkBase64 = peer_service::self_state::getPublicKey();
       std::string skBase64 = peer_service::self_state::getPrivateKey();
@@ -127,8 +129,8 @@ namespace consensus {
       ret.CopyFrom(block);
       ret.mutable_header()->set_created_time(iroha::time::now64());
       *ret.mutable_header()->mutable_peer_signature()->Add() = newSignature;
-
-      return ret;
+*/
+      return Block();
     }
 
     void setTimeOutCommit(const Block &block) {
@@ -143,12 +145,16 @@ namespace consensus {
      */
 
     int getNextOrder() {
+      /*
       thread_local int
           currentProxyTail = static_cast<int>(getNumValidatingPeers()) - 1;
       if (currentProxyTail >= peer_service::monitor::getActivePeerSize()) {
         return -1;
       }
+
       return currentProxyTail++;
+       */
+      return 0;
     }
 
     size_t countValidSignatures(const Block &block) {
@@ -186,12 +192,13 @@ namespace consensus {
       // Add Signature
       auto merkleRoot = appendBlock(block);
       auto newBlock = createSignedBlock(block, merkleRoot);
-
+      /*
       if (peer_service::self_state::isLeader()) {
         leaderMulticast(newBlock);
         setTimeOutCommit(newBlock);
         return;
       }
+       */
 
       auto numValidSignatures = countValidSignatures(newBlock);
 

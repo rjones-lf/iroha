@@ -20,7 +20,7 @@ limitations under the License.
 
 #include <map_queue/map_queue.hpp>
 #include <peer_service/monitor.hpp>
-#include <peer_service/self_state.hpp>
+#include <peer_service/self_status.hpp>
 #include <peer_service/synchronizer/synchronizer.hpp>
 #include <timer/timer.hpp>
 

@@ -186,33 +186,6 @@ message Account {
   }
 }
 
-
-message Peer {
-  enum Role {
-    validator = 0; // now all peers are validators, but this is for future versions
-    member = 1;
-  }
-
-  // add peer to the network
-  message Add {
-    string ip = 1;
-    string account_id = 2;
-    Role role = 3;
-  }
-
-  // remove peer from the network
-  message Remove {
-    string ip = 1;
-  }
-
-  // set peer role in the network
-  message SetRole {
-    string ip = 1;
-    Role role = 2;
-  }
-}
-
-
 message Command {
   // Asset Commands
   message AssetCommand {
@@ -274,20 +247,62 @@ message Command {
   }
 
   // PeerCommand
-  message PeerCommand {
-    oneof peer_command {
+
+  message Peer {
+
+    enum Role {
+      validator = 0; // now all peers are validators, but this is for future versions
+      reader = 1; // read only
+    }
+
+    // Add peer to the network
+    message Add {
+      string ip = 1;
+      string pubkey = 2;
+      Role role = 3;
+    }
+
+    // Remove peer from the network
+    message Remove {
+      string pubkey = 1;
+    }
+
+    // Activate peer in the network
+    message Activate {
+      string pubkey = 1;
+      uint64 activated_time = 2;
+    }
+
+    // Stop peer in the network
+    message Stop {
+      string pubkey = 1;
+    }
+
+    // Change peer role in the network
+    message ChangeRole {
+      string pubkey = 1;
+      Role role = 2;
+    }
+
+    oneof peer {
       // add peer to the network
-      Peer.Add peer_add = 1;
+      Add add = 1;
       // remove peer from the network
-      Peer.Remove peer_remove = 2;
-      // set peer role in the network
-      Peer.SetRole peer_set_state = 3;
+      Remove remove = 2;
+      // Activate peer in network
+      Activate activate = 3;
+      // Stop peer in the network
+      Stop stop = 4;
+      // Change peer role in the network
+      ChangeRole change_role = 5;
     }
   }
+
+
   oneof command {
     AssetCommand asset_command = 1;
     AccountCommand account_command = 2;
     DomainCommand domain_command = 3;
-    PeerCommand peer_command = 4;
+    Peer peer = 4;
   }
 }
