@@ -22,6 +22,7 @@
 #include <future>
 #include <uvw/loop.hpp>
 #include <grpc++/grpc++.h>
+#include <uvw.hpp>
 
 TEST(GRPC, ConsensusStubsConnection) {
   auto loop = uvw::Loop::getDefault();
@@ -31,7 +32,7 @@ TEST(GRPC, ConsensusStubsConnection) {
   std::thread([&proposal_received]() {
     iroha::ConsensusService stub;
 
-    stub.once<iroha::consensus::Proposal*>([&proposal_received](auto &p, auto&s) {
+    stub.once<const iroha::consensus::Proposal*>([&proposal_received](auto &p, auto &s) {
       printf("recv\n");
       proposal_received = true;
     });
