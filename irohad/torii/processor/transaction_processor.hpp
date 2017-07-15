@@ -33,11 +33,13 @@ namespace iroha {
     class TransactionProcessor {
       public:
 
+      virtual ~TransactionProcessor() {}
+      
       /**
        * Add transaction to the system for processing
        * @param transaction - transaction for processing
        */
-      virtual void handle(model::Client& client,model::Transaction &transaction) {};
+      virtual void handle(model::Client& client,model::Transaction &transaction) {}
 
     };
   }  // namespace torii
