@@ -38,7 +38,7 @@ namespace iroha {
                                const validation::StatelessValidator &validator);
 
       void handle(model::Client& client,
-                              model::Transaction &transaction) override;
+                  model::Transaction &transaction) override;
 
 
      private:
