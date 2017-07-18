@@ -21,4 +21,5 @@ target_link_libraries(ordering_service
     uvw
     spdlog
     grpc++
+    schema
     )

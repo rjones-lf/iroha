@@ -19,9 +19,10 @@
 #define IROHA_MESSAGES_HPP
 
 #include <consensus.pb.h>
+#include <block.pb.h>
 
 namespace iroha {
-  using Transaction = consensus::Transaction; // for debug
+  using Transaction = protocol::Transaction; // for debug
   using Ack = consensus::Ack;
   using Abort = consensus::Abort;
   using Vote = consensus::Vote;

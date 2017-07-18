@@ -62,7 +62,7 @@ namespace iroha {
   // for debug
   void OrderingService::simulate_one() {
     Transaction tx;
-    tx.set_test(std::to_string(rand()));
+    //tx.set_test(std::to_string(rand()));
     queue_->push(tx);
   }
 

@@ -19,7 +19,6 @@
 #define IROHA_STUB_QUERY_PROCESSOR_HPP
 
 #include <torii/processor/query_processor.hpp>
-#include <handler_map/handler_map.hpp>
 #include <ametsuchi/block_query.hpp>
 #include <ametsuchi/wsv_query.hpp>
 
@@ -49,8 +48,6 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<model::QueryResponse>> query_notifier() override;
 
      private:
-      HandlerMap<model::Query, void> handler_;
-      rxcpp::subjects::subject<std::shared_ptr<model::QueryResponse>> subject_;
       ametsuchi::WsvQuery &wsv_;
       ametsuchi::BlockQuery &block_;
 

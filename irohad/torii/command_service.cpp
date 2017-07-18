@@ -16,7 +16,7 @@ limitations under the License.
 
 #include "torii/command_service.hpp"
 #include <grpc++/server_context.h>
-#include "validation/stateless/validator.hpp"
+#include <validation/stateless/validator.hpp>
 
 namespace api {
 
