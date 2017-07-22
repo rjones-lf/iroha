@@ -21,5 +21,9 @@
 namespace consensus {
   namespace role {
     Role Leader::self() { return Role::LEADER; }
+
+    void on_commit(const model::Commit &commit) {
+      
+    }
   }
 }

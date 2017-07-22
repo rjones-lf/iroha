@@ -20,5 +20,10 @@
 namespace consensus {
   namespace role {
     Role Validator::self() { return Role::VALIDATOR; }
+
+    void on_commit(const model::Commit &commit) {
+      // TODO: validate commit
+      // TODO: store in ametsuchi
+    }
   }
 }
