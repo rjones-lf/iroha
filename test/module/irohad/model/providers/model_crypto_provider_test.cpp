@@ -22,6 +22,13 @@
 
 using namespace iroha::model;
 
+iroha::model::Signature create_signature() {
+  iroha::model::Signature signature{};
+  std::fill(signature.signature.begin(), signature.signature.end(), 0x0);
+  std::fill(signature.pubkey.begin(), signature.pubkey.end(), 0x0);
+  return signature;
+}
+
 iroha::model::Transaction create_transaction() {
   iroha::model::Transaction tx{};
   tx.creator_account_id = "test";
@@ -29,6 +36,18 @@ iroha::model::Transaction create_transaction() {
   tx.tx_counter = 0;
   tx.created_ts = 0;
   return tx;
+}
+
+iroha::model::Block create_block() {
+  iroha::model::Block block{};
+  std::fill(block.hash.begin(), block.hash.end(), 0x0);
+  block.created_ts = 0;
+  block.height = 0;
+  std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0x0);
+  block.txs_number = 0;
+  std::fill(block.merkle_root.begin(), block.merkle_root.end(), 0x0);
+  block.transactions.push_back(create_transaction());
+  return block;
 }
 
 Transaction sign(Transaction &tx, iroha::ed25519::privkey_t privkey,
@@ -62,4 +81,21 @@ TEST(CryptoProvider, SignAndVerify) {
   // now modify transaction's meta, so verify should fail
   model_tx.creator_account_id = "test1";
   ASSERT_FALSE(crypto_provider.verify(model_tx));
+}
+
+TEST(CryptoProvider, SignAndVerifyBlock) {
+  // generate privkey/pubkey keypair
+  auto seed = iroha::create_seed();
+  auto keypair = iroha::create_keypair(seed);
+
+  auto block = create_block();
+
+  iroha::model::ModelCryptoProviderImpl crypto_provider(keypair.privkey,
+                                                        keypair.pubkey);
+  crypto_provider.sign(block);
+  ASSERT_TRUE(crypto_provider.verify(block));
+
+  // now modify block's meta, so verify should fail
+  block.txs_number += 1;
+  ASSERT_FALSE(crypto_provider.verify(block));
 }

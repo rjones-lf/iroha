@@ -55,7 +55,7 @@ namespace iroha {
        * calculates hash and use it to sig block
        * @param block
        */
-      virtual void sign(const Block &block) const = 0;
+      virtual void sign(Block &block) const = 0;
     };
   }
 }

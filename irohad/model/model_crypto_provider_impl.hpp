@@ -33,7 +33,7 @@ namespace iroha {
       bool verify(const Query &tx) const override;
       bool verify(const Block& block) const override;
 
-      void sign(const Block &block) const override;
+      void sign(Block &block) const override;
 
      private:
       ed25519::privkey_t privkey_;

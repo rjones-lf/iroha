@@ -66,13 +66,13 @@ namespace iroha {
       return true;
     }
 
-    void ModelCryptoProviderImpl::sign(const Block &block) const {
+    void ModelCryptoProviderImpl::sign(Block &block) const {
       HashProviderImpl hashProvider;  // TODO: get rid off variable
                                       // initialization on every verify call
       auto block_hash = hashProvider.get_hash(block);
       auto sig =
           iroha::sign(block_hash.data(), block_hash.size(), pubkey_, privkey_);
-      Signature signature;
+      Signature signature{};
       signature.pubkey = pubkey_;
       signature.signature = sig;
       block.sigs.push_back(signature);

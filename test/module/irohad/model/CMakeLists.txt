@@ -31,3 +31,17 @@ addtest(model_operators_test operators/model_operators_test.cpp)
 target_link_libraries(model_operators_test
     model
     )
+
+addtest(model_hash_provider_test providers/model_hash_provider_test.cpp)
+target_link_libraries(model_hash_provider_test
+        model
+        optional
+        hash
+        )
+
+addtest(model_crypto_provider_test providers/model_crypto_provider_test.cpp)
+target_link_libraries(model_crypto_provider_test
+        model
+        hash
+        crypto
+        )
