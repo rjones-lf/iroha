@@ -16,10 +16,21 @@ limitations under the License.
 
 #include <main/application.hpp>
 
+// ToDo configurable
+const std::string Ip = "0.0.0.0";
+const int Port = 50051;
+
 Irohad::Irohad():
   context(new Context())
 {}
 
 void Irohad::run(){
 
+  ServerRunner serverRunner(Ip, Port);
+  std::thread server_thread([&serverRunner]{
+      serverRunner.run();
+  });
+  serverRunner.waitForServersReady();
+
+  server_thread.join();
 }

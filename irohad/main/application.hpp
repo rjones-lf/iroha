@@ -33,6 +33,7 @@
 
 
 class Irohad{
+
   public:
     std::shared_ptr<Context> context;
 
