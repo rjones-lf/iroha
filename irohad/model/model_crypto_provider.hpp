@@ -50,6 +50,12 @@ namespace iroha {
        * @return
        */
       virtual bool verify(const Block &block) const = 0;
+
+      /**
+       * calculates hash and use it to sig block
+       * @param block
+       */
+      virtual void sign(const Block &block) const = 0;
     };
   }
 }

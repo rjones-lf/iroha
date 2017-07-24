@@ -26,7 +26,8 @@ namespace iroha {
         : privkey_(privkey), pubkey_(pubkey) {}
 
     bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
-      HashProviderImpl hash_provider;
+      HashProviderImpl hash_provider;  // TODO: get rid off variable
+                                       // initialization on every verify call
       auto tx_hash = hash_provider.get_hash(tx);
 
       if (tx.signatures.size() == 0) return false;
@@ -40,7 +41,8 @@ namespace iroha {
     }
 
     bool ModelCryptoProviderImpl::verify(const Query &query) const {
-      HashProviderImpl hashProvider;
+      HashProviderImpl hashProvider;  // TODO: get rid off variable
+                                      // initialization on every verify call
       auto query_hash = hashProvider.get_hash(query);
       auto sign = query.signature;
       return iroha::verify(query_hash.data(), query_hash.size(), sign.pubkey,
@@ -48,7 +50,8 @@ namespace iroha {
     }
 
     bool ModelCryptoProviderImpl::verify(const Block &block) const {
-      HashProviderImpl hashProvider;
+      HashProviderImpl hashProvider;  // TODO: get rid off variable
+                                      // initialization on every verify call
       auto block_hash = hashProvider.get_hash(block);
 
       if (block.sigs.size() == 0) {
@@ -61,6 +64,18 @@ namespace iroha {
         if (!verified) return false;
       }
       return true;
+    }
+
+    void ModelCryptoProviderImpl::sign(const Block &block) const {
+      HashProviderImpl hashProvider;  // TODO: get rid off variable
+                                      // initialization on every verify call
+      auto block_hash = hashProvider.get_hash(block);
+      auto sig =
+          iroha::sign(block_hash.data(), block_hash.size(), pubkey_, privkey_);
+      Signature signature;
+      signature.pubkey = pubkey_;
+      signature.signature = sig;
+      block.sigs.push_back(signature);
     }
   }
 }
