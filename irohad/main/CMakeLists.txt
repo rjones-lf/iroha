@@ -40,4 +40,7 @@ target_link_libraries(irohad
 add_executable(iroha-main iroha-main.cpp)
 target_link_libraries(iroha-main
   irohad
+  gflags
+  rapidjson
+  config
 )
