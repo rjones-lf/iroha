@@ -21,13 +21,16 @@
 #include <fstream>
 #include <iostream>
 
+#include "client.hpp"
+
+
 DEFINE_bool(new_account, false, "Choose if account does not exist");
 DEFINE_string(name, "", "Name of the account");
 
-static bool not_empty_name(const char* flagname, const std::string& value) {
-  return value[0] != '\0';
-}
-DEFINE_validator(name, &not_empty_name);
+
+DEFINE_bool(grpc, false, "send sample transaction to IrohaNetwork");
+DEFINE_string(address, "127.0.0.1", "Where is Iroha network");
+DEFINE_int32(port, 50051, "What port to access iroha's Torii");
 
 void create_account(std::string name);
 
@@ -42,6 +45,18 @@ int main(int argc, char* argv[]) {
       return -1;
     }
     create_account(FLAGS_name);
+
+  // Send test tx to Iroha
+  } else if (FLAGS_grpc) {
+    if (FLAGS_port > 0 && FLAGS_port < 65535) {
+      std::cout<< "Send transaction to "<< FLAGS_address <<":" << FLAGS_port << std::endl;
+      auto client = iroha_cli::CliClient(FLAGS_address,FLAGS_port);
+      // ToDo more variables transaction
+      client.sendTx(iroha::model::Transaction{});
+    } else {
+      std::cout<< "Invalid port number " << FLAGS_port << std::endl;
+      iroha_cli::CliClient(FLAGS_address,FLAGS_port);
+    }
   }
 }
 
@@ -56,6 +71,9 @@ std::string hex_str(unsigned char* data, int len) {
   return s;
 }
 
+/**
+ * Command to create a new account using the interactive console.
+ */
 void create_account(std::string name) {
   unsigned char public_key[32], private_key[64], seed[32];
 
