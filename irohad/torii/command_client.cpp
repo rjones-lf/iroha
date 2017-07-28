@@ -35,10 +35,10 @@ namespace torii {
   /**
    * requests tx to a torii server and returns response (blocking, sync)
    * @param tx
-   * @return ToriiResponse
+   * @param response - returns ToriiResponse if succeeded
+   * @return grpc::Status - returns connection is success or not.
    */
-  ToriiResponse CommandSyncClient::Torii(const Transaction& tx) {
-    ToriiResponse response;
+  grpc::Status CommandSyncClient::Torii(const Transaction& tx, ToriiResponse& response) {
 
     std::unique_ptr<grpc::ClientAsyncResponseReader<iroha::protocol::ToriiResponse>> rpc(
       stub_->AsyncTorii(&context_, tx, &completionQueue_)
@@ -61,13 +61,7 @@ namespace torii {
     assert(got_tag == (void *)static_cast<int>(State::ResponseSent));
     assert(ok);
 
-    if (status_.ok()) {
-      return response;
-    }
-
-    response.set_code(iroha::protocol::ResponseCode::FAIL);
-    response.set_message("RPC failed");
-    return response;
+    return status_;
   }
 
   /**
@@ -85,8 +79,9 @@ namespace torii {
    * requests tx to a torii server and returns response (non-blocking)
    * @param tx
    * @param callback
+   * @return grpc::Status
    */
-  void CommandAsyncClient::Torii(
+  grpc::Status CommandAsyncClient::Torii(
     const Transaction& tx,
     const std::function<void(ToriiResponse& response)>& callback)
   {
@@ -94,6 +89,7 @@ namespace torii {
     call->callback = callback;
     call->responseReader = stub_->AsyncTorii(&call->context, tx, &completionQueue_);
     call->responseReader->Finish(&call->response, &call->status, (void*)call);
+    return call->status;
   }
 
   /**

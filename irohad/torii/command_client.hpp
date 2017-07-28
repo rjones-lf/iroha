@@ -37,9 +37,11 @@ namespace torii {
     /**
      * requests tx to a torii server and returns response (blocking, sync)
      * @param tx
-     * @return ToriiResponse
+     * @param response - returns ToriiResponse if succeeded
+     * @return grpc::Status - returns connection is success or not.
      */
-    iroha::protocol::ToriiResponse Torii(const iroha::protocol::Transaction& tx);
+    grpc::Status Torii(const iroha::protocol::Transaction& tx,
+                       iroha::protocol::ToriiResponse& response);
 
   private:
     grpc::ClientContext context_;
@@ -68,9 +70,9 @@ namespace torii {
      * Async Torii rpc
      * @param tx
      * @param callback
+     * @return grpc::Status
      */
-    void Torii(const iroha::protocol::Transaction& tx,
-               const Callback& callback);
+    grpc::Status Torii(const iroha::protocol::Transaction& tx, const Callback& callback);
 
   private:
     /**

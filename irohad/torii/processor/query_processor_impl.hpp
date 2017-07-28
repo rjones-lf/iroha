@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_STUB_QUERY_PROCESSOR_HPP
-#define IROHA_STUB_QUERY_PROCESSOR_HPP
+#ifndef IROHA_QUERY_PROCESSOR_IMPL_HPP
+#define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
-#include <torii/processor/query_processor.hpp>
-#include <handler_map/handler_map.hpp>
-#include <ametsuchi/block_query.hpp>
-#include <ametsuchi/wsv_query.hpp>
+#include "model/query_execution.hpp"
+#include "validation/stateless_validator.hpp"
+#include "torii/processor/query_processor.hpp"
 
 namespace iroha {
   namespace torii {
@@ -29,33 +28,31 @@ namespace iroha {
     /**
      * QueryProcessor provides start point for queries in the whole system
      */
-    class QueryProcessorStub : public QueryProcessor {
+    class QueryProcessorImpl : public QueryProcessor {
      public:
-
-      explicit QueryProcessorStub(ametsuchi::WsvQuery &wsv,
-                                  ametsuchi::BlockQuery &block);
+      explicit QueryProcessorImpl(
+          model::QueryProcessingFactory &qpf,
+          validation::StatelessValidator &stateless_validator);
 
       /**
        * Register client query
-       * @param client - query emitter
        * @param query - client intent
        */
-      void query_handle(model::Client client, const model::Query &query) override;
+      void query_handle(const model::Query &query) override;
 
       /**
        * Subscribe for query responses
        * @return observable with query responses
        */
-      rxcpp::observable<std::shared_ptr<model::QueryResponse>> query_notifier() override;
+      rxcpp::observable<std::shared_ptr<model::QueryResponse>> query_notifier()
+          override;
 
      private:
-      HandlerMap<model::Query, void> handler_;
       rxcpp::subjects::subject<std::shared_ptr<model::QueryResponse>> subject_;
-      ametsuchi::WsvQuery &wsv_;
-      ametsuchi::BlockQuery &block_;
-
-
+      model::QueryProcessingFactory &qpf_;
+      validation::StatelessValidator &validator_;
     };
-  } //namespace torii
-} //namespace iroha
-#endif //IROHA_STUB_QUERY_PROCESSOR_HPP
+  }
+}
+
+#endif  // IROHA_QUERY_PROCESSOR_IMPL_HPP

@@ -32,10 +32,8 @@ namespace iroha {
           validator_(validator) {
     }
 
-    void TransactionProcessorImpl::transaction_handle(model::Client client,
-                                                      model::Transaction &transaction) {
-      model::StatelessResponse response;
-      response.client = client;
+    void TransactionProcessorImpl::transaction_handle(model::Transaction &transaction) {
+      model::TransactionStatelessResponse response;
       response.transaction = transaction;
       response.passed = false;
 
@@ -45,7 +43,7 @@ namespace iroha {
       }
 
       notifier_.get_subscriber().on_next(
-          std::make_shared<model::StatelessResponse>(response));
+          std::make_shared<model::TransactionStatelessResponse>(response));
     }
 
     rxcpp::observable<std::shared_ptr<model::TransactionResponse>>

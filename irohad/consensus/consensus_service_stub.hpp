@@ -20,7 +20,7 @@
 
 #include <ametsuchi/storage.hpp>
 #include <consensus/consensus_service.hpp>
-#include <validation/chain/validator.hpp>
+#include "validation/chain_validator.hpp"
 #include <validation/stateful_validator.hpp>
 
 namespace iroha {

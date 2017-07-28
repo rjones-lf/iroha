@@ -18,15 +18,13 @@
 #ifndef IROHA_STATELESS_RESPONSE_HPP
 #define IROHA_STATELESS_RESPONSE_HPP
 
-#include <model/transaction_response.hpp>
-
 namespace iroha {
   namespace model {
 
     /**
      * Transaction response that contains
      */
-    struct StatelessResponse : TransactionResponse {
+    struct TransactionStatelessResponse : TransactionResponse {
 
       /**
        * Is stateless validation passed

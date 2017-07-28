@@ -21,6 +21,7 @@
 #include <rxcpp/rx.hpp>
 #include <model/proposal.hpp>
 #include <model/block.hpp>
+#include <nonstd/optional.hpp>
 
 namespace iroha {
   namespace simulator {
@@ -35,13 +36,13 @@ namespace iroha {
        * Processing proposal for making stateful validation
        * @param proposal - object for validation
        */
-      virtual void process_verified_proposal(model::Proposal proposal) = 0;
+      virtual void process_verified_proposal(nonstd::optional<model::Proposal> proposal) = 0;
 
       /**
        * Emit blocks made from proposals
        * @return
        */
-      virtual rxcpp::observable <model::Block> on_block() = 0;
+      virtual rxcpp::observable <nonstd::optional<model::Block>> on_block() = 0;
 
       virtual ~BlockCreator() = default;
     };

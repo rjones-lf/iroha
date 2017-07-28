@@ -18,7 +18,6 @@
 #ifndef IROHA_TRANSACTION_RESPONSE_HPP
 #define IROHA_TRANSACTION_RESPONSE_HPP
 
-#include <model/model.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 namespace iroha {

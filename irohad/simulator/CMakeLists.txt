@@ -5,4 +5,5 @@ add_library(simulator
 target_link_libraries(simulator PUBLIC
     model
     rxcpp
+    optional
     )

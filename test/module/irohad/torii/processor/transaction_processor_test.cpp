@@ -18,21 +18,22 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <torii/processor/transaction_processor_impl.hpp>
-#include <model/tx_responses/stateless_response.hpp>
-#include <network/ordering_gate.hpp>
+#include "torii/processor/transaction_processor_impl.hpp"
+#include "model/tx_responses/stateless_response.hpp"
+#include "network/ordering_gate.hpp"
 
 using namespace iroha;
 using ::testing::Return;
 using ::testing::_;
+using ::testing::A;
 
 /**
  * Mock for stateless validation
  */
 class StatelessValidationMock : public validation::StatelessValidator {
  public:
-  MOCK_CONST_METHOD1(validate, bool(
-      const model::Transaction &transaction));
+  MOCK_CONST_METHOD1(validate, bool(const model::Transaction &transaction));
+  MOCK_CONST_METHOD1(validate, bool(const model::Query &query));
 };
 
 /**
@@ -69,16 +70,16 @@ TEST(TransactionProcessorTest,
   EXPECT_CALL(pcs, propagate_transaction(_)).Times(1);
 
   StatelessValidationMock validation;
-  EXPECT_CALL(validation, validate(_)).WillRepeatedly(Return(true));
+  EXPECT_CALL(validation, validate(A<const model::Transaction&>())).WillRepeatedly(Return(true));
 
   iroha::torii::TransactionProcessorImpl tp(pcs, validation);
   model::Transaction tx;
   // TODO subscribe with testable subscriber
   tp.transaction_notifier().subscribe([](auto response) {
-    auto resp = static_cast<model::StatelessResponse &>(*response);
+    auto resp = static_cast<model::TransactionStatelessResponse &>(*response);
     ASSERT_EQ(resp.passed, true);
   });
-  tp.transaction_handle(model::Client(), tx);
+  tp.transaction_handle(tx);
 }
 
 /**
@@ -91,14 +92,15 @@ TEST(TransactionProcessorTest,
   EXPECT_CALL(pcs, propagate_transaction(_)).Times(0);
 
   StatelessValidationMock validation;
-  EXPECT_CALL(validation, validate(_)).WillRepeatedly(Return(false));
+  EXPECT_CALL(validation, validate(A<const model::Transaction&>())).WillRepeatedly(Return(false));
+  EXPECT_CALL(validation, validate(A<const model::Query&>())).WillRepeatedly(Return(false));
 
   iroha::torii::TransactionProcessorImpl tp(pcs, validation);
   model::Transaction tx;
   // TODO subscribe with testable subscriber
   tp.transaction_notifier().subscribe([](auto response) {
-    auto resp = static_cast<model::StatelessResponse &>(*response);
+    auto resp = static_cast<model::TransactionStatelessResponse &>(*response);
     ASSERT_EQ(resp.passed, false);
   });
-  tp.transaction_handle(model::Client(), tx);
+  tp.transaction_handle(tx);
 }

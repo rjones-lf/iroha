@@ -17,14 +17,15 @@ limitations under the License.
 #ifndef IROHA_PROPOSAL_HPP
 #define IROHA_PROPOSAL_HPP
 
-#include <vector>
 #include <model/transaction.hpp>
+#include <vector>
 
 namespace iroha {
   namespace model {
 
     /**
-     * Proposal is a Model-structure that provide bunch of transactions emitted by
+     * Proposal is a Model-structure that provide bunch of transactions emitted
+     * by
      * ordering service.
      * Proposal has no signatures and other meta information.
      */
@@ -35,6 +36,12 @@ namespace iroha {
        * Bunch of transactions provided by ordering service.
        */
       const std::vector<Transaction> transactions;
+
+      /**
+       * Height of current proposal.
+       * Note: This height must be consistent with your last block height
+       */
+      uint64_t height;
     };
   }
 }

@@ -14,27 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef IROHA_CHAIN_VALIDATOR_IMPL_HPP
+#define IROHA_CHAIN_VALIDATOR_IMPL_HPP
 
-#ifndef IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
-#define IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
-
-#include "validation/stateless/validator.hpp"
 #include "model/model_crypto_provider.hpp"
+#include "validation/chain_validator.hpp"
 
 namespace iroha {
   namespace validation {
-    class StatelessValidatorImpl : public StatelessValidator {
+    class ChainValidatorImpl : public ChainValidator {
      public:
-      explicit StatelessValidatorImpl(
-          model::ModelCryptoProvider& crypto_provider);
-      bool validate(const model::Transaction& transaction) const override;
+      explicit ChainValidatorImpl(model::ModelCryptoProvider &crypto_provider);
+
+      bool validateChain(rxcpp::observable<model::Block> &blocks,
+                         ametsuchi::MutableStorage &storage) override;
+
+      bool validateBlock(const model::Block &block,
+                         ametsuchi::MutableStorage &storage) override;
 
      private:
-      static constexpr uint64_t MAX_DELAY =
-          1000 * 3600 * 24;  // max-delay between tx creation and validation
-      const model::ModelCryptoProvider& crypto_provider_;
-    };
-  }  // namespace validation
-}  // namespace iroha
+      // internal
+      model::ModelCryptoProvider &crypto_provider_;
 
-#endif  // IROHA_TRANSACTION_VALIDATOR_IMPL_HPP
+      bool checkSupermajority(ametsuchi::MutableStorage &storage,
+                              uint64_t signs_num);
+    };
+  }
+}
+
+#endif  // IROHA_CHAIN_VALIDATOR_IMPL_HPP

@@ -15,15 +15,24 @@
  * limitations under the License.
  */
 
-#include <model/block.hpp>
-#include <validation/chain/block_validator_stub.hpp>
+#ifndef IROHA_STATELESS_RESPONSE_HPP
+#define IROHA_STATELESS_RESPONSE_HPP
 
 namespace iroha {
-  namespace validation {
+namespace model {
 
-    bool BlockValidatorStub::validate(const model::Block &block) const { return true; }
+/**
+ * Query response that contains
+ */
+struct QueryStatelessResponse : QueryResponse {
 
-    BlockValidatorStub::BlockValidatorStub(ametsuchi::MutableStorage &storage)
-        : storage_(storage) {}
-  }  // namespace validation
-}  // namespace iroha
+  /**
+   * Is stateless validation passed
+   */
+  bool passed;
+};
+} // namespace model
+} // namespace iroha
+
+
+#endif //IROHA_STATELESS_RESPONSE_HPP

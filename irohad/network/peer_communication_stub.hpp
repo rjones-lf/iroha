@@ -17,24 +17,22 @@
 #ifndef IROHA_PEER_COMMUNICATION_STUB_HPP
 #define IROHA_PEER_COMMUNICATION_STUB_HPP
 
-#include <network/peer_communication_service.hpp>
 #include <ametsuchi/storage.hpp>
 #include <consensus/consensus_service_stub.hpp>
-#include <network/ordering_gate.hpp>
-#include <validation/chain/validator.hpp>
-#include <validation/stateful_validator.hpp>
 #include <model/model_crypto_provider.hpp>
 #include <model/model_hash_provider.hpp>
+#include <network/ordering_gate.hpp>
+#include <network/peer_communication_service.hpp>
 #include <ordering/ordering_service_stub.hpp>
+#include <validation/chain_validator.hpp>
+#include <validation/stateful_validator.hpp>
 
 namespace iroha {
   namespace network {
     class PeerCommunicationServiceStub : public PeerCommunicationService {
      public:
-      PeerCommunicationServiceStub(
-          network::OrderingGate &orderer,
-          consensus::ConsensusService &consensus
-      );
+      PeerCommunicationServiceStub(network::OrderingGate& orderer,
+                                   consensus::ConsensusService& consensus);
 
       void propagate_transaction(model::Transaction transaction);
 
@@ -46,7 +44,7 @@ namespace iroha {
       network::OrderingGate& orderer_;
       consensus::ConsensusService& consensus_;
     };
-  }
-}
+  }  // namespace network
+}  // namespace iroha
 
 #endif  // IROHA_PEER_COMMUNICATION_STUB_HPP

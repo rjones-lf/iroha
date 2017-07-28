@@ -35,11 +35,9 @@ namespace iroha {
 
       /**
        * Add transaction to the system for processing
-       * @param client - transaction owner
        * @param transaction - transaction for processing
        */
-      virtual void transaction_handle(model::Client client,
-                                      model::Transaction &transaction) = 0;
+      virtual void transaction_handle(model::Transaction &transaction) = 0;
 
       /**
        * Subscribers will be notified with transaction status

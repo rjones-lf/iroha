@@ -27,24 +27,32 @@ namespace iroha {
 
     /**
      * ChainValidator is interface of chain validation,
-     * that require on commit step of consensus
+     * that is required on commit step of consensus
      */
     class ChainValidator {
      public:
       /**
        * Validate method provide chain validation for application it to ledger.
        *
-       * Chain validation assumes that all signatures of new blocks will be
-       * valid
-       * and valid related meta information such as previous hash, height and
+       * Chain validation will validate  all signatures of new blocks
+       * and related meta information such as previous hash, height and
        * other meta information
        * @param blocks - observable with all blocks, that should be applied
        * simultaneously
        * @param storage - storage that may be modified during loading
        * @return true if commit is valid, false otherwise
        */
-      virtual bool validate(rxcpp::observable<model::Block> &blocks,
-                            ametsuchi::MutableStorage &storage) = 0;
+      virtual bool validateChain(rxcpp::observable<model::Block> &blocks,
+                                 ametsuchi::MutableStorage &storage) = 0;
+
+      /**
+       * Block validation will check if all signatures and meta-data are valid.
+       * @param block - storage that may be modified during loading
+       * @param storage -  storage that may be modified during block appliance
+       * @return true if block is valid and can be applied, false otherwise
+       */
+      virtual bool validateBlock(const model::Block &block,
+                                 ametsuchi::MutableStorage &storage) = 0;
     };
   }  // namespace validation
 }  // namespace iroha

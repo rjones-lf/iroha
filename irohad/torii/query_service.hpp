@@ -32,13 +32,11 @@ namespace torii {
      * actual implementation of async Find in QueryService
      * @param request - Query
      * @param response - QueryResponse
-     * @return grpc::Status - Status::OK if succeeded. TODO(motxx): grpc::CANCELLED is not supported.
      */
-    static grpc::Status FindAsync(
+    static void FindAsync(
       iroha::protocol::Query const& request, iroha::protocol::QueryResponse& response) {
       response.set_code(iroha::protocol::ResponseCode::OK);
       response.set_message("Find async response");
-      return grpc::Status::OK;
     }
   };
 

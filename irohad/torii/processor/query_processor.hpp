@@ -37,8 +37,7 @@ namespace iroha {
        * @param client - query emitter
        * @param query - client intent
        */
-      virtual void query_handle(model::Client client,
-                                const model::Query &query) = 0;
+      virtual void query_handle(const model::Query &query) = 0;
 
       /**
        * Subscribe for query responses

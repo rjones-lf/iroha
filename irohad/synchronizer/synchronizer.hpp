@@ -18,8 +18,8 @@
 #ifndef IROHA_SYNCHRONIZER_HPP
 #define IROHA_SYNCHRONIZER_HPP
 
-#include <rxcpp/rx.hpp>
-#include <model/block.hpp>
+#include <rxcpp/rx-observable.hpp>
+#include "model/block.hpp"
 
 namespace iroha {
   namespace synchronizer {

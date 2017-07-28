@@ -34,11 +34,6 @@ namespace iroha {
        */
       Transaction transaction;
 
-      /**
-       * Transaction emitter
-       */
-      Client client;
-
       virtual ~TransactionResponse() = default;
     };
   } //namespace model

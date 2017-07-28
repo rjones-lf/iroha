@@ -17,8 +17,9 @@ limitations under the License.
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_HPP
 
-#include <model/transaction.hpp>
+#include "model/transaction.hpp"
 #include "model/query.hpp"
+#include "model/block.hpp"
 
 namespace iroha {
   namespace model {
@@ -43,7 +44,12 @@ namespace iroha {
        */
       virtual bool verify(const Query &tx) const = 0;
 
-
+      /**
+       *
+       * @param block
+       * @return
+       */
+      virtual bool verify(const Block &block) const = 0;
     };
   }
 }

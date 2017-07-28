@@ -26,8 +26,6 @@ limitations under the License.
 
 namespace torii_utils {
 
-  extern const char* FailureMessage;
-
   /**
    * CommandSyncClient
    */
@@ -38,10 +36,11 @@ namespace torii_utils {
 
     /**
      * requests query to a torii server and returns response (blocking, sync)
-     * @param query
-     * @return QueryResponse
+     * @param query - contains Query what clients request.
+     * @param response - QueryResponse that contains what clients want to get.
+     * @return grpc::Status
      */
-    iroha::protocol::QueryResponse Find(const iroha::protocol::Query& query);
+    grpc::Status Find(const iroha::protocol::Query &query, iroha::protocol::QueryResponse &response);
 
   private:
     grpc::ClientContext context_;

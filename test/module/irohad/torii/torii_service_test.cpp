@@ -55,26 +55,23 @@ public:
 };
 
 TEST_F(ToriiServiceTest, ToriiWhenBlocking) {
-  EXPECT_GT(static_cast<int>(iroha::protocol::ResponseCode::OK), 0); // to guarantee ASSERT_EQ works TODO(motxx): More reasonable way.
-
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     std::cout << i << std::endl;
-    auto response = torii::CommandSyncClient(Ip, Port)
-      .Torii(iroha::protocol::Transaction {});
-    ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
+    iroha::protocol::ToriiResponse response;
+    auto stat = torii::CommandSyncClient(Ip, Port)
+      .Torii(iroha::protocol::Transaction {}, response);
+    ASSERT_TRUE(stat.ok());
     std::cout << "Sync Response\n";
   }
 }
 
 TEST_F(ToriiServiceTest, ToriiWhenNonBlocking) {
-  EXPECT_GT(static_cast<int>(iroha::protocol::ResponseCode::OK), 0);
-
   torii::CommandAsyncClient client(Ip, Port);
   std::atomic_int count {0};
 
   for (size_t i = 0; i < TimesToriiNonBlocking; ++i) {
     std::cout << i << std::endl;
-    client.Torii(iroha::protocol::Transaction {},
+    auto stat = client.Torii(iroha::protocol::Transaction {},
                  [&count](iroha::protocol::ToriiResponse response){
                    ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
                    std::cout << "Async response\n";
@@ -87,39 +84,36 @@ TEST_F(ToriiServiceTest, ToriiWhenNonBlocking) {
 }
 
 TEST_F(ToriiServiceTest, FindWhereQueryServiceSync) {
-  EXPECT_GT(iroha::protocol::ResponseCode::OK, 0);
-
-  auto response = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {});
-  ASSERT_TRUE(response.code() == iroha::protocol::ResponseCode::OK);
-  ASSERT_STRNE(response.message().c_str(), torii_utils::FailureMessage);
+  iroha::protocol::QueryResponse response;
+  auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {}, response);
+  ASSERT_TRUE(stat.ok());
 }
 
 TEST_F(ToriiServiceTest, FindManyTimesWhereQueryServiceSync) {
-  EXPECT_GT(iroha::protocol::ResponseCode::OK, 0);
-
   for (size_t i = 0; i < TimesFind; ++i) {
-    auto response = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {});
-    ASSERT_TRUE(response.code() == iroha::protocol::ResponseCode::OK);
-    ASSERT_STRNE(response.message().c_str(), torii_utils::FailureMessage);
+    iroha::protocol::QueryResponse response;
+    auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {}, response);
+    ASSERT_TRUE(stat.ok());
   }
 }
 
 TEST_F(ToriiServiceTest, MixRPCWhereCommandAndQueryService) {
-  EXPECT_GT(iroha::protocol::ResponseCode::OK, 0);
   torii::CommandAsyncClient client(Ip, Port);
 
   for (size_t i = 0; i < TimesFind; ++i) {
-    auto response = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {});
-    ASSERT_TRUE(response.code() == iroha::protocol::ResponseCode::OK);
-    ASSERT_STRNE(response.message().c_str(), torii_utils::FailureMessage);
+    iroha::protocol::QueryResponse qresp;
+    grpc::Status stat;
+    stat = torii_utils::QuerySyncClient(Ip, Port).Find(iroha::protocol::Query {}, qresp);
+    ASSERT_TRUE(stat.ok());
     client.Torii(iroha::protocol::Transaction {},
       [](iroha::protocol::ToriiResponse response){
         ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::OK);
         std::cout << "Async response\n";
       });
-    auto toriiSyncResponse = torii::CommandSyncClient(Ip, Port)
-      .Torii(iroha::protocol::Transaction {});
-    ASSERT_EQ(toriiSyncResponse.code(), iroha::protocol::ResponseCode::OK);
+    iroha::protocol::ToriiResponse response;
+    stat = torii::CommandSyncClient(Ip, Port)
+      .Torii(iroha::protocol::Transaction {}, response);
+    ASSERT_TRUE(stat.ok());
     std::cout << "Sync Response\n";
   }
 }

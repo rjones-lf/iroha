@@ -15,21 +15,28 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_VALIDATOR_STUB_HPP
-#define IROHA_VALIDATOR_STUB_HPP
+#ifndef IROHA_STATELESS_VALIDATOR_IMPL_HPP
+#define IROHA_STATELESS_VALIDATOR_IMPL_HPP
 
-#include <validation/chain/validator.hpp>
-#include <validation/chain/block_validator.hpp>
+#include "model/model_crypto_provider.hpp"
+#include "validation/stateless_validator.hpp"
 
 namespace iroha {
   namespace validation {
-    class ChainValidatorStub : public ChainValidator {
-     public:
-      ChainValidatorStub();
-      bool validate(rxcpp::observable <model::Block> &blocks,
-                               ametsuchi::MutableStorage &storage) override;
-    };
-  }// namespace validation
-}//namespace iroha
 
-#endif //IROHA_VALIDATOR_STUB_HPP
+    class StatelessValidatorImpl : public StatelessValidator {
+     public:
+      explicit StatelessValidatorImpl(
+          model::ModelCryptoProvider& crypto_provider);
+      bool validate(const model::Transaction& transaction) const override;
+      bool validate(const model::Query& query) const override;
+
+     private:
+      static constexpr uint64_t MAX_DELAY =
+          1000 * 3600 * 24;  // max-delay between tx creation and validation
+      const model::ModelCryptoProvider& crypto_provider_;
+    };
+  }
+}
+
+#endif  // IROHA_STATELESS_VALIDATOR_IMPL_HPP

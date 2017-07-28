@@ -21,7 +21,7 @@
 #include <network/peer_communication_service.hpp>
 #include <model/transaction_response.hpp>
 #include <torii/processor/transaction_processor.hpp>
-#include <validation/stateless/validator.hpp>
+#include <validation/stateless_validator.hpp>
 
 namespace iroha {
   namespace torii {
@@ -37,8 +37,7 @@ namespace iroha {
       TransactionProcessorImpl(network::PeerCommunicationService &pcs,
                                const validation::StatelessValidator &validator);
 
-      void transaction_handle(model::Client client,
-                              model::Transaction &transaction) override;
+      void transaction_handle(model::Transaction &transaction) override;
 
       rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
       transaction_notifier() override;

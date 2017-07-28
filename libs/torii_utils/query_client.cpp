@@ -19,9 +19,7 @@ limitations under the License.
 #include <thread>
 
 namespace torii_utils {
-
-  const char* FailureMessage = "RPC failed";
-
+  
   using iroha::protocol::Query;
   using iroha::protocol::QueryResponse;
 
@@ -35,12 +33,12 @@ namespace torii_utils {
   }
 
   /**
-   * requests tx to a torii server and returns response (blocking, sync)
-   * @param tx
-   * @return ToriiResponse
+   * requests query to a torii server and returns response (blocking, sync)
+   * @param query
+   * @param response
+   * @return grpc::Status
    */
-  QueryResponse QuerySyncClient::Find(const iroha::protocol::Query &query) {
-    QueryResponse response;
+  grpc::Status QuerySyncClient::Find(const iroha::protocol::Query &query, QueryResponse &response) {
 
     std::unique_ptr<grpc::ClientAsyncResponseReader<iroha::protocol::QueryResponse>> rpc(
       stub_->AsyncFind(&context_, query, &completionQueue_)
@@ -63,13 +61,7 @@ namespace torii_utils {
     assert(got_tag == (void *)static_cast<int>(State::ResponseSent));
     assert(ok);
 
-    if (status_.ok()) {
-      return response;
-    }
-
-    response.set_code(iroha::protocol::ResponseCode::FAIL);
-    response.set_message(FailureMessage);
-    return response;
+    return status_;
   }
 
 }  // namespace torii
