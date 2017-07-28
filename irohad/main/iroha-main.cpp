@@ -20,6 +20,6 @@ int main(int argc, char *argv[]) {
 
   auto irohad = Irohad();
   irohad.run();
-
+  
   return 0;
 }
