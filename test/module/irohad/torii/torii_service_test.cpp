@@ -113,6 +113,24 @@ TEST_F(ToriiServiceTest, ToriiWhenBlocking) {
   }
 }
 
+TEST_F(ToriiServiceTest, ToriiWhenBlockingInvalid) {
+  EXPECT_CALL(svMock, validate(A<const iroha::model::Transaction &>()))
+      .WillRepeatedly(Return(false));
+
+  for (size_t i = 0; i < TimesToriiBlocking; ++i) {
+    iroha::protocol::ToriiResponse response;
+    // One client is generating transaction
+    auto new_tx = iroha::protocol::Transaction();
+    auto meta = new_tx.mutable_meta();
+    meta->set_tx_counter(i);
+    meta->set_creator_account_id("accountA");
+    auto stat = torii::CommandSyncClient(Ip, Port).Torii(new_tx, response);
+    ASSERT_TRUE(stat.ok());
+    ASSERT_EQ(response.validation(),
+              iroha::protocol::STATELESS_VALIDATION_FAILED);
+  }
+}
+
 TEST_F(ToriiServiceTest, ToriiWhenNonBlocking) {
   torii::CommandAsyncClient client(Ip, Port);
   std::atomic_int count{0};
