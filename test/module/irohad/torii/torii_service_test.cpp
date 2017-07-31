@@ -48,15 +48,8 @@ class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
     runner = new ServerRunner(Ip, Port);
-    th = std::thread([runner = runner] {
+    th = std::thread([this, runner = runner] {
       // ----------- Command Service --------------
-      PCSMock pcsMock;
-      StatelessValidatorMock svMock;
-
-      EXPECT_CALL(svMock, validate(A<const iroha::model::Transaction &>()))
-          .WillRepeatedly(Return(true));
-
-      EXPECT_CALL(pcsMock, propagate_transaction(_)).Times(AtLeast(1));
 
       auto tx_processor =
           iroha::torii::TransactionProcessorImpl(pcsMock, svMock);
@@ -67,12 +60,7 @@ class ToriiServiceTest : public testing::Test {
           std::make_unique<torii::CommandService>(pb_tx_factory, tx_processor);
 
       //----------- Query Service ----------
-      WsvQueryMock wsv_query;
-      BlockQueryMock block_query;
       iroha::model::QueryProcessingFactory qpf(wsv_query, block_query);
-
-      EXPECT_CALL(svMock, validate(A<const iroha::model::Query &>()))
-          .WillRepeatedly(Return(false));
 
       iroha::torii::QueryProcessorImpl qpi(qpf, svMock);
 
@@ -97,9 +85,20 @@ class ToriiServiceTest : public testing::Test {
 
   ServerRunner *runner;
   std::thread th;
+
+  WsvQueryMock wsv_query;
+  BlockQueryMock block_query;
+
+  PCSMock pcsMock;
+  StatelessValidatorMock svMock;
 };
 
 TEST_F(ToriiServiceTest, ToriiWhenBlocking) {
+  EXPECT_CALL(svMock, validate(A<const iroha::model::Transaction &>()))
+      .WillRepeatedly(Return(true));
+
+  EXPECT_CALL(pcsMock, propagate_transaction(_)).Times(AtLeast(1));
+
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     iroha::protocol::ToriiResponse response;
     // One client is generating transaction
@@ -117,6 +116,11 @@ TEST_F(ToriiServiceTest, ToriiWhenBlocking) {
 TEST_F(ToriiServiceTest, ToriiWhenNonBlocking) {
   torii::CommandAsyncClient client(Ip, Port);
   std::atomic_int count{0};
+
+  EXPECT_CALL(svMock, validate(A<const iroha::model::Transaction &>()))
+      .WillRepeatedly(Return(true));
+
+  EXPECT_CALL(pcsMock, propagate_transaction(_)).Times(AtLeast(1));
 
   for (size_t i = 0; i < TimesToriiNonBlocking; ++i) {
     auto new_tx = iroha::protocol::Transaction();
