@@ -38,7 +38,7 @@ class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
     runner = new ServerRunner(Ip, Port);
-    th = std::thread([ this, runner = runner ] {
+    th = std::thread([this] {
       // ----------- Command Service --------------
 
       auto tx_processor =
