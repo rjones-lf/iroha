@@ -17,6 +17,7 @@
 
 #include <model/model_hash_provider_impl.hpp>
 #include <model/queries/get_account.hpp>
+#include <iostream>
 #include "common/types.hpp"
 #include "model/queries/get_account_assets.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -115,7 +116,7 @@ namespace iroha {
         result_hash += cast.creator_account_id;
       }
       if (instanceof <model::GetSignatories>(query)) {
-        auto cast = static_cast<const GetAccountAssets &>(query);
+        auto cast = static_cast<const GetSignatories &>(query);
         result_hash += cast.account_id;
         result_hash += cast.creator_account_id;
       }

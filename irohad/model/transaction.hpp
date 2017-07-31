@@ -37,6 +37,11 @@ namespace iroha {
         this->tx_counter = tx_counter;
         return *this;
       }
+
+      Transaction& setCreatorAccountId(std::string creator_account_id) {
+        this->creator_account_id = creator_account_id;
+        return *this;
+      }
       /**
        * List of signatories that sign transaction
        * HEADER field

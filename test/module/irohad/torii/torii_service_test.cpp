@@ -51,7 +51,7 @@ class ToriiServiceTest : public testing::Test {
     th = std::thread([runner = runner] {
       // ----------- Command Service --------------
       PCSMock pcsMock;
-      SVMock svMock;
+      StatelessValidatorMock svMock;
 
       EXPECT_CALL(svMock, validate(A<const iroha::model::Transaction &>()))
           .WillRepeatedly(Return(true));

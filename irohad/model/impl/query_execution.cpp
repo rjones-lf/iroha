@@ -16,7 +16,6 @@
  */
 
 #include "model/query_execution.hpp"
-#include "common/types.hpp"
 #include "model/queries/responses/account_assets_response.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "model/queries/responses/error_response.hpp"
@@ -205,6 +204,7 @@ std::shared_ptr<iroha::model::QueryResponse> iroha::model::QueryProcessingFactor
     }
     return executeGetAccountAssetTransactions(qry);
   }
+  std::cout << "cast failed!" << std::endl;
   iroha::model::ErrorResponse response;
   response.query = query;
   response.reason = "Not implemented";

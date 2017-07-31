@@ -17,11 +17,11 @@ limitations under the License.
 #ifndef IROHA_MOCK_CLASSES_HPP
 #define IROHA_MOCK_CLASSES_HPP
 #include <gmock/gmock.h>
+#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/wsv_query.hpp"
+#include "model/query_execution.hpp"
 #include "network/peer_communication_service.hpp"
 #include "validation/stateless_validator.hpp"
-#include "ametsuchi/wsv_query.hpp"
-#include "ametsuchi/block_query.hpp"
-#include "model/query_execution.hpp"
 
 class PCSMock : public iroha::network::PeerCommunicationService {
  public:
@@ -32,7 +32,7 @@ class PCSMock : public iroha::network::PeerCommunicationService {
   MOCK_METHOD0(on_commit, rxcpp::observable<iroha::network::Commit>());
 };
 
-class SVMock : public iroha::validation::StatelessValidator {
+class StatelessValidatorMock : public iroha::validation::StatelessValidator {
  public:
   MOCK_CONST_METHOD1(validate, bool(const iroha::model::Transaction &));
   MOCK_CONST_METHOD1(validate, bool(const iroha::model::Query &));
@@ -44,12 +44,12 @@ class SVMock : public iroha::validation::StatelessValidator {
 class WsvQueryMock : public iroha::ametsuchi::WsvQuery {
  public:
   MOCK_METHOD1(getAccount, nonstd::optional<iroha::model::Account>(
-      const std::string &account_id));
+                               const std::string &account_id));
   MOCK_METHOD1(getSignatories,
                nonstd::optional<std::vector<iroha::ed25519::pubkey_t>>(
                    const std::string &account_id));
   MOCK_METHOD1(getAsset, nonstd::optional<iroha::model::Asset>(
-      const std::string &asset_id));
+                             const std::string &asset_id));
   MOCK_METHOD2(getAccountAsset,
                nonstd::optional<iroha::model::AccountAsset>(
                    const std::string &account_id, const std::string &asset_id));
@@ -60,11 +60,12 @@ class WsvQueryMock : public iroha::ametsuchi::WsvQuery {
  * Mock for block query
  */
 class BlockQueryMock : public iroha::ametsuchi::BlockQuery {
+ public:
   MOCK_METHOD1(
       getAccountTransactions,
       rxcpp::observable<iroha::model::Transaction>(std::string account_id));
   MOCK_METHOD2(getBlocks, rxcpp::observable<iroha::model::Block>(uint32_t from,
-      uint32_t to));
+                                                                 uint32_t to));
 };
 
 /**
@@ -73,9 +74,7 @@ class BlockQueryMock : public iroha::ametsuchi::BlockQuery {
 class QpfMock : public iroha::model::QueryProcessingFactory {
  public:
   MOCK_METHOD1(execute, std::shared_ptr<iroha::model::QueryResponse>(
-      const iroha::model::Query &query));
+                            const iroha::model::Query &query));
 };
 
-
-
-#endif //IROHA_MOCK_CLASSES_HPP
+#endif  // IROHA_MOCK_CLASSES_HPP
