@@ -52,7 +52,7 @@ For run use:
 sh run-ametsuchi-dev.sh
 ```
 
-## Consnesus
+## Consensus
 Currently starts only one container - node, but in future it should deploy also container with ordering service.
  
  For run use:
