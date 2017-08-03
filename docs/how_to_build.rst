@@ -94,4 +94,4 @@ Iroha本体のbuild / build iroha
     [100%] Built target iroha-main
     root@mizuki ~/iroha/build#
 
-完成！ Complate!
+完成！ Complete!
