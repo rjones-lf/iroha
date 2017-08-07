@@ -33,7 +33,7 @@ namespace iroha {
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
           tx.commands.push_back(
-              command_generator.generateAddPeer(peers_address[i], i));
+              command_generator.generateAddPeer(peers_address[i], i+1));
         }
         // Add domain
         tx.commands.push_back(command_generator.generateCreateDomain("test"));
