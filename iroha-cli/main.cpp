@@ -22,6 +22,9 @@
 #include "bootstrap_network.hpp"
 #include "common/assert_config.hpp"
 #include "genesis_block_client_impl.hpp"
+#include "model/converters/json_block_factory.hpp"
+#include "model/converters/json_common.hpp"
+#include "model/generators/block_generator.hpp"
 #include "validators.hpp"
 
 #include "client.hpp"
@@ -36,7 +39,7 @@
 DEFINE_string(config, "", "Trusted peer's ip addresses");
 // DEFINE_validator(config, &iroha_cli::validate_config);
 
-DEFINE_string(genesis_block, "", "Genesis block for sending network");
+// DEFINE_string(genesis_block, "", "Genesis block for sending network");
 // DEFINE_validator(genesis_block, &iroha_cli::validate_genesis_block);
 
 DEFINE_bool(new_account, false, "Choose if account does not exist");
@@ -47,11 +50,19 @@ DEFINE_string(pass_phrase, "", "Name of the account");
 DEFINE_bool(grpc, false, "Send sample transaction to IrohaNetwork");
 DEFINE_string(address, "0.0.0.0", "Address of the Iroha node");
 DEFINE_int32(torii_port, 50051, "Port of iroha's Torii");
-DEFINE_validator(torii_port, &iroha_cli::validate_port);
+// DEFINE_validator(torii_port, &iroha_cli::validate_port);
 DEFINE_string(json_transaction, "", "Transaction in json format");
 DEFINE_string(json_query, "", "Query in json format");
 
+// Genesis block generator:
+DEFINE_bool(genesis_block, false,
+            "Generate genesis block for new Iroha network");
+DEFINE_int32(peers_num, 1, "Number of peers in Iroha");
+DEFINE_string(peers_address, "", "File with peers address");
+
 using namespace iroha::protocol;
+using namespace iroha::model::generators;
+using namespace iroha::model::converters;
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -66,13 +77,6 @@ int main(int argc, char* argv[]) {
       logger->info(
           "Public and private key has been generated in current directory");
     };
-  } else if (not FLAGS_config.empty() && not FLAGS_genesis_block.empty()) {
-    iroha_cli::GenesisBlockClientImpl genesis_block_client;
-    auto bootstrap = iroha_cli::BootstrapNetwork(genesis_block_client);
-    auto peers = bootstrap.parse_trusted_peers(FLAGS_config);
-    auto block = bootstrap.parse_genesis_block(FLAGS_genesis_block);
-    block = bootstrap.merge_tx_add_trusted_peers(block, peers);
-    bootstrap.run_network(peers, block);
   } else if (FLAGS_grpc) {
     iroha_cli::CliClient client(FLAGS_address, FLAGS_torii_port);
     iroha_cli::GrpcResponseHandler response_handler;
@@ -92,6 +96,21 @@ int main(int argc, char* argv[]) {
       response_handler.handle(client.sendQuery(str));
     }
 
+  } else if (FLAGS_genesis_block) {
+    BlockGenerator generator;
+    std::ifstream file(FLAGS_peers_address);
+    std::vector<std::string> peers_address;
+    std::copy(std::istream_iterator<std::string>(file),
+              std::istream_iterator<std::string>(),
+              std::back_inserter(peers_address));
+    // Generate genesis block
+    auto block = generator.generateGenesisBlock(peers_address);
+    // Convert to json
+    JsonBlockFactory json_factory;
+    auto doc = json_factory.serialize(block);
+    std::ofstream output_file("genesis.block");
+    output_file << jsonToString(doc);
+    logger->info("File saved to genesis.block");
   } else {
     assert_config::assert_fatal(false, "Invalid flags");
   }

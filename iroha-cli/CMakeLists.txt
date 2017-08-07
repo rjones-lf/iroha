@@ -43,6 +43,7 @@ target_link_libraries(client
     command_client
     query_client
     ametsuchi
+    model_generators
     )
 
 target_include_directories(client PUBLIC

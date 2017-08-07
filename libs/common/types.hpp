@@ -19,10 +19,10 @@
 #define IROHA_COMMON_HPP
 
 #include <array>
-#include <crypto/base64.hpp>
 #include <cstdio>
 #include <string>
 #include <typeinfo>
+#include <vector>
 
 /**
  * This file defines common types used in iroha.

@@ -45,3 +45,5 @@ target_include_directories(model_registrations INTERFACE
 target_link_libraries(model_registrations INTERFACE
     model
     )
+
+add_subdirectory(generators)

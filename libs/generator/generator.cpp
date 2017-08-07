@@ -15,9 +15,18 @@
  * limitations under the License.
  */
 
-#include "generator.h"
+#include <stdlib.h>
+#include "generator.hpp"
 
-namespace iroha {
+namespace generator {
 
+  int64_t random_number(int64_t min, int64_t max) {
+    uint32_t SEED_ = 1337;
+    return min + (rand_r(&SEED_) % (max - min));
+  }
 
-}
+  uint8_t random_printable_char() {
+    return (uint8_t)random_number(32, 126 + 1);
+  }
+
+}  // namespace generator
