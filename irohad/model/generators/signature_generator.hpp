@@ -27,9 +27,9 @@ namespace iroha {
     namespace generators {
 
       /**
-       *
+       * Generate fake signature from given seed
        * @param seed
-       * @return
+       * @return model Signature
        */
       Signature generateSignature(size_t seed);
 

@@ -33,7 +33,7 @@ namespace iroha {
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
           tx.commands.push_back(
-              command_generator.generateAddPeer(peers_address[i], i+1));
+              command_generator.generateAddPeer(peers_address[i], i + 1));
         }
         // Add domain
         tx.commands.push_back(command_generator.generateCreateDomain("test"));
@@ -49,10 +49,22 @@ namespace iroha {
         tx.commands.push_back(
             command_generator.generateSetAdminPermissions("admin@test"));
 
-        HashProviderImpl hashProvider;
-        tx.tx_hash = hashProvider.get_hash(tx);
+        tx.tx_hash = hash_provider_.get_hash(tx);
         return tx;
       }
+
+      Transaction TransactionGenerator::generateTransaction(
+          ts64_t timestamp, std::string creator_account_id, uint64_t tx_counter,
+          std::vector<std::shared_ptr<Command>> commands) {
+        Transaction tx{};
+        tx.created_ts = timestamp;
+        tx.creator_account_id = creator_account_id;
+        tx.tx_counter = tx_counter;
+        tx.commands = commands;
+        tx.tx_hash = hash_provider_.get_hash(tx);
+        return tx;
+      }
+
     }  // namespace generators
   }    // namespace model
 }  // namespace iroha

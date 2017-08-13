@@ -37,6 +37,21 @@ namespace iroha {
          */
         Transaction generateGenesisTransaction(
             ts64_t timestamp, std::vector<std::string> peers_address);
+        /**
+         * Generate transaction from give meta data and commands list
+         * @param timestamp
+         * @param creator_account_id
+         * @param tx_counter
+         * @param commands
+         * @return
+         */
+        Transaction generateTransaction(
+            ts64_t timestamp, std::string creator_account_id,
+            uint64_t tx_counter,
+            std::vector<std::shared_ptr<Command>> commands);
+
+       private:
+        HashProviderImpl hash_provider_;
       };
     }  // namespace generators
   }    // namespace model

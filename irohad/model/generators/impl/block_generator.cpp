@@ -29,7 +29,6 @@ namespace iroha {
         block.height = 1;
         std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0);
         block.txs_number = 1;
-        block.sigs = {generateSignature(42)};
         TransactionGenerator tx_generator;
         block.transactions = {tx_generator.generateGenesisTransaction(
             block.created_ts, peers_address)};

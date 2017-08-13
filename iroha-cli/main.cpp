@@ -25,6 +25,7 @@
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/generators/block_generator.hpp"
+#include "model/generators/signature_generator.hpp"
 #include "validators.hpp"
 
 #include "client.hpp"
@@ -105,6 +106,9 @@ int main(int argc, char* argv[]) {
               std::back_inserter(peers_address));
     // Generate genesis block
     auto block = generator.generateGenesisBlock(peers_address);
+    // Sign block with fake signature from known seed
+    // TODO: come up with better idea
+    block.sigs = {generateSignature(42)};
     // Convert to json
     JsonBlockFactory json_factory;
     auto doc = json_factory.serialize(block);
