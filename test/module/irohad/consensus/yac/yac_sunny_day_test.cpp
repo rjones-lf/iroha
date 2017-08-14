@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <utility>
+#include <gtest/gtest.h>
 #include <string>
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include <utility>
 #include "framework/test_subscriber.hpp"
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 using ::testing::Return;
 using ::testing::_;
@@ -33,6 +33,7 @@ using ::testing::AtLeast;
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
 using namespace std;
+using pub_t = iroha::ed25519::pubkey_t;
 
 TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   cout << "-----------| Start => vote => propagate commit |-----------" << endl;
@@ -47,19 +48,14 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(std::move(YacVoteStorage()),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(std::move(YacVoteStorage()), network, crypto, timer,
+                    my_order, delay);
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(0);
+  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
@@ -67,7 +63,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   yac->vote(my_hash, my_order);
 
   for (auto i = 0; i < 3; ++i) {
-    yac->on_vote(my_peers.at(i), create_vote(my_hash, std::to_string(i)));
+    auto _pub = pub_t::from_string_var(std::to_string(i));
+    yac->on_vote(my_peers.at(i), create_vote(my_hash, _pub.to_string()));
   };
 }
 
@@ -84,12 +81,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(std::move(YacVoteStorage()),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(std::move(YacVoteStorage()), network, crypto, timer,
+                    my_order, delay);
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
@@ -112,7 +105,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   auto votes = std::vector<VoteMessage>();
 
   for (auto i = 0; i < 4; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    auto _pub = pub_t::from_string_var(std::to_string(i));
+    votes.push_back(create_vote(my_hash, _pub.to_string()));
   };
   yac->on_commit(my_peers.at(0), CommitMessage(votes));
   ASSERT_TRUE(wrapper.validate());
@@ -132,12 +126,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(std::move(YacVoteStorage()),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(std::move(YacVoteStorage()), network, crypto, timer,
+                    my_order, delay);
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
@@ -161,13 +151,15 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 
   // first commit
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    auto _pub = pub_t::from_string_var(std::to_string(i));
+    votes.push_back(create_vote(my_hash, _pub.to_string()));
   };
   yac->on_commit(my_peers.at(0), CommitMessage(votes));
 
   // second commit
   for (auto i = 1; i < 4; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    auto _pub = pub_t::from_string_var(std::to_string(i));
+    votes.push_back(create_vote(my_hash, _pub.to_string()));
   };
   yac->on_commit(my_peers.at(1), CommitMessage(votes));
 
@@ -176,7 +168,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 
 TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
   cout << "-----------| Start => vote => propagate commit => receive commit "
-      "|-----------"
+          "|-----------"
        << endl;
 
   auto my_peers = std::vector<iroha::model::Peer>({default_peers.at(0)});
@@ -213,7 +205,8 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   yac->vote(my_hash, my_order);
 
-  auto vote_message = create_vote(my_hash, std::to_string(0));
+  auto _pub = pub_t::from_string_var("0");
+  auto vote_message = create_vote(my_hash, _pub.to_string());
 
   yac->on_vote(my_peers.at(0), vote_message);
 
@@ -256,7 +249,8 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    auto _pub = pub_t::from_string_var(std::to_string(i));
+    votes.push_back(create_vote(my_hash, _pub.to_string()));
   };
   yac->on_commit(my_peers.at(0), CommitMessage(votes));
 

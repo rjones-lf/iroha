@@ -32,6 +32,10 @@ namespace iroha {
 
   hash512_t sha3_512(const uint8_t *input, size_t in_size);
 
+  hash256_t sha3_256(const std::string &s);
+
+  hash512_t sha3_512(const std::string &s);
+
 }  // namespace iroha
 
 #endif  // IROHA_HASH_H

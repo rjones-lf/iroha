@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <model/model_hash_provider_impl.hpp>
 #include "model/converters/pb_query_factory.hpp"
+#include <model/model_hash_provider_impl.hpp>
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -27,7 +27,7 @@ namespace iroha {
     namespace converters {
 
       std::shared_ptr<model::Query> PbQueryFactory::deserialize(
-           const protocol::Query &pb_query) {
+          const protocol::Query &pb_query) {
         std::shared_ptr<model::Query> val;
 
         if (pb_query.has_get_account()) {
@@ -67,16 +67,14 @@ namespace iroha {
         }
         Signature sign;
         auto pb_sign = pb_query.header().signature();
-        std::copy(pb_sign.pubkey().begin(), pb_sign.pubkey().end(),
-                  sign.pubkey.begin());
-
-        std::copy(pb_sign.signature().begin(), pb_sign.signature().end(),
-                  sign.signature.begin());
+        sign.pubkey = pb_sign.pubkey();
+        sign.signature = pb_sign.signature();
         val->query_counter = pb_query.query_counter();
         val->signature = sign;
         val->created_ts = pb_query.header().created_time();
         val->creator_account_id = pb_query.creator_account_id();
-        model::HashProviderImpl hashProvider; // TODO: get rid off unnecessary object initialization
+        model::HashProviderImpl hashProvider;  // TODO: get rid off unnecessary
+                                               // object initialization
         val->query_hash = hashProvider.get_hash(val);
         return val;
       }

@@ -64,11 +64,9 @@ namespace iroha {
         tx.created_ts = pb_tx.header().created_time();
         for (auto &pb_sign : pb_tx.header().signatures()) {
           model::Signature sign;
-          std::copy(pb_sign.pubkey().begin(), pb_sign.pubkey().end(),
-                    sign.pubkey.begin());
-          std::copy(pb_sign.signature().begin(), pb_sign.signature().end(),
-                    sign.signature.begin());
-          tx.signatures.push_back(sign);
+          sign.pubkey = pb_sign.pubkey();
+          sign.signature = pb_sign.signature();
+          tx.signatures.push_back(std::move(sign));
         }
 
         // -----|Meta|-----

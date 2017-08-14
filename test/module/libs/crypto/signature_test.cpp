@@ -61,15 +61,8 @@ TEST(Signature, generatedByAndroid) {
       "b75def7379be0e808392922cb8c43d5dd5d5039828ed7ade7e1c6c81";
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
-  auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
-      std::string{pubkey_.begin(), pubkey_.end()});
-
-  ed25519::sig_t signature;
-  std::vector<uint8_t> signature_v = base64_decode(signature_b64);
-  ASSERT_EQ(signature.size(), signature_v.size());
-  std::copy(signature_v.begin(), signature_v.end(), signature.begin());
-
+  ed25519::pubkey_t pubkey = base64_decode(public_key_b64);
+  ed25519::sig_t signature = base64_decode(signature_b64);
   ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
 }
 
@@ -82,15 +75,8 @@ TEST(Signature, generatedByiOS) {
       "46ed8c250356759f68930a94996faaa8f8c98ecbe0dcc58c479c8fad71e30096";
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
-  auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
-      std::string{pubkey_.begin(), pubkey_.end()});
-
-  ed25519::sig_t signature;
-  std::vector<uint8_t> signature_v = base64_decode(signature_b64);
-  ASSERT_EQ(signature.size(), signature_v.size());
-  std::copy(signature_v.begin(), signature_v.end(), signature.begin());
-
+  ed25519::pubkey_t pubkey = base64_decode(public_key_b64);
+  ed25519::sig_t signature = base64_decode(signature_b64);
   ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
 }
 
@@ -105,14 +91,7 @@ TEST(Signature, generatedByGO) {
       "b75def7379be0e808392922cb8c43d5dd5d5039828ed7ade7e1c6c81";
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
-  auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
-      std::string{pubkey_.begin(), pubkey_.end()});
-
-  ed25519::sig_t signature;
-  std::vector<uint8_t> signature_v = base64_decode(signature_b64);
-  ASSERT_EQ(signature.size(), signature_v.size());
-  std::copy(signature_v.begin(), signature_v.end(), signature.begin());
-
+  ed25519::pubkey_t pubkey = base64_decode(public_key_b64);
+  ed25519::sig_t signature = base64_decode(signature_b64);
   ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
 }

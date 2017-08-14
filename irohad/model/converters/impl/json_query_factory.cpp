@@ -24,7 +24,8 @@ namespace iroha {
 
       using namespace rapidjson;
 
-      JsonQueryFactory::JsonQueryFactory() :log_(logger::log("JsonQueryFactory")) {
+      JsonQueryFactory::JsonQueryFactory()
+          : log_(logger::log("JsonQueryFactory")) {
         deserializers_["GetAccount"] = &JsonQueryFactory::deserializeGetAccount;
         deserializers_["GetAccountAsset"] =
             &JsonQueryFactory::deserializeGetAccountAssets;
@@ -38,58 +39,69 @@ namespace iroha {
 
       nonstd::optional<iroha::protocol::Query> JsonQueryFactory::deserialize(
           const std::string query_json) {
-        log_->info("Deserialize query json");
-        iroha::protocol::Query pb_query;
-        Document doc;
-        if (doc.Parse(query_json.c_str()).HasParseError()) {
-          log_->error("Json is ill-formed");
-          return nonstd::nullopt;
-        }
-        // check if all necessary fields are there
-        auto obj_query = doc.GetObject();
-        auto req_fields = {"signature", "creator_account_id", "created_ts",
-                           "query_counter", "query_type"};
-        if (std::any_of(req_fields.begin(), req_fields.end(),
-                        [&obj_query](auto &&field) {
-                          return not obj_query.HasMember(field);
-                        })) {
-          log_->error("No required fields in json");
-          return nonstd::nullopt;
-        }
+        try {
+          log_->info("Deserialize query json");
+          iroha::protocol::Query pb_query;
+          Document doc;
+          if (doc.Parse(query_json.c_str()).HasParseError()) {
+            log_->error("Json is ill-formed");
+            return nonstd::nullopt;
+          }
+          // check if all necessary fields are there
+          auto obj_query = doc.GetObject();
+          auto req_fields = {"signature", "creator_account_id", "created_ts",
+                             "query_counter", "query_type"};
+          if (std::any_of(req_fields.begin(), req_fields.end(),
+                          [&obj_query](auto &&field) {
+                            return not obj_query.HasMember(field);
+                          })) {
+            log_->error("No required fields in json");
+            return nonstd::nullopt;
+          }
 
-        auto sig = obj_query["signature"].GetObject();
+          auto sig = obj_query["signature"].GetObject();
 
-        // check if signature has all needed fields
-        if (not sig.HasMember("pubkey")) {
-          log_->error("No pubkey in signature in json");
-          return nonstd::nullopt;
-        }
-        if (not sig.HasMember("signature")) {
-          log_->error("No signature in json");
-          return nonstd::nullopt;
-        }
+          // check if signature has all needed fields
+          if (not sig.HasMember("pubkey")) {
+            log_->error("No pubkey in signature in json");
+            return nonstd::nullopt;
+          }
+          if (not sig.HasMember("signature")) {
+            log_->error("No signature in json");
+            return nonstd::nullopt;
+          }
 
-        auto pb_header = pb_query.mutable_header();
-        pb_header->set_created_time(obj_query["created_ts"].GetUint64());
-        auto pb_sig = pb_header->mutable_signature();
-        pb_sig->set_pubkey(sig["pubkey"].GetString());
-        pb_sig->set_signature(sig["signature"].GetString());
+          auto pb_header = pb_query.mutable_header();
+          pb_header->set_created_time(obj_query["created_ts"].GetUint64());
+          auto pb_sig = pb_header->mutable_signature();
 
-        // set creator account id
-        pb_query.set_creator_account_id(
-            obj_query["creator_account_id"].GetString());
+          // throws std::invalid_argument if pubkey or signature is bad
+          ed25519::pubkey_t _pub =
+              ed25519::pubkey_t::from_hexstring(sig["pubkey"].GetString());
+          ed25519::sig_t _sig =
+              ed25519::sig_t::from_hexstring(sig["signature"].GetString());
 
-        // set query counter
-        pb_query.set_query_counter(obj_query["query_counter"].GetUint64());
+          pb_sig->set_pubkey(_pub.to_string());
+          pb_sig->set_signature(_sig.to_string());
 
+          // set creator account id
+          pb_query.set_creator_account_id(
+              obj_query["creator_account_id"].GetString());
 
-        auto query_type = obj_query["query_type"].GetString();
+          // set query counter
+          pb_query.set_query_counter(obj_query["query_counter"].GetUint64());
 
-        auto it = deserializers_.find(query_type);
-        if (it != deserializers_.end() and
-            (this->*it->second)(obj_query, pb_query)) {
-          return pb_query;
-        } else {
+          auto query_type = obj_query["query_type"].GetString();
+
+          auto it = deserializers_.find(query_type);
+          if (it != deserializers_.end() and
+              (this->*it->second)(obj_query, pb_query)) {
+            return pb_query;
+          } else {
+            return nonstd::nullopt;
+          }
+        } catch (const std::invalid_argument &e) {
+          log_->error(e.what());
           return nonstd::nullopt;
         }
       }

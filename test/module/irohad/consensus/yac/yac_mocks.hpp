@@ -39,7 +39,7 @@ namespace iroha {
       VoteMessage create_vote(YacHash hash, std::string sign) {
         VoteMessage vote;
         vote.hash = hash;
-        std::copy(sign.begin(), sign.end(), vote.signature.pubkey.begin());
+        vote.signature.pubkey = sign;
         return vote;
       }
 

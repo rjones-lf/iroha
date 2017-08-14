@@ -1,0 +1,1 @@
+AddTest(types_test types_test.cpp)

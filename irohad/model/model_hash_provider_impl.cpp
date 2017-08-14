@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+#include <iostream>
 #include <model/model_hash_provider_impl.hpp>
 #include <model/queries/get_account.hpp>
-#include <iostream>
 #include "common/types.hpp"
 #include "model/queries/get_account_assets.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -36,9 +36,7 @@ namespace iroha {
         concat_ += get_hash(tx).to_string();
       }
 
-      std::vector<uint8_t> concat(concat_.begin(), concat_.end());
-      auto concat_hash = sha3_256(concat.data(), concat.size());
-      return concat_hash;
+      return sha3_256(concat_);
     }
 
     iroha::hash256_t HashProviderImpl::get_hash(const Block &block) {
@@ -48,27 +46,26 @@ namespace iroha {
       concat_ += std::to_string(block.height);
 
       // Append prev_hash
-      std::copy(block.prev_hash.begin(), block.prev_hash.end(),
-                std::back_inserter(concat_));
+      concat_ += block.prev_hash.to_string();
 
       // Append txnumber
       concat_ += std::to_string(block.txs_number);
 
       // Append merkle root
-      std::copy(block.merkle_root.begin(), block.merkle_root.end(),
-                std::back_inserter(concat_));
+      concat_ += block.merkle_root.to_string();
+
       // Append transactions data
       for (auto tx : block.transactions) {
         concat_ += get_hash(tx).to_string();
       }
-      std::vector<uint8_t> concat(concat_.begin(), concat_.end());
 
-      auto concat_hash = sha3_256(concat.data(), concat.size());
-      return concat_hash;
+      return sha3_256(concat_);
     }
 
     iroha::hash256_t HashProviderImpl::get_hash(const Transaction &tx) {
       // Resulting string for the hash
+
+      // FIXME: sizeof(*command) is very bad, std::back_inserter with std::array is bad (check!)
       std::string concat_hash_commands_;
       for (auto command : tx.commands) {
         // convert command to blob and concat it to result string
@@ -81,14 +78,11 @@ namespace iroha {
 
       concat_hash_commands_ += tx.creator_account_id;
 
-
       // TODO: Decide if the header should be included
       /*
       for (auto sig : tx.signatures) {
-        std::copy(sig.pubkey.begin(), sig.pubkey.end(),
-                  std::back_inserter(concat_));
-        std::copy(sig.signature.begin(), sig.signature.end(),
-                  std::back_inserter(concat_));
+        concat_ += sig.pubkey.to_string();
+        concat_ += sig.signature.to_string();
       }
        */
       // Append tx counter
@@ -102,7 +96,8 @@ namespace iroha {
       return concat_hash;
     }
 
-    iroha::hash256_t HashProviderImpl::get_hash(std::shared_ptr<const Query> query) {
+    iroha::hash256_t HashProviderImpl::get_hash(
+        std::shared_ptr<const Query> query) {
       std::string result_hash;
       if (instanceof <model::GetAccount>(query)) {
         auto cast = static_cast<const GetAccount &>(*query);

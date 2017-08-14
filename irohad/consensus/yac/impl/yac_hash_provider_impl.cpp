@@ -25,14 +25,8 @@ namespace iroha {
       YacHash YacHashProviderImpl::makeHash(model::Block &block) {
         YacHash hash;
         // todo add proposal hash from block.proposal_hash
-        hash.proposal_hash = std::string(block.hash.size(), 0);
-        std::copy(block.hash.begin(),
-                  block.hash.end(),
-                  hash.proposal_hash.begin());
-        hash.block_hash = std::string(block.hash.size(), 0);
-        std::copy(block.hash.begin(),
-                  block.hash.end(),
-                  hash.block_hash.begin());
+        hash.proposal_hash = block.hash.to_string();
+        hash.block_hash = block.hash.to_string();
         return hash;
       }
     }  // namespace yac

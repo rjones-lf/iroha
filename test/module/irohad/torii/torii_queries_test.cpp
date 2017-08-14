@@ -112,6 +112,10 @@ TEST_F(ToriiServiceTest, FindWhenResponseInvalid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account()->set_account_id("accountB");
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Must return Error Response
@@ -141,7 +145,10 @@ TEST_F(ToriiServiceTest, FindAccountWhenStatefulInvalid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account()->set_account_id("accountB");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Must be invalid due to failed stateful validation caused by no permission
@@ -175,7 +182,10 @@ TEST_F(ToriiServiceTest, FindAccountWhenHasReadPermissions) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account()->set_account_id("accountB");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Should not return Error Response because tx is stateless and stateful valid
@@ -201,7 +211,10 @@ TEST_F(ToriiServiceTest, FindAccountWhenValid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account()->set_account_id("accountA");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Should not return Error Response because tx is stateless and stateful valid
@@ -241,7 +254,10 @@ TEST_F(ToriiServiceTest, FindAccountAssetWhenStatefulInvalid) {
   query.set_creator_account_id("accountA");
   query.mutable_get_account_assets()->set_account_id("accountB");
   query.mutable_get_account_assets()->set_asset_id("usd");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Must be invalid due to failed stateful validation caused by no permission
@@ -269,7 +285,8 @@ TEST_F(ToriiServiceTest, FindAccountAssetWhenValid) {
   asset.precision = 2;
 
   EXPECT_CALL(*wsv_query, getAccount("accountA")).WillOnce(Return(account));
-  EXPECT_CALL(*wsv_query, getAccountAsset(_, _)).WillOnce(Return(account_asset));
+  EXPECT_CALL(*wsv_query, getAccountAsset(_, _))
+      .WillOnce(Return(account_asset));
 
   iroha::protocol::QueryResponse response;
 
@@ -277,7 +294,10 @@ TEST_F(ToriiServiceTest, FindAccountAssetWhenValid) {
   query.set_creator_account_id("accountA");
   query.mutable_get_account_assets()->set_account_id("accountA");
   query.mutable_get_account_assets()->set_asset_id("usd");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Should not return Error Response because tx is stateless and stateful valid
@@ -317,7 +337,10 @@ TEST_F(ToriiServiceTest, FindSignatoriesWhenStatefulInvalid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account_signatories()->set_account_id("accountB");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Must be invalid due to failed stateful validation caused by no permission
@@ -347,7 +370,10 @@ TEST_F(ToriiServiceTest, FindSignatoriesWhenValid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id("accountA");
   query.mutable_get_account_signatories()->set_account_id("accountA");
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   /// Should not return Error Response because tx is stateless and stateful
@@ -355,8 +381,10 @@ TEST_F(ToriiServiceTest, FindSignatoriesWhenValid) {
   ASSERT_FALSE(response.has_error_response());
   // check if fields in response are valid
   auto signatory = response.signatories_response().keys(0);
-  decltype(pubkey) response_pubkey;
-  std::copy(signatory.begin(), signatory.end(), response_pubkey.begin());
+
+  using pub_t = decltype(pubkey);
+  pub_t response_pubkey;
+  response_pubkey = pub_t::from_string_var(signatory);
   ASSERT_EQ(response_pubkey, pubkey);
 }
 
@@ -372,17 +400,16 @@ TEST_F(ToriiServiceTest, FindTransactionsWhenValid) {
   iroha::model::Account account;
   account.account_id = "accountA";
 
-  auto txs_observable  =
-          rxcpp::observable<>::iterate([account] {
-              std::vector<iroha::model::Transaction> result;
-              for (size_t i = 0; i < 3; ++i) {
-                iroha::model::Transaction current;
-                current.creator_account_id = account.account_id;
-                current.tx_counter = i;
-                result.push_back(current);
-              }
-              return result;
-          }());
+  auto txs_observable = rxcpp::observable<>::iterate([account] {
+    std::vector<iroha::model::Transaction> result;
+    for (size_t i = 0; i < 3; ++i) {
+      iroha::model::Transaction current;
+      current.creator_account_id = account.account_id;
+      current.tx_counter = i;
+      result.push_back(current);
+    }
+    return result;
+  }());
 
   EXPECT_CALL(*wsv_query, getAccount(_)).WillOnce(Return(account));
   EXPECT_CALL(*block_query, getAccountTransactions(account.account_id))
@@ -393,7 +420,10 @@ TEST_F(ToriiServiceTest, FindTransactionsWhenValid) {
   auto query = iroha::protocol::Query();
   query.set_creator_account_id(account.account_id);
   query.mutable_get_account_transactions()->set_account_id(account.account_id);
-
+  query.mutable_header()->mutable_signature()->set_signature(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  query.mutable_header()->mutable_signature()->set_pubkey(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
   ASSERT_TRUE(stat.ok());
   // Should not return Error Response because tx is stateless and stateful valid
@@ -422,7 +452,10 @@ TEST_F(ToriiServiceTest, FindManyTimesWhereQueryServiceSync) {
     query.set_creator_account_id("accountA");
     query.mutable_get_account()->set_account_id("accountB");
     query.set_query_counter(i);
-
+    query.mutable_header()->mutable_signature()->set_signature(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    query.mutable_header()->mutable_signature()->set_pubkey(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
     ASSERT_TRUE(stat.ok());
     // Must return Error Response

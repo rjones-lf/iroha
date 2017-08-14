@@ -26,7 +26,7 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   iroha::model::Block block;
   std::string test_hash = std::string(block.hash.size(), 'f');
-  std::copy(test_hash.begin(), test_hash.end(), block.hash.begin());
+  block.hash = test_hash;
 
   auto yac_hash = hash_provider.makeHash(block);
 

@@ -23,7 +23,7 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      protocol::Block PbBlockFactory::serialize(model::Block const&block) {
+      protocol::Block PbBlockFactory::serialize(model::Block const& block) {
         protocol::Block pb_block;
 
         // -----|Header|-----
@@ -55,7 +55,8 @@ namespace iroha {
         return pb_block;
       }
 
-      model::Block PbBlockFactory::deserialize(protocol::Block const&pb_block) {
+      model::Block PbBlockFactory::deserialize(
+          protocol::Block const& pb_block) {
         model::Block block;
 
         // -----|Header|-----
@@ -63,10 +64,8 @@ namespace iroha {
         auto header = pb_block.header();
         for (auto pb_sig : header.signatures()) {
           Signature sig{};
-          std::copy(pb_sig.pubkey().begin(), pb_sig.pubkey().end(),
-                    sig.pubkey.begin());
-          std::copy(pb_sig.signature().begin(), pb_sig.signature().end(),
-                    sig.signature.begin());
+          sig.pubkey = pb_sig.pubkey();
+          sig.signature = pb_sig.signature();
           block.sigs.push_back(sig);
         }
 
@@ -75,10 +74,8 @@ namespace iroha {
         // potential dangerous cast
         block.txs_number = (uint16_t)meta.tx_number();
         block.height = meta.height();
-        std::copy(meta.merkle_root().begin(), meta.merkle_root().end(),
-                  block.merkle_root.begin());
-        std::copy(meta.prev_block_hash().begin(), meta.prev_block_hash().end(),
-                  block.prev_hash.begin());
+        block.merkle_root = meta.merkle_root();
+        block.prev_hash = meta.prev_block_hash();
 
         // -----|Body|-----
         auto body = pb_block.body();

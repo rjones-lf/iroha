@@ -123,13 +123,8 @@ namespace iroha {
         VoteMessage vote;
         vote.hash.proposal_hash = request->hash().proposal();
         vote.hash.block_hash = request->hash().block();
-        std::copy(request->signature().signature().begin(),
-                  request->signature().signature().end(),
-                  vote.signature.signature.begin());
-        std::copy(request->signature().pubkey().begin(),
-                  request->signature().pubkey().end(),
-                  vote.signature.pubkey.begin());
-
+        vote.signature.signature = request->signature().signature();
+        vote.signature.pubkey = request->signature().pubkey();
         handler_.lock()->on_vote(peer, vote);
         return grpc::Status::OK;
       }
@@ -150,12 +145,8 @@ namespace iroha {
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
-          std::copy(pb_vote.signature().signature().begin(),
-                    pb_vote.signature().signature().end(),
-                    vote.signature.signature.begin());
-          std::copy(pb_vote.signature().pubkey().begin(),
-                    pb_vote.signature().pubkey().end(),
-                    vote.signature.pubkey.begin());
+          vote.signature.signature = pb_vote.signature().signature();
+          vote.signature.pubkey = pb_vote.signature().pubkey();
           commit.votes.push_back(vote);
         }
 
@@ -179,12 +170,8 @@ namespace iroha {
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
-          std::copy(pb_vote.signature().signature().begin(),
-                    pb_vote.signature().signature().end(),
-                    vote.signature.signature.begin());
-          std::copy(pb_vote.signature().pubkey().begin(),
-                    pb_vote.signature().pubkey().end(),
-                    vote.signature.pubkey.begin());
+          vote.signature.signature = pb_vote.signature().signature();
+          vote.signature.pubkey = pb_vote.signature().pubkey();
           reject.votes.push_back(vote);
         }
 

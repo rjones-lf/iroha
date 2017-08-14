@@ -22,11 +22,11 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include "framework/test_subscriber.hpp"
 #include "yac_mocks.hpp"
-#include <string>
 
 using ::testing::Return;
 using ::testing::_;
@@ -51,12 +51,11 @@ TEST_F(YacTest, YacWhenInit) {
 
   auto fake_delay_ = 100500;
 
-  auto yac_ = Yac::create(YacVoteStorage(),
-                          std::make_shared<MockYacNetwork>(network_),
-                          std::make_shared<MockYacCryptoProvider>(crypto_),
-                          std::make_shared<MockTimer>(timer_),
-                          ClusterOrdering(default_peers),
-                          fake_delay_);
+  auto yac_ =
+      Yac::create(YacVoteStorage(), std::make_shared<MockYacNetwork>(network_),
+                  std::make_shared<MockYacCryptoProvider>(crypto_),
+                  std::make_shared<MockTimer>(timer_),
+                  ClusterOrdering(default_peers), fake_delay_);
 
   network_.subscribe(yac_);
 }
@@ -109,7 +108,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   cout << "----------|Start => receive supermajority of votes"
-      "|----------"
+          "|----------"
        << endl;
 
   // verify that commit not emitted
@@ -144,7 +143,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
 
   // verify that commit emitted
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe([propagated_hash](auto commit_hash) {
+  wrapper.subscribe([propagated_hash](auto &&commit_hash) {
     ASSERT_EQ(propagated_hash, commit_hash.votes.at(0).hash);
   });
 
@@ -161,10 +160,11 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   auto committed_peer = default_peers.at(0);
   auto msg = CommitMessage();
   uint64_t number_of_peer = 0;
-  for (auto &peer : default_peers) {
-    (void) peer;
-    msg.votes.push_back(create_vote(propagated_hash,
-                                    std::to_string(number_of_peer++)));
+
+  using pub_t = iroha::ed25519::pubkey_t;
+  for (auto i = 0u; i < default_peers.size(); i++) {
+    auto _pub = pub_t::from_string_var(std::to_string(number_of_peer++));
+    msg.votes.push_back(create_vote(propagated_hash, _pub.to_string()));
   }
   network->notification->on_commit(committed_peer, msg);
 

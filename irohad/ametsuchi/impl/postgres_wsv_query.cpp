@@ -55,8 +55,7 @@ namespace iroha {
       row.at("account_id") >> account.account_id;
       row.at("domain_id") >> account.domain_name;
       pqxx::binarystring master_key(row.at("master_key"));
-      std::copy(master_key.begin(), master_key.end(),
-                account.master_key.begin());
+      account.master_key = master_key.str();
       row.at("quorum") >> account.quorum;
       //      row.at("status") >> ?
       //      row.at("transaction_count") >> ?
@@ -94,8 +93,7 @@ namespace iroha {
       std::vector<ed25519::pubkey_t> signatories;
       for (const auto &row : result) {
         pqxx::binarystring public_key_str(row.at("public_key"));
-        ed25519::pubkey_t pubkey;
-        std::copy(public_key_str.begin(), public_key_str.end(), pubkey.begin());
+        ed25519::pubkey_t pubkey = public_key_str.str();
         signatories.push_back(pubkey);
       }
       return signatories;
@@ -175,8 +173,7 @@ namespace iroha {
       for (const auto &row : result) {
         model::Peer peer;
         pqxx::binarystring public_key_str(row.at("public_key"));
-        ed25519::pubkey_t pubkey;
-        std::copy(public_key_str.begin(), public_key_str.end(), pubkey.begin());
+        ed25519::pubkey_t pubkey = public_key_str.str();
         peer.pubkey = pubkey;
         row.at("address") >> peer.address;
         peers.push_back(peer);

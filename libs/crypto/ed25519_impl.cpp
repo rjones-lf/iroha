@@ -16,11 +16,18 @@
  */
 
 #include <ed25519.h>
+#include <algorithm>
+#include <functional>
+#include <random>
 #include <string>
 #include "crypto.hpp"
 #include "hash.hpp"
 
 namespace iroha {
+
+  static auto random =
+      std::bind(std::uniform_int_distribution<int32_t>{0x00, 0xFF},
+                std::mt19937(std::random_device{}()));
 
   using sig_t = ed25519::sig_t;
   using pubkey_t = ed25519::pubkey_t;
@@ -49,7 +56,7 @@ namespace iroha {
    */
   blob_t<32> create_seed() {
     blob_t<32> seed;
-    ed25519_create_seed(seed.data());
+    std::generate_n(seed.begin(), seed.size(), random);
     return seed;
   }
 

@@ -55,7 +55,7 @@ Transaction getAddPeerTransaction(uint64_t create_time, std::string address) {
 
   auto add_peer = std::make_shared<AddPeer>();
   add_peer->address = address;
-  add_peer->peer_key = {};
+  add_peer->peer_key = std::string(add_peer->peer_key.size(), '\0');
 
   transaction.commands = {add_peer};
   return transaction;

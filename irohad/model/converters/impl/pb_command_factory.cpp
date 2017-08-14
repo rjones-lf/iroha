@@ -63,8 +63,7 @@ namespace iroha {
       PbCommandFactory::deserializeAddPeer(const protocol::AddPeer &pb_add_peer) {
         model::AddPeer add_peer;
         add_peer.address = pb_add_peer.address();
-        std::copy(pb_add_peer.peer_key().begin(), pb_add_peer.peer_key().end(),
-                  add_peer.peer_key.begin());
+        add_peer.peer_key = pb_add_peer.peer_key();
         return add_peer;
       }
 
@@ -80,9 +79,7 @@ namespace iroha {
       model::AddSignatory PbCommandFactory::deserializeAddSignatory(const protocol::AddSignatory &pb_add_signatory) {
         model::AddSignatory add_signatory;
         add_signatory.account_id = pb_add_signatory.account_id();
-        std::copy(pb_add_signatory.public_key().begin(),
-                  pb_add_signatory.public_key().end(),
-                  add_signatory.pubkey.begin());
+        add_signatory.pubkey = pb_add_signatory.public_key();
         return add_signatory;
       }
 
@@ -100,9 +97,7 @@ namespace iroha {
           const protocol::AssignMasterKey &pb_assign_master_key) {
         model::AssignMasterKey assign_master_key;
         assign_master_key.account_id = pb_assign_master_key.account_id();
-        std::copy(pb_assign_master_key.public_key().begin(),
-                  pb_assign_master_key.public_key().end(),
-                  assign_master_key.pubkey.begin());
+        assign_master_key.pubkey = pb_assign_master_key.public_key();
         return assign_master_key;
       }
 
@@ -140,9 +135,7 @@ namespace iroha {
         model::CreateAccount create_account;
         create_account.account_name = pb_create_account.account_name();
         create_account.domain_id = pb_create_account.domain_id();
-        std::copy(pb_create_account.main_pubkey().begin(),
-                  pb_create_account.main_pubkey().end(),
-                  create_account.pubkey.begin());
+        create_account.pubkey = pb_create_account.main_pubkey();
         return create_account;
       }
 
@@ -173,9 +166,7 @@ namespace iroha {
           const protocol::RemoveSignatory &pb_remove_signatory) {
         model::RemoveSignatory remove_signatory;
         remove_signatory.account_id = pb_remove_signatory.account_id();
-        std::copy(pb_remove_signatory.public_key().begin(),
-                  pb_remove_signatory.public_key().end(),
-                  remove_signatory.pubkey.begin());
+        remove_signatory.pubkey = pb_remove_signatory.public_key();
         return remove_signatory;
       }
 

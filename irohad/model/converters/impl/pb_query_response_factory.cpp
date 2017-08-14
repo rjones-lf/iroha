@@ -109,8 +109,7 @@ namespace iroha {
             pb_account.permissions().set_permissions();
         res.permissions.set_quorum = pb_account.permissions().set_quorum();
 
-        std::copy(pb_account.master_key().begin(),
-                  pb_account.master_key().end(), res.master_key.begin());
+        res.master_key = pb_account.master_key();
         return res;
       }
 
@@ -190,9 +189,8 @@ namespace iroha {
           const protocol::SignatoriesResponse &signatoriesResponse) const {
         model::SignatoriesResponse res{};
         for (const auto &key : signatoriesResponse.keys()) {
-          ed25519::pubkey_t pubkey;
-          std::copy(key.begin(), key.end(), pubkey.begin());
-          res.keys.push_back(pubkey);
+          ed25519::pubkey_t pubkey = key;
+          res.keys.push_back(std::move(pubkey));
         }
         return res;
       }

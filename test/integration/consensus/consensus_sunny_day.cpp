@@ -36,10 +36,11 @@ Peer mk_local_peer(uint64_t num) {
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {
+  using pub_t = decltype(VoteMessage().signature.pubkey);
+
  public:
-  explicit FixedCryptoProvider(const std::string &public_key) {
-    pubkey.fill(0);
-    std::copy(public_key.begin(), public_key.end(), pubkey.begin());
+  explicit FixedCryptoProvider(uint64_t n) {
+    pubkey = pub_t::from_string_var(std::to_string(n));
   }
 
   VoteMessage getVote(YacHash hash) override {
@@ -48,7 +49,7 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
     return vote;
   }
 
-  decltype(VoteMessage().signature.pubkey) pubkey;
+  pub_t pubkey;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {
@@ -64,7 +65,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   void SetUp() override {
     network = std::make_shared<NetworkImpl>(my_peer.address, default_peers);
-    crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
+    crypto = std::make_shared<FixedCryptoProvider>(my_num);
     timer = std::make_shared<TimerImpl>();
     yac = Yac::create(std::move(YacVoteStorage()), network, crypto, timer,
                       ClusterOrdering(default_peers), delay);
@@ -119,8 +120,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     if (num_peers == 1) {
       delay_before = 0;
       delay_after = 50;
-    }
-    else {
+    } else {
       delay_before = 10 * 1000;
       delay_after = 3 * default_peers.size() + 10 * 1000;
     }
@@ -148,8 +148,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
 
   YacHash my_hash("proposal_hash", "block_hash");
   yac->vote(my_hash, ClusterOrdering(default_peers));
-  std::this_thread::sleep_for(
-      std::chrono::milliseconds(delay_after));
+  std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());
 }

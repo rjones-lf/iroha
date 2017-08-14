@@ -25,6 +25,8 @@ using namespace std;
 
 using namespace iroha::consensus::yac;
 
+using pub_t = iroha::ed25519::pubkey_t;
+
 TEST(YacStorageTest, SupermajorityFunctionForAllCases2) {
   cout << "-----------| F(x, 2), x in {0..3} -----------" << endl;
 
@@ -54,23 +56,27 @@ TEST(YacStorageTest, YacBlockStorageWhenNormalDataInput) {
   int N = 4;
   YacBlockStorage storage(hash, N);
 
-  auto insert_1 = storage.insert(create_vote(hash, "one"));
+  auto insert_1 = storage.insert(
+      create_vote(hash, pub_t::from_string_var("one").to_string()));
   ASSERT_EQ(CommitState::not_committed, insert_1.state);
   ASSERT_EQ(nonstd::nullopt, insert_1.answer.commit);
   ASSERT_EQ(nonstd::nullopt, insert_1.answer.reject);
 
-  auto insert_2 = storage.insert(create_vote(hash, "two"));
+  auto insert_2 = storage.insert(
+      create_vote(hash, pub_t::from_string_var("two").to_string()));
   ASSERT_EQ(CommitState::not_committed, insert_2.state);
   ASSERT_EQ(nonstd::nullopt, insert_2.answer.commit);
   ASSERT_EQ(nonstd::nullopt, insert_2.answer.reject);
 
-  auto insert_3 = storage.insert(create_vote(hash, "three"));
+  auto insert_3 = storage.insert(
+      create_vote(hash, pub_t::from_string_var("three").to_string()));
   ASSERT_EQ(CommitState::committed, insert_3.state);
   ASSERT_NE(nonstd::nullopt, insert_3.answer.commit);
   ASSERT_EQ(3, insert_3.answer.commit->votes.size());
   ASSERT_EQ(nonstd::nullopt, insert_3.answer.reject);
 
-  auto insert_4 = storage.insert(create_vote(hash, "four"));
+  auto insert_4 = storage.insert(
+      create_vote(hash, pub_t::from_string_var("four").to_string()));
   ASSERT_EQ(CommitState::committed_before, insert_4.state);
   ASSERT_EQ(4, insert_4.answer.commit->votes.size());
   ASSERT_EQ(nonstd::nullopt, insert_4.answer.reject);
@@ -83,15 +89,16 @@ TEST(YacStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
   int N = 4;
   YacBlockStorage storage(hash, N);
 
-  auto insert_1 = storage.insert(create_vote(hash, "one"));
+  auto insert_1 = storage.insert(
+      create_vote(hash, pub_t::from_string_var("one").to_string()));
   ASSERT_EQ(CommitState::not_committed, insert_1.state);
   ASSERT_EQ(nonstd::nullopt, insert_1.answer.commit);
   ASSERT_EQ(nonstd::nullopt, insert_1.answer.reject);
 
-  auto insert_commit = storage.insert(CommitMessage({create_vote(hash, "two"),
-                                                     create_vote(hash, "three"),
-                                                     create_vote(hash, "four")})
-  );
+  auto insert_commit = storage.insert(CommitMessage(
+      {create_vote(hash, pub_t::from_string_var("two").to_string()),
+       create_vote(hash, pub_t::from_string_var("three").to_string()),
+       create_vote(hash, pub_t::from_string_var("four").to_string())}));
   ASSERT_EQ(CommitState::committed, insert_commit.state);
   ASSERT_EQ(4, insert_commit.answer.commit->votes.size());
   ASSERT_EQ(nonstd::nullopt, insert_1.answer.reject);
