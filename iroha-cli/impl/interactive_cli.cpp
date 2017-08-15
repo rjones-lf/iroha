@@ -244,6 +244,7 @@ namespace iroha_cli {
     }
     std::ofstream output_file(words[1]);
     output_file << json_string.value();
+    cout << "Successfully saved!" << endl;
     return true;
   }
 
@@ -293,6 +294,8 @@ namespace iroha_cli {
     auto it = result_handler_map_.find(command);
     if (it != result_handler_map_.end() && (this->*it->second)(line)) {
       current_context_ = InteractiveCli::NONE;
+      cout << "-------" << endl;
+      cout << endl;
       mainMenu();
     } else {
       cout << "Command not found or not valid. Try again" << endl;
