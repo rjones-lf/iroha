@@ -52,7 +52,7 @@ namespace iroha_cli {
     if (it != handler_map_.end()) {
       return (this->*it->second)(response);
     } else {
-      log_->error("Response Handle not Implemented");
+      log_->error("Response Handle {} not Implemented", response.response_case());
       return false;
     }
   }

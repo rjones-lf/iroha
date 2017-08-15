@@ -67,17 +67,19 @@ namespace iroha {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch()).count());
 
-      if (now - query->created_ts > MAX_DELAY) {
-        log_->warn("timestamp broken: too old");
-        return false;
-      }
-
       // query is not sent from future
       // todo make future gap for passing timestamp, like with old timestamps
       if (now < query->created_ts) {
-        log_->warn("timestamp broken: send from future");
+        log_->warn("timestamp broken: send from future. Now {}", now);
         return false;
       }
+
+      if (now - query->created_ts > MAX_DELAY) {
+        log_->warn("timestamp broken: too old. Now {}", now);
+        return false;
+      }
+
+
       log_->info("query validated");
       return true;
     }

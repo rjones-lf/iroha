@@ -91,7 +91,6 @@ int main(int argc, char* argv[]) {
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
 
-
       response_handler.handle(client.sendJsonTx(str));
     }
     if (not FLAGS_json_query.empty()) {
@@ -121,11 +120,10 @@ int main(int argc, char* argv[]) {
     std::ofstream output_file("genesis.block");
     output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
-  } if (FLAGS_interactive){
+  } else if (FLAGS_interactive) {
     iroha_cli::InteractiveCli interactiveCli;
     interactiveCli.run();
-  }
-  else {
+  } else {
     assert_config::assert_fatal(false, "Invalid flags");
   }
   return 0;
