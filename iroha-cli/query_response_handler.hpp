@@ -33,20 +33,20 @@ namespace iroha_cli {
      * Handle query response
      * @param response - iroha protocol
      */
-    void handle(const iroha::protocol::QueryResponse& response);
+    bool handle(const iroha::protocol::QueryResponse& response);
 
    private:
-    void handleErrorResponse(const iroha::protocol::QueryResponse& response);
-    void handleAccountResponse(const iroha::protocol::QueryResponse& response);
-    void handleAccountAssetsResponse(
+    bool handleErrorResponse(const iroha::protocol::QueryResponse& response);
+    bool handleAccountResponse(const iroha::protocol::QueryResponse& response);
+    bool handleAccountAssetsResponse(
         const iroha::protocol::QueryResponse& response);
-    void handleTransactionsResponse(
+    bool handleTransactionsResponse(
         const iroha::protocol::QueryResponse& response);
-    void handleSignatoriesResponse(
+    bool handleSignatoriesResponse(
         const iroha::protocol::QueryResponse& response);
     // -- --
     using Handler =
-        void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
+        bool (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
     std::unordered_map<int , Handler> handler_map_;
     std::unordered_map<int, std::string> error_handler_map_;
 

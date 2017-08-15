@@ -28,7 +28,7 @@ namespace iroha_cli {
    public:
     GrpcResponseHandler();
     void handle(CliClient::Response<CliClient::TxStatus> response);
-    void handle(CliClient::Response<iroha::protocol::QueryResponse> response);
+    bool handle(CliClient::Response<iroha::protocol::QueryResponse> response);
    private:
     TransactionResponseHandler tx_handler_;
     QueryResponseHandler query_handler_;

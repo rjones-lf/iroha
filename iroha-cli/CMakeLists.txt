@@ -21,6 +21,7 @@ add_library(client
     impl/query_response_handler.cpp
     impl/transaction_response_handler.cpp
     impl/grpc_response_handler.cpp
+    impl/interactive_cli.cpp
     )
 target_link_libraries(client
     pb_model_converters
@@ -28,7 +29,9 @@ target_link_libraries(client
     model_generators
     command_client
     query_client
-    logger
+    model_generators
+    parser
+    model
     )
 
 target_include_directories(client PUBLIC

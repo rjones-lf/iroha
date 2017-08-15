@@ -31,6 +31,8 @@
 #include "impl/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
 
+#include "interactive_cli.hpp"
+
 // ** Genesis Block and Provisioning ** //
 // Reference is here (TODO: move to doc):
 // https://hackmd.io/GwRmwQ2BmCFoCsAGARtOAWBIBMcAcS0GcAZjhNNPvpAKZIDGQA==
@@ -58,6 +60,9 @@ DEFINE_bool(genesis_block, false,
             "Generate genesis block for new Iroha network");
 DEFINE_string(peers_address, "", "File with peers address");
 
+// Interactive
+DEFINE_bool(interactive, false, "Interactive cli");
+
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
@@ -81,17 +86,20 @@ int main(int argc, char* argv[]) {
     if (not FLAGS_json_transaction.empty()) {
       logger->info("Send transaction to {}:{} ", FLAGS_address,
                    FLAGS_torii_port);
+      // Read from file
       std::ifstream file(FLAGS_json_transaction);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      response_handler.handle(client.sendTx(str));
+
+
+      response_handler.handle(client.sendJsonTx(str));
     }
     if (not FLAGS_json_query.empty()) {
       logger->info("Send query to {}:{}", FLAGS_address, FLAGS_torii_port);
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      response_handler.handle(client.sendQuery(str));
+      response_handler.handle(client.sendJsonQuery(str));
     }
 
   } else if (FLAGS_genesis_block) {
@@ -113,7 +121,11 @@ int main(int argc, char* argv[]) {
     std::ofstream output_file("genesis.block");
     output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
-  } else {
+  } if (FLAGS_interactive){
+    iroha_cli::InteractiveCli interactiveCli;
+    interactiveCli.run();
+  }
+  else {
     assert_config::assert_fatal(false, "Invalid flags");
   }
   return 0;

@@ -19,7 +19,7 @@
 #define IROHA_CLIENT_HPP
 
 #include <string>
-#include <torii_utils/query_client.hpp>
+#include "torii_utils/query_client.hpp"
 #include "torii/command_client.hpp"
 
 namespace iroha_cli {
@@ -40,10 +40,16 @@ namespace iroha_cli {
      * @param json_tx
      * @return
      */
-    CliClient::Response<CliClient::TxStatus> sendTx(std::string json_tx);
-    CliClient::Response<iroha::protocol::ToriiResponse> getTxStatus(std::string tx_hash);
+    CliClient::Response<CliClient::TxStatus> sendTx(iroha::model::Transaction tx);
 
-    CliClient::Response<iroha::protocol::QueryResponse> sendQuery(std::string json_query);
+    /**
+     *
+     * @param query
+     * @return
+     */
+    CliClient::Response<iroha::protocol::QueryResponse> sendQuery(
+        std::shared_ptr<iroha::model::Query> query);
+
    private:
     torii::CommandSyncClient command_client_;
     torii_utils::QuerySyncClient query_client_;

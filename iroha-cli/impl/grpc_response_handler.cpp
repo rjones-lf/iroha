@@ -50,12 +50,13 @@ namespace iroha_cli {
     }
   }
 
-  void GrpcResponseHandler::handle(
+  bool GrpcResponseHandler::handle(
       CliClient::Response<iroha::protocol::QueryResponse> response) {
     if (response.status.ok()) {
-      query_handler_.handle(response.answer);
+      return query_handler_.handle(response.answer);
     } else {
       handleGrpcErrors(response.status.error_code());
+      return false;
     }
   }
 
