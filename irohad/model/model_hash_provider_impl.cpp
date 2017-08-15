@@ -81,7 +81,6 @@ namespace iroha {
 
       concat_hash_commands_ += tx.creator_account_id;
 
-
       // TODO: Decide if the header should be included
       /*
       for (auto sig : tx.signatures) {
@@ -93,6 +92,8 @@ namespace iroha {
        */
       // Append tx counter
       concat_hash_commands_ += tx.tx_counter;
+
+      concat_hash_commands_ += tx.created_ts;
 
       std::vector<uint8_t> concat_hash_commands(concat_hash_commands_.begin(),
                                                 concat_hash_commands_.end());
