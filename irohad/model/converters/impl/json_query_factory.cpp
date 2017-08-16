@@ -45,28 +45,73 @@ namespace iroha {
           log_->error("Json is ill-formed");
           return nonstd::nullopt;
         }
-        // check if all necessary fields are there
+
         auto obj_query = doc.GetObject();
-        auto req_fields = {"signature", "creator_account_id", "created_ts",
-                           "query_counter", "query_type"};
-        if (std::any_of(req_fields.begin(), req_fields.end(),
-                        [&obj_query](auto &&field) {
-                          return not obj_query.HasMember(field);
-                        })) {
-          log_->error("No required fields in json");
-          return nonstd::nullopt;
+        // check if all necessary fields are there
+        {
+          auto req_fields = {"signature", "creator_account_id", "created_ts",
+                             "query_counter", "query_type"};
+          if (std::any_of(req_fields.begin(), req_fields.end(),
+                          [&obj_query](auto &&field) {
+                            return not obj_query.HasMember(field);
+                          })) {
+            log_->error("No required fields in json");
+            return nonstd::nullopt;
+          }
+        }
+
+        // check if all member values have valid type.
+        {
+          if (not obj_query["signature"].IsObject()) {
+            log_->error("Type mismatch in json. signature must be object");
+            return nonstd::nullopt;
+          }
+
+          if (not obj_query["creator_account_id"].IsString()) {
+            log_->error("Type mismatch in json. created_js must be string");
+            return nonstd::nullopt;
+          }
+
+          if (not obj_query["created_ts"].IsUint64()) {
+            log_->error("Type mismatch in json. created_ts must be uint64");
+            return nonstd::nullopt;
+          }
+
+          if (not obj_query["query_counter"].IsUint64()) {
+            log_->error("Type mismatch in json. query_counter must be uint64");
+            return nonstd::nullopt;
+          }
+
+          if (not obj_query["query_type"].IsString()) {
+            log_->error("Type mismatch in json. query_type must be string");
+            return nonstd::nullopt;
+          }
         }
 
         auto sig = obj_query["signature"].GetObject();
 
         // check if signature has all needed fields
-        if (not sig.HasMember("pubkey")) {
-          log_->error("No pubkey in signature in json");
-          return nonstd::nullopt;
+        {
+          if (not sig.HasMember("pubkey")) {
+            log_->error("No pubkey in signature in json");
+            return nonstd::nullopt;
+          }
+          if (not sig.HasMember("signature")) {
+            log_->error("No signature in json");
+            return nonstd::nullopt;
+          }
         }
-        if (not sig.HasMember("signature")) {
-          log_->error("No signature in json");
-          return nonstd::nullopt;
+
+        // check if members of signature have valid type.
+        {
+          if (not sig["pubkey"].IsString()) {
+            log_->error("Type mismatch in json. pubkey in signature must be string");
+            return nonstd::nullopt;
+          }
+          if (not sig["signature"].IsString()) {
+            log_->error("Type mismatch in json. signature in signature must be string");
+            return nonstd::nullopt;
+          }
         }
 
         auto pb_header = pb_query.mutable_header();
@@ -98,7 +143,11 @@ namespace iroha {
           rapidjson::GenericValue<rapidjson::UTF8<char>>::Object &obj_query,
           protocol::Query &pb_query) {
         if (not obj_query.HasMember("account_id")) {
-          log_->error("No account id in json");
+          log_->error("No account_id in json");
+          return false;
+        }
+        if (not obj_query["account_id"].IsString()) {
+          log_->error("Type mismatch account_id in json");
           return false;
         }
         auto pb_get_account = pb_query.mutable_get_account();
@@ -114,6 +163,10 @@ namespace iroha {
           log_->error("No account id in json");
           return false;
         }
+        if (not obj_query["account_id"].IsString()) {
+          log_->error("Type mismatch account_id in json");
+          return false;
+        }
         auto pb_get_signatories = pb_query.mutable_get_account_signatories();
         pb_get_signatories->set_account_id(obj_query["account_id"].GetString());
 
@@ -125,6 +178,10 @@ namespace iroha {
           protocol::Query &pb_query) {
         if (not obj_query.HasMember("account_id")) {
           log_->error("No account id in json");
+          return false;
+        }
+        if (not obj_query["account_id"].IsString()) {
+          log_->error("Type mismatch account id in json");
           return false;
         }
         auto pb_get_account_transactions =
@@ -143,7 +200,11 @@ namespace iroha {
           log_->error("No account, asset id in json");
           return false;
         }
-
+        if (not(obj_query["account_id"].IsString() &&
+                obj_query["asset_id"].IsString())) {
+          log_->error("Type mismatch account, asset id in json");
+          return false;
+        }
         auto pb_get_account_asset_transactions =
             pb_query.mutable_get_account_asset_transactions();
         pb_get_account_asset_transactions->set_account_id(
@@ -160,6 +221,11 @@ namespace iroha {
         if (not(obj_query.HasMember("account_id") &&
                 obj_query.HasMember("asset_id"))) {
           log_->error("No account, asset id in json");
+          return false;
+        }
+        if (not(obj_query["account_id"].IsString() &&
+                obj_query["asset_id"].IsString())) {
+          log_->error("Type mismatch account, asset id in json");
           return false;
         }
         auto pb_get_account_assets = pb_query.mutable_get_account_assets();
