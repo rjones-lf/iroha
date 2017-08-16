@@ -25,11 +25,11 @@
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 
+#include "client.hpp"
+#include "grpc_response_handler.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/generators/transaction_generator.hpp"
 #include "parser/parser.hpp"
-#include "client.hpp"
-#include "grpc_response_handler.hpp"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ namespace iroha_cli {
   void InteractiveCli::startTransaction() {
     cout << "Starting a new transaction ..." << endl;
     current_context_ = InteractiveCli::TX;
-    //txMenu();
+    // txMenu();
   }
 
   void InteractiveCli::startQuery() {
@@ -95,8 +95,11 @@ namespace iroha_cli {
       printHelp("ga", notes);
       return nullptr;
     }
-    auto time_stamp =
-        (uint64_t)std::chrono::system_clock::now().time_since_epoch().count();
+    auto time_stamp = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
+
     auto creator = words[1];
     auto counter = parser::toUint64(words[2]);
     if (not counter.has_value()) {
@@ -105,9 +108,8 @@ namespace iroha_cli {
     }
     auto acc_id = words[3];
 
-    return generator.generateGetAccount(time_stamp, creator,
-                                              counter.value(), acc_id);
-
+    return generator.generateGetAccount(time_stamp, creator, counter.value(),
+                                        acc_id);
   }
 
   std::shared_ptr<iroha::model::Query> InteractiveCli::parseGetAccountAssets(
@@ -121,8 +123,12 @@ namespace iroha_cli {
       printHelp("gaa", notes);
       return nullptr;
     }
-    auto time_stamp =
-        (uint64_t)std::chrono::system_clock::now().time_since_epoch().count();
+
+    auto time_stamp = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
+
     auto creator = words[1];
     auto counter = parser::toUint64(words[2]);
     if (not counter.has_value()) {
@@ -133,7 +139,6 @@ namespace iroha_cli {
     auto asset_id = words[4];
     return generator.generateGetAccountAssets(
         time_stamp, creator, counter.value(), account_id, asset_id);
-
   }
 
   std::shared_ptr<iroha::model::Query>
@@ -147,8 +152,12 @@ namespace iroha_cli {
       printHelp("gat", notes);
       return nullptr;
     }
-    auto time_stamp =
-        (uint64_t)std::chrono::system_clock::now().time_since_epoch().count();
+
+    auto time_stamp = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
+
     auto creator = words[1];
     auto counter = parser::toUint64(words[2]);
     if (not counter.has_value()) {
@@ -157,8 +166,8 @@ namespace iroha_cli {
     }
     auto acc_id = words[3];
 
-    return generator.generateGetAccountTransactions(
-        time_stamp, creator, counter.value(), acc_id);
+    return generator.generateGetAccountTransactions(time_stamp, creator,
+                                                    counter.value(), acc_id);
   }
 
   std::shared_ptr<iroha::model::Query> InteractiveCli::parseGetSignatories(
@@ -172,8 +181,11 @@ namespace iroha_cli {
       printHelp("gs", notes);
       return nullptr;
     }
-    auto time_stamp =
-        (uint64_t)std::chrono::system_clock::now().time_since_epoch().count();
+    auto time_stamp = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch())
+            .count());
+
     auto creator = words[1];
     auto counter = parser::toUint64(words[2]);
     if (not counter.has_value()) {
@@ -183,7 +195,7 @@ namespace iroha_cli {
     auto acc_id = words[3];
 
     return generator.generateGetSignatories(time_stamp, creator,
-                                                  counter.value(), acc_id);
+                                            counter.value(), acc_id);
   }
 
   void InteractiveCli::queryMenu() {
@@ -250,13 +262,14 @@ namespace iroha_cli {
 
   bool InteractiveCli::parseSendToIroha(std::string line) {
     auto words = parser::split(line);
-    vector<string> notes = {"Ip Address of the Iroha server", "Iroha server Port"};
+    vector<string> notes = {"Ip Address of the Iroha server",
+                            "Iroha server Port"};
     if (words.size() < notes.size() + 1) {
       printHelp("send", notes);
       return false;
     }
     auto port = parser::toInt(words[2]);
-    if (not port.has_value()){
+    if (not port.has_value()) {
       cout << "Port has wrong format" << endl;
       return false;
     }
