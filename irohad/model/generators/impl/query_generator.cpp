@@ -24,7 +24,7 @@ namespace iroha {
                                                     std::string creator,
                                                     uint64_t query_counter,
                                                     std::string account_id) {
-        GetAccount query{};
+        GetAccount query;
         query.created_ts = timestamp;
         query.creator_account_id = creator;
         query.account_id = account_id;
@@ -37,7 +37,7 @@ namespace iroha {
       GetAccountAssets QueryGenerator::generateGetAccountAssets(
           ts64_t timestamp, std::string creator, uint64_t query_counter,
           std::string account_id, std::string asset_id) {
-        GetAccountAssets query{};
+        GetAccountAssets query;
         query.created_ts = timestamp;
         query.creator_account_id = creator;
         query.query_counter = query_counter;
@@ -51,7 +51,7 @@ namespace iroha {
       GetSignatories QueryGenerator::generateGetSignatories(
           ts64_t timestamp, std::string creator, uint64_t query_counter,
           std::string account_id) {
-        GetSignatories query{};
+        GetSignatories query;
         query.created_ts = timestamp;
         query.creator_account_id = creator;
         query.query_counter = query_counter;
@@ -64,7 +64,7 @@ namespace iroha {
       GetAccountTransactions QueryGenerator::generateGetAccountTransactions(
           ts64_t timestamp, std::string creator, uint64_t query_counter,
           std::string account_id) {
-        GetAccountTransactions query{};
+        GetAccountTransactions query;
         query.created_ts = timestamp;
         query.creator_account_id = creator;
         query.query_counter = query_counter;

@@ -58,7 +58,6 @@ DEFINE_string(json_query, "", "Query in json format");
 // Genesis block generator:
 DEFINE_bool(genesis_block, false,
             "Generate genesis block for new Iroha network");
-DEFINE_int32(peers_num, 1, "Number of peers in Iroha");
 DEFINE_string(peers_address, "", "File with peers address");
 
 using namespace iroha::protocol;
@@ -107,8 +106,9 @@ int main(int argc, char* argv[]) {
     // Generate genesis block
     auto block = generator.generateGenesisBlock(peers_address);
     // Sign block with fake signature from known seed
-    // TODO: come up with better idea
+    // TODO: generate signature depending on specific Iroha-net
     block.sigs = {generateSignature(42)};
+    block.transactions.at(0).signatures = {generateSignature(42)};
     // Convert to json
     JsonBlockFactory json_factory;
     auto doc = json_factory.serialize(block);

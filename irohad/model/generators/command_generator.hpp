@@ -33,48 +33,20 @@ namespace iroha {
     namespace generators {
       class CommandGenerator {
        public:
-        /**
-         *
-         * @param address
-         * @param seed
-         * @return
-         */
+
         std::shared_ptr<Command> generateAddPeer(std::string address,
                                                  size_t seed);
 
-        /**
-         *
-         * @param account_name
-         * @param domain_id
-         * @param seed
-         * @return
-         */
         std::shared_ptr<Command> generateCreateAccount(std::string account_name,
                                                        std::string domain_id,
                                                        size_t seed);
-        /**
-         *
-         * @param domain_name
-         * @return
-         */
+
         std::shared_ptr<Command> generateCreateDomain(std::string domain_name);
 
-        /**
-         *
-         * @param asset_name
-         * @param domain_name
-         * @param precision
-         * @return
-         */
         std::shared_ptr<Command> generateCreateAsset(std::string asset_name,
                                                      std::string domain_name,
                                                      uint8_t precision);
 
-        /**
-         *
-         * @param account_id
-         * @return
-         */
         std::shared_ptr<Command> generateSetAdminPermissions(
             std::string account_id);
       };

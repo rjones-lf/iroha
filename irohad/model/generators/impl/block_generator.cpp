@@ -23,17 +23,19 @@ namespace iroha {
     namespace generators {
       Block BlockGenerator::generateGenesisBlock(
           std::vector<std::string> peers_address) {
-        Block block{};
+        Block block;
         block.created_ts =
             (ts64_t)std::chrono::system_clock::now().time_since_epoch().count();
         block.height = 1;
         std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0);
+        std::fill(block.merkle_root.begin(), block.merkle_root.end(), 0);
         block.txs_number = 1;
         TransactionGenerator tx_generator;
         block.transactions = {tx_generator.generateGenesisTransaction(
             block.created_ts, peers_address)};
         HashProviderImpl provider;
         block.hash = provider.get_hash(block);
+
         return block;
       }
 
