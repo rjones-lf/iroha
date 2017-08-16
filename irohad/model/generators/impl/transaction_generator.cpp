@@ -23,9 +23,7 @@ namespace iroha {
       Transaction TransactionGenerator::generateGenesisTransaction(
           ts64_t timestamp, std::vector<std::string> peers_address) {
         Transaction tx;
-        tx.created_ts = timestamp;
-        // Create signature
-        tx.signatures = {generateSignature(42)};
+        tx.created_ts = timestamp; 
         tx.creator_account_id = "";
         tx.tx_counter = 0;
 
