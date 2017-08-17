@@ -84,31 +84,44 @@ namespace iroha_cli {
              [](auto el) { cout << "  " << el << endl; });
   }
 
+  std::string InteractiveCli::promtString(std::string message) {
+    std::string line;
+    std::cout << message << ": ";
+    std::getline(std::cin, line);
+    return line;
+  }
+
   std::shared_ptr<iroha::model::Query> InteractiveCli::parseGetAccount(
       std::string line) {
     iroha::model::generators::QueryGenerator generator;
     auto words = parser::split(line);
-    vector<string> notes = {"Creator account ID", "Query counter",
+    vector<string> notes = {"Creator account ID",
                             "Requested account Id"};
 
-    if (words.size() < notes.size()) {
-      printHelp("ga", notes);
-      return nullptr;
-    }
     auto time_stamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count());
+    auto counter = 0u;
+    string creator;
+    string acc_id;
 
-    auto creator = words[1];
-    auto counter = parser::toUint64(words[2]);
-    if (not counter.has_value()) {
-      cout << "Counter parse error";
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      creator = params[0];
+      acc_id = params[1];
+
+    } else if (words.size() < notes.size() + 1) {
+      printHelp("ga", notes);
       return nullptr;
+    } else {
+      creator = words[1];
+      acc_id = words[2];
     }
-    auto acc_id = words[3];
-
-    return generator.generateGetAccount(time_stamp, creator, counter.value(),
+    return generator.generateGetAccount(time_stamp, creator, counter,
                                         acc_id);
   }
 
@@ -116,58 +129,72 @@ namespace iroha_cli {
       std::string line) {
     iroha::model::generators::QueryGenerator generator;
     auto words = parser::split(line);
-    vector<string> notes = {"Creator account ID", "Query counter",
+    vector<string> notes = {"Creator account ID",
                             "Requested account Id", "Requested asset id"};
-
-    if (words.size() < notes.size()) {
-      printHelp("gaa", notes);
-      return nullptr;
-    }
-
+    auto counter = 0u;
     auto time_stamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count());
 
-    auto creator = words[1];
-    auto counter = parser::toUint64(words[2]);
-    if (not counter.has_value()) {
-      cout << "Counter parse error";
+    string creator;
+    string account_id;
+    string asset_id;
+
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      creator = params[0];
+      account_id = params[1];
+      asset_id = params[2];
+
+    } else   if (words.size() < notes.size() + 1) {
+      printHelp("gaa", notes);
       return nullptr;
+    } else {
+      creator = words[1];
+      account_id = words[2];
+      asset_id = words[3];
     }
-    auto account_id = words[3];
-    auto asset_id = words[4];
+
     return generator.generateGetAccountAssets(
-        time_stamp, creator, counter.value(), account_id, asset_id);
+        time_stamp, creator, counter, account_id, asset_id);
   }
 
   std::shared_ptr<iroha::model::Query>
   InteractiveCli::parseGetAccountTransactions(std::string line) {
     iroha::model::generators::QueryGenerator generator;
     auto words = parser::split(line);
-    vector<string> notes = {"Creator account ID", "Query counter",
+    vector<string> notes = {"Creator account ID",
                             "Requested account Id"};
-
-    if (words.size() < notes.size()) {
-      printHelp("gat", notes);
-      return nullptr;
-    }
-
+    string creator;
+    string account_id;
     auto time_stamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count());
+    auto counter = 0u;
 
-    auto creator = words[1];
-    auto counter = parser::toUint64(words[2]);
-    if (not counter.has_value()) {
-      cout << "Counter parse error";
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      creator = params[0];
+      account_id = params[1];
+    } else   if (words.size() < notes.size() + 1) {
+      printHelp("gat", notes);
       return nullptr;
+    } else {
+      creator = words[1];
+      account_id = words[2];
+
     }
-    auto acc_id = words[3];
 
     return generator.generateGetAccountTransactions(time_stamp, creator,
-                                                    counter.value(), acc_id);
+                                                    counter, account_id);
   }
 
   std::shared_ptr<iroha::model::Query> InteractiveCli::parseGetSignatories(

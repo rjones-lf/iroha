@@ -46,6 +46,7 @@ namespace iroha_cli {
 
     void printHelp(std::string command, std::vector<std::string> parameters);
 
+    std::string promtString(std::string message);
     // Main handlers:
     void startQuery();
     void startTransaction();
