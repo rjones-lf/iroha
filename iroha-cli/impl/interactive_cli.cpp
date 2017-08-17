@@ -114,7 +114,7 @@ namespace iroha_cli {
       creator = params[0];
       acc_id = params[1];
 
-    } else if (words.size() < notes.size() + 1) {
+    } else if (words.size() != notes.size() + 1) {
       printHelp("ga", notes);
       return nullptr;
     } else {
@@ -150,7 +150,7 @@ namespace iroha_cli {
       account_id = params[1];
       asset_id = params[2];
 
-    } else   if (words.size() < notes.size() + 1) {
+    } else   if (words.size() != notes.size() + 1) {
       printHelp("gaa", notes);
       return nullptr;
     } else {
@@ -184,7 +184,7 @@ namespace iroha_cli {
       });
       creator = params[0];
       account_id = params[1];
-    } else   if (words.size() < notes.size() + 1) {
+    } else   if (words.size() != notes.size() + 1) {
       printHelp("gat", notes);
       return nullptr;
     } else {
@@ -201,28 +201,35 @@ namespace iroha_cli {
       std::string line) {
     iroha::model::generators::QueryGenerator generator;
     auto words = parser::split(line);
-    vector<string> notes = {"Creator account ID", "Query counter",
+    vector<string> notes = {"Creator account ID",
                             "Requested account Id"};
 
-    if (words.size() < notes.size() + 1) {
-      printHelp("gs", notes);
-      return nullptr;
-    }
     auto time_stamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count());
+    auto counter = 0u;
+    string creator;
+    string acc_id;
 
-    auto creator = words[1];
-    auto counter = parser::toUint64(words[2]);
-    if (not counter.has_value()) {
-      cout << "Counter parse error";
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      creator = params[0];
+      acc_id = params[1];
+
+    } else if (words.size() != notes.size() + 1) {
+      printHelp("gs", notes);
       return nullptr;
+    } else {
+      creator = words[1];
+      acc_id = words[2];
     }
-    auto acc_id = words[3];
 
     return generator.generateGetSignatories(time_stamp, creator,
-                                            counter.value(), acc_id);
+                                            counter, acc_id);
   }
 
   void InteractiveCli::queryMenu() {
@@ -271,17 +278,28 @@ namespace iroha_cli {
   bool InteractiveCli::parseSaveToFile(std::string line) {
     auto words = parser::split(line);
     vector<string> notes = {"Path to save the file"};
-    if (words.size() < notes.size() + 1) {
+    string path;
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      path = params[0];
+
+    } else if (words.size() != notes.size() + 1) {
       printHelp("save", notes);
       return false;
+    } else {
+      path = words[1];
     }
+
     iroha::model::converters::JsonQueryFactory json_factory;
     auto json_string = json_factory.serialize(query_);
     if (not json_string.has_value()) {
       cout << "Error while forming a json" << endl;
       return false;
     }
-    std::ofstream output_file(words[1]);
+    std::ofstream output_file(path);
     output_file << json_string.value();
     cout << "Successfully saved!" << endl;
     return true;
@@ -291,17 +309,28 @@ namespace iroha_cli {
     auto words = parser::split(line);
     vector<string> notes = {"Ip Address of the Iroha server",
                             "Iroha server Port"};
-    if (words.size() < notes.size() + 1) {
+    string path;
+    nonstd::optional<int> port;
+    if (words.size() == 1) {
+      std::vector<string> params;
+      for_each(notes.begin(), notes.end(), [this, &params](auto param){
+        params.push_back(this->promtString(param));
+      });
+      path = params[0];
+      port = parser::toInt(params[1]);
+
+    } else if (words.size() != notes.size() + 1) {
       printHelp("send", notes);
       return false;
+    } else {
+      path = words[1];
+      port = parser::toInt(words[2]);
     }
-    auto port = parser::toInt(words[2]);
     if (not port.has_value()) {
       cout << "Port has wrong format" << endl;
       return false;
     }
-
-    CliClient client(words[1], (int)port.value());
+    CliClient client(words[1], port.value());
     GrpcResponseHandler response_handler;
     response_handler.handle(client.sendQuery(query_));
     return true;
