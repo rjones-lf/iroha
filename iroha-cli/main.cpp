@@ -31,7 +31,7 @@
 #include "impl/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
 
-#include "interactive_cli.hpp"
+#include "interactive/interactive_cli.hpp"
 
 // ** Genesis Block and Provisioning ** //
 // Reference is here (TODO: move to doc):
@@ -63,9 +63,11 @@ DEFINE_string(peers_address, "", "File with peers address");
 // Interactive
 DEFINE_bool(interactive, false, "Interactive cli");
 
+
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
+using namespace iroha_cli::interactive;
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -121,7 +123,12 @@ int main(int argc, char* argv[]) {
     output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
   } else if (FLAGS_interactive) {
-    iroha_cli::InteractiveCli interactiveCli;
+    // TODO: add login logic (e.g. password check)
+    if (FLAGS_name.empty()){
+      logger->error("Specify account name");
+      return -1;
+    }
+    InteractiveCli interactiveCli(FLAGS_name);
     interactiveCli.run();
   } else {
     assert_config::assert_fatal(false, "Invalid flags");
