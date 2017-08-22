@@ -18,28 +18,21 @@
 #ifndef IROHA_COMMAND_GENERATOR_HPP
 #define IROHA_COMMAND_GENERATOR_HPP
 
-#include "model/command.hpp"
-#include "model/commands/add_peer.hpp"
-#include "model/commands/create_account.hpp"
-#include "model/commands/create_asset.hpp"
-#include "model/commands/create_domain.hpp"
-#include "model/commands/set_permissions.hpp"
-
 #include <memory>
 #include "generator/generator.hpp"
+#include "model/command.hpp"
 
 namespace iroha {
   namespace model {
     namespace generators {
       class CommandGenerator {
        public:
-
         std::shared_ptr<Command> generateAddPeer(std::string address,
-                                                 size_t seed);
+                                                 ed25519::pubkey_t key);
 
         std::shared_ptr<Command> generateCreateAccount(std::string account_name,
                                                        std::string domain_id,
-                                                       size_t seed);
+                                                       ed25519::pubkey_t key);
 
         std::shared_ptr<Command> generateCreateDomain(std::string domain_name);
 
@@ -47,8 +40,26 @@ namespace iroha {
                                                      std::string domain_name,
                                                      uint8_t precision);
 
+        /**
+         *
+         * @param account_id
+         * @return
+         */
         std::shared_ptr<Command> generateSetAdminPermissions(
             std::string account_id);
+
+        std::shared_ptr<Command> generateSetQuorum(std::string account_id,
+                                                   uint32_t quorum);
+
+        std::shared_ptr<Command> generateAddAssetQuantity(
+            std::string account_id, std::string asset_id, Amount amount);
+
+        std::shared_ptr<Command> generateSubtractAssetQuantity(
+            std::string account_id, std::string asset_id, Amount amount);
+
+        std::shared_ptr<Command> generateTransferAsset(
+            std::string src_account, std::string target_account,
+            std::string asset_id, Amount amount);
       };
     }  // namespace generators
   }    // namespace model

@@ -3,6 +3,7 @@ add_library(interactive_cli
     impl/interactive_cli.cpp
     impl/interactive_common_cli.cpp
     impl/interactive_query_cli.cpp
+    impl/interactive_transaction_cli.cpp
     )
 target_link_libraries(interactive_cli
     model

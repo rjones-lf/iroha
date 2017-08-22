@@ -30,19 +30,24 @@ namespace iroha {
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
+          // TODO: replace with more flexible scheme
+          auto peer_key = generator::random_blob<ed25519::pubkey_t::size()>(i+1);
           tx.commands.push_back(
-              command_generator.generateAddPeer(peers_address[i], i + 1));
+              command_generator.generateAddPeer(peers_address[i], peer_key));
         }
         // Add domain
         tx.commands.push_back(command_generator.generateCreateDomain("test"));
         // Create accounts
+        auto acc_key = generator::random_blob<ed25519::pubkey_t::size()>(1);
         tx.commands.push_back(
-            command_generator.generateCreateAccount("admin", "test", 1));
+            command_generator.generateCreateAccount("admin", "test", acc_key));
+        acc_key = generator::random_blob<ed25519::pubkey_t::size()>(2);
         tx.commands.push_back(
-            command_generator.generateCreateAccount("test", "test", 2));
+            command_generator.generateCreateAccount("test", "test", acc_key));
         // Create asset
+        auto precision = 2;
         tx.commands.push_back(
-            command_generator.generateCreateAsset("coin", "test", 2));
+            command_generator.generateCreateAsset("coin", "test", precision));
         // Add admin rights
         tx.commands.push_back(
             command_generator.generateSetAdminPermissions("admin@test"));

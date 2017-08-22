@@ -25,35 +25,45 @@
 namespace iroha_cli {
   namespace interactive {
 
-    InteractiveQueryCli::InteractiveQueryCli(std::string account_name) {
-      creator_ = account_name;
+    void InteractiveQueryCli::assign_query_handlers() {
       // Fill menu points for queries
-      menu_points_ = {"1.GetAccount (ga)", "2.GetAccountAssets (gaa)",
-                      "3.GetAccountTransactions (gat)", "4.GetSignatories (gs)",
+      menu_points_ = {"1.Get Account Information (" + GET_ACC + ")",
+                      "2.Get Account's Assets (" + GET_ACC_AST + ")",
+                      "3.Get Account's Transactions (" + GET_ACC_TX + ")",
+                      "4.Get Account's Signatories (" + GET_ACC_SIGN + ")",
                       "0.Back (b)"};
 
       // Assign handlers for queries
       query_handlers_["1"] = &InteractiveQueryCli::parseGetAccount;
-      query_handlers_["ga"] = &InteractiveQueryCli::parseGetAccount;
+      query_handlers_[GET_ACC] = &InteractiveQueryCli::parseGetAccount;
 
       query_handlers_["2"] = &InteractiveQueryCli::parseGetAccountAssets;
-      query_handlers_["gaa"] = &InteractiveQueryCli::parseGetAccountAssets;
+      query_handlers_[GET_ACC_AST] =
+          &InteractiveQueryCli::parseGetAccountAssets;
 
       query_handlers_["3"] = &InteractiveQueryCli::parseGetAccountTransactions;
-      query_handlers_["gat"] =
+      query_handlers_[GET_ACC_TX] =
           &InteractiveQueryCli::parseGetAccountTransactions;
 
       query_handlers_["4"] = &InteractiveQueryCli::parseGetSignatories;
-      query_handlers_["gs"] = &InteractiveQueryCli::parseGetSignatories;
+      query_handlers_[GET_ACC_SIGN] = &InteractiveQueryCli::parseGetSignatories;
+    }
 
+    void InteractiveQueryCli::assin_result_handlers() {
       result_points_ = {"1. Save to file as json (save)",
-                        "2. Send to Iroha (send)", "0. Back (b)"};
+                        "2. Send to Iroha Peer (send)", "0. Back (b)"};
 
       result_handlers_["1"] = &InteractiveQueryCli::parseSaveFile;
       result_handlers_["save"] = &InteractiveQueryCli::parseSaveFile;
 
       result_handlers_["2"] = &InteractiveQueryCli::parseSendToIroha;
       result_handlers_["send"] = &InteractiveQueryCli::parseSendToIroha;
+    }
+
+    InteractiveQueryCli::InteractiveQueryCli(std::string account_name) {
+      creator_ = account_name;
+      assign_query_handlers();
+      assin_result_handlers();
     }
 
     void InteractiveQueryCli::run() {
@@ -106,7 +116,6 @@ namespace iroha_cli {
               .count());
       // TODO: assign counter from Iroha Net
       auto counter = 0u;
-      std::cout << "get account parsing" << std::endl;
       auto params = parseParams(line, "ga", notes);
       if (not params.has_value()) {
         return nullptr;

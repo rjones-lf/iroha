@@ -28,13 +28,12 @@ namespace iroha_cli {
     class InteractiveQueryCli {
      public:
       /**
-       *
+       * Create interactive query command line
        * @param account_name - account_id of query creator
        */
       explicit InteractiveQueryCli(std::string account_name);
       /**
        * Run interactive query command line
-       * @return False if no query was formed.
        */
       void run();
 
@@ -49,6 +48,15 @@ namespace iroha_cli {
       MenuContext current_context_;
       // Processed query
       std::shared_ptr<iroha::model::Query> query_;
+
+      // ------ Query handlers -----------
+      const std::string GET_ACC = "get_acc";
+      const std::string GET_ACC_AST = "get_acc_ast";
+      const std::string GET_ACC_TX = "get_acc_tx";
+      const std::string GET_ACC_SIGN = "get_acc_sign";
+
+      void assign_query_handlers();
+      void assin_result_handlers();
 
       // ------  Query parsers ---------
       bool parseQuery(std::string line);
