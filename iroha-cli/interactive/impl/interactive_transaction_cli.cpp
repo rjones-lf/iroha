@@ -18,12 +18,11 @@
 #include "interactive/interactive_transaction_cli.hpp"
 #include <fstream>
 #include "client.hpp"
-#include "common/types.hpp"
 #include "grpc_response_handler.hpp"
-#include "interactive/interactive_common_cli.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/generators/transaction_generator.hpp"
+
 
 #include "parser/parser.hpp"
 
@@ -94,13 +93,11 @@ namespace iroha_cli {
       command_handlers_["12"] = &InteractiveTransactionCli::parseTransferAsset;
       command_handlers_[TRAN_ASSET] =
           &InteractiveTransactionCli::parseTransferAsset;
-
     }
 
     void InteractiveTransactionCli::assign_result_handlers() {
       result_points_ = {"1. Save to file as json (save)",
-                        "2. Send to Iroha (send)",
-                        "3. Add command (add)"
+                        "2. Send to Iroha (send)", "3. Add command (add)",
                         "0. Go Back and start new tx (b)"};
 
       result_handlers_["1"] = &InteractiveTransactionCli::parseSaveFile;
@@ -114,12 +111,13 @@ namespace iroha_cli {
 
       result_handlers_["0"] = &InteractiveTransactionCli::parseGoBack;
       result_handlers_["b"] = &InteractiveTransactionCli::parseGoBack;
-
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
         std::string creator_account) {
       creator_ = creator_account;
+      // TODO: synchronize counter with iroha
+      tx_counter_ = 0;
       assign_command_handlers();
       assign_result_handlers();
     }
@@ -130,6 +128,8 @@ namespace iroha_cli {
       current_context_ = MAIN;
       printMenu("Forming a new transactions, choose command to add: ",
                 commands_points_);
+      // Creating a new transaction, increment local tx_counter
+      ++tx_counter_;
       while (is_parsing) {
         line = promtString("> ");
         switch (current_context_) {
@@ -173,7 +173,7 @@ namespace iroha_cli {
                                         "Amount to add (integer part)",
                                         "Amount to add (fractional part)"};
 
-      auto params = parseParams(line, "aaq", notes);
+      auto params = parseParams(line, ADD_ASSET_QTY, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -194,30 +194,51 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseAddPeer(std::string line) {
       std::vector<std::string> notes = {"Full address of a peer", "Public key"};
-      std::cout << "Not implemented " << std::endl;
-      // TODO: disccuss how to make this
-      return nullptr;
+      auto params = parseParams(line, ADD_PEER, notes);
+      if (not params.has_value()) {
+        return nullptr;
+      }
+      auto address = params.value()[0];
+      auto key = params.value()[1];
+      iroha::ed25519::pubkey_t pubkey;
+      iroha::hexstringToArray(key, pubkey);
+      return generator_.generateAddPeer(address, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseAddSignatory(std::string line) {
-      std::cout << "Not implemented " << std::endl;
-      // TODO: disccuss how to make this
-      return nullptr;
+      std::vector<std::string> notes = {"Account ID", "Public key to add"};
+      auto params = parseParams(line, ADD_SIGN, notes);
+      if (not params.has_value()) {
+        return nullptr;
+      }
+      auto account_id = params.value()[0];
+      auto key = params.value()[1];
+      iroha::ed25519::pubkey_t pubkey;
+      iroha::hexstringToArray(key, pubkey);
+      return generator_.generateAddSignatory(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseAssignMasterKey(std::string line) {
-      std::cout << "Not implemented " << std::endl;
-      // TODO: disccuss how to make this
-      return nullptr;
+      std::vector<std::string> notes = {
+          "Account ID", "Public key (must be one of the signatories):"};
+      auto params = parseParams(line, ASSIGN_M_KEY, notes);
+      if (not params.has_value()) {
+        return nullptr;
+      }
+      auto account_id = params.value()[0];
+      auto key = params.value()[1];
+      iroha::ed25519::pubkey_t pubkey;
+      iroha::hexstringToArray(key, pubkey);
+      return generator_.generateAssignMasterKey(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseCreateAccount(std::string line) {
       std::vector<std::string> notes = {"Account name", "Domain id",
                                         "Public Key"};
-      auto params = parseParams(line, "cac", notes);
+      auto params = parseParams(line, CREATE_ACC, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -226,14 +247,13 @@ namespace iroha_cli {
       auto key = params.value()[2];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
-
       return generator_.generateCreateAccount(account_id, domain_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseCreateDomain(std::string line) {
       std::vector<std::string> notes = {"Full domain id"};
-      auto params = parseParams(line, "cdo", notes);
+      auto params = parseParams(line, CREATE_DOMAIN, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -244,7 +264,7 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseCreateAsset(std::string line) {
       std::vector<std::string> notes = {"Full domain id"};
-      auto params = parseParams(line, "cas", notes);
+      auto params = parseParams(line, CREATE_ASSET, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -260,18 +280,28 @@ namespace iroha_cli {
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseRemoveSignatory(std::string line) {
-      return nullptr;
+      std::vector<std::string> notes = {"Account ID", "Public key to remove"};
+      auto params = parseParams(line, ADD_SIGN, notes);
+      if (not params.has_value()) {
+        return nullptr;
+      }
+      auto account_id = params.value()[0];
+      auto key = params.value()[1];
+      iroha::ed25519::pubkey_t pubkey;
+      iroha::hexstringToArray(key, pubkey);
+      return generator_.generateRemoveSignatory(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseSetPermissions(std::string line) {
+      // TODO: implement when change permission model
       return nullptr;
     }
 
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseSetQuorum(std::string line) {
       std::vector<std::string> notes = {"Account id", "Quorum"};
-      auto params = parseParams(line, "squ", notes);
+      auto params = parseParams(line, SET_QUO, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -297,7 +327,7 @@ namespace iroha_cli {
                                         "Amount to transfer (integer part)",
                                         "Amount to transfer (fractional part)"};
 
-      auto params = parseParams(line, "tas", notes);
+      auto params = parseParams(line, TRAN_ASSET, notes);
       if (not params.has_value()) {
         return nullptr;
       }
@@ -352,10 +382,8 @@ namespace iroha_cli {
               std::chrono::system_clock::now().time_since_epoch())
               .count());
       // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-
-      auto tx = tx_generator_.generateTransaction(time_stamp, creator_, counter,
-                                                  commands_);
+      auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
+                                                  tx_counter_, commands_);
       // TODO: sign tx
 
       CliClient client(address, port.value());
@@ -382,11 +410,8 @@ namespace iroha_cli {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch())
               .count());
-      // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-
-      auto tx = tx_generator_.generateTransaction(time_stamp, creator_, counter,
-                                                  commands_);
+      auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
+                                                  tx_counter_, commands_);
       // TODO: sign tx
 
       iroha::model::converters::JsonTransactionFactory json_factory;

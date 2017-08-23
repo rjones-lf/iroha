@@ -21,6 +21,7 @@
 #include <memory>
 #include "generator/generator.hpp"
 #include "model/command.hpp"
+#include "model/account.hpp"
 
 namespace iroha {
   namespace model {
@@ -29,6 +30,15 @@ namespace iroha {
        public:
         std::shared_ptr<Command> generateAddPeer(std::string address,
                                                  ed25519::pubkey_t key);
+
+        std::shared_ptr<Command> generateAddSignatory(std::string account_id,
+                                                      ed25519::pubkey_t key);
+
+        std::shared_ptr<Command> generateRemoveSignatory(
+            std::string account_id, ed25519::pubkey_t key);
+
+        std::shared_ptr<Command> generateAssignMasterKey(
+            std::string account_id, ed25519::pubkey_t key);
 
         std::shared_ptr<Command> generateCreateAccount(std::string account_name,
                                                        std::string domain_id,
@@ -50,6 +60,10 @@ namespace iroha {
 
         std::shared_ptr<Command> generateSetQuorum(std::string account_id,
                                                    uint32_t quorum);
+
+        std::shared_ptr<Command> generateSetPermissions(std::string account_id,
+                                                   Account::Permissions permissions);
+
 
         std::shared_ptr<Command> generateAddAssetQuantity(
             std::string account_id, std::string asset_id, Amount amount);

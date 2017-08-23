@@ -19,6 +19,7 @@
 #define IROHA_CLI_INTERACTIVE_CLI_HPP
 
 #include "interactive/interactive_query_cli.hpp"
+#include "interactive_transaction_cli.hpp"
 
 namespace iroha_cli {
 namespace interactive {
@@ -35,13 +36,20 @@ class InteractiveCli {
    */
   void run();
  private:
-  // Main menu points
-  std::vector<std::string> menu_points_;
   // Account id of creator
   std::string creator_;
+  // Query, tx cli
+  InteractiveTransactionCli tx_cli_;
+  InteractiveQueryCli query_cli_;
+
+  // Main menu points
+  std::vector<std::string> menu_points_;
+
 
   using MainHandler = void (InteractiveCli::*)();
   std::unordered_map<std::string, MainHandler> main_handler_map_;
+
+  void assign_main_handlers();
 
   void parseMain(std::string line);
 

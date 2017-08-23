@@ -44,10 +44,8 @@ namespace iroha_cli {
         std::string line, std::string command_name,
         std::vector<std::string> notes) {
       auto words = parser::split(line);
-      std::cout << "Parse params" << std::endl;
       if (words.size() == 1) {
         // Start interactive mode
-        std::cout << "Parse interactive " << std::endl;
         std::vector<std::string> params;
         for_each(notes.begin(), notes.end(), [&params](auto param) {
           params.push_back(promtString(param));
@@ -55,12 +53,10 @@ namespace iroha_cli {
         return params;
       } else if (words.size() != notes.size() + 1) {
         // Not enough parameters passed
-        std::cout << "Print help " << std::endl;
         printHelp(command_name, notes);
         return nonstd::nullopt;
       } else {
         // Remove command name
-        std::cout << "Just erase one word " << std::endl;
         words.erase(words.begin());
         return words;
       }

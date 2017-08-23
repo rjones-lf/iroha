@@ -40,6 +40,8 @@ namespace iroha_cli {
      private:
       // Creator account id
       std::string creator_;
+      // Local query counter of account creator_
+      uint64_t counter_;
       // Query menu points
       std::vector<std::string> menu_points_;
       // Query result points

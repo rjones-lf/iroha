@@ -16,12 +16,14 @@
  */
 
 #include "model/generators/command_generator.hpp"
-#include "common/types.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
+#include "model/commands/add_signatory.hpp"
+#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
+#include "model/commands/remove_signatory.hpp"
 #include "model/commands/set_permissions.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/subtract_asset_quantity.hpp"
@@ -38,6 +40,30 @@ namespace iroha {
         auto command = std::make_shared<AddPeer>();
         command->address = address;
         command->peer_key = key;
+        return command;
+      }
+
+      std::shared_ptr<Command> CommandGenerator::generateAddSignatory(
+          std::string account_id, ed25519::pubkey_t key) {
+        auto command = std::make_shared<AddSignatory>();
+        command->account_id = account_id;
+        command->pubkey = key;
+        return command;
+      }
+
+      std::shared_ptr<Command> CommandGenerator::generateRemoveSignatory(
+          std::string account_id, ed25519::pubkey_t key) {
+        auto command = std::make_shared<RemoveSignatory>();
+        command->account_id = account_id;
+        command->pubkey = key;
+        return command;
+      }
+
+      std::shared_ptr<Command> CommandGenerator::generateAssignMasterKey(
+          std::string account_id, ed25519::pubkey_t key) {
+        auto command = std::make_shared<AssignMasterKey>();
+        command->account_id = account_id;
+        command->pubkey = key;
         return command;
       }
 
@@ -97,16 +123,22 @@ namespace iroha {
         return command;
       }
 
+      std::shared_ptr<Command> CommandGenerator::generateSetPermissions(std::string account_id,
+                                                                        Account::Permissions permissions) {
+        auto command = std::make_shared<SetAccountPermissions>();
+        command->account_id = account_id;
+        command->new_permissions = permissions;
+        return command;
+      }
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
           std::string account_id, std::string asset_id, Amount amount) {
         // TODO: implement
         return nullptr;
       }
 
-      std::shared_ptr<Command> CommandGenerator::generateTransferAsset(std::string src_account,
-                                                                       std::string dest_account,
-                                                                       std::string asset_id,
-                                                                       Amount amount) {
+      std::shared_ptr<Command> CommandGenerator::generateTransferAsset(
+          std::string src_account, std::string dest_account,
+          std::string asset_id, Amount amount) {
         auto command = std::make_shared<TransferAsset>();
         command->amount = amount;
         command->asset_id = asset_id;
@@ -114,7 +146,6 @@ namespace iroha {
         command->dest_account_id = dest_account;
         return command;
       }
-
 
     }  // namespace generators
   }    // namespace model

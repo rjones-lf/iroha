@@ -36,8 +36,10 @@ namespace iroha_cli {
      private:
       // Creator account id
       std::string creator_;
+      // Transaction counter specific for account creator
+      uint64_t tx_counter_;
       iroha::model::generators::CommandGenerator generator_;
-      // Context
+      // Menu Context used in cli
       MenuContext current_context_;
       // Commands menu points
       std::vector<std::string> commands_points_;

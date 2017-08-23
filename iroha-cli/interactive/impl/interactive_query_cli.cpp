@@ -62,6 +62,8 @@ namespace iroha_cli {
 
     InteractiveQueryCli::InteractiveQueryCli(std::string account_name) {
       creator_ = account_name;
+      // TODO: synchronize query counter with iroha
+      counter_ = 0;
       assign_query_handlers();
       assin_result_handlers();
     }
@@ -71,6 +73,9 @@ namespace iroha_cli {
       bool is_parsing = true;
       current_context_ = MAIN;
       printMenu("Choose query: ", menu_points_);
+      // Creating a new query, increment local counter
+      ++counter_;
+
       while (is_parsing) {
         line = promtString("> ");
         switch (current_context_) {
@@ -114,14 +119,12 @@ namespace iroha_cli {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch())
               .count());
-      // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-      auto params = parseParams(line, "ga", notes);
+      auto params = parseParams(line, GET_ACC, notes);
       if (not params.has_value()) {
         return nullptr;
       }
       auto account_id = params.value()[0];
-      return generator.generateGetAccount(time_stamp, creator_, counter,
+      return generator.generateGetAccount(time_stamp, creator_, counter_,
                                           account_id);
     }
 
@@ -137,16 +140,14 @@ namespace iroha_cli {
               std::chrono::system_clock::now().time_since_epoch())
               .count());
 
-      // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-      auto params = parseParams(line, "gaa", notes);
+      auto params = parseParams(line, GET_ACC_AST, notes);
       if (not params.has_value()) {
         return nullptr;
       }
       auto account_id = params.value()[0];
       auto asset_id = params.value()[1];
 
-      return generator.generateGetAccountAssets(time_stamp, creator_, counter,
+      return generator.generateGetAccountAssets(time_stamp, creator_, counter_,
                                                 account_id, asset_id);
     }
 
@@ -159,16 +160,15 @@ namespace iroha_cli {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch())
               .count());
-      // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-      auto params = parseParams(line, "gat", notes);
+
+      auto params = parseParams(line, GET_ACC_TX, notes);
       if (not params.has_value()) {
         return nullptr;
       }
       auto account_id = params.value()[0];
 
       return generator.generateGetAccountTransactions(time_stamp, creator_,
-                                                      counter, account_id);
+                                                      counter_, account_id);
     }
 
     std::shared_ptr<iroha::model::Query>
@@ -182,15 +182,13 @@ namespace iroha_cli {
               std::chrono::system_clock::now().time_since_epoch())
               .count());
 
-      // TODO: assign counter from Iroha Net
-      auto counter = 0u;
-      auto params = parseParams(line, "gs", notes);
+      auto params = parseParams(line, GET_ACC_SIGN, notes);
       if (not params.has_value()) {
         return nullptr;
       }
       auto account_id = params.value()[0];
 
-      return generator.generateGetSignatories(time_stamp, creator_, counter,
+      return generator.generateGetSignatories(time_stamp, creator_, counter_,
                                               account_id);
     }
 

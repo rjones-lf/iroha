@@ -22,8 +22,7 @@
 namespace iroha_cli {
   namespace interactive {
 
-    InteractiveCli::InteractiveCli(std::string account_name) {
-      creator_ = account_name;
+    void InteractiveCli::assign_main_handlers() {
       menu_points_ = {"1.New transaction (tx)", "2.New query (qry)"};
 
       main_handler_map_["1"] = &InteractiveCli::startTx;
@@ -31,6 +30,11 @@ namespace iroha_cli {
 
       main_handler_map_["2"] = &InteractiveCli::startQuery;
       main_handler_map_["qry"] = &InteractiveCli::startQuery;
+    }
+
+    InteractiveCli::InteractiveCli(std::string account_name)
+        : creator_(account_name), tx_cli_(creator_), query_cli_(creator_) {
+      assign_main_handlers();
     }
 
     void InteractiveCli::parseMain(std::string line) {
@@ -47,12 +51,11 @@ namespace iroha_cli {
     }
 
     void InteractiveCli::startQuery() {
-      InteractiveQueryCli queryCli(creator_);
-      queryCli.run();
+      query_cli_.run();
     }
 
     void InteractiveCli::startTx() {
-      // TODO: implement
+      tx_cli_.run();
     }
 
     void InteractiveCli::run() {
