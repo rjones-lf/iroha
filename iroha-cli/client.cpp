@@ -87,7 +87,7 @@ namespace iroha_cli {
       response.answer = query_response;
       return response;
     }
-    return sendQuery(query_opt);
+    return sendQuery(query_opt.value());
   }
 
   CliClient::Response<iroha::protocol::QueryResponse> CliClient::sendQuery(
