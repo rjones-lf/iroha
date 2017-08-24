@@ -23,14 +23,17 @@
 namespace iroha {
 
   void sha3_256(unsigned char *output, unsigned char *input,
-                      size_t in_size);
+                      size_t in_size) noexcept;
 
   void sha3_512(unsigned char *output, unsigned char *input,
-                      size_t in_size);
+                      size_t in_size) noexcept;
 
-  hash256_t sha3_256(const uint8_t *input, size_t in_size);
+  hash256_t sha3_256(const uint8_t *input, size_t in_size) noexcept;
 
-  hash512_t sha3_512(const uint8_t *input, size_t in_size);
+  hash512_t sha3_512(const uint8_t *input, size_t in_size) noexcept;
+
+  hash256_t sha3_256(const std::string &msg) noexcept;
+  hash512_t sha3_512(const std::string &msg) noexcept;
 
 }  // namespace iroha
 

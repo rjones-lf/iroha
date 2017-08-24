@@ -1,0 +1,2 @@
+AddTest(proto_signature_test proto.cpp)
+target_link_libraries(proto_signature_test protobuf primitiveproto_h hash)
