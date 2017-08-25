@@ -8,6 +8,7 @@ jobs:
         environment:
           IROHA_HOME: /opt/iroha
           IROHA_BUILD: /tmp/build
+          IROHA_COVERAGE: /tmp/build/coverage.info
       - image: postgres:9.5
       - image: redis:3.2.8
     steps:
@@ -39,6 +40,29 @@ jobs:
       - run:
           name: run tests
           command: cmake --build $IROHA_BUILD --target test
+      - run:
+          name: reporting coverage
+          command : |
+            apt update -y
+            apt install lcov -y
+            lcov --capture --directory $IROHA_BUILD --output-file $IROHA_COVERAGE
+
+            IROHA_COVERAGE_TARGET_DIRECTORIES=('irohad' 'iroha-cli' 'libs')
+            for directory in ${IROHA_COVERAGE_TARGET_DIRECTORIES[@]}; do
+              lcov --extract $IROHA_COVERAGE "$IROHA_HOME/$directory/*" > ${IROHA_COVERAGE}_$directory
+            done
+
+            BASE_COVERAGE_REPORT=${IROHA_COVERAGE_TARGET_DIRECTORIES[0]}
+            IROHA_COVERAGE_TARGET_DIRECTORIES=(${IROHA_COVERAGE_TARGET_DIRECTORIES[@]:1})
+            for directory in ${IROHA_COVERAGE_TARGET_DIRECTORIES[@]}; do
+              lcov -a ${IROHA_COVERAGE}_$directory -a ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT > $IROHA_COVERAGE
+              mv $IROHA_COVERAGE ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT
+            done
+
+            mv ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT $IROHA_COVERAGE
+      - run:
+          name: upload codecov
+          command: cd $IROHA_HOME && bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f $IROHA_COVERAGE -X gcov
       - run:
           name: ccache teardown
           command: |
