@@ -103,7 +103,8 @@ namespace iroha {
       std::shared_ptr<YacGateImpl> YacInit::initConsensusGate(std::string network_address,
                                   std::shared_ptr<uvw::Loop> loop,
                                   std::shared_ptr<YacPeerOrderer> peer_orderer,
-                                  std::shared_ptr<simulator::BlockCreator> block_creator) {
+                                  std::shared_ptr<simulator::BlockCreator> block_creator,
+                                  std::shared_ptr<network::BlockLoader> block_loader) {
         auto yac = createYac(std::move(network_address),
                              std::move(loop),
                              peer_orderer->getInitialOrdering().value());
@@ -112,7 +113,9 @@ namespace iroha {
         auto hash_provider = createHashProvider();
         return std::make_shared<YacGateImpl>(std::move(yac),
                                              std::move(peer_orderer),
-                                             hash_provider, block_creator);
+                                             hash_provider,
+                                             block_creator,
+                                             block_loader);
       }
 
     } // namespace yac

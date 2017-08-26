@@ -17,6 +17,7 @@
 
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
+#include "module/irohad/network/network_mocks.hpp"
 
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
@@ -24,6 +25,7 @@
 #include "framework/test_subscriber.hpp"
 
 using namespace iroha::consensus::yac;
+using namespace iroha::network;
 using namespace iroha::simulator;
 using namespace framework::test_subscriber;
 
@@ -82,8 +84,11 @@ TEST(YacGateTest, YacGateSubscriptionTest) {
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
+  // Block loader
+  auto block_loader = make_shared<MockBlockLoader>();
+
   YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
-                   hash_provider, block_creator);
+                   hash_provider, block_creator, block_loader);
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate.on_commit(), 1);
@@ -140,6 +145,9 @@ TEST(YacGateTest, YacGateSubscribtionTestFailCase) {
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
+  // Block loader
+  auto block_loader = make_shared<MockBlockLoader>();
+
   YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
-                   hash_provider, block_creator);
+                   hash_provider, block_creator, block_loader);
 }

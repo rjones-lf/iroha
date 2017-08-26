@@ -117,14 +117,15 @@ void Irohad::run() {
   auto simulator = createSimulator(ordering_gate, stateful_validator, storage,
                                    storage, hash_provider);
 
+  // Block loader
+  auto block_loader = loader_init.initBlockLoader(storage);
+
   // Consensus gate
   auto consensus_gate = yac_init.initConsensusGate(peer_address,
                                                    loop,
                                                    orderer,
-                                                   simulator);
-
-  // Block loader
-  auto block_loader = loader_init.initBlockLoader(storage);
+                                                   simulator,
+                                                   block_loader);
 
   // Synchronizer
   auto synchronizer = createSynchronizer(consensus_gate, chain_validator,
