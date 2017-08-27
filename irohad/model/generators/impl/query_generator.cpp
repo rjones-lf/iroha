@@ -73,6 +73,19 @@ namespace iroha {
         return query;
       }
 
+      std::shared_ptr<GetAccountAssetTransactions> QueryGenerator::generateGetAccountAssetTransactions(
+          ts64_t timestamp, std::string creator, uint64_t query_counter,
+          std::string account_id, std::string asset_id) {
+        auto query = std::make_shared<GetAccountAssetTransactions>();
+        query->created_ts = timestamp;
+        query->creator_account_id = creator;
+        query->query_counter = query_counter;
+        query->account_id = account_id;
+        query->asset_id = asset_id;
+        query->query_hash = hash_provider_.get_hash(query);
+        return query;
+      }
+
     }  // namespace generators
   }    // namespace model
 }  // namespace iroha

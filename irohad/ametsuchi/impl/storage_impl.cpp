@@ -17,6 +17,7 @@
 
 #include <utility>
 #include <algorithm>
+#include <model/commands/transfer_asset.hpp>
 
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
@@ -245,6 +246,20 @@ namespace iroha {
           .filter([account_id](auto tx) {
             return tx.creator_account_id == account_id;
           });
+    }
+
+    rxcpp::observable<model::Transaction> StorageImpl::getAccountAssetTransactions(
+        std::string account_id, std::string asset_id) {
+      return getAccountTransactions(account_id).filter([account_id, asset_id](model::Transaction tx) {
+          return std::any_of(tx.commands.begin(), tx.commands.end(), [account_id, asset_id](std::shared_ptr<model::Command> command) {
+            if (instanceof <iroha::model::TransferAsset>(*command)) {
+              auto transferAsset = (iroha::model::TransferAsset*) command.get();
+              return (transferAsset->src_account_id == account_id || transferAsset->dest_account_id == account_id) && transferAsset->asset_id == asset_id;
+            } else {
+              return false;
+            }
+          });
+      });
     }
 
     rxcpp::observable<model::Block> StorageImpl::getBlocks(uint32_t height,

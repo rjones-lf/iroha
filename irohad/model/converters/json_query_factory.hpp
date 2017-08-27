@@ -64,27 +64,20 @@ namespace iroha {
 
         std::unordered_map<std::string, Deserializer> deserializers_;
         // Deserialize handlers
-        std::shared_ptr<Query> deserializeGetAccount(
-            GenericValue<UTF8<char>>::Object &obj_query);
-        std::shared_ptr<Query> deserializeGetSignatories(
-            GenericValue<UTF8<char>>::Object &obj_query);
-        std::shared_ptr<Query> deserializeGetAccountTransactions(
-            GenericValue<UTF8<char>>::Object &obj_query);
-        std::shared_ptr<Query> deserializeGetAccountAssets(
-            GenericValue<UTF8<char>>::Object &obj_query);
+        std::shared_ptr<Query> deserializeGetAccount(GenericValue<UTF8<char>>::Object &obj_query);
+        std::shared_ptr<Query> deserializeGetSignatories(GenericValue<UTF8<char>>::Object &obj_query);
+        std::shared_ptr<Query> deserializeGetAccountTransactions(GenericValue<UTF8<char>>::Object &obj_query);
+        std::shared_ptr<Query> deserializeGetAccountAssetTransactions(GenericValue<UTF8<char>>::Object &obj_query);
+        std::shared_ptr<Query> deserializeGetAccountAssets(GenericValue<UTF8<char>>::Object &obj_query);
         // Serializers:
-        using Serializer = void (JsonQueryFactory::*)(Document &,
-                                                      std::shared_ptr<Query>);
+        using Serializer = void (JsonQueryFactory::*)(Document &, std::shared_ptr<Query>);
         std::unordered_map<std::type_index, Serializer> serializers_;
         // Serialization handlers
-        void serializeGetAccount(Document &json_doc,
-                                 std::shared_ptr<Query> query);
-        void serializeGetAccountAssets(Document &json_doc,
-                                       std::shared_ptr<Query> query);
-        void serializeGetAccountTransactions(Document &json_doc,
-                                             std::shared_ptr<Query> query);
-        void serializeGetSignatories(Document &json_doc,
-                                     std::shared_ptr<Query> query);
+        void serializeGetAccount(Document &json_doc, std::shared_ptr<Query> query);
+        void serializeGetAccountAssets(Document &json_doc, std::shared_ptr<Query> query);
+        void serializeGetAccountTransactions(Document &json_doc, std::shared_ptr<Query> query);
+        void serializeGetAccountAssetTransactions(Document &json_doc, std::shared_ptr<Query> query);
+        void serializeGetSignatories(Document &json_doc, std::shared_ptr<Query> query);
 
         // Logger
         std::shared_ptr<spdlog::logger> log_;

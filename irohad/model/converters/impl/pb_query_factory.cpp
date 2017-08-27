@@ -30,14 +30,10 @@ namespace iroha {
       PbQueryFactory::PbQueryFactory() {
         log_ = logger::log("PbQueryFactory");
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
-        serializers_[typeid(GetAccountAssets)] =
-            &PbQueryFactory::serializeGetAccountAssets;
-        serializers_[typeid(GetAccountAssets)] =
-            &PbQueryFactory::serializeGetAccountAssets;
-        serializers_[typeid(GetAccountTransactions)] =
-            &PbQueryFactory::serializeGetAccountTransactions;
-        serializers_[typeid(GetSignatories)] =
-            &PbQueryFactory::serializeGetSignatories;
+        serializers_[typeid(GetAccountAssets)] = &PbQueryFactory::serializeGetAccountAssets;
+        serializers_[typeid(GetAccountTransactions)] = &PbQueryFactory::serializeGetAccountTransactions;
+        serializers_[typeid(GetAccountAssetTransactions)] = &PbQueryFactory::serializeGetAccountAssetTransactions;
+        serializers_[typeid(GetSignatories)] = &PbQueryFactory::serializeGetSignatories;
       }
 
       optional_ptr<model::Query> PbQueryFactory::deserialize(
@@ -75,6 +71,16 @@ namespace iroha {
           query.account_id = pb_cast.account_id();
           val = std::make_shared<model::GetAccountTransactions>(query);
         }
+
+        if (pb_query.has_get_account_asset_transactions()) {
+          // Convert to get Signatories
+          auto pb_cast = pb_query.get_account_asset_transactions();
+          auto query = GetAccountAssetTransactions();
+          query.account_id = pb_cast.account_id();
+          query.asset_id = pb_cast.asset_id();
+          val = std::make_shared<model::GetAccountAssetTransactions>(query);
+        }
+
         if (!val) {
           // Query not implemented
           return nonstd::nullopt;
@@ -149,6 +155,19 @@ namespace iroha {
         auto account_id = tmp->account_id;
         auto pb_query_mut = pb_query.mutable_get_account_transactions();
         pb_query_mut->set_account_id(account_id);
+        return pb_query;
+      }
+
+      protocol::Query PbQueryFactory::serializeGetAccountAssetTransactions(
+          std::shared_ptr<Query> query) {
+        protocol::Query pb_query;
+        serializeQueryMetaData(pb_query, query);
+        auto tmp = std::static_pointer_cast<GetAccountAssetTransactions>(query);
+        auto account_id = tmp->account_id;
+        auto asset_id = tmp->asset_id;
+        auto pb_query_mut = pb_query.mutable_get_account_asset_transactions();
+        pb_query_mut->set_account_id(account_id);
+        pb_query_mut->set_asset_id(asset_id);
         return pb_query;
       }
 
