@@ -23,29 +23,31 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/generators/transaction_generator.hpp"
 
-
 #include "parser/parser.hpp"
 
 namespace iroha_cli {
   namespace interactive {
 
-    void InteractiveTransactionCli::assign_command_handlers() {
-      // Fill menu points for commands
-      commands_points_ = {
-          "1.Add Asset Quantity (" + ADD_ASSET_QTY + ")",
-          "2.Add Peer to Iroha Network (" + ADD_PEER + ")",
-          "3.Add Signatory to Account (" + ADD_SIGN + ")",
-          "4.Assign Master Key to Account (" + ASSIGN_M_KEY + ")",
-          "5.Create Account (" + CREATE_ACC + ")",
-          "6.Create Domain (" + CREATE_DOMAIN + ")",
-          "7.Create Asset (" + CREATE_ASSET + ")",
-          "8.Remove Signatory (" + REMOVE_SIGN + ")",
-          "9.Set Permissions to Account (" + SET_PERM + ")",
-          "10.Set Account Quorum (" + SET_QUO + ")",
-          "11.Subtract  Assets Quantity from Account (" + SUB_ASSET_QTY + ")",
-          "12.Transfer Assets (" + TRAN_ASSET + ")",
-          "0.Back (b)"};
+    void InteractiveTransactionCli::create_command_menu() {
+      // -- Fill menu points for commands --
+      add_menu_point(commands_points_, "Add Asset Quantity", ADD_ASSET_QTY);
+      add_menu_point(commands_points_, "Add Peer to Iroha Network", ADD_PEER);
+      add_menu_point(commands_points_, "Add Signatory to Account", ADD_SIGN);
+      add_menu_point(commands_points_, "Assign Master Key to Account",
+                     ASSIGN_M_KEY);
+      add_menu_point(commands_points_, "Create Account", CREATE_ACC);
+      add_menu_point(commands_points_, "Create Domain", CREATE_DOMAIN);
+      add_menu_point(commands_points_, "Create Asset", CREATE_ASSET);
+      add_menu_point(commands_points_, "Remove Signatory", REMOVE_SIGN);
+      add_menu_point(commands_points_, "Set Permissions to Account", SET_PERM);
+      add_menu_point(commands_points_, "Set Account Quorum", SET_QUO);
+      add_menu_point(commands_points_, "Subtract  Assets Quantity from Account",
+                     SUB_ASSET_QTY);
+      add_menu_point(commands_points_, "Transfer Assets", TRAN_ASSET);
+      // Add "back" option
+      commands_points_.push_back("0.Back (b)");
 
+      // --- Assign command menu ---
       command_handlers_["1"] =
           &InteractiveTransactionCli::parseAddAssetQuantity;
       command_handlers_[ADD_ASSET_QTY] =
@@ -93,12 +95,44 @@ namespace iroha_cli {
       command_handlers_["12"] = &InteractiveTransactionCli::parseTransferAsset;
       command_handlers_[TRAN_ASSET] =
           &InteractiveTransactionCli::parseTransferAsset;
+
+      // --- Assign commands parameters ---
+      command_params_[ADD_ASSET_QTY] = {"Account Id to add assets", "Asset id",
+                                        "Amount to add (integer part)",
+                                        "Amount to add (fractional part)"};
+
+      command_params_[ADD_PEER] = {"Full address of a peer", "Public key"};
+      command_params_[ADD_SIGN] = {"Account ID", "Public key to add"};
+      command_params_[ASSIGN_M_KEY] = {
+          "Account ID", "Public key (must be one of the signatories):"};
+      command_params_[CREATE_ACC] = {"Account name", "Domain id", "Public Key"};
+      command_params_[CREATE_DOMAIN] = {"Full domain id"};
+      command_params_[CREATE_ASSET] = {"Asset name", "Full domain id",
+                                       "Asset precision"};
+      command_params_[REMOVE_SIGN] = {"Account ID", "Public key to remove"};
+      // TODO: implement
+      command_params_[SET_PERM] = {};
+      command_params_[SET_QUO] = {"Account id", "Quorum"};
+      command_params_[SUB_ASSET_QTY] = {};
+      command_params_[TRAN_ASSET] = {"Src account id", "Dest account id",
+                                     "Asset to transfer",
+                                     "Amount to transfer (integer part)",
+                                     "Amount to transfer (fractional part)"};
+
+      command_params_["save"] = {"Path to save tx in json format"};
+      command_params_["send"] = {"Ip Address of the Iroha server",
+                                 "Iroha server Port"};
     }
 
-    void InteractiveTransactionCli::assign_result_handlers() {
-      result_points_ = {"1. Save to file as json (save)",
-                        "2. Send to Iroha (send)", "3. Add command (add)",
-                        "0. Go Back and start new tx (b)"};
+    void InteractiveTransactionCli::create_result_menu() {
+      // --- Add result menu points ---
+      add_menu_point(result_points_, "Save to file as json transaction",
+                     "save");
+      add_menu_point(result_points_, "Send transaction to Iroha", "send");
+      add_menu_point(result_points_, "Add command to transaction", "add");
+      // Add "back" option
+      result_points_.push_back("0. Go Back and start new tx (b)");
+      // --- Assign result handlers ---
 
       result_handlers_["1"] = &InteractiveTransactionCli::parseSaveFile;
       result_handlers_["save"] = &InteractiveTransactionCli::parseSaveFile;
@@ -114,12 +148,11 @@ namespace iroha_cli {
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
-        std::string creator_account) {
+        std::string creator_account, uint64_t tx_counter) {
       creator_ = creator_account;
-      // TODO: synchronize counter with iroha
-      tx_counter_ = 0;
-      assign_command_handlers();
-      assign_result_handlers();
+      tx_counter_ = tx_counter;
+      create_command_menu();
+      create_result_menu();
     }
 
     void InteractiveTransactionCli::run() {
@@ -137,7 +170,7 @@ namespace iroha_cli {
             is_parsing = parseCommand(line);
             break;
           case RESULT:
-            is_parsing = not parseResult(line);
+            is_parsing = parseResult(line);
             break;
         }
       }
@@ -146,42 +179,41 @@ namespace iroha_cli {
     bool InteractiveTransactionCli::parseCommand(std::string line) {
       std::transform(line.begin(), line.end(), line.begin(), ::tolower);
       // Find in main handler map
-      auto command = parser::split(line)[0];
-      if (command == "b" || command == "0") {
+      auto command_name = parser::split(line)[0];
+      if (command_name == "b" || command_name == "0") {
         // Return back to main menu
-        // Stop parsing
+        // Parsing context is changed
         return false;
       }
-      auto it = command_handlers_.find(command);
-      if (it != command_handlers_.end()) {
-        auto res = (this->*it->second)(line);
-        if (res) {
-          commands_.push_back(res);
-          current_context_ = RESULT;
-          printMenu("Command is formed. Choose what to do:", result_points_);
-        }
-      } else {
+      // Find specific parser for this command
+      auto opt_parser = findInHandlerMap(command_name, command_handlers_);
+      if (not opt_parser.has_value()) {
         std::cout << "Command not found" << std::endl;
+        return true;
       }
-      // Continue parsing
+      // Fill up all needed parameters
+      auto params = parseParams(line, command_name, command_params_);
+      if (not params.has_value()) {
+        // Not all params where initialized.
+        // Continue parsing
+        return true;
+      }
+
+      auto res = (this->*opt_parser.value())(params.value());
+      commands_.push_back(res);
+      current_context_ = RESULT;
+      printMenu("Command is formed. Choose what to do:", result_points_);
       return true;
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseAddAssetQuantity(std::string line) {
-      std::vector<std::string> notes = {"Account Id to add assets", "Asset id",
-                                        "Amount to add (integer part)",
-                                        "Amount to add (fractional part)"};
-
-      auto params = parseParams(line, ADD_ASSET_QTY, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto asset_id = params.value()[1];
+    InteractiveTransactionCli::parseAddAssetQuantity(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto asset_id = params[1];
       iroha::Amount amount;
-      auto val_int = parser::toUint64(params.value()[2]);
-      auto val_frac = parser::toUint64(params.value()[3]);
+      auto val_int = parser::toUint64(params[2]);
+      auto val_frac = parser::toUint64(params[3]);
       if (not val_int.has_value() || not val_frac.has_value()) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
@@ -192,151 +224,111 @@ namespace iroha_cli {
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseAddPeer(std::string line) {
-      std::vector<std::string> notes = {"Full address of a peer", "Public key"};
-      auto params = parseParams(line, ADD_PEER, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto address = params.value()[0];
-      auto key = params.value()[1];
+    InteractiveTransactionCli::parseAddPeer(std::vector<std::string> params) {
+      auto address = params[0];
+      auto key = params[1];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
       return generator_.generateAddPeer(address, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseAddSignatory(std::string line) {
-      std::vector<std::string> notes = {"Account ID", "Public key to add"};
-      auto params = parseParams(line, ADD_SIGN, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto key = params.value()[1];
+    InteractiveTransactionCli::parseAddSignatory(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto key = params[1];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
       return generator_.generateAddSignatory(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseAssignMasterKey(std::string line) {
-      std::vector<std::string> notes = {
-          "Account ID", "Public key (must be one of the signatories):"};
-      auto params = parseParams(line, ASSIGN_M_KEY, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto key = params.value()[1];
+    InteractiveTransactionCli::parseAssignMasterKey(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto key = params[1];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
       return generator_.generateAssignMasterKey(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseCreateAccount(std::string line) {
-      std::vector<std::string> notes = {"Account name", "Domain id",
-                                        "Public Key"};
-      auto params = parseParams(line, CREATE_ACC, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto domain_id = params.value()[1];
-      auto key = params.value()[2];
+    InteractiveTransactionCli::parseCreateAccount(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto domain_id = params[1];
+      auto key = params[2];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
       return generator_.generateCreateAccount(account_id, domain_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseCreateDomain(std::string line) {
-      std::vector<std::string> notes = {"Full domain id"};
-      auto params = parseParams(line, CREATE_DOMAIN, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto domain_id = params.value()[0];
+    InteractiveTransactionCli::parseCreateDomain(
+        std::vector<std::string> params) {
+      auto domain_id = params[0];
       return generator_.generateCreateDomain(domain_id);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseCreateAsset(std::string line) {
-      std::vector<std::string> notes = {"Full domain id"};
-      auto params = parseParams(line, CREATE_ASSET, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto asset_name = params.value()[0];
-      auto domain_id = params.value()[1];
-      auto val = parser::toInt(params.value()[2]);
+    InteractiveTransactionCli::parseCreateAsset(
+        std::vector<std::string> params) {
+      auto asset_name = params[0];
+      auto domain_id = params[1];
+      auto val = parser::toInt(params[2]);
       if (not val.has_value()) {
-        // error
+        std::cout << "Wrong format for precision" << std::endl;
         return nullptr;
       }
       return generator_.generateCreateAsset(asset_name, domain_id, val.value());
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseRemoveSignatory(std::string line) {
-      std::vector<std::string> notes = {"Account ID", "Public key to remove"};
-      auto params = parseParams(line, ADD_SIGN, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto key = params.value()[1];
+    InteractiveTransactionCli::parseRemoveSignatory(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto key = params[1];
       iroha::ed25519::pubkey_t pubkey;
       iroha::hexstringToArray(key, pubkey);
       return generator_.generateRemoveSignatory(account_id, pubkey);
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseSetPermissions(std::string line) {
+    InteractiveTransactionCli::parseSetPermissions(
+        std::vector<std::string> params) {
       // TODO: implement when change permission model
+      std::cout << "Not implemented" << std::endl;
       return nullptr;
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseSetQuorum(std::string line) {
-      std::vector<std::string> notes = {"Account id", "Quorum"};
-      auto params = parseParams(line, SET_QUO, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto quorum = parser::toUint64(params.value()[2]);
+    InteractiveTransactionCli::parseSetQuorum(std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto quorum = parser::toUint64(params[1]);
       if (not quorum.has_value()) {
         std::cout << "Wrong format for quorum" << std::endl;
         return nullptr;
       }
       return generator_.generateSetQuorum(account_id, quorum.value());
     }
+
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseSubtractAssetQuantity(std::string line) {
-      std::cout << "Not implemented" << std::endl;
+    InteractiveTransactionCli::parseSubtractAssetQuantity(
+        std::vector<std::string> params) {
       // TODO: implement
+      std::cout << "Not implemented" << std::endl;
       return nullptr;
     }
 
     std::shared_ptr<iroha::model::Command>
-    InteractiveTransactionCli::parseTransferAsset(std::string line) {
-      std::vector<std::string> notes = {"Src account id", "Dest account id",
-                                        "Asset to transfer",
-                                        "Amount to transfer (integer part)",
-                                        "Amount to transfer (fractional part)"};
-
-      auto params = parseParams(line, TRAN_ASSET, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto src_account_id = params.value()[0];
-      auto dest_account_id = params.value()[1];
-      auto asset_id = params.value()[2];
+    InteractiveTransactionCli::parseTransferAsset(
+        std::vector<std::string> params) {
+      auto src_account_id = params[0];
+      auto dest_account_id = params[1];
+      auto asset_id = params[2];
       iroha::Amount amount;
-      auto val_int = parser::toUint64(params.value()[3]);
-      auto val_frac = parser::toUint64(params.value()[4]);
+      auto val_int = parser::toUint64(params[3]);
+      auto val_frac = parser::toUint64(params[4]);
       if (not val_int.has_value() || not val_frac.has_value()) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
@@ -351,29 +343,30 @@ namespace iroha_cli {
 
     bool InteractiveTransactionCli::parseResult(std::string line) {
       transform(line.begin(), line.end(), line.begin(), ::tolower);
+      auto command_name = parser::split(line)[0];
       // Find in result handler map
-      auto command = parser::split(line)[0];
-      auto it = result_handlers_.find(command);
-      if (it != result_handlers_.end()) {
-        return (this->*it->second)(line);
-      } else {
+      auto opt_parser = findInHandlerMap(command_name, result_handlers_);
+      if (not opt_parser.has_value()) {
         std::cout << "Command not found." << std::endl;
-        return false;
+        return true;
       }
+      // Fill up all needed parameters
+      auto params = parseParams(line, command_name, command_params_);
+      if (not params.has_value()) {
+        // Continue parsing
+        return true;
+      }
+      return (this->*opt_parser.value())(params.value());
     }
 
-    bool InteractiveTransactionCli::parseSendToIroha(std::string line) {
-      std::vector<std::string> notes = {"Ip Address of the Iroha server",
-                                        "Iroha server Port"};
-      auto params = parseParams(line, "send", notes);
-      if (not params.has_value()) {
-        return false;
-      }
-      auto address = params.value()[0];
-      auto port = parser::toInt(params.value()[1]);
+    bool InteractiveTransactionCli::parseSendToIroha(
+        std::vector<std::string> params) {
+      auto address = params[0];
+      auto port = parser::toInt(params[1]);
       if (not port.has_value()) {
         std::cout << "Port has wrong format" << std::endl;
-        return false;
+        // Continue parsing
+        return true;
       }
       // Forming a transaction
       iroha::model::generators::TransactionGenerator tx_generator_;
@@ -381,28 +374,23 @@ namespace iroha_cli {
           std::chrono::duration_cast<std::chrono::milliseconds>(
               std::chrono::system_clock::now().time_since_epoch())
               .count());
-      // TODO: assign counter from Iroha Net
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
       // TODO: sign tx
-
       CliClient client(address, port.value());
       GrpcResponseHandler response_handler;
       response_handler.handle(client.sendTx(tx));
-      return true;
+      // Stop parsing
+      return false;
     }
-    bool InteractiveTransactionCli::parseSaveFile(std::string line) {
-      std::vector<std::string> notes = {"Path to save query json"};
-      auto params = parseParams(line, "save", notes);
-      if (not params.has_value()) {
-        return false;
-      }
-      auto path = params.value()[0];
-
+    bool InteractiveTransactionCli::parseSaveFile(
+        std::vector<std::string> params) {
+      auto path = params[0];
       std::ofstream output_file(path);
       if (not output_file) {
         std::cout << "Wrong path" << std::endl;
-        return false;
+        // Continue parsing
+        return true;
       }
       // Forming a transaction
       iroha::model::generators::TransactionGenerator tx_generator_;
@@ -415,28 +403,32 @@ namespace iroha_cli {
       // TODO: sign tx
 
       iroha::model::converters::JsonTransactionFactory json_factory;
-      // TODO: change to other implemenetation
       auto json_doc = json_factory.serialize(tx);
       auto json_string = iroha::model::converters::jsonToString(json_doc);
       output_file << json_string;
       std::cout << "Successfully saved!" << std::endl;
-      return true;
+      // Stop parsing
+      return false;
     }
 
-    bool InteractiveTransactionCli::parseGoBack(std::string line) {
+    bool InteractiveTransactionCli::parseGoBack(
+        std::vector<std::string> params) {
       current_context_ = MAIN;
       // Remove all old commands
       commands_.clear();
       std::cout << "------" << std::endl;
       printMenu("Forming a new transaction. Choose command to add: ",
                 commands_points_);
-      return false;
+      // Continue parsing
+      return true;
     }
-    bool InteractiveTransactionCli::parseAddCommand(std::string line) {
+    bool InteractiveTransactionCli::parseAddCommand(
+        std::vector<std::string> params) {
       current_context_ = MAIN;
       std::cout << "------" << std::endl;
       printMenu("Choose command to add: ", commands_points_);
-      return false;
+      // Continue parsing
+      return true;
     }
 
   }  // namespace interactive

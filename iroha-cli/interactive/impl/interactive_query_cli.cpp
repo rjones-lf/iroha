@@ -25,15 +25,16 @@
 namespace iroha_cli {
   namespace interactive {
 
-    void InteractiveQueryCli::assign_query_handlers() {
-      // Fill menu points for queries
-      menu_points_ = {"1.Get Account Information (" + GET_ACC + ")",
-                      "2.Get Account's Assets (" + GET_ACC_AST + ")",
-                      "3.Get Account's Transactions (" + GET_ACC_TX + ")",
-                      "4.Get Account's Signatories (" + GET_ACC_SIGN + ")",
-                      "0.Back (b)"};
+    void InteractiveQueryCli::create_queries_menu() {
+      // -- Fill menu points for queries --
+      add_menu_point(menu_points_, "Get Account Information", GET_ACC);
+      add_menu_point(menu_points_, "Get Account's Assets", GET_ACC_AST);
+      add_menu_point(menu_points_, "Get Account's Transactions", GET_ACC_TX);
+      add_menu_point(menu_points_, "Get Account's Signatories", GET_ACC_SIGN);
+      // Add "go back" option
+      menu_points_.push_back("0.Back (b)");
 
-      // Assign handlers for queries
+      // --- Assign handlers for queries ---
       query_handlers_["1"] = &InteractiveQueryCli::parseGetAccount;
       query_handlers_[GET_ACC] = &InteractiveQueryCli::parseGetAccount;
 
@@ -47,25 +48,35 @@ namespace iroha_cli {
 
       query_handlers_["4"] = &InteractiveQueryCli::parseGetSignatories;
       query_handlers_[GET_ACC_SIGN] = &InteractiveQueryCli::parseGetSignatories;
+
+      // --- Assign query parameters ---
+      query_params_[GET_ACC] = {"Requested account Id"};
+      query_params_[GET_ACC_AST] = {"Requested account Id",
+                                    "Requested asset id"};
+      query_params_[GET_ACC_TX] = {"Requested account Id"};
+      query_params_[GET_ACC_SIGN] = {"Requested account Id"};
     }
 
-    void InteractiveQueryCli::assin_result_handlers() {
-      result_points_ = {"1. Save to file as json (save)",
-                        "2. Send to Iroha Peer (send)", "0. Back (b)"};
+    void InteractiveQueryCli::create_result_menu() {
+      add_menu_point(result_points_, "Save to file as json", "save");
+      add_menu_point(result_points_, "Send to Iroha Peer","send");
+      // Add go back option
+      result_points_.push_back("0. Back (b)");
 
       result_handlers_["1"] = &InteractiveQueryCli::parseSaveFile;
       result_handlers_["save"] = &InteractiveQueryCli::parseSaveFile;
 
       result_handlers_["2"] = &InteractiveQueryCli::parseSendToIroha;
       result_handlers_["send"] = &InteractiveQueryCli::parseSendToIroha;
+
     }
 
-    InteractiveQueryCli::InteractiveQueryCli(std::string account_name) {
+    InteractiveQueryCli::InteractiveQueryCli(std::string account_name,
+                                             uint64_t query_counter) {
       creator_ = account_name;
-      // TODO: synchronize query counter with iroha
-      counter_ = 0;
-      assign_query_handlers();
-      assin_result_handlers();
+      counter_ = query_counter;
+      create_queries_menu();
+      create_result_menu();
     }
 
     void InteractiveQueryCli::run() {
@@ -75,6 +86,11 @@ namespace iroha_cli {
       printMenu("Choose query: ", menu_points_);
       // Creating a new query, increment local counter
       ++counter_;
+      // Init timestamp for a new query
+      local_time_ = static_cast<uint64_t>(
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::system_clock::now().time_since_epoch())
+              .count());
 
       while (is_parsing) {
         line = promtString("> ");
@@ -83,7 +99,7 @@ namespace iroha_cli {
             is_parsing = parseQuery(line);
             break;
           case RESULT:
-            is_parsing = not parseResult(line);
+            is_parsing = parseResult(line);
             break;
         }
       }
@@ -91,162 +107,130 @@ namespace iroha_cli {
 
     bool InteractiveQueryCli::parseQuery(std::string line) {
       std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-      // Find in main handler map
-      auto command = parser::split(line)[0];
-      if (command == "b" || command == "0") {
+      // Get command name from the line
+      auto command_name = parser::split(line)[0];
+      if (command_name == "b" || command_name == "0") {
+        // Stop parsing
         return false;
       }
-      auto it = query_handlers_.find(command);
-      if (it != query_handlers_.end()) {
-        auto res = (this->*it->second)(line);
-        if (res) {
-          query_ = res;
-          current_context_ = RESULT;
-          printMenu("Query is formed. Choose what to do:", result_points_);
-        }
-      } else {
+
+      auto opt_parser = findInHandlerMap(command_name, query_handlers_);
+      if (not opt_parser.has_value()){
         std::cout << "Command not found" << std::endl;
+        // TODO: add logger, or cover with tests. Discuss with others
+        return true;
       }
+
+      // Get query parameters from the user
+      auto params = parseParams(line, command_name, query_params_);
+      if (not params.has_value()){
+        //Not every parameter was initialized
+        // Continue parsing
+        return true;
+      }
+
+      // Parse query
+      auto res = (this->*opt_parser.value())(params.value());
+      query_ = res;
+      current_context_ = RESULT;
+      printMenu("Query is formed. Choose what to do:", result_points_);
+      // Continue parsing
       return true;
     }
 
     std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetAccount(
-        std::string line) {
-      iroha::model::generators::QueryGenerator generator;
-      std::vector<std::string> notes = {"Requested account Id"};
-
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
-      auto params = parseParams(line, GET_ACC, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      return generator.generateGetAccount(time_stamp, creator_, counter_,
-                                          account_id);
+        QueryParams params) {
+      auto account_id = params[0];
+      return generator_.generateGetAccount(local_time_, creator_, counter_,
+                                           account_id);
     }
 
     std::shared_ptr<iroha::model::Query>
-    InteractiveQueryCli::parseGetAccountAssets(std::string line) {
-      iroha::model::generators::QueryGenerator generator;
-      auto words = parser::split(line);
-      std::vector<std::string> notes = {"Requested account Id",
-                                        "Requested asset id"};
-
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
-
-      auto params = parseParams(line, GET_ACC_AST, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-      auto asset_id = params.value()[1];
-
-      return generator.generateGetAccountAssets(time_stamp, creator_, counter_,
-                                                account_id, asset_id);
+    InteractiveQueryCli::parseGetAccountAssets(QueryParams params) {
+      auto account_id = params[0];
+      auto asset_id = params[1];
+      return generator_.generateGetAccountAssets(
+          local_time_, creator_, counter_, account_id, asset_id);
     }
 
     std::shared_ptr<iroha::model::Query>
-    InteractiveQueryCli::parseGetAccountTransactions(std::string line) {
-      iroha::model::generators::QueryGenerator generator;
-      auto words = parser::split(line);
-      std::vector<std::string> notes = {"Requested account Id"};
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
-
-      auto params = parseParams(line, GET_ACC_TX, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-
-      return generator.generateGetAccountTransactions(time_stamp, creator_,
-                                                      counter_, account_id);
+    InteractiveQueryCli::parseGetAccountTransactions(QueryParams params) {
+      auto account_id = params[0];
+      return generator_.generateGetAccountTransactions(local_time_, creator_,
+                                                       counter_, account_id);
     }
 
     std::shared_ptr<iroha::model::Query>
-    InteractiveQueryCli::parseGetSignatories(std::string line) {
-      iroha::model::generators::QueryGenerator generator;
-      auto words = parser::split(line);
-      std::vector<std::string> notes = {"Requested account Id"};
-
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
-
-      auto params = parseParams(line, GET_ACC_SIGN, notes);
-      if (not params.has_value()) {
-        return nullptr;
-      }
-      auto account_id = params.value()[0];
-
-      return generator.generateGetSignatories(time_stamp, creator_, counter_,
-                                              account_id);
+    InteractiveQueryCli::parseGetSignatories(QueryParams params) {
+      auto account_id = params[0];
+      return generator_.generateGetSignatories(local_time_, creator_, counter_,
+                                               account_id);
     }
 
     bool InteractiveQueryCli::parseResult(std::string line) {
       transform(line.begin(), line.end(), line.begin(), ::tolower);
       // Find in result handler map
-      auto command = parser::split(line)[0];
-      if (command == "b" || command == "0") {
+      auto command_name = parser::split(line)[0];
+      if (command_name == "b" || command_name == "0") {
+        // Give up the last query and start a new one
         current_context_ = MAIN;
         std::cout << "------" << std::endl;
         printMenu("Choose query: ", menu_points_);
-        return false;
+        // Continue parsing
+        return true;
       }
-      auto it = result_handlers_.find(command);
-      if (it != result_handlers_.end()) {
-        return (this->*it->second)(line);
-      } else {
-        std::cout << "Command not found." << std::endl;
-        return false;
+      // Find specific parser for the command
+      auto opt_parser = findInHandlerMap(command_name, result_handlers_);
+      if (not opt_parser.has_value()){
+        std::cout << "Command not found" << std::endl;
+        // TODO: add logger, or cover with tests. Discuss with others
+        return true;
       }
+      // Fill up the parameters for query from the user
+      auto params = parseParams(line, command_name, query_params_);
+      if (not params.has_value()) {
+        // Not all params where initialized.
+        // Continue parsing
+        return true;
+      }
+      return (this->*opt_parser.value())(params.value());
     }
 
-    bool InteractiveQueryCli::parseSendToIroha(std::string line) {
-      std::vector<std::string> notes = {"Ip Address of the Iroha server",
-                                        "Iroha server Port"};
-      auto params = parseParams(line, "send", notes);
-      if (not params.has_value()) {
-        return false;
-      }
-      auto address = params.value()[0];
-      auto port = parser::toInt(params.value()[1]);
+    bool InteractiveQueryCli::parseSendToIroha(QueryParams params) {
+      auto address = params[0];
+      auto port = parser::toInt(params[1]);
       if (not port.has_value()) {
         std::cout << "Port has wrong format" << std::endl;
-        return false;
+        // Continue parsing
+        return true;
       }
       CliClient client(address, port.value());
       GrpcResponseHandler response_handler;
       response_handler.handle(client.sendQuery(query_));
-      return true;
-    };
+      // Stop parsing
+      return false;
+    }
 
-    bool InteractiveQueryCli::parseSaveFile(std::string line) {
-      std::vector<std::string> notes = {"Path to save query json"};
-      auto params = parseParams(line, "save", notes);
-      if (not params.has_value()) {
-        return false;
-      }
-      auto path = params.value()[0];
+    bool InteractiveQueryCli::parseSaveFile(QueryParams params) {
+      auto path = params[0];
       iroha::model::converters::JsonQueryFactory json_factory;
       auto json_string = json_factory.serialize(query_);
       if (not json_string.has_value()) {
         std::cout << "Error while forming a json" << std::endl;
-        return false;
+        // Continue parsing
+        return true;
       }
       std::ofstream output_file(path);
+      if (not output_file){
+        std::cout << "Cannot create file" << std::endl;
+        // Continue parsing
+        return true;
+      }
       output_file << json_string.value();
       std::cout << "Successfully saved!" << std::endl;
-      return true;
+      // Stop parsing
+      return false;
     }
+
   }  // namespace interactive
 }  // namespace iroha_cli

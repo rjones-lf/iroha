@@ -31,24 +31,29 @@ namespace iroha_cli {
 
     /**
      * Handle query response
-     * @param response - iroha protocol
+     * @param response - iroha protocol object
      */
-    bool handle(const iroha::protocol::QueryResponse& response);
+    void handle(const iroha::protocol::QueryResponse& response);
 
    private:
-    bool handleErrorResponse(const iroha::protocol::QueryResponse& response);
-    bool handleAccountResponse(const iroha::protocol::QueryResponse& response);
-    bool handleAccountAssetsResponse(
+    void handleErrorResponse(const iroha::protocol::QueryResponse& response);
+    void handleAccountResponse(const iroha::protocol::QueryResponse& response);
+    void handleAccountAssetsResponse(
         const iroha::protocol::QueryResponse& response);
-    bool handleTransactionsResponse(
+    void handleTransactionsResponse(
         const iroha::protocol::QueryResponse& response);
-    bool handleSignatoriesResponse(
+    void handleSignatoriesResponse(
         const iroha::protocol::QueryResponse& response);
     // -- --
     using Handler =
-        bool (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
-    std::unordered_map<int , Handler> handler_map_;
-    std::unordered_map<int, std::string> error_handler_map_;
+        void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
+    using QueryResponseCode = int;
+    using ErrorResponseCode = int;
+
+    // Map  QueryResponse code -> Handle Method
+    std::unordered_map<QueryResponseCode , Handler> handler_map_;
+    // Map ErrorResponse code -> String to print
+    std::unordered_map<ErrorResponseCode, std::string> error_handler_map_;
 
     std::shared_ptr<spdlog::logger> log_;
   };

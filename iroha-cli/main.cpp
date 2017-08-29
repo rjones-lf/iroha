@@ -19,6 +19,8 @@
 #include <responses.pb.h>
 #include <fstream>
 #include <iostream>
+#include <model/converters/json_query_factory.hpp>
+#include "bootstrap_network.hpp"
 #include "common/assert_config.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
@@ -92,15 +94,30 @@ int main(int argc, char* argv[]) {
       std::ifstream file(FLAGS_json_transaction);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-
-      response_handler.handle(client.sendJsonTx(str));
+      iroha::model::converters::JsonTransactionFactory serializer;
+      auto doc = iroha::model::converters::stringToJson(str);
+      if (not doc.has_value()){
+        logger->error("Json has wrong format.");
+      }
+      auto tx_opt = serializer.deserialize(doc.value());
+      if (not tx_opt.has_value()) {
+        logger->error("Json transaction has wrong format.");
+      } else {
+        response_handler.handle(client.sendTx(tx_opt.value()));
+      }
     }
     if (not FLAGS_json_query.empty()) {
       logger->info("Send query to {}:{}", FLAGS_address, FLAGS_torii_port);
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      response_handler.handle(client.sendJsonQuery(str));
+      iroha::model::converters::JsonQueryFactory serializer;
+      auto query_opt = serializer.deserialize(std::move(str));
+      if (not query_opt.has_value()) {
+        logger->error("Json has wrong format.");
+      } else{
+        response_handler.handle(client.sendQuery(query_opt.value()));
+      }
     }
 
   } else if (FLAGS_genesis_block) {

@@ -46,71 +46,65 @@ namespace iroha_cli {
     error_handler_map_[ErrorResponse::WRONG_FORMAT] = "Query has wrong format";
   }
 
-  bool QueryResponseHandler::handle(
+  void QueryResponseHandler::handle(
       const iroha::protocol::QueryResponse &response) {
     auto it = handler_map_.find(response.response_case());
     if (it != handler_map_.end()) {
-      return (this->*it->second)(response);
+      (this->*it->second)(response);
     } else {
       log_->error("Response Handle {} not Implemented", response.response_case());
-      return false;
     }
   }
 
-  bool QueryResponseHandler::handleErrorResponse(
+  void QueryResponseHandler::handleErrorResponse(
       const iroha::protocol::QueryResponse &response) {
     auto it = error_handler_map_.find((response.error_response().reason()));
     if (it != error_handler_map_.end()) {
       log_->error(it->second);
-      return false;
     } else {
       // Response of some other type received
       log_->error("Error Response Handle of type {} not Implemented",
                   response.error_response().reason());
-      return false;
     }
   }
 
-  bool QueryResponseHandler::handleAccountResponse(
+  void QueryResponseHandler::handleAccountResponse(
       const iroha::protocol::QueryResponse &response) {
     auto account = response.account_response().account();
     log_->info("[Account]:");
     log_->info("-Id:- {}", account.account_id());
     // TODO : print permissions
     log_->info("-Domain- {}", account.domain_name());
-    return true;
   }
 
-  bool QueryResponseHandler::handleAccountAssetsResponse(
+  void QueryResponseHandler::handleAccountAssetsResponse(
       const iroha::protocol::QueryResponse &response) {
     auto acc_assets = response.account_assets_response().account_asset();
     log_->info("[Account Assets]");
     log_->info("-Account Id- {}", acc_assets.account_id());
     log_->info("-Asset Id- {}", acc_assets.asset_id());
     log_->info("-Balance- {}", acc_assets.balance());
-    return true;
   }
 
-  bool QueryResponseHandler::handleSignatoriesResponse(
+  void QueryResponseHandler::handleSignatoriesResponse(
       const iroha::protocol::QueryResponse &response) {
     auto signatories = response.signatories_response().keys();
     log_->info("[Signatories]");
     std::for_each(
         signatories.begin(), signatories.end(),
         [this](auto signatory) { log_->info("-Signatory- {}", signatory); });
-    return true;
   }
 
-  bool QueryResponseHandler::handleTransactionsResponse(
+  void QueryResponseHandler::handleTransactionsResponse(
       const iroha::protocol::QueryResponse &response) {
     auto txs = response.transactions_response().transactions();
     log_->info("[Transactions]");
     std::for_each(txs.begin(), txs.end(), [this](auto tx) {
       log_->info("-[tx]-");
       log_->info("--[Creator Id] -- {}", tx.meta().creator_account_id());
-      // TODO: add other fields
+      log_->info("--[Creator Id] -- {}", tx.meta().creator_account_id());
+      // TODO: add other fields: tx head, tx body
     });
-    return true;
   }
 
 }  // namespace iroha_cli

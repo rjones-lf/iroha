@@ -41,19 +41,26 @@ namespace iroha_cli {
     }
 
     nonstd::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name,
-        std::vector<std::string> notes) {
+        std::string line, std::string command_name, ParamsMap params_map) {
+      auto params_description = findInHandlerMap(command_name, params_map);
+      if (not params_description.has_value()) {
+        // Report no params where found for this command
+        std::cout << "Command params not found" << std::endl;
+        // Stop parsing, something is not implemented
+        return nonstd::nullopt;
+      }
       auto words = parser::split(line);
       if (words.size() == 1) {
         // Start interactive mode
         std::vector<std::string> params;
-        for_each(notes.begin(), notes.end(), [&params](auto param) {
-          params.push_back(promtString(param));
-        });
+        std::for_each(params_description.value().begin(),
+                      params_description.value().end(), [&params](auto param) {
+                        params.push_back(promtString(param));
+                      });
         return params;
-      } else if (words.size() != notes.size() + 1) {
+      } else if (words.size() != params_description.value().size() + 1) {
         // Not enough parameters passed
-        printHelp(command_name, notes);
+        printHelp(command_name, params_description.value());
         return nonstd::nullopt;
       } else {
         // Remove command name
@@ -62,13 +69,11 @@ namespace iroha_cli {
       }
     }
 
-    nonstd::optional<std::vector<std::string>> parseSend(std::string line) {
-      std::vector<std::string> notes = {"Ip Address of the Iroha server",
-                                        "Iroha server Port"};
-      nonstd::optional<int> port;
-      auto params = parseParams(line, "send", notes);
-      return params;
-    };
-
+    void add_menu_point(std::vector<std::string> &menu_points,
+                        std::string description,
+                        std::string command_short_name) {
+      menu_points.push_back(std::to_string(menu_points.size() + 1) +
+                            description + command_short_name);
+    }
   }  // namespace interactive
 }  // namespace iroha_cli

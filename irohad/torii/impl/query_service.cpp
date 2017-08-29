@@ -28,7 +28,6 @@ namespace torii {
       : pb_query_factory_(pb_query_factory),
         pb_query_response_factory_(pb_query_response_factory),
         query_processor_(query_processor) {
-    log_ = logger::log("QueryService");
     // Subscribe on result from iroha
     query_processor_->queryNotifier().subscribe([this](auto iroha_response) {
       // Find client to respond

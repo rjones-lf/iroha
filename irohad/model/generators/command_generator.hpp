@@ -20,8 +20,8 @@
 
 #include <memory>
 #include "generator/generator.hpp"
-#include "model/command.hpp"
 #include "model/account.hpp"
+#include "model/command.hpp"
 
 namespace iroha {
   namespace model {
@@ -34,11 +34,11 @@ namespace iroha {
         std::shared_ptr<Command> generateAddSignatory(std::string account_id,
                                                       ed25519::pubkey_t key);
 
-        std::shared_ptr<Command> generateRemoveSignatory(
-            std::string account_id, ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateRemoveSignatory(std::string account_id,
+                                                         ed25519::pubkey_t key);
 
-        std::shared_ptr<Command> generateAssignMasterKey(
-            std::string account_id, ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateAssignMasterKey(std::string account_id,
+                                                         ed25519::pubkey_t key);
 
         std::shared_ptr<Command> generateCreateAccount(std::string account_name,
                                                        std::string domain_id,
@@ -51,7 +51,12 @@ namespace iroha {
                                                      uint8_t precision);
 
         /**
-         *
+         * Generate default admin permissions
+         * Admin Permissions:
+         * - read_all_accounts
+         * - set permissions to other account
+         * - issue assets
+         * - can transfer money
          * @param account_id
          * @return
          */
@@ -61,18 +66,24 @@ namespace iroha {
         std::shared_ptr<Command> generateSetQuorum(std::string account_id,
                                                    uint32_t quorum);
 
-        std::shared_ptr<Command> generateSetPermissions(std::string account_id,
-                                                   Account::Permissions permissions);
-
+        std::shared_ptr<Command> generateSetPermissions(
+            std::string account_id, Account::Permissions permissions);
 
         std::shared_ptr<Command> generateAddAssetQuantity(
             std::string account_id, std::string asset_id, Amount amount);
 
         std::shared_ptr<Command> generateSubtractAssetQuantity(
             std::string account_id, std::string asset_id, Amount amount);
-
+        /**
+         * Generate transfer assets from source account_id to target account_id
+         * @param src_account_id - source account identifier
+         * @param target_account_id - target account identifier
+         * @param asset_id - asset identifier to transfer
+         * @param amount - amount of assets to transfer
+         * @return
+         */
         std::shared_ptr<Command> generateTransferAsset(
-            std::string src_account, std::string target_account,
+            std::string src_account_id, std::string target_account_id,
             std::string asset_id, Amount amount);
       };
     }  // namespace generators

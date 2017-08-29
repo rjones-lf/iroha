@@ -25,9 +25,6 @@ namespace iroha_cli {
       case iroha_cli::CliClient::OK:
         log_->info("Transaction successfully sent");
         break;
-      case iroha_cli::CliClient::WRONG_FORMAT:
-        log_->error("Transaction wrong json format");
-        break;
         /*
       case iroha_cli::CliClient::NOT_VALID:
         log_->error("Transaction is not valid");

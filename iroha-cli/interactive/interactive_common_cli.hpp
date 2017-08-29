@@ -23,35 +23,92 @@
 #include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
+#include <unordered_map>
+
 
 namespace iroha_cli {
   namespace interactive {
 
-    enum MenuContext { MAIN, RESULT };
+    /**
+     * Parsing menu context, used to identify the context of parsing
+     */
+    enum MenuContext {
+      /**
+       * Main menu context, used to print all commands/queries
+       */
+      MAIN,
+      /**
+       * Result menu, used for send, save tx/query
+       */
+      RESULT
+    };
+
+    using ParamsDescription = std::vector<std::string>;
+    using ParamsMap = std::unordered_map<std::string, ParamsDescription>;
 
     /**
-     *
-     * @param command
-     * @param parameters
+     * Print help for cli command.
+     * @param command - name of the cli command
+     * @param parameters needed to run the command
      */
     void printHelp(std::string command, std::vector<std::string> parameters);
     /**
-     *
-     * @param message
-     * @param menu_points
+     * Pretty Print of menu
+     * @param message - message to print before menu
+     * @param menu_points - elements of the menu
      */
     void printMenu(std::string message, std::vector<std::string> menu_points);
 
     /**
-     * Get string from user
+     * Get string input from user
      * @param message Message to ask user
      * @return user's input
      */
     std::string promtString(std::string message);
 
+    /**
+     * Parse parameters in interactive and shortcuted mode.
+     * Function run interactive mode if in line only the command name is passed.
+     * Function will parse all needed parameters from line if the line with
+     * commands is passed, it will print help if there are not enough parameters
+     * in line.
+     * @param line - cli line to parse
+     * @param command_name - command name to print
+     * @param notes - parameters needed to run the command
+     * @return vector with needed parameters
+     */
     nonstd::optional<std::vector<std::string>> parseParams(
         std::string line, std::string command_name,
-        std::vector<std::string> notes);
+        ParamsMap params_map);
+
+    /**
+     * Add menu point to vector menu
+     * @param menu_points to add new point
+     * @param description of the command to add
+     * @param command_short_name command short name
+     */
+    void add_menu_point(std::vector<std::string>& menu_points,
+                        std::string description,
+                        std::string command_short_name);
+
+    /**
+     *
+     * @tparam K
+     * @tparam V
+     * @param command_name
+     * @param params_map
+     * @return
+     */
+    template <typename K, typename V>
+    nonstd::optional<V> findInHandlerMap(std::string command_name,
+                                         std::unordered_map<K, V> params_map) {
+      auto it = params_map.find(command_name);
+      if (it == params_map.end()) {
+        // Command not found
+        return nonstd::nullopt;
+      }
+      return it->second;
+    }
 
   }  // namespace interactive
 }  // namespace iroha_cli

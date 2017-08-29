@@ -32,8 +32,10 @@ namespace iroha_cli {
       main_handler_map_["qry"] = &InteractiveCli::startQuery;
     }
 
+
     InteractiveCli::InteractiveCli(std::string account_name)
-        : creator_(account_name), tx_cli_(creator_), query_cli_(creator_) {
+    // TODO : assign counters from Iroha Network
+        : creator_(account_name), tx_cli_(creator_, 0), query_cli_(creator_, 0) {
       assign_main_handlers();
     }
 

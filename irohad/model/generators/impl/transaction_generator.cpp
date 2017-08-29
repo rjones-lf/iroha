@@ -30,8 +30,10 @@ namespace iroha {
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
-          // TODO: replace with more flexible scheme
-          auto peer_key = generator::random_blob<ed25519::pubkey_t::size()>(i+1);
+          // TODO: replace with more flexible scheme, generate public keys with
+          // specified parameters
+          auto peer_key =
+              generator::random_blob<ed25519::pubkey_t::size()>(i + 1);
           tx.commands.push_back(
               command_generator.generateAddPeer(peers_address[i], peer_key));
         }

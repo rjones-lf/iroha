@@ -18,35 +18,52 @@
 #ifndef IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 
-#include "model/command.hpp"
-#include "interactive/interactive_common_cli.hpp"
-#include "model/generators/command_generator.hpp"
 #include <unordered_map>
+#include "interactive/interactive_common_cli.hpp"
+#include "model/command.hpp"
+#include "model/generators/command_generator.hpp"
 
 namespace iroha_cli {
   namespace interactive {
     class InteractiveTransactionCli {
      public:
-      explicit InteractiveTransactionCli(std::string creator_account);
+      /**
+       *
+       * @param creator_account
+       * @param tx_counter
+       */
+      InteractiveTransactionCli(std::string creator_account,
+                                         uint64_t tx_counter);
       /**
        * Run interactive query command line
        */
       void run();
 
      private:
-      // Creator account id
+      /**
+       * Creator account id
+       */
       std::string creator_;
-      // Transaction counter specific for account creator
+      /**
+       *  Transaction counter specific for account creator
+       */
       uint64_t tx_counter_;
+
       iroha::model::generators::CommandGenerator generator_;
-      // Menu Context used in cli
+      /**
+       * Menu context used in cli
+       */
       MenuContext current_context_;
-      // Commands menu points
+      /**
+       * Commands menu points
+       */
       std::vector<std::string> commands_points_;
-      // Transaction result points
+      /**
+       * Transaction result points
+       */
       std::vector<std::string> result_points_;
 
-      // Shortcut commands
+      // --- Shortcut namings for queries ---
       const std::string ADD_ASSET_QTY = "add_ast_qty";
       const std::string ADD_PEER = "add_peer";
       const std::string ADD_SIGN = "add_sign";
@@ -60,52 +77,64 @@ namespace iroha_cli {
       const std::string SUB_ASSET_QTY = "sub_ast_qty";
       const std::string TRAN_ASSET = "tran_ast";
 
-      void assign_command_handlers();
-      void assign_result_handlers();
-
+      /**
+       * Create command menu and assign command handlers for current class
+       * object
+       */
+      void create_command_menu();
+      /**
+       * Create result menu and assign result handlers for current class object
+       */
+      void create_result_menu();
 
       // Commands to be formed
       std::vector<std::shared_ptr<iroha::model::Command>> commands_;
 
       // ---- Command parsers ----
+      using CommandHandler = std::shared_ptr<iroha::model::Command> (
+          InteractiveTransactionCli::*)(std::vector<std::string>);
+
+      std::unordered_map<std::string, CommandHandler> command_handlers_;
+      std::unordered_map<std::string, std::vector<std::string>> command_params_;
+
       bool parseCommand(std::string line);
 
-      using CommandHandler = std::shared_ptr<iroha::model::Command> (
-          InteractiveTransactionCli::*)(std::string);
-      std::unordered_map<std::string, CommandHandler> command_handlers_;
-
       std::shared_ptr<iroha::model::Command> parseAddAssetQuantity(
-          std::string line);
-      std::shared_ptr<iroha::model::Command> parseAddPeer(std::string line);
+          std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseAddPeer(std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseAddSignatory(
-          std::string line);
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseAssignMasterKey(
-          std::string line);
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseCreateAccount(
-          std::string line);
-      std::shared_ptr<iroha::model::Command> parseCreateAsset(std::string line);
+          std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseCreateAsset(std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseCreateDomain(
-          std::string line);
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseRemoveSignatory(
-          std::string line);
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSetPermissions(
-          std::string line);
-      std::shared_ptr<iroha::model::Command> parseSetQuorum(std::string line);
+          std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseSetQuorum(std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSubtractAssetQuantity(
-          std::string line);
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseTransferAsset(
-          std::string line);
+          std::vector<std::string> line);
 
       // ---- Result parsers ------
-      bool parseResult(std::string line);
-      using ResultHandler =
-      bool (InteractiveTransactionCli::*)(std::string);
+      using ResultHandler = bool (InteractiveTransactionCli::*)(std::vector<std::string>);
       std::unordered_map<std::string, ResultHandler> result_handlers_;
+      /**
+       * Parse line for result
+       * @param line - cli command
+       * @return True - if
+       */
+      bool parseResult(std::string line);
       // Result handlers
-      bool parseSendToIroha(std::string line);
-      bool parseSaveFile(std::string line);
-      bool parseGoBack(std::string line);
-      bool parseAddCommand(std::string line);
+      bool parseSendToIroha(std::vector<std::string> params);
+      bool parseSaveFile(std::vector<std::string> params);
+      bool parseGoBack(std::vector<std::string> params);
+      bool parseAddCommand(std::vector<std::string> params);
     };
   }  // namespace interactive
 }  // namespace iroha_cli
