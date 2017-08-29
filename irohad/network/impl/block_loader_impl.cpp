@@ -18,22 +18,48 @@
 #include "network/impl/block_loader_impl.hpp"
 #include <grpc++/create_channel.h>
 
-using namespace iroha::network;
+using namespace iroha::ametsuchi;
 using namespace iroha::model;
+using namespace iroha::network;
 
-rxcpp::observable<Block> BlockLoaderImpl::requestBlocks(Peer target_peer,
-                                                        Block topBlock) {
+BlockLoaderImpl::BlockLoaderImpl(
+    std::shared_ptr<PeerQuery> peer_query,
+    std::shared_ptr<BlockQuery> block_query)
+    : peer_query_(std::move(peer_query)),
+      block_query_(std::move(block_query)) {
+  log_ = logger::log("BlockLoaderImpl");
+}
+
+rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
+    model::Peer::KeyType peer_pubkey) {
   return rxcpp::observable<>::create<Block>(
-      [this, target_peer, topBlock](auto subscriber) {
+      [this, peer_pubkey](auto subscriber) {
+        nonstd::optional<Block> top_block;
+        block_query_->getTopBlocks(1)
+            .as_blocking()
+            .subscribe([&top_block](auto block) {
+              top_block = block;
+            });
+        if (not top_block.has_value()) {
+          log_->error("Failed to retrieve top block");
+          subscriber.on_completed();
+        }
+
+        auto peer = this->findPeer(peer_pubkey);
+        if (not peer.has_value()) {
+          log_->error("Cannot find peer");
+          subscriber.on_completed();
+        }
+
         proto::BlocksRequest request;
         grpc::ClientContext context;
         protocol::Block block;
 
         // request next block to our top
-        request.set_height(topBlock.height + 1);
+        request.set_height(top_block->height + 1);
 
         auto reader =
-            this->getPeerStub(target_peer).retrieveBlocks(&context, request);
+            this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
           subscriber.on_next(factory_.deserialize(block));
         }
@@ -42,12 +68,54 @@ rxcpp::observable<Block> BlockLoaderImpl::requestBlocks(Peer target_peer,
       });
 }
 
+nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
+    Peer::KeyType peer_pubkey, Block::HashType block_hash) {
+  auto peer = findPeer(peer_pubkey);
+  if (not peer.has_value()) {
+    log_->error("Cannot find peer");
+    return nonstd::nullopt;
+  }
+
+  proto::BlockRequest request;
+  grpc::ClientContext context;
+  protocol::Block block;
+
+  // request block with specified hash
+  request.set_hash(block_hash.to_string());
+
+  auto status =
+      getPeerStub(peer.value()).retrieveBlock(&context, request, &block);
+  if (not status.ok()) {
+    log_->error(status.error_message());
+    return nonstd::nullopt;
+  }
+  return factory_.deserialize(block);
+}
+
+nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
+  auto peers = peer_query_->getLedgerPeers();
+  if (not peers.has_value()) {
+    log_->error("Failed to retrieve peers");
+    return nonstd::nullopt;
+  }
+
+  auto it = std::find_if(
+      peers.value().begin(), peers.value().end(),
+      [pubkey](auto peer) { return peer.pubkey == pubkey; });
+  if (it == peers.value().end()) {
+    log_->error("Failed to find requested peer");
+    return nonstd::nullopt;
+  }
+
+  return *it;
+}
+
 proto::Loader::Stub &BlockLoaderImpl::getPeerStub(const Peer &peer) {
   auto it = peer_connections_.find(peer);
   if (it == peer_connections_.end()) {
     it = peer_connections_.insert(std::make_pair(peer, proto::Loader::NewStub(
-            grpc::CreateChannel(peer.address,
-                                grpc::InsecureChannelCredentials())))).first;
+        grpc::CreateChannel(peer.address,
+                            grpc::InsecureChannelCredentials())))).first;
   }
   return *it->second;
 }

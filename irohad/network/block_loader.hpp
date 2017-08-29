@@ -31,18 +31,24 @@ namespace iroha {
      */
     class BlockLoader {
      public:
+
       /**
-       * Method requests missed blocks from external peer starting from it's top
-       * block.
-       * Note, that blocks will be in order: from the newest
-       * to your actual top block.
-       * This order is required for verify blocks before storing in a ledger.
-       * @param target_peer - peer for requesting blocks
-       * @param topBlock - your last actual block
-       * @return observable with blocks
+       * Retrieve block from given peer starting from current top
+       * @param peer_pubkey - peer for requesting blocks
+       * @return
        */
-      virtual rxcpp::observable<model::Block> requestBlocks(
-          model::Peer target_peer, model::Block topBlock) = 0;
+      virtual rxcpp::observable<model::Block> retrieveBlocks(
+          model::Peer::KeyType peer_pubkey) = 0;
+
+      /**
+       * Retrieve block by its block_hash from given been
+       * @param peer_pubkey - peer for requesting blocks
+       * @param block_hash - requested block hash
+       * @return block on success, nullopt on failure
+       */
+      virtual nonstd::optional<model::Block> retrieveBlock(
+          model::Peer::KeyType peer_pubkey,
+          model::Block::HashType block_hash) = 0;
 
       virtual ~BlockLoader() = default;
     };

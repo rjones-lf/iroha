@@ -118,7 +118,7 @@ void Irohad::run() {
                                    storage, hash_provider);
 
   // Block loader
-  auto block_loader = loader_init.initBlockLoader(storage);
+  auto block_loader = loader_init.initBlockLoader(wsv, storage);
 
   // Consensus gate
   auto consensus_gate = yac_init.initConsensusGate(peer_address,

@@ -38,8 +38,10 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer = Peer();
     peer.address = "0.0.0.0:50051";
+    peers.push_back(peer);
+    peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    loader = std::make_shared<BlockLoaderImpl>();
+    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -53,6 +55,8 @@ class BlockLoaderTest : public testing::Test {
   }
 
   Peer peer;
+  std::vector<Peer> peers;
+  std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
@@ -64,10 +68,13 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   Block block;
   block.height = 1;
 
+  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  EXPECT_CALL(*storage, getTopBlocks(1))
+      .WillOnce(Return(rxcpp::observable<>::just(block)));
   EXPECT_CALL(*storage, getBlocksFrom(block.height + 1))
       .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->requestBlocks(peer, block), 0);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer.pubkey), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -81,10 +88,13 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   Block top_block;
   block.height = block.height + 1;
 
+  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  EXPECT_CALL(*storage, getTopBlocks(1))
+      .WillOnce(Return(rxcpp::observable<>::just(block)));
   EXPECT_CALL(*storage, getBlocksFrom(block.height + 1))
       .WillOnce(Return(rxcpp::observable<>::just(top_block)));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->requestBlocks(peer, block), 1);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer.pubkey), 1);
   wrapper.subscribe(
       [&top_block](auto block) { ASSERT_EQ(block.height, top_block.height); });
 
@@ -106,12 +116,44 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
     blocks.push_back(block);
   }
 
+  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  EXPECT_CALL(*storage, getTopBlocks(1))
+      .WillOnce(Return(rxcpp::observable<>::just(block)));
   EXPECT_CALL(*storage, getBlocksFrom(next_height))
       .WillOnce(Return(rxcpp::observable<>::iterate(blocks)));
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->requestBlocks(peer, block), num_blocks);
+      loader->retrieveBlocks(peer.pubkey), num_blocks);
   auto height = next_height;
-  wrapper.subscribe([&height](auto block) { ASSERT_EQ(block.height, height++); });
+  wrapper.subscribe(
+      [&height](auto block) { ASSERT_EQ(block.height, height++); });
 
   ASSERT_TRUE(wrapper.validate());
+}
+
+TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
+  Block requested_block;
+  requested_block.hash = HashProviderImpl().get_hash(requested_block);
+
+  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(Return(rxcpp::observable<>::just(requested_block)));
+  auto block = loader->retrieveBlock(peer.pubkey, requested_block.hash);
+
+  ASSERT_TRUE(block.has_value());
+  ASSERT_EQ(block.value(), requested_block);
+}
+
+TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
+  Block present_block;
+  present_block.hash = HashProviderImpl().get_hash(present_block);
+
+  auto hash = present_block.hash;
+  hash.at(0) = ~hash.at(0);
+
+  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(Return(rxcpp::observable<>::just(present_block)));
+  auto block = loader->retrieveBlock(peer.pubkey, hash);
+
+  ASSERT_FALSE(block.has_value());
 }

@@ -79,7 +79,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   EXPECT_CALL(*chain_validator, validateBlock(test_block, _))
       .WillOnce(Return(true));
 
-  EXPECT_CALL(*block_loader, requestBlocks(_, _)).Times(0);
+  EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
@@ -113,7 +113,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
 
   EXPECT_CALL(*chain_validator, validateBlock(test_block, _)).Times(0);
 
-  EXPECT_CALL(*block_loader, requestBlocks(_, _)).Times(0);
+  EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
@@ -145,7 +145,7 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
       .WillOnce(Return(false));
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 
-  EXPECT_CALL(*block_loader, requestBlocks(_, _))
+  EXPECT_CALL(*block_loader, retrieveBlocks(_))
       .WillOnce(Return(rxcpp::observable<>::just(test_block)));
 
   EXPECT_CALL(*consensus_gate, on_commit())
