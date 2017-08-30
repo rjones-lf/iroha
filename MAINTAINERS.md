@@ -13,7 +13,7 @@
 | Takumi Yamashita | satelliteyes | yamashita@soramitsu.co.jp |
 | Bogdan Vaneev | Warchant | bogdan@soramitsu.co.jp |
 | Fyodor Muratov | muratovv | fyodor@soramitsu.co.jp |
-| Andrei Lebedev | lebron | andrei@soramitsu.co.jp |
+| Andrei Lebedev | lebdron | andrei@soramitsu.co.jp |
 | Bulat Nasrulin | grimadas | bulat@soramitsu.co.jp |
 | Kamil Salakhiev | kamilsa | kamil@soramitsu.co.jp |
 | Konstantin Munichev | luckychess | konstantin@soramitsu.co.jp |
