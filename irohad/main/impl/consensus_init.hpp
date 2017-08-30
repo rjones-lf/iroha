@@ -40,7 +40,7 @@ namespace iroha {
         auto createNetwork(std::string network_address,
                            std::vector<model::Peer> initial_peers);
 
-        auto createCryptoProvider();
+        auto createCryptoProvider(model::Peer::KeyType pubkey);
 
         auto createTimer(std::shared_ptr<uvw::Loop> loop);
 
