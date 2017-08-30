@@ -55,7 +55,7 @@ jobs:
             BASE_COVERAGE_REPORT=${IROHA_COVERAGE_TARGET_DIRECTORIES[0]}
             IROHA_COVERAGE_TARGET_DIRECTORIES=(${IROHA_COVERAGE_TARGET_DIRECTORIES[@]:1})
             for directory in ${IROHA_COVERAGE_TARGET_DIRECTORIES[@]}; do
-              lcov -a ${IROHA_COVERAGE}_$directory -a ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT > $IROHA_COVERAGE
+              lcov --add-tracefile ${IROHA_COVERAGE}_$directory --add-tracefile ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT > $IROHA_COVERAGE
               mv $IROHA_COVERAGE ${IROHA_COVERAGE}_$BASE_COVERAGE_REPORT
             done
 
