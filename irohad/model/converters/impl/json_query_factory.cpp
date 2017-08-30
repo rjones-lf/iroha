@@ -200,6 +200,31 @@ namespace iroha {
       }
 
       std::shared_ptr<iroha::model::Query>
+      JsonQueryFactory::deserializeGetAccountAssetTransactions(
+          rapidjson::GenericValue<rapidjson::UTF8<char>>::Object &obj_query) {
+        if (not obj_query.HasMember("account_id")) {
+          log_->error("No account id in json");
+          return nullptr;
+        }
+        if (not obj_query.HasMember("asset_id")) {
+          log_->error("No asset id in json");
+          return nullptr;
+        }
+        if (not obj_query["account_id"].IsString()) {
+          log_->error("Type mismatch account id in json");
+          return nullptr;
+        }
+
+        auto timestamp = obj_query["created_ts"].GetUint64();
+        auto creator = obj_query["creator_account_id"].GetString();
+        auto counter = obj_query["query_counter"].GetUint64();
+        auto account_id = obj_query["account_id"].GetString();
+        auto asset_id = obj_query["asset_id"].GetString();
+        return query_generator_.generateGetAccountAssetTransactions(
+            timestamp, creator, counter, account_id, asset_id);
+      }
+
+      std::shared_ptr<iroha::model::Query>
       JsonQueryFactory::deserializeGetAccountAssets(
           rapidjson::GenericValue<rapidjson::UTF8<char>>::Object &obj_query) {
         if (not(obj_query.HasMember("account_id") &&
@@ -280,6 +305,16 @@ namespace iroha {
         auto get_account =
             std::static_pointer_cast<GetAccountTransactions>(query);
         json_doc.AddMember("account_id", get_account->account_id, allocator);
+      }
+
+      void JsonQueryFactory::serializeGetAccountAssetTransactions(
+          Document &json_doc, std::shared_ptr<Query> query) {
+        auto &allocator = json_doc.GetAllocator();
+        json_doc.AddMember("query_type", "GetAccountAssetTransactions", allocator);
+        auto get_account_asset =
+            std::static_pointer_cast<GetAccountAssetTransactions>(query);
+        json_doc.AddMember("account_id", get_account_asset->account_id, allocator);
+        json_doc.AddMember("asset_id", get_account_asset->asset_id, allocator);
       }
 
     }  // namespace converters
