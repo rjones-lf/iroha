@@ -33,7 +33,7 @@ namespace iroha_cli {
        * @param tx_counter
        */
       InteractiveTransactionCli(std::string creator_account,
-                                         uint64_t tx_counter);
+                                uint64_t tx_counter);
       /**
        * Run interactive query command line
        */
@@ -97,40 +97,51 @@ namespace iroha_cli {
       std::unordered_map<std::string, CommandHandler> command_handlers_;
       std::unordered_map<std::string, std::vector<std::string>> command_params_;
 
+      /**
+       * Parse line with iroha Command
+       * @param line containg iroha command
+       * @return false - if parsing must be stoped, true - if parsing should
+       * continue
+       */
       bool parseCommand(std::string line);
-
+      // --- Specific model Command parsers -----
       std::shared_ptr<iroha::model::Command> parseAddAssetQuantity(
           std::vector<std::string> line);
-      std::shared_ptr<iroha::model::Command> parseAddPeer(std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseAddPeer(
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseAddSignatory(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseAssignMasterKey(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseCreateAccount(
           std::vector<std::string> line);
-      std::shared_ptr<iroha::model::Command> parseCreateAsset(std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseCreateAsset(
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseCreateDomain(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseRemoveSignatory(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSetPermissions(
           std::vector<std::string> line);
-      std::shared_ptr<iroha::model::Command> parseSetQuorum(std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseSetQuorum(
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSubtractAssetQuantity(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseTransferAsset(
           std::vector<std::string> line);
 
       // ---- Result parsers ------
-      using ResultHandler = bool (InteractiveTransactionCli::*)(std::vector<std::string>);
+      using ResultHandler =
+          bool (InteractiveTransactionCli::*)(std::vector<std::string>);
       std::unordered_map<std::string, ResultHandler> result_handlers_;
       /**
        * Parse line for result
        * @param line - cli command
-       * @return True - if
+       * @return True - if parsing process must be continued. False if parsing
+       * context should be changed
        */
       bool parseResult(std::string line);
-      // Result handlers
+      // --- Specific result parsers ---
       bool parseSendToIroha(std::vector<std::string> params);
       bool parseSaveFile(std::vector<std::string> params);
       bool parseGoBack(std::vector<std::string> params);

@@ -22,9 +22,8 @@
 #include <iostream>
 #include <nonstd/optional.hpp>
 #include <string>
-#include <vector>
 #include <unordered_map>
-
+#include <vector>
 
 namespace iroha_cli {
   namespace interactive {
@@ -78,8 +77,7 @@ namespace iroha_cli {
      * @return vector with needed parameters
      */
     nonstd::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name,
-        ParamsMap params_map);
+        std::string line, std::string command_name, ParamsMap params_map);
 
     /**
      * Add menu point to vector menu
@@ -92,15 +90,15 @@ namespace iroha_cli {
                         std::string command_short_name);
 
     /**
-     *
-     * @tparam K
-     * @tparam V
-     * @param command_name
-     * @param params_map
-     * @return
+     * Find in unordered map
+     * @tparam K key type
+     * @tparam V value type
+     * @param command_name - key to find in the map
+     * @param params_map - map to find
+     * @return nullopt if key not found, value if found
      */
     template <typename K, typename V>
-    nonstd::optional<V> findInHandlerMap(std::string command_name,
+    nonstd::optional<V> findInHandlerMap(K command_name,
                                          std::unordered_map<K, V> params_map) {
       auto it = params_map.find(command_name);
       if (it == params_map.end()) {

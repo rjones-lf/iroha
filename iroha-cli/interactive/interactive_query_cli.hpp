@@ -87,9 +87,14 @@ namespace iroha_cli {
       using QueryHandler = std::shared_ptr<iroha::model::Query> (
       InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, QueryHandler> query_handlers_;
-
+      /**
+       * Parse line for query
+       * @param line - line containing query
+       * @return True - if parsing process must be continued. False if parsing
+       * context should be changed
+       */
       bool parseQuery(std::string line);
-      // Query handlers
+      //  --- Specific Query parsers ---
       std::shared_ptr<iroha::model::Query> parseGetAccount(QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAccountAssets(
           QueryParams params);
@@ -100,9 +105,14 @@ namespace iroha_cli {
       // ------ Result parsers --------
       using ResultHandler = bool (InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
-
+      /**
+       * Parse line for result
+       * @param line - cli command
+       * @return True - if parsing process must be continued. False if parsing
+       * context should be changed
+       */
       bool parseResult(std::string line);
-      // ---- Result handlers
+      // ---- Specific Result handlers
       bool parseSendToIroha(QueryParams line);
       bool parseSaveFile(QueryParams line);
 

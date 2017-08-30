@@ -23,7 +23,8 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveCli::assign_main_handlers() {
-      menu_points_ = {"1.New transaction (tx)", "2.New query (qry)"};
+      add_menu_point(menu_points_, "New transaction", "tx");
+      add_menu_point(menu_points_, "New query", "qry");
 
       main_handler_map_["1"] = &InteractiveCli::startTx;
       main_handler_map_["tx"] = &InteractiveCli::startTx;
