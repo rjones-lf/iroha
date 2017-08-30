@@ -34,3 +34,15 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   ASSERT_EQ(hex_test_hash, yac_hash.proposal_hash);
   ASSERT_EQ(hex_test_hash, yac_hash.block_hash);
 }
+
+TEST(YacHashProviderTest, ToModelHashTest) {
+  YacHashProviderImpl hash_provider;
+  iroha::model::Block block;
+  block.hash.fill('f');
+
+  auto yac_hash = hash_provider.makeHash(block);
+
+  auto model_hash = hash_provider.toModelHash(yac_hash);
+
+  ASSERT_EQ(model_hash, block.hash);
+}

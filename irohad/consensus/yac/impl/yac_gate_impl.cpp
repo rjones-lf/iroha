@@ -53,20 +53,33 @@ namespace iroha {
       };
 
       rxcpp::observable<model::Block> YacGateImpl::on_commit() {
-        return hash_gate_->on_commit().map([this](auto commit_message) {
-          if (commit_message.votes.at(0).hash == current_block_.first) {
-            current_block_.second.sigs.clear();
-            for (auto &&vote : commit_message.votes) {
-              current_block_.second.sigs.push_back(vote.signature);
-            }
-            log_->info("consensus: commit top block");
-            return current_block_.second;
-          }
-
-          // TODO download committed block
-          log_->warn(
-              "Functionality of downloading blocks absent, return empty block");
-          return model::Block();
+        return hash_gate_->on_commit().flat_map([this](auto commit_message) {
+          return rxcpp::observable<>::create<model::Block>(
+              [this, commit_message](auto subscriber) {
+                const auto hash = commit_message.votes.at(0).hash;
+                if (hash == current_block_.first) {
+                  current_block_.second.sigs.clear();
+                  for (auto &&vote : commit_message.votes) {
+                    current_block_.second.sigs.push_back(
+                        std::move(vote.signature));
+                  }
+                  log_->info("consensus: commit top block");
+                  subscriber.on_next(current_block_.second);
+                  subscriber.on_completed();
+                  return;
+                }
+                const auto model_hash = hash_provider_->toModelHash(hash);
+                for (const auto &vote : commit_message.votes) {
+                  auto block = block_loader_->retrieveBlock(
+                      vote.signature.pubkey, model_hash);
+                  if (block.has_value()) {
+                    subscriber.on_next(block.value());
+                    subscriber.on_completed();
+                    return;
+                  }
+                }
+                subscriber.on_completed();
+              });
         });
       };
     }  // namespace yac

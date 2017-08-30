@@ -70,6 +70,13 @@ namespace iroha {
          */
         virtual YacHash makeHash(model::Block &block) = 0;
 
+        /**
+         * Convert YacHash to model hash
+         * @param hash - for converting
+         * @return HashType of YacHash
+         */
+        virtual model::Block::HashType toModelHash(YacHash hash) = 0;
+
         virtual ~YacHashProvider() = default;
       };
     }  // namespace yac

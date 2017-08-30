@@ -31,6 +31,12 @@ namespace iroha {
         hash.block_hash = hex_hash;
         return hash;
       }
+
+      model::Block::HashType YacHashProviderImpl::toModelHash(YacHash hash) {
+        model::Block::HashType result;
+        hexstringToArray(hash.block_hash, result);
+        return result;
+      }
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

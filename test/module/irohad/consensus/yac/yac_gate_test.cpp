@@ -37,117 +37,138 @@ using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
 
-TEST(YacGateTest, YacGateSubscriptionTest) {
+class YacGateTest : public ::testing::Test {
+ public:
+  void SetUp() override {
+    expected_hash = YacHash("proposal", "block");
+    expected_block.sigs.emplace_back();
+    expected_block.sigs.back().pubkey.fill(1);
+    message.hash = expected_hash;
+    message.signature = expected_block.sigs.front();
+    commit_message = CommitMessage({message});
+    expected_commit = rxcpp::observable<>::just(commit_message);
+
+    hash_gate = make_unique<MockHashGate>();
+    peer_orderer = make_unique<MockYacPeerOrderer>();
+    hash_provider = make_shared<MockYacHashProvider>();
+    block_creator = make_shared<MockBlockCreator>();
+    block_loader = make_shared<MockBlockLoader>();
+  }
+
+  YacHash expected_hash;
+  iroha::model::Block expected_block;
+  VoteMessage message;
+  CommitMessage commit_message;
+  rxcpp::observable<CommitMessage> expected_commit;
+
+  unique_ptr<MockHashGate> hash_gate;
+  unique_ptr<MockYacPeerOrderer> peer_orderer;
+  shared_ptr<MockYacHashProvider> hash_provider;
+  shared_ptr<MockBlockCreator> block_creator;
+  shared_ptr<MockBlockLoader> block_loader;
+};
+
+TEST_F(YacGateTest, YacGateSubscriptionTest) {
   cout << "----------| BlockCreator (block)=> YacGate (vote)=> "
       "HashGate (commit) => YacGate => on_commit() |----------" << endl;
 
-  // expected values
-  YacHash expected_hash("proposal", "block");
-  iroha::model::Block expected_block;
-  expected_block.created_ts = 100500;
-  expected_block.sigs.push_back({});
-  VoteMessage message;
-  message.hash = expected_hash;
-  message.signature = expected_block.sigs.front();
-  CommitMessage commit_message({message});
-  auto expected_commit = rxcpp::observable<>::just(commit_message);
-
   // yac consensus
-  unique_ptr<HashGate> hash_gate = make_unique<MockHashGate>();
-  auto hash_gate_raw = hash_gate.get();
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
-  EXPECT_CALL(*static_cast<MockHashGate *>(hash_gate_raw),
-              vote(expected_hash, _)).Times(1);
-
-  EXPECT_CALL(*static_cast<MockHashGate *>(hash_gate_raw),
-              on_commit()).WillOnce(Return(expected_commit));
+  EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
 
   // generate order of peers
-  unique_ptr<YacPeerOrderer> peer_orderer =
-      make_unique<MockYacPeerOrderer>();
-  auto peer_orderer_raw = peer_orderer.get();
-
-  EXPECT_CALL(*static_cast<MockYacPeerOrderer *>(peer_orderer_raw),
-              getOrdering(_))
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
       .WillOnce(Return(ClusterOrdering({mk_peer("fake_node")})));
 
   // make hash from block
-  shared_ptr<YacHashProvider> hash_provider =
-      make_shared<MockYacHashProvider>();
-
-  EXPECT_CALL(
-      *static_cast<MockYacHashProvider *>(hash_provider.get()), makeHash(_))
-      .WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
   // make blocks
-  auto block_creator = make_shared<MockBlockCreator>();
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
   // Block loader
-  auto block_loader = make_shared<MockBlockLoader>();
-
   YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
                    hash_provider, block_creator, block_loader);
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate.on_commit(), 1);
-  gate_wrapper.subscribe([expected_block](auto block) {
+  gate_wrapper.subscribe([this](auto block) {
     ASSERT_EQ(block, expected_block);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
 
-TEST(YacGateTest, YacGateSubscribtionTestFailCase) {
+TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   cout << "----------| Fail case of retrieving cluster order  |----------"
        << endl;
 
-  // expected values
-  YacHash expected_hash("proposal", "block");
-  iroha::model::Block expected_block;
-  expected_block.created_ts = 100500;
-  VoteMessage message;
-  message.hash = expected_hash;
-  CommitMessage commit_message({message});
-  auto expected_commit = rxcpp::observable<>::just(commit_message);
-
   // yac consensus
-  unique_ptr<HashGate> hash_gate =
-      make_unique<MockHashGate>();
-  auto hash_gate_raw = hash_gate.get();
+  EXPECT_CALL(*hash_gate, vote(_, _)).Times(0);
 
-  EXPECT_CALL(*static_cast<MockHashGate *>(hash_gate_raw),
-              vote(_, _)).Times(0);
-
-  EXPECT_CALL(*static_cast<MockHashGate *>(hash_gate_raw),
-              on_commit()).Times(0);
+  EXPECT_CALL(*hash_gate, on_commit()).Times(0);
 
   // generate order of peers
-  unique_ptr<YacPeerOrderer> peer_orderer =
-      make_unique<MockYacPeerOrderer>();
-  auto peer_orderer_raw = peer_orderer.get();
-
-  EXPECT_CALL(*static_cast<MockYacPeerOrderer *>(peer_orderer_raw),
-              getOrdering(_))
-      .WillOnce(Return(nonstd::nullopt));
+  EXPECT_CALL(*peer_orderer, getOrdering(_)).WillOnce(Return(nonstd::nullopt));
 
   // make hash from block
-  shared_ptr<YacHashProvider> hash_provider =
-      make_shared<MockYacHashProvider>();
-
-  EXPECT_CALL(
-      *static_cast<MockYacHashProvider *>(hash_provider.get()), makeHash(_))
-      .WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
   // make blocks
-  auto block_creator = make_shared<MockBlockCreator>();
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
-  // Block loader
-  auto block_loader = make_shared<MockBlockLoader>();
-
   YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
                    hash_provider, block_creator, block_loader);
+}
+
+TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
+  // Vote for block => receive different block => load committed block
+
+  // make blocks
+  EXPECT_CALL(*block_creator, on_block())
+      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+
+  // make hash from block
+  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+
+  // generate order of peers
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
+      .WillOnce(Return(ClusterOrdering({mk_peer("fake_node")})));
+
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
+
+  // expected values
+  expected_hash = YacHash("actual_proposal", "actual_block");
+
+  message.hash = expected_hash;
+
+  commit_message = CommitMessage({message});
+  expected_commit = rxcpp::observable<>::just(commit_message);
+
+  // yac consensus
+  EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
+
+  // convert yac hash to model hash
+  EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
+      .WillOnce(Return(expected_block.hash));
+
+  // load block
+  EXPECT_CALL(*block_loader, retrieveBlock(expected_block.sigs.back().pubkey,
+                                           expected_block.hash))
+      .WillOnce(Return(expected_block));
+
+  // Block loader
+  YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
+                   hash_provider, block_creator, block_loader);
+
+  // verify that yac gate emit expected block
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate.on_commit(), 1);
+  gate_wrapper.subscribe([this](auto block) {
+    ASSERT_EQ(block, expected_block);
+  });
+
+  ASSERT_TRUE(gate_wrapper.validate());
 }
