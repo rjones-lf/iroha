@@ -68,24 +68,18 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
 
-  std::cout<<"1"<<std::endl;
   auto transport = std::make_shared<OrderingServiceTransportGrpc>();
-  std::cout<<"2"<<std::endl;
   service = std::make_shared<OrderingServiceImpl>(wsv, 5, 1000, transport, loop);
-  std::cout<<"3"<<std::endl;
+
   EXPECT_CALL(*fake_gate, SendProposal(_, _, _)).Times(2);
-  std::cout<<"4"<<std::endl;
   start();
-  std::cout<<"5"<<std::endl;
 
   for (size_t i = 0; i < 10; ++i) {
     grpc::ClientContext context;
 
     google::protobuf::Empty reply;
 
-    std::cout<<"*"<<std::endl;
     client->SendTransaction(&context, iroha::protocol::Transaction(), &reply);
-    std::cout<<i<<std::endl;
 
   }
 

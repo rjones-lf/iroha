@@ -22,7 +22,6 @@ using namespace iroha;
 
 void OrderingServiceTransportGrpc::publishProposal(std::shared_ptr<proto::Proposal> proposal,
                                                    const std::unique_ptr<proto::OrderingGate::Stub>& peer) {
-  std::cout<<"Start"<<std::endl;
 
   auto call = new AsyncClientCall;
 
@@ -30,5 +29,4 @@ void OrderingServiceTransportGrpc::publishProposal(std::shared_ptr<proto::Propos
           peer->AsyncSendProposal(&call->context, *proposal, &cq_);
 
   call->response_reader->Finish(&call->reply, &call->status, call);
-  std::cout<<"end"<<std::endl;
 }
