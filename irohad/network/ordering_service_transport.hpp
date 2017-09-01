@@ -14,42 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ORDERING_GATE_TRANSPORT_HPP
-#define ORDERING_GATE_TRANSPORT_HPP
+#ifndef IROHA_ORDERING_SERVICE_TRANSPORT_H
+#define IROHA_ORDERING_SERVICE_TRANSPORT_H
 
-#include "model/peer.hpp"
-#include "model/transaction.hpp"
+#include "ordering.grpc.pb.h"
 #include "model/proposal.hpp"
 #include "ordering.grpc.pb.h"
-
 
 namespace iroha {
   namespace network {
 
-    class OrderingGateNotification {
-    public:
-      virtual void handleProposal(std::shared_ptr<iroha::model::Proposal>) = 0;
-
-      virtual ~OrderingGateNotification() = default;
-    };
-
-
-    class OrderingGateTransport {
+    class OrderingServiceTransport {
 
     public:
-      std::shared_ptr<OrderingGateNotification> subscriber_ {nullptr};
 
-      virtual void propagate(std::shared_ptr<const iroha::model::Transaction>) = 0;
-
-      virtual void subscribe(std::shared_ptr<OrderingGateNotification>) = 0;
-
-      virtual std::shared_ptr<model::Proposal> getProposal(const iroha::ordering::proto::Proposal *request) = 0;
+      virtual void publishProposal(std::shared_ptr<ordering::proto::Proposal>,
+                                   const std::unique_ptr<ordering::proto::OrderingGate::Stub>& ) = 0;
 
 
-      virtual ~OrderingGateTransport() = default;
+      virtual ~OrderingServiceTransport() = default;
     };
 
   }
 }
 
-#endif
+#endif //IROHA_ORDERING_SERVICE_TRANSPORT_H

@@ -17,6 +17,7 @@
 
 #include "main/impl/ordering_init.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
+#include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 namespace iroha {
   namespace network {
@@ -31,9 +32,11 @@ namespace iroha {
                                      size_t delay_milliseconds,
                                      std::shared_ptr<uvw::Loop> loop) {
 
+      auto transport = std::make_shared<ordering::OrderingServiceTransportGrpc>();
       return std::make_shared<ordering::OrderingServiceImpl>(wsv,
                                                              max_size,
                                                              delay_milliseconds,
+                                                             transport,
                                                              loop);
     }
 

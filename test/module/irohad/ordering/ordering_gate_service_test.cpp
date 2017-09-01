@@ -21,6 +21,7 @@
 #include "ordering_mocks.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
+#include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::model;
@@ -66,9 +67,12 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenTimer) {
   std::shared_ptr<MockPeerQuery> wsv = std::make_shared<MockPeerQuery>();
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
+
+  auto transport = std::make_shared<OrderingServiceTransportGrpc>();
   service = std::make_shared<OrderingServiceImpl>(wsv,
                                                   100,
                                                   400,
+                                                  transport,
                                                   loop);
 
   start();
@@ -105,8 +109,9 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
 
-  service = std::make_shared<OrderingServiceImpl>(wsv, 5,
-                                                  1000, loop);
+  auto transport = std::make_shared<OrderingServiceTransportGrpc>();
+  service = std::make_shared<OrderingServiceImpl>(wsv, 5, 1000,
+                                                  transport, loop);
 
   start();
 

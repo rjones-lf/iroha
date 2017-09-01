@@ -16,7 +16,7 @@ add_library(ordering_service
     impl/ordering_gate_impl.cpp
     impl/ordering_service_impl.cpp
     impl/ordering_gate_transport_grpc.cpp impl/ordering_gate_transport_grpc.hpp
-    )
+        impl/ordering_service_transport_grpc.cpp impl/ordering_service_transport_grpc.hpp)
 
 target_link_libraries(ordering_service
     rxcpp
