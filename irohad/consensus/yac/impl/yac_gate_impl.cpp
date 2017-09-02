@@ -26,17 +26,19 @@ namespace iroha {
           std::shared_ptr<YacPeerOrderer> orderer,
           std::shared_ptr<YacHashProvider> hash_provider,
           std::shared_ptr<simulator::BlockCreator> block_creator,
-          std::shared_ptr<network::BlockLoader> block_loader)
+          std::shared_ptr<network::BlockLoader> block_loader,
+          uint64_t delay)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
-            block_loader_(std::move(block_loader)) {
+            block_loader_(std::move(block_loader)),
+            delay_(delay) {
         log_ = logger::log("YacGate");
         block_creator_->on_block().subscribe([this](auto block) {
           this->vote(block);
         });
-      };
+      }
 
       void YacGateImpl::vote(model::Block block) {
         auto hash = hash_provider_->makeHash(block);
@@ -50,7 +52,7 @@ namespace iroha {
         }
         current_block_ = std::make_pair(hash, block);
         hash_gate_->vote(hash, order.value());
-      };
+      }
 
       rxcpp::observable<model::Block> YacGateImpl::on_commit() {
         return hash_gate_->on_commit().flat_map([this](auto commit_message) {
@@ -69,19 +71,33 @@ namespace iroha {
                   return;
                 }
                 const auto model_hash = hash_provider_->toModelHash(hash);
-                for (const auto &vote : commit_message.votes) {
-                  auto block = block_loader_->retrieveBlock(
-                      vote.signature.pubkey, model_hash);
-                  if (block.has_value()) {
-                    subscriber.on_next(block.value());
-                    subscriber.on_completed();
-                    return;
-                  }
-                }
-                subscriber.on_completed();
+                rxcpp::observable<>::iterate(commit_message.votes)
+                    // allow other peers to apply commit
+                    .delay(std::chrono::milliseconds(delay_))
+                    .flat_map([this, model_hash](auto vote) {
+                      return rxcpp::observable<>::create<model::Block>(
+                          [this, model_hash, vote](auto subscriber) {
+                            auto block = block_loader_->retrieveBlock(
+                                vote.signature.pubkey, model_hash);
+                            if (block.has_value()) {
+                              subscriber.on_next(block.value());
+                            }
+                            subscriber.on_completed();
+                          });
+                    })
+                    .first()
+                    .subscribe(
+                        [subscriber](auto block) {
+                          subscriber.on_next(block);
+                          subscriber.on_completed();
+                        },
+                        [this, subscriber](std::exception_ptr) {
+                          log_->error("Cannot load committed block");
+                          subscriber.on_completed();
+                        });
               });
         });
-      };
+      }
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

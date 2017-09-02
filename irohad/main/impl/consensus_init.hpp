@@ -50,12 +50,15 @@ namespace iroha {
                                                        std::shared_ptr<uvw::Loop> loop,
                                                        ClusterOrdering initial_order);
 
+        uint64_t delay_seconds_ = 5;
+
        public:
         std::shared_ptr<YacGateImpl> initConsensusGate(std::string network_address,
-                               std::shared_ptr<uvw::Loop> loop,
-                               std::shared_ptr<YacPeerOrderer> peer_orderer,
-                               std::shared_ptr<simulator::BlockCreator> block_creator,
-                               std::shared_ptr<network::BlockLoader> block_loader);
+                                                       std::shared_ptr<uvw::Loop> loop,
+                                                       std::shared_ptr<
+                                                           YacPeerOrderer> peer_orderer,
+                                                       std::shared_ptr<simulator::BlockCreator> block_creator,
+                                                       std::shared_ptr<network::BlockLoader> block_loader);
 
         std::shared_ptr<NetworkImpl> consensus_network;
       };

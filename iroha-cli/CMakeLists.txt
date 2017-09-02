@@ -1,3 +1,5 @@
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+
 # Gflags config validators
 add_library(cli-flags_validators
     validators.cpp

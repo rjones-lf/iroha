@@ -55,12 +55,12 @@ namespace iroha {
         // Block can't be applied to current storage
         // Download all missing blocks
         for (auto signature : commit_message.sigs) {
-          auto chain = blockLoader_->retrieveBlocks(signature.pubkey);
           storage = mutableFactory_->createMutableStorage();
-          if (!storage) {
+          if (not storage) {
             log_->error("cannot create storage");
             return;
           }
+          auto chain = blockLoader_->retrieveBlocks(signature.pubkey);
           if (validator_->validateChain(chain, *storage)) {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));

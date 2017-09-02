@@ -35,7 +35,8 @@ namespace iroha {
                     std::shared_ptr<YacPeerOrderer> orderer,
                     std::shared_ptr<YacHashProvider> hash_provider,
                     std::shared_ptr<simulator::BlockCreator> block_creator,
-                    std::shared_ptr<network::BlockLoader> block_loader);
+                    std::shared_ptr<network::BlockLoader> block_loader,
+                    uint64_t delay);
         void vote(model::Block block) override;
         rxcpp::observable<model::Block> on_commit() override;
 
@@ -45,6 +46,8 @@ namespace iroha {
         std::shared_ptr<YacHashProvider> hash_provider_;
         std::shared_ptr<simulator::BlockCreator> block_creator_;
         std::shared_ptr<network::BlockLoader> block_loader_;
+
+        const uint64_t delay_;
 
         logger::Logger log_;
 

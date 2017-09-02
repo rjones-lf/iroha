@@ -26,29 +26,26 @@ namespace iroha {
       log_ = logger::log("ChainValidator");
     }
 
-    bool ChainValidatorImpl::validateBlock(const model::Block& block,
-                                           ametsuchi::MutableStorage& storage) {
+    bool ChainValidatorImpl::validateBlock(const model::Block &block,
+                                           ametsuchi::MutableStorage &storage) {
       log_->info("validate block");
-      auto apply_block = [](const auto& current_block,
-                            auto& query, const auto& top_hash) {
-        if (current_block.prev_hash != top_hash) {
-          return false;
-        }
-        return true;
+      auto apply_block = [](const auto &current_block,
+                            auto &query, const auto &top_hash) {
+        return current_block.prev_hash == top_hash;
       };
 
       return
-          // Check if block has supermajority
+        // Check if block has supermajority
           checkSupermajority(storage, block.sigs.size()) &&
-          // Verify signatories of the block
-          // TODO: use stateful validation here ?
-          crypto_provider_->verify(block) &&
-          // Apply to temporary storage
-          storage.apply(block, apply_block);
+              // Verify signatories of the block
+              // TODO: use stateful validation here ?
+              crypto_provider_->verify(block) &&
+              // Apply to temporary storage
+              storage.apply(block, apply_block);
     }
 
     bool ChainValidatorImpl::validateChain(Commit blocks,
-                                           ametsuchi::MutableStorage& storage) {
+                                           ametsuchi::MutableStorage &storage) {
       log_->info("validate chain...");
       return blocks
           .all([this, &storage](auto block) {
@@ -59,7 +56,7 @@ namespace iroha {
     }
 
     bool ChainValidatorImpl::checkSupermajority(
-        ametsuchi::MutableStorage& storage, uint64_t signs_num) {
+        ametsuchi::MutableStorage &storage, uint64_t signs_num) {
       auto all_peers = storage.getPeers();
       if (not all_peers.has_value()) {
         return false;

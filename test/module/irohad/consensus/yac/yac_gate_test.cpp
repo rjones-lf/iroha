@@ -55,6 +55,12 @@ class YacGateTest : public ::testing::Test {
     block_loader = make_shared<MockBlockLoader>();
   }
 
+  void init() {
+    gate = std::make_shared<YacGateImpl>(std::move(hash_gate),
+                                         std::move(peer_orderer), hash_provider,
+                                         block_creator, block_loader, delay);
+  }
+
   YacHash expected_hash;
   iroha::model::Block expected_block;
   VoteMessage message;
@@ -66,6 +72,9 @@ class YacGateTest : public ::testing::Test {
   shared_ptr<MockYacHashProvider> hash_provider;
   shared_ptr<MockBlockCreator> block_creator;
   shared_ptr<MockBlockLoader> block_loader;
+  uint64_t delay = 0;
+
+  shared_ptr<YacGateImpl> gate;
 };
 
 TEST_F(YacGateTest, YacGateSubscriptionTest) {
@@ -88,12 +97,10 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
-  // Block loader
-  YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
-                   hash_provider, block_creator, block_loader);
+  init();
 
   // verify that yac gate emit expected block
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate.on_commit(), 1);
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](auto block) {
     ASSERT_EQ(block, expected_block);
   });
@@ -120,8 +127,7 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
-  YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
-                   hash_provider, block_creator, block_loader);
+  init();
 }
 
 TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
@@ -160,12 +166,10 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
                                            expected_block.hash))
       .WillOnce(Return(expected_block));
 
-  // Block loader
-  YacGateImpl gate(std::move(hash_gate), std::move(peer_orderer),
-                   hash_provider, block_creator, block_loader);
+  init();
 
   // verify that yac gate emit expected block
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate.on_commit(), 1);
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](auto block) {
     ASSERT_EQ(block, expected_block);
   });

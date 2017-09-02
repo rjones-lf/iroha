@@ -36,19 +36,20 @@ rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
       [this, peer_pubkey](auto subscriber) {
         nonstd::optional<Block> top_block;
         block_query_->getTopBlocks(1)
+            .subscribe_on(rxcpp::observe_on_new_thread())
             .as_blocking()
-            .subscribe([&top_block](auto block) {
-              top_block = block;
-            });
+            .subscribe([&top_block](auto block) { top_block = block; });
         if (not top_block.has_value()) {
           log_->error("Failed to retrieve top block");
           subscriber.on_completed();
+          return;
         }
 
         auto peer = this->findPeer(peer_pubkey);
         if (not peer.has_value()) {
           log_->error("Cannot find peer");
           subscriber.on_completed();
+          return;
         }
 
         proto::BlocksRequest request;

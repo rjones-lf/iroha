@@ -22,6 +22,7 @@
 #include "loader.grpc.pb.h"
 #include "model/converters/pb_block_factory.hpp"
 #include "model/model_hash_provider_impl.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace network {
@@ -42,6 +43,7 @@ namespace iroha {
       model::converters::PbBlockFactory factory_;
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
       model::HashProviderImpl provider_;
+      logger::Logger log_;
     };
   } // namespace network
 } // namespace iroha

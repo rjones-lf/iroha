@@ -16,7 +16,6 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
-#include "algorithm"
 
 namespace iroha {
   namespace consensus {
@@ -25,7 +24,6 @@ namespace iroha {
       YacHash YacHashProviderImpl::makeHash(model::Block &block) {
         YacHash hash;
         // todo add proposal hash from block.proposal_hash
-        hash.proposal_hash = std::string(block.hash.size(), 0);
         auto hex_hash = block.hash.to_hexstring();
         hash.proposal_hash = hex_hash;
         hash.block_hash = hex_hash;

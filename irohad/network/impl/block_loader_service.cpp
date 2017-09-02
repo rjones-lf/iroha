@@ -43,7 +43,9 @@ nonstd::optional<blob_t<size>> stringToBlob(const std::string &s) {
 }
 
 BlockLoaderService::BlockLoaderService(std::shared_ptr<BlockQuery> storage)
-    : storage_(std::move(storage)) {}
+    : storage_(std::move(storage)) {
+  log_ = logger::log("BlockLoaderService");
+}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context, const proto::BlocksRequest *request,
@@ -59,15 +61,22 @@ grpc::Status BlockLoaderService::retrieveBlock(
     ::grpc::ServerContext *context, const proto::BlockRequest *request,
     protocol::Block *response) {
   const auto hash = stringToBlob<Block::HashType::size()>(request->hash());
+  if (not hash.has_value()) {
+    log_->error("Bad hash in request");
+    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
+                        "Bad hash provided");
+  }
+
   nonstd::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
       .filter([this, hash](auto block) {
-        return provider_.get_hash(block) == hash;
+        return provider_.get_hash(block) == hash.value();
       })
       .map([this](auto block) { return factory_.serialize(block); })
       .as_blocking()
       .subscribe([&result](auto block) { result = block; });
   if (not result.has_value()) {
+    log_->info("Cannot find block with requested hash");
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
   response->CopyFrom(result.value());

@@ -18,7 +18,6 @@
 #include <utility>
 
 #include "consensus/yac/yac.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -59,9 +58,9 @@ namespace iroha {
       void Yac::vote(YacHash hash, ClusterOrdering order) {
 
         log_->info("Order for voting: {}", logger::to_string(order.getPeers(),
-                                                     [](auto val) {
-                                                       return val.address;
-                                                     }));
+                                                             [](auto val) {
+                                                               return val.address;
+                                                             }));
 
         this->cluster_order_ = order;
         votingStep(hash);
@@ -107,7 +106,7 @@ namespace iroha {
 
         network_->send_vote(cluster_order_.currentLeader(),
                             crypto_->getVote(hash));
-        timer_->invokeAfterDelay(delay_, [this, hash]() {
+        timer_->invokeAfterDelay(delay_, [this, hash] {
           cluster_order_.switchToNext();
           if (cluster_order_.hasNext()) {
             this->votingStep(hash);
