@@ -62,7 +62,8 @@ grpc::Status BlockLoaderService::retrieveBlock(
     protocol::Block *response) {
   const auto hash = stringToBlob<Block::HashType::size()>(request->hash());
   if (not hash.has_value()) {
-    log_->error("Bad hash in request");
+    log_->error("Bad hash in request, {}",
+                bytestringToHexstring(request->hash()));
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Bad hash provided");
   }

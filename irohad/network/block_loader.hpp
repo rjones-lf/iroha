@@ -41,7 +41,7 @@ namespace iroha {
           model::Peer::KeyType peer_pubkey) = 0;
 
       /**
-       * Retrieve block by its block_hash from given been
+       * Retrieve block by its block_hash from given peer
        * @param peer_pubkey - peer for requesting blocks
        * @param block_hash - requested block hash
        * @return block on success, nullopt on failure

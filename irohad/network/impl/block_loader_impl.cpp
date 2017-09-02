@@ -24,9 +24,11 @@ using namespace iroha::network;
 
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> block_query)
+    std::shared_ptr<BlockQuery> block_query,
+    std::shared_ptr<model::ModelCryptoProvider> crypto_provider)
     : peer_query_(std::move(peer_query)),
-      block_query_(std::move(block_query)) {
+      block_query_(std::move(block_query)),
+      crypto_provider_(crypto_provider) {
   log_ = logger::log("BlockLoaderImpl");
 }
 
@@ -62,7 +64,13 @@ rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          subscriber.on_next(factory_.deserialize(block));
+          auto &&result = factory_.deserialize(block);
+          if (not crypto_provider_->verify(result)) {
+            log_->error("Block signatures are invalid");
+            context.TryCancel();
+          } else {
+            subscriber.on_next(result);
+          }
         }
         reader->Finish();
         subscriber.on_completed();
@@ -90,7 +98,14 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
     log_->error(status.error_message());
     return nonstd::nullopt;
   }
-  return factory_.deserialize(block);
+
+  auto &&result = factory_.deserialize(block);
+  if (not crypto_provider_->verify(result)) {
+    log_->error("Block signatures are invalid");
+    return nonstd::nullopt;
+  }
+
+  return result;
 }
 
 nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {

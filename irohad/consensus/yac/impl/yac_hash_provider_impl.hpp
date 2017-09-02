@@ -25,7 +25,7 @@ namespace iroha {
     namespace yac {
       class YacHashProviderImpl : public YacHashProvider {
        public:
-        YacHash makeHash(model::Block &block) override;
+        YacHash makeHash(model::Block::HashType &hash) override;
 
         model::Block::HashType toModelHash(YacHash hash) override;
       };

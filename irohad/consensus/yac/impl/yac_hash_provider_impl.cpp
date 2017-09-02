@@ -21,13 +21,13 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      YacHash YacHashProviderImpl::makeHash(model::Block &block) {
-        YacHash hash;
+      YacHash YacHashProviderImpl::makeHash(model::Block::HashType &hash) {
+        YacHash result;
         // todo add proposal hash from block.proposal_hash
-        auto hex_hash = block.hash.to_hexstring();
-        hash.proposal_hash = hex_hash;
-        hash.block_hash = hex_hash;
-        return hash;
+        auto hex_hash = hash.to_hexstring();
+        result.proposal_hash = hex_hash;
+        result.block_hash = hex_hash;
+        return result;
       }
 
       model::Block::HashType YacHashProviderImpl::toModelHash(YacHash hash) {

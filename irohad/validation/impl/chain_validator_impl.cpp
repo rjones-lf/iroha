@@ -20,28 +20,24 @@
 namespace iroha {
   namespace validation {
 
-    ChainValidatorImpl::ChainValidatorImpl(
-        std::shared_ptr<model::ModelCryptoProvider> crypto_provider)
-        : crypto_provider_(crypto_provider) {
+    ChainValidatorImpl::ChainValidatorImpl() {
       log_ = logger::log("ChainValidator");
     }
 
     bool ChainValidatorImpl::validateBlock(const model::Block &block,
                                            ametsuchi::MutableStorage &storage) {
-      log_->info("validate block");
+      log_->info("validate block: height {}, hash {}", block.height,
+                 block.hash.to_hexstring());
       auto apply_block = [](const auto &current_block,
                             auto &query, const auto &top_hash) {
         return current_block.prev_hash == top_hash;
       };
 
       return
-        // Check if block has supermajority
-          checkSupermajority(storage, block.sigs.size()) &&
-              // Verify signatories of the block
-              // TODO: use stateful validation here ?
-              crypto_provider_->verify(block) &&
-              // Apply to temporary storage
-              storage.apply(block, apply_block);
+          // Check if block has supermajority
+          checkSupermajority(storage, block.sigs.size()) and
+          // Apply to temporary storage
+          storage.apply(block, apply_block);
     }
 
     bool ChainValidatorImpl::validateChain(Commit blocks,
@@ -49,6 +45,9 @@ namespace iroha {
       log_->info("validate chain...");
       return blocks
           .all([this, &storage](auto block) {
+            log_->info("Validating block: height {}, hash {}",
+                       block.height,
+                       block.hash.to_hexstring());
             return this->validateBlock(block, storage);
           })
           .as_blocking()

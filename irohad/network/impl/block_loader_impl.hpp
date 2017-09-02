@@ -27,13 +27,15 @@
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 #include "model/converters/pb_block_factory.hpp"
+#include "model/model_crypto_provider.hpp"
 
 namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
       BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query,
+                      std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
 
       rxcpp::observable<model::Block> retrieveBlocks(
           model::Peer::KeyType peer_pubkey) override;
@@ -61,6 +63,8 @@ namespace iroha {
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
+      std::shared_ptr<model::ModelCryptoProvider> crypto_provider_;
+
       logger::Logger log_;
     };
   }  // namespace network

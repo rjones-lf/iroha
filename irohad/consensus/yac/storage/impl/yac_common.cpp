@@ -48,11 +48,19 @@ namespace iroha {
 
       nonstd::optional<ProposalHash>
       getProposalHash(const std::vector<VoteMessage> &votes) {
+        auto &&hash = getHash(votes);
+        if (hash.has_value()) {
+          return hash.value().proposal_hash;
+        }
+        return nonstd::nullopt;
+      }
+
+      nonstd::optional<YacHash> getHash(const std::vector<VoteMessage> &votes) {
         if (not sameProposals(votes)) {
           return nonstd::nullopt;
         }
 
-        return votes.at(0).hash.proposal_hash;
+        return votes.at(0).hash;
       }
     } // namespace yac
   } // namespace consensus

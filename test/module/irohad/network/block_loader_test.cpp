@@ -22,6 +22,7 @@
 
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/model/model_mocks.hpp"
 
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
@@ -32,6 +33,7 @@ using namespace iroha::model;
 using namespace framework::test_subscriber;
 
 using testing::Return;
+using testing::A;
 
 class BlockLoaderTest : public testing::Test {
  public:
@@ -41,7 +43,8 @@ class BlockLoaderTest : public testing::Test {
     peers.push_back(peer);
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
+    provider = std::make_shared<MockCryptoProvider>();
+    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage, provider);
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -58,6 +61,7 @@ class BlockLoaderTest : public testing::Test {
   std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
+  std::shared_ptr<MockCryptoProvider> provider;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
@@ -88,6 +92,7 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   Block top_block;
   block.height = block.height + 1;
 
+  EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
   EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
   EXPECT_CALL(*storage, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block)));
@@ -116,6 +121,9 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
     blocks.push_back(block);
   }
 
+  EXPECT_CALL(*provider, verify(A<const Block &>()))
+      .Times(num_blocks)
+      .WillRepeatedly(Return(true));
   EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
   EXPECT_CALL(*storage, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block)));
@@ -131,9 +139,11 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 }
 
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
+  // Request existing block => success
   Block requested_block;
   requested_block.hash = HashProviderImpl().get_hash(requested_block);
 
+  EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
   EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
   EXPECT_CALL(*storage, getBlocksFrom(1))
       .WillOnce(Return(rxcpp::observable<>::just(requested_block)));
@@ -144,6 +154,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
 }
 
 TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
+  // Request nonexisting block => failure
   Block present_block;
   present_block.hash = HashProviderImpl().get_hash(present_block);
 

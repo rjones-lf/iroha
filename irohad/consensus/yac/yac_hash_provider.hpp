@@ -68,12 +68,12 @@ namespace iroha {
          * @param block - for hashing
          * @return hashed value of block
          */
-        virtual YacHash makeHash(model::Block &block) = 0;
+        virtual YacHash makeHash(model::Block::HashType &hash) = 0;
 
         /**
          * Convert YacHash to model hash
          * @param hash - for converting
-         * @return HashType of YacHash
+         * @return HashType of model hash
          */
         virtual model::Block::HashType toModelHash(YacHash hash) = 0;
 

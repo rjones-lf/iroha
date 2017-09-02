@@ -41,6 +41,13 @@ namespace iroha {
         rxcpp::observable<model::Block> on_commit() override;
 
        private:
+
+        /**
+         * Update current block with signatures from commit message
+         * @param commit - commit message to get signatures from
+         */
+        void moveSignatures(CommitMessage &commit);
+
         std::shared_ptr<HashGate> hash_gate_;
         std::shared_ptr<YacPeerOrderer> orderer_;
         std::shared_ptr<YacHashProvider> hash_provider_;

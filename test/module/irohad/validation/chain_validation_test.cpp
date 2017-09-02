@@ -32,10 +32,6 @@ using ::testing::ByRef;
 
 class ChainValidationTest : public ::testing::Test {
  public:
-  ChainValidationTest()
-      : provider(std::make_shared<MockCryptoProvider>()), validator(provider) {}
-
-  std::shared_ptr<MockCryptoProvider> provider;
   ChainValidatorImpl validator;
   MockMutableStorage storage;
 };
@@ -43,8 +39,6 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidWhenOnePeer) {
   EXPECT_CALL(storage, getPeers())
       .WillOnce(Return(std::vector<model::Peer>(1)));
-  EXPECT_CALL(*provider, verify(A<const model::Block &>()))
-      .WillOnce(Return(true));
 
   Block block;
   block.sigs.emplace_back();
@@ -57,8 +51,6 @@ TEST_F(ChainValidationTest, ValidWhenOnePeer) {
 TEST_F(ChainValidationTest, ValidWhenNoPeers) {
   EXPECT_CALL(storage, getPeers())
       .WillOnce(Return(std::vector<model::Peer>(0)));
-  EXPECT_CALL(*provider, verify(A<const model::Block &>()))
-      .WillOnce(Return(true));
 
   Block block;
   block.sigs.emplace_back();
@@ -73,8 +65,6 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(storage, getPeers())
       .WillOnce(Return(std::vector<model::Peer>(1)));
-  EXPECT_CALL(*provider, verify(A<const model::Block &>()))
-      .WillOnce(Return(true));
 
   auto cmd = std::make_shared<MockCommand>();
 
@@ -98,8 +88,6 @@ TEST_F(ChainValidationTest, ValidWhenSamePrevHash) {
 
   EXPECT_CALL(storage, getPeers())
       .WillOnce(Return(std::vector<model::Peer>(1)));
-  EXPECT_CALL(*provider, verify(A<const model::Block &>()))
-      .WillOnce(Return(true));
 
   auto cmd = std::make_shared<MockCommand>();
 
@@ -121,8 +109,6 @@ TEST_F(ChainValidationTest, ValidWhenSamePrevHash) {
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   EXPECT_CALL(storage, getPeers())
       .WillOnce(Return(std::vector<model::Peer>(1)));
-  EXPECT_CALL(*provider, verify(A<const model::Block &>()))
-      .WillOnce(Return(true));
 
   Block block;
   block.sigs.emplace_back();

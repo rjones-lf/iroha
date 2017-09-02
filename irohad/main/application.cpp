@@ -98,7 +98,7 @@ void Irohad::run() {
   // Validators:
   auto stateless_validator = createStatelessValidator(crypto_verifier);
   auto stateful_validator = std::make_shared<StatefulValidatorImpl>();
-  auto chain_validator = std::make_shared<ChainValidatorImpl>(crypto_verifier);
+  auto chain_validator = std::make_shared<ChainValidatorImpl>();
   log_->info("[Init] => validators");
 
   auto wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage);
@@ -118,7 +118,7 @@ void Irohad::run() {
                                    storage, hash_provider);
 
   // Block loader
-  auto block_loader = loader_init.initBlockLoader(wsv, storage);
+  auto block_loader = loader_init.initBlockLoader(wsv, storage, crypto_verifier);
 
   // Consensus gate
   auto consensus_gate = yac_init.initConsensusGate(peer_address,
