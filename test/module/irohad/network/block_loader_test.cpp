@@ -159,7 +159,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   present_block.hash = HashProviderImpl().get_hash(present_block);
 
   auto hash = present_block.hash;
-  hash.at(0) = ~hash.at(0);
+  hash.fill(0);
 
   EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
   EXPECT_CALL(*storage, getBlocksFrom(1))

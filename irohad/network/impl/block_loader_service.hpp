@@ -42,7 +42,6 @@ namespace iroha {
      private:
       model::converters::PbBlockFactory factory_;
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
-      model::HashProviderImpl provider_;
       logger::Logger log_;
     };
   } // namespace network
