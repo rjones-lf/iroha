@@ -24,10 +24,18 @@
 namespace iroha {
   namespace network {
 
+    /**
+     * An universal interface for dealing with communication of ordering service and the network
+     */
     class OrderingServiceTransport {
 
     public:
 
+      /**
+       * Sends a proposal to a certain peer
+       * @param proposal
+       * @param peer
+       */
       virtual void publishProposal(std::shared_ptr<ordering::proto::Proposal>,
                                    const std::unique_ptr<ordering::proto::OrderingGate::Stub>& ) = 0;
 

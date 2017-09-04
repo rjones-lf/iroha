@@ -26,23 +26,45 @@
 namespace iroha {
   namespace network {
 
+    /**
+     * Ordering Gate Notification an universal interface for handling proposals
+     */
     class OrderingGateNotification {
     public:
+      /**
+       * Invoked when a proposal arrives
+       * @param transaction
+       */
       virtual void handleProposal(std::shared_ptr<iroha::model::Proposal>) = 0;
 
       virtual ~OrderingGateNotification() = default;
     };
 
 
+    /**
+     * An universal transport interface for network communication
+     */
     class OrderingGateTransport {
-
     public:
-      std::shared_ptr<OrderingGateNotification> subscriber_ {nullptr};
+      std::shared_ptr<OrderingGateNotification> subscriber_ {nullptr}; //Subscriber that will handle proposal
 
+      /**
+       * Propagate Transaction over subscribers
+       * @param transaction
+       */
       virtual void propagate(std::shared_ptr<const iroha::model::Transaction>) = 0;
 
+      /**
+       * Subscribe an Ordering Gate Notification to current transport
+       * @param Ordering Gate Notification itself
+       */
       virtual void subscribe(std::shared_ptr<OrderingGateNotification>) = 0;
 
+      /**
+       * Get proposal from request
+       * @param request
+       * @return proposal
+       */
       virtual std::shared_ptr<model::Proposal> getProposal(const iroha::ordering::proto::Proposal *request) = 0;
 
 

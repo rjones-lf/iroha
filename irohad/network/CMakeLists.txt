@@ -13,7 +13,9 @@ target_link_libraries(networking PUBLIC
 
 add_library(block_loader
     impl/block_loader_impl.cpp
-        ordering_service_transport.hpp)
+    ordering_service_transport.hpp
+    )
+
 target_link_libraries(block_loader
     loader_grpc
     rxcpp
