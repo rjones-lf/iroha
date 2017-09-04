@@ -24,7 +24,7 @@ Among the non-functional requirements can be noted a high degree of network faul
 Iroha v0.95 preview version is released on 6 of August.
 Please, get familiar with [preview notes](https://github.com/hyperledger/iroha/releases).
 
-Next milestone is [Alpha](https://github.com/hyperledger/iroha/wiki/Iroha-release-lifecycle) version, coming at [September 2017] (https://github.com/hyperledger/iroha/wiki/Iroha-release-plan).
+Next milestone is [Alpha](https://github.com/hyperledger/iroha/wiki/Iroha-release-lifecycle) version, coming at [September 2017](https://github.com/hyperledger/iroha/wiki/Iroha-release-plan).
 
 ## Iroha repository 101
 
@@ -46,14 +46,19 @@ For other components and more explanations, please take a look at the *technical
 
 ### Docker
 
-You may use the docker ennvironment to build and run the system, by executing the following:
+#### Single node
+You may use the docker ennvironment to build and run the system as single node, by executing the following:
 
 ```
 git clone https://github.com/hyperledger/iroha.git
-sh iroha/docker/run-ametsuchi-dev.sh
+sh scripts/run-iroha-dev.sh
 ```
 
 After that, the container will run in interactive mode. So, you can run any IDE or editor on your local environment, while building the system in docker environment
+
+#### Distributed system
+
+Please, follow guide, located at Confluence: [Create network of Iroha nodes using Docker Swarm](https://soramitsu.atlassian.net/wiki/spaces/IS/pages/12517377/Create+swarm+network+of+Iroha+nodes)
 
 ### Build
 
