@@ -116,7 +116,7 @@ namespace iroha_cli {
 
       auto opt_parser = findInHandlerMap(command_name, query_handlers_);
       if (not opt_parser.has_value()){
-        std::cout << "Command not found" << std::endl;
+        std::cout << "Command not found "  << std::endl;
         // TODO: add logger, or cover with tests. Discuss with others
         return true;
       }

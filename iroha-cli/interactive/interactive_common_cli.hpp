@@ -89,6 +89,23 @@ namespace iroha_cli {
                         std::string description,
                         std::string command_short_name);
 
+
+    /**
+     * Put into parser map
+     * @tparam V
+     * @param command_name
+     * @param parser
+     * @param parsers_map
+     */
+    template <typename V>
+    void putParserToMap(std::string command_name, V parser,
+                        std::unordered_map<std::string, V> parsers_map) {
+      // Add parser map
+      auto index = std::to_string(parsers_map.size() + 1);
+      parsers_map[index] = parser;
+      parsers_map[command_name] = parser;
+    };
+
     /**
      * Find in unordered map
      * @tparam K key type

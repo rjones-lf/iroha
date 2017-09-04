@@ -23,14 +23,13 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveCli::assign_main_handlers() {
-      add_menu_point(menu_points_, "New transaction", "tx");
-      add_menu_point(menu_points_, "New query", "qry");
+      // Add transaction menu and parser
+      add_menu_point(menu_points_, "New transaction", TX_CODE);
+      putParserToMap(TX_CODE, &InteractiveCli::startTx, main_handler_map_);
 
-      main_handler_map_["1"] = &InteractiveCli::startTx;
-      main_handler_map_["tx"] = &InteractiveCli::startTx;
-
-      main_handler_map_["2"] = &InteractiveCli::startQuery;
-      main_handler_map_["qry"] = &InteractiveCli::startQuery;
+      // Add query menu and parser
+      add_menu_point(menu_points_, "New query", QRY_CODE);
+      putParserToMap(QRY_CODE,  &InteractiveCli::startQuery, main_handler_map_);
     }
 
 
@@ -49,7 +48,7 @@ namespace iroha_cli {
       if (it != main_handler_map_.end()) {
         (this->*it->second)();
       } else {
-        std::cout << "Command not found" << std::endl;
+        std::cout << "Command not found " << command << std::endl;
       }
     }
 
@@ -63,8 +62,8 @@ namespace iroha_cli {
 
     void InteractiveCli::run() {
       std::cout << "Welcome to Iroha-Cli. " << std::endl;
-      bool is_parsing = true;
-      while (is_parsing) {
+      // Parsing cycle
+      while (true) {
         printMenu("Choose what to do:", menu_points_);
         auto line = promtString("> ");
         parseMain(line);
