@@ -29,122 +29,95 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveTransactionCli::create_command_menu() {
-      // -- Fill menu points for commands --
-      add_menu_point(commands_points_, "Add Asset Quantity", ADD_ASSET_QTY);
-      add_menu_point(commands_points_, "Add Peer to Iroha Network", ADD_PEER);
-      add_menu_point(commands_points_, "Add Signatory to Account", ADD_SIGN);
-      add_menu_point(commands_points_, "Assign Master Key to Account",
-                     ASSIGN_M_KEY);
-      add_menu_point(commands_points_, "Create Account", CREATE_ACC);
-      add_menu_point(commands_points_, "Create Domain", CREATE_DOMAIN);
-      add_menu_point(commands_points_, "Create Asset", CREATE_ASSET);
-      add_menu_point(commands_points_, "Remove Signatory", REMOVE_SIGN);
-      add_menu_point(commands_points_, "Set Permissions to Account", SET_PERM);
-      add_menu_point(commands_points_, "Set Account Quorum", SET_QUO);
-      add_menu_point(commands_points_, "Subtract  Assets Quantity from Account",
-                     SUB_ASSET_QTY);
-      add_menu_point(commands_points_, "Transfer Assets", TRAN_ASSET);
-      // Add "back" option
-      commands_points_.push_back("0.Back (b)");
+      description_map_ = {
+          {ADD_ASSET_QTY, "Add Asset Quantity"},
+          {ADD_PEER, "Add Peer to Iroha Network"},
+          {ADD_SIGN, "Add Signatory to Account"},
+          {ASSIGN_M_KEY, "Assign Master Key to Account"},
+          {CREATE_ACC, "Create Account"},
+          {CREATE_DOMAIN, "Create Domain"},
+          {CREATE_ASSET, "Create Asset"},
+          {REMOVE_SIGN, "Remove Signatory"},
+          {SET_PERM, "Set Permissions to Account"},
+          {SET_QUO, "Set Account Quorum"},
+          {SUB_ASSET_QTY, "Subtract  Assets Quantity from Account"},
+          {TRAN_ASSET, "Transfer Assets"}};
 
-      // --- Assign command menu ---
-      command_handlers_["1"] =
-          &InteractiveTransactionCli::parseAddAssetQuantity;
-      command_handlers_[ADD_ASSET_QTY] =
-          &InteractiveTransactionCli::parseAddAssetQuantity;
+      const auto acc_id = "Account Id";
+      const auto ast_id = "Asset Id";
+      const auto dom_id = "Domain Id";
+      const auto ammout_a = "Amount to add (integer part)";
+      const auto ammout_b = "Amount to add (fractional part)";
+      const auto peer_id = "Full address of a peer";
+      const auto pub_key = "Public Key";
+      const auto acc_name = "Account Name";
+      const auto ast_name = "Asset name";
+      const auto ast_precision = "Asset precision";
+      const auto quorum = "Quorum";
 
-      command_handlers_["2"] = &InteractiveTransactionCli::parseAddPeer;
-      command_handlers_[ADD_PEER] = &InteractiveTransactionCli::parseAddPeer;
+      command_params_ = {
+          {ADD_ASSET_QTY, {acc_id, ast_id, ammout_a, ammout_b}},
+          {ADD_PEER, {peer_id, pub_key}},
+          {ADD_SIGN, {acc_id, pub_key}},
+          {ASSIGN_M_KEY, {acc_id, pub_key}},
+          {CREATE_ACC, {acc_name, dom_id, pub_key}},
+          {CREATE_DOMAIN, {dom_id}},
+          {CREATE_ASSET, {ast_name, dom_id, ast_precision}},
+          {REMOVE_SIGN, {acc_id, pub_key}},
+          {SET_PERM, {}},
+          {SET_QUO, {acc_id, quorum}},
+          {SUB_ASSET_QTY, {}},
+          {TRAN_ASSET,
+           {std::string("Src") + acc_id, std::string("Dest") + acc_id, ast_id,
+            ammout_a, ammout_b}},
 
-      command_handlers_["3"] = &InteractiveTransactionCli::parseAddSignatory;
-      command_handlers_[ADD_SIGN] =
-          &InteractiveTransactionCli::parseAddSignatory;
+      };
 
-      command_handlers_["4"] = &InteractiveTransactionCli::parseAssignMasterKey;
-      command_handlers_[ASSIGN_M_KEY] =
-          &InteractiveTransactionCli::parseAssignMasterKey;
+      command_handlers_ = {
+          {ADD_ASSET_QTY, &InteractiveTransactionCli::parseAddAssetQuantity},
+          {ADD_PEER, &InteractiveTransactionCli::parseAddPeer},
+          {ADD_SIGN, &InteractiveTransactionCli::parseAddSignatory},
+          {ASSIGN_M_KEY, &InteractiveTransactionCli::parseAssignMasterKey},
+          {CREATE_ACC, &InteractiveTransactionCli::parseCreateAccount},
+          {CREATE_DOMAIN, &InteractiveTransactionCli::parseCreateDomain},
+          {CREATE_ASSET, &InteractiveTransactionCli::parseCreateAsset},
+          {REMOVE_SIGN, &InteractiveTransactionCli::parseRemoveSignatory},
+          {SET_PERM, &InteractiveTransactionCli::parseSetPermissions},
+          {SET_QUO, &InteractiveTransactionCli::parseSetQuorum},
+          {SUB_ASSET_QTY,
+           &InteractiveTransactionCli::parseSubtractAssetQuantity},
+          {TRAN_ASSET, &InteractiveTransactionCli::parseTransferAsset}};
 
-      command_handlers_["5"] = &InteractiveTransactionCli::parseCreateAccount;
-      command_handlers_[CREATE_ACC] =
-          &InteractiveTransactionCli::parseCreateAccount;
-
-      command_handlers_["6"] = &InteractiveTransactionCli::parseCreateDomain;
-      command_handlers_[CREATE_DOMAIN] =
-          &InteractiveTransactionCli::parseCreateDomain;
-
-      command_handlers_["7"] = &InteractiveTransactionCli::parseCreateAsset;
-      command_handlers_[CREATE_ASSET] =
-          &InteractiveTransactionCli::parseCreateAsset;
-
-      command_handlers_["8"] = &InteractiveTransactionCli::parseRemoveSignatory;
-      command_handlers_[REMOVE_SIGN] =
-          &InteractiveTransactionCli::parseRemoveSignatory;
-
-      command_handlers_["9"] = &InteractiveTransactionCli::parseSetPermissions;
-      command_handlers_[SET_PERM] =
-          &InteractiveTransactionCli::parseSetPermissions;
-
-      command_handlers_["10"] = &InteractiveTransactionCli::parseSetQuorum;
-      command_handlers_[SET_QUO] = &InteractiveTransactionCli::parseSetQuorum;
-
-      command_handlers_["11"] =
-          &InteractiveTransactionCli::parseSubtractAssetQuantity;
-      command_handlers_[SUB_ASSET_QTY] =
-          &InteractiveTransactionCli::parseSubtractAssetQuantity;
-
-      command_handlers_["12"] = &InteractiveTransactionCli::parseTransferAsset;
-      command_handlers_[TRAN_ASSET] =
-          &InteractiveTransactionCli::parseTransferAsset;
-
-      // --- Assign commands parameters ---
-      command_params_[ADD_ASSET_QTY] = {"Account Id to add assets", "Asset id",
-                                        "Amount to add (integer part)",
-                                        "Amount to add (fractional part)"};
-
-      command_params_[ADD_PEER] = {"Full address of a peer", "Public key"};
-      command_params_[ADD_SIGN] = {"Account ID", "Public key to add"};
-      command_params_[ASSIGN_M_KEY] = {
-          "Account ID", "Public key (must be one of the signatories):"};
-      command_params_[CREATE_ACC] = {"Account name", "Domain id", "Public Key"};
-      command_params_[CREATE_DOMAIN] = {"Full domain id"};
-      command_params_[CREATE_ASSET] = {"Asset name", "Full domain id",
-                                       "Asset precision"};
-      command_params_[REMOVE_SIGN] = {"Account ID", "Public key to remove"};
-      // TODO: implement
-      command_params_[SET_PERM] = {};
-      command_params_[SET_QUO] = {"Account id", "Quorum"};
-      command_params_[SUB_ASSET_QTY] = {};
-      command_params_[TRAN_ASSET] = {"Src account id", "Dest account id",
-                                     "Asset to transfer",
-                                     "Amount to transfer (integer part)",
-                                     "Amount to transfer (fractional part)"};
-
-      command_params_["save"] = {"Path to save tx in json format"};
-      command_params_["send"] = {"Ip Address of the Iroha server",
-                                 "Iroha server Port"};
+      formMenu(commands_points_, command_handlers_, command_params_,
+               description_map_);
+      // Add "go back" option
+      addBackOption(commands_points_);
     }
 
     void InteractiveTransactionCli::create_result_menu() {
       // --- Add result menu points ---
-      add_menu_point(result_points_, "Save to file as json transaction",
-                     "save");
-      add_menu_point(result_points_, "Send transaction to Iroha", "send");
-      add_menu_point(result_points_, "Add command to transaction", "add");
-      // Add "back" option
-      result_points_.push_back("0. Go Back and start new tx (b)");
-      // --- Assign result handlers ---
 
-      result_handlers_["1"] = &InteractiveTransactionCli::parseSaveFile;
-      result_handlers_["save"] = &InteractiveTransactionCli::parseSaveFile;
+      auto result_desciption = getCommonDescriptionMap();
+      const auto ADD_CMD = "add";
 
-      result_handlers_["2"] = &InteractiveTransactionCli::parseSendToIroha;
-      result_handlers_["send"] = &InteractiveTransactionCli::parseSendToIroha;
+      result_desciption.insert(
+          {ADD_CMD, "Add one more command to the transaction"});
+      result_desciption.insert(
+          {BACK_CODE, "Go back and start a new transaction"});
 
-      result_handlers_["3"] = &InteractiveTransactionCli::parseAddCommand;
-      result_handlers_["add"] = &InteractiveTransactionCli::parseAddCommand;
+      result_params_ = getCommonParamsMap();
 
-      result_handlers_["0"] = &InteractiveTransactionCli::parseGoBack;
-      result_handlers_["b"] = &InteractiveTransactionCli::parseGoBack;
+      result_params_.insert({ADD_CMD, {}});
+      result_params_.insert({BACK_CODE, {}});
+
+      result_handlers_ = {
+          {SAVE_CODE, &InteractiveTransactionCli::parseSaveFile},
+          {SEND_CODE, &InteractiveTransactionCli::parseSendToIroha},
+          {ADD_CMD, &InteractiveTransactionCli::parseAddCommand},
+          {BACK_CODE, &InteractiveTransactionCli::parseGoBack}};
+
+      formMenu(result_points_, result_handlers_, result_params_,
+               result_desciption);
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
@@ -177,30 +150,25 @@ namespace iroha_cli {
     }
 
     bool InteractiveTransactionCli::parseCommand(std::string line) {
-      std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-      // Find in main handler map
-      auto command_name = parser::split(line)[0];
-      if (command_name == "b" || command_name == "0") {
-        // Return back to main menu
-        // Parsing context is changed
+      auto raw_command = parser::parseFirstCommand(line);
+      if (not raw_command.has_value()) {
+        handleEmptyCommand();
         return false;
       }
-      // Find specific parser for this command
-      auto opt_parser = findInHandlerMap(command_name, command_handlers_);
-      if (not opt_parser.has_value()) {
-        std::cout << "Command not found" << std::endl;
-        return true;
+
+      auto command_name = raw_command.value();
+      if (isBackOption(command_name)) {
+        return false;
       }
-      // Fill up all needed parameters
-      auto params = parseParams(line, command_name, command_params_);
-      if (not params.has_value()) {
-        // Not all params where initialized.
-        // Continue parsing
+
+      auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
+          this, line, command_name, command_handlers_, command_params_);
+
+      if (not res.has_value()) {
         return true;
       }
 
-      auto res = (this->*opt_parser.value())(params.value());
-      commands_.push_back(res);
+      commands_.push_back(res.value());
       current_context_ = RESULT;
       printMenu("Command is formed. Choose what to do:", result_points_);
       return true;
@@ -342,32 +310,28 @@ namespace iroha_cli {
     // --------- Result parsers -------------
 
     bool InteractiveTransactionCli::parseResult(std::string line) {
-      transform(line.begin(), line.end(), line.begin(), ::tolower);
-      auto command_name = parser::split(line)[0];
+      auto command_raw = parser::parseFirstCommand(line);
+      if (not command_raw.has_value()) {
+        handleEmptyCommand();
+        return true;
+      }
+      auto command_name = command_raw.value();
       // Find in result handler map
-      auto opt_parser = findInHandlerMap(command_name, result_handlers_);
-      if (not opt_parser.has_value()) {
-        std::cout << "Command not found." << std::endl;
+      auto res = handleParse<bool>(this, line, command_name, result_handlers_,
+                                   result_params_);
+      if (not res.has_value()) {
         return true;
       }
-      // Fill up all needed parameters
-      auto params = parseParams(line, command_name, command_params_);
-      if (not params.has_value()) {
-        // Continue parsing
-        return true;
-      }
-      return (this->*opt_parser.value())(params.value());
+      return res.value();
     }
 
     bool InteractiveTransactionCli::parseSendToIroha(
         std::vector<std::string> params) {
-      auto address = params[0];
-      auto port = parser::toInt(params[1]);
-      if (not port.has_value()) {
-        std::cout << "Port has wrong format" << std::endl;
-        // Continue parsing
+      auto address = parseIrohaPeerParams(params);
+      if (not address.has_value()) {
         return true;
       }
+
       // Forming a transaction
       iroha::model::generators::TransactionGenerator tx_generator_;
       auto time_stamp = static_cast<uint64_t>(
@@ -377,9 +341,10 @@ namespace iroha_cli {
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
       // TODO: sign tx
-      CliClient client(address, port.value());
+      CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler response_handler;
       response_handler.handle(client.sendTx(tx));
+      printEnd();
       // Stop parsing
       return false;
     }
@@ -407,6 +372,7 @@ namespace iroha_cli {
       auto json_string = iroha::model::converters::jsonToString(json_doc);
       output_file << json_string;
       std::cout << "Successfully saved!" << std::endl;
+      printEnd();
       // Stop parsing
       return false;
     }
@@ -416,7 +382,7 @@ namespace iroha_cli {
       current_context_ = MAIN;
       // Remove all old commands
       commands_.clear();
-      std::cout << "------" << std::endl;
+      printEnd();
       printMenu("Forming a new transaction. Choose command to add: ",
                 commands_points_);
       // Continue parsing
@@ -425,7 +391,7 @@ namespace iroha_cli {
     bool InteractiveTransactionCli::parseAddCommand(
         std::vector<std::string> params) {
       current_context_ = MAIN;
-      std::cout << "------" << std::endl;
+      printEnd();
       printMenu("Choose command to add: ", commands_points_);
       // Continue parsing
       return true;

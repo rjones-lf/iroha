@@ -36,28 +36,27 @@ namespace iroha_cli {
       void run();
 
      private:
-        /**
+      /**
        * Create main menu and assign parser for commands
        */
-        void assign_main_handlers();
-        /**
-         * Parse main menu commands
-         * @param line, command to parse
-         */
-        void parseMain(std::string line);
+      void assign_main_handlers();
+      /**
+       * Parse main menu commands
+       * @param line, command to parse
+       */
+      void parseMain(std::string line);
 
-        /**
-         * Start new query
-         */
-        void startQuery();
-        /**
-         * Start new transaction
-         */
-        void startTx();
+      /**
+       * Start new query
+       */
+      void startQuery();
+      /**
+       * Start new transaction
+       */
+      void startTx();
 
-
-       const std::string TX_CODE = "tx";
-        const std::string QRY_CODE = "qry";
+      const std::string TX_CODE = "tx";
+      const std::string QRY_CODE = "qry";
 
       /**
        * Account id of creator
@@ -70,12 +69,10 @@ namespace iroha_cli {
       /**
        * Main menu points
        */
-      std::vector<std::string> menu_points_;
+      MenuPoints menu_points_;
 
       using MainHandler = void (InteractiveCli::*)();
       std::unordered_map<std::string, MainHandler> main_handler_map_;
-
-
     };
 
   }  // namespace interactive

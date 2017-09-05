@@ -27,6 +27,14 @@
 
 namespace parser {
 
+
+/**
+ * Parse the first command in the line
+ * @param line string to parse
+ * @return nullopt if no command found, string otherwise
+ */
+nonstd::optional<std::string> parseFirstCommand(std::string line);
+
 /**
  * Split line into words
  * @param line

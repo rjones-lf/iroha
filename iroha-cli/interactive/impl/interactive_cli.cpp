@@ -23,42 +23,37 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveCli::assign_main_handlers() {
-      // Add transaction menu and parser
-      add_menu_point(menu_points_, "New transaction", TX_CODE);
-      putParserToMap(TX_CODE, &InteractiveCli::startTx, main_handler_map_);
-
-      // Add query menu and parser
-      add_menu_point(menu_points_, "New query", QRY_CODE);
-      putParserToMap(QRY_CODE,  &InteractiveCli::startQuery, main_handler_map_);
+      addCliCommand(menu_points_, main_handler_map_, TX_CODE, "New transaction",
+                    &InteractiveCli::startTx);
+      addCliCommand(menu_points_, main_handler_map_, QRY_CODE, "New query",
+                    &InteractiveCli::startQuery);
     }
 
-
     InteractiveCli::InteractiveCli(std::string account_name)
-    // TODO : assign counters from Iroha Network
-        : creator_(account_name), tx_cli_(creator_, 0), query_cli_(creator_, 0) {
+        // TODO : assign counters from Iroha Network
+        : creator_(account_name),
+          tx_cli_(creator_, 0),
+          query_cli_(creator_, 0) {
       assign_main_handlers();
     }
 
     void InteractiveCli::parseMain(std::string line) {
-      std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-      // Find in main handler map
-      auto command = parser::split(line)[0];
+      auto raw_command = parser::parseFirstCommand(line);
+      if (not raw_command.has_value()) {
+        handleEmptyCommand();
+        return;
+      }
+      auto command_name = raw_command.value();
 
-      auto it = main_handler_map_.find(command);
-      if (it != main_handler_map_.end()) {
-        (this->*it->second)();
-      } else {
-        std::cout << "Command not found " << command << std::endl;
+      auto val = findInHandlerMap(command_name, main_handler_map_);
+      if (val.has_value()) {
+        (this->*val.value())();
       }
     }
 
-    void InteractiveCli::startQuery() {
-      query_cli_.run();
-    }
+    void InteractiveCli::startQuery() { query_cli_.run(); }
 
-    void InteractiveCli::startTx() {
-      tx_cli_.run();
-    }
+    void InteractiveCli::startTx() { tx_cli_.run(); }
 
     void InteractiveCli::run() {
       std::cout << "Welcome to Iroha-Cli. " << std::endl;

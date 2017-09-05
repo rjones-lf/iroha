@@ -19,7 +19,16 @@
 
 namespace parser {
 
+nonstd::optional<std::string> parseFirstCommand(std::string line){
+  auto vec = split(line);
+  if (vec.size() == 0) {
+    return nonstd::nullopt;
+  }
+  return vec[0];
+};
+
   std::vector<std::string> split(std::string line) {
+    std::transform(line.begin(), line.end(), line.begin(), ::tolower);
     std::istringstream iss(line);
     return {std::istream_iterator<std::string>{iss},
             std::istream_iterator<std::string>{}};

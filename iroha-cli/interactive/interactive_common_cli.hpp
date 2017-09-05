@@ -24,6 +24,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "client.hpp"
+#include "grpc_response_handler.hpp"
 
 namespace iroha_cli {
   namespace interactive {
@@ -43,7 +45,35 @@ namespace iroha_cli {
     };
 
     using ParamsDescription = std::vector<std::string>;
+    using DesciptionMap = std::unordered_map<std::string, std::string>;
+    using MenuPoints = std::vector<std::string>;
+
     using ParamsMap = std::unordered_map<std::string, ParamsDescription>;
+
+    const std::string SAVE_CODE = "save";
+    const std::string SEND_CODE = "send";
+    const std::string BACK_CODE = "b";
+
+    DesciptionMap getCommonDescriptionMap();
+
+    ParamsMap getCommonParamsMap();
+
+    void handleEmptyCommand();
+
+    void handleUnknownCommand(std::string command);
+
+    /**
+     *
+     * @param menu
+     */
+    void addBackOption(MenuPoints& menu);
+
+    /**
+     *
+     */
+    bool isBackOption(std::string command);
+
+    void printEnd();
 
     /**
      * Print help for cli command.
@@ -56,7 +86,7 @@ namespace iroha_cli {
      * @param message - message to print before menu
      * @param menu_points - elements of the menu
      */
-    void printMenu(std::string message, std::vector<std::string> menu_points);
+    void printMenu(std::string message, MenuPoints menu_points);
 
     /**
      * Get string input from user
@@ -85,25 +115,13 @@ namespace iroha_cli {
      * @param description of the command to add
      * @param command_short_name command short name
      */
-    void add_menu_point(std::vector<std::string>& menu_points,
+    size_t addMenuPoint(std::vector<std::string>& menu_points,
                         std::string description,
                         std::string command_short_name);
 
-
-    /**
-     * Put into parser map
-     * @tparam V
-     * @param command_name
-     * @param parser
-     * @param parsers_map
-     */
-    template <typename V>
-    void putParserToMap(std::string command_name, V parser,
-                        std::unordered_map<std::string, V> parsers_map) {
-      // Add parser map
-      auto index = std::to_string(parsers_map.size() + 1);
-      parsers_map[index] = parser;
-      parsers_map[command_name] = parser;
+    template <typename K, typename V>
+    std::size_t getNextIndex(std::unordered_map<K, V> parsers_map) {
+      return parsers_map.size() == 0 ? 1 : parsers_map.size();
     };
 
     /**
@@ -119,10 +137,78 @@ namespace iroha_cli {
                                          std::unordered_map<K, V> params_map) {
       auto it = params_map.find(command_name);
       if (it == params_map.end()) {
-        // Command not found
+        // Command not found, report error
+        handleUnknownCommand(command_name);
         return nonstd::nullopt;
       }
       return it->second;
+    }
+
+    /**
+     *
+     * @param params
+     * @return
+     */
+    nonstd::optional<std::pair<std::string, int>> parseIrohaPeerParams(
+        ParamsDescription params);
+
+    template <typename T, typename V, typename C>
+    nonstd::optional<T> handleParse(
+        C class_pointer, std::string line, std::string command_name,
+        std::unordered_map<std::string, V> parsers_map, ParamsMap params_map) {
+      std::cout << "handle parse triggered" << std::endl;
+      auto parser = findInHandlerMap(command_name, parsers_map);
+      if (not parser.has_value()) {
+        std::cout << "Parser for command not found" << std::endl;
+        return nonstd::nullopt;
+      }
+      auto params = parseParams(line, command_name, params_map);
+      if (not params.has_value()) {
+        std::cout << "Parse params returned no value" << std::endl;
+        return nonstd::nullopt;
+      }
+      return (class_pointer->*parser.value())(params.value());
+    };
+
+    /**
+     * Add new  cli command to menu points and menu handlers (parsers)
+     * @tparam V - type of parser
+     * @param command_name - short command name, will be used as id
+     * @param command_description - Description of command to add to menu
+     * @param menu_points - map of menu points
+     * @param params_map - map of used parsers
+     * @param parser - function to parse command
+     */
+    template <typename V>
+    void addCliCommand(MenuPoints& menu_points,
+                       std::unordered_map<std::string, V>& parsers_map,
+                       const std::string command_name,
+                       const std::string command_description, V parser) {
+      // Add menu point and get the index in menu of current command
+      auto index = std::to_string(
+          addMenuPoint(menu_points, command_description, command_name));
+      // Add parser for this command
+      parsers_map[index] = parser;
+      parsers_map[command_name] = parser;
+    }
+
+    template <typename V>
+    void formMenu(MenuPoints& menu_points,
+                  std::unordered_map<std::string, V>& parsers_map,
+                  ParamsMap& paramsMap, const DesciptionMap desciptionMap) {
+      // Add menu point and get the index in menu of current command
+
+      std::for_each(desciptionMap.begin(), desciptionMap.end(),
+                    [&parsers_map, &menu_points, &paramsMap](auto val) {
+                      auto command_name = val.first;
+                      auto command_description = val.second;
+                      auto parser = parsers_map.at(command_name);
+
+                      auto index = std::to_string(addMenuPoint(
+                          menu_points, command_description, command_name));
+                      parsers_map[index] = parser;
+                      paramsMap[index] = paramsMap.at(command_name);
+                    });
     }
 
   }  // namespace interactive

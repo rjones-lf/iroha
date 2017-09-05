@@ -26,49 +26,39 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveQueryCli::create_queries_menu() {
-      // -- Fill menu points for queries --
-      add_menu_point(menu_points_, "Get Account Information", GET_ACC);
-      add_menu_point(menu_points_, "Get Account's Assets", GET_ACC_AST);
-      add_menu_point(menu_points_, "Get Account's Transactions", GET_ACC_TX);
-      add_menu_point(menu_points_, "Get Account's Signatories", GET_ACC_SIGN);
+      decription_map_ = {{GET_ACC, "Get Account Information"},
+                         {GET_ACC_AST, "Get Account's Assets"},
+                         {GET_ACC_TX, "Get Account's Transactions"},
+                         {GET_ACC_SIGN, "Get Account's Signatories"}};
+
+      const auto acc_id = "Requested account Id";
+      const auto ast_id = "Requested asset Id";
+
+      query_params_ = {{GET_ACC, {acc_id}},
+                       {GET_ACC_AST, {acc_id, ast_id}},
+                       {GET_ACC_TX, {acc_id}},
+                       {GET_ACC_SIGN, {acc_id}}};
+
+      query_handlers_ = {
+          {GET_ACC, &InteractiveQueryCli::parseGetAccount},
+          {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
+          {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
+          {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
+      };
+
+      formMenu(menu_points_, query_handlers_, query_params_, decription_map_);
       // Add "go back" option
-      menu_points_.push_back("0.Back (b)");
-
-      // --- Assign handlers for queries ---
-      query_handlers_["1"] = &InteractiveQueryCli::parseGetAccount;
-      query_handlers_[GET_ACC] = &InteractiveQueryCli::parseGetAccount;
-
-      query_handlers_["2"] = &InteractiveQueryCli::parseGetAccountAssets;
-      query_handlers_[GET_ACC_AST] =
-          &InteractiveQueryCli::parseGetAccountAssets;
-
-      query_handlers_["3"] = &InteractiveQueryCli::parseGetAccountTransactions;
-      query_handlers_[GET_ACC_TX] =
-          &InteractiveQueryCli::parseGetAccountTransactions;
-
-      query_handlers_["4"] = &InteractiveQueryCli::parseGetSignatories;
-      query_handlers_[GET_ACC_SIGN] = &InteractiveQueryCli::parseGetSignatories;
-
-      // --- Assign query parameters ---
-      query_params_[GET_ACC] = {"Requested account Id"};
-      query_params_[GET_ACC_AST] = {"Requested account Id",
-                                    "Requested asset id"};
-      query_params_[GET_ACC_TX] = {"Requested account Id"};
-      query_params_[GET_ACC_SIGN] = {"Requested account Id"};
+      addBackOption(menu_points_);
     }
 
     void InteractiveQueryCli::create_result_menu() {
-      add_menu_point(result_points_, "Save to file as json", "save");
-      add_menu_point(result_points_, "Send to Iroha Peer","send");
-      // Add go back option
-      result_points_.push_back("0. Back (b)");
+      result_handlers_ = {{SAVE_CODE, &InteractiveQueryCli::parseSaveFile},
+                          {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
+      result_params_ = getCommonParamsMap();
 
-      result_handlers_["1"] = &InteractiveQueryCli::parseSaveFile;
-      result_handlers_["save"] = &InteractiveQueryCli::parseSaveFile;
-
-      result_handlers_["2"] = &InteractiveQueryCli::parseSendToIroha;
-      result_handlers_["send"] = &InteractiveQueryCli::parseSendToIroha;
-
+      formMenu(result_points_, result_handlers_, result_params_,
+               getCommonDescriptionMap());
+      addBackOption(result_points_);
     }
 
     InteractiveQueryCli::InteractiveQueryCli(std::string account_name,
@@ -106,32 +96,27 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseQuery(std::string line) {
-      std::transform(line.begin(), line.end(), line.begin(), ::tolower);
-      // Get command name from the line
-      auto command_name = parser::split(line)[0];
-      if (command_name == "b" || command_name == "0") {
+      auto raw_command = parser::parseFirstCommand(line);
+      if (not raw_command.has_value()) {
+        handleEmptyCommand();
+        // Stop parsing
+        return false;
+      }
+      auto command_name = raw_command.value();
+
+      if (isBackOption(command_name)) {
         // Stop parsing
         return false;
       }
 
-      auto opt_parser = findInHandlerMap(command_name, query_handlers_);
-      if (not opt_parser.has_value()){
-        std::cout << "Command not found "  << std::endl;
-        // TODO: add logger, or cover with tests. Discuss with others
-        return true;
-      }
-
-      // Get query parameters from the user
-      auto params = parseParams(line, command_name, query_params_);
-      if (not params.has_value()){
-        //Not every parameter was initialized
+      auto res = handleParse<std::shared_ptr<iroha::model::Query>>(
+          this, line, command_name, query_handlers_, query_params_);
+      if (not res.has_value()) {
         // Continue parsing
         return true;
       }
 
-      // Parse query
-      auto res = (this->*opt_parser.value())(params.value());
-      query_ = res;
+      query_ = res.value();
       current_context_ = RESULT;
       printMenu("Query is formed. Choose what to do:", result_points_);
       // Continue parsing
@@ -168,45 +153,42 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseResult(std::string line) {
-      transform(line.begin(), line.end(), line.begin(), ::tolower);
-      // Find in result handler map
-      auto command_name = parser::split(line)[0];
-      if (command_name == "b" || command_name == "0") {
+      std::cout << "Parse result triggered " << std::endl;
+      auto raw_command = parser::parseFirstCommand(line);
+      if (not raw_command.has_value()) {
+        handleEmptyCommand();
+        // Continue parsing
+        return true;
+      }
+      auto command_name = raw_command.value();
+      if (isBackOption(command_name)) {
         // Give up the last query and start a new one
         current_context_ = MAIN;
-        std::cout << "------" << std::endl;
+        printEnd();
         printMenu("Choose query: ", menu_points_);
         // Continue parsing
         return true;
       }
-      // Find specific parser for the command
-      auto opt_parser = findInHandlerMap(command_name, result_handlers_);
-      if (not opt_parser.has_value()){
-        std::cout << "Command not found" << std::endl;
-        // TODO: add logger, or cover with tests. Discuss with others
-        return true;
-      }
-      // Fill up the parameters for query from the user
-      auto params = parseParams(line, command_name, query_params_);
-      if (not params.has_value()) {
-        // Not all params where initialized.
+      std::cout << "Handle parsing " << std::endl;
+      auto res = handleParse<bool>(this, line, command_name, result_handlers_,
+                                   result_params_);
+      if (not res.has_value()) {
         // Continue parsing
+        std::cout << "Parsing returned no value " << std::endl;
         return true;
       }
-      return (this->*opt_parser.value())(params.value());
+      return res.value();
     }
 
     bool InteractiveQueryCli::parseSendToIroha(QueryParams params) {
-      auto address = params[0];
-      auto port = parser::toInt(params[1]);
-      if (not port.has_value()) {
-        std::cout << "Port has wrong format" << std::endl;
-        // Continue parsing
+      auto address = parseIrohaPeerParams(params);
+      if (not address.has_value()) {
         return true;
       }
-      CliClient client(address, port.value());
+      CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler response_handler;
       response_handler.handle(client.sendQuery(query_));
+      printEnd();
       // Stop parsing
       return false;
     }
@@ -221,13 +203,14 @@ namespace iroha_cli {
         return true;
       }
       std::ofstream output_file(path);
-      if (not output_file){
+      if (not output_file) {
         std::cout << "Cannot create file" << std::endl;
         // Continue parsing
         return true;
       }
       output_file << json_string.value();
       std::cout << "Successfully saved!" << std::endl;
+      printEnd();
       // Stop parsing
       return false;
     }

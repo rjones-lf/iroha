@@ -57,11 +57,11 @@ namespace iroha_cli {
       /**
        * Commands menu points
        */
-      std::vector<std::string> commands_points_;
+      MenuPoints commands_points_;
       /**
        * Transaction result points
        */
-      std::vector<std::string> result_points_;
+      MenuPoints result_points_;
 
       // --- Shortcut namings for queries ---
       const std::string ADD_ASSET_QTY = "add_ast_qty";
@@ -76,6 +76,9 @@ namespace iroha_cli {
       const std::string SET_QUO = "set_qrm";
       const std::string SUB_ASSET_QTY = "sub_ast_qty";
       const std::string TRAN_ASSET = "tran_ast";
+
+
+      DesciptionMap description_map_;
 
       /**
        * Create command menu and assign command handlers for current class
@@ -134,6 +137,7 @@ namespace iroha_cli {
       using ResultHandler =
           bool (InteractiveTransactionCli::*)(std::vector<std::string>);
       std::unordered_map<std::string, ResultHandler> result_handlers_;
+      ParamsMap result_params_;
       /**
        * Parse line for result
        * @param line - cli command

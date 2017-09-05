@@ -44,14 +44,14 @@ namespace iroha_cli {
       // Local query counter of account creator_
       uint64_t counter_;
 
-      //Local time
+      // Local time
       uint64_t local_time_;
 
       // Query menu points
-      std::vector<std::string> menu_points_;
+      MenuPoints menu_points_;
 
       // Query result points
-      std::vector<std::string> result_points_;
+      MenuPoints result_points_;
 
       // Current context for query forming
       MenuContext current_context_;
@@ -79,13 +79,14 @@ namespace iroha_cli {
       const std::string GET_ACC_SIGN = "get_acc_sign";
 
 
+      DesciptionMap decription_map_;
       ParamsMap query_params_;
       using QueryName = std::string;
       using QueryParams = std::vector<std::string>;
 
       // ------  Query parsers ---------
       using QueryHandler = std::shared_ptr<iroha::model::Query> (
-      InteractiveQueryCli::*)(QueryParams);
+          InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, QueryHandler> query_handlers_;
       /**
        * Parse line for query
@@ -103,8 +104,12 @@ namespace iroha_cli {
       std::shared_ptr<iroha::model::Query> parseGetSignatories(
           QueryParams params);
       // ------ Result parsers --------
+
+
+
       using ResultHandler = bool (InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
+      ParamsMap result_params_;
       /**
        * Parse line for result
        * @param line - cli command
@@ -115,7 +120,6 @@ namespace iroha_cli {
       // ---- Specific Result handlers
       bool parseSendToIroha(QueryParams line);
       bool parseSaveFile(QueryParams line);
-
     };
   }  // namespace interactive
 }  // namespace iroha_cli
