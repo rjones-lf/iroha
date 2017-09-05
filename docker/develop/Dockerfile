@@ -10,10 +10,12 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
         # dev dependencies
         libssl-dev libc-ares-dev \
         # CircleCI dependencies
-        git ssh tar gzip ca-certificates \
+        git ssh tar gzip ca-certificates python3 python3-pip python3-setuptools \
         # other
         wget curl cmake file unzip gdb iputils-ping vim ccache; \
     apt-get -y clean
+
+RUN pip3 install flask requests
 
 # install protobuf 3.3.0
 RUN git clone https://github.com/google/protobuf /tmp/protobuf-3.3.0; \

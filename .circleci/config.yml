@@ -1,4 +1,5 @@
 version: 2
+
 jobs:
   build:
     # must be IROHA_HOME:
@@ -12,6 +13,10 @@ jobs:
       - image: redis:3.2.8
     steps:
       - checkout
+      - run:
+          name: notify upsource that about current build
+          command: |
+            python3 .circleci/upsource-webhook.py --in-progress
       - run:
           name: ensure, required folders created
           command: |
@@ -52,6 +57,12 @@ jobs:
           key: build-cache
           paths:
             - ~/.ccache
+
+
+notify:
+  webhooks:
+    - url: https://upsource.soramitsu.co.jp/webhook/circleci
+
 #      - run:
 #          name: comment coverage on the pull-request
 #          command: $IROHA_HOME/scripts/comment-coverage.sh
@@ -185,6 +196,3 @@ jobs:
 #
 #            docker stop $(docker ps -qln 4)
 #            docker rm $(docker ps -qln 4)
-
-
-        
