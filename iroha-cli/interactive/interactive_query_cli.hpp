@@ -38,35 +38,21 @@ namespace iroha_cli {
       void run();
 
      private:
-      // Creator account id
-      std::string creator_;
 
-      // Local query counter of account creator_
-      uint64_t counter_;
+      using QueryName = std::string;
+      using QueryParams = std::vector<std::string>;
 
-      // Local time
-      uint64_t local_time_;
-
-      // Query menu points
+      // Menu for Queries
       MenuPoints menu_points_;
-
-      // Query result points
-      MenuPoints result_points_;
-
-      // Current context for query forming
-      MenuContext current_context_;
-
-      // Processed query
-      std::shared_ptr<iroha::model::Query> query_;
-
-      // Query generator for new queries
-      iroha::model::generators::QueryGenerator generator_;
-
       /**
        * Create query menu and assign command handlers for current class
        * object
        */
       void create_queries_menu();
+
+      // Menu for Query result
+      MenuPoints result_points_;
+
       /**
        * Create result menu and assign result handlers for current class object
        */
@@ -78,16 +64,16 @@ namespace iroha_cli {
       const std::string GET_ACC_TX = "get_acc_tx";
       const std::string GET_ACC_SIGN = "get_acc_sign";
 
-
-      DesciptionMap decription_map_;
-      ParamsMap query_params_;
-      using QueryName = std::string;
-      using QueryParams = std::vector<std::string>;
-
       // ------  Query parsers ---------
       using QueryHandler = std::shared_ptr<iroha::model::Query> (
           InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, QueryHandler> query_handlers_;
+      // Descriptions of queries
+      DescriptionMap description_map_;
+
+      // Parameters descriptions of queries
+      ParamsMap query_params_descriptions_;
+
       /**
        * Parse line for query
        * @param line - line containing query
@@ -103,13 +89,13 @@ namespace iroha_cli {
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetSignatories(
           QueryParams params);
-      // ------ Result parsers --------
-
-
-
+      // ------ Result parsers -------
       using ResultHandler = bool (InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
-      ParamsMap result_params_;
+
+      // Parameters descriptions of result commands
+      ParamsMap result_params_descriptions_;
+
       /**
        * Parse line for result
        * @param line - cli command
@@ -120,6 +106,26 @@ namespace iroha_cli {
       // ---- Specific Result handlers
       bool parseSendToIroha(QueryParams line);
       bool parseSaveFile(QueryParams line);
+
+
+      // Current context for query forming
+      MenuContext current_context_;
+
+      // ------- Query data -----------
+      // Creator account id
+      std::string creator_;
+
+      // Local query counter of account creator_
+      uint64_t counter_;
+
+      // Local time
+      uint64_t local_time_;
+
+      // Processed query
+      std::shared_ptr<iroha::model::Query> query_;
+
+      // Query generator for new queries
+      iroha::model::generators::QueryGenerator generator_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

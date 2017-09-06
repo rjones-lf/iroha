@@ -28,9 +28,8 @@ namespace iroha_cli {
     class InteractiveTransactionCli {
      public:
       /**
-       *
-       * @param creator_account
-       * @param tx_counter
+       * @param creator_account - Account of a creator
+       * @param tx_counter - local counter for transaction
        */
       InteractiveTransactionCli(std::string creator_account,
                                 uint64_t tx_counter);
@@ -40,30 +39,26 @@ namespace iroha_cli {
       void run();
 
      private:
-      /**
-       * Creator account id
-       */
-      std::string creator_;
-      /**
-       *  Transaction counter specific for account creator
-       */
-      uint64_t tx_counter_;
-
-      iroha::model::generators::CommandGenerator generator_;
-      /**
-       * Menu context used in cli
-       */
+      //  Menu context used in cli
       MenuContext current_context_;
-      /**
-       * Commands menu points
-       */
-      MenuPoints commands_points_;
-      /**
-       * Transaction result points
-       */
-      MenuPoints result_points_;
 
-      // --- Shortcut namings for queries ---
+      // Commands menu points
+      MenuPoints commands_menu_;
+
+      // Transaction result points
+      MenuPoints result_menu_;
+
+      /**
+       * Create command menu and assign command handlers for current class
+       * object
+       */
+      void createCommandMenu();
+      /**
+       * Create result menu and assign result handlers for current class object
+       */
+      void createResultMenu();
+
+      // --- Shortcut namings for Iroha Commands ---
       const std::string ADD_ASSET_QTY = "add_ast_qty";
       const std::string ADD_PEER = "add_peer";
       const std::string ADD_SIGN = "add_sign";
@@ -77,28 +72,18 @@ namespace iroha_cli {
       const std::string SUB_ASSET_QTY = "sub_ast_qty";
       const std::string TRAN_ASSET = "tran_ast";
 
-
-      DesciptionMap description_map_;
-
-      /**
-       * Create command menu and assign command handlers for current class
-       * object
-       */
-      void create_command_menu();
-      /**
-       * Create result menu and assign result handlers for current class object
-       */
-      void create_result_menu();
-
-      // Commands to be formed
-      std::vector<std::shared_ptr<iroha::model::Command>> commands_;
-
       // ---- Command parsers ----
       using CommandHandler = std::shared_ptr<iroha::model::Command> (
           InteractiveTransactionCli::*)(std::vector<std::string>);
 
+      // Specific parsers for each Iroha command
       std::unordered_map<std::string, CommandHandler> command_handlers_;
-      std::unordered_map<std::string, std::vector<std::string>> command_params_;
+
+      // Descriptions for commands parameters
+      ParamsMap command_params_descriptions_;
+
+      // Descriptions for commands
+      DescriptionMap commands_description_map_;
 
       /**
        * Parse line with iroha Command
@@ -137,7 +122,10 @@ namespace iroha_cli {
       using ResultHandler =
           bool (InteractiveTransactionCli::*)(std::vector<std::string>);
       std::unordered_map<std::string, ResultHandler> result_handlers_;
-      ParamsMap result_params_;
+
+      // Description for result command
+      ParamsMap result_params_descriptions;
+
       /**
        * Parse line for result
        * @param line - cli command
@@ -150,6 +138,20 @@ namespace iroha_cli {
       bool parseSaveFile(std::vector<std::string> params);
       bool parseGoBack(std::vector<std::string> params);
       bool parseAddCommand(std::vector<std::string> params);
+
+      // ---- Tx data ----
+
+      //  Creator account id
+      std::string creator_;
+
+      //  Transaction counter specific for account creator
+      uint64_t tx_counter_;
+
+      // Builder for new commands
+      iroha::model::generators::CommandGenerator generator_;
+
+      // Commands to be formed
+      std::vector<std::shared_ptr<iroha::model::Command>> commands_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

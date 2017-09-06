@@ -20,7 +20,7 @@
 namespace iroha_cli {
   namespace interactive {
 
-    DesciptionMap getCommonDescriptionMap() {
+    DescriptionMap getCommonDescriptionMap() {
       return {{SAVE_CODE, "Save as json file"},
               {SEND_CODE, "Send to Iroha peer"}};
     };
@@ -42,8 +42,10 @@ namespace iroha_cli {
       menu.push_back(std::string("0. Back (") + BACK_CODE + std::string(")"));
     }
 
-    bool isBackOption(std::string command) {
-      return command == "0" || command == BACK_CODE;
+    bool isBackOption(std::string line) {
+      auto command = parser::parseFirstCommand(line);
+      return command.has_value() && (command.value() == "0" ||
+             command.value() == BACK_CODE);
     };
 
     void printHelp(std::string command, std::vector<std::string> parameters) {

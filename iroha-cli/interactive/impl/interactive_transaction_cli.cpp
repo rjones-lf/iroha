@@ -28,8 +28,8 @@
 namespace iroha_cli {
   namespace interactive {
 
-    void InteractiveTransactionCli::create_command_menu() {
-      description_map_ = {
+    void InteractiveTransactionCli::createCommandMenu() {
+      commands_description_map_ = {
           {ADD_ASSET_QTY, "Add Asset Quantity"},
           {ADD_PEER, "Add Peer to Iroha Network"},
           {ADD_SIGN, "Add Signatory to Account"},
@@ -55,7 +55,7 @@ namespace iroha_cli {
       const auto ast_precision = "Asset precision";
       const auto quorum = "Quorum";
 
-      command_params_ = {
+      command_params_descriptions_ = {
           {ADD_ASSET_QTY, {acc_id, ast_id, ammout_a, ammout_b}},
           {ADD_PEER, {peer_id, pub_key}},
           {ADD_SIGN, {acc_id, pub_key}},
@@ -88,13 +88,13 @@ namespace iroha_cli {
            &InteractiveTransactionCli::parseSubtractAssetQuantity},
           {TRAN_ASSET, &InteractiveTransactionCli::parseTransferAsset}};
 
-      formMenu(commands_points_, command_handlers_, command_params_,
-               description_map_);
+      commands_menu_ = formMenu(command_handlers_, command_params_descriptions_,
+                                commands_description_map_);
       // Add "go back" option
-      addBackOption(commands_points_);
+      addBackOption(commands_menu_);
     }
 
-    void InteractiveTransactionCli::create_result_menu() {
+    void InteractiveTransactionCli::createResultMenu() {
       // --- Add result menu points ---
 
       auto result_desciption = getCommonDescriptionMap();
@@ -105,10 +105,10 @@ namespace iroha_cli {
       result_desciption.insert(
           {BACK_CODE, "Go back and start a new transaction"});
 
-      result_params_ = getCommonParamsMap();
+      result_params_descriptions = getCommonParamsMap();
 
-      result_params_.insert({ADD_CMD, {}});
-      result_params_.insert({BACK_CODE, {}});
+      result_params_descriptions.insert({ADD_CMD, {}});
+      result_params_descriptions.insert({BACK_CODE, {}});
 
       result_handlers_ = {
           {SAVE_CODE, &InteractiveTransactionCli::parseSaveFile},
@@ -116,16 +116,16 @@ namespace iroha_cli {
           {ADD_CMD, &InteractiveTransactionCli::parseAddCommand},
           {BACK_CODE, &InteractiveTransactionCli::parseGoBack}};
 
-      formMenu(result_points_, result_handlers_, result_params_,
-               result_desciption);
+      result_menu_ = formMenu(result_handlers_, result_params_descriptions,
+                              result_desciption);
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
         std::string creator_account, uint64_t tx_counter) {
       creator_ = creator_account;
       tx_counter_ = tx_counter;
-      create_command_menu();
-      create_result_menu();
+      createCommandMenu();
+      createResultMenu();
     }
 
     void InteractiveTransactionCli::run() {
@@ -133,7 +133,7 @@ namespace iroha_cli {
       bool is_parsing = true;
       current_context_ = MAIN;
       printMenu("Forming a new transactions, choose command to add: ",
-                commands_points_);
+                commands_menu_);
       // Creating a new transaction, increment local tx_counter
       ++tx_counter_;
       while (is_parsing) {
@@ -150,27 +150,24 @@ namespace iroha_cli {
     }
 
     bool InteractiveTransactionCli::parseCommand(std::string line) {
-      auto raw_command = parser::parseFirstCommand(line);
-      if (not raw_command.has_value()) {
-        handleEmptyCommand();
-        return false;
-      }
 
-      auto command_name = raw_command.value();
-      if (isBackOption(command_name)) {
+      if (isBackOption(line)) {
+        // Switch current context
         return false;
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
-          this, line, command_name, command_handlers_, command_params_);
+          this, line, command_handlers_,
+          command_params_descriptions_);
 
       if (not res.has_value()) {
+        // Continue parsing
         return true;
       }
 
       commands_.push_back(res.value());
       current_context_ = RESULT;
-      printMenu("Command is formed. Choose what to do:", result_points_);
+      printMenu("Command is formed. Choose what to do:", result_menu_);
       return true;
     }
 
@@ -310,19 +307,10 @@ namespace iroha_cli {
     // --------- Result parsers -------------
 
     bool InteractiveTransactionCli::parseResult(std::string line) {
-      auto command_raw = parser::parseFirstCommand(line);
-      if (not command_raw.has_value()) {
-        handleEmptyCommand();
-        return true;
-      }
-      auto command_name = command_raw.value();
       // Find in result handler map
-      auto res = handleParse<bool>(this, line, command_name, result_handlers_,
-                                   result_params_);
-      if (not res.has_value()) {
-        return true;
-      }
-      return res.value();
+      auto res = handleParse<bool>(this, line, result_handlers_,
+                                   result_params_descriptions);
+      return not res.has_value() ? true : res.value();
     }
 
     bool InteractiveTransactionCli::parseSendToIroha(
@@ -384,7 +372,7 @@ namespace iroha_cli {
       commands_.clear();
       printEnd();
       printMenu("Forming a new transaction. Choose command to add: ",
-                commands_points_);
+                commands_menu_);
       // Continue parsing
       return true;
     }
@@ -392,7 +380,7 @@ namespace iroha_cli {
         std::vector<std::string> params) {
       current_context_ = MAIN;
       printEnd();
-      printMenu("Choose command to add: ", commands_points_);
+      printMenu("Choose command to add: ", commands_menu_);
       // Continue parsing
       return true;
     }

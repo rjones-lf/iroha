@@ -26,18 +26,18 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveQueryCli::create_queries_menu() {
-      decription_map_ = {{GET_ACC, "Get Account Information"},
-                         {GET_ACC_AST, "Get Account's Assets"},
-                         {GET_ACC_TX, "Get Account's Transactions"},
-                         {GET_ACC_SIGN, "Get Account's Signatories"}};
+      description_map_ = {{GET_ACC, "Get Account Information"},
+                          {GET_ACC_AST, "Get Account's Assets"},
+                          {GET_ACC_TX, "Get Account's Transactions"},
+                          {GET_ACC_SIGN, "Get Account's Signatories"}};
 
       const auto acc_id = "Requested account Id";
       const auto ast_id = "Requested asset Id";
 
-      query_params_ = {{GET_ACC, {acc_id}},
-                       {GET_ACC_AST, {acc_id, ast_id}},
-                       {GET_ACC_TX, {acc_id}},
-                       {GET_ACC_SIGN, {acc_id}}};
+      query_params_descriptions_ = {{GET_ACC, {acc_id}},
+                                    {GET_ACC_AST, {acc_id, ast_id}},
+                                    {GET_ACC_TX, {acc_id}},
+                                    {GET_ACC_SIGN, {acc_id}}};
 
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
@@ -46,7 +46,8 @@ namespace iroha_cli {
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
       };
 
-      formMenu(menu_points_, query_handlers_, query_params_, decription_map_);
+      menu_points_ = formMenu(query_handlers_, query_params_descriptions_,
+                              description_map_);
       // Add "go back" option
       addBackOption(menu_points_);
     }
@@ -54,10 +55,10 @@ namespace iroha_cli {
     void InteractiveQueryCli::create_result_menu() {
       result_handlers_ = {{SAVE_CODE, &InteractiveQueryCli::parseSaveFile},
                           {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
-      result_params_ = getCommonParamsMap();
+      result_params_descriptions_ = getCommonParamsMap();
 
-      formMenu(result_points_, result_handlers_, result_params_,
-               getCommonDescriptionMap());
+      result_points_ = formMenu(result_handlers_, result_params_descriptions_,
+                                getCommonDescriptionMap());
       addBackOption(result_points_);
     }
 
@@ -96,21 +97,15 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseQuery(std::string line) {
-      auto raw_command = parser::parseFirstCommand(line);
-      if (not raw_command.has_value()) {
-        handleEmptyCommand();
-        // Stop parsing
-        return false;
-      }
-      auto command_name = raw_command.value();
 
-      if (isBackOption(command_name)) {
+      if (isBackOption(line)) {
         // Stop parsing
         return false;
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Query>>(
-          this, line, command_name, query_handlers_, query_params_);
+          this, line, query_handlers_,
+          query_params_descriptions_);
       if (not res.has_value()) {
         // Continue parsing
         return true;
@@ -153,15 +148,9 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseResult(std::string line) {
-      std::cout << "Parse result triggered " << std::endl;
-      auto raw_command = parser::parseFirstCommand(line);
-      if (not raw_command.has_value()) {
-        handleEmptyCommand();
-        // Continue parsing
-        return true;
-      }
-      auto command_name = raw_command.value();
-      if (isBackOption(command_name)) {
+
+
+      if (isBackOption(line)) {
         // Give up the last query and start a new one
         current_context_ = MAIN;
         printEnd();
@@ -169,15 +158,11 @@ namespace iroha_cli {
         // Continue parsing
         return true;
       }
-      std::cout << "Handle parsing " << std::endl;
-      auto res = handleParse<bool>(this, line, command_name, result_handlers_,
-                                   result_params_);
-      if (not res.has_value()) {
-        // Continue parsing
-        std::cout << "Parsing returned no value " << std::endl;
-        return true;
-      }
-      return res.value();
+
+      auto res = handleParse<bool>(this, line, result_handlers_,
+                                   result_params_descriptions_);
+
+      return not res.has_value()?true:res.value();
     }
 
     bool InteractiveQueryCli::parseSendToIroha(QueryParams params) {
