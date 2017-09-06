@@ -49,7 +49,7 @@ TEST(HandlerTest, QueryRegistration) {
               return index.name();
             }));
 
-  ASSERT_EQ(4, registry.query_handler.types().size());
+  ASSERT_EQ(5, registry.query_handler.types().size());
 }
 
 TEST(HandlerTest, QueryResponseRegistration) {

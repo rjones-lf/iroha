@@ -54,8 +54,8 @@ namespace iroha {
         // Query serializer:
         protocol::Query serializeGetAccount(std::shared_ptr<Query> query);
         protocol::Query serializeGetAccountAssets(std::shared_ptr<Query> query);
-        protocol::Query serializeGetAccountTransactions(
-            std::shared_ptr<Query> query);
+        protocol::Query serializeGetAccountTransactions(std::shared_ptr<Query> query);
+        protocol::Query serializeGetAccountAssetTransactions(std::shared_ptr<Query> query);
         protocol::Query serializeGetSignatories(std::shared_ptr<Query> query);
 
         /**

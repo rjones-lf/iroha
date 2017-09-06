@@ -131,6 +131,11 @@ namespace iroha {
       return StorageImpl::getAccountTransactions(account_id);
     }
 
+    rxcpp::observable<model::Transaction> TestStorageImpl::getAccountAssetTransactions(
+        std::string account_id, std::string asset_id) {
+      return StorageImpl::getAccountAssetTransactions(account_id, asset_id);
+    }
+
     rxcpp::observable<model::Block> TestStorageImpl::getBlocks(uint32_t height,
                                                                uint32_t count) {
       return StorageImpl::getBlocks(height, count);
