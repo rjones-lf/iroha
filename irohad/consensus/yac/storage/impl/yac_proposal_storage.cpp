@@ -20,7 +20,8 @@
 #include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
-#include <logger/logger.hpp>
+using namespace logger;
+
 
 namespace iroha {
   namespace consensus {
@@ -55,11 +56,17 @@ namespace iroha {
           : current_state_(nonstd::nullopt),
             hash_(std::move(hash)),
             peers_in_round_(peers_in_round) {
+        log_ = log("ProposalStorage");
       }
 
       nonstd::optional<Answer> YacProposalStorage::insert(VoteMessage msg) {
         if (shouldInsert(msg)) {
           // insert to block store
+
+          log_->info("Vote [{}, {}] looks valid",
+                     msg.hash.proposal_hash,
+                     msg.hash.block_hash);
+
           auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
           auto block_state = iter->insert(msg);
 
@@ -71,6 +78,7 @@ namespace iroha {
             // try to find reject case
             auto reject_state = findRejectProof();
             if (reject_state.has_value()) {
+              log_->info("Found reject proof");
               current_state_ = std::move(reject_state);
             }
           }

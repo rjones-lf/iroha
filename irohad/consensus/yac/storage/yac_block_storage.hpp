@@ -22,6 +22,7 @@
 #include <nonstd/optional.hpp>
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -115,6 +116,11 @@ namespace iroha {
          * Number of peers in current round
          */
         uint64_t peers_in_round_;
+
+        /**
+         * Storage logger
+         */
+        logger::Logger log_;
       };
 
     } // namespace yac

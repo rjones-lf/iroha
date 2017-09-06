@@ -19,26 +19,34 @@
 #include <algorithm>
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
+using namespace logger;
+
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      // --------| Public API |--------
+
       YacBlockStorage::YacBlockStorage(YacHash hash, uint64_t peers_in_round)
           : hash_(std::move(hash)), peers_in_round_(peers_in_round) {
+        log_ = log("YacBlockStorage");
       }
 
       nonstd::optional<Answer> YacBlockStorage::insert(VoteMessage msg) {
         if (validScheme(msg) and uniqueVote(msg)) {
           votes_.push_back(msg);
+
+          log_->info("Vote ({}, {}) inserted", msg.hash.proposal_hash,
+                     msg.hash.block_hash);
+          log_->info("Votes in storage [{}/{}]", votes_.size(),
+                     peers_in_round_);
         }
         return getState();
       }
 
       nonstd::optional<Answer> YacBlockStorage::insert(std::vector<VoteMessage> votes) {
         std::for_each(votes.begin(), votes.end(),
-                      [this](auto vote) {
-                        this->insert(vote);
-                      });
+                      [this](auto vote) { this->insert(vote); });
         return getState();
       }
 
@@ -47,37 +55,37 @@ namespace iroha {
       }
 
       auto YacBlockStorage::getNumberOfVotes() -> decltype(votes_)::size_type {
-        return votes_.size();
-      }
+      return votes_.size();
+    }
 
-      bool YacBlockStorage::isContains(const VoteMessage &msg) const {
-        return std::count(votes_.begin(), votes_.end(), msg) != 0;
+    nonstd::optional<Answer> YacBlockStorage::getState() {
+      auto supermajority = hasSupermajority(votes_.size(), peers_in_round_);
+      if (supermajority) {
+        return Answer(CommitMessage(votes_));
       }
+      return nonstd::nullopt;
+    }
 
-      nonstd::optional<Answer> YacBlockStorage::getState() {
-        auto supermajority = hasSupermajority(votes_.size(), peers_in_round_);
-        if (supermajority) {
-          return Answer(CommitMessage(votes_));
-        }
-        return nonstd::nullopt;
-      }
+    bool YacBlockStorage::isContains(const VoteMessage &msg) const {
+      return std::count(votes_.begin(), votes_.end(), msg) != 0;
+    }
 
-      YacHash YacBlockStorage::getStorageHash() {
-        return hash_;
-      }
+    YacHash YacBlockStorage::getStorageHash() {
+      return hash_;
+    }
 
-      // --------| private api |--------
+    // --------| private api |--------
 
-      bool YacBlockStorage::uniqueVote(VoteMessage &msg) {
-        // lookup take O(n) times
-        return std::all_of(votes_.begin(), votes_.end(), [&msg](auto vote) {
-          return vote != msg;
-        });
-      }
+    bool YacBlockStorage::uniqueVote(VoteMessage &msg) {
+      // lookup take O(n) times
+      return std::all_of(votes_.begin(), votes_.end(), [&msg](auto vote) {
+        return vote != msg;
+      });
+    }
 
-      bool YacBlockStorage::validScheme(VoteMessage &vote) {
-        return getStorageHash() == vote.hash;
-      }
+    bool YacBlockStorage::validScheme(VoteMessage &vote) {
+      return getStorageHash() == vote.hash;
+    }
 
     } // namespace yac
   } // namespace consensus

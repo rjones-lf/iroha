@@ -18,6 +18,7 @@
 #include "module/irohad/ordering/ordering_mocks.hpp"
 
 #include <grpc++/grpc++.h>
+#include <logger/logger.hpp>
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
@@ -26,10 +27,14 @@ using namespace iroha::ordering;
 using namespace iroha::model;
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
+using namespace std::chrono_literals;
 
 using ::testing::_;
+using ::testing::Invoke;
 using ::testing::AtLeast;
 using ::testing::Return;
+
+static logger::Logger log_ = logger::testLog("OrderingService");
 
 class OrderingServiceTest : public OrderingTest {
  public:
@@ -46,6 +51,29 @@ class OrderingServiceTest : public OrderingTest {
         grpc::CreateChannel(address, grpc::InsecureChannelCredentials()));
   }
 
+  void set_watchdog(std::chrono::milliseconds d) {
+    watchdog_timeout_ = true;
+    t_ = std::make_shared<std::thread>([this, d]() {
+      std::mutex _m;
+      std::unique_lock<std::mutex> _lk(_m);
+      cv_.wait_for(_lk, d);
+      log_->info("Timeout reached");
+      ASSERT_FALSE(watchdog_timeout_);
+    });
+  }
+
+  void end_watchdog() {
+    watchdog_timeout_ = false;
+    cv_.notify_one();
+    t_->join();
+  }
+
+  void send() {
+    grpc::ClientContext context;
+    google::protobuf::Empty reply;
+    client->SendTransaction(&context, iroha::protocol::Transaction(), &reply);
+  }
+
   void shutdown() override {
     loop->stop();
     if (loop_thread.joinable()) {
@@ -58,6 +86,13 @@ class OrderingServiceTest : public OrderingTest {
   std::thread loop_thread;
   ordering::MockOrderingGate *fake_gate;
   std::unique_ptr<iroha::ordering::proto::OrderingService::Stub> client;
+  std::condition_variable cv;
+  std::mutex m;
+
+ private:
+  std::atomic_bool watchdog_timeout_;
+  std::condition_variable cv_;
+  std::shared_ptr<std::thread> t_;
 };
 
 TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
@@ -66,22 +101,31 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   std::shared_ptr<MockPeerQuery> wsv = std::make_shared<MockPeerQuery>();
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
-
-  service = std::make_shared<OrderingServiceImpl>(wsv, 5, 1000, loop);
+  
+  const size_t max_proposal = 5;
+  const size_t commit_delay = 1000;
+  service = std::make_shared<OrderingServiceImpl>(wsv, max_proposal, commit_delay, loop);
 
   EXPECT_CALL(*fake_gate, SendProposal(_, _, _)).Times(2);
+  ON_CALL(*fake_gate, SendProposal(_, _, _))
+      .WillByDefault(Invoke([this](auto, auto, auto) {
+        cv.std::condition_variable::notify_one();
+        log_->info("Proposal send to grpc");
+        return grpc::Status::OK;
+      }));
 
   start();
+  set_watchdog(8s);
 
+  std::unique_lock<std::mutex> lk(m);
   for (size_t i = 0; i < 10; ++i) {
-    grpc::ClientContext context;
-
-    google::protobuf::Empty reply;
-
-    client->SendTransaction(&context, iroha::protocol::Transaction(), &reply);
+    send();
+    if (i != 0 && i % max_proposal == 0) {
+      cv.wait_for(lk, 10s);
+    }
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  end_watchdog();
 }
 
 TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
@@ -90,22 +134,29 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   std::shared_ptr<MockPeerQuery> wsv = std::make_shared<MockPeerQuery>();
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
-
-  service = std::make_shared<OrderingServiceImpl>(wsv, 100, 400, loop);
+  
+  const size_t max_proposal = 100;
+  const size_t commit_delay = 400;
+  service = std::make_shared<OrderingServiceImpl>(wsv, max_proposal, commit_delay, loop);
 
   EXPECT_CALL(*fake_gate, SendProposal(_, _, _)).Times(2);
+  ON_CALL(*fake_gate, SendProposal(_, _, _))
+      .WillByDefault(Invoke([this](auto, auto, auto) {
+        cv.std::condition_variable::notify_one();
+        return grpc::Status::OK;
+      }));
 
   start();
+  set_watchdog(8s);
 
-  for (size_t i = 0; i < 10; ++i) {
-    grpc::ClientContext context;
-
-    google::protobuf::Empty reply;
-
-    client->SendTransaction(&context, iroha::protocol::Transaction(), &reply);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  for (size_t i = 0; i < 8; ++i) {
+    send();
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::unique_lock<std::mutex> lk(m);
+  cv.wait_for(lk, 10s);
+
+  send(); send();
+  cv.wait_for(lk, 10s);
+  end_watchdog();
 }

@@ -24,15 +24,24 @@
 #include "network/impl/async_grpc_client.hpp"
 #include "consensus/yac/yac_network_interface.hpp"
 #include "yac.grpc.pb.h"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      /**
+       * Class provide implementation of transport for consensus based on grpc
+       */
       class NetworkImpl : public YacNetwork,
                           public proto::Yac::Service,
                           network::AsyncGrpcClient<google::protobuf::Empty> {
        public:
+
+        /**
+         * @param address - address of current peer
+         * @param peers - peers in network
+         */
         explicit NetworkImpl(const std::string &address,
                              const std::vector<model::Peer> &peers);
         void subscribe(
@@ -41,29 +50,63 @@ namespace iroha {
         void send_reject(model::Peer to, RejectMessage reject) override;
         void send_vote(model::Peer to, VoteMessage vote) override;
 
-        /*
-         * gRPC server methods
+        /**
+         * Receive vote from another peer;
+         * Naming is confusing, because this is rpc call that
+         * perform on another machine;
          */
         grpc::Status SendVote(
             ::grpc::ServerContext *context,
             const ::iroha::consensus::yac::proto::Vote *request,
             ::google::protobuf::Empty *response) override;
+
+        /**
+         * Receive commit from another peer;
+         * Naming is confusing, because this is rpc call that
+         * perform on another machine;
+         */
         grpc::Status SendCommit(
             ::grpc::ServerContext *context,
             const ::iroha::consensus::yac::proto::Commit *request,
             ::google::protobuf::Empty *response) override;
+
+        /**
+         * Receive reject from another peer;
+         * Naming is confusing, because this is rpc call that
+         * perform on another machine;
+         */
         grpc::Status SendReject(
             ::grpc::ServerContext *context,
             const ::iroha::consensus::yac::proto::Reject *request,
             ::google::protobuf::Empty *response) override;
 
        private:
+
+        /**
+         * Address of current peer
+         */
         std::string address_;
+
+        /**
+         * Mapping of peer objects to connections
+         */
         std::unordered_map<model::Peer, std::unique_ptr<proto::Yac::Stub>>
             peers_;
+
+        /**
+         * Subscriber of network messages
+         */
         std::weak_ptr<YacNetworkNotifications> handler_;
 
+        /**
+         * Mapping of addresses to peers
+         */
         std::unordered_map<std::string, model::Peer> peers_addresses_;
+
+        /**
+         * Internal logger
+         */
+        logger::Logger log_;
       };
 
     }  // namespace yac

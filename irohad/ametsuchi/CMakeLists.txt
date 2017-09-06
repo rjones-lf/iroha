@@ -13,12 +13,12 @@ add_library(ametsuchi
     )
 
 target_link_libraries(ametsuchi
+    json_model_converters
     logger
     rxcpp
     optional
     pqxx
     cpp_redis
-    model
     libs_common
     command_execution
     )
