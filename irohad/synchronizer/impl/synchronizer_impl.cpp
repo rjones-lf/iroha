@@ -54,20 +54,13 @@ namespace iroha {
       } else {
         // Block can't be applied to current storage
         // Download all missing blocks
-        // TODO: Loading blocks from other Peer
-        // TODO: Replace with more effective realization
         for (auto signature : commit_message.sigs) {
-          auto target_peer = model::Peer();
-          target_peer.pubkey = signature.pubkey;
-
-          // Get your last top block
-          auto top_block = model::Block();
-          auto chain = blockLoader_->requestBlocks(target_peer, top_block);
           storage = mutableFactory_->createMutableStorage();
-          if (!storage) {
+          if (not storage) {
             log_->error("cannot create storage");
             return;
           }
+          auto chain = blockLoader_->retrieveBlocks(signature.pubkey);
           if (validator_->validateChain(chain, *storage)) {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));

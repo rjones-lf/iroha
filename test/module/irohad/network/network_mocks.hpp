@@ -38,8 +38,11 @@ namespace iroha {
 
     class MockBlockLoader : public BlockLoader {
      public:
-      MOCK_METHOD2(requestBlocks,
-                   rxcpp::observable<model::Block>(model::Peer, model::Block));
+      MOCK_METHOD1(retrieveBlocks,
+                   rxcpp::observable<model::Block>(model::Peer::KeyType));
+      MOCK_METHOD2(retrieveBlock,
+                   nonstd::optional<model::Block>(model::Peer::KeyType,
+                                                  model::Block::HashType));
     };
 
     class MockOrderingGate : public OrderingGate {

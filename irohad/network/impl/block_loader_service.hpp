@@ -18,23 +18,31 @@
 #ifndef IROHA_BLOCK_LOADER_SERVICE_HPP
 #define IROHA_BLOCK_LOADER_SERVICE_HPP
 
-#include "loader.grpc.pb.h"
 #include "ametsuchi/block_query.hpp"
+#include "loader.grpc.pb.h"
 #include "model/converters/pb_block_factory.hpp"
+#include "model/model_hash_provider_impl.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace network {
     class BlockLoaderService : public proto::Loader::Service {
      public:
-      explicit BlockLoaderService(std::shared_ptr<ametsuchi::BlockQuery> storage);
+      explicit BlockLoaderService(
+          std::shared_ptr<ametsuchi::BlockQuery> storage);
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context, const proto::BlocksRequest *request,
-          ::grpc::ServerWriter<::iroha::protocol::Block> *writer) override;
+          ::grpc::ServerWriter<protocol::Block> *writer) override;
+
+      grpc::Status retrieveBlock(
+          ::grpc::ServerContext *context, const proto::BlockRequest *request,
+          protocol::Block *response) override;
 
      private:
       model::converters::PbBlockFactory factory_;
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
+      logger::Logger log_;
     };
   } // namespace network
 } // namespace iroha
