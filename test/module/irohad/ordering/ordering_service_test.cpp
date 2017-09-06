@@ -20,6 +20,7 @@
 #include <grpc++/grpc++.h>
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -67,10 +68,10 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
 
-  service = std::make_shared<OrderingServiceImpl>(wsv, 5, 1000, loop);
+  auto transport = std::make_shared<OrderingServiceTransportGrpc>();
+  service = std::make_shared<OrderingServiceImpl>(wsv, 5, 1000, transport, loop);
 
   EXPECT_CALL(*fake_gate, SendProposal(_, _, _)).Times(2);
-
   start();
 
   for (size_t i = 0; i < 10; ++i) {
@@ -79,6 +80,7 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
     google::protobuf::Empty reply;
 
     client->SendTransaction(&context, iroha::protocol::Transaction(), &reply);
+
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -91,7 +93,8 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   EXPECT_CALL(*wsv, getLedgerPeers()).WillRepeatedly(Return(std::vector<Peer>{
       peer}));
 
-  service = std::make_shared<OrderingServiceImpl>(wsv, 100, 400, loop);
+  auto transport = std::make_shared<OrderingServiceTransportGrpc>();
+  service = std::make_shared<OrderingServiceImpl>(wsv, 100, 400, transport, loop);
 
   EXPECT_CALL(*fake_gate, SendProposal(_, _, _)).Times(2);
 

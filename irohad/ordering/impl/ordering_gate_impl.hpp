@@ -18,6 +18,7 @@
 #ifndef IROHA_ORDERING_GATE_IMPL_HPP
 #define IROHA_ORDERING_GATE_IMPL_HPP
 
+#include "network/ordering_gate_transport.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate.hpp"
@@ -36,10 +37,11 @@ namespace iroha {
      */
     class OrderingGateImpl : public network::OrderingGate,
                              public proto::OrderingGate::Service,
+                             public network::OrderingGateNotification,
                              network::AsyncGrpcClient<google::protobuf::Empty> {
      public:
 
-      explicit OrderingGateImpl(const std::string &server_address);
+      explicit OrderingGateImpl(std::shared_ptr<network::OrderingGateTransport>);
 
       void propagate_transaction(
           std::shared_ptr<const model::Transaction> transaction) override;
@@ -50,13 +52,15 @@ namespace iroha {
                                 const proto::Proposal *request,
                                 ::google::protobuf::Empty *response) override;
 
-     private:
+      std::shared_ptr<network::OrderingGateTransport> transport_;
+
+    private:
       /**
        * Process proposal received from network
        * Publishes proposal to on_proposal subscribers
        * @param proposal
        */
-      void handleProposal(model::Proposal &&proposal);
+      void handleProposal(std::shared_ptr<model::Proposal> proposal) override;
 
       rxcpp::subjects::subject<model::Proposal> proposals_;
       model::converters::PbTransactionFactory factory_;

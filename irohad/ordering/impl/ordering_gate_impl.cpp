@@ -20,21 +20,15 @@
 namespace iroha {
   namespace ordering {
 
-    OrderingGateImpl::OrderingGateImpl(const std::string &server_address)
-        : client_(proto::OrderingService::NewStub(grpc::CreateChannel(
-              server_address, grpc::InsecureChannelCredentials()))) {
+    OrderingGateImpl::OrderingGateImpl(std::shared_ptr<network::OrderingGateTransport> transport)
+        : transport_(transport) {
       log_ = logger::log("OrderingGate");
     }
 
     void OrderingGateImpl::propagate_transaction(
         std::shared_ptr<const model::Transaction> transaction) {
       log_->info("propagate tx");
-      auto call = new AsyncClientCall;
-
-      call->response_reader = client_->AsyncSendTransaction(
-          &call->context, factory_.serialize(*transaction), &cq_);
-
-      call->response_reader->Finish(&call->reply, &call->status, call);
+      transport_->propagate(transaction);
     }
 
     rxcpp::observable<model::Proposal> OrderingGateImpl::on_proposal() {
@@ -53,15 +47,16 @@ namespace iroha {
       }
       log_->info("transactions in proposal: {}", transactions.size());
 
-      model::Proposal proposal(transactions);
-      proposal.height = request->height();
-      handleProposal(std::move(proposal));
+      auto proposal = transport_->getProposal(request);
 
+      proposal->height = request->height();
+      transport_->subscriber_->handleProposal(proposal);
+      //handleProposal(proposal);
       return grpc::Status::OK;
     }
 
-    void OrderingGateImpl::handleProposal(model::Proposal &&proposal) {
-      proposals_.get_subscriber().on_next(proposal);
+    void OrderingGateImpl::handleProposal(std::shared_ptr<model::Proposal> proposal) {
+      proposals_.get_subscriber().on_next(*proposal);
     }
   }  // namespace ordering
 }  // namespace iroha

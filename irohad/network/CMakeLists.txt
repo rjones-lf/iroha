@@ -1,6 +1,6 @@
 add_library(networking
     impl/peer_communication_service_impl.cpp
-    )
+        )
 
 target_link_libraries(networking
     rxcpp
@@ -12,7 +12,9 @@ target_link_libraries(networking
 
 add_library(block_loader
     impl/block_loader_impl.cpp
+    ordering_service_transport.hpp
     )
+
 target_link_libraries(block_loader
     pb_model_converters
     loader_grpc

@@ -26,13 +26,16 @@ namespace iroha {
   namespace ordering {
     OrderingServiceImpl::OrderingServiceImpl(
         std::shared_ptr<ametsuchi::PeerQuery> wsv, size_t max_size,
-        size_t delay_milliseconds, std::shared_ptr<uvw::Loop> loop)
+        size_t delay_milliseconds,
+        std::shared_ptr<network::OrderingServiceTransport> transport,
+        std::shared_ptr<uvw::Loop> loop)
         : loop_(std::move(loop)),
           timer_(loop_->resource<uvw::TimerHandle>()),
           wsv_(wsv),
+          transport_(transport),
           max_size_(max_size),
           delay_milliseconds_(delay_milliseconds),
-          proposal_height(2) {
+          proposal_height(2){
 
       timer_->on<uvw::TimerEvent>([this](const auto &, auto &) {
         if (!queue_.empty()) {
@@ -85,20 +88,16 @@ namespace iroha {
 
     void OrderingServiceImpl::publishProposal(model::Proposal &&proposal) {
       preparePeersForProposalRound();
-      proto::Proposal pb_proposal;
-      pb_proposal.set_height(proposal.height);
+      auto pb_proposal = std::make_shared<proto::Proposal>();
+      pb_proposal->set_height(proposal.height);
       for (const auto &tx : proposal.transactions) {
-        auto pb_tx = pb_proposal.add_transactions();
+        auto pb_tx = pb_proposal->add_transactions();
         new(pb_tx) protocol::Transaction(factory_.serialize(tx));
       }
 
       for (const auto &peer : peers_) {
-        auto call = new AsyncClientCall;
+        transport_->publishProposal(pb_proposal, peer.second);
 
-        call->response_reader =
-            peer.second->AsyncSendProposal(&call->context, pb_proposal, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
       }
     }
 

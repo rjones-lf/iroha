@@ -27,6 +27,7 @@
 #include "network/impl/async_grpc_client.hpp"
 #include "ordering.grpc.pb.h"
 #include "ametsuchi/peer_query.hpp"
+#include "network/ordering_service_transport.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -41,13 +42,14 @@ namespace iroha {
      */
     class OrderingServiceImpl
         : public proto::OrderingService::Service,
-          public uvw::Emitter<OrderingServiceImpl>,
-          network::AsyncGrpcClient<google::protobuf::Empty> {
+          public uvw::Emitter<OrderingServiceImpl> {
      public:
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv, size_t max_size,
           size_t delay_milliseconds,
+          std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<uvw::Loop> loop = uvw::Loop::getDefault());
+
       grpc::Status SendTransaction(
           ::grpc::ServerContext *context, const protocol::Transaction *request,
           ::google::protobuf::Empty *response) override;
@@ -81,6 +83,7 @@ namespace iroha {
       std::shared_ptr<uvw::Loop> loop_;
       std::shared_ptr<uvw::TimerHandle> timer_;
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
+      std::shared_ptr<network::OrderingServiceTransport> transport_;
 
       model::converters::PbTransactionFactory factory_;
 
