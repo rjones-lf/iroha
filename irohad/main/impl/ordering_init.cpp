@@ -22,7 +22,7 @@
 namespace iroha {
   namespace network {
     auto OrderingInit::createGate(std::string network_address) {
-      auto transport = std::make_shared<iroha::ordering::OrderingGateTransportgRPC>(network_address);
+      auto transport = std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(network_address);
       auto gate_impl = std::make_shared<ordering::OrderingGateImpl>(transport);
       return gate_impl;
     }

@@ -74,4 +74,4 @@ namespace iroha {
   }
 }
 
-#endif
+#endif //ORDERING_GATE_TRANSPORT_HPP

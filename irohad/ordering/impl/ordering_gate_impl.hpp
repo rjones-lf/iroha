@@ -18,7 +18,7 @@
 #ifndef IROHA_ORDERING_GATE_IMPL_HPP
 #define IROHA_ORDERING_GATE_IMPL_HPP
 
-#include <network/ordering_gate_transport.hpp>
+#include "network/ordering_gate_transport.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate.hpp"

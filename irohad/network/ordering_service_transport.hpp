@@ -17,7 +17,6 @@
 #ifndef IROHA_ORDERING_SERVICE_TRANSPORT_H
 #define IROHA_ORDERING_SERVICE_TRANSPORT_H
 
-#include "ordering.grpc.pb.h"
 #include "model/proposal.hpp"
 #include "ordering.grpc.pb.h"
 

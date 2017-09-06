@@ -31,7 +31,7 @@ using ::testing::_;
 class OrderingGateTest : public OrderingTest {
  public:
   OrderingGateTest() {
-    auto transport = std::make_shared<OrderingGateTransportgRPC>(address);
+    auto transport = std::make_shared<OrderingGateTransportGrpc>(address);
     gate_impl = std::make_shared<OrderingGateImpl>(transport);
     gate_impl->transport_->subscribe(gate_impl);
 

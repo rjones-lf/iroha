@@ -27,7 +27,7 @@
 namespace iroha {
   namespace ordering {
 
-    class OrderingGateTransportgRPC : public iroha::network::OrderingGateTransport,
+    class OrderingGateTransportGrpc : public iroha::network::OrderingGateTransport,
                                       public network::AsyncGrpcClient<google::protobuf::Empty>  {
     private:
       std::unique_ptr<proto::OrderingService::Stub> client_;
@@ -35,13 +35,13 @@ namespace iroha {
 
     public:
 
-      explicit OrderingGateTransportgRPC(const std::string& server_address);
+      explicit OrderingGateTransportGrpc(const std::string& server_address);
 
-      OrderingGateTransportgRPC(const OrderingGateTransportgRPC& rhs) = delete;
-      OrderingGateTransportgRPC& operator=(const OrderingGateTransportgRPC& rhs) = delete;
+      OrderingGateTransportGrpc(const OrderingGateTransportGrpc& rhs) = delete;
+      OrderingGateTransportGrpc& operator=(const OrderingGateTransportGrpc& rhs) = delete;
 
-      OrderingGateTransportgRPC(const OrderingGateTransportgRPC&& rhs) = delete;
-      OrderingGateTransportgRPC& operator=(const OrderingGateTransportgRPC&& rhs) = delete;
+      OrderingGateTransportGrpc(OrderingGateTransportGrpc&& rhs) = delete;
+      OrderingGateTransportGrpc& operator=(OrderingGateTransportGrpc&& rhs) = delete;
 
       void propagate(std::shared_ptr<const iroha::model::Transaction> transaction)  override;
 
@@ -50,7 +50,7 @@ namespace iroha {
 
       std::shared_ptr<model::Proposal> getProposal(const iroha::ordering::proto::Proposal *request) override;
 
-      ~OrderingGateTransportgRPC() override = default;
+      ~OrderingGateTransportGrpc() override = default;
     };
   }
 }

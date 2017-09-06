@@ -20,7 +20,7 @@
 using namespace iroha::ordering;
 using namespace iroha;
 
-void OrderingGateTransportgRPC::propagate(std::shared_ptr<const model::Transaction> transaction)  {
+void OrderingGateTransportGrpc::propagate(std::shared_ptr<const model::Transaction> transaction)  {
   auto call = new AsyncClientCall;
 
   call->response_reader = client_->AsyncSendTransaction(
@@ -29,18 +29,18 @@ void OrderingGateTransportgRPC::propagate(std::shared_ptr<const model::Transacti
   call->response_reader->Finish(&call->reply, &call->status, call);
 }
 
-OrderingGateTransportgRPC::OrderingGateTransportgRPC(const std::string &server_address):
+OrderingGateTransportGrpc::OrderingGateTransportGrpc(const std::string &server_address):
         client_(proto::OrderingService::NewStub(grpc::CreateChannel(
                 server_address, grpc::InsecureChannelCredentials()))) {
 }
 
-void OrderingGateTransportgRPC::subscribe(
+void OrderingGateTransportGrpc::subscribe(
         std::shared_ptr<iroha::network::OrderingGateNotification> subscriber) {
   subscriber_ = subscriber;
 }
 
 
-std::shared_ptr<model::Proposal> OrderingGateTransportgRPC::getProposal(const iroha::ordering::proto::Proposal *request) {
+std::shared_ptr<model::Proposal> OrderingGateTransportGrpc::getProposal(const iroha::ordering::proto::Proposal *request) {
   auto transactions =
           decltype(std::declval<model::Proposal>().transactions)();
   for (const auto &tx : request->transactions()) {
