@@ -29,6 +29,7 @@
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/assign_master_key.hpp"
 #include "model/commands/remove_signatory.hpp"
+#include "model/commands/set_quorum.hpp"
 #include "model/model_hash_provider_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
@@ -232,7 +233,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   block.prev_hash.fill(0);
   auto block1hash = hashProvider.get_hash(block);
   block.hash = block1hash;
-  block.txs_number = block.transactions.size();
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -270,7 +271,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   block.prev_hash = block1hash;
   auto block2hash = hashProvider.get_hash(block);
   block.hash = block2hash;
-  block.txs_number = block.transactions.size();
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -304,7 +305,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   block.prev_hash = block2hash;
   auto block3hash = hashProvider.get_hash(block);
   block.hash = block3hash;
-  block.txs_number = block.transactions.size();
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -324,7 +325,6 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     ASSERT_EQ(signatories->at(1), pubkey2);
   }
 
-
   // 4th tx (create user2 with pubkey1 that is same as user1's key)
   txn = Transaction();
   txn.creator_account_id = "admin2";
@@ -340,7 +340,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   block.prev_hash = block3hash;
   auto block4hash = hashProvider.get_hash(block);
   block.hash = block4hash;
-  block.txs_number = block.transactions.size();
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -383,7 +383,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   block.prev_hash = block4hash;
   auto block5hash = hashProvider.get_hash(block);
   block.hash = block5hash;
-  block.txs_number = block.transactions.size();
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -407,6 +407,133 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     ASSERT_TRUE(signatories2);
     ASSERT_EQ(signatories2->size(), 1);
     ASSERT_EQ(signatories2->at(0), pubkey1);
+  }
 
+  // 6th tx (add sig2 to user2 and set quorum = 1)
+  txn = Transaction();
+  txn.creator_account_id = user2id;
+  addSignatory = AddSignatory();
+  addSignatory.account_id = user2id;
+  addSignatory.pubkey = pubkey2;
+  txn.commands.push_back(std::make_shared<AddSignatory>(addSignatory));
+  auto seqQuorum = SetQuorum();
+  seqQuorum.account_id = user2id;
+  seqQuorum.new_quorum = 2;
+  txn.commands.push_back(std::make_shared<SetQuorum>(seqQuorum));
+
+  block = Block();
+  block.transactions.push_back(txn);
+  block.height = 6;
+  block.prev_hash = block5hash;
+  auto block6hash = hashProvider.get_hash(block);
+  block.hash = block6hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
+  {
+    auto ms = storage->createMutableStorage();
+    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+    storage->commit(std::move(ms));
+  }
+
+  {
+    auto account = storage->getAccount(user2id);
+    ASSERT_TRUE(account);
+    ASSERT_EQ(account->quorum, 2);
+
+    // user2 has pubkey1 and pubkey2.
+    auto signatories = storage->getSignatories(user2id);
+    ASSERT_TRUE(signatories);
+    ASSERT_EQ(signatories->size(), 2);
+    ASSERT_EQ(signatories->at(0), pubkey1);
+    ASSERT_EQ(signatories->at(1), pubkey2);
+  }
+
+  // 7th tx (remove sig2 fro user2: This must be fail)
+  txn = Transaction();
+  txn.creator_account_id = user2id;
+  removeSignatory = RemoveSignatory();
+  removeSignatory.account_id = user2id;
+  removeSignatory.pubkey = pubkey2;
+  txn.commands.push_back(std::make_shared<RemoveSignatory>(removeSignatory));
+
+  block = Block();
+  block.transactions.push_back(txn);
+  block.height = 7;
+  block.prev_hash = block6hash;
+  auto block7hash = hashProvider.get_hash(block);
+  block.hash = block7hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
+  {
+    auto ms = storage->createMutableStorage();
+    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+    storage->commit(std::move(ms));
+  }
+
+  {
+    // user2 still has pubkey1 and pubkey2.
+    auto signatories = storage->getSignatories(user2id);
+    ASSERT_TRUE(signatories);
+    ASSERT_EQ(signatories->size(), 2);
+    ASSERT_EQ(signatories->at(0), pubkey1);
+    ASSERT_EQ(signatories->at(1), pubkey2);
+  }
+
+  // 8th tx (set quorum = 1 to user2)
+  txn = Transaction();
+  txn.creator_account_id = user2id;
+  seqQuorum = SetQuorum();
+  seqQuorum.account_id = user2id;
+  seqQuorum.new_quorum = 1;
+  txn.commands.push_back(std::make_shared<SetQuorum>(seqQuorum));
+
+  block = Block();
+  block.transactions.push_back(txn);
+  block.height = 8;
+  block.prev_hash = block7hash;
+  auto block8hash = hashProvider.get_hash(block);
+  block.hash = block8hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
+  {
+    auto ms = storage->createMutableStorage();
+    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+    storage->commit(std::move(ms));
+  }
+
+  {
+    auto account = storage->getAccount(user2id);
+    ASSERT_TRUE(account);
+    ASSERT_EQ(account->quorum, 1);
+  }
+
+  // 9th tx (remove sig2 fro user2: This must success)
+  txn = Transaction();
+  txn.creator_account_id = user2id;
+  removeSignatory = RemoveSignatory();
+  removeSignatory.account_id = user2id;
+  removeSignatory.pubkey = pubkey2;
+  txn.commands.push_back(std::make_shared<RemoveSignatory>(removeSignatory));
+
+  block = Block();
+  block.transactions.push_back(txn);
+  block.height = 9;
+  block.prev_hash = block8hash;
+  auto block9hash = hashProvider.get_hash(block);
+  block.hash = block9hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
+  {
+    auto ms = storage->createMutableStorage();
+    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+    storage->commit(std::move(ms));
+  }
+
+  {
+    // user2 only has pubkey1.
+    auto signatories = storage->getSignatories(user2id);
+    ASSERT_TRUE(signatories);
+    ASSERT_EQ(signatories->size(), 1);
+    ASSERT_EQ(signatories->at(0), pubkey1);
   }
 }

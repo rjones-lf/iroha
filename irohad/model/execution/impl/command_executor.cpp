@@ -16,7 +16,6 @@
  */
 
 #include <algorithm>
-#include <limits>
 
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -330,6 +329,25 @@ bool RemoveSignatoryExecutor::execute(const Command &command,
                                       ametsuchi::WsvCommand &commands) {
   auto remove_signatory = static_cast<const RemoveSignatory &>(command);
 
+  auto account = queries.getAccount(remove_signatory.account_id);
+  auto signatories = queries.getSignatories(remove_signatory.account_id);
+
+  if (not (account.has_value() && signatories.has_value())) {
+    // No account or signatories found
+    return false;
+  }
+
+  auto newSignatoriesSize = signatories.value().size() - 1;
+  if (newSignatoriesSize < account.value().quorum) {
+    // You can't remove if size of rest signatories less than the quorum
+    return false;
+  }
+
+  if (remove_signatory.pubkey == account.value().master_key) {
+    // You can't remove master key (first you should reassign it)
+    return false;
+  }
+
   // Delete will fail if account signatory doesn't exist
   return commands.deleteAccountSignatory(remove_signatory.account_id,
                                          remove_signatory.pubkey) &&
@@ -351,11 +369,22 @@ bool RemoveSignatoryExecutor::hasPermissions(const Command &command,
 bool RemoveSignatoryExecutor::isValid(const Command &command,
                                       ametsuchi::WsvQuery &queries) {
   auto remove_signatory = static_cast<const RemoveSignatory &>(command);
-
   auto account = queries.getAccount(remove_signatory.account_id);
-  return account.has_value() &&
-         // You can't remove master key (first you should reassign it)
-         remove_signatory.pubkey != account.value().master_key;
+  auto signatories = queries.getSignatories(remove_signatory.account_id);
+
+  if (not (account.has_value() && signatories.has_value())) {
+    // No account or signatories found
+    return false;
+  }
+
+  auto newSignatoriesSize = signatories.value().size() - 1;
+  if (newSignatoriesSize < account.value().quorum) {
+    // You can't remove if size of rest signatories less than the quorum
+    return false;
+  }
+
+  // You can't remove master key (first you should reassign it)
+  return remove_signatory.pubkey != account.value().master_key;
 }
 
 // ----------------- SetAccountPermissions -----------------
