@@ -105,6 +105,40 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   ASSERT_TRUE(block_wrapper.validate());
 }
 
+TEST_F(SimulatorTest, NoBlockWhenEmptyValidatedProposal) {
+  // proposal with height 2 => height 1 block present => no valid transactions
+  // => no validated proposal
+  auto proposal = model::Proposal({});
+  proposal.height = 2;
+
+  model::Block block;
+  block.height = proposal.height - 1;
+
+  EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
+
+  EXPECT_CALL(*query, getTopBlocks(1))
+      .WillOnce(Return(rxcpp::observable<>::just(block)));
+
+  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
+
+  EXPECT_CALL(*ordering_gate, on_proposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
+
+  init();
+
+  auto proposal_wrapper =
+      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 0);
+  proposal_wrapper.subscribe();
+
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->on_block(), 0);
+  block_wrapper.subscribe();
+
+  simulator->process_proposal(proposal);
+
+  ASSERT_TRUE(proposal_wrapper.validate());
+  ASSERT_TRUE(block_wrapper.validate());
+}
+
 TEST_F(SimulatorTest, FailWhenNoBlock) {
   // height 2 proposal => height 1 block not present => no validated proposal
   auto txs = std::vector<model::Transaction>(2);

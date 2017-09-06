@@ -56,8 +56,11 @@ namespace iroha {
         return;
       }
       auto temporaryStorage = ametsuchi_factory_->createTemporaryWsv();
-      notifier_.get_subscriber().on_next(
-          validator_->validate(proposal, *temporaryStorage));
+      auto verified_proposal =
+          validator_->validate(proposal, *temporaryStorage);
+      if (not verified_proposal.transactions.empty()) {
+        notifier_.get_subscriber().on_next(verified_proposal);
+      }
     }
 
     void Simulator::process_verified_proposal(model::Proposal proposal) {
