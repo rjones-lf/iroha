@@ -65,7 +65,6 @@ DEFINE_string(peers_address, "", "File with peers address");
 // Interactive
 DEFINE_bool(interactive, false, "Interactive cli");
 
-
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
@@ -96,7 +95,7 @@ int main(int argc, char* argv[]) {
                       std::istreambuf_iterator<char>());
       iroha::model::converters::JsonTransactionFactory serializer;
       auto doc = iroha::model::converters::stringToJson(str);
-      if (not doc.has_value()){
+      if (not doc.has_value()) {
         logger->error("Json has wrong format.");
       }
       auto tx_opt = serializer.deserialize(doc.value());
@@ -115,7 +114,7 @@ int main(int argc, char* argv[]) {
       auto query_opt = serializer.deserialize(std::move(str));
       if (not query_opt.has_value()) {
         logger->error("Json has wrong format.");
-      } else{
+      } else {
         response_handler.handle(client.sendQuery(query_opt.value()));
       }
     }
@@ -141,11 +140,12 @@ int main(int argc, char* argv[]) {
     logger->info("File saved to genesis.block");
   } else if (FLAGS_interactive) {
     // TODO: add login logic (e.g. password check)
-    if (FLAGS_name.empty()){
+    if (FLAGS_name.empty()) {
       logger->error("Specify account name");
       return -1;
     }
-    InteractiveCli interactiveCli(FLAGS_name);
+    // TODO: Init counters from Iroha, or read from disk ?
+    InteractiveCli interactiveCli(FLAGS_name, 0, 0);
     interactiveCli.run();
   } else {
     assert_config::assert_fatal(false, "Invalid flags");

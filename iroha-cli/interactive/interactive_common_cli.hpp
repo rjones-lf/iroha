@@ -105,7 +105,7 @@ namespace iroha_cli {
      * @param command - name of the cli command
      * @param parameters needed to run the command
      */
-    void printHelp(std::string command, std::vector<std::string> parameters);
+    void printCommandParameters(std::string command, std::vector<std::string> parameters);
 
     /**
      * Pretty Print of menu

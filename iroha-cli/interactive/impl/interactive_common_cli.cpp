@@ -48,7 +48,7 @@ namespace iroha_cli {
              command.value() == BACK_CODE);
     };
 
-    void printHelp(std::string command, std::vector<std::string> parameters) {
+    void printCommandParameters(std::string command, std::vector<std::string> parameters) {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(),
@@ -102,7 +102,7 @@ namespace iroha_cli {
         return params;
       } else if (words.size() != params_description.value().size() + 1) {
         // Not enough parameters passed
-        printHelp(command_name, params_description.value());
+        printCommandParameters(command_name, params_description.value());
         return nonstd::nullopt;
       } else {
         // Remove command name, return parameters

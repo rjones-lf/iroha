@@ -29,7 +29,7 @@ namespace iroha_cli {
       /**
        * @param account_id account id used as transaction or query creator
        */
-      explicit InteractiveCli(std::string account_name);
+      InteractiveCli(std::string account_name, uint64_t tx_counter, uint64_t qry_counter);
       /**
        * Run interactive cli. Print menu and parse command
        */
