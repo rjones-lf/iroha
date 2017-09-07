@@ -32,11 +32,20 @@ namespace iroha {
       virtual ~BlockQuery() = default;
       /**
        * Get all transactions of an account.
-       * @param pub_key - account's first public key
+       * @param account_id - account_id (accountName@domainName)
        * @return observable of Model Transaction
        */
       virtual rxcpp::observable<model::Transaction> getAccountTransactions(
           std::string account_id) = 0;
+
+      /**
+       * Get asset transactions of an account.
+       * @param account_id - account_id (accountName@domainName)
+       * @param asset_id - asset_id (assetName#domainName)
+       * @return observable of Model Transaction
+       */
+      virtual rxcpp::observable<model::Transaction> getAccountAssetTransactions(
+          std::string account_id, std::string asset_id) = 0;
 
       /**
       * Get given number of blocks starting with given height.

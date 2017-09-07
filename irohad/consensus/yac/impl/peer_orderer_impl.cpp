@@ -22,11 +22,12 @@ namespace iroha {
     namespace yac {
 
       PeerOrdererImpl::PeerOrdererImpl(
-          std::shared_ptr<ametsuchi::WsvQuery> query)
-          : query_(std::move(query)) {}
+          std::shared_ptr<ametsuchi::PeerQuery> peer_query)
+          : query_(std::move(peer_query)) {
+      }
 
       nonstd::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
-        auto peers = query_->getPeers();
+        auto peers = query_->getLedgerPeers();
         if (peers.has_value()) {
           return ClusterOrdering(peers.value());
         }
@@ -36,7 +37,7 @@ namespace iroha {
 
       nonstd::optional<ClusterOrdering> PeerOrdererImpl::getOrdering(
           YacHash hash) {
-        auto peers = query_->getPeers();
+        auto peers = query_->getLedgerPeers();
         if (peers.has_value()) {
           // todo implement effective ordering based on hash value
           return ClusterOrdering(peers.value());

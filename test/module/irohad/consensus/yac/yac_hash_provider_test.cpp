@@ -27,9 +27,22 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   iroha::model::Block block;
   std::string test_hash = std::string(block.hash.size(), 'f');
   std::copy(test_hash.begin(), test_hash.end(), block.hash.begin());
+  auto hex_test_hash = block.hash.to_hexstring();
 
-  auto yac_hash = hash_provider.makeHash(block);
+  auto yac_hash = hash_provider.makeHash(block.hash);
 
-  ASSERT_EQ(test_hash, yac_hash.proposal_hash);
-  ASSERT_EQ(test_hash, yac_hash.block_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.proposal_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.block_hash);
+}
+
+TEST(YacHashProviderTest, ToModelHashTest) {
+  YacHashProviderImpl hash_provider;
+  iroha::model::Block block;
+  block.hash.fill('f');
+
+  auto yac_hash = hash_provider.makeHash(block.hash);
+
+  auto model_hash = hash_provider.toModelHash(yac_hash);
+
+  ASSERT_EQ(model_hash, block.hash);
 }

@@ -48,6 +48,10 @@ namespace iroha {
             ts64_t timestamp, std::string creator, uint64_t query_counter,
             std::string account_id);
 
+        std::shared_ptr<GetAccountAssetTransactions> generateGetAccountAssetTransactions(
+            ts64_t timestamp, std::string creator, uint64_t query_counter,
+            std::string account_id, std::string asset_id);
+
        private:
         HashProviderImpl hash_provider_;
       };

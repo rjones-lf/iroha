@@ -17,34 +17,30 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
-#include <network/peer_communication_service.hpp>
-#include <torii/processor/query_processor_impl.hpp>
-#include <torii/processor/transaction_processor_impl.hpp>
-#include <validation/impl/stateless_validator_impl.hpp>
-
-#include <ametsuchi/impl/storage_impl.hpp>
-#include <crypto/crypto.hpp>
 #include <uvw/loop.hpp>
-#include "network/consensus_gate.hpp"
-#include "network/block_loader.hpp"
-#include "synchronizer/synchronizer.hpp"
-#include "validation/chain_validator.hpp"
 
+#include "ametsuchi/impl/storage_impl.hpp"
+#include "crypto/crypto.hpp"
+#include "logger/logger.hpp"
+#include "main/impl/block_loader_init.hpp"
+#include "main/impl/consensus_init.hpp"
+#include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "model/model_crypto_provider_impl.hpp"
-#include "torii/command_service.hpp"
-
-#include "simulator/block_creator.hpp"
-#include "network/ordering_gate.hpp"
-#include "validation/stateful_validator.hpp"
 #include "model/model_hash_provider_impl.hpp"
-
+#include "network/block_loader.hpp"
+#include "network/consensus_gate.hpp"
+#include "network/ordering_gate.hpp"
+#include "network/peer_communication_service.hpp"
+#include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
-
-#include "main/impl/ordering_init.hpp"
-#include "main/impl/consensus_init.hpp"
-
-#include "logger/logger.hpp"
+#include "synchronizer/synchronizer.hpp"
+#include "torii/command_service.hpp"
+#include "torii/processor/query_processor_impl.hpp"
+#include "torii/processor/transaction_processor_impl.hpp"
+#include "validation/chain_validator.hpp"
+#include "validation/impl/stateless_validator_impl.hpp"
+#include "validation/stateful_validator.hpp"
 
 class Irohad {
  public:
@@ -128,13 +124,11 @@ class Irohad {
   std::unique_ptr<grpc::Server> internal_server;
   iroha::network::OrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
+  iroha::network::BlockLoaderInit loader_init;
 
   std::thread internal_thread, server_thread;
 
   logger::Logger log_;
-
-
-
 
  public:
   std::shared_ptr<iroha::ametsuchi::StorageImpl> storage;

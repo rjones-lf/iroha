@@ -15,21 +15,14 @@ limitations under the License.
 */
 
 #include "main/application.hpp"
-#include <synchronizer/impl/synchronizer_impl.hpp>
-#include <validation/impl/chain_validator_impl.hpp>
+
 #include <gmock/gmock.h>
-#include "model/converters/pb_transaction_factory.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
-#include "network/block_loader.hpp"
 
-#include "simulator/impl/simulator.hpp"
-#include "network/impl/peer_communication_service_impl.hpp"
-
-#include "validation/impl/stateful_validator_impl.hpp"
-
-#include "main/impl/ordering_init.hpp"
-#include "main/impl/consensus_init.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
+#include "validation/impl/chain_validator_impl.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -54,8 +47,8 @@ Irohad::Irohad(const std::string &block_store_dir,
       storage(StorageImpl::create(block_store_dir, redis_host, redis_port,
                                   pg_conn)),
       peer_number_(peer_number) {
-      log_ = logger::log("IROHAD");
-      log_->info("created");
+  log_ = logger::log("IROHAD");
+  log_->info("created");
 }
 
 Irohad::~Irohad() {
@@ -65,17 +58,13 @@ Irohad::~Irohad() {
   server_thread.join();
 }
 
-class MockBlockLoader : public iroha::network::BlockLoader {
- public:
-  MOCK_METHOD2(requestBlocks,
-               rxcpp::observable<model::Block>(model::Peer, model::Block));
-};
-
 class MockCryptoProvider : public ModelCryptoProvider {
  public:
-  MOCK_CONST_METHOD1(verify, bool(const Transaction &));
+  MOCK_CONST_METHOD1(verify, bool(
+      const Transaction &));
   MOCK_CONST_METHOD1(verify, bool(std::shared_ptr<const Query>));
-  MOCK_CONST_METHOD1(verify, bool(const Block &));
+  MOCK_CONST_METHOD1(verify, bool(
+      const Block &));
 };
 
 void Irohad::run() {
@@ -109,32 +98,34 @@ void Irohad::run() {
   // Validators:
   auto stateless_validator = createStatelessValidator(crypto_verifier);
   auto stateful_validator = std::make_shared<StatefulValidatorImpl>();
-  auto chain_validator = std::make_shared<ChainValidatorImpl>(crypto_verifier);
+  auto chain_validator = std::make_shared<ChainValidatorImpl>();
   log_->info("[Init] => validators");
 
-  auto orderer = std::make_shared<PeerOrdererImpl>(storage);
+  auto wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage);
+
+  auto orderer = std::make_shared<PeerOrdererImpl>(wsv);
   log_->info("[Init] => peer orderer");
 
-  auto wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage);
   auto peer_address = wsv->getLedgerPeers().value().at(peer_number_).address;
 
   // Ordering gate
   auto ordering_gate = ordering_init.initOrderingGate(wsv, loop, 10, 5000);
   log_->info("[Init] => init ordering gate - [{}]",
-              logger::logBool(ordering_gate));
+             logger::logBool(ordering_gate));
 
   // Simulator
   auto simulator = createSimulator(ordering_gate, stateful_validator, storage,
                                    storage, hash_provider);
 
+  // Block loader
+  auto block_loader = loader_init.initBlockLoader(wsv, storage, crypto_verifier);
+
   // Consensus gate
   auto consensus_gate = yac_init.initConsensusGate(peer_address,
                                                    loop,
                                                    orderer,
-                                                   simulator);
-
-  // Block loader
-  auto block_loader = std::make_shared<MockBlockLoader>();
+                                                   simulator,
+                                                   block_loader);
 
   // Synchronizer
   auto synchronizer = createSynchronizer(consensus_gate, chain_validator,
@@ -174,6 +165,7 @@ void Irohad::run() {
   builder.RegisterService(ordering_init.ordering_gate.get());
   builder.RegisterService(ordering_init.ordering_service.get());
   builder.RegisterService(yac_init.consensus_network.get());
+  builder.RegisterService(loader_init.service.get());
   internal_server = builder.BuildAndStart();
   internal_thread = std::thread([this] { internal_server->Wait(); });
   server_thread = std::thread([this] {

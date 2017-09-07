@@ -60,9 +60,9 @@ namespace iroha {
 
       bool validate(const model::GetSignatories& query);
 
-      bool validate(const model::GetAccountAssetTransactions& query);
-
       bool validate(const model::GetAccountTransactions& query);
+
+      bool validate(const model::GetAccountAssetTransactions& query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAccountAssets(
           const model::GetAccountAssets& query);

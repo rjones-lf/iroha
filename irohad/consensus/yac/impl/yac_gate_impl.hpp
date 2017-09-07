@@ -20,6 +20,7 @@
 
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "network/block_loader.hpp"
 #include "simulator/block_creator.hpp"
 
 #include "logger/logger.hpp"
@@ -33,15 +34,27 @@ namespace iroha {
         YacGateImpl(std::shared_ptr<HashGate> hash_gate,
                     std::shared_ptr<YacPeerOrderer> orderer,
                     std::shared_ptr<YacHashProvider> hash_provider,
-                    std::shared_ptr<simulator::BlockCreator> block_creator);
+                    std::shared_ptr<simulator::BlockCreator> block_creator,
+                    std::shared_ptr<network::BlockLoader> block_loader,
+                    uint64_t delay);
         void vote(model::Block block) override;
         rxcpp::observable<model::Block> on_commit() override;
 
        private:
+
+        /**
+         * Update current block with signatures from commit message
+         * @param commit - commit message to get signatures from
+         */
+        void moveSignatures(CommitMessage &commit);
+
         std::shared_ptr<HashGate> hash_gate_;
         std::shared_ptr<YacPeerOrderer> orderer_;
         std::shared_ptr<YacHashProvider> hash_provider_;
         std::shared_ptr<simulator::BlockCreator> block_creator_;
+        std::shared_ptr<network::BlockLoader> block_loader_;
+
+        const uint64_t delay_;
 
         logger::Logger log_;
 

@@ -18,7 +18,6 @@
 #include <utility>
 
 #include "consensus/yac/yac.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -50,11 +49,19 @@ namespace iroha {
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
             cluster_order_(order),
-            delay_(delay) {}
+            delay_(delay) {
+        log_ = logger::log("YAC");
+      }
 
       // ------|Hash gate|------
 
       void Yac::vote(YacHash hash, ClusterOrdering order) {
+
+        log_->info("Order for voting: {}", logger::to_string(order.getPeers(),
+                                                             [](auto val) {
+                                                               return val.address;
+                                                             }));
+
         this->cluster_order_ = order;
         votingStep(hash);
       };
@@ -66,18 +73,21 @@ namespace iroha {
       // ------|Network notifications|------
 
       void Yac::on_vote(model::Peer from, VoteMessage vote) {
+        std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(vote)) {
           this->applyVote(from, vote);
         }
       }
 
       void Yac::on_commit(model::Peer from, CommitMessage commit) {
+        std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(commit)) {
           this->applyCommit(from, commit);
         }
       }
 
       void Yac::on_reject(model::Peer from, RejectMessage reject) {
+        std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(reject)) {
           this->applyReject(from, reject);
         }
@@ -90,9 +100,13 @@ namespace iroha {
         if (committed) {
           return;
         }
+
+        log_->info("Vote for hash ({}, {})",
+                   hash.proposal_hash, hash.block_hash);
+
         network_->send_vote(cluster_order_.currentLeader(),
                             crypto_->getVote(hash));
-        timer_->invokeAfterDelay(delay_, [this, hash]() {
+        timer_->invokeAfterDelay(delay_, [this, hash] {
           cluster_order_.switchToNext();
           if (cluster_order_.hasNext()) {
             this->votingStep(hash);
@@ -138,6 +152,10 @@ namespace iroha {
       };
 
       void Yac::applyVote(model::Peer from, VoteMessage vote) {
+
+        log_->info("Apply vote: {} from {}", vote.hash.block_hash,
+                   from.address);
+
         auto answer =
             vote_storage_.store(vote, cluster_order_.getNumberOfPeers());
 
@@ -153,14 +171,25 @@ namespace iroha {
         if (answer->commit.has_value()) {
           if (not already_processed) {
             // propagate for all
+
+            log_->info("Propagate commit {} to whole network",
+                       vote.hash.block_hash);
+
             propagateCommit(answer->commit.value());
           } else {
             // propagate directly
+
+            log_->info("Propagate commit {} directly to {}",
+                       vote.hash.block_hash, from.address);
+
             propagateCommitDirectly(from, answer->commit.value());
           }
         }
 
         if (answer->reject.has_value()) {
+
+          log_->info("Reject case on hash {} achieved", proposal_hash);
+
           if (not already_processed) {
             // propagate reject for all
             propagateReject(answer->reject.value());
@@ -175,7 +204,7 @@ namespace iroha {
       // ------|Propagation|------
 
       void Yac::propagateCommit(CommitMessage msg) {
-        for (auto peer :cluster_order_.getPeers()) {
+        for (const auto &peer :cluster_order_.getPeers()) {
           propagateCommitDirectly(peer, msg);
         }
       }
@@ -185,7 +214,7 @@ namespace iroha {
       }
 
       void Yac::propagateReject(RejectMessage msg) {
-        for (auto peer :cluster_order_.getPeers()) {
+        for (const auto &peer :cluster_order_.getPeers()) {
           propagateRejectDirectly(peer, msg);
         }
       }

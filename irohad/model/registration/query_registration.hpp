@@ -41,6 +41,7 @@ namespace iroha {
         query_handler.register_type(typeid(GetAccountAssets));
         query_handler.register_type(typeid(GetSignatories));
         query_handler.register_type(typeid(GetAccountTransactions));
+        query_handler.register_type(typeid(GetAccountAssetTransactions));
       }
 
       ClassHandler query_handler;

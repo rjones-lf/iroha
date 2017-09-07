@@ -19,9 +19,7 @@
 #include <responses.pb.h>
 #include <fstream>
 #include <iostream>
-#include "bootstrap_network.hpp"
 #include "common/assert_config.hpp"
-#include "genesis_block_client_impl.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/generators/block_generator.hpp"

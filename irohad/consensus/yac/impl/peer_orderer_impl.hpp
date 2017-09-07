@@ -18,7 +18,7 @@
 #ifndef IROHA_PEER_ORDERER_IMPL_HPP
 #define IROHA_PEER_ORDERER_IMPL_HPP
 
-#include "ametsuchi/wsv_query.hpp"
+#include "ametsuchi/peer_query.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
 
 namespace iroha {
@@ -27,15 +27,14 @@ namespace iroha {
 
       class PeerOrdererImpl : public YacPeerOrderer {
        public:
-        explicit PeerOrdererImpl(std::shared_ptr<ametsuchi::WsvQuery> query);
+        explicit PeerOrdererImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query);
 
         nonstd::optional<ClusterOrdering> getInitialOrdering() override;
 
         nonstd::optional<ClusterOrdering> getOrdering(YacHash hash) override;
 
        private:
-        std::shared_ptr<ametsuchi::WsvQuery> query_;
-        std::shared_ptr<YacHashProvider> hash_provider_;
+        std::shared_ptr<ametsuchi::PeerQuery> query_;
       };
 
     }  // namespace yac

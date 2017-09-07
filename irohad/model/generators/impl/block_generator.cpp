@@ -23,9 +23,8 @@ namespace iroha {
     namespace generators {
       Block BlockGenerator::generateGenesisBlock(
           std::vector<std::string> peers_address) {
-        Block block;
-        block.created_ts =
-            (ts64_t)std::chrono::system_clock::now().time_since_epoch().count();
+        Block block{};
+        block.created_ts = 0;
         block.height = 1;
         std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0);
         std::fill(block.merkle_root.begin(), block.merkle_root.end(), 0);

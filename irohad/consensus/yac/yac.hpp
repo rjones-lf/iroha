@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <mutex>
 #include <nonstd/optional.hpp>
 
 #include "consensus/yac/yac_gate.hpp"
@@ -30,6 +31,7 @@
 #include "consensus/yac/yac_crypto_provider.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -74,8 +76,8 @@ namespace iroha {
         // ------|Private interface|------
 
         /**
-         * Voting step is strategy of propagating vote until commit/reject
-         * messagee
+         * Voting step is strategy of propagating vote
+         * until commit/reject message received
          */
         void votingStep(YacHash hash);
 
@@ -101,13 +103,17 @@ namespace iroha {
         std::shared_ptr<YacCryptoProvider> crypto_;
         std::shared_ptr<Timer> timer_;
         rxcpp::subjects::subject<CommitMessage> notifier_;
+        std::mutex mutex_;
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
 
-
         // ------|Constants|------
         const uint64_t delay_;
+
+        // ------|Logger|------
+        logger::Logger log_;
+
       };
     }  // namespace yac
   }    // namespace consensus

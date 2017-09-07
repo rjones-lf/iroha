@@ -38,6 +38,8 @@ namespace iroha {
        */
       hash256_t hash;
 
+      using HashType = decltype(hash);
+
       /**
        * List of signatures for signing the block
        * HEADER field
