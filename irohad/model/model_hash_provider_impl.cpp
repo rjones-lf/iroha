@@ -122,6 +122,11 @@ namespace iroha {
         auto cast = static_cast<const GetAccountTransactions &>(*query);
         result_hash += cast.account_id;
       }
+      if (instanceof <model::GetAccountAssetTransactions>(query)) {
+        auto cast = static_cast<const GetAccountAssetTransactions &>(*query);
+        result_hash += cast.account_id;
+        result_hash += cast.asset_id;
+      }
 
       result_hash += query->creator_account_id;
       result_hash += query->query_counter;

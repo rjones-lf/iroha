@@ -44,6 +44,7 @@ add_library(endpoint
 target_link_libraries(endpoint
     protobuf
     grpc++
+    schema
     )
 
 add_library(peer_service_grpc

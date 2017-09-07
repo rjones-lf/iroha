@@ -15,16 +15,14 @@
  * limitations under the License.
  */
 
-#include <utility>
-#include <algorithm>
-
 #include "ametsuchi/impl/storage_impl.hpp"
+
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
+#include "model/commands/transfer_asset.hpp"
 #include "model/converters/json_common.hpp"
-#include "model/execution/command_executor_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -118,7 +116,7 @@ namespace iroha {
 
       hash256_t top_hash;
 
-      if (block_store_->last_id()) {
+      if (block_store_->last_id() > 0) {
         auto blob = block_store_->get(block_store_->last_id());
         if (not blob.has_value()) {
           log_->error("Fetching of blob failed");
@@ -206,7 +204,7 @@ namespace iroha {
                                  redis_host,
                                  redis_port,
                                  postgres_options);
-      if(not ctx.has_value()) {
+      if (not ctx.has_value()) {
         return nullptr;
       }
 
@@ -247,10 +245,23 @@ namespace iroha {
           });
     }
 
+    rxcpp::observable<model::Transaction> StorageImpl::getAccountAssetTransactions(
+        std::string account_id, std::string asset_id) {
+      return getAccountTransactions(account_id).filter([account_id, asset_id](auto tx) {
+          return std::any_of(tx.commands.begin(), tx.commands.end(), [account_id, asset_id](auto command) {
+            if (instanceof <model::TransferAsset>(*command)) {
+              auto transferAsset = (model::TransferAsset*) command.get();
+              return (transferAsset->src_account_id == account_id || transferAsset->dest_account_id == account_id) && transferAsset->asset_id == asset_id;
+            }
+            return false;
+          });
+      });
+    }
+
     rxcpp::observable<model::Block> StorageImpl::getBlocks(uint32_t height,
                                                            uint32_t count) {
       std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      auto to = height + count;
+      auto to = height - 1 + count;
       auto last_id = block_store_->last_id();
       if (to > last_id) {
         to = last_id;
@@ -261,14 +272,17 @@ namespace iroha {
             [this, bytes](auto s) {
               if (not bytes.has_value()) {
                 s.on_completed();
+                return;
               }
               auto document = model::converters::vectorToJson(bytes.value());
               if (not document.has_value()) {
                 s.on_completed();
+                return;
               }
               auto block = serializer_.deserialize(document.value());
               if (not block.has_value()) {
                 s.on_completed();
+                return;
               }
               s.on_next(block.value());
               s.on_completed();
@@ -276,9 +290,12 @@ namespace iroha {
       });
     }
 
-
     rxcpp::observable<model::Block> StorageImpl::getBlocksFrom(uint32_t height) {
-      return getBlocks(height, block_store_->last_id());
+      auto last_id = block_store_->last_id();
+      if (height > last_id) {
+        height = last_id;
+      }
+      return getBlocks(height, block_store_->last_id() - height + 1);
     }
 
     rxcpp::observable<model::Block> StorageImpl::getTopBlocks(uint32_t count) {
@@ -286,7 +303,7 @@ namespace iroha {
       if (count > last_id) {
         count = last_id;
       }
-      return getBlocks(last_id - count + 1, last_id);
+      return getBlocks(last_id - count + 1, count);
     }
 
     nonstd::optional<model::Account> StorageImpl::getAccount(

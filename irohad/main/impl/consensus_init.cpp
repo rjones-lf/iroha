@@ -18,17 +18,6 @@
 #include "main/impl/consensus_init.hpp"
 
 #include <gmock/gmock.h>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-#include "consensus/yac/yac.hpp"
-#include "consensus/yac/messages.hpp"
-#include "consensus/yac/impl/yac_gate_impl.hpp"
-#include "consensus/yac/impl/network_impl.hpp"
-#include <consensus/yac/impl/timer_impl.hpp>
-#include <consensus/yac/impl/peer_orderer_impl.hpp>
-#include <consensus/yac/impl/yac_hash_provider_impl.hpp>
 
 namespace iroha {
   namespace consensus {
@@ -43,27 +32,33 @@ namespace iroha {
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;
           vote.hash = hash;
+          vote.signature.pubkey = pubkey_;
           return vote;
         }
 
-        MockYacCryptoProvider() = default;
+        MockYacCryptoProvider(model::Peer::KeyType pubkey)
+            : pubkey_(std::move(pubkey)) {}
 
         MockYacCryptoProvider(const MockYacCryptoProvider &) {}
 
         MockYacCryptoProvider &operator=(const MockYacCryptoProvider &) {
           return *this;
         }
+
+       private:
+        model::Peer::KeyType pubkey_;
       };
 
       auto YacInit::createNetwork(std::string network_address,
                                   std::vector<model::Peer> initial_peers) {
-        consensus_network = std::make_shared<NetworkImpl>(network_address, initial_peers);
+        consensus_network =
+            std::make_shared<NetworkImpl>(network_address, initial_peers);
         return consensus_network;
       }
 
-      auto YacInit::createCryptoProvider() {
+      auto YacInit::createCryptoProvider(model::Peer::KeyType pubkey) {
         std::shared_ptr<MockYacCryptoProvider>
-            crypto = std::make_shared<MockYacCryptoProvider>();
+            crypto = std::make_shared<MockYacCryptoProvider>(pubkey);
 
         EXPECT_CALL(*crypto, verify(testing::An<CommitMessage>()))
             .WillRepeatedly(testing::Return(true));
@@ -84,26 +79,30 @@ namespace iroha {
         return std::make_shared<YacHashProviderImpl>();
       }
 
-      std::shared_ptr<consensus::yac::Yac> YacInit::createYac(std::string network_address,
-                                                              std::shared_ptr<
-                                                                  uvw::Loop> loop,
-                                                              ClusterOrdering initial_order) {
-        uint64_t delay_seconds = 5;
+      std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
+          std::string network_address, std::shared_ptr<uvw::Loop> loop,
+          ClusterOrdering initial_order) {
+        auto &&order = initial_order.getPeers();
+        auto pubkey =
+            std::find_if(order.begin(), order.end(), [network_address](
+                auto peer) {
+              return peer.address == network_address;
+            })->pubkey;
 
         return Yac::create(YacVoteStorage(),
-                           createNetwork(std::move(network_address),
-                                         initial_order.getPeers()),
-                           createCryptoProvider(),
+                           createNetwork(std::move(network_address), order),
+                           createCryptoProvider(pubkey),
                            createTimer(std::move(loop)),
                            initial_order,
-                           delay_seconds * 1000);
+                           delay_seconds_ * 1000);
 
       }
 
-      std::shared_ptr<YacGateImpl> YacInit::initConsensusGate(std::string network_address,
-                                  std::shared_ptr<uvw::Loop> loop,
-                                  std::shared_ptr<YacPeerOrderer> peer_orderer,
-                                  std::shared_ptr<simulator::BlockCreator> block_creator) {
+      std::shared_ptr<YacGateImpl> YacInit::initConsensusGate(
+          std::string network_address, std::shared_ptr<uvw::Loop> loop,
+          std::shared_ptr<YacPeerOrderer> peer_orderer,
+          std::shared_ptr<simulator::BlockCreator> block_creator,
+          std::shared_ptr<network::BlockLoader> block_loader) {
         auto yac = createYac(std::move(network_address),
                              std::move(loop),
                              peer_orderer->getInitialOrdering().value());
@@ -112,7 +111,10 @@ namespace iroha {
         auto hash_provider = createHashProvider();
         return std::make_shared<YacGateImpl>(std::move(yac),
                                              std::move(peer_orderer),
-                                             hash_provider, block_creator);
+                                             hash_provider,
+                                             block_creator,
+                                             block_loader,
+                                             delay_seconds_ * 1000);
       }
 
     } // namespace yac

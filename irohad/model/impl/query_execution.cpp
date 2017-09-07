@@ -120,12 +120,11 @@ iroha::model::QueryProcessingFactory::executeGetAccountAssets(
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
     const model::GetAccountAssetTransactions& query) {
-  // auto acc_asset_tx = _blockQuery.
-  // TODO: implement
-  iroha::model::ErrorResponse response;
+  auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(query.account_id, query.asset_id);
+  iroha::model::TransactionsResponse response;
   response.query_hash = query.query_hash;
-  response.reason = ErrorResponse::NOT_SUPPORTED;
-  return std::make_shared<iroha::model::ErrorResponse>(response);
+  response.transactions = acc_asset_tx;
+  return std::make_shared<iroha::model::TransactionsResponse>(response);
 }
 
 std::shared_ptr<iroha::model::QueryResponse>

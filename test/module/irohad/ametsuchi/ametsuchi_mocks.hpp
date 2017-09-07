@@ -58,6 +58,7 @@ namespace iroha {
       MOCK_METHOD2(deleteAccountSignatory,
                    bool(const std::string &, const ed25519::pubkey_t &));
 
+
       MOCK_METHOD1(insertPeer, bool(const model::Peer &));
 
       MOCK_METHOD1(deletePeer, bool(const model::Peer &));
@@ -70,6 +71,9 @@ namespace iroha {
       MOCK_METHOD1(
           getAccountTransactions,
           rxcpp::observable<model::Transaction>(std::string account_id));
+      MOCK_METHOD2(
+          getAccountAssetTransactions,
+          rxcpp::observable<model::Transaction>(std::string account_id, std::string asset_id));
       MOCK_METHOD2(getBlocks,
                    rxcpp::observable<model::Block>(uint32_t, uint32_t));
       MOCK_METHOD1(getBlocksFrom,

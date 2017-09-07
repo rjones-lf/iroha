@@ -19,11 +19,11 @@
 #include <grpc++/grpc++.h>
 #include "logger/logger.hpp"
 
-using namespace logger;
-
 namespace iroha {
   namespace consensus {
     namespace yac {
+
+      // ----------| Public API |----------
 
       NetworkImpl::NetworkImpl(const std::string &address,
                                const std::vector<model::Peer> &peers)
@@ -33,11 +33,35 @@ namespace iroha {
               peer.address, grpc::InsecureChannelCredentials()));
           peers_addresses_[peer.address] = peer;
         }
+        log_ = logger::log("YacNetwork");
       }
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
         handler_ = handler;
+      }
+
+      void NetworkImpl::send_vote(model::Peer to, VoteMessage vote) {
+        proto::Vote request;
+        auto hash = request.mutable_hash();
+        hash->set_block(vote.hash.block_hash);
+        hash->set_proposal(vote.hash.proposal_hash);
+        auto signature = request.mutable_signature();
+        signature->set_signature(vote.signature.signature.data(),
+                                 vote.signature.signature.size());
+        signature->set_pubkey(vote.signature.pubkey.data(),
+                              vote.signature.pubkey.size());
+
+        auto call = new AsyncClientCall;
+
+        call->context.AddMetadata("address", address_);
+
+        call->response_reader =
+            peers_.at(to)->AsyncSendVote(&call->context, request, &cq_);
+
+        call->response_reader->Finish(&call->reply, &call->status, call);
+
+        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address);
       }
 
       void NetworkImpl::send_commit(model::Peer to, CommitMessage commit) {
@@ -62,6 +86,10 @@ namespace iroha {
             peers_.at(to)->AsyncSendCommit(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
+
+        log_->info("Send votes bundle[size={}] commit to {}",
+                   commit.votes.size(),
+                   to.address);
       }
 
       void NetworkImpl::send_reject(model::Peer to, RejectMessage reject) {
@@ -86,27 +114,10 @@ namespace iroha {
             peers_.at(to)->AsyncSendReject(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
-      }
 
-      void NetworkImpl::send_vote(model::Peer to, VoteMessage vote) {
-        proto::Vote request;
-        auto hash = request.mutable_hash();
-        hash->set_block(vote.hash.block_hash);
-        hash->set_proposal(vote.hash.proposal_hash);
-        auto signature = request.mutable_signature();
-        signature->set_signature(vote.signature.signature.data(),
-                                 vote.signature.signature.size());
-        signature->set_pubkey(vote.signature.pubkey.data(),
-                              vote.signature.pubkey.size());
-
-        auto call = new AsyncClientCall;
-
-        call->context.AddMetadata("address", address_);
-
-        call->response_reader =
-            peers_.at(to)->AsyncSendVote(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
+        log_->info("Send votes bundle[size={}] reject to {}",
+                   reject.votes.size(),
+                   to.address);
       }
 
       grpc::Status NetworkImpl::SendVote(
@@ -129,6 +140,10 @@ namespace iroha {
         std::copy(request->signature().pubkey().begin(),
                   request->signature().pubkey().end(),
                   vote.signature.pubkey.begin());
+
+        log_->info("Receive vote {} from {}",
+                   vote.hash.block_hash,
+                   peer.address);
 
         handler_.lock()->on_vote(peer, vote);
         return grpc::Status::OK;
@@ -159,6 +174,10 @@ namespace iroha {
           commit.votes.push_back(vote);
         }
 
+        log_->info("Receive commit[size={}] from {}",
+                   commit.votes.size(),
+                   peer.address);
+
         handler_.lock()->on_commit(peer, commit);
         return grpc::Status::OK;
       }
@@ -187,6 +206,10 @@ namespace iroha {
                     vote.signature.pubkey.begin());
           reject.votes.push_back(vote);
         }
+
+        log_->info("Receive reject[size={}] from {}",
+                   reject.votes.size(),
+                   peer.address);
 
         handler_.lock()->on_reject(peer, reject);
         return grpc::Status::OK;

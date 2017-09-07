@@ -16,24 +16,24 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
-#include "algorithm"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
-      YacHash YacHashProviderImpl::makeHash(model::Block &block) {
-        YacHash hash;
+      YacHash YacHashProviderImpl::makeHash(model::Block::HashType &hash) {
+        YacHash result;
         // todo add proposal hash from block.proposal_hash
-        hash.proposal_hash = std::string(block.hash.size(), 0);
-        std::copy(block.hash.begin(),
-                  block.hash.end(),
-                  hash.proposal_hash.begin());
-        hash.block_hash = std::string(block.hash.size(), 0);
-        std::copy(block.hash.begin(),
-                  block.hash.end(),
-                  hash.block_hash.begin());
-        return hash;
+        auto hex_hash = hash.to_hexstring();
+        result.proposal_hash = hex_hash;
+        result.block_hash = hex_hash;
+        return result;
+      }
+
+      model::Block::HashType YacHashProviderImpl::toModelHash(YacHash hash) {
+        model::Block::HashType result;
+        hexstringToArray(hash.block_hash, result);
+        return result;
       }
     }  // namespace yac
   }    // namespace consensus
