@@ -63,7 +63,6 @@ add_subdirectory(schema)
 add_subdirectory(libs)
 add_subdirectory(irohad)
 add_subdirectory(iroha-cli)
-add_subdirectory(libiroha)
 
 link_directories(${PROJECT_BINARY_DIR}/lib)
 

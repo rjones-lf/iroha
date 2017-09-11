@@ -79,3 +79,17 @@ find_package(rxcpp)
 #          TBB           #
 ##########################
 find_package(tbb)
+
+##########################
+# boost multiprecision   #
+##########################
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost 1.53.0 COMPONENTS multiprecision)
+
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    add_executable(progname file1.cxx file2.cxx)
+    target_link_libraries(progname ${Boost_LIBRARIES})
+endif()

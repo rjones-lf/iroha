@@ -15,19 +15,17 @@
  * limitations under the License.
  */
 
-
 #include <gtest/gtest.h>
-#include "basic/amount.hpp"
+//#include "amount/amount.hpp"
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
-using namespace libiroha::basic;
-
-class AmountTest : public testing::Test {
-
-};
+class AmountTest : public testing::Test {};
 
 TEST_F(AmountTest, TestBasic) {
-  Amount a,b;
-  EXPECT_EQ(a.to_string(), b.to_string());
+  boost::multiprecision::cpp_dec_float<2> a(1);
+  auto b = a.div_unsigned_long_long(3);
+
+  std::cout.precision(
+      std::numeric_limits<boost::multiprecision::cpp_dec_float_50>::digits10);
+  std::cout << b.cpp_dec_float_digits10 << std::endl;
 }
-
-
