@@ -184,7 +184,7 @@ namespace iroha_cli {
      * @param params in format: vector of strings
      * @return pair if ip and port if formed right, nullopt otherwise
      */
-    nonstd::optional<std::pair<std::string, int>> parseIrohaPeerParams(
+    nonstd::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
         std::vector<std::string> params);
 
     /**

@@ -39,7 +39,7 @@ namespace iroha_cli {
     };
 
     void addBackOption(MenuPoints& menu) {
-      menu.push_back(std::string("0. Back (") + BACK_CODE + std::string(")"));
+      menu.push_back("0. Back (" + BACK_CODE + ")");
     }
 
     bool isBackOption(std::string line) {
@@ -70,10 +70,10 @@ namespace iroha_cli {
 
     void printEnd() { std::cout << "--------------------" << std::endl; };
 
-    nonstd::optional<std::pair<std::string, int>> parseIrohaPeerParams(
+    nonstd::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
         ParamsDescription params) {
       auto address = params[0];
-      auto port = parser::toInt(params[1]);
+      auto port = parser::parseValue<uint16_t>(params[1]);
       if (not port.has_value()) {
         std::cout << "Port has wrong format" << std::endl;
         // Continue parsing

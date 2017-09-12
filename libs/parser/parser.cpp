@@ -33,23 +33,4 @@ nonstd::optional<std::string> parseFirstCommand(std::string line){
     return {std::istream_iterator<std::string>{iss},
             std::istream_iterator<std::string>{}};
   }
-
-  nonstd::optional<uint64_t> toUint64(std::string word) {
-    try {
-      auto val = std::stoull(word);
-      return val;
-    } catch (const std::exception&) {
-      return nonstd::nullopt;
-    }
-  };
-
-  nonstd::optional<int> toInt(std::string word) {
-    try {
-      auto val = std::stoi(word);
-      return val;
-    } catch (const std::exception&) {
-      return nonstd::nullopt;
-    }
-  };
-
 }  // namespace parser

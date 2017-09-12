@@ -70,12 +70,12 @@ namespace iroha {
       // query is not sent from future
       // todo make future gap for passing timestamp, like with old timestamps
       if (now < query->created_ts) {
-        log_->warn("timestamp broken: send from future. Now {}", now);
+        log_->warn("timestamp broken: send from future: {}. Now {}", query->created_ts, now);
         return false;
       }
 
       if (now - query->created_ts > MAX_DELAY) {
-        log_->warn("timestamp broken: too old. Now {}", now);
+        log_->warn("timestamp broken: too old: {}. Now {}", query->created_ts, now);
         return false;
       }
 

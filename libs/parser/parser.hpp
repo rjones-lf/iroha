@@ -15,48 +15,43 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <sstream>
 #include <algorithm>
-#include <vector>
 #include <iterator>
 #include <nonstd/optional.hpp>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #ifndef IROHA_PARSER_HPP
 #define IROHA_PARSER_HPP
 
 namespace parser {
 
+  /**
+   * Parse the first command in the line
+   * @param line string to parse
+   * @return nullopt if no command found, string otherwise
+   */
+  nonstd::optional<std::string> parseFirstCommand(std::string line);
 
-/**
- * Parse the first command in the line
- * @param line string to parse
- * @return nullopt if no command found, string otherwise
- */
-nonstd::optional<std::string> parseFirstCommand(std::string line);
+  /**
+   * Split line into words
+   * @param line
+   * @return vector with words
+   */
+  std::vector<std::string> split(std::string line);
 
-/**
- * Split line into words
- * @param line
- * @return vector with words
- */
-std::vector<std::string> split(std::string line);
+  template <typename T>
+  nonstd::optional<T> parseValue(std::string word) {
+    std::stringstream ss(word);
+    T val;
+    if (ss >> val) {
+      return val;
+    } else {
+      return nonstd::nullopt;
+    }
+  }
 
-/**
- * String to Uint64_t
- * @param word
- * @return nullopt if error
- */
-nonstd::optional<uint64_t> toUint64(std::string word);
+}  // namespace parser
 
-/**
- * String to Int
- * @param word
- * @return nullopt if error
- */
-nonstd::optional<int> toInt(std::string word);
-
-
-}
-
-#endif //IROHA_PARSER_HPP
+#endif  // IROHA_PARSER_HPP

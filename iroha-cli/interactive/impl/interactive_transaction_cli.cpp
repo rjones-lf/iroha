@@ -25,6 +25,8 @@
 
 #include "parser/parser.hpp"
 
+using namespace std::chrono_literals;
+
 namespace iroha_cli {
   namespace interactive {
 
@@ -150,15 +152,13 @@ namespace iroha_cli {
     }
 
     bool InteractiveTransactionCli::parseCommand(std::string line) {
-
       if (isBackOption(line)) {
         // Switch current context
         return false;
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
-          this, line, command_handlers_,
-          command_params_descriptions_);
+          this, line, command_handlers_, command_params_descriptions_);
 
       if (not res.has_value()) {
         // Continue parsing
@@ -177,8 +177,8 @@ namespace iroha_cli {
       auto account_id = params[0];
       auto asset_id = params[1];
       iroha::Amount amount;
-      auto val_int = parser::toUint64(params[2]);
-      auto val_frac = parser::toUint64(params[3]);
+      auto val_int = parser::parseValue<uint64_t >(params[2]);
+      auto val_frac = parser::parseValue<uint64_t>(params[3]);
       if (not val_int.has_value() || not val_frac.has_value()) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
@@ -240,7 +240,7 @@ namespace iroha_cli {
         std::vector<std::string> params) {
       auto asset_name = params[0];
       auto domain_id = params[1];
-      auto val = parser::toInt(params[2]);
+      auto val = parser::parseValue<uint8_t>(params[2]);
       if (not val.has_value()) {
         std::cout << "Wrong format for precision" << std::endl;
         return nullptr;
@@ -269,7 +269,7 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseSetQuorum(std::vector<std::string> params) {
       auto account_id = params[0];
-      auto quorum = parser::toUint64(params[1]);
+      auto quorum = parser::parseValue<uint64_t>(params[1]);
       if (not quorum.has_value()) {
         std::cout << "Wrong format for quorum" << std::endl;
         return nullptr;
@@ -292,8 +292,8 @@ namespace iroha_cli {
       auto dest_account_id = params[1];
       auto asset_id = params[2];
       iroha::Amount amount;
-      auto val_int = parser::toUint64(params[3]);
-      auto val_frac = parser::toUint64(params[4]);
+      auto val_int = parser::parseValue<uint64_t>(params[3]);
+      auto val_frac = parser::parseValue<uint64_t>(params[4]);
       if (not val_int.has_value() || not val_frac.has_value()) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
@@ -322,10 +322,8 @@ namespace iroha_cli {
 
       // Forming a transaction
       iroha::model::generators::TransactionGenerator tx_generator_;
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
+      auto time_stamp =
+          std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
       // TODO: sign tx
@@ -347,10 +345,8 @@ namespace iroha_cli {
       }
       // Forming a transaction
       iroha::model::generators::TransactionGenerator tx_generator_;
-      auto time_stamp = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
+      auto time_stamp =
+          std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
       // TODO: sign tx

@@ -22,6 +22,8 @@
 #include "model/converters/json_query_factory.hpp"
 #include "parser/parser.hpp"
 
+using namespace std::chrono_literals;
+
 namespace iroha_cli {
   namespace interactive {
 
@@ -78,10 +80,7 @@ namespace iroha_cli {
       // Creating a new query, increment local counter
       ++counter_;
       // Init timestamp for a new query
-      local_time_ = static_cast<uint64_t>(
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::system_clock::now().time_since_epoch())
-              .count());
+      local_time_ = std::chrono::system_clock::now().time_since_epoch() / 1ms;
 
       while (is_parsing) {
         line = promtString("> ");
