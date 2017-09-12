@@ -19,20 +19,23 @@
 #define IROHA_CLIENT_HPP
 
 #include <string>
-#include "torii_utils/query_client.hpp"
 #include "torii/command_client.hpp"
+#include "torii_utils/query_client.hpp"
+
+#include "model/query.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha_cli {
 
   class CliClient {
    public:
     template <typename T>
-    struct Response{
+    struct Response {
       grpc::Status status;
       T answer;
     };
 
-    enum TxStatus { WRONG_FORMAT, OK,  };
+    enum TxStatus { OK };
 
     CliClient(std::string target_ip, int port);
     /**
@@ -40,7 +43,8 @@ namespace iroha_cli {
      * @param tx
      * @return
      */
-    CliClient::Response<CliClient::TxStatus> sendTx(iroha::model::Transaction tx);
+    CliClient::Response<CliClient::TxStatus> sendTx(
+        iroha::model::Transaction tx);
 
     /**
      * Send Query to Iroha Peer, i.e. target_ip:port
@@ -50,6 +54,8 @@ namespace iroha_cli {
     CliClient::Response<iroha::protocol::QueryResponse> sendQuery(
         std::shared_ptr<iroha::model::Query> query);
 
+    CliClient::Response<iroha::protocol::ToriiResponse> getTxStatus(
+        std::string tx_hash);
 
    private:
     torii::CommandSyncClient command_client_;

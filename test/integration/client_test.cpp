@@ -18,6 +18,7 @@
 #include <responses.pb.h>
 
 #include <model/model_hash_provider_impl.hpp>
+#include <endpoint.pb.h>
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -193,7 +194,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   iroha::model::HashProviderImpl hashProvider;
   tx.tx_hash = hashProvider.get_hash(tx);
 
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(json_string).answer,
+  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(tx).answer,
             iroha_cli::CliClient::OK);
   ASSERT_EQ(iroha_cli::CliClient(Ip, Port)
                 .getTxStatus(tx.tx_hash.to_string())

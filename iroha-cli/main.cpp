@@ -10,7 +10,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY =KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -19,8 +19,7 @@
 #include <responses.pb.h>
 #include <fstream>
 #include <iostream>
-#include <model/converters/json_query_factory.hpp>
-#include "bootstrap_network.hpp"
+#include "model/converters/json_query_factory.hpp"
 #include "common/assert_config.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"

@@ -26,8 +26,9 @@ add_library(torii_service
     impl/command_service.cpp
     )
 target_link_libraries(torii_service
-  pb_model_convertersendpoint
-  stateless_validator
-  model
-  logger
-  )
+    pb_model_converters
+    endpoint
+    stateless_validator
+    model
+    logger
+    )
