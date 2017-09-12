@@ -36,7 +36,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-.PHONY: all docker docker-test up test-up down test-down test
+.PHONY: all help docker docker-test up test-up down test-down test
 
 IROHA_HOME := $(shell pwd)
 
