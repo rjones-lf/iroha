@@ -17,12 +17,12 @@
 
 #ifndef IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
 #define IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
+#include <map>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include "logger/logger.hpp"
 #include "responses.pb.h"
-#include <memory>
-#include <map>
 
 namespace iroha_cli {
   class QueryResponseHandler {
@@ -47,11 +47,11 @@ namespace iroha_cli {
     // -- --
     using Handler =
         void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
-    using QueryResponseCode = int;
-    using ErrorResponseCode = int;
+    using QueryResponseCode = iroha::protocol::QueryResponse::ResponseCase;
+    using ErrorResponseCode = iroha::protocol::ErrorResponse::Reason;
 
     // Map  QueryResponse code -> Handle Method
-    std::unordered_map<QueryResponseCode , Handler> handler_map_;
+    std::unordered_map<QueryResponseCode, Handler> handler_map_;
     // Map ErrorResponse code -> String to print
     std::unordered_map<ErrorResponseCode, std::string> error_handler_map_;
 

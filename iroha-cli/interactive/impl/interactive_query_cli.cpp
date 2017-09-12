@@ -170,8 +170,7 @@ namespace iroha_cli {
         return true;
       }
       CliClient client(address.value().first, address.value().second);
-      GrpcResponseHandler response_handler;
-      response_handler.handle(client.sendQuery(query_));
+      GrpcResponseHandler{}.handle(client.sendQuery(query_));
       printEnd();
       // Stop parsing
       return false;

@@ -34,6 +34,10 @@ namespace iroha {
 
       bool operator==(const Command& command) const override;
       bool operator!=(const Command& command) const override;
+
+      CreateDomain() {}
+
+      CreateDomain(std::string domain_name) : domain_name(domain_name) {}
     };
   }  // namespace model
 }

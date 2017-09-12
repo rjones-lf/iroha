@@ -50,6 +50,11 @@ namespace iroha {
                                                      std::string domain_name,
                                                      uint8_t precision);
 
+        template <typename Type, typename ... ParamTypes>
+        std::shared_ptr<Command> generateCommand(ParamTypes ... args) {
+          return std::make_shared<Type>(args...);
+        }
+
         /**
          * Generate default admin permissions
          * Admin Permissions:

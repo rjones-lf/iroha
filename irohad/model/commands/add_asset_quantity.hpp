@@ -47,6 +47,12 @@ namespace iroha {
 
       bool operator==(const Command& command) const override;
       bool operator!=(const Command& command) const override;
+
+      AddAssetQuantity() {}
+
+      AddAssetQuantity(std::string account_id, std::string asset_id,
+                       Amount amount)
+          : account_id(account_id), asset_id(asset_id), amount(amount) {}
     };
   }  // namespace model
 }  // namespace iroha

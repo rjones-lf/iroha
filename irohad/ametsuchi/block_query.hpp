@@ -18,6 +18,8 @@
 #ifndef IROHA_BLOCK_QUERY_HPP
 #define IROHA_BLOCK_QUERY_HPP
 
+#include <cmath>
+
 #include <model/block.hpp>
 #include <model/transaction.hpp>
 #include <rxcpp/rx-observable.hpp>

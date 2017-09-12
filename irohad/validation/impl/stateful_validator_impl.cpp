@@ -16,7 +16,7 @@
  */
 
 #include "validation/impl/stateful_validator_impl.hpp"
-#include <algorithm>
+#include <numeric>
 
 namespace iroha {
   namespace validation {

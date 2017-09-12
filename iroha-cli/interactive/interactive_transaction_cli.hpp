@@ -88,7 +88,7 @@ namespace iroha_cli {
       /**
        * Parse line with iroha Command
        * @param line containg iroha command
-       * @return false - if parsing must be stoped, true - if parsing should
+       * @return false - if parsing must be stopped, true - if parsing should
        * continue
        */
       bool parseCommand(std::string line);

@@ -41,6 +41,11 @@ namespace iroha {
 
       bool operator==(const Command& command) const override;
       bool operator!=(const Command& command) const override;
+
+      AddSignatory() {}
+
+      AddSignatory(std::string account_id, ed25519::pubkey_t pubkey)
+          : account_id(account_id), pubkey(pubkey) {}
     };
   }  // namespace model
 }  // namespace iroha
