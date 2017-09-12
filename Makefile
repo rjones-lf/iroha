@@ -57,10 +57,10 @@ iroha-build:
 	docker run -t --rm --name iroha -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-build.sh
 
 iroha-release:
-	docker run -it --rm --name iroha-release -v $(IROHA_HOME):/usr/local/iroha -v $(IROHA_HOME)/build/ccache-data:/tmp/ccache -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
+	docker run -t --rm --name iroha-release -v $(IROHA_HOME):/usr/local/iroha -v $(IROHA_HOME)/build/ccache-data:/tmp/ccache -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
 
 iroha-release-test:
-	docker run -it --rm --name iroha-release-test -v $(IROHA_HOME):/usr/local/iroha -v $(IROHA_HOME)/build/ccache-data:/tmp/ccache -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-release-test.sh
+	docker run -t --rm --name iroha-release-test -v $(IROHA_HOME):/usr/local/iroha -v $(IROHA_HOME)/build/ccache-data:/tmp/ccache -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-release-test.sh
 
 
 iroha:
