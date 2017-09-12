@@ -18,6 +18,7 @@
 #define IROHA_AMOUNT_H
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <cstdint>
 #include <string>
 
@@ -26,8 +27,8 @@ namespace amount {
   class Amount {
    public:
     Amount();
-    Amount(uint64_t amount);
-    Amount(uint64_t amount, uint8_t precision);
+    Amount(boost::multiprecision::uint256_t amount);
+    Amount(boost::multiprecision::uint256_t amount, uint8_t precision);
 
     Amount(const Amount&);
     Amount& operator=(const Amount&);
@@ -55,7 +56,8 @@ namespace amount {
     ~Amount() = default;
 
    private:
-    boost::multiprecision::cpp_dec_float_50 value;
+    boost::multiprecision::uint256_t value_;
+    uint8_t precision_;
   };
 }
 #endif  // IROHA_AMOUNT_H

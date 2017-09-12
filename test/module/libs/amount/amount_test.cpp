@@ -16,16 +16,19 @@
  */
 
 #include <gtest/gtest.h>
-//#include "amount/amount.hpp"
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <amount/amount.hpp>
 
 class AmountTest : public testing::Test {};
 
-TEST_F(AmountTest, TestBasic) {
-  boost::multiprecision::cpp_dec_float<2> a(1);
-  auto b = a.div_unsigned_long_long(3);
+using namespace boost::multiprecision;
 
-  std::cout.precision(
-      std::numeric_limits<boost::multiprecision::cpp_dec_float_50>::digits10);
-  std::cout << b.cpp_dec_float_digits10 << std::endl;
+TEST_F(AmountTest, TestBasic) {
+  amount::Amount a(123, 2);
+  auto b = a.percentage(50);
+  ASSERT_EQ(b.to_string(), "0.61");
+
+  auto c = a + b;
+  ASSERT_EQ(c.to_string(), "1.84");
 }

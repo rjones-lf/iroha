@@ -15,32 +15,98 @@
  * limitations under the License.
  */
 
+#include <utility>
+
 #include "amount/amount.hpp"
 
 namespace amount {
 
-  Amount::Amount() {}
+  using namespace boost::multiprecision;
 
-  Amount::Amount(uint64_t amount, uint8_t precision) {
-    value = amount;
-    value /= std::pow(10, precision);
+  Amount::Amount() : value_(0), precision_(0) {}
+
+  Amount::Amount(boost::multiprecision::uint256_t value)
+      : value_(value), precision_(0) {}
+
+  Amount::Amount(boost::multiprecision::uint256_t amount, uint8_t precision)
+      : value_(amount), precision_(precision) {}
+
+  Amount::Amount(const Amount &am)
+      : value_(am.value_), precision_(am.precision_) {}
+
+  Amount &Amount::operator=(const Amount &other) {
+    // check for self-assignment
+    if(&other == this)
+      return *this;
+    std::copy(&other.value_, &other.value_ + sizeof(decltype(value_)), &value_);
+    std::copy(&other.precision_, &other.precision_ + sizeof(precision_), &precision_);
+    return *this;
   }
-  Amount::Amount(uint64_t amount) { value = amount; }
-  Amount::Amount(const Amount &) {}
-  Amount &Amount::operator=(const Amount &) { return *this; }
-  Amount::Amount(Amount &&) {}
+
+  Amount::Amount(Amount &&am)
+      : value_(std::move(am.value_)), precision_(std::move(am.precision_)) {}
+
   Amount &Amount::operator=(Amount &&) { return *this; }
-  Amount Amount::percentage(uint64_t) const { return Amount(); }
-  Amount Amount::percentage(const Amount &) const { return Amount(); }
-  Amount Amount::operator+(const Amount &) const { return Amount(); }
-  Amount &Amount::operator+=(const Amount &) { return *this; }
-  Amount Amount::operator-(const Amount &) const { return Amount(); }
-  Amount &Amount::operator-=(const Amount &) { return *this; }
-  bool Amount::operator==(const Amount &) const { return false; }
-  bool Amount::operator!=(const Amount &) const { return false; }
-  bool Amount::operator<(const Amount &) const { return false; }
-  bool Amount::operator>(const Amount &) const { return false; }
-  bool Amount::operator<=(const Amount &) const { return false; }
-  bool Amount::operator>=(const Amount &) const { return false; }
-}
+
+  Amount Amount::percentage(uint64_t percents) const {
+    boost::multiprecision::uint256_t new_val =
+        value_ * percents / 100;
+    return Amount(new_val, precision_);
+  }
+
+  Amount Amount::percentage(const Amount &am) const {
+    boost::multiprecision::uint256_t new_value = value_ * am.value_;
+    new_value /= uint256_t(std::pow(10, am.precision_));
+    return Amount(new_value, precision_);
+  }
+
+  Amount Amount::operator+(const Amount &other) const {
+    auto new_val = value_ + other.value_;
+    return {new_val, precision_};
+  }
+
+  Amount &Amount::operator+=(const Amount &other) {
+    value_ += other.value_;
+    return *this;
+  }
+
+  Amount Amount::operator-(const Amount &other) const {
+    auto new_val = value_ - other.value_;
+    return {new_val, precision_};
+  }
+
+  Amount &Amount::operator-=(const Amount &other) {
+    value_ -= other.value_;
+    return *this;
+  }
+
+  bool Amount::operator==(const Amount &other) const {
+    return value_ == other.value_ and precision_ == other.precision_;
+  }
+
+  bool Amount::operator!=(const Amount &other) const {
+    return !this->operator==(other);
+  }
+
+  bool Amount::operator<(const Amount &other) const {
+    return value_ < other.value_;
+  }
+
+  bool Amount::operator>(const Amount &other) const {
+    return value_ > other.value_;
+  }
+
+  bool Amount::operator<=(const Amount &other) const {
+    return value_ <= other.value_;
+  }
+
+  bool Amount::operator>=(const Amount &other) const {
+    return value_ >= other.value_;
+  }
+
+  std::string Amount::to_string() const {
+    cpp_dec_float_50 float50(value_);
+    float50 /= std::pow(10, precision_);
+    return float50.str(precision_, std::ios_base::fixed);
+  }
 }
