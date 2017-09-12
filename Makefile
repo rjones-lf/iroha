@@ -85,5 +85,5 @@ test:
 	bash scripts/iroha-test.sh
 
 clean:
-	rm schema/*.{cc,h}
+	-rm schema/*.{cc,h}
 	rm -fr build
