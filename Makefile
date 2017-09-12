@@ -11,13 +11,17 @@
 # - test-up       - running iroha-test container buy docker-compose
 # - test-down     - stop and remove iroha-test container by docker-compose
 # - test          - exec all test commands
+# - clean         - cleaning protobuf schemas and build directory
+#
 # - iroha-develop - build iroha-docker-develop  container
 # - iroha-release - build iroha by iroha-docker-develop
 # - iroha         - build iroha runtime container
+#
 # - iroha-up      - running iroha container by docker-compose
 # - iroha-down    - stop and remove iroha container by docker-compose
+# - iroha-test-up - running iroha-test container by docker-compose
+# - iroha-test-down - stop and remove iroha-test container by docker-compose
 # - iroha-test    - exec all test commands
-# - clean         - cleaning protobuf schemas and build directory
 #---------------------------------------------------------------
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +41,18 @@
 IROHA_HOME := $(shell pwd)
 
 all: iroha-develop iroha-build iroha-release iroha
+
+help:
+	@echo "help          - show make targets"
+	@echo "all (default) - buid iroha-build container, and build iroha"
+	@echo "docker        - build iroha runtime container"
+	@echo "docker-test   - build iroha runtime and test container"
+	@echo "up            - running iroha container by docker-compose"
+	@echo "down          - stop and remove iroha container by docker-compose"
+	@echo "test-up       - running iroha-test container buy docker-compose"
+	@echo "test-down     - stop and remove iroha-test container by docker-compose"
+	@echo "test          - exec all test commands"
+	@echo "clean         - cleaning protobuf schemas and build directory"
 
 docker: iroha-release iroha
 
