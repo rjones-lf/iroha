@@ -52,7 +52,6 @@ message(STATUS "-DCOVERAGE=${COVERAGE}")
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
-  ${PROJECT_SOURCE_DIR}/libiroha
   ${PROJECT_SOURCE_DIR}/libs
   ${IROHA_SCHEMA_DIR}
 )
