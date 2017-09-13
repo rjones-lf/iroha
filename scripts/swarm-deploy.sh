@@ -69,9 +69,9 @@ do
     # copy config
     docker cp ${IROHA_HOME}/iroha.conf ${COMPOSE_PROJECT_NAME}_node_1:/
     # generate genesis block based on list of peers
-    docker exec ${COMPOSE_PROJECT_NAME}_node_1 iroha-cli --genesis_block --peers_address /peers.list
+    docker exec ${COMPOSE_PROJECT_NAME}_node_1 /opt/iroha/iroha-cli --genesis_block --peers_address /peers.list
     # run irohad with output redirection to /iroha.log
-    docker exec -d ${COMPOSE_PROJECT_NAME}_node_1 bash -c "irohad --config /iroha.conf --genesis_block /genesis.block --peer_number ${i} > /iroha.log"
+    docker exec -d ${COMPOSE_PROJECT_NAME}_node_1 bash -c "/opt/iroha/irohad --config /iroha.conf --genesis_block /genesis.block --peer_number ${i} > /iroha.log"
     ((i++))
 done < <(docker-machine ls -f "{{.Name}}")
 
