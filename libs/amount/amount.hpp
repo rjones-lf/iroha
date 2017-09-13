@@ -24,27 +24,76 @@
 
 namespace amount {
 
+  /**
+   * Keeps integer and scale values allowing performing math
+   * operations on them
+   */
   class Amount {
    public:
+    /**
+     * Creates Amount with integer = 0 and scale = 0
+     */
     Amount();
+
+    /**
+     * Amount with integer = amount and scale = 0
+     * @param amount integer part
+     */
     Amount(boost::multiprecision::uint256_t amount);
+
+    /**
+     * Amount with provided integer and scale part
+     * @param amount integer part
+     * @param precision scale part
+     */
     Amount(boost::multiprecision::uint256_t amount, uint8_t precision);
 
+    /**
+     * Copy constructor
+     */
     Amount(const Amount&);
     Amount& operator=(const Amount&);
 
+    /**
+     * Move constructor
+     */
     Amount(Amount&&);
     Amount& operator=(Amount&&);
 
-    Amount percentage(uint64_t) const;
-    Amount percentage(const Amount&) const;
+    /**
+     * Takes percentage from current amount
+     * @param percents
+     * @return
+     */
+    Amount percentage(uint64_t percents) const;
 
+    /**
+     * Takes percentage represented as amount value
+     * The current scale and scale of percents may vary
+     * @param percents
+     * @return
+     */
+    Amount percentage(const Amount& percents) const;
+
+    /**
+     * Sums two amounts. Requires to have the same scale
+     * @return
+     */
     Amount operator+(const Amount&) const;
     Amount& operator+=(const Amount&);
 
+    /**
+     * Subtracts one amount from another.
+     * Requires to have the same scale between both amounts
+     * @return
+     */
     Amount operator-(const Amount&) const;
     Amount& operator-=(const Amount&);
 
+    /**
+     * Two amounts are equal, when integer and scale parts are equal
+     * @return
+     */
     bool operator==(const Amount&) const;
     bool operator!=(const Amount&) const;
     bool operator<(const Amount&) const;

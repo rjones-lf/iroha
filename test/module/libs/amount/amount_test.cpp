@@ -31,4 +31,10 @@ TEST_F(AmountTest, TestBasic) {
 
   auto c = a + b;
   ASSERT_EQ(c.to_string(), "1.84");
+
+  auto d = a.percentage(c);
+  ASSERT_EQ(d.to_string(), "0.02");
+
+  auto e = a.percentage(amount::Amount(256));
+  ASSERT_EQ(e.to_string(), "3.14");
 }

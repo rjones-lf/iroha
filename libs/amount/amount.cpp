@@ -36,28 +36,31 @@ namespace amount {
 
   Amount &Amount::operator=(const Amount &other) {
     // check for self-assignment
-    if(&other == this)
-      return *this;
+    if (&other == this) return *this;
     std::copy(&other.value_, &other.value_ + sizeof(decltype(value_)), &value_);
-    std::copy(&other.precision_, &other.precision_ + sizeof(precision_), &precision_);
+    std::copy(&other.precision_, &other.precision_ + sizeof(precision_),
+              &precision_);
     return *this;
   }
 
   Amount::Amount(Amount &&am)
       : value_(std::move(am.value_)), precision_(std::move(am.precision_)) {}
 
-  Amount &Amount::operator=(Amount &&) { return *this; }
+  Amount &Amount::operator=(Amount &&other) {
+    std::swap(value_, other.value_);
+    std::swap(precision_, other.precision_);
+    return *this;
+  }
 
   Amount Amount::percentage(uint64_t percents) const {
-    boost::multiprecision::uint256_t new_val =
-        value_ * percents / 100;
-    return Amount(new_val, precision_);
+    boost::multiprecision::uint256_t new_val = value_ * percents / 100;
+    return {new_val, precision_};
   }
 
   Amount Amount::percentage(const Amount &am) const {
     boost::multiprecision::uint256_t new_value = value_ * am.value_;
-    new_value /= uint256_t(std::pow(10, am.precision_));
-    return Amount(new_value, precision_);
+    new_value /= uint256_t(std::pow(10, precision_ + am.precision_));
+    return {new_value, precision_};
   }
 
   Amount Amount::operator+(const Amount &other) const {
@@ -81,7 +84,13 @@ namespace amount {
   }
 
   bool Amount::operator==(const Amount &other) const {
-    return value_ == other.value_ and precision_ == other.precision_;
+    if (precision_ == other.precision_){
+      return value_ == other.value_;
+    }
+    auto max_precision = std::max(precision_, other.precision_);
+    auto val1 = value_ * uint256_t(std::pow(10, max_precision-precision_));
+    auto val2 = other.value_ * uint256_t(std::pow(10, max_precision-other.precision_));
+    return val1 == val2;
   }
 
   bool Amount::operator!=(const Amount &other) const {
