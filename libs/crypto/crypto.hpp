@@ -66,5 +66,11 @@ namespace iroha {
    * @return
    */
   keypair_t create_keypair(blob_t<32> seed);
+
+  /**
+   * Create new keypair with a default seed (by create_seed())
+   * @return
+   */
+  keypair_t create_keypair();
 }
 #endif  // IROHA_CRYPTO_HPP

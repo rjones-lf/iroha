@@ -33,7 +33,7 @@ class Service : public testing::Test {
   Service() {
     std::vector<ed25519::keypair_t> kps(NPEERS);
     std::generate_n(kps.begin(), NPEERS,
-                    []() { return create_keypair(create_seed()); });
+                    []() { return create_keypair(); });
 
     std::vector<peerservice::Node> cluster;
     for (int i = 0; i < NPEERS; ++i) {

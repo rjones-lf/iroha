@@ -29,8 +29,7 @@ namespace ed25519 = iroha::ed25519;
 using iroha::to_blob;
 
 TEST(Signature, sign_data_size) {
-  auto seed = create_seed();
-  auto keypair = create_keypair(seed);
+  auto keypair = create_keypair();
 
   std::string nonce =
       "c0a5cca43b8aa79eb50e3464bc839dd6fd414fae0ddf928ca23dcebf8a8b8dd0";
@@ -42,8 +41,7 @@ TEST(Signature, sign_data_size) {
 }
 
 TEST(Signature, PrintkeyPair) {
-  auto seed = create_seed();
-  auto keypair = create_keypair(seed);
+  auto keypair = create_keypair();
   ASSERT_NO_THROW({ std::cout << keypair.pubkey.to_base64() << std::endl; });
   ASSERT_NO_THROW({ std::cout << keypair.privkey.to_base64() << std::endl; });
 }

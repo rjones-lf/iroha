@@ -81,4 +81,10 @@ namespace iroha {
 
     return keypair_t{.pubkey = pub, .privkey = priv};
   }
+
+  /**
+   * Create new keypair with a default seed (by create_seed())
+   * @return
+   */
+  keypair_t create_keypair() { return create_keypair(create_seed()); }
 }

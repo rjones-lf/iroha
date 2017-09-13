@@ -36,8 +36,7 @@ iroha::model::Transaction create_transaction() {
 
 TEST(CryptoProvider, SignAndVerify) {
   // generate privkey/pubkey keypair
-  auto seed = iroha::create_seed();
-  auto keypair = iroha::create_keypair(seed);
+  auto keypair = iroha::create_keypair();
 
   auto model_tx = create_transaction();
   auto proto_tx = iroha::model::converters::PbTransactionFactory::serialize(model_tx);
