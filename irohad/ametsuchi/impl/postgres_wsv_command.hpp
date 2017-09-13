@@ -35,6 +35,7 @@ namespace iroha {
                                   const ed25519::pubkey_t &signatory) override;
       bool deleteAccountSignatory(const std::string &account_id,
                                   const ed25519::pubkey_t &signatory) override;
+      bool deleteSignatory(const ed25519::pubkey_t &signatory) override;
       bool insertPeer(const model::Peer &peer) override;
       bool deletePeer(const model::Peer &peer) override;
       bool insertDomain(const model::Domain &domain) override;

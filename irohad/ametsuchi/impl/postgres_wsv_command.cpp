@@ -105,10 +105,9 @@ namespace iroha {
       try {
         pqxx::binarystring public_key(signatory.data(), signatory.size());
         transaction_.exec(
-            "INSERT INTO signatory(\n"
-            "            public_key)\n"
-            "    VALUES (" +
-            transaction_.quote(public_key) + ");");
+            "INSERT INTO signatory(public_key)\n"
+            "    SELECT " + transaction_.quote(public_key) + "\n" +
+            "    WHERE NOT EXISTS (SELECT 1 FROM signatory WHERE public_key = " + transaction_.quote(public_key) + ");");
       } catch (const std::exception &e) {
         return false;
       }
@@ -140,6 +139,21 @@ namespace iroha {
             " WHERE account_id=" +
             transaction_.quote(account_id) + " AND public_key=" +
             transaction_.quote(public_key) + ";");
+      } catch (const std::exception &e) {
+        return false;
+      }
+      return true;
+    }
+
+    bool PostgresWsvCommand::deleteSignatory(const ed25519::pubkey_t &signatory) {
+      pqxx::binarystring public_key(signatory.data(), signatory.size());
+      try {
+        transaction_.exec(
+            "DELETE FROM signatory\n"
+                " WHERE public_key=" + transaction_.quote(public_key) + "\n" +
+                " AND NOT EXISTS (SELECT 1 FROM account_has_signatory WHERE public_key = " + transaction_.quote(public_key) + ")" +
+                " AND NOT EXISTS (SELECT 1 FROM peer WHERE public_key = " + transaction_.quote(public_key) + ");"
+        );
       } catch (const std::exception &e) {
         return false;
       }

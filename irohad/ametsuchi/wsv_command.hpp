@@ -92,6 +92,14 @@ namespace iroha {
           const ed25519::pubkey_t &signatory) = 0;
 
       /**
+       * Delete signatory
+       * @param signatory
+       * @return
+       */
+      virtual bool deleteSignatory(
+          const ed25519::pubkey_t &signatory) = 0;
+
+      /**
        *
        * @param peer
        * @return
