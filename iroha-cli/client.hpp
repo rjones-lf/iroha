@@ -35,6 +35,7 @@ namespace iroha_cli {
       T answer;
     };
 
+    //TODO: check if we need more status codes
     enum TxStatus { OK };
 
     CliClient(std::string target_ip, int port);
