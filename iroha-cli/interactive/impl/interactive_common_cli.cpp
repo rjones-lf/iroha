@@ -34,34 +34,35 @@ namespace iroha_cli {
       std::cout << "Put not empty command" << std::endl;
     };
 
-    void handleUnknownCommand(std::string command) {
+    void handleUnknownCommand(std::string &command) {
       std::cout << "Command not found: " << command << std::endl;
     };
 
-    void addBackOption(MenuPoints& menu) {
+    void addBackOption(MenuPoints &menu) {
       menu.push_back("0. Back (" + BACK_CODE + ")");
     }
 
     bool isBackOption(std::string line) {
       auto command = parser::parseFirstCommand(line);
-      return command.has_value() && (command.value() == "0" ||
-             command.value() == BACK_CODE);
+      return command.has_value() &&
+             (command.value() == "0" || command.value() == BACK_CODE);
     };
 
-    void printCommandParameters(std::string command, std::vector<std::string> parameters) {
+    void printCommandParameters(std::string &command,
+                                std::vector<std::string> parameters) {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(),
                     [](auto el) { std::cout << "  " << el << std::endl; });
     };
 
-    void printMenu(std::string message, MenuPoints menu_points) {
+    void printMenu(const std::string &message, MenuPoints menu_points) {
       std::cout << message << std::endl;
       std::for_each(menu_points.begin(), menu_points.end(),
                     [](auto el) { std::cout << el << std::endl; });
     };
 
-    std::string promtString(std::string message) {
+    std::string promtString(const std::string &message) {
       std::string line;
       std::cout << message << ": ";
       std::getline(std::cin, line);
@@ -111,9 +112,9 @@ namespace iroha_cli {
       }
     }
 
-    size_t addMenuPoint(std::vector<std::string>& menu_points,
-                        std::string description,
-                        std::string command_short_name) {
+    size_t addMenuPoint(std::vector<std::string> &menu_points,
+                        const std::string &description,
+                        const std::string &command_short_name) {
       menu_points.push_back(std::to_string(menu_points.size() + 1) + ". " +
                             description + " (" + command_short_name + ")");
       return menu_points.size();

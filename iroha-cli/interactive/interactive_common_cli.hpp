@@ -80,7 +80,7 @@ namespace iroha_cli {
      * Handle error of unknown command
      * @param command - name of unknown command
      */
-    void handleUnknownCommand(std::string command);
+    void handleUnknownCommand(std::string& command);
 
     /**
      * Add back option to menu
@@ -105,21 +105,22 @@ namespace iroha_cli {
      * @param command - name of the cli command
      * @param parameters needed to run the command
      */
-    void printCommandParameters(std::string command, std::vector<std::string> parameters);
+    void printCommandParameters(std::string& command,
+                                std::vector<std::string> parameters);
 
     /**
      * Pretty Print of menu
      * @param message - message to print before menu
      * @param menu_points - elements of the menu
      */
-    void printMenu(std::string message, MenuPoints menu_points);
+    void printMenu(const std::string& message, MenuPoints menu_points);
 
     /**
      * Get string input from user
      * @param message Message to ask user
      * @return user's input
      */
-    std::string promtString(std::string message);
+    std::string promtString(const std::string& message);
 
     /**
      * Parse parameters in interactive and shortcuted mode.
@@ -142,8 +143,8 @@ namespace iroha_cli {
      * @param command_short_name command short name
      */
     size_t addMenuPoint(std::vector<std::string>& menu_points,
-                        std::string description,
-                        std::string command_short_name);
+                        const std::string& description,
+                        const std::string& command_short_name);
 
     /**
      * Get next numerical index in the map.
@@ -203,8 +204,8 @@ namespace iroha_cli {
      */
     template <typename T, typename V, typename C>
     nonstd::optional<T> handleParse(
-        C class_pointer, std::string line,
-        std::unordered_map<std::string, V> parsers_map, ParamsMap params_map) {
+        C class_pointer, std::string& line,
+        std::unordered_map<std::string, V>& parsers_map, ParamsMap params_map) {
       auto raw_command = parser::parseFirstCommand(line);
       if (not raw_command.has_value()) {
         handleEmptyCommand();
@@ -236,8 +237,8 @@ namespace iroha_cli {
     template <typename V>
     void addCliCommand(MenuPoints& menu_points,
                        std::unordered_map<std::string, V>& parsers_map,
-                       const std::string command_name,
-                       const std::string command_description, V parser) {
+                       const std::string& command_name,
+                       const std::string& command_description, V parser) {
       // Add menu point and get the index in menu of current command
       auto index = std::to_string(
           addMenuPoint(menu_points, command_description, command_name));

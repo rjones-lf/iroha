@@ -36,43 +36,44 @@ namespace iroha {
     namespace generators {
 
       std::shared_ptr<Command> CommandGenerator::generateAddPeer(
-          std::string address, ed25519::pubkey_t key) {
+          const std::string &address, const ed25519::pubkey_t &key) {
         return generateCommand<AddPeer>(key, address);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddSignatory(
-          std::string account_id, ed25519::pubkey_t key) {
+          const std::string &account_id, const ed25519::pubkey_t &key) {
         return generateCommand<AddSignatory>(account_id, key);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateRemoveSignatory(
-          std::string account_id, ed25519::pubkey_t key) {
+          const std::string &account_id, const ed25519::pubkey_t &key) {
         return generateCommand<RemoveSignatory>(account_id, key);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAssignMasterKey(
-          std::string account_id, ed25519::pubkey_t key) {
+          const std::string &account_id, const ed25519::pubkey_t &key) {
         return generateCommand<AssignMasterKey>(account_id, key);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateCreateAccount(
-          std::string account_name, std::string domain_id,
-          ed25519::pubkey_t key) {
+          const std::string &account_name, const std::string &domain_id,
+          const ed25519::pubkey_t &key) {
         return generateCommand<CreateAccount>(account_name, domain_id, key);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateCreateDomain(
-          std::string domain_name) {
+          const std::string &domain_name) {
         return generateCommand<CreateDomain>(domain_name);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateCreateAsset(
-          std::string asset_name, std::string domain_name, uint8_t precision) {
+          const std::string &asset_name, const std::string &domain_name,
+          uint8_t precision) {
         return generateCommand<CreateAsset>(asset_name, domain_name, precision);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetAdminPermissions(
-          std::string account_id) {
+          const std::string &account_id) {
         Account::Permissions permissions;
         permissions.read_all_accounts = true;
         permissions.set_permissions = true;
@@ -82,29 +83,29 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddAssetQuantity(
-          std::string account_id, std::string asset_id, Amount amount) {
+          const std::string &account_id, const std::string &asset_id, const Amount &amount) {
         return generateCommand<AddAssetQuantity>(account_id, asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetQuorum(
-          std::string account_id, uint32_t quorum) {
+          const std::string &account_id, uint32_t quorum) {
         return generateCommand<SetQuorum>(account_id, quorum);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetPermissions(
-          std::string account_id, Account::Permissions permissions) {
+          const std::string &account_id, const Account::Permissions &permissions) {
         return generateCommand<SetAccountPermissions>(account_id, permissions);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-          std::string account_id, std::string asset_id, Amount amount) {
+          const std::string &account_id, const std::string &asset_id, const Amount &amount) {
         // TODO: implement
         return nullptr;
       }
 
       std::shared_ptr<Command> CommandGenerator::generateTransferAsset(
-          std::string src_account, std::string dest_account,
-          std::string asset_id, Amount amount) {
+          const std::string &src_account, const std::string &dest_account,
+          const std::string &asset_id, const Amount &amount) {
         return generateCommand<TransferAsset>(src_account, dest_account,
                                               asset_id, amount);
       }

@@ -28,30 +28,30 @@ namespace iroha {
     namespace generators {
       class CommandGenerator {
        public:
-        std::shared_ptr<Command> generateAddPeer(std::string address,
-                                                 ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateAddPeer(const std::string &address,
+                                                 const ed25519::pubkey_t &key);
 
-        std::shared_ptr<Command> generateAddSignatory(std::string account_id,
-                                                      ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateAddSignatory(const std::string &account_id,
+                                                      const ed25519::pubkey_t &key);
 
-        std::shared_ptr<Command> generateRemoveSignatory(std::string account_id,
-                                                         ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateRemoveSignatory(
+            const std::string &account_id, const ed25519::pubkey_t &key);
 
-        std::shared_ptr<Command> generateAssignMasterKey(std::string account_id,
-                                                         ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateAssignMasterKey(
+            const std::string &account_id, const ed25519::pubkey_t &key);
 
-        std::shared_ptr<Command> generateCreateAccount(std::string account_name,
-                                                       std::string domain_id,
-                                                       ed25519::pubkey_t key);
+        std::shared_ptr<Command> generateCreateAccount(
+            const std::string &account_name, const std::string &domain_id,
+            const ed25519::pubkey_t &key);
 
-        std::shared_ptr<Command> generateCreateDomain(std::string domain_name);
+        std::shared_ptr<Command> generateCreateDomain(const std::string &domain_name);
 
-        std::shared_ptr<Command> generateCreateAsset(std::string asset_name,
-                                                     std::string domain_name,
+        std::shared_ptr<Command> generateCreateAsset(const std::string &asset_name,
+                                                     const std::string &domain_name,
                                                      uint8_t precision);
 
-        template <typename Type, typename ... ParamTypes>
-        std::shared_ptr<Command> generateCommand(ParamTypes ... args) {
+        template <typename Type, typename... ParamTypes>
+        std::shared_ptr<Command> generateCommand(ParamTypes... args) {
           return std::make_shared<Type>(args...);
         }
 
@@ -66,19 +66,19 @@ namespace iroha {
          * @return
          */
         std::shared_ptr<Command> generateSetAdminPermissions(
-            std::string account_id);
+            const std::string &account_id);
 
-        std::shared_ptr<Command> generateSetQuorum(std::string account_id,
+        std::shared_ptr<Command> generateSetQuorum(const std::string &account_id,
                                                    uint32_t quorum);
 
         std::shared_ptr<Command> generateSetPermissions(
-            std::string account_id, Account::Permissions permissions);
+            const std::string &account_id, const Account::Permissions &permissions);
 
         std::shared_ptr<Command> generateAddAssetQuantity(
-            std::string account_id, std::string asset_id, Amount amount);
+            const std::string &account_id, const std::string &asset_id, const Amount &amount);
 
         std::shared_ptr<Command> generateSubtractAssetQuantity(
-            std::string account_id, std::string asset_id, Amount amount);
+            const std::string &account_id, const std::string &asset_id, const Amount &amount);
         /**
          * Generate transfer assets from source account_id to target account_id
          * @param src_account_id - source account identifier
@@ -88,8 +88,8 @@ namespace iroha {
          * @return
          */
         std::shared_ptr<Command> generateTransferAsset(
-            std::string src_account_id, std::string target_account_id,
-            std::string asset_id, Amount amount);
+            const std::string &src_account_id, const std::string &target_account_id,
+            const std::string &asset_id, const Amount &amount);
       };
     }  // namespace generators
   }    // namespace model
