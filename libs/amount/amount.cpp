@@ -25,10 +25,10 @@ namespace amount {
 
   Amount::Amount() : value_(0), precision_(0) {}
 
-  Amount::Amount(boost::multiprecision::uint256_t value)
+  Amount::Amount(uint256_t value)
       : value_(value), precision_(0) {}
 
-  Amount::Amount(boost::multiprecision::uint256_t amount, uint8_t precision)
+  Amount::Amount(uint256_t amount, uint8_t precision)
       : value_(amount), precision_(precision) {}
 
   Amount::Amount(const Amount &am)
@@ -43,8 +43,13 @@ namespace amount {
     return *this;
   }
 
-  Amount::Amount(Amount &&am)
-      : value_(std::move(am.value_)), precision_(std::move(am.precision_)) {}
+  Amount::Amount(Amount &&am) : value_(0), precision_(0) {
+    value_ = am.value_;
+    precision_ = am.precision_;
+
+    am.value_ = 0;
+    am.precision_ = 0;
+  }
 
   Amount &Amount::operator=(Amount &&other) {
     std::swap(value_, other.value_);
@@ -52,65 +57,83 @@ namespace amount {
     return *this;
   }
 
-  Amount Amount::percentage(uint64_t percents) const {
-    boost::multiprecision::uint256_t new_val = value_ * percents / 100;
+  Amount Amount::percentage(uint256_t percents) const {
+    uint256_t new_val = value_ * percents / 100;
     return {new_val, precision_};
   }
 
   Amount Amount::percentage(const Amount &am) const {
-    boost::multiprecision::uint256_t new_value = value_ * am.value_;
+    uint256_t new_value = value_ * am.value_;
     new_value /= uint256_t(std::pow(10, precision_ + am.precision_));
     return {new_value, precision_};
   }
 
   Amount Amount::operator+(const Amount &other) const {
+    if (precision_ != other.precision_) {
+      throw std::invalid_argument("precisions are not the same");
+    }
     auto new_val = value_ + other.value_;
     return {new_val, precision_};
   }
 
   Amount &Amount::operator+=(const Amount &other) {
+    if (precision_ != other.precision_) {
+      throw std::invalid_argument("precisions are not the same");
+    }
     value_ += other.value_;
     return *this;
   }
 
   Amount Amount::operator-(const Amount &other) const {
+    if (precision_ != other.precision_) {
+      throw std::invalid_argument("precisions are not the same");
+    }
     auto new_val = value_ - other.value_;
     return {new_val, precision_};
   }
 
   Amount &Amount::operator-=(const Amount &other) {
+    if (precision_ != other.precision_) {
+      throw std::invalid_argument("precisions are not the same");
+    }
     value_ -= other.value_;
     return *this;
   }
 
-  bool Amount::operator==(const Amount &other) const {
-    if (precision_ == other.precision_){
-      return value_ == other.value_;
+  int Amount::compareTo(const Amount &other) const {
+    if (precision_ == other.precision_) {
+      return (value_ < other.value_) ? -1 : (value_ > other.value_) ? 1 : 0;
     }
+    // when different precisions transform to have the same scale
     auto max_precision = std::max(precision_, other.precision_);
-    auto val1 = value_ * uint256_t(std::pow(10, max_precision-precision_));
-    auto val2 = other.value_ * uint256_t(std::pow(10, max_precision-other.precision_));
-    return val1 == val2;
+    auto val1 = value_ * uint256_t(std::pow(10, max_precision - precision_));
+    auto val2 = other.value_ *
+                uint256_t(std::pow(10, max_precision - other.precision_));
+    return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
+  }
+
+  bool Amount::operator==(const Amount &other) const {
+    return compareTo(other) == 0;
   }
 
   bool Amount::operator!=(const Amount &other) const {
-    return !this->operator==(other);
+    return compareTo(other) != 0;
   }
 
   bool Amount::operator<(const Amount &other) const {
-    return value_ < other.value_;
+    return compareTo(other) < 0;
   }
 
   bool Amount::operator>(const Amount &other) const {
-    return value_ > other.value_;
+    return compareTo(other) > 0;
   }
 
   bool Amount::operator<=(const Amount &other) const {
-    return value_ <= other.value_;
+    return compareTo(other) <= 0;
   }
 
   bool Amount::operator>=(const Amount &other) const {
-    return value_ >= other.value_;
+    return compareTo(other) >= 0;
   }
 
   std::string Amount::to_string() const {

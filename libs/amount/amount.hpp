@@ -65,7 +65,7 @@ namespace amount {
      * @param percents
      * @return
      */
-    Amount percentage(uint64_t percents) const;
+    Amount percentage(boost::multiprecision::uint256_t percents) const;
 
     /**
      * Takes percentage represented as amount value
@@ -76,7 +76,8 @@ namespace amount {
     Amount percentage(const Amount& percents) const;
 
     /**
-     * Sums two amounts. Requires to have the same scale
+     * Sums two amounts. Requires to have the same scale.
+     * Otherwise invalid argument exception is thrown
      * @return
      */
     Amount operator+(const Amount&) const;
@@ -84,14 +85,16 @@ namespace amount {
 
     /**
      * Subtracts one amount from another.
-     * Requires to have the same scale between both amounts
+     * Requires to have the same scale between both amounts.
+     * Otherwise invalid argument exception is thrown
      * @return
      */
     Amount operator-(const Amount&) const;
     Amount& operator-=(const Amount&);
 
     /**
-     * Two amounts are equal, when integer and scale parts are equal
+     * Comparisons are possible between amounts with different precisions.
+     *
      * @return
      */
     bool operator==(const Amount&) const;
@@ -105,6 +108,15 @@ namespace amount {
     ~Amount() = default;
 
    private:
+    /**
+     * Support function for comparison operators.
+     * Returns 0 when equal, -1 when current Amount smaller, and 1 when it is
+     * greater
+     * @param other
+     * @return
+     */
+    int compareTo(const Amount& other) const;
+
     boost::multiprecision::uint256_t value_;
     uint8_t precision_;
   };
