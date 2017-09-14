@@ -33,7 +33,7 @@ TEST_F(AmountTest, TestBasic) {
   auto c = a + b;
   ASSERT_EQ(c.to_string(), "1.84");
 
-  auto d = a.percentage(c);
+  auto d = a.percentage(c); // taking 1.84% of 1.23
   ASSERT_EQ(d.to_string(), "0.02");
 
   auto e = a.percentage(iroha::Amount(256)); // taking 256% of the amount == 3.1488
@@ -55,4 +55,6 @@ TEST_F(AmountTest, TestBasic) {
   ASSERT_GT(iroha::Amount(111, 2), iroha::Amount(110, 2));
   ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(110, 2));
   ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(111, 2));
+
+  std::cout << iroha::Amount(222,2).percentage(iroha::Amount(1111, 1)).to_string() << std::endl;
 }

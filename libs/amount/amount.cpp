@@ -139,7 +139,7 @@ namespace iroha {
 
   std::string Amount::to_string() const {
     cpp_dec_float_50 float50(value_);
-    float50 /= std::pow(10, precision_);
+    float50 /= ipow(10, precision_);
     return float50.str(precision_, std::ios_base::fixed);
   }
 }

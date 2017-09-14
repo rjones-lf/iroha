@@ -71,7 +71,7 @@ namespace iroha {
 
     /**
      * Takes percentage represented as amount value
-     * The current scale and scale of percents may vary
+     * The current scale and scale of percents may differ
      * @param percents
      * @return
      */
