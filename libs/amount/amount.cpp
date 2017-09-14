@@ -54,7 +54,7 @@ namespace iroha {
 
   Amount Amount::percentage(const Amount &am) const {
     uint256_t new_value = value_ * am.value_;
-    new_value /= uint256_t(std::pow(10, precision_ + am.precision_));
+    new_value /= ipow(10, am.precision_+2);
     return {new_value, precision_};
   }
 
@@ -91,7 +91,7 @@ namespace iroha {
   }
 
   // to raise to power integer values
-  int ipow(int base, int exp) {
+  int Amount::ipow(int base, int exp) const {
     int result = 1;
     while (exp != 0) {
       if (exp & 1) result *= base;
