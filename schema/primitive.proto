@@ -18,3 +18,13 @@ message Signature {
    bytes pubkey    = 1;
    bytes signature = 2;
 }
+
+message uint128 {
+   uint64 a = 1;
+   uint64 b = 2;
+}
+
+message uint256 {
+   uint128 a = 1;
+   uint128 b = 2;
+}

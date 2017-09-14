@@ -27,6 +27,10 @@
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 
+#include "model/converters/pb_block_factory.hpp"
+
+#include "crypto/hash.hpp"
+
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -65,6 +69,8 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
+
+  converters::PbBlockFactory blockFactory;
 };
 
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
@@ -141,7 +147,9 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   Block requested_block;
-  requested_block.hash = HashProviderImpl().get_hash(requested_block);
+
+  auto pBlock = blockFactory.serialize(requested_block);
+  requested_block.hash = iroha::sha3_256(pBlock.mutable_payload()->SerializeAsString());
 
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
   EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
@@ -156,7 +164,9 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
 TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
   Block present_block;
-  present_block.hash = HashProviderImpl().get_hash(present_block);
+
+  auto pBlock = blockFactory.serialize(present_block);
+  present_block.hash = iroha::sha3_256(pBlock.mutable_payload()->SerializeAsString());
 
   auto hash = present_block.hash;
   hash.fill(0);

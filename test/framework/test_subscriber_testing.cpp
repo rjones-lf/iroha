@@ -33,7 +33,7 @@ TEST_F(TestSubscriberTesting, ValidCallExactTest) {
 
   auto number_of_calls = 0;
 
-  auto wrapper = make_test_subscriber<CallExact>(ints, 2);
+  auto wrapper = make_test_subscriber<CallExact, int>(ints, 2);
   wrapper.subscribe([&number_of_calls](auto val) { ++number_of_calls; });
 
   ASSERT_TRUE(wrapper.validate());
@@ -49,7 +49,7 @@ TEST_F(TestSubscriberTesting, UnsatisfiedCallExactTest) {
 
   auto number_of_calls = 0;
 
-  auto wrapper = make_test_subscriber<CallExact>(ints, 555);
+  auto wrapper = make_test_subscriber<CallExact, int>(ints, 555);
   wrapper.subscribe([&number_of_calls](auto val) { ++number_of_calls; });
   ASSERT_FALSE(wrapper.validate());
   ASSERT_EQ(2, number_of_calls);
@@ -58,7 +58,7 @@ TEST_F(TestSubscriberTesting, UnsatisfiedCallExactTest) {
 TEST_F(TestSubscriberTesting, DefaultSubscriberTest) {
   auto one = rxcpp::observable<>::just(0);
 
-  auto wrapper = make_test_subscriber<CallExact>(one, 1);
+  auto wrapper = make_test_subscriber<CallExact, int>(one, 1);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());

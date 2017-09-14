@@ -16,7 +16,9 @@
  */
 
 #include <gtest/gtest.h>
-#include <model/model_hash_provider_impl.hpp>
+#include <block.pb.h>
+#include <crypto/hash.hpp>
+#include "model/converters/pb_block_factory.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -302,8 +304,11 @@ Block createBlock(){
   block.transactions.push_back(createTransaction());
   block.height = 123;
 
-  HashProviderImpl hashProvider;
-  block.hash = hashProvider.get_hash(block);
+  converters::PbBlockFactory factory;
+  auto sBlock = factory.serialize(block);
+  auto hash = iroha::sha3_256(sBlock.payload().SerializeAsString());
+
+  block.hash = hash;
   return block;
 }
 

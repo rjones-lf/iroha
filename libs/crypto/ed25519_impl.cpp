@@ -21,11 +21,6 @@
 #include "hash.hpp"
 
 namespace iroha {
-
-  using sig_t = ed25519::sig_t;
-  using pubkey_t = ed25519::pubkey_t;
-  using privkey_t = ed25519::privkey_t;
-  using keypair_t = ed25519::keypair_t;
   /**
    * Sign the message
    */
@@ -36,12 +31,25 @@ namespace iroha {
     return sig;
   }
 
+  sig_t sign(const std::string &msg, const pubkey_t &pub,
+             const privkey_t &priv) {
+    sig_t sig;
+    ed25519_sign(sig.data(), (uint8_t *)msg.data(), msg.size(), pub.data(),
+                 priv.data());
+    return sig;
+  }
+
   /**
    * Verify signature
    */
   bool verify(const uint8_t *msg, size_t msgsize, const pubkey_t &pub,
               const sig_t &sig) {
     return 1 == ed25519_verify(sig.data(), msg, msgsize, pub.data());
+  }
+
+  bool verify(const std::string &msg, const pubkey_t &pub, const sig_t &sig) {
+    return 1 == ed25519_verify(sig.data(), (uint8_t *)msg.data(), msg.size(),
+                               pub.data());
   }
 
   /**
@@ -73,4 +81,10 @@ namespace iroha {
 
     return keypair_t{.pubkey = pub, .privkey = priv};
   }
+
+  /**
+   * Create new keypair with a default seed (by create_seed())
+   * @return
+   */
+  keypair_t create_keypair() { return create_keypair(create_seed()); }
 }

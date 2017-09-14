@@ -16,6 +16,8 @@
  */
 
 #include <gtest/gtest.h>
+#include <crypto/hash.hpp>
+#include <model/converters/pb_block_factory.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/byteutils.hpp"
 #include "framework/test_subscriber.hpp"
@@ -27,7 +29,6 @@
 #include "model/commands/create_domain.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/transfer_asset.hpp"
-#include "model/model_hash_provider_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
 using namespace iroha::ametsuchi;
@@ -55,8 +56,6 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
-  HashProviderImpl hashProvider;
-
   auto storage =
       StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
   ASSERT_TRUE(storage);
@@ -77,9 +76,11 @@ TEST_F(AmetsuchiTest, SampleTest) {
   block.transactions.push_back(txn);
   block.height = 1;
   block.prev_hash.fill(0);
-  auto block1hash = hashProvider.get_hash(block);
-  block.hash = block1hash;
-  block.txs_number = block.transactions.size();
+  iroha::model::converters::PbBlockFactory blockFactory;
+  auto pBlock = blockFactory.serialize(block);
+  auto hash = iroha::sha3_256(pBlock.payload().SerializeAsString());
+  block.hash = hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -131,10 +132,11 @@ TEST_F(AmetsuchiTest, SampleTest) {
   block = Block();
   block.transactions.push_back(txn);
   block.height = 2;
-  block.prev_hash = block1hash;
-  auto block2hash = hashProvider.get_hash(block);
-  block.hash = block2hash;
-  block.txs_number = block.transactions.size();
+  block.prev_hash = hash;
+  pBlock = blockFactory.serialize(block);
+  auto hash2 = iroha::sha3_256(pBlock.payload().SerializeAsString());
+  block.hash = hash2;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
@@ -156,11 +158,11 @@ TEST_F(AmetsuchiTest, SampleTest) {
   }
 
   // Block store tests
-  blocks->getBlocks(1, 2).subscribe([block1hash, block2hash](auto eachBlock) {
+  blocks->getBlocks(1, 2).subscribe([hash, hash2](auto eachBlock) {
     if (eachBlock.height == 1) {
-      EXPECT_EQ(eachBlock.hash, block1hash);
+      EXPECT_EQ(eachBlock.hash, hash);
     } else if (eachBlock.height == 2) {
-      EXPECT_EQ(eachBlock.hash, block2hash);
+      EXPECT_EQ(eachBlock.hash, hash2);
     }
   });
 
@@ -204,8 +206,6 @@ TEST_F(AmetsuchiTest, PeerTest) {
 }
 
 TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
-  HashProviderImpl hashProvider;
-
   auto storage = StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
@@ -267,9 +267,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   block.transactions.push_back(txn);
   block.height = 1;
   block.prev_hash.fill(0);
-  auto block1hash = hashProvider.get_hash(block);
-  block.hash = block1hash;
-  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
+  iroha::model::converters::PbBlockFactory blockFactory;
+  auto pBlock = blockFactory.serialize(block);
+  auto hash1 = iroha::sha3_256(pBlock.payload().SerializeAsString());
+  block.hash = hash1;
 
   {
     auto ms = storage->createMutableStorage();
@@ -318,9 +320,12 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   block = Block();
   block.transactions.push_back(txn);
   block.height = 2;
-  block.prev_hash = block1hash;
-  auto block2hash = hashProvider.get_hash(block);
-  block.hash = block2hash;
+  block.prev_hash = hash1;
+
+  pBlock = blockFactory.serialize(block);
+  auto hash2 = iroha::sha3_256(pBlock.payload().SerializeAsString());
+  block.hash = hash2;
+
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
@@ -363,9 +368,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   block = Block();
   block.transactions.push_back(txn);
   block.height = 3;
-  block.prev_hash = block2hash;
-  auto block3hash = hashProvider.get_hash(block);
-  block.hash = block3hash;
+  block.prev_hash = hash2;
+
+  auto hash3 = iroha::sha3_256(pBlock.payload().SerializeAsString());
+  block.hash = hash3;
+
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
@@ -393,13 +400,13 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   }
 
   // Block store tests
-  blocks->getBlocks(1, 3).subscribe([block1hash, block2hash, block3hash](auto eachBlock) {
+  blocks->getBlocks(1, 3).subscribe([hash1, hash2, hash3](auto eachBlock) {
     if (eachBlock.height == 1) {
-      EXPECT_EQ(eachBlock.hash, block1hash);
+      EXPECT_EQ(eachBlock.hash, hash1);
     } else if (eachBlock.height == 2) {
-      EXPECT_EQ(eachBlock.hash, block2hash);
+      EXPECT_EQ(eachBlock.hash, hash2);
     } else if (eachBlock.height == 3) {
-      EXPECT_EQ(eachBlock.hash, block3hash);
+      EXPECT_EQ(eachBlock.hash, hash3);
     }
   });
 

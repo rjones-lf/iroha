@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include "model/converters/pb_transaction_factory.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
@@ -22,14 +23,15 @@ limitations under the License.
 #include <queries.pb.h>
 #include <atomic>
 #include <chrono>
+#include <crypto/hash.hpp>
 #include <main/server_runner.hpp>
 #include <memory>
-#include <model/model_hash_provider_impl.hpp>
 #include <thread>
 #include <torii/command_client.hpp>
 #include <torii/command_service.hpp>
 #include <torii/processor/query_processor_impl.hpp>
 #include <torii_utils/query_client.hpp>
+#include "crypto/hash.hpp"
 
 #include "torii/processor/transaction_processor_impl.hpp"
 
@@ -48,6 +50,7 @@ using ::testing::AtLeast;
 using namespace iroha::network;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
+using namespace iroha::model::converters;
 
 using Commit = rxcpp::observable<iroha::model::Block>;
 
@@ -139,19 +142,20 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
   std::vector<std::string> tx_hashes;
 
   iroha::model::converters::PbTransactionFactory tx_factory;
-  iroha::model::HashProviderImpl hashProvider;
 
   // create transactions, but do not send them
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto new_tx = iroha::protocol::Transaction();
-    auto meta = new_tx.mutable_meta();
-    meta->set_tx_counter(i);
-    meta->set_creator_account_id("accountA");
+    auto payload = new_tx.mutable_payload();
+    payload->set_tx_counter(i);
+    payload->set_creator_account_id("accountA");
 
     auto iroha_tx = tx_factory.deserialize(new_tx);
     txs.push_back(*iroha_tx);
-    auto tx_hash = hashProvider.get_hash(*iroha_tx);
-    tx_hashes.push_back(tx_hash.to_string());
+
+    auto pTx = tx_factory.serialize(*iroha_tx);
+    auto hash = iroha::sha3_256(pTx.mutable_payload()->SerializeAsString());
+    tx_hashes.push_back(hash.to_string());
   }
 
   // get statuses of unsent transactions
@@ -184,21 +188,24 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   std::vector<std::string> tx_hashes;
 
   iroha::model::converters::PbTransactionFactory tx_factory;
-  iroha::model::HashProviderImpl hashProvider;
 
   // create transactions and send them to Torii
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto new_tx = iroha::protocol::Transaction();
-    auto meta = new_tx.mutable_meta();
-    meta->set_tx_counter(i);
-    meta->set_creator_account_id("accountA");
+    auto payload = new_tx.mutable_payload();
+    payload->set_tx_counter(i);
+    payload->set_creator_account_id("accountA");
 
     auto stat = torii::CommandSyncClient(Ip, Port).Torii(new_tx);
 
     auto iroha_tx = tx_factory.deserialize(new_tx);
     txs.push_back(*iroha_tx);
-    auto tx_hash = hashProvider.get_hash(*iroha_tx);
-    tx_hashes.push_back(tx_hash.to_string());
+
+    PbTransactionFactory transactionFactory;
+    auto pTx = transactionFactory.serialize(*iroha_tx);
+    auto hash = iroha::sha3_256(pTx.mutable_payload()->SerializeAsString());
+
+    tx_hashes.push_back(hash.to_string());
 
     ASSERT_TRUE(stat.ok());
   }
@@ -214,9 +221,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(
-        toriiResponse.tx_status(),
-        iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+    ASSERT_EQ(toriiResponse.tx_status(),
+              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
   }
 
   // create block from the all transactions but the last one
@@ -239,9 +245,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(
-        toriiResponse.tx_status(),
-        iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+    ASSERT_EQ(toriiResponse.tx_status(),
+              iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
   }
 
   // end current commit
@@ -254,8 +259,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::COMMITTED);
+    ASSERT_EQ(toriiResponse.tx_status(), iroha::protocol::TxStatus::COMMITTED);
   }
 
   // check if the last transaction from txs has failed stateful validation
@@ -280,21 +284,23 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
   std::vector<iroha::model::Transaction> txs;
   std::vector<std::string> tx_hashes;
   iroha::model::converters::PbTransactionFactory tx_factory;
-  iroha::model::HashProviderImpl hashProvider;
 
   // generate txs with corresponding hashes
   for (size_t i = 0; i < TimesToriiNonBlocking; ++i) {
     auto new_tx = iroha::protocol::Transaction();
-    auto meta = new_tx.mutable_meta();
-    meta->set_tx_counter(i);
-    meta->set_creator_account_id("accountA");
+    auto payload = new_tx.mutable_payload();
+    payload->set_tx_counter(i);
+    payload->set_creator_account_id("accountA");
 
     auto stat = client.Torii(
         new_tx, [&torii_count](auto empty_response) { torii_count++; });
 
     auto iroha_tx = tx_factory.deserialize(new_tx);
     txs.push_back(*iroha_tx);
-    tx_hashes.push_back(hashProvider.get_hash(*iroha_tx).to_string());
+
+    tx_hashes.push_back(
+        iroha::sha3_256(new_tx.mutable_payload()->SerializeAsString())
+            .to_string());
   }
 
   // wait untill all transactions are sent
@@ -315,9 +321,8 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(
-          response.tx_status(),
-          iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+      ASSERT_EQ(response.tx_status(),
+                iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
       status_counter++;
     });
   }
@@ -344,9 +349,8 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(
-          response.tx_status(),
-          iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+      ASSERT_EQ(response.tx_status(),
+                iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
       status_counter++;
     });
   }
@@ -364,8 +368,7 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(response.tx_status(),
-                iroha::protocol::TxStatus::COMMITTED);
+      ASSERT_EQ(response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
       status_counter++;
     });
   }

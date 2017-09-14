@@ -17,7 +17,6 @@
 
 #include "model/block.hpp"
 #include "model/generators/transaction_generator.hpp"
-#include "model/model_hash_provider_impl.hpp"
 
 #ifndef IROHA_BLOCK_GENERATOR_HPP
 #define IROHA_BLOCK_GENERATOR_HPP

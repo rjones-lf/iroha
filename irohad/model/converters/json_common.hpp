@@ -19,6 +19,7 @@
 #define IROHA_JSON_COMMON_HPP
 
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <unordered_map>
 

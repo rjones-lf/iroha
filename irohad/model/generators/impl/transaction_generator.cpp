@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
+#include <crypto/hash.hpp>
 #include "model/generators/transaction_generator.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 
 namespace iroha {
   namespace model {
@@ -54,7 +56,10 @@ namespace iroha {
         tx.commands.push_back(
             command_generator.generateSetAdminPermissions("admin@test"));
 
-        tx.tx_hash = hash_provider_.get_hash(tx);
+        converters::PbTransactionFactory transactionFactory;
+        auto ptx = transactionFactory.serialize(tx);
+        tx.tx_hash = sha3_256(ptx.payload().SerializeAsString());
+
         return tx;
       }
 
@@ -66,7 +71,11 @@ namespace iroha {
         tx.creator_account_id = creator_account_id;
         tx.tx_counter = tx_counter;
         tx.commands = commands;
-        tx.tx_hash = hash_provider_.get_hash(tx);
+
+        converters::PbTransactionFactory transactionFactory;
+        auto ptx = transactionFactory.serialize(tx);
+        tx.tx_hash = sha3_256(ptx.payload().SerializeAsString());
+
         return tx;
       }
 

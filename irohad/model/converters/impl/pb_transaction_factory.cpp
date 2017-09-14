@@ -16,73 +16,64 @@
  */
 
 #include "model/converters/pb_transaction_factory.hpp"
+#include <crypto/hash.hpp>
 #include "model/commands/add_asset_quantity.hpp"
-#include "common/types.hpp"
 #include "model/converters/pb_command_factory.hpp"
-#include "model/model_hash_provider_impl.hpp"
 
 namespace iroha {
   namespace model {
     namespace converters {
 
       protocol::Transaction PbTransactionFactory::serialize(
-          const model::Transaction &tx) const {
+          const model::Transaction &tx)  {
         model::converters::PbCommandFactory factory;
-        protocol::Transaction pb_tx;
+        protocol::Transaction pbtx;
 
-        // -----|Header|-----
-        auto header = pb_tx.mutable_header();
-        header->set_created_time(tx.created_ts);
-        for (auto &signature : tx.signatures) {
-          auto proto_signature = pb_tx.mutable_header()->add_signatures();
-          proto_signature->set_pubkey(signature.pubkey.data(),
-                                      signature.pubkey.size());
-          proto_signature->set_signature(signature.signature.data(),
-                                         signature.signature.size());
-        }
+        auto pl = pbtx.mutable_payload();
+        pl->set_created_time(tx.created_ts);
+        pl->set_creator_account_id(tx.creator_account_id);
+        pl->set_tx_counter(tx.tx_counter);
 
-        // -----|Meta|-----
-        auto meta = pb_tx.mutable_meta();
-        meta->set_creator_account_id(tx.creator_account_id);
-        meta->set_tx_counter(tx.tx_counter);
-
-        // -----|Body|-----
-        for (auto &command : tx.commands) {
-          auto cmd = pb_tx.mutable_body()->add_commands();
+        for (const auto &command : tx.commands) {
+          auto cmd = pl->add_commands();
           new (cmd)
               protocol::Command(factory.serializeAbstractCommand(*command));
         }
-        return pb_tx;
+
+        for (const auto &sig_obj : tx.signatures) {
+          auto proto_signature = pbtx.add_signature();
+          proto_signature->set_pubkey(sig_obj.pubkey.to_string());
+          proto_signature->set_signature(sig_obj.signature.to_string());
+        }
+
+        return pbtx;
       }
 
       std::shared_ptr<model::Transaction> PbTransactionFactory::deserialize(
-          const protocol::Transaction &pb_tx) const {
+          const protocol::Transaction &pb_tx)  {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
 
-        // -----|Header|-----
-        tx.created_ts = pb_tx.header().created_time();
-        for (auto &pb_sign : pb_tx.header().signatures()) {
-          model::Signature sign;
-          std::copy(pb_sign.pubkey().begin(), pb_sign.pubkey().end(),
-                    sign.pubkey.begin());
-          std::copy(pb_sign.signature().begin(), pb_sign.signature().end(),
-                    sign.signature.begin());
-          tx.signatures.push_back(sign);
+        const auto &pl = pb_tx.payload();
+
+        tx.tx_counter = pl.tx_counter();
+        tx.creator_account_id = pl.creator_account_id();
+        tx.created_ts = pl.created_time();
+
+        for (const auto &pb_sig : pb_tx.signature()) {
+          model::Signature sig{};
+          sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
+          sig.signature =  sig_t::from_string(pb_sig.signature());
+
+          tx.signatures.push_back(sig);
         }
 
-        // -----|Meta|-----
-        tx.creator_account_id = pb_tx.meta().creator_account_id();
-        tx.tx_counter = pb_tx.meta().tx_counter();
-
-        // -----|Body|-----
-        for (const auto &pb_command : pb_tx.body().commands()) {
+        for (const auto &pb_command : pl.commands()) {
           tx.commands.push_back(
               commandFactory.deserializeAbstractCommand(pb_command));
         }
 
-        model::HashProviderImpl hashProvider;
-        tx.tx_hash = hashProvider.get_hash(tx);
+        tx.tx_hash = iroha::sha3_256(pl.SerializeAsString());
 
         return std::make_shared<model::Transaction>(tx);
       }

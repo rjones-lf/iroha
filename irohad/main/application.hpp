@@ -27,7 +27,6 @@
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "model/model_crypto_provider_impl.hpp"
-#include "model/model_hash_provider_impl.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
@@ -71,8 +70,7 @@ class Irohad {
       std::shared_ptr<iroha::network::OrderingGate> ordering_gate,
       std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator,
       std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
-      std::shared_ptr<iroha::ametsuchi::TemporaryFactory> temporary_factory,
-      std::shared_ptr<iroha::model::HashProviderImpl> hash_provider);
+      std::shared_ptr<iroha::ametsuchi::TemporaryFactory> temporary_factory);
 
   std::shared_ptr<iroha::network::PeerCommunicationService>
   createPeerCommunicationService(

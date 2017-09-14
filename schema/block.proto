@@ -9,38 +9,28 @@ message Header {
 }
 
 message Transaction {
-
-  message Meta {
-    string creator_account_id = 1;
-    // used to prevent replay attacks.
-    uint64 tx_counter = 2;
-  }
-
-  message Body {
+  message Payload {
     repeated Command commands = 1;
+    string creator_account_id = 2;
+    uint64 tx_counter  = 3;
+    uint64 created_time = 4;
   }
 
-  Header header = 1;
-  Meta meta = 2;
-  Body body = 3;
+  Payload payload = 1;
+  repeated Signature signature = 2;
 }
 
 message Block {
-
-
-  message Meta {
-    uint32 tx_number = 1; // the number of transactions inside. Maximum 16384 or 2^14
-    uint64 height = 2; // the current block number in a ledger
-    bytes merkle_root = 3; // global merkle root
-    bytes prev_block_hash = 4; // Previous block hash
-  }
-
-  message Body {
+  // everything that should be signed:
+  message Payload {
     repeated Transaction transactions = 1;
+    uint32 tx_number = 2; // the number of transactions inside. Maximum 16384 or 2^14
+    uint64 height = 3; // the current block number in a ledger
+    bytes merkle_root = 4; // global merkle root
+    bytes prev_block_hash = 5; // Previous block hash
+    uint64 created_time = 6;
   }
 
-
-  Header header = 1;
-  Meta meta = 2;
-  Body body = 3;
+  Payload payload = 1;
+  repeated Signature signatures = 2;
 }

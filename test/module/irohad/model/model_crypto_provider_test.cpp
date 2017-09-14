@@ -18,7 +18,9 @@
 #include <gtest/gtest.h>
 #include <crypto/crypto.hpp>
 #include <model/model_crypto_provider_impl.hpp>
-#include <model/model_hash_provider_impl.hpp>
+#include <block.pb.h>
+#include <crypto/hash.hpp>
+#include <model/converters/pb_transaction_factory.hpp>
 
 using namespace iroha::model;
 
@@ -31,34 +33,21 @@ iroha::model::Transaction create_transaction() {
   return tx;
 }
 
-Transaction sign(Transaction &tx, iroha::ed25519::privkey_t privkey,
-                 iroha::ed25519::pubkey_t pubkey) {
-  HashProviderImpl hash_provider;
-  auto tx_hash = hash_provider.get_hash(tx);
-
-  auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey, privkey);
-
-  Signature signature{};
-  signature.signature = sign;
-  signature.pubkey = pubkey;
-
-  tx.signatures.push_back(signature);
-
-  return tx;
-}
 
 TEST(CryptoProvider, SignAndVerify) {
   // generate privkey/pubkey keypair
-  auto seed = iroha::create_seed();
-  auto keypair = iroha::create_keypair(seed);
+  auto keypair = iroha::create_keypair();
 
   auto model_tx = create_transaction();
+  auto proto_tx = iroha::model::converters::PbTransactionFactory::serialize(model_tx);
 
-  iroha::model::ModelCryptoProviderImpl crypto_provider;
-  sign(model_tx, keypair.privkey, keypair.pubkey);
-  ASSERT_TRUE(crypto_provider.verify(model_tx));
+  iroha::hash256_t hash = iroha::sha3_256(proto_tx.payload().SerializeAsString());
+  auto sig = iroha::sign(hash.to_string(), keypair.pubkey, keypair.privkey);
+  ASSERT_TRUE(iroha::verify(hash.to_string(), keypair.pubkey, sig));
 
-  // now modify transaction's meta, so verify should fail
+  // now modify transaction's creator, so verify should fail
   model_tx.creator_account_id = "test1";
-  ASSERT_FALSE(crypto_provider.verify(model_tx));
+  proto_tx = iroha::model::converters::PbTransactionFactory::serialize(model_tx);
+  hash = iroha::sha3_256(proto_tx.payload().SerializeAsString());
+  ASSERT_FALSE(iroha::verify(hash.to_string(), keypair.pubkey, sig));
 }

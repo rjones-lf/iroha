@@ -19,7 +19,6 @@
 #define IROHA_JSON_TRANSACTION_FACTORY_HPP
 
 #include "model/converters/json_command_factory.hpp"
-#include "model/model_hash_provider_impl.hpp"
 #include "model/transaction.hpp"
 
 namespace iroha {
@@ -35,7 +34,6 @@ namespace iroha {
 
        private:
         JsonCommandFactory factory_;
-        HashProviderImpl hash_provider_;
       };
 
     }  // namespace converters

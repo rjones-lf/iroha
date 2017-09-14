@@ -16,7 +16,10 @@
  */
 
 #include "model/generators/block_generator.hpp"
+#include <block.pb.h>
 #include <chrono>
+#include <crypto/hash.hpp>
+#include "model/converters/pb_block_factory.hpp"
 
 namespace iroha {
   namespace model {
@@ -32,8 +35,9 @@ namespace iroha {
         TransactionGenerator tx_generator;
         block.transactions = {tx_generator.generateGenesisTransaction(
             block.created_ts, peers_address)};
-        HashProviderImpl provider;
-        block.hash = provider.get_hash(block);
+        converters::PbBlockFactory blockFactory;
+        auto pBlock = blockFactory.serialize(block);
+        block.hash = sha3_256(pBlock.payload().SerializeAsString());
 
         return block;
       }

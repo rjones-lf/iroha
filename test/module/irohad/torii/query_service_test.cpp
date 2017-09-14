@@ -35,7 +35,12 @@ class QueryServiceTest : public ::testing::Test {
     query_factory = std::make_shared<PbQueryFactory>();
     query_response_factory = std::make_shared<PbQueryResponseFactory>();
     // any query
-    query.mutable_get_account();
+    query.mutable_payload()->mutable_get_account();
+
+    // just random hex strings
+    query.mutable_signature()->set_pubkey("680ded3260f417635c4b19e77b2cf7fc");
+    query.mutable_signature()->set_signature(
+        "781f3b66cabeb600f86d80e045564f59fbc1f07c1f4379d50edf52e934305439");
   }
 
   void init() {

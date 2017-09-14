@@ -39,19 +39,17 @@ class SimulatorTest : public ::testing::Test {
     validator = std::make_shared<MockStatefulValidator>();
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
-    provider = std::make_shared<HashProviderImpl>();
     ordering_gate = std::make_shared<MockOrderingGate>();
   }
 
   void init() {
     simulator = std::make_shared<Simulator>(ordering_gate, validator, factory,
-                                            query, provider);
+                                            query);
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
-  std::shared_ptr<HashProviderImpl> provider;
   std::shared_ptr<MockOrderingGate> ordering_gate;
 
   std::shared_ptr<Simulator> simulator;

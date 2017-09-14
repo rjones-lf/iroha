@@ -26,22 +26,20 @@ message GetAccountAssets {
 }
 
 message Query {
-  message Header {
+  message Payload {
     uint64 created_time = 1;
-    Signature signature = 2;
+    string creator_account_id = 2;
+      oneof query {
+        GetAccount get_account = 3;
+        GetSignatories get_account_signatories = 4;
+        GetAccountTransactions get_account_transactions = 5;
+        GetAccountAssetTransactions get_account_asset_transactions = 6;
+        GetAccountAssets get_account_assets = 7;
+      }
+      // used to prevent replay attacks.
+      uint64 query_counter = 8;
   }
 
-  Header header = 1;
-  string creator_account_id = 2;
-
-
-  oneof query {
-    GetAccount get_account = 3;
-    GetSignatories get_account_signatories = 4;
-    GetAccountTransactions get_account_transactions = 5;
-    GetAccountAssetTransactions get_account_asset_transactions = 6;
-    GetAccountAssets get_account_assets = 7;
-  }
-  // used to prevent replay attacks.
-  uint64 query_counter = 8;
+  Payload payload = 1;
+  Signature signature = 2;
 }

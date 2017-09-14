@@ -36,15 +36,16 @@ namespace iroha {
          * @param block - reference to block
          * @return proto block
          */
-        protocol::Transaction serialize(const model::Transaction &tx) const;
+        static protocol::Transaction serialize(
+            const model::Transaction &tx) ;
 
         /**
          * Convert proto block to model block
          * @param pb_block - reference to proto block
          * @return model block
          */
-        std::shared_ptr<model::Transaction> deserialize(
-            const protocol::Transaction &pb_tx) const;
+        static std::shared_ptr<model::Transaction> deserialize(
+            const protocol::Transaction &pb_tx) ;
       };
     }  // namespace converters
   }    // namespace model

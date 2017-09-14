@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-addtest(model_hash_provider_test model_hash_provider_test.cpp)
-target_link_libraries(model_hash_provider_test
-    model
-    optional
-    hash
-    )
-
 addtest(model_crypto_provider_test model_crypto_provider_test.cpp)
 target_link_libraries(model_crypto_provider_test
     model

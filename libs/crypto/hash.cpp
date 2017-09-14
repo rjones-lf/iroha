@@ -22,13 +22,11 @@ extern "C" {
 #include "common/types.hpp"
 
 namespace sha3 {
-  void sha3_256_(const unsigned char *message,
-                 size_t message_len,
+  void sha3_256_(const unsigned char *message, size_t message_len,
                  unsigned char *out) {
     sha3_256(message, message_len, out);
   }
-  void sha3_512_(const unsigned char *message,
-                 size_t message_len,
+  void sha3_512_(const unsigned char *message, size_t message_len,
                  unsigned char *out) {
     sha3_512(message, message_len, out);
   }
@@ -36,13 +34,11 @@ namespace sha3 {
 
 namespace iroha {
 
-  void sha3_256(unsigned char *output, unsigned char *input,
-                size_t in_size) {
+  void sha3_256(unsigned char *output, unsigned char *input, size_t in_size) {
     sha3::sha3_256_(input, in_size, output);
   }
 
-  void sha3_512(unsigned char *output, unsigned char *input,
-                size_t in_size) {
+  void sha3_512(unsigned char *output, unsigned char *input, size_t in_size) {
     sha3::sha3_512_(input, in_size, output);
   }
 
@@ -57,5 +53,19 @@ namespace iroha {
     sha3::sha3_512_(input, in_size, h.data());
     return h;
   }
+
+  hash256_t sha3_256(const std::string &msg) {
+    hash256_t h;
+    sha3::sha3_256_((uint8_t *)msg.data(), msg.size(), h.data());
+    return h;
+  }
+
+  hash512_t sha3_512(const std::string &msg) {
+    hash512_t h;
+    sha3::sha3_512_((uint8_t *)msg.data(), msg.size(), h.data());
+    return h;
+  }
+
+  //TODO: add convenient functions like hash(Transaction), hash(Block), hash(Query) etc
 
 }  // namespace iroha

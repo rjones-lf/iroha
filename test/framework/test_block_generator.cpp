@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
-#include <chrono>
 #include "framework/test_block_generator.hpp"
-#include "model/model_hash_provider_impl.hpp"
+#include <chrono>
+#include <crypto/hash.hpp>
 #include "model/commands/add_peer.hpp"
-#include "model/commands/create_domain.hpp"
-#include "model/commands/create_domain.hpp"
-#include "model/commands/create_asset.hpp"
 #include "model/commands/create_account.hpp"
+#include "model/commands/create_asset.hpp"
+#include "model/commands/create_domain.hpp"
 #include "model/commands/set_permissions.hpp"
-#include "common/types.hpp"
+#include "model/converters/pb_block_factory.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -77,9 +76,8 @@ namespace framework {
       permissions.set_permissions = true;
       set_perm->new_permissions = permissions;
 
-      transaction.commands =
-          {create_domain, create_asset, create_admin, create_acc,
-           set_perm};
+      transaction.commands = {create_domain, create_asset, create_admin,
+                              create_acc, set_perm};
       return transaction;
     }
 
@@ -101,8 +99,11 @@ namespace framework {
 
       Signature sign{};
       block.sigs = {sign};
-      block.hash = iroha::model::HashProviderImpl().get_hash(block);
+      model::converters::PbBlockFactory blockFactory;
+      auto pBlock = blockFactory.serialize(block);
+      block.hash = sha3_256(pBlock.payload().SerializeAsString());
+
       return block;
     }
-  } // namespace generator
-} // namespace framework
+  }  // namespace generator
+}  // namespace framework

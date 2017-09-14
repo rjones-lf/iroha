@@ -61,7 +61,7 @@ TEST(TransactionTest, tx_test) {
 
   auto factory = iroha::model::converters::PbTransactionFactory();
   auto proto_tx = factory.serialize(orig_tx);
-  switch (proto_tx.body().commands().Get(0).command_case()){
+  switch (proto_tx.payload().commands().Get(0).command_case()){
 
     case iroha::protocol::Command::kAddAssetQuantity:break;
     case iroha::protocol::Command::kAddPeer:break;

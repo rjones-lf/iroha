@@ -53,7 +53,6 @@ SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
   ${PROJECT_SOURCE_DIR}/libs
-  ${PROJECT_SOURCE_DIR}/libs/gsl/include
   ${IROHA_SCHEMA_DIR}
 )
 

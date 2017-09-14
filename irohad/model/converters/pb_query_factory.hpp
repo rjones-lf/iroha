@@ -22,6 +22,7 @@
 #include "logger/logger.hpp"
 #include "model/common.hpp"
 #include "model/query.hpp"
+#include <model/converters/pb_query_factory.hpp>
 #include "queries.pb.h"
 
 namespace iroha {
@@ -46,17 +47,18 @@ namespace iroha {
          * @return nonstd::nullopt if no query type is found
          */
         nonstd::optional<protocol::Query> serialize(
-            std::shared_ptr<Query> query);
+            std::shared_ptr<const model::Query> query);
 
         PbQueryFactory();
 
        private:
         // Query serializer:
-        protocol::Query serializeGetAccount(std::shared_ptr<Query> query);
-        protocol::Query serializeGetAccountAssets(std::shared_ptr<Query> query);
-        protocol::Query serializeGetAccountTransactions(std::shared_ptr<Query> query);
-        protocol::Query serializeGetAccountAssetTransactions(std::shared_ptr<Query> query);
-        protocol::Query serializeGetSignatories(std::shared_ptr<Query> query);
+        protocol::Query serializeGetAccount(std::shared_ptr<const model::Query> query);
+        protocol::Query serializeGetAccountAssets(std::shared_ptr<const model::Query> query);
+        protocol::Query serializeGetAccountTransactions(
+            std::shared_ptr<const model::Query> query);
+        protocol::Query serializeGetSignatories(std::shared_ptr<const model::Query> query);
+        protocol::Query serializeGetAccountAssetTransactions(std::shared_ptr<const model::Query> query);
 
         /**
          * Serialize and add meta data of model query to proto query
@@ -64,10 +66,10 @@ namespace iroha {
          * @param query - model query to serialize
          */
         void serializeQueryMetaData(protocol::Query& pb_query,
-                                    std::shared_ptr<Query> query);
+                                    std::shared_ptr<const model::Query> query);
 
         using Serializer =
-            protocol::Query (PbQueryFactory::*)(std::shared_ptr<Query>);
+            protocol::Query (PbQueryFactory::*)(std::shared_ptr<const model::Query>);
         std::unordered_map<std::type_index, Serializer> serializers_;
 
         logger::Logger log_;

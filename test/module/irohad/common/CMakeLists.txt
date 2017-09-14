@@ -6,4 +6,6 @@ target_link_libraries(block_insertion_test
     test_block_generator
     raw_block_insertion
     logger
+    optional
+    common
     )

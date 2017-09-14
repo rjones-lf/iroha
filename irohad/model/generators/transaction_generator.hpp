@@ -20,7 +20,6 @@
 
 #include "model/generators/command_generator.hpp"
 #include "model/generators/signature_generator.hpp"
-#include "model/model_hash_provider_impl.hpp"
 #include "model/transaction.hpp"
 
 namespace iroha {
@@ -49,9 +48,6 @@ namespace iroha {
             ts64_t timestamp, std::string creator_account_id,
             uint64_t tx_counter,
             std::vector<std::shared_ptr<Command>> commands);
-
-       private:
-        HashProviderImpl hash_provider_;
       };
     }  // namespace generators
   }    // namespace model

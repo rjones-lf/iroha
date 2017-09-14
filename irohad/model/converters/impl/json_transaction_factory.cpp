@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-#include "model/converters/json_transaction_factory.hpp"
-
+#include "crypto/hash.hpp"
 #include <algorithm>
 #include "model/converters/json_common.hpp"
+#include "model/converters/json_transaction_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 
 using namespace rapidjson;
 
@@ -84,7 +85,8 @@ namespace iroha {
             | des.Array(&Transaction::signatures, "signatures")
             | des.Array(&Transaction::commands, "commands", des_commands)
             | [this](auto transaction) {
-                transaction.tx_hash = hash_provider_.get_hash(transaction);
+                converters::PbTransactionFactory txFactory;
+                transaction.tx_hash = iroha::sha3_256(txFactory.serialize(transaction).payload().SerializeAsString());
                 return nonstd::make_optional(transaction);
               };
       }

@@ -186,7 +186,7 @@ namespace iroha_cli {
         // Continue parsing
         return true;
       }
-      output_file << json_string;
+      // output_file << json_string;
       std::cout << "Successfully saved!" << std::endl;
       printEnd();
       // Stop parsing

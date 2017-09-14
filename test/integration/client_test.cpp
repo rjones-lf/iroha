@@ -16,10 +16,16 @@
  */
 
 #include <responses.pb.h>
+// <<<<<<< HEAD
 
-#include <endpoint.pb.h>
-#include <model/model_hash_provider_impl.hpp>
+// #include <endpoint.pb.h>
+// #include <model/model_hash_provider_impl.hpp>
 
+// =======
+#include <crypto/hash.hpp>
+#include <model/converters/json_transaction_factory.hpp>
+#include "model/converters/json_common.hpp"
+// >>>>>>> feature/test-IR341
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
@@ -185,8 +191,11 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   auto doc = iroha::model::converters::stringToJson(json_string).value();
   iroha::model::converters::JsonTransactionFactory transactionFactory;
   auto tx = transactionFactory.deserialize(doc).value();
-  iroha::model::HashProviderImpl hashProvider;
-  tx.tx_hash = hashProvider.get_hash(tx);
+  iroha::model::converters::PbTransactionFactory pbTransactionFactory;
+  auto hash = iroha::sha3_256(pbTransactionFactory.serialize(tx)
+                                  .mutable_payload()
+                                  ->SerializeAsString());
+  tx.tx_hash = hash;
 
   ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(tx).answer,
             iroha_cli::CliClient::OK);

@@ -46,7 +46,7 @@ TEST(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   iroha::torii::QueryProcessorImpl qpi(std::move(qpf), validation);
   auto query = std::make_shared<model::Query>();
 
-  auto wrapper = make_test_subscriber<CallExact>(
+  auto wrapper = make_test_subscriber<CallExact, std::shared_ptr<iroha::model::QueryResponse>>(
       qpi.queryNotifier().filter([](auto response) {
         return instanceof <model::ErrorResponse>(response);
       }), 1);

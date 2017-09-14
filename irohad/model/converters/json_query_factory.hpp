@@ -49,7 +49,8 @@ namespace iroha {
          * @param model_query - model representation of query
          * @return serialized Query in json format
          */
-        std::string serialize(std::shared_ptr<Query> model_query);
+        nonstd::optional<std::string> serialize(
+            std::shared_ptr<const Query> model_query);
 
        private:
         Convert<std::shared_ptr<Query>> toQuery;
@@ -72,24 +73,17 @@ namespace iroha {
         optional_ptr<Query> deserializeGetAccountAssets(
             const rapidjson::Value &obj_query);
         // Serializers:
-        using Serializer = void (JsonQueryFactory::*)(rapidjson::Document &,
-                                                      std::shared_ptr<Query>);
+        using Serializer = void (JsonQueryFactory::*)(rapidjson::Document &, std::shared_ptr<const Query>);
         std::unordered_map<std::type_index, Serializer> serializers_;
         // Serialization handlers
-        void serializeGetAccount(rapidjson::Document &json_doc,
-                                 std::shared_ptr<Query> query);
-        void serializeGetAccountAssets(rapidjson::Document &json_doc,
-                                       std::shared_ptr<Query> query);
-        void serializeGetAccountTransactions(rapidjson::Document &json_doc,
-                                             std::shared_ptr<Query> query);
-        void serializeGetAccountAssetTransactions(rapidjson::Document &json_doc,
-                                                  std::shared_ptr<Query> query);
-        void serializeGetSignatories(rapidjson::Document &json_doc,
-                                     std::shared_ptr<Query> query);
+        void serializeGetAccount(rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
+        void serializeGetAccountAssets(rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
+        void serializeGetAccountTransactions(rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
+        void serializeGetAccountAssetTransactions(rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
+        void serializeGetSignatories(rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
 
         // Logger
         std::shared_ptr<spdlog::logger> log_;
-        HashProviderImpl hash_provider_;
       };
     }  // namespace converters
   }    // namespace model

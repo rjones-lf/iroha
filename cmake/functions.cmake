@@ -38,15 +38,19 @@ function(addbenchmark bench_name SOURCES)
   strictmode(${bench_name})
 endfunction()
 
-function(compile_proto_to_cpp PROTO)
-  string(REGEX REPLACE "\\.proto$" ".pb.h" GEN_PB_HEADER ${PROTO})
-  string(REGEX REPLACE "\\.proto$" ".pb.cc" GEN_PB ${PROTO})
+function(compile_proto_to_cpp PROTORELATIVEPATH)
+  # now this function can compile proto in any directory. compiled files will be in the same directory as input file
+  get_filename_component(PROTOABSOLUTEPATH ${PROTORELATIVEPATH} REALPATH)
+  get_filename_component(PROTODIRPATH      ${PROTOABSOLUTEPATH} DIRECTORY)
+  get_filename_component(PROTONAME         ${PROTOABSOLUTEPATH} NAME)
+  string(REGEX REPLACE "\\.proto$" ".pb.h" GEN_PB_HEADER ${PROTONAME})
+  string(REGEX REPLACE "\\.proto$" ".pb.cc" GEN_PB ${PROTONAME})
   add_custom_command(
-      OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_PB}
+      OUTPUT ${PROTODIRPATH}/${GEN_PB_HEADER} ${PROTODIRPATH}/${GEN_PB}
       COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I. --cpp_out=${IROHA_SCHEMA_DIR} ${PROTO}
+      ARGS -I${protobuf_INCLUDE_DIR} -I. --cpp_out=${PROTODIRPATH} ${PROTORELATIVEPATH}
       DEPENDS protoc
-      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
+      WORKING_DIRECTORY ${PROTODIRPATH}
       )
 endfunction()
 

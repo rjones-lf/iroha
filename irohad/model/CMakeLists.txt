@@ -3,17 +3,20 @@ add_subdirectory(converters)
 
 add_library(model
     model_crypto_provider_impl.cpp
-    model_hash_provider_impl.cpp
     impl/model_operators.cpp
     impl/query_execution.cpp
     )
+
 target_link_libraries(model
+    pb_model_converters
     hash
     optional
     rxcpp
     logger
+    schema
+    crypto
+    rapidjson
     )
-
 
 add_library(model_registrations INTERFACE)
 target_include_directories(model_registrations INTERFACE

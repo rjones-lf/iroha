@@ -89,10 +89,6 @@ void Irohad::run() {
       .WillRepeatedly(::testing::Return(true));
   log_->info("[Init] => crypto provider");
 
-  // Hash provider
-  auto hash_provider = std::make_shared<HashProviderImpl>();
-  log_->info("[Init] => hash provider");
-
   // Validators:
   auto stateless_validator = createStatelessValidator(crypto_verifier);
   auto stateful_validator = std::make_shared<StatefulValidatorImpl>();
@@ -114,18 +110,15 @@ void Irohad::run() {
   // Simulator
   auto simulator =
       createSimulator(ordering_gate, stateful_validator,
-                      storage->getBlockQuery(), storage, hash_provider);
+                      storage->getBlockQuery(), storage);
 
   // Block loader
   auto block_loader = loader_init.initBlockLoader(wsv, storage->getBlockQuery(),
                                                   crypto_verifier);
 
   // Consensus gate
-  auto consensus_gate = yac_init.initConsensusGate(peer_address,
-                                                   loop,
-                                                   orderer,
-                                                   simulator,
-                                                   block_loader);
+  auto consensus_gate = yac_init.initConsensusGate(peer_address, loop, orderer,
+                                                   simulator, block_loader);
 
   // Synchronizer
   auto synchronizer = createSynchronizer(consensus_gate, chain_validator,
@@ -134,13 +127,11 @@ void Irohad::run() {
   // PeerCommunicationService
   auto pcs = createPeerCommunicationService(ordering_gate, synchronizer);
 
-  pcs->on_proposal().subscribe([this](auto) {
-    log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
-  });
+  pcs->on_proposal().subscribe(
+      [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
 
-  pcs->on_commit().subscribe([this](auto) {
-    log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ ");
-  });
+  pcs->on_commit().subscribe(
+      [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
 
   // Torii:
   // --- Transactions:
@@ -160,8 +151,8 @@ void Irohad::run() {
 
   grpc::ServerBuilder builder;
   int port = 0;
-  builder.AddListeningPort(peer_address,
-                           grpc::InsecureServerCredentials(), &port);
+  builder.AddListeningPort(peer_address, grpc::InsecureServerCredentials(),
+                           &port);
   builder.RegisterService(ordering_init.ordering_gate.get());
   builder.RegisterService(ordering_init.ordering_service.get());
   builder.RegisterService(yac_init.consensus_network.get());
@@ -180,11 +171,9 @@ std::shared_ptr<Simulator> Irohad::createSimulator(
     std::shared_ptr<OrderingGate> ordering_gate,
     std::shared_ptr<StatefulValidator> stateful_validator,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<TemporaryFactory> temporary_factory,
-    std::shared_ptr<HashProviderImpl> hash_provider) {
+    std::shared_ptr<TemporaryFactory> temporary_factory) {
   return std::make_shared<Simulator>(ordering_gate, stateful_validator,
-                                     temporary_factory, block_query,
-                                     hash_provider);
+                                     temporary_factory, block_query);
 }
 
 std::shared_ptr<PeerCommunicationService>

@@ -16,79 +16,69 @@
  */
 
 #include "model/converters/pb_block_factory.hpp"
-#include <model/model_hash_provider_impl.hpp>
+#include <crypto/hash.hpp>
+#include <limits>
 #include "model/converters/pb_transaction_factory.hpp"
 
 namespace iroha {
   namespace model {
     namespace converters {
 
-      protocol::Block PbBlockFactory::serialize(model::Block const&block) {
-        protocol::Block pb_block;
+      protocol::Block PbBlockFactory::serialize(model::Block const& block) {
+        protocol::Block pb_block{};
 
-        // -----|Header|-----
-        auto header = pb_block.mutable_header();
-        header->set_created_time(block.created_ts);
-        for (auto sig : block.sigs) {
-          auto pb_sig = header->add_signatures();
-          pb_sig->set_pubkey(sig.pubkey.data(), sig.pubkey.size());
-          pb_sig->set_signature(sig.signature.data(), sig.signature.size());
+        auto pl = pb_block.mutable_payload();
+        pl->set_tx_number(block.txs_number);
+        pl->set_height(block.height);
+        pl->set_merkle_root(block.merkle_root.to_string());
+        pl->set_prev_block_hash(block.prev_hash.to_string());
+        pl->set_created_time(block.created_ts);
+
+        for (const auto& sig_obj : block.sigs) {
+          auto sig = pb_block.add_signatures();
+          sig->set_pubkey(sig_obj.pubkey.to_string());
+          sig->set_signature(sig_obj.signature.to_string());
         }
 
-        // -----|Meta|-----
-        auto meta = pb_block.mutable_meta();
-        meta->set_tx_number(block.txs_number);
-        meta->set_height(block.height);
-        meta->set_merkle_root(block.merkle_root.data(),
-                              block.merkle_root.size());
-        meta->set_prev_block_hash(block.prev_hash.data(),
-                                  block.prev_hash.size());
-
-        // -----|Body|-----
-        auto body = pb_block.mutable_body();
-        PbTransactionFactory tx_factory;
-        for (auto tx : block.transactions) {
-          auto pb_tx = body->add_transactions();
-          pb_tx->CopyFrom(tx_factory.serialize(tx));
+        for (const auto& tx : block.transactions) {
+          auto pb_tx = pl->add_transactions();
+          pb_tx->CopyFrom(PbTransactionFactory::serialize(tx));
         }
 
         return pb_block;
       }
 
-      model::Block PbBlockFactory::deserialize(protocol::Block const&pb_block) {
-        model::Block block;
+      model::Block PbBlockFactory::deserialize(
+          protocol::Block const& pb_block) {
+        model::Block block{};
 
-        // -----|Header|-----
-        block.created_ts = pb_block.header().created_time();
-        auto header = pb_block.header();
-        for (auto pb_sig : header.signatures()) {
-          Signature sig{};
-          std::copy(pb_sig.pubkey().begin(), pb_sig.pubkey().end(),
-                    sig.pubkey.begin());
-          std::copy(pb_sig.signature().begin(), pb_sig.signature().end(),
-                    sig.signature.begin());
-          block.sigs.push_back(sig);
+        const auto& pl = pb_block.payload();
+
+        // in proto we use uint32, but txs_number is uint16
+        auto txn_max = std::numeric_limits<decltype(block.txs_number)>::max();
+        if (pl.tx_number() > txn_max) {
+          throw BadFormatException("too many transactions in block");
         }
 
-        // -----|Meta|-----
-        auto meta = pb_block.meta();
-        // potential dangerous cast
-        block.txs_number = (uint16_t)meta.tx_number();
-        block.height = meta.height();
-        std::copy(meta.merkle_root().begin(), meta.merkle_root().end(),
-                  block.merkle_root.begin());
-        std::copy(meta.prev_block_hash().begin(), meta.prev_block_hash().end(),
-                  block.prev_hash.begin());
+        block.txs_number = static_cast<uint16_t>(pl.tx_number());
+        block.height = pl.height();
+        block.merkle_root = hash256_t::from_string(pl.merkle_root());
+        block.prev_hash = hash256_t::from_string(pl.prev_block_hash());
+        block.created_ts = pl.created_time();
 
-        // -----|Body|-----
-        auto body = pb_block.body();
-        PbTransactionFactory tx_factory;
-        for (auto pb_tx : body.transactions()) {
-          block.transactions.push_back(*tx_factory.deserialize(pb_tx));
+        for (const auto& pb_sig : pb_block.signatures()) {
+          model::Signature sig;
+          sig.signature = sig_t::from_string(pb_sig.signature());
+          sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
+          block.sigs.push_back(std::move(sig));
         }
 
-        iroha::model::HashProviderImpl hash_provider;
-        block.hash = hash_provider.get_hash(block);
+        for (const auto& pb_tx : pl.transactions()) {
+          block.transactions.push_back(
+              *PbTransactionFactory::deserialize(pb_tx));
+        }
+
+        block.hash = iroha::sha3_256(pl.SerializeAsString());
 
         return block;
       }

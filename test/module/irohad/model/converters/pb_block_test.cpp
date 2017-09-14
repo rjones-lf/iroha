@@ -16,7 +16,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <model/model_hash_provider_impl.hpp>
+#include <crypto/hash.hpp>
 #include "commands.pb.h"
 #include "model/block.hpp"
 #include "model/converters/pb_block_factory.hpp"
@@ -71,12 +71,14 @@ TEST(BlockTest, bl_test) {
   orig_block.txs_number = 1;
   orig_block.transactions = {orig_tx};
 
-  iroha::model::HashProviderImpl hash_provider;
-  orig_block.hash = hash_provider.get_hash(orig_block);
-
   auto factory = iroha::model::converters::PbBlockFactory();
   auto proto_block = factory.serialize(orig_block);
+
+  auto hash = iroha::sha3_256(proto_block.payload().SerializeAsString());
+  orig_block.hash = hash;
+
   auto serial_block = factory.deserialize(proto_block);
+
   ASSERT_EQ(orig_block.created_ts, serial_block.created_ts);
   ASSERT_EQ(orig_block.transactions, serial_block.transactions);
   ASSERT_EQ(orig_block.sigs, serial_block.sigs);

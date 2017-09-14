@@ -10,6 +10,7 @@ target_link_libraries(hash
     )
 
 add_library(crypto
+    crypto.hpp
     ed25519_impl.cpp
     )
 target_link_libraries(crypto

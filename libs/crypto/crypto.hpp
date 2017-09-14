@@ -31,9 +31,10 @@ namespace iroha {
    * @param priv
    * @return
    */
-  ed25519::sig_t sign(const uint8_t *msg, size_t msgsize,
-                      const ed25519::pubkey_t &pub,
-                      const ed25519::privkey_t &priv);
+  sig_t sign(const uint8_t *msg, size_t msgsize, const pubkey_t &pub,
+             const privkey_t &priv);
+  sig_t sign(const std::string &msg, const pubkey_t &pub,
+             const privkey_t &priv);
 
   /**
    * Verify signature of ed25519 crypto algorithm
@@ -43,8 +44,9 @@ namespace iroha {
    * @param sig
    * @return true if signature is valid, false otherwise
    */
-  bool verify(const uint8_t *msg, size_t msgsize, const ed25519::pubkey_t &pub,
-              const ed25519::sig_t &sig);
+  bool verify(const uint8_t *msg, size_t msgsize, const pubkey_t &pub,
+              const sig_t &sig);
+  bool verify(const std::string &msg, const pubkey_t &pub, const sig_t &sig);
 
   /**
    * Generate random seed reading from /dev/urandom
@@ -63,8 +65,12 @@ namespace iroha {
    * @param seed
    * @return
    */
-  ed25519::keypair_t create_keypair(blob_t<32> seed);
+  keypair_t create_keypair(blob_t<32> seed);
 
-
+  /**
+   * Create new keypair with a default seed (by create_seed())
+   * @return
+   */
+  keypair_t create_keypair();
 }
 #endif  // IROHA_CRYPTO_HPP

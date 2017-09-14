@@ -21,7 +21,6 @@
 #include "ametsuchi/block_query.hpp"
 #include "loader.grpc.pb.h"
 #include "model/converters/pb_block_factory.hpp"
-#include "model/model_hash_provider_impl.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
