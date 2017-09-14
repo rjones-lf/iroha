@@ -21,12 +21,9 @@
 
 namespace amount {
 
-  using namespace boost::multiprecision;
-
   Amount::Amount() : value_(0), precision_(0) {}
 
-  Amount::Amount(uint256_t value)
-      : value_(value), precision_(0) {}
+  Amount::Amount(uint256_t value) : value_(value), precision_(0) {}
 
   Amount::Amount(uint256_t amount, uint8_t precision)
       : value_(amount), precision_(precision) {}
@@ -37,19 +34,12 @@ namespace amount {
   Amount &Amount::operator=(const Amount &other) {
     // check for self-assignment
     if (&other == this) return *this;
-    std::copy(&other.value_, &other.value_ + sizeof(decltype(value_)), &value_);
-    std::copy(&other.precision_, &other.precision_ + sizeof(precision_),
-              &precision_);
+    value_ = other.value_;
+    precision_ = other.precision_;
     return *this;
   }
 
-  Amount::Amount(Amount &&am) : value_(0), precision_(0) {
-    value_ = am.value_;
-    precision_ = am.precision_;
-
-    am.value_ = 0;
-    am.precision_ = 0;
-  }
+  Amount::Amount(Amount &&am) : value_(am.value_), precision_(am.precision_) {}
 
   Amount &Amount::operator=(Amount &&other) {
     std::swap(value_, other.value_);
@@ -100,15 +90,26 @@ namespace amount {
     return *this;
   }
 
+  // to raise to power integer values
+  int ipow(int base, int exp) {
+    int result = 1;
+    while (exp != 0) {
+      if (exp & 1) result *= base;
+      exp >>= 1;
+      base *= base;
+    }
+
+    return result;
+  }
+
   int Amount::compareTo(const Amount &other) const {
     if (precision_ == other.precision_) {
       return (value_ < other.value_) ? -1 : (value_ > other.value_) ? 1 : 0;
     }
     // when different precisions transform to have the same scale
     auto max_precision = std::max(precision_, other.precision_);
-    auto val1 = value_ * uint256_t(std::pow(10, max_precision - precision_));
-    auto val2 = other.value_ *
-                uint256_t(std::pow(10, max_precision - other.precision_));
+    auto val1 = value_ * ipow(10, max_precision - precision_);
+    auto val2 = other.value_ * ipow(10, max_precision - other.precision_);
     return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
   }
 

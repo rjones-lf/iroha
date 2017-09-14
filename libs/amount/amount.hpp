@@ -24,6 +24,8 @@
 
 namespace amount {
 
+  using namespace boost::multiprecision;
+
   /**
    * Keeps integer and scale values allowing performing math
    * operations on them
@@ -39,14 +41,14 @@ namespace amount {
      * Amount with integer = amount and scale = 0
      * @param amount integer part
      */
-    Amount(boost::multiprecision::uint256_t amount);
+    Amount(uint256_t amount);
 
     /**
      * Amount with provided integer and scale part
      * @param amount integer part
      * @param precision scale part
      */
-    Amount(boost::multiprecision::uint256_t amount, uint8_t precision);
+    Amount(uint256_t amount, uint8_t precision);
 
     /**
      * Copy constructor
@@ -65,7 +67,7 @@ namespace amount {
      * @param percents
      * @return
      */
-    Amount percentage(boost::multiprecision::uint256_t percents) const;
+    Amount percentage(uint256_t percents) const;
 
     /**
      * Takes percentage represented as amount value
