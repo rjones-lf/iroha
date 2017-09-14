@@ -8,7 +8,7 @@ jobs:
       - image: hyperledger/iroha-docker-develop
         environment:
           IROHA_HOME: /opt/iroha
-          IROHA_BUILD: /tmp/build
+          IROHA_BUILD: /opt/iroha/build
       - image: postgres:9.5
       - image: redis:3.2.8
     steps:
@@ -16,7 +16,7 @@ jobs:
       - run:
           name: notify upsource about current build
           command: |
-            python3 .circleci/upsource-webhook.py --in-progress
+            python3 .circleci/upsource-webhook.py --in-progress || true
       - run:
           name: ensure, required folders created
           command: |
@@ -40,19 +40,34 @@ jobs:
           command: cmake -DCOVERAGE=ON -H$IROHA_HOME -B$IROHA_BUILD
       - run:
           name: make
-          command: cmake --build $IROHA_BUILD -- -j4
+          command: cmake --build $IROHA_BUILD -- -j2
       - run:
           name: code coverage pre
           command: cmake --build $IROHA_BUILD --target coverage.init.info
       - run:
-          name: run tests
-          command: cmake --build $IROHA_BUILD --target test
+          name: unit tests, generate xunit-*.xml
+          command: |
+            GTEST_DIR=$IROHA_BUILD/test_bin
+            for test in $(ls $GTEST_DIR); do
+              XUTEST=$IROHA_BUILD/xunit-$test.xml
+              # generates build/xunit-*.xml files with reports
+              $GTEST_DIR/$test --gtest_output=xml:$XUTEST
+            done
       - run:
-          name: code coverage post
+          name: post code coverage
           command: |
             cmake --build $IROHA_BUILD --target coverage.info
             lcov --list $IROHA_BUILD/coverage.info
             bash <(curl -s https://codecov.io/bash) -X fix -f $IROHA_BUILD/coverage.info || echo "Codecov did not collect coverage reports"
+      - run:
+          name: run analyzers and generate xml reports
+          command: |
+            # generate reports. they all will be in build directory
+            housekeeping/xml-reports.sh
+      - run:
+          name: execute sonar-scanner
+          command: sonar-scanner -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectVersion="${CIRCLE_BRANCH}"
+
       - run:
           name: ccache teardown
           command: |
@@ -69,4 +84,4 @@ jobs:
 
 notify:
   webhooks:
-    - url: https://upsource.soramitsu.co.jp/webhook/circleci
+    - url: http://upsource.soramitsu.co.jp:1112
