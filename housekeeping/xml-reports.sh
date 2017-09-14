@@ -1,19 +1,19 @@
 #!/bin/sh
 
 BUILD_DIR=/opt/iroha/build
-PARALLELISM=`nproc --all`
+PARALLELISM=$(nproc --all)
 IROHA_HOME=$(dirname $(realpath $0))/..
 
 cd $IROHA_HOME
 
 # all files with source code will be here
-SOURCES=`find $PWD -type f  | egrep "\.(hpp|cpp|h|c|cc)$" | egrep -v "external"`
+SOURCES=$(find $PWD -type f  | egrep "\.(hpp|cpp|h|c|cc)$" | egrep -v "external")
 
 cd $BUILD_DIR
 
 # run vera++
 VERA_XML=${BUILD_DIR}/vera-report.xml
-cat $SOURCES | vera++ - -s -c ${VERA_XML}
+(vera++ - -s -c ${VERA_XML}) < $SOURCES
 
 
 # run cppcheck
@@ -31,7 +31,7 @@ cppcheck -j${PARALLELISM} -v \
 GTEST_DIR=${BUILD_DIR}/test_bin
 for test in $(ls $GTEST_DIR); do
  VGXML=${BUILD_DIR}/valgrind-$test.xml
- XUXML=${BUILD_DIR}/xunit-$test.xml
+ # XUXML=${BUILD_DIR}/xunit-$test.xml
 
  bin=$GTEST_DIR/$test
  valgrind --xml=yes --xml-file=$VGXML \
