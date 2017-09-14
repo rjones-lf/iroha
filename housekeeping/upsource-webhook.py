@@ -21,7 +21,7 @@ def submit_ci_status(key = "IROHA",
                      name = "null",
                      description = "null",
                      revision = "null"):
-    upsource_url = "https://upsource.soramitsu.co.jp/~buildStatus"
+    upsource_url = "http://upsource.soramitsu.co.jp/~buildStatus"
     project = "iroha"
 
     post_body = {
