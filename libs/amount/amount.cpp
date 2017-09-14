@@ -19,7 +19,7 @@
 
 #include "amount/amount.hpp"
 
-namespace amount {
+namespace iroha {
 
   Amount::Amount() : value_(0), precision_(0) {}
 

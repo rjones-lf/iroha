@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <string>
 
-namespace amount {
+namespace iroha {
 
   using namespace boost::multiprecision;
 

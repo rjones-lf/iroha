@@ -22,10 +22,8 @@
 
 class AmountTest : public testing::Test {};
 
-using namespace boost::multiprecision;
-
 TEST_F(AmountTest, TestBasic) {
-  amount::Amount a(123, 2);
+  iroha::Amount a(123, 2);
 
   // check taking percentage
   auto b = a.percentage(50);
@@ -38,23 +36,23 @@ TEST_F(AmountTest, TestBasic) {
   auto d = a.percentage(c);
   ASSERT_EQ(d.to_string(), "0.02");
 
-  auto e = a.percentage(amount::Amount(256)); // taking 256% of the amount == 3.1488
+  auto e = a.percentage(iroha::Amount(256)); // taking 256% of the amount == 3.1488
   // assuming that we round down
   ASSERT_EQ(e.to_string(), "3.14");
 
   // check move constructor
-  amount::Amount f(std::move(a));
+  iroha::Amount f(std::move(a));
   ASSERT_EQ(f.to_string(), "1.23");
 
   // check equals when different precisions
-  ASSERT_EQ(amount::Amount(110, 2), amount::Amount(11,1));
+  ASSERT_EQ(iroha::Amount(110, 2), iroha::Amount(11,1));
 
   // check comparisons
-  ASSERT_LT(amount::Amount(110, 2), amount::Amount(111, 2));
-  ASSERT_LE(amount::Amount(110, 2), amount::Amount(111, 2));
-  ASSERT_LE(amount::Amount(111, 2), amount::Amount(111, 2));
+  ASSERT_LT(iroha::Amount(110, 2), iroha::Amount(111, 2));
+  ASSERT_LE(iroha::Amount(110, 2), iroha::Amount(111, 2));
+  ASSERT_LE(iroha::Amount(111, 2), iroha::Amount(111, 2));
 
-  ASSERT_GT(amount::Amount(111, 2), amount::Amount(110, 2));
-  ASSERT_GE(amount::Amount(111, 2), amount::Amount(110, 2));
-  ASSERT_GE(amount::Amount(111, 2), amount::Amount(111, 2));
+  ASSERT_GT(iroha::Amount(111, 2), iroha::Amount(110, 2));
+  ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(110, 2));
+  ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(111, 2));
 }
