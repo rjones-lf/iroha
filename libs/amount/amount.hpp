@@ -118,7 +118,6 @@ namespace iroha {
      * @return
      */
     int compareTo(const Amount& other) const;
-    int ipow(int base, int exp) const;
 
     boost::multiprecision::uint256_t value_;
     uint8_t precision_;

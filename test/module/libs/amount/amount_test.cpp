@@ -55,6 +55,4 @@ TEST_F(AmountTest, TestBasic) {
   ASSERT_GT(iroha::Amount(111, 2), iroha::Amount(110, 2));
   ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(110, 2));
   ASSERT_GE(iroha::Amount(111, 2), iroha::Amount(111, 2));
-
-  std::cout << iroha::Amount(222,2).percentage(iroha::Amount(1111, 1)).to_string() << std::endl;
 }

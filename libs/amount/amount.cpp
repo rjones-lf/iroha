@@ -21,6 +21,18 @@
 
 namespace iroha {
 
+  // to raise to power integer values
+  int ipow(int base, int exp) {
+    int result = 1;
+    while (exp != 0) {
+      if (exp & 1) result *= base;
+      exp >>= 1;
+      base *= base;
+    }
+
+    return result;
+  }
+
   Amount::Amount() : value_(0), precision_(0) {}
 
   Amount::Amount(uint256_t value) : value_(value), precision_(0) {}
@@ -53,8 +65,14 @@ namespace iroha {
   }
 
   Amount Amount::percentage(const Amount &am) const {
+    // multiply two amount values
     uint256_t new_value = value_ * am.value_;
-    new_value /= ipow(10, am.precision_+2);
+
+    // new value should be decreased by the scale of am to move floating point
+    // to the left, as it is done when we multiply manually
+    new_value /= ipow(10, am.precision_);
+    // to take percentage value we need divide by 100
+    new_value /= 100;
     return {new_value, precision_};
   }
 
@@ -88,18 +106,6 @@ namespace iroha {
     }
     value_ -= other.value_;
     return *this;
-  }
-
-  // to raise to power integer values
-  int Amount::ipow(int base, int exp) const {
-    int result = 1;
-    while (exp != 0) {
-      if (exp & 1) result *= base;
-      exp >>= 1;
-      base *= base;
-    }
-
-    return result;
   }
 
   int Amount::compareTo(const Amount &other) const {
