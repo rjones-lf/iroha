@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/sh -x
 
 if [ -z "$1" ] || [ "$1" -le "0" ]; then
     echo "Usage: $0 <number_of_peers>"
     exit -1
 fi
-PEERS_NUM=$($1-1 | bc)
+PEERS_NUM=$(($1-1))
 
 
 if ! docker ps >/dev/null 2>&1; then
@@ -17,7 +17,7 @@ if ! docker-machine >/dev/null 2>&1; then
     exit 3
 fi
 
-IROHA_HOME=$(dirname ${BASH_SOURCE[0]})/..
+IROHA_HOME=$(dirname $0)/..
 IMAGE="$IROHA_HOME/build/iroha-dev.tar"
 PREFIX=peer
 
@@ -40,5 +40,5 @@ for i in $(seq 0 $PEERS_NUM); do
 
 done
 
-$(dirname $(realpath ${BASH_SOURCE[0]}))/swarm-deploy.sh
+$(dirname $(realpath $0))/swarm-deploy.sh
 
