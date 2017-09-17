@@ -20,6 +20,7 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <cstdint>
+#include <nonstd/optional.hpp>
 #include <string>
 
 namespace iroha {
@@ -77,21 +78,34 @@ namespace iroha {
      */
     Amount percentage(const Amount& percents) const;
 
-    /**
-     * Sums two amounts. Requires to have the same scale.
-     * Otherwise invalid argument exception is thrown
-     * @return
-     */
-    Amount operator+(const Amount&) const;
-    Amount& operator+=(const Amount&);
+    friend nonstd::optional<Amount> operator+(nonstd::optional<Amount> a,
+                                              nonstd::optional<Amount> b) {
+      // check precisions
+      if (a->precision_ != b->precision_) {
+        return nonstd::nullopt;
+      }
+      auto res = a->add(*b);
+      // check overflow
+      if (res.value_ < a->value_ or res.value_ < b->value_) {
+        return nonstd::nullopt;
+      }
+      return res;
+    }
 
-    /**
-     * Subtracts one amount from another.
-     * Requires to have the same scale between both amounts.
-     * Otherwise invalid argument exception is thrown
-     * @return
-     */
-    Amount operator-(const Amount&) const;
+    friend nonstd::optional<Amount> operator-(nonstd::optional<Amount> a,
+                                              nonstd::optional<Amount> b) {
+      // check precisions
+      if (a->precision_ != b->precision_) {
+        return nonstd::nullopt;
+      }
+      // check if a greater than b
+      if (a->value_ < b->value_) {
+        return nonstd::nullopt;
+      }
+      return a->subtract(*b);
+    }
+
+    Amount& operator+=(const Amount&);
     Amount& operator-=(const Amount&);
 
     /**
@@ -118,6 +132,20 @@ namespace iroha {
      * @return
      */
     int compareTo(const Amount& other) const;
+
+    /**
+     * Sums two amounts. Requires to have the same scale.
+     * Otherwise invalid argument exception is thrown
+     * @return
+     */
+    Amount add(const Amount&) const;
+    /**
+     * Subtracts one amount from another.
+     * Requires to have the same scale between both amounts.
+     * Otherwise invalid argument exception is thrown
+     * @return
+     */
+    Amount subtract(const Amount&) const;
 
     boost::multiprecision::uint256_t value_;
     uint8_t precision_;

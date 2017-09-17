@@ -31,9 +31,15 @@ TEST_F(AmountTest, TestBasic) {
 
   // check summation
   auto c = a + b;
-  ASSERT_EQ(c.to_string(), "1.84");
+  ASSERT_TRUE(c.has_value());
+  ASSERT_EQ(c->to_string(), "1.84");
 
-  auto d = a.percentage(c); // taking 1.84% of 1.23
+  // check subtraction by subtracting b from c
+  auto aa = c - b;
+  ASSERT_TRUE(aa.has_value());
+  ASSERT_EQ(a, *aa);
+
+  auto d = a.percentage(*c); // taking 1.84% of 1.23
   ASSERT_EQ(d.to_string(), "0.02");
 
   auto e = a.percentage(iroha::Amount(256)); // taking 256% of the amount == 3.1488

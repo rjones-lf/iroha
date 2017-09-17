@@ -70,16 +70,13 @@ namespace iroha {
 
     // new value should be decreased by the scale of am to move floating point
     // to the left, as it is done when we multiply manually
-    new_value /= ipow(10, am.precision_);
+    new_value /= uint256_t(pow(10, am.precision_));
     // to take percentage value we need divide by 100
     new_value /= 100;
     return {new_value, precision_};
   }
 
-  Amount Amount::operator+(const Amount &other) const {
-    if (precision_ != other.precision_) {
-      throw std::invalid_argument("precisions are not the same");
-    }
+  Amount Amount::add(const Amount &other) const {
     auto new_val = value_ + other.value_;
     return {new_val, precision_};
   }
@@ -92,10 +89,7 @@ namespace iroha {
     return *this;
   }
 
-  Amount Amount::operator-(const Amount &other) const {
-    if (precision_ != other.precision_) {
-      throw std::invalid_argument("precisions are not the same");
-    }
+  Amount Amount::subtract(const Amount &other) const {
     auto new_val = value_ - other.value_;
     return {new_val, precision_};
   }
@@ -145,7 +139,7 @@ namespace iroha {
 
   std::string Amount::to_string() const {
     cpp_dec_float_50 float50(value_);
-    float50 /= ipow(10, precision_);
+    float50 /= pow(10, precision_);
     return float50.str(precision_, std::ios_base::fixed);
   }
 }
