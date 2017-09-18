@@ -14,6 +14,7 @@ SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
 if(COVERAGE)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
   find_program(LCOV_PROGRAM lcov)
   if(NOT LCOV_PROGRAM)
     message(FATAL_ERROR "lcov not found! Aborting...")
