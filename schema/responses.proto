@@ -15,7 +15,6 @@ message Account {
     string domain_name = 2;
     Permissions permissions = 3;
     uint32 quorum = 4;
-    bytes master_key = 5;
 }
 
 message AccountAsset {

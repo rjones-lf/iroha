@@ -18,31 +18,43 @@
 #ifndef IROHA_BYTEUTILS_H
 #define IROHA_BYTEUTILS_H
 
-#include <crypto/base64.hpp>
-
-extern "C" {
-#include <crypto/lookup3.h>
-}
-
 #include <string>
-#include "types.hpp"
+
+#include <nonstd/optional.hpp>
+
+#include "crypto/base64.hpp"
+extern "C" {
+#include "crypto/lookup3.h"
+}
+#include "common/types.hpp"
 
 namespace iroha {
 
   /**
-   * Converts given string to the blob of given size.
-   * @tparam size
-   * @param s
-   * @return
+   * Create blob_t from string of specified size
+   * @tparam size - size of blob_t, expected size of string
+   * @param s - string to convert
+   * @return blob, if conversion was successful, otherwise nullopt
+   */
+  template<size_t size>
+  nonstd::optional<blob_t<size>> stringToBlob(const std::string &string) {
+    if (size != string.size()) {
+      return nonstd::nullopt;
+    }
+    blob_t<size> array;
+    std::copy(string.begin(), string.end(), array.begin());
+    return array;
+  }
+
+  /**
+   * Convert hexstring to array of given size
+   * @tparam size - output array size
+   * @param string - input string for transform
+   * @return array of given size if size matches, nullopt otherwise
    */
   template <size_t size>
-  blob_t<size> to_blob(std::string s) {
-    if (s.size() != size) throw std::runtime_error("to_blob size mismatch");
-
-    blob_t<size> b;
-    std::copy(s.begin(), s.end(), b.begin());
-
-    return b;
+  nonstd::optional<blob_t<size>> hexstringToArray(const std::string &string) {
+    return hexstringToBytestring(string) | stringToBlob<size>;
   }
 }
 

@@ -19,7 +19,7 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "torii/processor/transaction_processor_impl.hpp"
-#include "model/tx_responses/stateless_response.hpp"
+#include "model/transaction_response.hpp"
 #include "framework/test_subscriber.hpp"
 
 using namespace iroha;
@@ -39,6 +39,18 @@ class TransactionProcessorTest : public ::testing::Test {
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
     validation = std::make_shared<MockStatelessValidator>();
+
+    rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
+    rxcpp::subjects::subject<Commit> commit_notifier;
+
+    EXPECT_CALL(*pcs,
+                on_proposal())
+        .WillRepeatedly(Return(prop_notifier.get_observable()));
+
+    EXPECT_CALL(*pcs,
+                on_commit())
+        .WillRepeatedly(Return(commit_notifier.get_observable()));
+
     tp = std::make_shared<TransactionProcessorImpl>(pcs, validation);
   }
 
@@ -61,8 +73,8 @@ TEST_F(TransactionProcessorTest,
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = static_cast<TransactionStatelessResponse &>(*response);
-    ASSERT_EQ(resp.passed, true);
+    auto resp = static_cast<TransactionResponse &>(*response);
+    ASSERT_EQ(resp.current_status, iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS);
   });
   tp->transactionHandle(tx);
 
@@ -84,8 +96,8 @@ TEST_F(TransactionProcessorTest,
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = static_cast<TransactionStatelessResponse &>(*response);
-    ASSERT_EQ(resp.passed, false);
+    auto resp = static_cast<TransactionResponse &>(*response);
+    ASSERT_EQ(resp.current_status, iroha::model::TransactionResponse::STATELESS_VALIDATION_FAILED);
   });
   tp->transactionHandle(tx);
 

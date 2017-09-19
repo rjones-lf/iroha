@@ -20,7 +20,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -51,12 +50,10 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
     creator.account_id = admin_id;
     creator.domain_name = domain_id;
-    creator.master_key.fill(0x1);
     creator.quorum = 1;
 
     account.account_id = account_id;
     account.domain_name = domain_id;
-    account.master_key.fill(0x2);
     account.quorum = 1;
   }
 
@@ -67,7 +64,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
   }
 
   std::string admin_id = "admin@test", account_id = "test@test",
-      asset_id = "coin#test", domain_id = "test";
+      asset_id = "coin#test", domain_id = "test", description = "test transfer";
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockWsvCommand> wsv_command;
@@ -199,7 +196,7 @@ class AddSignatoryTest : public CommandValidateExecuteTest {
 
     add_signatory = std::make_shared<AddSignatory>();
     add_signatory->account_id = account_id;
-    add_signatory->pubkey = creator.master_key;  // Such Pubkey exist
+    add_signatory->pubkey.fill(1);  // Such Pubkey exist
 
     command = add_signatory;
   }
@@ -263,87 +260,11 @@ TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
 TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
   // Add same signatory
   creator.permissions.add_signatory = true;
-  add_signatory->pubkey = account.master_key;
+  add_signatory->pubkey.fill(2);
 
   EXPECT_CALL(*wsv_command, insertAccountSignatory(add_signatory->account_id,
                                                    add_signatory->pubkey))
       .WillOnce(Return(false));
-
-  ASSERT_FALSE(validateAndExecute());
-}
-
-
-class AssignMasterKeyTest : public CommandValidateExecuteTest {
- public:
-  void SetUp() override {
-    CommandValidateExecuteTest::SetUp();
-
-    pubkeys = {creator.master_key, account.master_key};
-
-    assign_master_key = std::make_shared<AssignMasterKey>();
-    assign_master_key->account_id = account_id;
-    assign_master_key->pubkey = creator.master_key;
-
-    command = assign_master_key;
-  }
-
-  std::vector<ed25519::pubkey_t> pubkeys;
-  std::shared_ptr<AssignMasterKey> assign_master_key;
-};
-
-TEST_F(AssignMasterKeyTest, ValidWhenCreatorHasPermissions) {
-  // Creator is sys admin
-  creator.permissions.add_signatory = true;
-
-  EXPECT_CALL(*wsv_query, getAccount(assign_master_key->account_id))
-      .Times(2).WillRepeatedly(Return(account));
-  EXPECT_CALL(*wsv_query, getSignatories(assign_master_key->account_id))
-      .WillOnce(Return(pubkeys));
-  EXPECT_CALL(*wsv_command, updateAccount(_)).WillOnce(Return(true));
-
-  ASSERT_TRUE(validateAndExecute());
-}
-
-TEST_F(AssignMasterKeyTest, ValidWhenSameAccount) {
-  // Creator is account itself
-  creator.account_id = assign_master_key->account_id;
-
-  EXPECT_CALL(*wsv_query, getAccount(assign_master_key->account_id))
-      .Times(2).WillRepeatedly(Return(account));
-  EXPECT_CALL(*wsv_query, getSignatories(assign_master_key->account_id))
-      .WillOnce(Return(pubkeys));
-  EXPECT_CALL(*wsv_command, updateAccount(_)).WillOnce(Return(true));
-
-  ASSERT_TRUE(validateAndExecute());
-}
-
-TEST_F(AssignMasterKeyTest, InvalidWhenNoPermissions) {
-  // Creator has no permissions
-  creator.permissions.add_signatory = false;
-
-  ASSERT_FALSE(validateAndExecute());
-}
-
-TEST_F(AssignMasterKeyTest, InvalidWhenNoKey) {
-  // Assign random master key
-  creator.permissions.add_signatory = true;
-  assign_master_key->pubkey.fill(0xF);
-
-  EXPECT_CALL(*wsv_query, getAccount(assign_master_key->account_id))
-      .WillOnce(Return(account));
-  EXPECT_CALL(*wsv_query, getSignatories(assign_master_key->account_id))
-      .WillOnce(Return(pubkeys));
-
-  ASSERT_FALSE(validateAndExecute());
-}
-
-TEST_F(AssignMasterKeyTest, InvalidWhenNoAccount) {
-  // Add to nonexistent account
-  creator.permissions.add_signatory = true;
-  assign_master_key->account_id = "noacc";
-
-  EXPECT_CALL(*wsv_query, getAccount(assign_master_key->account_id))
-      .WillOnce(Return(nonstd::nullopt));
 
   ASSERT_FALSE(validateAndExecute());
 }
@@ -357,7 +278,7 @@ class CreateAccountTest : public CommandValidateExecuteTest {
     create_account = std::make_shared<CreateAccount>();
     create_account->account_name = "test";
     create_account->domain_id = domain_id;
-    create_account->pubkey = account.master_key;
+    create_account->pubkey.fill(2);
 
     command = create_account;
   }
@@ -477,7 +398,7 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
 
     remove_signatory = std::make_shared<RemoveSignatory>();
     remove_signatory->account_id = account_id;
-    remove_signatory->pubkey = creator.master_key;
+    remove_signatory->pubkey.fill(1);
 
     command = remove_signatory;
   }
@@ -501,17 +422,6 @@ TEST_F(RemoveSignatoryTest, ValidWhenCreatorHasPermissions) {
 TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
   // Creator has no permissions
   creator.permissions.remove_signatory = false;
-
-  ASSERT_FALSE(validateAndExecute());
-}
-
-TEST_F(RemoveSignatoryTest, InvalidWhenMasterKey) {
-  // Remove master key
-  creator.permissions.remove_signatory = true;
-  remove_signatory->pubkey = account.master_key;
-
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-      .WillOnce(Return(account));
 
   ASSERT_FALSE(validateAndExecute());
 }
@@ -654,6 +564,7 @@ class TransferAssetTest : public CommandValidateExecuteTest {
     transfer_asset->src_account_id = admin_id;
     transfer_asset->dest_account_id = account_id;
     transfer_asset->asset_id = asset_id;
+    transfer_asset->description = description;
     transfer_asset->amount.int_part = 1;
     transfer_asset->amount.frac_part = 50;
 

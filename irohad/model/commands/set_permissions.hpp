@@ -40,6 +40,12 @@ namespace iroha {
 
       bool operator==(const Command& command) const override;
       bool operator!=(const Command& command) const override;
+
+      SetAccountPermissions() {}
+
+      SetAccountPermissions(std::string account_id,
+                            Account::Permissions new_permissions)
+          : account_id(account_id), new_permissions(new_permissions) {}
     };
   }  // namespace model
 }  // namespace iroha

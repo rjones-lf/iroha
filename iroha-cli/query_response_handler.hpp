@@ -17,21 +17,34 @@
 
 #ifndef IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
 #define IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
+#include <map>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include "logger/logger.hpp"
 #include "responses.pb.h"
-#include <memory>
-#include <map>
 
 namespace iroha_cli {
+  /*
+  workaround for circle-ci compilation issue; see
+  http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2148 and
+  https://stackoverflow.com/questions/18837857/cant-use-enum-class-as-unordered-map-key
+  for more details
+  */
+  struct EnumTypeHash {
+    template <typename T>
+    std::size_t operator()(T t) const {
+      return static_cast<std::size_t>(t);
+    }
+  };
+
   class QueryResponseHandler {
    public:
     QueryResponseHandler();
 
     /**
      * Handle query response
-     * @param response - iroha protocol
+     * @param response - iroha protocol object
      */
     void handle(const iroha::protocol::QueryResponse& response);
 
@@ -47,8 +60,14 @@ namespace iroha_cli {
     // -- --
     using Handler =
         void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
-    std::unordered_map<int , Handler> handler_map_;
-    std::unordered_map<int, std::string> error_handler_map_;
+    using QueryResponseCode = iroha::protocol::QueryResponse::ResponseCase;
+    using ErrorResponseCode = iroha::protocol::ErrorResponse::Reason;
+
+    // Map  QueryResponse code -> Handle Method
+    std::unordered_map<QueryResponseCode, Handler, EnumTypeHash> handler_map_;
+    // Map ErrorResponse code -> String to print
+    std::unordered_map<ErrorResponseCode, std::string, EnumTypeHash>
+        error_handler_map_;
 
     std::shared_ptr<spdlog::logger> log_;
   };

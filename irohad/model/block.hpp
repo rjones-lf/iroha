@@ -46,6 +46,8 @@ namespace iroha {
        */
       std::vector<Signature> sigs;
 
+      using SignaturesType = decltype(sigs);
+
       /**
        * Timestamp of block creation(signing)
        * HEADER field
@@ -83,6 +85,8 @@ namespace iroha {
        * BODY field
        */
       std::vector<Transaction> transactions;
+
+      using TransactionsType = decltype(transactions);
 
       bool operator==(const Block& rhs) const;
       bool operator!=(const Block& rhs) const;

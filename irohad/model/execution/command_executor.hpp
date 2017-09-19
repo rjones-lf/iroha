@@ -127,22 +127,6 @@ namespace iroha {
                    ametsuchi::WsvQuery &queries) override;
     };
 
-    class AssignMasterKeyExecutor : public CommandExecutor {
-     public:
-
-      AssignMasterKeyExecutor();
-
-      bool execute(const Command &command, ametsuchi::WsvQuery &queries,
-                   ametsuchi::WsvCommand &commands) override;
-
-     protected:
-      bool hasPermissions(const Command &command, ametsuchi::WsvQuery &queries,
-                          const Account &creator) override;
-
-      bool isValid(const Command &command,
-                   ametsuchi::WsvQuery &queries) override;
-    };
-
     class CreateAccountExecutor : public CommandExecutor {
      public:
 

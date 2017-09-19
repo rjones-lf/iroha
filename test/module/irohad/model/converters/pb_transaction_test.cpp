@@ -23,7 +23,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -67,7 +66,6 @@ TEST(TransactionTest, tx_test) {
     case iroha::protocol::Command::kAddAssetQuantity:break;
     case iroha::protocol::Command::kAddPeer:break;
     case iroha::protocol::Command::kAddSignatory:break;
-    case iroha::protocol::Command::kAccountAssignMk:break;
     case iroha::protocol::Command::kCreateAsset:break;
     case iroha::protocol::Command::kCreateAccount:break;
     case iroha::protocol::Command::kCreateDomain:break;

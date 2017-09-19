@@ -18,15 +18,17 @@
 #ifndef IROHA_STORAGE_IMPL_HPP
 #define IROHA_STORAGE_IMPL_HPP
 
+#include "ametsuchi/storage.hpp"
+
+#include <cmath>
+#include <shared_mutex>
+
 #include <cpp_redis/cpp_redis>
 #include <nonstd/optional.hpp>
 #include <pqxx/pqxx>
-#include <shared_mutex>
-#include <cmath>
-#include "model/converters/json_block_factory.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include "ametsuchi/storage.hpp"
 #include "logger/logger.hpp"
+#include "model/converters/json_block_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -35,20 +37,17 @@ namespace iroha {
       ConnectionContext(std::unique_ptr<FlatFile> block_store,
                         std::unique_ptr<cpp_redis::redis_client> index,
                         std::unique_ptr<pqxx::lazyconnection> pg_lazy,
-                        std::unique_ptr<pqxx::nontransaction> pg_nontx,
-                        std::unique_ptr<WsvQuery> wsv)
+                        std::unique_ptr<pqxx::nontransaction> pg_nontx)
           : block_store(std::move(block_store)),
             index(std::move(index)),
             pg_lazy(std::move(pg_lazy)),
-            pg_nontx(std::move(pg_nontx)),
-            wsv(std::move(wsv)) {
+            pg_nontx(std::move(pg_nontx)) {
       }
 
       std::unique_ptr<FlatFile> block_store;
       std::unique_ptr<cpp_redis::redis_client> index;
       std::unique_ptr<pqxx::lazyconnection> pg_lazy;
       std::unique_ptr<pqxx::nontransaction> pg_nontx;
-      std::unique_ptr<WsvQuery> wsv;
     };
 
     class StorageImpl : public Storage {
@@ -65,27 +64,14 @@ namespace iroha {
           std::size_t redis_port, std::string postgres_connection);
 
       std::unique_ptr<TemporaryWsv> createTemporaryWsv() override;
+
       std::unique_ptr<MutableStorage> createMutableStorage() override;
+
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
-      rxcpp::observable<model::Transaction> getAccountTransactions(
-          std::string account_id) override;
-      rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          std::string account_id, std::string asset_id) override;
-      rxcpp::observable<model::Block> getBlocks(uint32_t height,
-                                                uint32_t count) override;
-      rxcpp::observable<model::Block> getBlocksFrom(uint32_t height) override;
-      rxcpp::observable<model::Block> getTopBlocks(uint32_t count) override;
+      std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
-      nonstd::optional<model::Account> getAccount(
-          const std::string &account_id) override;
-      nonstd::optional<std::vector<ed25519::pubkey_t>> getSignatories(
-          const std::string &account_id) override;
-      nonstd::optional<model::Asset> getAsset(
-          const std::string &asset_id) override;
-      nonstd::optional<model::AccountAsset> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) override;
-      nonstd::optional<std::vector<model::Peer>> getPeers() override;
+      std::shared_ptr<BlockQuery> getBlockQuery() const override;
 
      protected:
 
@@ -96,8 +82,7 @@ namespace iroha {
                   std::unique_ptr<FlatFile> block_store,
                   std::unique_ptr<cpp_redis::redis_client> index,
                   std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                  std::unique_ptr<pqxx::nontransaction> wsv_transaction,
-                  std::unique_ptr<WsvQuery> wsv);
+                  std::unique_ptr<pqxx::nontransaction> wsv_transaction);
 
       /**
        * Folder with raw blocks
@@ -124,7 +109,9 @@ namespace iroha {
 
       std::unique_ptr<pqxx::nontransaction> wsv_transaction_;
 
-      std::unique_ptr<WsvQuery> wsv_;
+      std::shared_ptr<WsvQuery> wsv_;
+
+      std::shared_ptr<BlockQuery> blocks_;
 
       model::converters::JsonBlockFactory serializer_;
 
@@ -147,7 +134,6 @@ namespace iroha {
           "CREATE TABLE IF NOT EXISTS account (\n"
           "    account_id character varying(197),    \n"
           "    domain_id character varying(164) NOT NULL REFERENCES domain,\n"
-          "    master_key bytea NOT NULL REFERENCES signatory(public_key),\n"
           "    quorum int NOT NULL,\n"
           "    status int NOT NULL DEFAULT 0,    \n"
           "    transaction_count int NOT NULL DEFAULT 0, \n"

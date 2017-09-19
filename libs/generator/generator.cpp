@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
-#include "generator.hpp"
+#include "generator/generator.hpp"
+
+#include <cstdlib>
 
 namespace generator {
 

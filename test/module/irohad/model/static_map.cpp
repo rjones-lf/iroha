@@ -36,7 +36,7 @@ TEST(HandlerTest, CommandRegistration) {
               return index.name();
             }));
 
-  ASSERT_EQ(11, registry.command_handler.types().size());
+  ASSERT_EQ(10, registry.command_handler.types().size());
 }
 
 TEST(HandlerTest, QueryRegistration) {

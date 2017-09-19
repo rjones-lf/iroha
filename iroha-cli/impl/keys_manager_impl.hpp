@@ -17,7 +17,10 @@
 
 #ifndef IROHA_CLI_KEYS_MANAGER_IMPL_HPP
 #define IROHA_CLI_KEYS_MANAGER_IMPL_HPP
-#include "../keys_manager.hpp"
+
+#include "keys_manager.hpp"
+#include "common/types.hpp"
+#include "common/byteutils.hpp"
 
 namespace iroha_cli {
   class KeysManagerImpl : public KeysManager {

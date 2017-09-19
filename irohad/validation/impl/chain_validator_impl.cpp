@@ -17,9 +17,10 @@
 
 #include "validation/impl/chain_validator_impl.hpp"
 
+#include "consensus/consensus_common.hpp"
+
 namespace iroha {
   namespace validation {
-
     ChainValidatorImpl::ChainValidatorImpl() {
       log_ = logger::log("ChainValidator");
     }
@@ -28,16 +29,20 @@ namespace iroha {
                                            ametsuchi::MutableStorage &storage) {
       log_->info("validate block: height {}, hash {}", block.height,
                  block.hash.to_hexstring());
-      auto apply_block = [](const auto &current_block,
-                            auto &query, const auto &top_hash) {
-        return current_block.prev_hash == top_hash;
+      auto apply_block = [this](const auto &block, auto &queries,
+                                const auto &top_hash) {
+        auto peers = queries.getPeers();
+        if (not peers.has_value()) {
+          return false;
+        }
+        return block.prev_hash == top_hash and
+               consensus::hasSupermajority(block.sigs.size(),
+                                           peers.value().size()) and
+               consensus::peersSubset(block.sigs, peers.value());
       };
 
-      return
-          // Check if block has supermajority
-          checkSupermajority(storage, block.sigs.size()) and
-          // Apply to temporary storage
-          storage.apply(block, apply_block);
+      // Apply to temporary storage
+      return storage.apply(block, apply_block);
     }
 
     bool ChainValidatorImpl::validateChain(Commit blocks,
@@ -52,17 +57,6 @@ namespace iroha {
           })
           .as_blocking()
           .first();
-    }
-
-    bool ChainValidatorImpl::checkSupermajority(
-        ametsuchi::MutableStorage &storage, uint64_t signs_num) {
-      auto all_peers = storage.getPeers();
-      if (not all_peers.has_value()) {
-        return false;
-      }
-      int64_t all = all_peers.value().size();
-      auto f = (all - 1) / 3.0;
-      return signs_num >= 2 * f + 1;
     }
   }
 }

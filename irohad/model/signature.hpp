@@ -27,7 +27,12 @@ namespace iroha {
      */
     struct Signature {
       ed25519::sig_t signature;
+
+      using SignatureType = decltype(signature);
+
       ed25519::pubkey_t pubkey;
+
+      using KeyType = decltype(pubkey);
 
       bool operator==(const Signature& rhs) const;
       bool operator!=(const Signature& rhs) const;

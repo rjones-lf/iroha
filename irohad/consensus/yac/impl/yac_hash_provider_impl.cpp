@@ -16,6 +16,7 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "common/byteutils.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -31,9 +32,8 @@ namespace iroha {
       }
 
       model::Block::HashType YacHashProviderImpl::toModelHash(YacHash hash) {
-        model::Block::HashType result;
-        hexstringToArray(hash.block_hash, result);
-        return result;
+        return hexstringToArray<model::Block::HashType::size()>(
+            hash.block_hash).value();
       }
     }  // namespace yac
   }    // namespace consensus

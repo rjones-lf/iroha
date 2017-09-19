@@ -25,23 +25,6 @@ using namespace iroha::model;
 using namespace iroha::model::converters;
 using namespace iroha::network;
 
-/**
- * Create blob_t from string of specified size
- * @tparam size - expected size of string
- * @param s - string to convert
- * @return blob, if conversion was successful, otherwise nullopt
- */
-template<size_t size>
-nonstd::optional<blob_t<size>> stringToBlob(const std::string &s) {
-  nonstd::optional<blob_t<size>> result;
-  try {
-    result = to_blob<size>(s);
-  } catch (const std::runtime_error &e) {
-    return nonstd::nullopt;
-  }
-  return result;
-}
-
 BlockLoaderService::BlockLoaderService(std::shared_ptr<BlockQuery> storage)
     : storage_(std::move(storage)) {
   log_ = logger::log("BlockLoaderService");

@@ -36,22 +36,14 @@ namespace iroha {
           hash256_t top_hash, std::unique_ptr<cpp_redis::redis_client> index,
           std::unique_ptr<pqxx::lazyconnection> connection,
           std::unique_ptr<pqxx::nontransaction> transaction,
-          std::unique_ptr<WsvQuery> wsv, std::unique_ptr<WsvCommand> executor,
           std::shared_ptr<model::CommandExecutorFactory> command_executors);
+
       bool apply(const model::Block &block,
                  std::function<bool(const model::Block &,
                                     WsvQuery &, const hash256_t &)>
-                     function) override;
+                 function) override;
+
       ~MutableStorageImpl() override;
-      nonstd::optional<model::Account> getAccount(
-          const std::string &account_id) override;
-      nonstd::optional<std::vector<ed25519::pubkey_t>> getSignatories(
-          const std::string &account_id) override;
-      nonstd::optional<model::Asset> getAsset(
-          const std::string &asset_id) override;
-      nonstd::optional<model::AccountAsset> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) override;
-      nonstd::optional<std::vector<model::Peer>> getPeers() override;
 
      private:
       hash256_t top_hash_;

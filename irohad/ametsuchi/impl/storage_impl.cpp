@@ -18,24 +18,21 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
-#include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
-#include "model/commands/transfer_asset.hpp"
+#include "ametsuchi/impl/flat_file_block_query.hpp"
 #include "model/converters/json_common.hpp"
 
 namespace iroha {
   namespace ametsuchi {
 
-    StorageImpl::StorageImpl(std::string block_store_dir,
-                             std::string redis_host,
-                             std::size_t redis_port,
-                             std::string postgres_options,
-                             std::unique_ptr<FlatFile> block_store,
-                             std::unique_ptr<cpp_redis::redis_client> index,
-                             std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                             std::unique_ptr<pqxx::nontransaction> wsv_transaction,
-                             std::unique_ptr<WsvQuery> wsv)
+    StorageImpl::StorageImpl(
+        std::string block_store_dir, std::string redis_host,
+        std::size_t redis_port, std::string postgres_options,
+        std::unique_ptr<FlatFile> block_store,
+        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<pqxx::lazyconnection> wsv_connection,
+        std::unique_ptr<pqxx::nontransaction> wsv_transaction)
         : block_store_dir_(std::move(block_store_dir)),
           redis_host_(std::move(redis_host)),
           redis_port_(redis_port),
@@ -44,7 +41,8 @@ namespace iroha {
           index_(std::move(index)),
           wsv_connection_(std::move(wsv_connection)),
           wsv_transaction_(std::move(wsv_transaction)),
-          wsv_(std::move(wsv)) {
+          wsv_(std::make_shared<PostgresWsvQuery>(*wsv_transaction_)),
+          blocks_(std::make_shared<FlatFileBlockQuery>(*block_store_)) {
       log_ = logger::log("StorageImpl");
 
       wsv_transaction_->exec(init_);
@@ -53,8 +51,6 @@ namespace iroha {
     }
 
     std::unique_ptr<TemporaryWsv> StorageImpl::createTemporaryWsv() {
-      // TODO lock
-
       auto command_executors = model::CommandExecutorFactory::create();
       if (not command_executors.has_value()) {
         log_->error("Cannot create CommandExecutorFactory");
@@ -71,20 +67,13 @@ namespace iroha {
       }
       auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
           *postgres_connection, "TemporaryWsv");
-      std::unique_ptr<WsvQuery> wsv =
-          std::make_unique<PostgresWsvQuery>(*wsv_transaction);
-      std::unique_ptr<WsvCommand> executor =
-          std::make_unique<PostgresWsvCommand>(*wsv_transaction);
 
       return std::make_unique<TemporaryWsvImpl>(
           std::move(postgres_connection), std::move(wsv_transaction),
-          std::move(wsv), std::move(executor),
           std::move(command_executors.value()));
     }
 
     std::unique_ptr<MutableStorage> StorageImpl::createMutableStorage() {
-      // TODO lock
-
       auto command_executors = model::CommandExecutorFactory::create();
       if (not command_executors.has_value()) {
         log_->error("Cannot create CommandExecutorFactory");
@@ -101,10 +90,6 @@ namespace iroha {
       }
       auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
           *postgres_connection, "TemporaryWsv");
-      std::unique_ptr<WsvQuery> wsv =
-          std::make_unique<PostgresWsvQuery>(*wsv_transaction);
-      std::unique_ptr<WsvCommand> executor =
-          std::make_unique<PostgresWsvCommand>(*wsv_transaction);
 
       auto index = std::make_unique<cpp_redis::redis_client>();
       try {
@@ -114,44 +99,24 @@ namespace iroha {
         return nullptr;
       }
 
-      hash256_t top_hash;
+      nonstd::optional<hash256_t> top_hash;
 
-      if (block_store_->last_id() > 0) {
-        auto blob = block_store_->get(block_store_->last_id());
-        if (not blob.has_value()) {
-          log_->error("Fetching of blob failed");
-          return nullptr;
-        }
-
-        auto document = model::converters::vectorToJson(blob.value());
-        if (not document.has_value()) {
-          log_->error("Blob parsing failed");
-          return nullptr;
-        }
-
-        auto block = serializer_.deserialize(document.value());
-        if (not block.has_value()) {
-          log_->error("Deserialization of block failed");
-          return nullptr;
-        }
-        top_hash = block->hash;
-      } else {
-        top_hash.fill(0);
-      }
+      blocks_->getTopBlocks(1).as_blocking().subscribe(
+          [&top_hash](auto block) { top_hash = block.hash; });
 
       return std::make_unique<MutableStorageImpl>(
-          top_hash, std::move(index), std::move(postgres_connection),
-          std::move(wsv_transaction), std::move(wsv), std::move(executor),
+          top_hash.value_or(hash256_t{}),
+          std::move(index),
+          std::move(postgres_connection),
+          std::move(wsv_transaction),
           std::move(command_executors.value()));
     }
 
-    nonstd::optional<ConnectionContext> StorageImpl::initConnections(std::string block_store_dir,
-                                                                     std::string redis_host,
-                                                                     std::size_t redis_port,
-                                                                     std::string postgres_options) {
+    nonstd::optional<ConnectionContext> StorageImpl::initConnections(
+        std::string block_store_dir, std::string redis_host,
+        std::size_t redis_port, std::string postgres_options) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
-      // TODO lock
 
       auto block_store = FlatFile::create(block_store_dir);
       if (!block_store) {
@@ -183,26 +148,18 @@ namespace iroha {
 
       auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
           *postgres_connection, "Storage");
-      std::unique_ptr<WsvQuery> wsv =
-          std::make_unique<PostgresWsvQuery>(*wsv_transaction);
       log_->info("transaction to PostgreSQL initialized");
 
-      return nonstd::make_optional<ConnectionContext>(std::move(block_store),
-                                                      std::move(index),
-                                                      std::move(
-                                                          postgres_connection),
-                                                      std::move(wsv_transaction),
-                                                      std::move(wsv));
-
+      return nonstd::make_optional<ConnectionContext>(
+          std::move(block_store), std::move(index),
+          std::move(postgres_connection), std::move(wsv_transaction));
     }
 
     std::shared_ptr<StorageImpl> StorageImpl::create(
         std::string block_store_dir, std::string redis_host,
         std::size_t redis_port, std::string postgres_options) {
-
       auto ctx = initConnections(block_store_dir,
-                                 redis_host,
-                                 redis_port,
+                                 redis_host, redis_port,
                                  postgres_options);
       if (not ctx.has_value()) {
         return nullptr;
@@ -214,9 +171,7 @@ namespace iroha {
                           postgres_options,
                           std::move(ctx->block_store),
                           std::move(ctx->index),
-                          std::move(ctx->pg_lazy),
-                          std::move(ctx->pg_nontx),
-                          std::move(ctx->wsv)));
+                          std::move(ctx->pg_lazy), std::move(ctx->pg_nontx)));
     }
 
     void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {
@@ -225,115 +180,20 @@ namespace iroha {
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
         block_store_->add(block.first,
-                          model::converters::jsonToVector(
-                              serializer_.serialize(block.second)));
+                          stringToBytes(model::converters::jsonToString(
+                              serializer_.serialize(block.second))));
       }
       storage->index_->exec();
       storage->transaction_->exec("COMMIT;");
       storage->committed = true;
     }
 
-    rxcpp::observable<model::Transaction> StorageImpl::getAccountTransactions(
-        std::string account_id) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return getBlocksFrom(1)
-          .flat_map([](auto block) {
-            return rxcpp::observable<>::iterate(block.transactions);
-          })
-          .filter([account_id](auto tx) {
-            return tx.creator_account_id == account_id;
-          });
+    std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
+      return wsv_;
     }
 
-    rxcpp::observable<model::Transaction> StorageImpl::getAccountAssetTransactions(
-        std::string account_id, std::string asset_id) {
-      return getAccountTransactions(account_id).filter([account_id, asset_id](auto tx) {
-          return std::any_of(tx.commands.begin(), tx.commands.end(), [account_id, asset_id](auto command) {
-            if (instanceof <model::TransferAsset>(*command)) {
-              auto transferAsset = (model::TransferAsset*) command.get();
-              return (transferAsset->src_account_id == account_id || transferAsset->dest_account_id == account_id) && transferAsset->asset_id == asset_id;
-            }
-            return false;
-          });
-      });
+    std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
+      return blocks_;
     }
-
-    rxcpp::observable<model::Block> StorageImpl::getBlocks(uint32_t height,
-                                                           uint32_t count) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      auto to = height - 1 + count;
-      auto last_id = block_store_->last_id();
-      if (to > last_id) {
-        to = last_id;
-      }
-      return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
-        auto bytes = block_store_->get(i);
-        return rxcpp::observable<>::create<model::Block>(
-            [this, bytes](auto s) {
-              if (not bytes.has_value()) {
-                s.on_completed();
-                return;
-              }
-              auto document = model::converters::vectorToJson(bytes.value());
-              if (not document.has_value()) {
-                s.on_completed();
-                return;
-              }
-              auto block = serializer_.deserialize(document.value());
-              if (not block.has_value()) {
-                s.on_completed();
-                return;
-              }
-              s.on_next(block.value());
-              s.on_completed();
-            });
-      });
-    }
-
-    rxcpp::observable<model::Block> StorageImpl::getBlocksFrom(uint32_t height) {
-      auto last_id = block_store_->last_id();
-      if (height > last_id) {
-        height = last_id;
-      }
-      return getBlocks(height, block_store_->last_id() - height + 1);
-    }
-
-    rxcpp::observable<model::Block> StorageImpl::getTopBlocks(uint32_t count) {
-      auto last_id = block_store_->last_id();
-      if (count > last_id) {
-        count = last_id;
-      }
-      return getBlocks(last_id - count + 1, count);
-    }
-
-    nonstd::optional<model::Account> StorageImpl::getAccount(
-        const std::string &account_id) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return wsv_->getAccount(account_id);
-    }
-
-    nonstd::optional<std::vector<ed25519::pubkey_t>>
-    StorageImpl::getSignatories(const std::string &account_id) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return wsv_->getSignatories(account_id);
-    }
-
-    nonstd::optional<model::Asset> StorageImpl::getAsset(
-        const std::string &asset_id) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return wsv_->getAsset(asset_id);
-    }
-
-    nonstd::optional<model::AccountAsset> StorageImpl::getAccountAsset(
-        const std::string &account_id, const std::string &asset_id) {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return wsv_->getAccountAsset(account_id, asset_id);
-    }
-
-    nonstd::optional<std::vector<model::Peer>> StorageImpl::getPeers() {
-      std::shared_lock<std::shared_timed_mutex> write(rw_lock_);
-      return wsv_->getPeers();
-    }
-
   }  // namespace ametsuchi
 }  // namespace iroha

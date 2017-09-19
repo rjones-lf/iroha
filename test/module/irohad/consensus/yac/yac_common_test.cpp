@@ -16,10 +16,12 @@
  */
 
 #include <gtest/gtest.h>
+#include "consensus/consensus_common.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "logger/logger.hpp"
 
+using namespace iroha::consensus;
 using namespace iroha::consensus::yac;
 
 static logger::Logger log_ = logger::testLog("YacCommon");

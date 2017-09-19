@@ -52,7 +52,7 @@ namespace iroha_cli {
     if (it != handler_map_.end()) {
       (this->*it->second)(response);
     } else {
-      log_->error("Response Handle not Implemented");
+      log_->error("Response Handle {} not Implemented", response.response_case());
     }
   }
 
@@ -102,7 +102,7 @@ namespace iroha_cli {
     std::for_each(txs.begin(), txs.end(), [this](auto tx) {
       log_->info("-[tx]-");
       log_->info("--[Creator Id] -- {}", tx.meta().creator_account_id());
-      // TODO: add other fields
+      // TODO: add other fields: tx head, tx body
     });
   }
 

@@ -15,12 +15,31 @@
  * limitations under the License.
  */
 
+#include "impl/keys_manager_impl.hpp"
+
 #include <utility>
-#include "keys_manager_impl.hpp"
 #include <fstream>
-#include "common/types.hpp"
+
+using iroha::operator|;
 
 namespace iroha_cli {
+  /**
+   * Return function which will try to deserialize specified value to specified
+   * field in given keypair
+   * @tparam T - keypair field type
+   * @tparam V - value type to deserialize
+   * @param field - keypair field to be deserialized
+   * @param value - value to be deserialized
+   * @return keypair on success, otherwise nullopt
+   */
+  template<typename T, typename V>
+  auto deserializeKeypairField(T iroha::ed25519::keypair_t::*field,
+                               const V &value) {
+    return [=](auto keypair) mutable {
+      return iroha::hexstringToArray<T::size()>(value)
+          | iroha::assignObjectField(keypair, field);
+    };
+  }
 
   KeysManagerImpl::KeysManagerImpl(std::string account_name)
       : account_name_(std::move(account_name)) {}
@@ -37,12 +56,11 @@ namespace iroha_cli {
     priv_file >> client_priv_key_;
     pub_file >> client_pub_key_;
 
-    iroha::ed25519::keypair_t keypair;
-    auto privkey = iroha::hex2bytes(client_priv_key_);
-    std::copy(privkey.begin(), privkey.end(), keypair.privkey.begin());
-    auto pubkey = iroha::hex2bytes(client_pub_key_);
-    std::copy(pubkey.begin(), pubkey.end(), keypair.pubkey.begin());
-    return keypair;
+    return nonstd::make_optional<iroha::ed25519::keypair_t>()
+        | deserializeKeypairField(&iroha::ed25519::keypair_t::pubkey,
+                                  client_pub_key_)
+        | deserializeKeypairField(&iroha::ed25519::keypair_t::privkey,
+                                  client_priv_key_);
   }
 
   bool KeysManagerImpl::createKeys(std::string pass_phrase) {

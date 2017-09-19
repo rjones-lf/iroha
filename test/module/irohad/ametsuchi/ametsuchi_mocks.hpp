@@ -22,10 +22,10 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "ametsuchi/peer_query.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "ametsuchi/peer_query.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -76,10 +76,8 @@ namespace iroha {
           rxcpp::observable<model::Transaction>(std::string account_id, std::string asset_id));
       MOCK_METHOD2(getBlocks,
                    rxcpp::observable<model::Block>(uint32_t, uint32_t));
-      MOCK_METHOD1(getBlocksFrom,
-                   rxcpp::observable<model::Block>(uint32_t));
-      MOCK_METHOD1(getTopBlocks,
-                   rxcpp::observable<model::Block>(uint32_t));
+      MOCK_METHOD1(getBlocksFrom, rxcpp::observable<model::Block>(uint32_t));
+      MOCK_METHOD1(getTopBlocks, rxcpp::observable<model::Block>(uint32_t));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {
@@ -91,19 +89,8 @@ namespace iroha {
      public:
       MOCK_METHOD2(apply,
                    bool(const model::Block &,
-                        std::function<bool(const model::Block &,
-                                           WsvQuery &, const hash256_t &)>));
-      MOCK_METHOD1(getAccount, nonstd::optional<model::Account>(
-                                   const std::string &account_id));
-      MOCK_METHOD1(getSignatories,
-                   nonstd::optional<std::vector<ed25519::pubkey_t>>(
-                       const std::string &account_id));
-      MOCK_METHOD1(getAsset,
-                   nonstd::optional<model::Asset>(const std::string &asset_id));
-      MOCK_METHOD2(getAccountAsset, nonstd::optional<model::AccountAsset>(
-                                        const std::string &account_id,
-                                        const std::string &asset_id));
-      MOCK_METHOD0(getPeers, nonstd::optional<std::vector<model::Peer>>());
+                        std::function<bool(const model::Block &, WsvQuery &,
+                                           const hash256_t &)>));
     };
 
     /**

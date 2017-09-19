@@ -44,8 +44,7 @@ namespace iroha {
                       std::unique_ptr<FlatFile> block_store,
                       std::unique_ptr<cpp_redis::redis_client> index,
                       std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                      std::unique_ptr<pqxx::nontransaction> wsv_transaction,
-                      std::unique_ptr<WsvQuery> wsv);
+                      std::unique_ptr<pqxx::nontransaction> wsv_transaction);
      private:
       logger::Logger log_;
 
@@ -57,35 +56,9 @@ namespace iroha {
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
-      rxcpp::observable<model::Transaction>
-      getAccountTransactions(std::string account_id) override;
+      std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
-      rxcpp::observable<model::Transaction>
-      getAccountAssetTransactions(std::string account_id, std::string asset_id) override;
-
-      rxcpp::observable<model::Block>
-      getBlocks(uint32_t height, uint32_t count) override;
-
-      rxcpp::observable<model::Block>
-      getBlocksFrom(uint32_t height) override;
-
-      rxcpp::observable<model::Block>
-      getTopBlocks(uint32_t count) override;
-
-      nonstd::optional<model::Account>
-      getAccount(const std::string &account_id) override;
-
-      nonstd::optional<std::vector<ed25519::pubkey_t>>
-      getSignatories(const std::string &account_id) override;
-
-      nonstd::optional<model::Asset>
-      getAsset(const std::string &asset_id) override;
-
-      nonstd::optional<model::AccountAsset>
-      getAccountAsset(const std::string &account_id,
-                      const std::string &asset_id) override;
-
-      nonstd::optional<std::vector<model::Peer>> getPeers() override ;
+      std::shared_ptr<BlockQuery> getBlockQuery() const override;
     };
 
   }  // namespace ametsuchi

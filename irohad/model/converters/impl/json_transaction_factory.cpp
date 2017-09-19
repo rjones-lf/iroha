@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include "model/converters/json_transaction_factory.hpp"
+
+#include <algorithm>
 #include "model/converters/json_common.hpp"
 
 using namespace rapidjson;
@@ -35,10 +35,7 @@ namespace iroha {
         Value signatures;
         signatures.SetArray();
         for (const auto &signature : transaction.signatures) {
-          signatures.PushBack(
-              Document(&allocator)
-                  .CopyFrom(serializeSignature(signature), allocator),
-              allocator);
+          signatures.PushBack(serializeSignature(signature, allocator), allocator);
         }
         document.AddMember("signatures", signatures, allocator);
 
@@ -63,44 +60,33 @@ namespace iroha {
       }
 
       nonstd::optional<Transaction> JsonTransactionFactory::deserialize(
-          const Document &document) {
-        model::Transaction tx{};
-
-        if (not verifyRequiredMembers(
-                document, {"creator_account_id", "tx_counter", "commands",
-                           "signatures", "created_ts"})) {
-          return nonstd::nullopt;
-        }
-
-        for (auto it = document["signatures"].Begin(); it != document["signatures"].End(); ++it) {
-          Document signature_document;
-          auto &allocator = signature_document.GetAllocator();
-          signature_document.CopyFrom(*it, allocator);
-          auto signature = deserializeSignature(signature_document);
-          if (not signature.has_value()) {
-            return nonstd::nullopt;
-          }
-          tx.signatures.emplace_back(signature.value());
-        }
-
-        tx.created_ts = document["created_ts"].GetUint64();
-
-        tx.creator_account_id = document["creator_account_id"].GetString();
-
-        tx.tx_counter = document["tx_counter"].GetUint64();
-
-        for (auto it = document["commands"].Begin(); it != document["commands"].End(); ++it) {
-          Document command_document;
-          auto &allocator = command_document.GetAllocator();
-          command_document.CopyFrom(*it, allocator);
-          auto command = factory_.deserializeAbstractCommand(command_document);
-          if (not command.has_value()) {
-            return nonstd::nullopt;
-          }
-          tx.commands.emplace_back(command.value());
-        }
-
-        return tx;
+          const Value &document) {
+        auto des = makeFieldDeserializer(document);
+        auto des_commands = [this](auto array) {
+          auto acc_commands = [this](auto init, auto &x) {
+            return init
+                | [this, &x](auto commands) {
+                    return factory_.deserializeAbstractCommand(x)
+                        | [&commands](auto command) {
+                            commands.push_back(command);
+                            return nonstd::make_optional(commands);
+                          };
+                  };
+          };
+          return std::accumulate(
+              array.begin(), array.end(),
+              nonstd::make_optional<Transaction::CommandsType>(), acc_commands);
+        };
+        return nonstd::make_optional<Transaction>()
+            | des.Uint64(&Transaction::created_ts, "created_ts")
+            | des.String(&Transaction::creator_account_id, "creator_account_id")
+            | des.Uint64(&Transaction::tx_counter, "tx_counter")
+            | des.Array(&Transaction::signatures, "signatures")
+            | des.Array(&Transaction::commands, "commands", des_commands)
+            | [this](auto transaction) {
+                transaction.tx_hash = hash_provider_.get_hash(transaction);
+                return nonstd::make_optional(transaction);
+              };
       }
 
     }  // namespace converters

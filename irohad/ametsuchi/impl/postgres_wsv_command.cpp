@@ -25,8 +25,6 @@ namespace iroha {
         : transaction_(transaction) {}
 
     bool PostgresWsvCommand::insertAccount(const model::Account &account) {
-      pqxx::binarystring master_key(account.master_key.data(),
-                                    account.master_key.size());
       std::stringstream permissions;
       permissions << account.permissions.add_signatory
                   << account.permissions.can_transfer
@@ -41,13 +39,12 @@ namespace iroha {
       try {
         transaction_.exec(
             "INSERT INTO account(\n"
-            "            account_id, domain_id, master_key, quorum, status, "
+            "            account_id, domain_id, quorum, status, "
             "transaction_count, \n"
             "            permissions)\n"
             "    VALUES (" +
             transaction_.quote(account.account_id) + ", " +
             transaction_.quote(account.domain_name) + ", " +
-            transaction_.quote(master_key) + ", " +
             transaction_.quote(account.quorum) + ", " +
             /*account.status*/ transaction_.quote(0) + ", " +
             /*account.transaction_count*/ transaction_.quote(0) +
@@ -192,8 +189,6 @@ namespace iroha {
     }
 
     bool PostgresWsvCommand::updateAccount(const model::Account &account) {
-      pqxx::binarystring master_key(account.master_key.data(),
-                                    account.master_key.size());
       std::stringstream permissions;
       permissions << account.permissions.add_signatory
                   << account.permissions.can_transfer
@@ -208,8 +203,7 @@ namespace iroha {
       try {
         transaction_.exec(
             "UPDATE account\n"
-            "   SET master_key=" +
-            transaction_.quote(master_key) + ", quorum=" +
+            "   SET quorum=" +
             transaction_.quote(account.quorum) + ", status=" +
             /*account.status*/ transaction_.quote(0) + ", transaction_count=" +
             /*account.transaction_count*/ transaction_.quote(0) +

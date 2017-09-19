@@ -25,6 +25,8 @@ limitations under the License.
 #include "model/converters/pb_query_response_factory.hpp"
 #include "torii/processor/query_processor.hpp"
 
+#include "logger/logger.hpp"
+
 namespace torii {
   /**
    * Actual implementation of async QueryService.
@@ -57,8 +59,15 @@ namespace torii {
         pb_query_response_factory_;
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
 
-    std::unordered_map<std::string, iroha::protocol::QueryResponse &>
+    std::unordered_map<std::string, iroha::protocol::QueryResponse&>
         handler_map_;
+
+    std::unordered_map<std::string, iroha::protocol::QueryResponse>
+        old_queries_;
+
+
+    logger::Logger log_;
+
   };
 
 }  // namespace torii

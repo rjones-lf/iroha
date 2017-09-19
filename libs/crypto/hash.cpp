@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-#include <common/types.hpp>
 extern "C" {
 #include <sha3.h>
 }
+
+#include "common/types.hpp"
+
 namespace sha3 {
   void sha3_256_(const unsigned char *message,
                  size_t message_len,

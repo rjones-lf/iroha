@@ -10,7 +10,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY =KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -19,6 +19,7 @@
 #include <responses.pb.h>
 #include <fstream>
 #include <iostream>
+#include "model/converters/json_query_factory.hpp"
 #include "common/assert_config.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
@@ -30,6 +31,8 @@
 #include "grpc_response_handler.hpp"
 #include "impl/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
+
+#include "interactive/interactive_cli.hpp"
 
 // ** Genesis Block and Provisioning ** //
 // Reference is here (TODO: move to doc):
@@ -58,9 +61,13 @@ DEFINE_bool(genesis_block, false,
             "Generate genesis block for new Iroha network");
 DEFINE_string(peers_address, "", "File with peers address");
 
+// Interactive
+DEFINE_bool(interactive, false, "Interactive cli");
+
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
+using namespace iroha_cli::interactive;
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -81,17 +88,34 @@ int main(int argc, char* argv[]) {
     if (not FLAGS_json_transaction.empty()) {
       logger->info("Send transaction to {}:{} ", FLAGS_address,
                    FLAGS_torii_port);
+      // Read from file
       std::ifstream file(FLAGS_json_transaction);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      response_handler.handle(client.sendTx(str));
+      iroha::model::converters::JsonTransactionFactory serializer;
+      auto doc = iroha::model::converters::stringToJson(str);
+      if (not doc.has_value()) {
+        logger->error("Json has wrong format.");
+      }
+      auto tx_opt = serializer.deserialize(doc.value());
+      if (not tx_opt.has_value()) {
+        logger->error("Json transaction has wrong format.");
+      } else {
+        response_handler.handle(client.sendTx(tx_opt.value()));
+      }
     }
     if (not FLAGS_json_query.empty()) {
       logger->info("Send query to {}:{}", FLAGS_address, FLAGS_torii_port);
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      response_handler.handle(client.sendQuery(str));
+      iroha::model::converters::JsonQueryFactory serializer;
+      auto query_opt = serializer.deserialize(std::move(str));
+      if (not query_opt.has_value()) {
+        logger->error("Json has wrong format.");
+      } else {
+        response_handler.handle(client.sendQuery(query_opt.value()));
+      }
     }
 
   } else if (FLAGS_genesis_block) {
@@ -113,6 +137,15 @@ int main(int argc, char* argv[]) {
     std::ofstream output_file("genesis.block");
     output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
+  } else if (FLAGS_interactive) {
+    // TODO: add login logic (e.g. password check)
+    if (FLAGS_name.empty()) {
+      logger->error("Specify account name");
+      return -1;
+    }
+    // TODO: Init counters from Iroha, or read from disk ?
+    InteractiveCli interactiveCli(FLAGS_name, 0, 0);
+    interactiveCli.run();
   } else {
     assert_config::assert_fatal(false, "Invalid flags");
   }

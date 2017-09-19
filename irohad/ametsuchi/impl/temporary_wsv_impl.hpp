@@ -28,24 +28,16 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
-      TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction,
-                       std::unique_ptr<WsvQuery> wsv,
-                       std::unique_ptr<WsvCommand> executor,
-                       std::shared_ptr<model::CommandExecutorFactory> command_executors);
+      TemporaryWsvImpl(
+          std::unique_ptr<pqxx::lazyconnection> connection,
+          std::unique_ptr<pqxx::nontransaction> transaction,
+          std::shared_ptr<model::CommandExecutorFactory> command_executors);
+
       bool apply(const model::Transaction &transaction,
                  std::function<bool(const model::Transaction &,
                                     WsvQuery &)>
-                     function) override;
-      nonstd::optional<model::Account> getAccount(
-          const std::string &account_id) override;
-      nonstd::optional<std::vector<ed25519::pubkey_t>> getSignatories(
-          const std::string &account_id) override;
-      nonstd::optional<model::Asset> getAsset(
-          const std::string &asset_id) override;
-      nonstd::optional<model::AccountAsset> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) override;
-      nonstd::optional<std::vector<model::Peer>> getPeers() override;
+                 function) override;
+
       ~TemporaryWsvImpl() override;
 
      private:

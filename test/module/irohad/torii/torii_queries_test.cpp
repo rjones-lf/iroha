@@ -51,6 +51,17 @@ class ToriiServiceTest : public testing::Test {
       wsv_query = std::make_shared<MockWsvQuery>();
       block_query = std::make_shared<MockBlockQuery>();
 
+      rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
+      rxcpp::subjects::subject<Commit> commit_notifier;
+
+      EXPECT_CALL(*pcsMock,
+                  on_proposal())
+          .WillRepeatedly(Return(prop_notifier.get_observable()));
+
+      EXPECT_CALL(*pcsMock,
+                  on_commit())
+          .WillRepeatedly(Return(commit_notifier.get_observable()));
+
       auto tx_processor =
           std::make_shared<iroha::torii::TransactionProcessorImpl>(
               pcsMock, statelessValidatorMock);

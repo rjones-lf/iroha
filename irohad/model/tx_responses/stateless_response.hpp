@@ -21,18 +21,18 @@
 #include "model/transaction_response.hpp"
 
 namespace iroha {
-  namespace model {
+namespace model {
 
-    /**
-     * Transaction response that contains
-     */
-    struct TransactionStatelessResponse : TransactionResponse {
+/**
+ * Transaction response that contains
+ */
+struct TransactionStatelessResponse : TransactionResponse {
 
-      /**
-       * Is stateless validation passed
-       */
-      bool passed;
-    };
-  } // namespace model
+  /**
+   * Is stateless validation passed
+   */
+  bool passed;
+};
+} // namespace model
 } // namespace iroha
 #endif //IROHA_STATELESS_RESPONSE_HPP

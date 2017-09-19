@@ -20,7 +20,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -93,17 +92,6 @@ TEST(CommandTest, add_signatory_abstract_factory) {
   auto orig_command = iroha::model::AddSignatory();
   orig_command.account_id = "23";
 
-  command_converter_test(orig_command);
-}
-
-TEST(CommandTest, assign_master_key) {
-  auto orig_command = iroha::model::AssignMasterKey();
-  orig_command.account_id = "23";
-  auto factory = iroha::model::converters::PbCommandFactory();
-  auto proto_command = factory.serializeAssignMasterKey(orig_command);
-  auto serial_command = factory.deserializeAssignMasterKey(proto_command);
-
-  ASSERT_EQ(orig_command, serial_command);
   command_converter_test(orig_command);
 }
 
@@ -191,6 +179,7 @@ TEST(CommandTest, set_transfer_asset) {
   orig_command.asset_id = "tugrik";
   orig_command.src_account_id = "Vasya";
   orig_command.dest_account_id = "Petya";
+  orig_command.description = "from Vasya to Petya without love";
 
   auto proto_command = factory.serializeTransferAsset(orig_command);
   auto serial_command = factory.deserializeTransferAsset(proto_command);

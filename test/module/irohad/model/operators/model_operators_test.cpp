@@ -21,7 +21,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -82,24 +81,6 @@ AddSignatory createAddSignatory() {
 TEST(ModelOperatorTest, AddSignatoryTest) {
   auto first = createAddSignatory();
   auto second = createAddSignatory();
-
-  ASSERT_EQ(first, second);
-  second.account_id = "22";
-  ASSERT_NE(first, second);
-}
-
-// -----|AssignMasterKey|-----
-
-AssignMasterKey createAssignMasterKey() {
-  AssignMasterKey assignMasterKey;
-  assignMasterKey.account_id = "123";
-  std::fill(assignMasterKey.pubkey.begin(), assignMasterKey.pubkey.end(), 0x23);
-  return assignMasterKey;
-}
-
-TEST(ModelOperatorTest, AssignMasterKeyTest) {
-  auto first = createAssignMasterKey();
-  auto second = createAssignMasterKey();
 
   ASSERT_EQ(first, second);
   second.account_id = "22";
@@ -223,6 +204,7 @@ TransferAsset createTransferAsset() {
   transferAsset.amount.frac_part = 10;
   transferAsset.src_account_id = "1";
   transferAsset.dest_account_id = "2";
+  transferAsset.description = "test";
   return transferAsset;
 }
 
@@ -284,8 +266,6 @@ Transaction createTransaction() {
   transaction.commands.push_back(std::make_shared<AddPeer>(createAddPeer()));
   transaction.commands.push_back(
       std::make_shared<AddSignatory>(createAddSignatory()));
-  transaction.commands.push_back(
-      std::make_shared<AssignMasterKey>(createAssignMasterKey()));
   transaction.commands.push_back(
       std::make_shared<CreateAccount>(createCreateAccount()));
   transaction.commands.push_back(

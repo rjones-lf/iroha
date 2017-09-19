@@ -27,7 +27,15 @@ namespace iroha_cli {
   class GrpcResponseHandler {
    public:
     GrpcResponseHandler();
+    /**
+     * Handle iroha GRPC TxResponse
+     * @param response
+     */
     void handle(CliClient::Response<CliClient::TxStatus> response);
+    /**
+     * Handle Iroha GRPC QueryResponse
+     * @param response
+     */
     void handle(CliClient::Response<iroha::protocol::QueryResponse> response);
    private:
     TransactionResponseHandler tx_handler_;

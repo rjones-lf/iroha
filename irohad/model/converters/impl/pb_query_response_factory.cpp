@@ -79,8 +79,6 @@ namespace iroha {
         permissions->set_can_transfer(account.permissions.can_transfer);
         permissions->set_add_signatory(account.permissions.add_signatory);
 
-        pb_account.set_master_key(account.master_key.data(),
-                                  account.master_key.size());
         return pb_account;
       }
 
@@ -109,8 +107,6 @@ namespace iroha {
             pb_account.permissions().set_permissions();
         res.permissions.set_quorum = pb_account.permissions().set_quorum();
 
-        std::copy(pb_account.master_key().begin(),
-                  pb_account.master_key().end(), res.master_key.begin());
         return res;
       }
 

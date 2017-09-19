@@ -29,14 +29,6 @@ namespace iroha {
       using BlockHash = decltype(YacHash::block_hash);
 
       /**
-       * Check that current number >= supermajority.
-       * @param current - current number for validation
-       * @param all - whole number (N)
-       * @return true if belong supermajority
-       */
-      bool hasSupermajority(uint64_t current, uint64_t all);
-
-      /**
        * Check if there is available reject proof.
        * Reject proof is proof that in current round
        * no one hash doesn't achieve supermajority.
@@ -59,8 +51,8 @@ namespace iroha {
        * @param votes - collection with votes
        * @return hash, if collection has same proposal hash, otherwise nullopt
        */
-      nonstd::optional<ProposalHash>
-      getProposalHash(const std::vector<VoteMessage> &votes);
+      nonstd::optional<ProposalHash> getProposalHash(
+          const std::vector<VoteMessage> &votes);
 
       /**
        * Get common hash from collection
@@ -68,7 +60,7 @@ namespace iroha {
        * @return hash, if collection elements have same hash, otherwise nullopt
        */
       nonstd::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_YAC_COMMON_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_YAC_COMMON_HPP

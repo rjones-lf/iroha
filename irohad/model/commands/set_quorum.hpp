@@ -40,6 +40,11 @@ namespace iroha {
 
       bool operator==(const Command& command) const override;
       bool operator!=(const Command& command) const override;
+
+      SetQuorum() {}
+
+      SetQuorum(std::string account_id, uint32_t new_quorum)
+          : account_id(account_id), new_quorum(new_quorum) {}
     };
   }  // namespace model
 }  // namespace iroha
