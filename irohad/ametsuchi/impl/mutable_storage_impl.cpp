@@ -15,20 +15,37 @@
  * limitations under the License.
  */
 
-#include <algorithm>
+#include "ametsuchi/impl/mutable_storage_impl.hpp"
 
-#include <ametsuchi/impl/mutable_storage_impl.hpp>
+#include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+    MutableStorageImpl::MutableStorageImpl(
+        hash256_t top_hash, std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<pqxx::lazyconnection> connection,
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        std::shared_ptr<model::CommandExecutorFactory> command_executors)
+        : top_hash_(top_hash),
+          index_(std::move(index)),
+          connection_(std::move(connection)),
+          transaction_(std::move(transaction)),
+          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
+          executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
+          command_executors_(std::move(command_executors)),
+          committed(false) {
+      index_->multi();
+      transaction_->exec("BEGIN;");
+    }
 
     bool MutableStorageImpl::apply(
         const model::Block &block,
         std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
-            function) {
+        function) {
       auto execute_command = [this](auto command) {
         return command_executors_->getCommandExecutor(command)->execute(
-            *command, *this, *executor_);
+            *command, *wsv_, *executor_);
       };
       auto execute_transaction = [this, execute_command](auto &transaction) {
         return std::all_of(transaction.commands.begin(),
@@ -36,9 +53,9 @@ namespace iroha {
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result = function(block, *this, top_hash_) &&
-                    std::all_of(block.transactions.begin(),
-                                block.transactions.end(), execute_transaction);
+      auto result = function(block, *wsv_, top_hash_) &&
+          std::all_of(block.transactions.begin(),
+                      block.transactions.end(), execute_transaction);
 
       if (result) {
         block_store_.insert(std::make_pair(block.height, block));
@@ -50,53 +67,11 @@ namespace iroha {
       return result;
     }
 
-    MutableStorageImpl::MutableStorageImpl(
-        hash256_t top_hash, std::unique_ptr<cpp_redis::redis_client> index,
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction,
-        std::unique_ptr<WsvQuery> wsv, std::unique_ptr<WsvCommand> executor,
-        std::shared_ptr<model::CommandExecutorFactory> command_executors)
-        : top_hash_(top_hash),
-          index_(std::move(index)),
-          connection_(std::move(connection)),
-          transaction_(std::move(transaction)),
-          wsv_(std::move(wsv)),
-          executor_(std::move(executor)),
-          command_executors_(std::move(command_executors)),
-          committed(false) {
-      index_->multi();
-      transaction_->exec("BEGIN;");
-    }
-
     MutableStorageImpl::~MutableStorageImpl() {
-      if (!committed) {
+      if (not committed) {
         index_->discard();
         transaction_->exec("ROLLBACK;");
       }
-    }
-
-    nonstd::optional<model::Account> MutableStorageImpl::getAccount(
-        const std::string &account_id) {
-      return wsv_->getAccount(account_id);
-    }
-
-    nonstd::optional<std::vector<ed25519::pubkey_t>>
-    MutableStorageImpl::getSignatories(const std::string &account_id) {
-      return wsv_->getSignatories(account_id);
-    }
-
-    nonstd::optional<model::Asset> MutableStorageImpl::getAsset(
-        const std::string &asset_id) {
-      return wsv_->getAsset(asset_id);
-    }
-
-    nonstd::optional<model::AccountAsset> MutableStorageImpl::getAccountAsset(
-        const std::string &account_id, const std::string &asset_id) {
-      return wsv_->getAccountAsset(account_id, asset_id);
-    }
-
-    nonstd::optional<std::vector<model::Peer>> MutableStorageImpl::getPeers() {
-      return wsv_->getPeers();
     }
   }  // namespace ametsuchi
 }  // namespace iroha

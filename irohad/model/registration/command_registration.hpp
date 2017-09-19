@@ -24,7 +24,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -46,7 +45,6 @@ namespace iroha {
         command_handler.register_type(typeid(AddAssetQuantity));
         command_handler.register_type(typeid(AddPeer));
         command_handler.register_type(typeid(AddSignatory));
-        command_handler.register_type(typeid(AssignMasterKey));
         command_handler.register_type(typeid(CreateAccount));
         command_handler.register_type(typeid(CreateAsset));
         command_handler.register_type(typeid(CreateDomain));

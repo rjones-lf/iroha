@@ -79,3 +79,8 @@ find_package(rxcpp)
 #          TBB           #
 ##########################
 find_package(tbb)
+
+##########################
+# boost multiprecision   #
+##########################
+find_package(Boost REQUIRED)

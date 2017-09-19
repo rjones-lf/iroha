@@ -13,8 +13,26 @@ SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-fprofile-arcs -ftest-coverage")
-SET(GCC_COVERAGE_LINK_FLAGS    "-lgcov")
+if(COVERAGE)
+  set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
+  find_program(LCOV_PROGRAM lcov)
+  if(NOT LCOV_PROGRAM)
+    message(FATAL_ERROR "lcov not found! Aborting...")
+  endif()
+  message(STATUS "lcov enabled (${LCOV_PROGRAM})")
+  set(CMAKE_CXX_FLAGS "--coverage ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "--coverage ${CMAKE_C_FLAGS}")
+  set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
+  add_custom_target(coverage.init.info
+      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.init.info -c -i -d ${PROJECT_BINARY_DIR}
+      )
+  add_custom_target(coverage.info
+      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -c -d ${PROJECT_BINARY_DIR}
+      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -a ${PROJECT_BINARY_DIR}/coverage.init.info -a ${PROJECT_BINARY_DIR}/coverage.info
+      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -r ${PROJECT_BINARY_DIR}/coverage.info '/usr*' '${CMAKE_SOURCE_DIR}/external/*'
+      )
+endif()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
@@ -49,16 +67,10 @@ add_subdirectory(iroha-cli)
 
 link_directories(${PROJECT_BINARY_DIR}/lib)
 
-if (COVERAGE)
-  SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}" )
-  SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}" )
-endif()
-
 if(TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
-
 
 if(BENCHMARKING)
   add_subdirectory(benchmark)

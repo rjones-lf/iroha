@@ -19,7 +19,6 @@
 #include "logger/logger.hpp"
 #include "ametsuchi/impl/test_storage_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "framework/test_block_generator.hpp"
 
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -65,7 +64,8 @@ TEST_F(TestStorageFixture, TestingStorageWhenInsertBlock) {
   auto storage =
       TestStorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
   ASSERT_TRUE(storage);
-  ASSERT_EQ(0, storage->getPeers().value().size());
+  auto wsv = storage->getWsvQuery();
+  ASSERT_EQ(0, wsv->getPeers().value().size());
 
   log->info("Try insert block");
 
@@ -74,7 +74,7 @@ TEST_F(TestStorageFixture, TestingStorageWhenInsertBlock) {
 
   log->info("Request ledger information");
 
-  ASSERT_NE(0, storage->getPeers().value().size());
+  ASSERT_NE(0, wsv->getPeers().value().size());
 
   log->info("Drop ledger");
 
@@ -96,7 +96,8 @@ TEST_F(TestStorageFixture, TestingStorageWhenDropAll) {
   auto storage =
       TestStorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
   ASSERT_TRUE(storage);
-  ASSERT_EQ(0, storage->getPeers().value().size());
+  auto wsv = storage->getWsvQuery();
+  ASSERT_EQ(0, wsv->getPeers().value().size());
 
   log->info("Try insert block");
 
@@ -105,15 +106,15 @@ TEST_F(TestStorageFixture, TestingStorageWhenDropAll) {
 
   log->info("Request ledger information");
 
-  ASSERT_NE(0, storage->getPeers().value().size());
+  ASSERT_NE(0, wsv->getPeers().value().size());
 
   log->info("Drop ledger");
 
   storage->dropStorage();
 
-  ASSERT_EQ(0, storage->getPeers().value().size());
+  ASSERT_EQ(0, wsv->getPeers().value().size());
   auto new_storage =
       TestStorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
-  ASSERT_EQ(0, storage->getPeers().value().size());
+  ASSERT_EQ(0, wsv->getPeers().value().size());
   new_storage->dropStorage();
 }

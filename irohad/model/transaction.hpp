@@ -74,6 +74,8 @@ namespace iroha {
        */
       std::vector<std::shared_ptr<Command>> commands;
 
+      using CommandsType = decltype(commands);
+
       bool operator==(const Transaction& rhs) const;
       bool operator!=(const Transaction& rhs) const;
     };

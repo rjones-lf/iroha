@@ -15,25 +15,37 @@
  * limitations under the License.
  */
 
-#include <ametsuchi/impl/temporary_wsv_impl.hpp>
+#include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
-#include <algorithm>
+#include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+    TemporaryWsvImpl::TemporaryWsvImpl(
+        std::unique_ptr<pqxx::lazyconnection> connection,
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        std::shared_ptr<model::CommandExecutorFactory> command_executors)
+        : connection_(std::move(connection)),
+          transaction_(std::move(transaction)),
+          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
+          executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
+          command_executors_(std::move(command_executors)) {
+      transaction_->exec("BEGIN;");
+    }
 
     bool TemporaryWsvImpl::apply(
         const model::Transaction &transaction,
         std::function<bool(const model::Transaction &, WsvQuery &)> function) {
       auto execute_command = [this, transaction](auto command) {
         auto executor = command_executors_->getCommandExecutor(command);
-        auto account = this->getAccount(transaction.creator_account_id).value();
-        return executor->validate(*command, *this, account) &&
-            executor->execute(*command, *this, *executor_);
+        auto account = wsv_->getAccount(transaction.creator_account_id).value();
+        return executor->validate(*command, *wsv_, account) &&
+            executor->execute(*command, *wsv_, *executor_);
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result = function(transaction, *this) &&
+      auto result = function(transaction, *wsv_) &&
           std::all_of(transaction.commands.begin(),
                       transaction.commands.end(), execute_command);
       if (result) {
@@ -44,44 +56,6 @@ namespace iroha {
       return result;
     }
 
-    TemporaryWsvImpl::TemporaryWsvImpl(
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction,
-        std::unique_ptr<WsvQuery> wsv, std::unique_ptr<WsvCommand> executor,
-        std::shared_ptr<model::CommandExecutorFactory> command_executors)
-        : connection_(std::move(connection)),
-          transaction_(std::move(transaction)),
-          wsv_(std::move(wsv)),
-          executor_(std::move(executor)),
-          command_executors_(std::move(command_executors)) {
-      transaction_->exec("BEGIN;");
-    }
-
     TemporaryWsvImpl::~TemporaryWsvImpl() { transaction_->exec("ROLLBACK;"); }
-
-    nonstd::optional<model::Account> TemporaryWsvImpl::getAccount(
-        const std::string &account_id) {
-      return wsv_->getAccount(account_id);
-    }
-
-    nonstd::optional<std::vector<ed25519::pubkey_t>>
-    TemporaryWsvImpl::getSignatories(const std::string &account_id) {
-      return wsv_->getSignatories(account_id);
-    }
-
-    nonstd::optional<model::Asset> TemporaryWsvImpl::getAsset(
-        const std::string &asset_id) {
-      return wsv_->getAsset(asset_id);
-    }
-
-    nonstd::optional<model::AccountAsset> TemporaryWsvImpl::getAccountAsset(
-        const std::string &account_id, const std::string &asset_id) {
-      return wsv_->getAccountAsset(account_id, asset_id);
-    }
-
-    nonstd::optional<std::vector<model::Peer>> TemporaryWsvImpl::getPeers() {
-      return wsv_->getPeers();
-    }
-
   }  // namespace ametsuchi
 }  // namespace iroha

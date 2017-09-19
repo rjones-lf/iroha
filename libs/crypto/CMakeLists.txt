@@ -6,6 +6,7 @@ add_library(hash
 
 target_link_libraries(hash
     ed25519
+    common
     )
 
 add_library(crypto
@@ -17,6 +18,5 @@ target_link_libraries(crypto
     )
 
 add_library(lookup3
-    lookup3.h
     lookup3.c
     )

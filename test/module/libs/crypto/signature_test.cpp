@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <common/byteutils.hpp>
-#include <common/types.hpp>
-#include <crypto/base64.hpp>
-#include <crypto/crypto.hpp>
+#include "common/byteutils.hpp"
+#include "common/types.hpp"
+#include "crypto/base64.hpp"
+#include "crypto/crypto.hpp"
 
 #include <gtest/gtest.h>
 
@@ -26,7 +26,7 @@ using iroha::create_keypair;
 using iroha::sign;
 using iroha::verify;
 namespace ed25519 = iroha::ed25519;
-using iroha::to_blob;
+using iroha::stringToBlob;
 
 TEST(Signature, sign_data_size) {
   auto seed = create_seed();
@@ -62,7 +62,7 @@ TEST(Signature, generatedByAndroid) {
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
   auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
+  auto pubkey = stringToBlob<ed25519::pubkey_t::size()>(
       std::string{pubkey_.begin(), pubkey_.end()});
 
   ed25519::sig_t signature;
@@ -70,7 +70,9 @@ TEST(Signature, generatedByAndroid) {
   ASSERT_EQ(signature.size(), signature_v.size());
   std::copy(signature_v.begin(), signature_v.end(), signature.begin());
 
-  ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
+  ASSERT_TRUE(pubkey.has_value());
+  ASSERT_TRUE(
+      verify(message.data(), message.size(), pubkey.value(), signature));
 }
 
 TEST(Signature, generatedByiOS) {
@@ -83,7 +85,7 @@ TEST(Signature, generatedByiOS) {
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
   auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
+  auto pubkey = stringToBlob<ed25519::pubkey_t::size()>(
       std::string{pubkey_.begin(), pubkey_.end()});
 
   ed25519::sig_t signature;
@@ -91,7 +93,9 @@ TEST(Signature, generatedByiOS) {
   ASSERT_EQ(signature.size(), signature_v.size());
   std::copy(signature_v.begin(), signature_v.end(), signature.begin());
 
-  ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
+  ASSERT_TRUE(pubkey.has_value());
+  ASSERT_TRUE(
+      verify(message.data(), message.size(), pubkey.value(), signature));
 }
 
 TEST(Signature, generatedByGO) {
@@ -106,7 +110,7 @@ TEST(Signature, generatedByGO) {
   std::vector<uint8_t> message(message_.begin(), message_.end());
 
   auto pubkey_ = base64_decode(public_key_b64);
-  auto pubkey = to_blob<ed25519::pubkey_t::size()>(
+  auto pubkey = stringToBlob<ed25519::pubkey_t::size()>(
       std::string{pubkey_.begin(), pubkey_.end()});
 
   ed25519::sig_t signature;
@@ -114,5 +118,7 @@ TEST(Signature, generatedByGO) {
   ASSERT_EQ(signature.size(), signature_v.size());
   std::copy(signature_v.begin(), signature_v.end(), signature.begin());
 
-  ASSERT_TRUE(verify(message.data(), message.size(), pubkey, signature));
+  ASSERT_TRUE(pubkey.has_value());
+  ASSERT_TRUE(
+      verify(message.data(), message.size(), pubkey.value(), signature));
 }

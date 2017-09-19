@@ -28,9 +28,9 @@ namespace iroha {
      * Mutable storage is used apply blocks to the storage.
      * Allows to query the world state view, transactions, and blocks.
      */
-    class MutableStorage : public WsvQuery {
+    class MutableStorage {
      public:
-      virtual ~MutableStorage() = default;
+
       /**
        * Applies a block to current mutable state
        * using logic specified in function
@@ -45,11 +45,12 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(
-          const model::Block &block,
-          std::function<bool(const model::Block &, WsvQuery &,
-                             const hash256_t &)>
-              function) = 0;
+      virtual bool apply(const model::Block &block,
+                         std::function<bool(const model::Block &, WsvQuery &,
+                                            const hash256_t &)>
+                             function) = 0;
+
+      virtual ~MutableStorage() = default;
     };
 
   }  // namespace ametsuchi

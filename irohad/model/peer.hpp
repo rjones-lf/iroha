@@ -34,8 +34,8 @@ namespace iroha {
       /**
        * Public key of peer
        */
-      iroha::ed25519::pubkey_t pubkey;
-      
+      ed25519::pubkey_t pubkey;
+
       using KeyType = decltype(pubkey);
 
       bool operator==(const Peer &obj) const {

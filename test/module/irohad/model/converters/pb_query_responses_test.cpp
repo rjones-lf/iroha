@@ -24,7 +24,6 @@ TEST(QueryResponseTest, AccountTest) {
   model::converters::PbQueryResponseFactory pb_factory;
   model::Account account;
   account.account_id = "123";
-  std::fill(account.master_key.begin(), account.master_key.end(), 0x1);
   account.permissions.add_signatory = true;
   account.domain_name = "domain";
   account.quorum = 32;
@@ -33,7 +32,6 @@ TEST(QueryResponseTest, AccountTest) {
   auto des_account = pb_factory.deserializeAccount(pb_account);
 
   ASSERT_EQ(account.account_id, des_account.account_id);
-  ASSERT_EQ(account.master_key, des_account.master_key);
   ASSERT_EQ(account.permissions, des_account.permissions);
   ASSERT_EQ(account.domain_name, des_account.domain_name);
   ASSERT_EQ(account.quorum, account.quorum);
@@ -44,7 +42,6 @@ TEST(QueryResponseTest, AccountResponseTest) {
 
   model::Account account;
   account.account_id = "123";
-  std::fill(account.master_key.begin(), account.master_key.end(), 0x1);
   account.permissions.add_signatory = true;
   account.domain_name = "domain";
   account.quorum = 32;
@@ -59,8 +56,6 @@ TEST(QueryResponseTest, AccountResponseTest) {
 
   ASSERT_EQ(accountResponse.account.account_id,
             des_account_response.account.account_id);
-  ASSERT_EQ(accountResponse.account.master_key,
-            des_account_response.account.master_key);
   ASSERT_EQ(accountResponse.account.permissions,
             des_account_response.account.permissions);
   ASSERT_EQ(accountResponse.account.domain_name,

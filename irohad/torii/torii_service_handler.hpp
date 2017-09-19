@@ -104,7 +104,11 @@ namespace torii {
      * then, creates a new Call instance to serve an another client.
      */
     void ToriiHandler(CommandServiceCall<iroha::protocol::Transaction,
+                                         google::protobuf::Empty>*);
+
+    void StatusHandler(CommandServiceCall<iroha::protocol::TxStatusRequest,
                                          iroha::protocol::ToriiResponse>*);
+
 
     void QueryFindHandler(QueryServiceCall<iroha::protocol::Query,
                                            iroha::protocol::QueryResponse>*);

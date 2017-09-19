@@ -9,6 +9,7 @@
 #ifndef sha3_h
 #define sha3_h
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* 'Words' here refers to uint64_t */

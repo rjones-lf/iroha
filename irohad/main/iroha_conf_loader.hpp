@@ -21,6 +21,7 @@
 #include <fstream>
 #include <string>
 #include <rapidjson/rapidjson.h>
+#include <rapidjson/istreamwrapper.h>
 #include "common/assert_config.hpp"
 
 namespace config_members {

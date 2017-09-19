@@ -8,17 +8,27 @@ import "google/protobuf/empty.proto";
 import "responses.proto";
 
 
-enum StatelessValidation {
+enum TxStatus {
   STATELESS_VALIDATION_FAILED = 0;
   STATELESS_VALIDATION_SUCCESS = 1;
+  STATEFUL_VALIDATION_FAILED = 2;
+  STATEFUL_VALIDATION_SUCCESS = 3;
+  COMMITTED = 4;
+  ON_PROCESS = 5;
+  NOT_RECEIVED = 6;
 }
 
 message ToriiResponse {
-  StatelessValidation validation = 1;
+  TxStatus tx_status = 1;
+}
+
+message TxStatusRequest{
+  bytes tx_hash = 1;
 }
 
 service CommandService {
-  rpc Torii (Transaction) returns (ToriiResponse);
+  rpc Torii (Transaction) returns (google.protobuf.Empty);
+  rpc Status (TxStatusRequest) returns (ToriiResponse);
 }
 
 

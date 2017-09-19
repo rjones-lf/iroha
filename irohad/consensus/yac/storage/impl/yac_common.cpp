@@ -17,18 +17,11 @@
 
 #include <algorithm>
 #include "consensus/yac/storage/yac_common.hpp"
+#include "consensus/consensus_common.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-
-      bool hasSupermajority(uint64_t current, uint64_t all) {
-        if (current > all)
-          return false;
-        auto f = (all - 1) / 3.0;
-        return current >= 2 * f + 1;
-      }
-
       bool hasReject(uint64_t frequent, uint64_t voted, uint64_t all) {
         auto not_voted = all - voted;
         return not hasSupermajority(frequent + not_voted, all);

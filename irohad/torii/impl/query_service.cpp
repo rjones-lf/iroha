@@ -64,4 +64,4 @@ namespace torii {
     // Send query to iroha
     query_processor_->queryHandle(query.value());
   }
-}
+}  // namespace torii

@@ -1,0 +1,28 @@
+codecov:
+  branch: default
+coverage:
+  range: 50...100
+  status:
+    patch:
+      default:
+        target: 50
+    project:
+      default:
+        target: auto
+        threshold: 0.05
+      cli:
+        target: auto
+        threshold: 0.05
+        paths: "iroha-cli/"
+      daemon:
+        target: auto
+        threshold: 0.05
+        paths: "irohad/"
+      tests:
+        target: auto
+        paths: "test/"
+    changes:
+      default:
+        enabled: no
+comment:
+  layout: "reach, diff, flags, files, footer"

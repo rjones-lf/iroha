@@ -23,7 +23,7 @@ limitations under the License.
 #include <string>
 #include <unordered_map>
 #include "model/converters/pb_transaction_factory.hpp"
-#include "model/tx_responses/stateless_response.hpp"
+#include "model/transaction_response.hpp"
 #include "torii/processor/transaction_processor.hpp"
 
 namespace torii {
@@ -48,12 +48,15 @@ namespace torii {
      * @param response - ToriiResponse
      */
     void ToriiAsync(iroha::protocol::Transaction const& request,
-                    iroha::protocol::ToriiResponse& response);
+                    google::protobuf::Empty& response);
+
+    void StatusAsync(iroha::protocol::TxStatusRequest const& request,
+                     iroha::protocol::ToriiResponse& response);
 
    private:
     std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_factory_;
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
-    std::unordered_map<std::string, iroha::protocol::ToriiResponse&>
+    std::unordered_map<std::string, iroha::protocol::ToriiResponse>
         handler_map_;
   };
 

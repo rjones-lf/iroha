@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/storage/yac_block_storage.hpp"
+
 #include <utility>
 #include <algorithm>
-#include "consensus/yac/storage/yac_block_storage.hpp"
+
+#include "consensus/consensus_common.hpp"
 
 using namespace logger;
 

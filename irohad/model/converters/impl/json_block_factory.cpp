@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-#define RAPIDJSON_HAS_STDSTRING 1
-
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 
@@ -38,10 +36,7 @@ namespace iroha {
         Value signatures;
         signatures.SetArray();
         for (const auto &signature : block.sigs) {
-          signatures.PushBack(
-              Document(&allocator)
-                  .CopyFrom(serializeSignature(signature), allocator),
-              allocator);
+          signatures.PushBack(serializeSignature(signature, allocator), allocator);
         }
         document.AddMember("signatures", signatures, allocator);
 
@@ -69,50 +64,32 @@ namespace iroha {
 
       nonstd::optional<Block> JsonBlockFactory::deserialize(
           const Document &document) {
-        model::Block block{};
-
-        if (not verifyRequiredMembers(
-                document, {"hash", "signatures", "created_ts", "height",
-                           "prev_hash", "txs_number"})) {
-          return nonstd::nullopt;
-        }
-
-        auto &signatures = document["signatures"];
-        for (auto it = signatures.Begin(); it != signatures.End(); ++it) {
-          Document signature_document;
-          auto &allocator = signature_document.GetAllocator();
-          signature_document.CopyFrom(*it, allocator);
-          auto signature = deserializeSignature(signature_document);
-          if (not signature.has_value()) {
-            log_->error("Signature parsing failure");
-            return nonstd::nullopt;
-          }
-          block.sigs.emplace_back(signature.value());
-        }
-
-        block.created_ts = document["created_ts"].GetUint64();
-        block.height = document["height"].GetUint64();
-        block.txs_number = static_cast<decltype(block.txs_number)>(
-            document["txs_number"].GetUint());
-        hexstringToArray(document["hash"].GetString(), block.hash);
-        hexstringToArray(document["prev_hash"].GetString(), block.prev_hash);
-        hexstringToArray(document["merkle_root"].GetString(),
-                         block.merkle_root);
-
-        auto& transactions = document["transactions"];
-        for (auto it = transactions.Begin(); it != transactions.End(); ++it) {
-          Document transaction_document;
-          auto &allocator = transaction_document.GetAllocator();
-          transaction_document.CopyFrom(*it, allocator);
-          auto transaction = factory_.deserialize(transaction_document);
-          if (not transaction.has_value()) {
-            log_->error("Transaction parsing failure");
-            return nonstd::nullopt;
-          }
-          block.transactions.emplace_back(transaction.value());
-        }
-
-        return block;
+        auto des = makeFieldDeserializer(document);
+        auto des_transactions = [this](auto array) {
+          auto acc_transactions = [this](auto init, auto &x) {
+            return init
+                | [this, &x](auto transactions) {
+                    return factory_.deserialize(x)
+                        | [&transactions](auto transaction) {
+                            transactions.push_back(transaction);
+                            return nonstd::make_optional(transactions);
+                          };
+                  };
+          };
+          return std::accumulate(
+              array.begin(), array.end(),
+              nonstd::make_optional<Block::TransactionsType>(),
+              acc_transactions);
+        };
+        return nonstd::make_optional<model::Block>()
+            | des.Uint64(&Block::created_ts, "created_ts")
+            | des.Uint64(&Block::height, "height")
+            | des.Uint(&Block::txs_number, "txs_number")
+            | des.String(&Block::hash, "hash")
+            | des.String(&Block::prev_hash, "prev_hash")
+            | des.String(&Block::merkle_root, "merkle_root")
+            | des.Array(&Block::sigs, "signatures")
+            | des.Array(&Block::transactions, "transactions", des_transactions);
       }
 
     }  // namespace converters

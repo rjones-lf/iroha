@@ -51,6 +51,9 @@ namespace iroha {
       // processing
       std::shared_ptr<validation::StatelessValidator> validator_;
 
+      std::unordered_set<std::string> proposal_set_;
+      std::unordered_set<std::string> candidate_set_;
+
       // internal
       rxcpp::subjects::subject<std::shared_ptr<model::TransactionResponse>>
           notifier_;

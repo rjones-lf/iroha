@@ -35,9 +35,6 @@ namespace iroha {
 
      private:
 
-      bool checkSupermajority(ametsuchi::MutableStorage &storage,
-                              uint64_t signs_num);
-
       logger::Logger log_;
 
     };

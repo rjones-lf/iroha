@@ -28,7 +28,7 @@ class JsonBlockTest : public ::testing::Test {
 };
 
 TEST_F(JsonBlockTest, ValidWhenWellFormed) {
-  Block orig_block;
+  Block orig_block{};
 
   auto json_block = factory.serialize(orig_block);
   auto serial_block = factory.deserialize(json_block);
@@ -37,7 +37,7 @@ TEST_F(JsonBlockTest, ValidWhenWellFormed) {
 }
 
 TEST_F(JsonBlockTest, InvalidWhenFieldsMissing) {
-  Block orig_block;
+  Block orig_block{};
 
   auto json_block = factory.serialize(orig_block);
 

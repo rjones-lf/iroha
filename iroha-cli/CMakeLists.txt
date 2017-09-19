@@ -1,5 +1,7 @@
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
+add_subdirectory(interactive)
+
 # Gflags config validators
 add_library(cli-flags_validators
     validators.cpp
@@ -15,6 +17,9 @@ target_link_libraries(keys_manager
     optional
     crypto
     )
+target_include_directories(keys_manager PUBLIC
+    ${PROJECT_SOURCE_DIR}/iroha-cli
+    )
 
 add_library(client
     client.cpp
@@ -23,14 +28,20 @@ add_library(client
     impl/grpc_response_handler.cpp
     )
 target_link_libraries(client
+    interactive_cli
+    crypto
+    optional
+    logger
+    rapidjson
     pb_model_converters
     json_model_converters
     model_generators
     command_client
     query_client
-    logger
+    model_generators
+    parser
+    model
     )
-
 target_include_directories(client PUBLIC
     ${PROJECT_SOURCE_DIR}/iroha-cli
     )

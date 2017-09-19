@@ -40,28 +40,18 @@ namespace iroha {
                               std::move(ctx->block_store),
                               std::move(ctx->index),
                               std::move(ctx->pg_lazy),
-                              std::move(ctx->pg_nontx),
-                              std::move(ctx->wsv)));
+                              std::move(ctx->pg_nontx)));
     }
 
-    TestStorageImpl::TestStorageImpl(std::string block_store_dir,
-                                     std::string redis_host,
-                                     size_t redis_port,
-                                     std::string postgres_options,
-                                     std::unique_ptr<FlatFile> block_store,
-                                     std::unique_ptr<cpp_redis::redis_client> index,
-                                     std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                                     std::unique_ptr<pqxx::nontransaction> wsv_transaction,
-                                     std::unique_ptr<WsvQuery> wsv)
-        : StorageImpl(block_store_dir,
-                      redis_host,
-                      redis_port,
-                      postgres_options,
-                      std::move(block_store),
-                      std::move(index),
-                      std::move(wsv_connection),
-                      std::move(wsv_transaction),
-                      std::move(wsv)) {
+    TestStorageImpl::TestStorageImpl(
+        std::string block_store_dir, std::string redis_host, size_t redis_port,
+        std::string postgres_options, std::unique_ptr<FlatFile> block_store,
+        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<pqxx::lazyconnection> wsv_connection,
+        std::unique_ptr<pqxx::nontransaction> wsv_transaction)
+        : StorageImpl(block_store_dir, redis_host, redis_port, postgres_options,
+                      std::move(block_store), std::move(index),
+                      std::move(wsv_connection), std::move(wsv_transaction)) {
       log_ = logger::log("TestStorage");
     }
 
@@ -126,52 +116,12 @@ namespace iroha {
       return StorageImpl::commit(std::move(mutableStorage));
     }
 
-    rxcpp::observable<model::Transaction> TestStorageImpl::getAccountTransactions(
-        std::string account_id) {
-      return StorageImpl::getAccountTransactions(account_id);
+    std::shared_ptr<WsvQuery> TestStorageImpl::getWsvQuery() const {
+      return StorageImpl::getWsvQuery();
     }
 
-    rxcpp::observable<model::Transaction> TestStorageImpl::getAccountAssetTransactions(
-        std::string account_id, std::string asset_id) {
-      return StorageImpl::getAccountAssetTransactions(account_id, asset_id);
+    std::shared_ptr<BlockQuery> TestStorageImpl::getBlockQuery() const {
+      return StorageImpl::getBlockQuery();
     }
-
-    rxcpp::observable<model::Block> TestStorageImpl::getBlocks(uint32_t height,
-                                                               uint32_t count) {
-      return StorageImpl::getBlocks(height, count);
-    };
-
-    rxcpp::observable<model::Block> TestStorageImpl::getBlocksFrom(uint32_t height) {
-      return StorageImpl::getBlocksFrom(height);
-    };
-
-    rxcpp::observable<model::Block> TestStorageImpl::getTopBlocks(uint32_t count) {
-      return StorageImpl::getTopBlocks(count);
-    };
-
-    nonstd::optional<model::Account> TestStorageImpl::getAccount(
-        const std::string &account_id) {
-      return StorageImpl::getAccount(account_id);
-    }
-
-    nonstd::optional<std::vector<ed25519::pubkey_t>> TestStorageImpl::getSignatories(
-        const std::string &account_id) {
-      return StorageImpl::getSignatories(account_id);
-    }
-
-    nonstd::optional<model::Asset> TestStorageImpl::getAsset(
-        const std::string &asset_id) {
-      return StorageImpl::getAsset(asset_id);
-    }
-
-    nonstd::optional<model::AccountAsset> TestStorageImpl::getAccountAsset(
-        const std::string &account_id, const std::string &asset_id) {
-      return StorageImpl::getAccountAsset(account_id, asset_id);
-    }
-
-    nonstd::optional<std::vector<model::Peer>> TestStorageImpl::getPeers() {
-      return StorageImpl::getPeers();
-    }
-
   }  // namespace ametsuchi
 }  // namespace iroha

@@ -26,6 +26,11 @@ namespace iroha {
     // Optional over shared pointer
     template <typename T>
     using optional_ptr = nonstd::optional<std::shared_ptr<T>>;
+
+    template <typename T, typename... Args>
+    optional_ptr<T> make_optional_ptr(Args &&... args) {
+      return std::make_shared<T>(std::forward<Args>(args)...);
+    }
   }  // namespace model
 }  // namespace iroha
 

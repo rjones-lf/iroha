@@ -19,16 +19,15 @@
 #define IROHA_JSON_COMMAND_FACTORY_HPP
 
 #include "model/common.hpp"
-#include <rapidjson/document.h>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include "model/command.hpp"
+#include "model/converters/json_common.hpp"
 
 namespace iroha {
   namespace model {
     namespace converters {
-
       class JsonCommandFactory {
        public:
         JsonCommandFactory();
@@ -36,79 +35,75 @@ namespace iroha {
         // AddAssetQuantity
         rapidjson::Document serializeAddAssetQuantity(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeAddAssetQuantity(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeAddAssetQuantity(
+            const rapidjson::Value &document);
 
         // AddPeer
         rapidjson::Document serializeAddPeer(std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeAddPeer(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeAddPeer(
+            const rapidjson::Value &document);
 
         // AddSignatory
         rapidjson::Document serializeAddSignatory(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeAddSignatory(
-            const rapidjson::Document &command);
-
-        // AssignMasterKey
-        rapidjson::Document serializeAssignMasterKey(
-            std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeAssignMasterKey(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeAddSignatory(
+            const rapidjson::Value &document);
 
         // CreateAccount
         rapidjson::Document serializeCreateAccount(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeCreateAccount(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeCreateAccount(
+            const rapidjson::Value &document);
 
         // CreateAsset
         rapidjson::Document serializeCreateAsset(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeCreateAsset(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeCreateAsset(
+            const rapidjson::Value &document);
 
         // CreateDomain
         rapidjson::Document serializeCreateDomain(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeCreateDomain(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeCreateDomain(
+            const rapidjson::Value &document);
 
         // RemoveSignatory
         rapidjson::Document serializeRemoveSignatory(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeRemoveSignatory(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeRemoveSignatory(
+            const rapidjson::Value &document);
 
         // SetAccountPermissions
         rapidjson::Document serializeSetAccountPermissions(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeSetAccountPermissions(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeSetAccountPermissions(
+            const rapidjson::Value &document);
 
         // SetQuorum
         rapidjson::Document serializeSetQuorum(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeSetQuorum(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeSetQuorum(
+            const rapidjson::Value &document);
 
         // TransferAsset
         rapidjson::Document serializeTransferAsset(
             std::shared_ptr<Command> command);
-        std::shared_ptr<Command> deserializeTransferAsset(
-            const rapidjson::Document &command);
+        optional_ptr<Command> deserializeTransferAsset(
+            const rapidjson::Value &document);
 
         // Abstract
         rapidjson::Document serializeAbstractCommand(
             std::shared_ptr<Command> command);
         optional_ptr <model::Command> deserializeAbstractCommand(
-            const rapidjson::Document &command);
+            const rapidjson::Value &document);
 
        private:
+        Convert<std::shared_ptr<Command>> toCommand;
+
         using Serializer = rapidjson::Document (JsonCommandFactory::*)(
             std::shared_ptr<Command>);
-        using Deserializer = std::shared_ptr<model::Command> (
-            JsonCommandFactory::*)(const rapidjson::Document &);
+        using Deserializer = optional_ptr<Command> (
+            JsonCommandFactory::*)(const rapidjson::Value &);
 
         std::unordered_map<std::type_index, Serializer> serializers_;
         std::unordered_map<std::string, Deserializer> deserializers_;

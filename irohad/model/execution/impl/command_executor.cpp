@@ -20,7 +20,6 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
@@ -178,59 +177,6 @@ bool AddSignatoryExecutor::isValid(const Command &command,
   return true;
 }
 
-// -----------------------------| AssignMasterKey |-----------------------------
-
-AssignMasterKeyExecutor::AssignMasterKeyExecutor() {
-  log_ = logger::log("AssignMasterKeyExecutor");
-}
-
-bool AssignMasterKeyExecutor::execute(const Command &command,
-                                      ametsuchi::WsvQuery &queries,
-                                      ametsuchi::WsvCommand &commands) {
-  auto assign_master_key = static_cast<const AssignMasterKey &>(command);
-
-  auto account = queries.getAccount(assign_master_key.account_id);
-  if (not account.has_value()) {
-    log_->info("account {} not found", assign_master_key.account_id);
-
-    return false;
-  }
-  account.value().master_key = assign_master_key.pubkey;
-  return commands.updateAccount(account.value());
-}
-
-bool AssignMasterKeyExecutor::hasPermissions(const Command &command,
-                                             ametsuchi::WsvQuery &queries,
-                                             const Account &creator) {
-  auto assign_master_key = static_cast<const AssignMasterKey &>(command);
-
-  // Two cases - when creator assigns to itself, or system admin
-  return creator.account_id == assign_master_key.account_id or
-      creator.permissions.add_signatory;
-}
-
-bool AssignMasterKeyExecutor::isValid(const Command &command,
-                                      ametsuchi::WsvQuery &queries) {
-  auto assign_master_key = static_cast<const AssignMasterKey &>(command);
-
-  auto acc = queries.getAccount(assign_master_key.account_id);
-  if (not(acc.has_value() and
-      acc.value().master_key != assign_master_key.pubkey)) {
-    log_->info("account {} not exists or master keys are not same",
-               assign_master_key.account_id);
-    return false;
-  }
-  auto signs = queries.getSignatories(assign_master_key.account_id);
-  return
-    // Has at least one signatory
-      signs.has_value() and not signs.value().empty() and
-          // Check if new master key is in AccountSignatory relationship
-          std::any_of(signs.value().begin(), signs.value().end(),
-                      [assign_master_key](auto &&key) {
-                        return key == assign_master_key.pubkey;
-                      });
-}
-
 // ------------------------------| CreateAccount |------------------------------
 
 CreateAccountExecutor::CreateAccountExecutor() {
@@ -243,7 +189,6 @@ bool CreateAccountExecutor::execute(const Command &command,
   auto create_account = static_cast<const CreateAccount &>(command);
 
   Account account;
-  account.master_key = create_account.pubkey;
   account.account_id =
       create_account.account_name + "@" + create_account.domain_id;
 
@@ -515,7 +460,9 @@ bool TransferAssetExecutor::execute(const Command &command,
   if (not src_account_asset.has_value()) {
     log_->info("asset {} is absent of {}",
                transfer_asset.asset_id,
-               transfer_asset.src_account_id);
+               transfer_asset.src_account_id,
+               transfer_asset.description
+    );
 
     return false;
   }
@@ -527,7 +474,9 @@ bool TransferAssetExecutor::execute(const Command &command,
   if (not asset.has_value()) {
     log_->info("asset {} is absent of {}",
                transfer_asset.asset_id,
-               transfer_asset.dest_account_id);
+               transfer_asset.dest_account_id,
+               transfer_asset.description
+    );
 
     return false;
   }

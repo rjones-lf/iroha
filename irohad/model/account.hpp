@@ -119,11 +119,6 @@ namespace iroha {
        * Minimum quorum of signatures need for transactions
        */
       uint32_t quorum;
-
-      /**
-       * Identifier of account
-       */
-      ed25519::pubkey_t master_key;
     };
   }
 }

@@ -23,11 +23,6 @@ message AddSignatory {
     bytes public_key = 2;
 }
 
-message AssignMasterKey {
-    string account_id = 1;
-    bytes public_key = 2;
-}
-
 message CreateAsset {
     string asset_name = 1;
     string domain_id = 2;
@@ -63,7 +58,8 @@ message TransferAsset {
     string src_account_id = 1;
     string dest_account_id = 2;
     string asset_id = 3;
-    Amount amount = 4;
+    string description = 4;
+    Amount amount = 5;
 }
 
 message Command {
@@ -71,13 +67,12 @@ message Command {
         AddAssetQuantity add_asset_quantity = 1;
         AddPeer add_peer = 2;
         AddSignatory add_signatory = 3;
-        AssignMasterKey account_assign_mk = 4;
-        CreateAsset create_asset = 5;
-        CreateAccount create_account = 6;
-        CreateDomain create_domain = 7;
-        RemoveSignatory remove_sign = 8;
-        SetAccountPermissions set_permission = 9;
-        SetAccountQuorum set_quorum = 10;
-        TransferAsset transfer_asset = 11;
+        CreateAsset create_asset = 4;
+        CreateAccount create_account = 5;
+        CreateDomain create_domain = 6;
+        RemoveSignatory remove_sign = 7;
+        SetAccountPermissions set_permission = 8;
+        SetAccountQuorum set_quorum = 9;
+        TransferAsset transfer_asset = 10;
     }
 }

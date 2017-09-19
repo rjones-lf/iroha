@@ -18,7 +18,6 @@ limitations under the License.
 #include <grpc++/grpc++.h>
 #include <fstream>
 #include <thread>
-#include "common/config.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_insertion.hpp"
