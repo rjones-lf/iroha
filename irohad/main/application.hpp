@@ -42,6 +42,13 @@
 #include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
+
+#include "ametsuchi/impl/peer_query_wsv.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
+#include "validation/impl/chain_validator_impl.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
+
 class Irohad {
  public:
   /**
@@ -56,68 +63,116 @@ class Irohad {
   Irohad(const std::string &block_store_dir, const std::string &redis_host,
          size_t redis_port, const std::string &pg_conn, size_t torii_port,
          uint64_t peer_number);
-  void run();
+
+  /**
+   * Initialization of whole objects in system
+   */
+  virtual void init();
+
+  /**
+   * Run worker threads for start performing
+   */
+  virtual void run();
+
   ~Irohad();
 
- private:
-  std::shared_ptr<iroha::synchronizer::Synchronizer> createSynchronizer(
-      std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
-      std::shared_ptr<iroha::validation::ChainValidator> validator,
-      std::shared_ptr<iroha::ametsuchi::MutableFactory> mutableFactory,
-      std::shared_ptr<iroha::network::BlockLoader> blockLoader);
+ protected:
+// ------------------------| component initialization |-------------------------
 
-  std::shared_ptr<iroha::simulator::Simulator> createSimulator(
-      std::shared_ptr<iroha::network::OrderingGate> ordering_gate,
-      std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator,
-      std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
-      std::shared_ptr<iroha::ametsuchi::TemporaryFactory> temporary_factory,
-      std::shared_ptr<iroha::model::HashProviderImpl> hash_provider);
+  virtual void initStorage();
 
-  std::shared_ptr<iroha::network::PeerCommunicationService>
-  createPeerCommunicationService(
-      std::shared_ptr<iroha::network::OrderingGate> ordering_gate,
-      std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer);
+  virtual void initLoop();
 
-  std::unique_ptr<::torii::CommandService> createCommandService(
-      std::shared_ptr<iroha::model::converters::PbTransactionFactory>
-          pb_factory,
-      std::shared_ptr<iroha::torii::TransactionProcessor> txProccesor);
+  virtual void initProtoFactories();
 
-  std::unique_ptr<::torii::QueryService> createQueryService(
-      std::shared_ptr<iroha::model::converters::PbQueryFactory>
-          pb_query_factory,
-      std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
-          pb_query_response_factory,
-      std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
+  virtual void initCryptoProvider();
 
-  std::shared_ptr<iroha::torii::QueryProcessor> createQueryProcessor(
-      std::unique_ptr<iroha::model::QueryProcessingFactory> qpf,
-      std::shared_ptr<iroha::validation::StatelessValidator>
-          stateless_validator);
+  virtual void initHashProvider();
 
-  std::shared_ptr<iroha::torii::TransactionProcessor>
-  createTransactionProcessor(
-      std::shared_ptr<iroha::network::PeerCommunicationService> pcs,
-      std::shared_ptr<iroha::validation::StatelessValidator> validator);
+  virtual void initValidators();
 
-  std::shared_ptr<iroha::validation::StatelessValidator>
-  createStatelessValidator(
-      std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_provider);
+  virtual void initPeerQuery();
 
-  std::unique_ptr<iroha::model::QueryProcessingFactory>
-  createQueryProcessingFactory(
-      std::shared_ptr<iroha::ametsuchi::WsvQuery> wsvQuery,
-      std::shared_ptr<iroha::ametsuchi::BlockQuery> blockQuery);
+  virtual void initPeerOrderer();
 
+  virtual void initPeerAddress();
+
+  virtual void initOrderingGate();
+
+  virtual void initSimulator();
+
+  virtual void initBlockLoader();
+
+  virtual void initConsensusGate();
+
+  virtual void initSynchronizer();
+
+  virtual void initPeerCommunicationService();
+
+  virtual void initTransactionCommandService();
+
+  virtual void initQueryService();
+
+  // constructor dependencies
   std::string block_store_dir_;
   std::string redis_host_;
   size_t redis_port_;
   std::string pg_conn_;
   size_t torii_port_;
+
+// ---------------------------| internal decencies |----------------------------
+
+  // loop
   std::shared_ptr<uvw::Loop> loop;
 
-  std::unique_ptr<::torii::CommandService> command_service;
-  std::unique_ptr<::torii::QueryService> query_service;
+  // converter factories
+  std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_tx_factory;
+  std::shared_ptr<iroha::model::converters::PbQueryFactory> pb_query_factory;
+  std::shared_ptr<iroha::model::converters::PbQueryResponseFactory> pb_query_response_factory;
+
+  // crypto provider
+  std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_verifier;
+
+  // hash provider
+  std::shared_ptr<iroha::model::HashProviderImpl> hash_provider;
+
+  // validators
+  std::shared_ptr<iroha::validation::StatelessValidator> stateless_validator;
+  std::shared_ptr<iroha::validation::StatefulValidatorImpl> stateful_validator;
+  std::shared_ptr<iroha::validation::ChainValidatorImpl> chain_validator;
+
+  // peer query
+  std::shared_ptr<iroha::ametsuchi::PeerQueryWsv> wsv;
+
+  // peer orderer
+  std::shared_ptr<iroha::consensus::yac::PeerOrdererImpl> orderer;
+
+  // peer address
+  std::string peer_address; // TODO change type of address with decltype
+
+  // ordering gate
+  std::shared_ptr<iroha::ordering::OrderingGateImpl> ordering_gate;
+
+  // simulator
+  std::shared_ptr<iroha::simulator::Simulator> simulator;
+
+  // block loader
+  std::shared_ptr<iroha::network::BlockLoader> block_loader;
+
+  // consensus gate
+  std::shared_ptr<iroha::consensus::yac::YacGateImpl> consensus_gate;
+
+  // synchronizer
+  std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer;
+
+  // pcs
+  std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
+
+  // transaction service
+  std::unique_ptr<torii::CommandService> command_service;
+
+  // query service
+  std::unique_ptr<torii::QueryService> query_service;
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<grpc::Server> internal_server;
