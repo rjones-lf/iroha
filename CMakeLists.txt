@@ -9,7 +9,10 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall -fPIC")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
+# -Wl,-rpath,lib says to the compiler: first directory where binary looks for
+# static libs is lib in current directory. Will be triggered by -DCMAKE_BUILD_TYPE=Release
+# equivalent of ld -rpath lib
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wl,-rpath,lib")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
