@@ -17,6 +17,8 @@ build/*
 *xcworkspace*
 *cmake-build-debug*
 CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles/*
 cmake-build-debu/*
 docker/build/iroha.tar
 cmake-build-debug/*
