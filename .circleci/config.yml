@@ -148,14 +148,15 @@ jobs:
 
 
 
-  dockerize:
-    <<: *defaults
-    machine: true
-    steps:
-      - attach_workspace:
-          at: /opt/iroha/build
-      - run: TODO
-      - command: echo "I am happy albatross"
+  # dockerize:
+  #   <<: *defaults
+  #   machine: true
+  #   steps:
+  #     - attach_workspace:
+  #         at: /opt/iroha/build
+  #     - run: TODO
+  #         name: todo
+  #         command: echo "I am happy albatross"
 
 
 
@@ -168,9 +169,9 @@ workflows:
       - sonar:
           requires:
             - build
-      - dockerize:
-          requires:
-            - sonar
+      # - dockerize:
+      #     requires:
+      #       - sonar
 
 
 notify:
