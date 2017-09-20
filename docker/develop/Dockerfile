@@ -4,6 +4,9 @@ FROM ubuntu:16.04
 # usage: docker build --build-arg PARALLELISM=8 -t name/name .
 ARG PARALLELISM=1
 
+ENV IROHA_HOME /opt/iroha
+ENV IROHA_BUILD /opt/iroha/build
+
 RUN apt-get update; \
     apt-get -y upgrade; \
     apt-get -y --no-install-recommends install apt-utils; \
@@ -24,6 +27,9 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
 
 RUN pip3 install --upgrade pip; \
     pip3 install flask requests
+
+RUN git config --global user.email "bog@soramitsu.co.jp"; \
+    git config --global user.name "Sorabot"
 
 # install protobuf
 RUN git clone https://github.com/google/protobuf /tmp/protobuf; \
