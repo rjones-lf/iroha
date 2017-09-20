@@ -1,16 +1,19 @@
+defaults: &defaults
+  working_directory: /opt/iroha
+  environment:
+    IROHA_HOME: /opt/iroha
+    IROHA_BUILD: /opt/iroha/build
+
+
 version: 2
 
 jobs:
   build:
-    # must be IROHA_HOME:
-    working_directory: /opt/iroha
+    <<: *defaults
     docker:
       - image: hyperledger/iroha-docker-develop
-        environment:
-          IROHA_HOME: /opt/iroha
-          IROHA_BUILD: /opt/iroha/build
       - image: postgres:9.5
-      - image: redis:3.2.8
+      - image: redis:3.2.8  
     steps:
       - checkout
       - run:
@@ -26,8 +29,12 @@ jobs:
           keys:
             - build-cache-{{ .Branch }}
             - build-cache
+            - build-dir
           paths:
             - ~/.ccache
+            - /opt/iroha/build
+
+      # build and cache build results
       - run:
           name: ccache setup
           command: |
@@ -35,39 +42,16 @@ jobs:
             ccache --show-stats
             ccache --zero-stats
             ccache --max-size=1G
+
+      # cmake and make
       - run:
           name: cmake
           command: cmake -DCOVERAGE=ON -DFIND_PROTOBUF=ON -DFIND_GRPC=ON -H$IROHA_HOME -B$IROHA_BUILD
       - run:
           name: make
-          command: cmake --build $IROHA_BUILD -- -j2
-      - run:
-          name: code coverage pre
-          command: cmake --build $IROHA_BUILD --target coverage.init.info
-      - run:
-          name: unit tests, generate xunit-*.xml
           command: |
-            GTEST_DIR=$IROHA_BUILD/test_bin
-            for test in $(ls $GTEST_DIR); do
-              XUTEST=$IROHA_BUILD/xunit-$test.xml
-              # generates build/xunit-*.xml files with reports
-              $GTEST_DIR/$test --gtest_output=xml:$XUTEST
-            done
-      - run:
-          name: post code coverage
-          command: |
-            cmake --build $IROHA_BUILD --target coverage.info
-            lcov --list $IROHA_BUILD/coverage.info
-            bash <(curl -s https://codecov.io/bash) -X fix -f $IROHA_BUILD/coverage.info || echo "Codecov did not collect coverage reports"
-      - run:
-          name: run analyzers and generate xml reports
-          command: |
-            # generate reports. they all will be in build directory
-            housekeeping/xml-reports.sh
-      - run:
-          name: execute sonar-scanner
-          command: sonar-scanner -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectVersion="${CIRCLE_BRANCH}"
-
+            cmake --build $IROHA_BUILD -- -j4
+      # save cache
       - run:
           name: ccache teardown
           command: |
@@ -81,6 +65,113 @@ jobs:
           key: build-cache
           paths:
             - ~/.ccache
+      - save_cache:
+          key: build-dir
+          paths:
+            - /opt/iroha/build
+
+      # test and coverage info
+      - run:
+          name: cmake
+          command:  cmake -DCOVERAGE=ON -DFIND_PROTOBUF=ON -DFIND_GRPC=ON -H$IROHA_HOME -B$IROHA_BUILD
+      - run:
+          name: code coverage pre
+          command: cmake --build $IROHA_BUILD --target coverage.init.info
+      - run:
+          name: unit tests, generate xunit-*.xml
+          command: |
+            TEST_DIR=$IROHA_BUILD/test_bin
+            for test in $(ls $TEST_DIR); do
+              $TEST_DIR/$test --gtest_output=xml:$IROHA_BUILD/reports/xunit-$test.xml
+            done
+      - run:
+          name: post code coverage
+          command: |
+            cmake --build $IROHA_BUILD --target coverage.info
+            lcov --list $IROHA_BUILD/coverage.info
+            bash <(curl -s https://codecov.io/bash) -X fix -f $IROHA_BUILD/coverage.info || echo "Codecov did not collect coverage reports"
+      # analysis
+      - run:
+          name: gcovr and cppcheck
+          command: |
+            cmake --build $IROHA_BUILD --target gcovr
+            cmake --build $IROHA_BUILD --target cppcheck
+
+      # persist reports
+      - persist_to_workspace:
+          root: /opt/iroha/build
+          paths:
+            - reports
+
+
+      # - run:
+      #     name: prepare redistributable dir
+      #     command: |
+      #       IROHAD=$IROHA_BUILD/bin/irohad
+      #       IROHA_CLI=$IROHA_BUILD/bin/iroha-cli
+      #       TEST_DIR=$IROHA_BUILD/test_bin
+      #       RELEASE=$IROHA_BUILD/release
+      #       mkdir -p $RELEASE
+
+
+
+      # - persist_to_workspace:
+      #     root: /opt/iroha/build/release
+      #     paths:
+      #       - bin
+      #       - test_bin
+
+
+
+  sonar:
+    <<: *defaults
+    docker:
+      - image: hyperledger/iroha-docker-develop
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sonar
+          paths:
+            - ~/.sonar
+      - attach_workspace:
+          at: /opt/iroha/build
+      - run:
+          name: execute sonar-scanner
+          command: |
+            PR_NUMBER=$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")
+            sonar-scanner -Dsonar.github.repository="hyperledger/iroha" -Dsonar.analysis.mode="preview" -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectVersion="${CIRCLE_BRANCH}" -Dsonar.github.oauth="${SORABOT_TOKEN}" -Dsonar.github.pullRequest="${PR_NUMBER}"
+      - save_cache:
+          key: sonar
+          paths:
+            - ~/.sonar
+
+
+
+  dockerize:
+    <<: *defaults
+    machine: true
+    steps:
+      - attach_workspace:
+          at: /opt/iroha/build
+      - run: TODO
+      - command: echo "I am happy albatross"
+
+
+
+workflows:
+  version: 2
+  full_pipeline:
+    jobs:
+      # build -> sonar -> dockerize
+      - build
+      - sonar:
+          requires:
+            - build
+      - dockerize:
+          requires:
+            - sonar
+
 
 notify:
   webhooks:

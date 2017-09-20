@@ -4,6 +4,9 @@ FROM ubuntu:16.04
 # usage: docker build --build-arg PARALLELISM=8 -t name/name .
 ARG PARALLELISM=1
 
+ENV IROHA_HOME /opt/iroha
+ENV IROHA_BUILD /opt/iroha/build
+
 RUN apt-get update; \
     apt-get -y upgrade; \
     apt-get -y --no-install-recommends install apt-utils; \
@@ -12,17 +15,21 @@ RUN apt-get update; \
 RUN apt-get -y --no-install-recommends install build-essential python-software-properties \
         automake libtool \
         # dev dependencies
-        libssl-dev zlib1g-dev libboost-all-dev libc6-dbg \
+        libssl-dev zlib1g-dev libboost-all-dev libc6-dbg golang \
         # CircleCI dependencies
         git ssh tar gzip ca-certificates python3 python3-pip python3-setuptools \
         # code coverage
         lcov \
         # other
-        wget curl cmake file unzip gdb iputils-ping vim ccache gcovr vera++ cppcheck; \
+        wget curl cmake file unzip gdb iputils-ping vim ccache \
+        gcovr vera++ cppcheck doxygen graphviz graphviz-dev; \
     apt-get -y clean
 
 RUN pip3 install --upgrade pip; \
     pip3 install flask requests
+
+RUN git config --global user.email "bog@soramitsu.co.jp"; \
+    git config --global user.name "Sorabot"
 
 # install protobuf
 RUN git clone https://github.com/google/protobuf /tmp/protobuf; \

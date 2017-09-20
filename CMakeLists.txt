@@ -65,6 +65,7 @@ add_subdirectory(libs)
 add_subdirectory(irohad)
 add_subdirectory(iroha-cli)
 
+
 link_directories(${PROJECT_BINARY_DIR}/lib)
 
 if(TESTING)
@@ -83,3 +84,10 @@ if (FUZZING)
     message(Fuzzing with compilers other than clang does not supported yet)
   endif()
 endif()
+
+
+include(cmake/analysis.cmake)
+set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
+mkdir(${REPORT_DIR})
+scan_cppcheck(irohad iroha-cli libs test)
+scan_gcovr(irohad iroha-cli libs test)
