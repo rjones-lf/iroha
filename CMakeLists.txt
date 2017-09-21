@@ -29,7 +29,6 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks" OFF)
 option(TESTING "Build tests" ON)
-option(TESTING_XML_OUTPUT "Enable gtest XML output" OFF)
 option(COVERAGE "Enable coverage" OFF)
 option(FUZZING "Build fuzzing binaries" OFF)
 
@@ -76,10 +75,3 @@ if (FUZZING)
     message(Fuzzing with compilers other than clang does not supported yet)
   endif()
 endif()
-
-
-include(cmake/analysis.cmake)
-set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
-mkdir(${REPORT_DIR})
-scan_cppcheck(irohad iroha-cli libs test)
-scan_gcovr(irohad iroha-cli libs)
