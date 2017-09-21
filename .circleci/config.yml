@@ -41,7 +41,7 @@ jobs:
       # cmake and make
       - run:
           name: cmake
-          command: cmake -DCOVERAGE=ON -DFIND_PROTOBUF=ON -DFIND_GRPC=ON -H$IROHA_HOME -B$IROHA_BUILD
+          command: cmake -DTESTING_XML_OUTPUT=ON -DCOVERAGE=ON -DFIND_PROTOBUF=ON -DFIND_GRPC=ON -H$IROHA_HOME -B$IROHA_BUILD
       - run:
           name: make
           command: |
@@ -75,11 +75,7 @@ jobs:
           command: cmake --build $IROHA_BUILD --target coverage.init.info
       - run:
           name: unit tests, generate xunit-*.xml
-          command: |
-            TEST_DIR=$IROHA_BUILD/test_bin
-            for test in $(ls $TEST_DIR); do
-              $TEST_DIR/$test --gtest_output=xml:$IROHA_BUILD/reports/xunit-$test.xml
-            done
+          command: cmake --build $IROHA_BUILD --target test
       - run:
           name: post code coverage
           command: |
