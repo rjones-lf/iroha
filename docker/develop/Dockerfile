@@ -28,9 +28,6 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
 RUN pip3 install --upgrade pip; \
     pip3 install flask requests
 
-RUN git config --global user.email "bog@soramitsu.co.jp"; \
-    git config --global user.name "Sorabot"
-
 # install protobuf
 RUN git clone https://github.com/google/protobuf /tmp/protobuf; \
     (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95); \
