@@ -15,30 +15,20 @@ SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
 if(COVERAGE)
   set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
-  find_program(LCOV_PROGRAM lcov)
-  if(NOT LCOV_PROGRAM)
-    message(FATAL_ERROR "lcov not found! Aborting...")
-  endif()
-  message(STATUS "lcov enabled (${LCOV_PROGRAM})")
   set(CMAKE_CXX_FLAGS "--coverage ${CMAKE_CXX_FLAGS}")
   set(CMAKE_C_FLAGS "--coverage ${CMAKE_C_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
-  add_custom_target(coverage.init.info
-      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.init.info -c -i -d ${PROJECT_BINARY_DIR}
-      )
-  add_custom_target(coverage.info
-      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -c -d ${PROJECT_BINARY_DIR}
-      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -a ${PROJECT_BINARY_DIR}/coverage.init.info -a ${PROJECT_BINARY_DIR}/coverage.info
-      COMMAND ${LCOV_PROGRAM} -o ${PROJECT_BINARY_DIR}/coverage.info -r ${PROJECT_BINARY_DIR}/coverage.info '/usr*' '${CMAKE_SOURCE_DIR}/external/*'
-      )
+
+  set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
+  file(MAKE_DIRECTORY ${REPORT_DIR})
+  include(cmake/analysis.cmake)
 endif()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks" OFF)
 option(TESTING "Build tests" ON)
-option(TESTING_XML_OUTPUT "Enable gtest XML output" OFF)
 option(COVERAGE "Enable coverage" OFF)
 option(FUZZING "Build fuzzing binaries" OFF)
 
@@ -85,10 +75,3 @@ if (FUZZING)
     message(Fuzzing with compilers other than clang does not supported yet)
   endif()
 endif()
-
-
-include(cmake/analysis.cmake)
-set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
-mkdir(${REPORT_DIR})
-scan_cppcheck(irohad iroha-cli libs test)
-scan_gcovr(irohad iroha-cli libs)

@@ -19,7 +19,7 @@ jobs:
       - run:
           name: notify upsource about current build
           command: |
-            python3 .circleci/upsource-webhook.py --in-progress || true
+            python3 housekeeping/upsource-webhook.py --in-progress || true
       - restore_cache:
           keys:
             - build-cache-{{ .Branch }}-
@@ -41,7 +41,7 @@ jobs:
       # cmake and make
       - run:
           name: cmake
-          command: cmake -DTESTING_XML_OUTPUT=ON -DCOVERAGE=ON -DFIND_PROTOBUF=ON -DFIND_GRPC=ON -H$IROHA_HOME -B$IROHA_BUILD
+          command: cmake -DCOVERAGE=ON -H$IROHA_HOME -B$IROHA_BUILD
       - run:
           name: make
           command: |
@@ -71,28 +71,22 @@ jobs:
 
       # test and coverage info
       - run:
-          name: code coverage pre
-          command: cmake --build $IROHA_BUILD --target coverage.init.info
-      - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
       - run:
-          name: post code coverage
-          command: |
-            cmake --build $IROHA_BUILD --target coverage.info
-            lcov --list $IROHA_BUILD/coverage.info
-            bash <(curl -s https://codecov.io/bash) -X fix -f $IROHA_BUILD/coverage.info || echo "Codecov did not collect coverage reports"
+          name: coverage info
+          command: cmake --build $IROHA_BUILD --target gcovr
+
       # analysis
       - run:
-          name: gcovr and cppcheck
-          command: |
-            cmake --build $IROHA_BUILD --target gcovr
-            cmake --build $IROHA_BUILD --target cppcheck
+          name: cppcheck
+          command: cmake --build $IROHA_BUILD --target cppcheck
 
       # persist reports
       - persist_to_workspace:
           root: /opt/iroha/build
           paths:
+            - compile_commands.json
             - reports
 
 
@@ -123,16 +117,24 @@ jobs:
       - checkout
       - restore_cache:
           keys:
+            - sonar-
             - sonar
-          paths:
-            - ~/.sonar
       - attach_workspace:
           at: /opt/iroha/build
       - run:
+          name: codecov.io
+          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
+      - run:
           name: execute sonar-scanner
-          command: |
-            PR_NUMBER=$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")
-            sonar-scanner -Dsonar.github.repository="hyperledger/iroha" -Dsonar.analysis.mode="preview" -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectVersion="${CIRCLE_BRANCH}" -Dsonar.github.oauth="${SORABOT_TOKEN}" -Dsonar.github.pullRequest="${PR_NUMBER}"
+          command: >
+            sonar-scanner -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.projectVersion="${CIRCLE_BRANCH}" \
+              -Dsonar.github.oauth="${SORABOT_TOKEN}" \
+              -Dsonar.github.pullRequest="$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")"
+      - save_cache:
+          key: sonar-{{ epoch }}
+          paths:
+            - ~/.sonar
       - save_cache:
           key: sonar
           paths:
