@@ -21,7 +21,7 @@ else()
       -I ${CMAKE_SOURCE_DIR}/irohad/ -I ${CMAKE_SOURCE_DIR}/iroha-cli/
       -I ${CMAKE_SOURCE_DIR}/libs/ -I ${CMAKE_SOURCE_DIR}/test/
       -i ${CMAKE_SOURCE_DIR}/external/ -i ${CMAKE_SOURCE_DIR}/schema/
-      -i ${CMAKE_BINARY_DIR} --enable=all
+      -i ${CMAKE_BINARY_DIR} --enable=all -j4
       2> ${REPORT_DIR}/cppcheck.xml
     COMMENT "Analyzing sources with cppcheck" VERBATIM
     )
