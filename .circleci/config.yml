@@ -198,6 +198,12 @@ workflows:
       - sonar-pr:
           requires:
             - build
+          filters:
+            tags:
+              # do not invoke sonar-pr for tags
+              ignore: /.*/
+      # invoke sonar-release whenever anything to master, develop is pushed
+      # or any commit tagged with v[\.0-9]+.*
       - sonar-release:
           requires:
             - build
@@ -206,7 +212,9 @@ workflows:
               only:
                 - develop
                 - master
-                - /^v[0-9\.]+.*/  # tagged release
+            tags:
+              only: /v[\.0-9]+.*/ 
+
 
       # - dockerize:
       #     requires:
