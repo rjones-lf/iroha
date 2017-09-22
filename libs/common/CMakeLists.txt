@@ -1,5 +1,6 @@
 add_library(libs_common
     files.cpp
+    result.hpp
     )
 
 target_link_libraries(libs_common
