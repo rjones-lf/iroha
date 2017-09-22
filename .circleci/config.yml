@@ -108,8 +108,44 @@ jobs:
       #       - test_bin
 
 
+  # used to push info about issues to github
+  sonar-pr:
+    <<: *defaults
+    docker:
+      - image: hyperledger/iroha-docker-develop
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sonar-
+            - sonar
+      - attach_workspace:
+          at: /opt/iroha/build
+      - run:
+          name: codecov.io
+          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
+      - run:
+          name: execute sonar-scanner to analyze PR
+          command: >
+            sonar-scanner \
+              -Dsonar.github.repository="hyperledger/iroha" \
+              -Dsonar.analysis.mode=preview \
+              -Dsonar.login=${SONAR_TOKEN} \
+              -Dsonar.projectVersion="${CIRCLE_BUILD_NUM}" \
+              -Dsonar.github.oauth="${SORABOT_TOKEN}" \
+              -Dsonar.github.pullRequest="$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")"
+      - save_cache:
+          key: sonar-{{ epoch }}
+          paths:
+            - ~/.sonar
+      - save_cache:
+          key: sonar
+          paths:
+            - ~/.sonar
 
-  sonar:
+
+  # executed only for develop, master and release branches
+  sonar-release:
     <<: *defaults
     docker:
       - image: hyperledger/iroha-docker-develop
@@ -127,10 +163,10 @@ jobs:
       - run:
           name: execute sonar-scanner
           command: >
-            sonar-scanner -Dsonar.login=${SONAR_TOKEN} \
-              -Dsonar.projectVersion="${CIRCLE_BRANCH}" \
-              -Dsonar.github.oauth="${SORABOT_TOKEN}" \
-              -Dsonar.github.pullRequest="$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")"
+            sonar-scanner \
+              -Dsonar.login="${SONAR_TOKEN}" \
+              -Dsonar.projectVersion="${CIRCLE_BUILD_NUM}" \
+              -Dsonar.branch="${CIRCLE_BRANCH}"
       - save_cache:
           key: sonar-{{ epoch }}
           paths:
@@ -139,7 +175,6 @@ jobs:
           key: sonar
           paths:
             - ~/.sonar
-
 
 
   # dockerize:
@@ -160,9 +195,19 @@ workflows:
     jobs:
       # build -> sonar -> dockerize
       - build
-      - sonar:
+      - sonar-pr:
           requires:
             - build
+      - sonar-release:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - develop
+                - master
+                - /^v[0-9\.]+.*/  # tagged release
+
       # - dockerize:
       #     requires:
       #       - sonar
