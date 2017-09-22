@@ -149,14 +149,13 @@ void Irohad::initPeerOrderer() {
 void Irohad::initPeerAddress() {
   peer_address = wsv->getLedgerPeers().value().at(peer_number_).address;
 
-  log_->info("[Init] => peer adress is {}", peer_address);
+  log_->info("[Init] => peer address is {}", peer_address);
 }
 
 void Irohad::initOrderingGate() {
   ordering_gate = ordering_init.initOrderingGate(wsv, loop, 10, 5000);
 
   log_->info("[Init] => init ordering gate - [{}]",
-      // TODO try to change with pointer directly
              logger::logBool(ordering_gate));
 }
 
@@ -250,7 +249,6 @@ void Irohad::run() {
   internal_thread = std::thread([this] { internal_server->Wait(); });
   server_thread = std::thread([this] {
     torii_server->run(std::move(command_service),
-        // TODO take care about field and move
                       std::move(query_service));
   });
   log_->info("===> iroha initialized");
