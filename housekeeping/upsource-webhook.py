@@ -88,7 +88,7 @@ def prepare_description(s):
     return "By {}".format(s)
 
 def in_progress_update():
-    print('in progress uptdate')
+    print('in progress update')
     try:
         # try to get these environment variables
         # throw, if at least one is missing
@@ -139,7 +139,7 @@ def main():
     parser.add_argument('--in-progress', action='store_true',
                         help='run script once in circle ci, notify upsource about "in progress" status of current commit')
     parser.add_argument('--server', dest='port',
-                        help='run script as a server on specified interface and port. it processes failed/successed commits')
+                        help='run script as a server on specified interface and port. it processes failed/succeeded commits')
 
     args = parser.parse_args()
     if not args.port and not args.in_progress:
