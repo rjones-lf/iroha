@@ -34,7 +34,7 @@ if (NOT grpc_FOUND)
       GIT_REPOSITORY https://github.com/grpc/grpc
       GIT_TAG bfcbad3b86c7912968dc8e64f2121c920dad4dfb
       CMAKE_ARGS -DgRPC_PROTOBUF_PROVIDER=package -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf -DgRPC_ZLIB_PROVIDER=package -DBUILD_SHARED_LIBS=ON
-      PATCH_COMMAND ${GIT_EXECUTABLE} am ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch
+      PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step
