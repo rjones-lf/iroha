@@ -27,7 +27,7 @@ endif()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-option(BENCHMARKING "Build benchmarks" OFF)
+option(BENCHMARK "Build benchmarks" OFF)
 option(TESTING "Build tests" ON)
 option(COVERAGE "Enable coverage" OFF)
 option(FUZZING "Build fuzzing binaries" OFF)
@@ -38,7 +38,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 message(STATUS "-DTESTING=${TESTING}")
-message(STATUS "-DBENCHMARKING=${BENCHMARKING}")
+message(STATUS "-DBENCHMARK=${BENCHMARK}")
 message(STATUS "-DFUZZING=${FUZZING}")
 message(STATUS "-DCOVERAGE=${COVERAGE}")
 message(STATUS "-DDOCS=${DOCS}")
@@ -47,7 +47,7 @@ SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
   ${PROJECT_SOURCE_DIR}/libs
-  ${PROJECT_SOURCE_DIR}/libs/gsl/include
+  ${PROJECT_SOURCE_DIR}/libs/gsl
   ${IROHA_SCHEMA_DIR}
 )
 
@@ -66,7 +66,7 @@ if(TESTING)
   add_subdirectory(test)
 endif()
 
-if(BENCHMARKING)
+if(BENCHMARK)
   add_subdirectory(benchmark)
 endif()
 
@@ -74,6 +74,6 @@ if (FUZZING)
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_subdirectory(fuzz)
   else()
-    message(Fuzzing with compilers other than clang does not supported yet)
+    message(Fuzzing with compilers other than clang is not supported yet)
   endif()
 endif()

@@ -18,18 +18,17 @@
 #include <gtest/gtest.h>
 #include <common/result.hpp>
 
-using namespace iroha;
+using namespace iroha::result;
 using error = std::string;
 using value = std::string;
-using operators::operator|;
 using res = result<value, error>;
 using namespace std::literals::string_literals;
 
 res dosomething(bool isValue) {
   if (isValue) {
-    return iroha::Ok("value"s);
+    return Ok("value"s);
   } else {
-    return iroha::Error("error"s);
+    return Error("error"s);
   }
 }
 
@@ -43,9 +42,9 @@ TEST(Result, value_instantiation) {
   ASSERT_TRUE(r) << "operator=: should be value";
 
   // static function
-  ASSERT_NO_THROW(res a = iroha::Ok("ok!"s)) << "fails on Ok";
+  ASSERT_NO_THROW(res a = Ok("ok!"s)) << "fails on Ok";
 
-  r = iroha::Ok("hello"s);
+  r = Ok("hello"s);
   ASSERT_TRUE(r);
   ASSERT_EQ(r.ok(), "hello"s);
 }
@@ -60,14 +59,14 @@ TEST(Result, error_instantiation) {
   ASSERT_FALSE(r) << "operator=: should be error";
 
   // static function
-  ASSERT_NO_THROW(res a = iroha::Error("error"s)) << "fails on Error";
+  ASSERT_NO_THROW(res a = Error("error"s)) << "fails on Error";
 
-  r = iroha::Error("error"s);
+  r = Error("error"s);
   ASSERT_FALSE(r);
   ASSERT_EQ(r.error(), "error"s);
 }
 
-using R = iroha::result<int, std::string>;
+using R = result<int, std::string>;
 R increment_but_less_5(int a) {
   if (a < 5) {
     return Ok(a + 1);
