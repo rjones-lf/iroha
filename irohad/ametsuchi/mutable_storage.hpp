@@ -50,6 +50,11 @@ namespace iroha {
                                             const hash256_t &)>
                              function) = 0;
 
+      virtual bool validate(const model::Block &block,
+                         std::function<bool(const model::Block &, WsvQuery &,
+                         const hash256_t &)> function) = 0;
+
+
       virtual ~MutableStorage() = default;
     };
 

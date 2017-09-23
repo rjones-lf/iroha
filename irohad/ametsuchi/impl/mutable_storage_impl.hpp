@@ -43,6 +43,11 @@ namespace iroha {
                                     WsvQuery &, const hash256_t &)>
                  function) override;
 
+      bool validate(const model::Block &block,
+                 std::function<bool(const model::Block &,
+                                    WsvQuery &, const hash256_t &)>
+                 function) override;
+
       ~MutableStorageImpl() override;
 
      private:

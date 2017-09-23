@@ -29,9 +29,9 @@
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/commands/add_signatory.hpp"
-#include "model/commands/assign_master_key.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/set_permissions.hpp"
 #include "model/model_hash_provider_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
@@ -213,15 +213,13 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   auto storage = StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
   ASSERT_TRUE(storage);
+  auto wsv = storage->getWsvQuery();
+  auto blocks = storage->getBlockQuery();
 
-  std::string pubkeyStr1 = "b+etgin9x1S16omALSjr4HTVzv9IEXQzlvSTp7el0Js=";
-  std::string pubkeyStr2 = "slyr7oz2+EU6dh2dY9+jNeO/hVrXCkT3rGhcNZo5rrE=";
-  auto pubkeyBytes1 = base64_decode(pubkeyStr1);
-  auto pubkey1 = iroha::to_blob<iroha::ed25519::pubkey_t::size()>(
-      std::string{pubkeyBytes1.begin(), pubkeyBytes1.end()});
-  auto pubkeyBytes2 = base64_decode(pubkeyStr2);
-  auto pubkey2 = iroha::to_blob<iroha::ed25519::pubkey_t::size()>(
-      std::string{pubkeyBytes2.begin(), pubkeyBytes2.end()});
+  auto pubkeyStr1 = base64_decode("b+etgin9x1S16omALSjr4HTVzv9IEXQzlvSTp7el0Js=");
+  auto pubkeyStr2 = base64_decode("slyr7oz2+EU6dh2dY9+jNeO/hVrXCkT3rGhcNZo5rrE=");
+  auto pubkey1 = iroha::stringToBlob<iroha::ed25519::pubkey_t::size()>(std::string{pubkeyStr1.begin(), pubkeyStr1.end()}).value();
+  auto pubkey2 = iroha::stringToBlob<iroha::ed25519::pubkey_t::size()>(std::string{pubkeyStr2.begin(), pubkeyStr2.end()}).value();
 
   auto user1id = "user1@domain";
   auto user2id = "user2@domain";
@@ -248,21 +246,17 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &blk, auto &query, const auto &top_hash) {
-      return true;
-    });
+    ms->apply(block, [](const auto &blk, auto &query, const auto &top_hash) { return true; });
     storage->commit(std::move(ms));
   }
 
   {
-    auto account = storage->getAccount(user1id);
+    auto account = wsv->getAccount(user1id);
     ASSERT_TRUE(account);
     ASSERT_EQ(account->account_id, user1id);
     ASSERT_EQ(account->domain_name, createAccount.domain_id);
-    ASSERT_EQ(account->master_key, createAccount.pubkey);
-    ASSERT_EQ(account->master_key, pubkey1);
 
-    auto signatories = storage->getSignatories(user1id);
+    auto signatories = wsv->getSignatories(user1id);
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 1);
     ASSERT_EQ(signatories->at(0), pubkey1);
@@ -291,24 +285,21 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   }
 
   {
-    auto account = storage->getAccount(user1id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->master_key, pubkey1);
-
-    auto signatories = storage->getSignatories(user1id);
+    auto signatories = wsv->getSignatories(user1id);
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 2);
     ASSERT_EQ(signatories->at(0), pubkey1);
     ASSERT_EQ(signatories->at(1), pubkey2);
   }
 
-  // 3rd tx (assign pubkey2 as master key to user1)
+  // 3th tx (create user2 with pubkey1 that is same as user1's key)
   txn = Transaction();
-  txn.creator_account_id = user1id;
-  auto assignMasterKey = AssignMasterKey();
-  assignMasterKey.account_id = user1id;
-  assignMasterKey.pubkey = pubkey2;
-  txn.commands.push_back(std::make_shared<AssignMasterKey>(assignMasterKey));
+  txn.creator_account_id = "admin2";
+  createAccount = CreateAccount();
+  createAccount.account_name = "user2";
+  createAccount.domain_id = "domain";
+  createAccount.pubkey = pubkey1; // same as user1's pubkey1
+  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount));
 
   block = Block();
   block.transactions.push_back(txn);
@@ -325,32 +316,60 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   }
 
   {
-    auto account = storage->getAccount(user1id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->master_key, pubkey2);
+    auto signatories1 = wsv->getSignatories(user1id);
+    ASSERT_TRUE(signatories1);
+    ASSERT_EQ(signatories1->size(), 2);
+    ASSERT_EQ(signatories1->at(0), pubkey1);
+    ASSERT_EQ(signatories1->at(1), pubkey2);
 
-    auto signatories = storage->getSignatories(user1id);
-    ASSERT_TRUE(signatories);
-    ASSERT_EQ(signatories->size(), 2);
-    ASSERT_EQ(signatories->at(0), pubkey1);
-    ASSERT_EQ(signatories->at(1), pubkey2);
+    auto signatories2 = wsv->getSignatories(user2id);
+    ASSERT_TRUE(signatories2);
+    ASSERT_EQ(signatories2->size(), 1);
+    ASSERT_EQ(signatories2->at(0), pubkey1);
   }
+}
 
-  // 4th tx (create user2 with pubkey1 that is same as user1's key)
-  txn = Transaction();
-  txn.creator_account_id = "admin2";
-  createAccount = CreateAccount();
-  createAccount.account_name = "user2";
+iroha::blob_t<32> setupAdmin(std::shared_ptr<StorageImpl> storage) {
+  HashProviderImpl hashProvider;
+  auto wsv = storage->getWsvQuery();
+  auto blocks = storage->getBlockQuery();
+
+  auto pubkeyStr1 = base64_decode("b+etgin9x1S16omALSjr4HTVzv9IEXQzlvSTp7el0Js=");
+  auto pubkey1 = iroha::stringToBlob<iroha::ed25519::pubkey_t::size()>(std::string{pubkeyStr1.begin(), pubkeyStr1.end()}).value();
+
+  // 1st tx (create user1 with pubkey1, pubkey2, and set quorum = 2)
+  Transaction txn;
+  txn.creator_account_id = "admin1@domain";
+  auto createDomain = CreateDomain();
+  createDomain.domain_name = "domain";
+  txn.commands.push_back(std::make_shared<CreateDomain>(createDomain));
+  auto createAccount = CreateAccount();
+  createAccount.account_name = "admin1";
   createAccount.domain_id = "domain";
-  createAccount.pubkey = pubkey1; // same as user1's pubkey1
+  createAccount.pubkey = pubkey1;
   txn.commands.push_back(std::make_shared<CreateAccount>(createAccount));
+  Account::Permissions permissions;
+  permissions.add_signatory = true;
+  permissions.can_transfer = true;
+  permissions.create_accounts = true;
+  permissions.create_assets = true;
+  permissions.create_domains = true;
+  permissions.issue_assets = true;
+  permissions.read_all_accounts = true;
+  permissions.remove_signatory = true;
+  permissions.set_permissions = true;
+  permissions.set_quorum = true;
+  auto setPermissions = SetAccountPermissions();
+  setPermissions.account_id = "admin1@domain";
+  setPermissions.new_permissions = permissions;
+  txn.commands.push_back(std::make_shared<SetAccountPermissions>(setPermissions));
 
-  block = Block();
+  Block block;
   block.transactions.push_back(txn);
-  block.height = 4;
-  block.prev_hash = block3hash;
-  auto block4hash = hashProvider.get_hash(block);
-  block.hash = block4hash;
+  block.height = 1;
+  block.prev_hash.fill(0);
+  auto block1hash = hashProvider.get_hash(block);
+  block.hash = block1hash;
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
@@ -359,28 +378,76 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     storage->commit(std::move(ms));
   }
 
+  return block1hash;
+}
+
+TEST_F(AmetsuchiTest, RemoveSignatoryTest) {
+  HashProviderImpl hashProvider;
+
+  auto storage = StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  auto block0hash = setupAdmin(storage);
+  auto idx = 2;
+  auto wsv = storage->getWsvQuery();
+  auto blocks = storage->getBlockQuery();
+
+  auto pubkeyStr1 = base64_decode("b+etgin9x1S16omALSjr4HTVzv9IEXQzlvSTp7el0Js=");
+  auto pubkeyStr2 = base64_decode("slyr7oz2+EU6dh2dY9+jNeO/hVrXCkT3rGhcNZo5rrE=");
+  auto pubkey1 = iroha::stringToBlob<iroha::ed25519::pubkey_t::size()>(std::string{pubkeyStr1.begin(), pubkeyStr1.end()}).value();
+  auto pubkey2 = iroha::stringToBlob<iroha::ed25519::pubkey_t::size()>(std::string{pubkeyStr2.begin(), pubkeyStr2.end()}).value();
+
+  auto adminid = "admin1@domain";
+  auto user1id = "user1@domain";
+
+  // 1st tx (create user1 with pubkey1, pubkey2, and set quorum = 2)
+  Transaction txn;
+  txn.creator_account_id = adminid;
+  auto createAccount = CreateAccount();
+  createAccount.account_name = "user1";
+  createAccount.domain_id = "domain";
+  createAccount.pubkey = pubkey1;
+  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount));
+  auto addSignatory = AddSignatory();
+  addSignatory.account_id = user1id;
+  addSignatory.pubkey = pubkey2;
+  txn.commands.push_back(std::make_shared<AddSignatory>(addSignatory));
+  auto seqQuorum = SetQuorum();
+  seqQuorum.account_id = user1id;
+  seqQuorum.new_quorum = 2;
+  txn.commands.push_back(std::make_shared<SetQuorum>(seqQuorum));
+
+  Block block;
+  block.transactions.push_back(txn);
+  block.height = idx++;
+  block.prev_hash = block0hash;
+  auto block1hash = hashProvider.get_hash(block);
+  block.hash = block1hash;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+
   {
-    auto account1 = storage->getAccount(user1id);
-    ASSERT_TRUE(account1);
-    ASSERT_EQ(account1->master_key, pubkey2);
-
-    auto account2 = storage->getAccount(user2id);
-    ASSERT_TRUE(account2);
-    ASSERT_EQ(account2->master_key, pubkey1);
-
-    auto signatories1 = storage->getSignatories(user1id);
-    ASSERT_TRUE(signatories1);
-    ASSERT_EQ(signatories1->size(), 2);
-    ASSERT_EQ(signatories1->at(0), pubkey1);
-    ASSERT_EQ(signatories1->at(1), pubkey2);
-
-    auto signatories2 = storage->getSignatories(user2id);
-    ASSERT_TRUE(signatories2);
-    ASSERT_EQ(signatories2->size(), 1);
-    ASSERT_EQ(signatories2->at(0), pubkey1);
+    auto ms = storage->createMutableStorage();
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_TRUE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
-  // 5th tx (remove pubkey1 from user1)
+  {
+    auto account = wsv->getAccount(user1id);
+    ASSERT_TRUE(account);
+    ASSERT_EQ(account->account_id, user1id);
+    ASSERT_EQ(account->domain_name, createAccount.domain_id);
+
+    auto signatories = wsv->getSignatories(user1id);
+    ASSERT_TRUE(signatories);
+    ASSERT_EQ(signatories->size(), 2);
+    ASSERT_EQ(signatories->at(0), pubkey1);
+    ASSERT_EQ(signatories->at(1), pubkey2);
+  }
+
+  // 2nd tx (remove sig1 fro user1: This must be fail)
   txn = Transaction();
   txn.creator_account_id = user1id;
   auto removeSignatory = RemoveSignatory();
@@ -390,162 +457,95 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 5;
-  block.prev_hash = block4hash;
-  auto block5hash = hashProvider.get_hash(block);
-  block.hash = block5hash;
+  block.height = idx++;
+  block.prev_hash = block1hash;
+  auto block2hash = hashProvider.get_hash(block);
+  block.hash = block2hash;
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_FALSE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
   {
-    auto account = storage->getAccount(user1id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->master_key, pubkey2);
-
-    // user1 has only pubkey2.
-    auto signatories1 = storage->getSignatories(user1id);
-    ASSERT_TRUE(signatories1);
-    ASSERT_EQ(signatories1->size(), 1);
-    ASSERT_EQ(signatories1->at(0), pubkey2);
-
-    // user2 still has pubkey1.
-    auto signatories2 = storage->getSignatories(user2id);
-    ASSERT_TRUE(signatories2);
-    ASSERT_EQ(signatories2->size(), 1);
-    ASSERT_EQ(signatories2->at(0), pubkey1);
-  }
-
-  // 6th tx (add sig2 to user2 and set quorum = 1)
-  txn = Transaction();
-  txn.creator_account_id = user2id;
-  addSignatory = AddSignatory();
-  addSignatory.account_id = user2id;
-  addSignatory.pubkey = pubkey2;
-  txn.commands.push_back(std::make_shared<AddSignatory>(addSignatory));
-  auto seqQuorum = SetQuorum();
-  seqQuorum.account_id = user2id;
-  seqQuorum.new_quorum = 2;
-  txn.commands.push_back(std::make_shared<SetQuorum>(seqQuorum));
-
-  block = Block();
-  block.transactions.push_back(txn);
-  block.height = 6;
-  block.prev_hash = block5hash;
-  auto block6hash = hashProvider.get_hash(block);
-  block.hash = block6hash;
-  block.txs_number = static_cast<uint16_t>(block.transactions.size());
-
-  {
-    auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
-  }
-
-  {
-    auto account = storage->getAccount(user2id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->quorum, 2);
-
-    // user2 has pubkey1 and pubkey2.
-    auto signatories = storage->getSignatories(user2id);
+    // user1 still has pubkey1 and pubkey2.
+    auto signatories = wsv->getSignatories(user1id);
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 2);
     ASSERT_EQ(signatories->at(0), pubkey1);
     ASSERT_EQ(signatories->at(1), pubkey2);
   }
 
-  // 7th tx (remove sig2 fro user2: This must be fail)
+  // 3rd tx (set quorum = 1 to user1)
   txn = Transaction();
-  txn.creator_account_id = user2id;
-  removeSignatory = RemoveSignatory();
-  removeSignatory.account_id = user2id;
-  removeSignatory.pubkey = pubkey2;
-  txn.commands.push_back(std::make_shared<RemoveSignatory>(removeSignatory));
-
-  block = Block();
-  block.transactions.push_back(txn);
-  block.height = 7;
-  block.prev_hash = block6hash;
-  auto block7hash = hashProvider.get_hash(block);
-  block.hash = block7hash;
-  block.txs_number = static_cast<uint16_t>(block.transactions.size());
-
-  {
-    auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
-  }
-
-  {
-    // user2 still has pubkey1 and pubkey2.
-    auto signatories = storage->getSignatories(user2id);
-    ASSERT_TRUE(signatories);
-    ASSERT_EQ(signatories->size(), 2);
-    ASSERT_EQ(signatories->at(0), pubkey1);
-    ASSERT_EQ(signatories->at(1), pubkey2);
-  }
-
-  // 8th tx (set quorum = 1 to user2)
-  txn = Transaction();
-  txn.creator_account_id = user2id;
+  txn.creator_account_id = user1id;
   seqQuorum = SetQuorum();
-  seqQuorum.account_id = user2id;
+  seqQuorum.account_id = user1id;
   seqQuorum.new_quorum = 1;
   txn.commands.push_back(std::make_shared<SetQuorum>(seqQuorum));
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 8;
-  block.prev_hash = block7hash;
-  auto block8hash = hashProvider.get_hash(block);
-  block.hash = block8hash;
+  block.height = idx++;
+  block.prev_hash = block2hash;
+  auto block3hash = hashProvider.get_hash(block);
+  block.hash = block3hash;
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_TRUE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
   {
-    auto account = storage->getAccount(user2id);
+    auto account = wsv->getAccount(user1id);
     ASSERT_TRUE(account);
     ASSERT_EQ(account->quorum, 1);
   }
 
-  // 9th tx (remove sig2 fro user2: This must success)
+  // 4th tx (remove sig1 from user1: This must success)
   txn = Transaction();
-  txn.creator_account_id = user2id;
+  txn.creator_account_id = user1id;
   removeSignatory = RemoveSignatory();
-  removeSignatory.account_id = user2id;
-  removeSignatory.pubkey = pubkey2;
+  removeSignatory.account_id = user1id;
+  removeSignatory.pubkey = pubkey1;
   txn.commands.push_back(std::make_shared<RemoveSignatory>(removeSignatory));
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 9;
-  block.prev_hash = block8hash;
-  auto block9hash = hashProvider.get_hash(block);
-  block.hash = block9hash;
+  block.height = idx++;
+  block.prev_hash = block3hash;
+  auto block4hash = hashProvider.get_hash(block);
+  block.hash = block4hash;
   block.txs_number = static_cast<uint16_t>(block.transactions.size());
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_TRUE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
   {
-    // user2 only has pubkey1.
-    auto signatories = storage->getSignatories(user2id);
+    // user1 only has pubkey2.
+    auto signatories = wsv->getSignatories(user1id);
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 1);
-    ASSERT_EQ(signatories->at(0), pubkey1);
+    ASSERT_EQ(signatories->at(0), pubkey2);
   }
 }
 
@@ -562,6 +562,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   const auto user1name = "user1";
   const auto user2name = "user2";
   const auto user3name = "user3";
+  const auto adminId = "admin1@domain";
   const auto user1id = "user1@domain";
   const auto user2id = "user2@domain";
   const auto user3id = "user3@domain";
@@ -572,7 +573,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // 1st tx
   Transaction txn;
-  txn.creator_account_id = admin;
+  txn.creator_account_id = adminId;
   CreateDomain createDomain;
   createDomain.domain_name = domain;
   txn.commands.push_back(std::make_shared<CreateDomain>(createDomain));
@@ -608,6 +609,16 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   addAssetQuantity2.account_id = user2id;
   addAssetQuantity2.amount = iroha::Amount(2, 50);
   txn.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity2));
+  Account::Permissions permissions;
+  permissions.can_transfer = true;
+  SetAccountPermissions setPermissions1;
+  setPermissions1.account_id = user1id;
+  setPermissions1.new_permissions = permissions;
+  txn.commands.push_back(std::make_shared<SetAccountPermissions>(setPermissions1));
+  SetAccountPermissions setPermissions2;
+  setPermissions2.account_id = user2id;
+  setPermissions2.new_permissions = permissions;
+  txn.commands.push_back(std::make_shared<SetAccountPermissions>(setPermissions2));
 
   Block block;
   block.transactions.push_back(txn);
@@ -671,8 +682,12 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_TRUE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
   {
@@ -716,8 +731,12 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   {
     auto ms = storage->createMutableStorage();
-    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    auto valid = ms->validate(block, [](const auto &, auto &, const auto &) { return true; });
+    ASSERT_TRUE(valid);
+    if (valid) {
+      ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+      storage->commit(std::move(ms));
+    }
   }
 
   {
@@ -750,7 +769,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   });
 
   blocks->getAccountTransactions(admin).subscribe(
-      [](auto tx) { EXPECT_EQ(tx.commands.size(), 8); });
+      [](auto tx) { EXPECT_EQ(tx.commands.size(), 10); });
   blocks->getAccountTransactions(user1id).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 1); });
   blocks->getAccountTransactions(user2id).subscribe(

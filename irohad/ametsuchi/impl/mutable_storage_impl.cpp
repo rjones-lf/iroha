@@ -43,6 +43,7 @@ namespace iroha {
         const model::Block &block,
         std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
         function) {
+
       auto execute_command = [this](auto command) {
         return command_executors_->getCommandExecutor(command)->execute(
             *command, *wsv_, *executor_);
@@ -65,6 +66,21 @@ namespace iroha {
         transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
       }
       return result;
+    }
+
+    bool MutableStorageImpl::validate(
+        const model::Block &block,
+        std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)> function) {
+      auto validate_transaction = [this](auto &transaction) {
+        auto account = wsv_->getAccount(transaction.creator_account_id).value();
+        auto validate_command = [this, account](auto command) {
+          return command_executors_->getCommandExecutor(command)->validate(*command, *wsv_, account);
+        };
+        return std::all_of(transaction.commands.begin(), transaction.commands.end(), validate_command);
+      };
+
+      return std::all_of(block.transactions.begin(),
+                                block.transactions.end(), validate_transaction);
     }
 
     MutableStorageImpl::~MutableStorageImpl() {
