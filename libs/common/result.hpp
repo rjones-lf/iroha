@@ -19,6 +19,7 @@
 
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
+#include "visitor.hpp"
 
 namespace iroha {
 
@@ -56,6 +57,13 @@ namespace iroha {
     return Error_t<E>{std::forward<E>(e)};
   }
 
+  namespace operators {
+    template <typename T, typename Transform>
+    auto operator|(T t, Transform f) -> decltype(f(*t)) {
+      return t ? f(*t) : t;
+    }
+  }
+
   /**
    * Represents "result of a function" type. Is either value, or error.
    * @tparam V value type
@@ -70,6 +78,11 @@ namespace iroha {
     using Et = Error_t<E>;
     using Vt = Ok_t<V>;
     using R = result<Vt, Et>;
+    template <typename T>
+    using Ok_f = std::function<T(Vt const&)>;
+    template <typename T>
+    using Err_f = std::function<T(Et const&)>;
+    using bad_get = boost::bad_get;
 
     /// initializing constructor
     // construct from value
@@ -139,8 +152,27 @@ namespace iroha {
       _ = std::move(val);
       return *this;
     }
+    // from Error
+    result& operator=(Et const& val) {
+      _ = val;
+      return *this;
+    }
+    result& operator=(Et&& val) {
+      _ = std::move(val);
+      return *this;
+    }
 
-    using bad_get = boost::bad_get;
+    /// visitor
+    // first OK, then Error
+    template <typename T>
+    T match(Ok_f<T> f1, Err_f<T> f2) {
+      return boost::apply_visitor(make_visitor(f1, f2), _);
+    }
+    // first Error, then OK
+    template <typename T>
+    T match(Err_f<T> f1, Ok_f<T> f2) {
+      return boost::apply_visitor(make_visitor(f2, f1), _);
+    }
 
    private:
     inline V& get_value() { return boost::get<Vt>(_).value; }

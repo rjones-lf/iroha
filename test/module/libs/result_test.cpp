@@ -16,12 +16,12 @@
  */
 
 #include <gtest/gtest.h>
-#include <common/operators.hpp>
 #include <common/result.hpp>
 
 using namespace iroha;
 using error = std::string;
 using value = std::string;
+using operators::operator|;
 using res = result<value, error>;
 using namespace std::literals::string_literals;
 
@@ -72,7 +72,7 @@ R increment_but_less_5(int a) {
   if (a < 5) {
     return Ok(a + 1);
   } else {
-    return iroha::Error(":("s);
+    return Error(":("s);
   }
 }
 
@@ -89,4 +89,17 @@ TEST(Result, monadic) {
   R c = b | increment_but_less_5 | increment_but_less_5 | increment_but_less_5;
   ASSERT_FALSE(c);
   ASSERT_EQ(c.error(), ":("s);
+}
+
+TEST(Result, pattern_matching) {
+  R a = 1;
+  ASSERT_TRUE(a);
+
+  // in one order
+  a.match<void>([](Ok_t<int> const& v) { SUCCEED(); },
+                [](Error_t<std::string> const& e) { FAIL(); });
+
+  // in reversed order
+  a.match<void>([](Error_t<std::string> const& e) { FAIL(); },
+                [](Ok_t<int> const& v) { SUCCEED(); });
 }

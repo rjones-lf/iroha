@@ -1,6 +1,5 @@
 add_library(libs_common
     files.cpp
-    result.hpp
     )
 
 target_link_libraries(libs_common
@@ -13,4 +12,5 @@ target_include_directories(common INTERFACE
     )
 target_link_libraries(common INTERFACE
     optional
+    ${Boost_LIBRARIES}
     )

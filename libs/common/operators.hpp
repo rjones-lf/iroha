@@ -17,25 +17,29 @@
 
 #pragma once
 
-/**
- * Bind operator. If argument has value, dereferences argument and calls
- * given function, which should return wrapped value
- * operator| is used since it has to be binary and left-associative
- *
- * nonstd::optional<int> f();
- * nonstd::optional<double> g(int);
- *
- * nonstd::optional<double> d = f()
- *    | g;
- *
- * @tparam T - monadic type
- * @tparam Transform - transform function type
- * @param t - monadic value
- * @param f - function, which takes dereferenced value, and returns
- * wrapped value
- * @return monadic value, which can be of another type
- */
-template <typename T, typename Transform>
-auto operator|(T t, Transform f) -> decltype(f(*t)) {
-  return t ? f(*t) : t;
+namespace iroha {
+
+  /**
+   * Bind operator. If argument has value, dereferences argument and calls
+   * given function, which should return wrapped value
+   * operator| is used since it has to be binary and left-associative
+   *
+   * nonstd::optional<int> f();
+   * nonstd::optional<double> g(int);
+   *
+   * nonstd::optional<double> d = f()
+   *    | g;
+   *
+   * @tparam T - monadic type
+   * @tparam Transform - transform function type
+   * @param t - monadic value
+   * @param f - function, which takes dereferenced value, and returns
+   * wrapped value
+   * @return monadic value, which can be of another type
+   */
+  template <typename T, typename Transform>
+  auto operator|(T t, Transform f) -> decltype(f(*t)) {
+    if (t) return f(*t);
+    return {};
+  }
 }
