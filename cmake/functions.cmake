@@ -21,12 +21,15 @@ endfunction()
 
 # Creates test "test_name", with "SOURCES" (use string as second argument)
 function(addtest test_name SOURCES)
+  if (COVERAGE)
+    set(test_xml_output --gtest_output=xml:${REPORT_DIR}/xunit-${test_name}.xml)
+  endif ()
   add_executable(${test_name} ${SOURCES})
   target_link_libraries(${test_name} gtest gmock)
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
   add_test(
       NAME ${test_name}
-      COMMAND $<TARGET_FILE:${test_name}>
+      COMMAND $<TARGET_FILE:${test_name}> ${test_xml_output}
   )
   strictmode(${test_name})
 endfunction()
