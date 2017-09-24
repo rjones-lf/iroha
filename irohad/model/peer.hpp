@@ -31,6 +31,8 @@ namespace iroha {
        */
       std::string address;
 
+      using AddressType = decltype(address);
+
       /**
        * Public key of peer
        */

@@ -120,7 +120,7 @@ class Irohad {
   std::string pg_conn_;
   size_t torii_port_;
 
-// ---------------------------| internal decencies |----------------------------
+// ---------------------------| internal dependencies |----------------------------
 
   // loop
   std::shared_ptr<uvw::Loop> loop;
@@ -138,20 +138,20 @@ class Irohad {
 
   // validators
   std::shared_ptr<iroha::validation::StatelessValidator> stateless_validator;
-  std::shared_ptr<iroha::validation::StatefulValidatorImpl> stateful_validator;
-  std::shared_ptr<iroha::validation::ChainValidatorImpl> chain_validator;
+  std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
+  std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
   // peer query
   std::shared_ptr<iroha::ametsuchi::PeerQueryWsv> wsv;
 
   // peer orderer
-  std::shared_ptr<iroha::consensus::yac::PeerOrdererImpl> orderer;
+  std::shared_ptr<iroha::consensus::yac::YacPeerOrderer> orderer;
 
   // peer address
-  std::string peer_address; // TODO change type of address with decltype
+  iroha::model::Peer::AddressType peer_address;
 
   // ordering gate
-  std::shared_ptr<iroha::ordering::OrderingGateImpl> ordering_gate;
+  std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
   // simulator
   std::shared_ptr<iroha::simulator::Simulator> simulator;
@@ -160,7 +160,7 @@ class Irohad {
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
 
   // consensus gate
-  std::shared_ptr<iroha::consensus::yac::YacGateImpl> consensus_gate;
+  std::shared_ptr<iroha::consensus::yac::YacGate> consensus_gate;
 
   // synchronizer
   std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer;
@@ -176,6 +176,8 @@ class Irohad {
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<grpc::Server> internal_server;
+
+  // initialization objects
   iroha::network::OrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
@@ -185,7 +187,7 @@ class Irohad {
   logger::Logger log_;
 
  public:
-  std::shared_ptr<iroha::ametsuchi::StorageImpl> storage;
+  std::shared_ptr<iroha::ametsuchi::Storage> storage;
   uint64_t peer_number_;
 };
 
