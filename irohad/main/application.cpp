@@ -153,7 +153,17 @@ void Irohad::initPeerAddress() {
 }
 
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(wsv, loop, 10, 5000);
+
+  // const set maximum transactions that possible appears in one proposal
+  auto max_transactions_in_proposal = 10u;
+
+  // const set maximum waiting time util emitting new proposal
+  auto delay_for_new_proposal = 5000u;
+
+  ordering_gate = ordering_init.initOrderingGate(wsv,
+                                                 loop,
+                                                 max_transactions_in_proposal,
+                                                 delay_for_new_proposal);
 
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
