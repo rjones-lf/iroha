@@ -20,55 +20,97 @@
 
 #include <fstream>
 #include <string>
+
 #include <rapidjson/rapidjson.h>
-#include <rapidjson/istreamwrapper.h>
+
 #include "common/assert_config.hpp"
+#include "common/types.hpp"
+#include "model/converters/json_common.hpp"
 
 namespace config_members {
-  const char* BlockStorePath = "block_store_path";
-  const char* ToriiPort = "torii_port";  // TODO: Needs AddPeer.
-  const char* KeyPairPath = "key_pair_path";
-  const char* PgOpt = "pg_opt";
-  const char* RedisHost = "redis_host";
-  const char* RedisPort = "redis_port";
+  auto BlockStorePath = "IROHA_BLOCK_STORE_PATH";
+  auto ToriiPort = "IROHA_TORII_PORT";  // TODO: Needs AddPeer.
+  auto KeyPairPath = "IROHA_KEY_PAIR_PATH";
+  auto PgHost = "IROHA_PG_HOST";
+  auto PgPort = "IROHA_PG_PORT";
+  auto PgUser = "IROHA_PG_USER";
+  auto PgPass = "IROHA_PG_PASS";
+  auto RedisHost = "IROHA_REDIS_HOST";
+  auto RedisPort = "IROHA_REDIS_PORT";
+  auto PeerNumber = "IROHA_PEER_NUMBER";
 }  // namespace config_members
 
 /**
- * parse and assert trusted peers json in `iroha.conf`
- * @param iroha_conf_path
+ * Get the value of given environment variable
+ * @param var - name of environment variable
+ * @return value, if variable is set, nullopt otherwise
+ */
+auto getEnvironmentVariable(const char *var) -> nonstd::optional<const char *> {
+  auto val = std::getenv(var);
+  if (val) {
+    return val;
+  }
+  return nonstd::nullopt;
+}
+
+// TODO common json library in libs directory
+namespace iroha {
+  namespace model {
+    namespace converters {
+      template <>
+      struct Convert<size_t> {
+        template <typename T>
+        auto operator()(T &&x) -> nonstd::optional<size_t> {
+          try {
+            return std::stoull(x);
+          } catch (const std::exception &e) {
+            return nonstd::nullopt;
+          }
+        }
+      };
+    }  // namespace converters
+  }    // namespace model
+}  // namespace iroha
+
+/**
+ * Serialize given environment variable to document
+ * @tparam T - environment variable type
+ * @tparam Convert - transform function type
+ * @param var - environment variable for serialization
+ * @param transform - transform function from string to T
+ * @return
+ */
+template <typename T = rapidjson::Value::StringRefType,
+          typename Convert = iroha::model::converters::Convert<T>>
+auto serializeValue(const char *var, Convert transform = Convert()) {
+  return [=](auto &document) {
+    return getEnvironmentVariable(var) | transform | [&](auto val) {
+      auto &allocator = document.GetAllocator();
+      document.AddMember(rapidjson::Value::StringRefType(var), val, allocator);
+      std::cout << iroha::model::converters::jsonToString(document) << std::endl;
+      return nonstd::make_optional(std::move(document));
+    };
+  };
+}
+
+/**
+ * parse and assert trusted peers
  * @return rapidjson::Document
  */
-inline rapidjson::Document parse_iroha_config(std::string const& iroha_conf_path) {
+inline auto parse_iroha_config() {
+  using iroha::operator|;
   using namespace assert_config;
   namespace mbr = config_members;
-  rapidjson::Document doc;
-  std::ifstream ifs_iroha(iroha_conf_path);
-  rapidjson::IStreamWrapper isw(ifs_iroha);
-  doc.ParseStream(isw);
-  assert_fatal(not doc.HasParseError(), "JSON parse error: " + iroha_conf_path);
-
-  assert_fatal(doc.HasMember(mbr::BlockStorePath),
-               no_member_error(mbr::BlockStorePath));
-  assert_fatal(doc[mbr::BlockStorePath].IsString(),
-               type_error(mbr::BlockStorePath, "string"));
-
-  assert_fatal(doc.HasMember(mbr::ToriiPort), no_member_error(mbr::ToriiPort));
-  assert_fatal(doc[mbr::ToriiPort].IsUint(),
-               type_error(mbr::ToriiPort, "uint"));
 
   // TODO restore key pair path parameter when crypto is ready
-
-  assert_fatal(doc.HasMember(mbr::PgOpt), no_member_error(mbr::PgOpt));
-  assert_fatal(doc[mbr::PgOpt].IsString(), type_error(mbr::PgOpt, "string"));
-
-  assert_fatal(doc.HasMember(mbr::RedisHost), no_member_error(mbr::RedisHost));
-  assert_fatal(doc[mbr::RedisHost].IsString(),
-               type_error(mbr::RedisHost, "string"));
-
-  assert_fatal(doc.HasMember(mbr::RedisPort), no_member_error(mbr::RedisPort));
-  assert_fatal(doc[mbr::RedisPort].IsUint(),
-               type_error(mbr::RedisPort, "uint"));
-  return doc;
+  return nonstd::make_optional<rapidjson::Document>(
+             rapidjson::Type::kObjectType)
+      | serializeValue(mbr::BlockStorePath)
+      | serializeValue<size_t>(mbr::ToriiPort) | serializeValue(mbr::PgHost)
+      | serializeValue<size_t>(mbr::PgPort) | serializeValue(mbr::PgUser)
+      | serializeValue(mbr::PgPass) | serializeValue(mbr::RedisHost)
+      | serializeValue<size_t>(mbr::RedisPort)
+      | serializeValue<size_t>(mbr::PeerNumber);
 }
 
 #endif  // IROHA_CONF_LOADER_HPP

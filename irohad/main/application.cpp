@@ -37,15 +37,17 @@ using namespace iroha::consensus::yac;
 
 Irohad::Irohad(const std::string &block_store_dir,
                const std::string &redis_host, size_t redis_port,
-               const std::string &pg_conn, size_t torii_port,
-               uint64_t peer_number)
+               const std::string &pg_host, size_t pg_port,
+               const std::string &pg_user, const std::string &pg_pass,
+               size_t torii_port, uint64_t peer_number)
     : block_store_dir_(block_store_dir),
       redis_host_(redis_host),
       redis_port_(redis_port),
-      pg_conn_(pg_conn),
+      pg_conn_("host=" + pg_host + " port=" + std::to_string(pg_port) +
+               " user=" + pg_user + " password=" + pg_pass),
       torii_port_(torii_port),
       storage(StorageImpl::create(block_store_dir, redis_host, redis_port,
-                                  pg_conn)),
+                                  pg_conn_)),
       peer_number_(peer_number) {
   log_ = logger::log("IROHAD");
   log_->info("created");

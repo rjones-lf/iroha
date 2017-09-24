@@ -51,7 +51,9 @@ namespace iroha {
          */
         template <typename T>
         auto operator()(T &&x) {
-          return nonstd::optional<V>(x);
+          nonstd::optional<V> result;
+          result.emplace(x);
+          return result;
         }
       };
 

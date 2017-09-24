@@ -54,8 +54,9 @@ class Irohad {
    * @param peer_number - number of peer in ledger // todo replace with pub key
    */
   Irohad(const std::string &block_store_dir, const std::string &redis_host,
-         size_t redis_port, const std::string &pg_conn, size_t torii_port,
-         uint64_t peer_number);
+         size_t redis_port, const std::string &pg_host, size_t pg_port,
+         const std::string &pg_user, const std::string &pg_pass,
+         size_t torii_port, uint64_t peer_number);
   void run();
   ~Irohad();
 

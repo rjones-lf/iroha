@@ -24,21 +24,12 @@ limitations under the License.
 
 #include "logger/logger.hpp"
 
-bool validate_config(const char *flag_name, std::string const &path) {
-  return not path.empty();
-}
-
 bool validate_genesis_path(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
-DEFINE_string(config, "", "Specify iroha provisioning path.");
-DEFINE_validator(config, &validate_config);
-
 DEFINE_string(genesis_block, "genesis.json", "Specify file with initial block");
 DEFINE_validator(genesis_block, &validate_genesis_path);
-
-DEFINE_uint64(peer_number, 0, "Specify peer number");
 
 int main(int argc, char *argv[]) {
   auto log = logger::log("MAIN");
@@ -48,13 +39,21 @@ int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   gflags::ShutDownCommandLineFlags();
 
-  auto config = parse_iroha_config(FLAGS_config);
+  auto config = parse_iroha_config();
+  if (not config.has_value()) {
+    log->error("Invalid config parameters");
+    return EXIT_FAILURE;
+  }
   log->info("config initialized");
-  Irohad irohad(config[mbr::BlockStorePath].GetString(),
-                config[mbr::RedisHost].GetString(),
-                config[mbr::RedisPort].GetUint(),
-                config[mbr::PgOpt].GetString(),
-                config[mbr::ToriiPort].GetUint(), FLAGS_peer_number);
+  Irohad irohad(config.value()[mbr::BlockStorePath].GetString(),
+                config.value()[mbr::RedisHost].GetString(),
+                config.value()[mbr::RedisPort].GetUint64(),
+                config.value()[mbr::PgHost].GetString(),
+                config.value()[mbr::PgPort].GetUint64(),
+                config.value()[mbr::PgUser].GetString(),
+                config.value()[mbr::PgPass].GetString(),
+                config.value()[mbr::ToriiPort].GetUint64(),
+                config.value()[mbr::PeerNumber].GetUint64());
   log->info("storage initialized: {}", logger::logBool(irohad.storage));
 
   iroha::main::BlockInserter inserter(irohad.storage);
