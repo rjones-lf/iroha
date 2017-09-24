@@ -1,0 +1,85 @@
+{
+    "hash": "20e1a6f78251ddf3f2e9820dbb6b8d0a8f1944f71198f00a7c521533eb8c6118",
+    "signatures": [
+        {
+            "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+    ],
+    "created_ts": 1501779527803139642,
+    "height": 1,
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "txs_number": 5,
+    "merkle_root": "0000000000001100000000000000e976a8e26d7f0000b013ee00000000009ba7",
+    "transactions": [
+        {
+            "signatures": [
+                {
+                    "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                }
+            ],
+            "created_ts": 1501779527803139642,
+            "creator_account_id": "",
+            "tx_counter": 0,
+            "commands": [
+                {
+                    "command_type": "AddPeer",
+                    "address": "0.0.0.0:10001",
+                    "peer_key": "0000000000000000000000000000000000000000000000000000000000000000"
+                }
+            ]
+        },
+        {
+            "signatures": [
+                {
+                    "pubkey": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                }
+            ],
+            "created_ts": 1501779527803139642,
+            "creator_account_id": "",
+            "tx_counter": 0,
+            "commands": [
+                {
+                    "command_type": "CreateDomain",
+                    "domain_name": "test"
+                },
+                {
+                    "command_type": "CreateAsset",
+                    "asset_name": "coin",
+                    "domain_id": "test",
+                    "precision": 2
+                },
+                {
+                    "command_type": "CreateAccount",
+                    "domain_id": "test",
+                    "account_name": "admin",
+                    "pubkey": "1000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                    "command_type": "CreateAccount",
+                    "domain_id": "test",
+                    "account_name": "test",
+                    "pubkey": "2000000000000000000000000000000000000000000000000000000000000000"
+                },
+                {
+                    "command_type": "SetAccountPermissions",
+                    "account_id": "admin@test",
+                    "new_permissions": {
+                        "add_signatory": false,
+                        "can_transfer": true,
+                        "create_accounts": false,
+                        "create_assets": false,
+                        "create_domains": false,
+                        "issue_assets": true,
+                        "read_all_accounts": true,
+                        "remove_signatory": false,
+                        "set_permissions": true,
+                        "set_quorum": false
+                    }
+                }
+            ]
+        }
+    ]
+}

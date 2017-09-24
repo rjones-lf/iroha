@@ -2,7 +2,7 @@ version: '3'
 
 services:
   node:
-    image: hyperledger/iroha
+    image: hyperledger/iroha-test
     ports:
       - "50051:50051"
     environment:

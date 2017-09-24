@@ -23,13 +23,13 @@ find_package(spdlog)
 ################################
 #           protobuf           #
 ################################
-option(FIND_PROTOBUF "Try to find protobuf in system" OFF)
+option(FIND_PROTOBUF "Try to find protobuf in system" ON)
 find_package(protobuf)
 
 #########################
 #         gRPC          #
 #########################
-option(FIND_GRPC "Try to find gRPC in system" OFF)
+option(FIND_GRPC "Try to find gRPC in system" ON)
 find_package(grpc)
 
 ################################
