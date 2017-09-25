@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "visitor.hpp"
 
@@ -72,8 +71,8 @@ namespace iroha {
     template <typename V, typename E>
     class result final {
       /// basic types
-      using pointer_type = V*;
-      using pointer_const_type = const V*;
+      using ptr = V*;
+      using cptr = const V*;
       using Et = Error_t<E>;
       using Vt = Ok_t<V>;
       using R = result<Vt, Et>;
@@ -114,8 +113,8 @@ namespace iroha {
       V const& operator*() const & { return this->get_value(); }
 
       /// arrow operator
-      pointer_type operator->() { return std::ref(this->get_value()); }
-      pointer_const_type operator->() const {
+      ptr operator->() { return std::ref(this->get_value()); }
+      cptr operator->() const {
         return std::cref(this->get_value());
       }
 
