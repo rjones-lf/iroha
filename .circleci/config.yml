@@ -112,6 +112,10 @@ jobs:
       - run:
           name: execute sonar-scanner to analyze PR
           command: >
+          if [ -z "$CI_PULL_REQUEST"]; then
+            echo "sonar-pr is executed for non-existent PR"
+            exit 0
+          else
             sonar-scanner \
               -Dsonar.github.repository="hyperledger/iroha" \
               -Dsonar.analysis.mode=preview \
@@ -119,6 +123,7 @@ jobs:
               -Dsonar.projectVersion="${CIRCLE_BUILD_NUM}" \
               -Dsonar.github.oauth="${SORABOT_TOKEN}" \
               -Dsonar.github.pullRequest="$(echo $CI_PULL_REQUEST | egrep -o "[0-9]+")"
+          fi
       - save_cache:
           key: sonar-{{ epoch }}
           paths:
