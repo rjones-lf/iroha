@@ -71,7 +71,6 @@ namespace iroha {
      */
     template <typename V, typename E>
     class result final {
-     public:
       /// basic types
       using pointer_type = V*;
       using pointer_const_type = const V*;
@@ -82,6 +81,9 @@ namespace iroha {
       using Ok_f = std::function<T(Vt const&)>;
       template <typename T>
       using Err_f = std::function<T(Et const&)>;
+
+     public:
+      // part of the interface
       using bad_get = boost::bad_get;
 
       /// initializing constructor
