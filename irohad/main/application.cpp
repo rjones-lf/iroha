@@ -48,6 +48,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       peer_number_(peer_number) {
   log_ = logger::log("IROHAD");
   log_->info("created");
+  init();
 }
 
 Irohad::~Irohad() {
