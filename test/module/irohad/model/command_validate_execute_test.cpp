@@ -241,6 +241,20 @@ TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
   ASSERT_FALSE(validateAndExecute());
 }
 
+TEST_F(AddSignatoryTest, InvalidWhenNoKey) {
+  // Trying to add nonexistent public key
+  creator.permissions.add_signatory = true;
+  add_signatory->pubkey.fill(0xF);
+
+  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command, insertAccountSignatory(add_signatory->account_id,
+                                                   add_signatory->pubkey))
+      .WillOnce(Return(false));
+
+  ASSERT_FALSE(validateAndExecute());
+}
+
 TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
   // Add to nonexistent account
   creator.permissions.add_signatory = true;
@@ -261,6 +275,9 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
   add_signatory->pubkey.fill(2);
 
   EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command, insertAccountSignatory(add_signatory->account_id,
+                                                   add_signatory->pubkey))
       .WillOnce(Return(false));
 
   ASSERT_FALSE(validateAndExecute());
@@ -416,8 +433,15 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
   // Creator is admin
   creator.permissions.remove_signatory = true;
 
+  ASSERT_TRUE(account.quorum == 1);
+
+  ON_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
+      .WillByDefault(Return(many_pubkeys));
+
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
       .WillOnce(Return(account));
+
+  // These must not be called because the account quorum is 1.
 
   EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
       .WillOnce(Return(many_pubkeys));
@@ -448,6 +472,22 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
   EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey))
       .Times(0);
 
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(RemoveSignatoryTest, InvalidWhenCreatorHasPermissions) {
+  // Creator is admin
+  creator.permissions.remove_signatory = true;
+
+  ASSERT_TRUE(account.quorum == 1);
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
+      .WillOnce(Return(account_pubkeys));
+
+  // delete methods must not be called because the account quorum is 1.
   ASSERT_FALSE(validateAndExecute());
 }
 
