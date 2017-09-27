@@ -117,6 +117,7 @@ jobs:
               exit 0
             else
               sonar-scanner \
+                -Dsonar.github.disableInlineComments \
                 -Dsonar.github.repository="hyperledger/iroha" \
                 -Dsonar.analysis.mode=preview \
                 -Dsonar.login=${SONAR_TOKEN} \
