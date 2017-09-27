@@ -66,6 +66,18 @@ namespace iroha {
       uint64_t tx_counter{};
 
       /**
+       * Quorum means number of signatures required for processing transaction
+       * in system.
+       * This field should be > 0.
+       */
+      uint8_t quorum = 1;
+
+      /**
+       * Hash will be used in iroha for transaction identification
+       */
+      hash256_t tx_hash;
+
+      /**
        * Bunch of commands attached to transaction
        * shared_ptr is used since Proposal has to be copied
        * BODY field
