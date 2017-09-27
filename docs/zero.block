@@ -67,16 +67,16 @@
                     "command_type": "SetAccountPermissions",
                     "account_id": "admin@test",
                     "new_permissions": {
-                        "add_signatory": false,
+                        "add_signatory": true,
                         "can_transfer": true,
-                        "create_accounts": false,
-                        "create_assets": false,
-                        "create_domains": false,
+                        "create_accounts": true,
+                        "create_assets": true,
+                        "create_domains": true,
                         "issue_assets": true,
                         "read_all_accounts": true,
-                        "remove_signatory": false,
+                        "remove_signatory": true,
                         "set_permissions": true,
-                        "set_quorum": false
+                        "set_quorum": true
                     }
                 }
             ]
