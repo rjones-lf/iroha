@@ -38,9 +38,10 @@ namespace iroha {
        * @param min
        * @param max
        */
-      explicit prng(IntType min = std::numeric_limits<IntType>::min(),
-                    IntType max = std::numeric_limits<IntType>::max())
-          : dis(min, max), tw(/* seed engine with */ true_random_uint64()) {}
+      prng(IntType min = std::numeric_limits<IntType>::min(),
+           IntType max = std::numeric_limits<IntType>::max(),
+           uint64_t seed = true_random_uint64())
+          : dis(min, max), tw(/* seed engine with */ seed) {}
 
       /**
        * @brief Get random number of 'IntType'.
@@ -77,7 +78,7 @@ namespace iroha {
       std::mt19937_64 tw;
     };
 
-    template<typename IntType>
+    template <typename IntType>
     std::random_device prng<IntType>::rd{};
   }  // namespace secure
 }  // namespace iroha

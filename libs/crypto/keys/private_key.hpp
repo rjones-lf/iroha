@@ -33,7 +33,7 @@ namespace iroha {
      * cryptographic algorithms.
      */
     class PrivateKey final {
-      std::vector<uint8_t> blob;
+      std::string blob;
 
      public:
       PrivateKey() = default;                       ///< default constructor
@@ -43,7 +43,6 @@ namespace iroha {
           default;  ///< copy assignment operator
       PrivateKey& operator=(PrivateKey&&) noexcept =
           default;  ///< move assignment operator
-      PrivateKey
 
       /**
        * @brief Destructor. Securely erase private key data.
@@ -62,13 +61,13 @@ namespace iroha {
        * @brief Accessor for blob.
        * @return vector of bytes.
        */
-      std::vector<uint8_t> data() noexcept { return blob; }
+      std::string data() noexcept { return blob; }
 
       /**
        * @brief Accessor for blob.
        * @return const reference to vector of bytes.
        */
-      std::vector<uint8_t> const& data() const noexcept { return blob; }
+      std::string const& data() const noexcept { return blob; }
     };
 
     /**

@@ -85,7 +85,7 @@ namespace iroha {
     bool compare(std::vector<uint8_t> const &lhs,
                  std::vector<uint8_t> const &rhs) {
       return lhs.size() == rhs.size()
-          && compare(lhs.data(), rhs.data(), lhs.size());
+          && compare((void *)lhs.data(), (void *)rhs.data(), lhs.size());
     }
 
   }  // namespace secure
