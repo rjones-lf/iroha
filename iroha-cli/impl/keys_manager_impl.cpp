@@ -16,13 +16,17 @@
  */
 
 #include "impl/keys_manager_impl.hpp"
+#include <curses.h>
+#include <iostream>
 
-#include <utility>
 #include <fstream>
+#include <utility>
 
 using iroha::operator|;
 
 namespace iroha_cli {
+  const auto suffix = ".keypair";
+
   /**
    * Return function which will try to deserialize specified value to specified
    * field in given keypair
@@ -32,9 +36,8 @@ namespace iroha_cli {
    * @param value - value to be deserialized
    * @return keypair on success, otherwise nullopt
    */
-  template<typename T, typename V>
-  auto deserializeKeypairField(T iroha::keypair_t::*field,
-                               const V &value) {
+  template <typename T, typename V>
+  auto deserializeKeypairField(T iroha::keypair_t::*field, const V &value) {
     return [=](auto keypair) mutable {
       return iroha::hexstringToArray<T::size()>(value)
           | iroha::assignObjectField(keypair, field);
@@ -46,43 +49,69 @@ namespace iroha_cli {
 
   nonstd::optional<iroha::keypair_t> KeysManagerImpl::loadKeys() {
     // Try to load from local file
-    std::ifstream priv_file(account_name_ + ".priv");
-    std::ifstream pub_file(account_name_ + ".pub");
-    if (not priv_file || not pub_file) {
+
+    std::ifstream keyfile(account_name_ + suffix);
+    if (not keyfile) {
       return nonstd::nullopt;
     }
     std::string client_pub_key_;
     std::string client_priv_key_;
-    priv_file >> client_priv_key_;
-    pub_file >> client_pub_key_;
+    keyfile >> client_priv_key_ >> client_pub_key_;
 
     return nonstd::make_optional<iroha::keypair_t>()
-        | deserializeKeypairField(&iroha::keypair_t::pubkey,
-                                  client_pub_key_)
-        | deserializeKeypairField(&iroha::keypair_t::privkey,
-                                  client_priv_key_);
+        | deserializeKeypairField(&iroha::keypair_t::pubkey, client_pub_key_)
+        | deserializeKeypairField(&iroha::keypair_t::privkey, client_priv_key_);
   }
 
-  bool KeysManagerImpl::createKeys(std::string pass_phrase) {
-    auto seed = iroha::create_seed(pass_phrase);
+  /**
+   * @brief Prompts for a password.
+   * @param prompt
+   * @return
+   */
+  std::string getpass(const char *prompt) {
+    printw(prompt);
+    noecho();  // disable character echoing
+
+    char buff[128];
+    getnstr(buff, sizeof(buff));
+
+    echo();  // enable character echoing again
+    return buff;
+  }
+
+  bool KeysManagerImpl::createKeys() {
+    std::string passphrase;
+    initscr();  // enable ncurses
+    std::string p1 = getpass("Enter passphrase: ");
+    std::string p2 = getpass("Confirm passphrase: ");
+    if (p1 == p2) {
+      passphrase = p1;
+    } else {
+      std::cerr << "Entered passphrases are different.";
+      exit(1);
+    }
+    endwin();  // disable ncurses
+
+    auto seed = iroha::create_seed(passphrase);
     auto key_pairs = iroha::create_keypair(seed);
-    std::ifstream pb_file(account_name_ + ".pub");
-    std::ifstream pr_file(account_name_ + ".priv");
-    if (pb_file && pr_file) {
+
+    // check if such keypair exists
+    std::ifstream kin(account_name_ + suffix);
+    if (kin) {
+      std::cerr << "Given keypair exists\n";
       return false;
     }
-    // Save pubkey to file
-    std::ofstream pub_file(account_name_ + ".pub");
-    if (not pub_file) {
+
+    // Save to file
+    std::ofstream kout(account_name_ + suffix);
+    if (not kout) {
+      std::cerr << "Can not safe keypair to the file\n";
       return false;
     }
-    pub_file << key_pairs.pubkey.to_hexstring();
-    // Save privkey to file
-    std::ofstream priv_file(account_name_ + ".priv");
-    if (not priv_file) {
-      return false;
-    }
-    priv_file << key_pairs.privkey.to_hexstring();
+
+    kout << key_pairs.pubkey.to_hexstring() << std::endl
+         << key_pairs.privkey.to_hexstring();
+
     return true;
   }
 

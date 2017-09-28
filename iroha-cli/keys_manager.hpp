@@ -35,10 +35,9 @@ class KeysManager {
   /**
    * Create keys and associate with account
    * @param account_name
-   * @param pass_phrase
    * @return false if create account failed
    */
-  virtual bool createKeys(std::string pass_phrase) = 0;
+  virtual bool createKeys() = 0;
 
 };
 

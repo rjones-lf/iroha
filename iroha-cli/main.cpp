@@ -34,8 +34,6 @@
 
 #include "interactive/interactive_cli.hpp"
 
-#include "flags.hpp"
-
 // ** Genesis Block and Provisioning ** //
 // Reference is here (TODO: move to doc):
 // https://hackmd.io/GwRmwQ2BmCFoCsAGARtOAWBIBMcAcS0GcAZjhNNPvpAKZIDGQA==
@@ -47,8 +45,7 @@ DEFINE_string(config, "", "Trusted peer's ip addresses");
 // DEFINE_validator(genesis_block, &iroha_cli::validate_genesis_block);
 
 DEFINE_bool(new_account, false, "Choose if account does not exist");
-DEFINE_string(name, "", "Name of the account");
-DEFINE_string(pass_phrase, "", "Name of the account");
+DEFINE_string(name, "default", "Name of the account");
 
 // Sending transaction to Iroha
 DEFINE_bool(grpc, false, "Send sample transaction to IrohaNetwork");
@@ -78,15 +75,17 @@ int main(int argc, char* argv[]) {
   if (FLAGS_new_account) {
     // Create new pub/priv key
     auto keysManager = iroha_cli::KeysManagerImpl(FLAGS_name);
-    if (not keysManager.createKeys(FLAGS_pass_phrase)) {
+    if (not keysManager.createKeys()) {
       logger->error("Keys already exist");
     } else {
       logger->info(
           "Public and private key has been generated in current directory");
     };
+
   } else if (FLAGS_grpc) {
     iroha_cli::CliClient client(FLAGS_address, FLAGS_torii_port);
     iroha_cli::GrpcResponseHandler response_handler;
+
     if (not FLAGS_json_transaction.empty()) {
       logger->info("Send transaction to {}:{} ", FLAGS_address,
                    FLAGS_torii_port);
@@ -94,11 +93,13 @@ int main(int argc, char* argv[]) {
       std::ifstream file(FLAGS_json_transaction);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
+
       iroha::model::converters::JsonTransactionFactory serializer;
       auto doc = iroha::model::converters::stringToJson(str);
       if (not doc.has_value()) {
         logger->error("Json has wrong format.");
       }
+
       auto tx_opt = serializer.deserialize(doc.value());
       if (not tx_opt.has_value()) {
         logger->error("Json transaction has wrong format.");
@@ -106,13 +107,15 @@ int main(int argc, char* argv[]) {
         response_handler.handle(client.sendTx(tx_opt.value()));
       }
     }
+
     if (not FLAGS_json_query.empty()) {
       logger->info("Send query to {}:{}", FLAGS_address, FLAGS_torii_port);
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
+
       iroha::model::converters::JsonQueryFactory serializer;
-      auto query_opt = serializer.deserialize(std::move(str));
+      auto query_opt = serializer.deserialize(str);
       if (not query_opt.has_value()) {
         logger->error("Json has wrong format.");
       } else {
@@ -122,23 +125,27 @@ int main(int argc, char* argv[]) {
 
   } else if (FLAGS_genesis_block) {
     BlockGenerator generator;
+
     std::ifstream file(FLAGS_peers_address);
     std::vector<std::string> peers_address;
     std::copy(std::istream_iterator<std::string>(file),
               std::istream_iterator<std::string>(),
               std::back_inserter(peers_address));
+
     // Generate genesis block
     auto block = generator.generateGenesisBlock(peers_address);
     // Sign block with fake signature from known seed
     // TODO: generate signature depending on specific Iroha-net
     block.sigs = {generateSignature(42)};
     block.transactions.at(0).signatures = {generateSignature(42)};
+
     // Convert to json
     JsonBlockFactory json_factory;
     auto doc = json_factory.serialize(block);
     std::ofstream output_file("genesis.block");
     output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
+
   } else if (FLAGS_interactive) {
     // TODO: add login logic (e.g. password check)
     if (FLAGS_name.empty()) {

@@ -79,8 +79,8 @@ namespace iroha {
      * attacks.
      * @param lhs
      * @param rhs
-     * @param size both chunks should be the same size.
-     * @return true if memory chunks are equal, false otherwise.
+     * @param size both vectors should be the same size.
+     * @return true if vectors are equal, false otherwise.
      */
     bool compare(std::vector<uint8_t> const &lhs,
                  std::vector<uint8_t> const &rhs) {

@@ -29,7 +29,7 @@ namespace iroha_cli {
 
     nonstd::optional<iroha::keypair_t> loadKeys() override;
 
-    bool createKeys(std::string pass_phrase) override;
+    bool createKeys() override;
 
    private:
     std::string account_name_;

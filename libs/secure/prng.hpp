@@ -76,6 +76,9 @@ namespace iroha {
       std::uniform_int_distribution<IntType> dis;
       std::mt19937_64 tw;
     };
+
+    template<typename IntType>
+    std::random_device prng<IntType>::rd{};
   }  // namespace secure
 }  // namespace iroha
 

@@ -16,6 +16,7 @@ add_library(keys_manager
 target_link_libraries(keys_manager
     optional
     crypto
+    ncurses
     )
 target_include_directories(keys_manager PUBLIC
     ${PROJECT_SOURCE_DIR}/iroha-cli
