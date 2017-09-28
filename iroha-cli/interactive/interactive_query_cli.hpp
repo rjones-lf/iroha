@@ -18,9 +18,11 @@
 #ifndef IROHA_CLI_INTERACTIVE_QUERY_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_QUERY_CLI_HPP
 
+#include <impl/keys_manager_impl.hpp>
 #include <memory>
 #include <unordered_map>
 #include "interactive/interactive_common_cli.hpp"
+#include "logger/logger.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/query.hpp"
 
@@ -39,7 +41,6 @@ namespace iroha_cli {
       void run();
 
      private:
-
       using QueryName = std::string;
       using QueryParams = std::vector<std::string>;
 
@@ -93,8 +94,7 @@ namespace iroha_cli {
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetSignatories(
           QueryParams params);
-      std::shared_ptr<iroha::model::Query> parseGetRoles(
-          QueryParams params);
+      std::shared_ptr<iroha::model::Query> parseGetRoles(QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetRolePermissions(
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAssetInfo(
@@ -117,7 +117,6 @@ namespace iroha_cli {
       bool parseSendToIroha(QueryParams line);
       bool parseSaveFile(QueryParams line);
 
-
       // Current context for query forming
       MenuContext current_context_;
 
@@ -136,6 +135,12 @@ namespace iroha_cli {
 
       // Query generator for new queries
       iroha::model::generators::QueryGenerator generator_;
+
+      // key manager for transaction signing
+      KeysManagerImpl keysManager_;
+
+      // Logger
+      logger::Logger log_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli
