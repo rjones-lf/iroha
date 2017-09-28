@@ -41,7 +41,6 @@ namespace iroha {
       pubkey_t pubkey;
 
       bool operator==(const Command &command) const override;
-      bool operator!=(const Command &command) const override;
 
       RemoveSignatory() {}
 

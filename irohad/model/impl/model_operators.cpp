@@ -49,18 +49,6 @@ namespace iroha {
       return !operator==(rhs);
     };
 
-    bool RemoveSignatory::operator!=(const Command &command) const {
-      return !operator==(command);
-    }
-
-    bool CreateAccount::operator!=(const Command &command) const {
-      return !operator==(command);
-    }
-
-    bool AddSignatory::operator!=(const Command &command) const {
-      return !operator==(command);
-    }
-
     bool AddPeer::operator!=(const Command &command) const {
       return !operator==(command);
     }
