@@ -18,6 +18,7 @@
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
 
+#include <model/converters/pb_common.hpp>
 #include <model/model_crypto_provider.hpp>
 
 namespace iroha {
@@ -25,14 +26,27 @@ namespace iroha {
 
     class ModelCryptoProviderImpl : public ModelCryptoProvider {
      public:
-      bool verify(const Transaction &tx) const override;
-
+      bool verify(const Transaction& tx) const override;
       bool verify(std::shared_ptr<const Query> tx) const override;
-
       bool verify(const Block& block) const override;
 
+      /**
+       * Sign block with given keypair. Adds signature to the array of sigs.
+       */
+      void sign(model::Block& b, keypair_t const& kp) const override;
+
+      /**
+       * Sign transaction with given keypair.  Adds signature to the array of
+       * signatures.
+       */
+      void sign(model::Transaction& b, keypair_t const& kp) const override;
+
+      /**
+       * Sign query. Replaces current signature with new one.
+       */
+      void sign(model::Query& b, keypair_t const& kp) const override;
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 #endif  // IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP

@@ -163,6 +163,8 @@ namespace iroha_cli {
 
       // Commands to be formed
       std::vector<std::shared_ptr<iroha::model::Command>> commands_;
+
+      iroha::keypair_t keypair;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

@@ -30,8 +30,13 @@
 #include "model/commands/revoke_permission.hpp"
 #include "parser/parser.hpp"
 
+#include <crypto/crypto.hpp>
+#include <model/converters/pb_common.hpp>
+#include <model/model_crypto_provider_impl.hpp>
+
 using namespace std::chrono_literals;
 using namespace iroha::model;
+
 
 namespace iroha_cli {
   namespace interactive {
@@ -389,9 +394,14 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
-      // TODO: sign tx
       CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler response_handler;
+
+      // TODO (@warchant): refactor!!!
+      // SIGN (baaaad!)
+      ModelCryptoProvider crypto = ModelCryptoProviderImpl();
+      crypto.sign(tx, keypair);
+
       response_handler.handle(client.sendTx(tx));
       printEnd();
       // Stop parsing
@@ -414,7 +424,7 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
-      // TODO: sign tx
+
 
       iroha::model::converters::JsonTransactionFactory json_factory;
       auto json_doc = json_factory.serialize(tx);

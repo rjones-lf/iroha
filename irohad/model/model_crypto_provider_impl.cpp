@@ -26,12 +26,16 @@ namespace iroha {
   namespace model {
 
     bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
-      if (tx.signatures.empty()) return false;
+      if (tx.signatures.empty()) {
+        return false;
+      }
 
       const auto hash_ = hash(tx).to_string();
 
       for (const auto &sign : tx.signatures) {
-        if (not iroha::verify(hash_, sign.pubkey, sign.signature)) return false;
+        if (not iroha::verify(hash_, sign.pubkey, sign.signature)) {
+          return false;
+        }
       }
       return true;
     }
@@ -47,11 +51,32 @@ namespace iroha {
     bool ModelCryptoProviderImpl::verify(const Block &block) const {
       const auto hash_ = hash(block).to_string();
 
-      for (const auto &sig : block.sigs)
+      for (const auto &sig : block.sigs) {
         if (not iroha::verify(hash_, sig.pubkey, sig.signature)) {
           return false;
         }
-       return true;
+      }
+      return true;
     }
-  }
-}
+
+    void ModelCryptoProviderImpl::sign(model::Block &b, keypair_t const &kp) const {
+      const auto hash_ = hash(b).to_string();
+      const auto signature = iroha::sign(hash_, kp.pubkey, kp.privkey);
+      b.sigs.emplace_back(model::Signature{signature, kp.pubkey});
+    }
+
+    void ModelCryptoProviderImpl::sign(model::Transaction &b,
+                                       keypair_t const &kp) const {
+      const auto hash_ = hash(b).to_string();
+      const auto signature = iroha::sign(hash_, kp.pubkey, kp.privkey);
+      b.signatures.emplace_back(model::Signature{signature, kp.pubkey});
+    }
+
+    void ModelCryptoProviderImpl::sign(model::Query &b, keypair_t const &kp) const {
+      const auto hash_ = hash(b).to_string();
+      const auto signature = iroha::sign(hash_, kp.pubkey, kp.privkey);
+      b.signature = model::Signature{signature, kp.pubkey};
+    }
+
+  }  // namespace model
+}  // namespace iroha
