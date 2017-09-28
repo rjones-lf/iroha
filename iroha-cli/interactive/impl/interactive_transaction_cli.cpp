@@ -19,10 +19,13 @@
 #include <fstream>
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 #include "model/generators/transaction_generator.hpp"
 
 #include <chrono>
 #include "client.hpp"
+#include "crypto/crypto.hpp"
+#include "crypto/hash.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/commands/append_role.hpp"
 #include "model/commands/create_role.hpp"
@@ -146,9 +149,11 @@ namespace iroha_cli {
 
 
     InteractiveTransactionCli::InteractiveTransactionCli(
-        std::string creator_account, uint64_t tx_counter) {
-      creator_ = creator_account;
-      tx_counter_ = tx_counter;
+        std::string creator_account, uint64_t tx_counter)
+        : creator_(creator_account),
+          tx_counter_(tx_counter),
+          keysManager_(creator_account) {
+      log_ = logger::log("InteractiveTransactionCli");
       createCommandMenu();
       createResultMenu();
     }
@@ -394,14 +399,22 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
+                               keys->privkey);
+        tx.signatures.push_back(
+            Signature{.signature = sig, .pubkey = keys->pubkey});
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
+
       CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler response_handler;
-
-      // TODO (@warchant): refactor!!!
-      // SIGN (baaaad!)
-      ModelCryptoProvider crypto = ModelCryptoProviderImpl();
-      crypto.sign(tx, keypair);
-
       response_handler.handle(client.sendTx(tx));
       printEnd();
       // Stop parsing
@@ -424,6 +437,19 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
+                               keys->privkey);
+        tx.signatures.push_back(
+            Signature{.signature = sig, .pubkey = keys->pubkey});
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
 
 
       iroha::model::converters::JsonTransactionFactory json_factory;
