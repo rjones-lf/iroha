@@ -23,12 +23,17 @@
 
 #include <chrono>
 #include "client.hpp"
+#include "crypto/crypto.hpp"
+#include "crypto/hash.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/commands/append_role.hpp"
 #include "model/commands/create_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/revoke_permission.hpp"
 #include "parser/parser.hpp"
+
+#include <model/converters/pb_common.hpp>
+#include <model/model_crypto_provider_impl.hpp>
 
 using namespace std::chrono_literals;
 using namespace iroha::model;
@@ -138,9 +143,11 @@ namespace iroha_cli {
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
-        std::string creator_account, uint64_t tx_counter) {
-      creator_ = creator_account;
-      tx_counter_ = tx_counter;
+        std::string creator_account, uint64_t tx_counter)
+        : creator_(creator_account),
+          tx_counter_(tx_counter),
+          keysManager_(creator_account) {
+      log_ = logger::log("InteractiveTransactionCli");
       createCommandMenu();
       createResultMenu();
     }
@@ -367,9 +374,20 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
-      // TODO: sign tx
-      tx.signatures.push_back(
-          {});  // get rid off fake signature when crypto is integrated
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
+                               keys->privkey);
+        tx.signatures.push_back(
+            Signature{.signature = sig, .pubkey = keys->pubkey});
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
+
       CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler response_handler;
       response_handler.handle(client.sendTx(tx));
@@ -392,8 +410,21 @@ namespace iroha_cli {
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
       auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
                                                   tx_counter_, commands_);
-      // TODO: sign tx
-      tx.signatures.push_back({});  // get rid off fake signature
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
+                               keys->privkey);
+        tx.signatures.push_back(
+            Signature{.signature = sig, .pubkey = keys->pubkey});
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
+
+
       iroha::model::converters::JsonTransactionFactory json_factory;
       auto json_doc = json_factory.serialize(tx);
       auto json_string = iroha::model::converters::jsonToString(json_doc);
