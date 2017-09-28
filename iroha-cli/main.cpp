@@ -19,10 +19,10 @@
 #include <responses.pb.h>
 #include <fstream>
 #include <iostream>
-#include "model/converters/json_query_factory.hpp"
 #include "common/assert_config.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
+#include "model/converters/json_query_factory.hpp"
 #include "model/generators/block_generator.hpp"
 #include "model/generators/signature_generator.hpp"
 #include "validators.hpp"
@@ -33,6 +33,8 @@
 #include "logger/logger.hpp"
 
 #include "interactive/interactive_cli.hpp"
+
+#include "flags.hpp"
 
 // ** Genesis Block and Provisioning ** //
 // Reference is here (TODO: move to doc):

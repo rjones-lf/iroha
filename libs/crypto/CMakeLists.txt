@@ -21,3 +21,6 @@ target_link_libraries(crypto
 add_library(lookup3
     lookup3.c
     )
+
+
+add_subdirectory(keys)

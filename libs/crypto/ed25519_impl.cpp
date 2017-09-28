@@ -16,6 +16,7 @@
  */
 
 #include <ed25519.h>
+#include <secure/prng.hpp>
 #include <string>
 #include "crypto.hpp"
 #include "hash.hpp"
@@ -60,7 +61,9 @@ namespace iroha {
    */
   blob_t<32> create_seed() {
     blob_t<32> seed;
-    ed25519_create_seed(seed.data());
+    secure::prng<uint8_t> p;
+    auto v = p.get(32);
+    std::copy(v.begin(), v.end(), seed.begin());
     return seed;
   }
 
