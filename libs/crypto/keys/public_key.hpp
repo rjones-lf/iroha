@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PRIVATE_KEY_HPP_
-#define IROHA_PRIVATE_KEY_HPP_
+#ifndef IROHA_PUBLIC_KEY_HPP
+#define IROHA_PUBLIC_KEY_HPP
 
 #include <array>
 #include <common/types.hpp>
@@ -26,31 +26,23 @@
 
 namespace iroha {
   namespace crypto {
-
     /**
-     * @class PrivateKey
-     * @brief Represents secret data, intended for use as private keys in
-     * cryptographic algorithms.
+     * @class PublicKey
+     * Represents public data, which could be distributed among anyone
+     * and used for signature verification
      */
-    class PrivateKey final {
+    class PublicKey final {
+     private:
       std::string blob;
 
      public:
-      PrivateKey() = default;                       ///< default constructor
-      PrivateKey(PrivateKey const&) = default;      ///< copy constructor
-      PrivateKey(PrivateKey&&) noexcept = default;  ///< move constructor
-      PrivateKey& operator=(PrivateKey const&) =
+      PublicKey() = default;                      ///< default constructor
+      PublicKey(PublicKey const&) = default;      ///< copy constructor
+      PublicKey(PublicKey&&) noexcept = default;  ///< move constructor
+      PublicKey& operator=(PublicKey const&) =
           default;  ///< copy assignment operator
-      PrivateKey& operator=(PrivateKey&&) noexcept =
+      PublicKey& operator=(PublicKey&&) noexcept =
           default;  ///< move assignment operator
-
-      /**
-       * @brief Destructor. Securely erase private key data.
-       */
-      ~PrivateKey() {
-        secure::erase(reinterpret_cast<void*>(const_cast<char*>(blob.data())),
-                      blob.size());
-      }
 
       /**
        * @brief  Accessor for size.
@@ -72,25 +64,25 @@ namespace iroha {
     };
 
     /**
-     * Secure equal comparator for private keys.
+     * Secure equal comparator for public keys (why not?)
      * @param lhs
      * @param rhs
      * @return
      */
-    inline bool operator==(PrivateKey const& lhs, PrivateKey const& rhs) {
+    inline bool operator==(PublicKey const& lhs, PublicKey const& rhs) {
       return secure::compare(lhs.data(), rhs.data());
     }
 
     /**
-     * Secure not equal comparator for private keys.
+     * Secure not equal comparator for public keys.
      * @param lhs
      * @param rhs
      * @return
      */
-    inline bool operator!=(PrivateKey const& lhs, PrivateKey const& rhs) {
+    inline bool operator!=(PublicKey const& lhs, PublicKey const& rhs) {
       return !operator==(lhs, rhs);
     }
-  }  // namespace crypto
-}  // namespace iroha
+  }
+}
 
-#endif  //  IROHA_PRIVATE_KEY_HPP_
+#endif  // IROHA_PUBLIC_KEY_HPP

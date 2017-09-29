@@ -51,7 +51,30 @@ namespace iroha {
 
       do {
         *p = 0;
-      } while (*p++ && --size);
+      } while (--size);
+    }
+
+    /*** @brief Secure move from src to dest. Copies data first and then
+     * securely
+       * erases src. Destination memory should be at least same size as source.
+       * @param[out] dest destination memory
+       * @param[in/out] src sources memory, will be erased at the end
+       * @param size size of memory in bytes
+       */
+    void move(void *dest, void *src, size_t size) {
+      auto to = util::void2volatileptr<char>(dest);
+      auto from = util::void2volatileptr<char>(src);
+      auto count = size;
+
+      if (size == 0) {
+        return;
+      }
+
+      do {
+        *to++ = *from++;
+      } while (--count);
+
+      erase(src, size);
     }
 
     /**
@@ -75,15 +98,14 @@ namespace iroha {
     }
 
     /**
-     * @brief Secure compare of two vectors. Resistant to timing
+     * @brief Secure compare of two strings. Resistant to timing
      * attacks.
      * @param lhs
      * @param rhs
      * @param size both vectors should be the same size.
      * @return true if vectors are equal, false otherwise.
      */
-    bool compare(std::vector<uint8_t> const &lhs,
-                 std::vector<uint8_t> const &rhs) {
+    bool compare(std::string const &lhs, std::string const &rhs) {
       return lhs.size() == rhs.size()
           && compare((void *)lhs.data(), (void *)rhs.data(), lhs.size());
     }

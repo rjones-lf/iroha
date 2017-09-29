@@ -6,6 +6,7 @@ add_library(keypair
     keypair.cpp
     keypair.hpp
     private_key.hpp
+    public_key.hpp
     )
 target_link_libraries(keypair
     crypto

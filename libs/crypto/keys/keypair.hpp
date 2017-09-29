@@ -20,11 +20,10 @@
 
 #include <crypto/crypto.hpp>
 #include "private_key.hpp"
+#include "public_key.hpp"
 
 namespace iroha {
   namespace crypto {
-
-    using PublicKey = std::vector<uint8_t>;
 
     /**
      * @class Keypair
@@ -43,6 +42,7 @@ namespace iroha {
       static Keypair random(Type t) {
         if (t == Type::ed25519) {
           auto kp = create_keypair(create_seed());
+          //TODO: convert to Keypair
         }
       }
 
