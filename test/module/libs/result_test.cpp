@@ -21,7 +21,7 @@
 using namespace iroha::result;
 using error = std::string;
 using value = std::string;
-using res = result<value, error>;
+using res = Result<value, error>;
 using namespace std::literals::string_literals;
 
 res dosomething(bool isValue) {
@@ -66,7 +66,7 @@ TEST(Result, error_instantiation) {
   ASSERT_EQ(r.error(), "error"s);
 }
 
-using R = result<int, std::string>;
+using R = Result<int, std::string>;
 R increment_but_less_5(int a) {
   if (a < 5) {
     return Ok(a + 1);
@@ -94,11 +94,12 @@ TEST(Result, pattern_matching) {
   R a = 1;
   ASSERT_TRUE(a);
 
-  // in one order
   a.match<void>([](Ok_t<int> const& v) { SUCCEED(); },
                 [](Error_t<std::string> const& e) { FAIL(); });
 
-  // in reversed order
-  a.match<void>([](Error_t<std::string> const& e) { FAIL(); },
-                [](Ok_t<int> const& v) { SUCCEED(); });
+  // create own visitor
+  auto ok_handler = [](R::OkType const& v) { SUCCEED(); };
+  auto error_handler = [](R::ErrorType const& v) { FAIL(); };
+  auto visitor = make_visitor(ok_handler, error_handler);
+  a.match(visitor);
 }

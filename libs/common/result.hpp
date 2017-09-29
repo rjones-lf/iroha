@@ -15,180 +15,351 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef IROHA_COMMON_RESULT_HPP_
+#define IROHA_COMMON_RESULT_HPP_
 
 #include <boost/variant.hpp>
 #include "visitor.hpp"
 
 namespace iroha {
-
   namespace result {
 
+    /**
+     * @struct Ok_t
+     * @brief Type, which represents success of operation.
+     * @tparam T any type.
+     */
     template <typename T>
     struct Ok_t {
-      Ok_t(T&& v) : value{std::forward<T>(v)} {}
-
-      Ok_t<T>& operator=(T&& v) {
-        value = std::forward<T>(v);
-        return *this;
-      }
-
+      Ok_t(T&& v) : value(std::forward<T>(v)) {}
       T value;
     };
 
+    /**
+     * @struct Error_t
+     * @brief Type, which represents failed operation.
+     * @tparam E any type.
+     */
     template <typename E>
     struct Error_t {
-      Error_t(E&& e) : reason{std::forward<E>(e)} {}
-
-      Error_t<E>& operator=(E&& e) {
-        reason = std::forward<E>(e);
-        return *this;
-      }
-
+      Error_t(E&& e) : reason(std::forward<E>(e)) {}
       E reason;
     };
 
+    /**
+     * @brief Okay indicator. Shortcut that is used to easily create Ok_t.
+     *
+     * @code
+     * Result<int, std::string> f(){
+     *   return Ok(5); // returns Ok_t<int>(5)
+     * }
+     * @endcode
+     *
+     * @tparam T any type.
+     * @param e value.
+     * @return Ok_t<T>(e)
+     */
     template <typename T>
     constexpr auto Ok(T&& e) {
       return Ok_t<T>{std::forward<T>(e)};
     }
 
+    /**
+     * @brief Error indicator. Shortcut that is used to easily create Error_t.
+     *
+     * @code
+     * Result<int, std::string> f() {
+     *   return Error("reason"s); // returns Error_t<std::string>("reason"s);
+     * }
+     * @endcode
+     *
+     * @tparam E any movable or copyable type
+     * @param e reason of error.
+     * @return Error_t<E>(e)
+     */
     template <typename E>
     constexpr auto Error(E&& e) {
       return Error_t<E>{std::forward<E>(e)};
     }
 
+    /**
+     * @brief Monadic bind operator for Result object.
+     *
+     * @code
+     *  using R = iroha::Result<int, std::string>;
+     *
+     *  R increment_but_less_5(int a) {
+     *    return a < 5 ? Ok(a + 1) : Error(":("s);
+     *  }
+     *
+     *  void dothejob() {
+     *    R a = 1;
+     *    assert(a);  // true
+     *    R b = a | increment_but_less_5 | increment_but_less_5;
+     *    assert(a);  // true
+     *    assert(b);  // true
+     *    assert(*b == *a + 2);  //  true
+     *  }
+     * @endcode
+     *
+     * @tparam T monadic type.
+     * @tparam Transform transformation, which accepts decltype(*t) as first
+     * argument.
+     * @param t istance of monadic type.
+     * @param f instance of transformation.
+     * @return applies transformation on t if t is true, returns t otherwise.
+     */
     template <typename T, typename Transform>
     constexpr auto operator|(T t, Transform f) -> decltype(f(*t)) {
       return t ? f(*t) : t;
     }
 
     /**
-     * Represents "result of a function" type. Is either value, or error.
-     * @tparam V value type
-     * @tparam E error type
+     * @class Result
+     * @brief Represents "Result of a function" type. Is either value, or error.
+     * @tparam V value type.
+     * @tparam E error type.
      */
     template <typename V, typename E>
-    class result final {
-      /// basic types
-      using ptr = V*;
-      using cptr = const V*;
+    class Result final {
+      /// shortcuts
       using Et = Error_t<E>;
       using Vt = Ok_t<V>;
-      using R = result<Vt, Et>;
+      using R = Result<Vt, Et>;
       template <typename T>
       using Ok_f = std::function<T(Vt const&)>;
       template <typename T>
       using Err_f = std::function<T(Et const&)>;
 
      public:
-      // part of the interface
+      // exception that is thrown by Result if user is trying to get Value,
+      // while Result contains Error. And vice versa.
       using bad_get = boost::bad_get;
 
-      /// initializing constructor
-      // construct from value
-      result(const V& v) : result(Ok(v)) {}
-      result(V&& v) : result(Ok(std::forward<V>(v))) {}
-      // construct from Ok
-      result(const Vt& e) : _(e) {}
-      result(Vt&& e) : _(std::move(e)) {}
-      // construct from Error
-      result(const Et& e) : _(e) {}
-      result(Et&& e) : _(std::move(e)) {}
+      // alias
+      using VType = V;
+      // alias
+      using EType = E;
+      // alias
+      using OkType = Vt;
+      // alias
+      using ErrorType = Et;
 
-      /// copy constructor
-      result(R const& other) { _ = other._; }
-      result(R&& other) noexcept { _ = std::move(other._); }
+      // from Value (rvalue)
+      Result(const V& v) : Result(Ok(v)) {}
+
+      // from Value (lvalue)
+      Result(V&& v) : Result(Ok(std::forward<V>(v))) {}
+
+      // from Ok_t<V> lvalue
+      Result(const Vt& e) : m(e) {}
+
+      // from Ok_t<V> rvalue
+      Result(Vt&& e) : m(std::move(e)) {}
+
+      // from Error_t<E> lvalue
+      Result(Et const& e) : m(e) {}
+
+      // from Error_t<E> rvalue
+      Result(Et&& e) : m(std::move(e)) {}
+
+      // from Result lvalue
+      Result(R const& other) { m = other.m; }
+
+      // from Result rvalue
+      Result(R&& other) noexcept { m = std::move(other.m); }
 
       /// default destructor
-      ~result() = default;
+      ~Result() = default;
 
-      /// boolean operators
-      explicit operator bool() const noexcept { return _.which() == 0; }
-      bool operator!() const noexcept { return _.which() == 1; }
+      /**
+       * @brief Operator bool. True if and only if Result contains Value type.
+       *
+       * @code
+       * Result<int, double> f = 1;
+       * if(f) {
+       *   // f contains value
+       * } else {
+       *   // f contains error
+       * }
+       * @nocode
+       *
+       * @return
+       */
+      explicit operator bool() const noexcept { return m.which() == 0; }
 
-      /// dereference operator
+      /**
+       * Negation operator. True if and only if Result contains Error type.
+       * @return
+       */
+      bool operator!() const noexcept { return m.which() == 1; }
+
+      /**
+       * @brief Dereference operator.
+       *
+       * @code
+       * Result<int, double> f = 1;
+       * int value = *f;  // one way to get value.
+       * @nocode
+       *
+       * Semantics is the following: this operator is one of ways to get Value.
+       * If Result contains Error, it throws Result::bad_get.
+       *
+       * @throws Result::bad_get if Result contains Error
+       * @return
+       */
       V&& operator*() && { return std::move(this->get_value()); }
+
+      /**
+       * @brief Dereference operator.
+       * @throws Result::bad_get if Result contains Error
+       * @return
+       */
       V& operator*() & { return this->get_value(); }
+
+      /**
+       * @brief Dereference operator.
+       * @throws Result::bad_get if Result contains Error
+       * @return
+       */
       V const& operator*() const & { return this->get_value(); }
 
-      /// arrow operator
-      ptr operator->() { return std::ref(this->get_value()); }
-      cptr operator->() const {
-        return std::cref(this->get_value());
-      }
+      /**
+       * @brief Arrow operator.
+       *
+       * @code
+       * Result<std::string, double> f = "hello"s;
+       * f->size();  // one more way to get access to the value.
+       * @nocode
+       *
+       * Semantics is the following: this operator is one of ways to get Value.
+       * If Result contains Error, it throws Result::bad_get
+       *
+       * @throws Result::bad_get if Result contains Error
+       * @return
+       */
+      V* operator->() { return std::ref(this->get_value()); }
+      // arrow operator
+      const V* operator->() const { return std::cref(this->get_value()); }
 
-      /// access operators
-      // throw result::bad_get if you're trying to get Error while result has
-      // Value, and vice versa
+      /**
+       * @brief Accessor for the Error object.
+       * @throws Result::bad_get if Result contains Value.
+       * @return E
+       */
       E error() { return this->get_error(); }
+
+      /**
+       * @brief Accessor for the Value object.
+       * @throws Result::bad_get if Result contains Error.
+       * @return V
+       */
       V ok() { return this->get_value(); }
+
+      /**
+       * @brief Accessor for the Error object.
+       * @throws Result::bad_get if Result contains Value.
+       * @return const V&
+       */
       const V& error() const { return this->get_error(); }
+
+      /**
+       * @brief Accessor for the Value object.
+       * @throws Result::bad_get if Result contains Error.
+       * @return const V&
+       */
       const V& ok() const { return this->get_value(); }
 
-      /// operator=
-      result& operator=(R const& rhs) {
-        _ = rhs;
-        return *this;
-      }
-      result& operator=(R&& rhs) noexcept {
-        _ = std::move(rhs);
-        return *this;
-      }
-      // from Value
-      result& operator=(V const& val) {
-        _ = Ok(val);
-        return *this;
-      }
-      result& operator=(V&& val) {
-        _ = Ok(std::move(val));
-        return *this;
-      }
-      // from Ok(Value)
-      result& operator=(Vt const& val) {
-        _ = val;
-        return *this;
-      }
-      result& operator=(Vt&& val) {
-        _ = std::move(val);
-        return *this;
-      }
-      // from Error
-      result& operator=(Et const& val) {
-        _ = val;
-        return *this;
-      }
-      result& operator=(Et&& val) {
-        _ = std::move(val);
+      // from Result lvalue
+      Result& operator=(R const& rhs) {
+        m = rhs;
         return *this;
       }
 
-      /// visitor
-      // first OK, then Error
+      // from Result rvalue
+      Result& operator=(R&& rhs) noexcept {
+        m = std::move(rhs);
+        return *this;
+      }
+
+      // from Value lvalue
+      Result& operator=(V const& val) {
+        m = Ok(val);
+        return *this;
+      }
+
+      // from Value rvalue
+      Result& operator=(V&& val) {
+        m = Ok(std::move(val));
+        return *this;
+      }
+
+      // from Ok_t<V> lvalue
+      Result& operator=(Vt const& val) {
+        m = val;
+        return *this;
+      }
+
+      // from Ok_t<V> rvalue
+      Result& operator=(Vt&& val) {
+        m = std::move(val);
+        return *this;
+      }
+
+      // from Error_t<E> lvalue
+      Result& operator=(Et const& val) {
+        m = val;
+        return *this;
+      }
+
+      // from Error_t<E> rvalue
+      Result& operator=(Et&& val) {
+        m = std::move(val);
+        return *this;
+      }
+
+      /**
+       * @brief Used for pattern matching. Fast, type-safe, exception-safe sway
+       * to get value from Result.
+       * @tparam T arbitrary type that should be returned from visitor.
+       * @param f1 lambda that accepts Ok_t<V> const& as argument.
+       * @param f2 lambda that accepts Error_t<E> const& as argument.
+       * @return arbitrary value that visitor returns.
+       */
       template <typename T>
       constexpr T match(Ok_f<T> f1, Err_f<T> f2) {
-        return boost::apply_visitor(make_visitor(f1, f2), _);
+        return boost::apply_visitor(make_visitor(f1, f2), m);
       }
-      // first Error, then OK
-      template <typename T>
-      constexpr T match(Err_f<T> f1, Ok_f<T> f2) {
-        return boost::apply_visitor(make_visitor(f2, f1), _);
+
+      /**
+       * @brief Used for pattern matching. Fast, type-safe, exception-safe way
+       * to get value from Result.
+       * @tparam Visitor visitor object, which has overloaded operator() for
+       * Ok_t<V> const& and Error_t<E> const&
+       * @param v visitor instance.
+       * @return arbitrary value that visitor returns.
+       */
+      template <typename Visitor>
+      constexpr auto match(Visitor v) {
+        return boost::apply_visitor(v, m);
       }
 
      private:
-      inline V& get_value() { return boost::get<Vt>(_).value; }
-      inline E& get_error() { return boost::get<Et>(_).reason; }
+      inline V& get_value() { return boost::get<Vt>(m).value; }
+      inline E& get_error() { return boost::get<Et>(m).reason; }
 
       inline V const& get_value() const {
-        return std::cref(boost::get<Vt>(_).value);
+        return std::cref(boost::get<Vt>(m).value);
       }
 
       inline E const& get_error() const {
-        return std::cref(boost::get<Et>(_).reason);
+        return std::cref(boost::get<Et>(m).reason);
       }
 
-      boost::variant<Vt, Et> _;
+      boost::variant<Vt, Et> m;
     };
   }
 
 }  // namespace iroha
+
+#endif  // IROHA_COMMON_RESULT_HPP_
