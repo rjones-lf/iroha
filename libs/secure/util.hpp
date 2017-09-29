@@ -92,7 +92,7 @@ namespace iroha {
       size_t s = 0;
       do {
         s |= (*a) ^ (*b);
-      } while (*a++ && *b++ && --size);
+      } while (--size);
 
       return s == 0;
     }

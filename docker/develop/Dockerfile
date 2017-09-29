@@ -15,7 +15,7 @@ RUN apt-get update; \
 RUN apt-get -y --no-install-recommends install build-essential python-software-properties \
         automake libtool \
         # dev dependencies
-        libssl-dev zlib1g-dev libboost-all-dev libc6-dbg golang \
+        libssl-dev zlib1g-dev libboost-all-dev libc6-dbg golang libncurses5-dev \
         # CircleCI dependencies
         git ssh tar gzip ca-certificates python3 python3-pip python3-setuptools \
         # code coverage
