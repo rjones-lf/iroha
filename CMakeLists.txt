@@ -31,6 +31,7 @@ option(BENCHMARKING "Build benchmarks" OFF)
 option(TESTING "Build tests" ON)
 option(COVERAGE "Enable coverage" OFF)
 option(FUZZING "Build fuzzing binaries" OFF)
+option(DOCS "Build documentation" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
@@ -40,6 +41,7 @@ message(STATUS "-DTESTING=${TESTING}")
 message(STATUS "-DBENCHMARKING=${BENCHMARKING}")
 message(STATUS "-DFUZZING=${FUZZING}")
 message(STATUS "-DCOVERAGE=${COVERAGE}")
+message(STATUS "-DDOCS=${DOCS}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(

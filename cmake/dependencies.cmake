@@ -83,6 +83,42 @@ find_package(rxcpp)
 find_package(tbb)
 
 ##########################
-# boost multiprecision   #
+#         boost          #
 ##########################
 find_package(Boost REQUIRED)
+
+
+##########################
+#    google benchmark    #
+##########################
+if(BENCHMARK)
+  message(STATUS "google benchmark enabled")
+  find_package(benchmark)
+endif()
+
+
+#######################
+#    documentation    #
+#######################
+if(DOCS)
+  cmake_policy(SET CMP0057 NEW)
+
+  find_package(Doxygen
+      REQUIRED dot
+      )
+
+  set(DOXYGEN_GENERATE_HTML YES)
+  set(DOXYGEN_GENERATE_MAN NO)
+  set(DOXYGEN_UML_LOOK YES)
+  set(DOXYGEN_EXTRACT_ALL YES)
+  # set(DOXYGEN_PROJECT_LOGO "${CMAKE_SOURCE_DIR}/docs/Iroha_3_sm.png")
+  set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/docs)
+
+  doxygen_add_docs(docs
+      ${CMAKE_SOURCE_DIR}/irohad
+      ${CMAKE_SOURCE_DIR}/iroha-cli
+      ${CMAKE_SOURCE_DIR}/libs
+      # ${CMAKE_SOURCE_DIR}/test
+      COMMENT "Creating doxygen documentation"
+      )
+endif()
