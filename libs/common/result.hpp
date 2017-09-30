@@ -111,7 +111,11 @@ namespace iroha {
      */
     template <typename T, typename Transform>
     constexpr auto operator|(T t, Transform f) -> decltype(f(*t)) {
-      return t ? f(*t) : t;
+      if (t) {
+        return f(*t);
+      } else {
+        return t;
+      }
     }
 
     /**
@@ -128,41 +132,51 @@ namespace iroha {
       using R = Result<Vt, Et>;
 
      public:
-      // exception that is thrown by Result if user is trying to get Value,
-      // while Result contains Error. And vice versa.
+      /**
+       * @brief exception that is thrown by Result if user is trying to get
+       * Value, while Result contains Error. And vice versa.
+       */
       using bad_get = boost::bad_get;
 
-      // alias
+      /**
+       * Alias for V type
+       */
       using VType = V;
-      // alias
+
+      /**
+       * Alias for E type
+       */
       using EType = E;
-      // alias
+
+      /**
+       * Alias for Ok_t<V> type
+       */
       using OkType = Vt;
-      // alias
+
+      /**
+       * Alias for Error_t<E> type
+       */
       using ErrorType = Et;
 
-      // from Value (lvalue)
-      Result(const V &v) : Result(Ok(v)) {}
+      /// from Value (both lvalue and rvalue)
+      Result(V &&v) : m(Ok(std::forward<V>(v))) {}
 
-      // from Value (rvalue)
-      Result(V &&v) : Result(Ok(std::forward<V>(v))) {}
-
-      // from Ok_t<V> lvalue
+      /// from Ok_t<V> lvalue
       Result(const Vt &e) : m(e) {}
 
-      // from Ok_t<V> rvalue
+      /// from Ok_t<V> rvalue
       Result(Vt &&e) : m(std::move(e)) {}
 
-      // from Error_t<E> lvalue
+      /// from Error_t<E> lvalue
       Result(const Et &e) : m(e) {}
 
-      // from Error_t<E> rvalue
+      /// from Error_t<E> rvalue
       Result(Et &&e) : m(std::move(e)) {}
 
-      // from Result lvalue
+      /// from Result lvalue
       Result(const R &other) : m(other.m) {}
 
-      // from Result rvalue
+      /// from Result rvalue
       Result(R &&other) noexcept : m(std::move(other.m)) {}
 
       /// default destructor
@@ -234,9 +248,9 @@ namespace iroha {
        * @throws Result::bad_get if Result contains Error
        * @return
        */
-      V *operator->() { return std::ref(this->get_value()); }
+      V *operator->() { return &this->get_value(); }
       // arrow operator
-      const V *operator->() const { return std::cref(this->get_value()); }
+      const V *operator->() const { return &this->get_value(); }
 
       /**
        * @brief Accessor for the Error object.
@@ -255,7 +269,7 @@ namespace iroha {
       /**
        * @brief Accessor for the Error object.
        * @throws Result::bad_get if Result contains Value.
-       * @return const V&
+       * @return const E&
        */
       const E &error() const { return this->get_error(); }
 
@@ -266,61 +280,47 @@ namespace iroha {
        */
       const V &ok() const { return this->get_value(); }
 
-      // from Result lvalue
+      /// from Result lvalue
       Result &operator=(R const &rhs) {
         m = rhs;
         return *this;
       }
 
-      // from Result rvalue
+      /// from Result rvalue
       Result &operator=(R &&rhs) noexcept {
         m = std::move(rhs);
         return *this;
       }
 
-      // from Value lvalue
-      Result &operator=(V const &val) {
-        m = Ok(val);
-        return *this;
-      }
-
-      // from Value rvalue
+      /// from Value (both lvalue and rvalue)
       Result &operator=(V &&val) {
-        m = Ok(std::move(val));
+        m = Ok(std::forward<V>(val));
         return *this;
       }
 
-      // from Ok_t<V> lvalue
+      /// from Ok_t<V> lvalue
       Result &operator=(Vt const &val) {
         m = val;
         return *this;
       }
 
-      // from Ok_t<V> rvalue
+      /// from Ok_t<V> rvalue
       Result &operator=(Vt &&val) {
         m = std::move(val);
         return *this;
       }
 
-      // from Error_t<E> lvalue
+      /// from Error_t<E> lvalue
       Result &operator=(Et const &val) {
         m = val;
         return *this;
       }
 
-      // from Error_t<E> rvalue
+      /// from Error_t<E> rvalue
       Result &operator=(Et &&val) {
         m = std::move(val);
         return *this;
       }
-
-      /**
-       *
-       * @tparam T arbitrary type that should be returned from visitor.
-       * @param f1 lambda that accepts Ok_t<V> const& as argument.
-       * @param f2 lambda that accepts Error_t<E> const& as argument.
-       * @return
-       */
 
       /**
        * @brief Used for pattern matching. Fast, type-safe, exception-safe sway

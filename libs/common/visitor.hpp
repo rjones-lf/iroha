@@ -40,8 +40,30 @@ namespace detail {
   };
 }
 
+/**
+ * @brief Convenient in-place compile-time visitor creation, from a set of
+ * lambdas
+ *
+ * @code
+ * make_visitor([](int a){ return 1; },
+ *              [](std::string b) { return 2; });
+ * @nocode
+ *
+ * is essentially the same as
+ *
+ * @code
+ * struct visitor : public boost::static_visitor<int> {
+ *   int operator()(int a) { return 1; }
+ *   int operator()(std::string b) { return 2; }
+ * }
+ * @nocode
+ *
+ * @tparam Fs
+ * @param fs
+ * @return
+ */
 template <class... Fs>
-constexpr auto make_visitor(Fs&&... fs) {
+constexpr auto make_visitor(Fs &&... fs) {
   using visitor_type = detail::lambda_visitor<std::decay_t<Fs>...>;
   return visitor_type(std::forward<Fs>(fs)...);
 }

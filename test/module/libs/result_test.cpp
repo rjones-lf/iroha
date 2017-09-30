@@ -19,51 +19,67 @@
 #include <common/result.hpp>
 
 using namespace iroha::result;
-using error = std::string;
-using value = std::string;
-using res = Result<value, error>;
 using namespace std::literals::string_literals;
 
-res dosomething(bool isValue) {
-  if (isValue) {
-    return Ok("value"s);
-  } else {
-    return Error("error"s);
-  }
-}
-
 TEST(Result, value_instantiation) {
+  using R = Result<bool, bool>;
   // constructor, value
-  res r = dosomething(true);
+  R r = true;
   ASSERT_TRUE(r) << "constructor: should be value";
 
   // operator =
-  r = dosomething(true);
+  r = false;  // any value of type bool is Ok_t unless Error(bool) is specified
   ASSERT_TRUE(r) << "operator=: should be value";
 
   // static function
-  ASSERT_NO_THROW(res a = Ok("ok!"s)) << "fails on Ok";
+  ASSERT_NO_THROW(R a = Ok(false)) << "fails on Ok";
 
-  r = Ok("hello"s);
+  r = Ok(true);
   ASSERT_TRUE(r);
-  ASSERT_EQ(r.ok(), "hello"s);
+  ASSERT_EQ(r.ok(), true);
+
+  // const
+  const R z = true;
+  R x = z;
+  const R c(std::move(x));
+  const R v{c};
+  ASSERT_TRUE(z);
+  ASSERT_TRUE(c);
+  ASSERT_TRUE(v);
+
+  // get value
+  ASSERT_NO_THROW(r.ok());
+  ASSERT_TRUE(r.ok());  // r contains true in value
+  // on const object
+  ASSERT_NO_THROW(z.ok());
+  ASSERT_TRUE(z.ok());  // z contains true in value
 }
 
 TEST(Result, error_instantiation) {
+  using R = Result<bool, bool>;
+
   // constructor, value
-  res r = dosomething(false);
+  R r = Error(false);
   ASSERT_FALSE(r) << "constructor: should be error";
 
   // operator =
-  r = dosomething(false);
+  r = Error(false);
   ASSERT_FALSE(r) << "operator=: should be error";
 
-  // static function
-  ASSERT_NO_THROW(res a = Error("error"s)) << "fails on Error";
+  const R z = Error(false);
+  R x = z;
+  const R c(std::move(x));
+  const R v{c};
+  ASSERT_FALSE(z);
+  ASSERT_FALSE(c);
+  ASSERT_FALSE(v);
 
-  r = Error("error"s);
-  ASSERT_FALSE(r);
-  ASSERT_EQ(r.error(), "error"s);
+  // get error value
+  ASSERT_NO_THROW(r.error());
+  ASSERT_FALSE(r.error());  // r contains false in error
+  // on const object
+  ASSERT_NO_THROW(z.error());
+  ASSERT_FALSE(z.error());  // z contains false in error
 }
 
 using R = Result<int, std::string>;
@@ -88,6 +104,22 @@ TEST(Result, monadic) {
   R c = b | increment_but_less_5 | increment_but_less_5 | increment_but_less_5;
   ASSERT_FALSE(c);
   ASSERT_EQ(c.error(), ":("s);
+
+  // monadic sequence test
+  using Rm = Result<bool, bool>;
+  auto succeed = [](auto &&) -> Rm {
+    SUCCEED();
+    return Ok(true);
+  };
+
+  auto make_error = [](auto &&) -> Rm { return Error(false); };
+
+  auto fail = [](auto &&) -> Rm { ADD_FAILURE(); };
+
+  // 3 consecutive success operations which return value, then 4th returns
+  // error. if 5th is executed, than test should fail.
+  Rm test_ = Ok(true);
+  Rm r_ = test_ | succeed | succeed | succeed | make_error | fail;
 }
 
 TEST(Result, pattern_matching) {
@@ -107,4 +139,74 @@ TEST(Result, pattern_matching) {
 TEST(Result, constant_result) {
   const R a = Error("test"s);
   ASSERT_EQ("test"s, a.error());
+}
+
+TEST(Result, accessors_constructors) {
+  using R = Result<std::string, std::string>;
+  R nonc = "ok"s;
+  ASSERT_TRUE(nonc) << "contains value, but false";
+  ASSERT_EQ(*nonc, "ok"s);
+  ASSERT_EQ(nonc->size(), (*nonc).size());
+
+  const R c = "ok"s;
+  ASSERT_TRUE(c) << "contains value, but false";
+
+  auto ok = Ok("ok"s);
+  R a1 = ok;
+  R a2{ok};
+  R a3(ok);
+  R a4(std::move(ok));
+  R a5(R(Ok("ok"s)));
+  R a6 = Error("err"s);
+  a6 = std::move(Ok("ok"s));
+
+  const auto V = Ok("ok"s);
+  R a7 = Error("err"s);
+  a7 = V;
+  ASSERT_TRUE(a1);
+  ASSERT_TRUE(a2);
+  ASSERT_TRUE(a3);
+  ASSERT_TRUE(a4);
+  ASSERT_TRUE(a5);
+  ASSERT_TRUE(a6);
+  ASSERT_EQ(*a1, "ok"s);
+
+  auto err = Error("err"s);
+  R b1 = err;
+  R b2{err};
+  R b3(err);
+  R b4(std::move(err));
+  R b5(R(Error("err"s)));
+  R b6 = Ok("ok"s);
+  b6 = std::move(Error("err"s));
+
+  const auto E = Error("err"s);
+  R b7 = Ok("ok"s);
+  b7 = E;
+  ASSERT_FALSE(b1);
+  ASSERT_FALSE(b2);
+  ASSERT_FALSE(b3);
+  ASSERT_FALSE(b4);
+  ASSERT_FALSE(b5);
+  ASSERT_FALSE(b6);
+  ASSERT_FALSE(b7);
+
+  // rvalue operator * and ->
+  ASSERT_TRUE(R("ok"s));
+  ASSERT_EQ(*R("ok"s), "ok"s);
+  ASSERT_EQ(R("ok"s)->size(), "ok"s.size());
+
+  const R c1 = Ok("ok"s);
+  ASSERT_FALSE(!c1);
+  ASSERT_EQ(c1->size(), (*c1).size());
+
+  // copy constructors
+  R v1 = Ok("okay"s);
+  R v2 = v1;
+  R v3 = R(Ok("okay"s));
+  R v4((R(Error("s"s))));
+  ASSERT_TRUE(v1);
+  ASSERT_TRUE(v2);
+  ASSERT_TRUE(v3);
+  ASSERT_FALSE(v4);
 }
