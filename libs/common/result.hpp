@@ -19,7 +19,7 @@
 #define IROHA_COMMON_RESULT_HPP_
 
 #include <boost/variant.hpp>
-#include "visitor.hpp"
+#include "common/visitor.hpp"
 
 namespace iroha {
   namespace result {
@@ -31,7 +31,7 @@ namespace iroha {
      */
     template <typename T>
     struct Ok_t {
-      Ok_t(T&& v) : value(std::forward<T>(v)) {}
+      Ok_t(T &&v) : value(std::forward<T>(v)) {}
       T value;
     };
 
@@ -42,7 +42,7 @@ namespace iroha {
      */
     template <typename E>
     struct Error_t {
-      Error_t(E&& e) : reason(std::forward<E>(e)) {}
+      Error_t(E &&e) : reason(std::forward<E>(e)) {}
       E reason;
     };
 
@@ -60,7 +60,7 @@ namespace iroha {
      * @return Ok_t<T>(e)
      */
     template <typename T>
-    constexpr auto Ok(T&& e) {
+    constexpr auto Ok(T &&e) {
       return Ok_t<T>{std::forward<T>(e)};
     }
 
@@ -78,7 +78,7 @@ namespace iroha {
      * @return Error_t<E>(e)
      */
     template <typename E>
-    constexpr auto Error(E&& e) {
+    constexpr auto Error(E &&e) {
       return Error_t<E>{std::forward<E>(e)};
     }
 
@@ -105,7 +105,7 @@ namespace iroha {
      * @tparam T monadic type.
      * @tparam Transform transformation, which accepts decltype(*t) as first
      * argument.
-     * @param t istance of monadic type.
+     * @param t instance of monadic type.
      * @param f instance of transformation.
      * @return applies transformation on t if t is true, returns t otherwise.
      */
@@ -126,10 +126,6 @@ namespace iroha {
       using Et = Error_t<E>;
       using Vt = Ok_t<V>;
       using R = Result<Vt, Et>;
-      template <typename T>
-      using Ok_f = std::function<T(Vt const&)>;
-      template <typename T>
-      using Err_f = std::function<T(Et const&)>;
 
      public:
       // exception that is thrown by Result if user is trying to get Value,
@@ -145,29 +141,29 @@ namespace iroha {
       // alias
       using ErrorType = Et;
 
-      // from Value (rvalue)
-      Result(const V& v) : Result(Ok(v)) {}
-
       // from Value (lvalue)
-      Result(V&& v) : Result(Ok(std::forward<V>(v))) {}
+      Result(const V &v) : Result(Ok(v)) {}
+
+      // from Value (rvalue)
+      Result(V &&v) : Result(Ok(std::forward<V>(v))) {}
 
       // from Ok_t<V> lvalue
-      Result(const Vt& e) : m(e) {}
+      Result(const Vt &e) : m(e) {}
 
       // from Ok_t<V> rvalue
-      Result(Vt&& e) : m(std::move(e)) {}
+      Result(Vt &&e) : m(std::move(e)) {}
 
       // from Error_t<E> lvalue
-      Result(Et const& e) : m(e) {}
+      Result(const Et &e) : m(e) {}
 
       // from Error_t<E> rvalue
-      Result(Et&& e) : m(std::move(e)) {}
+      Result(Et &&e) : m(std::move(e)) {}
 
       // from Result lvalue
-      Result(R const& other) { m = other.m; }
+      Result(const R &other) : m(other.m) {}
 
       // from Result rvalue
-      Result(R&& other) noexcept { m = std::move(other.m); }
+      Result(R &&other) noexcept : m(std::move(other.m)) {}
 
       /// default destructor
       ~Result() = default;
@@ -208,21 +204,21 @@ namespace iroha {
        * @throws Result::bad_get if Result contains Error
        * @return
        */
-      V&& operator*() && { return std::move(this->get_value()); }
+      V &&operator*() && { return std::move(this->get_value()); }
 
       /**
        * @brief Dereference operator.
        * @throws Result::bad_get if Result contains Error
        * @return
        */
-      V& operator*() & { return this->get_value(); }
+      V &operator*() & { return this->get_value(); }
 
       /**
        * @brief Dereference operator.
        * @throws Result::bad_get if Result contains Error
        * @return
        */
-      V const& operator*() const & { return this->get_value(); }
+      V const &operator*() const & { return this->get_value(); }
 
       /**
        * @brief Arrow operator.
@@ -238,9 +234,9 @@ namespace iroha {
        * @throws Result::bad_get if Result contains Error
        * @return
        */
-      V* operator->() { return std::ref(this->get_value()); }
+      V *operator->() { return std::ref(this->get_value()); }
       // arrow operator
-      const V* operator->() const { return std::cref(this->get_value()); }
+      const V *operator->() const { return std::cref(this->get_value()); }
 
       /**
        * @brief Accessor for the Error object.
@@ -261,74 +257,81 @@ namespace iroha {
        * @throws Result::bad_get if Result contains Value.
        * @return const V&
        */
-      const V& error() const { return this->get_error(); }
+      const E &error() const { return this->get_error(); }
 
       /**
        * @brief Accessor for the Value object.
        * @throws Result::bad_get if Result contains Error.
        * @return const V&
        */
-      const V& ok() const { return this->get_value(); }
+      const V &ok() const { return this->get_value(); }
 
       // from Result lvalue
-      Result& operator=(R const& rhs) {
+      Result &operator=(R const &rhs) {
         m = rhs;
         return *this;
       }
 
       // from Result rvalue
-      Result& operator=(R&& rhs) noexcept {
+      Result &operator=(R &&rhs) noexcept {
         m = std::move(rhs);
         return *this;
       }
 
       // from Value lvalue
-      Result& operator=(V const& val) {
+      Result &operator=(V const &val) {
         m = Ok(val);
         return *this;
       }
 
       // from Value rvalue
-      Result& operator=(V&& val) {
+      Result &operator=(V &&val) {
         m = Ok(std::move(val));
         return *this;
       }
 
       // from Ok_t<V> lvalue
-      Result& operator=(Vt const& val) {
+      Result &operator=(Vt const &val) {
         m = val;
         return *this;
       }
 
       // from Ok_t<V> rvalue
-      Result& operator=(Vt&& val) {
+      Result &operator=(Vt &&val) {
         m = std::move(val);
         return *this;
       }
 
       // from Error_t<E> lvalue
-      Result& operator=(Et const& val) {
+      Result &operator=(Et const &val) {
         m = val;
         return *this;
       }
 
       // from Error_t<E> rvalue
-      Result& operator=(Et&& val) {
+      Result &operator=(Et &&val) {
         m = std::move(val);
         return *this;
       }
 
       /**
-       * @brief Used for pattern matching. Fast, type-safe, exception-safe sway
-       * to get value from Result.
+       *
        * @tparam T arbitrary type that should be returned from visitor.
        * @param f1 lambda that accepts Ok_t<V> const& as argument.
        * @param f2 lambda that accepts Error_t<E> const& as argument.
+       * @return
+       */
+
+      /**
+       * @brief Used for pattern matching. Fast, type-safe, exception-safe sway
+       * to get value from Result.
+       * @tparam Fs types of visitor functions
+       * @param fs visitor functions
        * @return arbitrary value that visitor returns.
        */
-      template <typename T>
-      constexpr T match(Ok_f<T> f1, Err_f<T> f2) {
-        return boost::apply_visitor(make_visitor(f1, f2), m);
+      template <typename... Fs>
+      constexpr auto match(Fs &&... fs) {
+        return boost::apply_visitor(make_visitor(std::forward<Fs>(fs)...), m);
       }
 
       /**
@@ -345,16 +348,12 @@ namespace iroha {
       }
 
      private:
-      inline V& get_value() { return boost::get<Vt>(m).value; }
-      inline E& get_error() { return boost::get<Et>(m).reason; }
+      V &get_value() { return boost::get<Vt>(m).value; }
+      E &get_error() { return boost::get<Et>(m).reason; }
 
-      inline V const& get_value() const {
-        return std::cref(boost::get<Vt>(m).value);
-      }
+      const V &get_value() const { return std::cref(boost::get<Vt>(m).value); }
 
-      inline E const& get_error() const {
-        return std::cref(boost::get<Et>(m).reason);
-      }
+      const E &get_error() const { return std::cref(boost::get<Et>(m).reason); }
 
       boost::variant<Vt, Et> m;
     };

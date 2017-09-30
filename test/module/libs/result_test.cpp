@@ -33,7 +33,7 @@ res dosomething(bool isValue) {
 }
 
 TEST(Result, value_instantiation) {
-  // costructor, value
+  // constructor, value
   res r = dosomething(true);
   ASSERT_TRUE(r) << "constructor: should be value";
 
@@ -50,7 +50,7 @@ TEST(Result, value_instantiation) {
 }
 
 TEST(Result, error_instantiation) {
-  // costructor, value
+  // constructor, value
   res r = dosomething(false);
   ASSERT_FALSE(r) << "constructor: should be error";
 
@@ -94,12 +94,17 @@ TEST(Result, pattern_matching) {
   R a = 1;
   ASSERT_TRUE(a);
 
-  a.match<void>([](Ok_t<int> const& v) { SUCCEED(); },
-                [](Error_t<std::string> const& e) { FAIL(); });
+  a.match([](const Ok_t<int> &v) { SUCCEED(); },
+          [](const Error_t<std::string> &e) { FAIL(); });
 
   // create own visitor
-  auto ok_handler = [](R::OkType const& v) { SUCCEED(); };
-  auto error_handler = [](R::ErrorType const& v) { FAIL(); };
+  auto ok_handler = [](const R::OkType &v) { SUCCEED(); };
+  auto error_handler = [](const R::ErrorType &v) { FAIL(); };
   auto visitor = make_visitor(ok_handler, error_handler);
   a.match(visitor);
+}
+
+TEST(Result, constant_result) {
+  const R a = Error("test"s);
+  ASSERT_EQ("test"s, a.error());
 }
