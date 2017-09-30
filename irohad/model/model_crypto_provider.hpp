@@ -17,9 +17,9 @@ limitations under the License.
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_HPP
 
-#include "model/transaction.hpp"
-#include "model/query.hpp"
 #include "model/block.hpp"
+#include "model/query.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {
@@ -50,6 +50,22 @@ namespace iroha {
        * @return
        */
       virtual bool verify(const Block &block) const = 0;
+
+      /**
+       * Sign block with given keypair. Adds signature to the array of sigs.
+       */
+      virtual void sign(model::Block &, keypair_t const &) const = 0;
+
+      /**
+       * Sign transaction with given keypair.  Adds signature to the array of
+       * signatures.
+       */
+      virtual void sign(model::Transaction &, keypair_t const &) const = 0;
+
+      /**
+       * Sign query. Replaces current signature with new one.
+       */
+      virtual void sign(model::Query &, keypair_t const &) const = 0;
     };
   }
 }

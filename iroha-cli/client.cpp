@@ -22,6 +22,9 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
+#include <crypto/crypto.hpp>
+
+#include <model/model_crypto_provider_impl.hpp>
 
 namespace iroha_cli {
 

@@ -18,8 +18,10 @@
 #ifndef IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 
+#include <impl/keys_manager_impl.hpp>
 #include <unordered_map>
 #include "interactive/interactive_common_cli.hpp"
+#include "logger/logger.hpp"
 #include "model/command.hpp"
 #include "model/generators/command_generator.hpp"
 
@@ -161,8 +163,14 @@ namespace iroha_cli {
       // Builder for new commands
       iroha::model::generators::CommandGenerator generator_;
 
+      // key manager for transaction signing
+      KeysManagerImpl keysManager_;
+
       // Commands to be formed
       std::vector<std::shared_ptr<iroha::model::Command>> commands_;
+
+      // Logger
+      logger::Logger log_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

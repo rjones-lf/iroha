@@ -29,13 +29,6 @@ using namespace iroha::torii;
 using namespace iroha::model::converters;
 using namespace iroha::consensus::yac;
 
-class MockCryptoProvider : public ModelCryptoProvider {
- public:
-  MOCK_CONST_METHOD1(verify, bool(const Transaction &));
-  MOCK_CONST_METHOD1(verify, bool(std::shared_ptr<const Query>));
-  MOCK_CONST_METHOD1(verify, bool(const Block &));
-};
-
 Irohad::Irohad(const std::string &block_store_dir,
                const std::string &redis_host, size_t redis_port,
                const std::string &pg_conn, size_t torii_port,
@@ -103,19 +96,8 @@ void Irohad::initProtoFactories() {
 }
 
 void Irohad::initCryptoProvider() {
-  auto mock_crypto_verifier = std::make_shared<MockCryptoProvider>();
-
-  EXPECT_CALL(*mock_crypto_verifier,
-              verify(::testing::A<const Transaction &>()))
-      .WillRepeatedly(::testing::Return(true));
-  EXPECT_CALL(*mock_crypto_verifier,
-              verify(::testing::A<std::shared_ptr<const Query>>()))
-      .WillRepeatedly(::testing::Return(true));
-  EXPECT_CALL(*mock_crypto_verifier, verify(::testing::A<const Block &>()))
-      .WillRepeatedly(::testing::Return(true));
-
-  crypto_verifier = mock_crypto_verifier;
-
+  auto model_crypto_verifier = std::make_shared<ModelCryptoProviderImpl>();
+  crypto_verifier = model_crypto_verifier;
   log_->info("[Init] => crypto provider");
 }
 

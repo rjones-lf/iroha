@@ -18,6 +18,8 @@
 #include "interactive/interactive_query_cli.hpp"
 #include <fstream>
 #include "client.hpp"
+#include "crypto/crypto.hpp"
+#include "crypto/hash.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/converters/json_query_factory.hpp"
 
@@ -38,22 +40,17 @@ namespace iroha_cli {
           {GET_ACC_SIGN, "Get Account's Signatories"},
           {GET_ROLES, "Get all current roles in the system"},
           {GET_AST_INFO, "Get information about asset"},
-          {GET_ROLE_PERM, "Get all permissions related to role"}
-      };
+          {GET_ROLE_PERM, "Get all permissions related to role"}};
 
       const auto acc_id = "Requested account Id";
       const auto ast_id = "Requested asset Id";
       const auto role_id = "Requested role name";
 
       query_params_descriptions_ = {
-          {GET_ACC, {acc_id}},
-          {GET_ACC_AST, {acc_id, ast_id}},
-          {GET_ACC_TX, {acc_id}},
-          {GET_ACC_SIGN, {acc_id}},
-          {GET_ROLES, {}},
-          {GET_AST_INFO, {ast_id}},
-          {GET_ROLE_PERM, {role_id}}
-      };
+          {GET_ACC, {acc_id}},       {GET_ACC_AST, {acc_id, ast_id}},
+          {GET_ACC_TX, {acc_id}},    {GET_ACC_SIGN, {acc_id}},
+          {GET_ROLES, {}},           {GET_AST_INFO, {ast_id}},
+          {GET_ROLE_PERM, {role_id}}};
 
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
@@ -62,8 +59,7 @@ namespace iroha_cli {
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
           {GET_ROLE_PERM, &InteractiveQueryCli::parseGetRolePermissions},
           {GET_ROLES, &InteractiveQueryCli::parseGetRoles},
-          {GET_AST_INFO, &InteractiveQueryCli::parseGetAssetInfo}
-      };
+          {GET_AST_INFO, &InteractiveQueryCli::parseGetAssetInfo}};
 
       menu_points_ = formMenu(query_handlers_, query_params_descriptions_,
                               description_map_);
@@ -82,9 +78,11 @@ namespace iroha_cli {
     }
 
     InteractiveQueryCli::InteractiveQueryCli(std::string account_name,
-                                             uint64_t query_counter) {
-      creator_ = account_name;
-      counter_ = query_counter;
+                                             uint64_t query_counter)
+        : creator_(account_name),
+          counter_(query_counter),
+          keysManager_(account_name) {
+      log_ = logger::log("InteractiveQueryCli");
       create_queries_menu();
       create_result_menu();
     }
@@ -161,7 +159,8 @@ namespace iroha_cli {
                                                account_id);
     }
 
-    std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetAssetInfo(QueryParams params) {
+    std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetAssetInfo(
+        QueryParams params) {
       auto asset_id = params[0];
       auto query = std::make_shared<GetAssetInfo>(asset_id);
       // TODO: refactor, move query meta data outside of this function
@@ -169,13 +168,15 @@ namespace iroha_cli {
       return query;
     }
 
-    std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetRoles(QueryParams params) {
+    std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetRoles(
+        QueryParams params) {
       auto query = std::make_shared<GetRoles>();
       generator_.setQueryMetaData(query, local_time_, creator_, counter_);
       return query;
     }
 
-    std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetRolePermissions(QueryParams params) {
+    std::shared_ptr<iroha::model::Query>
+    InteractiveQueryCli::parseGetRolePermissions(QueryParams params) {
       auto role_name = params[0];
       auto query = std::make_shared<GetRolePermissions>(role_name);
       generator_.setQueryMetaData(query, local_time_, creator_, counter_);
@@ -203,6 +204,20 @@ namespace iroha_cli {
       if (not address.has_value()) {
         return true;
       }
+
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(*query_).to_string(), keys->pubkey,
+                               keys->privkey);
+        query_->signature = Signature{.signature = sig, .pubkey = keys->pubkey};
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
+
       CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler{}.handle(client.sendQuery(query_));
       printEnd();
@@ -211,6 +226,19 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseSaveFile(QueryParams params) {
+      auto keys = keysManager_.loadKeys();
+      if (keys) {
+        auto sig = iroha::sign(iroha::hash(*query_).to_string(), keys->pubkey,
+                               keys->privkey);
+        query_->signature = Signature{.signature = sig, .pubkey = keys->pubkey};
+      } else {
+        // TODO: check what should we do - generate new keys or return an error
+        // or may be something else
+        log_->warn(
+            "Could not load keypair for {}, transaction remains unsigned",
+            creator_);
+      }
+
       auto path = params[0];
       iroha::model::converters::JsonQueryFactory json_factory;
       auto json_string = json_factory.serialize(query_);

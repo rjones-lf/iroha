@@ -1,4 +1,5 @@
 add_subdirectory(ed25519)
+add_subdirectory(keys)
 
 add_library(hash
     hash.cpp

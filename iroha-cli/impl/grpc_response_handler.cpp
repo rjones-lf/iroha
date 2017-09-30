@@ -36,7 +36,6 @@ namespace iroha_cli {
     handler_map_[OUT_OF_RANGE] = "OUT_OF_RANGE";
     handler_map_[UNIMPLEMENTED] = "UNIMPLEMENTED";
     handler_map_[INTERNAL] = "INTERNAL";
-    handler_map_[UNIMPLEMENTED] = "UNIMPLEMENTED";
     handler_map_[UNAVAILABLE] = "Server is unavailable";
     handler_map_[DATA_LOSS] = "DATA_LOSS";
   }
