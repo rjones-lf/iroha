@@ -101,6 +101,7 @@ endif()
 #    documentation    #
 #######################
 if(DOCS)
+  cmake_minimum_required(VERSION 3.9)
   cmake_policy(SET CMP0057 NEW)
 
   find_package(Doxygen
