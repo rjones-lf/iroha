@@ -15,4 +15,4 @@
  * limitations under the License.
  */
 
-#include "multi_sig_transactions/mst_propagator.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"

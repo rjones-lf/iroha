@@ -34,7 +34,7 @@ namespace iroha {
     /**
      * Return difference between own and target state
      */
-    virtual MstState getDiffState(const model::Peer& target_peer) = 0;
+    virtual MstState getDiffState(const model::Peer& target_peer) const = 0;
 
     virtual ~MstStorage() = default;
   };

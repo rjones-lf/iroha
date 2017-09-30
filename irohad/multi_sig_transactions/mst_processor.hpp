@@ -20,31 +20,30 @@
 
 #include <rxcpp/rx.hpp>
 #include <memory>
-#include <memory>
 #include "multi_sig_transactions/storage/mst_state.hpp"
 #include "model/transaction.hpp"
 
 namespace iroha {
-  class MstPropagator {
+  class MstProcessor {
    public:
 
     /**
      * Propagate in network multi-signature transaction for signing by other participants
      * @param transaction - transaction for propagation
      */
-    virtual void propagate_transaction(model::Transaction transaction) = 0;
+    virtual void propagate_transaction(std::shared_ptr<model::Transaction> transaction) = 0;
 
     /**
      * Prove updating of state for handling status of signing
      */
-    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() = 0;
+    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const = 0;
 
     /**
      * Observable emit transactions that prepared to processing in system
      */
-    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions();
+    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions() const = 0;
 
-    virtual ~MstPropagator() = default;
+    virtual ~MstProcessor() = default;
 
   };
 } // namespace iroha
