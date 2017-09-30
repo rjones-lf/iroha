@@ -352,7 +352,7 @@ TEST(ModelOperatorTest, TransactionTest) {
 
   ASSERT_EQ(tx1, tx2);
   tx1.signatures.push_back(createSignature());
-  ASSERT_NE(tx1, tx2);
+  ASSERT_EQ(tx1, tx2); // signatures not affect on equality
 }
 
 // -----|Block|-----

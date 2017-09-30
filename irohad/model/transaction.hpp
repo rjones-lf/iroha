@@ -72,10 +72,13 @@ namespace iroha {
        */
       uint8_t quorum = 1;
 
+      using TxHashType = hash256_t;
+
       /**
        * Hash will be used in iroha for transaction identification
        */
-      hash256_t tx_hash;
+      TxHashType tx_hash;
+
 
       /**
        * Bunch of commands attached to transaction
