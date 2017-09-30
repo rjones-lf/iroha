@@ -98,7 +98,10 @@ namespace iroha {
 
     static blob_t<size_> from_string(const std::string &data) {
       if (data.size() != size_) {
-        throw BadFormatException("blob_t: input string has incorrect length");
+        std::string value =
+            "blob_t: input string has incorrect length. Found: " + std::to_string(data.size()) +
+                + ", required: " + std::to_string(size_);
+        throw BadFormatException(value.c_str());
       }
 
       blob_t<size_> b;
@@ -115,6 +118,13 @@ namespace iroha {
    */
   inline std::vector<uint8_t> stringToBytes(const std::string &source) {
     return std::vector<uint8_t>(source.begin(), source.end());
+  }
+
+  template <typename blob>
+  blob stringToBytesFiller(const std::string &source, const char filler = '0') {
+    auto result = source + std::string(blob::size() - source.length(), filler);
+
+    return blob::from_string(result);
   }
 
   /**
