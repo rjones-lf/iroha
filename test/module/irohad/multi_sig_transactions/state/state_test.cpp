@@ -52,6 +52,17 @@ TEST(StateTest, UpdateState) {
   ASSERT_EQ(1, state.getTransactions().size());
 }
 
+TEST(StateTest, UpdateExistingState) {
+  log_->info("Create empty state => insert tx with one signature => "
+                 "insert tx with another signature");
+
+  MstState state;
+  state += makeTx("1", "1");
+  state += makeTx("1", "2");
+  ASSERT_EQ(1, state.getTransactions().size());
+  ASSERT_EQ(2, state.getTransactions().begin()->get()->signatures.size());
+}
+
 TEST(StateTest, UpdateStateWhenTransacionsSame) {
   log_->info("Create empty state => insert two equal transaction");
 

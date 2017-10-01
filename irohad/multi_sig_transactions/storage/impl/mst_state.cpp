@@ -104,7 +104,16 @@ namespace iroha {
   }
 
   MstState &MstState::operator+=(const DataType &rhs) {
-    internal_state_.insert(rhs);
+    auto iter = internal_state_.find(rhs);
+    if (iter != internal_state_.end()) {
+      iter->get()->signatures =
+          merge_unique<std::vector<iroha::model::Signature>,
+                       iroha::model::Signature,
+                       SignatureHasher>(iter->get()->signatures,
+                                        rhs.get()->signatures);
+    } else {
+      internal_state_.insert(rhs);
+    }
     return *this;
   }
 
