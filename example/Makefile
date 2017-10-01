@@ -20,7 +20,24 @@
 
 .PHONY: help up dwon logs hakodate
 
-IROHA_HOME := $(shell pwd)
+UKERNEL := $(shell uname -s)
+UMACHINE := $(shell uname -m)
+
+ifeq ($(UKERNEL),Linux)
+  ifeq ($(UMACHINE),x86_64)
+    COMPOSE := docker-compose.yml
+  endif
+  ifeq ($(UMACHINE),armv7l)
+    COMPOSE := docker-compose-arm32v7.yml
+  endif
+endif
+ifeq ($(UKERNEL),Darwin)
+  COMPOSE := docker-compose.yml
+endif
+
+ifeq ($(COMPOSE), )
+$(error This platform "$(UKERNEL)/$(UMACHINE)" in not supported.)
+endif
 
 help:
 	@echo "help          - show make targets"
@@ -30,10 +47,10 @@ help:
 	@echo "hakodate      - hakodate hands-on sample using iroha-cli"
 
 up:
-	env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha up -d
+	env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha -f $(COMPOSE) up -d
 
 down:
-	env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha down
+	env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha -f $(COMPOSE) down
 
 logs:
 	docker logs -f iroha_node_1

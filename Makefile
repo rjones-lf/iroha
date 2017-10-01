@@ -33,7 +33,33 @@
 
 .PHONY: all help docker up dwon test clean
 
-IROHA_HOME := $(shell pwd)
+IROHA_HOME := /usr/local/iroha
+BUILD_HOME := $(shell pwd)
+
+UKERNEL := $(shell uname -s)
+UMACHINE := $(shell uname -m)
+
+ifeq ($(UKERNEL),Linux)
+  ifeq ($(UMACHINE),x86_64)
+    PROJECT := Hyperledger
+    DOCKER := Dockerfile
+    COMPOSE := docker-compose.yml
+  endif
+  ifeq ($(UMACHINE),armv7l)
+    PROJECT := arm32v7
+    DOCKER := Dockerfile.arm32v7
+    COMPOSE := docker-compose-arm32v7.yml
+  endif
+endif
+ifeq ($(UKERNEL),Darwin)
+  PROJECT := Hyperledger
+  DOCKER := Dockerfile
+  COMPOSE := docker-compose.yml
+endif
+
+ifeq ($(DOCKER), )
+$(error This platform "$(UKERNEL)/$(UMACHINE)" in not supported.)
+endif
 
 all: iroha-develop iroha-build iroha-release iroha
 
@@ -54,22 +80,22 @@ up: iroha-up
 down: iroha-down
 
 iroha-develop:
-	cd docker/develop && docker build --rm -t hyperledger/iroha-docker-develop .
+	cd docker/develop && docker build --rm -t $(PROJECT)/iroha-docker-develop -f $(DOCKER) .
 
 iroha-build:
-	docker run -t --rm --name iroha -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-build.sh
+	docker run -t --rm --name iroha -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-build.sh
 
 iroha-release:
-	docker run -t --rm --name iroha-release -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha hyperledger/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
+	docker run -t --rm --name iroha-release -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
 
 iroha:
-	cd docker/release && docker build --rm -t hyperledger/iroha .
+	cd docker/release && docker build --rm -t $(PROJECT)/iroha -f $(DOCKER) .
 
 iroha-up:
-	cd docker && env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha up -d
+	cd docker && env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha -f $(COMPOSE) up -d
 
 iroha-down:
-	cd docker && env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha down
+	cd docker && env COMPOSE_PROJECT_NAME=iroha docker-compose -p iroha -f $(COMPOSE) down
 
 test:
 	cd scripts && bash iroha-test.sh

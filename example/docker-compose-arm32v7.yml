@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  node:
+    image: arm32v7/iroha
+    ports:
+      - "50051:50051"
+    environment:
+      - IROHA_POSTGRES_HOST=${COMPOSE_PROJECT_NAME}_postgres_1
+      - IROHA_POSTGRES_PORT=5432
+      - IROHA_POSTGRES_USER=iroha
+      - IROHA_POSTGRES_PASSWORD=HelloW0rld
+      - IROHA_REDIS_HOST=${COMPOSE_PROJECT_NAME}_redis_1
+      - IROHA_REDIS_PORT=6379
+      - CCACHE_DIR=/tmp/ccache
+    depends_on:
+      - redis
+      - postgres
+    tty: true
+    volumes:
+      - ../config:/usr/local/iroha/config
+      - ../build/test_bin:/usr/local/iroha/test_bin
+      - ../example:/usr/local/iroha/example
+      - ccache-data:/tmp/ccache
+    working_dir: /usr/local/iroha
+
+  postgres:
+    image: arm32v7/postgres:9.5
+    environment:
+      - POSTGRES_USER=iroha
+      - IROHA_POSTGRES_PASSWORD=HelloW0rld
+    depends_on:
+      - redis
+
+  redis:
+    image: arm32v7/redis
+
+volumes:
+  ccache-data:
