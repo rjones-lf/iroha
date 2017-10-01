@@ -125,3 +125,17 @@ TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
   ASSERT_EQ(2, union_state.getTransactions().begin()->get()->signatures.size());
 }
 
+TEST(StateTest, DifferenceTest){
+  log_->info("Create two sets with common element => perform diff operation");
+
+  MstState state1, state2;
+  (state1 += makeTx("1", "1"))
+      += makeTx("2", "2");
+
+  (state2 += makeTx("2", "2"))
+      += makeTx("3", "3");
+
+  MstState diff = state1 - state2;
+  ASSERT_EQ(1, diff.getTransactions().size());
+}
+

@@ -88,7 +88,11 @@ namespace {
   template<typename Set>
   Set set_difference(const Set &left, const Set &right) {
     Set out;
-    // TODO implement diff on set
+    for (auto &&element : left) {
+      if (right.find(element) == right.end()) {
+        out.insert(element);
+      }
+    }
     return out;
   }
 } // anonymous namespace
