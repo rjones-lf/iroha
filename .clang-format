@@ -2,3 +2,5 @@ BasedOnStyle: Google
 NamespaceIndentation: All
 BreakBeforeBinaryOperators: NonAssignment
 AlignOperands: false
+DerivePointerAlignment: false
+PointerAlignment: Right

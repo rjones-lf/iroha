@@ -12,4 +12,5 @@ target_include_directories(common INTERFACE
     )
 target_link_libraries(common INTERFACE
     optional
+    ${Boost_LIBRARIES}
     )
