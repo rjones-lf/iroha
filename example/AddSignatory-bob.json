@@ -5,7 +5,7 @@
             "signature": "4563f8de6ee45e44b462a7027d1640376dece03eaf1091f8e69cdc9531957b178f00667e9241ba2d09f49b7861419b89af4986eb4d332e9d7efb31bb1105890e"
         }
     ],
-    "created_ts": 1506670398040,
+    "created_ts": 1506465158885,
     "creator_account_id": "admin@test",
     "tx_counter": 1,
     "commands": [
