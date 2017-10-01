@@ -33,6 +33,7 @@ using namespace framework::test_subscriber;
 
 using ::testing::Return;
 using ::testing::ReturnArg;
+using ::testing::A;
 using ::testing::_;
 
 class SimulatorTest : public ::testing::Test {
@@ -86,7 +87,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(_)).WillOnce(ReturnArg<0>());
+  EXPECT_CALL(*crypto_provider, sign(A<const Block &>()))
+      .WillOnce(ReturnArg<0>());
 
   init();
 
@@ -126,7 +128,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(_)).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<const Block &>())).Times(0);
 
   init();
 
@@ -163,7 +165,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(_)).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<const Block &>())).Times(0);
 
   init();
 

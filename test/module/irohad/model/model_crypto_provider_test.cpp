@@ -29,21 +29,6 @@ iroha::model::Transaction create_transaction() {
   return tx;
 }
 
-iroha::model::Transaction sign(iroha::model::Transaction &tx, iroha::privkey_t privkey,
-                 iroha::pubkey_t pubkey) {
-  auto tx_hash = iroha::hash(tx);
-
-  auto sign = iroha::sign(tx_hash.data(), tx_hash.size(), pubkey, privkey);
-
-  iroha::model::Signature signature{};
-  signature.signature = sign;
-  signature.pubkey = pubkey;
-
-  tx.signatures.push_back(signature);
-
-  return tx;
-}
-
 TEST(CryptoProvider, SignAndVerify) {
   // generate privkey/pubkey keypair
   auto seed = iroha::create_seed();
@@ -52,7 +37,7 @@ TEST(CryptoProvider, SignAndVerify) {
   auto model_tx = create_transaction();
 
   iroha::model::ModelCryptoProviderImpl crypto_provider(keypair);
-  sign(model_tx, keypair.privkey, keypair.pubkey);
+  model_tx = crypto_provider.sign(model_tx);
   ASSERT_TRUE(crypto_provider.verify(model_tx));
 
   // now modify transaction's meta, so verify should fail

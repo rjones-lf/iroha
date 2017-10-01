@@ -35,6 +35,8 @@ namespace iroha {
 
       Block sign(const Block &block) const override;
 
+      Transaction sign(const Transaction &transaction) const override;
+
      private:
       keypair_t keypair_;
     };

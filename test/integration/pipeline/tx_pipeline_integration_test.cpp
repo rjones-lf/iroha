@@ -88,10 +88,14 @@ class TxPipelineIntegrationTest : public iroha::ametsuchi::AmetsuchiTest {
     // insert genesis block
     iroha::main::BlockInserter inserter(irohad->storage);
 
+    auto keypair = iroha::create_keypair();
+
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
-            {"0.0.0.0:10000"});
+            {"0.0.0.0:10000"}, {keypair.pubkey});
     inserter.applyToLedger({genesis_block});
+
+    irohad->setKeypair(keypair);
 
     // initialize irohad
     irohad->init();
@@ -181,7 +185,7 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   auto tx =
       iroha::model::generators::TransactionGenerator().generateTransaction(
           "admin@test", 1, {cmd});
-  tx.signatures.emplace_back();
+  tx = irohad->getCryptoProvider()->sign(tx);
 
   sendTransactions({tx});
 

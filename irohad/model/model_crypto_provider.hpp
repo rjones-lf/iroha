@@ -18,9 +18,9 @@
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_HPP
 
-#include "model/transaction.hpp"
-#include "model/query.hpp"
 #include "model/block.hpp"
+#include "model/query.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {
@@ -58,6 +58,13 @@ namespace iroha {
        * @return signed block
        */
       virtual Block sign(const Block &block) const = 0;
+
+      /**
+       * Method for signing a transaction with stored keypair
+       * @param transaction - transaction for signing
+       * @return signed transaction
+       */
+      virtual Transaction sign(const Transaction &transaction) const = 0;
     };
   }
 }

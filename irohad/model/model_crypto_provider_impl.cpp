@@ -15,55 +15,63 @@
  * limitations under the License.
  */
 
-#include <crypto/crypto.hpp>
-#include <crypto/hash.hpp>
-#include <model/converters/pb_block_factory.hpp>
-#include <model/converters/pb_query_factory.hpp>
-#include <model/converters/pb_transaction_factory.hpp>
-#include <model/model_crypto_provider_impl.hpp>
+#include "model/model_crypto_provider_impl.hpp"
+#include "model/converters/pb_block_factory.hpp"
+#include "model/converters/pb_common.hpp"
+#include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 
 namespace iroha {
   namespace model {
+
+    const static model::converters::PbTransactionFactory transaction_factory;
+    const static model::converters::PbBlockFactory block_factory;
+    const static model::converters::PbQueryFactory query_factory;
+
     ModelCryptoProviderImpl::ModelCryptoProviderImpl(const keypair_t &keypair)
         : keypair_(keypair) {}
 
     bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
-      if (tx.signatures.empty()) return false;
-
-      const auto hash_ = hash(tx).to_string();
-
-      for (const auto &sign : tx.signatures) {
-        if (not iroha::verify(hash_, sign.pubkey, sign.signature)) return false;
-      }
-      return true;
+      auto pb_tx = transaction_factory.serialize(tx);
+      
+      return std::all_of(
+          tx.signatures.begin(), tx.signatures.end(), iroha::verify(pb_tx));
     }
 
     bool ModelCryptoProviderImpl::verify(
         std::shared_ptr<const Query> query) const {
-      const auto hash_ = hash(*query).to_string();
-      const auto sig = query->signature;
+      auto pb_query = *query_factory.serialize(query);
 
-      return iroha::verify(hash_, sig.pubkey, sig.signature);
+      return iroha::verify(pb_query)(query->signature);
     }
 
     bool ModelCryptoProviderImpl::verify(const Block &block) const {
-      const auto hash_ = hash(block).to_string();
+      auto pb_block = block_factory.serialize(block);
 
-      for (const auto &sig : block.sigs)
-        if (not iroha::verify(hash_, sig.pubkey, sig.signature)) {
-          return false;
-        }
-       return true;
+      return std::all_of(
+          block.sigs.begin(), block.sigs.end(), iroha::verify(pb_block));
     }
 
-    const static model::converters::PbBlockFactory block_factory;
-
     Block ModelCryptoProviderImpl::sign(const Block &block) const {
+      auto pb_block = block_factory.serialize(block);
+
+      auto signature = iroha::sign(pb_block, keypair_);
+
       auto signed_block = block;
-      auto blob = block_factory.serialize(signed_block).SerializeAsString();
-      auto signature = iroha::sign(blob, keypair_.pubkey, keypair_.privkey);
-      signed_block.sigs.push_back(Signature{std::move(signature), keypair_.pubkey});
+      signed_block.sigs.push_back(Signature{signature, keypair_.pubkey});
       return signed_block;
+    }
+
+    Transaction ModelCryptoProviderImpl::sign(
+        const Transaction &transaction) const {
+      auto pb_transaction = transaction_factory.serialize(transaction);
+
+      auto signature = iroha::sign(pb_transaction, keypair_);
+
+      auto signed_transaction = transaction;
+      signed_transaction.signatures.push_back(
+          Signature{signature, keypair_.pubkey});
+      return signed_transaction;
     }
   }
 }

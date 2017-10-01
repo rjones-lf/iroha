@@ -24,7 +24,9 @@ namespace iroha {
   namespace model {
     namespace generators {
       Transaction TransactionGenerator::generateGenesisTransaction(
-          ts64_t timestamp, std::vector<std::string> peers_address) {
+          ts64_t timestamp,
+          std::vector<std::string> peers_address,
+          std::vector<pubkey_t> public_keys) {
         Transaction tx;
         tx.created_ts = timestamp;
         tx.creator_account_id = "";
@@ -33,9 +35,7 @@ namespace iroha {
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
-          // TODO: replace with more flexible scheme, generate public keys with
-          // specified parameters
-          auto peer_key = generator::random_blob<pubkey_t::size()>(i + 1);
+          auto peer_key = public_keys.at(i);
           tx.commands.push_back(
               command_generator.generateAddPeer(peers_address[i], peer_key));
         }
@@ -57,6 +57,18 @@ namespace iroha {
             command_generator.generateSetAdminPermissions("admin@test"));
 
         return tx;
+      }
+
+      Transaction TransactionGenerator::generateGenesisTransaction(
+          ts64_t timestamp,
+          std::vector<std::string> peers_address) {
+        std::vector<pubkey_t> public_keys;
+        for (size_t i = 0; i < peers_address.size(); ++i) {
+          public_keys.push_back(
+              generator::random_blob<pubkey_t::size()>(i + 1));
+        }
+        return generateGenesisTransaction(
+            timestamp, peers_address, public_keys);
       }
 
       Transaction TransactionGenerator::generateTransaction(

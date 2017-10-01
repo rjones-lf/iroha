@@ -27,6 +27,15 @@ namespace iroha {
       class BlockGenerator {
        public:
         /**
+          * Generate sample genesis for new Iroha network
+          * @param peers_address
+          * @param public_keys
+          * @return model Block
+          */
+        Block generateGenesisBlock(std::vector<std::string> peers_address,
+                                   std::vector<pubkey_t> public_keys);
+
+        /**
          * Generate sample genesis for new Iroha network
          * @param peers_address
          * @return model Block
