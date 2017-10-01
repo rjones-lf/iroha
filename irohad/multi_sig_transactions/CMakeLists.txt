@@ -16,10 +16,12 @@ add_subdirectory(storage)
 add_subdirectory(transport)
 
 
-#add_library(mst_processor
-#    impl/mst_processor.cpp
-#    )
-#
-#target_link_libraries(mst_processor
-#    mst_storage
-#    )
+add_library(mst_processor
+    impl/mst_processor_impl.cpp
+    impl/mst_processor.cpp
+    )
+
+target_link_libraries(mst_processor
+    mst_storage
+    logger
+    )

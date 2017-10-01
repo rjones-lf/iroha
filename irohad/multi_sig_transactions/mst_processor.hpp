@@ -22,28 +22,56 @@
 #include <memory>
 #include "multi_sig_transactions/storage/mst_state.hpp"
 #include "model/transaction.hpp"
+#include <mutex>
+#include "logger/logger.hpp"
 
 namespace iroha {
+
+  /**
+   * MstProcessor is responsible for organization of sharing multi-signature
+   * transactions in network
+   */
   class MstProcessor {
    public:
+// -----------------------------| user interface |------------------------------
 
     /**
      * Propagate in network multi-signature transaction for signing by other participants
      * @param transaction - transaction for propagation
+     * Important note: propagateTransaction call cover under mutex,
+     * thus, it is thread-safe.
      */
-    virtual void propagate_transaction(std::shared_ptr<model::Transaction> transaction) = 0;
+    void propagateTransaction(std::shared_ptr<model::Transaction> transaction);
 
     /**
      * Prove updating of state for handling status of signing
      */
-    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const = 0;
+    rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
      * Observable emit transactions that prepared to processing in system
      */
-    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions() const = 0;
+    rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions() const;
 
     virtual ~MstProcessor() = default;
+
+   protected:
+    MstProcessor();
+
+   private:
+// --------------------------| inheritance interface |--------------------------
+
+    virtual void propagateTransactionImpl(std::shared_ptr<model::Transaction> transaction) = 0;
+
+    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdateImpl() const = 0;
+
+    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactionsImpl() const = 0;
+
+// ---------------------------------| fields |----------------------------------
+
+    std::mutex mutex_;
+
+    logger::Logger log_;
 
   };
 } // namespace iroha
