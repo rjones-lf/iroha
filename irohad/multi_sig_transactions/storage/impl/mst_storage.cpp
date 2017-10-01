@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <utility>
+
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
@@ -22,18 +24,18 @@ namespace iroha {
     log_ = logger::log("MstStorage");
   }
 
-  void MstStorage::apply(const model::Peer &target_peer, MstState new_state) {
-    std::lock_guard<std::mutex> _{this->mutex_};
-    return applyImpl(target_peer, std::move(new_state));
+  void MstStorage::apply(ConstPeer &target_peer, MstState new_state) {
+    std::lock_guard<std::mutex> lock{this->mutex_};
+    return applyImpl(target_peer, new_state);
   }
 
   void MstStorage::updateOwnState(TransactionType tx) {
-    std::lock_guard<std::mutex> _{this->mutex_};
+    std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(std::move(tx));
   }
 
-  MstState MstStorage::getDiffState(const model::Peer &target_peer) const {
-    std::lock_guard<std::mutex> _{this->mutex_};
+  MstState MstStorage::getDiffState(ConstPeer &target_peer) const {
+    std::lock_guard<std::mutex> lock(this->mutex_);
     return getDiffStateImpl(target_peer);
   }
 } // namespace iroha

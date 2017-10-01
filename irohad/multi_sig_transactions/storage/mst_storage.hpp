@@ -44,7 +44,7 @@ namespace iroha {
      * @param new_state - state with new data
      * General note: implementation of method covered by lock
      */
-    void apply(const model::Peer &target_peer, MstState new_state);
+    void apply(ConstPeer &target_peer, MstState new_state);
 
     /**
      * Provide updating state of current peer with new transaction
@@ -57,22 +57,21 @@ namespace iroha {
      * Return difference between own and target state
      * General note: implementation of method covered by lock
      */
-    MstState getDiffState(const model::Peer &target_peer) const;
+    MstState getDiffState(ConstPeer &target_peer) const;
 
     virtual ~MstStorage() = default;
    private:
 // --------------------------------| class API |--------------------------------
 
-    virtual void applyImpl(const model::Peer &target_peer,
-                           MstState new_state) = 0;
+    virtual void applyImpl(ConstPeer &target_peer, MstState &new_state) = 0;
 
     virtual void updateOwnStateImpl(TransactionType tx) = 0;
 
-    virtual MstState getDiffStateImpl(const model::Peer &target_peer) const = 0;
+    virtual MstState getDiffStateImpl(ConstPeer &target_peer) const = 0;
 
 // ---------------------------------| fields |----------------------------------
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 
    protected:
     logger::Logger log_;
