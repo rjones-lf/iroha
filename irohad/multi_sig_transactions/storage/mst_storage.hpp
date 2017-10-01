@@ -18,25 +18,64 @@
 #ifndef IROHA_MST_STORAGE_HPP
 #define IROHA_MST_STORAGE_HPP
 
+#include <mutex>
+#include "logger/logger.hpp"
 #include "model/peer.hpp"
 #include "multi_sig_transactions/storage/mst_state.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
+
+  /**
+   * MstStorage responsible for manage own and others MstStates.
+   */
   class MstStorage {
+   public:
+// --------------------------------| user API |---------------------------------
+
+    /**
+     * Constructor provide initialization of protected fields, such as logger.
+     */
+    MstStorage();
 
     /**
      * Apply new state for peer
      * @param target_peer - key for for updating state
      * @param new_state - state with new data
+     * General note: implementation of method covered by lock
      */
-    virtual void apply(const model::Peer& target_peer, MstState new_state) = 0;
+    void apply(const model::Peer &target_peer, MstState new_state);
+
+    /**
+     * Provide updating state of current peer with new transaction
+     * @param tx - new transaction for insertion in state
+     * General note: implementation of method covered by lock
+     */
+    void updateOwnState(TransactionType tx);
 
     /**
      * Return difference between own and target state
+     * General note: implementation of method covered by lock
      */
-    virtual MstState getDiffState(const model::Peer& target_peer) const = 0;
+    MstState getDiffState(const model::Peer &target_peer) const;
 
     virtual ~MstStorage() = default;
+   private:
+// --------------------------------| class API |--------------------------------
+
+    virtual void applyImpl(const model::Peer &target_peer,
+                           MstState new_state) = 0;
+
+    virtual void updateOwnStateImpl(TransactionType tx) = 0;
+
+    virtual MstState getDiffStateImpl(const model::Peer &target_peer) const = 0;
+
+// ---------------------------------| fields |----------------------------------
+
+    std::mutex mutex_;
+
+   protected:
+    logger::Logger log_;
   };
 } // namespace iroha
 #endif //IROHA_MST_STORAGE_HPP
