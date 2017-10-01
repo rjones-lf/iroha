@@ -27,5 +27,6 @@ core/infra/protobuf
 docker/tiny/iroha/
 include/generated/*
 .scannerwork/
+iroha.conf
 peers.list
 
