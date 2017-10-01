@@ -74,75 +74,49 @@
 #
 #------------------------------------------------------------------------
 
+source functions.sh
+
 #IROHA_NODE=iroha_node_1
 #IROHA_HOME=/opt/iroha/build/bin
+if [[ -z "${IROHA_CLI}" ]];
+    then IROHA_CLI=/opt/iroha/build/bin/iroha-cli
+fi
 #IROHA_CLI=/opt/iroha/build/bin/iroha-cli
 #IROHA_SEND="--grpc --json_transaction"
 #IROHA_RECV="--grpc --json_query"
 
 tx_counter=0
-
 #CURDIR=$(basename $(pwd))
-
-function send() {
-  echo "=== $1 ==="
-  read
-
-  created_ts=$(./current_millis)
-  ((tx_counter+=1))
-
-  < $(basename $2) \
-    sed -e "s/\"created_ts\".*/\"created_ts\": $created_ts,/" \
-        -e "s/\"tx_counter\".*/\"tx_counter\": $tx_counter,/" >tx.json
-
-  /opt/iroha/build/bin/iroha-cli --grpc --json_transaction tx.json
-  echo
-}
-
-function recv() {
-  echo "=== $1 ==="
-  read
-
-  created_ts=$(./current_millis)
-  ((tx_counter+=1))
-
-  < $(basename $2)  \
-    sed -e "s/\"created_ts\".*/\"created_ts\": $created_ts,/" \
-        -e "s/\"tx_counter\".*/\"tx_counter\": $tx_counter,/" >rx.json
-
-  /opt/iroha/build/bin/iroha-cli --grpc --json_query rx.json
-  echo
-}
 
 ## # Generate New Key-pair by iroha-cli
 ## docker exec -t iroha_node_1 /usr/local/iroha/bin/iroha-cli --new_account --name alice --pass_phrase hell0wor1d
 
-send "CreateDomain"             CreateDomain.json
+run_send "CreateDomain"             CreateDomain.json
 
-send "CreateAsset"              CreateAsset.json
+run_send "CreateAsset"              CreateAsset.json
 
-recv "GetAccount (alice)"       GetAccount-alice.json
-send "CreateAccount (alice)"    CreateAccount-alice.json
-recv "GetAccount (alice)"       GetAccount-alice.json
+run_recv "GetAccount (alice)"       GetAccount-alice.json
+run_send "CreateAccount (alice)"    CreateAccount-alice.json
+run_recv "GetAccount (alice)"       GetAccount-alice.json
 
-send "CreateAccount (bob)"      CreateAccount-bob.json
-recv "GetAccount (bob)"         GetAccount-bob.json
+run_send "CreateAccount (bob)"      CreateAccount-bob.json
+run_recv "GetAccount (bob)"         GetAccount-bob.json
 
-send "AddSignatory (bob)"       AddSignatory-bob.json
-recv "GetSignatories (bob)"     GetSignatories.json
+run_send "AddSignatory (bob)"       AddSignatory-bob.json
+run_recv "GetSignatories (bob)"     GetSignatories.json
 
-send "AddAssetQuantity (alice)" AddAssetQuantity-alice.json
-recv "GetAccountAssets (alice)" GetAccountAssets-alice.json
+run_send "AddAssetQuantity (alice)" AddAssetQuantity-alice.json
+run_recv "GetAccountAssets (alice)" GetAccountAssets-alice.json
 
-send "AddAssetQuantity (bob)"   AddAssetQuantity-bob.json
-recv "GetAccountAssets (bob)"   GetAccountAssets-bob.json
+run_send "AddAssetQuantity (bob)"   AddAssetQuantity-bob.json
+run_recv "GetAccountAssets (bob)"   GetAccountAssets-bob.json
 
-send "TransferAsset"            TransferAsset.json
-recv "GetAccountAssets (alice)" GetAccountAssets-alice.json
-recv "GetAccountAssets (bob)"   GetAccountAssets-bob.json
+run_send "TransferAsset"            TransferAsset.json
+run_recv "GetAccountAssets (alice)" GetAccountAssets-alice.json
+run_recv "GetAccountAssets (bob)"   GetAccountAssets-bob.json
 
-recv "GetAccountTransactions (bob)" GetAccountTransactions.json
+run_recv "GetAccountTransactions (bob)" GetAccountTransactions.json
 
-recv "GetAccountAssetTransactions (alice)" GetAccountAssetTransactions-alice.json
+run_recv "GetAccountAssetTransactions (alice)" GetAccountAssetTransactions-alice.json
 
 exit 0
