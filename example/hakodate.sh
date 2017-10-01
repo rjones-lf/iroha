@@ -74,43 +74,44 @@
 #
 #------------------------------------------------------------------------
 
-#IROHA_NODE=iroha_node_1
-#IROHA_HOME=/opt/iroha/build/bin
-#IROHA_CLI=/opt/iroha/build/bin/iroha-cli
-#IROHA_SEND="--grpc --json_transaction"
-#IROHA_RECV="--grpc --json_query"
+IROHA_NODE=iroha_node_1
+IROHA_HOME=/usr/local/iroha
+IROHA_CLI=${IROHA_HOME}/bin/iroha-cli
+IROHA_SEND="--grpc --json_transaction"
+IROHA_RECV="--grpc --json_query"
 
 tx_counter=0
+rx_counter=0
 
-#CURDIR=$(basename $(pwd))
+CURDIR=$(basename $(pwd))
 
 function send() {
   echo "=== $1 ==="
-  read
+  read junk
 
   created_ts=$(./current_millis)
   ((tx_counter+=1))
 
-  < $(basename $2) \
+  cat $(basename $2) | \
     sed -e "s/\"created_ts\".*/\"created_ts\": $created_ts,/" \
         -e "s/\"tx_counter\".*/\"tx_counter\": $tx_counter,/" >tx.json
 
-  /opt/iroha/build/bin/iroha-cli --grpc --json_transaction tx.json
+  docker exec -t ${IROHA_NODE} ${IROHA_CLI} ${IROHA_SEND} ${CURDIR}/tx.json
   echo
 }
 
 function recv() {
   echo "=== $1 ==="
-  read
+  read junk
 
   created_ts=$(./current_millis)
   ((tx_counter+=1))
 
-  < $(basename $2)  \
+  cat $(basename $2) | \
     sed -e "s/\"created_ts\".*/\"created_ts\": $created_ts,/" \
         -e "s/\"tx_counter\".*/\"tx_counter\": $tx_counter,/" >rx.json
 
-  /opt/iroha/build/bin/iroha-cli --grpc --json_query rx.json
+  docker exec -t ${IROHA_NODE} ${IROHA_CLI} ${IROHA_RECV} ${CURDIR}/rx.json
   echo
 }
 
