@@ -29,7 +29,7 @@
 
 #include "client.hpp"
 #include "grpc_response_handler.hpp"
-#include "impl/keys_manager_impl.hpp"
+#include "crypto/keys_manager_impl.hpp"
 #include "logger/logger.hpp"
 
 #include "interactive/interactive_cli.hpp"
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
   auto logger = logger::log("CLI-MAIN");
   if (FLAGS_new_account) {
     // Create new pub/priv key
-    auto keysManager = iroha_cli::KeysManagerImpl(FLAGS_name);
+    auto keysManager = iroha::KeysManagerImpl(FLAGS_name);
     if (not keysManager.createKeys(FLAGS_pass_phrase)) {
       logger->error("Keys already exist");
     } else {

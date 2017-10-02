@@ -53,8 +53,7 @@ namespace iroha {
    */
   template <typename T>
   auto sign(const T &pb, const keypair_t &keypair) {
-    return iroha::sign(
-        pb.payload().SerializeAsString(), keypair.pubkey, keypair.privkey);
+    return iroha::sign(pb, keypair.pubkey, keypair.privkey);
   }
 
   /**
@@ -66,9 +65,7 @@ namespace iroha {
   template <typename T>
   auto verify(const T &pb) {
     return [=](auto signature) {
-      return iroha::verify(pb.payload().SerializeAsString(),
-                           signature.pubkey,
-                           signature.signature);
+      return iroha::verify(pb, signature.pubkey, signature.signature);
     };
   }
 }

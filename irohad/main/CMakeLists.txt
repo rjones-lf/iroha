@@ -60,4 +60,5 @@ target_link_libraries(irohad
     raw_block_insertion
     gflags
     rapidjson
+    keys_manager
     )

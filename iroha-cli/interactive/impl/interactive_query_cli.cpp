@@ -20,6 +20,7 @@
 #include "client.hpp"
 #include "crypto/crypto.hpp"
 #include "crypto/hash.hpp"
+#include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/converters/json_query_factory.hpp"
 
@@ -46,11 +47,13 @@ namespace iroha_cli {
       const auto ast_id = "Requested asset Id";
       const auto role_id = "Requested role name";
 
-      query_params_descriptions_ = {
-          {GET_ACC, {acc_id}},       {GET_ACC_AST, {acc_id, ast_id}},
-          {GET_ACC_TX, {acc_id}},    {GET_ACC_SIGN, {acc_id}},
-          {GET_ROLES, {}},           {GET_AST_INFO, {ast_id}},
-          {GET_ROLE_PERM, {role_id}}};
+      query_params_descriptions_ = {{GET_ACC, {acc_id}},
+                                    {GET_ACC_AST, {acc_id, ast_id}},
+                                    {GET_ACC_TX, {acc_id}},
+                                    {GET_ACC_SIGN, {acc_id}},
+                                    {GET_ROLES, {}},
+                                    {GET_AST_INFO, {ast_id}},
+                                    {GET_ROLE_PERM, {role_id}}};
 
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
@@ -61,8 +64,8 @@ namespace iroha_cli {
           {GET_ROLES, &InteractiveQueryCli::parseGetRoles},
           {GET_AST_INFO, &InteractiveQueryCli::parseGetAssetInfo}};
 
-      menu_points_ = formMenu(query_handlers_, query_params_descriptions_,
-                              description_map_);
+      menu_points_ = formMenu(
+          query_handlers_, query_params_descriptions_, description_map_);
       // Add "go back" option
       addBackOption(menu_points_);
     }
@@ -72,7 +75,8 @@ namespace iroha_cli {
                           {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
       result_params_descriptions_ = getCommonParamsMap();
 
-      result_points_ = formMenu(result_handlers_, result_params_descriptions_,
+      result_points_ = formMenu(result_handlers_,
+                                result_params_descriptions_,
                                 getCommonDescriptionMap());
       addBackOption(result_points_);
     }
@@ -81,8 +85,9 @@ namespace iroha_cli {
                                              uint64_t query_counter)
         : creator_(account_name),
           counter_(query_counter),
-          keysManager_(account_name) {
+          keysManager_(iroha::KeysManagerImpl(account_name)) {
       log_ = logger::log("InteractiveQueryCli");
+      keypair_ = keysManager_.loadKeys();
       create_queries_menu();
       create_result_menu();
     }
@@ -133,8 +138,8 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetAccount(
         QueryParams params) {
       auto account_id = params[0];
-      return generator_.generateGetAccount(local_time_, creator_, counter_,
-                                           account_id);
+      return generator_.generateGetAccount(
+          local_time_, creator_, counter_, account_id);
     }
 
     std::shared_ptr<iroha::model::Query>
@@ -148,15 +153,15 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Query>
     InteractiveQueryCli::parseGetAccountTransactions(QueryParams params) {
       auto account_id = params[0];
-      return generator_.generateGetAccountTransactions(local_time_, creator_,
-                                                       counter_, account_id);
+      return generator_.generateGetAccountTransactions(
+          local_time_, creator_, counter_, account_id);
     }
 
     std::shared_ptr<iroha::model::Query>
     InteractiveQueryCli::parseGetSignatories(QueryParams params) {
       auto account_id = params[0];
-      return generator_.generateGetSignatories(local_time_, creator_, counter_,
-                                               account_id);
+      return generator_.generateGetSignatories(
+          local_time_, creator_, counter_, account_id);
     }
 
     std::shared_ptr<iroha::model::Query> InteractiveQueryCli::parseGetAssetInfo(
@@ -193,8 +198,8 @@ namespace iroha_cli {
         return true;
       }
 
-      auto res = handleParse<bool>(this, line, result_handlers_,
-                                   result_params_descriptions_);
+      auto res = handleParse<bool>(
+          this, line, result_handlers_, result_params_descriptions_);
 
       return not res.has_value() ? true : res.value();
     }
@@ -205,11 +210,10 @@ namespace iroha_cli {
         return true;
       }
 
-      auto keys = keysManager_.loadKeys();
-      if (keys) {
-        auto sig = iroha::sign(iroha::hash(*query_).to_string(), keys->pubkey,
-                               keys->privkey);
-        query_->signature = Signature{.signature = sig, .pubkey = keys->pubkey};
+      if (keypair_) {
+        auto sig = iroha::sign(
+            iroha::hash(*query_).to_string(), keypair_->pubkey, keypair_->privkey);
+        query_->signature = Signature{.signature = sig, .pubkey = keypair_->pubkey};
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else
@@ -226,11 +230,10 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseSaveFile(QueryParams params) {
-      auto keys = keysManager_.loadKeys();
-      if (keys) {
-        auto sig = iroha::sign(iroha::hash(*query_).to_string(), keys->pubkey,
-                               keys->privkey);
-        query_->signature = Signature{.signature = sig, .pubkey = keys->pubkey};
+      if (keypair_) {
+        auto sig = iroha::sign(
+            iroha::hash(*query_).to_string(), keypair_->pubkey, keypair_->privkey);
+        query_->signature = Signature{.signature = sig, .pubkey = keypair_->pubkey};
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else

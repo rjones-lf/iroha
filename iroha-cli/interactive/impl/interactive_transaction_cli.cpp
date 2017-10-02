@@ -85,8 +85,11 @@ namespace iroha_cli {
           {SET_QUO, {acc_id, quorum}},
           {SUB_ASSET_QTY, {}},
           {TRAN_ASSET,
-           {std::string("Src") + acc_id, std::string("Dest") + acc_id, ast_id,
-            ammout_a, ammout_b}},
+           {std::string("Src") + acc_id,
+            std::string("Dest") + acc_id,
+            ast_id,
+            ammout_a,
+            ammout_b}},
           {CREATE_ROLE, {role}},
           {APPEND_ROLE, {acc_id, role}},
           {GRANT_PERM, {acc_id, perm}},
@@ -110,7 +113,8 @@ namespace iroha_cli {
           {GRANT_PERM, &InteractiveTransactionCli::parseGrantPermission},
           {REVOKE_PERM, &InteractiveTransactionCli::parseGrantPermission}};
 
-      commands_menu_ = formMenu(command_handlers_, command_params_descriptions_,
+      commands_menu_ = formMenu(command_handlers_,
+                                command_params_descriptions_,
                                 commands_description_map_);
       // Add "go back" option
       addBackOption(commands_menu_);
@@ -138,8 +142,8 @@ namespace iroha_cli {
           {ADD_CMD, &InteractiveTransactionCli::parseAddCommand},
           {BACK_CODE, &InteractiveTransactionCli::parseGoBack}};
 
-      result_menu_ = formMenu(result_handlers_, result_params_descriptions,
-                              result_desciption);
+      result_menu_ = formMenu(
+          result_handlers_, result_params_descriptions, result_desciption);
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
@@ -147,6 +151,7 @@ namespace iroha_cli {
         : creator_(creator_account),
           tx_counter_(tx_counter),
           keysManager_(creator_account) {
+      keypair_ = keysManager_.loadKeys();
       log_ = logger::log("InteractiveTransactionCli");
       createCommandMenu();
       createResultMenu();
@@ -348,16 +353,16 @@ namespace iroha_cli {
         return nullptr;
       }
       iroha::Amount amount(val_int.value(), precision.value());
-      return generator_.generateTransferAsset(src_account_id, dest_account_id,
-                                              asset_id, amount);
+      return generator_.generateTransferAsset(
+          src_account_id, dest_account_id, asset_id, amount);
     }
 
     // --------- Result parsers -------------
 
     bool InteractiveTransactionCli::parseResult(std::string line) {
       // Find in result handler map
-      auto res = handleParse<bool>(this, line, result_handlers_,
-                                   result_params_descriptions);
+      auto res = handleParse<bool>(
+          this, line, result_handlers_, result_params_descriptions);
       return not res.has_value() ? true : res.value();
     }
 
@@ -372,14 +377,13 @@ namespace iroha_cli {
       iroha::model::generators::TransactionGenerator tx_generator_;
       auto time_stamp =
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
-      auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
-                                                  tx_counter_, commands_);
-      auto keys = keysManager_.loadKeys();
-      if (keys) {
-        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
-                               keys->privkey);
+      auto tx = tx_generator_.generateTransaction(
+          time_stamp, creator_, tx_counter_, commands_);
+      if (keypair_) {
+        auto sig = iroha::sign(
+            iroha::hash(tx).to_string(), keypair_->pubkey, keypair_->privkey);
         tx.signatures.push_back(
-            Signature{.signature = sig, .pubkey = keys->pubkey});
+            Signature{.signature = sig, .pubkey = keypair_->pubkey});
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else
@@ -395,6 +399,7 @@ namespace iroha_cli {
       // Stop parsing
       return false;
     }
+
     bool InteractiveTransactionCli::parseSaveFile(
         std::vector<std::string> params) {
       auto path = params[0];
@@ -408,14 +413,13 @@ namespace iroha_cli {
       iroha::model::generators::TransactionGenerator tx_generator_;
       auto time_stamp =
           std::chrono::system_clock::now().time_since_epoch() / 1ms;
-      auto tx = tx_generator_.generateTransaction(time_stamp, creator_,
-                                                  tx_counter_, commands_);
-      auto keys = keysManager_.loadKeys();
-      if (keys) {
-        auto sig = iroha::sign(iroha::hash(tx).to_string(), keys->pubkey,
-                               keys->privkey);
+      auto tx = tx_generator_.generateTransaction(
+          time_stamp, creator_, tx_counter_, commands_);
+      if (keypair_) {
+        auto sig = iroha::sign(
+            iroha::hash(tx).to_string(), keypair_->pubkey, keypair_->privkey);
         tx.signatures.push_back(
-            Signature{.signature = sig, .pubkey = keys->pubkey});
+            Signature{.signature = sig, .pubkey = keypair_->pubkey});
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else
@@ -423,7 +427,6 @@ namespace iroha_cli {
             "Could not load keypair for {}, transaction remains unsigned",
             creator_);
       }
-
 
       iroha::model::converters::JsonTransactionFactory json_factory;
       auto json_doc = json_factory.serialize(tx);
@@ -446,6 +449,7 @@ namespace iroha_cli {
       // Continue parsing
       return true;
     }
+
     bool InteractiveTransactionCli::parseAddCommand(
         std::vector<std::string> params) {
       current_context_ = MAIN;

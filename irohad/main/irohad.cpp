@@ -21,6 +21,7 @@ limitations under the License.
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_insertion.hpp"
+#include "crypto/keys_manager_impl.hpp"
 
 #include "logger/logger.hpp"
 
@@ -51,8 +52,12 @@ int main(int argc, char *argv[]) {
   auto config = parse_iroha_config(FLAGS_config);
   log->info("config initialized");
 
-  // TODO load keypair
+  // TODO: we need a name here
+  iroha::KeysManagerImpl keysManager("admin@test");
   iroha::keypair_t keypair;
+  if (auto loadedKeypair = keysManager.loadKeys()) {
+    keypair = *loadedKeypair;
+  }
 
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::RedisHost].GetString(),

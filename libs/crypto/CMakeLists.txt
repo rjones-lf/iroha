@@ -21,3 +21,12 @@ target_link_libraries(crypto
 add_library(lookup3
     lookup3.c
     )
+
+add_library(keys_manager
+    keys_manager_impl.cpp
+    )
+
+target_link_libraries(keys_manager
+        optional
+        crypto
+        )

@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-#include "impl/keys_manager_impl.hpp"
+#include "keys_manager_impl.hpp"
 
 #include <utility>
 #include <fstream>
 
 using iroha::operator|;
 
-namespace iroha_cli {
+namespace iroha {
   /**
    * Return function which will try to deserialize specified value to specified
    * field in given keypair
@@ -86,4 +86,4 @@ namespace iroha_cli {
     return true;
   }
 
-}  // namespace iroha_cli
+}  // namespace iroha

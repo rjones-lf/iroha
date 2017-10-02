@@ -15,32 +15,24 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CLI_KEYS_MANAGER_HPP
-#define IROHA_CLI_KEYS_MANAGER_HPP
+#ifndef IROHA_CLI_KEYS_MANAGER_IMPL_HPP
+#define IROHA_CLI_KEYS_MANAGER_IMPL_HPP
 
-#include <nonstd/optional.hpp>
-#include "crypto/crypto.hpp"
+#include "keys_manager.hpp"
+#include "common/types.hpp"
+#include "common/byteutils.hpp"
 
-namespace iroha_cli {
+namespace iroha {
+  class KeysManagerImpl : public KeysManager {
+   public:
+    explicit KeysManagerImpl(std::string account_name);
 
-class KeysManager {
- public:
-  /**
-   * Load keys associated with account
-   * @param account_name
-   * @return nullopt if no keypair found locally
-   */
-  virtual nonstd::optional<iroha::keypair_t> loadKeys() = 0;
+    nonstd::optional<iroha::keypair_t> loadKeys() override;
 
-  /**
-   * Create keys and associate with account
-   * @param account_name
-   * @param pass_phrase
-   * @return false if create account failed
-   */
-  virtual bool createKeys(std::string pass_phrase) = 0;
+    bool createKeys(std::string pass_phrase) override;
 
-};
-
-} // namepsace iroha_cli
-#endif  // IROHA_CLI_KEYS_MANAGER_HPP
+   private:
+    std::string account_name_;
+  };
+}  // namespace iroha_cli
+#endif  // IROHA_CLI_KEYS_MANAGER_IMPL_HPP

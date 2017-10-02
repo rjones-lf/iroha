@@ -10,17 +10,6 @@ target_link_libraries(cli-flags_validators
     gflags
     )
 
-add_library(keys_manager
-    impl/keys_manager_impl.cpp
-    )
-target_link_libraries(keys_manager
-    optional
-    crypto
-    )
-target_include_directories(keys_manager PUBLIC
-    ${PROJECT_SOURCE_DIR}/iroha-cli
-    )
-
 add_library(client
     client.cpp
     impl/query_response_handler.cpp
