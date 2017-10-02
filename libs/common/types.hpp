@@ -344,5 +344,16 @@ namespace iroha {
     return typeid(Base) == typeid(ptr);
   }
 
+  /**
+   * Dereference for equality of wrapped objects
+   */
+  template<typename T>
+  class DereferenceEquals {
+   public:
+    bool operator()(const T &lhs, const T &rhs) const {
+      return (*lhs) == (*rhs);
+    }
+  };
+
 }  // namespace iroha
 #endif  // IROHA_COMMON_TYPES_HPP
