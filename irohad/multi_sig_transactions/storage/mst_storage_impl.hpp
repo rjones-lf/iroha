@@ -28,9 +28,11 @@ namespace iroha {
 
 // ------------------------------| interface API |------------------------------
 
-    void applyImpl(ConstPeer &target_peer, MstState &new_state) override;
+    auto applyImpl(ConstPeer &target_peer, MstState &new_state)
+    -> decltype(apply(target_peer, new_state)) override;
 
-    void updateOwnStateImpl(TransactionType tx) override;
+    auto updateOwnStateImpl(TransactionType tx)
+    -> decltype(updateOwnState(tx)) override;
 
     MstState getDiffStateImpl(ConstPeer &target_peer) const override;
 

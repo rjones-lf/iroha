@@ -63,9 +63,11 @@ namespace iroha {
    private:
 // --------------------------------| class API |--------------------------------
 
-    virtual void applyImpl(ConstPeer &target_peer, MstState &new_state) = 0;
+    virtual auto applyImpl(ConstPeer &target_peer, MstState &new_state)
+    -> decltype(apply(target_peer, new_state)) = 0;
 
-    virtual void updateOwnStateImpl(TransactionType tx) = 0;
+    virtual auto updateOwnStateImpl(TransactionType tx)
+    -> decltype(updateOwnState(tx)) = 0;
 
     virtual MstState getDiffStateImpl(ConstPeer &target_peer) const = 0;
 

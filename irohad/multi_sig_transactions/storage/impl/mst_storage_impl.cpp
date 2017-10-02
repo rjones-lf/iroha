@@ -23,8 +23,9 @@ namespace iroha {
     peer_states_.insert({own_peer_, MstState()});
   }
 
-  void MstStorageStateImpl::applyImpl(ConstPeer &target_peer,
-                                      MstState &new_state) {
+  auto MstStorageStateImpl::applyImpl(ConstPeer &target_peer,
+                                      MstState &new_state)
+  -> decltype(apply(target_peer, new_state)) {
     auto own_iter = peer_states_.find(own_peer_);
     auto found_iter = peer_states_.find(target_peer);
     if (found_iter == peer_states_.end()) {
@@ -40,7 +41,8 @@ namespace iroha {
     }
   }
 
-  void MstStorageStateImpl::updateOwnStateImpl(TransactionType tx) {
+  auto MstStorageStateImpl::updateOwnStateImpl(TransactionType tx)
+  -> decltype(updateOwnState(tx)) {
     auto found_iter = peer_states_.find(own_peer_);
     found_iter->second += tx;
   }
