@@ -147,7 +147,7 @@ RUN git clone https://github.com/01org/tbb /tmp/tbb; \
     rm -rf /tmp/tbb
 
 # install docker
-ENV DOCKER_VERSION=17.06.0-ce
+ENV DOCKER_VERSION=17.09.0-ce
 RUN curl -L -o /tmp/docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz; \
     tar -xz -C /tmp -f /tmp/docker-${DOCKER_VERSION}.tgz; \
     mv /tmp/docker/* /usr/bin; \
