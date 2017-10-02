@@ -53,9 +53,16 @@ namespace iroha {
     virtual ~FairMstProcessor() = default;
 
    private:
-// ---------------------------------| fields |----------------------------------
+/*
+ * ---------------------------------| fields |----------------------------------
+*/
+    shp<iroha::network::MstTransport> transport_;
+    shp<MstStorage> storage_;
+    shp<PropagationStrategy<PropagationDataType>> strategy_;
 
-
+    // rx subjects
+    rxcpp::subjects::subject<shp<MstState>> state_subject_;
+    rxcpp::subjects::subject<shp<model::Transaction>> transactions_subject_;
   };
 } // namespace iroha
 

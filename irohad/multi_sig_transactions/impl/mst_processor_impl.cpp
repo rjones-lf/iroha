@@ -15,4 +15,40 @@
  * limitations under the License.
  */
 
+#include <utility>
+
 #include "multi_sig_transactions/mst_processor_impl.hpp"
+
+namespace iroha {
+  FairMstProcessor::FairMstProcessor(
+      shp<iroha::network::MstTransport> transport,
+      shp<MstStorage> storage,
+      shp<PropagationStrategy<PropagationDataType>> strategy)
+      : MstProcessor(),
+        transport_(std::move(transport)),
+        storage_(std::move(storage)),
+        strategy_(std::move(strategy)) {
+  }
+
+// --------------------------| MstProcessor override |--------------------------
+
+  void FairMstProcessor::propagateTransactionImpl(shp<model::Transaction> transaction) {
+    storage_->updateOwnState(transaction);
+  }
+
+  rxcpp::observable<shp<MstState>> FairMstProcessor::onStateUpdateImpl() const {
+    return state_subject_.get_observable();
+  }
+
+  rxcpp::observable<shp<model::Transaction>> FairMstProcessor::onPreparedTransactionsImpl() const {
+    return transactions_subject_.get_observable();
+  }
+
+// --------------------| MstTransportNotification override |--------------------
+
+  void FairMstProcessor::onStateUpdate(ConstPeer from, MstState new_state) {
+//    auto diff = storage_->apply(from, std::move(new_state));
+
+
+  }
+} // namespace iroha
