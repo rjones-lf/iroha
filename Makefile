@@ -41,7 +41,7 @@ UMACHINE := $(shell uname -m)
 
 ifeq ($(UKERNEL),Linux)
   ifeq ($(UMACHINE),x86_64)
-    PROJECT := Hyperledger
+    PROJECT := hyperledger
     DOCKER := Dockerfile
     COMPOSE := docker-compose.yml
   endif
@@ -52,7 +52,7 @@ ifeq ($(UKERNEL),Linux)
   endif
 endif
 ifeq ($(UKERNEL),Darwin)
-  PROJECT := Hyperledger
+  PROJECT := hyperledger
   DOCKER := Dockerfile
   COMPOSE := docker-compose.yml
 endif
