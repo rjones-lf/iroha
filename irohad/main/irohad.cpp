@@ -50,11 +50,17 @@ int main(int argc, char *argv[]) {
 
   auto config = parse_iroha_config(FLAGS_config);
   log->info("config initialized");
+
+  // TODO load keypair
+  iroha::keypair_t keypair;
+
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::RedisHost].GetString(),
                 config[mbr::RedisPort].GetUint(),
                 config[mbr::PgOpt].GetString(),
-                config[mbr::ToriiPort].GetUint(), FLAGS_peer_number);
+                config[mbr::ToriiPort].GetUint(),
+                FLAGS_peer_number,
+                keypair);
 
   if (not irohad.storage) {
     log->error("Failed to initialize storage");
@@ -69,7 +75,7 @@ int main(int argc, char *argv[]) {
   if (block.has_value()) {
     inserter.applyToLedger({block.value()});
     log->info("Genesis block inserted, number of transactions: {}",
-               block.value().transactions.size());
+              block.value().transactions.size());
   }
   // init pipeline components
   irohad.init();

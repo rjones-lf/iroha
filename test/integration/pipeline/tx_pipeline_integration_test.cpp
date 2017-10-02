@@ -33,13 +33,15 @@ class TestIrohad : public Irohad {
              size_t redis_port,
              const std::string &pg_conn,
              size_t torii_port,
-             uint64_t peer_number)
+             uint64_t peer_number,
+             const iroha::keypair_t &keypair)
       : Irohad(block_store_dir,
                redis_host,
                redis_port,
                pg_conn,
                torii_port,
-               peer_number) {}
+               peer_number,
+               keypair) {}
 
   auto &getCommandService() { return command_service; }
 
@@ -80,22 +82,23 @@ class TxPipelineIntegrationTest : public iroha::ametsuchi::AmetsuchiTest {
   TxPipelineIntegrationTest() { spdlog::set_level(spdlog::level::off); }
 
   void SetUp() override {
-    irohad = std::make_shared<TestIrohad>(
-        block_store_path, redishost_, redisport_, pgopt_, 0, 0);
+    irohad = std::make_shared<TestIrohad>(block_store_path,
+                                          redishost_,
+                                          redisport_,
+                                          pgopt_,
+                                          0,
+                                          0,
+                                          iroha::create_keypair());
 
     ASSERT_TRUE(irohad->storage);
 
     // insert genesis block
     iroha::main::BlockInserter inserter(irohad->storage);
 
-    auto keypair = iroha::create_keypair();
-
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
-            {"0.0.0.0:10000"}, {keypair.pubkey});
+            {"0.0.0.0:10000"}, {irohad->keypair.pubkey});
     inserter.applyToLedger({genesis_block});
-
-    irohad->setKeypair(keypair);
 
     // initialize irohad
     irohad->init();

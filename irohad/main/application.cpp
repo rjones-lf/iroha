@@ -30,34 +30,17 @@ using namespace iroha::torii;
 using namespace iroha::model::converters;
 using namespace iroha::consensus::yac;
 
-class MockCryptoProvider : public ModelCryptoProvider {
- public:
-  MockCryptoProvider(const pubkey_t &pubkey) : pubkey_(pubkey) {}
-
-  MOCK_CONST_METHOD1(verify, bool(const Transaction &));
-  MOCK_CONST_METHOD1(verify, bool(std::shared_ptr<const Query>));
-  MOCK_CONST_METHOD1(verify, bool(const Block &));
-
-  Block sign(const Block &block) const override {
-    auto signed_block = block;
-    signed_block.sigs.push_back(Signature{{}, pubkey_});
-    return signed_block;
-  }
-
- private:
-  pubkey_t pubkey_;
-};
-
 Irohad::Irohad(const std::string &block_store_dir,
                const std::string &redis_host, size_t redis_port,
                const std::string &pg_conn, size_t torii_port,
-               uint64_t peer_number)
+               uint64_t peer_number, const keypair_t &keypair)
     : block_store_dir_(block_store_dir),
       redis_host_(redis_host),
       redis_port_(redis_port),
       pg_conn_(pg_conn),
       torii_port_(torii_port),
-      peer_number_(peer_number) {
+      peer_number_(peer_number),
+      keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
   initStorage();
@@ -135,16 +118,8 @@ void Irohad::initPeer() {
 }
 
 void Irohad::initCryptoProvider() {
-  auto mock_crypto_verifier = std::make_shared<MockCryptoProvider>(peer.pubkey);
-
-  EXPECT_CALL(*mock_crypto_verifier,
-              verify(::testing::A<const Transaction &>()))
-      .WillRepeatedly(::testing::Return(true));
-  EXPECT_CALL(*mock_crypto_verifier,
-              verify(::testing::A<std::shared_ptr<const Query>>()))
-      .WillRepeatedly(::testing::Return(true));
-  EXPECT_CALL(*mock_crypto_verifier, verify(::testing::A<const Block &>()))
-      .WillRepeatedly(::testing::Return(true));
+  auto mock_crypto_verifier =
+      std::make_shared<ModelCryptoProviderImpl>(keypair);
 
   crypto_verifier = mock_crypto_verifier;
 
