@@ -35,17 +35,17 @@ namespace {
   };
 
   /**
-   * Megre collections with unique elements
+   * Merge collections with unique elements
    * @tparam Collection - type of collection
    * @tparam TargetType - type of elements in collection
-   * @tparam Hasher - class for hashing TagetType objects
+   * @tparam Hasher - class for hashing TargetType objects
    * @param left - first collection
    * @param right - second collection
    * @return collection with type Collection, that contain unique union of elements
    */
-  template<typename Collection, typename TargetType, typename Hasher>
+  template <typename Hasher, typename Collection,
+            typename TargetType = typename Collection::value_type>
   auto merge_unique(Collection left, Collection right) {
-
     std::unordered_set<TargetType, Hasher> unique_set(left.begin(), left.end());
 
     unique_set.insert(right.begin(), right.end());
@@ -55,24 +55,21 @@ namespace {
   /**
    * Provide merge of sets based on mering same elements
    * @tparam Set - type of set
+   * @tparam Merge - type of merge predicate
    * @param left - first set
    * @param right - second set
+   * @param merge - merge predicate
    * @return new set, that contains union of elements,
    * where same elements merged inside
    */
-  template<typename Set>
-  Set set_union(const Set &left, const Set &right) {
+  template<typename Set, typename Merge>
+  Set set_union(const Set &left, const Set &right, Merge &&merge) {
     Set out;
     out.insert(left.begin(), left.end());
     for (auto &&tx : right) {
       auto iter = out.find(tx);
       if (iter != out.end()) {
-        // todo move business logic into own template method
-        iter->get()->signatures =
-            merge_unique<std::vector<iroha::model::Signature>,
-                         iroha::model::Signature,
-                         SignatureHasher>(iter->get()->signatures,
-                                          right.find(tx)->get()->signatures);
+        merge(*iter, tx);
       } else {
         out.insert(tx);
       }
@@ -110,11 +107,8 @@ namespace iroha {
   MstState &MstState::operator+=(const DataType &rhs) {
     auto iter = internal_state_.find(rhs);
     if (iter != internal_state_.end()) {
-      iter->get()->signatures =
-          merge_unique<std::vector<iroha::model::Signature>,
-                       iroha::model::Signature,
-                       SignatureHasher>(iter->get()->signatures,
-                                        rhs.get()->signatures);
+      (*iter)->signatures =
+          merge_unique<SignatureHasher>((*iter)->signatures, rhs->signatures);
     } else {
       internal_state_.insert(rhs);
     }
@@ -122,7 +116,11 @@ namespace iroha {
   }
 
   MstState MstState::operator+(const MstState &rhs) const {
-    return MstState(set_union(this->internal_state_, rhs.internal_state_));
+    return MstState(set_union(
+        this->internal_state_, rhs.internal_state_, [](auto iter, auto tx) {
+          iter->signatures =
+              merge_unique<SignatureHasher>(iter->signatures, tx->signatures);
+        }));
   }
 
   MstState MstState::operator-(const MstState &rhs) const {
