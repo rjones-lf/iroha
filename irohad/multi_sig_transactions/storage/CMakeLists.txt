@@ -15,7 +15,6 @@
 add_library(mst_storage
     impl/mst_state.cpp
     impl/mst_storage.cpp
-    impl/mst_storage_impl.cpp
     )
 
 target_link_libraries(mst_storage

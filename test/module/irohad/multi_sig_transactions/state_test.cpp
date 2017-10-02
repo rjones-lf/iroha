@@ -38,7 +38,7 @@ auto generateSignature(const string &sign_value) {
 
 auto makeTx(const string &hash_value, const string &signature_value) {
   Transaction tx{};
-  tx.tx_hash = stringToBytesFiller<Transaction::TxHashType>(hash_value);
+  tx.tx_hash = stringToBytesFiller<Transaction::HashType>(hash_value);
   tx.signatures = {generateSignature(signature_value)};
   return make_shared<Transaction>(tx);
 }

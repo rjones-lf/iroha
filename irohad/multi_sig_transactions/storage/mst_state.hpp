@@ -23,6 +23,8 @@
 #include <vector>
 #include "logger/logger.hpp"
 #include "model/transaction.hpp"
+#include "model/operators/hash.hpp"
+#include "common/types.hpp"
 
 namespace iroha {
 
@@ -64,53 +66,15 @@ namespace iroha {
     std::vector<DataType> getTransactions() const;
 
    private:
-// -----------------------------| private classes |-----------------------------
+// ----------------------------| private interface |----------------------------
 
-    /**
-     * Hash calculation for transaction
-     */
-    class ShpTxHasher {
-     public:
-
-      ShpTxHasher() {
-        log_ = logger::log("TxHasher");
-      }
-
-      size_t operator()(const DataType &tx) const {
-        auto hash = string_hasher(tx.get()->tx_hash.to_string());
-        return hash;
-      }
-
-     private:
-      std::hash<std::string> string_hasher;
-      logger::Logger log_;
-    };
-
-    /**
-     * Dereference for equality of wrapped objects
-     */
-    template<typename T>
-    class DereferenceEquals {
-     public:
-      DereferenceEquals() {
-        log_ = logger::log("DereferenceEquals");
-      }
-
-      bool operator()(const T &lhs, const T &rhs) const {
-        return (*lhs) == (*rhs);
-      }
-
-     private:
-      logger::Logger log_;
-    };
-
-// -------------------------------| private api |-------------------------------
-
-    using InternalStateType = std::unordered_set<DataType,
-                                                 ShpTxHasher,
-                                                 DereferenceEquals<DataType>>;
+    using InternalStateType =
+    std::unordered_set<DataType,
+                       iroha::model::PointerTxHasher<DataType>,
+                       iroha::DereferenceEquals<DataType>>;
 
     MstState(InternalStateType transactions);
+
 // ---------------------------------| fields |----------------------------------
 
     InternalStateType internal_state_;
