@@ -83,10 +83,10 @@ iroha-develop:
 	cd docker/develop && docker build --rm -t $(PROJECT)/iroha-docker-develop -f $(DOCKER) .
 
 iroha-build:
-	docker run -t --rm --name iroha -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-build.sh
+	docker run -t --rm --name iroha -v $(BUILD_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-build.sh
 
 iroha-release:
-	docker run -t --rm --name iroha-release -v $(IROHA_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
+	docker run -t --rm --name iroha-release -v $(BUILD_HOME):/usr/local/iroha -w /usr/local/iroha $(PROJECT)/iroha-docker-develop /usr/local/iroha/scripts/iroha-release.sh
 
 iroha:
 	cd docker/release && docker build --rm -t $(PROJECT)/iroha -f $(DOCKER) .
