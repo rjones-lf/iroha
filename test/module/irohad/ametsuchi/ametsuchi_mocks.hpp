@@ -31,34 +31,38 @@ namespace iroha {
   namespace ametsuchi {
     class MockWsvQuery : public WsvQuery {
      public:
-      MOCK_METHOD1(getAccountRoles, nonstd::optional<std::vector<std::string>>(
-                                        const std::string &account_id));
+      MOCK_METHOD1(getAccountRoles,
+                   nonstd::optional<std::vector<std::string>>(
+                       const std::string &account_id));
       MOCK_METHOD1(getRolePermissions,
                    nonstd::optional<std::vector<std::string>>(
                        const std::string &role_name));
       MOCK_METHOD0(getRoles, nonstd::optional<std::vector<std::string>>());
-      MOCK_METHOD1(getAccount, nonstd::optional<model::Account>(
-                                   const std::string &account_id));
+      MOCK_METHOD1(
+          getAccount,
+          nonstd::optional<model::Account>(const std::string &account_id));
       MOCK_METHOD1(getSignatories,
                    nonstd::optional<std::vector<pubkey_t>>(
                        const std::string &account_id));
       MOCK_METHOD1(getAsset,
                    nonstd::optional<model::Asset>(const std::string &asset_id));
-      MOCK_METHOD2(getAccountAsset, nonstd::optional<model::AccountAsset>(
-                                        const std::string &account_id,
-                                        const std::string &asset_id));
+      MOCK_METHOD2(
+          getAccountAsset,
+          nonstd::optional<model::AccountAsset>(const std::string &account_id,
+                                                const std::string &asset_id));
       MOCK_METHOD0(getPeers, nonstd::optional<std::vector<model::Peer>>());
       MOCK_METHOD3(hasAccountGrantablePermission,
                    bool(const std::string &permitee_account_id,
-                       const std::string &account_id,
-                       const std::string &permission_id));
+                        const std::string &account_id,
+                        const std::string &permission_id));
     };
 
     class MockWsvCommand : public WsvCommand {
      public:
       MOCK_METHOD1(insertRole, bool(const std::string &role_name));
-      MOCK_METHOD2(insertAccountRole, bool(const std::string &account_id,
-                                           const std::string &role_name));
+      MOCK_METHOD2(insertAccountRole,
+                   bool(const std::string &account_id,
+                        const std::string &role_name));
       MOCK_METHOD2(insertRolePermissions,
                    bool(const std::string &role_id,
                         const std::vector<std::string> &permissions));
@@ -94,12 +98,22 @@ namespace iroha {
 
     class MockBlockQuery : public BlockQuery {
      public:
-      MOCK_METHOD1(
-          getAccountTransactions,
-          rxcpp::observable<model::Transaction>(std::string account_id));
+      MOCK_METHOD1(getAccountTransactions,
+                   rxcpp::observable<model::Transaction>(std::string));
       MOCK_METHOD2(getAccountAssetTransactions,
-                   rxcpp::observable<model::Transaction>(std::string account_id,
-                                                         std::string asset_id));
+                   rxcpp::observable<model::Transaction>(std::string,
+                                                         std::string));
+
+      MOCK_METHOD3(getAccountTransactionsWithPager,
+                   rxcpp::observable<model::Transaction>(std::string,
+                                                         iroha::hash256_t,
+                                                         size_t));
+
+      MOCK_METHOD4(getAccountAssetsTransactionsWithPager,
+                   rxcpp::observable<model::Transaction>(
+                       std::string, std::vector<std::string>, iroha::hash256_t,
+                       size_t));
+
       MOCK_METHOD2(getBlocks,
                    rxcpp::observable<model::Block>(uint32_t, uint32_t));
       MOCK_METHOD1(getBlocksFrom, rxcpp::observable<model::Block>(uint32_t));

@@ -658,3 +658,176 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     ASSERT_EQ(signatories->at(0), pubkey1);
   }
 }
+
+TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
+  auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  auto wsv = storage->getWsvQuery();
+  auto blocks = storage->getBlockQuery();
+
+  const std::string adminid = "admin@maindomain";
+  const std::string domain1name = "domain1";
+  const std::string domain2name = "domain2";
+  const std::string user1name = "alice";
+  const std::string user2name = "bob";
+  const std::string user3name = "charlie";
+  const std::string user4name = "eve";
+  const std::string user1id = "alice@domain1";
+  const std::string user2id = "bob@domain1";
+  const std::string user3id = "charlie@domain1";
+
+  auto commit_block = [&storage](auto block, auto height, auto prev_hash) {
+    block.height = height;
+    block.created_ts = 0;
+    block.txs_number = static_cast<uint16_t>(block.transactions.size());
+    block.prev_hash = prev_hash;
+    block.hash = iroha::hash(block);
+    auto ms = storage->createMutableStorage();
+    ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+    storage->commit(std::move(ms));
+  };
+
+  Transaction tx1, tx2, tx3, tx4, tx5;
+
+  Block block1;
+  {
+    tx1 = Transaction{};
+    tx1.creator_account_id = adminid;
+    tx1.commands = {std::make_shared<CreateDomain>(domain1name),
+                    std::make_shared<CreateDomain>(domain2name),
+                    std::make_shared<CreateAccount>(user1name, domain1name,
+                                                    iroha::pubkey_t{}),
+                    std::make_shared<CreateAccount>(user2name, domain1name,
+                                                    iroha::pubkey_t{})};
+    block1.transactions.push_back(tx1);
+
+    // CreateAccount charlie@domain1
+    tx2 = Transaction{};
+    tx2.creator_account_id = adminid;
+    tx2.commands = {std::make_shared<CreateAccount>(user3name, domain1name,
+                                                    iroha::pubkey_t{})};
+    block1.transactions.push_back(tx2);
+  }
+
+  commit_block(block1, 1, iroha::hash256_t{});
+
+  blocks->getTopBlocks(1).subscribe([](auto block) {
+    EXPECT_EQ(2, block.transactions.size());
+    EXPECT_EQ(4, block.transactions[0].commands.size());
+    EXPECT_EQ(1, block.transactions[1].commands.size());
+  });
+
+  // Then Account alice@domain1 should be load.
+  auto account1 = wsv->getAccount(user1id);
+  ASSERT_TRUE(account1);
+  ASSERT_STREQ(user1id.c_str(), account1->account_id.c_str());
+
+  // Then Account bob@domain1 should be load.
+  auto account2 = wsv->getAccount(user2id);
+  ASSERT_TRUE(account2);
+  ASSERT_STREQ(user2id.c_str(), account2->account_id.c_str());
+
+  // Then Account charlie@domain1 should be load.
+  auto account3 = wsv->getAccount(user3id);
+  ASSERT_TRUE(account3);
+  ASSERT_STREQ(user3id.c_str(), account3->account_id.c_str());
+
+  const auto asset1name = std::string("irh");
+  const auto asset1id = asset1name + "#" + domain1name;
+  const auto asset1prec = 1;
+  const auto asset2name = std::string("moeka");
+  const auto asset2id = asset2name + "#" + domain2name;
+  const auto asset2prec = 2;
+
+  Block block2;
+  {
+    // Admin applies CreateAsset irh@domain1, CreateAsset moeka@domain2
+    tx1 = Transaction{};
+    tx1.creator_account_id = adminid;
+    tx1.commands = {
+      std::make_shared<CreateAsset>(asset1name, domain1name, asset1prec),
+      std::make_shared<CreateAsset>(asset2name, domain2name, asset2prec)};
+    block2.transactions.push_back(tx1);
+  }
+
+  commit_block(block2, 2, block1.hash);
+
+  blocks->getTopBlocks(1).subscribe([&](auto block) {
+    EXPECT_EQ(1, block.transactions.size());
+    EXPECT_EQ(2, block.transactions[0].commands.size());
+  });
+
+  ASSERT_TRUE(wsv->getAsset(asset1id));
+  ASSERT_TRUE(wsv->getAsset(asset2id));
+  ASSERT_TRUE(wsv->getAccount(user1id));
+
+  Block block3;
+  {
+    // Admin applies AddAssetQuantity with Alice's irh@domain1 and moeka@domain2
+    // wallet.
+    tx1 = Transaction{};
+    tx1.creator_account_id = adminid;
+    tx1.commands = {
+      std::make_shared<AddAssetQuantity>(user1id, asset1id, iroha::Amount(1234, asset1prec)),
+      std::make_shared<AddAssetQuantity>(user2id, asset1id, iroha::Amount(100, asset1prec)),
+      std::make_shared<AddAssetQuantity>(user2id, asset2id, iroha::Amount(200, asset2prec))
+    };
+    block3.transactions.push_back(tx1);
+  }
+
+  commit_block(block3, 3, block2.hash);
+  blocks->getTopBlocks(1).subscribe([&](auto block) {
+    EXPECT_EQ(1, block.transactions.size());
+    EXPECT_EQ(3, block.transactions[0].commands.size());
+  });
+
+  {
+    auto acct_asset = wsv->getAccountAsset(user1id, asset1id);
+    ASSERT_TRUE(acct_asset);
+    ASSERT_EQ(iroha::Amount(1234, asset1prec), acct_asset->balance);
+  }
+  {
+    auto acct_asset = wsv->getAccountAsset(user2id, asset1id);
+    ASSERT_TRUE(acct_asset);
+    ASSERT_EQ(iroha::Amount(100, asset1prec), acct_asset->balance);
+  }
+  {
+    auto acct_asset = wsv->getAccountAsset(user2id, asset2id);
+    ASSERT_TRUE(acct_asset);
+    ASSERT_EQ(iroha::Amount(200, asset2prec), acct_asset->balance);
+  }
+
+  Block block4;
+  {
+    tx1 = Transaction{};
+    tx1.creator_account_id = adminid;
+    tx1.commands = {
+      std::make_shared<CreateDomain>("dummy"),
+      std::make_shared<TransferAsset>(
+        user1id, user2id, asset2id, iroha::Amount(1234, asset1prec)),
+      std::make_shared<CreateAccount>("dummy_acct_1", "dummy", iroha::pubkey_t{})
+    };
+    block4.transactions.push_back(tx1);
+
+    tx2 = Transaction{};
+    tx2.creator_account_id = adminid;
+    tx2.commands = {
+      std::make_shared<CreateAccount>("dummy_acct_2", "dummy", iroha::pubkey_t{})
+    };
+    block4.transactions.push_back(tx2);
+  };
+
+  commit_block(block4, 4, block3.hash);
+
+  blocks->getTopBlocks(1).subscribe([&](auto block){
+    EXPECT_EQ(2, block.transactions.size());
+    EXPECT_EQ(2, block.transactions[0].commands.size());
+    EXPECT_EQ(1, block.transactions[1].commands.size());
+  });
+
+  blocks->getAccountAssetsTransactionsWithPager(
+  user1id, {asset1id}, iroha::hash256_t{}, 0).subscribe([](auto) {
+    FAIL() << "subscribe shouldn't occur with limit 0";
+  });
+}
