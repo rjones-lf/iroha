@@ -18,7 +18,7 @@
 #ifndef IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
 #define IROHA_MODEL_CRYPTO_PROVIDER_IMPL_HPP
 
-#include "model/model_crypto_provider.hpp"
+#include "model_crypto_provider.hpp"
 
 namespace iroha {
   namespace model {

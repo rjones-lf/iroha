@@ -15,11 +15,9 @@
  * limitations under the License.
  */
 
-#include "model/model_crypto_provider_impl.hpp"
-#include "model/converters/pb_block_factory.hpp"
-#include "model/converters/pb_common.hpp"
-#include "model/converters/pb_query_factory.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
+#include "model_crypto_provider_impl.hpp"
+#include "crypto/crypto.hpp"
+#include "crypto/hash.hpp"
 
 namespace iroha {
   namespace model {
@@ -27,28 +25,32 @@ namespace iroha {
         : keypair_(keypair) {}
 
     bool ModelCryptoProviderImpl::verify(const Transaction &tx) const {
-      std::cout << keypair_.pubkey.to_hexstring() << std::endl;
-      std::cout << keypair_.privkey.to_hexstring() << std::endl;
-      std::cout << iroha::hash(tx).to_hexstring() << std::endl;
-
       return std::all_of(tx.signatures.begin(),
                          tx.signatures.end(),
-                         iroha::verify(iroha::hash(tx).to_string()));
+                         [tx](const Signature &sig) {
+                           return iroha::verify(iroha::hash(tx).to_string(),
+                                                sig.pubkey,
+                                                sig.signature);
+                         });
     }
 
     bool ModelCryptoProviderImpl::verify(
         std::shared_ptr<const Query> query) const {
-      return iroha::verify(iroha::hash(*query).to_string())(query->signature);
+      return iroha::verify(
+          iroha::hash(*query).to_string(), keypair_.pubkey, keypair_.privkey);
     }
 
     bool ModelCryptoProviderImpl::verify(const Block &block) const {
-      return std::all_of(block.sigs.begin(),
-                         block.sigs.end(),
-                         iroha::verify(iroha::hash(block).to_string()));
+      return std::all_of(
+          block.sigs.begin(), block.sigs.end(), [block](const Signature &sig) {
+            return iroha::verify(
+                iroha::hash(block).to_string(), sig.pubkey, sig.signature);
+          });
     }
 
     Block ModelCryptoProviderImpl::sign(const Block &block) const {
-      auto signature = iroha::sign(iroha::hash(block).to_string(), keypair_);
+      auto signature = iroha::sign(
+          iroha::hash(block).to_string(), keypair_.pubkey, keypair_.privkey);
       auto signed_block = block;
       signed_block.sigs.push_back(Signature{signature, keypair_.pubkey});
       return signed_block;
@@ -56,8 +58,9 @@ namespace iroha {
 
     Transaction ModelCryptoProviderImpl::sign(
         const Transaction &transaction) const {
-      auto signature =
-          iroha::sign(iroha::hash(transaction).to_string(), keypair_);
+      auto signature = iroha::sign(iroha::hash(transaction).to_string(),
+                                   keypair_.pubkey,
+                                   keypair_.privkey);
       auto signed_transaction = transaction;
       signed_transaction.signatures.push_back(
           Signature{signature, keypair_.pubkey});

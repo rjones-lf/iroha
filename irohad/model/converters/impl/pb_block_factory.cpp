@@ -19,6 +19,8 @@
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "crypto/hash.hpp"
+
 namespace iroha {
   namespace model {
     namespace converters {

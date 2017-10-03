@@ -23,6 +23,7 @@
 #include "common/types.hpp"
 #include "crypto/crypto.hpp"
 #include "crypto/hash.hpp"
+#include "model/signature.hpp"
 
 namespace iroha {
   namespace model {
@@ -42,31 +43,6 @@ namespace iroha {
   template <typename T>
   hash256_t hash(const T &pb) {
     return sha3_256(pb.payload().SerializeAsString());
-  }
-
-  /**
-   *
-   * @tparam T
-   * @param pb
-   * @param keypair
-   * @return
-   */
-  template <typename T>
-  auto sign(const T &pb, const keypair_t &keypair) {
-    return iroha::sign(pb, keypair.pubkey, keypair.privkey);
-  }
-
-  /**
-   *
-   * @tparam T
-   * @param pb
-   * @return
-   */
-  template <typename T>
-  auto verify(const T &pb) {
-    return [=](auto signature) {
-      return iroha::verify(pb, signature.pubkey, signature.signature);
-    };
   }
 }
 
