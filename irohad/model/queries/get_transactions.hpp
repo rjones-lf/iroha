@@ -20,6 +20,7 @@
 
 #include <model/query.hpp>
 #include <string>
+#include <vector>
 
 namespace iroha {
   namespace model {
@@ -47,6 +48,45 @@ namespace iroha {
        * Account identifier
        */
       std::string account_id;
+    };
+
+    /**
+     * Query for getting transactions of given asset of an account
+     */
+    struct GetAccountAssetsTransactionsWithPager : Query {
+      /**
+       * Account identifier
+       */
+      std::string account_id;
+
+      /**
+       * Asset identifiers
+       */
+      std::vector<std::string> assets_id;
+
+      /**
+       * Pager for transactions
+       */
+      std::string pager_tx_hash;
+      uint16_t pager_limit;
+
+      using AssetsIdType = decltype(assets_id);
+    };
+
+    /**
+      * Query for getting transactions of account
+      */
+    struct GetAccountTransactionsWithPager : Query {
+      /**
+       * Account identifier
+       */
+      std::string account_id;
+
+      /**
+       * Pager for transactions
+       */
+      std::string pager_tx_hash;
+      uint16_t pager_limit;
     };
   }  // namespace model
 }  // namespace iroha
