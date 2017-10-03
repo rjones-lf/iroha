@@ -17,7 +17,7 @@ message Header {
    }
 
   Payload payload = 1;
-  repeated Signature signature = 2;
+  repeated Signature signatures = 2;
  }
 
  message Block {

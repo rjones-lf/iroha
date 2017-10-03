@@ -19,6 +19,7 @@
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/converters/pb_command_factory.hpp"
+#include <logger/logger.hpp>
 
 namespace iroha {
   namespace model {
@@ -43,7 +44,7 @@ namespace iroha {
         }
 
         for (const auto &sig_obj : tx.signatures) {
-          auto proto_signature = pbtx.add_signature();
+          auto proto_signature = pbtx.add_signatures();
           proto_signature->set_pubkey(sig_obj.pubkey.to_string());
           proto_signature->set_signature(sig_obj.signature.to_string());
         }
@@ -54,22 +55,26 @@ namespace iroha {
           const protocol::Transaction &pb_tx) {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
+        static auto log_ = logger::log("PbTransactionFactory::deserialize");
+        try {
+          const auto &pl = pb_tx.payload();
+          tx.tx_counter = pl.tx_counter();
+          tx.creator_account_id = pl.creator_account_id();
+          tx.created_ts = pl.created_time();
 
-        const auto &pl = pb_tx.payload();
-        tx.tx_counter = pl.tx_counter();
-        tx.creator_account_id = pl.creator_account_id();
-        tx.created_ts = pl.created_time();
+          for (const auto &pb_sig : pb_tx.signatures()) {
+            model::Signature sig{};
+            sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
+            sig.signature = sig_t::from_string(pb_sig.signature());
+            tx.signatures.push_back(sig);
+          }
 
-        for (const auto &pb_sig : pb_tx.signature()) {
-          model::Signature sig{};
-          sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
-          sig.signature =  sig_t::from_string(pb_sig.signature());
-          tx.signatures.push_back(sig);
-        }
-
-        for (const auto &pb_command : pl.commands()) {
-          tx.commands.push_back(
-              commandFactory.deserializeAbstractCommand(pb_command));
+          for (const auto &pb_command : pl.commands()) {
+            tx.commands.push_back(
+                commandFactory.deserializeAbstractCommand(pb_command));
+          }
+        } catch( std::invalid_argument e ) {
+          log_->error(e.what());
         }
 
         return std::make_shared<model::Transaction>(tx);
