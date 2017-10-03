@@ -21,6 +21,7 @@ add_library(yac
     impl/yac_gate_impl.cpp
     impl/yac_hash_provider_impl.cpp
     impl/yac_peer_orderer_impl.cpp
+    impl/yac_crypto_provider_impl.cpp
 
     storage/impl/yac_common.cpp
     storage/impl/storage_result.cpp
@@ -31,8 +32,8 @@ add_library(yac
 target_link_libraries(yac
     rxcpp
     optional
-    model
     yac_grpc
     uvw
     logger
+    hash
     )
