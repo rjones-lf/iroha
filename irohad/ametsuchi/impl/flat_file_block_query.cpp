@@ -89,11 +89,15 @@ namespace iroha {
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountTransactionsWithPager(
         std::string account_id, iroha::hash256_t tx_hash, size_t limit) {
-      return getAccountTransactions(account_id)
-          .take_while(
-              [&tx_hash](auto tx) { return iroha::hash(tx) != tx_hash; })
-          .take_last(limit);  // TODO: size check
-      // TODO: reverse
+      std::vector<model::Transaction> result;
+      getAccountTransactions(account_id)
+          // local variables can be captured because this observable will be
+          // subscribed here.
+          .take_while([&](auto tx) { return iroha::hash(tx) != tx_hash; })
+          .take_last(limit)  // TODO: std::max(limit, MaxLimit)
+          .subscribe([&](auto tx) { result.push_back(tx); });
+      std::reverse(result.begin(), result.end());
+      return rxcpp::observable<>::iterate(result);
     }
 
     rxcpp::observable<model::Transaction>
@@ -153,7 +157,7 @@ namespace iroha {
           .filter([tx_hash, asset_operations](auto const &tx) {
             return asset_operations(tx);
           })
-          .take_last(limit)
+          .take_last(limit)  // TODO: std::max(limit, MaxLimit)
           .subscribe([&](auto tx) {
             result.push_front(tx);  // reverse transactions
           });
