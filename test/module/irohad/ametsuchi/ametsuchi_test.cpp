@@ -805,7 +805,7 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
     tx1.commands = {
       std::make_shared<CreateDomain>("dummy"),
       std::make_shared<TransferAsset>(
-        user1id, user2id, asset2id, iroha::Amount(1234, asset1prec)),
+        user1id, user2id, asset1id, iroha::Amount(1234, asset1prec)),
       std::make_shared<CreateAccount>("dummy_acct_1", "dummy", iroha::pubkey_t{})
     };
     block4.transactions.push_back(tx1);
@@ -813,7 +813,8 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
     tx2 = Transaction{};
     tx2.creator_account_id = adminid;
     tx2.commands = {
-      std::make_shared<CreateAccount>("dummy_acct_2", "dummy", iroha::pubkey_t{})
+      std::make_shared<CreateAccount>("dummy_acct_2", "dummy", iroha::pubkey_t{}),
+      std::make_shared<AddAssetQuantity>(user1id, asset2id, iroha::Amount(500, asset2prec))
     };
     block4.transactions.push_back(tx2);
   };
@@ -822,12 +823,91 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
 
   blocks->getTopBlocks(1).subscribe([&](auto block){
     EXPECT_EQ(2, block.transactions.size());
-    EXPECT_EQ(2, block.transactions[0].commands.size());
-    EXPECT_EQ(1, block.transactions[1].commands.size());
+    EXPECT_EQ(3, block.transactions[0].commands.size());
+    EXPECT_EQ(2, block.transactions[1].commands.size());
   });
 
   blocks->getAccountAssetsTransactionsWithPager(
   user1id, {asset1id}, iroha::hash256_t{}, 0).subscribe([](auto) {
     FAIL() << "subscribe shouldn't occur with limit 0";
   });
+
+  blocks->getAccountAssetsTransactionsWithPager(
+    user1id, {asset1id}, iroha::hash256_t{}, 1).subscribe([&](auto tx){
+    EXPECT_EQ(3, tx.commands.size());
+    EXPECT_TRUE(std::dynamic_pointer_cast<CreateDomain>(tx.commands[0]));
+    EXPECT_TRUE(std::dynamic_pointer_cast<TransferAsset>(tx.commands[1]));
+    EXPECT_TRUE(std::dynamic_pointer_cast<CreateAccount>(tx.commands[2]));
+  });
+
+  std::vector<Transaction> result;
+  blocks->getAccountAssetsTransactionsWithPager(
+    user1id, {asset1id}, iroha::hash256_t{}, 2).subscribe([&](auto tx){
+    result.push_back(tx);
+  });
+
+  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(3, result[0].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateDomain>(result[0].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<TransferAsset>(result[0].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateAccount>(result[0].commands[2]));
+  ASSERT_EQ(3, result[1].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[2]));
+
+  result.clear();
+  blocks->getAccountAssetsTransactionsWithPager(
+    user1id, {asset1id}, iroha::hash256_t{}, 100).subscribe([&](auto tx){
+    result.push_back(tx);
+  });
+
+  ASSERT_EQ(2, result.size());
+  ASSERT_EQ(3, result[0].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateDomain>(result[0].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<TransferAsset>(result[0].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateAccount>(result[0].commands[2]));
+  ASSERT_EQ(3, result[1].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[1].commands[2]));
+
+  result.clear();
+  blocks->getAccountAssetsTransactionsWithPager(
+    user1id, {asset1id, asset2id}, iroha::hash256_t{}, 100).subscribe([&](auto tx){
+    result.push_back(tx);
+  });
+
+  ASSERT_EQ(3, result.size());
+  ASSERT_EQ(2, result[0].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateAccount>(result[0].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[1]));
+  ASSERT_EQ(3, result[1].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateDomain>(result[1].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<TransferAsset>(result[1].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<CreateAccount>(result[1].commands[2]));
+  ASSERT_EQ(3, result[2].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[2].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[2].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[2].commands[2]));
+
+  auto w = wsv->getAccountAsset(user1id, asset2id);
+  ASSERT_TRUE(w);
+  ASSERT_EQ(iroha::Amount(500, asset2prec), w->balance);
+
+  // Get transactions until a tx which has (CreateDomain, TransferAsset, CreateAccount).
+  // Tx which has until_tx_hash is excluded.
+  auto until_tx_hash = iroha::hash(result[1]);
+
+  result.clear();
+  blocks->getAccountAssetsTransactionsWithPager(
+    user1id, {asset1id, asset2id}, until_tx_hash, 100).subscribe([&](auto tx){
+    result.push_back(tx);
+  });
+
+  ASSERT_EQ(1, result.size());
+  ASSERT_EQ(3, result[0].commands.size());
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[0]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[1]));
+  EXPECT_TRUE(std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[2]));
 }

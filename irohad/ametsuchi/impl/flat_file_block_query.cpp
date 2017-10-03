@@ -17,9 +17,10 @@
 
 #include "ametsuchi/impl/flat_file_block_query.hpp"
 
+#include <deque>
 #include "crypto/hash.hpp"
-#include "model/commands/transfer_asset.hpp"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/transfer_asset.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -77,20 +78,21 @@ namespace iroha {
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountTransactions(std::string account_id) {
       return getBlocksFrom(1)
-        .flat_map([](auto block) {
-          return rxcpp::observable<>::iterate(block.transactions);
-        })
-        .filter([account_id](auto tx) {
-          return tx.creator_account_id == account_id;
-        });
+          .flat_map([](auto block) {
+            return rxcpp::observable<>::iterate(block.transactions);
+          })
+          .filter([account_id](auto tx) {
+            return tx.creator_account_id == account_id;
+          });
     }
 
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountTransactionsWithPager(
-      std::string account_id, iroha::hash256_t tx_hash, size_t limit) {
+        std::string account_id, iroha::hash256_t tx_hash, size_t limit) {
       return getAccountTransactions(account_id)
-        .take_while([&tx_hash](auto tx) { return iroha::hash(tx) != tx_hash; })
-        .take_last(limit);  // TODO: size check
+          .take_while(
+              [&tx_hash](auto tx) { return iroha::hash(tx) != tx_hash; })
+          .take_last(limit);  // TODO: size check
       // TODO: reverse
     }
 
@@ -104,9 +106,9 @@ namespace iroha {
                 [account_id, asset_id](auto command) {
                   if (instanceof <model::TransferAsset>(*command)) {
                     auto transferAsset = (model::TransferAsset *)command.get();
-                    return (transferAsset->src_account_id == account_id or
-                            transferAsset->dest_account_id == account_id) and
-                           transferAsset->asset_id == asset_id;
+                    return (transferAsset->src_account_id == account_id
+                            or transferAsset->dest_account_id == account_id)
+                        and transferAsset->asset_id == asset_id;
                   }
                   return false;
                 });
@@ -115,15 +117,15 @@ namespace iroha {
 
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountAssetsTransactionsWithPager(
-      std::string account_id, std::vector<std::string> assets_id,
-      iroha::hash256_t tx_hash, size_t limit) {
+        std::string account_id, std::vector<std::string> assets_id,
+        iroha::hash256_t tx_hash, size_t limit) {
       using iroha::model::TransferAsset;
       using iroha::model::AddAssetQuantity;
-      auto asset_operations = [assets_id, account_id](auto const& tx) {
-        for (auto const& c : tx.commands) {
+      auto asset_operations = [assets_id, account_id](auto const &tx) {
+        for (auto const &c : tx.commands) {
           if (auto p = std::dynamic_pointer_cast<TransferAsset>(c)) {
             if (std::find(assets_id.begin(), assets_id.end(), p->asset_id)
-                != assets_id.end()
+                    != assets_id.end()
                 and (p->src_account_id == account_id
                      or p->dest_account_id == account_id)) {
               return true;
@@ -131,7 +133,7 @@ namespace iroha {
           }
           if (auto p = std::dynamic_pointer_cast<AddAssetQuantity>(c)) {
             if (std::find(assets_id.begin(), assets_id.end(), p->asset_id)
-                != assets_id.end()
+                    != assets_id.end()
                 and (p->account_id == account_id)) {
               return true;
             }
@@ -139,17 +141,23 @@ namespace iroha {
         }
         return false;
       };
-      return getBlocksFrom(1)
-        .flat_map([](auto block) {
-          return rxcpp::observable<>::iterate(block.transactions);
-        })
-        .take_while([tx_hash](auto const& tx) {
-          return iroha::hash(tx) != tx_hash;
-        })
-        .filter([tx_hash, asset_operations](auto const& tx) {
-          return asset_operations(tx);
-        })
-        .take_last(limit);
+      std::deque<model::Transaction> result;
+      getBlocksFrom(1)
+          .flat_map([](auto block) {
+            return rxcpp::observable<>::iterate(block.transactions);
+          })
+          .take_while(
+              // local variables can be captured because this observable will be
+              // subscribed here.
+              [&](auto const &tx) { return iroha::hash(tx) != tx_hash; })
+          .filter([tx_hash, asset_operations](auto const &tx) {
+            return asset_operations(tx);
+          })
+          .take_last(limit)
+          .subscribe([&](auto tx) {
+            result.push_front(tx);  // reverse transactions
+          });
+      return rxcpp::observable<>::iterate(result);
     }
 
   }  // namespace ametsuchi
