@@ -73,7 +73,7 @@ namespace iroha {
             tx.commands.push_back(
                 commandFactory.deserializeAbstractCommand(pb_command));
           }
-        } catch( std::invalid_argument e ) {
+        } catch( std::invalid_argument &e ) {
           log_->error(e.what());
         }
 
