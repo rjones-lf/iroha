@@ -20,6 +20,22 @@ message GetAccountAssetTransactions {
   string asset_id = 2;
 }
 
+message Pager {
+  bytes tx_hash = 1;
+  uint32 limit = 2;
+}
+
+message GetAccountTransactionsWithPager {
+  string account_id = 1;
+  Pager pager = 2;
+}
+
+message GetAccountAssetsTransactionsWithPager {
+  string account_id = 1;
+  repeated string assets_id = 2;
+  Pager pager = 3;
+}
+
 message GetAccountAssets {
   string account_id = 1;
   string asset_id = 2;
