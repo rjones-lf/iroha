@@ -290,7 +290,7 @@ namespace iroha {
         }
         json_doc.AddMember("assets_id", assets_id, allocator);
         json_doc.AddMember("pager_tx_hash",
-                           get_account_assets_pg->pager_tx_hash, allocator);
+                           get_account_assets_pg->pager_tx_hash.to_hexstring(), allocator);
         json_doc.AddMember("pager_limit", get_account_assets_pg->pager_limit,
                            allocator);
       }
