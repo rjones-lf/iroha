@@ -93,28 +93,26 @@ namespace iroha {
 
       std::shared_ptr<GetAccountTransactionsWithPager> QueryGenerator::generateGetAccountTransactionsWithPager(
         ts64_t timestamp, std::string creator, uint64_t query_counter,
-        std::string account_id, iroha::hash256_t tx_hash, uint16_t limit) {
+        std::string account_id, model::Pager pager) {
         auto query = std::make_shared<GetAccountTransactionsWithPager>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
         query->query_counter = query_counter;
         query->account_id = account_id;
-        query->pager_tx_hash = tx_hash;
-        query->pager_limit = limit;
+        query->pager = pager;
         return query;
       }
 
       std::shared_ptr<GetAccountAssetsTransactionsWithPager> QueryGenerator::generateGetAccountAssetsTransactionsWithPager(
         ts64_t timestamp, std::string creator, uint64_t query_counter,
-        std::string account_id, std::vector<std::string> assets_id, iroha::hash256_t tx_hash, uint16_t limit) {
+        std::string account_id, std::vector<std::string> assets_id, model::Pager pager) {
         auto query = std::make_shared<GetAccountAssetsTransactionsWithPager>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
         query->query_counter = query_counter;
         query->account_id = account_id;
         query->assets_id = assets_id;
-        query->pager_tx_hash = tx_hash;
-        query->pager_limit = limit;
+        query->pager = pager;
         return query;
       }
 

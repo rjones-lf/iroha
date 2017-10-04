@@ -22,6 +22,7 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "model/converters/json_block_factory.hpp"
+#include "model/queries/get_transactions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -40,14 +41,14 @@ namespace iroha {
         std::string account_id) override;
 
       rxcpp::observable<model::Transaction> getAccountTransactionsWithPager(
-        std::string account_id, iroha::hash256_t tx_hash, size_t limit) override;
+        std::string account_id, model::Pager pager) override;
 
       rxcpp::observable<model::Transaction> getAccountAssetTransactions(
           std::string account_id, std::string asset_id) override;
 
       rxcpp::observable<model::Transaction> getAccountAssetsTransactionsWithPager(
           std::string account_id, std::vector<std::string> assets_id,
-          iroha::hash256_t tx_hash, size_t limit) override;
+          model::Pager pager) override;
 
     private:
       FlatFile &block_store_;

@@ -32,6 +32,7 @@
 #include "common/byteutils.hpp"
 #include "model/block.hpp"
 #include "model/common.hpp"
+#include "model/queries/get_transactions.hpp"
 #include "model/signature.hpp"
 
 namespace iroha {
@@ -106,9 +107,12 @@ namespace iroha {
          * @return function, which takes block, returns block with deserialized
          * member on success, nullopt otherwise
          */
-        template <typename T, typename V, typename B,
+        template <typename T,
+                  typename V,
+                  typename B,
                   typename Convert = Convert<V>>
-        auto deserialize(V B::*member, const std::string &field,
+        auto deserialize(V B::*member,
+                         const std::string &field,
                          Convert transform = Convert()) {
           return [this, member, field, transform](auto block) {
             return deserializeField<T>(document, field) | transform
@@ -189,10 +193,11 @@ namespace iroha {
          * @return @see deserialize
          */
         template <typename V, typename B, typename Convert = Convert<V>>
-        auto Array(V B::*member, const std::string &field,
+        auto Array(V B::*member,
+                   const std::string &field,
                    Convert transform = Convert()) {
-          return deserialize<rapidjson::Value::ConstArray>(member, field,
-                                                           transform);
+          return deserialize<rapidjson::Value::ConstArray>(
+              member, field, transform);
         }
 
         /**
@@ -204,10 +209,11 @@ namespace iroha {
          * @return @see deserialize
          */
         template <typename V, typename B, typename Convert = Convert<V>>
-        auto Object(V B::*member, const std::string &field,
+        auto Object(V B::*member,
+                    const std::string &field,
                     Convert transform = Convert()) {
-          return deserialize<rapidjson::Value::ConstObject>(member, field,
-                                                            transform);
+          return deserialize<rapidjson::Value::ConstObject>(
+              member, field, transform);
         }
 
         // document for deserialization
@@ -237,6 +243,17 @@ namespace iroha {
       };
 
       template <>
+      struct Convert<Pager> {
+        template <typename T>
+        auto operator()(T &&x) {
+          auto des = makeFieldDeserializer(x);
+          return nonstd::make_optional<Pager>()
+              | des.String(&Pager::tx_hash, "tx_hash")
+              | des.Uint(&Pager::limit, "limit");
+        }
+      };
+
+      template <>
       struct Convert<Block::SignaturesType> {
         template <typename T>
         auto operator()(T &&x) {
@@ -248,7 +265,8 @@ namespace iroha {
               };
             };
           };
-          return std::accumulate(x.begin(), x.end(),
+          return std::accumulate(x.begin(),
+                                 x.end(),
                                  nonstd::make_optional<Block::SignaturesType>(),
                                  acc_signatures);
         }
@@ -263,6 +281,15 @@ namespace iroha {
       rapidjson::Value serializeSignature(
           const Signature &signature,
           rapidjson::Document::AllocatorType &allocator);
+
+      /**
+       * Serialize pager to JSON with given allocator
+       * @param pager - pager for restricting to get transactions
+       * @param allocator - allocator for JSON value
+       * @return JSON value with pager
+       */
+      rapidjson::Value serializePager(
+          const Pager &pager, rapidjson::Document::AllocatorType &allocator);
 
       /**
        * Try to parse JSON from string

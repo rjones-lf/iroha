@@ -88,13 +88,13 @@ namespace iroha {
 
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountTransactionsWithPager(
-        std::string account_id, iroha::hash256_t tx_hash, size_t limit) {
+        std::string account_id, model::Pager pager) {
       std::vector<model::Transaction> result;
       getAccountTransactions(account_id)
           // local variables can be captured because this observable will be
           // subscribed here.
-          .take_while([&](auto tx) { return iroha::hash(tx) != tx_hash; })
-          .take_last(limit)  // TODO: std::max(limit, MaxLimit)
+          .take_while([&](auto tx) { return iroha::hash(tx) != pager.tx_hash; })
+          .take_last(pager.limit)  // TODO: std::max(limit, MaxLimit)
           .subscribe([&](auto tx) { result.push_back(tx); });
       std::reverse(result.begin(), result.end());
       return rxcpp::observable<>::iterate(result);
@@ -122,7 +122,7 @@ namespace iroha {
     rxcpp::observable<model::Transaction>
     FlatFileBlockQuery::getAccountAssetsTransactionsWithPager(
         std::string account_id, std::vector<std::string> assets_id,
-        iroha::hash256_t tx_hash, size_t limit) {
+        model::Pager pager) {
       using iroha::model::TransferAsset;
       using iroha::model::AddAssetQuantity;
       auto asset_operations = [assets_id, account_id](auto const &tx) {
@@ -153,11 +153,11 @@ namespace iroha {
           .take_while(
               // local variables can be captured because this observable will be
               // subscribed here.
-              [&](auto const &tx) { return iroha::hash(tx) != tx_hash; })
-          .filter([tx_hash, asset_operations](auto const &tx) {
+              [&](auto const &tx) { return iroha::hash(tx) != pager.tx_hash; })
+          .filter([&](auto const &tx) {
             return asset_operations(tx);
           })
-          .take_last(limit)  // TODO: std::max(limit, MaxLimit)
+          .take_last(pager.limit)  // TODO: std::max(limit, MaxLimit)
           .subscribe([&](auto tx) {
             result.push_front(tx);  // reverse transactions
           });

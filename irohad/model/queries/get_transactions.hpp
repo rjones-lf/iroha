@@ -51,6 +51,14 @@ namespace iroha {
     };
 
     /**
+     * Pager for transactions queries
+     */
+    struct Pager {
+      iroha::hash256_t tx_hash;
+      uint16_t limit;
+    };
+
+    /**
      * Query for getting transactions of given asset of an account
      */
     struct GetAccountAssetsTransactionsWithPager : Query {
@@ -67,8 +75,7 @@ namespace iroha {
       /**
        * Pager for transactions
        */
-      iroha::hash256_t pager_tx_hash;
-      uint16_t pager_limit;
+      Pager pager;
 
       using AssetsIdType = decltype(assets_id);
     };
@@ -85,8 +92,7 @@ namespace iroha {
       /**
        * Pager for transactions
        */
-      iroha::hash256_t pager_tx_hash;
-      uint16_t pager_limit;
+      Pager pager;
     };
   }  // namespace model
 }  // namespace iroha

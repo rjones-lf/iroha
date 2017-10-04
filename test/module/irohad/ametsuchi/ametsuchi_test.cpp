@@ -707,10 +707,10 @@ TEST_F(AmetsuchiTest, GetAccountTransactionsWithPagerTest) {
     tx1 = Transaction{};
     tx1.creator_account_id = adminid;
     tx1.commands = {std::make_shared<CreateDomain>(domain1name),
-                    std::make_shared<CreateAccount>(user1name, domain1name,
-                                                    iroha::pubkey_t{}),
-                    std::make_shared<CreateAccount>(user2name, domain1name,
-                                                    iroha::pubkey_t{})};
+                    std::make_shared<CreateAccount>(
+                        user1name, domain1name, iroha::pubkey_t{}),
+                    std::make_shared<CreateAccount>(
+                        user2name, domain1name, iroha::pubkey_t{})};
     block1.transactions.push_back(tx1);
 
     // tx2: Alice send CreateDomain
@@ -766,14 +766,14 @@ TEST_F(AmetsuchiTest, GetAccountTransactionsWithPagerTest) {
   ASSERT_TRUE(wsv->getAsset(bob_assetid));
 
   // When query with limit 0
-  blocks->getAccountTransactionsWithPager(user1id, iroha::hash256_t{}, 0)
+  blocks->getAccountTransactionsWithPager(user1id, Pager{iroha::hash256_t{}, 0})
       .subscribe([](auto) {
         FAIL() << "Pager with limit 0 cannot subscribe any transactions";
       });
 
   // When query with a last alice's tx.
   std::vector<Transaction> results;
-  blocks->getAccountTransactionsWithPager(user1id, iroha::hash256_t{}, 1)
+  blocks->getAccountTransactionsWithPager(user1id, Pager{iroha::hash256_t{}, 1})
       .subscribe([&](auto tx) { results.push_back(tx); });
 
   ASSERT_EQ(1, results.size());
@@ -787,7 +787,7 @@ TEST_F(AmetsuchiTest, GetAccountTransactionsWithPagerTest) {
 
   // When query with last two alice's txs.
   results.clear();
-  blocks->getAccountTransactionsWithPager(user1id, iroha::hash256_t{}, 2)
+  blocks->getAccountTransactionsWithPager(user1id, Pager{iroha::hash256_t{}, 2})
       .subscribe([&](auto tx) { results.push_back(tx); });
 
   ASSERT_EQ(2, results.size());
@@ -807,7 +807,8 @@ TEST_F(AmetsuchiTest, GetAccountTransactionsWithPagerTest) {
 
   // When query with alice's txs with overflowed limit.
   results.clear();
-  blocks->getAccountTransactionsWithPager(user1id, iroha::hash256_t{}, 100)
+  blocks
+      ->getAccountTransactionsWithPager(user1id, Pager{iroha::hash256_t{}, 100})
       .subscribe([&](auto tx) { results.push_back(tx); });
 
   ASSERT_EQ(2, results.size());
@@ -827,7 +828,9 @@ TEST_F(AmetsuchiTest, GetAccountTransactionsWithPagerTest) {
 
   // When query bob's txs with overflowed limit.
   results.clear();
-  blocks->getAccountTransactionsWithPager(user2id, iroha::hash256_t{}, 100)
+  blocks
+      ->getAccountTransactionsWithPager(
+          user2id, Pager{iroha::hash256_t{}, 100})
       .subscribe([&](auto tx) { results.push_back(tx); });
 
   ASSERT_EQ(1, results.size());
@@ -877,10 +880,10 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
     tx1.creator_account_id = adminid;
     tx1.commands = {std::make_shared<CreateDomain>(domain1name),
                     std::make_shared<CreateDomain>(domain2name),
-                    std::make_shared<CreateAccount>(user1name, domain1name,
-                                                    iroha::pubkey_t{}),
-                    std::make_shared<CreateAccount>(user2name, domain1name,
-                                                    iroha::pubkey_t{})};
+                    std::make_shared<CreateAccount>(
+                        user1name, domain1name, iroha::pubkey_t{}),
+                    std::make_shared<CreateAccount>(
+                        user2name, domain1name, iroha::pubkey_t{})};
     block1.transactions.push_back(tx1);
   }
 
@@ -973,16 +976,16 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
     tx1.creator_account_id = adminid;
     tx1.commands = {
         std::make_shared<CreateDomain>("dummy"),
-        std::make_shared<TransferAsset>(user1id, user2id, asset1id,
-                                        iroha::Amount(1234, asset1prec)),
-        std::make_shared<CreateAccount>("dummy_acct_1", "dummy",
-                                        iroha::pubkey_t{})};
+        std::make_shared<TransferAsset>(
+            user1id, user2id, asset1id, iroha::Amount(1234, asset1prec)),
+        std::make_shared<CreateAccount>(
+            "dummy_acct_1", "dummy", iroha::pubkey_t{})};
     block4.transactions.push_back(tx1);
 
     tx2 = Transaction{};
     tx2.creator_account_id = adminid;
-    tx2.commands = {std::make_shared<CreateAccount>("dummy_acct_2", "dummy",
-                                                    iroha::pubkey_t{}),
+    tx2.commands = {std::make_shared<CreateAccount>(
+                        "dummy_acct_2", "dummy", iroha::pubkey_t{}),
                     std::make_shared<AddAssetQuantity>(
                         user1id, asset2id, iroha::Amount(500, asset2prec))};
     block4.transactions.push_back(tx2);
@@ -997,14 +1000,14 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
   });
 
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id},
-                                              iroha::hash256_t{}, 0)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id}, Pager{iroha::hash256_t{}, 0})
       .subscribe(
           [](auto) { FAIL() << "subscribe shouldn't occur with limit 0"; });
 
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id},
-                                              iroha::hash256_t{}, 1)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id}, Pager{iroha::hash256_t{}, 1})
       .subscribe([&](auto tx) {
         EXPECT_EQ(3, tx.commands.size());
         EXPECT_TRUE(std::dynamic_pointer_cast<CreateDomain>(tx.commands[0]));
@@ -1014,8 +1017,8 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
 
   std::vector<Transaction> result;
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id},
-                                              iroha::hash256_t{}, 2)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id}, Pager{iroha::hash256_t{}, 2})
       .subscribe([&](auto tx) { result.push_back(tx); });
 
   ASSERT_EQ(2, result.size());
@@ -1033,8 +1036,8 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
 
   result.clear();
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id},
-                                              iroha::hash256_t{}, 100)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id}, Pager{iroha::hash256_t{}, 100})
       .subscribe([&](auto tx) { result.push_back(tx); });
 
   ASSERT_EQ(2, result.size());
@@ -1052,8 +1055,8 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
 
   result.clear();
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id, asset2id},
-                                              iroha::hash256_t{}, 100)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id, asset2id}, Pager{iroha::hash256_t{}, 100})
       .subscribe([&](auto tx) { result.push_back(tx); });
 
   ASSERT_EQ(3, result.size());
@@ -1083,8 +1086,8 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
 
   result.clear();
   blocks
-      ->getAccountAssetsTransactionsWithPager(user1id, {asset1id, asset2id},
-                                              until_tx_hash, 100)
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {asset1id, asset2id}, Pager{until_tx_hash, 100})
       .subscribe([&](auto tx) { result.push_back(tx); });
 
   ASSERT_EQ(1, result.size());
@@ -1096,8 +1099,9 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
   EXPECT_TRUE(
       std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[2]));
 
-  blocks->getAccountAssetsTransactionsWithPager(user1id, {}, iroha::hash256_t{}, 100)
-    .subscribe([&](auto tx) {
-      FAIL() << "Shouldn't subscribe if no assets.";
-    });
+  blocks
+      ->getAccountAssetsTransactionsWithPager(
+          user1id, {}, Pager{iroha::hash256_t{}, 100})
+      .subscribe(
+          [&](auto tx) { FAIL() << "Shouldn't subscribe if no assets."; });
 }

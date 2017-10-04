@@ -239,8 +239,8 @@ namespace iroha {
                                 ->mutable_get_account_transactions_with_pager();
         pb_query_mut->set_account_id(tmp->account_id);
         auto pb_pager = pb_query_mut->mutable_pager();
-        pb_pager->set_tx_hash(tmp->pager_tx_hash.to_hexstring());
-        pb_pager->set_limit(tmp->pager_limit);
+        pb_pager->set_tx_hash(tmp->pager.tx_hash.to_hexstring());
+        pb_pager->set_limit(tmp->pager.limit);
         return pb_query;
       }
 
@@ -261,8 +261,8 @@ namespace iroha {
           (*pb_query_mut->add_assets_id()) = id;
         }
         auto pb_pager = pb_query_mut->mutable_pager();
-        pb_pager->set_tx_hash(tmp->pager_tx_hash.to_hexstring());
-        pb_pager->set_limit(tmp->pager_limit);
+        pb_pager->set_tx_hash(tmp->pager.tx_hash.to_hexstring());
+        pb_pager->set_limit(tmp->pager.limit);
         return pb_query;
       }
 

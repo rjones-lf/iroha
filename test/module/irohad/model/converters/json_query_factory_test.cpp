@@ -184,7 +184,7 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactionsWithPager) {
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccountTransactionsWithPager(
-      0, "123", 0, "test", iroha::hash256_t{}, 1);
+      0, "123", 0, "test", Pager{iroha::hash256_t{}, 1});
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
@@ -231,9 +231,10 @@ TEST(QuerySerializerTest,
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccountAssetsTransactionsWithPager(
-      0, "123", 0, "test", {"a", "b"}, iroha::hash256_t{}, 1);
+      0, "123", 0, "test", {"a", "b"}, model::Pager{iroha::hash256_t{}, 1});
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
+  std::cout << json << std::endl;
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val.has_value());
   ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
@@ -245,7 +246,7 @@ TEST(QuerySerializerTest,
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccountAssetsTransactionsWithPager(
-      0, "123", 0, "test", {}, iroha::hash256_t{}, 1);
+      0, "123", 0, "test", {}, model::Pager{iroha::hash256_t{}, 1});
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);

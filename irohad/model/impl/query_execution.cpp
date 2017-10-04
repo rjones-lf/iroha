@@ -245,8 +245,7 @@ std::shared_ptr<iroha::model::QueryResponse> iroha::model::
     QueryProcessingFactory::executeGetAccountAssetsTransactionsWithPager(
         const model::GetAccountAssetsTransactionsWithPager &query) {
   auto acc_asset_tx = _blockQuery->getAccountAssetsTransactionsWithPager(
-      query.account_id, query.assets_id, query.pager_tx_hash,
-      query.pager_limit);
+      query.account_id, query.assets_id, query.pager);
   iroha::model::TransactionsResponse response;
   response.query_hash = iroha::hash(query);
   response.transactions = acc_asset_tx;
@@ -257,7 +256,7 @@ std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountTransactionsWithPager(
     const model::GetAccountTransactionsWithPager &query) {
   auto acc_tx = _blockQuery->getAccountTransactionsWithPager(
-      query.account_id, query.pager_tx_hash, query.pager_limit);
+      query.account_id, query.pager);
   iroha::model::TransactionsResponse response;
   response.query_hash = iroha::hash(query);
   response.transactions = acc_tx;

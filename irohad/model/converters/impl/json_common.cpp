@@ -27,10 +27,21 @@ namespace iroha {
         Value document;
         document.SetObject();
 
-        document.AddMember("pubkey", signature.pubkey.to_hexstring(),
-                           allocator);
-        document.AddMember("signature", signature.signature.to_hexstring(),
-                           allocator);
+        document.AddMember(
+            "pubkey", signature.pubkey.to_hexstring(), allocator);
+        document.AddMember(
+            "signature", signature.signature.to_hexstring(), allocator);
+
+        return document;
+      }
+
+      Value serializePager(const Pager& pager,
+                           Document::AllocatorType& allocator) {
+        Value document;
+        document.SetObject();
+
+        document.AddMember("tx_hash", pager.tx_hash.to_hexstring(), allocator);
+        document.AddMember("limit", pager.limit, allocator);
 
         return document;
       }

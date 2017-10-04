@@ -104,15 +104,13 @@ namespace iroha {
                    rxcpp::observable<model::Transaction>(std::string,
                                                          std::string));
 
-      MOCK_METHOD3(getAccountTransactionsWithPager,
+      MOCK_METHOD2(getAccountTransactionsWithPager,
                    rxcpp::observable<model::Transaction>(std::string,
-                                                         iroha::hash256_t,
-                                                         size_t));
+                                                         model::Pager));
 
-      MOCK_METHOD4(getAccountAssetsTransactionsWithPager,
+      MOCK_METHOD3(getAccountAssetsTransactionsWithPager,
                    rxcpp::observable<model::Transaction>(
-                       std::string, std::vector<std::string>, iroha::hash256_t,
-                       size_t));
+                       std::string, std::vector<std::string>, model::Pager));
 
       MOCK_METHOD2(getBlocks,
                    rxcpp::observable<model::Block>(uint32_t, uint32_t));
@@ -127,10 +125,11 @@ namespace iroha {
 
     class MockMutableStorage : public MutableStorage {
      public:
-      MOCK_METHOD2(apply,
-                   bool(const model::Block &,
-                        std::function<bool(const model::Block &, WsvQuery &,
-                                           const hash256_t &)>));
+      MOCK_METHOD2(
+          apply,
+          bool(const model::Block &,
+               std::function<
+                   bool(const model::Block &, WsvQuery &, const hash256_t &)>));
     };
 
     /**
