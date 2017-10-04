@@ -33,13 +33,18 @@ bool validate_genesis_path(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
+bool validate_keypair_name(const char *flag_name, std::string const &path) {
+  return not path.empty();
+}
+
 DEFINE_string(config, "", "Specify iroha provisioning path.");
 DEFINE_validator(config, &validate_config);
 
 DEFINE_string(genesis_block, "genesis.json", "Specify file with initial block");
 DEFINE_validator(genesis_block, &validate_genesis_path);
 
-DEFINE_uint64(peer_number, 0, "Specify peer number");
+DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
+DEFINE_validator(keypair_name, &validate_keypair_name);
 
 int main(int argc, char *argv[]) {
   auto log = logger::log("MAIN");
@@ -52,11 +57,19 @@ int main(int argc, char *argv[]) {
   auto config = parse_iroha_config(FLAGS_config);
   log->info("config initialized");
 
-  // TODO: we need a name here
-  iroha::KeysManagerImpl keysManager("testnode");
-  iroha::keypair_t keypair;
+  iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
+  iroha::keypair_t keypair{};
   if (auto loadedKeypair = keysManager.loadKeys()) {
     keypair = *loadedKeypair;
+    std::string keypair_test = "1";
+    auto signature = iroha::sign(keypair_test, keypair.pubkey, keypair.privkey);
+    if (not iroha::verify(keypair_test, keypair.pubkey, signature)) {
+      log->error("Failed to verify loaded keypair");
+      return EXIT_FAILURE;
+    }
+  } else {
+    log->error("Failed to load keypair");
+    return EXIT_FAILURE;
   }
 
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
@@ -64,7 +77,6 @@ int main(int argc, char *argv[]) {
                 config[mbr::RedisPort].GetUint(),
                 config[mbr::PgOpt].GetString(),
                 config[mbr::ToriiPort].GetUint(),
-                FLAGS_peer_number,
                 keypair);
 
   if (not irohad.storage) {

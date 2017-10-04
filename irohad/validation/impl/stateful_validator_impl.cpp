@@ -30,7 +30,7 @@ namespace iroha {
         const model::Proposal &proposal,
         ametsuchi::TemporaryWsv &temporaryWsv) {
       log_->info("transactions in proposal: {}", proposal.transactions.size());
-      auto checking_transaction = [](auto &tx, auto &queries) {
+      auto checking_transaction = [this](auto &tx, auto &queries) {
         auto account = queries.getAccount(tx.creator_account_id);
         // Check if tx creator has account and has quorum to execute transaction
         if (not account.has_value()
@@ -60,6 +60,16 @@ namespace iroha {
                               accPubkeys.end(),
                               txPubkeys.begin(),
                               txPubkeys.end())) {
+          log_->warn(
+              "Account public keys do not contain transaction public keys");
+          log_->warn("Account public keys: ");
+          for (const auto &pubkey : *account_signs) {
+            log_->warn("{}", pubkey.to_hexstring());
+          }
+          log_->warn("Transaction public keys: ");
+          for (const auto &sign : tx.signatures) {
+            log_->warn("{}", sign.pubkey.to_hexstring());
+          }
           return false;
         }
 

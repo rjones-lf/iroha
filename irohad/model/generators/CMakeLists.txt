@@ -10,4 +10,5 @@ target_link_libraries(model_generators
     model
     optional
     generator
+    keys_manager
     )

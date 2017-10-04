@@ -33,14 +33,12 @@ Irohad::Irohad(const std::string &block_store_dir,
                size_t redis_port,
                const std::string &pg_conn,
                size_t torii_port,
-               uint64_t peer_number,
                const keypair_t &keypair)
     : block_store_dir_(block_store_dir),
       redis_host_(redis_host),
       redis_port_(redis_port),
       pg_conn_(pg_conn),
       torii_port_(torii_port),
-      peer_number_(peer_number),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -109,7 +107,17 @@ void Irohad::initPeerQuery() {
 }
 
 void Irohad::initPeer() {
-  peer = wsv->getLedgerPeers().value().at(peer_number_);
+  auto peers = wsv->getLedgerPeers().value();
+
+  auto it = std::find_if(peers.begin(), peers.end(), [this](auto peer) {
+    return peer.pubkey == keypair.pubkey;
+  });
+
+  if (it == peers.end()) {
+    log_->error("Cannot find peer with given public key");
+  }
+
+  peer = *it;
 
   log_->info("[Init] => peer address is {}", peer.address);
 }

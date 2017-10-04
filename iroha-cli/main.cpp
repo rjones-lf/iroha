@@ -134,10 +134,7 @@ int main(int argc, char* argv[]) {
               std::back_inserter(peers_address));
     // Generate genesis block
     auto block = generator.generateGenesisBlock(peers_address);
-    // Sign block with fake signature from known seed
-    // TODO: generate signature depending on specific Iroha-net
-    block.sigs = {generateSignature(42)};
-    block.transactions.at(0).signatures = {generateSignature(42)};
+
     // Convert to json
     JsonBlockFactory json_factory;
     auto doc = json_factory.serialize(block);
