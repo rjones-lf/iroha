@@ -17,6 +17,7 @@
 
 #include "model/converters/pb_query_factory.hpp"
 #include <queries.pb.h>
+#include "common/types.hpp"
 #include "crypto/hash.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
@@ -107,15 +108,28 @@ namespace iroha {
               const auto &pb_cast = pl.get_account_transactions_with_pager();
               auto query = GetAccountTransactionsWithPager();
               query.account_id = pb_cast.account_id();
-              val = std::make_shared<model::GetAccountTransactionsWithPager>(query);
+              auto hex_opt =
+                  iroha::hexstringToBytestring(pb_cast.pager().tx_hash());
+              assert(hex_opt);  // The string should be eliminated in stateless
+                                // validator.
+              query.pager.tx_hash.from_string(*hex_opt);
+              query.pager.limit =
+                  static_cast<uint16_t>(pb_cast.pager().limit());
+              val = std::make_shared<model::GetAccountTransactionsWithPager>(
+                  query);
               break;
             }
-            case Query_Payload::QueryCase::kGetAccountAssetsTransactionsWithPager: {
-              const auto &pb_cast = pl.get_account_assets_transactions_with_pager();
+            case Query_Payload::QueryCase::
+                kGetAccountAssetsTransactionsWithPager: {
+              const auto &pb_cast =
+                  pl.get_account_assets_transactions_with_pager();
               auto query = GetAccountAssetsTransactionsWithPager();
               query.account_id = pb_cast.account_id();
-              std::copy(pb_cast.assets_id().begin(), pb_cast.assets_id().end(), query.assets_id.begin());
-              val = std::make_shared<model::GetAccountAssetsTransactionsWithPager>(query);
+              std::copy(pb_cast.assets_id().begin(),
+                        pb_cast.assets_id().end(),
+                        query.assets_id.begin());
+              val = std::make_shared<
+                  model::GetAccountAssetsTransactionsWithPager>(query);
               break;
             }
             case Query_Payload::QueryCase::kGetRoles: {
@@ -137,7 +151,8 @@ namespace iroha {
             }
             default: {
               // Query not implemented
-              log_->error("Query (query_case: {}) is not implemented.", pl.query_case());
+              log_->error("Query (query_case: {}) is not implemented.",
+                          pl.query_case());
               return nonstd::nullopt;
             }
           }
@@ -233,7 +248,7 @@ namespace iroha {
         protocol::Query pb_query;
         serializeQueryMetaData(pb_query, query);
         auto tmp =
-            std::static_pointer_cast<const GetAccountTransactionsWithPager>(
+            std::dynamic_pointer_cast<const GetAccountTransactionsWithPager>(
                 query);
         auto pb_query_mut = pb_query.mutable_payload()
                                 ->mutable_get_account_transactions_with_pager();
@@ -249,8 +264,9 @@ namespace iroha {
           std::shared_ptr<const Query> query) const {
         protocol::Query pb_query;
         serializeQueryMetaData(pb_query, query);
-        auto tmp = std::static_pointer_cast<
+        auto tmp = std::dynamic_pointer_cast<
             const GetAccountAssetsTransactionsWithPager>(query);
+        assert(tmp);
         auto account_id = tmp->account_id;
         auto assets_id = tmp->assets_id;
         auto pb_query_mut =
