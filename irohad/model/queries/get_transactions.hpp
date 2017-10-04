@@ -67,7 +67,7 @@ namespace iroha {
       /**
        * Pager for transactions
        */
-      std::string pager_tx_hash;
+      iroha::hash256_t pager_tx_hash;
       uint16_t pager_limit;
 
       using AssetsIdType = decltype(assets_id);
@@ -85,7 +85,7 @@ namespace iroha {
       /**
        * Pager for transactions
        */
-      std::string pager_tx_hash;
+      iroha::hash256_t pager_tx_hash;
       uint16_t pager_limit;
     };
   }  // namespace model
