@@ -39,7 +39,7 @@ namespace iroha {
          * @return model Query
          */
         optional_ptr<model::Query> deserialize(
-            const protocol::Query& pb_query) const;
+            const protocol::Query &pb_query) const;
 
         /**
          * Convert model query to proto query
@@ -61,6 +61,10 @@ namespace iroha {
             std::shared_ptr<const Query> query) const;
         protocol::Query serializeGetAccountAssetTransactions(
             std::shared_ptr<const Query> query) const;
+        protocol::Query serializeGetAccountTransactionsWithPager(
+            std::shared_ptr<const Query> query) const;
+        protocol::Query serializeGetAccountAssetsTransactionsWithPager(
+            std::shared_ptr<const Query> query) const;
         protocol::Query serializeGetSignatories(
             std::shared_ptr<const Query> query) const;
         protocol::Query serializeGetAssetInfo(
@@ -75,7 +79,7 @@ namespace iroha {
          * @param pb_query - protocol query  object
          * @param query - model query to serialize
          */
-        void serializeQueryMetaData(protocol::Query& pb_query,
+        void serializeQueryMetaData(protocol::Query &pb_query,
                                     std::shared_ptr<const Query> query) const;
 
         using Serializer = protocol::Query (PbQueryFactory::*)(
