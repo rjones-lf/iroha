@@ -46,7 +46,9 @@ TEST(QuerySerializerTest, ClassHandlerTest) {
       std::make_shared<GetAccountAssets>(),
       std::make_shared<GetSignatories>(),
       std::make_shared<GetAccountAssetTransactions>(),
-      std::make_shared<GetAccountTransactions>()
+      std::make_shared<GetAccountTransactions>(),
+      std::make_shared<GetAccountTransactionsWithPager>(),
+      std::make_shared<GetAccountAssetsTransactionsWithPager>()
   };
   for (const auto &command : commands) {
     auto ser = factory.serialize(command);
@@ -164,6 +166,18 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions){
   ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
 }
 
+TEST(QuerySerializerTest, SerializeGetAccountAssetTransactions){
+  JsonQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto val = queryGenerator.generateGetAccountAssetTransactions(0, "123", 0, "test", "test_asset");
+  val->signature = generateSignature(42);
+  auto json = queryFactory.serialize(val);
+  auto ser_val = queryFactory.deserialize(json);
+  ASSERT_TRUE(ser_val.has_value());
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
+  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+}
+
 TEST(QuerySerializerTest, SerializeGetSignatories){
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
@@ -197,4 +211,14 @@ TEST(QuerySerializerTest, get_role_permissions){
   runQueryTest(val);
 }
 
-
+TEST(QuerySerializerTest, SerializeGetAccountTransactionsWithPager){
+  JsonQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto val = queryGenerator.generateGetSignatories(0, "123", 0, "test");
+  val->signature = generateSignature(42);
+  auto json = queryFactory.serialize(val);
+  auto ser_val = queryFactory.deserialize(json);
+  ASSERT_TRUE(ser_val.has_value());
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
+  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+}
