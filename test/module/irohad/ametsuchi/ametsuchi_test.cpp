@@ -1095,4 +1095,9 @@ TEST_F(AmetsuchiTest, GetAccountAssetsTransactionsWithPagerTest) {
       std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[1]));
   EXPECT_TRUE(
       std::dynamic_pointer_cast<AddAssetQuantity>(result[0].commands[2]));
+
+  blocks->getAccountAssetsTransactionsWithPager(user1id, {}, iroha::hash256_t{}, 100)
+    .subscribe([&](auto tx) {
+      FAIL() << "Shouldn't subscribe if no assets.";
+    });
 }
