@@ -142,9 +142,16 @@ namespace iroha {
         auto des = makeFieldDeserializer(obj_query);
 
         auto des_assets_id = [this](auto assets_id) {
-          auto acc_string = [this](auto init, auto &) {
-            return init |
-                [this](auto value) { return nonstd::make_optional(value); };
+          auto acc_string = [this](auto init, auto &x) {
+            return init | [this, &x](auto commands) {
+              // TODO: Refactor this.
+              return (x.IsString() ? nonstd::make_optional(x.GetString())
+                                   : nonstd::nullopt)
+                  | [&commands](auto command) {
+                      commands.push_back(command);
+                      return nonstd::make_optional(commands);
+                    };
+            };
           };
           return std::accumulate(
               assets_id.begin(), assets_id.end(),
@@ -269,8 +276,10 @@ namespace iroha {
         json_doc.AddMember("query_type", "GetAccountTransactionsWithPager",
                            allocator);
         auto get_account_with_pg =
-            std::dynamic_pointer_cast<const GetAccountTransactionsWithPager>(query);
-        json_doc.AddMember("account_id", get_account_with_pg->account_id, allocator);
+            std::dynamic_pointer_cast<const GetAccountTransactionsWithPager>(
+                query);
+        json_doc.AddMember("account_id", get_account_with_pg->account_id,
+                           allocator);
         json_doc.AddMember("pager_tx_hash",
                            get_account_with_pg->pager_tx_hash.to_hexstring(),
                            allocator);
@@ -290,14 +299,14 @@ namespace iroha {
         auto get_tx_with_pg = std::dynamic_pointer_cast<
             const GetAccountAssetsTransactionsWithPager>(query);
         assert(get_tx_with_pg);
-        Value assets_id;
-        assets_id.SetArray();
-        for (auto perm : get_tx_with_pg->assets_id) {
-          Value id;
-          id.Set(perm, allocator);
-          assets_id.PushBack(id, allocator);
+        Value pb_assets_id;
+        pb_assets_id.SetArray();
+        for (auto id : get_tx_with_pg->assets_id) {
+          Value pb_id;
+          pb_id.Set(id, allocator);
+          pb_assets_id.PushBack(pb_id, allocator);
         }
-        json_doc.AddMember("assets_id", assets_id, allocator);
+        json_doc.AddMember("assets_id", pb_assets_id, allocator);
         json_doc.AddMember("pager_tx_hash",
                            get_account_assets_pg->pager_tx_hash.to_hexstring(),
                            allocator);
