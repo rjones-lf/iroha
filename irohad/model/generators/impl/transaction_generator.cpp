@@ -25,9 +25,7 @@ namespace iroha {
   namespace model {
     namespace generators {
       Transaction TransactionGenerator::generateGenesisTransaction(
-          ts64_t timestamp,
-          std::vector<std::string> peers_address,
-          std::vector<pubkey_t> public_keys) {
+          ts64_t timestamp, std::vector<std::string> peers_address) {
         Transaction tx;
         tx.created_ts = timestamp;
         tx.creator_account_id = "";
@@ -36,9 +34,11 @@ namespace iroha {
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
-          auto peer_key = public_keys.at(i);
-          tx.commands.push_back(
-              command_generator.generateAddPeer(peers_address[i], peer_key));
+          KeysManagerImpl manager("node" + std::to_string(i));
+          manager.createKeys("node" + std::to_string(i));
+          auto keypair = *manager.loadKeys();
+          tx.commands.push_back(command_generator.generateAddPeer(
+              peers_address[i], keypair.pubkey));
         }
         // Add domain
         tx.commands.push_back(command_generator.generateCreateDomain("test"));
@@ -62,19 +62,6 @@ namespace iroha {
             command_generator.generateSetAdminPermissions("admin@test"));
 
         return tx;
-      }
-
-      Transaction TransactionGenerator::generateGenesisTransaction(
-          ts64_t timestamp, std::vector<std::string> peers_address) {
-        std::vector<pubkey_t> public_keys;
-        for (size_t i = 0; i < peers_address.size(); ++i) {
-          KeysManagerImpl manager("node" + std::to_string(i));
-          manager.createKeys("node" + std::to_string(i));
-          auto keypair = *manager.loadKeys();
-          public_keys.push_back(keypair.pubkey);
-        }
-        return generateGenesisTransaction(
-            timestamp, peers_address, public_keys);
       }
 
       Transaction TransactionGenerator::generateTransaction(
