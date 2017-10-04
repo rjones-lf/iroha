@@ -62,6 +62,10 @@ namespace iroha {
              &JsonQueryFactory::serializeGetAccountTransactions},
             {typeid(GetAccountAssetTransactions),
              &JsonQueryFactory::serializeGetAccountAssetTransactions},
+            {typeid(GetAccountTransactionsWithPager),
+             &JsonQueryFactory::serializeGetAccountTransactionsWithPager},
+            {typeid(GetAccountAssetsTransactionsWithPager),
+             &JsonQueryFactory::serializeGetAccountAssetsTransactionsWithPager},
             {typeid(GetAssetInfo), &JsonQueryFactory::serializeGetAssetInfo},
             {typeid(GetRoles), &JsonQueryFactory::serializeGetRoles},
             {typeid(GetRolePermissions),
@@ -264,9 +268,14 @@ namespace iroha {
         auto &allocator = json_doc.GetAllocator();
         json_doc.AddMember("query_type", "GetAccountTransactionsWithPager",
                            allocator);
-        auto get_account =
-            std::static_pointer_cast<const GetAccountTransactions>(query);
-        json_doc.AddMember("account_id", get_account->account_id, allocator);
+        auto get_account_with_pg =
+            std::dynamic_pointer_cast<const GetAccountTransactionsWithPager>(query);
+        json_doc.AddMember("account_id", get_account_with_pg->account_id, allocator);
+        json_doc.AddMember("pager_tx_hash",
+                           get_account_with_pg->pager_tx_hash.to_hexstring(),
+                           allocator);
+        json_doc.AddMember("pager_limit", get_account_with_pg->pager_limit,
+                           allocator);
       }
 
       void JsonQueryFactory::serializeGetAccountAssetsTransactionsWithPager(
@@ -290,7 +299,8 @@ namespace iroha {
         }
         json_doc.AddMember("assets_id", assets_id, allocator);
         json_doc.AddMember("pager_tx_hash",
-                           get_account_assets_pg->pager_tx_hash.to_hexstring(), allocator);
+                           get_account_assets_pg->pager_tx_hash.to_hexstring(),
+                           allocator);
         json_doc.AddMember("pager_limit", get_account_assets_pg->pager_limit,
                            allocator);
       }
