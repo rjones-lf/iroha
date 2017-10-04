@@ -17,8 +17,6 @@
 
 #include "main/application.hpp"
 
-#include <gmock/gmock.h>
-
 using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::simulator;
@@ -31,9 +29,12 @@ using namespace iroha::model::converters;
 using namespace iroha::consensus::yac;
 
 Irohad::Irohad(const std::string &block_store_dir,
-               const std::string &redis_host, size_t redis_port,
-               const std::string &pg_conn, size_t torii_port,
-               uint64_t peer_number, const keypair_t &keypair)
+               const std::string &redis_host,
+               size_t redis_port,
+               const std::string &pg_conn,
+               size_t torii_port,
+               uint64_t peer_number,
+               const keypair_t &keypair)
     : block_store_dir_(block_store_dir),
       redis_host_(redis_host),
       redis_port_(redis_port),
@@ -68,7 +69,6 @@ void Irohad::init() {
   initPeer();
   initCryptoProvider();
   initValidators();
-  initPeerOrderer();
   initOrderingGate();
   initSimulator();
   initBlockLoader();
@@ -79,14 +79,11 @@ void Irohad::init() {
   // Torii
   initTransactionCommandService();
   initQueryService();
-
 }
 
 void Irohad::initStorage() {
-  storage = StorageImpl::create(block_store_dir_,
-                                redis_host_,
-                                redis_port_,
-                                pg_conn_);
+  storage =
+      StorageImpl::create(block_store_dir_, redis_host_, redis_port_, pg_conn_);
 
   log_->info("[Init] => storage", logger::logBool(storage));
 }
@@ -135,23 +132,15 @@ void Irohad::initValidators() {
   log_->info("[Init] => validators");
 }
 
-void Irohad::initPeerOrderer() {
-  orderer = std::make_shared<PeerOrdererImpl>(wsv);
-  log_->info("[Init] => peer orderer");
-}
-
 void Irohad::initOrderingGate() {
-
   // const set maximum transactions that possible appears in one proposal
   auto max_transactions_in_proposal = 10u;
 
   // const set maximum waiting time util emitting new proposal
   auto delay_for_new_proposal = 5000u;
 
-  ordering_gate = ordering_init.initOrderingGate(wsv,
-                                                 loop,
-                                                 max_transactions_in_proposal,
-                                                 delay_for_new_proposal);
+  ordering_gate = ordering_init.initOrderingGate(
+      wsv, loop, max_transactions_in_proposal, delay_for_new_proposal);
 
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
@@ -168,25 +157,22 @@ void Irohad::initSimulator() {
 }
 
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(wsv,
-                                             storage->getBlockQuery(),
-                                             crypto_verifier);
+  block_loader = loader_init.initBlockLoader(
+      wsv, storage->getBlockQuery(), crypto_verifier);
 
   log_->info("[Init] => block loader");
 }
 
 void Irohad::initConsensusGate() {
   consensus_gate = yac_init.initConsensusGate(
-      peer.address, loop, orderer, simulator, block_loader);
+      peer.address, loop, wsv, simulator, block_loader, keypair);
 
   log_->info("[Init] => consensus gate");
 }
 
 void Irohad::initSynchronizer() {
-  synchronizer = std::make_shared<SynchronizerImpl>(consensus_gate,
-                                                    chain_validator,
-                                                    storage,
-                                                    block_loader);
+  synchronizer = std::make_shared<SynchronizerImpl>(
+      consensus_gate, chain_validator, storage, block_loader);
 
   log_->info("[Init] => synchronizer");
 }
@@ -195,13 +181,11 @@ void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(ordering_gate,
                                                        synchronizer);
 
-  pcs->on_proposal().subscribe([this](auto) {
-    log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
-  });
+  pcs->on_proposal().subscribe(
+      [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
 
-  pcs->on_commit().subscribe([this](auto) {
-    log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ ");
-  });
+  pcs->on_commit().subscribe(
+      [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
 
   log_->info("[Init] => pcs");
 }
@@ -244,8 +228,7 @@ void Irohad::run() {
   internal_server = builder.BuildAndStart();
   internal_thread = std::thread([this] { internal_server->Wait(); });
   server_thread = std::thread([this] {
-    torii_server->run(std::move(command_service),
-                      std::move(query_service));
+    torii_server->run(std::move(command_service), std::move(query_service));
   });
   log_->info("===> iroha initialized");
   torii_server->waitForServersReady();

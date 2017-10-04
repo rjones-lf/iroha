@@ -42,7 +42,8 @@ namespace iroha {
 
       bool CryptoProviderImpl::verify(VoteMessage msg) {
         return iroha::verify(
-            iroha::sha3_256(serializeVote(msg).hash().SerializeAsString())
+            iroha::sha3_256(
+                PbConverters::serializeVote(msg).hash().SerializeAsString())
                 .to_string(),
             msg.signature.pubkey,
             msg.signature.signature);
@@ -52,7 +53,8 @@ namespace iroha {
         VoteMessage vote;
         vote.hash = hash;
         auto signature = iroha::sign(
-            iroha::sha3_256(serializeVote(vote).hash().SerializeAsString())
+            iroha::sha3_256(
+                PbConverters::serializeVote(vote).hash().SerializeAsString())
                 .to_string(),
             keypair_.pubkey,
             keypair_.privkey);

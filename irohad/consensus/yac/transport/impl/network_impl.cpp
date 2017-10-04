@@ -44,7 +44,7 @@ namespace iroha {
       }
 
       void NetworkImpl::send_vote(model::Peer to, VoteMessage vote) {
-        auto request = serializeVote(vote);
+        auto request = PbConverters::serializeVote(vote);
 
         auto call = new AsyncClientCall;
 
@@ -62,7 +62,7 @@ namespace iroha {
         proto::Commit request;
         for (const auto &vote : commit.votes) {
           auto pb_vote = request.add_votes();
-          *pb_vote = serializeVote(vote);
+          *pb_vote = PbConverters::serializeVote(vote);
         }
 
         auto call = new AsyncClientCall;
@@ -83,7 +83,7 @@ namespace iroha {
         proto::Reject request;
         for (const auto &vote : reject.votes) {
           auto pb_vote = request.add_votes();
-          *pb_vote = serializeVote(vote);
+          *pb_vote = PbConverters::serializeVote(vote);
         }
 
         auto call = new AsyncClientCall;
@@ -113,7 +113,7 @@ namespace iroha {
         auto address = std::string(it->second.data(), it->second.size());
         auto peer = peers_addresses_.at(address);
 
-        auto vote = *deserializeVote(*request);
+        auto vote = *PbConverters::deserializeVote(*request);
 
         log_->info(
             "Receive vote {} from {}", vote.hash.block_hash, peer.address);
@@ -137,7 +137,7 @@ namespace iroha {
 
         CommitMessage commit;
         for (const auto &pb_vote : request->votes()) {
-          auto vote = *deserializeVote(pb_vote);
+          auto vote = *PbConverters::deserializeVote(pb_vote);
           commit.votes.push_back(vote);
         }
 
@@ -164,7 +164,7 @@ namespace iroha {
 
         RejectMessage reject;
         for (const auto &pb_vote : request->votes()) {
-          auto vote = *deserializeVote(pb_vote);
+          auto vote = *PbConverters::deserializeVote(pb_vote);
           reject.votes.push_back(vote);
         }
 

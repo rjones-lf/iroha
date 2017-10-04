@@ -42,7 +42,6 @@
 #include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
-
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
@@ -60,9 +59,13 @@ class Irohad {
    * @param torii_port - port for torii binding
    * @param peer_number - number of peer in ledger // todo replace with pub key
    */
-  Irohad(const std::string &block_store_dir, const std::string &redis_host,
-         size_t redis_port, const std::string &pg_conn, size_t torii_port,
-         uint64_t peer_number, const iroha::keypair_t &keypair);
+  Irohad(const std::string &block_store_dir,
+         const std::string &redis_host,
+         size_t redis_port,
+         const std::string &pg_conn,
+         size_t torii_port,
+         uint64_t peer_number,
+         const iroha::keypair_t &keypair);
 
   /**
    * Initialization of whole objects in system
@@ -77,7 +80,7 @@ class Irohad {
   virtual ~Irohad();
 
  protected:
-// ------------------------| component initialization |-------------------------
+  // -----------------------| component initialization |------------------------
 
   virtual void initStorage();
 
@@ -92,8 +95,6 @@ class Irohad {
   virtual void initCryptoProvider();
 
   virtual void initValidators();
-
-  virtual void initPeerOrderer();
 
   virtual void initOrderingGate();
 
@@ -118,7 +119,7 @@ class Irohad {
   std::string pg_conn_;
   size_t torii_port_;
 
-// ---------------------------| internal dependencies |----------------------------
+  // ------------------------| internal dependencies |-------------------------
 
   // loop
   std::shared_ptr<uvw::Loop> loop;
@@ -126,7 +127,8 @@ class Irohad {
   // converter factories
   std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_tx_factory;
   std::shared_ptr<iroha::model::converters::PbQueryFactory> pb_query_factory;
-  std::shared_ptr<iroha::model::converters::PbQueryResponseFactory> pb_query_response_factory;
+  std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
+      pb_query_response_factory;
 
   // crypto provider
   std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_verifier;
@@ -137,10 +139,7 @@ class Irohad {
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
   // peer query
-  std::shared_ptr<iroha::ametsuchi::PeerQueryWsv> wsv;
-
-  // peer orderer
-  std::shared_ptr<iroha::consensus::yac::YacPeerOrderer> orderer;
+  std::shared_ptr<iroha::ametsuchi::PeerQuery> wsv;
 
   // peer
   iroha::model::Peer peer;
@@ -155,7 +154,7 @@ class Irohad {
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
 
   // consensus gate
-  std::shared_ptr<iroha::consensus::yac::YacGate> consensus_gate;
+  std::shared_ptr<iroha::network::ConsensusGate> consensus_gate;
 
   // synchronizer
   std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer;
