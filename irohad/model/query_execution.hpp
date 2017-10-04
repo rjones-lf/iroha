@@ -72,6 +72,10 @@ namespace iroha {
 
       bool validate(const model::GetAccountAssetTransactions& query);
 
+      bool validate(const model::GetAccountTransactionsWithPager& query);
+
+      bool validate(const model::GetAccountAssetsTransactionsWithPager& query);
+
       std::shared_ptr<iroha::model::QueryResponse> executeGetAssetInfo(
           const model::GetAssetInfo& query);
 
