@@ -56,50 +56,58 @@ namespace iroha {
                              std::shared_ptr<ametsuchi::BlockQuery> blockQuery);
 
      private:
-      bool validate(const model::GetAssetInfo& query);
+      bool validate(const model::GetAssetInfo &query);
 
-      bool validate(const model::GetRoles& query);
+      bool validate(const model::GetRoles &query);
 
-      bool validate(const model::GetRolePermissions& query);
+      bool validate(const model::GetRolePermissions &query);
 
-      bool validate(const model::GetAccountAssets& query);
+      bool validate(const model::GetAccountAssets &query);
 
-      bool validate(const model::GetAccount& query);
+      bool validate(const model::GetAccount &query);
 
-      bool validate(const model::GetSignatories& query);
+      bool validate(const model::GetSignatories &query);
 
-      bool validate(const model::GetAccountTransactions& query);
+      bool validate(const model::GetAccountTransactions &query);
 
-      bool validate(const model::GetAccountAssetTransactions& query);
+      bool validate(const model::GetAccountAssetTransactions &query);
 
-      bool validate(const model::GetAccountTransactionsWithPager& query);
+      bool validate(const model::GetAccountTransactionsWithPager &query);
 
-      bool validate(const model::GetAccountAssetsTransactionsWithPager& query);
+      bool validate(const model::GetAccountAssetsTransactionsWithPager &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAssetInfo(
-          const model::GetAssetInfo& query);
+          const model::GetAssetInfo &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetRoles(
-          const model::GetRoles& query);
+          const model::GetRoles &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetRolePermissions(
-          const model::GetRolePermissions& query);
+          const model::GetRolePermissions &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAccountAssets(
-          const model::GetAccountAssets& query);
+          const model::GetAccountAssets &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAccount(
-          const model::GetAccount& query);
+          const model::GetAccount &query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetSignatories(
-          const model::GetSignatories& query);
+          const model::GetSignatories &query);
 
       std::shared_ptr<iroha::model::QueryResponse>
       executeGetAccountAssetTransactions(
-          const model::GetAccountAssetTransactions& query);
+          const model::GetAccountAssetTransactions &query);
 
       std::shared_ptr<iroha::model::QueryResponse>
-      executeGetAccountTransactions(const model::GetAccountTransactions& query);
+      executeGetAccountTransactions(const model::GetAccountTransactions &query);
+
+      std::shared_ptr<iroha::model::QueryResponse>
+      executeGetAccountAssetsTransactionsWithPager(
+          const model::GetAccountAssetsTransactionsWithPager &query);
+
+      std::shared_ptr<iroha::model::QueryResponse>
+      executeGetAccountTransactionsWithPager(
+          const model::GetAccountTransactionsWithPager &query);
 
       std::shared_ptr<ametsuchi::WsvQuery> _wsvQuery;
       std::shared_ptr<ametsuchi::BlockQuery> _blockQuery;

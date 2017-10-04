@@ -241,6 +241,29 @@ iroha::model::QueryProcessingFactory::executeGetAccountTransactions(
   return std::make_shared<iroha::model::TransactionsResponse>(response);
 }
 
+std::shared_ptr<iroha::model::QueryResponse> iroha::model::
+    QueryProcessingFactory::executeGetAccountAssetsTransactionsWithPager(
+        const model::GetAccountAssetsTransactionsWithPager &query) {
+  auto acc_asset_tx = _blockQuery->getAccountAssetsTransactionsWithPager(
+      query.account_id, query.assets_id, query.pager_tx_hash,
+      query.pager_limit);
+  iroha::model::TransactionsResponse response;
+  response.query_hash = iroha::hash(query);
+  response.transactions = acc_asset_tx;
+  return std::make_shared<iroha::model::TransactionsResponse>(response);
+}
+
+std::shared_ptr<iroha::model::QueryResponse>
+iroha::model::QueryProcessingFactory::executeGetAccountTransactionsWithPager(
+    const model::GetAccountTransactionsWithPager &query) {
+  auto acc_tx = _blockQuery->getAccountTransactionsWithPager(
+      query.account_id, query.pager_tx_hash, query.pager_limit);
+  iroha::model::TransactionsResponse response;
+  response.query_hash = iroha::hash(query);
+  response.transactions = acc_tx;
+  return std::make_shared<iroha::model::TransactionsResponse>(response);
+}
+
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetSignatories(
     const model::GetSignatories &query) {
@@ -316,6 +339,29 @@ iroha::model::QueryProcessingFactory::execute(
       return std::make_shared<iroha::model::ErrorResponse>(response);
     }
     return executeGetAccountAssetTransactions(*qry);
+  }
+  if (instanceof <iroha::model::GetAccountTransactionsWithPager>(query.get())) {
+    auto qry =
+      std::static_pointer_cast<const iroha::model::GetAccountTransactionsWithPager>(
+        query);
+    if (!validate(*qry)) {
+      iroha::model::ErrorResponse response;
+      response.query_hash = iroha::hash(*qry);
+      response.reason = model::ErrorResponse::STATEFUL_INVALID;
+      return std::make_shared<iroha::model::ErrorResponse>(response);
+    }
+    return executeGetAccountTransactionsWithPager(*qry);
+  }
+  if (instanceof <iroha::model::GetAccountAssetsTransactionsWithPager>(query.get())) {
+    auto qry = std::static_pointer_cast<
+      const iroha::model::GetAccountAssetsTransactionsWithPager>(query);
+    if (!validate(*qry)) {
+      iroha::model::ErrorResponse response;
+      response.query_hash = iroha::hash(*qry);
+      response.reason = model::ErrorResponse::STATEFUL_INVALID;
+      return std::make_shared<iroha::model::ErrorResponse>(response);
+    }
+    return executeGetAccountAssetsTransactionsWithPager(*qry);
   }
   if (instanceof <GetRoles>(query.get())) {
     auto qry = std::static_pointer_cast<const GetRoles>(query);
