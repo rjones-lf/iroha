@@ -24,8 +24,9 @@ target_link_libraries(server_runner
 
 add_library(raw_block_insertion impl/raw_block_insertion.cpp)
 target_link_libraries(raw_block_insertion
-  model json_model_converters
-  )
+    model
+    json_model_converters
+    )
 
 add_library(application
     application.cpp
@@ -35,8 +36,6 @@ add_library(application
     )
 target_link_libraries(application
     logger
-    gtest
-    gmock
     yac
     server_runner
     model

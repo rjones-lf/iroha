@@ -30,12 +30,8 @@ namespace iroha {
           std::shared_ptr<Timer> timer,
           ClusterOrdering order,
           uint64_t delay) {
-        return std::make_shared<Yac>(vote_storage,
-                                     network,
-                                     crypto,
-                                     timer,
-                                     order,
-                                     delay);
+        return std::make_shared<Yac>(
+            vote_storage, network, crypto, timer, order, delay);
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
@@ -73,7 +69,14 @@ namespace iroha {
 
       void Yac::on_vote(model::Peer from, VoteMessage vote) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(vote)) {
+        if (not crypto_->verify(vote)) {
+          log_->warn(
+              "Crypto verification failed for vote from {}. Signature: {}, "
+              "public key: {}",
+              from.address,
+              vote.signature.signature.to_hexstring(),
+              vote.signature.pubkey.to_hexstring());
+        } else {
           this->applyVote(from, vote);
         }
       }
@@ -82,6 +85,14 @@ namespace iroha {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(commit)) {
           this->applyCommit(from, commit);
+        } else {
+          log_->warn("Crypto verification failed for commit from {}",
+                     from.address);
+          for (const auto &vote : commit.votes) {
+            log_->warn("Signature: {}, public key: {}",
+                       vote.signature.signature.to_hexstring(),
+                       vote.signature.pubkey.to_hexstring());
+          }
         }
       }
 
@@ -89,6 +100,14 @@ namespace iroha {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(reject)) {
           this->applyReject(from, reject);
+        } else {
+          log_->warn("Crypto verification failed for vote from {}",
+                     from.address);
+          for (const auto &vote : reject.votes) {
+            log_->warn("Signature: {}, public key: {}",
+                       vote.signature.signature.to_hexstring(),
+                       vote.signature.pubkey.to_hexstring());
+          }
         }
       }
 
@@ -100,7 +119,8 @@ namespace iroha {
           return;
         }
 
-        log_->info("Vote for hash ({}, {})", vote.hash.proposal_hash,
+        log_->info("Vote for hash ({}, {})",
+                   vote.hash.proposal_hash,
                    vote.hash.block_hash);
 
         network_->send_vote(cluster_order_.currentLeader(), vote);
@@ -111,9 +131,7 @@ namespace iroha {
         }
       }
 
-      void Yac::closeRound() {
-        timer_->deny();
-      };
+      void Yac::closeRound() { timer_->deny(); };
 
       // ------|Apply data|------
 
@@ -130,7 +148,6 @@ namespace iroha {
             vote_storage_.getProcessingState(proposal_hash);
 
         if (not already_processed) {
-
           if (answer->commit.has_value()) {
             notifier_.get_subscriber().on_next(*answer->commit);
           }
@@ -150,9 +167,8 @@ namespace iroha {
       };
 
       void Yac::applyVote(model::Peer from, VoteMessage vote) {
-
-        log_->info("Apply vote: {} from {}", vote.hash.block_hash,
-                   from.address);
+        log_->info(
+            "Apply vote: {} from {}", vote.hash.block_hash, from.address);
 
         auto answer =
             vote_storage_.store(vote, cluster_order_.getNumberOfPeers());
@@ -178,14 +194,14 @@ namespace iroha {
             // propagate directly
 
             log_->info("Propagate commit {} directly to {}",
-                       vote.hash.block_hash, from.address);
+                       vote.hash.block_hash,
+                       from.address);
 
             propagateCommitDirectly(from, answer->commit.value());
           }
         }
 
         if (answer->reject.has_value()) {
-
           log_->info("Reject case on hash {} achieved", proposal_hash);
 
           if (not already_processed) {
@@ -196,13 +212,12 @@ namespace iroha {
             propagateRejectDirectly(from, answer->reject.value());
           }
         }
-
       };
 
       // ------|Propagation|------
 
       void Yac::propagateCommit(CommitMessage msg) {
-        for (const auto &peer :cluster_order_.getPeers()) {
+        for (const auto &peer : cluster_order_.getPeers()) {
           propagateCommitDirectly(peer, msg);
         }
       }
@@ -212,7 +227,7 @@ namespace iroha {
       }
 
       void Yac::propagateReject(RejectMessage msg) {
-        for (const auto &peer :cluster_order_.getPeers()) {
+        for (const auto &peer : cluster_order_.getPeers()) {
           propagateRejectDirectly(peer, msg);
         }
       }

@@ -15,29 +15,31 @@
  * limitations under the License.
  */
 
-#include "yac_peer_orderer_impl.hpp"
-#include <utility>
+#ifndef IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
+#define IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
+
+#include "consensus/yac/yac_crypto_provider.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-      YacPeerOrdererImpl::YacPeerOrdererImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv)
-          : wsv_(std::move(wsv)) {
-      };
+      class CryptoProviderImpl : public YacCryptoProvider {
+       public:
+        explicit CryptoProviderImpl(const keypair_t &keypair);
 
-      nonstd::optional<ClusterOrdering>
-      YacPeerOrdererImpl::getInitialOrdering() {
-        auto peers = wsv_->getLedgerPeers();
-        if(not peers.has_value()) return nonstd::nullopt;
-        return ClusterOrdering(peers.value());
-      };
+        bool verify(CommitMessage msg) override;
 
-      nonstd::optional<ClusterOrdering>
-      YacPeerOrdererImpl::getOrdering(YacHash hash) {
-        // todo make shuffling with proposal_hash seed
-        return getInitialOrdering();
+        bool verify(RejectMessage msg) override;
+
+        bool verify(VoteMessage msg) override;
+
+        VoteMessage getVote(YacHash hash) override;
+
+       private:
+        keypair_t keypair_;
       };
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
+#endif  // IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
