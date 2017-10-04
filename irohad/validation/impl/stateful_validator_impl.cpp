@@ -17,6 +17,7 @@
 
 #include "validation/impl/stateful_validator_impl.hpp"
 #include <numeric>
+#include <set>
 
 namespace iroha {
   namespace validation {
@@ -32,7 +33,8 @@ namespace iroha {
       auto checking_transaction = [](auto &tx, auto &queries) {
         auto account = queries.getAccount(tx.creator_account_id);
         // Check if tx creator has account and has quorum to execute transaction
-        if (not account.has_value() || tx.signatures.size() < account.value().quorum) {
+        if (not account.has_value()
+            || tx.signatures.size() < account.value().quorum) {
           return false;
         }
 
@@ -43,7 +45,24 @@ namespace iroha {
           return false;
         }
 
-        // TODO: Check if signatures in transaction are valid
+        // check if a set of account public keys contains a set
+        // of transaction public keys
+        std::set<pubkey_t> txPubkeys;
+        for (auto sign : tx.signatures) {
+          txPubkeys.insert(sign.pubkey);
+        }
+        std::set<pubkey_t> accPubkeys;
+        for (auto pubkey : *account_signs) {
+          accPubkeys.insert(pubkey);
+        }
+
+        if (not std::includes(accPubkeys.begin(),
+                              accPubkeys.end(),
+                              txPubkeys.begin(),
+                              txPubkeys.end())) {
+          return false;
+        }
+
         return true;
       };
 

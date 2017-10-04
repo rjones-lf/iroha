@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
   log->info("config initialized");
 
   // TODO: we need a name here
-  iroha::KeysManagerImpl keysManager("admin@test");
+  iroha::KeysManagerImpl keysManager("testnode");
   iroha::keypair_t keypair;
   if (auto loadedKeypair = keysManager.loadKeys()) {
     keypair = *loadedKeypair;
