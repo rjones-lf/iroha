@@ -63,13 +63,15 @@ message Query {
        GetSignatories get_account_signatories = 4;
        GetAccountTransactions get_account_transactions = 5;
        GetAccountAssetTransactions get_account_asset_transactions = 6;
-       GetAccountAssets get_account_assets = 7;
-       GetRoles get_roles = 8;
-       GetAssetInfo get_asset_info = 9;
-       GetRolePermissions get_role_permissions = 10;
+       GetAccountTransactionsWithPager get_account_transactions_with_pager = 7;
+       GetAccountAssetsTransactionsWithPager get_account_assets_transactions_with_pager = 8;
+       GetAccountAssets get_account_assets = 9;
+       GetRoles get_roles = 10;
+       GetAssetInfo get_asset_info = 11;
+       GetRolePermissions get_role_permissions = 12;
      }
      // used to prevent replay attacks.
-     uint64 query_counter = 11;
+     uint64 query_counter = 13;
   }
 
   Payload payload = 1;
