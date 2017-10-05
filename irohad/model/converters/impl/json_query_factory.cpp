@@ -274,6 +274,7 @@ namespace iroha {
         auto get_account_with_pg =
             std::dynamic_pointer_cast<const GetAccountTransactionsWithPager>(
                 query);
+        assert(get_account_with_pg);
         json_doc.AddMember(
             "account_id", get_account_with_pg->account_id, allocator);
         Value json_pager;
@@ -294,16 +295,16 @@ namespace iroha {
             "account_id", get_account_assets_pg->account_id, allocator);
         Value json_assets_id;
         json_assets_id.SetArray();
-        for (auto id : get_account_assets_pg->assets_id) {
+        for (const auto& id : get_account_assets_pg->assets_id) {
           Value json_id;
-          json_assets_id.Set(id, allocator);
+          json_id.Set(id, allocator);
           json_assets_id.PushBack(json_id, allocator);
         }
+        json_doc.AddMember("assets_id", json_assets_id, allocator);
         Value json_pager;
         json_pager.SetObject();
         json_pager.CopyFrom(
-            serializePager(get_account_assets_pg->pager, allocator), allocator);
-        json_doc.AddMember("assets_id", json_assets_id, allocator);
+          serializePager(get_account_assets_pg->pager, allocator), allocator);
         json_doc.AddMember("pager", json_pager, allocator);
       }
 
