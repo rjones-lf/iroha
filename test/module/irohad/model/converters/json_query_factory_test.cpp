@@ -234,7 +234,6 @@ TEST(QuerySerializerTest,
       0, "123", 0, "test", {"a", "b"}, model::Pager{iroha::hash256_t{}, 1});
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
-  std::cout << json << std::endl;
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val.has_value());
   ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
