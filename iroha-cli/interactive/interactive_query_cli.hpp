@@ -34,7 +34,9 @@ namespace iroha_cli {
        * @param account_id creator's account identification
        * @param query_counter counter associated with creator's account
        */
-      InteractiveQueryCli(std::string account_id, uint64_t query_counter);
+      InteractiveQueryCli(std::string account_id,
+                          uint64_t query_counter,
+                          std::string key_path);
       /**
        * Run interactive query command line
        */

@@ -23,16 +23,25 @@ namespace iroha_cli {
   namespace interactive {
 
     void InteractiveCli::assign_main_handlers() {
-      addCliCommand(menu_points_, main_handler_map_, TX_CODE, "New transaction",
+      addCliCommand(menu_points_,
+                    main_handler_map_,
+                    TX_CODE,
+                    "New transaction",
                     &InteractiveCli::startTx);
-      addCliCommand(menu_points_, main_handler_map_, QRY_CODE, "New query",
+      addCliCommand(menu_points_,
+                    main_handler_map_,
+                    QRY_CODE,
+                    "New query",
                     &InteractiveCli::startQuery);
     }
 
-    InteractiveCli::InteractiveCli(std::string account_name, uint64_t tx_counter, uint64_t qry_counter)
+    InteractiveCli::InteractiveCli(std::string account_name,
+                                   uint64_t tx_counter,
+                                   uint64_t qry_counter,
+                                   std::string key_path)
         : creator_(account_name),
-          tx_cli_(creator_, tx_counter),
-          query_cli_(creator_, qry_counter) {
+          tx_cli_(creator_, tx_counter, key_path),
+          query_cli_(creator_, qry_counter, key_path) {
       assign_main_handlers();
     }
 

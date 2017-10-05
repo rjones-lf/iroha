@@ -82,10 +82,11 @@ namespace iroha_cli {
     }
 
     InteractiveQueryCli::InteractiveQueryCli(std::string account_name,
-                                             uint64_t query_counter)
+                                             uint64_t query_counter,
+                                             std::string key_path)
         : creator_(account_name),
           counter_(query_counter),
-          keysManager_("./keys/" + account_name) {
+          keysManager_("./" + key_path + "/" + account_name) {
       log_ = logger::log("InteractiveQueryCli");
       keypair_ = keysManager_.loadKeys();
       create_queries_menu();
@@ -211,9 +212,11 @@ namespace iroha_cli {
       }
 
       if (keypair_) {
-        auto sig = iroha::sign(
-            iroha::hash(*query_).to_string(), keypair_->pubkey, keypair_->privkey);
-        query_->signature = Signature{.signature = sig, .pubkey = keypair_->pubkey};
+        auto sig = iroha::sign(iroha::hash(*query_).to_string(),
+                               keypair_->pubkey,
+                               keypair_->privkey);
+        query_->signature =
+            Signature{.signature = sig, .pubkey = keypair_->pubkey};
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else
@@ -231,9 +234,11 @@ namespace iroha_cli {
 
     bool InteractiveQueryCli::parseSaveFile(QueryParams params) {
       if (keypair_) {
-        auto sig = iroha::sign(
-            iroha::hash(*query_).to_string(), keypair_->pubkey, keypair_->privkey);
-        query_->signature = Signature{.signature = sig, .pubkey = keypair_->pubkey};
+        auto sig = iroha::sign(iroha::hash(*query_).to_string(),
+                               keypair_->pubkey,
+                               keypair_->privkey);
+        query_->signature =
+            Signature{.signature = sig, .pubkey = keypair_->pubkey};
       } else {
         // TODO: check what should we do - generate new keys or return an error
         // or may be something else

@@ -18,8 +18,8 @@
 #ifndef IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_TRANSACTION_CLI_HPP
 
-#include "crypto/keys_manager_impl.hpp"
 #include <unordered_map>
+#include "crypto/keys_manager_impl.hpp"
 #include "interactive/interactive_common_cli.hpp"
 #include "logger/logger.hpp"
 #include "model/command.hpp"
@@ -34,7 +34,8 @@ namespace iroha_cli {
        * @param tx_counter - local counter for transaction
        */
       InteractiveTransactionCli(std::string creator_account,
-                                uint64_t tx_counter);
+                                uint64_t tx_counter,
+                                std::string key_path);
       /**
        * Run interactive query command line
        */

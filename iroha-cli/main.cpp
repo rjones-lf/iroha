@@ -47,6 +47,7 @@ DEFINE_string(config, "", "Trusted peer's ip addresses");
 DEFINE_bool(new_account, false, "Choose if account does not exist");
 DEFINE_string(name, "", "Name of the account");
 DEFINE_string(pass_phrase, "", "Name of the account");
+DEFINE_string(key_path, "", "Path to user keys");
 
 // Sending transaction to Iroha
 DEFINE_bool(grpc, false, "Send sample transaction to IrohaNetwork");
@@ -149,8 +150,8 @@ int main(int argc, char* argv[]) {
       logger->error("Specify account name");
       return -1;
     }
-    // TODO: Init counters from Iroha, or read from disk ?
-    InteractiveCli interactiveCli(FLAGS_name, 0, 0);
+    // TODO: Init counters from Iroha, or read from disk?
+    InteractiveCli interactiveCli(FLAGS_name, 0, 0, FLAGS_key_path);
     interactiveCli.run();
   } else {
     assert_config::assert_fatal(false, "Invalid flags");
