@@ -18,6 +18,7 @@
 #ifndef IROHA_CLI_INTERACTIVE_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_CLI_HPP
 
+#include "crypto/keys_manager_impl.hpp"
 #include "interactive/interactive_query_cli.hpp"
 #include "interactive_transaction_cli.hpp"
 
@@ -58,6 +59,11 @@ namespace iroha_cli {
        */
       void startTx();
 
+      /**
+       * Validate user keypair
+       */
+      bool checkKeys();
+
       const std::string TX_CODE = "tx";
       const std::string QRY_CODE = "qry";
 
@@ -65,6 +71,12 @@ namespace iroha_cli {
        * Account id of creator
        */
       std::string creator_;
+
+      /**
+       * To read a keypair
+       */
+      iroha::KeysManagerImpl keysManager_;
+
       // -- Query, tx cli --
       InteractiveTransactionCli tx_cli_;
       InteractiveQueryCli query_cli_;

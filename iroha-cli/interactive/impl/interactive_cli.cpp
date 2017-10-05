@@ -16,6 +16,8 @@
  */
 
 #include "interactive/interactive_cli.hpp"
+#include "crypto/crypto.hpp"
+#include "crypto/hash.hpp"
 #include "interactive/interactive_transaction_cli.hpp"
 #include "parser/parser.hpp"
 
@@ -40,8 +42,9 @@ namespace iroha_cli {
                                    uint64_t qry_counter,
                                    std::string key_path)
         : creator_(account_name),
-          tx_cli_(creator_, tx_counter, key_path),
-          query_cli_(creator_, qry_counter, key_path) {
+          keysManager_("./" + key_path + "/" + account_name),
+          tx_cli_(creator_, tx_counter, keysManager_.loadKeys()),
+          query_cli_(creator_, qry_counter, keysManager_.loadKeys()) {
       assign_main_handlers();
     }
 
@@ -63,8 +66,31 @@ namespace iroha_cli {
 
     void InteractiveCli::startTx() { tx_cli_.run(); }
 
+    bool InteractiveCli::checkKeys() {
+      auto keypair = keysManager_.loadKeys();
+      if (not keypair) {
+        return false;
+      }
+
+      std::string test = "12345";
+      auto sig =
+          iroha::sign(iroha::sha3_256(test).to_string(), keypair->pubkey, keypair->privkey);
+      if (not iroha::verify(iroha::sha3_256(test).to_string(), keypair->pubkey, sig)) {
+        return false;
+      }
+
+      return true;
+    }
+
     void InteractiveCli::run() {
       std::cout << "Welcome to Iroha-Cli. " << std::endl;
+      if (not checkKeys()) {
+        std::cout << "Could not load keys for " + creator_
+                + " or keys are invalid"
+                  << std::endl;
+        std::cout << "Did you forget --key_path param?" << std::endl;
+        return;
+      }
       // Parsing cycle
       while (true) {
         printMenu("Choose what to do:", menu_points_);

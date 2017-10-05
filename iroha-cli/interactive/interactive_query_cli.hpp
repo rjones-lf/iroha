@@ -18,7 +18,6 @@
 #ifndef IROHA_CLI_INTERACTIVE_QUERY_CLI_HPP
 #define IROHA_CLI_INTERACTIVE_QUERY_CLI_HPP
 
-#include <crypto/keys_manager_impl.hpp>
 #include <memory>
 #include <unordered_map>
 #include "interactive/interactive_common_cli.hpp"
@@ -36,7 +35,7 @@ namespace iroha_cli {
        */
       InteractiveQueryCli(std::string account_id,
                           uint64_t query_counter,
-                          std::string key_path);
+                          nonstd::optional<iroha::keypair_t> keypair);
       /**
        * Run interactive query command line
        */
@@ -137,9 +136,6 @@ namespace iroha_cli {
 
       // Query generator for new queries
       iroha::model::generators::QueryGenerator generator_;
-
-      // key manager for transaction signing
-      iroha::KeysManagerImpl keysManager_;
 
       // Logger
       logger::Logger log_;
