@@ -127,7 +127,14 @@ namespace iroha {
               query.account_id = pb_cast.account_id();
               std::copy(pb_cast.assets_id().begin(),
                         pb_cast.assets_id().end(),
-                        query.assets_id.begin());
+                        std::back_inserter(query.assets_id));
+              auto hex_opt =
+                iroha::hexstringToBytestring(pb_cast.pager().tx_hash());
+              assert(hex_opt);  // The string should be eliminated in stateless
+              // validator.
+              query.pager.tx_hash.from_string(*hex_opt);
+              query.pager.limit =
+                static_cast<uint16_t>(pb_cast.pager().limit());
               val = std::make_shared<
                   model::GetAccountAssetsTransactionsWithPager>(query);
               break;
