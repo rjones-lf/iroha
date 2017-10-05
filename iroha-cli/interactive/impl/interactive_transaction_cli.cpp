@@ -148,7 +148,7 @@ namespace iroha_cli {
         std::string creator_account, uint64_t tx_counter)
         : creator_(creator_account),
           tx_counter_(tx_counter),
-          keysManager_(creator_account) {
+          keysManager_("./keys/" + creator_account) {
       keypair_ = keysManager_.loadKeys();
       log_ = logger::log("InteractiveTransactionCli");
       createCommandMenu();

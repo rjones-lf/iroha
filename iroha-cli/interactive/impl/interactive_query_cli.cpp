@@ -85,7 +85,7 @@ namespace iroha_cli {
                                              uint64_t query_counter)
         : creator_(account_name),
           counter_(query_counter),
-          keysManager_(account_name) {
+          keysManager_("./keys/" + account_name) {
       log_ = logger::log("InteractiveQueryCli");
       keypair_ = keysManager_.loadKeys();
       create_queries_menu();
