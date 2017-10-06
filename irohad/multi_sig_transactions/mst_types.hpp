@@ -15,7 +15,15 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_STATE_TIME_INDEX_HPP
-#define IROHA_MST_STATE_TIME_INDEX_HPP
+#ifndef IROHA_MST_TYPES_HPP
+#define IROHA_MST_TYPES_HPP
 
-#endif //IROHA_MST_STATE_TIME_INDEX_HPP
+#include <memory>
+#include "model/transaction.hpp"
+#include "model/peer.hpp"
+
+namespace iroha {
+  using TransactionType = std::shared_ptr<iroha::model::Transaction>;
+  using ConstPeer = const iroha::model::Peer;
+} // namespace iroha
+#endif //IROHA_MST_TYPES_HPP

@@ -17,8 +17,7 @@
 
 #include <utility>
 
-#include "multi_sig_transactions/storage/mst_state_time_index.hpp"
-#include "multi_sig_transactions/storage/mst_state.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
   namespace detail {
@@ -111,14 +110,21 @@ namespace iroha {
                                            rhs.internal_state_));
   }
 
-  std::vector<MstState::DataType> MstState::getTransactions() const {
+  std::vector<DataType> MstState::getTransactions() const {
     return std::vector<DataType>(internal_state_.begin(),
                                  internal_state_.end());
   }
 
-  size_t MstState::eraseByTime(const TimeType &time) {
-    size_t count;
-    return count;
+  MstState MstState::eraseByTime(const TimeType &time) {
+    MstState out = MstState::empty(completer_);
+    while (not index_.empty() and completer_->operator()(index_.top(), time)) {
+      auto iter = internal_state_.find(index_.top());
+
+      out += *iter;
+      internal_state_.erase(iter);
+      index_.pop();
+    }
+    return out;
   }
 
   // ------------------------------| private api |------------------------------
@@ -138,6 +144,7 @@ namespace iroha {
     if (corresponding == internal_state_.end()) {
       /// when state not contains transaction
       internal_state_.insert(rhs_tx);
+      index_.push(rhs_tx);
       return;
     }
 

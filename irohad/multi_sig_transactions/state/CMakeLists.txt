@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AddTest(state_test state_test.cpp)
-target_link_libraries(state_test
-    mst_state
-    logger
+add_library(mst_state
+    impl/mst_state.cpp
     )
 
+target_link_libraries(mst_state
+    model
+    )

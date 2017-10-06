@@ -36,11 +36,13 @@ inline auto generateSignature(const string &sign_value) {
 
 inline auto makeTx(const string &hash_value,
                    const string &signature_value,
-                   uint8_t quorum = 3) {
+                   uint8_t quorum = 3,
+                   iroha::TimeType created_time = 1) {
   Transaction tx{};
   tx.tx_hash = stringToBytesFiller<Transaction::HashType>(hash_value);
   tx.signatures = {generateSignature(signature_value)};
   tx.quorum = quorum;
+  tx.created_ts = created_time;
   return make_shared<Transaction>(tx);
 }
 

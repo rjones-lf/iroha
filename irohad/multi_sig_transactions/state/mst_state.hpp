@@ -19,18 +19,19 @@
 #define IROHA_MST_STATE_HPP
 
 #include <unordered_set>
-#include <memory>
 #include <vector>
+#include <queue>
 #include "logger/logger.hpp"
-#include "model/transaction.hpp"
+
 #include "multi_sig_transactions/mst_types.hpp"
-#include "multi_sig_transactions/storage/mst_state_time_index.hpp"
 #include "model/operators/hash.hpp"
 #include "common/types.hpp"
-#include <queue>
 
 namespace iroha {
 
+  using DataType = std::shared_ptr<iroha::model::Transaction>;
+  using ConstPeer = const iroha::model::Peer;
+  using TimeType = iroha::model::Transaction::TimeType;
 
 
   class MstState {
@@ -41,29 +42,53 @@ namespace iroha {
     using DataType = TransactionType;
     using TimeType = iroha::model::Transaction::TimeType;
 
-    class Completer {
-     public:
+  class DefaultCompleter;
 
-      /**
-       * Verify that transaction is completed
-       * @param tx - transaction for verification
-       * @return true, if complete
-       */
-      virtual bool operator()(const DataType tx) const = 0;
-
-      virtual ~Completer() = default;
-    };
+  /**
+   * Completer is strategy for verification transactions on
+   * completeness and expiration
+   */
+  class Completer {
+   public:
 
     /**
-     * Class provide default behaviour for transaction completer
+     * Verify that transaction is completed
+     * @param tx - transaction for verification
+     * @return true, if complete
      */
-    class DefaultCompleter : public Completer {
-      bool operator()(const MstState::DataType transaction) const override {
-        return transaction->signatures.size() >= transaction->quorum;
-      }
-    };
+    virtual bool operator()(const DataType tx) const = 0;
 
-    using CompliterType = std::shared_ptr<const Completer>;
+    /**
+     * Check that invariant for time expiration for transaction
+     * @param tx - transaction for validation
+     * @param time - current time
+     * @return true, if transaction was expired
+     */
+    virtual bool operator()(const DataType &tx,
+                            const TimeType &time) const = 0;
+
+    virtual ~Completer() = default;
+  };
+
+  /**
+   * Class provide default behaviour for transaction completer
+   */
+  class DefaultCompleter : public Completer {
+    bool operator()(const DataType transaction) const override {
+      return transaction->signatures.size() >= transaction->quorum;
+    }
+
+    bool operator()(const DataType &tx,
+                    const TimeType &time) const override {
+      return false;
+    }
+  };
+
+  using CompliterType = std::shared_ptr<const Completer>;
+
+  class MstState {
+   public:
+    // -----------------------------| public api |------------------------------
 
     /**
      * Create empty state
@@ -106,12 +131,22 @@ namespace iroha {
     /**
      * Erase expired transactions
      * @param time - current time
-     * @return number of expired transactions
+     * @return state with expired transactions
      */
-    size_t eraseByTime(const TimeType &time);
+    MstState eraseByTime(const TimeType &time);
 
    private:
     // ------------------------------| private api |------------------------------
+
+    /**
+     * Class for providing operator < for transactions
+     */
+    class Less {
+     public:
+      bool operator()(const DataType &left, const DataType &right) const {
+        return left->created_ts < right->created_ts;
+      }
+    };
 
     using InternalStateType =
     std::unordered_set<DataType,
@@ -122,39 +157,24 @@ namespace iroha {
 
     MstState(CompliterType completer, InternalStateType transactions);
 
+    /**
+     * Insert transaction in own state and push it in ouw_state if required
+     * @param out_state - state for inserting completed transactions
+     * @param rhs_tx - transaction for isnert
+     */
     void insertOne(MstState &out_state, const DataType &rhs_tx);
 
     // --------------------------------| fields |---------------------------------
 
     CompliterType completer_;
+
     InternalStateType internal_state_;
-    std::priority_queue<MstStateTimeIndex,
-                        std::vector<MstStateTimeIndex>,
-                        IndexLess> index;
+
+    std::priority_queue<DataType,
+                        std::vector<DataType>,
+                        Less> index_;
 
     logger::Logger log_;
-  };
-
-  class MstStateTimeIndex {
-   public:
-
-    static MstStateTimeIndex create(const MstState::TimeType &key,
-                                    MstState::DataType &data) {
-      return MstStateTimeIndex(key, data);
-    }
-
-    MstState::TimeType getKey() const {
-      return key_;
-    }
-
-    MstState::DataType data_;
-
-   private:
-    MstStateTimeIndex(const MstState::TimeType &key,
-                      MstState::DataType &data) : data_(data), key_(key) {
-    }
-
-    MstState::TimeType key_;
   };
 
 } // namespace iroha
