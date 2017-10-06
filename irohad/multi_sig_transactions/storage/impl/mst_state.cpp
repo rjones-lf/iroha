@@ -17,6 +17,7 @@
 
 #include <utility>
 
+#include "multi_sig_transactions/storage/mst_state_time_index.hpp"
 #include "multi_sig_transactions/storage/mst_state.hpp"
 
 namespace iroha {
@@ -115,9 +116,9 @@ namespace iroha {
                                  internal_state_.end());
   }
 
-  MstState MstState::eraseByTime(const TimeType &time) {
-    // TODO implement
-    return MstState::empty(completer_);
+  size_t MstState::eraseByTime(const TimeType &time) {
+    size_t count;
+    return count;
   }
 
   // ------------------------------| private api |------------------------------

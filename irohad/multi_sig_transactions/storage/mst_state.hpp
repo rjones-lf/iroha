@@ -24,14 +24,18 @@
 #include "logger/logger.hpp"
 #include "model/transaction.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/storage/mst_state_time_index.hpp"
 #include "model/operators/hash.hpp"
 #include "common/types.hpp"
+#include <queue>
 
 namespace iroha {
 
+
+
   class MstState {
    public:
-  // ------------------------------| public api |-------------------------------
+    // -----------------------------| public api |------------------------------
 
 
     using DataType = TransactionType;
@@ -102,16 +106,17 @@ namespace iroha {
     /**
      * Erase expired transactions
      * @param time - current time
-     * @return // todo think about return type
+     * @return number of expired transactions
      */
-    MstState eraseByTime(const TimeType &time);
+    size_t eraseByTime(const TimeType &time);
 
    private:
-  // ------------------------------| private api |------------------------------
+    // ------------------------------| private api |------------------------------
 
-    using InternalStateType = std::unordered_set<DataType,
-                                                 iroha::model::PointerTxHasher<DataType>,
-                                                 iroha::DereferenceEquals<DataType>>;
+    using InternalStateType =
+    std::unordered_set<DataType,
+                       iroha::model::PointerTxHasher<DataType>,
+                       iroha::DereferenceEquals<DataType>>;
 
     MstState(CompliterType completer);
 
@@ -119,12 +124,37 @@ namespace iroha {
 
     void insertOne(MstState &out_state, const DataType &rhs_tx);
 
-  // --------------------------------| fields |---------------------------------
+    // --------------------------------| fields |---------------------------------
 
     CompliterType completer_;
     InternalStateType internal_state_;
+    std::priority_queue<MstStateTimeIndex,
+                        std::vector<MstStateTimeIndex>,
+                        IndexLess> index;
 
     logger::Logger log_;
+  };
+
+  class MstStateTimeIndex {
+   public:
+
+    static MstStateTimeIndex create(const MstState::TimeType &key,
+                                    MstState::DataType &data) {
+      return MstStateTimeIndex(key, data);
+    }
+
+    MstState::TimeType getKey() const {
+      return key_;
+    }
+
+    MstState::DataType data_;
+
+   private:
+    MstStateTimeIndex(const MstState::TimeType &key,
+                      MstState::DataType &data) : data_(data), key_(key) {
+    }
+
+    MstState::TimeType key_;
   };
 
 } // namespace iroha
