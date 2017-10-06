@@ -23,6 +23,7 @@
 #include <vector>
 #include "logger/logger.hpp"
 #include "model/transaction.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 #include "model/operators/hash.hpp"
 #include "common/types.hpp"
 
@@ -30,25 +31,58 @@ namespace iroha {
 
   class MstState {
    public:
-// -------------------------------| public api |--------------------------------
+  // ------------------------------| public api |-------------------------------
 
-    using DataType = std::shared_ptr<iroha::model::Transaction>;
 
-    MstState();
+    using DataType = TransactionType;
+    using TimeType = iroha::model::Transaction::TimeType;
+
+    class Completer {
+     public:
+
+      /**
+       * Verify that transaction is completed
+       * @param tx - transaction for verification
+       * @return true, if complete
+       */
+      virtual bool operator()(const DataType tx) const = 0;
+
+      virtual ~Completer() = default;
+    };
+
+    /**
+     * Class provide default behaviour for transaction completer
+     */
+    class DefaultCompleter : public Completer {
+      bool operator()(const MstState::DataType transaction) const override {
+        return transaction->signatures.size() >= transaction->quorum;
+      }
+    };
+
+    using CompliterType = std::shared_ptr<const Completer>;
+
+    /**
+     * Create empty state
+     * @param completer - stategy for determine complete transactions
+     * and expired signatures
+     * @return empty mst state
+     */
+    static MstState empty(
+        const CompliterType &completer = std::make_shared<DefaultCompleter>());
 
     /**
      * Add transaction to current state
      * @param rhs - transaction for insertion
-     * @return this
+     * @return State with completed transactions
      */
-    MstState &operator+=(const DataType &rhs);
+    MstState operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for joining
      * @return State is union of this and right states
      */
-    MstState operator+(const MstState &rhs) const;
+    MstState operator+=(const MstState &rhs);
 
     /**
      * Operator provide difference between this and rhs operator
@@ -65,19 +99,31 @@ namespace iroha {
      */
     std::vector<DataType> getTransactions() const;
 
+    /**
+     * Erase expired transactions
+     * @param time - current time
+     * @return // todo think about return type
+     */
+    MstState eraseByTime(const TimeType &time);
+
    private:
-// ----------------------------| private interface |----------------------------
+  // ------------------------------| private api |------------------------------
 
-    using InternalStateType =
-    std::unordered_set<DataType,
-                       iroha::model::PointerTxHasher<DataType>,
-                       iroha::DereferenceEquals<DataType>>;
+    using InternalStateType = std::unordered_set<DataType,
+                                                 iroha::model::PointerTxHasher<DataType>,
+                                                 iroha::DereferenceEquals<DataType>>;
 
-    MstState(InternalStateType transactions);
+    MstState(CompliterType completer);
 
-// ---------------------------------| fields |----------------------------------
+    MstState(CompliterType completer, InternalStateType transactions);
 
+    void insertOne(MstState &out_state, const DataType &rhs_tx);
+
+  // --------------------------------| fields |---------------------------------
+
+    CompliterType completer_;
     InternalStateType internal_state_;
+
     logger::Logger log_;
   };
 

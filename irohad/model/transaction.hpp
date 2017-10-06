@@ -42,11 +42,13 @@ namespace iroha {
 
       using SignaturesType = decltype(signatures);
 
+      using TimeType = ts64_t;
+
       /**
        * Creation timestamp
        * HEADER field
        */
-      ts64_t created_ts{};
+       TimeType created_ts{};
 
       /**
        * Account id of transaction creator.
