@@ -30,21 +30,22 @@ namespace iroha {
      */
     class BlockCreator {
      public:
-
       /**
        * Processing proposal for making stateful validation
        * @param proposal - object for validation
        */
+
+      // TODO(@warchant): proposal below is copied every time. Use const ref or ptr
       virtual void process_verified_proposal(model::Proposal) = 0;
 
       /**
        * Emit blocks made from proposals
        * @return
        */
-      virtual rxcpp::observable <model::Block> on_block() = 0;
+      virtual rxcpp::observable<model::Block> on_block() = 0;
 
       virtual ~BlockCreator() = default;
     };
-  } // namespace simulator
-} // namespace iroha
-#endif //IROHA_BLOCK_CREATOR_HPP
+  }  // namespace simulator
+}  // namespace iroha
+#endif  // IROHA_BLOCK_CREATOR_HPP

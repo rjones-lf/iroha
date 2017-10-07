@@ -39,7 +39,7 @@ namespace iroha {
         MockYacCryptoProvider(model::Peer::KeyType pubkey)
             : pubkey_(std::move(pubkey)) {}
 
-        MockYacCryptoProvider(const MockYacCryptoProvider &) {}
+        MockYacCryptoProvider(const MockYacCryptoProvider &): pubkey_{} {}
 
         MockYacCryptoProvider &operator=(const MockYacCryptoProvider &) {
           return *this;
@@ -78,8 +78,13 @@ namespace iroha {
       }
 
       std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
-          std::string network_address, ClusterOrdering initial_order) {
+          std::string network_address,
+          ClusterOrdering initial_order) {
         auto &&order = initial_order.getPeers();
+
+        // TODO(@warchant): crypto provider with certificates will be here
+
+        // TODO(@warchant): if find_if does not find pubkey, here will be SEGFAULT
         auto pubkey = std::find_if(order.begin(),
                                    order.end(),
                                    [network_address](auto peer) {
@@ -92,7 +97,8 @@ namespace iroha {
                            createCryptoProvider(pubkey),
                            createTimer(),
                            initial_order,
-                           delay_seconds_ * 1000);
+                           delay_seconds_ * 1000); // TODO(@warchant): remove magic number
+
       }
 
       std::shared_ptr<YacGateImpl> YacInit::initConsensusGate(
@@ -105,12 +111,13 @@ namespace iroha {
         consensus_network->subscribe(yac);
 
         auto hash_provider = createHashProvider();
-        return std::make_shared<YacGateImpl>(std::move(yac),
-                                             std::move(peer_orderer),
-                                             hash_provider,
-                                             block_creator,
-                                             block_loader,
-                                             delay_seconds_ * 1000);
+        return std::make_shared<YacGateImpl>(
+            std::move(yac),
+            std::move(peer_orderer),
+            hash_provider,
+            block_creator,
+            block_loader,
+            delay_seconds_ * 1000);  // TODO(@warchant): remove magic number
       }
 
     }  // namespace yac

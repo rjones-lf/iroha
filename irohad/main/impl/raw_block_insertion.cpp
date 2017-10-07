@@ -16,18 +16,17 @@
  */
 
 #include "main/raw_block_insertion.hpp"
-#include "model/converters/json_common.hpp"
 #include <fstream>
 #include <utility>
 #include "common/types.hpp"
+#include "model/converters/json_common.hpp"
 
 namespace iroha {
   namespace main {
 
-    BlockInserter::BlockInserter(std::shared_ptr<ametsuchi::MutableFactory> factory)
-        : factory_(std::move(factory)) {
-      log_ = logger::log("BlockInserter");
-    }
+    BlockInserter::BlockInserter(
+        std::shared_ptr<ametsuchi::MutableFactory> factory)
+        : factory_(std::move(factory)), log_(logger::log("BlockInserter")) {}
 
     nonstd::optional<model::Block> BlockInserter::parseBlock(std::string data) {
       auto document = model::converters::stringToJson(data);
@@ -38,11 +37,14 @@ namespace iroha {
       return block_factory_.deserialize(document.value());
     };
 
-    void BlockInserter::applyToLedger(std::vector<model::Block> blocks) {
+    void BlockInserter::applyToLedger(const std::vector<model::Block> &blocks) {
       auto storage = factory_->createMutableStorage();
       for (auto &&block : blocks) {
-        storage->apply(block, [](const auto &current_block, auto &query,
-                                 const auto &top_hash) { return true; });
+        storage->apply(
+            block,
+            [](const auto &current_block, auto &query, const auto &top_hash) {
+              return true;
+            });
       }
       factory_->commit(std::move(storage));
     };
@@ -54,5 +56,5 @@ namespace iroha {
       return str;
     };
 
-  } // namespace main
-} // namespace iroha
+  }  // namespace main
+}  // namespace iroha

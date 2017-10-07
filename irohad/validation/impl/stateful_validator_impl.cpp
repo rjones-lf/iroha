@@ -21,18 +21,19 @@
 namespace iroha {
   namespace validation {
 
-    StatefulValidatorImpl::StatefulValidatorImpl() {
-      log_ = logger::log("SFV");
-    }
+    StatefulValidatorImpl::StatefulValidatorImpl() : log_(logger::log("SFV")) {}
 
     model::Proposal StatefulValidatorImpl::validate(
         const model::Proposal &proposal,
         ametsuchi::TemporaryWsv &temporaryWsv) {
       log_->info("transactions in proposal: {}", proposal.transactions.size());
+
+      // start lambda
       auto checking_transaction = [](auto &tx, auto &queries) {
         auto account = queries.getAccount(tx.creator_account_id);
         // Check if tx creator has account and has quorum to execute transaction
-        if (not account.has_value() || tx.signatures.size() < account.value().quorum) {
+        if (not account.has_value()
+            || tx.signatures.size() < account.value().quorum) {
           return false;
         }
 
@@ -45,7 +46,7 @@ namespace iroha {
 
         // TODO: Check if signatures in transaction are valid
         return true;
-      };
+      };  // end lambda
 
       // Filter only valid transactions
       auto filter = [&temporaryWsv, checking_transaction](auto &acc,

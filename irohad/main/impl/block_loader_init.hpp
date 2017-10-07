@@ -28,24 +28,7 @@ namespace iroha {
      * Initialization context of Block loader: loader itself and service
      */
     class BlockLoaderInit {
-     private:
-      /**
-       * Create block loader service with given storage
-       * @param storage - used to retrieve blocks
-       * @return initialized service
-       */
-      auto createService(std::shared_ptr<ametsuchi::BlockQuery> storage);
-
-      /**
-       * Create block loader for loading blocks from given peer by top block
-       * @return initialized loader
-       */
-      auto createLoader(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
      public:
-
       /**
        * Initialize block loader with service and loader
        * @return initialized service
@@ -58,6 +41,6 @@ namespace iroha {
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;
     };
-  } // namespace network
-} // namespace iroha
-#endif //IROHA_BLOCK_LOADER_INIT_HPP
+  }  // namespace network
+}  // namespace iroha
+#endif  // IROHA_BLOCK_LOADER_INIT_HPP

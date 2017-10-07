@@ -26,9 +26,8 @@ namespace iroha {
 
     void OrderingGateImpl::propagate_transaction(
         std::shared_ptr<const model::Transaction> transaction) {
-      log_->info("propagate tx, tx_counter: " +
-                 std::to_string(transaction->tx_counter) +
-                 " account_id: " + transaction->creator_account_id);
+      log_->info("propagate tx, tx_counter: {}, account_id: {}",
+                 transaction->tx_counter, transaction->created_ts);
 
       transport_->propagate_transaction(transaction);
     }
@@ -39,6 +38,7 @@ namespace iroha {
 
     void OrderingGateImpl::onProposal(model::Proposal proposal) {
       log_->info("Received new proposal");
+
       proposals_.get_subscriber().on_next(proposal);
     }
 

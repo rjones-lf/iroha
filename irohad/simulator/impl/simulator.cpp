@@ -30,7 +30,8 @@ namespace iroha {
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
-          crypto_provider_(std::move(crypto_provider)) {
+          crypto_provider_(std::move(crypto_provider)),
+          log_(logger::log("Simulator")) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
           [this](auto proposal) { this->process_proposal(proposal); });
@@ -47,13 +48,11 @@ namespace iroha {
     void Simulator::process_proposal(model::Proposal proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      block_queries_->getTopBlocks(1)
-          .as_blocking()
-          .subscribe([this](auto block) {
-            last_block = block;
-          });
-      if (not last_block.has_value() or
-          last_block.value().height + 1 != proposal.height) {
+      block_queries_->getTopBlocks(1).as_blocking().subscribe(
+          /* TODO(@warchant): block below is copied. use ptr or ref! */
+          [this](auto block) { last_block = block; });
+      if (not last_block.has_value()
+          or last_block.value().height + 1 != proposal.height) {
         return;
       }
       auto temporaryStorage = ametsuchi_factory_->createTemporaryWsv();
@@ -61,15 +60,17 @@ namespace iroha {
           validator_->validate(proposal, *temporaryStorage));
     }
 
+    // TODO(@warchant): proposal below is copied. use const ref or ptr
     void Simulator::process_verified_proposal(model::Proposal proposal) {
-      log_->info("process verified proposal");
+      log_->info("processing verified proposal");
+
       model::Block new_block;
       new_block.height = proposal.height;
       new_block.prev_hash = last_block.value().hash;
       new_block.transactions = proposal.transactions;
       new_block.txs_number = proposal.transactions.size();
-      new_block.created_ts = 0; // todo set timestamp from proposal
-      new_block.merkle_root.fill(0); // todo make effective impl
+      new_block.created_ts = 0;  // TODO(@warchant) set timestamp from proposal
+      new_block.merkle_root.fill(0);  // TODO(@warchant) make effective impl
       new_block.hash = hash(new_block);
       new_block = crypto_provider_->sign(new_block);
 

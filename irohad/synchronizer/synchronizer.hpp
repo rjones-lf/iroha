@@ -34,7 +34,7 @@ namespace iroha {
       /**
        * Processing block last committed block
        */
-      virtual void process_commit(model::Block block) = 0;
+      virtual void process_commit(const model::Block& block) = 0;
 
       /**
        * Emit committed blocks

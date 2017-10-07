@@ -29,4 +29,5 @@ include/generated/*
 .scannerwork/
 iroha.conf
 peers.list
-
+.gtm
+cmake-build*

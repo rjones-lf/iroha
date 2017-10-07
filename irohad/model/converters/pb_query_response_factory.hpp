@@ -36,6 +36,8 @@ namespace iroha {
       /**
        * Converting business objects to protobuf and vice versa
        */
+
+      // TODO(@warchant):  add comments!
       class PbQueryResponseFactory {
        public:
         nonstd::optional<protocol::QueryResponse> serialize(

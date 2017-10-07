@@ -21,9 +21,8 @@
 
 namespace iroha {
   namespace validation {
-    ChainValidatorImpl::ChainValidatorImpl() {
-      log_ = logger::log("ChainValidator");
-    }
+    ChainValidatorImpl::ChainValidatorImpl()
+        : log_(logger::log("ChainValidator")) {}
 
     bool ChainValidatorImpl::validateBlock(const model::Block &block,
                                            ametsuchi::MutableStorage &storage) {
@@ -35,10 +34,10 @@ namespace iroha {
         if (not peers.has_value()) {
           return false;
         }
-        return block.prev_hash == top_hash and
-               consensus::hasSupermajority(block.sigs.size(),
-                                           peers.value().size()) and
-               consensus::peersSubset(block.sigs, peers.value());
+        return block.prev_hash == top_hash
+            and consensus::hasSupermajority(block.sigs.size(),
+                                            peers.value().size())
+            and consensus::peersSubset(block.sigs, peers.value());
       };
 
       // Apply to temporary storage
@@ -50,8 +49,7 @@ namespace iroha {
       log_->info("validate chain...");
       return blocks
           .all([this, &storage](auto block) {
-            log_->info("Validating block: height {}, hash {}",
-                       block.height,
+            log_->info("Validating block: height {}, hash {}", block.height,
                        block.hash.to_hexstring());
             return this->validateBlock(block, storage);
           })

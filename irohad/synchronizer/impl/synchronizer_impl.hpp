@@ -35,7 +35,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::MutableFactory> mutableFactory,
           std::shared_ptr<network::BlockLoader> blockLoader);
 
-      void process_commit(iroha::model::Block commit_message) override;
+      void process_commit(const iroha::model::Block &commit_message) override;
 
       rxcpp::observable<Commit> on_commit_chain() override;
 

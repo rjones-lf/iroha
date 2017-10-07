@@ -37,11 +37,15 @@ namespace iroha {
             block_loader_(std::move(block_loader)),
             delay_(delay) {
         log_ = logger::log("YacGate");
-        block_creator_->on_block().subscribe([this](auto block) {
-          this->vote(block);
-        });
+
+        // TODO(@warchant): block below is copied every time. Change to ptr or
+        // const ref.
+        block_creator_->on_block().subscribe(
+            [this](auto block) { this->vote(block); });
       }
 
+      // TODO(@warchant): block below is copied every time. Change to ptr or
+      // const ref.
       void YacGateImpl::vote(model::Block block) {
         auto hash = hash_provider_->makeHash(block);
         log_->info("vote for block ({}, {})",
@@ -50,16 +54,20 @@ namespace iroha {
         auto order = orderer_->getOrdering(hash);
         if (not order.has_value()) {
           log_->error("ordering doesn't provide peers => pass round");
-          return;
+          return;  // TODO(@warchant): write some comments here. Why it returns.
         }
         current_block_ = std::make_pair(hash, block);
         hash_gate_->vote(hash, order.value());
       }
 
       rxcpp::observable<model::Block> YacGateImpl::on_commit() {
+        //  TODO(@warchant): commit message is copied every time. Change to ptr
+        //  or const ref.
         return hash_gate_->on_commit().flat_map([this](auto commit_message) {
           // map commit to block if it is present or loaded from other peer
           return rxcpp::observable<>::create<model::Block>(
+              // TODO(@warchant): subscriber and commit_message are copied. Use
+              // const ref or ptr. For commit_message use &commit_message
               [this, commit_message](auto subscriber) {
                 const auto hash = getHash(commit_message.votes);
                 if (not hash.has_value()) {
@@ -101,11 +109,13 @@ namespace iroha {
                     // need only the first
                     .first()
                     .subscribe(
+                        // TODO(@warchant): block is copied. Use const ref or ptr.
                         // if load is successful from at least one node
                         [subscriber](auto block) {
                           subscriber.on_next(block);
                           subscriber.on_completed();
                         },
+                        // TODO(@warchant): subscriber is copied. Use const ref or ptr.
                         // if load has failed, no peers provided the block
                         [this, subscriber](std::exception_ptr) {
                           log_->error("Cannot load committed block");

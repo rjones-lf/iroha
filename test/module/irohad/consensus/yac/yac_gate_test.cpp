@@ -16,8 +16,8 @@
  */
 
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/irohad/simulator/simulator_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/simulator/simulator_mocks.hpp"
 
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
@@ -80,7 +80,8 @@ class YacGateTest : public ::testing::Test {
 
 TEST_F(YacGateTest, YacGateSubscriptionTest) {
   cout << "----------| BlockCreator (block)=> YacGate (vote)=> "
-      "HashGate (commit) => YacGate => on_commit() |----------" << endl;
+          "HashGate (commit) => YacGate => on_commit() |----------"
+       << endl;
 
   // yac consensus
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
@@ -102,9 +103,8 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto block) {
-    ASSERT_EQ(block, expected_block);
-  });
+  gate_wrapper.subscribe(
+      [this](auto block) { ASSERT_EQ(block, expected_block); });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -171,9 +171,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto block) {
-    ASSERT_EQ(block, expected_block);
-  });
+  gate_wrapper.subscribe(
+      [this](auto block) { ASSERT_EQ(block, expected_block); });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
