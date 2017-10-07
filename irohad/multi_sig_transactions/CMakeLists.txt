@@ -15,10 +15,10 @@ add_subdirectory(state)
 add_subdirectory(storage)
 
 
-add_library(mst_processor
-    impl/mst_processor.cpp
-    )
-
-target_link_libraries(mst_processor
-    mst_storage
-    )
+#add_library(mst_processor
+#    impl/mst_processor.cpp
+#    )
+#
+#target_link_libraries(mst_processor
+#    mst_storage
+#    )
