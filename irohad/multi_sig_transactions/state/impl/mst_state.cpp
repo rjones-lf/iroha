@@ -18,75 +18,13 @@
 #include <utility>
 
 #include "multi_sig_transactions/state/mst_state.hpp"
+#include "common/set.hpp"
 
 namespace iroha {
-  namespace detail {
-
-    /**
-     * Merge collections with unique elements
-     * @tparam Collection - type of collection
-     * @tparam TargetType - type of elements in collection
-     * @tparam Hasher - class for hashing TargetType objects
-     * @param left - first collection
-     * @param right - second collection
-     * @return collection with type Collection, that contain unique union of elements
-     */
-    template<typename Hasher,
-        typename Collection,
-        typename TargetType = typename Collection::value_type>
-    auto merge_unique(Collection left, Collection right) {
-      std::unordered_set<TargetType, Hasher>
-          unique_set(left.begin(), left.end());
-
-      unique_set.insert(right.begin(), right.end());
-      return Collection(unique_set.begin(), unique_set.end());
-    }
-
-    /**
-     * Provide merge of sets based on mering same elements
-     * @tparam Set - type of set
-     * @tparam Merge - type of merge predicate
-     * @param left - first set
-     * @param right - second set
-     * @param merge - merge predicate
-     * @return new set, that contains union of elements,
-     * where same elements merged inside
-     */
-    template<typename Set, typename Merge>
-    Set set_union(const Set &left, const Set &right, Merge &&merge) {
-      Set out;
-      out.insert(left.begin(), left.end());
-      for (auto &&tx : right) {
-        auto iter = out.find(tx);
-        if (iter != out.end()) {
-          merge(*iter, tx);
-        } else {
-          out.insert(tx);
-        }
-      }
-      return out;
-    }
-
-    /**
-     * Provide difference operation on set
-     * @tparam Set - type of set
-     * @return difference of sets.
-     */
-    template<typename Set>
-    Set set_difference(const Set &left, const Set &right) {
-      Set out;
-      for (auto &&element : left) {
-        if (right.find(element) == right.end()) {
-          out.insert(element);
-        }
-      }
-      return out;
-    }
-  } // namespace detail
 
   // ------------------------------| public api |-------------------------------
 
-  MstState MstState::empty(const CompliterType &completer) {
+  MstState MstState::empty(const CompleterType &completer) {
     return MstState(completer);
   }
 
@@ -106,8 +44,8 @@ namespace iroha {
 
   MstState MstState::operator-(const MstState &rhs) const {
     return MstState(this->completer_,
-                    detail::set_difference(this->internal_state_,
-                                           rhs.internal_state_));
+                    set_difference(this->internal_state_,
+                                   rhs.internal_state_));
   }
 
   std::vector<DataType> MstState::getTransactions() const {
@@ -117,7 +55,7 @@ namespace iroha {
 
   MstState MstState::eraseByTime(const TimeType &time) {
     MstState out = MstState::empty(completer_);
-    while (not index_.empty() and completer_->operator()(index_.top(), time)) {
+    while (not index_.empty() and (*completer_)(index_.top(), time)) {
       auto iter = internal_state_.find(index_.top());
 
       out += *iter;
@@ -129,11 +67,11 @@ namespace iroha {
 
   // ------------------------------| private api |------------------------------
 
-  MstState::MstState(CompliterType completer)
-      : MstState(std::move(completer), InternalStateType({})) {
+  MstState::MstState(CompleterType completer)
+      : MstState(std::move(completer), InternalStateType{}) {
   }
 
-  MstState::MstState(CompliterType completer, InternalStateType transactions)
+  MstState::MstState(CompleterType completer, InternalStateType transactions)
       : completer_(std::move(completer)),
         internal_state_(std::move(transactions)) {
     log_ = logger::log("MstState");
@@ -142,20 +80,20 @@ namespace iroha {
   void MstState::insertOne(MstState &out_state, const DataType &rhs_tx) {
     auto corresponding = internal_state_.find(rhs_tx);
     if (corresponding == internal_state_.end()) {
-      /// when state not contains transaction
+      // when state not contains transaction
       internal_state_.insert(rhs_tx);
       index_.push(rhs_tx);
       return;
     }
 
-    /// state already contains transaction, merge signatures
+    // state already contains transaction, merge signatures
     (*corresponding)->signatures =
-        detail::merge_unique<iroha::model::SignatureHasher>(
+        merge_unique<iroha::model::SignatureHasher>(
             (*corresponding)->signatures, rhs_tx->signatures);
 
-    if (completer_->operator()(*corresponding)) {
-      /// state already has completed transaction,
-      /// remove from state and return it
+    if ((*completer_)(*corresponding)) {
+      // state already has completed transaction,
+      // remove from state and return it
       out_state += *corresponding;
       internal_state_.erase(corresponding);
     }

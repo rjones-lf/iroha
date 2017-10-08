@@ -84,7 +84,7 @@ namespace iroha {
     }
   };
 
-  using CompliterType = std::shared_ptr<const Completer>;
+  using CompleterType = std::shared_ptr<const Completer>;
 
   class MstState {
    public:
@@ -97,7 +97,7 @@ namespace iroha {
      * @return empty mst state
      */
     static MstState empty(
-        const CompliterType &completer = std::make_shared<DefaultCompleter>());
+        const CompleterType &completer = std::make_shared<DefaultCompleter>());
 
     /**
      * Add transaction to current state
@@ -108,8 +108,8 @@ namespace iroha {
 
     /**
      * Concat internal data of states
-     * @param rhs - object for joining
-     * @return State is union of this and right states
+     * @param rhs - object for merging
+     * @return State with completed trasactions
      */
     MstState operator+=(const MstState &rhs);
 
@@ -153,20 +153,20 @@ namespace iroha {
                        iroha::model::PointerTxHasher<DataType>,
                        iroha::DereferenceEquals<DataType>>;
 
-    MstState(CompliterType completer);
+    MstState(CompleterType completer);
 
-    MstState(CompliterType completer, InternalStateType transactions);
+    MstState(CompleterType completer, InternalStateType transactions);
 
     /**
-     * Insert transaction in own state and push it in ouw_state if required
+     * Insert transaction in own state and push it in out_state if required
      * @param out_state - state for inserting completed transactions
-     * @param rhs_tx - transaction for isnert
+     * @param rhs_tx - transaction for insert
      */
     void insertOne(MstState &out_state, const DataType &rhs_tx);
 
     // --------------------------------| fields |---------------------------------
 
-    CompliterType completer_;
+    CompleterType completer_;
 
     InternalStateType internal_state_;
 
