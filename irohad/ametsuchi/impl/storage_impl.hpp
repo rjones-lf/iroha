@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS account (
     account_id character varying(197),
     domain_id character varying(164) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
-    transaction_count int NOT NULL DEFAULT 0,
+    transaction_count int NOT NULL DEFAULT 0 CHECK (transaction_count >= 0),
     permissions bit varying NOT NULL,
     PRIMARY KEY (account_id)
 );
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS peer (
 CREATE TABLE IF NOT EXISTS asset (
     asset_id character varying(197),
     domain_id character varying(164) NOT NULL REFERENCES domain,
-    precision int NOT NULL,
+    precision int NOT NULL CHECK (precision >= 0),
     data json,
     PRIMARY KEY (asset_id)
 );
