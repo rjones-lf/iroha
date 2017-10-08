@@ -30,9 +30,6 @@
 namespace iroha {
 
   using DataType = TransactionType;
-  using TimeType = iroha::model::Transaction::TimeType;
-
-  class DefaultCompleter;
 
   /**
    * Completer is strategy for verification transactions on
@@ -143,9 +140,14 @@ namespace iroha {
                        iroha::model::PointerTxHasher<DataType>,
                        iroha::DereferenceEquals<DataType>>;
 
-    MstState(CompleterType completer);
+    using IndexType = std::priority_queue<DataType,
+                                          std::vector<DataType>,
+                                          Less>;
 
-    MstState(CompleterType completer, InternalStateType transactions);
+    MstState(const CompleterType &completer);
+
+    MstState(const CompleterType &completer,
+             const InternalStateType &transactions);
 
     /**
      * Insert transaction in own state and push it in out_state if required
@@ -154,15 +156,19 @@ namespace iroha {
      */
     void insertOne(MstState &out_state, const DataType &rhs_tx);
 
+    /**
+     * Insert new value in state with keeping invariant
+     * @param rhs_tx - data for insertion
+     */
+    void rawInsert(const DataType &rhs_tx);
+
     // --------------------------------| fields |---------------------------------
 
     CompleterType completer_;
 
     InternalStateType internal_state_;
 
-    std::priority_queue<DataType,
-                        std::vector<DataType>,
-                        Less> index_;
+    IndexType index_;
 
     logger::Logger log_;
   };

@@ -67,13 +67,15 @@ namespace iroha {
 
   // ------------------------------| private api |------------------------------
 
-  MstState::MstState(CompleterType completer)
-      : MstState(std::move(completer), InternalStateType{}) {
+  MstState::MstState(const CompleterType &completer)
+      : MstState(completer, InternalStateType{}) {
   }
 
-  MstState::MstState(CompleterType completer, InternalStateType transactions)
-      : completer_(std::move(completer)),
-        internal_state_(std::move(transactions)) {
+  MstState::MstState(const CompleterType &completer,
+                     const InternalStateType &transactions)
+      : completer_(completer),
+        internal_state_(transactions.begin(), transactions.end()),
+        index_(transactions.begin(), transactions.end()) {
     log_ = logger::log("MstState");
   }
 
@@ -81,8 +83,7 @@ namespace iroha {
     auto corresponding = internal_state_.find(rhs_tx);
     if (corresponding == internal_state_.end()) {
       // when state not contains transaction
-      internal_state_.insert(rhs_tx);
-      index_.push(rhs_tx);
+      rawInsert(rhs_tx);
       return;
     }
 
@@ -97,6 +98,11 @@ namespace iroha {
       out_state += *corresponding;
       internal_state_.erase(corresponding);
     }
+  }
+
+  void MstState::rawInsert(const DataType &rhs_tx) {
+    internal_state_.insert(rhs_tx);
+    index_.push(rhs_tx);
   }
 
 } // namespace iroha

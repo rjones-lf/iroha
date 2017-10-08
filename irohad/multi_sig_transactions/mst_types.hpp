@@ -25,5 +25,6 @@
 namespace iroha {
   using TransactionType = std::shared_ptr<iroha::model::Transaction>;
   using ConstPeer = const iroha::model::Peer;
+  using TimeType = iroha::model::Transaction::TimeType;
 } // namespace iroha
 #endif //IROHA_MST_TYPES_HPP
