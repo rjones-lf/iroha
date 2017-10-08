@@ -27,7 +27,7 @@ using namespace iroha;
 using namespace iroha::model;
 
 inline auto generateSignature(const string &sign_value) {
-  // TODO move to test/framework folder
+  // TODO move out this code after reworking model builders
   Signature s;
   s.signature = stringToBytesFiller<Signature::SignatureType>(sign_value);
   s.pubkey = stringToBytesFiller<Signature::KeyType>(sign_value);

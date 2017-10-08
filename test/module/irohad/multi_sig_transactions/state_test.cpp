@@ -55,6 +55,7 @@ TEST(StateTest, UpdateStateWhenTransacionsSame) {
   state += makeTx("1", "1");
 
   ASSERT_EQ(1, state.getTransactions().size());
+  ASSERT_EQ(1, state.getTransactions().begin()->get()->signatures.size());
 }
 
 TEST(StateTest, DifferentSignaturesUnionTest) {
@@ -104,11 +105,9 @@ TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
   state1 += makeTx("1", "1");
   state2 += makeTx("1", "2");
 
-  auto union_state = state1 += state2;
+  state1 += state2;
   ASSERT_EQ(1, state1.getTransactions().size());
   ASSERT_EQ(2, state1.getTransactions().begin()->get()->signatures.size());
-
-  // TODO make assert on union_state
 }
 
 TEST(StateTest, DifferenceTest) {

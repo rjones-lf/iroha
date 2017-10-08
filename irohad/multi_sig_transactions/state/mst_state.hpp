@@ -29,18 +29,8 @@
 
 namespace iroha {
 
-  using DataType = std::shared_ptr<iroha::model::Transaction>;
-  using ConstPeer = const iroha::model::Peer;
+  using DataType = TransactionType;
   using TimeType = iroha::model::Transaction::TimeType;
-
-
-  class MstState {
-   public:
-    // -----------------------------| public api |------------------------------
-
-
-    using DataType = TransactionType;
-    using TimeType = iroha::model::Transaction::TimeType;
 
   class DefaultCompleter;
 
