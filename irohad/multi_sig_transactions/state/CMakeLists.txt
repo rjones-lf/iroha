@@ -11,14 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-add_subdirectory(state)
-add_subdirectory(storage)
 
+add_library(mst_state
+    impl/mst_state.cpp
+    )
 
-#add_library(mst_processor
-#    impl/mst_processor.cpp
-#    )
-#
-#target_link_libraries(mst_processor
-#    mst_storage
-#    )
+target_link_libraries(mst_state
+    model
+    )

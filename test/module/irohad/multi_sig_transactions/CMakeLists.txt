@@ -14,7 +14,12 @@
 
 AddTest(state_test state_test.cpp)
 target_link_libraries(state_test
-    mst_storage
+    mst_state
     logger
     )
 
+#AddTest(storage_test storage_test.cpp)
+#target_link_libraries(storage_test
+#    mst_storage
+#    logger
+#    )
