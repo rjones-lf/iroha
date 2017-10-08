@@ -58,6 +58,8 @@ namespace iroha {
     MstState getExpiredTransactions(const TimeType &current_time);
 
     /**
+     * Make state based on diff of own and target states.
+     * All expired transactions will be removed from diff.
      * @return difference between own and target state
      * General note: implementation of method covered by lock
      */

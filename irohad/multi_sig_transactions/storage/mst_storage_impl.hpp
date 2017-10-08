@@ -37,7 +37,7 @@ namespace iroha {
 
    public:
     // ----------------------------| interface API |----------------------------
-    MstStorageStateImpl(const ConstPeer &own_peer,
+    MstStorageStateImpl(ConstPeer &own_peer,
                         const CompleterType &completer);
 
     auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
@@ -59,7 +59,7 @@ namespace iroha {
 
     std::unordered_map<ConstPeer, MstState, iroha::model::PeerHasher>
         peer_states_;
-    const ConstPeer own_peer_;
+    ConstPeer own_peer_;
     const CompleterType completer_;
 
     MstState &own_state_;
