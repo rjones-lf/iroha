@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
+#include "model/converters/pb_query_factory.hpp"
 #include <gtest/gtest.h>
 #include "crypto/hash.hpp"
-#include "model/converters/pb_query_factory.hpp"
 #include "model/generators/query_generator.hpp"
 
-#include "model/queries/get_roles.hpp"
 #include "model/queries/get_asset_info.hpp"
+#include "model/queries/get_roles.hpp"
 
 using namespace iroha::model::converters;
 using namespace iroha::model::generators;
 using namespace iroha::model;
 
-void runQueryTest(std::shared_ptr<Query> query){
+void runQueryTest(std::shared_ptr<Query> query) {
   PbQueryFactory queryFactory;
   auto pb_query = queryFactory.serialize(query);
   ASSERT_TRUE(pb_query.has_value());
@@ -37,7 +37,7 @@ void runQueryTest(std::shared_ptr<Query> query){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
-TEST(PbQueryFactoryTest, SerializeGetAccount){
+TEST(PbQueryFactoryTest, SerializeGetAccount) {
   PbQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto query = queryGenerator.generateGetAccount(0, "123", 0, "test");
@@ -49,10 +49,11 @@ TEST(PbQueryFactoryTest, SerializeGetAccount){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
-TEST(PbQueryFactoryTest, SerializeGetAccountAssets){
+TEST(PbQueryFactoryTest, SerializeGetAccountAssets) {
   PbQueryFactory queryFactory;
   QueryGenerator queryGenerator;
-  auto query = queryGenerator.generateGetAccountAssets(0, "123", 0, "test", "coin");
+  auto query =
+      queryGenerator.generateGetAccountAssets(0, "123", 0, "test", "coin");
   auto pb_query = queryFactory.serialize(query);
   ASSERT_TRUE(pb_query.has_value());
   auto res_query = queryFactory.deserialize(pb_query.value());
@@ -61,10 +62,11 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
-TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
+TEST(PbQueryFactoryTest, SerializeGetAccountTransactions) {
   PbQueryFactory queryFactory;
   QueryGenerator queryGenerator;
-  auto query = queryGenerator.generateGetAccountTransactions(0, "123", 0, "test");
+  auto query =
+      queryGenerator.generateGetAccountTransactions(0, "123", 0, "test");
   auto pb_query = queryFactory.serialize(query);
   ASSERT_TRUE(pb_query.has_value());
   auto res_query = queryFactory.deserialize(pb_query.value());
@@ -73,7 +75,33 @@ TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
-TEST(PbQueryFactoryTest, SerializeGetSignatories){
+TEST(PbQueryFactoryTest, SerializeGetAccountTransactionsWithPager) {
+  PbQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto query = queryGenerator.generateGetAccountTransactionsWithPager(
+      0, "123", 0, "test", Pager{iroha::hash256_t{}, 1});
+  auto pb_query = queryFactory.serialize(query);
+  ASSERT_TRUE(pb_query.has_value());
+  auto res_query = queryFactory.deserialize(pb_query.value());
+  ASSERT_TRUE(res_query.has_value());
+  // TODO: overload operator == for queries and replace with it
+  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+}
+
+TEST(PbQueryFactoryTest, SerializeGetAccountAssetsTransactionsWithPager) {
+  PbQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto query = queryGenerator.generateGetAccountAssetsTransactionsWithPager(
+      0, "123", 0, "test", {"a", "b"}, Pager{iroha::hash256_t{}, 1});
+  auto pb_query = queryFactory.serialize(query);
+  ASSERT_TRUE(pb_query.has_value());
+  auto res_query = queryFactory.deserialize(pb_query.value());
+  ASSERT_TRUE(res_query.has_value());
+  // TODO: overload operator == for queries and replace with it
+  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+}
+
+TEST(PbQueryFactoryTest, SerializeGetSignatories) {
   PbQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto query = queryGenerator.generateGetSignatories(0, "123", 0, "test");
@@ -85,18 +113,17 @@ TEST(PbQueryFactoryTest, SerializeGetSignatories){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
-TEST(PbQueryFactoryTest, get_roles){
-
+TEST(PbQueryFactoryTest, get_roles) {
   auto query = QueryGenerator{}.generateGetRoles();
   runQueryTest(query);
 }
 
-TEST(PbQueryFactoryTest, get_role_permissions){
+TEST(PbQueryFactoryTest, get_role_permissions) {
   auto query = QueryGenerator{}.generateGetRolePermissions();
   runQueryTest(query);
 }
 
-TEST(PbQueryFactoryTest, get_asset_info){
+TEST(PbQueryFactoryTest, get_asset_info) {
   auto query = QueryGenerator{}.generateGetAssetInfo();
   runQueryTest(query);
 }

@@ -65,6 +65,10 @@ namespace iroha {
             const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAccountAssetTransactions(
             const rapidjson::Value &obj_query);
+        optional_ptr<Query> deserializeGetAccountTransactionsWithPager(
+            const rapidjson::Value &obj_query);
+        optional_ptr<Query> deserializeGetAccountAssetsTransactionsWithPager(
+            const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAccountAssets(
             const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAssetInfo(
@@ -84,11 +88,17 @@ namespace iroha {
             rapidjson::Document &json_doc,
             std::shared_ptr<const model::Query> query);
         void serializeGetAccountTransactions(
-            rapidjson::Document &json_doc,
-            std::shared_ptr<const model::Query> query);
+          rapidjson::Document &json_doc,
+          std::shared_ptr<const model::Query> query);
         void serializeGetAccountAssetTransactions(
-            rapidjson::Document &json_doc,
-            std::shared_ptr<const model::Query> query);
+          rapidjson::Document &json_doc,
+          std::shared_ptr<const model::Query> query);
+        void serializeGetAccountTransactionsWithPager(
+          rapidjson::Document &json_doc,
+          std::shared_ptr<const model::Query> query);
+        void serializeGetAccountAssetsTransactionsWithPager(
+          rapidjson::Document &json_doc,
+          std::shared_ptr<const model::Query> query);
         void serializeGetSignatories(rapidjson::Document &json_doc,
                                      std::shared_ptr<const model::Query> query);
 

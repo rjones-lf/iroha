@@ -20,6 +20,7 @@
 
 #include <model/query.hpp>
 #include <string>
+#include <vector>
 
 namespace iroha {
   namespace model {
@@ -40,13 +41,78 @@ namespace iroha {
     };
 
     /**
-      * Query for getting transactions of account
-      */
+     * Query for getting transactions of account
+     */
     struct GetAccountTransactions : Query {
       /**
        * Account identifier
        */
       std::string account_id{};
+    };
+
+    /**
+     * Pager for transactions queries
+     */
+    struct Pager {
+      iroha::hash256_t tx_hash;
+      uint16_t limit;
+
+      bool operator==(Pager const& rhs) const {
+        return tx_hash == rhs.tx_hash and limit == rhs.limit;
+      }
+      bool operator!=(Pager const& rhs) const { return not(operator==(rhs)); }
+    };
+
+    /**
+     * Query for getting transactions of given asset of an account
+     */
+    struct GetAccountAssetsTransactionsWithPager : Query {
+      /**
+       * Account identifier
+       */
+      std::string account_id;
+
+      /**
+       * Asset identifiers
+       */
+      std::vector<std::string> assets_id;
+
+      /**
+       * Pager for transactions
+       */
+      Pager pager;
+
+      using AssetsIdType = decltype(assets_id);
+
+      bool operator==(GetAccountAssetsTransactionsWithPager const& rhs) const {
+        return account_id == rhs.account_id and assets_id == rhs.assets_id
+            and pager == rhs.pager;
+      }
+      bool operator!=(GetAccountAssetsTransactionsWithPager const& rhs) const {
+        return not(operator==(rhs));
+      }
+    };
+
+    /**
+     * Query for getting transactions of account
+     */
+    struct GetAccountTransactionsWithPager : Query {
+      /**
+       * Account identifier
+       */
+      std::string account_id;
+
+      /**
+       * Pager for transactions
+       */
+      Pager pager;
+
+      bool operator==(GetAccountTransactionsWithPager const& rhs) const {
+        return account_id == rhs.account_id and pager == rhs.pager;
+      }
+      bool operator!=(GetAccountTransactionsWithPager const& rhs) const {
+        return not(operator==(rhs));
+      }
     };
   }  // namespace model
 }  // namespace iroha

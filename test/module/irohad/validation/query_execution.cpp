@@ -17,12 +17,22 @@
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
-#include <model/queries/responses/account_assets_response.hpp>
+#include <rxcpp/rx.hpp>
+#include "common/types.hpp"
+#include "crypto/hash.hpp"
+#include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/create_account.hpp"
+#include "model/commands/create_domain.hpp"
+#include "model/commands/transfer_asset.hpp"
+#include "model/queries/get_transactions.hpp"
+#include "model/queries/responses/account_assets_response.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "model/queries/responses/asset_response.hpp"
 #include "model/queries/responses/error_response.hpp"
 #include "model/queries/responses/roles_response.hpp"
+#include "model/queries/responses/transactions_response.hpp"
 #include "model/query_execution.hpp"
+#include "model/transaction_response.hpp"
 
 using ::testing::Return;
 using ::testing::AtLeast;
@@ -37,6 +47,7 @@ using namespace iroha::model;
 /**
  * Variables for testing
  */
+auto ACCOUNT_NAME = "test";
 auto ACCOUNT_ID = "test@test";
 auto ADMIN_ID = "admin@test";
 auto DOMAIN_NAME = "test";
@@ -44,6 +55,7 @@ auto ADVERSARY_ID = "adversary@test";
 auto ASSET_ID = "coin";
 auto ADMIN_ROLE = "admin";
 auto ADIMIN_PERM = "can_something";
+auto PAGER = Pager{iroha::hash256_t{}, 123};
 
 /**
  * Default accounts for testing
@@ -319,3 +331,83 @@ TEST(QueryExecutor, get_role_permissions) {
   // TODO: add more test cases, i.e. bad ones
 }
 
+TEST(QueryExecutor, get_account_transactions_with_pager) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+
+  auto query_proccesor =
+      iroha::model::QueryProcessingFactory(wsv_queries, block_queries);
+
+  set_default_ametsuchi(*wsv_queries, *block_queries);
+
+  // set sample block query
+  auto txs = std::vector<Transaction>{};
+  auto tx1 = Transaction{};
+  tx1.creator_account_id = ADMIN_ID;
+  tx1.commands.push_back(std::make_shared<CreateDomain>(DOMAIN_NAME));
+  txs.push_back(tx1);
+  Transaction tx2{};
+  tx2.creator_account_id = ADMIN_ID;
+  tx2.commands.push_back(std::make_shared<CreateAccount>(
+      ACCOUNT_NAME, DOMAIN_NAME, iroha::pubkey_t{}));
+  txs.push_back(tx2);
+  EXPECT_CALL(*block_queries,
+              getAccountTransactionsWithPager(ACCOUNT_ID, PAGER))
+      .WillRepeatedly(Return(rxcpp::observable<>::iterate(txs)));
+
+  auto query = std::make_shared<GetAccountTransactionsWithPager>();
+  query->creator_account_id = ADMIN_ID;
+  query->account_id = ACCOUNT_ID;
+  query->pager = PAGER;
+  auto response = query_proccesor.execute(query);
+  auto cast_resp = std::dynamic_pointer_cast<TransactionsResponse>(response);
+  ASSERT_TRUE(cast_resp);
+
+  std::vector<Transaction> txs_resp;
+  cast_resp->transactions.subscribe([&](auto tx) { txs_resp.push_back(tx); });
+  ASSERT_EQ(2, txs_resp.size());
+  ASSERT_EQ(tx1, txs_resp[0]);
+  ASSERT_EQ(tx2, txs_resp[1]);
+}
+
+TEST(QueryExecutor, get_account_assets_transactions_with_pager) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+
+  auto query_proccesor =
+      iroha::model::QueryProcessingFactory(wsv_queries, block_queries);
+
+  set_default_ametsuchi(*wsv_queries, *block_queries);
+
+  // set sample block query
+  auto txs = std::vector<Transaction>{};
+  auto tx1 = Transaction{};
+  tx1.creator_account_id = ADMIN_ID;
+  tx1.commands.push_back(std::make_shared<TransferAsset>(
+      ADMIN_ID, ACCOUNT_ID, ASSET_ID, iroha::Amount(321, 1)));
+  txs.push_back(tx1);
+  Transaction tx2{};
+  tx2.creator_account_id = ADMIN_ID;
+  tx2.commands.push_back(std::make_shared<AddAssetQuantity>(
+      ACCOUNT_ID, ASSET_ID, iroha::Amount(123, 2)));
+  txs.push_back(tx2);
+  EXPECT_CALL(*block_queries,
+              getAccountAssetsTransactionsWithPager(
+                  ACCOUNT_ID, std::vector<std::string>{ASSET_ID}, PAGER))
+      .WillRepeatedly(Return(rxcpp::observable<>::iterate(txs)));
+
+  auto query = std::make_shared<GetAccountAssetsTransactionsWithPager>();
+  query->creator_account_id = ADMIN_ID;
+  query->account_id = ACCOUNT_ID;
+  query->assets_id = {ASSET_ID};
+  query->pager = PAGER;
+  auto response = query_proccesor.execute(query);
+  auto cast_resp = std::dynamic_pointer_cast<TransactionsResponse>(response);
+  ASSERT_TRUE(cast_resp);
+
+  std::vector<Transaction> txs_resp;
+  cast_resp->transactions.subscribe([&](auto tx) { txs_resp.push_back(tx); });
+  ASSERT_EQ(2, txs_resp.size());
+  ASSERT_EQ(tx1, txs_resp[0]);
+  ASSERT_EQ(tx2, txs_resp[1]);
+}

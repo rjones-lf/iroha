@@ -29,29 +29,52 @@ namespace iroha {
     namespace generators {
       class QueryGenerator {
        public:
+        std::shared_ptr<GetAccount> generateGetAccount(ts64_t timestamp,
+                                                       std::string creator,
+                                                       uint64_t query_counter,
+                                                       std::string account_id);
 
-        std::shared_ptr<GetAccount> generateGetAccount(ts64_t timestamp, std::string creator,
-                                      uint64_t query_counter,
-                                      std::string account_id);
+        std::shared_ptr<GetAccountAssets> generateGetAccountAssets(
+            ts64_t timestamp,
+            std::string creator,
+            uint64_t query_counter,
+            std::string account_id,
+            std::string asset_id);
 
-        std::shared_ptr<GetAccountAssets> generateGetAccountAssets(ts64_t timestamp,
-                                                  std::string creator,
-                                                  uint64_t query_counter,
-                                                  std::string account_id,
-                                                  std::string asset_id);
-
-        std::shared_ptr<GetSignatories> generateGetSignatories(ts64_t timestamp,
-                                              std::string creator,
-                                              uint64_t query_counter,
-                                              std::string account_id);
-
-        std::shared_ptr<GetAccountTransactions> generateGetAccountTransactions(
-            ts64_t timestamp, std::string creator, uint64_t query_counter,
+        std::shared_ptr<GetSignatories> generateGetSignatories(
+            ts64_t timestamp,
+            std::string creator,
+            uint64_t query_counter,
             std::string account_id);
 
-        std::shared_ptr<GetAccountAssetTransactions> generateGetAccountAssetTransactions(
-            ts64_t timestamp, std::string creator, uint64_t query_counter,
-            std::string account_id, std::string asset_id);
+        std::shared_ptr<GetAccountTransactions> generateGetAccountTransactions(
+            ts64_t timestamp,
+            std::string creator,
+            uint64_t query_counter,
+            std::string account_id);
+
+        std::shared_ptr<GetAccountAssetTransactions>
+        generateGetAccountAssetTransactions(ts64_t timestamp,
+                                            std::string creator,
+                                            uint64_t query_counter,
+                                            std::string account_id,
+                                            std::string asset_id);
+
+        std::shared_ptr<GetAccountTransactionsWithPager>
+        generateGetAccountTransactionsWithPager(ts64_t timestamp,
+                                                std::string creator,
+                                                uint64_t query_counter,
+                                                std::string account_id,
+                                                model::Pager pager);
+
+        std::shared_ptr<GetAccountAssetsTransactionsWithPager>
+        generateGetAccountAssetsTransactionsWithPager(
+            ts64_t timestamp,
+            std::string creator,
+            uint64_t query_counter,
+            std::string account_id,
+            std::vector<std::string> assets_id,
+            model::Pager);
 
         /**
          * Generate default query GetAssetInfo
@@ -71,8 +94,10 @@ namespace iroha {
          */
         std::shared_ptr<GetRolePermissions> generateGetRolePermissions();
 
-        void setQueryMetaData(std::shared_ptr<Query> query, ts64_t timestamp,
-                              std::string creator, uint64_t query_counter);
+        void setQueryMetaData(std::shared_ptr<Query> query,
+                              ts64_t timestamp,
+                              std::string creator,
+                              uint64_t query_counter);
       };
     }  // namespace generators
   }    // namespace model
