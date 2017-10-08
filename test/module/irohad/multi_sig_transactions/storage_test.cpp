@@ -35,10 +35,10 @@ class StorageTestCompleter : public DefaultCompleter {
 
 class StorageTest : public testing::Test {
  public:
+  StorageTest() : my_peer(makePeer("1", "1")),
+                  absent_peer(makePeer("absent", "absent")) {}
 
   void SetUp() override {
-    my_peer = makePeer("1", "1");
-    absent_peer = makePeer("absent", "absent");
     storage = make_shared<MstStorageStateImpl>(my_peer,
                                                std::make_shared<
                                                    StorageTestCompleter>());
@@ -60,7 +60,7 @@ class StorageTest : public testing::Test {
 };
 
 TEST_F(StorageTest, StorageWhenApplyOtherState) {
-  log_->info("crate state with default peers and other state => "
+  log_->info("create state with default peers and other state => "
                  "apply state");
 
   auto new_state = MstState::empty(std::make_shared<StorageTestCompleter>());
@@ -75,8 +75,7 @@ TEST_F(StorageTest, StorageWhenApplyOtherState) {
 }
 
 TEST_F(StorageTest, StorageInsertOtherState) {
-  log_->info("init fixture state => "
-                 "get expired state");
+  log_->info("init fixture state => get expired state");
 
   ASSERT_EQ(3, storage->getExpiredTransactions(creation_time + 1)
       .getTransactions().size());

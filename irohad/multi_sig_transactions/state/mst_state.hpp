@@ -144,9 +144,10 @@ namespace iroha {
                                           std::vector<DataType>,
                                           Less>;
 
-    MstState(CompleterType completer);
+    MstState(const CompleterType &completer);
 
-    MstState(CompleterType completer, InternalStateType transactions);
+    MstState(const CompleterType &completer,
+             const InternalStateType &transactions);
 
     /**
      * Insert transaction in own state and push it in out_state if required

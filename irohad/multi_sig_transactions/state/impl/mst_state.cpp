@@ -67,15 +67,15 @@ namespace iroha {
 
   // ------------------------------| private api |------------------------------
 
-  MstState::MstState(CompleterType completer)
-      : MstState(std::move(completer), InternalStateType{}) {
+  MstState::MstState(const CompleterType &completer)
+      : MstState(completer, InternalStateType{}) {
   }
 
-  MstState::MstState(CompleterType completer, InternalStateType transactions)
-      : completer_(std::move(completer)) {
-    std::for_each(transactions.begin(), transactions.end(),
-                  [this](auto data) { this->rawInsert(data); }
-    );
+  MstState::MstState(const CompleterType &completer,
+                     const InternalStateType &transactions)
+      : completer_(completer),
+        internal_state_(transactions.begin(), transactions.end()),
+        index_(transactions.begin(), transactions.end()) {
     log_ = logger::log("MstState");
   }
 

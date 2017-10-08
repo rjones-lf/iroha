@@ -37,21 +37,20 @@ namespace iroha {
 
    public:
     // ----------------------------| interface API |----------------------------
-    MstStorageStateImpl(const ConstPeer own_peer,
-                        const CompleterType completer);
+    MstStorageStateImpl(const ConstPeer &own_peer,
+                        const CompleterType &completer);
 
-    auto applyImpl(ConstPeer &target_peer, MstState &new_state)
-    -> decltype(apply(target_peer, new_state)) override;
+    auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
+        -> decltype(apply(target_peer, new_state)) override;
 
-    auto updateOwnStateImpl(TransactionType tx)
-    -> decltype(updateOwnState(tx)) override;
+    auto updateOwnStateImpl(const TransactionType &tx)
+        -> decltype(updateOwnState(tx)) override;
 
     auto getExpiredTransactionsImpl(const TimeType &current_time)
-    -> decltype(getExpiredTransactions(current_time)) override;
+        -> decltype(getExpiredTransactions(current_time)) override;
 
-    auto getDiffStateImpl(ConstPeer &target_peer,
-                          const TimeType &current_time)
-    -> decltype(getDiffState(target_peer, current_time)) override;
+    auto getDiffStateImpl(ConstPeer &target_peer, const TimeType &current_time)
+        -> decltype(getDiffState(target_peer, current_time)) override;
 
     virtual ~MstStorageStateImpl() = default;
 

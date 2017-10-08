@@ -34,15 +34,6 @@ TEST(StateTest, CreateState) {
   ASSERT_EQ(1, state.getTransactions().size());
 }
 
-TEST(StateTest, UpdateState) {
-  log_->info("Create empty state => insert one transaction");
-
-  auto state = MstState::empty();
-  ASSERT_EQ(0, state.getTransactions().size());
-  state += makeTx("1", "1");
-  ASSERT_EQ(1, state.getTransactions().size());
-}
-
 TEST(StateTest, UpdateExistingState) {
   log_->info("Create empty state => insert tx with one signature => "
                  "insert tx with another signature");

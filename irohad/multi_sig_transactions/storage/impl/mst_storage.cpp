@@ -24,12 +24,12 @@ namespace iroha {
     log_ = logger::log("MstStorage");
   }
 
-  MstState MstStorage::apply(ConstPeer &target_peer, MstState new_state) {
+  MstState MstStorage::apply(ConstPeer &target_peer, const MstState &new_state) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return applyImpl(target_peer, new_state);
   }
 
-  MstState MstStorage::updateOwnState(TransactionType tx) {
+  MstState MstStorage::updateOwnState(const TransactionType &tx) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(std::move(tx));
   }

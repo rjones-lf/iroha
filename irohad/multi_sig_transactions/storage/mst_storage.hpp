@@ -21,8 +21,8 @@
 #include <mutex>
 #include "logger/logger.hpp"
 #include "model/peer.hpp"
-#include "multi_sig_transactions/state/mst_state.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
 
@@ -40,7 +40,7 @@ namespace iroha {
      * @return State with completed transaction
      * General note: implementation of method covered by lock
      */
-    MstState apply(ConstPeer &target_peer, MstState new_state);
+    MstState apply(ConstPeer &target_peer, const MstState &new_state);
 
     /**
      * Provide updating state of current peer with new transaction
@@ -48,11 +48,12 @@ namespace iroha {
      * @return State with completed transaction
      * General note: implementation of method covered by lock
      */
-    MstState updateOwnState(TransactionType tx);
+    MstState updateOwnState(const TransactionType &tx);
 
     /**
      * Remove expired transactions and return them
      * @return State with expired transactions
+     * General note: implementation of method covered by lock
      */
     MstState getExpiredTransactions(const TimeType &current_time);
 
@@ -73,18 +74,18 @@ namespace iroha {
     MstStorage();
 
    private:
-    virtual auto applyImpl(ConstPeer &target_peer, MstState &new_state)
-    -> decltype(apply(target_peer, new_state)) = 0;
+    virtual auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
+        -> decltype(apply(target_peer, new_state)) = 0;
 
-    virtual auto updateOwnStateImpl(TransactionType tx)
-    -> decltype(updateOwnState(tx)) = 0;
+    virtual auto updateOwnStateImpl(const TransactionType &tx)
+        -> decltype(updateOwnState(tx)) = 0;
 
     virtual auto getExpiredTransactionsImpl(const TimeType &current_time)
-    -> decltype(getExpiredTransactions(current_time)) = 0;
+        -> decltype(getExpiredTransactions(current_time)) = 0;
 
     virtual auto getDiffStateImpl(ConstPeer &target_peer,
                                   const TimeType &current_time)
-    -> decltype(getDiffState(target_peer, current_time)) = 0;
+        -> decltype(getDiffState(target_peer, current_time)) = 0;
 
     // -------------------------------| fields |--------------------------------
 
@@ -93,5 +94,5 @@ namespace iroha {
    protected:
     logger::Logger log_;
   };
-} // namespace iroha
-#endif //IROHA_MST_STORAGE_HPP
+}  // namespace iroha
+#endif  // IROHA_MST_STORAGE_HPP

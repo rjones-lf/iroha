@@ -9,6 +9,7 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
 SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall -fPIC")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
