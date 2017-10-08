@@ -25,6 +25,15 @@ using namespace std;
 using namespace iroha;
 using namespace iroha::model;
 
+TEST(StateTest, CreateState) {
+  log_->info("Create state from => insert one transaction");
+
+  auto state = MstState::empty();
+  ASSERT_EQ(0, state.getTransactions().size());
+  state += makeTx("1", "1");
+  ASSERT_EQ(1, state.getTransactions().size());
+}
+
 TEST(StateTest, UpdateState) {
   log_->info("Create empty state => insert one transaction");
 
@@ -211,4 +220,27 @@ TEST(StateTest, TimeIndexInsertionByAddState) {
   ASSERT_EQ(0, state1.getTransactions().size());
   ASSERT_EQ(2, state2.getTransactions().size());
 
+}
+
+TEST(StateTest, RemovingTestWhenByTimeExpired) {
+  log_->info("Create one filled state and one empty => "
+                 "remove second from first "
+                 "=> perform time expiration method");
+
+  auto quorum = 3u;
+  auto created_time = 1u;
+
+  auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
+  state1 += makeTx("1", "1", quorum, created_time);
+  state1 += makeTx("2", "2", quorum, created_time);
+
+  auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
+
+  auto diff_state = state1 - state2;
+
+  ASSERT_EQ(2, diff_state.getTransactions().size());
+
+  auto expired_state = diff_state.eraseByTime(created_time + 1);
+  ASSERT_EQ(0, diff_state.getTransactions().size());
+  ASSERT_EQ(2, expired_state.getTransactions().size());
 }
