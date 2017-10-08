@@ -53,6 +53,18 @@ namespace iroha {
      private:
       std::hash<std::string> string_hasher;
     };
+
+    /**
+     * Hasing of peer object
+     */
+    class PeerHasher {
+     public:
+      std::size_t operator()(ConstPeer &obj) const {
+        return hasher(obj.address + obj.pubkey.to_string());
+      }
+     private:
+      std::hash<std::string> hasher;
+    };
   } // namespace model
 } // namespace iroha
 

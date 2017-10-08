@@ -18,41 +18,52 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
 namespace iroha {
-  MstStorageStateImpl::MstStorageStateImpl(ConstPeer own_peer)
-      : MstStorage(), own_peer_(own_peer) {
-    peer_states_.insert({own_peer_, MstState()});
+// -------------------------------| private API |-------------------------------
+
+  auto MstStorageStateImpl::getState(ConstPeer &target_peer) {
+    auto target_state_iter = peer_states_.find(target_peer);
+    if (target_state_iter == peer_states_.end()) {
+      return peer_states_
+          .insert({target_peer, MstState::empty(completer_)})
+          .first;
+    }
+    return target_state_iter;
+  }
+// ------------------------------| interface API |------------------------------
+  MstStorageStateImpl::MstStorageStateImpl(const ConstPeer own_peer,
+                                           const CompleterType completer)
+      : MstStorage(),
+        own_peer_(own_peer),
+        completer_(completer),
+        own_state_(peer_states_.insert({own_peer_, MstState::empty(completer_)})
+                       .first->second) {
   }
 
   auto MstStorageStateImpl::applyImpl(ConstPeer &target_peer,
                                       MstState &new_state)
   -> decltype(apply(target_peer, new_state)) {
-    auto own_iter = peer_states_.find(own_peer_);
-    auto found_iter = peer_states_.find(target_peer);
-    if (found_iter == peer_states_.end()) {
-
-      own_iter->second = own_iter->second + new_state;
-
-      peer_states_.insert({target_peer, std::move(new_state)});
-    } else {
-
-      own_iter->second = own_iter->second + new_state;
-
-      found_iter->second = found_iter->second + new_state;
-    }
+    auto target_state_iter = getState(target_peer);
+    target_state_iter->second += new_state;
+    return own_state_ += new_state;
   }
 
   auto MstStorageStateImpl::updateOwnStateImpl(TransactionType tx)
   -> decltype(updateOwnState(tx)) {
-    auto found_iter = peer_states_.find(own_peer_);
-    found_iter->second += tx;
+    return own_state_ += tx;
   }
 
-  MstState MstStorageStateImpl::getDiffStateImpl(ConstPeer &target_peer) const {
-    auto own_iter = peer_states_.find(own_peer_);
-    auto target_iter = peer_states_.find(target_peer);
-    if (target_iter == peer_states_.end()) {
-      return own_iter->second;
-    }
-    return own_iter->second - target_iter->second;
+  auto MstStorageStateImpl::getExpiredTransactionsImpl(const TimeType &current_time)
+  -> decltype(getExpiredTransactions(current_time)) {
+    return own_state_.eraseByTime(current_time);
   }
+
+  auto MstStorageStateImpl::getDiffStateImpl(ConstPeer &target_peer,
+                                             const TimeType &current_time)
+  -> decltype(getDiffState(target_peer, current_time)) {
+    auto target_current_state_iter = getState(target_peer);
+    auto new_diff_state = own_state_ - target_current_state_iter->second;
+    new_diff_state.eraseByTime(current_time);
+    return new_diff_state;
+  }
+
 } // namespace iroha

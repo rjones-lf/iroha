@@ -19,14 +19,26 @@
 #define IROHA_MST_STORAGE_IMPL_HPP
 
 #include "multi_sig_transactions/storage/mst_storage.hpp"
+#include "model/operators/hash.hpp"
 #include <unordered_map>
 
 namespace iroha {
   class MstStorageStateImpl : public MstStorage {
-   public:
-    MstStorageStateImpl(ConstPeer own_peer);
 
-// ------------------------------| interface API |------------------------------
+   private:
+    // -----------------------------| private API |-----------------------------
+
+    /**
+     * Return state of passed peer, if state doesn't exist, create empty
+     * @param target_peer - peer for searching
+     * @return valid iterator for state of peer
+     */
+    auto getState(ConstPeer &target_peer);
+
+   public:
+    // ----------------------------| interface API |----------------------------
+    MstStorageStateImpl(const ConstPeer own_peer,
+                        const CompleterType completer);
 
     auto applyImpl(ConstPeer &target_peer, MstState &new_state)
     -> decltype(apply(target_peer, new_state)) override;
@@ -34,27 +46,24 @@ namespace iroha {
     auto updateOwnStateImpl(TransactionType tx)
     -> decltype(updateOwnState(tx)) override;
 
-    MstState getDiffStateImpl(ConstPeer &target_peer) const override;
+    auto getExpiredTransactionsImpl(const TimeType &current_time)
+    -> decltype(getExpiredTransactions(current_time)) override;
+
+    auto getDiffStateImpl(ConstPeer &target_peer,
+                          const TimeType &current_time)
+    -> decltype(getDiffState(target_peer, current_time)) override;
 
     virtual ~MstStorageStateImpl() = default;
 
    private:
-// -------------------------------| private API |-------------------------------
+    // ---------------------------| private fields |----------------------------
 
-    class PeerHasher {
-     public:
-      std::size_t operator()(ConstPeer &obj) const {
-        return hasher(obj.address + obj.pubkey.to_string());
-      }
-     private:
-      std::hash<std::string> hasher;
-    };
+    std::unordered_map<ConstPeer, MstState, iroha::model::PeerHasher>
+        peer_states_;
+    const ConstPeer own_peer_;
+    const CompleterType completer_;
 
-// -----------------------------| private fileds |------------------------------
-
-    std::unordered_map<ConstPeer, MstState, PeerHasher> peer_states_;
-
-    ConstPeer own_peer_;
+    MstState &own_state_;
   };
 } // namespace iroha
 

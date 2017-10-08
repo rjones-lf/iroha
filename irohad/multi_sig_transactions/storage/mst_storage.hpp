@@ -21,7 +21,7 @@
 #include <mutex>
 #include "logger/logger.hpp"
 #include "model/peer.hpp"
-#include "multi_sig_transactions/storage/mst_state.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
@@ -31,47 +31,62 @@ namespace iroha {
    */
   class MstStorage {
    public:
-// --------------------------------| user API |---------------------------------
+    // ------------------------------| user API |-------------------------------
+
+    /**
+     * Apply new state for peer
+     * @param target_peer - key for for updating state
+     * @param new_state - state with new data
+     * @return State with completed transaction
+     * General note: implementation of method covered by lock
+     */
+    MstState apply(ConstPeer &target_peer, MstState new_state);
+
+    /**
+     * Provide updating state of current peer with new transaction
+     * @param tx - new transaction for insertion in state
+     * @return State with completed transaction
+     * General note: implementation of method covered by lock
+     */
+    MstState updateOwnState(TransactionType tx);
+
+    /**
+     * Remove expired transactions and return them
+     * @return State with expired transactions
+     */
+    MstState getExpiredTransactions(const TimeType &current_time);
+
+    /**
+     * @return difference between own and target state
+     * General note: implementation of method covered by lock
+     */
+    MstState getDiffState(ConstPeer &target_peer, const TimeType &current_time);
+
+    virtual ~MstStorage() = default;
+
+   protected:
+    // ------------------------------| class API |------------------------------
 
     /**
      * Constructor provide initialization of protected fields, such as logger.
      */
     MstStorage();
 
-    /**
-     * Apply new state for peer
-     * @param target_peer - key for for updating state
-     * @param new_state - state with new data
-     * General note: implementation of method covered by lock
-     */
-    void apply(ConstPeer &target_peer, MstState new_state);
-
-    /**
-     * Provide updating state of current peer with new transaction
-     * @param tx - new transaction for insertion in state
-     * General note: implementation of method covered by lock
-     */
-    void updateOwnState(TransactionType tx);
-
-    /**
-     * Return difference between own and target state
-     * General note: implementation of method covered by lock
-     */
-    MstState getDiffState(ConstPeer &target_peer) const;
-
-    virtual ~MstStorage() = default;
    private:
-// --------------------------------| class API |--------------------------------
-
     virtual auto applyImpl(ConstPeer &target_peer, MstState &new_state)
     -> decltype(apply(target_peer, new_state)) = 0;
 
     virtual auto updateOwnStateImpl(TransactionType tx)
     -> decltype(updateOwnState(tx)) = 0;
 
-    virtual MstState getDiffStateImpl(ConstPeer &target_peer) const = 0;
+    virtual auto getExpiredTransactionsImpl(const TimeType &current_time)
+    -> decltype(getExpiredTransactions(current_time)) = 0;
 
-// ---------------------------------| fields |----------------------------------
+    virtual auto getDiffStateImpl(ConstPeer &target_peer,
+                                  const TimeType &current_time)
+    -> decltype(getDiffState(target_peer, current_time)) = 0;
+
+    // -------------------------------| fields |--------------------------------
 
     mutable std::mutex mutex_;
 

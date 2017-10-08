@@ -25,43 +25,80 @@ auto log_ = logger::log("MstStorageTest");
 
 using namespace iroha;
 
+class StorageTestCompleter : public DefaultCompleter {
+ public:
+  bool operator()(const DataType &tx,
+                  const TimeType &time) const override {
+    return tx->created_ts < time;
+  }
+};
+
 class StorageTest : public testing::Test {
  public:
 
   void SetUp() override {
     my_peer = makePeer("1", "1");
     absent_peer = makePeer("absent", "absent");
-    storage = make_shared<MstStorageStateImpl>(my_peer);
+    storage = make_shared<MstStorageStateImpl>(my_peer,
+                                               std::make_shared<
+                                                   StorageTestCompleter>());
     fillOwnState();
   }
 
   void fillOwnState() {
-    storage->updateOwnState(makeTx("1", "1"));
-    storage->updateOwnState(makeTx("2", "2"));
-    storage->updateOwnState(makeTx("3", "3"));
+    storage->updateOwnState(makeTx("1", "1", quorum, creation_time));
+    storage->updateOwnState(makeTx("2", "2", quorum, creation_time));
+    storage->updateOwnState(makeTx("3", "3", quorum, creation_time));
   }
 
   shared_ptr<MstStorage> storage;
   iroha::model::Peer my_peer;
   iroha::model::Peer absent_peer;
+
+  static const auto quorum = 3u;
+  static const auto creation_time = 1u;
 };
 
-TEST_F(StorageTest, StorageInitialization) {
-  log_->info("insert transactions => check their presence");
+TEST_F(StorageTest, StorageWhenApplyOtherState) {
+  log_->info("crate state with default peers and other state => "
+                 "apply state");
 
-  ASSERT_EQ(3, storage->getDiffState(absent_peer).getTransactions().size());
+  auto new_state = MstState::empty(std::make_shared<StorageTestCompleter>());
+  new_state += makeTx("5", "5", quorum, creation_time);
+  new_state += makeTx("6", "6", quorum, creation_time);
+  new_state += makeTx("7", "7", quorum, creation_time);
+
+  storage->apply(makePeer("another", "another"), new_state);
+
+  ASSERT_EQ(6, storage->getDiffState(absent_peer, creation_time)
+      .getTransactions().size());
 }
 
 TEST_F(StorageTest, StorageInsertOtherState) {
-  log_->info("insert transactions for other peer as state => "
-                 "check other state");
-  MstState otherState;
-  ((otherState += makeTx("3", "3"))
-       += makeTx("4", "4"))
-      += makeTx("5", "5");
-  auto other_existed = makePeer("new", "new");
-  storage->apply(other_existed, otherState);
+  log_->info("init fixture state => "
+                 "get expired state");
 
-  ASSERT_EQ(2, storage->getDiffState(other_existed).getTransactions().size());
-  ASSERT_EQ(5, storage->getDiffState(absent_peer).getTransactions().size());
+  ASSERT_EQ(3, storage->getExpiredTransactions(creation_time + 1)
+      .getTransactions().size());
+  ASSERT_EQ(0, storage->getDiffState(absent_peer, creation_time + 1)
+      .getTransactions().size());
+
+}
+
+TEST_F(StorageTest, StorageWhenCreateValidDiff) {
+  log_->info("insert transactions => check their presence");
+
+  ASSERT_EQ(3, storage->getDiffState(absent_peer, creation_time)
+      .getTransactions().size());
+
+}
+
+TEST_F(StorageTest, StorageWhenCreate) {
+  log_->info("insert transactions => wait until expiring => "
+                 " check their absence");
+
+  auto expiration_time = creation_time + 1;
+
+  ASSERT_EQ(0, storage->getDiffState(absent_peer, expiration_time)
+      .getTransactions().size());
 }
