@@ -50,7 +50,7 @@ namespace iroha {
        * Apply block to current state of ledger
        * @param blocks - list of blocks for insertion
        */
-      void applyToLedger(std::vector<model::Block> blocks);
+      void applyToLedger(const std::vector<model::Block>& blocks);
 
       /**
        * Additional method

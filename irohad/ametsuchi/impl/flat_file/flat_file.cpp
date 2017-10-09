@@ -19,8 +19,8 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 using namespace iroha::ametsuchi;
 
@@ -28,6 +28,8 @@ const uint32_t DIGIT_CAPACITY = 16;
 
 // todo rework separator with platform independent approach
 const std::string SEPARATOR = "/";
+
+// TODO(@warchant): move these functions to libs/util/filesystem
 
 /**
  * Convert id to string repr
@@ -56,7 +58,7 @@ Identifier name_to_id(const std::string &name) {
  * @return true, if exists
  */
 bool file_exist(const std::string &name) {
-  struct stat buffer{};
+  struct stat buffer {};
   return (stat(name.c_str(), &buffer) == 0);
 }
 
@@ -69,8 +71,8 @@ void remove(const std::string &dump_dir, std::string filename) {
   auto f_name = dump_dir + SEPARATOR + filename;
 
   if (std::remove(f_name.c_str()) != 0) {
-    logger::log("FLAT_FILE")->error("remove({}, {}): error on deleting file",
-                                    dump_dir, filename);
+    logger::log("FLAT_FILE")
+        ->error("remove({}, {}): error on deleting file", dump_dir, filename);
   }
 }
 
@@ -87,6 +89,8 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
     log->error("check_consistency({}), not directory", dump_dir);
     return nonstd::nullopt;
   }
+
+  // TODO(@warchant): refactor with boost::filesystem
   // Directory iterator:
   struct dirent **namelist;
   auto status = scandir(dump_dir.c_str(), &namelist, nullptr, alphasort);
@@ -125,7 +129,7 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
  * @return number of bytes contains in file
  */
 long file_size(const std::string &filename) {
-  struct stat stat_buf{};
+  struct stat stat_buf {};
   int rc = stat(filename.c_str(), &stat_buf);
   return rc == 0 ? stat_buf.st_size : 0u;
 }
@@ -135,17 +139,20 @@ long file_size(const std::string &filename) {
 std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
-  // todo change creating folder with system independent approach
+  // TODO (@warchant): refactor with boost::filesystem
   if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
     if (errno != EEXIST) {
-      log_->error("Cannot create storage dir: {}", path);
+      log_->error("Cannot create storage dir: {}, reason: {}", path,
+                  strerror(errno));
     }
   }
+
   auto res = check_consistency(path);
   if (!res) {
     log_->error("Checking consistency for {} - failed", path);
     return nullptr;
   }
+
   return std::unique_ptr<FlatFile>(new FlatFile(*res, path));
 }
 
@@ -165,8 +172,8 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
     log_->warn("Cannot open file by index {} for writing", id);
   }
 
-  auto val_size = sizeof(std::remove_reference<decltype(block)>::
-  type::value_type);
+  auto val_size =
+      sizeof(std::remove_reference<decltype(block)>::type::value_type);
 
   file.write(reinterpret_cast<const char *>(block.data()),
              block.size() * val_size);
@@ -181,14 +188,16 @@ nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
     log_->info("get({}) file not found", id);
     return nonstd::nullopt;
   }
+
   auto fileSize = file_size(filename);
-  std::vector<uint8_t> buf;
-  buf.resize(fileSize);
+  std::vector<uint8_t> buf(fileSize);
+
   std::ifstream file(filename, std::ifstream::binary);
   if (not file.is_open()) {
     log_->info("get({}) problem with opening file", id);
     return nonstd::nullopt;
   }
+
   file.read(reinterpret_cast<char *>(buf.data()), fileSize);
   return buf;
 }
@@ -200,7 +209,6 @@ Identifier FlatFile::last_id() const { return current_id_.load(); }
 // ----------| private API |----------
 
 FlatFile::FlatFile(Identifier current_id, const std::string &path)
-    : dump_dir_(path) {
-  log_ = logger::log("FlatFile");
+    : dump_dir_(path), log_(logger::log("FlatFile")) {
   current_id_.store(current_id);
 }

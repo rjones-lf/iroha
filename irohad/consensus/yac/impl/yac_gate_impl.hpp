@@ -41,7 +41,6 @@ namespace iroha {
         rxcpp::observable<model::Block> on_commit() override;
 
        private:
-
         /**
          * Update current block with signatures from commit message
          * @param commit - commit message to get signatures from

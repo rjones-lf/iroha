@@ -28,12 +28,11 @@ namespace iroha {
   namespace validation {
     StatelessValidatorImpl::StatelessValidatorImpl(
         std::shared_ptr<model::ModelCryptoProvider> crypto_provider)
-        : crypto_provider_(std::move(crypto_provider)) {
-      log_ = logger::log("SLV");
-    }
+        : crypto_provider_(std::move(crypto_provider)),
+          log_(logger::log("SLV")) {}
 
     bool StatelessValidatorImpl::validate(
-        const model::Transaction& transaction) const {
+        const model::Transaction &transaction) const {
       // signatures are correct
       if (!crypto_provider_->verify(transaction)) {
         log_->warn("crypto verification broken");
@@ -67,7 +66,7 @@ namespace iroha {
         std::shared_ptr<const model::Query> query) const {
       // signatures are correct
       if (!crypto_provider_->verify(query)) {
-        log_->warn("crypto verification broken");
+        log_->warn("crypto verification is broken");
         return false;
       }
 
@@ -77,13 +76,13 @@ namespace iroha {
       // query is not sent from future
       // todo make future gap for passing timestamp, like with old timestamps
       if (now < query->created_ts) {
-        log_->warn("timestamp broken: send from future: {}. Now {}",
+        log_->warn("bad timestamp: send from future: {}. Now {}",
                    query->created_ts, now);
         return false;
       }
 
       if (now - query->created_ts > MAX_DELAY) {
-        log_->warn("timestamp broken: too old: {}. Now {}", query->created_ts,
+        log_->warn("bad timestamp: too old: {}. Now {}", query->created_ts,
                    now);
         return false;
       }

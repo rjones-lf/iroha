@@ -25,6 +25,7 @@ namespace iroha {
   namespace simulator {
     class MockBlockCreator : public BlockCreator {
      public:
+      // TODO(@warchant): proposal below is copied. Change to const ref or ptr
       MOCK_METHOD1(process_verified_proposal, void(model::Proposal));
       MOCK_METHOD0(on_block, rxcpp::observable<model::Block>());
     };

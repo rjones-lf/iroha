@@ -31,18 +31,22 @@ namespace iroha {
           mutableFactory_(std::move(mutableFactory)),
           blockLoader_(std::move(blockLoader)) {
       log_ = logger::log("synchronizer");
-      consensus_gate->on_commit().subscribe([this](auto block) {
+      consensus_gate->on_commit().subscribe([this](const auto &block) {
+        // TODO(@warchant): if any error happens, it will be logged and ignored!
+        // Fix this behaviour.
         this->process_commit(block);
       });
     }
 
-    void SynchronizerImpl::process_commit(iroha::model::Block commit_message) {
+    void SynchronizerImpl::process_commit(
+        const iroha::model::Block &commit_message) {
       log_->info("processing commit");
       auto storage = mutableFactory_->createMutableStorage();
       if (not storage) {
         log_->error("Cannot create mutable storage");
         return;
       }
+
       if (validator_->validateBlock(commit_message, *storage)) {
         // Block can be applied to current storage
         // Commit to main Ametsuchi
@@ -54,12 +58,13 @@ namespace iroha {
       } else {
         // Block can't be applied to current storage
         // Download all missing blocks
-        for (auto signature : commit_message.sigs) {
+        for (const auto &signature : commit_message.sigs) {
           storage = mutableFactory_->createMutableStorage();
           if (not storage) {
             log_->error("cannot create storage");
             return;
           }
+
           auto chain = blockLoader_->retrieveBlocks(signature.pubkey);
           if (validator_->validateChain(chain, *storage)) {
             // Peer send valid chain

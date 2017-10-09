@@ -32,7 +32,7 @@ namespace iroha {
     class OrderingInit {
      private:
       /**
-       * Init effective realisation of ordering gate (client of ordering
+       * Init effective implementation of ordering gate (client of ordering
        * service)
        * @param network_address - address of ordering service
        */
