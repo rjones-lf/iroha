@@ -20,7 +20,7 @@
 
 #include <memory>
 #include "model/peer.hpp"
-#include "multi_sig_transactions/storage/mst_state.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
   namespace network {

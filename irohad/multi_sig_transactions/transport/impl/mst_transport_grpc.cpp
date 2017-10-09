@@ -16,7 +16,6 @@
  */
 
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
-#include <mst.pb.h>
 
 using namespace iroha::network;
 
@@ -28,7 +27,7 @@ grpc::Status MstTransportGrpc::SendState(
     ::google::protobuf::Empty* response) {
   log_->info("MstState Received");
 
-  MstState newState;
+  MstState newState = MstState::empty();
   for (const auto& tx : request->transactions()) {
     newState += std::make_shared<model::Transaction>(*factory_.deserialize(tx));
   }
