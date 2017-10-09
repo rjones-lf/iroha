@@ -27,8 +27,6 @@ namespace iroha {
       protocol::Transaction PbTransactionFactory::serialize (
           const model::Transaction &tx) {
         model::converters::PbCommandFactory factory;
-        protocol::Transaction pb_tx;
-
         protocol::Transaction pbtx;
 
         auto pl = pbtx.mutable_payload();

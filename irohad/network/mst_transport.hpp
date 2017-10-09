@@ -18,9 +18,9 @@
 #ifndef IROHA_MST_TRANSPORT_HPP
 #define IROHA_MST_TRANSPORT_HPP
 
-#include "multi_sig_transactions/storage/mst_state.hpp"
-#include "model/peer.hpp"
 #include <memory>
+#include "model/peer.hpp"
+#include "multi_sig_transactions/storage/mst_state.hpp"
 
 namespace iroha {
   namespace network {
@@ -30,7 +30,6 @@ namespace iroha {
      */
     class MstTransportNotification {
      public:
-
       /**
        * Handler method for updating state, when new data received
        * @param from - peer emitter of state
@@ -46,13 +45,13 @@ namespace iroha {
      * for propagating multi-signature transactions in network
      */
     class MstTransport {
-
+     public:
       /**
        * Subscribe object for receiving notifications
        * @param notification - object that will be notified on updates
        */
-      virtual void subscribe(std::shared_ptr<MstTransportNotification>
-                             notification) = 0;
+      virtual void subscribe(
+          std::shared_ptr<MstTransportNotification> notification) = 0;
 
       /**
        * Share state with other peer
@@ -64,5 +63,5 @@ namespace iroha {
       virtual ~MstTransport() = default;
     };
   }  // namespace network
-} // namespace iroha
-#endif //IROHA_MST_TRANSPORT_HPP
+}  // namespace iroha
+#endif  // IROHA_MST_TRANSPORT_HPP

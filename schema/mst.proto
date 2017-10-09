@@ -1,0 +1,14 @@
+syntax = "proto3";
+package iroha.network.transport;
+
+import "block.proto";
+import "google/protobuf/empty.proto";
+
+message MstState {
+    repeated iroha.protocol.Transaction transactions = 1;
+    bytes pubkey = 2;
+}
+
+service MstTransportGrpc {
+    rpc SendState(MstState) returns (google.protobuf.Empty);
+}

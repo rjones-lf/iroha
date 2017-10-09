@@ -11,15 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-add_subdirectory(state)
-add_subdirectory(storage)
-add_subdirectory(transport)
 
+add_library(mst_transport
+        impl/mst_transport_grpc.cpp
+        )
 
-#add_library(mst_processor
-#    impl/mst_processor.cpp
-#    )
-#
-#target_link_libraries(mst_processor
-#    mst_storage
-#    )
+#target_link_libraries(mst_transport
+#        model
+#        )
