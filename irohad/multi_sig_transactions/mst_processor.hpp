@@ -18,12 +18,13 @@
 #ifndef IROHA_MST_PROPAGATOR_HPP
 #define IROHA_MST_PROPAGATOR_HPP
 
-#include <rxcpp/rx.hpp>
 #include <memory>
-#include "multi_sig_transactions/storage/mst_state.hpp"
-#include "model/transaction.hpp"
 #include <mutex>
+#include <rxcpp/rx.hpp>
 #include "logger/logger.hpp"
+#include "model/transaction.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
 
@@ -33,15 +34,16 @@ namespace iroha {
    */
   class MstProcessor {
    public:
-// -----------------------------| user interface |------------------------------
+    // ---------------------------| user interface |----------------------------
 
     /**
-     * Propagate in network multi-signature transaction for signing by other participants
+     * Propagate in network multi-signature transaction for signing by other
+     * participants
      * @param transaction - transaction for propagation
      * Important note: propagateTransaction call cover under mutex,
      * thus, it is thread-safe.
      */
-    void propagateTransaction(std::shared_ptr<model::Transaction> transaction);
+    void propagateTransaction(ConstRefTransaction transaction);
 
     /**
      * Prove updating of state for handling status of signing
@@ -51,7 +53,7 @@ namespace iroha {
     /**
      * Observable emit transactions that prepared to processing in system
      */
-    rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions() const;
+    rxcpp::observable<TransactionType> onPreparedTransactions() const;
 
     virtual ~MstProcessor() = default;
 
@@ -59,21 +61,22 @@ namespace iroha {
     MstProcessor();
 
    private:
-// --------------------------| inheritance interface |--------------------------
+    // ------------------------| inheritance interface |------------------------
 
-    virtual void propagateTransactionImpl(std::shared_ptr<model::Transaction> transaction) = 0;
+    virtual void propagateTransactionImpl(ConstRefTransaction transaction) = 0;
 
-    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdateImpl() const = 0;
+    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdateImpl()
+        const = 0;
 
-    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactionsImpl() const = 0;
+    virtual rxcpp::observable<TransactionType> onPreparedTransactionsImpl()
+        const = 0;
 
-// ---------------------------------| fields |----------------------------------
+    // -------------------------------| fields |--------------------------------
 
     std::mutex mutex_;
 
     logger::Logger log_;
-
   };
-} // namespace iroha
+}  // namespace iroha
 
-#endif //IROHA_MST_PROPAGATOR_HPP
+#endif  // IROHA_MST_PROPAGATOR_HPP

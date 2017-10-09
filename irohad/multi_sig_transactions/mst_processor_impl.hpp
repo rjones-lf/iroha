@@ -18,52 +18,52 @@
 #ifndef IROHA_MST_PROCESSOR_IMPL_HPP
 #define IROHA_MST_PROCESSOR_IMPL_HPP
 
+#include <memory>
+#include <vector>
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 #include "network/mst_transport.hpp"
-#include "memory"
-#include "vector"
 
 namespace iroha {
 
   class FairMstProcessor : public MstProcessor,
                            public iroha::network::MstTransportNotification {
    public:
-    using PropagationDataType = std::vector<ConstPeer>;
+    FairMstProcessor(
+        std::shared_ptr<iroha::network::MstTransport> transport,
+        std::shared_ptr<MstStorage> storage,
+        std::shared_ptr<PropagationStrategy> strategy);
 
-    explicit FairMstProcessor(shp<iroha::network::MstTransport> transport,
-                              shp<MstStorage> storage,
-                              shp<PropagationStrategy<PropagationDataType>> strategy);
+    // ------------------------| MstProcessor override |------------------------
 
-// --------------------------| MstProcessor override |--------------------------
+    void propagateTransactionImpl(ConstRefTransaction transaction) override;
 
-    void propagateTransactionImpl(shp<model::Transaction> transaction) override;
+    rxcpp::observable<std::shared_ptr<MstState>> onStateUpdateImpl()
+        const override;
 
-    rxcpp::observable<shp<MstState>> onStateUpdateImpl() const override;
+    rxcpp::observable<std::shared_ptr<model::Transaction>>
+    onPreparedTransactionsImpl() const override;
 
-    rxcpp::observable<shp<model::Transaction>> onPreparedTransactionsImpl() const override;
+    // ------------------| MstTransportNotification override |------------------
 
-// --------------------| MstTransportNotification override |--------------------
+    void onStateUpdate(ConstRefPeer from, ConstRefState new_state) override;
 
-    void onStateUpdate(ConstPeer from, MstState new_state) override;
-
-// ------------------------------| end override |-------------------------------
+    // ----------------------------| end override |-----------------------------
 
     virtual ~FairMstProcessor() = default;
 
    private:
-/*
- * ---------------------------------| fields |----------------------------------
-*/
-    shp<iroha::network::MstTransport> transport_;
-    shp<MstStorage> storage_;
-    shp<PropagationStrategy<PropagationDataType>> strategy_;
+    // -------------------------------| fields |--------------------------------
+    std::shared_ptr<iroha::network::MstTransport> transport_;
+    std::shared_ptr<MstStorage> storage_;
+    std::shared_ptr<PropagationStrategy> strategy_;
 
     // rx subjects
-    rxcpp::subjects::subject<shp<MstState>> state_subject_;
-    rxcpp::subjects::subject<shp<model::Transaction>> transactions_subject_;
+    rxcpp::subjects::subject<std::shared_ptr<MstState>> state_subject_;
+    rxcpp::subjects::subject<std::shared_ptr<model::Transaction>>
+        transactions_subject_;
   };
-} // namespace iroha
+}  // namespace iroha
 
-#endif //IROHA_MST_PROCESSOR_IMPL_HPP
+#endif  // IROHA_MST_PROCESSOR_IMPL_HPP

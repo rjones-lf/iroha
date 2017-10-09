@@ -18,19 +18,19 @@
 #ifndef IROHA_MST_PROPAGATION_STRATEGY_HPP
 #define IROHA_MST_PROPAGATION_STRATEGY_HPP
 
-#include "rxcpp/rx.hpp"
+#include <rxcpp/rx.hpp>
+#include "model/peer.hpp"
 
 /**
  * Interface provides strategy for propagation states in network
  */
-template <typename TypeResult>
 class PropagationStrategy {
 
   /**
    * Provides observable that will be emit new results
    * with respect to own strategy
    */
-  virtual rxcpp::observable<TypeResult> emitter() = 0;
+  virtual rxcpp::observable<std::vector<iroha::model::Peer>> emitter() = 0;
 };
 
 #endif //IROHA_MST_PROPAGATION_STRATEGY_HPP

@@ -35,7 +35,8 @@ namespace iroha {
        * @param from - peer emitter of state
        * @param new_state - state propagated from peer
        */
-      virtual void onStateUpdate(const model::Peer from, MstState new_state) = 0;
+      virtual void onStateUpdate(const model::Peer &from,
+                                 const MstState &new_state) = 0;
 
       virtual ~MstTransportNotification() = default;
     };
@@ -58,7 +59,8 @@ namespace iroha {
        * @param to - peer recipient of message
        * @param providing_state - state for transmitting
        */
-      virtual void sendState(const model::Peer &to, const MstState &providing_state) = 0;
+      virtual void sendState(const model::Peer &to,
+                             const MstState &providing_state) = 0;
 
       virtual ~MstTransport() = default;
     };

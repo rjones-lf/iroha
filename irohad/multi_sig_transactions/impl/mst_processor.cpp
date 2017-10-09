@@ -19,20 +19,20 @@
 
 namespace iroha {
 
-  MstProcessor::MstProcessor() {
-    log_ = logger::log("MstProcessor");
-  }
+  MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
 
-  void MstProcessor::propagateTransaction(std::shared_ptr<model::Transaction> transaction) {
+  void MstProcessor::propagateTransaction(ConstRefTransaction transaction) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     this->propagateTransactionImpl(std::move(transaction));
   }
 
-  rxcpp::observable<std::shared_ptr<MstState>> MstProcessor::onStateUpdate() const {
+  rxcpp::observable<std::shared_ptr<MstState>> MstProcessor::onStateUpdate()
+      const {
     return this->onStateUpdateImpl();
   }
 
-  rxcpp::observable<std::shared_ptr<model::Transaction>> MstProcessor::onPreparedTransactions() const {
+  rxcpp::observable<std::shared_ptr<model::Transaction>>
+  MstProcessor::onPreparedTransactions() const {
     return this->onPreparedTransactionsImpl();
   }
-} // namespace iroha
+}  // namespace iroha

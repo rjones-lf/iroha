@@ -21,34 +21,35 @@
 
 namespace iroha {
   FairMstProcessor::FairMstProcessor(
-      shp<iroha::network::MstTransport> transport,
-      shp<MstStorage> storage,
-      shp<PropagationStrategy<PropagationDataType>> strategy)
+      std::shared_ptr<iroha::network::MstTransport> transport,
+      std::shared_ptr<MstStorage> storage,
+      std::shared_ptr<PropagationStrategy> strategy)
       : MstProcessor(),
-        transport_(std::move(transport)),
-        storage_(std::move(storage)),
-        strategy_(std::move(strategy)) {
-  }
+        transport_(transport),
+        storage_(storage),
+        strategy_(strategy) {}
 
-// --------------------------| MstProcessor override |--------------------------
+  // -------------------------| MstProcessor override |-------------------------
 
-  void FairMstProcessor::propagateTransactionImpl(shp<model::Transaction> transaction) {
+  void FairMstProcessor::propagateTransactionImpl(
+      ConstRefTransaction transaction) {
     storage_->updateOwnState(transaction);
   }
 
-  rxcpp::observable<shp<MstState>> FairMstProcessor::onStateUpdateImpl() const {
+  rxcpp::observable<std::shared_ptr<MstState>>
+  FairMstProcessor::onStateUpdateImpl() const {
     return state_subject_.get_observable();
   }
 
-  rxcpp::observable<shp<model::Transaction>> FairMstProcessor::onPreparedTransactionsImpl() const {
+  rxcpp::observable<std::shared_ptr<model::Transaction>>
+  FairMstProcessor::onPreparedTransactionsImpl() const {
     return transactions_subject_.get_observable();
   }
 
-// --------------------| MstTransportNotification override |--------------------
+  // -------------------| MstTransportNotification override |-------------------
 
-  void FairMstProcessor::onStateUpdate(ConstPeer from, MstState new_state) {
-//    auto diff = storage_->apply(from, std::move(new_state));
-
-
+  void FairMstProcessor::onStateUpdate(ConstRefPeer from,
+                                       ConstRefState new_state) {
+    //    auto diff = storage_->apply(from, std::move(new_state));
   }
-} // namespace iroha
+}  // namespace iroha
