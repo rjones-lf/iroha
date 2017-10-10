@@ -16,6 +16,6 @@ add_library(mst_transport
         impl/mst_transport_grpc.cpp
         )
 
-#target_link_libraries(mst_transport
-#        model
-#        )
+target_link_libraries(mst_transport
+        mst_grpc
+        )
