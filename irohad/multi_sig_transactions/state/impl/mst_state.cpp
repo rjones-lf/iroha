@@ -17,8 +17,8 @@
 
 #include <utility>
 
-#include "multi_sig_transactions/state/mst_state.hpp"
 #include "common/set.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
 
@@ -44,8 +44,21 @@ namespace iroha {
 
   MstState MstState::operator-(const MstState &rhs) const {
     return MstState(this->completer_,
-                    set_difference(this->internal_state_,
-                                   rhs.internal_state_));
+                    set_difference(this->internal_state_, rhs.internal_state_));
+  }
+
+  bool MstState::operator==(const MstState &rhs) const {
+    return std::is_permutation(
+        internal_state_.begin(), internal_state_.end(),
+        rhs.internal_state_.begin(), [](auto tx1, auto tx2) {
+          if (*tx1 == *tx2) {
+            return std::is_permutation(
+                tx1->signatures.begin(), tx1->signatures.end(),
+                tx2->signatures.begin(),
+                [](auto sig1, auto sig2) { return sig1 == sig2; });
+          }
+          return false;
+        });
   }
 
   std::vector<DataType> MstState::getTransactions() const {
@@ -68,8 +81,7 @@ namespace iroha {
   // ------------------------------| private api |------------------------------
 
   MstState::MstState(const CompleterType &completer)
-      : MstState(completer, InternalStateType{}) {
-  }
+      : MstState(completer, InternalStateType{}) {}
 
   MstState::MstState(const CompleterType &completer,
                      const InternalStateType &transactions)
@@ -88,9 +100,8 @@ namespace iroha {
     }
 
     // state already contains transaction, merge signatures
-    (*corresponding)->signatures =
-        merge_unique<iroha::model::SignatureHasher>(
-            (*corresponding)->signatures, rhs_tx->signatures);
+    (*corresponding)->signatures = merge_unique<iroha::model::SignatureHasher>(
+        (*corresponding)->signatures, rhs_tx->signatures);
 
     if ((*completer_)(*corresponding)) {
       // state already has completed transaction,
@@ -105,4 +116,4 @@ namespace iroha {
     index_.push(rhs_tx);
   }
 
-} // namespace iroha
+}  // namespace iroha

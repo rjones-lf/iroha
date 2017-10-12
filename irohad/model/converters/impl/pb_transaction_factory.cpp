@@ -33,6 +33,7 @@ namespace iroha {
         pl->set_created_time(tx.created_ts);
         pl->set_creator_account_id(tx.creator_account_id);
         pl->set_tx_counter(tx.tx_counter);
+        pl->set_quorum(tx.quorum);
 
         for (const auto &command : tx.commands) {
           auto cmd = pl->add_commands();
@@ -57,6 +58,7 @@ namespace iroha {
         tx.tx_counter = pl.tx_counter();
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
+        tx.quorum = static_cast<uint8_t >(pl.quorum());
 
         for (const auto &pb_sig : pb_tx.signature()) {
           model::Signature sig{};

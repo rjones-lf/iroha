@@ -18,14 +18,14 @@
 #ifndef IROHA_MST_STATE_HPP
 #define IROHA_MST_STATE_HPP
 
+#include <queue>
 #include <unordered_set>
 #include <vector>
-#include <queue>
 #include "logger/logger.hpp"
 
-#include "multi_sig_transactions/mst_types.hpp"
-#include "model/operators/hash.hpp"
 #include "common/types.hpp"
+#include "model/operators/hash.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
 
@@ -37,7 +37,6 @@ namespace iroha {
    */
   class Completer {
    public:
-
     /**
      * Verify that transaction is completed
      * @param tx - transaction for verification
@@ -51,8 +50,7 @@ namespace iroha {
      * @param time - current time
      * @return true, if transaction was expired
      */
-    virtual bool operator()(const DataType &tx,
-                            const TimeType &time) const = 0;
+    virtual bool operator()(const DataType &tx, const TimeType &time) const = 0;
 
     virtual ~Completer() = default;
   };
@@ -65,8 +63,7 @@ namespace iroha {
       return transaction->signatures.size() >= transaction->quorum;
     }
 
-    bool operator()(const DataType &tx,
-                    const TimeType &time) const override {
+    bool operator()(const DataType &tx, const TimeType &time) const override {
       return false;
     }
   };
@@ -111,6 +108,13 @@ namespace iroha {
     MstState operator-(const MstState &rhs) const;
 
     /**
+     * Compares two different MstState's
+     * @param rhs - MstState to compare
+     * @return true is rhs equal to this or false otherwise
+     */
+    bool operator==(const MstState &rhs) const;
+
+    /**
      * Provide transactions, that contains in state
      */
     std::vector<DataType> getTransactions() const;
@@ -123,7 +127,7 @@ namespace iroha {
     MstState eraseByTime(const TimeType &time);
 
    private:
-    // ------------------------------| private api |------------------------------
+    // --------------------------| private api |------------------------------
 
     /**
      * Class for providing operator < for transactions
@@ -136,13 +140,11 @@ namespace iroha {
     };
 
     using InternalStateType =
-    std::unordered_set<DataType,
-                       iroha::model::PointerTxHasher<DataType>,
-                       iroha::DereferenceEquals<DataType>>;
+        std::unordered_set<DataType, iroha::model::PointerTxHasher<DataType>,
+                           iroha::DereferenceEquals<DataType>>;
 
-    using IndexType = std::priority_queue<DataType,
-                                          std::vector<DataType>,
-                                          Less>;
+    using IndexType =
+        std::priority_queue<DataType, std::vector<DataType>, Less>;
 
     MstState(const CompleterType &completer);
 
@@ -162,7 +164,7 @@ namespace iroha {
      */
     void rawInsert(const DataType &rhs_tx);
 
-    // --------------------------------| fields |---------------------------------
+    // -----------------------------| fields |------------------------------
 
     CompleterType completer_;
 
@@ -173,5 +175,5 @@ namespace iroha {
     logger::Logger log_;
   };
 
-} // namespace iroha
-#endif //IROHA_MST_STATE_HPP
+}  // namespace iroha
+#endif  // IROHA_MST_STATE_HPP

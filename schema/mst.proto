@@ -4,9 +4,14 @@ package iroha.network.transport;
 import "block.proto";
 import "google/protobuf/empty.proto";
 
+message Peer {
+    bytes pubkey = 1;
+    string address = 2;
+}
+
 message MstState {
     repeated iroha.protocol.Transaction transactions = 1;
-    bytes pubkey = 2;
+    Peer peer = 2;
 }
 
 service MstTransportGrpc {

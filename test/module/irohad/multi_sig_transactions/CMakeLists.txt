@@ -23,3 +23,9 @@ target_link_libraries(storage_test
     mst_storage
     logger
     )
+
+AddTest(transport_test transport_test.cpp)
+target_link_libraries(transport_test
+    mst_transport
+    logger
+    )

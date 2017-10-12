@@ -29,12 +29,12 @@ grpc::Status MstTransportGrpc::SendState(
 
   MstState newState = MstState::empty();
   for (const auto& tx : request->transactions()) {
-    newState += std::make_shared<model::Transaction>(*factory_.deserialize(tx));
+    newState += factory_.deserialize(tx);
   }
   log_->info("transactions in MstState: {}", newState.getTransactions().size());
 
-  model::Peer from{.address = context->peer(),
-                   .pubkey = blob_t<32>::from_string(request->pubkey())};
+  model::Peer from{.address = request->peer().address(),
+                   .pubkey = blob_t<32>::from_string(request->peer().pubkey())};
   subscriber_->onStateUpdate(std::move(from), std::move(newState));
 
   return grpc::Status::OK;
@@ -53,7 +53,9 @@ void MstTransportGrpc::sendState(model::Peer to, MstState providing_state) {
   AsyncClientCall* call = new AsyncClientCall;
 
   transport::MstState protoState;
-  protoState.set_pubkey(to.pubkey.to_string());
+  auto peer = protoState.mutable_peer();
+  peer->set_pubkey(to.pubkey.to_string());
+  peer->set_address(to.address);
   for (auto tx : providing_state.getTransactions()) {
     auto addtxs = protoState.add_transactions();
     new (addtxs) protocol::Transaction(factory_.serialize(*tx));
@@ -61,6 +63,5 @@ void MstTransportGrpc::sendState(model::Peer to, MstState providing_state) {
 
   call->response_reader =
       client->AsyncSendState(&call->context, protoState, &cq_);
-
   call->response_reader->Finish(&call->reply, &call->status, call);
 }
