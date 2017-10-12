@@ -27,13 +27,19 @@
 
 namespace iroha {
   namespace network {
-    class MstTransportGrpc
-        : public MstTransport,
-          public transport::MstTransportGrpc::Service,
-          private AsyncGrpcClient<google::protobuf::Empty> {
+    class MstTransportGrpc : public MstTransport,
+                             public transport::MstTransportGrpc::Service,
+                             private AsyncGrpcClient<google::protobuf::Empty> {
      public:
       MstTransportGrpc();
 
+      /**
+       * Server part of grpc SendState method call
+       * @param context - server context with information about call
+       * @param request - received new MstState object
+       * @param response - buffer for response data, not used
+       * @return grpc::Status (always OK)
+       */
       grpc::Status SendState(
           ::grpc::ServerContext* context,
           const ::iroha::network::transport::MstState* request,
@@ -45,7 +51,7 @@ namespace iroha {
       void sendState(model::Peer to, MstState providing_state) override;
 
      private:
-      std::shared_ptr<MstTransportNotification> subscriber_;
+      std::weak_ptr<MstTransportNotification> subscriber_;
       model::converters::PbTransactionFactory factory_;
       logger::Logger log_;
     };
