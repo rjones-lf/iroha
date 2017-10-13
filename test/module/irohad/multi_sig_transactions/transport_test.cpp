@@ -17,7 +17,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "mst_test_helpers.hpp"
+#include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
@@ -33,6 +33,11 @@ class MockMstTransportNotification : public MstTransportNotification {
   MOCK_METHOD2(onStateUpdate, void(Peer peer, iroha::MstState state));
 };
 
+/**
+ * Sends data over MstTransportGrpc (MstState and Peer objects) and receives
+ * them. When received deserializes them end ensures that deserialized
+ * objects equal to objects before sending.
+ */
 TEST(TransportTest, SendAndReceive) {
   auto transport = std::make_shared<MstTransportGrpc>();
   auto notifications = std::make_shared<MockMstTransportNotification>();
@@ -60,6 +65,8 @@ TEST(TransportTest, SendAndReceive) {
   state += tx3;
   state += std::make_shared<Transaction>(tx4);
 
+  // we want to ensure that server side will call onStateUpdate()
+  // with same parameters as on the client side
   EXPECT_CALL(*notifications, onStateUpdate(peer, state)).Times(1);
 
   std::unique_ptr<grpc::Server> server;
