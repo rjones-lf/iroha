@@ -20,6 +20,7 @@
 
 #include "common/types.hpp"
 #include "model/transaction.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 #include <string>
 
 using namespace std;

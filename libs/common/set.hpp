@@ -17,6 +17,9 @@
 
 #ifndef IROHA_SET_HPP
 #define IROHA_SET_HPP
+
+#include <unordered_set>
+
 namespace iroha {
   /**
        * Merge collections with unique elements

@@ -13,6 +13,7 @@
 # limitations under the License.
 add_subdirectory(state)
 add_subdirectory(storage)
+add_subdirectory(transport)
 
 
 #add_library(mst_processor

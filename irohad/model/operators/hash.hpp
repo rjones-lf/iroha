@@ -20,13 +20,14 @@
 
 #include <functional>
 #include <string>
+#include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
   namespace model {
     /**
      * Hash calculation factory for transaction
      */
-    template<typename Tx>
+    template <typename Tx>
     class PointerTxHasher {
      public:
       using TxType = Tx;
@@ -45,8 +46,8 @@ namespace iroha {
     class SignatureHasher {
      public:
       size_t operator()(const iroha::model::Signature &sign) const {
-        auto hash = string_hasher(sign.signature.to_string() +
-            sign.pubkey.to_string());
+        auto hash =
+            string_hasher(sign.signature.to_string() + sign.pubkey.to_string());
         return hash;
       }
 
@@ -62,10 +63,11 @@ namespace iroha {
       std::size_t operator()(ConstPeer &obj) const {
         return hasher(obj.address + obj.pubkey.to_string());
       }
+
      private:
       std::hash<std::string> hasher;
     };
-  } // namespace model
-} // namespace iroha
+  }  // namespace model
+}  // namespace iroha
 
-#endif //IROHA_HASH_HPP
+#endif  // IROHA_HASH_HPP

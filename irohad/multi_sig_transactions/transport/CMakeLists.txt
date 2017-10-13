@@ -12,20 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AddTest(state_test state_test.cpp)
-target_link_libraries(state_test
-    mst_state
-    logger
-    )
+add_library(mst_transport
+        impl/mst_transport_grpc.cpp
+        )
 
-AddTest(storage_test storage_test.cpp)
-target_link_libraries(storage_test
-    mst_storage
-    logger
-    )
-
-AddTest(transport_test transport_test.cpp)
-target_link_libraries(transport_test
-    mst_transport
-    logger
-    )
+target_link_libraries(mst_transport
+        mst_grpc
+        mst_state
+        )
