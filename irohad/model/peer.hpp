@@ -42,7 +42,7 @@ namespace iroha {
       using KeyType = decltype(pubkey);
 
       Peer() {}
-      Peer(std::string address, pubkey_t pubkey)
+      Peer(std::string &address, pubkey_t pubkey)
           : address(address), pubkey(pubkey) {}
 
       bool operator==(const Peer &obj) const {
