@@ -25,23 +25,23 @@ namespace iroha {
   }
 
   MstState MstStorage::apply(ConstPeer &target_peer, const MstState &new_state) {
-    std::lock_guard<std::mutex> lock{this->mutex_};
     return applyImpl(target_peer, new_state);
   }
 
   MstState MstStorage::updateOwnState(const TransactionType &tx) {
-    std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(std::move(tx));
   }
 
   MstState MstStorage::getExpiredTransactions(const TimeType &current_time){
-    std::lock_guard<std::mutex> lock{this->mutex_};
     return getExpiredTransactionsImpl(current_time);
   }
 
   MstState MstStorage::getDiffState(ConstPeer &target_peer,
                                     const TimeType &current_time) {
-    std::lock_guard<std::mutex> lock(this->mutex_);
     return getDiffStateImpl(target_peer, current_time);
+  }
+
+  MstState &MstStorage::getOwnState() const {
+    return getOwnStateImpl();
   }
 } // namespace iroha

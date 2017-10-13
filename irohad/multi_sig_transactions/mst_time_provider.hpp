@@ -15,26 +15,16 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_PROPAGATION_STRATEGY_HPP
-#define IROHA_MST_PROPAGATION_STRATEGY_HPP
+#ifndef IROHA_MST_TIME_PROVIDER_HPP
+#define IROHA_MST_TIME_PROVIDER_HPP
 
-#include <rxcpp/rx.hpp>
-#include "model/peer.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
-  /**
-   * Interface provides strategy for propagation states in network
-   */
-  class PropagationStrategy {
+  class MstTimeProvider {
    public:
-    using PropagationData = std::vector<iroha::model::Peer>;
-
-    /**
-     * Provides observable that will be emit new results
-     * with respect to own strategy
-     */
-    virtual rxcpp::observable<PropagationData> emitter() = 0;
+    TimeType getCurrentTime() const;
   };
-}  // namespace iroha
+} // namespace iroha
 
-#endif  // IROHA_MST_PROPAGATION_STRATEGY_HPP
+#endif //IROHA_MST_TIME_PROVIDER_HPP

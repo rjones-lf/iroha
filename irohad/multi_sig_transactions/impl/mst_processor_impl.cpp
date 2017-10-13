@@ -20,36 +20,79 @@
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 
 namespace iroha {
+
+  template <typename Subject>
+  void shareState(ConstRefState state, Subject &subject) {
+    if (not state.isEmpty()) {
+      auto completed_transactions = state.getTransactions();
+      std::for_each(
+          completed_transactions.begin(), completed_transactions.end(),
+          [&subject](const auto tx) { subject.get_subscriber().on_next(tx); });
+    }
+  }
+
   FairMstProcessor::FairMstProcessor(
       std::shared_ptr<iroha::network::MstTransport> transport,
       std::shared_ptr<MstStorage> storage,
-      std::shared_ptr<PropagationStrategy> strategy)
+      std::shared_ptr<PropagationStrategy> strategy,
+      std::shared_ptr<MstTimeProvider> time_provider)
       : MstProcessor(),
-        transport_(transport),
-        storage_(storage),
-        strategy_(strategy) {}
+        transport_(std::move(transport)),
+        storage_(std::move(storage)),
+        strategy_(std::move(strategy)),
+        time_provider_(std::move(time_provider)) {}
 
   // -------------------------| MstProcessor override |-------------------------
 
-  void FairMstProcessor::propagateTransactionImpl(
-      ConstRefTransaction transaction) {
-    storage_->updateOwnState(transaction);
+  auto FairMstProcessor::propagateTransactionImpl(
+      ConstRefTransaction transaction)
+      -> decltype(propagateTransaction(transaction)) {
+    shareState(storage_->updateOwnState(transaction), transactions_subject_);
   }
 
-  rxcpp::observable<std::shared_ptr<MstState>>
-  FairMstProcessor::onStateUpdateImpl() const {
+  auto FairMstProcessor::onStateUpdateImpl() const
+      -> decltype(onStateUpdate()) {
     return state_subject_.get_observable();
   }
 
-  rxcpp::observable<std::shared_ptr<model::Transaction>>
-  FairMstProcessor::onPreparedTransactionsImpl() const {
+  auto FairMstProcessor::onPreparedTransactionsImpl() const
+      -> decltype(onPreparedTransactions()) {
     return transactions_subject_.get_observable();
+  }
+
+  auto FairMstProcessor::onExpiredTransactionsImpl() const
+      -> decltype(onExpiredTransactions()) {
+    return expired_subject_.get_observable();
   }
 
   // -------------------| MstTransportNotification override |-------------------
 
-  void FairMstProcessor::onStateUpdate(ConstRefPeer from,
-                                       ConstRefState new_state) {
-    //    auto diff = storage_->apply(from, std::move(new_state));
+  void FairMstProcessor::onNewState(ConstRefPeer from,
+                                    ConstRefState new_state) {
+    auto current_time = time_provider_->getCurrentTime();
+
+    // update state
+    // todo change with method
+    auto new_transactions =
+        std::make_shared<MstState>(new_state - storage_->getOwnState());
+    state_subject_.get_subscriber().on_next(new_transactions);
+
+    // completed transactions
+    shareState(storage_->apply(from, new_state), transactions_subject_);
+
+    // expired transactions
+    auto expired_transactions = storage_->getDiffState(from, current_time);
+    shareState(expired_transactions, this->expired_subject_);
   }
+
+  void FairMstProcessor::onPropagate(
+      const PropagationStrategy::PropagationData &data) {
+    auto current_time = time_provider_->getCurrentTime();
+    std::for_each(data.begin(), data.end(),
+                  [this, &current_time](const auto &peer) {
+                    transport_->sendState(
+                        peer, storage_->getDiffState(peer, current_time));
+                  });
+  }
+
 }  // namespace iroha

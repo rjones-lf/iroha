@@ -65,6 +65,8 @@ namespace iroha {
      */
     MstState getDiffState(ConstPeer &target_peer, const TimeType &current_time);
 
+    MstState &getOwnState() const;
+
     virtual ~MstStorage() = default;
 
    protected:
@@ -89,9 +91,10 @@ namespace iroha {
                                   const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) = 0;
 
+    virtual auto getOwnStateImpl() const -> decltype(getOwnState()) = 0;
+
     // -------------------------------| fields |--------------------------------
 
-    mutable std::mutex mutex_;
 
    protected:
     logger::Logger log_;

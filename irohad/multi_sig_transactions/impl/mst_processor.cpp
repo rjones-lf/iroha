@@ -23,7 +23,7 @@ namespace iroha {
 
   void MstProcessor::propagateTransaction(ConstRefTransaction transaction) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    this->propagateTransactionImpl(std::move(transaction));
+    this->propagateTransactionImpl(transaction);
   }
 
   rxcpp::observable<std::shared_ptr<MstState>> MstProcessor::onStateUpdate()
@@ -34,5 +34,10 @@ namespace iroha {
   rxcpp::observable<std::shared_ptr<model::Transaction>>
   MstProcessor::onPreparedTransactions() const {
     return this->onPreparedTransactionsImpl();
+  }
+
+  rxcpp::observable<std::shared_ptr<model::Transaction>>
+  MstProcessor::onExpiredTransactions() const {
+    return this->onExpiredTransactionsImpl();
   }
 }  // namespace iroha

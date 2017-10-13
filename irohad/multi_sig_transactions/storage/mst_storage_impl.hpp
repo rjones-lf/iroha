@@ -52,6 +52,8 @@ namespace iroha {
     auto getDiffStateImpl(ConstPeer &target_peer, const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) override;
 
+    auto getOwnStateImpl() const -> decltype(getOwnState()) override;
+
     virtual ~MstStorageStateImpl() = default;
 
    private:

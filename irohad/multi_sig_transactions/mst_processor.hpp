@@ -55,6 +55,11 @@ namespace iroha {
      */
     rxcpp::observable<TransactionType> onPreparedTransactions() const;
 
+    /**
+     * Observable emit expired by time transactions
+     */
+    rxcpp::observable<TransactionType> onExpiredTransactions() const;
+
     virtual ~MstProcessor() = default;
 
    protected:
@@ -63,13 +68,16 @@ namespace iroha {
    private:
     // ------------------------| inheritance interface |------------------------
 
-    virtual void propagateTransactionImpl(ConstRefTransaction transaction) = 0;
+    virtual auto propagateTransactionImpl(ConstRefTransaction transaction)
+        -> decltype(propagateTransaction(transaction)) = 0;
 
-    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdateImpl()
-        const = 0;
+    virtual auto onStateUpdateImpl() const -> decltype(onStateUpdate()) = 0;
 
-    virtual rxcpp::observable<TransactionType> onPreparedTransactionsImpl()
-        const = 0;
+    virtual auto onPreparedTransactionsImpl() const
+        -> decltype(onPreparedTransactions()) = 0;
+
+    virtual auto onExpiredTransactionsImpl() const
+        -> decltype(onExpiredTransactions()) = 0;
 
     // -------------------------------| fields |--------------------------------
 

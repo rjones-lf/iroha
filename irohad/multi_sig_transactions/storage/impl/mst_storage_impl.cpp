@@ -67,4 +67,8 @@ namespace iroha {
     return new_diff_state;
   }
 
+  auto MstStorageStateImpl::getOwnStateImpl() const -> decltype(getOwnState())  {
+    return own_state_;
+  }
+
 } // namespace iroha
