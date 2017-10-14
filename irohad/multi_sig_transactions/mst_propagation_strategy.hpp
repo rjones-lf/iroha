@@ -22,6 +22,7 @@
 #include "model/peer.hpp"
 
 namespace iroha {
+
   /**
    * Interface provides strategy for propagation states in network
    */

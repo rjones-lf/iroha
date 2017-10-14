@@ -22,15 +22,25 @@
 #include <vector>
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
-#include "multi_sig_transactions/storage/mst_storage.hpp"
 #include "multi_sig_transactions/mst_time_provider.hpp"
+#include "multi_sig_transactions/storage/mst_storage.hpp"
 #include "network/mst_transport.hpp"
 
 namespace iroha {
 
+  /**
+   * Effective implementation of MstProcessor,
+   * that implements gossip propagation of own state
+   */
   class FairMstProcessor : public MstProcessor,
                            public iroha::network::MstTransportNotification {
    public:
+    /**
+     * @param transport - connection to other peers in network
+     * @param storage  - repository for storing states
+     * @param strategy - propagation mechanism for sharing state with others
+     * @param time_provider - repository of current time
+     */
     FairMstProcessor(std::shared_ptr<iroha::network::MstTransport> transport,
                      std::shared_ptr<MstStorage> storage,
                      std::shared_ptr<PropagationStrategy> strategy,
@@ -47,7 +57,7 @@ namespace iroha {
         -> decltype(onPreparedTransactions()) override;
 
     auto onExpiredTransactionsImpl() const
-    -> decltype(onExpiredTransactions()) override;
+        -> decltype(onExpiredTransactions()) override;
 
     // ------------------| MstTransportNotification override |------------------
 
@@ -60,7 +70,6 @@ namespace iroha {
     virtual ~FairMstProcessor() = default;
 
    private:
-
     // -------------------------------| fields |--------------------------------
     std::shared_ptr<iroha::network::MstTransport> transport_;
     std::shared_ptr<MstStorage> storage_;
@@ -68,9 +77,15 @@ namespace iroha {
     std::shared_ptr<MstTimeProvider> time_provider_;
 
     // rx subjects
+
+    /// use for share new states from other peers
     rxcpp::subjects::subject<std::shared_ptr<MstState>> state_subject_;
+
+    /// use for share completed transactions
     rxcpp::subjects::subject<std::shared_ptr<model::Transaction>>
         transactions_subject_;
+
+    /// use for share expired transactions
     rxcpp::subjects::subject<std::shared_ptr<model::Transaction>>
         expired_subject_;
   };

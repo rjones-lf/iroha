@@ -40,23 +40,25 @@ namespace iroha {
      * Propagate in network multi-signature transaction for signing by other
      * participants
      * @param transaction - transaction for propagation
-     * Important note: propagateTransaction call cover under mutex,
-     * thus, it is thread-safe.
+     * General note: implementation of method covered by lock
      */
     void propagateTransaction(ConstRefTransaction transaction);
 
     /**
      * Prove updating of state for handling status of signing
+     * General note: implementation of method covered by lock
      */
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
      * Observable emit transactions that prepared to processing in system
+     * General note: implementation of method covered by lock
      */
     rxcpp::observable<TransactionType> onPreparedTransactions() const;
 
     /**
      * Observable emit expired by time transactions
+     * General note: implementation of method covered by lock
      */
     rxcpp::observable<TransactionType> onExpiredTransactions() const;
 
@@ -68,14 +70,26 @@ namespace iroha {
    private:
     // ------------------------| inheritance interface |------------------------
 
+    /**
+     * @see propagateTransaction method
+     */
     virtual auto propagateTransactionImpl(ConstRefTransaction transaction)
         -> decltype(propagateTransaction(transaction)) = 0;
 
+    /**
+     * @see onStateUpdate method
+     */
     virtual auto onStateUpdateImpl() const -> decltype(onStateUpdate()) = 0;
 
+    /**
+     * @see onPreparedTransactions method
+     */
     virtual auto onPreparedTransactionsImpl() const
         -> decltype(onPreparedTransactions()) = 0;
 
+    /**
+     * @see onExpiredTransactions method
+     */
     virtual auto onExpiredTransactionsImpl() const
         -> decltype(onExpiredTransactions()) = 0;
 

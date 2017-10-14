@@ -21,8 +21,17 @@
 #include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
+
+  /**
+   * Interface provides current time for iroha
+   */
   class MstTimeProvider {
    public:
+
+    /**
+     * Fetching current time in system
+     * @return current time
+     */
     TimeType getCurrentTime() const;
   };
 } // namespace iroha

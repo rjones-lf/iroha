@@ -38,7 +38,6 @@ namespace iroha {
      * @param target_peer - key for for updating state
      * @param new_state - state with new data
      * @return State with completed transaction
-     * General note: implementation of method covered by lock
      */
     MstState apply(ConstPeer &target_peer, const MstState &new_state);
 
@@ -46,14 +45,12 @@ namespace iroha {
      * Provide updating state of current peer with new transaction
      * @param tx - new transaction for insertion in state
      * @return State with completed transaction
-     * General note: implementation of method covered by lock
      */
     MstState updateOwnState(const TransactionType &tx);
 
     /**
      * Remove expired transactions and return them
      * @return State with expired transactions
-     * General note: implementation of method covered by lock
      */
     MstState getExpiredTransactions(const TimeType &current_time);
 
@@ -61,7 +58,6 @@ namespace iroha {
      * Make state based on diff of own and target states.
      * All expired transactions will be removed from diff.
      * @return difference between own and target state
-     * General note: implementation of method covered by lock
      */
     MstState getDiffState(ConstPeer &target_peer, const TimeType &current_time);
 
