@@ -36,7 +36,7 @@ grpc::Status MstTransportGrpc::SendState(
 
   model::Peer from(request->peer().address(),
                    blob_t<32>::from_string(request->peer().pubkey()));
-  subscriber_.lock()->onStateUpdate(std::move(from), std::move(newState));
+  subscriber_.lock()->onNewState(std::move(from), std::move(newState));
 
   return grpc::Status::OK;
 }
@@ -46,7 +46,7 @@ void MstTransportGrpc::subscribe(
   subscriber_ = notification;
 }
 
-void MstTransportGrpc::sendState(model::Peer to, MstState providing_state) {
+void MstTransportGrpc::sendState(ConstRefPeer to, ConstRefState providing_state) {
   log_->info("Propagate MstState to peer {}", to.address);
   auto client = transport::MstTransportGrpc::NewStub(
       grpc::CreateChannel(to.address, grpc::InsecureChannelCredentials()));

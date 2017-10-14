@@ -48,14 +48,14 @@ namespace iroha {
       void subscribe(
           std::shared_ptr<MstTransportNotification> notification) override;
 
-      void sendState(model::Peer to, MstState providing_state) override;
+      void sendState(ConstRefPeer to, ConstRefState providing_state) override;
 
      private:
       std::weak_ptr<MstTransportNotification> subscriber_;
       model::converters::PbTransactionFactory factory_;
       logger::Logger log_;
     };
-  }
-}
+  }  // namespace network
+}  // namespace iroha
 
 #endif  // IROHA_MST_TRANSPORT_GRPC_HPP

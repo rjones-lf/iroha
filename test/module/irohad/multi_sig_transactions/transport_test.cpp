@@ -30,7 +30,7 @@ using ::testing::InvokeWithoutArgs;
 
 class MockMstTransportNotification : public MstTransportNotification {
  public:
-  MOCK_METHOD2(onStateUpdate, void(Peer peer, iroha::MstState state));
+  MOCK_METHOD2(onNewState, void(const model::Peer &peer, const MstState &state));
 };
 
 /**
@@ -45,7 +45,7 @@ TEST(TransportTest, SendAndReceive) {
 
   std::mutex mtx;
   std::condition_variable cv;
-  ON_CALL(*notifications, onStateUpdate(_, _))
+  ON_CALL(*notifications, onNewState(_, _))
       .WillByDefault(
           InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
@@ -65,9 +65,9 @@ TEST(TransportTest, SendAndReceive) {
   state += tx3;
   state += std::make_shared<Transaction>(tx4);
 
-  // we want to ensure that server side will call onStateUpdate()
+  // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onStateUpdate(peer, state)).Times(1);
+  EXPECT_CALL(*notifications, onNewState(peer, state)).Times(1);
 
   std::unique_ptr<grpc::Server> server;
 
