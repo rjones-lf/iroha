@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <vector>
+#include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_time_provider.hpp"
@@ -65,20 +66,24 @@ namespace iroha {
 
     // ----------------------------| end override |-----------------------------
 
+    virtual ~FairMstProcessor() = default;
+
+   private:
+    // -----------------------------| private api |-----------------------------
+
     /**
      * Invoke when propagation strategy emit new data
      * @param data - propagated data
      */
     void onPropagate(const PropagationStrategy::PropagationData& data);
 
-    virtual ~FairMstProcessor() = default;
-
-   private:
     // -------------------------------| fields |--------------------------------
     std::shared_ptr<iroha::network::MstTransport> transport_;
     std::shared_ptr<MstStorage> storage_;
     std::shared_ptr<PropagationStrategy> strategy_;
     std::shared_ptr<MstTimeProvider> time_provider_;
+
+    logger::Logger log_;
 
     // rx subjects
 

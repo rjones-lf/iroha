@@ -41,9 +41,9 @@ namespace iroha {
         storage_(std::move(storage)),
         strategy_(std::move(strategy)),
         time_provider_(std::move(time_provider)) {
-    strategy_->emitter().subscribe([this](auto data){
-      this->onPropagate(data);
-    });
+    strategy_->emitter().subscribe(
+        [this](auto data) { this->onPropagate(data); });
+    log_ = logger::log("FairMstProcessor");
   }
 
   // -------------------------| MstProcessor override |-------------------------
@@ -52,6 +52,9 @@ namespace iroha {
       ConstRefTransaction transaction)
       -> decltype(propagateTransaction(transaction)) {
     shareState(storage_->updateOwnState(transaction), transactions_subject_);
+    shareState(
+        storage_->getOwnState().eraseByTime(time_provider_->getCurrentTime()),
+        expired_subject_);
   }
 
   auto FairMstProcessor::onStateUpdateImpl() const
@@ -88,6 +91,8 @@ namespace iroha {
     auto expired_transactions = storage_->getDiffState(from, current_time);
     shareState(expired_transactions, this->expired_subject_);
   }
+
+  // -----------------------------| private api |-----------------------------
 
   void FairMstProcessor::onPropagate(
       const PropagationStrategy::PropagationData &data) {
