@@ -32,7 +32,7 @@ namespace iroha {
      * Fetching current time in system
      * @return current time
      */
-    TimeType getCurrentTime() const;
+    virtual TimeType getCurrentTime() const = 0;
   };
 } // namespace iroha
 

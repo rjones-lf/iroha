@@ -63,9 +63,13 @@ namespace iroha {
 
     void onNewState(ConstRefPeer from, ConstRefState new_state) override;
 
-    void onPropagate(const PropagationStrategy::PropagationData& data);
-
     // ----------------------------| end override |-----------------------------
+
+    /**
+     * Invoke when propagation strategy emit new data
+     * @param data - propagated data
+     */
+    void onPropagate(const PropagationStrategy::PropagationData& data);
 
     virtual ~FairMstProcessor() = default;
 

@@ -60,10 +60,16 @@ class MstProcessorTest : public testing::Test {
 };
 
 /**
- * @given
- * @when
- * @then
+ * @given initialised mst processor
+ * AND wrappers on mst observables
+ *
+ * @when insert not-completed transaction
+ *
+ * @then check that:
+ * state not update
+ * AND absent prepared transactions
+ * AND absent expired transactions
  */
 TEST_F(MstProcessorTest, InitializationTes) {
-
+  ASSERT_NE(nullptr, mst_processor);
 }

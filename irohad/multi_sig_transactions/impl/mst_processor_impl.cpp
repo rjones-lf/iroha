@@ -40,7 +40,11 @@ namespace iroha {
         transport_(std::move(transport)),
         storage_(std::move(storage)),
         strategy_(std::move(strategy)),
-        time_provider_(std::move(time_provider)) {}
+        time_provider_(std::move(time_provider)) {
+    strategy_->emitter().subscribe([this](auto data){
+      this->onPropagate(data);
+    });
+  }
 
   // -------------------------| MstProcessor override |-------------------------
 
@@ -72,7 +76,7 @@ namespace iroha {
     auto current_time = time_provider_->getCurrentTime();
 
     // update state
-    // todo change with method
+    // todo wrap in method
     auto new_transactions =
         std::make_shared<MstState>(new_state - storage_->getOwnState());
     state_subject_.get_subscriber().on_next(new_transactions);
