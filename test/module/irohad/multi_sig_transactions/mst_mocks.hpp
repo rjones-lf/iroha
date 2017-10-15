@@ -26,6 +26,13 @@
 
 namespace iroha {
 
+  class MockMstTransport : public network::MstTransport {
+   public:
+    MOCK_METHOD1(subscribe, void(std::shared_ptr<network::MstTransportNotification>));
+    MOCK_METHOD2(sendState,
+                 void(const model::Peer &to, const MstState &providing_state));
+  };
+
   /**
    * Transport notification mock
    */
@@ -33,9 +40,7 @@ namespace iroha {
       : public network::MstTransportNotification {
    public:
     MOCK_METHOD2(onNewState,
-                 void(
-                     const model::Peer &peer,
-                     const MstState &state));
+                 void(const model::Peer &peer, const MstState &state));
   };
 
   /**
@@ -49,7 +54,7 @@ namespace iroha {
   /**
    * Time provider mock
    */
-  class TimeProviderMock : public MstTimeProvider {
+  class MockTimeProvider : public MstTimeProvider {
    public:
     MOCK_CONST_METHOD0(getCurrentTime, TimeType());
   };
