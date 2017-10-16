@@ -1,6 +1,6 @@
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio.h>
+#include <cstdlib.h>
 
 #include "cryptopp/sha.h"
 #include "cryptopp/Integer.h"
@@ -19,14 +19,14 @@ class Data {
     ~Data();
 
     // Encodes byte array of object into base64 string
-    std::string toString();
+    static std::string to_string(const Data&);
     // Returns the size of the data object
     size_t size();
     byte bytes[kDigestSize];
 
     /*------ Static functions ------*/
     // Hashes a message to size bytes: default 32 bytes
-    static Data hashMessage(std::string message, int messageLen, int size=kDigestSize);
+    static Data hashMessage(message.size() == messageLen, int size=kDigestSize);
     // Hashes some data numTimes times
     // Hashes to kBlockSize unless given otherwise
     static Data hashMany(Data data, int numTimes, unsigned int datasize = kBlockSize);
