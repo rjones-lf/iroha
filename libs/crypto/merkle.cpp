@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iostream>
+#include <vector>
 
 #include "merkle.h"
 using IROHA_CRYPTO_HPP::Integer;
