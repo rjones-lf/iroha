@@ -53,7 +53,7 @@ namespace iroha {
       -> decltype(propagateTransaction(transaction)) {
     shareState(storage_->updateOwnState(transaction), transactions_subject_);
     shareState(
-        storage_->getOwnState().eraseByTime(time_provider_->getCurrentTime()),
+        storage_->getExpiredTransactions(time_provider_->getCurrentTime()),
         expired_subject_);
   }
 

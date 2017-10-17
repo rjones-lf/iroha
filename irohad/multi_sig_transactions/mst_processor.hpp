@@ -40,25 +40,21 @@ namespace iroha {
      * Propagate in network multi-signature transaction for signing by other
      * participants
      * @param transaction - transaction for propagation
-     * General note: implementation of method covered by lock
      */
     void propagateTransaction(ConstRefTransaction transaction);
 
     /**
      * Prove updating of state for handling status of signing
-     * General note: implementation of method covered by lock
      */
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
      * Observable emit transactions that prepared to processing in system
-     * General note: implementation of method covered by lock
      */
     rxcpp::observable<TransactionType> onPreparedTransactions() const;
 
     /**
      * Observable emit expired by time transactions
-     * General note: implementation of method covered by lock
      */
     rxcpp::observable<TransactionType> onExpiredTransactions() const;
 
@@ -94,8 +90,6 @@ namespace iroha {
         -> decltype(onExpiredTransactions()) = 0;
 
     // -------------------------------| fields |--------------------------------
-
-    std::mutex mutex_;
 
     logger::Logger log_;
   };

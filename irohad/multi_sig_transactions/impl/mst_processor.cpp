@@ -22,7 +22,6 @@ namespace iroha {
   MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
 
   void MstProcessor::propagateTransaction(ConstRefTransaction transaction) {
-    std::lock_guard<std::mutex> lock{this->mutex_};
     this->propagateTransactionImpl(transaction);
   }
 
