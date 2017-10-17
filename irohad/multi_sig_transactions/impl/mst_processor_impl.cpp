@@ -81,7 +81,7 @@ namespace iroha {
     // update state
     // todo wrap in method
     auto new_transactions =
-        std::make_shared<MstState>(new_state - storage_->getOwnState());
+        std::make_shared<MstState>(storage_->whatsNew(new_state));
     state_subject_.get_subscriber().on_next(new_transactions);
 
     // completed transactions
