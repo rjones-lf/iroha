@@ -61,6 +61,10 @@ namespace iroha {
         });
   }
 
+  bool MstState::isEmpty() const {
+    return internal_state_.empty();
+  }
+
   std::vector<DataType> MstState::getTransactions() const {
     return std::vector<DataType>(internal_state_.begin(),
                                  internal_state_.end());

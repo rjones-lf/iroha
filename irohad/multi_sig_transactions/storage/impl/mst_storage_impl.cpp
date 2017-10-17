@@ -23,8 +23,7 @@ namespace iroha {
   auto MstStorageStateImpl::getState(ConstPeer &target_peer) {
     auto target_state_iter = peer_states_.find(target_peer);
     if (target_state_iter == peer_states_.end()) {
-      return peer_states_
-          .insert({target_peer, MstState::empty(completer_)})
+      return peer_states_.insert({target_peer, MstState::empty(completer_)})
           .first;
     }
     return target_state_iter;
@@ -67,4 +66,9 @@ namespace iroha {
     return new_diff_state;
   }
 
-} // namespace iroha
+  auto MstStorageStateImpl::whatsNewImpl(ConstRefState new_state) const
+      -> decltype(whatsNew(new_state)) {
+    return new_state - own_state_;
+  }
+
+}  // namespace iroha

@@ -18,34 +18,81 @@
 #ifndef IROHA_MST_PROPAGATOR_HPP
 #define IROHA_MST_PROPAGATOR_HPP
 
-#include <rxcpp/rx.hpp>
 #include <memory>
-#include "multi_sig_transactions/storage/mst_state.hpp"
+#include <mutex>
+#include <rxcpp/rx.hpp>
+#include "logger/logger.hpp"
 #include "model/transaction.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 namespace iroha {
+
+  /**
+   * MstProcessor is responsible for organization of sharing multi-signature
+   * transactions in network
+   */
   class MstProcessor {
    public:
+    // ---------------------------| user interface |----------------------------
 
     /**
-     * Propagate in network multi-signature transaction for signing by other participants
+     * Propagate in network multi-signature transaction for signing by other
+     * participants
      * @param transaction - transaction for propagation
      */
-    virtual void propagate_transaction(std::shared_ptr<model::Transaction> transaction) = 0;
+    void propagateTransaction(ConstRefTransaction transaction);
 
     /**
      * Prove updating of state for handling status of signing
      */
-    virtual rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const = 0;
+    rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
      * Observable emit transactions that prepared to processing in system
      */
-    virtual rxcpp::observable<std::shared_ptr<model::Transaction>> onPreparedTransactions() const = 0;
+    rxcpp::observable<TransactionType> onPreparedTransactions() const;
+
+    /**
+     * Observable emit expired by time transactions
+     */
+    rxcpp::observable<TransactionType> onExpiredTransactions() const;
 
     virtual ~MstProcessor() = default;
 
-  };
-} // namespace iroha
+   protected:
+    MstProcessor();
 
-#endif //IROHA_MST_PROPAGATOR_HPP
+   private:
+    // ------------------------| inheritance interface |------------------------
+
+    /**
+     * @see propagateTransaction method
+     */
+    virtual auto propagateTransactionImpl(ConstRefTransaction transaction)
+        -> decltype(propagateTransaction(transaction)) = 0;
+
+    /**
+     * @see onStateUpdate method
+     */
+    virtual auto onStateUpdateImpl() const -> decltype(onStateUpdate()) = 0;
+
+    /**
+     * @see onPreparedTransactions method
+     */
+    virtual auto onPreparedTransactionsImpl() const
+        -> decltype(onPreparedTransactions()) = 0;
+
+    /**
+     * @see onExpiredTransactions method
+     */
+    virtual auto onExpiredTransactionsImpl() const
+        -> decltype(onExpiredTransactions()) = 0;
+
+    // -------------------------------| fields |--------------------------------
+
+    logger::Logger log_;
+  };
+}  // namespace iroha
+
+#endif  // IROHA_MST_PROPAGATOR_HPP

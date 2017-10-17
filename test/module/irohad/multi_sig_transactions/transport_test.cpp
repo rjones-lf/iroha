@@ -18,6 +18,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
@@ -27,11 +28,6 @@ using namespace iroha::model;
 using ::testing::AtLeast;
 using ::testing::_;
 using ::testing::InvokeWithoutArgs;
-
-class MockMstTransportNotification : public MstTransportNotification {
- public:
-  MOCK_METHOD2(onStateUpdate, void(Peer peer, iroha::MstState state));
-};
 
 /**
  * Sends data over MstTransportGrpc (MstState and Peer objects) and receives
@@ -45,7 +41,7 @@ TEST(TransportTest, SendAndReceive) {
 
   std::mutex mtx;
   std::condition_variable cv;
-  ON_CALL(*notifications, onStateUpdate(_, _))
+  ON_CALL(*notifications, onNewState(_, _))
       .WillByDefault(
           InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
@@ -65,9 +61,9 @@ TEST(TransportTest, SendAndReceive) {
   state += tx3;
   state += std::make_shared<Transaction>(tx4);
 
-  // we want to ensure that server side will call onStateUpdate()
+  // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onStateUpdate(peer, state)).Times(1);
+  EXPECT_CALL(*notifications, onNewState(peer, state)).Times(1);
 
   std::unique_ptr<grpc::Server> server;
 

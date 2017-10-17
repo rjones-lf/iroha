@@ -108,6 +108,11 @@ namespace iroha {
     MstState operator-(const MstState &rhs) const;
 
     /**
+     * @return true, if there is no transactions inside
+     */
+    bool isEmpty() const;
+
+    /**
      * Compares two different MstState's
      * @param rhs - MstState to compare
      * @return true is rhs equal to this or false otherwise

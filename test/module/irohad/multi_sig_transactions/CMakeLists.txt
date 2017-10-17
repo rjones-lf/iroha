@@ -29,3 +29,9 @@ target_link_libraries(transport_test
     mst_transport
     logger
     )
+
+AddTest(mst_processor_test mst_processor_test.cpp)
+target_link_libraries(mst_processor_test
+    mst_processor
+    logger
+    )

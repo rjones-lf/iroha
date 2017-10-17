@@ -15,26 +15,25 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_TYPES_HPP
-#define IROHA_MST_TYPES_HPP
+#ifndef IROHA_MST_TIME_PROVIDER_HPP
+#define IROHA_MST_TIME_PROVIDER_HPP
 
-#include <memory>
-#include "model/transaction.hpp"
-#include "model/peer.hpp"
+#include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
-  using TransactionType = std::shared_ptr<iroha::model::Transaction>;
-  using ConstPeer = const iroha::model::Peer;
-  using TimeType = iroha::model::Transaction::TimeType;
 
-  class MstState;
+  /**
+   * Interface provides current time for iroha
+   */
+  class MstTimeProvider {
+   public:
 
-  template<typename T>
-  using ConstRefT = const T &;
-
-  using ConstRefTransaction = ConstRefT<TransactionType>;
-  using ConstRefPeer = ConstRefT<iroha::model::Peer>;
-  using ConstRefTime = ConstRefT<TimeType>;
-  using ConstRefState = ConstRefT<MstState>;
+    /**
+     * Fetching current time in system
+     * @return current time
+     */
+    virtual TimeType getCurrentTime() const = 0;
+  };
 } // namespace iroha
-#endif //IROHA_MST_TYPES_HPP
+
+#endif //IROHA_MST_TIME_PROVIDER_HPP

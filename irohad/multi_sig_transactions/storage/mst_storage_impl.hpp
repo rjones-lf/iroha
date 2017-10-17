@@ -18,13 +18,12 @@
 #ifndef IROHA_MST_STORAGE_IMPL_HPP
 #define IROHA_MST_STORAGE_IMPL_HPP
 
-#include "multi_sig_transactions/storage/mst_storage.hpp"
-#include "model/operators/hash.hpp"
 #include <unordered_map>
+#include "model/operators/hash.hpp"
+#include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
   class MstStorageStateImpl : public MstStorage {
-
    private:
     // -----------------------------| private API |-----------------------------
 
@@ -37,8 +36,7 @@ namespace iroha {
 
    public:
     // ----------------------------| interface API |----------------------------
-    MstStorageStateImpl(ConstPeer &own_peer,
-                        const CompleterType &completer);
+    MstStorageStateImpl(ConstPeer &own_peer, const CompleterType &completer);
 
     auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) override;
@@ -52,7 +50,8 @@ namespace iroha {
     auto getDiffStateImpl(ConstPeer &target_peer, const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) override;
 
-    virtual ~MstStorageStateImpl() = default;
+    auto whatsNewImpl(ConstRefState new_state) const
+        -> decltype(whatsNew(new_state)) override;
 
    private:
     // ---------------------------| private fields |----------------------------
@@ -64,6 +63,6 @@ namespace iroha {
 
     MstState &own_state_;
   };
-} // namespace iroha
+}  // namespace iroha
 
-#endif //IROHA_MST_STORAGE_IMPL_HPP
+#endif  // IROHA_MST_STORAGE_IMPL_HPP

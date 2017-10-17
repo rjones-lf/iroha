@@ -15,26 +15,27 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_TYPES_HPP
-#define IROHA_MST_TYPES_HPP
+#ifndef IROHA_MST_PROPAGATION_STRATEGY_HPP
+#define IROHA_MST_PROPAGATION_STRATEGY_HPP
 
-#include <memory>
-#include "model/transaction.hpp"
+#include <rxcpp/rx.hpp>
 #include "model/peer.hpp"
 
 namespace iroha {
-  using TransactionType = std::shared_ptr<iroha::model::Transaction>;
-  using ConstPeer = const iroha::model::Peer;
-  using TimeType = iroha::model::Transaction::TimeType;
 
-  class MstState;
+  /**
+   * Interface provides strategy for propagation states in network
+   */
+  class PropagationStrategy {
+   public:
+    using PropagationData = std::vector<iroha::model::Peer>;
 
-  template<typename T>
-  using ConstRefT = const T &;
+    /**
+     * Provides observable that will be emit new results
+     * with respect to own strategy
+     */
+    virtual rxcpp::observable<PropagationData> emitter() = 0;
+  };
+}  // namespace iroha
 
-  using ConstRefTransaction = ConstRefT<TransactionType>;
-  using ConstRefPeer = ConstRefT<iroha::model::Peer>;
-  using ConstRefTime = ConstRefT<TimeType>;
-  using ConstRefState = ConstRefT<MstState>;
-} // namespace iroha
-#endif //IROHA_MST_TYPES_HPP
+#endif  // IROHA_MST_PROPAGATION_STRATEGY_HPP

@@ -28,6 +28,8 @@ namespace iroha {
 
   /**
    * MstStorage responsible for manage own and others MstStates.
+   * All methods of storage covered by mutex, because we assume that mutex
+   * possible to execute in concurrent environment.
    */
   class MstStorage {
    public:
@@ -65,6 +67,14 @@ namespace iroha {
      */
     MstState getDiffState(ConstPeer &target_peer, const TimeType &current_time);
 
+    /**
+     * Return diff between own and new state
+     * @param new_state - state with new data
+     * @return state that contains new data with respect to own state
+     * General note: implementation of method covered by lock
+     */
+    MstState whatsNew(ConstRefState new_state) const;
+
     virtual ~MstStorage() = default;
 
    protected:
@@ -88,6 +98,9 @@ namespace iroha {
     virtual auto getDiffStateImpl(ConstPeer &target_peer,
                                   const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) = 0;
+
+    virtual auto whatsNewImpl(ConstRefState new_state) const
+        -> decltype(whatsNew(new_state)) = 0;
 
     // -------------------------------| fields |--------------------------------
 

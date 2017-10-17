@@ -16,3 +16,27 @@
  */
 
 #include "multi_sig_transactions/mst_processor.hpp"
+
+namespace iroha {
+
+  MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
+
+  void MstProcessor::propagateTransaction(ConstRefTransaction transaction) {
+    this->propagateTransactionImpl(transaction);
+  }
+
+  rxcpp::observable<std::shared_ptr<MstState>> MstProcessor::onStateUpdate()
+      const {
+    return this->onStateUpdateImpl();
+  }
+
+  rxcpp::observable<std::shared_ptr<model::Transaction>>
+  MstProcessor::onPreparedTransactions() const {
+    return this->onPreparedTransactionsImpl();
+  }
+
+  rxcpp::observable<std::shared_ptr<model::Transaction>>
+  MstProcessor::onExpiredTransactions() const {
+    return this->onExpiredTransactionsImpl();
+  }
+}  // namespace iroha
