@@ -15,14 +15,14 @@ find_package_handle_standard_args(benchmark DEFAULT_MSG
 if (NOT benchmark_FOUND)
   externalproject_add(google_benchmark
       GIT_REPOSITORY https://github.com/google/benchmark
-      GIT_TAG 'v1.2.0'
+      GIT_TAG v1.2.0
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step
       )
-  externalproject_get_property(google_benchmark binary_dir)
-  set(benchmark_INCLUDE_DIR ${binary_dir}/include)
-  set(benchmark_LIBRARY ${binary_dir}/lib/libbenchmark.a)
+  externalproject_get_property(google_benchmark source_dir binary_dir)
+  set(benchmark_INCLUDE_DIR ${source_dir}/include)
+  set(benchmark_LIBRARY ${binary_dir}/src/libbenchmark.a)
   file(MAKE_DIRECTORY ${benchmark_INCLUDE_DIR})
 
   add_dependencies(benchmark google_benchmark)
