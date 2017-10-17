@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <tuple>
 #include "framework/test_subscriber.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -79,6 +80,32 @@ class MstProcessorTest : public testing::Test {
   }
 };
 
+/*
+ * Initialize observables of mst processor
+ */
+auto initObservers(shared_ptr<FairMstProcessor> mst_processor, int a, int b,
+                   int c) {
+  auto obs = std::make_tuple(
+      make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), a),
+      make_test_subscriber<CallExact>(mst_processor->onPreparedTransactions(),
+                                      b),
+      make_test_subscriber<CallExact>(mst_processor->onExpiredTransactions(),
+                                      c));
+  std::get<0>(obs).subscribe();
+  std::get<1>(obs).subscribe();
+  std::get<2>(obs).subscribe();
+  return obs;
+}
+
+/*
+ * Make sure that observables in the valid state
+ */
+template <typename T> void check(T &t) {
+  ASSERT_TRUE(std::get<0>(t).validate());
+  ASSERT_TRUE(std::get<1>(t).validate());
+  ASSERT_TRUE(std::get<2>(t).validate());
+}
+
 /**
  * @given initialised mst processor
  * AND wrappers on mst observables
@@ -92,17 +119,7 @@ class MstProcessorTest : public testing::Test {
  */
 TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto on_state_update_wrapper =
-      make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  on_state_update_wrapper.subscribe();
-
-  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onPreparedTransactions(), 0);
-  on_prepared_transactions_wrapper.subscribe();
-
-  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onExpiredTransactions(), 0);
-  on_expired_transactions_wrapper.subscribe();
+  auto observers = initObservers(mst_processor, 0, 0, 0);
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 2;
@@ -111,9 +128,7 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
       makeTx("hash", "sign", quorum, creation_time));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(on_state_update_wrapper.validate());
-  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
-  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
+  check(observers);
 }
 
 /**
@@ -129,17 +144,7 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, completedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto on_state_update_wrapper =
-      make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  on_state_update_wrapper.subscribe();
-
-  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onPreparedTransactions(), 1);
-  on_prepared_transactions_wrapper.subscribe();
-
-  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onExpiredTransactions(), 0);
-  on_expired_transactions_wrapper.subscribe();
+  auto observers = initObservers(mst_processor, 0, 1, 0);
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 2;
@@ -150,9 +155,7 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
       makeTx("hash", "sign_two", quorum, creation_time));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(on_state_update_wrapper.validate());
-  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
-  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
+  check(observers);
 }
 
 /**
@@ -169,17 +172,7 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto on_state_update_wrapper =
-      make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  on_state_update_wrapper.subscribe();
-
-  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onPreparedTransactions(), 0);
-  on_prepared_transactions_wrapper.subscribe();
-
-  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onExpiredTransactions(), 1);
-  on_expired_transactions_wrapper.subscribe();
+  auto observers = initObservers(mst_processor, 0, 0, 1);
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 1;
@@ -188,9 +181,7 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
       makeTx("another hash", "sign", quorum, timeBefore));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(on_state_update_wrapper.validate());
-  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
-  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
+  check(observers);
 }
 
 /**
@@ -208,17 +199,7 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto on_state_update_wrapper =
-      make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 1);
-  on_state_update_wrapper.subscribe();
-
-  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onPreparedTransactions(), 1);
-  on_prepared_transactions_wrapper.subscribe();
-
-  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
-      mst_processor->onExpiredTransactions(), 0);
-  on_expired_transactions_wrapper.subscribe();
+  auto observers = initObservers(mst_processor, 1, 1, 0);
 
   auto quorum = 2;
   auto timeAfter = 112;
@@ -232,9 +213,7 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   mst_processor->onNewState(another_peer, transported_state);
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(on_state_update_wrapper.validate());
-  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
-  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
+  check(observers);
 }
 
 /**
