@@ -92,17 +92,17 @@ class MstProcessorTest : public testing::Test {
  */
 TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto onStateUpdateWrapper =
+  auto on_state_update_wrapper =
       make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  onStateUpdateWrapper.subscribe();
+  on_state_update_wrapper.subscribe();
 
-  auto onPreparedTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onPreparedTransactions(), 0);
-  onPreparedTransactionsWrapper.subscribe();
+  on_prepared_transactions_wrapper.subscribe();
 
-  auto onExpiredTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onExpiredTransactions(), 0);
-  onExpiredTransactionsWrapper.subscribe();
+  on_expired_transactions_wrapper.subscribe();
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 2;
@@ -111,9 +111,9 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
       makeTx("hash", "sign", quorum, creation_time));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(onStateUpdateWrapper.validate());
-  ASSERT_TRUE(onPreparedTransactionsWrapper.validate());
-  ASSERT_TRUE(onExpiredTransactionsWrapper.validate());
+  ASSERT_TRUE(on_state_update_wrapper.validate());
+  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
+  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
 }
 
 /**
@@ -129,17 +129,17 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, completedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto onStateUpdateWrapper =
+  auto on_state_update_wrapper =
       make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  onStateUpdateWrapper.subscribe();
+  on_state_update_wrapper.subscribe();
 
-  auto onPreparedTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onPreparedTransactions(), 1);
-  onPreparedTransactionsWrapper.subscribe();
+  on_prepared_transactions_wrapper.subscribe();
 
-  auto onExpiredTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onExpiredTransactions(), 0);
-  onExpiredTransactionsWrapper.subscribe();
+  on_expired_transactions_wrapper.subscribe();
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 2;
@@ -150,9 +150,9 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
       makeTx("hash", "sign_two", quorum, creation_time));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(onStateUpdateWrapper.validate());
-  ASSERT_TRUE(onPreparedTransactionsWrapper.validate());
-  ASSERT_TRUE(onExpiredTransactionsWrapper.validate());
+  ASSERT_TRUE(on_state_update_wrapper.validate());
+  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
+  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
 }
 
 /**
@@ -169,17 +169,17 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto onStateUpdateWrapper =
+  auto on_state_update_wrapper =
       make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 0);
-  onStateUpdateWrapper.subscribe();
+  on_state_update_wrapper.subscribe();
 
-  auto onPreparedTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onPreparedTransactions(), 0);
-  onPreparedTransactionsWrapper.subscribe();
+  on_prepared_transactions_wrapper.subscribe();
 
-  auto onExpiredTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onExpiredTransactions(), 1);
-  onExpiredTransactionsWrapper.subscribe();
+  on_expired_transactions_wrapper.subscribe();
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 1;
@@ -188,9 +188,9 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
       makeTx("another hash", "sign", quorum, timeBefore));
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(onStateUpdateWrapper.validate());
-  ASSERT_TRUE(onPreparedTransactionsWrapper.validate());
-  ASSERT_TRUE(onExpiredTransactionsWrapper.validate());
+  ASSERT_TRUE(on_state_update_wrapper.validate());
+  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
+  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
 }
 
 /**
@@ -208,17 +208,17 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  */
 TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto onStateUpdateWrapper =
+  auto on_state_update_wrapper =
       make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), 1);
-  onStateUpdateWrapper.subscribe();
+  on_state_update_wrapper.subscribe();
 
-  auto onPreparedTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_prepared_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onPreparedTransactions(), 1);
-  onPreparedTransactionsWrapper.subscribe();
+  on_prepared_transactions_wrapper.subscribe();
 
-  auto onExpiredTransactionsWrapper = make_test_subscriber<CallExact>(
+  auto on_expired_transactions_wrapper = make_test_subscriber<CallExact>(
       mst_processor->onExpiredTransactions(), 0);
-  onExpiredTransactionsWrapper.subscribe();
+  on_expired_transactions_wrapper.subscribe();
 
   auto quorum = 2;
   auto timeAfter = 112;
@@ -232,9 +232,9 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   mst_processor->onNewState(another_peer, transported_state);
 
   // ---------------------------------| then |----------------------------------
-  ASSERT_TRUE(onStateUpdateWrapper.validate());
-  ASSERT_TRUE(onPreparedTransactionsWrapper.validate());
-  ASSERT_TRUE(onExpiredTransactionsWrapper.validate());
+  ASSERT_TRUE(on_state_update_wrapper.validate());
+  ASSERT_TRUE(on_prepared_transactions_wrapper.validate());
+  ASSERT_TRUE(on_expired_transactions_wrapper.validate());
 }
 
 /**

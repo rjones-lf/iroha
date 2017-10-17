@@ -19,7 +19,6 @@
 #define IROHA_MST_PROCESSOR_IMPL_HPP
 
 #include <memory>
-#include <vector>
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
