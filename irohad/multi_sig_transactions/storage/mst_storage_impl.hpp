@@ -51,7 +51,7 @@ namespace iroha {
         -> decltype(getDiffState(target_peer, current_time)) override;
 
     auto whatsNewImpl(ConstRefState new_state) const
-        -> decltype(whatsNew(new_state));
+        -> decltype(whatsNew(new_state)) override;
 
    private:
     // ---------------------------| private fields |----------------------------
