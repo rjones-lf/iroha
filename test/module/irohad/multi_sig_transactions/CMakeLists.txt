@@ -35,3 +35,9 @@ target_link_libraries(mst_processor_test
     mst_processor
     logger
     )
+
+AddTest(gossip_propagation_strategy_test gossip_propagation_strategy_test.cpp)
+target_link_libraries(gossip_propagation_strategy_test
+    mst_processor
+    logger
+    )
