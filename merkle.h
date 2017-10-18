@@ -9,7 +9,7 @@ class Merkle {
       IROHA_CRYPTO_HH::Integer msgNum; 
     };
 
-    // need secret key, depth, size of digest we want to sign, and winternitz sec param
+    // need secret key, depth, size of digest we want to sign, and winternitz sec parameter
     Merkle(Data sk, unsigned int depth, unsigned int digestsize, unsigned int ell);
 
     // Empty constructor so that it is easy to create vectors of trees
