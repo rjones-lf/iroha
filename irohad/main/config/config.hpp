@@ -18,6 +18,7 @@
 #ifndef IROHA_CONFIG_HPP_
 #define IROHA_CONFIG_HPP_
 
+#include <boost/assert.hpp>
 #include <sstream>
 #include <string>
 #include "common/byteutils.hpp"
@@ -200,10 +201,10 @@ namespace iroha {
     inline keypair_t Config::Cryptography::keypair() const noexcept {
       // TODO (@warchant): /17/10/2017 temp solution, will be removed when we
       // will use certificate
-      pubkey_t pub = hexstringToArray<pubkey_t::size()>(public_key)
-                         .value_or(pubkey_t::from_string(public_key));
-      privkey_t priv = hexstringToArray<privkey_t::size()>(private_key)
-                           .value_or(privkey_t::from_string(private_key));
+      auto pub = hexstringToArray<pubkey_t::size()>(public_key)
+                     .value_or(pubkey_t::from_string(public_key));
+      auto priv = hexstringToArray<privkey_t::size()>(private_key)
+                      .value_or(privkey_t::from_string(private_key));
       return keypair_t{pub, priv};
     }
   }  // namespace config
