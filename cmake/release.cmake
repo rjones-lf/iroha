@@ -7,16 +7,12 @@ if(PACKAGE_ZIP)
   list(APPEND CPACK_GENERATOR ZIP)
 endif()
 
-set(CPACK_PACKAGE_NAME "iroha")
-set(CPACK_PACKAGE_VENDOR "Soramitsu LLC")
+set(CPACK_PACKAGE_NAME                "iroha")
+set(CPACK_PACKAGE_VENDOR              "Soramitsu LLC")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Iroha - simple decentralized blockchain")
-
 SET(CPACK_PACKAGE_VENDOR              "Soramitsu LLC")
 SET(CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_SOURCE_DIR}/LICENSE")
 SET(CPACK_PACKAGE_CONTACT             "Bogdan Vaneev <bogdan@soramitsu.co.jp>")
-
-# change build type
-SET(CMAKE_BUILD_TYPE Release)
 
 if(NOT IROHA_VERSION)
   message(WARNING  "IROHA_VERSION is not specified, using commit hash as version")
