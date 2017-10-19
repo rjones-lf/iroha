@@ -76,4 +76,28 @@ TEST(GossipPropagationStrategyTest, SimpleEmitting) {
   }
 }
 
+/**
+ * @given no peers and strategy
+ * @when strategy emits this peers
+ * @then ensure that empty peer list is emitted
+ */
+TEST(GossipPropagationStrategyTest, EmptyEmitting) {
+  // given
+  auto query = std::make_shared<MockPeerQuery>();
+  EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(PropagationData{}));
+  GossipPropagationStrategy strategy(query, 1ms, 1);
+
+  // when
+  PropagationData emitted;
+  auto subscriber =
+      rxcpp::make_subscriber<std::vector<model::Peer>>([&emitted](auto v) {
+        for (const auto &t : v)
+          emitted.push_back(t);
+      });
+  strategy.emitter().take(13).subscribe(subscriber);
+
+  // then
+  ASSERT_EQ(emitted.size(), 0);
+}
+
 } // namespace iroha

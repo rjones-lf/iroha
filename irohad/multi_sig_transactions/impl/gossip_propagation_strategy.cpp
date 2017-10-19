@@ -22,6 +22,7 @@
 namespace iroha {
 
 using PropagationData = PropagationStrategy::PropagationData;
+using OptPeer = GossipPropagationStrategy::OptPeer;
 using std::chrono::steady_clock;
 
 GossipPropagationStrategy::GossipPropagationStrategy(
@@ -30,9 +31,14 @@ GossipPropagationStrategy::GossipPropagationStrategy(
     : query(query),
       emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
                   .map([this, amount](int) {
-                    PropagationData vec(amount);
-                    std::for_each(vec.begin(), vec.end(),
-                                  [this](auto &el) { this->visit(el); });
+                    PropagationData vec;
+                    vec.reserve(amount);
+                    OptPeer element;
+                    for (auto &v : vec) {
+                      element = this->visit();
+                      if (!element) break;
+                      v = *element;
+                    }
                     return vec;
                   })) {}
 
@@ -47,18 +53,19 @@ void GossipPropagationStrategy::initQueue(const PropagationData &data) {
   non_visited = {v.begin(), v.end()};
 }
 
-void GossipPropagationStrategy::visit(PropagationData::value_type &el) {
+OptPeer GossipPropagationStrategy::visit() {
   auto data_opt = query->getLedgerPeers();
-  if (!data_opt) {
-    return;
+  if (!data_opt || data_opt->size() == 0) {
+    return nonstd::nullopt;
   }
   const auto data = *data_opt;
   if (non_visited.empty()) {
     initQueue(data);
   }
 
-  el = data[non_visited.top()];
+  auto el = data[non_visited.top()];
   non_visited.pop();
+  return el;
 }
 
 }  // namespace iroha

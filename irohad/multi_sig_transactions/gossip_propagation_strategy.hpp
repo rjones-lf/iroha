@@ -33,6 +33,7 @@ namespace iroha {
  */
 class GossipPropagationStrategy : public PropagationStrategy {
 public:
+  using OptPeer = nonstd::optional<PropagationData::value_type>;
   /**
    * Initialize strategy with
    * @param query is a provider of peer list
@@ -62,9 +63,9 @@ private:
 
   /**
    * Visit next element of non_visited
-   * @param el where to save data
+   * @return following peer
    */
-  void visit(PropagationData::value_type &el);
+  OptPeer visit();
 };
 } // namespace iroha
 
