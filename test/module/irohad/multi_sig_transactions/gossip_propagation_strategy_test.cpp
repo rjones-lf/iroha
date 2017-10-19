@@ -18,6 +18,7 @@
 #include "ametsuchi/peer_query.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include <algorithm>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
 #include <model/peer.hpp>
@@ -30,13 +31,9 @@ namespace iroha {
 using namespace std::chrono_literals;
 using PropagationData = GossipPropagationStrategy::PropagationData;
 
-class PeerQueryImpl : public ametsuchi::PeerQuery {
+class MockPeerQuery : public ametsuchi::PeerQuery {
 public:
-  PeerQueryImpl(PropagationData &data) : data(data) {}
-  nonstd::optional<PropagationData> getLedgerPeers() override { return {data}; }
-
-private:
-  PropagationData data;
+  MOCK_METHOD0(getLedgerPeers, nonstd::optional<PropagationData>());
 };
 
 /**
@@ -57,8 +54,9 @@ TEST(GossipPropagationStrategyTest, SimpleEmitting) {
   PropagationData peers;
   std::transform(peersId.begin(), peersId.end(), std::back_inserter(peers),
                  [](auto &s) { return model::Peer(s, pubkey_t{}); });
-  GossipPropagationStrategy strategy(std::make_shared<PeerQueryImpl>(peers),
-                                     period, amount);
+  auto query = std::make_shared<MockPeerQuery>();
+  EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
+  GossipPropagationStrategy strategy(query, period, amount);
 
   // when
   PropagationData emitted;
