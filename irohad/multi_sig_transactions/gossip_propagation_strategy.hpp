@@ -18,36 +18,44 @@
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 
-#include <rxcpp/rx.hpp>
-#include <queue>
 #include "mst_propagation_strategy.hpp"
+#include <queue>
+#include <rxcpp/rx.hpp>
 
 namespace iroha {
 
+/**
+ * This class provides strategy for propagation states in network
+ * Choose unique amount of peers each period of time
+ */
+class GossipPropagationStrategy : public PropagationStrategy {
+public:
   /**
-   * Interface provides strategy for propagation states in network
+   * Initialize strategy with
+   * @param data full list of peers; TODO: replace with provider of peer list
+   * @param period of emitting to observable in ms
+   * @param amount of peers emitted per once
    */
-  class GossipPropagationStrategy : public PropagationStrategy {
-   public:
-    /*
-     * Initialize strategy with:
-     * @param full list of peers; TODO: replace with provider of peer list
-     * @param frequency of emitting to observable in ms
-     * @param amount of peers emited per once
-     */
-     GossipPropagationStrategy(PropagationData, uint32_t, uint32_t);
-     // ------------------| PropagationStrategy override |------------------
+  GossipPropagationStrategy(PropagationData data, uint32_t period,
+                            uint32_t amount);
+  // ------------------| PropagationStrategy override |------------------
 
-     rxcpp::observable<PropagationData> emitter() override;
+  rxcpp::observable<PropagationData> emitter() override;
 
-     // --------------------------| end override |---------------------------
-   private:
-     const PropagationData data;
-     rxcpp::observable<PropagationData> emitent;
-     std::priority_queue<size_t> non_visited;
+  // --------------------------| end override |---------------------------
+private:
+  const PropagationData data;
+  rxcpp::observable<PropagationData> emitent;
+  /**
+   * Queue that represents peers indexes of data that have not been emitted yet
+   */
+  std::priority_queue<size_t> non_visited;
 
-     void initQueue();
-  };
-  } // namespace iroha
+  /**
+   * Fill a queue with random ordered list of peers
+   */
+  void initQueue();
+};
+} // namespace iroha
 
 #endif // IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP

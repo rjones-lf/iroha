@@ -26,6 +26,12 @@
 
 namespace iroha {
 
+/*
+ * @given list of peers and
+ *        strategy that emits two peers in some time
+ * @when strategy emits this peers
+ * @then ensure that all peers is being emitted
+ */
 TEST(GossipPropagationStrategyTest, SimpleEmitting) {
   std::vector<std::string> peersId{"a", "b", "c", "d"};
   std::vector<model::Peer> peers;

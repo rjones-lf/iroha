@@ -24,12 +24,12 @@ namespace iroha {
 using PropagationData = PropagationStrategy::PropagationData;
 
 GossipPropagationStrategy::GossipPropagationStrategy(PropagationData data,
-                                                     uint32_t frequency,
+                                                     uint32_t period,
                                                      uint32_t amount)
     : data(data),
       emitent(
           rxcpp::observable<>::interval(std::chrono::steady_clock::now(),
-                                        std::chrono::milliseconds(frequency))
+                                        std::chrono::milliseconds(period))
               .map([this, amount](int v) {
                 std::vector<decltype(data)::value_type> vec(amount);
                 std::for_each(vec.begin(), vec.end(), [this](auto &el) {
