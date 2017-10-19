@@ -18,7 +18,10 @@
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 
-#include "mst_propagation_strategy.hpp"
+#include "ametsuchi/peer_query.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy.hpp"
+#include <chrono>
+#include <memory>
 #include <queue>
 #include <rxcpp/rx.hpp>
 
@@ -32,19 +35,19 @@ class GossipPropagationStrategy : public PropagationStrategy {
 public:
   /**
    * Initialize strategy with
-   * @param data full list of peers; TODO: replace with provider of peer list
+   * @param query is a provider of peer list
    * @param period of emitting to observable in ms
    * @param amount of peers emitted per once
    */
-  GossipPropagationStrategy(PropagationData data, uint32_t period,
-                            uint32_t amount);
+  GossipPropagationStrategy(std::shared_ptr<ametsuchi::PeerQuery> query,
+                            std::chrono::milliseconds period, uint32_t amount);
   // ------------------| PropagationStrategy override |------------------
 
   rxcpp::observable<PropagationData> emitter() override;
 
   // --------------------------| end override |---------------------------
 private:
-  const PropagationData data;
+  std::shared_ptr<ametsuchi::PeerQuery> query;
   rxcpp::observable<PropagationData> emitent;
   /**
    * Queue that represents peers indexes of data that have not been emitted yet
@@ -53,8 +56,15 @@ private:
 
   /**
    * Fill a queue with random ordered list of peers
+   * @param data array of peers
    */
-  void initQueue();
+  void initQueue(const PropagationData &data);
+
+  /**
+   * Visit next element of non_visited
+   * @param el where to save data
+   */
+  void visit(PropagationData::value_type &el);
 };
 } // namespace iroha
 

@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
+#include "ametsuchi/peer_query.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <memory>
 #include <model/peer.hpp>
 #include <rxcpp/rx.hpp>
 #include <string>
@@ -26,24 +27,55 @@
 
 namespace iroha {
 
-/*
+using namespace std::chrono_literals;
+using PropagationData = GossipPropagationStrategy::PropagationData;
+
+class PeerQueryImpl : public ametsuchi::PeerQuery {
+public:
+  PeerQueryImpl(PropagationData &data) : data(data) {}
+  nonstd::optional<PropagationData> getLedgerPeers() override { return {data}; }
+
+private:
+  PropagationData data;
+};
+
+/**
  * @given list of peers and
  *        strategy that emits two peers in some time
  * @when strategy emits this peers
  * @then ensure that all peers is being emitted
  */
 TEST(GossipPropagationStrategyTest, SimpleEmitting) {
-  std::vector<std::string> peersId{"a", "b", "c", "d"};
-  std::vector<model::Peer> peers;
+  // given
+  std::vector<std::string> peersId(23); // should work for any number
+  std::generate(peersId.begin(), peersId.end(), [] {
+    static char c = 'a';
+    return std::string{c++};
+  });
+  auto period = 5ms;
+  auto amount = 2;
+  PropagationData peers;
   std::transform(peersId.begin(), peersId.end(), std::back_inserter(peers),
                  [](auto &s) { return model::Peer(s, pubkey_t{}); });
-  GossipPropagationStrategy strategy(peers, 5, 2);
-  decltype(peers) emitted;
-  strategy.emitter().take(2).subscribe(rxcpp::make_subscriber<std::vector<model::Peer>>([&emitted](auto v){
-    for (const auto& t: v) emitted.push_back(t);
-  }));
-  for (const auto &v: emitted)
-    ASSERT_NE(std::find(peersId.begin(), peersId.end(), v.address), peersId.end());
+  GossipPropagationStrategy strategy(std::make_shared<PeerQueryImpl>(peers),
+                                     period, amount);
+
+  // when
+  PropagationData emitted;
+  auto subscriber =
+      rxcpp::make_subscriber<std::vector<model::Peer>>([&emitted](auto v) {
+        for (const auto &t : v)
+          emitted.push_back(t);
+      });
+  strategy.emitter().take(peers.size() / amount).subscribe(subscriber);
+
+  // then
+  // emitted.size() is divisible by amount and not greater peers.size()
+  ASSERT_GE(peers.size(), emitted.size());
+  for (const auto &v : emitted) {
+    ASSERT_NE(std::find(peersId.begin(), peersId.end(), v.address),
+              peersId.end());
+  }
 }
 
 } // namespace iroha

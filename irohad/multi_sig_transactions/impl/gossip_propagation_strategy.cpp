@@ -22,35 +22,43 @@
 namespace iroha {
 
 using PropagationData = PropagationStrategy::PropagationData;
+using std::chrono::steady_clock;
 
-GossipPropagationStrategy::GossipPropagationStrategy(PropagationData data,
-                                                     uint32_t period,
-                                                     uint32_t amount)
-    : data(data),
-      emitent(
-          rxcpp::observable<>::interval(std::chrono::steady_clock::now(),
-                                        std::chrono::milliseconds(period))
-              .map([this, amount](int v) {
-                std::vector<decltype(data)::value_type> vec(amount);
-                std::for_each(vec.begin(), vec.end(), [this](auto &el) {
-                  if (this->non_visited.empty())
-                    this->initQueue();
-                  el = this->data[this->non_visited.top()];
-                  this->non_visited.pop();
-                });
-                return vec;
-              })) {}
+GossipPropagationStrategy::GossipPropagationStrategy(
+    std::shared_ptr<ametsuchi::PeerQuery> query,
+    std::chrono::milliseconds period, uint32_t amount)
+    : query(query),
+      emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
+                  .map([this, amount](int) {
+                    PropagationData vec(amount);
+                    std::for_each(vec.begin(), vec.end(),
+                                  [this](auto &el) { this->visit(el); });
+                    return vec;
+                  })) {}
 
 rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
   return emitent;
 }
 
-void GossipPropagationStrategy::initQueue() {
+void GossipPropagationStrategy::initQueue(const PropagationData &data) {
   std::vector<decltype(non_visited)::value_type> v(data.size());
   std::iota(v.begin(), v.end(), 0);
   std::random_shuffle(v.begin(), v.end());
-  non_visited = std::priority_queue<decltype(non_visited)::value_type>{
-      v.begin(), v.end()};
+  non_visited = {v.begin(), v.end()};
 }
 
-} // namespace iroha
+void GossipPropagationStrategy::visit(PropagationData::value_type &el) {
+  auto data_opt = query->getLedgerPeers();
+  if (!data_opt) {
+    return;
+  }
+  const auto data = *data_opt;
+  if (non_visited.empty()) {
+    initQueue(data);
+  }
+
+  el = data[non_visited.top()];
+  non_visited.pop();
+}
+
+}  // namespace iroha
