@@ -27,46 +27,48 @@
 
 namespace iroha {
 
-/**
- * This class provides strategy for propagation states in network
- * Choose unique amount of peers each period of time
- */
-class GossipPropagationStrategy : public PropagationStrategy {
-public:
-  using OptPeer = nonstd::optional<PropagationData::value_type>;
   /**
-   * Initialize strategy with
-   * @param query is a provider of peer list
-   * @param period of emitting to observable in ms
-   * @param amount of peers emitted per once
+   * This class provides strategy for propagation states in network
+   * Choose unique amount of peers each period of time
    */
-  GossipPropagationStrategy(std::shared_ptr<ametsuchi::PeerQuery> query,
-                            std::chrono::milliseconds period, uint32_t amount);
-  // ------------------| PropagationStrategy override |------------------
+  class GossipPropagationStrategy : public PropagationStrategy {
+   public:
+    using OptPeer = nonstd::optional<PropagationData::value_type>;
+    /**
+     * Initialize strategy with
+     * @param query is a provider of peer list
+     * @param period of emitting to observable in ms
+     * @param amount of peers emitted per once
+     */
+    GossipPropagationStrategy(std::shared_ptr<ametsuchi::PeerQuery> query,
+                              std::chrono::milliseconds period,
+                              uint32_t amount);
+    // ------------------| PropagationStrategy override |------------------
 
-  rxcpp::observable<PropagationData> emitter() override;
+    rxcpp::observable<PropagationData> emitter() override;
 
-  // --------------------------| end override |---------------------------
-private:
-  std::shared_ptr<ametsuchi::PeerQuery> query;
-  rxcpp::observable<PropagationData> emitent;
-  /**
-   * Queue that represents peers indexes of data that have not been emitted yet
-   */
-  std::priority_queue<size_t> non_visited;
+    // --------------------------| end override |---------------------------
+   private:
+    std::shared_ptr<ametsuchi::PeerQuery> query;
+    rxcpp::observable<PropagationData> emitent;
+    /**
+     * Queue that represents peers indexes of data that have not been emitted
+     * yet
+     */
+    std::priority_queue<size_t> non_visited;
 
-  /**
-   * Fill a queue with random ordered list of peers
-   * @param data array of peers
-   */
-  void initQueue(const PropagationData &data);
+    /**
+     * Fill a queue with random ordered list of peers
+     * @param data array of peers
+     */
+    void initQueue(const PropagationData &data);
 
-  /**
-   * Visit next element of non_visited
-   * @return following peer
-   */
-  OptPeer visit();
-};
-} // namespace iroha
+    /**
+     * Visit next element of non_visited
+     * @return following peer
+     */
+    OptPeer visit();
+  };
+}  // namespace iroha
 
-#endif // IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
+#endif  // IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP

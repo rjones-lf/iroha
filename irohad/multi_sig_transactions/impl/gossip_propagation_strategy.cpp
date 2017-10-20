@@ -21,51 +21,51 @@
 
 namespace iroha {
 
-using PropagationData = PropagationStrategy::PropagationData;
-using OptPeer = GossipPropagationStrategy::OptPeer;
-using std::chrono::steady_clock;
+  using PropagationData = PropagationStrategy::PropagationData;
+  using OptPeer = GossipPropagationStrategy::OptPeer;
+  using std::chrono::steady_clock;
 
-GossipPropagationStrategy::GossipPropagationStrategy(
-    std::shared_ptr<ametsuchi::PeerQuery> query,
-    std::chrono::milliseconds period, uint32_t amount)
-    : query(query),
-      emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
-                  .map([this, amount](int) {
-                    PropagationData vec;
-                    vec.reserve(amount);
-                    OptPeer element;
-                    for (auto &v : vec) {
-                      element = this->visit();
-                      if (!element) break;
-                      v = *element;
-                    }
-                    return vec;
-                  })) {}
+  GossipPropagationStrategy::GossipPropagationStrategy(
+      std::shared_ptr<ametsuchi::PeerQuery> query,
+      std::chrono::milliseconds period, uint32_t amount)
+      : query(query),
+        emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
+                    .map([this, amount](int) {
+                      PropagationData vec;
+                      vec.reserve(amount);
+                      OptPeer element;
+                      for (auto &v : vec) {
+                        element = this->visit();
+                        if (!element) break;
+                        v = *element;
+                      }
+                      return vec;
+                    })) {}
 
-rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
-  return emitent;
-}
-
-void GossipPropagationStrategy::initQueue(const PropagationData &data) {
-  std::vector<decltype(non_visited)::value_type> v(data.size());
-  std::iota(v.begin(), v.end(), 0);
-  std::random_shuffle(v.begin(), v.end());
-  non_visited = {v.begin(), v.end()};
-}
-
-OptPeer GossipPropagationStrategy::visit() {
-  auto data_opt = query->getLedgerPeers();
-  if (!data_opt || data_opt->size() == 0) {
-    return nonstd::nullopt;
-  }
-  const auto data = *data_opt;
-  if (non_visited.empty()) {
-    initQueue(data);
+  rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
+    return emitent;
   }
 
-  auto el = data[non_visited.top()];
-  non_visited.pop();
-  return el;
-}
+  void GossipPropagationStrategy::initQueue(const PropagationData &data) {
+    std::vector<decltype(non_visited)::value_type> v(data.size());
+    std::iota(v.begin(), v.end(), 0);
+    std::random_shuffle(v.begin(), v.end());
+    non_visited = {v.begin(), v.end()};
+  }
+
+  OptPeer GossipPropagationStrategy::visit() {
+    auto data_opt = query->getLedgerPeers();
+    if (!data_opt || data_opt->size() == 0) {
+      return nonstd::nullopt;
+    }
+    const auto data = *data_opt;
+    if (non_visited.empty()) {
+      initQueue(data);
+    }
+
+    auto el = data[non_visited.top()];
+    non_visited.pop();
+    return el;
+  }
 
 }  // namespace iroha
