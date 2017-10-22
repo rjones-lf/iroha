@@ -28,7 +28,8 @@ namespace iroha {
 
   /**
    * This class provides strategy for propagation states in network
-   * Choose unique amount of peers each period of time
+   * Choose at exactly (or nothing iff provider empty) amount of peers
+   * each period of time
    */
   class GossipPropagationStrategy : public PropagationStrategy {
    public:

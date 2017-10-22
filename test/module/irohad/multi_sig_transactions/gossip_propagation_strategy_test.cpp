@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
-#include <model/peer.hpp>
+#include "model/peer.hpp"
 #include <numeric>
 #include <rxcpp/rx.hpp>
 #include <string>

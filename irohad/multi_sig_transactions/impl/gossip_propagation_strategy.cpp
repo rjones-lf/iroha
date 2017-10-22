@@ -35,7 +35,7 @@ namespace iroha {
                       PropagationData vec;
                       for (uint32_t i = 0; i < amount; i++) {
                         OptPeer element = this->visit();
-                        if (!element) break;
+                        if (not element) break;
                         vec.push_back(*element);
                       }
                       return vec;
@@ -46,26 +46,25 @@ namespace iroha {
   }
 
   bool GossipPropagationStrategy::initQueue() {
-    // Grub peers from the storage
-    auto data_opt = query->getLedgerPeers();
-    if (!data_opt || data_opt->size() == 0) {
-      return false;
-    }
-    last_data = *data_opt;
-
-    // Generate random ordered vector of unique numbers
-    non_visited.resize(last_data.size());
-    std::iota(non_visited.begin(), non_visited.end(), 0);
-    std::random_shuffle(non_visited.begin(), non_visited.end());
-    return true;
+    return static_cast<bool>(
+        query->getLedgerPeers() |
+            [this](PropagationData data) -> nonstd::optional<int> {
+          last_data = data;
+          if (data.size() == 0) return {};
+          this->non_visited.resize(this->last_data.size());
+          std::iota(this->non_visited.begin(), this->non_visited.end(), 0);
+          std::random_shuffle(this->non_visited.begin(),
+                              this->non_visited.end());
+          return {0}; // any value on optional derefernce gives true
+        });
   }
 
   OptPeer GossipPropagationStrategy::visit() {
-    if (non_visited.empty() && !initQueue()) {
+    if (non_visited.empty() and not initQueue()) {
       return nonstd::nullopt;
     }
     // either initQueue exits from method or non_visited non-empty
-    BOOST_ASSERT(!non_visited.empty());
+    BOOST_ASSERT(not non_visited.empty());
 
     auto el = last_data[non_visited.back()];
     non_visited.pop_back();
