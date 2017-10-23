@@ -19,7 +19,7 @@
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 
 #include <chrono>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <rxcpp/rx.hpp>
 #include "ametsuchi/peer_query.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
@@ -34,7 +34,7 @@ namespace iroha {
   class GossipPropagationStrategy : public PropagationStrategy {
    public:
     using PeerProvider = std::shared_ptr<ametsuchi::PeerQuery>;
-    using OptPeer = nonstd::optional<PropagationData::value_type>;
+    using OptPeer = boost::optional<PropagationData::value_type>;
     /**
      * Initialize strategy with
      * @param query is a provider of peer list

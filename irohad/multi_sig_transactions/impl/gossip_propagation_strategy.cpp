@@ -48,7 +48,7 @@ namespace iroha {
   bool GossipPropagationStrategy::initQueue() {
     return static_cast<bool>(
         query->getLedgerPeers() |
-            [this](PropagationData data) -> nonstd::optional<int> {
+            [this](PropagationData data) -> boost::optional<int> {
           last_data = data;
           if (data.size() == 0) return {};
           this->non_visited.resize(this->last_data.size());
@@ -61,7 +61,7 @@ namespace iroha {
 
   OptPeer GossipPropagationStrategy::visit() {
     if (non_visited.empty() and not initQueue()) {
-      return nonstd::nullopt;
+      return {};
     }
     // either initQueue exits from method or non_visited non-empty
     BOOST_ASSERT(not non_visited.empty());
