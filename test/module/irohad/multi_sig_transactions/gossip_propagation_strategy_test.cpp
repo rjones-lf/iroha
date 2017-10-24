@@ -21,12 +21,12 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
-#include "model/peer.hpp"
 #include <numeric>
 #include <rxcpp/rx.hpp>
 #include <string>
 #include <vector>
 #include "ametsuchi/peer_query.hpp"
+#include "model/peer.hpp"
 
 using namespace iroha;
 
@@ -39,24 +39,36 @@ class MockPeerQuery : public ametsuchi::PeerQuery {
   MOCK_METHOD0(getLedgerPeers, nonstd::optional<PropagationData>());
 };
 
+/**
+ * Generates peers with empty pub keys
+ * @param ids generated addreses of peers
+ * @param num amount for generation
+ */
 PropagationData generate(std::vector<std::string> &ids, size_t num) {
   ids.resize(num);
   std::iota(ids.begin(), ids.end(), 'a');
   PropagationData peers;
-  std::transform(ids.begin(), ids.end(), std::back_inserter(peers),
-                 [](auto &s) { return model::Peer(s, pubkey_t{}); });
+  std::transform(
+      ids.begin(), ids.end(), std::back_inserter(peers), [](auto &s) {
+        return model::Peer(s, pubkey_t{});
+      });
   return peers;
 }
 
+/**
+ * Perform subscribtion and the emitting from created strategy
+ * @param data that retrieved from the PeerProvider
+ * @param period of the strategy
+ * @param take is amount taken from the strategy emitter
+ */
 PropagationData subscribe_and_emit(nonstd::optional<PropagationData> data,
                                    std::chrono::milliseconds period,
-                                   uint32_t amount, uint32_t take) {
-  // given
+                                   uint32_t amount,
+                                   uint32_t take) {
   auto query = std::make_shared<MockPeerQuery>();
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(data));
   GossipPropagationStrategy strategy(query, period, amount);
 
-  // when
   PropagationData emitted;
   auto subscriber = rxcpp::make_subscriber<Peers>([&emitted](auto v) {
     std::copy(v.begin(), v.end(), std::back_inserter(emitted));
