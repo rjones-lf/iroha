@@ -71,9 +71,10 @@ namespace iroha {
 
   OptPeer GossipPropagationStrategy::visit() {
     if (non_visited.empty() and not initQueue()) {
+      // either PeerProvider doesn't gives peers
       return {};
     }
-    // either initQueue exits from method or non_visited non-empty
+    // or non_visited non-empty
     BOOST_ASSERT(not non_visited.empty());
 
     auto el = last_data[non_visited.back()];

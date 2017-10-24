@@ -28,8 +28,9 @@ namespace iroha {
 
   /**
    * This class provides strategy for propagation states in network
-   * Choose at exactly (or nothing iff provider empty) amount of peers
-   * each period of time
+   * Emits exactly (or zero iff provider is empty) amount of peers
+   * at some period
+   * note: it can be inconsistent with the peer provider
    */
   class GossipPropagationStrategy : public PropagationStrategy {
    public:
@@ -38,7 +39,7 @@ namespace iroha {
     /**
      * Initialize strategy with
      * @param query is a provider of peer list
-     * @param period of emitting to observable in ms
+     * @param period of emitting data in ms
      * @param amount of peers emitted per once
      */
     GossipPropagationStrategy(PeerProvider query,
@@ -51,9 +52,6 @@ namespace iroha {
 
     // --------------------------| end override |---------------------------
    private:
-    /**
-     * Peer provider
-     */
     PeerProvider query;
     /**
      * Cache of peer provider's data
@@ -61,14 +59,13 @@ namespace iroha {
     PropagationData last_data;
     rxcpp::observable<PropagationData> emitent;
     /**
-     * Queue that represents peers indexes of data that have
-     * not been emitted yet
+     * Queue that contains non-emitted indexes of peers
      */
     std::vector<size_t> non_visited;
 
     /**
-     * Fill a queue with random ordered list of peers
-     * @return true if sucessful
+     * Fill a queue with a random ordered list of peers
+     * @return true if query to PeerProvider was successful
      */
     bool initQueue();
 

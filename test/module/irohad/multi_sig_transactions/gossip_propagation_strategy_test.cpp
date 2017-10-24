@@ -41,8 +41,9 @@ class MockPeerQuery : public ametsuchi::PeerQuery {
 
 /**
  * Generates peers with empty pub keys
- * @param ids generated addreses of peers
- * @param num amount for generation
+ * @param ids generated addresses of peers
+ * @param amount for generation
+ * @return generated peers
  */
 PropagationData generate(std::vector<std::string> &ids, size_t num) {
   ids.resize(num);
@@ -56,10 +57,11 @@ PropagationData generate(std::vector<std::string> &ids, size_t num) {
 }
 
 /**
- * Perform subscribtion and the emitting from created strategy
- * @param data that retrieved from the PeerProvider
+ * Perform subscription and the emitting from created strategy
+ * @param data retrieved from the PeerProvider
  * @param period of the strategy
  * @param take is amount taken from the strategy emitter
+ * @return emitted data
  */
 PropagationData subscribe_and_emit(nonstd::optional<PropagationData> data,
                                    std::chrono::milliseconds period,
@@ -82,7 +84,7 @@ PropagationData subscribe_and_emit(nonstd::optional<PropagationData> data,
  * @given list of peers and
  *        strategy that emits two peers
  * @when strategy emits this peers
- * @then ensure that all peers is being emitted
+ * @then ensure that all peers are being emitted
  */
 TEST(GossipPropagationStrategyTest, EmittingAllPeers) {
   auto peers_size = 23, amount = 2, take = peers_size / amount;
@@ -105,7 +107,7 @@ TEST(GossipPropagationStrategyTest, EmittingAllPeers) {
  * @given list of peers and
  *        strategy that emits two peers
  * @when strategy emits more than peers available
- * @then ensure that there's been emitted
+ * @then ensure that there's been emitted peers
  */
 TEST(GossipPropagationStrategyTest, EmitEvenOnOddPeers) {
   auto peers_size = 11, amount = 2, take = 6;
