@@ -118,6 +118,10 @@ namespace iroha {
                    bool(const model::Block &,
                         std::function<bool(const model::Block &, WsvQuery &,
                                            const hash256_t &)>));
+      MOCK_METHOD2(validate,
+                   bool(const model::Block &,
+                        std::function<bool(const model::Block &, WsvQuery &,
+                                           const hash256_t &)>));
     };
 
     /**
