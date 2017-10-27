@@ -113,13 +113,19 @@ namespace iroha {
         transaction_.exec(
             "INSERT INTO account(\n"
             "            account_id, domain_id, quorum, "
-            "transaction_count \n"
+            "transaction_count, data \n"
             "            )\n"
-            "    VALUES (" +
-            transaction_.quote(account.account_id) + ", " +
-            transaction_.quote(account.domain_id) + ", " +
-            transaction_.quote(account.quorum) + ", " +
-            /*account.transaction_count*/ transaction_.quote(0) + ");");
+            "    VALUES ("
+            + transaction_.quote(account.account_id)
+            + ", "
+            + transaction_.quote(account.domain_id)
+            + ", "
+            + transaction_.quote(account.quorum)
+            + ", "
+            + transaction_.quote(0)
+            + ", "
+            + transaction_.quote(account.json_data)
+            + ");");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return false;

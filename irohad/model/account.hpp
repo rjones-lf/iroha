@@ -45,6 +45,11 @@ namespace iroha {
        */
       uint32_t quorum;
 
+      /**
+       * Key/Value account data
+       */
+      std::string json_data;
+
       Account() {}
     };
   }

@@ -32,6 +32,7 @@ namespace iroha {
         account.domain_id = domain.domain_id;
         account.account_id = "id@" + account.domain_id;
         account.quorum = 1;
+        account.json_data = R"({"key": "value"})";
       }
 
       void SetUp() override {
@@ -80,6 +81,7 @@ CREATE TABLE IF NOT EXISTS account (
     domain_id character varying(164) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
     transaction_count int NOT NULL DEFAULT 0,
+    data JSONB,
     PRIMARY KEY (account_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (
@@ -128,7 +130,6 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
 
     TEST_F(RoleTest, InsertRoleWhenValidName) {
       ASSERT_TRUE(command->insertRole(role));
-
       auto roles = query->getRoles();
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
@@ -166,6 +167,21 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       auto permissions = query->getRolePermissions(new_role);
       ASSERT_TRUE(permissions);
       ASSERT_EQ(0, permissions->size());
+    }
+
+    class AccountTest : public WsvQueryCommandTest {
+      void SetUp() override {
+        WsvQueryCommandTest::SetUp();
+        ASSERT_TRUE(command->insertRole(role));
+        ASSERT_TRUE(command->insertDomain(domain));
+      }
+    };
+
+    TEST_F(AccountTest, InsertAccountWithJSONData) {
+      ASSERT_TRUE(command->insertAccount(account));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(account.json_data, acc.value().json_data);
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {
