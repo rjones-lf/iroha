@@ -111,18 +111,15 @@ namespace iroha {
     bool PostgresWsvCommand::insertAccount(const model::Account &account) {
       try {
         transaction_.exec(
-            "INSERT INTO account(\n"
-            "            account_id, domain_id, quorum, "
-            "transaction_count, data \n"
-            "            )\n"
-            "    VALUES ("
+            "INSERT INTO account(account_id, domain_id, quorum, "
+            "transaction_count, data) VALUES ("
             + transaction_.quote(account.account_id)
             + ", "
             + transaction_.quote(account.domain_id)
             + ", "
             + transaction_.quote(account.quorum)
             + ", "
-            // Transaction counter, by default zero
+            // Transaction counter
             + transaction_.quote(0)
             + ", "
             + transaction_.quote(account.json_data)

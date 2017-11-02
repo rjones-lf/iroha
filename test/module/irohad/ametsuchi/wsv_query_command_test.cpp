@@ -177,6 +177,12 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       }
     };
 
+
+    /**
+     * @given inserted role, domain
+     * @when insert account with filled json data
+     * @then get account and check json data is the same
+     */
     TEST_F(AccountTest, InsertAccountWithJSONData) {
       ASSERT_TRUE(command->insertAccount(account));
       auto acc = query->getAccount(account.account_id);
