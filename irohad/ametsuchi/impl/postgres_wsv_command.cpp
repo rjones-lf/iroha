@@ -122,6 +122,7 @@ namespace iroha {
             + ", "
             + transaction_.quote(account.quorum)
             + ", "
+            // Transaction counter, by default zero
             + transaction_.quote(0)
             + ", "
             + transaction_.quote(account.json_data)
