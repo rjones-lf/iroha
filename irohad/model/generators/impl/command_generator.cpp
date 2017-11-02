@@ -57,7 +57,7 @@ namespace iroha {
           const std::string &domain_id,
           const pubkey_t &key) {
         return generateCommand<CreateAccount>(
-            account_name, domain_id, key,"{}");
+            account_name, domain_id, key, "{}");
       }
 
       std::shared_ptr<Command> CommandGenerator::generateCreateDomain(
