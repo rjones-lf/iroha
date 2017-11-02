@@ -28,6 +28,8 @@
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/revoke_permission.hpp"
+#include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/execution/common_executor.hpp"
@@ -511,6 +513,38 @@ namespace iroha {
 
       // You can't remove if size of rest signatories less than the quorum
       return newSignatoriesSize >= account.value().quorum;
+    }
+
+    SetAccountDetailExecutor::SetAccountDetailExecutor() {
+      log_ = logger::log("SetAccountDetailExecutor");
+    }
+
+    bool SetAccountDetailExecutor::execute(const Command &command,
+                                           ametsuchi::WsvQuery &queries,
+                                           ametsuchi::WsvCommand &commands) {
+      auto cmd = static_cast<const SetAccountDetail &>(command);
+      auto account = queries.getAccount(cmd.account_id);
+      if (not account.has_value()) {
+        log_->info("absent account {}", cmd.account_id);
+        return false;
+      }
+      // TODO add wsv execution
+      return false;
+    }
+
+    bool SetAccountDetailExecutor::hasPermissions(const Command &command,
+                                                  ametsuchi::WsvQuery &queries,
+                                                  const Account &creator) {
+      auto cmd  = static_cast<const SetAccountDetail &>(command);
+
+      return
+        // 1. Creator set details for his account
+          (creator.account_id == cmd.account_id);
+    }
+
+    bool SetAccountDetailExecutor::isValid(const Command &command,
+                                           ametsuchi::WsvQuery &queries) {
+      return true;
     }
 
     // -----------------------|SetQuorum|-------------------------

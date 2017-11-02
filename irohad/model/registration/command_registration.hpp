@@ -35,6 +35,7 @@
 #include "model/commands/create_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 
 /**
  * File contains registration for all command subclasses
@@ -59,6 +60,7 @@ namespace iroha {
         command_handler.register_type(typeid(CreateRole));
         command_handler.register_type(typeid(GrantPermission));
         command_handler.register_type(typeid(RevokePermission));
+        command_handler.register_type(typeid(SetAccountDetail));
       }
 
       ClassHandler command_handler{};
