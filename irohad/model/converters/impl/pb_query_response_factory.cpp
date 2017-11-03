@@ -85,6 +85,7 @@ namespace iroha {
         pb_account.set_quorum(account.quorum);
         pb_account.set_account_id(account.account_id);
         pb_account.set_domain_id(account.domain_id);
+        pb_account.set_json_data(account.json_data);
         return pb_account;
       }
 
@@ -94,6 +95,7 @@ namespace iroha {
         res.account_id = pb_account.account_id();
         res.quorum = pb_account.quorum();
         res.domain_id = pb_account.domain_id();
+        res.json_data = pb_account.json_data();
         return res;
       }
 

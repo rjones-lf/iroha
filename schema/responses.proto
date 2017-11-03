@@ -14,6 +14,7 @@ message Account {
     string account_id = 1;
     string domain_id = 2;
     uint32 quorum = 3;
+    string json_data = 4;
 }
 
 message AccountAsset {

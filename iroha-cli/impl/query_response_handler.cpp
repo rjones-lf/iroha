@@ -90,6 +90,7 @@ namespace iroha_cli {
     std::for_each(roles.begin(), roles.end(), [](auto role){
       std::cout << " " << role;
     });
+    log_->info("-Data-: {}", account.json_data());
   }
 
   void QueryResponseHandler::handleRolesResponse(
