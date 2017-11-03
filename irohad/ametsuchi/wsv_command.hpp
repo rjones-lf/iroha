@@ -100,6 +100,16 @@ namespace iroha {
       virtual bool updateAccount(const model::Account &account) = 0;
 
       /**
+       * @param account_id  account in which update key value
+       * @param key - key to set
+       * @param val - value of the key/value pair
+       * @return true if no error occurred, false otherwise
+       */
+      virtual bool setAccountKV(const std::string &account_id,
+                                const std::string &key,
+                                const std::string &val) = 0;
+
+      /**
        *
        * @param asset
        * @return

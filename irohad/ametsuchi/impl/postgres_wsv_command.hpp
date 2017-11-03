@@ -40,6 +40,9 @@ namespace iroha {
 
       bool insertAccount(const model::Account &account) override;
       bool updateAccount(const model::Account &account) override;
+      bool setAccountKV(const std::string &account_id,
+                        const std::string &key,
+                        const std::string &val) override;
       bool insertAsset(const model::Asset &asset) override;
       bool upsertAccountAsset(const model::AccountAsset &asset) override;
       bool insertSignatory(const pubkey_t &signatory) override;

@@ -100,6 +100,10 @@ namespace iroha {
       MOCK_METHOD1(deletePeer, bool(const model::Peer &));
 
       MOCK_METHOD1(insertDomain, bool(const model::Domain &));
+      MOCK_METHOD3(setAccountKV,
+                   bool(const std::string &,
+                        const std::string &,
+                        const std::string &));
     };
 
     class MockBlockQuery : public BlockQuery {
