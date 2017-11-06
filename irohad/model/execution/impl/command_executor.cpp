@@ -523,13 +523,7 @@ namespace iroha {
                                            ametsuchi::WsvQuery &queries,
                                            ametsuchi::WsvCommand &commands) {
       auto cmd = static_cast<const SetAccountDetail &>(command);
-      auto account = queries.getAccount(cmd.account_id);
-      if (not account.has_value()) {
-        log_->info("absent account {}", cmd.account_id);
-        return false;
-      }
-      // TODO add wsv execution
-      return false;
+      return commands.setAccountKV(cmd.account_id, cmd.key, cmd.value);
     }
 
     bool SetAccountDetailExecutor::hasPermissions(const Command &command,

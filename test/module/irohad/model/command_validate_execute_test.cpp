@@ -20,18 +20,18 @@
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
+#include "model/commands/append_role.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
+#include "model/commands/create_role.hpp"
+#include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
+#include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/execution/command_executor_factory.hpp"
-
-#include "model/commands/append_role.hpp"
-#include "model/commands/create_role.hpp"
-#include "model/commands/grant_permission.hpp"
-#include "model/commands/revoke_permission.hpp"
 #include "model/permissions.hpp"
 
 using ::testing::Return;
@@ -1048,5 +1048,44 @@ TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
       hasAccountGrantablePermission(
           exact_command->account_id, admin_id, exact_command->permission_name))
       .WillOnce(Return(false));
+  ASSERT_FALSE(validateAndExecute());
+}
+
+class SetAccountDetailTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    pubkey_t creator_key, account_key;
+    creator_key.fill(0x1);
+    account_key.fill(0x2);
+    account_pubkeys = {creator_key, account_key};
+    cmd = std::make_shared<SetAccountDetail>();
+    cmd->account_id = admin_id;
+    cmd->key = "key";
+    cmd->value = "val";
+    command = cmd;
+    role_permissions = {can_set_quorum};
+  }
+
+  std::vector<pubkey_t> account_pubkeys;
+  std::shared_ptr<SetAccountDetail> cmd;
+};
+
+/**
+ * @when creator is setting details to their account
+ * @then successfully execute the command
+ */
+TEST_F(SetAccountDetailTest, ValidWhenCreatorHasPermissions) {
+  EXPECT_CALL(*wsv_command, setAccountKV(_, _, _)).WillOnce(Return(true));
+  ASSERT_TRUE(validateAndExecute());
+}
+
+/**
+ * @when creator is setting details to their account
+ * @then successfully execute the command
+ */
+TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
+  cmd->account_id = account_id;
   ASSERT_FALSE(validateAndExecute());
 }
