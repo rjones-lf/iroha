@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       ASSERT_TRUE(command->setAccountKV(account.account_id, "id", "val"));
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
-      ASSERT_EQ("{\"id\": \"val\", \"key\": \"value\"}", acc.value().json_data);
+      ASSERT_EQ(R"({"id": "val", "key": "value"})", acc.value().json_data);
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {
