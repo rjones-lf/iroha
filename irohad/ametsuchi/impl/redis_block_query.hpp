@@ -57,7 +57,7 @@ namespace iroha {
        * @param account_id
        * @return vector of block ids
        */
-      std::vector<iroha::model::Block::BlockHeightType> getBlockIds(
+      std::set<iroha::model::Block::BlockHeightType> getBlockIds(
           const std::string &account_id);
 
       /**

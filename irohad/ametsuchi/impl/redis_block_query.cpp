@@ -69,16 +69,16 @@ namespace iroha {
       return getBlocks(last_id - count + 1, count);
     }
 
-    std::vector<iroha::model::Block::BlockHeightType>
+    std::set<iroha::model::Block::BlockHeightType>
     RedisBlockQuery::getBlockIds(const std::string &account_id) {
-      std::vector<uint64_t> block_ids;
+      std::set<uint64_t> block_ids;
       client_.lrange(account_id, 0, -1, [&block_ids](cpp_redis::reply &reply) {
         for (const auto &block_reply : reply.as_array()) {
           const auto &string_reply = block_reply.as_string();
 
           // check if reply is an integer
           if (isdigit(string_reply.c_str()[0])) {
-            block_ids.push_back(std::stoul(string_reply));
+            block_ids.insert(std::stoul(string_reply));
           }
         }
       });
