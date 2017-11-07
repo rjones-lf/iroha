@@ -311,12 +311,13 @@ namespace iroha {
                                           const std::string &key,
                                           const std::string &val) {
       try {
-        transaction_.exec(
-            "UPDATE account\n"
-            "   SET data = jsonb_set(data,\'{"+key+"}\', \'\""+val+"\"\')"
-           "\n WHERE account_id="
-            + transaction_.quote(account_id)
-            + ";");
+        transaction_.exec("UPDATE account SET data = jsonb_set(data,"
+                          + transaction_.quote("{" + key + "}")
+                          + ","
+                          + transaction_.quote("\"" + val + "\"")
+                          + ") WHERE account_id="
+                          + transaction_.quote(account_id)
+                          + ";");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return false;

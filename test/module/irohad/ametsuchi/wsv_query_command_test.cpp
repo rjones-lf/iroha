@@ -25,8 +25,6 @@ namespace iroha {
     class WsvQueryCommandTest : public AmetsuchiTest {
      public:
       WsvQueryCommandTest() {
-        spdlog::set_level(spdlog::level::off);
-
         domain.domain_id = "domain";
         domain.default_role = role;
         account.domain_id = domain.domain_id;
