@@ -529,11 +529,11 @@ namespace iroha {
     bool SetAccountDetailExecutor::hasPermissions(const Command &command,
                                                   ametsuchi::WsvQuery &queries,
                                                   const Account &creator) {
-      auto cmd  = static_cast<const SetAccountDetail &>(command);
+      auto cmd = static_cast<const SetAccountDetail &>(command);
 
       return
-        // 1. Creator set details for his account
-          (creator.account_id == cmd.account_id);
+          // Creator set details for his account
+          creator.account_id == cmd.account_id;
     }
 
     bool SetAccountDetailExecutor::isValid(const Command &command,
