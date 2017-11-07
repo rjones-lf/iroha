@@ -1055,11 +1055,7 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-
-    pubkey_t creator_key, account_key;
-    creator_key.fill(0x1);
-    account_key.fill(0x2);
-    account_pubkeys = {creator_key, account_key};
+    
     cmd = std::make_shared<SetAccountDetail>();
     cmd->account_id = admin_id;
     cmd->key = "key";
