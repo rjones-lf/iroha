@@ -138,6 +138,7 @@ namespace iroha {
         auto pl = pb_query.mutable_payload();
         pl->set_creator_account_id(query->creator_account_id);
         pl->set_created_time(query->created_ts);
+        pl->set_query_counter(query->query_counter);
         // Set signatures
         auto sig = pb_query.mutable_signature();
         sig->set_signature(query->signature.signature.to_string());
