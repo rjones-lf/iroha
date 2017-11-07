@@ -273,7 +273,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   createRole.role_name = "user";
   createRole.permissions = {can_add_peer, can_create_asset, can_get_my_account};
 
-  // 1st tx
+  Block block;
+  // 1st tx in block 1
   Transaction txn;
   txn.creator_account_id = admin;
 
@@ -284,11 +285,25 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   createDomain.user_default_role = "user";
   txn.commands.push_back(std::make_shared<CreateDomain>(createDomain));
 
+  // Add 1st tx to block1
+  block.transactions.push_back(txn);
+
+  // 2nd tx in block 1
+  txn = Transaction();
+  txn.creator_account_id = admin;
+
   // Create account 1
   CreateAccount createAccount1;
   createAccount1.account_name = user1name;
   createAccount1.domain_id = domain;
   txn.commands.push_back(std::make_shared<CreateAccount>(createAccount1));
+
+  // Add 2nd tx to block1
+  block.transactions.push_back(txn);
+
+  // 3rd tx in block 1
+  txn = Transaction();
+  txn.creator_account_id = admin;
 
   // Create account 2
   CreateAccount createAccount2;
@@ -330,7 +345,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   addAssetQuantity2.amount = iroha::Amount(250, 2);
   txn.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity2));
 
-  Block block;
+  // Add 3rd tx to block1
   block.transactions.push_back(txn);
   block.height = 1;
   block.prev_hash.fill(0);
@@ -380,7 +395,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
     ASSERT_EQ(asset2->balance, iroha::Amount(250, 2));
   }
 
-  // 2th tx (user1 -> user2 # asset1)
+  // 4th tx (user1 -> user2 # asset1) in block 2
   txn = Transaction();
   txn.creator_account_id = user1id;
 
@@ -392,6 +407,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   transferAsset.amount = iroha::Amount(120, 2);
   txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset));
 
+  // Add 4th tx to block2
   block = Block();
   block.transactions.push_back(txn);
   block.height = 2;
@@ -421,7 +437,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
     ASSERT_EQ(asset2->balance, iroha::Amount(120, 2));
   }
 
-  // 3rd tx
+  // 5th tx in block 3
   //   (user2 -> user3 # asset2)
   //   (user2 -> user1 # asset2)
   txn = Transaction();
@@ -441,6 +457,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   transferAsset2.amount = iroha::Amount(10, 2);
   txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset2));
 
+  // Add 5th tx to block3
   block = Block();
   block.transactions.push_back(txn);
   block.height = 3;
@@ -487,14 +504,21 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
         }
       });
 
+  auto number_of_admin_txs = 0;
+  auto number_of_admin_tx_commands = 0;
   blocks->getAccountTransactions(admin).subscribe(
-      [](auto tx) { EXPECT_EQ(tx.commands.size(), 9); });
+      [&number_of_admin_txs, &number_of_admin_tx_commands](auto tx) {
+        number_of_admin_txs ++;
+        number_of_admin_tx_commands += tx.commands.size();
+    });
   blocks->getAccountTransactions(user1id).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 1); });
   blocks->getAccountTransactions(user2id).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 2); });
   blocks->getAccountTransactions(user3id).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 0); });
+  EXPECT_EQ(number_of_admin_txs, 3);
+  EXPECT_EQ(number_of_admin_tx_commands, 9);
 
   // (user1 -> user2 # asset1)
   // (user2 -> user3 # asset2)
