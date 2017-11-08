@@ -18,6 +18,7 @@
 #ifndef IROHA_TORII_MOCKS_HPP
 #define IROHA_TORII_MOCKS_HPP
 
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "torii/processor/query_processor.hpp"
 
 #include <gmock/gmock.h>
@@ -29,6 +30,16 @@ namespace iroha {
       MOCK_METHOD1(queryHandle, void(std::shared_ptr<model::Query>));
       MOCK_METHOD0(queryNotifier,
                    rxcpp::observable<std::shared_ptr<model::QueryResponse>>());
+    };
+
+    class MockMstProcessorDummy : public MstProcessor {
+      MOCK_METHOD1(propagateTransactionImpl, void(ConstRefTransaction));
+      MOCK_CONST_METHOD0(onStateUpdateImpl,
+                         rxcpp::observable<std::shared_ptr<MstState>>());
+      MOCK_CONST_METHOD0(onPreparedTransactionsImpl,
+                         rxcpp::observable<TransactionType>());
+      MOCK_CONST_METHOD0(onExpiredTransactionsImpl,
+                         rxcpp::observable<TransactionType>());
     };
   }  // namespace torii
 }  // namespace iroha
