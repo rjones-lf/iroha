@@ -11,7 +11,8 @@
     "commands": [
         {
           "command_type": "CreateDomain",
-          "domain_name": "soramitsu"
+          "domain_id": "soramitsu",
+          "user_default_role": "user"
         }
     ]
 }
