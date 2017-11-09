@@ -18,6 +18,7 @@ add_subdirectory(transport)
 
 
 add_library(mst_processor
+    impl/gossip_propagation_strategy.cpp
     impl/mst_processor_impl.cpp
     impl/mst_processor.cpp
     )
