@@ -32,8 +32,8 @@ namespace iroha {
                    rxcpp::observable<std::shared_ptr<model::QueryResponse>>());
     };
 
-    class MockMstProcessorDummy : public MstProcessor {
-      MOCK_METHOD1(propagateTransactionImpl, void(DataType));
+    struct MockMstProcessorDummy : public MstProcessor {
+      MOCK_METHOD1(propagateTransactionImpl, void(const DataType));
       MOCK_CONST_METHOD0(onStateUpdateImpl,
                          rxcpp::observable<std::shared_ptr<MstState>>());
       MOCK_CONST_METHOD0(onPreparedTransactionsImpl,

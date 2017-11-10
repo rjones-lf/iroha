@@ -52,23 +52,30 @@ namespace iroha {
         }
       });
 
+      static const auto notify_success = [this](const auto &tx) {
+        auto h = hash(tx).to_string();
+        this->proposal_set_.erase(h);
+        this->candidate_set_.insert(h);
+        this->notifier_.get_subscriber().on_next(
+            std::make_shared<TransactionResponse>(TransactionResponse{
+                h,
+                Status::STATEFUL_VALIDATION_SUCCESS,
+            }));
+      };
+
+      static const auto notify_fail = [this](const auto &h) {
+        this->notifier_.get_subscriber().on_next(
+            std::make_shared<TransactionResponse>(
+                TransactionResponse{h, Status::STATEFUL_VALIDATION_FAILED}));
+      };
+
       // move commited txs from proposal to candidate map
       pcs_->on_commit().subscribe([this](auto blocks) {
         blocks.subscribe(
             // on next..
             [this](auto block) {
-              static auto in_proposal = [this](const auto &tx) {
+              static const auto in_proposal = [this](const auto &tx) {
                 return this->proposal_set_.count(hash(tx).to_string());
-              };
-              static auto notify_success = [this](const auto &tx) {
-                auto h = hash(tx).to_string();
-                this->proposal_set_.erase(h);
-                this->candidate_set_.insert(h);
-                this->notifier_.get_subscriber().on_next(
-                    std::make_shared<TransactionResponse>(TransactionResponse{
-                        h,
-                        Status::STATEFUL_VALIDATION_SUCCESS,
-                    }));
               };
               boost::for_each(
                   block.transactions | boost::adaptors::filtered(in_proposal),
@@ -76,16 +83,18 @@ namespace iroha {
             },
             // on complete
             [this]() {
-              for (const auto &tx_hash :
-                   boost::join(this->proposal_set_, this->candidate_set_)) {
-                this->notifier_.get_subscriber().on_next(
-                    std::make_shared<TransactionResponse>(TransactionResponse{
-                        tx_hash, Status::STATEFUL_VALIDATION_FAILED}));
-              }
+              boost::for_each(
+                  boost::join(this->proposal_set_, this->candidate_set_),
+                  notify_fail);
               this->proposal_set_.clear();
               this->candidate_set_.clear();
             });
       });
+
+      mst_proc_->onPreparedTransactions().subscribe(
+          [](auto tx) { return notify_success(*tx); });
+      mst_proc_->onExpiredTransactions().subscribe(
+          [](auto tx) { return notify_fail(hash(*tx).to_string()); });
     }
 
     void TransactionProcessorImpl::transactionHandle(
@@ -94,9 +103,20 @@ namespace iroha {
       TransactionResponse response{hash(*transaction).to_string(),
                                    Status::STATELESS_VALIDATION_FAILED};
 
+      // TODO: nice place for code linearizing
       if (validator_->validate(*transaction)) {
         response.current_status = Status::STATELESS_VALIDATION_SUCCESS;
-        pcs_->propagate_transaction(transaction);
+        switch (transaction->signatures.size()) {
+          case 0:
+            response.current_status = Status::STATELESS_VALIDATION_FAILED;
+            break;
+          case 1:
+            pcs_->propagate_transaction(transaction);
+            break;
+          default:
+            mst_proc_->propagateTransaction(transaction);
+            break;
+        }
       }
       log_->info(
           "stateless validation status: {}",
