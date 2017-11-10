@@ -41,7 +41,7 @@ namespace iroha {
     auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) override;
 
-    auto updateOwnStateImpl(const TransactionType &tx)
+    auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) override;
 
     auto getExpiredTransactionsImpl(const TimeType &current_time)

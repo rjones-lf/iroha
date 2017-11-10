@@ -50,7 +50,7 @@ namespace iroha {
      * @return State with completed transaction
      * General note: implementation of method covered by lock
      */
-    MstState updateOwnState(const TransactionType &tx);
+    MstState updateOwnState(const DataType &tx);
 
     /**
      * Remove expired transactions and return them
@@ -89,7 +89,7 @@ namespace iroha {
     virtual auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) = 0;
 
-    virtual auto updateOwnStateImpl(const TransactionType &tx)
+    virtual auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) = 0;
 
     virtual auto getExpiredTransactionsImpl(const TimeType &current_time)

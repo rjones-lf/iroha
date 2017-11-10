@@ -15,19 +15,21 @@
  * limitations under the License.
  */
 
-#include "torii/processor/transaction_processor_impl.hpp"
-#include <endpoint.pb.h>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/join.hpp>
 #include <iostream>
 #include <utility>
 #include "crypto/hash.hpp"
-#include "model/transaction_response.hpp"
 #include "endpoint.pb.h"
+#include "model/transaction_response.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
 namespace iroha {
   namespace torii {
 
     using model::TransactionResponse;
+    using Status = model::TransactionResponse::Status;
     using network::PeerCommunicationService;
     using validation::StatelessValidator;
 
@@ -44,80 +46,66 @@ namespace iroha {
       pcs_->on_proposal().subscribe([this](model::Proposal proposal) {
         for (const auto &tx : proposal.transactions) {
           proposal_set_.insert(hash(tx).to_string());
-          TransactionResponse response;
-          response.tx_hash = hash(tx).to_string();
-          response.current_status =
-              TransactionResponse::STATELESS_VALIDATION_SUCCESS;
           notifier_.get_subscriber().on_next(
-              std::make_shared<model::TransactionResponse>(response));
+              std::make_shared<TransactionResponse>(TransactionResponse{
+                  hash(tx).to_string(), Status::STATELESS_VALIDATION_SUCCESS}));
         }
       });
 
       // move commited txs from proposal to candidate map
-      pcs_->on_commit().subscribe([this](
-                                      rxcpp::observable<model::Block> blocks) {
+      pcs_->on_commit().subscribe([this](auto blocks) {
         blocks.subscribe(
             // on next..
-            [this](model::Block block) {
-              for (const auto &tx : block.transactions) {
-                if (this->proposal_set_.count(hash(tx).to_string())) {
-                  proposal_set_.erase(hash(tx).to_string());
-                  candidate_set_.insert(hash(tx).to_string());
-                  TransactionResponse response;
-                  response.tx_hash = hash(tx).to_string();
-                  response.current_status =
-                      model::TransactionResponse::STATEFUL_VALIDATION_SUCCESS;
-                  notifier_.get_subscriber().on_next(
-                      std::make_shared<model::TransactionResponse>(response));
-                }
-              }
+            [this](auto block) {
+              static auto in_proposal = [this](const auto &tx) {
+                return this->proposal_set_.count(hash(tx).to_string());
+              };
+              static auto notify_success = [this](const auto &tx) {
+                auto h = hash(tx).to_string();
+                this->proposal_set_.erase(h);
+                this->candidate_set_.insert(h);
+                this->notifier_.get_subscriber().on_next(
+                    std::make_shared<TransactionResponse>(TransactionResponse{
+                        h,
+                        Status::STATEFUL_VALIDATION_SUCCESS,
+                    }));
+              };
+              boost::for_each(
+                  block.transactions | boost::adaptors::filtered(in_proposal),
+                  notify_success);
             },
             // on complete
             [this]() {
-              for (auto tx_hash : proposal_set_) {
-                TransactionResponse response;
-                response.tx_hash = tx_hash;
-                response.current_status =
-                    TransactionResponse::STATEFUL_VALIDATION_FAILED;
-                notifier_.get_subscriber().on_next(
-                    std::make_shared<model::TransactionResponse>(response));
+              for (const auto &tx_hash :
+                   boost::join(this->proposal_set_, this->candidate_set_)) {
+                this->notifier_.get_subscriber().on_next(
+                    std::make_shared<TransactionResponse>(TransactionResponse{
+                        tx_hash, Status::STATEFUL_VALIDATION_FAILED}));
               }
-              proposal_set_.clear();
-
-              for (auto tx_hash : candidate_set_) {
-                TransactionResponse response;
-                response.tx_hash = tx_hash;
-                response.current_status = TransactionResponse::COMMITTED;
-                notifier_.get_subscriber().on_next(
-                    std::make_shared<model::TransactionResponse>(response));
-              }
-              candidate_set_.clear();
+              this->proposal_set_.clear();
+              this->candidate_set_.clear();
             });
       });
     }
 
     void TransactionProcessorImpl::transactionHandle(
-        std::shared_ptr<model::Transaction> transaction) {
+        ConstRefTransaction transaction) {
       log_->info("handle transaction");
-      model::TransactionResponse response;
-      response.tx_hash = hash(*transaction).to_string();
-      response.current_status =
-          model::TransactionResponse::Status::STATELESS_VALIDATION_FAILED;
+      TransactionResponse response{hash(*transaction).to_string(),
+                                   Status::STATELESS_VALIDATION_FAILED};
 
       if (validator_->validate(*transaction)) {
-        response.current_status =
-            TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
+        response.current_status = Status::STATELESS_VALIDATION_SUCCESS;
         pcs_->propagate_transaction(transaction);
       }
       log_->info(
           "stateless validation status: {}",
-          response.current_status
-              == TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS);
+          response.current_status == Status::STATELESS_VALIDATION_SUCCESS);
       notifier_.get_subscriber().on_next(
-          std::make_shared<model::TransactionResponse>(response));
+          std::make_shared<TransactionResponse>(response));
     }
 
-    rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
+    rxcpp::observable<TxResponse>
     TransactionProcessorImpl::transactionNotifier() {
       return notifier_.get_observable();
     }

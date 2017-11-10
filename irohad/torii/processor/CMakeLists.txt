@@ -10,4 +10,5 @@ target_link_libraries(processors PUBLIC
     logger
     endpoint
     mst_processor
+    ${BOOST_LIBRARIES}
     )

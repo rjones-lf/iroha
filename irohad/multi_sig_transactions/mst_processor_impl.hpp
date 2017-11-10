@@ -48,7 +48,7 @@ namespace iroha {
 
     // ------------------------| MstProcessor override |------------------------
 
-    auto propagateTransactionImpl(ConstRefTransaction transaction)
+    auto propagateTransactionImpl(const DataType transaction)
         -> decltype(propagateTransaction(transaction)) override;
 
     auto onStateUpdateImpl() const -> decltype(onStateUpdate()) override;
@@ -90,12 +90,10 @@ namespace iroha {
     rxcpp::subjects::subject<std::shared_ptr<MstState>> state_subject_;
 
     /// use for share completed transactions
-    rxcpp::subjects::subject<std::shared_ptr<model::Transaction>>
-        transactions_subject_;
+    rxcpp::subjects::subject<DataType> transactions_subject_;
 
     /// use for share expired transactions
-    rxcpp::subjects::subject<std::shared_ptr<model::Transaction>>
-        expired_subject_;
+    rxcpp::subjects::subject<DataType> expired_subject_;
   };
 }  // namespace iroha
 

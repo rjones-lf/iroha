@@ -33,13 +33,13 @@ namespace iroha {
     };
 
     class MockMstProcessorDummy : public MstProcessor {
-      MOCK_METHOD1(propagateTransactionImpl, void(ConstRefTransaction));
+      MOCK_METHOD1(propagateTransactionImpl, void(DataType));
       MOCK_CONST_METHOD0(onStateUpdateImpl,
                          rxcpp::observable<std::shared_ptr<MstState>>());
       MOCK_CONST_METHOD0(onPreparedTransactionsImpl,
-                         rxcpp::observable<TransactionType>());
+                         rxcpp::observable<DataType>());
       MOCK_CONST_METHOD0(onExpiredTransactionsImpl,
-                         rxcpp::observable<TransactionType>());
+                         rxcpp::observable<DataType>());
     };
   }  // namespace torii
 }  // namespace iroha

@@ -44,7 +44,7 @@ namespace iroha {
     return own_state_ += new_state;
   }
 
-  auto MstStorageStateImpl::updateOwnStateImpl(const TransactionType &tx)
+  auto MstStorageStateImpl::updateOwnStateImpl(const DataType &tx)
       -> decltype(updateOwnState(tx)) {
     return own_state_ += tx;
   }

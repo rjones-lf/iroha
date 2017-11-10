@@ -48,8 +48,7 @@ namespace iroha {
 
   // -------------------------| MstProcessor override |-------------------------
 
-  auto FairMstProcessor::propagateTransactionImpl(
-      ConstRefTransaction transaction)
+  auto FairMstProcessor::propagateTransactionImpl(const DataType transaction)
       -> decltype(propagateTransaction(transaction)) {
     shareState(storage_->updateOwnState(transaction), transactions_subject_);
     shareState(

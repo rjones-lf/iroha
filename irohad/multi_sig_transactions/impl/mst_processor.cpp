@@ -21,7 +21,7 @@ namespace iroha {
 
   MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
 
-  void MstProcessor::propagateTransaction(ConstRefTransaction transaction) {
+  void MstProcessor::propagateTransaction(const DataType transaction) {
     this->propagateTransactionImpl(transaction);
   }
 
@@ -30,13 +30,11 @@ namespace iroha {
     return this->onStateUpdateImpl();
   }
 
-  rxcpp::observable<std::shared_ptr<model::Transaction>>
-  MstProcessor::onPreparedTransactions() const {
+  rxcpp::observable<DataType> MstProcessor::onPreparedTransactions() const {
     return this->onPreparedTransactionsImpl();
   }
 
-  rxcpp::observable<std::shared_ptr<model::Transaction>>
-  MstProcessor::onExpiredTransactions() const {
+  rxcpp::observable<DataType> MstProcessor::onExpiredTransactions() const {
     return this->onExpiredTransactionsImpl();
   }
 }  // namespace iroha

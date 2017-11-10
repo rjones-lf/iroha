@@ -29,8 +29,6 @@
 
 namespace iroha {
 
-  using DataType = TransactionType;
-
   /**
    * Completer is strategy for verification transactions on
    * completeness and expiration
