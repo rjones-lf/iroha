@@ -26,12 +26,11 @@
 #include "model/commands/create_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
-#include "model/generators/transaction_generator.hpp"
 #include "model/permissions.hpp"
-#include "parser/parser.hpp"
 
 using namespace iroha::model;
 
@@ -53,7 +52,8 @@ namespace iroha_cli {
           {CREATE_ROLE, "Create new role"},
           {APPEND_ROLE, "Add new role to account"},
           {GRANT_PERM, "Grant permission over your account"},
-          {REVOKE_PERM, "Revoke permission from account"}
+          {REVOKE_PERM, "Revoke permission from account"},
+          {SET_ACC_KV, "Set account key/value detail"}
           // commands_description_map_
       };
 
@@ -106,7 +106,8 @@ namespace iroha_cli {
             can_create_account}},
           {APPEND_ROLE, {acc_id, role}},
           {GRANT_PERM, {acc_id, perm}},
-          {REVOKE_PERM, {acc_id, perm}}
+          {REVOKE_PERM, {acc_id, perm}},
+          {SET_ACC_KV, {acc_id, "key", "value"}}
           // command parameters descriptions
       };
 
@@ -125,7 +126,8 @@ namespace iroha_cli {
           {CREATE_ROLE, &InteractiveTransactionCli::parseCreateRole},
           {APPEND_ROLE, &InteractiveTransactionCli::parseAppendRole},
           {GRANT_PERM, &InteractiveTransactionCli::parseGrantPermission},
-          {REVOKE_PERM, &InteractiveTransactionCli::parseGrantPermission}
+          {REVOKE_PERM, &InteractiveTransactionCli::parseGrantPermission},
+          {SET_ACC_KV, &InteractiveTransactionCli::parseSetAccountDetail}
           // Command parsers
       };
 
@@ -236,9 +238,12 @@ namespace iroha_cli {
       auto create_account = parser::parseValue<bool>(params[8]);
 
       if (not read_self.has_value() or not edit_self.has_value()
-          or not read_all.has_value() or not transfer_receive.has_value()
-          or not asset_create.has_value() or not create_domain.has_value()
-          or not roles.has_value() or not create_account.has_value()) {
+          or not read_all.has_value()
+          or not transfer_receive.has_value()
+          or not asset_create.has_value()
+          or not create_domain.has_value()
+          or not roles.has_value()
+          or not create_account.has_value()) {
         std::cout << "Wrong format for permission" << std::endl;
         return nullptr;
       }
@@ -416,6 +421,15 @@ namespace iroha_cli {
       iroha::Amount amount(val_int.value(), precision.value());
       return generator_.generateTransferAsset(
           src_account_id, dest_account_id, asset_id, amount);
+    }
+
+    std::shared_ptr<iroha::model::Command>
+    InteractiveTransactionCli::parseSetAccountDetail(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto key = params[1];
+      auto value = params[2];
+      return std::make_shared<SetAccountDetail>(account_id, key, value);
     }
 
     // --------- Result parsers -------------
