@@ -36,7 +36,7 @@ namespace iroha {
 
    public:
     // ----------------------------| interface API |----------------------------
-    MstStorageStateImpl(const CompleterType &completer);
+    explicit MstStorageStateImpl(const CompleterType &completer);
 
     auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) override;

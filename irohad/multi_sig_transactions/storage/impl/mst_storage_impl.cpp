@@ -30,8 +30,11 @@ namespace iroha {
   }
   // -----------------------------| interface API |-----------------------------
 
-  MstStorageStateImpl::MstStorageStateImpl(const CompleterType &completer)
-      : MstStorage(), completer_(completer), own_state_(MstState::empty(completer_)) {}
+  MstStorageStateImpl::MstStorageStateImpl(
+      const CompleterType &completer)
+      : MstStorage(),
+        completer_(completer),
+        own_state_(MstState::empty(completer_)) {}
 
   auto MstStorageStateImpl::applyImpl(ConstPeer &target_peer,
                                       const MstState &new_state)
