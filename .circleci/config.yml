@@ -3,7 +3,6 @@ defaults: &defaults
   environment:
     IROHA_HOME: /opt/iroha
     IROHA_BUILD: /opt/iroha/build
-    CCACHE_DIR: ~/.ccache
 
 version: 2
 
@@ -18,14 +17,16 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - build-cache-{{ arch }}-{{ .Branch }}
-            - build-cache-{{ arch }}
+            - build-cache-linux-{{ .Branch }}-
+            - build-cache-linux-
           paths:
             - ~/.ccache
       - run:
           name: ccache setup
           command: |
-            ccache --max-files=0
+            ccache --version
+            ccache --show-stats
+            ccache --zero-stats
             ccache --max-size=1G
       - run:
           name: cmake
@@ -34,8 +35,13 @@ jobs:
           name: make
           command: |
             cmake --build $IROHA_BUILD -- -j4
+      - run:
+          name: ccache teardown
+          command: |
+            ccache --cleanup
+            ccache --show-stats
       - save_cache:
-          key: build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: build-cache-linux-{{ .Branch }}-{{ epoch }}
           paths:
             - ~/.ccache
       - run: ccache --show-stats
@@ -136,44 +142,54 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - brew-{{ arch }}
+            - brew-macos-
           paths:
             - Library/Caches/Homebrew
       - run:
           name: install dev dependencies
           command: brew install cmake boost postgres grpc autoconf automake libtool ccache
       - save_cache:
-          key: brew-{{ arch }}-{{ epoch }}
+          key: brew-macos-{{ epoch }}
           paths:
             - Library/Caches/Homebrew
       - restore_cache:
           keys:
-            - build-cache-{{ arch }}-{{ .Branch }}
+            - build-cache-macos-{{ .Branch }}-
+            - build-cache-macos-
           paths:
             - ~/.ccache
       - restore_cache:
           keys:
-            - external-{{ arch }}-{{ .Branch }}
-            - external-{{ arch }}
+            - external-macos-{{ .Branch }}-
+            - external-macos-
           paths:
             - external
-      - run: ccache --show-stats
+      - run:
+          name: ccache setup
+          command: |
+            ccache --version
+            ccache --show-stats
+            ccache --zero-stats
+            ccache --max-size=1G
       - run:
           name: build
           command: |
             cmake -H. -Bbuild
             cmake --build build -- -j$(sysctl -n hw.ncpu)
       - save_cache:
-          key: build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: build-cache-macos-{{ .Branch }}-{{ epoch }}
           paths:
             - ~/.ccache
       - save_cache:
-          key: external-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: external-macos-{{ .Branch }}-{{ epoch }}
           paths:
             - external
+      - run:
+          name: ccache teardown
+          command: |
+            ccache --cleanup
+            ccache --show-stats
 
-      - run: ccache --show-stats
-     
 
 workflows:
   version: 2
