@@ -48,7 +48,6 @@ class MstProcessorTest : public testing::Test {
  public:
   // --------------------------------| fields |---------------------------------
 
-  Peer own_peer = makePeer("iam", "1");
   /// propagation subject, useful for propagation control
   rxcpp::subjects::subject<PropagationStrategy::PropagationData>
       propagation_subject;
@@ -65,8 +64,7 @@ class MstProcessorTest : public testing::Test {
  protected:
   void SetUp() override {
     transport = make_shared<MockMstTransport>();
-    storage = make_shared<MstStorageStateImpl>(own_peer,
-                                               make_shared<TestCompleter>());
+    storage = make_shared<MstStorageStateImpl>(make_shared<TestCompleter>());
 
     propagation_strategy = make_shared<MockPropagationStrategy>();
     EXPECT_CALL(*propagation_strategy, emitter())
