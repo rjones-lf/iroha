@@ -89,6 +89,11 @@ class ToriiServiceTest : public testing::Test {
       storageMock = std::make_shared<MockStorage>();
       block_query = std::make_shared<MockBlockQuery>();
 
+      EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+          .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
+      EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+          .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
+
       auto tx_processor =
           std::make_shared<iroha::torii::TransactionProcessorImpl>(
               pcsMock, statelessValidatorMock, mst);
@@ -139,6 +144,8 @@ class ToriiServiceTest : public testing::Test {
 
   rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+  rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
   std::shared_ptr<MockStatelessValidator> statelessValidatorMock;

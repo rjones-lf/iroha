@@ -60,12 +60,18 @@ class ToriiQueriesTest : public testing::Test {
 
       rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
       rxcpp::subjects::subject<Commit> commit_notifier;
+      rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+      rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
       EXPECT_CALL(*pcsMock, on_proposal())
           .WillRepeatedly(Return(prop_notifier.get_observable()));
-
       EXPECT_CALL(*pcsMock, on_commit())
           .WillRepeatedly(Return(commit_notifier.get_observable()));
+
+      EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+          .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
+      EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+          .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
       auto tx_processor =
           std::make_shared<iroha::torii::TransactionProcessorImpl>(
