@@ -63,6 +63,12 @@ namespace iroha {
             }));
       };
 
+      const auto notify_committed = [this](const auto &h) {
+        this->notifier_.get_subscriber().on_next(
+            std::make_shared<TransactionResponse>(
+                TransactionResponse{h, Status::COMMITTED}));
+      };
+
       const auto notify_fail = [this](const auto &h) {
         this->notifier_.get_subscriber().on_next(
             std::make_shared<TransactionResponse>(
@@ -70,8 +76,8 @@ namespace iroha {
       };
 
       // move commited txs from proposal to candidate map
-      pcs_->on_commit().subscribe([this, notify_success,
-                                   notify_fail](auto blocks) {
+      pcs_->on_commit().subscribe([this, notify_success, notify_fail,
+                                   notify_committed](auto blocks) {
         blocks.subscribe(
             // on next..
             [this, notify_success](auto block) {
@@ -83,11 +89,10 @@ namespace iroha {
                   notify_success);
             },
             // on complete
-            [this, notify_fail]() {
-              boost::for_each(
-                  boost::join(this->proposal_set_, this->candidate_set_),
-                  notify_fail);
+            [this, notify_fail, notify_committed]() {
+              boost::for_each(this->proposal_set_, notify_fail);
               this->proposal_set_.clear();
+              boost::for_each(this->candidate_set_, notify_committed);
               this->candidate_set_.clear();
             });
       });
