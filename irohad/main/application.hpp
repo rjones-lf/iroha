@@ -26,6 +26,11 @@
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "model/model_crypto_provider_impl.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy.hpp"
+#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_time_provider_impl.hpp"
+#include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
@@ -119,6 +124,8 @@ class Irohad {
 
   virtual void initPeerCommunicationService();
 
+  virtual void initMstProcessor();
+
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
@@ -171,6 +178,9 @@ class Irohad {
 
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
+
+  // mst
+  std::shared_ptr<iroha::MstProcessor> mst_proc;
 
   // transaction service
   std::unique_ptr<torii::CommandService> command_service;

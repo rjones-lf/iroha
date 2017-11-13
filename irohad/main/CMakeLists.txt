@@ -53,6 +53,7 @@ target_link_libraries(application
     simulator
     block_loader
     block_loader_service
+    mst_processor
     )
 
 add_executable(irohad irohad.cpp)
