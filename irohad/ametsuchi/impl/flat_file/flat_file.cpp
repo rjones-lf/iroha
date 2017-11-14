@@ -17,6 +17,7 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include <dirent.h>
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include "common/files.hpp"
 
@@ -82,44 +83,25 @@ void remove(const std::string &dump_dir, std::string filename) {
 nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
   auto log = logger::log("FLAT_FILE");
 
-  Identifier tmp_id = 0u;
   if (dump_dir.empty()) {
     log->error("check_consistency({}), not directory", dump_dir);
     return nonstd::nullopt;
   }
-  // Directory iterator:
-  struct dirent **namelist;
-  auto status = scandir(dump_dir.c_str(), &namelist, nullptr, alphasort);
-  if (status < 0) {
-    log->error("check_consistency({}), scandir error: {}", dump_dir, status);
-    return nonstd::nullopt;
-  }
-  if (status < 3) {
-    log->info("check_consistency({}), directory is empty", dump_dir);
-    auto n = static_cast<uint32_t>(status);
-    for (auto j = 0u; j < n; ++j) {
-      free(namelist[j]);
-    }
-    free(namelist);
-    return 0;
-  }
 
-  auto n = static_cast<uint32_t>(status);
-  tmp_id = 2;
+  using namespace boost::filesystem;
 
-  while (tmp_id < n and id_to_name(tmp_id - 1) == namelist[tmp_id]->d_name) {
-    ++tmp_id;
-  }
-  for (auto j = tmp_id; j < n; ++j) {
-    remove(dump_dir, namelist[j]->d_name);
-  }
-
-  for (auto j = 0u; j < n; ++j) {
-    free(namelist[j]);
-  }
-  free(namelist);
-
-  return tmp_id - 2;
+  Identifier id = 0u;
+  auto const missing =
+      std::find_if(directory_iterator{dump_dir},
+                   directory_iterator{},
+                   [&id](const directory_entry &d) mutable {
+                     ++id;
+                     return id_to_name(id) != d.path().filename();
+                   });
+  std::for_each(missing, directory_iterator{}, [](const directory_entry &d) {
+    remove(d.path());
+  });
+  return id;
 }
 
 /**
@@ -202,9 +184,13 @@ nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
   return buf;
 }
 
-std::string FlatFile::directory() const { return dump_dir_; }
+std::string FlatFile::directory() const {
+  return dump_dir_;
+}
 
-Identifier FlatFile::last_id() const { return current_id_.load(); }
+Identifier FlatFile::last_id() const {
+  return current_id_.load();
+}
 
 void FlatFile::dropAll() {
   remove_all(dump_dir_);
