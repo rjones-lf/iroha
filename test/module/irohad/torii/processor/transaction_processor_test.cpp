@@ -125,9 +125,8 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
       .WillRepeatedly(Return(true));
 
   auto tx = std::make_shared<Transaction>();
-  // ensure that we have multiple signatures
-  tx->signatures.emplace_back();
-  tx->signatures.emplace_back();
+  // ensure we have bigger quorum than signatures
+  tx->quorum = 2;
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {

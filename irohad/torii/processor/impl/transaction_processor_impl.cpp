@@ -77,7 +77,7 @@ namespace iroha {
       });
 
       mst_proc_->onPreparedTransactions().subscribe(
-          [this](auto tx) { return this->notify_success(*tx); });
+          [this](auto tx) { return this->transactionHandle(tx); });
       mst_proc_->onExpiredTransactions().subscribe(
           [this](auto tx) { return this->notify_fail(hash(*tx).to_string()); });
     }
@@ -91,16 +91,10 @@ namespace iroha {
       // TODO: nice place for code linearizing
       if (validator_->validate(*transaction)) {
         response.current_status = Status::STATELESS_VALIDATION_SUCCESS;
-        switch (transaction->signatures.size()) {
-          case 0:
-            response.current_status = Status::STATELESS_VALIDATION_FAILED;
-            break;
-          case 1:
-            pcs_->propagate_transaction(transaction);
-            break;
-          default:
-            mst_proc_->propagateTransaction(transaction);
-            break;
+        if (transaction->signatures.size() < transaction->quorum) {
+          mst_proc_->propagateTransaction(transaction);
+        } else {
+          pcs_->propagate_transaction(transaction);
         }
       }
       log_->info(
