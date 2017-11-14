@@ -52,56 +52,34 @@ namespace iroha {
         }
       });
 
-      const auto notify_success = [this](const auto &tx) {
-        auto h = hash(tx).to_string();
-        this->proposal_set_.erase(h);
-        this->candidate_set_.insert(h);
-        this->notifier_.get_subscriber().on_next(
-            std::make_shared<TransactionResponse>(TransactionResponse{
-                h,
-                Status::STATEFUL_VALIDATION_SUCCESS,
-            }));
-      };
-
-      const auto notify_committed = [this](const auto &h) {
-        this->notifier_.get_subscriber().on_next(
-            std::make_shared<TransactionResponse>(
-                TransactionResponse{h, Status::COMMITTED}));
-      };
-
-      const auto notify_fail = [this](const auto &h) {
-        this->notifier_.get_subscriber().on_next(
-            std::make_shared<TransactionResponse>(
-                TransactionResponse{h, Status::STATEFUL_VALIDATION_FAILED}));
-      };
-
       // move commited txs from proposal to candidate map
-      pcs_->on_commit().subscribe([this, notify_success, notify_fail,
-                                   notify_committed](auto blocks) {
+      pcs_->on_commit().subscribe([this](auto blocks) {
         blocks.subscribe(
             // on next..
-            [this, notify_success](auto block) {
+            [this](auto block) {
               const auto in_proposal = [this](const auto &tx) {
                 return this->proposal_set_.count(hash(tx).to_string());
               };
               boost::for_each(
                   block.transactions | boost::adaptors::filtered(in_proposal),
-                  notify_success);
+                  [this](auto &t) { return this->notify_success(t); });
             },
             // on complete
-            [this, notify_fail, notify_committed]() {
-              boost::for_each(this->proposal_set_, notify_fail);
+            [this]() {
+              boost::for_each(this->proposal_set_,
+                              [this](auto &t) { return this->notify_fail(t); });
               this->proposal_set_.clear();
-              boost::for_each(this->candidate_set_, notify_committed);
+              boost::for_each(this->candidate_set_, [this](auto &t) {
+                return this->notify_commit(t);
+              });
               this->candidate_set_.clear();
             });
       });
 
       mst_proc_->onPreparedTransactions().subscribe(
-          [notify_success](auto tx) { return notify_success(*tx); });
-      mst_proc_->onExpiredTransactions().subscribe([notify_fail](auto tx) {
-        return notify_fail(hash(*tx).to_string());
-      });
+          [this](auto tx) { return this->notify_success(*tx); });
+      mst_proc_->onExpiredTransactions().subscribe(
+          [this](auto tx) { return this->notify_fail(hash(*tx).to_string()); });
     }
 
     void TransactionProcessorImpl::transactionHandle(
@@ -137,5 +115,26 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
+    template <typename Model>
+    void TransactionProcessorImpl::notify_success(Model &&m) {
+      auto h = hash(m).to_string();
+      this->proposal_set_.erase(h);
+      this->candidate_set_.insert(h);
+      this->notifier_.get_subscriber().on_next(
+          std::make_shared<TransactionResponse>(TransactionResponse{
+              h,
+              Status::STATEFUL_VALIDATION_SUCCESS,
+          }));
+    }
+    void TransactionProcessorImpl::notify_commit(const std::string &hash) {
+      this->notifier_.get_subscriber().on_next(
+          std::make_shared<TransactionResponse>(
+              TransactionResponse{hash, Status::COMMITTED}));
+    }
+    void TransactionProcessorImpl::notify_fail(const std::string &hash) {
+      this->notifier_.get_subscriber().on_next(
+          std::make_shared<TransactionResponse>(
+              TransactionResponse{hash, Status::STATEFUL_VALIDATION_FAILED}));
+    }
   }  // namespace torii
 }  // namespace iroha

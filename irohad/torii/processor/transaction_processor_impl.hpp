@@ -61,6 +61,11 @@ namespace iroha {
       rxcpp::subjects::subject<TxResponse> notifier_;
 
       logger::Logger log_;
+
+      template <typename Model>
+      void notify_success(Model &&m);
+      void notify_commit(const std::string &hash);
+      void notify_fail(const std::string &hash);
     };
   }  // namespace torii
 }  // namespace iroha
