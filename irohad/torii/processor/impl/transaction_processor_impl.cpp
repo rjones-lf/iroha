@@ -92,8 +92,10 @@ namespace iroha {
       if (validator_->validate(*transaction)) {
         response.current_status = Status::STATELESS_VALIDATION_SUCCESS;
         if (transaction->signatures.size() < transaction->quorum) {
+          log_->info("retrieving signatures for quorum");
           mst_proc_->propagateTransaction(transaction);
         } else {
+          log_->info("propagating tx");
           pcs_->propagate_transaction(transaction);
         }
       }

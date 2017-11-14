@@ -45,21 +45,22 @@ class TransactionProcessorTest : public ::testing::Test {
 
     rxcpp::subjects::subject<Proposal> prop_notifier;
     rxcpp::subjects::subject<Commit> commit_notifier;
-    rxcpp::subjects::subject<DataType> mst_notifier;
 
     EXPECT_CALL(*pcs, on_proposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
-
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
 
     EXPECT_CALL(*mp, onPreparedTransactionsImpl())
-        .WillRepeatedly(Return(mst_notifier.get_observable()));
+        .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
     EXPECT_CALL(*mp, onExpiredTransactionsImpl())
-        .WillRepeatedly(Return(mst_notifier.get_observable()));
+        .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     tp = std::make_shared<TransactionProcessorImpl>(pcs, validation, mp);
   }
+
+  rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+  rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatelessValidator> validation;
@@ -114,10 +115,44 @@ TEST_F(TransactionProcessorTest, InvalidTransaction) {
 }
 
 /**
- * @when propagate tx with multiple signature
- * @then it goes to mst and doesn't go to PeerCommunicationService
+ * @given multisig tx
+ * @when propagate it with big quorum
+ * @then it goes to mst and after signing goes to PeerCommunicationService
  */
 TEST_F(TransactionProcessorTest, MultisigTransaction) {
+  EXPECT_CALL(*mp, propagateTransactionImpl(_))
+      .Times(1)
+      .WillRepeatedly(testing::Invoke([](auto &tx) {
+        tx->signatures.emplace_back();
+        tx->signatures.emplace_back();
+      }));
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
+
+  EXPECT_CALL(*validation, validate(A<const Transaction &>()))
+      .WillRepeatedly(Return(true));
+
+  auto tx = std::make_shared<Transaction>();
+  // ensure we have bigger quorum than signatures
+  tx->quorum = 2;
+
+  auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 2);
+  wrapper.subscribe([](auto response) {
+    auto resp = static_cast<TransactionResponse &>(*response);
+    ASSERT_EQ(resp.current_status,
+              TransactionResponse::STATELESS_VALIDATION_SUCCESS);
+  });
+  tp->transactionHandle(tx);
+  mst_prepared_notifier.get_subscriber().on_next(tx);
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given multisig tx
+ * @when propagate it with big quorum
+ * @then ensure after expiring it leads to STATEFUL_VALIDATION_FAILED
+ */
+TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(1);
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
 
@@ -128,13 +163,16 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
   // ensure we have bigger quorum than signatures
   tx->quorum = 2;
 
-  auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
+  auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 2);
   wrapper.subscribe([](auto response) {
+    static int idx = 0;
     auto resp = static_cast<TransactionResponse &>(*response);
     ASSERT_EQ(resp.current_status,
-              TransactionResponse::STATELESS_VALIDATION_SUCCESS);
+              idx++ == 0 ? TransactionResponse::STATELESS_VALIDATION_SUCCESS
+                         : TransactionResponse::STATEFUL_VALIDATION_FAILED);
   });
   tp->transactionHandle(tx);
+  mst_expired_notifier.get_subscriber().on_next(tx);
 
   ASSERT_TRUE(wrapper.validate());
 }
