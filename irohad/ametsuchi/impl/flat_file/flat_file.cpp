@@ -22,9 +22,9 @@
 
 using namespace iroha::ametsuchi;
 
-const uint32_t DIGIT_CAPACITY = 16;
-
 namespace {
+  const uint32_t DIGIT_CAPACITY = 16;
+
   /**
    * Convert id to string repr
    * @param id - for conversion
