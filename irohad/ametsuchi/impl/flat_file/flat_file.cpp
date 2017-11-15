@@ -16,7 +16,6 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include <dirent.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include "common/files.hpp"
