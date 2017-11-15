@@ -19,7 +19,6 @@
 #include <dirent.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <fstream>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;
@@ -61,26 +60,29 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
     return nonstd::nullopt;
   }
 
-  using namespace boost::filesystem;
-
   auto const files = [&dump_dir] {
-    std::vector<path> ps;
-    std::copy(directory_iterator{dump_dir},
-              directory_iterator{},
+    std::vector<boost::filesystem::path> ps;
+    std::copy(boost::filesystem::directory_iterator{dump_dir},
+              boost::filesystem::directory_iterator{},
               std::back_inserter(ps));
-    std::sort(ps.begin(), ps.end(),[](const path& lhs, const path& rhs){
-        return lhs.compare(rhs) < 0;
-      });
+    std::sort(ps.begin(),
+              ps.end(),
+              [](const boost::filesystem::path &lhs,
+                 const boost::filesystem::path &rhs) {
+                return lhs.compare(rhs) < 0;
+              });
     return ps;
   }();
 
   auto const missing =
-      std::find_if(files.cbegin(), files.cend(), [id = 0](const path &p) mutable {
-        ++id;
-        return id_to_name(id) != p.filename();
-      });
-  std::for_each(missing, files.cend(), [](const path &p) {
-    remove(p);
+      std::find_if(files.cbegin(),
+                   files.cend(),
+                   [id = 0](const boost::filesystem::path &p) mutable {
+                     ++id;
+                     return id_to_name(id) != p.filename();
+                   });
+  std::for_each(missing, files.cend(), [](const boost::filesystem::path &p) {
+    boost::filesystem::remove(p);
   });
   return missing - files.cbegin();
 }
@@ -112,7 +114,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   }
 
   auto next_id = id;
-  const auto file_name = boost::filesystem::path{dump_dir_}/id_to_name(id);
+  const auto file_name = boost::filesystem::path{dump_dir_} / id_to_name(id);
 
   // Write block to binary file
   if (boost::filesystem::exists(file_name)) {
@@ -121,7 +123,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
     return;
   }
   // New file will be created
-  std::ofstream file(file_name.native(), std::ofstream::binary);
+  boost::filesystem::ofstream file(file_name.native(), std::ofstream::binary);
   if (not file.is_open()) {
     log_->warn("Cannot open file by index {} for writing", id);
     return;
@@ -138,7 +140,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
 }
 
 nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
-  const auto filename = boost::filesystem::path{dump_dir_}/id_to_name(id);
+  const auto filename = boost::filesystem::path{dump_dir_} / id_to_name(id);
   if (not boost::filesystem::exists(filename)) {
     log_->info("get({}) file not found", id);
     return nonstd::nullopt;
