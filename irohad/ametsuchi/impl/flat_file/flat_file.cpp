@@ -18,16 +18,13 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include <dirent.h>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <fstream>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;
 
 const uint32_t DIGIT_CAPACITY = 16;
-
-// TODO 19/08/17 Muratov rework separator with platform independent approach
-// IR-495 #goodfirstissue
-const std::string SEPARATOR = "/";
 
 /**
  * Convert id to string repr
@@ -88,17 +85,6 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
   return missing - files.cbegin();
 }
 
-/**
- * Compute size of file in bytes
- * @param filename - file for processing
- * @return number of bytes contains in file
- */
-long file_size(const std::string &filename) {
-  struct stat stat_buf {};
-  int rc = stat(filename.c_str(), &stat_buf);
-  return rc == 0 ? stat_buf.st_size : 0u;
-}
-
 // ----------| public API |----------
 
 std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
@@ -126,7 +112,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   }
 
   auto next_id = id;
-  auto file_name = dump_dir_ + SEPARATOR + id_to_name(id);
+  const auto file_name = boost::filesystem::path{dump_dir_}/id_to_name(id);
 
   // Write block to binary file
   if (boost::filesystem::exists(file_name)) {
@@ -135,9 +121,10 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
     return;
   }
   // New file will be created
-  std::ofstream file(file_name, std::ofstream::binary);
+  std::ofstream file(file_name.native(), std::ofstream::binary);
   if (not file.is_open()) {
     log_->warn("Cannot open file by index {} for writing", id);
+    return;
   }
 
   auto val_size =
@@ -151,15 +138,15 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
 }
 
 nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
-  std::string filename = dump_dir_ + SEPARATOR + id_to_name(id);
+  const auto filename = boost::filesystem::path{dump_dir_}/id_to_name(id);
   if (not boost::filesystem::exists(filename)) {
     log_->info("get({}) file not found", id);
     return nonstd::nullopt;
   }
-  auto fileSize = file_size(filename);
+  const auto fileSize = boost::filesystem::file_size(filename);
   std::vector<uint8_t> buf;
   buf.resize(fileSize);
-  std::ifstream file(filename, std::ifstream::binary);
+  boost::filesystem::ifstream file(filename, std::ifstream::binary);
   if (not file.is_open()) {
     log_->info("get({}) problem with opening file", id);
     return nonstd::nullopt;
