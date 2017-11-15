@@ -237,16 +237,15 @@ namespace iroha_cli {
       auto roles = parser::parseValue<bool>(params[7]);
       auto create_account = parser::parseValue<bool>(params[8]);
 
-      if (not read_self.has_value() or not edit_self.has_value()
-          or not read_all.has_value()
-          or not transfer_receive.has_value()
-          or not asset_create.has_value()
-          or not create_domain.has_value()
-          or not roles.has_value()
-          or not create_account.has_value()) {
+      if (not(read_self and edit_self and read_all and transfer_receive
+              and asset_create
+              and create_domain
+              and roles
+              and create_account)) {
         std::cout << "Wrong format for permission" << std::endl;
         return nullptr;
       }
+
       std::set<std::string> perms;
       if (read_self.value()) {
         perms.insert(read_self_group.begin(), read_self_group.end());

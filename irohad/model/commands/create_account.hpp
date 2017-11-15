@@ -49,7 +49,7 @@ namespace iroha {
 
       bool operator==(const Command &command) const override;
 
-      CreateAccount() { json_data = "{}"; }
+      CreateAccount() : json_data("{}") {}
 
       CreateAccount(const std::string &account_name,
                     const std::string &domain_id,
