@@ -22,6 +22,7 @@
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_domain.hpp"
 #include "model/commands/create_role.hpp"
+#include "model/commands/set_account_detail.hpp"
 #include "model/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
@@ -32,7 +33,7 @@ using namespace iroha::model;
  * Fixture for yuna storage test. Creates two account, one containing age
  * information in json field, another has empty json information
  */
-class YunaTest : public AmetsuchiTest {
+class KVTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
@@ -72,6 +73,13 @@ class YunaTest : public AmetsuchiTest {
     createAccount2.json_data = "{}";
     txn1_1.commands.push_back(std::make_shared<CreateAccount>(createAccount2));
 
+    // Set age for user2
+    SetAccountDetail setAccount2Age;
+    setAccount2Age.account_id = account_name2 + "@" + domain_id;
+    setAccount2Age.key = "age";
+    setAccount2Age.value = "24";
+    txn1_1.commands.push_back(std::make_shared<SetAccountDetail>(setAccount2Age));
+
     Block block1;
     block1.height = 1;
     block1.transactions.push_back(txn1_1);
@@ -100,11 +108,11 @@ class YunaTest : public AmetsuchiTest {
 };
 
 /**
- * @given storage with account containing json data
+ * @given storage with account of user1 containing json data
  * @when get account detail query is invoked
- * @then the requested information is returned
+ * @then the requested information of user1 is returned
  */
-TEST_F(YunaTest, GetAccountDetail) {
+TEST_F(KVTest, GetAccountDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
   auto account = wsv_query->getAccount(account_id1);
   ASSERT_TRUE(account);
@@ -115,4 +123,17 @@ TEST_F(YunaTest, GetAccountDetail) {
   auto age = wsv_query->getAccountDetail(account_id1, "age");
   ASSERT_TRUE(age);
   ASSERT_EQ(age.value(), "30");
+}
+
+/**
+ * @given storage with account containing age inserted using SetAccountDetail
+ * @when get account detail is invoked
+ * @then correct age of user2 is returned
+ */
+TEST_F(KVTest, SetAccountDetail) {
+  auto account_id2 = account_name2 + "@" + domain_id;
+  auto age = wsv_query->getAccountDetail(account_id2, "age");
+
+  ASSERT_TRUE(age);
+  ASSERT_EQ(age.value(), "24");
 }
