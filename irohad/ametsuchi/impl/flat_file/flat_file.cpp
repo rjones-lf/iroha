@@ -51,16 +51,6 @@ Identifier name_to_id(const std::string &name) {
 }
 
 /**
- * Check if file exists
- * @param name - full path to file
- * @return true, if exists
- */
-bool file_exist(const std::string &name) {
-  struct stat buffer {};
-  return stat(name.c_str(), &buffer) == 0;
-}
-
-/**
  * Remove file from folder
  * @param dump_dir - target dir
  * @param id - identifier of file
@@ -153,7 +143,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   auto file_name = dump_dir_ + SEPARATOR + id_to_name(id);
 
   // Write block to binary file
-  if (file_exist(file_name)) {
+  if (boost::filesystem::exists(file_name)) {
     // File already exist
     log_->warn("insertion for {} failed, because file already exists", id);
     return;
@@ -176,7 +166,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
 
 nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
   std::string filename = dump_dir_ + SEPARATOR + id_to_name(id);
-  if (not file_exist(filename)) {
+  if (not boost::filesystem::exists(filename)) {
     log_->info("get({}) file not found", id);
     return nonstd::nullopt;
   }
