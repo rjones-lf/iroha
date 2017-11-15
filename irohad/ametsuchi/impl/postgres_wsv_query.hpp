@@ -37,6 +37,8 @@ namespace iroha {
 
       nonstd::optional<model::Account> getAccount(
           const std::string &account_id) override;
+      nonstd::optional<std::string> getAccountDetail(
+          const std::string &account_id, const std::string &detail) override;
       nonstd::optional<std::vector<pubkey_t>> getSignatories(
           const std::string &account_id) override;
       nonstd::optional<model::Asset> getAsset(
@@ -48,7 +50,8 @@ namespace iroha {
       nonstd::optional<model::Domain> getDomain(
           const std::string &domain_id) override;
       bool hasAccountGrantablePermission(
-          const std::string &permitee_account_id, const std::string &account_id,
+          const std::string &permitee_account_id,
+          const std::string &account_id,
           const std::string &permission_id) override;
 
      private:

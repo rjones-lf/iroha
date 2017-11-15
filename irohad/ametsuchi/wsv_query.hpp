@@ -45,10 +45,10 @@ namespace iroha {
        * @param permission_id
        * @return true if has permission, false otherwise
        */
-      virtual bool
-      hasAccountGrantablePermission(const std::string &permitee_account_id,
-                                    const std::string &account_id,
-                                    const std::string &permission_id) = 0;
+      virtual bool hasAccountGrantablePermission(
+          const std::string &permitee_account_id,
+          const std::string &account_id,
+          const std::string &permission_id) = 0;
 
       /**
        * Get iroha domain
@@ -85,6 +85,8 @@ namespace iroha {
       virtual nonstd::optional<model::Account> getAccount(
           const std::string &account_id) = 0;
 
+      virtual nonstd::optional<std::string> getAccountDetail(
+          const std::string &account_id, const std::string &detail) = 0;
 
       /**
        * Get signatories of account by user account_id
