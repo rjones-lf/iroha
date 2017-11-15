@@ -90,18 +90,26 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
 
   using namespace boost::filesystem;
 
-  Identifier id = 0u;
+  auto const files = [&dump_dir] {
+    std::vector<path> ps;
+    std::copy(directory_iterator{dump_dir},
+              directory_iterator{},
+              std::back_inserter(ps));
+    std::sort(ps.begin(), ps.end(),[](const path& lhs, const path& rhs){
+        return lhs.compare(rhs) < 0;
+      });
+    return ps;
+  }();
+
   auto const missing =
-      std::find_if(directory_iterator{dump_dir},
-                   directory_iterator{},
-                   [&id](const directory_entry &d) mutable {
-                     ++id;
-                     return id_to_name(id) != d.path().filename();
-                   });
-  std::for_each(missing, directory_iterator{}, [](const directory_entry &d) {
-    remove(d.path());
+      std::find_if(files.cbegin(), files.cend(), [id = 0](const path &p) mutable {
+        ++id;
+        return id_to_name(id) != p.filename();
+      });
+  std::for_each(missing, files.cend(), [](const path &p) {
+    remove(p);
   });
-  return id;
+  return missing - files.cbegin();
 }
 
 /**
