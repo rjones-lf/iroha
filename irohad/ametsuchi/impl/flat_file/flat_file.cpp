@@ -92,10 +92,8 @@ nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
 std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
-  // TODO 19/08/17 Muratov change creating folder with system independent
-  // approach IR-496 #goodfirstissue
-  if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
-    if (errno != EEXIST) {
+  if (boost::filesystem::create_directory(path)) {
+    if (!boost::filesystem::is_directory(path)) {
       log_->error("Cannot create storage dir: {}", path);
     }
   }
