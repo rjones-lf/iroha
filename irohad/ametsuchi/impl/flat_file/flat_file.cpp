@@ -25,67 +25,59 @@ using namespace iroha::ametsuchi;
 
 const uint32_t DIGIT_CAPACITY = 16;
 
-/**
- * Convert id to string repr
- * @param id - for conversion
- * @return string repr of identifier
- */
-std::string id_to_name(Identifier id) {
-  std::string new_id(DIGIT_CAPACITY, '\0');
-  std::sprintf(&new_id[0], "%016u", id);
-  return new_id;
-}
-
-/**
- * Convert string to identifier
- * @param name - string for conversion
- * @return numeric identifier
- */
-Identifier name_to_id(const std::string &name) {
-  std::string::size_type sz;
-  return static_cast<Identifier>(std::stoul(name, &sz));
-}
-
-/**
- * Checking consistency of storage for provided folder
- * If some block in the middle is missing all blocks following it are deleted
- * @param dump_dir - folder of storage
- * @return - last available identifier
- */
-nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
-  auto log = logger::log("FLAT_FILE");
-
-  if (dump_dir.empty()) {
-    log->error("check_consistency({}), not directory", dump_dir);
-    return nonstd::nullopt;
+namespace {
+  /**
+   * Convert id to string repr
+   * @param id - for conversion
+   * @return string repr of identifier
+   */
+  std::string id_to_name(Identifier id) {
+    std::string new_id(DIGIT_CAPACITY, '\0');
+    std::sprintf(&new_id[0], "%016u", id);
+    return new_id;
   }
 
-  auto const files = [&dump_dir] {
-    std::vector<boost::filesystem::path> ps;
-    std::copy(boost::filesystem::directory_iterator{dump_dir},
-              boost::filesystem::directory_iterator{},
-              std::back_inserter(ps));
-    std::sort(ps.begin(),
-              ps.end(),
-              [](const boost::filesystem::path &lhs,
-                 const boost::filesystem::path &rhs) {
-                return lhs.compare(rhs) < 0;
-              });
-    return ps;
-  }();
+  /**
+   * Checking consistency of storage for provided folder
+   * If some block in the middle is missing all blocks following it are deleted
+   * @param dump_dir - folder of storage
+   * @return - last available identifier
+   */
+  nonstd::optional<Identifier> check_consistency(const std::string &dump_dir) {
+    auto log = logger::log("FLAT_FILE");
 
-  auto const missing =
-      std::find_if(files.cbegin(),
-                   files.cend(),
-                   [id = 0](const boost::filesystem::path &p) mutable {
-                     ++id;
-                     return id_to_name(id) != p.filename();
-                   });
-  std::for_each(missing, files.cend(), [](const boost::filesystem::path &p) {
-    boost::filesystem::remove(p);
-  });
-  return missing - files.cbegin();
-}
+    if (dump_dir.empty()) {
+      log->error("check_consistency({}), not directory", dump_dir);
+      return nonstd::nullopt;
+    }
+
+    auto const files = [&dump_dir] {
+      std::vector<boost::filesystem::path> ps;
+      std::copy(boost::filesystem::directory_iterator{dump_dir},
+                boost::filesystem::directory_iterator{},
+                std::back_inserter(ps));
+      std::sort(ps.begin(),
+                ps.end(),
+                [](const boost::filesystem::path &lhs,
+                   const boost::filesystem::path &rhs) {
+                  return lhs.compare(rhs) < 0;
+                });
+      return ps;
+    }();
+
+    auto const missing =
+        std::find_if(files.cbegin(),
+                     files.cend(),
+                     [id = 0](const boost::filesystem::path &p) mutable {
+                       ++id;
+                       return id_to_name(id) != p.filename();
+                     });
+    std::for_each(missing, files.cend(), [](const boost::filesystem::path &p) {
+      boost::filesystem::remove(p);
+    });
+    return missing - files.cbegin();
+  }
+}  // namespace
 
 // ----------| public API |----------
 
