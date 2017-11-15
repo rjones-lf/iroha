@@ -101,7 +101,7 @@ namespace iroha {
       return;
     }
 
-    auto tx = *corresponding;
+    auto &tx = *corresponding;
     tx->signatures = merge_unique<iroha::model::SignatureHasher>(
         tx->signatures, rhs_tx->signatures);
 

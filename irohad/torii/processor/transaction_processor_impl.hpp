@@ -62,10 +62,6 @@ namespace iroha {
 
       logger::Logger log_;
 
-      /// Notify validated tx and remove it from internal sets
-      template <typename Model>
-      void notify_success(Model &&m);
-
       /// Wrapper on notifying on some hash
       void notify(const std::string &hash,
                   model::TransactionResponse::Status s);
