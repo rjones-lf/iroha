@@ -51,20 +51,6 @@ Identifier name_to_id(const std::string &name) {
 }
 
 /**
- * Remove file from folder
- * @param dump_dir - target dir
- * @param id - identifier of file
- */
-void remove(const std::string &dump_dir, std::string filename) {
-  auto f_name = dump_dir + SEPARATOR + filename;
-
-  if (std::remove(f_name.c_str()) != 0) {
-    logger::log("FLAT_FILE")
-        ->error("remove({}, {}): error on deleting file", dump_dir, filename);
-  }
-}
-
-/**
  * Checking consistency of storage for provided folder
  * If some block in the middle is missing all blocks following it are deleted
  * @param dump_dir - folder of storage
