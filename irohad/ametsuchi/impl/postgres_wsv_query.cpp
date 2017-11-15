@@ -130,8 +130,8 @@ namespace iroha {
         const std::string &account_id, const std::string &detail) {
       pqxx::result result;
       try {
-        result = transaction_.exec("SELECT data->>'" + detail
-                                   + "' FROM account WHERE account_id = "
+        result = transaction_.exec("SELECT data->>" + transaction_.quote(detail)
+                                   + " FROM account WHERE account_id = "
                                    + transaction_.quote(account_id) + ";");
       } catch (const std::exception &e) {
         log_->error(e.what());
