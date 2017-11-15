@@ -18,6 +18,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "framework/test_subscriber.hpp"
@@ -41,7 +42,7 @@ class TransactionProcessorTest : public ::testing::Test {
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
     validation = std::make_shared<MockStatelessValidator>();
-    mp = std::make_shared<MockMstProcessorDummy>();
+    mp = std::make_shared<MockMstProcessor>();
 
     rxcpp::subjects::subject<Proposal> prop_notifier;
     rxcpp::subjects::subject<Commit> commit_notifier;
@@ -65,7 +66,7 @@ class TransactionProcessorTest : public ::testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatelessValidator> validation;
   std::shared_ptr<TransactionProcessorImpl> tp;
-  std::shared_ptr<MockMstProcessorDummy> mp;
+  std::shared_ptr<MockMstProcessor> mp;
 };
 
 /**
@@ -150,7 +151,7 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
 /**
  * @given multisig tx
  * @when propagate it with big quorum
- * @then ensure after expiring it leads to STATEFUL_VALIDATION_FAILED
+ * @then ensure after expiring it leads to EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(1);
@@ -169,7 +170,7 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
     auto resp = static_cast<TransactionResponse &>(*response);
     ASSERT_EQ(resp.current_status,
               idx++ == 0 ? TransactionResponse::STATELESS_VALIDATION_SUCCESS
-                         : TransactionResponse::STATEFUL_VALIDATION_FAILED);
+                         : TransactionResponse::EXPIRED);
   });
   tp->transactionHandle(tx);
   mst_expired_notifier.get_subscriber().on_next(tx);

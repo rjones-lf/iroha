@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/join.hpp>
+#include "torii/processor/transaction_processor_impl.hpp"
+
 #include <iostream>
 #include <utility>
+
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+
 #include "crypto/hash.hpp"
 #include "endpoint.pb.h"
 #include "model/transaction_response.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
 
 namespace iroha {
   namespace torii {
@@ -36,19 +38,17 @@ namespace iroha {
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs,
         std::shared_ptr<StatelessValidator> validator,
-        std::shared_ptr<MstProcessor> mst_proc)
+        std::shared_ptr<MstProcessor> mst_processor)
         : pcs_(std::move(pcs)),
           validator_(std::move(validator)),
-          mst_proc_(std::move(mst_proc)) {
+          mst_processor_(std::move(mst_processor)) {
       log_ = logger::log("TxProcessor");
 
       // insert all txs from proposal to proposal set
       pcs_->on_proposal().subscribe([this](model::Proposal proposal) {
         for (const auto &tx : proposal.transactions) {
           proposal_set_.insert(hash(tx).to_string());
-          notifier_.get_subscriber().on_next(
-              std::make_shared<TransactionResponse>(TransactionResponse{
-                  hash(tx).to_string(), Status::STATELESS_VALIDATION_SUCCESS}));
+          notify(hash(tx).to_string(), Status::STATELESS_VALIDATION_SUCCESS);
         }
       });
 
@@ -56,54 +56,53 @@ namespace iroha {
       pcs_->on_commit().subscribe([this](auto blocks) {
         blocks.subscribe(
             // on next..
-            [this](auto block) {
+            [this](auto &&block) {
               const auto in_proposal = [this](const auto &tx) {
                 return this->proposal_set_.count(hash(tx).to_string());
               };
               boost::for_each(
                   block.transactions | boost::adaptors::filtered(in_proposal),
-                  [this](auto &t) { return this->notify_success(t); });
+                  [this](auto &t) { this->notify_success(t); });
             },
             // on complete
             [this]() {
-              boost::for_each(this->proposal_set_,
-                              [this](auto &t) { return this->notify_fail(t); });
+              boost::for_each(this->proposal_set_, [this](auto &t) {
+                return this->notify(t, Status::STATEFUL_VALIDATION_FAILED);
+              });
               this->proposal_set_.clear();
               boost::for_each(this->candidate_set_, [this](auto &t) {
-                return this->notify_commit(t);
+                return this->notify(t, Status::COMMITTED);
               });
               this->candidate_set_.clear();
             });
       });
 
-      mst_proc_->onPreparedTransactions().subscribe(
-          [this](auto tx) { return this->transactionHandle(tx); });
-      mst_proc_->onExpiredTransactions().subscribe(
-          [this](auto tx) { return this->notify_fail(hash(*tx).to_string()); });
+      mst_processor_->onPreparedTransactions().subscribe(
+          [this](auto &&tx) { return this->transactionHandle(tx); });
+      mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
+        return this->notify(hash(*tx).to_string(), Status::EXPIRED);
+      });
     }
 
     void TransactionProcessorImpl::transactionHandle(
         ConstRefTransaction transaction) {
       log_->info("handle transaction");
-      TransactionResponse response{hash(*transaction).to_string(),
-                                   Status::STATELESS_VALIDATION_FAILED};
+      auto h = hash(*transaction).to_string();
 
-      // TODO: nice place for code linearizing
-      if (validator_->validate(*transaction)) {
-        response.current_status = Status::STATELESS_VALIDATION_SUCCESS;
-        if (transaction->signatures.size() < transaction->quorum) {
-          log_->info("retrieving signatures for quorum");
-          mst_proc_->propagateTransaction(transaction);
-        } else {
-          log_->info("propagating tx");
-          pcs_->propagate_transaction(transaction);
-        }
+      if (!validator_->validate(*transaction)) {
+        log_->info("stateless validation failed");
+        notify(h, Status::STATELESS_VALIDATION_FAILED);
+        return;
       }
-      log_->info(
-          "stateless validation status: {}",
-          response.current_status == Status::STATELESS_VALIDATION_SUCCESS);
-      notifier_.get_subscriber().on_next(
-          std::make_shared<TransactionResponse>(response));
+
+      if (transaction->signatures.size() < transaction->quorum) {
+        log_->info("waiting for quorum signatures");
+        mst_processor_->propagateTransaction(transaction);
+      } else {
+        log_->info("propagating tx");
+        pcs_->propagate_transaction(transaction);
+      }
+      notify(h, Status::STATELESS_VALIDATION_SUCCESS);
     }
 
     rxcpp::observable<TxResponse>
@@ -114,23 +113,14 @@ namespace iroha {
     template <typename Model>
     void TransactionProcessorImpl::notify_success(Model &&m) {
       auto h = hash(m).to_string();
-      this->proposal_set_.erase(h);
-      this->candidate_set_.insert(h);
-      this->notifier_.get_subscriber().on_next(
-          std::make_shared<TransactionResponse>(TransactionResponse{
-              h,
-              Status::STATEFUL_VALIDATION_SUCCESS,
-          }));
+      proposal_set_.erase(h);
+      candidate_set_.insert(h);
+      notify(h, Status::STATEFUL_VALIDATION_SUCCESS);
     }
-    void TransactionProcessorImpl::notify_commit(const std::string &hash) {
-      this->notifier_.get_subscriber().on_next(
-          std::make_shared<TransactionResponse>(
-              TransactionResponse{hash, Status::COMMITTED}));
-    }
-    void TransactionProcessorImpl::notify_fail(const std::string &hash) {
-      this->notifier_.get_subscriber().on_next(
-          std::make_shared<TransactionResponse>(
-              TransactionResponse{hash, Status::STATEFUL_VALIDATION_FAILED}));
+
+    void TransactionProcessorImpl::notify(const std::string &hash, Status s) {
+      notifier_.get_subscriber().on_next(
+          std::make_shared<TransactionResponse>(hash, s));
     }
   }  // namespace torii
 }  // namespace iroha

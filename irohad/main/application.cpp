@@ -187,17 +187,18 @@ void Irohad::initMstProcessor() {
   auto mst_completer = std::make_shared<DefaultCompleter>();
   auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
   // TODO: @l4l magics should be fixed with options in cli branch
+  //            check #661 for details
   auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
       wsv, std::chrono::milliseconds(5) /*emitting period*/,
       5 /*amount per once*/);
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
-  mst_proc = std::make_shared<FairMstProcessor>(mst_transport, mst_storage,
-                                                mst_propagation, mst_time);
+  mst_processor = std::make_shared<FairMstProcessor>(mst_transport, mst_storage,
+                                                     mst_propagation, mst_time);
 }
 
 void Irohad::initTransactionCommandService() {
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
-      pcs, stateless_validator, mst_proc);
+      pcs, stateless_validator, mst_processor);
 
   command_service = std::make_unique<::torii::CommandService>(
       pb_tx_factory, tx_processor, storage);

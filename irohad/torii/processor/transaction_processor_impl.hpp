@@ -39,7 +39,7 @@ namespace iroha {
       TransactionProcessorImpl(
           std::shared_ptr<network::PeerCommunicationService> pcs,
           std::shared_ptr<validation::StatelessValidator> validator,
-          std::shared_ptr<MstProcessor> mst_proc);
+          std::shared_ptr<MstProcessor> mst_processor);
 
       void transactionHandle(ConstRefTransaction transaction) override;
 
@@ -52,7 +52,7 @@ namespace iroha {
       // processing
       std::shared_ptr<validation::StatelessValidator> validator_;
 
-      std::shared_ptr<MstProcessor> mst_proc_;
+      std::shared_ptr<MstProcessor> mst_processor_;
 
       std::unordered_set<std::string> proposal_set_;
       std::unordered_set<std::string> candidate_set_;
@@ -62,10 +62,13 @@ namespace iroha {
 
       logger::Logger log_;
 
+      /// Notify validated tx and remove it from internal sets
       template <typename Model>
       void notify_success(Model &&m);
-      void notify_commit(const std::string &hash);
-      void notify_fail(const std::string &hash);
+
+      /// Wrapper on notifying on some hash
+      void notify(const std::string &hash,
+                  model::TransactionResponse::Status s);
     };
   }  // namespace torii
 }  // namespace iroha

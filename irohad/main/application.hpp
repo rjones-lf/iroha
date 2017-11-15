@@ -180,7 +180,7 @@ class Irohad {
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
   // mst
-  std::shared_ptr<iroha::MstProcessor> mst_proc;
+  std::shared_ptr<iroha::MstProcessor> mst_processor;
 
   // transaction service
   std::unique_ptr<torii::CommandService> command_service;

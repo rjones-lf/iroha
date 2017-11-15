@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include <endpoint.pb.h>
-#include <responses.pb.h>
+#include "endpoint.pb.h"
+#include "responses.pb.h"
 
 #include "client.hpp"
 
 #include "crypto/hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "main/server_runner.hpp"
@@ -60,7 +60,7 @@ class ClientServerTest : public testing::Test {
       // ----------- Command Service --------------
       pcsMock = std::make_shared<MockPeerCommunicationService>();
       svMock = std::make_shared<MockStatelessValidator>();
-      mst = std::make_shared<iroha::torii::MockMstProcessorDummy>();
+      mst = std::make_shared<iroha::MockMstProcessor>();
       wsv_query = std::make_shared<MockWsvQuery>();
       block_query = std::make_shared<MockBlockQuery>();
       storageMock = std::make_shared<MockStorage>();
@@ -119,7 +119,7 @@ class ClientServerTest : public testing::Test {
   std::thread th;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<MockStatelessValidator> svMock;
-  std::shared_ptr<iroha::torii::MockMstProcessorDummy> mst;
+  std::shared_ptr<iroha::MockMstProcessor> mst;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;

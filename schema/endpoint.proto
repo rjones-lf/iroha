@@ -16,6 +16,7 @@ enum TxStatus {
   COMMITTED = 4;
   ON_PROCESS = 5;
   NOT_RECEIVED = 6;
+  EXPIRED = 7;
 }
 
 message ToriiResponse {

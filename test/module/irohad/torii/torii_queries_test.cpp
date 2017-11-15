@@ -18,6 +18,7 @@ limitations under the License.
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 // to compare pb amount and iroha amount
@@ -53,7 +54,7 @@ class ToriiQueriesTest : public testing::Test {
       // ----------- Command Service --------------
       pcsMock = std::make_shared<MockPeerCommunicationService>();
       statelessValidatorMock = std::make_shared<MockStatelessValidator>();
-      mst = std::make_shared<MockMstProcessorDummy>();
+      mst = std::make_shared<iroha::MockMstProcessor>();
       wsv_query = std::make_shared<MockWsvQuery>();
       block_query = std::make_shared<MockBlockQuery>();
       storageMock = std::make_shared<MockStorage>();
@@ -117,7 +118,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<MockStatelessValidator> statelessValidatorMock;
   std::shared_ptr<MockStorage> storageMock;
-  std::shared_ptr<MockMstProcessorDummy> mst;
+  std::shared_ptr<iroha::MockMstProcessor> mst;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;

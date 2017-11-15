@@ -28,4 +28,5 @@ target_link_libraries(mst_processor
     mst_transport
     mst_state
     logger
+    time64
     )

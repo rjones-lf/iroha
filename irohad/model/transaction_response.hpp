@@ -47,12 +47,17 @@ namespace iroha {
         /// transaction is received, but not validated
         ON_PROCESS,
         /// transaction is not in handler map
-        NOT_RECEIVED
+        NOT_RECEIVED,
+        /// tx is too old
+        EXPIRED,
       };
 
       Status current_status{};
 
       virtual ~TransactionResponse() = default;
+
+      TransactionResponse(std::string tx_hash, Status stauts)
+          : tx_hash(tx_hash), current_status(stauts) {}
     };
   }  // namespace model
 }  // namespace iroha

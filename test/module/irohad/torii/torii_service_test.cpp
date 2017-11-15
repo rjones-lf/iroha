@@ -19,6 +19,7 @@ limitations under the License.
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include <endpoint.pb.h>
@@ -84,7 +85,7 @@ class ToriiServiceTest : public testing::Test {
       pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
           prop_notifier_, commit_notifier_);
       statelessValidatorMock = std::make_shared<MockStatelessValidator>();
-      mst = std::make_shared<MockMstProcessorDummy>();
+      mst = std::make_shared<iroha::MockMstProcessor>();
       wsv_query = std::make_shared<MockWsvQuery>();
       storageMock = std::make_shared<MockStorage>();
       block_query = std::make_shared<MockBlockQuery>();
@@ -149,7 +150,7 @@ class ToriiServiceTest : public testing::Test {
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
   std::shared_ptr<MockStatelessValidator> statelessValidatorMock;
-  std::shared_ptr<MockMstProcessorDummy> mst;
+  std::shared_ptr<iroha::MockMstProcessor> mst;
 };
 
 TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
