@@ -130,8 +130,9 @@ namespace iroha {
         const std::string &account_id, const std::string &detail) {
       pqxx::result result;
       try {
-        result = transaction_.exec("SELECT data->>'" + detail + "' FROM account WHERE account_id = "
-                                       + transaction_.quote(account_id) + ";");
+        result = transaction_.exec("SELECT data->>'" + detail
+                                   + "' FROM account WHERE account_id = "
+                                   + transaction_.quote(account_id) + ";");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return nullopt;
@@ -143,7 +144,11 @@ namespace iroha {
       auto row = result.at(0);
       std::string res;
       row.at(0) >> res;
-      log_->info(res);
+
+      // if res is empty, then that key does not exist for this account
+      if (res.empty()) {
+        return nullopt;
+      }
       return res;
     }
 

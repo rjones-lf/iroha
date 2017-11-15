@@ -30,7 +30,7 @@ using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
 /**
- * Fixture for yuna storage test. Creates two account, one containing age
+ * Fixture for kv storage test. Creates two account, one containing age
  * information in json field, another has empty json information
  */
 class KVTest : public AmetsuchiTest {
@@ -123,6 +123,19 @@ TEST_F(KVTest, GetAccountDetail) {
   auto age = wsv_query->getAccountDetail(account_id1, "age");
   ASSERT_TRUE(age);
   ASSERT_EQ(age.value(), "30");
+}
+
+/**
+ * @given storage with account1 containing json data
+ * @when non existing detail is queried using GetAccountDetail
+ * @then nullopt is returned
+ */
+TEST_F(KVTest, GetNonexistingDetail) {
+  auto account_id1 = account_name1 + "@" + domain_id;
+  auto account = wsv_query->getAccount(account_id1);
+
+  auto age = wsv_query->getAccountDetail(account_id1, "nonexisting-field");
+  ASSERT_FALSE(age);
 }
 
 /**
