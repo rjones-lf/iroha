@@ -20,6 +20,10 @@ message GetAccountAssetTransactions {
   string asset_id = 2;
 }
 
+message GetTransactions {
+  repeated string tx_hashes = 1;
+}
+
 message GetAccountAssets {
   string account_id = 1;
   string asset_id = 2;
@@ -47,13 +51,14 @@ message Query {
        GetSignatories get_account_signatories = 4;
        GetAccountTransactions get_account_transactions = 5;
        GetAccountAssetTransactions get_account_asset_transactions = 6;
-       GetAccountAssets get_account_assets = 7;
-       GetRoles get_roles = 8;
-       GetAssetInfo get_asset_info = 9;
-       GetRolePermissions get_role_permissions = 10;
+       GetTransactions get_transactions = 7;
+       GetAccountAssets get_account_assets = 8;
+       GetRoles get_roles = 9;
+       GetAssetInfo get_asset_info = 10;
+       GetRolePermissions get_role_permissions = 11;
      }
      // used to prevent replay attacks.
-     uint64 query_counter = 11;
+     uint64 query_counter = 12;
   }
 
   Payload payload = 1;

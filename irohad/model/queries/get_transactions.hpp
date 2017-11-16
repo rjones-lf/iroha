@@ -18,6 +18,7 @@
 #ifndef IROHA_GET_TRANSACTIONS_HPP
 #define IROHA_GET_TRANSACTIONS_HPP
 
+#include <nonstd/optional.hpp>
 #include <model/query.hpp>
 #include <string>
 
@@ -47,6 +48,16 @@ namespace iroha {
        * Account identifier
        */
       std::string account_id{};
+    };
+
+    /**
+     * Query for getting transactions of given transactions' hashes
+     */
+    struct GetTransactions : Query {
+      /**
+       * Hashes of the transaction to be retrieved
+       */
+      std::vector<iroha::hash256_t> tx_hashes{};
     };
   }  // namespace model
 }  // namespace iroha
