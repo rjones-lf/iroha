@@ -16,6 +16,7 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include <array>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include "common/files.hpp"
@@ -31,9 +32,10 @@ namespace {
    * @return string repr of identifier
    */
   std::string id_to_name(Identifier id) {
-    std::string new_id(DIGIT_CAPACITY, '\0');
-    std::sprintf(&new_id[0], "%016u", id);
-    return new_id;
+    std::array<char, DIGIT_CAPACITY + 1> buf;
+    std::snprintf(buf.begin(), buf.size(), "%016u", id);
+    // drop the trailing null character written by snprintf.
+    return {buf.begin(), buf.end() - 1};
   }
 
   /**
