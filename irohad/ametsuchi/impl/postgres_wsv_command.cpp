@@ -111,15 +111,19 @@ namespace iroha {
     bool PostgresWsvCommand::insertAccount(const model::Account &account) {
       try {
         transaction_.exec(
-            "INSERT INTO account(\n"
-            "            account_id, domain_id, quorum, "
-            "transaction_count \n"
-            "            )\n"
-            "    VALUES (" +
-            transaction_.quote(account.account_id) + ", " +
-            transaction_.quote(account.domain_id) + ", " +
-            transaction_.quote(account.quorum) + ", " +
-            /*account.transaction_count*/ transaction_.quote(0) + ");");
+            "INSERT INTO account(account_id, domain_id, quorum, "
+            "transaction_count, data) VALUES ("
+            + transaction_.quote(account.account_id)
+            + ", "
+            + transaction_.quote(account.domain_id)
+            + ", "
+            + transaction_.quote(account.quorum)
+            + ", "
+            // Transaction counter
+            + transaction_.quote(0)
+            + ", "
+            + transaction_.quote(account.json_data)
+            + ");");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return false;

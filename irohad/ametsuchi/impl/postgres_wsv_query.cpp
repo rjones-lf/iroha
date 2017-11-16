@@ -127,6 +127,7 @@ namespace iroha {
       row.at("account_id") >> account.account_id;
       row.at("domain_id") >> account.domain_id;
       row.at("quorum") >> account.quorum;
+      row.at("data") >> account.json_data;
       //      row.at("transaction_count") >> ?
       return account;
     }

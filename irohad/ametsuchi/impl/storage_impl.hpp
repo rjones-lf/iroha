@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS account (
     domain_id character varying(164) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
     transaction_count int NOT NULL DEFAULT 0,
+    data JSONB,
     PRIMARY KEY (account_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (

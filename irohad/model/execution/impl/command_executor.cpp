@@ -343,6 +343,7 @@ namespace iroha {
 
       account.domain_id = create_account.domain_id;
       account.quorum = 1;
+      account.json_data = create_account.json_data;
       auto domain = queries.getDomain(create_account.domain_id);
       if (not domain.has_value()) {
         log_->error("Domain {} not found", create_account.domain_id);
