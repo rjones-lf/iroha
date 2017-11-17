@@ -164,6 +164,16 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions){
   ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
 }
 
+TEST(QuerySerializerTest, SerialzieGetTransactions) {
+  QueryGenerator queryGenerator;
+  iroha::hash256_t hash1, hash2;
+  hash1[0] = 1, hash2[0] = 2;
+  auto val =
+    queryGenerator.generateGetTransactions(0, "admin", 0, {hash1, hash2});
+  val->signature = generateSignature(42);
+  runQueryTest(val);
+}
+
 TEST(QuerySerializerTest, SerializeGetSignatories){
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
@@ -196,5 +206,3 @@ TEST(QuerySerializerTest, get_role_permissions){
   val->signature = generateSignature(42);
   runQueryTest(val);
 }
-
-

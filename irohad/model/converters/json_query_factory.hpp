@@ -65,6 +65,8 @@ namespace iroha {
             const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAccountAssetTransactions(
             const rapidjson::Value &obj_query);
+        optional_ptr<Query> deserializeGetTransactions(
+            const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAccountAssets(
             const rapidjson::Value &obj_query);
         optional_ptr<Query> deserializeGetAssetInfo(
@@ -89,6 +91,8 @@ namespace iroha {
         void serializeGetAccountAssetTransactions(
             rapidjson::Document &json_doc,
             std::shared_ptr<const model::Query> query);
+        void serializeGetTransactions(
+            rapidjson::Document &json_doc, std::shared_ptr<const Query> query);
         void serializeGetSignatories(rapidjson::Document &json_doc,
                                      std::shared_ptr<const model::Query> query);
 
