@@ -91,6 +91,17 @@ namespace iroha {
         return query;
       }
 
+      std::shared_ptr<GetTransactions> QueryGenerator::generateGetTransactions(
+          ts64_t timestamp, const std::string& creator, uint64_t query_counter,
+          const std::vector<iroha::hash256_t>& tx_hashes) {
+        auto query = std::make_shared<GetTransactions>();
+        query->created_ts = timestamp;
+        query->creator_account_id = creator;
+        query->query_counter = query_counter;
+        query->tx_hashes = tx_hashes;
+        return query;
+      }
+
       std::shared_ptr<GetAssetInfo> QueryGenerator::generateGetAssetInfo() {
         auto query = std::make_shared<GetAssetInfo>("coin#test");
         query->created_ts = 0;

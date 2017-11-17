@@ -53,6 +53,10 @@ namespace iroha {
             ts64_t timestamp, std::string creator, uint64_t query_counter,
             std::string account_id, std::string asset_id);
 
+        std::shared_ptr<GetTransactions> generateGetTransactions(
+            ts64_t timestamp, const std::string& creator, uint64_t query_counter,
+            const std::vector<iroha::hash256_t>& tx_hahses);
+
         /**
          * Generate default query GetAssetInfo
          * @return default GetAssetInfo
