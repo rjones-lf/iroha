@@ -264,6 +264,49 @@ namespace iroha {
           const Signature &signature,
           rapidjson::Document::AllocatorType &allocator);
 
+
+      /**
+       * Deserialize JSON array to std::vector<Model>, for applying to converter
+       * function
+       * @tparam T - Model type
+       * @tparam F - Mapping function type
+       * @param values - JSON array
+       * @param mapper - Mapping function to apply each element
+       * @return Deserialized array on success, nullopt otherwise
+       */
+      template <typename T, typename F>
+      nonstd::optional<T> deserializeArray(
+          const rapidjson::Value::ConstArray &values, const F &mapper) {
+        auto accumulateString = [&mapper](auto init, auto &x) {
+          return init | [&x, &mapper](auto commands) {
+            return (x.IsString() ? nonstd::make_optional(mapper(x.GetString()))
+                                 : nonstd::nullopt)
+                   | [&commands](auto command) {
+              commands.push_back(command);
+              return nonstd::make_optional(commands);
+            };
+          };
+        };
+        return std::accumulate(values.begin(),
+                               values.end(),
+                               nonstd::make_optional<T>(),
+                               accumulateString);
+      }
+
+      /**
+       * Deserialize JSON array to std::vector<Model>, for applying to converter
+       * function
+       * @tparam T - Model type
+       * @tparam Array - JSON Array type, for perfect forwarding
+       * @param values - JSON array
+       * @return Deserialized array on success, nullopt otherwise
+       */
+      template <typename T, typename Array>
+      nonstd::optional<T> deserializeArray(Array &&values) {
+        return deserializeArray(std::forward<Array>(values),
+                                [](auto x) { return x; });
+      }
+
       /**
        * Try to parse JSON from string
        * @param string - string for parsing
