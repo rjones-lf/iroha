@@ -38,7 +38,7 @@ TEST(HandlerTest, QueryRegistration) {
 
   QueryRegistry registry;
 
-  ASSERT_EQ(8, registry.query_handler.types().size());
+  ASSERT_EQ(9, registry.query_handler.types().size());
 }
 
 TEST(HandlerTest, QueryResponseRegistration) {
