@@ -16,9 +16,10 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include <array>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <iomanip>
+#include <sstream>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;
@@ -27,15 +28,21 @@ namespace {
   const uint32_t DIGIT_CAPACITY = 16;
 
   /**
-   * Convert id to string repr
+   * Convert id to a string representation. The string representation is always
+   * DIGIT_CAPACITY-character width regardless of the value of `id`.
+   * If the length of the string representation of `id` is less than
+   * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
+   *
+   * For example, if str_rep(`id`) is "123", then the returned value is
+   * "0000000000000123".
+   *
    * @param id - for conversion
    * @return string repr of identifier
    */
   std::string id_to_name(Identifier id) {
-    std::array<char, DIGIT_CAPACITY + 1> buf;
-    std::snprintf(buf.begin(), buf.size(), "%016u", id);
-    // drop the trailing null character written by snprintf.
-    return {buf.begin(), buf.end() - 1};
+    std::ostringstream os;
+    os << std::setw(DIGIT_CAPACITY) << std::setfill('0') << id;
+    return os.str();
   }
 
   /**
