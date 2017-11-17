@@ -88,6 +88,14 @@ TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
+TEST(PbQueryFactoryTest, SerializeGetTransactions){
+  iroha::hash256_t hash1, hash2;
+  hash1[0] = 1;
+  hash2[1] = 2;
+  auto query = QueryGenerator{}.generateGetTransactions(0, "admin", 1, {hash1, hash2});
+  runQueryTest(query);
+}
+
 TEST(PbQueryFactoryTest, SerializeGetSignatories){
   PbQueryFactory query_factory;
   QueryGenerator query_generator;

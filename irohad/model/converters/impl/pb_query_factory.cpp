@@ -39,6 +39,8 @@ namespace iroha {
             &PbQueryFactory::serializeGetAccountTransactions;
         serializers_[typeid(GetAccountAssetTransactions)] =
             &PbQueryFactory::serializeGetAccountAssetTransactions;
+        serializers_[typeid(GetTransactions)] =
+            &PbQueryFactory::serializeGetTransactions;
         serializers_[typeid(GetSignatories)] =
             &PbQueryFactory::serializeGetSignatories;
         serializers_[typeid(GetRolePermissions)] =
@@ -96,6 +98,19 @@ namespace iroha {
               auto query = GetAccountTransactions();
               query.account_id = pb_cast.account_id();
               val = std::make_shared<model::GetAccountTransactions>(query);
+              break;
+            }
+            case Query_Payload::QueryCase::kGetTransactions: {
+              // Convert to get transactions
+              const auto &pb_cast = pl.get_transactions();
+              auto query = GetTransactions();
+              std::for_each(pb_cast.tx_hashes().begin(),
+                            pb_cast.tx_hashes().end(),
+                            [&query](auto tx_hash) {
+                              query.tx_hashes.push_back(
+                                  iroha::hash256_t::from_string(tx_hash));
+                            });
+              val = std::make_shared<GetTransactions>(query);
               break;
             }
             case Query_Payload::QueryCase::kGetRoles: {
@@ -203,6 +218,23 @@ namespace iroha {
                                 ->mutable_get_account_asset_transactions();
         pb_query_mut->set_account_id(account_id);
         pb_query_mut->set_asset_id(asset_id);
+        return pb_query;
+      }
+
+      protocol::Query PbQueryFactory::serializeGetTransactions(
+          std::shared_ptr<const Query> query) const {
+        protocol::Query pb_query;
+        serializeQueryMetaData(pb_query, query);
+        auto tmp = std::static_pointer_cast<const GetTransactions>(query);
+        auto tx_hashes = tmp->tx_hashes;
+        auto pb_query_mut =
+          pb_query.mutable_payload()->mutable_get_transactions();
+        std::for_each(tmp->tx_hashes.begin(),
+                      tmp->tx_hashes.end(),
+                      [&pb_query_mut](auto tx_hash) {
+                        auto adder = pb_query_mut->add_tx_hashes();
+                        *adder = tx_hash.to_string();
+                      });
         return pb_query;
       }
 
