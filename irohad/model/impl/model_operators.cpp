@@ -109,7 +109,8 @@ namespace iroha {
       auto create_account = static_cast<const CreateAccount &>(command);
       return create_account.pubkey == pubkey
           && create_account.domain_id == domain_id
-          && create_account.account_name == account_name;
+          && create_account.account_name == account_name
+          && create_account.json_data == create_account.json_data;
     }
 
     /* SetAccountDetail */

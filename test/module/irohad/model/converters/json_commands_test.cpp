@@ -168,6 +168,7 @@ TEST_F(JsonCommandTest, create_account) {
   auto orig_command = std::make_shared<CreateAccount>();
   orig_command->account_name = "keker";
   orig_command->domain_id = "cheburek";
+  orig_command->json_data = R"({"key" : "value"})";
 
   auto json_command = factory.serializeCreateAccount(orig_command);
   auto serial_command = factory.deserializeCreateAccount(json_command);
