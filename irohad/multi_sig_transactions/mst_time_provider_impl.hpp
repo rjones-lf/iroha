@@ -18,7 +18,6 @@
 #ifndef IROHA_MST_TIME_PROVIDER_IMPL_HPP
 #define IROHA_MST_TIME_PROVIDER_IMPL_HPP
 
-#include <chrono>
 #include "datetime/time.hpp"
 #include "multi_sig_transactions/mst_time_provider.hpp"
 
