@@ -189,8 +189,8 @@ void Irohad::initMstProcessor() {
   // TODO: @l4l magics should be fixed with options in cli branch
   //            check #661 for details
   auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-      wsv, std::chrono::milliseconds(5) /*emitting period*/,
-      5 /*amount per once*/);
+      wsv, std::chrono::seconds(5) /*emitting period*/,
+      2 /*amount per once*/);
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
   mst_processor = std::make_shared<FairMstProcessor>(mst_transport, mst_storage,
                                                      mst_propagation, mst_time);
