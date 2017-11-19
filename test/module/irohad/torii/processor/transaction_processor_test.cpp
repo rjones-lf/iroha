@@ -70,7 +70,9 @@ class TransactionProcessorTest : public ::testing::Test {
 };
 
 /**
- * Transaction processor test case, when handling stateless valid transaction
+ * @given simple tx and permanently true tx validator
+ * @when transaction_processor handle it
+ * @then it returns STATELESS_VALIDATION_SUCCESS
  */
 TEST_F(TransactionProcessorTest, ValidTransaction) {
   EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(0);
@@ -93,7 +95,9 @@ TEST_F(TransactionProcessorTest, ValidTransaction) {
 }
 
 /**
- * Transaction processor test case, when handling invalid transaction
+ * @given simple tx and permanently false tx validator
+ * @when transaction_processor handle it
+ * @then it returns STATELESS_VALIDATION_FAILED
  */
 TEST_F(TransactionProcessorTest, InvalidTransaction) {
   EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(0);
@@ -116,8 +120,8 @@ TEST_F(TransactionProcessorTest, InvalidTransaction) {
 }
 
 /**
- * @given multisig tx
- * @when propagate it with big quorum
+ * @given multisig tx and permanently true tx validator
+ * @when transaction_processor handle it
  * @then it goes to mst and after signing goes to PeerCommunicationService
  */
 TEST_F(TransactionProcessorTest, MultisigTransaction) {
@@ -149,8 +153,8 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
 }
 
 /**
- * @given multisig tx
- * @when propagate it with big quorum
+ * @given multisig tx and permanently true tx validator
+ * @when transaction_processor handle it
  * @then ensure after expiring it leads to EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
