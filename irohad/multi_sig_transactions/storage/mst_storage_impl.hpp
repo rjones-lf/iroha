@@ -32,13 +32,13 @@ namespace iroha {
      * @param target_peer - peer for searching
      * @return valid iterator for state of peer
      */
-    auto getState(ConstPeer &target_peer);
+    auto getState(const model::Peer &target_peer);
 
    public:
     // ----------------------------| interface API |----------------------------
     explicit MstStorageStateImpl(const CompleterType &completer);
 
-    auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
+    auto applyImpl(const model::Peer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) override;
 
     auto updateOwnStateImpl(const DataType &tx)
@@ -47,7 +47,7 @@ namespace iroha {
     auto getExpiredTransactionsImpl(const TimeType &current_time)
         -> decltype(getExpiredTransactions(current_time)) override;
 
-    auto getDiffStateImpl(ConstPeer &target_peer, const TimeType &current_time)
+    auto getDiffStateImpl(const model::Peer &target_peer, const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) override;
 
     auto whatsNewImpl(ConstRefState new_state) const
@@ -57,7 +57,7 @@ namespace iroha {
     // ---------------------------| private fields |----------------------------
 
     const CompleterType completer_;
-    std::unordered_map<ConstPeer, MstState, iroha::model::PeerHasher>
+    std::unordered_map<const model::Peer, MstState, iroha::model::PeerHasher>
         peer_states_;
     MstState own_state_;
   };
