@@ -18,6 +18,8 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 #include <iomanip>
 #include <sstream>
 #include "common/files.hpp"
@@ -73,17 +75,17 @@ namespace {
       return ps;
     }();
 
-    auto const missing =
-        std::find_if(files.cbegin(),
-                     files.cend(),
-                     [id = 0](const boost::filesystem::path &p) mutable {
-                       ++id;
-                       return id_to_name(id) != p.filename();
-                     });
-    std::for_each(missing, files.cend(), [](const boost::filesystem::path &p) {
-      boost::filesystem::remove(p);
-    });
-    return missing - files.cbegin();
+    auto const missing = boost::range::find_if(
+        files | boost::adaptors::indexed(1), [](const auto &it) {
+          return id_to_name(it.index()) != it.value().filename();
+        });
+
+    std::for_each(
+        missing.get(), files.cend(), [](const boost::filesystem::path &p) {
+          boost::filesystem::remove(p);
+        });
+
+    return missing.get() - files.cbegin();
   }
 }  // namespace
 
