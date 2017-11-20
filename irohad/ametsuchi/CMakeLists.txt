@@ -18,5 +18,6 @@ target_link_libraries(ametsuchi
     cpp_redis
     libs_common
     command_execution
-    Boost::filesystem
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
     )
