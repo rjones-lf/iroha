@@ -120,19 +120,7 @@ namespace iroha {
           const Value &obj_query) {
         auto des = makeFieldDeserializer(obj_query);
         return make_optional_ptr<GetTransactions>()
-            | des.Array(
-                  &GetTransactions::tx_hashes,
-                  "tx_hashes",
-                  [](auto tx_hashes) {
-                    return deserializeArray<std::vector<iroha::hash256_t>>(
-                        tx_hashes, [](auto tx_hash) {
-                          auto opt = iroha::hexstringToBytestring(tx_hash);
-                          return opt.has_value()
-                              ? iroha::hash256_t::from_string(*opt)
-                              : iroha::hash256_t{};  // alternative to nullopt
-                        });
-                  })
-            | toQuery;
+            | des.Array(&GetTransactions::tx_hashes, "tx_hashes") | toQuery;
       }
 
       optional_ptr<Query> JsonQueryFactory::deserializeGetAccountAssets(

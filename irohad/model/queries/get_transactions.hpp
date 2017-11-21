@@ -18,7 +18,6 @@
 #ifndef IROHA_GET_TRANSACTIONS_HPP
 #define IROHA_GET_TRANSACTIONS_HPP
 
-#include <nonstd/optional.hpp>
 #include <model/query.hpp>
 #include <string>
 
@@ -54,10 +53,12 @@ namespace iroha {
      * Query for getting transactions of given transactions' hashes
      */
     struct GetTransactions : Query {
+      using TxHashType = iroha::hash256_t;
+      using TxHashCollectionType = std::vector<TxHashType>;
       /**
        * Hashes of the transaction to be retrieved
        */
-      std::vector<iroha::hash256_t> tx_hashes{};
+      TxHashCollectionType tx_hashes{};
     };
   }  // namespace model
 }  // namespace iroha
