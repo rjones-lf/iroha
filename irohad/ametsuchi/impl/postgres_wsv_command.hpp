@@ -63,6 +63,8 @@ namespace iroha {
           const std::string &account_id, const std::string &permission_id) override;
 
      private:
+      const auto default_tx_counter = 0;
+
       pqxx::nontransaction &transaction_;
 
       logger::Logger log_;

@@ -30,8 +30,9 @@ using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
 /**
- * Fixture for kv storage test. Creates two account, one containing age
- * information in json field, another has empty json information
+ * Fixture for kv storage test. Creates two accounts: one has predefined json
+ * information in json field, another one has json information filled using set
+ * account detail method
  */
 class KVTest : public AmetsuchiTest {
  protected:
@@ -78,7 +79,8 @@ class KVTest : public AmetsuchiTest {
     setAccount2Age.account_id = account_name2 + "@" + domain_id;
     setAccount2Age.key = "age";
     setAccount2Age.value = "24";
-    txn1_1.commands.push_back(std::make_shared<SetAccountDetail>(setAccount2Age));
+    txn1_1.commands.push_back(
+        std::make_shared<SetAccountDetail>(setAccount2Age));
 
     Block block1;
     block1.height = 1;

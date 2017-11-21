@@ -515,6 +515,8 @@ namespace iroha {
       return newSignatoriesSize >= account.value().quorum;
     }
 
+  // -----------------------|SetAccountDetail|-------------------------
+
     SetAccountDetailExecutor::SetAccountDetailExecutor() {
       log_ = logger::log("SetAccountDetailExecutor");
     }

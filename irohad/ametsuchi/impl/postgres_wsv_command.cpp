@@ -131,7 +131,7 @@ namespace iroha {
             + transaction_.quote(account.quorum)
             + ", "
             // Transaction counter
-            + transaction_.quote(0)
+            + transaction_.quote(default_tx_counter)
             + ", "
             + transaction_.quote(account.json_data)
             + ");");
@@ -296,7 +296,7 @@ namespace iroha {
             "   SET quorum=" +
             transaction_.quote(account.quorum) +
             ", transaction_count=" +
-            /*account.transaction_count*/ transaction_.quote(0) +
+            /*account.transaction_count*/ transaction_.quote(default_tx_counter) +
             "\n"
             " WHERE account_id=" +
             transaction_.quote(account.account_id) + ";");
