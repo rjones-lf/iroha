@@ -108,7 +108,6 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
   ASSERT_EQ("coin#test", casted->asset_id);
 }
 
-
 TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
   JsonQueryFactory querySerializer;
   auto json_query = R"({
@@ -125,6 +124,36 @@ TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
   })";
   auto res = querySerializer.deserialize(json_query);
   ASSERT_FALSE(res.has_value());
+}
+
+/**
+ * @given The json transaction that has valid and invalid hashes.
+ * @when Deserialize the json transaction.
+ * @then Validate the invalid hash is skipped and the only valid deserialized.
+ */
+TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
+  JsonQueryFactory queryFactory;
+  iroha::hash256_t exact_size_hash{};
+  exact_size_hash[0] = 1;
+  QueryGenerator queryGenerator;
+  auto val =
+    queryGenerator.generateGetTransactions(0, "123", 0, {exact_size_hash});
+  val->signature = generateSignature(42);
+  auto json = queryFactory.serialize(val);
+  json.erase(std::remove_if(json.begin(), json.end(), [](auto c) {
+    return std::isspace(c, std::locale{});
+  }), json.end());
+  const std::string keyword = "tx_hashes\":[";
+  const auto found_pos = json.find(keyword);
+  ASSERT_NE(found_pos, std::string::npos);
+  const auto inserted_pos = found_pos + keyword.size();
+  json = std::string{json.cbegin(), json.cbegin() + inserted_pos} + "\"123\"," +
+         std::string{json.cbegin() + inserted_pos, json.cend()};
+  auto res = queryFactory.deserialize(json);
+  ASSERT_TRUE(res.has_value());
+  auto casted = std::static_pointer_cast<GetTransactions>(*res);
+  ASSERT_EQ(1, casted->tx_hashes.size());
+  ASSERT_EQ(exact_size_hash, casted->tx_hashes[0]);
 }
 
 TEST(QuerySerializerTest, SerializeGetAccount){
@@ -164,7 +193,7 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions){
   ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
 }
 
-TEST(QuerySerializerTest, SerialzieGetTransactions) {
+TEST(QuerySerializerTest, SerialiizeGetTransactions) {
   QueryGenerator queryGenerator;
   iroha::hash256_t hash1, hash2;
   hash1[0] = 1, hash2[0] = 2;
