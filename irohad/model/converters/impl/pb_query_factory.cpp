@@ -104,12 +104,12 @@ namespace iroha {
               // Convert to get transactions
               const auto &pb_cast = pl.get_transactions();
               auto query = GetTransactions();
-              std::for_each(pb_cast.tx_hashes().begin(),
-                            pb_cast.tx_hashes().end(),
-                            [&query](auto tx_hash) {
-                              query.tx_hashes.push_back(
-                                  iroha::hash256_t::from_string(tx_hash));
-                            });
+              std::transform(pb_cast.tx_hashes().begin(),
+                             pb_cast.tx_hashes().end(),
+                             std::back_inserter(query.tx_hashes),
+                             [](auto tx_hash) {
+                               return iroha::hash256_t::from_string(tx_hash);
+                             });
               val = std::make_shared<GetTransactions>(query);
               break;
             }
@@ -226,7 +226,6 @@ namespace iroha {
         protocol::Query pb_query;
         serializeQueryMetaData(pb_query, query);
         auto tmp = std::static_pointer_cast<const GetTransactions>(query);
-        auto tx_hashes = tmp->tx_hashes;
         auto pb_query_mut =
           pb_query.mutable_payload()->mutable_get_transactions();
         std::for_each(tmp->tx_hashes.begin(),
