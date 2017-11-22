@@ -20,6 +20,7 @@ compile_proto_to_cpp(primitive.proto)
 compile_proto_to_cpp(commands.proto)
 compile_proto_to_cpp(queries.proto)
 compile_proto_to_cpp(responses.proto)
+compile_proto_to_cpp(endpoint.proto)
 compile_proto_to_grpc_cpp(endpoint.proto)
 compile_proto_to_grpc_cpp(yac.proto)
 compile_proto_to_grpc_cpp(ordering.proto)
@@ -31,6 +32,7 @@ add_library(schema
     primitive.pb.cc
     queries.pb.cc
     responses.pb.cc
+    endpoint.pb.cc
     )
 target_link_libraries(schema
     protobuf
