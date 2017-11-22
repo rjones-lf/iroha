@@ -18,10 +18,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "crypto/hash.hpp"
+#include "model/converters/json_common.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/generators/signature_generator.hpp"
-
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 
@@ -133,27 +133,37 @@ TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
  */
 TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
   JsonQueryFactory queryFactory;
-  iroha::hash256_t exact_size_hash{};
-  exact_size_hash[0] = 1;
+  iroha::hash256_t valid_size_hash{};
+  valid_size_hash[0] = 1;
   QueryGenerator queryGenerator;
-  auto val =
-    queryGenerator.generateGetTransactions(0, "123", 0, {exact_size_hash});
+  const auto val =
+      queryGenerator.generateGetTransactions(0, "123", 0, {valid_size_hash});
   val->signature = generateSignature(42);
-  auto json = queryFactory.serialize(val);
-  json.erase(std::remove_if(json.begin(), json.end(), [](auto c) {
-    return std::isspace(c, std::locale{});
-  }), json.end());
-  const std::string keyword = "tx_hashes\":[";
-  const auto found_pos = json.find(keyword);
-  ASSERT_NE(found_pos, std::string::npos);
-  const auto inserted_pos = found_pos + keyword.size();
-  json = std::string{json.cbegin(), json.cbegin() + inserted_pos} + "\"123\"," +
-         std::string{json.cbegin() + inserted_pos, json.cend()};
-  auto res = queryFactory.deserialize(json);
+  const auto json = queryFactory.serialize(val);
+  auto json_doc_opt = iroha::model::converters::stringToJson(json);
+  ASSERT_TRUE(json_doc_opt.has_value());
+
+  auto &json_doc = json_doc_opt.value();
+  auto &allocator = json_doc.GetAllocator();
+
+  rapidjson::Value tx_hashes;
+  tx_hashes.SetArray();
+  rapidjson::Value invalid_size_hash;
+  invalid_size_hash.SetString("123", 3, allocator);
+  tx_hashes.PushBack(invalid_size_hash, allocator);
+  for (auto &e : json_doc["tx_hashes"].GetArray()) {
+    rapidjson::Value value;
+    const std::string str = e.GetString();
+    value.Set(str, allocator);
+    tx_hashes.PushBack(value, allocator);
+  }
+  json_doc["tx_hashes"].Swap(tx_hashes);
+  auto res = queryFactory.deserialize(
+      iroha::model::converters::jsonToString(json_doc));
   ASSERT_TRUE(res.has_value());
   auto casted = std::static_pointer_cast<GetTransactions>(*res);
   ASSERT_EQ(1, casted->tx_hashes.size());
-  ASSERT_EQ(exact_size_hash, casted->tx_hashes[0]);
+  ASSERT_EQ(valid_size_hash, casted->tx_hashes[0]);
 }
 
 TEST(QuerySerializerTest, SerializeGetAccount){
