@@ -19,6 +19,7 @@
 #define IROHA_REFERENCE_HOLDER_HPP
 
 #include <boost/variant.hpp>
+#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace detail {
