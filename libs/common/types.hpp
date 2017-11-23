@@ -135,7 +135,7 @@ namespace iroha {
     std::stringstream ss;
     ss << std::hex << std::setfill('0');
     for (const auto &c : str) {
-      ss << std::setw(2) << static_cast<int>(c);
+      ss << std::setw(2) << (static_cast<int>(c) & 0xff);
     }
     return ss.str();
   }
