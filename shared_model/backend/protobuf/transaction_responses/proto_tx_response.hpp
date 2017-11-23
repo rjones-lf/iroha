@@ -59,11 +59,11 @@ namespace shared_model {
 
      public:
       /// Type of variant, that handle all concrete tx responses in the system
-      using ProtoResponseVariantType = wrap<CommittedTxResponse,
+      using ProtoResponseVariantType = wrap<StatelessFailedTxResponse,
+                                            StatelessValidTxResponse,
                                             StatefulFailedTxResponse,
                                             StatefulValidTxResponse,
-                                            StatelessFailedTxResponse,
-                                            StatelessValidTxResponse,
+                                            CommittedTxResponse,
                                             UnknownTxResponse>;
 
       /// Type with list of types in ResponseVariantType
