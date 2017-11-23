@@ -41,17 +41,17 @@ namespace shared_model {
                            iroha::model::TransactionResponse> {
      private:
       /// PolymorphicWrapper shortcut type
-      template <typename Value>
-      using w = detail::PolymorphicWrapper<Value>;
+      template <typename... Value>
+      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
 
      public:
       /// Type of variant, that handle all concrete tx responses in the system
-      using ResponseVariantType = boost::variant<w<CommittedTxResponse>,
-                                                 w<StatefulFailedTxResponse>,
-                                                 w<StatefulValidTxResponse>,
-                                                 w<StatelessFailedTxResponse>,
-                                                 w<StatelessValidTxResponse>,
-                                                 w<UnknownTxResponse>>;
+      using ResponseVariantType = wrap<StatelessFailedTxResponse,
+                                       StatelessValidTxResponse,
+                                       StatefulFailedTxResponse,
+                                       StatefulValidTxResponse,
+                                       CommittedTxResponse,
+                                       UnknownTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ResponseListType = ResponseVariantType::types;
