@@ -120,6 +120,38 @@ namespace iroha {
       };
     }
 
+    rxcpp::observable<model::Transaction> RedisBlockQuery::reverseObservable(
+        const rxcpp::observable<model::Transaction> &o) const {
+      std::deque<model::Transaction> reverser;
+      o.subscribe([&reverser](auto tx) { reverser.push_front(tx); });
+      return rxcpp::observable<>::iterate(reverser);
+    }
+
+    rxcpp::observable<model::Transaction>
+    RedisBlockQuery::getAccountTransactions(const std::string &account_id,
+                                            const model::Pager &pager) {
+      // TODO 06/11/17 motxx: Improve API for BlockQueries for on-demand
+      // fetching
+      return reverseObservable(
+          getBlocksFrom(1)
+              .flat_map([](auto block) {
+                return rxcpp::observable<>::iterate(block.transactions);
+              })
+              .take_while([&pager](auto tx) {
+                return iroha::hash(tx) != pager.tx_hash;
+              })
+              // filter txs by specified creator after take_while until tx_hash
+              // to deal with other creator's tx_hash
+              .filter([&account_id](auto tx) {
+                return tx.creator_account_id == account_id;
+              })
+              // size of retrievable blocks and transactions should be
+              // restricted in stateless validation.
+              .take_last(pager.limit));
+    }
+
+    // TODO 17/11/17 motxx - Discuss the effective solution with using Redis and Pagination
+    /*
     rxcpp::observable<model::Transaction>
     RedisBlockQuery::getAccountTransactions(const std::string &account_id) {
       return rxcpp::observable<>::create<model::Transaction>(
@@ -140,6 +172,7 @@ namespace iroha {
             subscriber.on_completed();
           });
     }
+     */
 
     rxcpp::observable<model::Transaction>
     RedisBlockQuery::getAccountAssetTransactions(const std::string &account_id,
