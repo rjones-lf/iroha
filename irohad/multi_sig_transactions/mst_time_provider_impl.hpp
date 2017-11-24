@@ -18,14 +18,17 @@
 #ifndef IROHA_MST_TIME_PROVIDER_IMPL_HPP
 #define IROHA_MST_TIME_PROVIDER_IMPL_HPP
 
-#include "datetime/time.hpp"
+#include <chrono>
 #include "multi_sig_transactions/mst_time_provider.hpp"
 
 namespace iroha {
 
   class MstTimeProviderImpl : public MstTimeProvider {
    public:
-    TimeType getCurrentTime() const override { return time::now64(); }
+    TimeType getCurrentTime() const override {
+      return std::chrono::system_clock::now().time_since_epoch()
+          / std::chrono::milliseconds(1);
+    }
   };
 }  // namespace iroha
 
