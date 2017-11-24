@@ -18,6 +18,7 @@ message Pager {
 
 message GetAccountTransactions {
   string account_id = 1;
+  Pager pager = 2;
 }
 
 message GetAccountAssetTransactions {
