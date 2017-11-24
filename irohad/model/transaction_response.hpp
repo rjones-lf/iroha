@@ -48,8 +48,8 @@ namespace iroha {
         ON_PROCESS,
         /// transaction is not in handler map
         NOT_RECEIVED,
-        /// tx is too old
-        EXPIRED,
+        /// tx is expired in mst validation
+        MST_EXPIRED,
       };
 
       Status current_status{};

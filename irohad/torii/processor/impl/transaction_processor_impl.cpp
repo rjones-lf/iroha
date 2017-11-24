@@ -85,7 +85,7 @@ namespace iroha {
       mst_processor_->onPreparedTransactions().subscribe(
           [this](auto &&tx) { return this->transactionHandle(tx); });
       mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
-        return this->notify(hash(*tx).to_string(), Status::EXPIRED);
+        return this->notify(hash(*tx).to_string(), Status::MST_EXPIRED);
       });
     }
 
