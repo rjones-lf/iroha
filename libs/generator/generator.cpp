@@ -16,18 +16,27 @@
  */
 
 #include "generator/generator.hpp"
-
-#include <cstdlib>
+#include <random>
 
 namespace generator {
 
   int64_t random_number(int64_t min, int64_t max) {
-    uint32_t SEED_ = 1337;
-    return min + (rand_r(&SEED_) % (max - min));
+    static std::random_device seed_gen;
+    static std::default_random_engine engine(seed_gen());
+    std::uniform_int_distribution<> dist(min, max);
+    return dist(engine);
   }
 
-  uint8_t random_printable_char() {
-    return (uint8_t)random_number(32, 126 + 1);
+  char random_printable_char() {
+    return (uint8_t)random_number(32, 126);
   }
 
+  char random_lower_char() { return (char)random_number('a', 'z'); }
+
+  std::string random_string(size_t length,
+                            const std::function<char(void)> &generator) {
+    std::string s;
+    std::generate_n(std::back_inserter(s), length, generator);
+    return s;
+  }
 }  // namespace generator

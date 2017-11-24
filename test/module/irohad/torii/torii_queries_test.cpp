@@ -32,6 +32,7 @@ constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
 constexpr size_t TimesFind = 1;
+const iroha::model::Pager NO_PAGER {iroha::hash256_t{}, 100};
 
 using ::testing::Return;
 using ::testing::A;
@@ -486,7 +487,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   std::vector<std::string> perm = {can_get_my_acc_txs};
   EXPECT_CALL(*wsv_query, getRolePermissions("test"))
       .WillOnce(Return(perm));
-  EXPECT_CALL(*block_query, getAccountTransactions(account.account_id))
+  EXPECT_CALL(*block_query, getAccountTransactions(account.account_id, NO_PAGER))
       .WillOnce(Return(txs_observable));
 
   iroha::protocol::QueryResponse response;
@@ -494,8 +495,10 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto query = iroha::protocol::Query();
 
   query.mutable_payload()->set_creator_account_id(account.account_id);
-  query.mutable_payload()->mutable_get_account_transactions()->set_account_id(
-      account.account_id);
+  auto get_account_tx = query.mutable_payload()->mutable_get_account_transactions();
+  get_account_tx->set_account_id(account.account_id);
+  *get_account_tx->mutable_pager()->mutable_tx_hash() = NO_PAGER.tx_hash.to_string();
+  get_account_tx->mutable_pager()->set_limit(NO_PAGER.limit);
   query.mutable_signature()->set_pubkey(pubkey_test);
   query.mutable_signature()->set_signature(signature_test);
 

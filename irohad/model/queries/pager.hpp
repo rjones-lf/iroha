@@ -15,17 +15,34 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_GET_TRANSACTIONS_HPP
-#define IROHA_GET_TRANSACTIONS_HPP
+#ifndef IROHA_MODEL_QUERY_PAGER_HPP
+#define IROHA_MODEL_QUERY_PAGER_HPP
 
-#include <model/query.hpp>
 #include <string>
 #include <vector>
-#include "model/queries/pager.hpp"
 
 namespace iroha {
   namespace model {
-    //TODO 06/11/17 motxx Add GetTransactions API
+    /**
+     * Pager for transactions queries
+     */
+    struct Pager {
+      /**
+       * Transaction hash which is starting point to fetch transactions.
+       * Empty tx_hash means fetching from the top most transaction.
+       */
+      iroha::hash256_t tx_hash{};
+
+      /**
+       * Number of max transactions to fetch transactinos.
+       */
+      uint16_t limit{};
+
+      bool operator==(Pager const& rhs) const {
+        return tx_hash == rhs.tx_hash and limit == rhs.limit;
+      }
+      bool operator!=(Pager const& rhs) const { return not(operator==(rhs)); }
+    };
   }  // namespace model
 }  // namespace iroha
-#endif  // IROHA_GET_TRANSACTIONS_HPP
+#endif  // IROHA_MODEL_QUERY_PAGER_HPP

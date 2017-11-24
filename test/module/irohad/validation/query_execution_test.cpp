@@ -15,15 +15,24 @@
  * limitations under the License.
  */
 
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-
-#include <model/queries/responses/account_assets_response.hpp>
+#include <rxcpp/rx.hpp>
+#include "common/types.hpp"
+#include "crypto/hash.hpp"
+#include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/create_account.hpp"
+#include "model/commands/transfer_asset.hpp"
+#include "model/queries/get_transactions.hpp"
+#include "model/queries/responses/account_assets_response.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "model/queries/responses/asset_response.hpp"
 #include "model/queries/responses/error_response.hpp"
 #include "model/queries/responses/roles_response.hpp"
+#include "model/queries/responses/transactions_response.hpp"
 #include "model/query_execution.hpp"
 #include "model/permissions.hpp"
+
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "framework/test_subscriber.hpp"
 
 using ::testing::Return;
 using ::testing::AtLeast;
@@ -32,18 +41,21 @@ using ::testing::AllOf;
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
+using namespace framework::test_subscriber;
 
 // TODO 26/09/17 grimadas: refactor (check CommandValidateExecuteTest test) IR-513
-
+// TODO 06/11/17 motxx: refactor initializations into fixture.
 /**
  * Variables for testing
  */
+auto ACCOUNT_NAME = "test";
 auto ACCOUNT_ID = "test@test";
 auto ADMIN_ID = "admin@test";
 auto DOMAIN_NAME = "test";
 auto ADVERSARY_ID = "adversary@test";
 auto ASSET_ID = "coin";
 auto ADMIN_ROLE = "admin";
+auto NO_PAGER = Pager{iroha::hash256_t{}, 123};
 
 /**
  * Default accounts for testing
@@ -337,3 +349,95 @@ TEST(QueryExecutor, get_role_permissions) {
   // TODO: add more test cases
 }
 
+/**
+ * @given MockBlockQuery is scheduled to return a transaction
+ *        which creator ACCOUNT_ID
+ * @when executes query processor
+ * @then returns the inserted transaction
+ */
+TEST(QueryExecutor, get_account_transactions) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+
+  auto query_proccesor =
+    iroha::model::QueryProcessingFactory(wsv_queries, block_queries);
+
+  set_default_ametsuchi(*wsv_queries, *block_queries);
+
+  std::vector<Transaction> txs;
+  {
+    Transaction tx1{};
+    tx1.creator_account_id = ADMIN_ID;
+    tx1.commands.push_back(std::make_shared<CreateAccount>(
+      ACCOUNT_NAME, DOMAIN_NAME, iroha::pubkey_t{}));
+    txs.push_back(tx1);
+
+    // Insert sample transactions into MockBlockQuery
+    EXPECT_CALL(*block_queries,
+                getAccountTransactions(ACCOUNT_ID, NO_PAGER))
+      .WillRepeatedly(Return(rxcpp::observable<>::iterate(txs)));
+  }
+
+  auto query = std::make_shared<GetAccountTransactions>();
+  query->creator_account_id = ADMIN_ID;
+  query->account_id = ACCOUNT_ID;
+  query->pager = NO_PAGER;
+  auto response = query_proccesor.execute(query);
+  auto cast_resp =
+    std::dynamic_pointer_cast<TransactionsResponse>(response);
+  ASSERT_TRUE(cast_resp);
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    cast_resp->transactions, txs);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @given MockBlockQuery is scheduled to return transactions
+ *        which have TransferAsset and AddAssetQuantity
+ * @when executes query processor
+ * @then returns inserted transactions
+ */
+TEST(QueryExecutor, get_account_assets_transactions) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+
+  auto query_proccesor =
+    iroha::model::QueryProcessingFactory(wsv_queries, block_queries);
+
+  set_default_ametsuchi(*wsv_queries, *block_queries);
+
+  std::vector<Transaction> txs{};
+  {
+    Transaction tx1{};
+    tx1.creator_account_id = ADMIN_ID;
+    tx1.commands.push_back(std::make_shared<TransferAsset>(
+      ADMIN_ID, ACCOUNT_ID, ASSET_ID, iroha::Amount(321, 1)));
+    txs.push_back(tx1);
+    Transaction tx2{};
+    tx2.creator_account_id = ADMIN_ID;
+    tx2.commands.push_back(std::make_shared<AddAssetQuantity>(
+      ACCOUNT_ID, ASSET_ID, iroha::Amount(123, 2)));
+    txs.push_back(tx2);
+
+    // Insert sample transactions into MockBlockQuery
+    EXPECT_CALL(*block_queries,
+                getAccountAssetTransactions(
+                  ACCOUNT_ID, std::vector<std::string>{ASSET_ID}, NO_PAGER))
+      .WillRepeatedly(Return(rxcpp::observable<>::iterate(txs)));
+  }
+
+  auto query = std::make_shared<GetAccountAssetTransactions>();
+  query->creator_account_id = ADMIN_ID;
+  query->account_id = ACCOUNT_ID;
+  query->assets_id = {ASSET_ID};
+  query->pager = NO_PAGER;
+  auto response = query_proccesor.execute(query);
+  auto cast_resp =
+    std::dynamic_pointer_cast<TransactionsResponse>(response);
+  ASSERT_TRUE(cast_resp);
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    cast_resp->transactions, txs);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}

@@ -44,7 +44,8 @@ namespace iroha {
           wsv_connection_(std::move(wsv_connection)),
           wsv_transaction_(std::move(wsv_transaction)),
           wsv_(std::make_shared<PostgresWsvQuery>(*wsv_transaction_)),
-          blocks_(std::make_shared<RedisBlockQuery>(*index_, *block_store_)) {
+          blocks_(
+              std::make_shared<RedisBlockQuery>(*index_, *block_store_)) {
       log_ = logger::log("StorageImpl");
 
       wsv_transaction_->exec(init_);

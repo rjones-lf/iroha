@@ -104,23 +104,21 @@ namespace iroha {
 
     class MockBlockQuery : public BlockQuery {
      public:
-      MOCK_METHOD1(
-          getAccountTransactions,
-          rxcpp::observable<model::Transaction>(const std::string &account_id));
-      MOCK_METHOD1(
-          getTxByHashSync,
-          boost::optional<model::Transaction>(const std::string &hash));
-      MOCK_METHOD2(
-          getAccountAssetTransactions,
-          rxcpp::observable<model::Transaction>(const std::string &account_id,
-                                                const std::string &asset_id));
       MOCK_METHOD1(getTransactions,
                    rxcpp::observable<boost::optional<model::Transaction>>(
                      const std::vector<iroha::hash256_t> &tx_hashes));
+      MOCK_METHOD2(getAccountTransactions,
+                   rxcpp::observable<model::Transaction>(const std::string&,
+                     const model::Pager&));
+      MOCK_METHOD3(getAccountAssetTransactions,
+                   rxcpp::observable<model::Transaction>(const std::string&,
+                     const std::vector<std::string>&, const model::Pager&));
       MOCK_METHOD2(getBlocks,
                    rxcpp::observable<model::Block>(uint32_t, uint32_t));
       MOCK_METHOD1(getBlocksFrom, rxcpp::observable<model::Block>(uint32_t));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<model::Block>(uint32_t));
+      MOCK_METHOD1(getTxByHashSync,
+                   boost::optional<model::Transaction>(const std::string &));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {

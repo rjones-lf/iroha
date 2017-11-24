@@ -199,8 +199,8 @@ iroha::model::QueryProcessingFactory::executeGetAccountAssets(
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
     const model::GetAccountAssetTransactions& query) {
-  auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(query.account_id,
-                                                               query.asset_id);
+  auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(
+    query.account_id, query.assets_id, query.pager);
   iroha::model::TransactionsResponse response;
   response.query_hash = iroha::hash(query);
   response.transactions = acc_asset_tx;
@@ -210,7 +210,8 @@ iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountTransactions(
     const model::GetAccountTransactions& query) {
-  auto acc_tx = _blockQuery->getAccountTransactions(query.account_id);
+  auto acc_tx = _blockQuery->getAccountTransactions(
+    query.account_id, query.pager);
   iroha::model::TransactionsResponse response;
   response.query_hash = iroha::hash(query);
   response.transactions = acc_tx;

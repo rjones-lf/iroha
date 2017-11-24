@@ -76,16 +76,32 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
+/**
+ * @given generated GetAccountTransaction
+ * @when runQueryTest(), serialize and deserialize test
+ * @then validate success.
+ */
 TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
-  PbQueryFactory query_factory;
-  QueryGenerator query_generator;
-  auto query = query_generator.generateGetAccountTransactions(0, "123", 0, "test");
-  auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
-  auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
-  // TODO 26/09/17 grimadas: overload operator == for queries and replace with it IR-512 #goodfirstissue
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  PbQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto query = queryGenerator.generateGetAccountTransactions(
+    0, "123", 0, "test", Pager{iroha::hash256_t{}, 1});
+  ASSERT_TRUE(query.has_value());
+  runQueryTest(*query);
+}
+
+/**
+ * @given generated GetAccountAssetsTransactions
+ * @when runQueryTest(), serialize and deserialize test
+ * @then validate success.
+ */
+TEST(PbQueryFactoryTest, SerializeGetAccountAssetsTransactions) {
+  PbQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto query = queryGenerator.generateGetAccountAssetTransactions(
+    0, "123", 0, "test", {"a", "b"}, Pager{iroha::hash256_t{}, 1});
+  ASSERT_TRUE(query.has_value());
+  runQueryTest(*query);
 }
 
 TEST(PbQueryFactoryTest, SerializeGetSignatories){

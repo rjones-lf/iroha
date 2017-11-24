@@ -35,6 +35,17 @@ namespace iroha {
         return document;
       }
 
+      Value serializePager(const Pager& pager,
+                           Document::AllocatorType& allocator) {
+        Value document;
+        document.SetObject();
+
+        document.AddMember("tx_hash", pager.tx_hash.to_hexstring(), allocator);
+        document.AddMember("limit", pager.limit, allocator);
+
+        return document;
+      }
+
       nonstd::optional<Document> stringToJson(const std::string& string) {
         Document document;
         document.Parse(string);

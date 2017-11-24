@@ -63,3 +63,37 @@ TEST_F(TestSubscriberTesting, DefaultSubscriberTest) {
 
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given observable created by sequence: on_next(1), on_next(2)
+ * @when validate subscriber with the vector {1, 2}, using EqualToList
+ * @then true because subscribed values are same as the vector
+ */
+TEST_F(TestSubscriberTesting, ValidEqualToListTest) {
+  auto ints = rxcpp::observable<>::create<int>([](auto s) {
+    s.on_next(1);
+    s.on_next(2);
+    s.on_completed();
+  });
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    ints, std::vector<int>{1, 2});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @given observable created by sequence: on_next(1), on_next(2)
+ * @when validate subscriber with the vector {1, 2, 3}, using EqualList
+ * @then false because subscribed values are not same as the vector.
+ */
+TEST_F(TestSubscriberTesting, UnsatisfiedEqualToListTest) {
+  auto ints = rxcpp::observable<>::create<int>([](auto s) {
+    s.on_next(1);
+    s.on_next(2);
+    s.on_completed();
+  });
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    ints, std::vector<int>{1, 2, 3});
+  ASSERT_FALSE(wrapper.subscribe().validate());
+}

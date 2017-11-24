@@ -21,6 +21,7 @@
 #include "common/byteutils.hpp"
 #include "crypto/hash.hpp"
 #include "framework/test_subscriber.hpp"
+#include "generator/generator.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
@@ -37,6 +38,70 @@
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
+
+inline iroha::model::Block make_block(
+  const std::vector<iroha::model::Transaction> &transactions,
+  uint64_t height,
+  const iroha::hash256_t &prev_hash) {
+  iroha::model::Block block;
+  block.created_ts = 0;
+  block.transactions = transactions;
+  block.height = height;
+  block.txs_number = static_cast<uint16_t>(block.transactions.size());
+  block.prev_hash = prev_hash;
+  block.hash = iroha::hash(block);
+  return block;
+}
+
+inline iroha::model::Transaction make_tx(
+  const std::string &creator,
+  const std::vector<std::shared_ptr<iroha::model::Command>> &commands = {
+    std::make_shared<iroha::model::CreateDomain>(
+      generator::random_string(20, generator::random_lower_char), "user")}) {
+  auto tx = iroha::model::Transaction{};
+  tx.creator_account_id = creator;
+  tx.commands = commands;
+  return tx;
+}
+
+static const auto NO_PAGER = iroha::model::Pager{iroha::hash256_t{}, 10000};
+
+namespace default_block {
+  static const auto DOMAIN_ID = std::string("domain");
+  static const auto DOMAIN_USER_DEFAULT_ROLE = "user";
+  static const auto ALICE_NAME = std::string("alice");
+  static const auto BOB_NAME = std::string("bob");
+  static const auto ALICE_ID = ALICE_NAME + "@" + DOMAIN_ID;
+  static const auto BOB_ID = BOB_NAME + "@" + DOMAIN_ID;
+  static const auto ASSET1_NAME = std::string("irh");
+  static const auto ASSET1_ID = ASSET1_NAME + "#" + DOMAIN_ID;
+  static const auto ASSET1_PREC = static_cast<uint8_t>(1);
+  static const auto ASSET2_name = std::string("moeka");
+  static const auto ASSET2_ID = ASSET2_name + "#" + DOMAIN_ID;
+  static const auto ASSET2_PREC = 2;
+
+  inline iroha::hash256_t insert_default_block(
+    std::shared_ptr<iroha::ametsuchi::StorageImpl> const &storage) {
+    auto tx = iroha::model::Transaction{};
+    tx.creator_account_id = "default@defaultdomain",
+      tx.commands = {
+        std::make_shared<iroha::model::CreateRole>(
+          DOMAIN_USER_DEFAULT_ROLE, iroha::model::all_perm_group),
+        std::make_shared<iroha::model::CreateDomain>(
+          DOMAIN_ID, DOMAIN_USER_DEFAULT_ROLE),
+        std::make_shared<iroha::model::CreateAccount>(
+          ALICE_NAME, DOMAIN_ID, iroha::pubkey_t{}),
+        std::make_shared<iroha::model::CreateAccount>(
+          BOB_NAME, DOMAIN_ID, iroha::pubkey_t{}),
+        std::make_shared<iroha::model::CreateAsset>(
+          ASSET1_NAME, DOMAIN_ID, ASSET1_PREC),
+        std::make_shared<iroha::model::CreateAsset>(
+          ASSET2_name, DOMAIN_ID, ASSET2_PREC)};
+    const auto block = make_block({tx}, 1, iroha::hash256_t{});
+    EXPECT_TRUE(storage->insertBlock(block));
+    return block.hash;
+  }
+}
 
 TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
   // Commit block => get block => observable completed
@@ -69,25 +134,25 @@ TEST_F(AmetsuchiTest, SampleTest) {
   createRole.permissions = {can_add_peer, can_create_asset, can_get_my_account};
 
   // Tx 1
-  Transaction txn;
-  txn.creator_account_id = "admin1";
+  auto txn1 = Transaction();
+  txn1.creator_account_id = "admin1";
 
   // Create domain ru
-  txn.commands.push_back(std::make_shared<CreateRole>(createRole));
+  txn1.commands.push_back(std::make_shared<CreateRole>(createRole));
   CreateDomain createDomain;
   createDomain.domain_id = "ru";
   createDomain.user_default_role = "user";
-  txn.commands.push_back(std::make_shared<CreateDomain>(createDomain));
+  txn1.commands.push_back(std::make_shared<CreateDomain>(createDomain));
 
   // Create account user1
   CreateAccount createAccount;
   createAccount.account_name = "user1";
   createAccount.domain_id = "ru";
-  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount));
+  txn1.commands.push_back(std::make_shared<CreateAccount>(createAccount));
 
   // Compose block
   Block block;
-  block.transactions.push_back(txn);
+  block.transactions.push_back(txn1);
   block.height = 1;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
@@ -112,21 +177,21 @@ TEST_F(AmetsuchiTest, SampleTest) {
   }
 
   // Tx 2
-  txn = Transaction();
-  txn.creator_account_id = "admin2";
+  auto txn2 = Transaction();
+  txn2.creator_account_id = "admin2";
 
   // Create account user2
   createAccount = CreateAccount();
   createAccount.account_name = "user2";
   createAccount.domain_id = "ru";
-  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount));
+  txn2.commands.push_back(std::make_shared<CreateAccount>(createAccount));
 
   // Create asset RUB#ru
   CreateAsset createAsset;
   createAsset.domain_id = "ru";
   createAsset.asset_name = "RUB";
   createAsset.precision = 2;
-  txn.commands.push_back(std::make_shared<CreateAsset>(createAsset));
+  txn2.commands.push_back(std::make_shared<CreateAsset>(createAsset));
 
   // Add RUB#ru to user1
   AddAssetQuantity addAssetQuantity;
@@ -134,7 +199,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   addAssetQuantity.account_id = "user1@ru";
   iroha::Amount asset_amount(150, 2);
   addAssetQuantity.amount = asset_amount;
-  txn.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity));
+  txn2.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity));
 
   // Transfer asset from user 1
   TransferAsset transferAsset;
@@ -144,11 +209,11 @@ TEST_F(AmetsuchiTest, SampleTest) {
   transferAsset.description = "test transfer";
   iroha::Amount transfer_amount(100, 2);
   transferAsset.amount = transfer_amount;
-  txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset));
+  txn2.commands.push_back(std::make_shared<TransferAsset>(transferAsset));
 
   // Compose block
   block = Block();
-  block.transactions.push_back(txn);
+  block.transactions.push_back(txn2);
   block.height = 2;
   block.prev_hash = block1hash;
   auto block2hash = iroha::hash(block);
@@ -184,41 +249,45 @@ TEST_F(AmetsuchiTest, SampleTest) {
     }
   });
 
-  blocks->getAccountTransactions("admin1").subscribe([](auto tx) {
-    EXPECT_EQ(tx.creator_account_id, "admin1");
-    EXPECT_EQ(tx.commands.size(), 3);
-  });
-  blocks->getAccountTransactions("admin2").subscribe([](auto tx) {
-    EXPECT_EQ(tx.creator_account_id, "admin2");
-    EXPECT_EQ(tx.commands.size(), 4);
-  });
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountTransactions("admin1", NO_PAGER),
+      std::vector<Transaction>{txn1});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountTransactions("admin2", NO_PAGER),
+      std::vector<Transaction>{txn2});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
 
-  // request for non-existing user
-  auto number_of_calls = 0;
-  auto getAccountsTxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions("non_existing_user"), 0);
-  getAccountsTxWrapper.subscribe(
-      [&number_of_calls](auto val) { number_of_calls++; });
-
-  ASSERT_TRUE(getAccountsTxWrapper.validate());
-  ASSERT_EQ(number_of_calls, 0);
-
-  blocks->getAccountAssetTransactions("user1@ru", "RUB#ru")
-      .subscribe([](auto tx) { EXPECT_EQ(tx.commands.size(), 1); });
-  blocks->getAccountAssetTransactions("user2@ru", "RUB#ru")
-      .subscribe([](auto tx) { EXPECT_EQ(tx.commands.size(), 1); });
-
-  // request for non-existing asset
-  number_of_calls = 0;
-  auto getAccountAssetTxWrapper = make_test_subscriber<CallExact>(
+  {
+    // request for non-existing user
+    auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getAccountTransactions("non_existing_user", NO_PAGER), 0);
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions("user1@ru", {"RUB#ru"}, NO_PAGER),
+      std::vector<Transaction>{txn2});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions("user2@ru", {"RUB#ru"}, NO_PAGER),
+      std::vector<Transaction>{txn2});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    // request for non-existing asset
+    auto wrapper = make_test_subscriber<CallExact>(
       blocks->getAccountAssetTransactions("non_existing_user",
-                                          "non_existing_asset"),
+                                          {"non_existing_asset"}, NO_PAGER),
       0);
-  getAccountAssetTxWrapper.subscribe(
-      [&number_of_calls](auto val) { number_of_calls++; });
-
-  ASSERT_TRUE(getAccountAssetTxWrapper.validate());
-  ASSERT_EQ(number_of_calls, 0);
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
 }
 
 TEST_F(AmetsuchiTest, PeerTest) {
@@ -274,64 +343,64 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   createRole.permissions = {can_add_peer, can_create_asset, can_get_my_account};
 
   // 1st tx
-  Transaction txn;
-  txn.creator_account_id = admin;
+  auto txn1 = Transaction();
+  txn1.creator_account_id = admin;
 
   // Create domain
   CreateDomain createDomain;
-  txn.commands.push_back(std::make_shared<CreateRole>(createRole));
+  txn1.commands.push_back(std::make_shared<CreateRole>(createRole));
   createDomain.domain_id = domain;
   createDomain.user_default_role = "user";
-  txn.commands.push_back(std::make_shared<CreateDomain>(createDomain));
+  txn1.commands.push_back(std::make_shared<CreateDomain>(createDomain));
 
   // Create account 1
   CreateAccount createAccount1;
   createAccount1.account_name = user1name;
   createAccount1.domain_id = domain;
-  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount1));
+  txn1.commands.push_back(std::make_shared<CreateAccount>(createAccount1));
 
   // Create account 2
   CreateAccount createAccount2;
   createAccount2.account_name = user2name;
   createAccount2.domain_id = domain;
-  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount2));
+  txn1.commands.push_back(std::make_shared<CreateAccount>(createAccount2));
 
   // Create account 3
   CreateAccount createAccount3;
   createAccount3.account_name = user3name;
   createAccount3.domain_id = domain;
-  txn.commands.push_back(std::make_shared<CreateAccount>(createAccount3));
+  txn1.commands.push_back(std::make_shared<CreateAccount>(createAccount3));
 
   // Create asset 1
   CreateAsset createAsset1;
   createAsset1.domain_id = domain;
   createAsset1.asset_name = asset1name;
   createAsset1.precision = 2;
-  txn.commands.push_back(std::make_shared<CreateAsset>(createAsset1));
+  txn1.commands.push_back(std::make_shared<CreateAsset>(createAsset1));
 
   // Create asset 2
   CreateAsset createAsset2;
   createAsset2.domain_id = domain;
   createAsset2.asset_name = asset2name;
   createAsset2.precision = 2;
-  txn.commands.push_back(std::make_shared<CreateAsset>(createAsset2));
+  txn1.commands.push_back(std::make_shared<CreateAsset>(createAsset2));
 
   // Add 3.00 to user 1
   AddAssetQuantity addAssetQuantity1;
   addAssetQuantity1.asset_id = asset1id;
   addAssetQuantity1.account_id = user1id;
   addAssetQuantity1.amount = iroha::Amount(300, 2);
-  txn.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity1));
+  txn1.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity1));
 
   // Add 2.50 to user 2
   AddAssetQuantity addAssetQuantity2;
   addAssetQuantity2.asset_id = asset2id;
   addAssetQuantity2.account_id = user2id;
   addAssetQuantity2.amount = iroha::Amount(250, 2);
-  txn.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity2));
+  txn1.commands.push_back(std::make_shared<AddAssetQuantity>(addAssetQuantity2));
 
   Block block;
-  block.transactions.push_back(txn);
+  block.transactions.push_back(txn1);
   block.height = 1;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
@@ -381,8 +450,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   }
 
   // 2th tx (user1 -> user2 # asset1)
-  txn = Transaction();
-  txn.creator_account_id = user1id;
+  auto txn2 = Transaction();
+  txn2.creator_account_id = user1id;
 
   // Create transfer asset from user 1 to user 2
   TransferAsset transferAsset;
@@ -390,10 +459,10 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   transferAsset.dest_account_id = user2id;
   transferAsset.asset_id = asset1id;
   transferAsset.amount = iroha::Amount(120, 2);
-  txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset));
+  txn2.commands.push_back(std::make_shared<TransferAsset>(transferAsset));
 
   block = Block();
-  block.transactions.push_back(txn);
+  block.transactions.push_back(txn2);
   block.height = 2;
   block.prev_hash = block1hash;
   auto block2hash = iroha::hash(block);
@@ -424,25 +493,25 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   // 3rd tx
   //   (user2 -> user3 # asset2)
   //   (user2 -> user1 # asset2)
-  txn = Transaction();
-  txn.creator_account_id = user2id;
+  auto txn3 = Transaction();
+  txn3.creator_account_id = user2id;
 
   TransferAsset transferAsset1;
   transferAsset1.src_account_id = user2id;
   transferAsset1.dest_account_id = user3id;
   transferAsset1.asset_id = asset2id;
   transferAsset1.amount = iroha::Amount(150, 2);
-  txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset1));
+  txn3.commands.push_back(std::make_shared<TransferAsset>(transferAsset1));
 
   TransferAsset transferAsset2;
   transferAsset2.src_account_id = user2id;
   transferAsset2.dest_account_id = user1id;
   transferAsset2.asset_id = asset2id;
   transferAsset2.amount = iroha::Amount(10, 2);
-  txn.commands.push_back(std::make_shared<TransferAsset>(transferAsset2));
+  txn3.commands.push_back(std::make_shared<TransferAsset>(transferAsset2));
 
   block = Block();
-  block.transactions.push_back(txn);
+  block.transactions.push_back(txn3);
   block.height = 3;
   block.prev_hash = block2hash;
   auto block3hash = iroha::hash(block);
@@ -487,36 +556,53 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
         }
       });
 
-  blocks->getAccountTransactions(admin).subscribe(
+  blocks->getAccountTransactions(admin, NO_PAGER).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 9); });
-  blocks->getAccountTransactions(user1id).subscribe(
+  blocks->getAccountTransactions(user1id, NO_PAGER).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 1); });
-  blocks->getAccountTransactions(user2id).subscribe(
+  blocks->getAccountTransactions(user2id, NO_PAGER).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 2); });
-  blocks->getAccountTransactions(user3id).subscribe(
+  blocks->getAccountTransactions(user3id, NO_PAGER).subscribe(
       [](auto tx) { EXPECT_EQ(tx.commands.size(), 0); });
 
   // (user1 -> user2 # asset1)
   // (user2 -> user3 # asset2)
   // (user2 -> user1 # asset2)
-  blocks->getAccountAssetTransactions(user1id, asset1id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 1);
-  });
-  blocks->getAccountAssetTransactions(user2id, asset1id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 1);
-  });
-  blocks->getAccountAssetTransactions(user3id, asset1id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 0);
-  });
-  blocks->getAccountAssetTransactions(user1id, asset2id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 1);
-  });
-  blocks->getAccountAssetTransactions(user2id, asset2id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 2);
-  });
-  blocks->getAccountAssetTransactions(user3id, asset2id).subscribe([](auto tx) {
-    EXPECT_EQ(tx.commands.size(), 1);
-  });
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions(user1id, {asset1id}, NO_PAGER),
+      std::vector<Transaction>{txn2, txn1});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions(user2id, {asset1id}, NO_PAGER),
+      std::vector<Transaction>{txn2});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getAccountAssetTransactions(user3id, {asset1id}, NO_PAGER), 0);
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions(user1id, {asset2id}, NO_PAGER),
+      std::vector<Transaction>{txn3});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions(user2id, {asset2id}, NO_PAGER),
+      std::vector<Transaction>{txn3, txn1});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
+  {
+    auto wrapper = make_test_subscriber<EqualToList>(
+      blocks->getAccountAssetTransactions(user3id, {asset2id}, NO_PAGER),
+      std::vector<Transaction>{txn3});
+    ASSERT_TRUE(wrapper.subscribe().validate());
+  }
 }
 
 TEST_F(AmetsuchiTest, AddSignatoryTest) {
@@ -924,4 +1010,545 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_EQ(*blocks->getTxByHashSync(tx1hash), tx1);
   ASSERT_EQ(*blocks->getTxByHashSync(tx2hash), tx2);
   ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
+}
+
+/* ----------------- GetAccountTransactions ----------------- */
+
+/**
+ * @brief No transactions when pager.limit = 0.
+ *
+ * @given StorageImpl inserted a transaction:
+ *   1. creator_account_id = alice@domain
+ * @when Query alice's transactions with pager.limit = 0
+ * @then No transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, NoTxsWhenGetAcctTxsPagerLimit0) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx = make_tx(ALICE_ID);
+  const auto block = make_block({tx}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 0};
+  auto wrapper = make_test_subscriber<CallExact>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    0);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Skip other creator transactions.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = bob@domain
+ *   tx3: creator_account_id = alice@domain
+ * @when Query alice[bob]'s transactions with pager.limit = 2[1]
+ * @then Alice[bob]'s transactions [3, 1]/[2] can be retrieved.
+ */
+TEST_F(AmetsuchiTest, SkipOtherCreatorWhenGetAcctTxsPagerLimit1) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(BOB_ID);
+  const auto tx3 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2, tx3}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager1 = Pager{iroha::hash256_t{}, 2};
+  auto wrapper1 = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager1),
+    std::vector<Transaction>{tx3, tx1});
+  ASSERT_TRUE(wrapper1.subscribe().validate());
+
+  const auto pager2 = Pager{iroha::hash256_t{}, 1};
+  auto wrapper2 = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(BOB_ID, pager2),
+    std::vector<Transaction>{tx2});
+  ASSERT_TRUE(wrapper2.subscribe().validate());
+}
+
+/**
+ * @brief Valid when num of inserted txs in storage less than pager.limit.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = alice@domain
+ * @when Query alice's transactions with pager.limit = 100
+ * @then All alice's transactions [2, 1] can be retrieved.
+ */
+TEST_F(AmetsuchiTest, AllTxsWhenGetAcctTxsInsNumLessThanPagerLimit) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    std::vector<Transaction>{tx2, tx1});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Valid when retrievable txs is in multiple blocks.
+ *
+ * @given StorageImpl inserted transactions in multiple blocks:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = alice@domain
+ *   tx3: creator_account_id = bob@domain
+ *   tx4: creator_account_id = alice@domain
+ * @when Query alice's transactions with pager.limit = 100
+ * @then All alice's transactions in blocks
+ */
+TEST_F(AmetsuchiTest, ValidTxsInMultipleBlocksWhenGetAcctTxs) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(ALICE_ID);
+  const auto block1 = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block1));
+
+  const auto tx3 = make_tx(BOB_ID);
+  const auto tx4 = make_tx(ALICE_ID);
+  const auto block2 = make_block({tx3, tx4}, 3, block1.hash);
+  ASSERT_TRUE(storage->insertBlock(block2));
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper1 = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    std::vector<Transaction>{tx4, tx2, tx1});
+  ASSERT_TRUE(wrapper1.subscribe().validate());
+
+  auto wrapper2 = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(BOB_ID, pager),
+    std::vector<Transaction>{tx3});
+  ASSERT_TRUE(wrapper2.subscribe().validate());
+}
+
+/**
+ * @brief Valid when the tx of pager.tx_hash belongs to the query's creator.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = alice@domain
+ * @when Query alice's transactions with pager{tx_hash: tx2, limit: 100}
+ * @then One transaction 1 can be retrieved.
+ *
+ * @note A tx which corresponds to pager.tx_hash is excluded in response.
+ */
+TEST_F(AmetsuchiTest, GetAcctTxsWithPagerHash) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash(tx2), 100};
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    std::vector<Transaction>{tx1});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Valid when the tx of pager.tx_hash doesn't belong to the query's creator.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = bob@domain
+ *   tx3: creator_account_id = alice@domain
+ * @when Query alice's transactions with pager{tx_hash: tx2, limit: 100}
+ * @then One transaction 1 can be retrieved.
+ *
+ * @note A tx which corresponds to pager.tx_hash is excluded in response.
+ */
+TEST_F(AmetsuchiTest, GetAcctTxsWithPagerOtherCreatorHash) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(BOB_ID);
+  const auto tx3 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2, tx3}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash(tx2), 100};
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    std::vector<Transaction>{tx1});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Regards pager.tx_hash as empty when the hash is invalid.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = alice@domain
+ * @when Query alice's transactions with pager{tx_hash: invalid bytes, limit: 100}
+ * @then Regards pager.tx_hash as empty and transactions [2, 1] can be retrieved.
+ *
+ * @note Stateful validation will fail when this query sent.
+ */
+TEST_F(AmetsuchiTest, RegardsTxHashAsEmptyWhenGetAcctTxsWithInvalidHash) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  iroha::hash256_t invalid_hash;
+  invalid_hash.at(0) = 1;
+  const auto pager = Pager{invalid_hash, 100};
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountTransactions(ALICE_ID, pager),
+    std::vector<Transaction>{tx2, tx1});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief No transactions when the query's creator is not found.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = alice@domain
+ *   tx2: creator_account_id = alice@domain
+ * @when Query none@somewhere creator's transactions with pager.limit = 100
+ * @then No transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, NoTxsWhenGetAcctTxsWithInvalidCreator) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID);
+  const auto tx2 = make_tx(ALICE_ID);
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto no_account = "none@somewhere";
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper = make_test_subscriber<CallExact>(
+    blocks->getAccountTransactions(
+      no_account, pager),
+    0);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief No transactions when the storage is empty.
+ *
+ * @given Empty StorageImpl
+ * @when Query with pager.limit = 100
+ * @then No transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, NoTxsWhenGetAcctTxsToEmptyStorage) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+
+  blocks->getTopBlocks(1).subscribe([](auto blk) {
+    FAIL() << "Storage must be empty.";
+  });
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper = make_test_subscriber<CallExact>(
+    blocks->getAccountTransactions("alice@domain", pager),
+    0);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/* ----------------- GetAccountAssetTransactions ----------------- */
+
+/**
+ * @brief No transactions when pager.limit = 0.
+ *
+ * @given StorageImpl inserted transactions:
+ *   1. transaction creator_account_id = admin@admindomain
+ *      - TransferAsset(src: alice@domain, dest: bob@domain, irh#domain, 123.4)
+ * @when (account_id: alice@domain1, asset_id: [irh#domain],
+ *        pager: {tx_hash: {}, limit: 0})
+ * @then No transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, NoTxsWhenGetAcctAssetTxsPagerLimit0) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto tx1 = make_tx(ALICE_ID, {
+    std::make_shared<AddAssetQuantity>(
+      ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC)),
+    std::make_shared<TransferAsset>(
+      ALICE_ID, BOB_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto block = make_block({tx1}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 0};
+
+  auto wrapper = make_test_subscriber<CallExact>(
+    blocks->getAccountAssetTransactions(ALICE_ID, {ASSET1_ID}, pager),
+    0);
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Parts of matched transactions when pager.limit specified.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 123.4)
+ *   tx2: creator_account_id = admin@domain
+ *        - TransferAsset(src: alice@domain, dest: bob@domain, irh#domain, 100.0)
+ *   tx3: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 200.0)
+ * @when (account_id: alice@domain1, asset_id: [irh#domain],
+ *        pager: {tx_hash: {}, limit: 2})
+ * @then Transactions [3, 2] can be retrieved.
+ */
+TEST_F(AmetsuchiTest, PartsOfTxsWhenGetAcctAssetTxsWithPagerLimit) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto admin_id = "admin@domain";
+  const auto tx1 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>(
+      ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto tx2 = make_tx(admin_id, {
+    std::make_shared<TransferAsset>(
+      ALICE_ID, BOB_ID, ASSET1_ID, iroha::Amount(1000, ASSET1_PREC))
+  });
+  const auto tx3 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>(
+      ALICE_ID, ASSET1_ID, iroha::Amount(2000, ASSET1_PREC))
+  });
+  const auto block = make_block({tx1, tx2, tx3}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 2};
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountAssetTransactions(ALICE_ID, {ASSET1_ID}, pager),
+    std::vector<Transaction>{tx3, tx2});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief All transactions when num of inserted txs less than pager.limit.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 123.4)
+ *   tx2: creator_account_id = admin@domain
+ *        - TransferAsset(src: alice@domain, dest: bob@domain, irh#domain, 100.0)
+ * @when (account_id: alice@domain1, asset_id: [irh#domain],
+ *        pager: {tx_hash: {}, limit: 100})
+ * @then All matched transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, AllTxsWhenGetAcctAssetTxsInsNumLessThanPagerLimit) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto admin_id = "admin@domain";
+  const auto tx1 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>
+      (ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto tx2 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>
+      (ALICE_ID, ASSET1_ID, iroha::Amount(1000, ASSET1_PREC))
+  });
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper = make_test_subscriber<EqualToList>(
+    blocks->getAccountAssetTransactions(ALICE_ID, {ASSET1_ID}, pager),
+    std::vector<Transaction>{tx2, tx1});
+  ASSERT_TRUE(wrapper.subscribe().validate());
+}
+
+/**
+ * @brief Transactions when multiple assets relates to account id.
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 123.4)
+ *   tx2: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, moeka#domain, 10.00)
+ * @when (account_id: alice@domain1, asset_id: [irh#domain, moeka#domain],
+ *        pager: {tx_hash: {}, limit: 100})
+ * @then All matched transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, MultipleAssetsWhenGetAcctAssetTxs) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto admin_id = "admin@domain";
+  const auto tx1 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>
+      (ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto tx2 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>(
+      ALICE_ID, ASSET2_ID, iroha::Amount(1000, ASSET2_PREC))
+  });
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  auto wrapper1 = make_test_subscriber<EqualToList>(
+    blocks->getAccountAssetTransactions(
+      ALICE_ID, {ASSET1_ID}, Pager{iroha::hash256_t{}, 100}),
+    std::vector<Transaction>{tx1});
+  ASSERT_TRUE(wrapper1.subscribe().validate());
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper2 = make_test_subscriber<EqualToList>(
+    blocks->getAccountAssetTransactions(
+      ALICE_ID, {ASSET1_ID, ASSET2_ID}, pager),
+    std::vector<Transaction>{tx2, tx1});
+  ASSERT_TRUE(wrapper2.subscribe().validate());
+}
+
+/**
+ * @brief Transactions with pager.tx_hash
+ *
+ * @given StorageImpl inserted transactions:
+ *   tx1: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 123.4)
+ *   tx2: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 222.2)
+ * @when (account_id: alice@domain1, asset_id: [irh#domain1, moeka#domain2],
+ *        pager: {tx_hash: hash(d), limit: 100})
+ * @then A transaction c can be retrieved.
+ * @note The transaction of tx_hash is excluded.
+ *       Retrieving transactions from newer to older transactions.
+ */
+TEST_F(AmetsuchiTest, PagerTxHashWhenGetAcctAssetTxs) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto admin_id = "admin@domain";
+  const auto tx1 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>
+      (ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto tx2 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>(
+      ALICE_ID, ASSET1_ID, iroha::Amount(2222, ASSET1_PREC))
+  });
+  const auto block = make_block({tx1, tx2}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash(tx2), 100};
+
+  auto wrapper1 = make_test_subscriber<EqualToList>(
+    blocks->getAccountAssetTransactions(ALICE_ID, {ASSET1_ID}, pager),
+    std::vector<Transaction>{tx1});
+  ASSERT_TRUE(wrapper1.subscribe().validate());
+}
+
+/**
+ * @brief No transactions with empty asset id vector.
+ *
+ * @given TestStorage inserted transactions.
+ *   tx1: creator_account_id = admin@domain
+ *        - AddAssetQuantity(alice@domain, irh#domain, 123.4)
+ * @when (account_id: alice@domain1, asset_id: [],
+ *        pager: {tx_hash: {}, limit: 100})
+ * @then No transactions can be retrieved.
+ */
+TEST_F(AmetsuchiTest, PaginationWhenGetAccountAssetTransactions) {
+  using namespace default_block;
+  const auto storage =
+    StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
+  ASSERT_TRUE(storage);
+  const auto blocks = storage->getBlockQuery();
+  const auto default_block_hash = insert_default_block(storage);
+
+  const auto admin_id = "admin@domain";
+  const auto tx1 = make_tx(admin_id, {
+    std::make_shared<AddAssetQuantity>
+      (ALICE_ID, ASSET1_ID, iroha::Amount(1234, ASSET1_PREC))
+  });
+  const auto block = make_block({tx1}, 2, default_block_hash);
+  ASSERT_TRUE(storage->insertBlock(block));
+
+  const auto pager = Pager{iroha::hash256_t{}, 100};
+
+  auto wrapper = make_test_subscriber<CallExact>(
+    blocks->getAccountAssetTransactions(ALICE_ID, {}, pager),
+    0);
+  ASSERT_TRUE(wrapper.subscribe().validate());
 }

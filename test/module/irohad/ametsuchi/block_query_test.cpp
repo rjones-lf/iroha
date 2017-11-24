@@ -20,6 +20,7 @@
 #include "crypto/hash.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "model/queries/pager.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -79,6 +80,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::shared_ptr<BlockQuery> blocks;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
+  const iroha::model::Pager NO_PAGER {iroha::hash256_t{}, 10000};
 };
 
 /**
@@ -91,7 +93,7 @@ class BlockQueryTest : public AmetsuchiTest {
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
   // Check that creator1 has created 3 transactions
   auto getCreator1TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator1), 3);
+      blocks->getAccountTransactions(creator1, NO_PAGER), 3);
   getCreator1TxWrapper.subscribe(
       [this](auto val) { EXPECT_EQ(val.creator_account_id, creator1); });
   ASSERT_TRUE(getCreator1TxWrapper.validate());
@@ -107,7 +109,7 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
   // Check that creator1 has created 1 transaction
   auto getCreator2TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator2), 1);
+      blocks->getAccountTransactions(creator2, NO_PAGER), 1);
   getCreator2TxWrapper.subscribe(
       [this](auto val) { EXPECT_EQ(val.creator_account_id, creator2); });
   ASSERT_TRUE(getCreator2TxWrapper.validate());
@@ -122,7 +124,7 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
 TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
   // Check that "nonexisting" user has no transaction
   auto getNonexistingTxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions("nonexisting user"), 0);
+      blocks->getAccountTransactions("nonexisting user", NO_PAGER), 0);
   getNonexistingTxWrapper.subscribe();
   ASSERT_TRUE(getNonexistingTxWrapper.validate());
 }

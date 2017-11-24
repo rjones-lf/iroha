@@ -11,13 +11,20 @@ message GetSignatories {
   string account_id = 1;
 }
 
+message Pager {
+  bytes tx_hash = 1;
+  uint32 limit = 2;
+}
+
 message GetAccountTransactions {
   string account_id = 1;
+  Pager pager = 2;
 }
 
 message GetAccountAssetTransactions {
   string account_id = 1;
-  string asset_id = 2;
+  repeated string assets_id = 2;
+  Pager pager = 3;
 }
 
 message GetAccountAssets {

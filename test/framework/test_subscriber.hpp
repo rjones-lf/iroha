@@ -272,6 +272,63 @@ namespace framework {
       bool on_complete_called = false;
     };
 
+    /**
+     * EqualToList checks subscribed values equals to vector<T>
+     * @tparam T - observable parameter
+     */
+    template <typename T>
+    class EqualToList : public VerificationStrategy<T> {
+    public:
+      /**
+       * @param expected_values - expected vector<T> values
+       * equals to list from observable
+       */
+      EqualToList(std::vector<T> expected_values) noexcept
+        : expected_values_(std::move(expected_values)) {}
+
+      EqualToList(EqualToList<T> &&rhs) noexcept {
+        std::move(rhs.expected_values_.begin(),
+                  rhs.expected_values_.end(),
+                  std::back_inserter(expected_values_.begin()));
+        std::move(rhs.actual_values_.begin(),
+                  rhs.actual_values_.end(),
+                  std::back_inserter(actual_values_.begin()));
+      }
+
+      EqualToList<T> &operator=(EqualToList<T> &&rhs) noexcept {
+        std::move(rhs.expected_values_.begin(),
+                  rhs.expected_values_.end(),
+                  std::back_inserter(expected_values_.begin()));
+        std::move(rhs.actual_values_.begin(),
+                  rhs.actual_values_.end(),
+                  std::back_inserter(actual_values_.begin()));
+        return *this;
+      }
+
+      /**
+       * Remove copy operator=
+       */
+      EqualToList<T> &operator=(EqualToList<T> &rhs) = delete;
+
+      /**
+       * Remove copy constructor
+       */
+      EqualToList(const EqualToList<T> &rhs) = delete;
+
+      void on_next_after(T next) override {
+        actual_values_.push_back(next);
+      }
+
+    protected:
+      bool validate() override {
+        return expected_values_ == actual_values_;
+      }
+
+    private:
+      std::vector<T> expected_values_;
+      std::vector<T> actual_values_;
+    };
+
   }  // namespace test_subscriber
 }  // namespace framework
 #endif  // IROHA_TEST_SUBSCRIBER_HPP

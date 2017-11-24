@@ -23,6 +23,7 @@
 
 #include "interactive/interactive_common_cli.hpp"
 #include "logger/logger.hpp"
+#include "model/common.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/model_crypto_provider.hpp"
 #include "model/query.hpp"
@@ -68,6 +69,7 @@ namespace iroha_cli {
       const std::string GET_ACC = "get_acc";
       const std::string GET_ACC_AST = "get_acc_ast";
       const std::string GET_ACC_TX = "get_acc_tx";
+      const std::string GET_ACC_AST_TX = "get_acc_ast_tx";
       const std::string GET_ACC_SIGN = "get_acc_sign";
       const std::string GET_ROLES = "get_roles";
       const std::string GET_AST_INFO = "get_ast_info";
@@ -96,6 +98,8 @@ namespace iroha_cli {
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAccountTransactions(
           QueryParams params);
+      std::shared_ptr<iroha::model::Query> parseGetAccountAssetTransactions(
+          QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetSignatories(
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetRoles(QueryParams params);
@@ -103,7 +107,10 @@ namespace iroha_cli {
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAssetInfo(
           QueryParams params);
-
+      //  --- Specific QueryParam parsers ---
+      nonstd::optional<iroha::model::Pager> parsePager(
+          const std::string& encoded_tx_hash, const std::string& limit_str);
+      std::vector<std::string> parseAssetId(const std::string& param) const;
       // ------ Result parsers -------
       using ResultHandler = bool (InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, ResultHandler> result_handlers_;

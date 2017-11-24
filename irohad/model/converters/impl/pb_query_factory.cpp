@@ -17,6 +17,7 @@
 
 #include "model/converters/pb_query_factory.hpp"
 #include <queries.pb.h>
+#include "common/types.hpp"
 #include "crypto/hash.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
@@ -24,7 +25,8 @@
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
-#include "model/queries/get_transactions.hpp"
+#include "model/queries/get_account_transactions.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 
 namespace iroha {
   namespace model {
@@ -46,6 +48,20 @@ namespace iroha {
         serializers_[typeid(GetAssetInfo)] =
             &PbQueryFactory::serializeGetAssetInfo;
         serializers_[typeid(GetRoles)] = &PbQueryFactory::serializeGetRoles;
+      }
+
+      // Specific deserializer
+      model::Pager PbQueryFactory::deserializePager(
+          const protocol::Pager &pb_pager) const {
+        model::Pager pager;
+        if (const auto byte_tx_hash =
+          iroha::hexstringToBytestring(pb_pager.tx_hash())) {
+          pager.tx_hash.from_string(*byte_tx_hash);
+        } else {
+          pager.tx_hash.fill(0);
+        }
+        pager.limit = static_cast<decltype(pager.limit)>(pb_pager.limit());
+        return pager;
       }
 
       optional_ptr<model::Query> PbQueryFactory::deserialize(
@@ -74,14 +90,6 @@ namespace iroha {
               val = std::make_shared<model::GetAccountAssets>(query);
               break;
             }
-            case Query_Payload::QueryCase::kGetAccountAssetTransactions: {
-              const auto &pb_cast = pl.get_account_asset_transactions();
-              auto query = GetAccountAssetTransactions();
-              query.account_id = pb_cast.account_id();
-              query.asset_id = pb_cast.asset_id();
-              val = std::make_shared<model::GetAccountAssetTransactions>(query);
-              break;
-            }
             case Query_Payload::QueryCase::kGetAccountSignatories: {
               // Convert to get Signatories
               const auto &pb_cast = pl.get_account_signatories();
@@ -95,7 +103,23 @@ namespace iroha {
               const auto &pb_cast = pl.get_account_transactions();
               auto query = GetAccountTransactions();
               query.account_id = pb_cast.account_id();
-              val = std::make_shared<model::GetAccountTransactions>(query);
+              query.pager = deserializePager(pb_cast.pager());
+              val = std::make_shared<model::GetAccountTransactions>(
+                query);
+              break;
+            }
+            case Query_Payload::QueryCase::
+              kGetAccountAssetTransactions: {
+              const auto &pb_cast =
+                pl.get_account_asset_transactions();
+              auto query = GetAccountAssetTransactions();
+              query.account_id = pb_cast.account_id();
+              std::copy(pb_cast.assets_id().begin(),
+                        pb_cast.assets_id().end(),
+                        std::back_inserter(query.assets_id));
+              query.pager = deserializePager(pb_cast.pager());
+              val = std::make_shared<
+                model::GetAccountAssetTransactions>(query);
               break;
             }
             case Query_Payload::QueryCase::kGetRoles: {
@@ -188,6 +212,9 @@ namespace iroha {
         auto pb_query_mut =
             pb_query.mutable_payload()->mutable_get_account_transactions();
         pb_query_mut->set_account_id(tmp->account_id);
+        auto pb_pager = pb_query_mut->mutable_pager();
+        pb_pager->set_tx_hash(tmp->pager.tx_hash.to_hexstring());
+        pb_pager->set_limit(tmp->pager.limit);
         return pb_query;
       }
 
@@ -198,11 +225,16 @@ namespace iroha {
         auto tmp =
             std::static_pointer_cast<const GetAccountAssetTransactions>(query);
         auto account_id = tmp->account_id;
-        auto asset_id = tmp->asset_id;
+        auto assets_id = tmp->assets_id;
         auto pb_query_mut = pb_query.mutable_payload()
                                 ->mutable_get_account_asset_transactions();
         pb_query_mut->set_account_id(account_id);
-        pb_query_mut->set_asset_id(asset_id);
+        std::for_each(assets_id.begin(), assets_id.end(), [&pb_query_mut](auto id) {
+          (*pb_query_mut->add_assets_id()) = id;
+        });
+        auto pb_pager = pb_query_mut->mutable_pager();
+        pb_pager->set_tx_hash(tmp->pager.tx_hash.to_hexstring());
+        pb_pager->set_limit(tmp->pager.limit);
         return pb_query;
       }
 

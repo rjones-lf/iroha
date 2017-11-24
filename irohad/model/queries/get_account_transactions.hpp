@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_GET_TRANSACTIONS_HPP
-#define IROHA_GET_TRANSACTIONS_HPP
+#ifndef IROHA_GET_ACCOUNT_TRANSACTIONS_HPP
+#define IROHA_GET_ACCOUNT_TRANSACTIONS_HPP
 
 #include <model/query.hpp>
 #include <string>
@@ -25,7 +25,28 @@
 
 namespace iroha {
   namespace model {
-    //TODO 06/11/17 motxx Add GetTransactions API
+    /**
+     * Query for getting transactions of account
+     */
+    struct GetAccountTransactions : Query {
+      /**
+       * Account identifier
+       */
+      std::string account_id{};
+
+      /**
+       * Pager for transactions
+       */
+      Pager pager{};
+
+      bool operator==(GetAccountTransactions const &rhs) const {
+        return account_id == rhs.account_id and pager == rhs.pager;
+      }
+
+      bool operator!=(GetAccountTransactions const &rhs) const {
+        return not(operator==(rhs));
+      }
+    };
   }  // namespace model
 }  // namespace iroha
-#endif  // IROHA_GET_TRANSACTIONS_HPP
+#endif  // IROHA_GET_ACCOUNT_TRANSACTIONS_HPP

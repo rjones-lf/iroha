@@ -17,6 +17,8 @@
 
 #include "ametsuchi/impl/redis_block_query.hpp"
 #include "crypto/hash.hpp"
+#include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/transfer_asset.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -120,6 +122,64 @@ namespace iroha {
       };
     }
 
+    rxcpp::observable<model::Transaction> RedisBlockQuery::reverseObservable(
+        const rxcpp::observable<model::Transaction> &o) const {
+      std::deque<model::Transaction> reverser;
+      o.subscribe([&reverser](auto tx) { reverser.push_front(tx); });
+      return rxcpp::observable<>::iterate(reverser);
+    }
+
+    rxcpp::observable<model::Transaction>
+    RedisBlockQuery::getAccountTransactions(const std::string &account_id,
+                                            const model::Pager &pager) {
+      // TODO 06/11/17 motxx: Improve API for BlockQueries for on-demand
+      // fetching
+      return reverseObservable(
+          getBlocksFrom(1)
+              .flat_map([](auto block) {
+                return rxcpp::observable<>::iterate(block.transactions);
+              })
+              .take_while([&pager](auto tx) {
+                return iroha::hash(tx) != pager.tx_hash;
+              })
+              // filter txs by specified creator after take_while until tx_hash
+              // to deal with other creator's tx_hash
+              .filter([&account_id](auto tx) {
+                return tx.creator_account_id == account_id;
+              })
+              // size of retrievable blocks and transactions should be
+              // restricted in stateless validation.
+              .take_last(pager.limit));
+    }
+
+    bool RedisBlockQuery::hasAccountAssetRelatedCommand(
+        const std::string &account_id,
+        const std::vector<std::string> &assets_id,
+        const std::shared_ptr<iroha::model::Command> &command) const {
+      return isCommandValid<model::TransferAsset>(
+                 command,
+                 [&account_id, &assets_id](const auto &transfer) {
+                   return (transfer.src_account_id == account_id
+                           or transfer.dest_account_id == account_id)
+                       and std::any_of(assets_id.begin(),
+                                       assets_id.end(),
+                                       [&transfer](auto const &a) {
+                                         return a == transfer.asset_id;
+                                       });
+                 })
+          or isCommandValid<model::AddAssetQuantity>(
+                 command, [&account_id, &assets_id](const auto &add) {
+                   return add.account_id == account_id
+                       and std::any_of(assets_id.begin(),
+                                       assets_id.end(),
+                                       [&add](auto const &a) {
+                                         return a == add.asset_id;
+                                       });
+                 });
+    }
+
+    // TODO 17/11/17 motxx - Discuss the effective solution with using Redis and Pagination
+    /*
     rxcpp::observable<model::Transaction>
     RedisBlockQuery::getAccountTransactions(const std::string &account_id) {
       return rxcpp::observable<>::create<model::Transaction>(
@@ -140,36 +200,71 @@ namespace iroha {
             subscriber.on_completed();
           });
     }
+     */
 
     rxcpp::observable<model::Transaction>
-    RedisBlockQuery::getAccountAssetTransactions(const std::string &account_id,
-                                                 const std::string &asset_id) {
-      return rxcpp::observable<>::create<model::Transaction>(
-          [this, account_id, asset_id](auto subscriber) {
-            auto block_ids = this->getBlockIds(account_id);
-            if (block_ids.empty()) {
-              subscriber.on_completed();
-              return;
-            }
-
-            for (auto block_id : block_ids) {
-              // create key for querying redis
-              std::string account_assets_key;
-              account_assets_key.append(account_id);
-              account_assets_key.append(":");
-              account_assets_key.append(std::to_string(block_id));
-              account_assets_key.append(":");
-              account_assets_key.append(asset_id);
-              client_.lrange(account_assets_key,
-                             0,
-                             -1,
-                             this->callbackToLrange(subscriber, block_id));
-            }
-            client_.sync_commit();
-            subscriber.on_completed();
-          });
+    RedisBlockQuery::getAccountAssetTransactions(
+        const std::string &account_id,
+        const std::vector<std::string> &assets_id,
+        const model::Pager &pager) {
+      // TODO 06/11/17 motxx: Improve API for BlockQueries for on-demand
+      // fetching
+      return reverseObservable(
+          getBlocksFrom(1)
+              .flat_map([](auto block) {
+                return rxcpp::observable<>::iterate(block.transactions);
+              })
+              // local variables can be captured because this observable will be
+              // subscribed in this function.
+              .take_while([&pager](auto tx) {
+                return iroha::hash(tx) != pager.tx_hash;
+              })
+              .filter([this, &account_id, &assets_id](auto tx) {
+                return std::any_of(
+                    tx.commands.begin(),
+                    tx.commands.end(),
+                    [this, &account_id, &assets_id](auto command) {
+                      // This "this->" is required by gcc.
+                      return this->hasAccountAssetRelatedCommand(
+                          account_id, assets_id, command);
+                    });
+              })
+              // size of retrievable blocks and transactions should be
+              // restricted in stateless validation.
+              .take_last(pager.limit));
     }
 
+    // TODO 17/11/17 motxx - Discuss the effective solution with using Redis and Pagination
+    // approach with pagination.
+    /*
+        rxcpp::observable<model::Transaction>
+        RedisBlockQuery::getAccountAssetTransactions(const std::string
+       &account_id, const std::string &asset_id) { return
+       rxcpp::observable<>::create<model::Transaction>( [this, account_id,
+       asset_id](auto subscriber) { auto block_ids =
+       this->getBlockIds(account_id); if (block_ids.empty()) {
+                  subscriber.on_completed();
+                  return;
+                }
+
+                for (auto block_id : block_ids) {
+                  // create key for querying redis
+                  std::string account_assets_key;
+                  account_assets_key.append(account_id);
+                  account_assets_key.append(":");
+                  account_assets_key.append(std::to_string(block_id));
+                  account_assets_key.append(":");
+                  account_assets_key.append(asset_id);
+                  client_.lrange(account_assets_key,
+                                 0,
+                                 -1,
+                                 this->callbackToLrange(subscriber, block_id));
+                }
+                client_.sync_commit();
+                subscriber.on_completed();
+              });
+        }
+    */
     rxcpp::observable<boost::optional<model::Transaction>>
     RedisBlockQuery::getTransactions(
         const std::vector<iroha::hash256_t> &tx_hashes) {

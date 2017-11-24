@@ -1,6 +1,7 @@
 addtest(ametsuchi_test ametsuchi_test.cpp)
 target_link_libraries(ametsuchi_test
     ametsuchi
+    generator
     libs_common
     )
 

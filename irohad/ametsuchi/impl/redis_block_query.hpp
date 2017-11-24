@@ -36,10 +36,12 @@ namespace iroha {
       RedisBlockQuery(cpp_redis::redis_client &client, FlatFile &file_store);
 
       rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) override;
+          const std::string &account_id, const model::Pager &pager) override;
 
       rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          const std::string &account_id, const std::string &asset_id) override;
+          const std::string &account_id,
+          const std::vector<std::string> &assets_id,
+          const model::Pager &pager) override;
 
       rxcpp::observable<boost::optional<model::Transaction>> getTransactions(
           const std::vector<iroha::hash256_t> &tx_hashes) override;
@@ -62,6 +64,43 @@ namespace iroha {
        */
       std::vector<iroha::model::Block::BlockHeightType> getBlockIds(
           const std::string &account_id);
+
+      /**
+       * @tparam CommandType
+       * @tparam Predicate
+       * @param command
+       * @param predicate
+       * @return true if CommandType matches the command and command satisfies
+       * predicate
+       */
+      template <typename CommandType, typename Predicate>
+      bool isCommandValid(const std::shared_ptr<iroha::model::Command> &command,
+                          const Predicate &predicate) const {
+        if (const auto p = std::dynamic_pointer_cast<CommandType>(command)) {
+          return predicate(*p);
+        }
+        return false;
+      }
+
+      /**
+       * @param o - given observable
+       * @return observable reversed the elements to emit
+       */
+      rxcpp::observable<model::Transaction> reverseObservable(
+          const rxcpp::observable<model::Transaction> &o) const;
+
+      /**
+       * @param account_id - account identifier
+       * @param assets_id - asset identifiers
+       * @param command - command to check if it is account asset related
+       * command or not
+       * @return true if given command is accout asset related command,
+       * otherwise not
+       */
+      bool hasAccountAssetRelatedCommand(
+          const std::string &account_id,
+          const std::vector<std::string> &assets_id,
+          const std::shared_ptr<iroha::model::Command> &command) const;
 
       /**
        * Returns block id which contains transaction with a given hash
