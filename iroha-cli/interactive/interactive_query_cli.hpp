@@ -23,6 +23,7 @@
 
 #include "interactive/interactive_common_cli.hpp"
 #include "logger/logger.hpp"
+#include "model/common.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/model_crypto_provider.hpp"
 #include "model/query.hpp"
@@ -103,7 +104,9 @@ namespace iroha_cli {
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAssetInfo(
           QueryParams params);
-
+      //  --- Specific QueryParam parsers ---
+      nonstd::optional<iroha::model::Pager> parsePager(
+          const std::string& encoded_tx_hash, const std::string& limit_str);
       // ------ Result parsers -------
       using ResultHandler = bool (InteractiveQueryCli::*)(QueryParams);
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
