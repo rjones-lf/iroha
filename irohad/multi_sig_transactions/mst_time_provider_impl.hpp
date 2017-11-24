@@ -15,16 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_TYPES_HPP
-#define IROHA_MST_TYPES_HPP
+#ifndef IROHA_MST_TIME_PROVIDER_IMPL_HPP
+#define IROHA_MST_TIME_PROVIDER_IMPL_HPP
 
-#include "model/types.hpp"
+#include <chrono>
+#include "multi_sig_transactions/mst_time_provider.hpp"
 
 namespace iroha {
-  class MstState;
 
-  using ConstRefState = ConstRefT<MstState>;
-
-  using DataType = SharedTx;
+  class MstTimeProviderImpl : public MstTimeProvider {
+   public:
+    TimeType getCurrentTime() const override {
+      return std::chrono::system_clock::now().time_since_epoch()
+          / std::chrono::milliseconds(1);
+    }
+  };
 }  // namespace iroha
-#endif  // IROHA_MST_TYPES_HPP
+
+#endif  // IROHA_MST_TIME_PROVIDER_IMPL_HPP

@@ -15,16 +15,26 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_TYPES_HPP
-#define IROHA_MST_TYPES_HPP
+#ifndef IROHA_MODEL_TYPES_HPP
+#define IROHA_MODEL_TYPES_HPP
 
-#include "model/types.hpp"
+#include <memory>
+#include "model/peer.hpp"
+#include "model/transaction.hpp"
+#include "model/transaction_response.hpp"
 
 namespace iroha {
-  class MstState;
+  using TxType = model::Transaction;
+  using SharedTx = std::shared_ptr<TxType>;
+  using ConstPeer = const model::Peer;
+  using TimeType = model::Transaction::TimeType;
+  using TxResponse = std::shared_ptr<model::TransactionResponse>;
 
-  using ConstRefState = ConstRefT<MstState>;
+  template <typename T>
+  using ConstRefT = const T &;
 
-  using DataType = SharedTx;
+  using ConstRefTransaction = ConstRefT<SharedTx>;
+  using ConstRefPeer = ConstRefT<model::Peer>;
+  using ConstRefTime = ConstRefT<TimeType>;
 }  // namespace iroha
-#endif  // IROHA_MST_TYPES_HPP
+#endif  // IROHA_MODEL_TYPES_HPP

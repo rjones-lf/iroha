@@ -19,9 +19,10 @@
 #define IROHA_TRANSACTION_PROCESSOR_HPP
 
 #include <rxcpp/rx.hpp>
-#include <model/transaction.hpp>
-#include <model/client.hpp>
+#include "model/client.hpp"
+#include "model/transaction.hpp"
 #include "model/transaction_response.hpp"
+#include "model/types.hpp"
 
 namespace iroha {
   namespace torii {
@@ -32,19 +33,17 @@ namespace iroha {
      */
     class TransactionProcessor {
      public:
-
       /**
        * Add transaction to the system for processing
        * @param transaction - transaction for processing
        */
-      virtual void transactionHandle(std::shared_ptr<model::Transaction> transaction) = 0;
+      virtual void transactionHandle(ConstRefTransaction transaction) = 0;
 
       /**
        * Subscribers will be notified with transaction status
        * @return observable for subscribing
        */
-      virtual rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
-      transactionNotifier() = 0;
+      virtual rxcpp::observable<TxResponse> transactionNotifier() = 0;
 
       virtual ~TransactionProcessor() = default;
     };

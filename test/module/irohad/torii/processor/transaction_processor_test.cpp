@@ -16,7 +16,9 @@
  */
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "framework/test_subscriber.hpp"
@@ -31,50 +33,61 @@ using namespace iroha::model;
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
 
+using ::testing::A;
 using ::testing::Return;
 using ::testing::_;
-using ::testing::A;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
     validation = std::make_shared<MockStatelessValidator>();
+    mp = std::make_shared<MockMstProcessor>();
 
-    rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
+    rxcpp::subjects::subject<Proposal> prop_notifier;
     rxcpp::subjects::subject<Commit> commit_notifier;
 
     EXPECT_CALL(*pcs, on_proposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
-
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
 
-    tp = std::make_shared<TransactionProcessorImpl>(pcs, validation);
+    EXPECT_CALL(*mp, onPreparedTransactionsImpl())
+        .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
+    EXPECT_CALL(*mp, onExpiredTransactionsImpl())
+        .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
+
+    tp = std::make_shared<TransactionProcessorImpl>(pcs, validation, mp);
   }
+
+  rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+  rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatelessValidator> validation;
   std::shared_ptr<TransactionProcessorImpl> tp;
+  std::shared_ptr<MockMstProcessor> mp;
 };
 
 /**
- * Transaction processor test case, when handling stateless valid transaction
+ * @given simple tx and permanently true tx validator
+ * @when transaction_processor handle it
+ * @then it returns STATELESS_VALIDATION_SUCCESS
  */
-TEST_F(TransactionProcessorTest,
-       TransactionProcessorWhereInvokeValidTransaction) {
+TEST_F(TransactionProcessorTest, ValidTransaction) {
+  EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
 
   EXPECT_CALL(*validation, validate(A<const Transaction &>()))
       .WillRepeatedly(Return(true));
 
   auto tx = std::make_shared<Transaction>();
+  tx->signatures.emplace_back();
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
     auto resp = static_cast<TransactionResponse &>(*response);
-    ASSERT_EQ(resp.current_status,
-              iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS);
+    ASSERT_EQ(resp.current_status, TransactionResponse::STATELESS_VALIDATION_SUCCESS);
   });
   tp->transactionHandle(tx);
 
@@ -82,24 +95,89 @@ TEST_F(TransactionProcessorTest,
 }
 
 /**
- * Transaction processor test case, when handling invalid transaction
+ * @given simple tx and permanently false tx validator
+ * @when transaction_processor handle it
+ * @then it returns STATELESS_VALIDATION_FAILED
  */
-TEST_F(TransactionProcessorTest,
-       TransactionProcessorWhereInvokeInvalidTransaction) {
+TEST_F(TransactionProcessorTest, InvalidTransaction) {
+  EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
 
-  EXPECT_CALL(*validation, validate(A<const Transaction &>()))
-      .WillRepeatedly(Return(false));
+  EXPECT_CALL(*validation, validate(A<const Transaction&>()))
+  .WillRepeatedly(Return(false));
 
   auto tx = std::make_shared<Transaction>();
+  tx->signatures.emplace_back();
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
     auto resp = static_cast<TransactionResponse &>(*response);
-    ASSERT_EQ(resp.current_status,
-              iroha::model::TransactionResponse::STATELESS_VALIDATION_FAILED);
+    ASSERT_EQ(resp.current_status, TransactionResponse::STATELESS_VALIDATION_FAILED);
   });
   tp->transactionHandle(tx);
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given multisig tx and permanently true tx validator
+ * @when transaction_processor handle it
+ * @then it goes to mst and after signing goes to PeerCommunicationService
+ */
+TEST_F(TransactionProcessorTest, MultisigTransaction) {
+  EXPECT_CALL(*mp, propagateTransactionImpl(_))
+      .Times(1)
+      .WillRepeatedly(testing::Invoke([](auto &tx) {
+        tx->signatures.emplace_back();
+        tx->signatures.emplace_back();
+      }));
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
+
+  EXPECT_CALL(*validation, validate(A<const Transaction &>()))
+      .WillRepeatedly(Return(true));
+
+  auto tx = std::make_shared<Transaction>();
+  // ensure we have bigger quorum than signatures
+  tx->quorum = 2;
+
+  auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 2);
+  wrapper.subscribe([](auto response) {
+    auto resp = static_cast<TransactionResponse &>(*response);
+    ASSERT_EQ(resp.current_status,
+              TransactionResponse::STATELESS_VALIDATION_SUCCESS);
+  });
+  tp->transactionHandle(tx);
+  mst_prepared_notifier.get_subscriber().on_next(tx);
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given multisig tx and permanently true tx validator
+ * @when transaction_processor handle it
+ * @then ensure after expiring it leads to MST_EXPIRED status
+ */
+TEST_F(TransactionProcessorTest, MultisigExpired) {
+  EXPECT_CALL(*mp, propagateTransactionImpl(_)).Times(1);
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
+
+  EXPECT_CALL(*validation, validate(A<const Transaction &>()))
+      .WillRepeatedly(Return(true));
+
+  auto tx = std::make_shared<Transaction>();
+  // ensure we have bigger quorum than signatures
+  tx->quorum = 2;
+
+  auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 2);
+  wrapper.subscribe([](auto response) {
+    static int idx = 0;
+    auto resp = static_cast<TransactionResponse &>(*response);
+    ASSERT_EQ(resp.current_status,
+              idx++ == 0 ? TransactionResponse::STATELESS_VALIDATION_SUCCESS
+                         : TransactionResponse::MST_EXPIRED);
+  });
+  tp->transactionHandle(tx);
+  mst_expired_notifier.get_subscriber().on_next(tx);
 
   ASSERT_TRUE(wrapper.validate());
 }

@@ -61,9 +61,7 @@ namespace iroha {
         });
   }
 
-  bool MstState::isEmpty() const {
-    return internal_state_.empty();
-  }
+  bool MstState::isEmpty() const { return internal_state_.empty(); }
 
   std::vector<DataType> MstState::getTransactions() const {
     return std::vector<DataType>(internal_state_.begin(),
@@ -103,14 +101,14 @@ namespace iroha {
       return;
     }
 
-    // state already contains transaction, merge signatures
-    (*corresponding)->signatures = merge_unique<iroha::model::SignatureHasher>(
-        (*corresponding)->signatures, rhs_tx->signatures);
+    auto &tx = *corresponding;
+    tx->signatures = merge_unique<iroha::model::SignatureHasher>(
+        tx->signatures, rhs_tx->signatures);
 
-    if ((*completer_)(*corresponding)) {
+    if ((*completer_)(tx)) {
       // state already has completed transaction,
       // remove from state and return it
-      out_state += *corresponding;
+      out_state += tx;
       internal_state_.erase(corresponding);
     }
   }

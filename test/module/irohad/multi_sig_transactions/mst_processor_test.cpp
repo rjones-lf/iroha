@@ -98,7 +98,8 @@ auto initObservers(shared_ptr<FairMstProcessor> mst_processor, int a, int b,
 /*
  * Make sure that observables in the valid state
  */
-template <typename T> void check(T &t) {
+template <typename T>
+void check(T &t) {
   ASSERT_TRUE(std::get<0>(t).validate());
   ASSERT_TRUE(std::get<1>(t).validate());
   ASSERT_TRUE(std::get<2>(t).validate());

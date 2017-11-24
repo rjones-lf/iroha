@@ -41,7 +41,7 @@ namespace iroha {
      * participants
      * @param transaction - transaction for propagation
      */
-    void propagateTransaction(ConstRefTransaction transaction);
+    void propagateTransaction(const DataType transaction);
 
     /**
      * Prove updating of state for handling status of signing
@@ -51,12 +51,12 @@ namespace iroha {
     /**
      * Observable emit transactions that prepared to processing in system
      */
-    rxcpp::observable<TransactionType> onPreparedTransactions() const;
+    rxcpp::observable<DataType> onPreparedTransactions() const;
 
     /**
      * Observable emit expired by time transactions
      */
-    rxcpp::observable<TransactionType> onExpiredTransactions() const;
+    rxcpp::observable<DataType> onExpiredTransactions() const;
 
     virtual ~MstProcessor() = default;
 
@@ -69,7 +69,7 @@ namespace iroha {
     /**
      * @see propagateTransaction method
      */
-    virtual auto propagateTransactionImpl(ConstRefTransaction transaction)
+    virtual auto propagateTransactionImpl(DataType transaction)
         -> decltype(propagateTransaction(transaction)) = 0;
 
     /**

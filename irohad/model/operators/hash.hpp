@@ -20,7 +20,7 @@
 
 #include <functional>
 #include <string>
-#include "multi_sig_transactions/mst_types.hpp"
+#include "model/types.hpp"
 
 namespace iroha {
   namespace model {

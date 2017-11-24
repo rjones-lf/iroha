@@ -42,7 +42,7 @@ namespace iroha {
      * @return State with completed transaction
      * General note: implementation of method covered by lock
      */
-    MstState apply(ConstPeer &target_peer, const MstState &new_state);
+    MstState apply(const model::Peer &target_peer, const MstState &new_state);
 
     /**
      * Provide updating state of current peer with new transaction
@@ -50,7 +50,7 @@ namespace iroha {
      * @return State with completed transaction
      * General note: implementation of method covered by lock
      */
-    MstState updateOwnState(const TransactionType &tx);
+    MstState updateOwnState(const DataType &tx);
 
     /**
      * Remove expired transactions and return them
@@ -65,7 +65,7 @@ namespace iroha {
      * @return difference between own and target state
      * General note: implementation of method covered by lock
      */
-    MstState getDiffState(ConstPeer &target_peer, const TimeType &current_time);
+    MstState getDiffState(const model::Peer &target_peer, const TimeType &current_time);
 
     /**
      * Return diff between own and new state
@@ -86,16 +86,16 @@ namespace iroha {
     MstStorage();
 
    private:
-    virtual auto applyImpl(ConstPeer &target_peer, const MstState &new_state)
+    virtual auto applyImpl(const model::Peer &target_peer, const MstState &new_state)
         -> decltype(apply(target_peer, new_state)) = 0;
 
-    virtual auto updateOwnStateImpl(const TransactionType &tx)
+    virtual auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) = 0;
 
     virtual auto getExpiredTransactionsImpl(const TimeType &current_time)
         -> decltype(getExpiredTransactions(current_time)) = 0;
 
-    virtual auto getDiffStateImpl(ConstPeer &target_peer,
+    virtual auto getDiffStateImpl(const model::Peer &target_peer,
                                   const TimeType &current_time)
         -> decltype(getDiffState(target_peer, current_time)) = 0;
 
