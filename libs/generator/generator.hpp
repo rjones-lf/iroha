@@ -28,7 +28,8 @@ namespace generator {
    */
   int64_t random_number(int64_t min, int64_t max);
 
-  uint8_t random_printable_char();
+  char random_printable_char();
+  char random_lower_char();
 
   template <size_t size_>
   iroha::blob_t<size_> random_blob(size_t seed) {
@@ -38,6 +39,10 @@ namespace generator {
     return v;
   }
 
-}  // namespace generator
+  std::string random_string(
+    size_t length,
+    const std::function<char(void)>& generator = random_printable_char);
+
+  }  // namespace generator
 
 #endif  // __IROHA_GENERATOR_GENERATOR_HPP__
