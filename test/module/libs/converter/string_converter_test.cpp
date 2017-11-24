@@ -19,22 +19,25 @@
 #include "common/types.hpp"
 
 using namespace iroha;
+using namespace std::string_literals;
 
 TEST(StringConverterTest, ConvertHexToBinary) {
   std::string hex = "ff000233551117daa110050399";
-  std::string bin = "\xFF\x02\x33\x55\x11\x17\xDA\xA1\x10\x05\x03\x99";
-  bin.insert(bin.begin() + 1, '\0');
+  std::string bin = "\xFF\x00\x02\x33\x55\x11\x17\xDA\xA1\x10\x05\x03\x99"s;
   ASSERT_EQ(hexstringToBytestring(hex).value(), bin);
 }
 
 TEST(StringConverterTest, ConvertBinaryToHex) {
-  std::string bin = "\xFF\x02\x33\x55\x11\x17\xDA\xA1\x10\x05\x03\x99";
-  bin.insert(bin.begin() + 1, '\0');
+  std::string bin = "\xFF\x00\x02\x33\x55\x11\x17\xDA\xA1\x10\x05\x03\x99"s;
   ASSERT_EQ(bytestringToHexstring(bin), "ff000233551117daa110050399");
 }
 
 TEST(StringConverterTest, ConvertHexToBinaryAndBack) {
-  std::string hexString = "0123456789abcdef";
-  ASSERT_EQ(hexString,
-            bytestringToHexstring(hexstringToBytestring(hexString).value()));
+  std::stringstream ss;
+  ss << std::hex << std::setfill('0');
+  for (int i = 0; i < 256; ++i) {
+    ss << std::setw(2) << i;
+  }
+  ASSERT_EQ(ss.str(),
+            bytestringToHexstring(hexstringToBytestring(ss.str()).value()));
 }
