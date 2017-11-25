@@ -18,15 +18,16 @@
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
-#include "backend/protobuf/transaction_responses/proto_committed_tx_response.hpp"
-#include "backend/protobuf/transaction_responses/proto_stateful_failed_tx_response.hpp"
-#include "backend/protobuf/transaction_responses/proto_stateful_valid_tx_response.hpp"
-#include "backend/protobuf/transaction_responses/proto_stateless_failed_tx_response.hpp"
-#include "backend/protobuf/transaction_responses/proto_stateless_valid_tx_response.hpp"
-#include "backend/protobuf/transaction_responses/proto_unknown_tx_response.hpp"
 #include "endpoint.pb.h"
+#include "interfaces/transaction_responses/committed_tx_response.hpp"
+#include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
+#include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
+#include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
+#include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
+#include "interfaces/transaction_responses/unknown_tx_response.hpp"
 #include "utils/lazy_initializer.hpp"
+#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 template <typename... T>
@@ -42,6 +43,40 @@ auto load(const iroha::protocol::ToriiResponse &ar) {
 
 namespace shared_model {
   namespace proto {
+    template <typename Iface>
+    class RespType final : public Iface {
+     private:
+      using RefToriiResp =
+          detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
+
+     public:
+      explicit RespType(const iroha::protocol::ToriiResponse &response)
+          : RespType(RefToriiResp(response)) {}
+
+      explicit RespType(iroha::protocol::ToriiResponse &&response)
+          : RespType(RefToriiResp(std::move(response))) {}
+
+      typename Iface::ModelType *copy() const override {
+        return new RespType(*response_);
+      }
+
+     private:
+      explicit RespType(RefToriiResp &&ref) : response_(std::move(ref)) {}
+      // proto
+      RefToriiResp response_;
+    };
+
+    using StatelessFailedTxResponse =
+        RespType<interface::StatelessFailedTxResponse>;
+    using StatelessValidTxResponse =
+        RespType<interface::StatelessValidTxResponse>;
+    using StatefulFailedTxResponse =
+        RespType<interface::StatefulFailedTxResponse>;
+    using StatefulValidTxResponse =
+        RespType<interface::StatefulValidTxResponse>;
+    using CommittedTxResponse = RespType<interface::CommittedTxResponse>;
+    using UnknownTxResponse = RespType<interface::UnknownTxResponse>;
+
     /**
      * TransactionResponse is a status of transaction in system
      */
