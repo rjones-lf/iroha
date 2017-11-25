@@ -22,6 +22,7 @@
 #include "logger/logger.hpp"
 #include "model/common.hpp"
 #include "model/query.hpp"
+#include "model/queries/pager.hpp"
 #include "queries.pb.h"
 
 namespace iroha {
@@ -69,6 +70,10 @@ namespace iroha {
             std::shared_ptr<const Query> query) const;
         protocol::Query serializeGetRolePermissions(
             std::shared_ptr<const Query> query) const;
+
+        // Specific deserializer
+        model::Pager deserializePager(
+          const protocol::Pager &pb_pager) const;
 
         /**
          * Serialize and add meta data of model query to proto query

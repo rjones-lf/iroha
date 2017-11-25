@@ -44,7 +44,11 @@ TEST(QuerySerializerTest, ClassHandlerTest) {
   std::vector<std::shared_ptr<Query>> commands = {
       std::make_shared<GetAccount>(),
       std::make_shared<GetAccountAssets>(),
-      std::make_shared<GetSignatories>()
+      std::make_shared<GetSignatories>(),
+      std::make_shared<GetAccountTransactions>(),
+      std::make_shared<GetRoles>(),
+      std::make_shared<GetAssetInfo>(),
+      std::make_shared<GetRolePermissions>()
   };
   for (const auto &command : commands) {
     auto ser = factory.serialize(command);
@@ -181,4 +185,24 @@ TEST(QuerySerializerTest, get_role_permissions){
   auto val = queryGenerator.generateGetRolePermissions();
   val->signature = generateSignature(42);
   runQueryTest(val);
+}
+
+/**
+ * @given Generated GetAccountTransactions query with random signature.
+ * @when serialize it, then deserialize the product.
+ * @then Validate the generated value is equal to the deserialized value.
+ */
+TEST(QuerySerializerTest, SerializeGetAccountTransactions){
+  JsonQueryFactory queryFactory;
+  QueryGenerator queryGenerator;
+  auto val_ = queryGenerator.generateGetAccountTransactions(
+    0, "123", 0, "test", Pager{iroha::hash256_t{}, 1});
+  ASSERT_TRUE(val_.has_value());
+  auto val = *val_;
+  val->signature = generateSignature(42);
+  auto json = queryFactory.serialize(val);
+  auto ser_val = queryFactory.deserialize(json);
+  ASSERT_TRUE(ser_val.has_value());
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
+  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
 }

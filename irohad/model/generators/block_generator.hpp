@@ -35,6 +35,20 @@ namespace iroha {
         iroha::model::Block generateGenesisBlock(
           ts64_t created_ts,
           const std::vector<iroha::model::Transaction>& transactions);
+
+        /**
+         * Generate block from give meta data and transaction list
+         * @param created_ts
+         * @param height
+         * @param prev_hash
+         * @param transactions
+         * @return
+         */
+        iroha::model::Block generateBlock(
+          ts64_t created_ts,
+          uint64_t height,
+          const iroha::hash256_t &prev_hash,
+          const std::vector<iroha::model::Transaction> &transactions);
       };
 
     }  // namespace generators

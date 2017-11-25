@@ -36,7 +36,7 @@ namespace iroha {
       RedisBlockQuery(cpp_redis::redis_client &client, FlatFile &file_store);
 
       rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) override;
+          const std::string &account_id, const model::Pager &pager) override;
 
       rxcpp::observable<model::Transaction> getAccountAssetTransactions(
           const std::string &account_id, const std::string &asset_id) override;
@@ -62,6 +62,13 @@ namespace iroha {
        */
       std::vector<iroha::model::Block::BlockHeightType> getBlockIds(
           const std::string &account_id);
+
+      /**
+       * @param o - given observable
+       * @return observable reversed the elements to emit
+       */
+      rxcpp::observable<model::Transaction> reverseObservable(
+          const rxcpp::observable<model::Transaction> &o) const;
 
       /**
        * Returns block id which contains transaction with a given hash

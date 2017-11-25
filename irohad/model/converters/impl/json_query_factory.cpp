@@ -24,6 +24,7 @@
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
 #include "model/queries/get_transactions.hpp"
+#include "model/queries/get_account_transactions.hpp"
 
 using namespace rapidjson;
 
@@ -100,6 +101,7 @@ namespace iroha {
         auto des = makeFieldDeserializer(obj_query);
         return make_optional_ptr<GetAccountTransactions>()
             | des.String(&GetAccountTransactions::account_id, "account_id")
+            | des.Object(&GetAccountTransactions::pager, "pager")
             | toQuery;
       }
 
@@ -107,6 +109,7 @@ namespace iroha {
       JsonQueryFactory::deserializeGetAccountAssetTransactions(
           const Value &obj_query) {
         auto des = makeFieldDeserializer(obj_query);
+
         return make_optional_ptr<GetAccountAssetTransactions>()
             | des.String(&GetAccountAssetTransactions::account_id, "account_id")
             | des.String(&GetAccountAssetTransactions::asset_id, "asset_id")
@@ -197,6 +200,11 @@ namespace iroha {
         auto get_account =
             std::static_pointer_cast<const GetAccountTransactions>(query);
         json_doc.AddMember("account_id", get_account->account_id, allocator);
+        Value json_pager;
+        json_pager.SetObject();
+        json_pager.CopyFrom(
+          serializePager(get_account->pager, allocator), allocator);
+        json_doc.AddMember("pager", json_pager, allocator);
       }
 
       void JsonQueryFactory::serializeGetAccountAssetTransactions(

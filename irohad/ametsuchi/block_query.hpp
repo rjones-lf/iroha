@@ -21,9 +21,10 @@
 #include <cmath>
 
 #include <boost/optional.hpp>
-#include <model/block.hpp>
-#include <model/transaction.hpp>
 #include <rxcpp/rx-observable.hpp>
+#include "model/block.hpp"
+#include "model/transaction.hpp"
+#include "model/queries/pager.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -36,10 +37,11 @@ namespace iroha {
       /**
        * Get all transactions of an account.
        * @param account_id - account_id (accountName@domainName)
+       * @param pager - pager for transactions
        * @return observable of Model Transaction
        */
       virtual rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) = 0;
+          const std::string& account_id, const model::Pager& pager) = 0;
 
       /**
        * Get asset transactions of an account.
