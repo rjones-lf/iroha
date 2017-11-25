@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <generator/generator.hpp>
+#include "generator/generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
@@ -32,6 +32,7 @@ constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
 constexpr size_t TimesFind = 1;
+const iroha::model::Pager NO_PAGER {iroha::hash256_t{}, 100};
 
 using ::testing::Return;
 using ::testing::A;
@@ -453,6 +454,68 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   decltype(pubkey) response_pubkey;
   std::copy(signatory.begin(), signatory.end(), response_pubkey.begin());
   ASSERT_EQ(response_pubkey, pubkey);
+}
+
+/**
+ * Test for transactions response
+ */
+TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
+  EXPECT_CALL(*statelessValidatorMock,
+              validate(A<const iroha::model::Query &>()))
+    .WillOnce(Return(true));
+
+  iroha::model::Account account;
+  account.account_id = "accountA";
+
+  auto txs_observable = rxcpp::observable<>::iterate([account] {
+    std::vector<iroha::model::Transaction> result;
+    for (size_t i = 0; i < 3; ++i) {
+      iroha::model::Transaction current;
+      current.creator_account_id = account.account_id;
+      current.tx_counter = i;
+      result.push_back(current);
+    }
+    return result;
+  }());
+
+  // TODO: refactor this to use stateful validation mocks
+  auto creator =  "accountA";
+  std::vector<std::string> roles = {"test"};
+  EXPECT_CALL(*wsv_query, getAccountRoles(creator))
+    .WillOnce(Return(roles));
+  std::vector<std::string> perm = {can_get_my_acc_txs};
+  EXPECT_CALL(*wsv_query, getRolePermissions("test"))
+    .WillOnce(Return(perm));
+  EXPECT_CALL(*block_query, getAccountTransactions(account.account_id, NO_PAGER))
+    .WillOnce(Return(txs_observable));
+
+  iroha::protocol::QueryResponse response;
+
+  auto query = iroha::protocol::Query();
+
+  query.mutable_payload()->set_creator_account_id(account.account_id);
+  auto get_account_tx = query.mutable_payload()->mutable_get_account_transactions();
+  get_account_tx->set_account_id(account.account_id);
+  *get_account_tx->mutable_pager()->mutable_tx_hash() = NO_PAGER.tx_hash.to_string();
+  get_account_tx->mutable_pager()->set_limit(NO_PAGER.limit);
+  query.mutable_signature()->set_pubkey(pubkey_test);
+  query.mutable_signature()->set_signature(signature_test);
+
+  auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
+  ASSERT_TRUE(stat.ok());
+  // Should not return Error Response because tx is stateless and stateful valid
+  ASSERT_FALSE(response.has_error_response());
+  for (auto i = 0; i < response.transactions_response().transactions_size();
+       i++) {
+    ASSERT_EQ(response.transactions_response()
+                .transactions(i)
+                .payload()
+                .creator_account_id(),
+              account.account_id);
+    ASSERT_EQ(
+      response.transactions_response().transactions(i).payload().tx_counter(),
+      i);
+  }
 }
 
 TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
