@@ -86,9 +86,6 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
 
-      /// lazy variant shortcut
-      using LazyVariantType = detail::LazyInitializer<ResponseVariantType>;
-
       using RefTxResponse =
           detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
 
@@ -115,7 +112,7 @@ namespace shared_model {
        * @return hash of corresponding transaction
        */
       const interface::Transaction::HashType &transactionHash() const override {
-        return hash_;
+        return *hash_;
       };
 
       /**
@@ -139,18 +136,24 @@ namespace shared_model {
             })),
             // fixme @l4l: proto should be changed and this one replaced as well
             //             or some other solution needed
-            hash_("") {}
+            hash_([]() { return crypto::Hash(""); }) {}
 
       // ------------------------------| fields |-------------------------------
 
       // proto
       RefTxResponse response_;
 
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      /// lazy variant shortcut
+      using LazyVariantType = Lazy<ResponseVariantType>;
+
       // lazy
       LazyVariantType variant_;
 
       // stub hash
-      crypto::Hash hash_;
+      Lazy<crypto::Hash> hash_;
     };
   }  // namespace  proto
 }  // namespace shared_model
