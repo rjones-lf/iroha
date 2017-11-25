@@ -24,8 +24,9 @@ target_link_libraries(stateless_transaction_validator_test
     model
     )
 
-addtest(query_execution query_execution.cpp)
-target_link_libraries(query_execution
+addtest(query_execution_test query_execution_test.cpp)
+target_link_libraries(query_execution_test
+    model_generators
     model
     )
 
