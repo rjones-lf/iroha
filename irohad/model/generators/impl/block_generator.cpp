@@ -38,6 +38,20 @@ namespace iroha {
         return block;
       }
 
+      iroha::model::Block BlockGenerator::generateBlock(
+          ts64_t created_ts,
+          uint64_t height,
+          const iroha::hash256_t &prev_hash,
+          const std::vector<iroha::model::Transaction> &transactions) {
+        iroha::model::Block block;
+        block.created_ts = created_ts;
+        block.transactions = transactions;
+        block.height = height;
+        block.txs_number = static_cast<uint16_t>(block.transactions.size());
+        block.prev_hash = prev_hash;
+        block.hash = iroha::hash(block);
+        return block;
+      }
     }  // namespace generators
   }    // namespace model
 }  // namespace iroha
