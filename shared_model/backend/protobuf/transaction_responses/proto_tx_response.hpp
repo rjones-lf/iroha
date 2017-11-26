@@ -43,26 +43,21 @@ auto load(const iroha::protocol::ToriiResponse &ar) {
 
 namespace shared_model {
   namespace proto {
+    using RefToriiResp =
+        detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
+
     template <typename Iface>
     class RespType final : public Iface {
-     private:
-      using RefToriiResp =
-          detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
-
      public:
-      explicit RespType(const iroha::protocol::ToriiResponse &response)
-          : RespType(RefToriiResp(response)) {}
-
-      explicit RespType(iroha::protocol::ToriiResponse &&response)
-          : RespType(RefToriiResp(std::move(response))) {}
+      template <typename TxResponse>
+      explicit RespType(TxResponse &&ref)
+          : response_(std::forward<TxResponse>(ref)) {}
 
       typename Iface::ModelType *copy() const override {
         return new RespType(*response_);
       }
 
      private:
-      explicit RespType(RefToriiResp &&ref) : response_(std::move(ref)) {}
-      // proto
       RefToriiResp response_;
     };
 
@@ -86,9 +81,6 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
 
-      using RefTxResponse =
-          detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
-
      public:
       /// Type of variant, that handle all concrete tx responses in the system
       using ProtoResponseVariantType = wrap<StatelessFailedTxResponse,
@@ -101,12 +93,16 @@ namespace shared_model {
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;
 
-      explicit TransactionResponse(
-          const iroha::protocol::ToriiResponse &command)
-          : TransactionResponse(RefTxResponse(command)) {}
-
-      explicit TransactionResponse(iroha::protocol::ToriiResponse &&command)
-          : TransactionResponse(RefTxResponse(std::move(command))) {}
+      template <typename TxResponse>
+      explicit TransactionResponse(TxResponse &&ref)
+          : response_(std::forward<TxResponse>(ref)),
+            variant_(detail::makeLazyInitializer([this] {
+              return ResponseVariantType(
+                  load<ProtoResponseListType>(*response_));
+            })),
+            // fixme @l4l: proto should be changed and this one replaced as well
+            //             or some other solution needed
+            hash_([]() { return crypto::Hash(""); }) {}
 
       /**
        * @return hash of corresponding transaction
@@ -128,20 +124,10 @@ namespace shared_model {
       }
 
      private:
-      explicit TransactionResponse(RefTxResponse &&ref)
-          : response_(std::move(ref)),
-            variant_(detail::makeLazyInitializer([this] {
-              return ResponseVariantType(
-                  load<ProtoResponseListType>(*response_));
-            })),
-            // fixme @l4l: proto should be changed and this one replaced as well
-            //             or some other solution needed
-            hash_([]() { return crypto::Hash(""); }) {}
-
       // ------------------------------| fields |-------------------------------
 
       // proto
-      RefTxResponse response_;
+      RefToriiResp response_;
 
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
@@ -150,10 +136,10 @@ namespace shared_model {
       using LazyVariantType = Lazy<ResponseVariantType>;
 
       // lazy
-      LazyVariantType variant_;
+      const LazyVariantType variant_;
 
       // stub hash
-      Lazy<crypto::Hash> hash_;
+      const Lazy<crypto::Hash> hash_;
     };
   }  // namespace  proto
 }  // namespace shared_model
