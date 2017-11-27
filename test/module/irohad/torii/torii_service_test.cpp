@@ -41,10 +41,10 @@ constexpr size_t TimesToriiBlocking = 5;
 constexpr size_t TimesToriiNonBlocking = 5;
 constexpr size_t TimesFind = 10;
 
-using ::testing::Return;
 using ::testing::A;
-using ::testing::_;
 using ::testing::AtLeast;
+using ::testing::Return;
+using ::testing::_;
 
 using namespace iroha::network;
 using namespace iroha::validation;
@@ -213,15 +213,14 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(
-        toriiResponse.tx_status(),
-        iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+    ASSERT_EQ(toriiResponse.tx_status(),
+              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
   }
 
   // create block from the all transactions but the last one
   iroha::model::Block block;
-  block.transactions.insert(block.transactions.begin(), txs.begin(),
-                            txs.end() - 1);
+  block.transactions.insert(
+      block.transactions.begin(), txs.begin(), txs.end() - 1);
 
   // create commit from block notifier's observable
   rxcpp::subjects::subject<iroha::model::Block> block_notifier_;
@@ -238,9 +237,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(
-        toriiResponse.tx_status(),
-        iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+    ASSERT_EQ(toriiResponse.tx_status(),
+              iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
   }
 
   // end current commit
@@ -253,8 +251,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     iroha::protocol::ToriiResponse toriiResponse;
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
 
-    ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::COMMITTED);
+    ASSERT_EQ(toriiResponse.tx_status(), iroha::protocol::TxStatus::COMMITTED);
   }
 
   // check if the last transaction from txs has failed stateful validation
@@ -313,9 +310,8 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(
-          response.tx_status(),
-          iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+      ASSERT_EQ(response.tx_status(),
+                iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
       status_counter++;
     });
   }
@@ -342,9 +338,8 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(
-          response.tx_status(),
-          iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+      ASSERT_EQ(response.tx_status(),
+                iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
       status_counter++;
     });
   }
@@ -362,12 +357,37 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     tx_request.set_tx_hash(tx_hashes.at(i));
     iroha::protocol::ToriiResponse toriiResponse;
     client.Status(tx_request, [&status_counter](auto response) {
-      ASSERT_EQ(response.tx_status(),
-                iroha::protocol::TxStatus::COMMITTED);
+      ASSERT_EQ(response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
       status_counter++;
     });
   }
   while (status_counter < (int)TimesToriiNonBlocking)
     ;
   ASSERT_EQ(status_counter, TimesToriiNonBlocking);
+}
+
+TEST_F(ToriiServiceTest, CheckHash) {
+  std::vector<iroha::model::Transaction> txs;
+  std::vector<std::string> tx_hashes;
+  const int tx_num = 10;
+
+  iroha::model::converters::PbTransactionFactory tx_factory;
+
+  for (size_t i = 0; i < tx_num; ++i) {
+    auto new_tx = iroha::protocol::Transaction();
+    auto payload = new_tx.mutable_payload();
+    payload->set_tx_counter(i);
+    auto tx = tx_factory.deserialize(new_tx);
+
+    tx_hashes.push_back(iroha::hash(*tx).to_string());
+  }
+
+  for (auto &hash : tx_hashes) {
+    iroha::protocol::TxStatusRequest tx_request;
+    tx_request.set_tx_hash(hash);
+    iroha::protocol::ToriiResponse toriiResponse;
+    torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
+
+    ASSERT_EQ(toriiResponse.tx_hash(), hash);
+  }
 }
