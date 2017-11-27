@@ -61,6 +61,7 @@ namespace torii {
               res->second.set_tx_status(TxStatus::ON_PROCESS);
               break;
             case TransactionResponse::NOT_RECEIVED:
+            default:
               res->second.set_tx_status(TxStatus::NOT_RECEIVED);
               break;
           }
