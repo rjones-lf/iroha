@@ -100,9 +100,9 @@ namespace shared_model {
               return ResponseVariantType(
                   load<ProtoResponseListType>(*response_));
             })),
-            // fixme @l4l: proto should be changed and this one replaced as well
-            //             or some other solution needed
-            hash_([]() { return crypto::Hash(""); }) {}
+            hash_([this]() {
+              return crypto::Hash(this->response_->tx_hash());
+            }) {}
 
       /**
        * @return hash of corresponding transaction
