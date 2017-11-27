@@ -18,6 +18,7 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
 #include <gtest/gtest.h>
+#include "cryptography/hash.hpp"
 
 // Quite hacky way to extract the class name
 // probably not stable and should be improved
@@ -35,13 +36,19 @@ class ProtoTxResponse : public testing::Test {
  public:
   void SetUp() override {}
   void SetUp(iroha::protocol::TxStatus status) {
+    r.set_tx_hash(hash);
     r.set_tx_status(status);
     proto = std::make_shared<shared_model::proto::TransactionResponse>(r);
+  }
+
+  void TearDown() override {
+    ASSERT_EQ(proto->transactionHash(), shared_model::crypto::Hash(hash));
   }
 
   iroha::protocol::ToriiResponse r;
   std::shared_ptr<shared_model::proto::TransactionResponse> proto;
   ClassNameVisitor visitor;
+  const std::string hash = "123";
 };
 
 /**
