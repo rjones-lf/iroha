@@ -18,14 +18,7 @@
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
-#include "endpoint.pb.h"
-#include "interfaces/transaction_responses/committed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/tx_response.hpp"
-#include "interfaces/transaction_responses/unknown_tx_response.hpp"
+#include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
@@ -43,35 +36,6 @@ auto load(const iroha::protocol::ToriiResponse &ar) {
 
 namespace shared_model {
   namespace proto {
-    using RefToriiResp =
-        detail::ReferenceHolder<iroha::protocol::ToriiResponse>;
-
-    template <typename Iface>
-    class RespType final : public Iface {
-     public:
-      template <typename TxResponse>
-      explicit RespType(TxResponse &&ref)
-          : response_(std::forward<TxResponse>(ref)) {}
-
-      typename Iface::ModelType *copy() const override {
-        return new RespType(*response_);
-      }
-
-     private:
-      RefToriiResp response_;
-    };
-
-    using StatelessFailedTxResponse =
-        RespType<interface::StatelessFailedTxResponse>;
-    using StatelessValidTxResponse =
-        RespType<interface::StatelessValidTxResponse>;
-    using StatefulFailedTxResponse =
-        RespType<interface::StatefulFailedTxResponse>;
-    using StatefulValidTxResponse =
-        RespType<interface::StatefulValidTxResponse>;
-    using CommittedTxResponse = RespType<interface::CommittedTxResponse>;
-    using UnknownTxResponse = RespType<interface::UnknownTxResponse>;
-
     /**
      * TransactionResponse is a status of transaction in system
      */
@@ -127,7 +91,7 @@ namespace shared_model {
       // ------------------------------| fields |-------------------------------
 
       // proto
-      RefToriiResp response_;
+      detail::ReferenceHolder<iroha::protocol::ToriiResponse> response_;
 
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
