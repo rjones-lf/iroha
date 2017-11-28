@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "torii/query_service.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace torii {
 
@@ -40,29 +40,29 @@ namespace torii {
     });
   }
 
-  void QueryService::FindAsync(iroha::protocol::Query const& request,
-                               iroha::protocol::QueryResponse& response) {
+  void QueryService::FindAsync(iroha::protocol::Query const &request,
+                               iroha::protocol::QueryResponse &response) {
     // Get iroha model query
     auto query = pb_query_factory_->deserialize(request);
+    auto hash = iroha::hash(**query).to_string();
 
     if (not query.has_value()) {
       response.mutable_error_response()->set_reason(
           iroha::protocol::ErrorResponse::NOT_SUPPORTED);
-      return;
     }
 
-    auto hash = iroha::hash(**query).to_string();
-
-    if (handler_map_.count(hash) > 0) {
+    else if (handler_map_.count(hash) > 0) {
       // Query was already processed
       response.mutable_error_response()->set_reason(
           iroha::protocol::ErrorResponse::STATELESS_INVALID);
-      return;
     }
 
-    // Query - response relationship
-    handler_map_.emplace(hash, response);
-    // Send query to iroha
-    query_processor_->queryHandle(query.value());
+    else {
+      // Query - response relationship
+      handler_map_.emplace(hash, response);
+      // Send query to iroha
+      query_processor_->queryHandle(query.value());
+    }
+    response.set_hash(hash);
   }
 }  // namespace torii

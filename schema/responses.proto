@@ -70,14 +70,15 @@ message TransactionsResponse {
 
 
 message QueryResponse {
+    bytes hash = 1;
     oneof response {
-        AccountAssetResponse account_assets_response = 1;
-        AccountResponse account_response = 2;
-        ErrorResponse error_response = 3;
-        SignatoriesResponse signatories_response = 4;
-        TransactionsResponse transactions_response = 5;
-        AssetResponse asset_response = 6;
-        RolesResponse roles_response = 7;
-        RolePermissionsResponse role_permissions_response = 8;
+        AccountAssetResponse account_assets_response = 2;
+        AccountResponse account_response = 3;
+        ErrorResponse error_response = 4;
+        SignatoriesResponse signatories_response = 5;
+        TransactionsResponse transactions_response = 6;
+        AssetResponse asset_response = 7;
+        RolesResponse roles_response = 8;
+        RolePermissionsResponse role_permissions_response = 9;
     }
 }
