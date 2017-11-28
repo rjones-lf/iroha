@@ -25,14 +25,18 @@ namespace shared_model {
      * @tparam Proto is protobuf containter
      */
     template <typename Iface, typename Proto>
-    class CommonProto final : public Iface {
+    class TrivialProto final : public Iface {
      public:
-      template <typename TxResponse>
-      explicit CommonProto(TxResponse &&ref)
-          : proto_(std::forward<TxResponse>(ref)) {}
+      /**
+       * @tparm ProtoLoader generic param so it can be hanled
+       *                    in the load for the boost::variant
+       */
+      template <typename ProtoLoader>
+      explicit TrivialProto(ProtoLoader &&ref)
+          : proto_(std::forward<ProtoLoader>(ref)) {}
 
       typename Iface::ModelType *copy() const override {
-        return new CommonProto(*proto_);
+        return new TrivialProto(Proto(*proto_));
       }
 
      private:

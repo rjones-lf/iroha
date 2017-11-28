@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "backend/protobuf/common_objects/common_proto.hpp"
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
@@ -28,20 +28,20 @@
 namespace shared_model {
   namespace proto {
     using StatelessFailedTxResponse =
-        CommonProto<interface::StatelessFailedTxResponse,
-                    iroha::protocol::ToriiResponse>;
+        TrivialProto<interface::StatelessFailedTxResponse,
+                     iroha::protocol::ToriiResponse>;
     using StatelessValidTxResponse =
-        CommonProto<interface::StatelessValidTxResponse,
-                    iroha::protocol::ToriiResponse>;
+        TrivialProto<interface::StatelessValidTxResponse,
+                     iroha::protocol::ToriiResponse>;
     using StatefulFailedTxResponse =
-        CommonProto<interface::StatefulFailedTxResponse,
-                    iroha::protocol::ToriiResponse>;
+        TrivialProto<interface::StatefulFailedTxResponse,
+                     iroha::protocol::ToriiResponse>;
     using StatefulValidTxResponse =
-        CommonProto<interface::StatefulValidTxResponse,
-                    iroha::protocol::ToriiResponse>;
-    using CommittedTxResponse = CommonProto<interface::CommittedTxResponse,
-                                            iroha::protocol::ToriiResponse>;
-    using UnknownTxResponse = CommonProto<interface::UnknownTxResponse,
-                                          iroha::protocol::ToriiResponse>;
+        TrivialProto<interface::StatefulValidTxResponse,
+                     iroha::protocol::ToriiResponse>;
+    using CommittedTxResponse = TrivialProto<interface::CommittedTxResponse,
+                                             iroha::protocol::ToriiResponse>;
+    using UnknownTxResponse = TrivialProto<interface::UnknownTxResponse,
+                                           iroha::protocol::ToriiResponse>;
   }  // namespace proto
 }  // namespace shared_model
