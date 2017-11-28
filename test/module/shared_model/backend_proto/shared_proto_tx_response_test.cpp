@@ -18,82 +18,34 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
 #include <gtest/gtest.h>
+#include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/irange.hpp>
 #include "cryptography/hash.hpp"
 
-// Quite hacky way to extract the class name
-// probably not stable and should be improved
-class ClassNameVisitor : public boost::static_visitor<const std::string> {
- public:
-  template <typename T>
-  const std::string operator()(const T &t) const {
-    auto s = t->toString();
-    // skip everything except class name
-    return std::string(s.begin(), s.begin() + s.find(':'));
-  }
-};
-
-class ProtoTxResponse : public testing::Test {
- public:
-  void SetUp() override {}
-  void SetUp(iroha::protocol::TxStatus status) {
-    r.set_tx_hash(hash);
-    r.set_tx_status(status);
-    proto = std::make_shared<shared_model::proto::TransactionResponse>(r);
-  }
-
-  void TearDown() override {
-    ASSERT_EQ(proto->transactionHash(), shared_model::crypto::Hash(hash));
-  }
-
-  iroha::protocol::ToriiResponse r;
-  std::shared_ptr<shared_model::proto::TransactionResponse> proto;
-  ClassNameVisitor visitor;
-  const std::string hash = "123";
-};
-
 /**
- * The following test ensures that the tx response is deserialized properly
+ * @given protobuf's ToriiResponse with different tx_statuses and some hash
+ * @when converting to shared model
+ * @then ensure that status and hash remain the same
  */
+TEST(ProtoTxResponse, TxResponseLoad) {
+  iroha::protocol::ToriiResponse response;
+  const std::string hash = "123";
+  response.set_tx_hash(hash);
+  auto desc = response.GetDescriptor();
+  auto tx_status = desc->FindFieldByName("tx_status");
+  ASSERT_NE(nullptr, tx_status);
+  auto tx_status_enum = tx_status->enum_type();
+  ASSERT_NE(nullptr, tx_status_enum);
 
-TEST_F(ProtoTxResponse, StatelessFailedLoad) {
-  SetUp(iroha::protocol::STATELESS_VALIDATION_FAILED);
-  ASSERT_STREQ("StatelessFailedTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, StatelessValidLoad) {
-  SetUp(iroha::protocol::STATELESS_VALIDATION_SUCCESS);
-  ASSERT_STREQ("StatelessValidTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, StatefulFailedLoad) {
-  SetUp(iroha::protocol::STATEFUL_VALIDATION_FAILED);
-  ASSERT_STREQ("StatefulFailedTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, StatefulValidLoad) {
-  SetUp(iroha::protocol::STATEFUL_VALIDATION_SUCCESS);
-  ASSERT_STREQ("StatefulValidTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, CommittedLoad) {
-  SetUp(iroha::protocol::COMMITTED);
-  ASSERT_STREQ("CommittedTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, UnknownLoad) {
-  SetUp(iroha::protocol::NOT_RECEIVED);
-  ASSERT_STREQ("UnknownTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
-}
-
-TEST_F(ProtoTxResponse, RandomLoad) {
-  SetUp(static_cast<iroha::protocol::TxStatus>(
-      123));  // some random big enough value
-  ASSERT_STREQ("UnknownTxResponse",
-               boost::apply_visitor(visitor, proto->get()).c_str());
+  boost::for_each(boost::irange(0, tx_status_enum->value_count()), [&](auto i) {
+    response.GetReflection()->SetEnumValue(&response, tx_status, i);
+    // proto::UnknownTxResponse is replacement for
+    // protocol::ON_PROCESS and protocol::NOT_RECEIVED
+    // thus last index is lesser by 1 than protobuf's
+    auto model_response = shared_model::proto::TransactionResponse(response);
+    ASSERT_EQ(std::min(i, tx_status_enum->value_count() - 2),
+              model_response.get().which());
+    ASSERT_EQ(model_response.transactionHash(),
+              shared_model::crypto::Hash(hash));
+  });
 }
