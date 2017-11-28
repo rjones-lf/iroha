@@ -135,6 +135,11 @@ class ToriiServiceTest : public testing::Test {
   std::shared_ptr<MockStatelessValidator> statelessValidatorMock;
 };
 
+/**
+ * @given torii service and number of transactions
+ * @when retrieving their status
+ * @then ensure those are not received
+ */
 TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
   std::vector<iroha::model::Transaction> txs;
   std::vector<std::string> tx_hashes;
@@ -167,12 +172,17 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
 }
 
 /**
- * That test simulates the behavior of the Torii.
- * Instead of real implementation fake PCS is used.
- * In fake PCS instead of being subscribed to ordering service and simulator
- * we create our own rxcpp::subjects and subscribe on them.
- * During the test we supply that subjects with transactions or commits
- * just like ordering service or simulator would do
+ * That test simulates the real behavior of the blocking Torii.
+ *
+ * @given torii service with mocked CommunicationService
+ *        that is subscribed on custom rxcpp::subjects
+ * @when sending some number of transactions to the Torii
+ * @then ensure it perform as real one:
+ *       - Torii returns ok status
+ *       - Proper txs responses in Status are STATELESS_VALIDATION_SUCCESS,
+ *         then STATEFUL_VALIDATION_SUCCESS and COMMITTED (order matters)
+ *       - Tx that not in a block returns STATELESS_VALIDATION_SUCCESS and
+           then STATEFUL_VALIDATION_FAILED
  */
 TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   EXPECT_CALL(*statelessValidatorMock,
@@ -264,9 +274,20 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
 }
 
+/**
+ * Note that this test assume that Torii is non-blocking so it waits
+ * for some time if it required thus on failing may hang
+ *
+ * @given torii service with mocked CommunicationService
+ *        that is subscribed on custom rxcpp::subjects
+ * @when sending some number of transactions to the Torii
+ * @then txs responses in Status are STATELESS_VALIDATION_SUCCESS,
+ *         then STATEFUL_VALIDATION_SUCCESS and COMMITTED (order matters)
+ */
 TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
   torii::CommandAsyncClient client(Ip, Port);
-  std::atomic_int torii_count{0};  // counts how many times torii was invoked
+  // counts how many times torii was invoked
+  std::atomic_int torii_count{0};
 
   EXPECT_CALL(*statelessValidatorMock,
               validate(A<const iroha::model::Transaction &>()))
@@ -297,8 +318,8 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
     ;
   ASSERT_EQ(torii_count, TimesToriiNonBlocking);
 
-  std::atomic_int status_counter{
-      0};  // counts how many times statuses of txs were invoked
+  // counts how many times statuses of txs were invoked
+  std::atomic_int status_counter{0};
 
   // create proposal from these transactions
   iroha::model::Proposal proposal(txs);
@@ -366,13 +387,19 @@ TEST_F(ToriiServiceTest, StatusWhenNonBlocking) {
   ASSERT_EQ(status_counter, TimesToriiNonBlocking);
 }
 
+/**
+ * @given torii service and some number of transactions with hashes
+ * @when sending request on this txs
+ * @then ensure that response has the same hash as sent tx
+ */
 TEST_F(ToriiServiceTest, CheckHash) {
-  std::vector<iroha::model::Transaction> txs;
+  // given
   std::vector<std::string> tx_hashes;
   const int tx_num = 10;
 
   iroha::model::converters::PbTransactionFactory tx_factory;
 
+  // create transactions, but do not send them
   for (size_t i = 0; i < tx_num; ++i) {
     auto new_tx = iroha::protocol::Transaction();
     auto payload = new_tx.mutable_payload();
@@ -382,12 +409,14 @@ TEST_F(ToriiServiceTest, CheckHash) {
     tx_hashes.push_back(iroha::hash(*tx).to_string());
   }
 
+  // get statuses of transactions
   for (auto &hash : tx_hashes) {
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(hash);
     iroha::protocol::ToriiResponse toriiResponse;
+    // when
     torii::CommandSyncClient(Ip, Port).Status(tx_request, toriiResponse);
-
+    // then
     ASSERT_EQ(toriiResponse.tx_hash(), hash);
   }
 }
