@@ -44,6 +44,11 @@ namespace torii {
                                iroha::protocol::QueryResponse &response) {
     // Get iroha model query
     auto query = pb_query_factory_->deserialize(request);
+    if (not query) {
+      response.mutable_error_response()->set_reason(
+          iroha::protocol::ErrorResponse::WRONG_FORMAT);
+      return;
+    }
     auto hash = iroha::hash(**query).to_string();
 
     if (not query.has_value()) {
