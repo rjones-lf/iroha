@@ -63,6 +63,6 @@ namespace torii {
       // Send query to iroha
       query_processor_->queryHandle(query.value());
     }
-    response.set_hash(hash);
+    response.set_query_hash(hash);
   }
 }  // namespace torii
