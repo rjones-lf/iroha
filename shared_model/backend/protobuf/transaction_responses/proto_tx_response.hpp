@@ -60,13 +60,10 @@ namespace shared_model {
       template <typename TxResponse>
       explicit TransactionResponse(TxResponse &&ref)
           : response_(std::forward<TxResponse>(ref)),
-            variant_(detail::makeLazyInitializer([this] {
-              return ResponseVariantType(
-                  load<ProtoResponseListType>(*response_));
-            })),
-            hash_([this]() {
-              return crypto::Hash(this->response_->tx_hash());
-            }) {}
+            variant_(detail::makeLazyInitializer(
+                [this] { return load<ProtoResponseListType>(*response_); })),
+            hash_([this] { return crypto::Hash(this->response_->tx_hash()); }) {
+      }
 
       TransactionResponse(TransactionResponse &&r)
           : TransactionResponse(std::move(r.response_)) {}
