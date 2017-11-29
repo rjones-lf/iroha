@@ -68,6 +68,11 @@ namespace shared_model {
               return crypto::Hash(this->response_->tx_hash());
             }) {}
 
+      TransactionResponse(TransactionResponse &&r)
+          : TransactionResponse(std::move(r.response_)) {}
+      TransactionResponse(const TransactionResponse &r)
+          : TransactionResponse(r.response_) {}
+
       /**
        * @return hash of corresponding transaction
        */
