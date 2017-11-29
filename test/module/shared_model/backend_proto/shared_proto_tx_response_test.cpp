@@ -38,7 +38,8 @@ TEST(ProtoTxResponse, TxResponseLoad) {
   ASSERT_NE(nullptr, tx_status_enum);
 
   boost::for_each(boost::irange(0, tx_status_enum->value_count()), [&](auto i) {
-    response.GetReflection()->SetEnumValue(&response, tx_status, i);
+    response.GetReflection()->SetEnumValue(
+        &response, tx_status, tx_status_enum->value(i)->number());
     // proto::UnknownTxResponse is replacement for
     // protocol::ON_PROCESS and protocol::NOT_RECEIVED
     // thus last index is lesser by 1 than protobuf's

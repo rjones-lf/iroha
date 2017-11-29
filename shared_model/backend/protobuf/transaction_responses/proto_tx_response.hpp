@@ -23,15 +23,19 @@
 #include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T>
-auto load(const iroha::protocol::ToriiResponse &ar) {
-  unsigned which = ar.tx_status();
+template <typename... T, typename Archive>
+auto load(Archive &&ar) {
+  unsigned which = ar.GetDescriptor()
+                   ->FindFieldByName("tx_status")
+                   ->enum_type()
+                   ->FindValueByNumber(ar.tx_status())
+                   ->index();
   constexpr unsigned last = boost::mpl::size<T...>::type::value - 1;
 
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::TransactionResponse::ResponseVariantType>(
-      ar, which > last ? last : which);
-  ;
+  return shared_model::detail::variant_impl<T...>::
+      template load<shared_model::interface::TransactionResponse::
+                        ResponseVariantType>(std::forward<Archive>(ar),
+                                             which > last ? last : which);
 }
 
 namespace shared_model {
