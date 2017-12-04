@@ -48,6 +48,10 @@ namespace shared_model {
             .append("account_id", accountId())
             .finalize();
       }
+
+      bool operator==(const ModelType &rhs) const override {
+        return accountId() == rhs.accountId();
+      }
     };
   }  // namespace interface
 }  // namespace shared_model

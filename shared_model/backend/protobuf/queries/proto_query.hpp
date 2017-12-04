@@ -26,8 +26,10 @@
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
+
 #include "backend/protobuf/queries/proto_get_account.hpp"
-#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_signatories.hpp"
+
 
 
 template <typename... T, typename Archive>
@@ -60,7 +62,7 @@ namespace shared_model {
 
      public:
       /// type of proto variant
-      using ProtoQueryVariantType = wrap<GetAccount, GetAccountAssets>;
+      using ProtoQueryVariantType = wrap<GetAccount, GetSignatories>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;

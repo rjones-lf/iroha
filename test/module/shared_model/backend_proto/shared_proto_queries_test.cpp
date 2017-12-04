@@ -40,6 +40,8 @@ TEST(ProtoQuery, QueryLoad) {
         auto field = desc->field(i);
         refl->SetAllocatedMessage(
             &query, refl->GetMessage(query, field).New(), field);
+        auto a = shared_model::proto::Query(query).get();
+        std::cout<<a.which()<<std::endl;
         ASSERT_EQ(i, shared_model::proto::Query(query).get().which());
       });
 }
