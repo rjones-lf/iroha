@@ -36,8 +36,7 @@ template <typename... T, typename Archive>
 auto load_query(Archive &&ar) {
   int which = ar.payload()
                   .GetDescriptor()
-                  ->FindOneofByName("query")
-                  ->field(ar.payload().query_case())
+                  ->FindFieldByNumber(ar.payload().query_case())
                   ->index_in_oneof();
   return shared_model::detail::variant_impl<T...>::template load<
       shared_model::interface::Query::QueryVariantType>(
