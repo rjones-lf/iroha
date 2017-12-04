@@ -19,6 +19,7 @@
 #include "crypto/hash.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -66,6 +67,26 @@ AddAssetQuantity createAddAssetQuantity() {
 TEST(ModelOperatorTest, AddAssetQuantityTest) {
   auto first = createAddAssetQuantity();
   auto second = createAddAssetQuantity();
+
+  ASSERT_EQ(first, second);
+  second.asset_id = "22";
+  ASSERT_NE(first, second);
+}
+
+// -----|SubtractAssetQuantity|-----
+
+SubtractAssetQuantity createSubtractAssetQuantity() {
+  SubtractAssetQuantity saq;
+  saq.account_id = "123";
+  iroha::Amount amount(1010, 2);
+  saq.amount = amount;
+  saq.asset_id = "123";
+  return saq;
+}
+
+TEST(ModelOperatorTest, SubtractAssetQuantityTest) {
+  auto first = createSubtractAssetQuantity();
+  auto second = createSubtractAssetQuantity();
 
   ASSERT_EQ(first, second);
   second.asset_id = "22";
@@ -291,6 +312,8 @@ Transaction createTransaction() {
   // commands
   transaction.commands.push_back(
       std::make_shared<AddAssetQuantity>(createAddAssetQuantity()));
+  transaction.commands.push_back(
+      std::make_shared<SubtractAssetQuantity>(createSubtractAssetQuantity()));
   transaction.commands.push_back(std::make_shared<AddPeer>(createAddPeer()));
   transaction.commands.push_back(
       std::make_shared<AddSignatory>(createAddSignatory()));

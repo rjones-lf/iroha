@@ -17,8 +17,43 @@
 #ifndef IROHA_SUBTRACT_ASSET_QUANTITY_HPP
 #define IROHA_SUBTRACT_ASSET_QUANTITY_HPP
 
-// TODO 12/07/17 grimadas: implement in next versions IR-498
-// Subtract asset quantity from a given account from the system.
-// Only issuer can do this
 
+#include <model/command.hpp>
+#include <string>
+#include "common/types.hpp"
+#include "amount/amount.hpp"
+
+namespace iroha {
+    namespace model {
+
+        /**
+         * Subtract amount of asset to an account
+         */
+        struct SubtractAssetQuantity : public Command {
+            /**
+             * Account where to subtract assets
+             */
+            std::string account_id{};
+
+            /**
+             * Asset to issue
+             * Note: must exist in the system
+             */
+            std::string asset_id{};
+
+            /**
+             * Amount to add to account asset
+             */
+            Amount amount{};
+
+            bool operator==(const Command &command) const override;
+
+            SubtractAssetQuantity() {}
+
+            SubtractAssetQuantity(const std::string &account_id,
+                             const std::string &asset_id, Amount amount)
+              : account_id(account_id), asset_id(asset_id), amount(amount) {}
+        };
+    }  // namespace model
+}  // namespace iroha
 #endif //IROHA_SUBTRACT_ASSET_QUANTITY_HPP
