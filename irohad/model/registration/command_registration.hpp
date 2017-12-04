@@ -22,6 +22,7 @@
 
 // ----------| commands |----------
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -48,6 +49,7 @@ namespace iroha {
      public:
       CommandRegistry() {
         command_handler.register_type(typeid(AddAssetQuantity));
+        command_handler.register_type(typeid(SubtractAssetQuantity));
         command_handler.register_type(typeid(AddPeer));
         command_handler.register_type(typeid(AddSignatory));
         command_handler.register_type(typeid(CreateAccount));
