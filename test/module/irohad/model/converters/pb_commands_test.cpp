@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include "commands.pb.h"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -55,6 +56,22 @@ TEST(CommandTest, add_asset_quantity) {
   auto factory = iroha::model::converters::PbCommandFactory();
   auto proto_command = factory.serializeAddAssetQuantity(orig_command);
   auto serial_command = factory.deserializeAddAssetQuantity(proto_command);
+
+  ASSERT_EQ(orig_command, serial_command);
+  command_converter_test(orig_command);
+}
+
+TEST(CommandTest, subtract_asset_quantity) {
+  auto orig_command = iroha::model::SubtractAssetQuantity();
+  orig_command.account_id = "23";
+  iroha::Amount amount(50,1);
+
+  orig_command.amount = amount;
+  orig_command.asset_id = "23";
+
+  auto factory = iroha::model::converters::PbCommandFactory();
+  auto proto_command = factory.serializeSubtractAssetQuantity(orig_command);
+  auto serial_command = factory.deserializeSubtractAssetQuantity(proto_command);
 
   ASSERT_EQ(orig_command, serial_command);
   command_converter_test(orig_command);

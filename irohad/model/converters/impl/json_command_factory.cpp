@@ -20,6 +20,7 @@
 #include <model/commands/set_account_detail.hpp>
 #include <regex>
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -70,6 +71,8 @@ namespace iroha {
         serializers_ = {
             {typeid(AddAssetQuantity),
              &JsonCommandFactory::serializeAddAssetQuantity},
+            {typeid(SubtractAssetQuantity),
+             &JsonCommandFactory::serializeSubtractAssetQuantity},
             {typeid(AddPeer), &JsonCommandFactory::serializeAddPeer},
             {typeid(AddSignatory), &JsonCommandFactory::serializeAddSignatory},
             {typeid(CreateAccount),
@@ -88,11 +91,14 @@ namespace iroha {
             {typeid(GrantPermission),
              &JsonCommandFactory::serializeGrantPermission},
             {typeid(RevokePermission),
-             &JsonCommandFactory::serializeRevokePermission}};
+             &JsonCommandFactory::serializeRevokePermission}
+        };
 
         deserializers_ = {
             {"AddAssetQuantity",
              &JsonCommandFactory::deserializeAddAssetQuantity},
+            {"SubtractAssetQuantity",
+             &JsonCommandFactory::deserializeSubtractAssetQuantity},
             {"AddPeer", &JsonCommandFactory::deserializeAddPeer},
             {"AddSignatory", &JsonCommandFactory::deserializeAddSignatory},
             {"CreateAccount", &JsonCommandFactory::deserializeCreateAccount},
@@ -109,7 +115,8 @@ namespace iroha {
             {"GrantPermission",
              &JsonCommandFactory::deserializeGrantPermission},
             {"RevokePermission",
-             &JsonCommandFactory::deserializeRevokePermission}};
+             &JsonCommandFactory::deserializeRevokePermission}
+        };
       }
 
       // AddAssetQuantity
@@ -508,6 +515,42 @@ namespace iroha {
             | des.String(&RevokePermission::account_id, "account_id")
             | des.String(&RevokePermission::permission_name, "permission_name")
             | toCommand;
+      }
+
+      // SubtractAssetQuantity
+      Document JsonCommandFactory::serializeSubtractAssetQuantity(
+        std::shared_ptr<Command> command) {
+        auto subtract_asset_quantity =
+          static_cast<SubtractAssetQuantity *>(command.get());
+
+        Document document;
+        auto &allocator = document.GetAllocator();
+
+        document.SetObject();
+        document.AddMember("command_type", "SubtractAssetQuantity", allocator);
+        document.AddMember(
+          "account_id", subtract_asset_quantity->account_id, allocator);
+        document.AddMember("asset_id", subtract_asset_quantity->asset_id, allocator);
+
+        Value amount;
+        amount.SetObject();
+        amount.AddMember(
+          "value", subtract_asset_quantity->amount.getIntValue().str(), allocator);
+        amount.AddMember(
+          "precision", subtract_asset_quantity->amount.getPrecision(), allocator);
+
+        document.AddMember("amount", amount, allocator);
+
+        return document;
+      }
+
+      optional_ptr<Command> JsonCommandFactory::deserializeSubtractAssetQuantity(
+        const Value &document) {
+        auto des = makeFieldDeserializer(document);
+        return make_optional_ptr<SubtractAssetQuantity>()
+               | des.String(&SubtractAssetQuantity::account_id, "account_id")
+               | des.String(&SubtractAssetQuantity::asset_id, "asset_id")
+               | des.Object(&SubtractAssetQuantity::amount, "amount") | toCommand;
       }
 
       // Abstract
