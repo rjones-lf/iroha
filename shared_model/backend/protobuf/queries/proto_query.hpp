@@ -20,13 +20,15 @@
 
 #include <boost/range/numeric.hpp>
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query.hpp"
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
+#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+
 
 template <typename... T, typename Archive>
 auto load_query(Archive &&ar) {
@@ -50,7 +52,6 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
 
-
       /// lazy variant shortcut
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
@@ -59,7 +60,7 @@ namespace shared_model {
 
      public:
       /// type of proto variant
-      using ProtoQueryVariantType = wrap<GetAccount>;
+      using ProtoQueryVariantType = wrap<GetAccount, GetAccountAssets>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;

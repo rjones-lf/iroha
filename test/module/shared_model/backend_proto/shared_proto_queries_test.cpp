@@ -35,7 +35,7 @@ TEST(ProtoQuery, QueryLoad) {
   auto desc = query.GetDescriptor();
   boost::for_each(
       // TODO 03/12/17 dumitru replace 1 with desc->field_count()
-      boost::irange(0, 1),
+      boost::irange(0, 2),
       [&](auto i) {
         auto field = desc->field(i);
         refl->SetAllocatedMessage(

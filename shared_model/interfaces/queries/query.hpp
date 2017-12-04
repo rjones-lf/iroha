@@ -50,7 +50,7 @@ namespace shared_model {
 
      public:
       /// Type of variant, that handle concrete query
-      using QueryVariantType = wrap<GetAccount>;
+      using QueryVariantType = wrap<GetAccount, GetAccountAssets>;
       //                                              w<GetAccountAssets>,
       //                                              w<GetAssetInfo>,
       //                                              w<GetRoles>,
