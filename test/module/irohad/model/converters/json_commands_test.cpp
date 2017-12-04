@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -57,6 +58,7 @@ class JsonCommandTest : public ::testing::Test {
 TEST_F(JsonCommandTest, ClassHandlerTest) {
   std::vector<std::shared_ptr<Command>> commands = {
       std::make_shared<AddAssetQuantity>(),
+      std::make_shared<SubtractAssetQuantity>(),
       std::make_shared<AddPeer>(),
       std::make_shared<AddSignatory>(),
       std::make_shared<CreateAccount>(),
@@ -111,6 +113,22 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
   ASSERT_TRUE(serial_command.has_value());
   ASSERT_EQ(*orig_command, *serial_command.value());
   command_converter_test(orig_command);
+}
+
+TEST_F(JsonCommandTest, subtract_asset_quantity) {
+auto orig_command = std::make_shared<SubtractAssetQuantity>();
+orig_command->account_id = "23";
+iroha::Amount amount(150, 2);
+
+orig_command->amount = amount;
+orig_command->asset_id = "23";
+
+auto json_command = factory.serializeSubtractAssetQuantity(orig_command);
+auto serial_command = factory.deserializeSubtractAssetQuantity(json_command);
+
+ASSERT_TRUE(serial_command.has_value());
+ASSERT_EQ(*orig_command, *serial_command.value());
+command_converter_test(orig_command);
 }
 
 TEST_F(JsonCommandTest, add_peer) {
