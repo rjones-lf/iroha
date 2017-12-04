@@ -79,6 +79,12 @@ message RevokePermission {
     GrantablePermission permission = 2;
 }
 
+message SubtractAssetQuantity {
+    string account_id = 1;
+    string asset_id = 2;
+    Amount amount = 3;
+}
+
 message Command {
     oneof command {
         AddAssetQuantity add_asset_quantity = 1;
@@ -95,5 +101,6 @@ message Command {
         GrantPermission grant_permission = 13;
         RevokePermission revoke_permission = 14;
         SetAccountDetail set_account_detail = 15;
+        SubtractAssetQuantity subtract_asset_quantity = 16;
     }
 }
