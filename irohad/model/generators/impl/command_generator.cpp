@@ -107,17 +107,16 @@ namespace iroha {
         return generateCommand<AddAssetQuantity>(account_id, asset_id, amount);
       }
 
+      std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
+        const std::string &account_id,
+        const std::string &asset_id,
+        const Amount &amount) {
+        return generateCommand<SubtractAssetQuantity>(account_id, asset_id, amount);
+      }
+
       std::shared_ptr<Command> CommandGenerator::generateSetQuorum(
           const std::string &account_id, uint32_t quorum) {
         return generateCommand<SetQuorum>(account_id, quorum);
-      }
-
-      std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const Amount &amount) {
-        // TODO 13/09/17 grimadas: implement IR-498
-        return nullptr;
       }
 
       std::shared_ptr<Command> CommandGenerator::generateTransferAsset(
