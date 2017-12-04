@@ -15,24 +15,25 @@ enum RolePermission {
     can_set_quorum = 9;
     can_transfer = 10;
     can_receive = 11;
+    can_subtract_asset_qty = 12;
    // Query permissions
-    can_read_assets = 12;
-    can_get_roles = 13;
-    can_get_my_account = 14;
-    can_get_all_accounts = 15;
-    can_get_my_signatories = 16;
-    can_get_all_signatories = 17;
-    can_get_my_acc_ast = 18;
-    can_get_all_acc_ast = 19;
-    can_get_my_acc_txs = 20;
-    can_get_all_acc_txs = 21;
-    can_get_my_acc_ast_txs = 22;
-    can_get_all_acc_ast_txs = 23;
+    can_read_assets = 13;
+    can_get_roles = 14;
+    can_get_my_account = 15;
+    can_get_all_accounts = 16;
+    can_get_my_signatories = 17;
+    can_get_all_signatories = 18;
+    can_get_my_acc_ast = 19;
+    can_get_all_acc_ast = 20;
+    can_get_my_acc_txs = 21;
+    can_get_all_acc_txs = 22;
+    can_get_my_acc_ast_txs = 23;
+    can_get_all_acc_ast_txs = 24;
    // Grant permissions
-    can_grant_add_signatory = 24;
-    can_grant_remove_signatory = 25;
-    can_grant_set_quorum = 26;
-    can_grant_can_transfer = 27;
+    can_grant_add_signatory = 25;
+    can_grant_remove_signatory = 26;
+    can_grant_set_quorum = 27;
+    can_grant_can_transfer = 28;
 }
 
 enum GrantablePermission {
