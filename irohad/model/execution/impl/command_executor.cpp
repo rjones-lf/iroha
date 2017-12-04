@@ -18,6 +18,7 @@
 #include "model/execution/command_executor.hpp"
 #include <algorithm>
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -260,6 +261,69 @@ namespace iroha {
       auto add_asset_quantity = static_cast<const AddAssetQuantity &>(command);
       return true;
     }
+
+      // ----------------------------|SubtractAssetQuantity|-----------------------------
+
+      SubtractAssetQuantityExecutor::SubtractAssetQuantityExecutor() {
+        log_ = logger::log("SubtractAssetQuantityExecutor");
+      }
+
+      bool SubtractAssetQuantityExecutor::execute(const Command &command,
+                                             WsvQuery &queries,
+                                             WsvCommand &commands) {
+        auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
+
+        auto asset = queries.getAsset(subtract_asset_quantity.asset_id);
+        if (not asset.has_value()) {
+          log_->info("asset {} is absent", subtract_asset_quantity.asset_id);
+          return false;
+        }
+        auto precision = asset.value().precision;
+
+        if (subtract_asset_quantity.amount.getPrecision() != precision) {
+          log_->info("amount is wrongly formed:");
+          return false;
+        }
+        if (not queries.getAccount(subtract_asset_quantity.account_id).has_value()) {
+          log_->info("amount {} is absent", subtract_asset_quantity.account_id);
+          return false;
+        }
+        auto account_asset = queries.getAccountAsset(
+          subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id);
+        if (not account_asset.has_value()) {
+          log_->info("{} do not have {}",
+                     subtract_asset_quantity.account_id,
+                     subtract_asset_quantity.asset_id);
+          return false;
+        } else {
+          auto account_asset_value = account_asset.value();
+
+          auto new_balance =
+            account_asset_value.balance - subtract_asset_quantity.amount;
+          if (not new_balance.has_value()) {
+            return false;
+          }
+          account_asset->balance = new_balance.value();
+        }
+
+        // accountAsset.value().balance -= amount;
+        return commands.upsertAccountAsset(account_asset.value());
+      }
+
+      bool SubtractAssetQuantityExecutor::hasPermissions(const Command &command,
+                                                    WsvQuery &queries,
+                                                    const Account &creator) {
+        auto cmd_value = static_cast<const SubtractAssetQuantity &>(command);
+        return creator.account_id == cmd_value.account_id
+               and checkAccountRolePermission(
+          creator.account_id, queries, can_subtract_asset_qty);
+      }
+
+      bool SubtractAssetQuantityExecutor::isValid(const Command &command,
+                                             WsvQuery &queries) {
+        auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
+        return true;
+      }
 
     // --------------------------|AddPeer|------------------------------
 

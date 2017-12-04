@@ -18,6 +18,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -207,6 +208,146 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   add_asset_quantity->asset_id = "noass";
 
   EXPECT_CALL(*wsv_query, getAsset(add_asset_quantity->asset_id))
+      .WillOnce(Return(nonstd::nullopt));
+
+  ASSERT_FALSE(validateAndExecute());
+}
+
+class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
+public:
+    void SetUp() override {
+      CommandValidateExecuteTest::SetUp();
+
+      asset = Asset();
+      asset.asset_id = asset_id;
+      asset.domain_id = domain_id;
+      asset.precision = 2;
+
+      wallet = AccountAsset();
+      wallet.asset_id = asset_id;
+      wallet.account_id = account_id;
+      wallet.balance = balance;
+
+      subtract_asset_quantity = std::make_shared<SubtractAssetQuantity>();
+      subtract_asset_quantity->account_id = creator.account_id;
+      Amount amount(100, 2);
+      subtract_asset_quantity->amount = amount;
+      subtract_asset_quantity->asset_id = asset_id;
+
+      command = subtract_asset_quantity;
+      role_permissions = {can_subtract_asset_qty};
+    }
+
+    decltype(AccountAsset().balance) balance = Amount(150ul, 2);
+    Asset asset;
+    AccountAsset wallet;
+
+    std::shared_ptr<SubtractAssetQuantity> subtract_asset_quantity;
+};
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
+  // Subtract asset - no wallet
+  // When there is no wallet - Failed
+  EXPECT_CALL(*wsv_query,
+    getAccountAsset(subtract_asset_quantity->account_id,
+                    subtract_asset_quantity->asset_id))
+    .WillOnce(Return(nonstd::nullopt));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
+    .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+    .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(subtract_asset_quantity->account_id))
+    .WillOnce(Return(account));
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
+  // There is already asset- there is a wallet
+  // When there is a wallet - no new accountAsset created
+  EXPECT_CALL(*wsv_query,
+      getAccountAsset(subtract_asset_quantity->account_id,
+                      subtract_asset_quantity->asset_id))
+      .WillOnce(Return(wallet));
+
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(subtract_asset_quantity->account_id))
+      .WillOnce(Return(account));
+  EXPECT_CALL(*wsv_command, upsertAccountAsset(_)).WillOnce(Return(true));
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  ASSERT_TRUE(validateAndExecute());
+}
+
+
+TEST_F(SubtractAssetQuantityTest, ValidWhenOverAmount) {
+  Amount amount(1204, 2);
+  subtract_asset_quantity->amount = amount;
+  EXPECT_CALL(*wsv_query,
+    getAccountAsset(subtract_asset_quantity->account_id,
+                    subtract_asset_quantity->asset_id))
+      .WillOnce(Return(wallet));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(subtract_asset_quantity->account_id))
+      .WillOnce(Return(account));
+
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
+  // Creator has no roles
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
+      .WillOnce(Return(nonstd::nullopt));
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenZeroAmount) {
+  // Amount is zero
+  Amount amount(0);
+  subtract_asset_quantity->amount = amount;
+  EXPECT_CALL(*wsv_query, getAsset(asset.asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccountRoles(creator.account_id))
+    .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+    .WillOnce(Return(role_permissions));
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
+  // Amount is with wrong precision (must be 2)
+  Amount amount(subtract_asset_quantity->amount.getIntValue(), 30);
+  subtract_asset_quantity->amount = amount;
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
+  // Account to subtract doesn't exist
+  subtract_asset_quantity->account_id = "noacc";
+  ASSERT_FALSE(validateAndExecute());
+}
+
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
+  // Asset doesn't exist
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  subtract_asset_quantity->asset_id = "noass";
+
+  EXPECT_CALL(*wsv_query, getAsset(subtract_asset_quantity->asset_id))
       .WillOnce(Return(nonstd::nullopt));
 
   ASSERT_FALSE(validateAndExecute());
