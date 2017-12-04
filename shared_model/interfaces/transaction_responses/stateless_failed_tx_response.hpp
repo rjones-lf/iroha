@@ -18,7 +18,7 @@
 #ifndef IROHA_STATELESS_FAILED_TX_RESPONSE_HPP
 #define IROHA_STATELESS_FAILED_TX_RESPONSE_HPP
 
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 
 namespace shared_model {
   namespace interface {

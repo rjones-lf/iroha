@@ -20,6 +20,7 @@
 
 #include <boost/variant.hpp>
 #include <utility>
+#include "interfaces/base/hashable.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -33,10 +34,9 @@
 #include "interfaces/commands/revoke_permission.hpp"
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/hashable.hpp"
-#include "interfaces/polymorphic_wrapper.hpp"
-#include "interfaces/visitor_apply_for_all.hpp"
 #include "model/command.hpp"
+#include "utils/polymorphic_wrapper.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

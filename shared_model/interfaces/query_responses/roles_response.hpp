@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/queries/responses/roles_response.hpp"
 #include "utils/string_builder.hpp"
 

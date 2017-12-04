@@ -22,8 +22,8 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
 #include "amount/amount.hpp"
+#include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/hashable.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
@@ -34,7 +34,6 @@ namespace shared_model {
      */
     class Amount : public Hashable<Amount, iroha::Amount> {
      public:
-
       /**
        * Gets integer representation value, which ignores precision
        * @return amount represented as integer value, which ignores precision

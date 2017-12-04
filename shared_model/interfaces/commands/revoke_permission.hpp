@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_REVOKE_PERMISSION_HPP
 #define IROHA_SHARED_MODEL_REVOKE_PERMISSION_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/revoke_permission.hpp"
 
 namespace shared_model {

@@ -19,7 +19,7 @@
 #ifndef IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 #define IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "model/queries/responses/error_response.hpp"
 #include "utils/string_builder.hpp"
 

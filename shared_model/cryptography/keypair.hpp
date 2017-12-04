@@ -20,7 +20,7 @@
 
 #include "cryptography/private_key.hpp"
 #include "cryptography/public_key.hpp"
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "utils/string_builder.hpp"
 
 #include "common/types.hpp"

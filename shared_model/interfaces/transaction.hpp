@@ -18,14 +18,13 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTION_HPP
 #define IROHA_SHARED_MODEL_TRANSACTION_HPP
 
-#include <unordered_set>
 #include <vector>
+#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/polymorphic_wrapper.hpp"
-#include "interfaces/primitive.hpp"
-#include "interfaces/signable.hpp"
 #include "model/transaction.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

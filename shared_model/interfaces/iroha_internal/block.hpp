@@ -18,7 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_BLOCK_HPP
 #define IROHA_SHARED_MODEL_BLOCK_HPP
 
-#include "interfaces/signable.hpp"
+#include "interfaces/base/signable.hpp"
 #include "interfaces/transaction.hpp"
 #include "model/block.hpp"
 #include "utils/string_builder.hpp"

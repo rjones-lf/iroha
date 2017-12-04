@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_ADD_PEER_HPP
 #define IROHA_SHARED_MODEL_ADD_PEER_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/add_peer.hpp"
 
 namespace shared_model {

@@ -21,10 +21,10 @@
 #include <new>
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
-#include "interfaces/visitor_apply_for_all.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "model/queries/responses/account_assets_response.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

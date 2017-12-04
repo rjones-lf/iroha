@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_GRANT_PERMISSION_HPP
 #define IROHA_SHARED_MODEL_GRANT_PERMISSION_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/grant_permission.hpp"
 
 namespace shared_model {

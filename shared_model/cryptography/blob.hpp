@@ -20,7 +20,7 @@
 
 #include <iomanip>
 #include <sstream>
-#include "interfaces/model_primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/deprecated.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/string_builder.hpp"

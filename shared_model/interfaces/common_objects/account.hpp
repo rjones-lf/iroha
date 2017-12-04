@@ -19,8 +19,8 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_HPP
 
 #include "cryptography/hash.hpp"
+#include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/hashable.hpp"
 #include "model/account.hpp"
 #include "utils/string_builder.hpp"
 

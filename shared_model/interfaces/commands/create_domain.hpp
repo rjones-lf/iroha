@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 #define IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/create_domain.hpp"
 
 namespace shared_model {

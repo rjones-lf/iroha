@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 #define IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/remove_signatory.hpp"
 
 namespace shared_model {

@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_TRANSFER_ASSET_HPP
 #define IROHA_SHARED_MODEL_TRANSFER_ASSET_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/transfer_asset.hpp"
 
 namespace shared_model {

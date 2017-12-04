@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "interfaces/hashable.hpp"
+#include "interfaces/base/hashable.hpp"
 #include "interfaces/transaction.hpp"
 #include "model/proposal.hpp"
 #include "utils/string_builder.hpp"
