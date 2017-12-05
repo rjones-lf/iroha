@@ -19,8 +19,8 @@
 #define IROHA_CRYPTO_MODEL_SIGNER_HPP_
 
 #include "cryptography/keypair.hpp"
+#include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/signature.hpp"
-#include "interfaces/signable.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -40,7 +40,7 @@ namespace shared_model {
     template <typename SignerT>
     void CryptoModelSigner<SignerT>::sign(interface::Signable &s) noexcept {
       auto sigblob = SignerT::sign(s.hash(), this->keypair_);
-//      s.addSignature() // <- should receive blob or Signature instance
+      //      s.addSignature() // <- should receive blob or Signature instance
     }
 
     template <typename SignerT>

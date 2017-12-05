@@ -18,7 +18,7 @@
 #ifndef IROHA_STATEFUL_FAILED_TX_RESPONSE_HPP
 #define IROHA_STATEFUL_FAILED_TX_RESPONSE_HPP
 
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "model/transaction_response.hpp"
 #include "utils/string_builder.hpp"
 

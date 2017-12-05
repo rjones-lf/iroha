@@ -18,14 +18,13 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/polymorphic_wrapper.hpp"
-#include "interfaces/primitive.hpp"
 #include "interfaces/transaction.hpp"
-#include "interfaces/visitor_apply_for_all.hpp"
 #include "model/queries/responses/transactions_response.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

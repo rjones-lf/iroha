@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_GET_SIGNATORIES_HPP
 #define IROHA_SHARED_MODEL_GET_SIGNATORIES_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/queries/get_signatories.hpp"
 
 namespace shared_model {

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/queries/get_transactions.hpp"
 
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP

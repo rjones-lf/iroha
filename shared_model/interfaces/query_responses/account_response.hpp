@@ -19,12 +19,12 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_RESPONSE_HPP
 
 #include <new>
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
-#include "interfaces/visitor_apply_for_all.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

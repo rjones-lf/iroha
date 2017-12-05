@@ -18,9 +18,9 @@
 #ifndef IROHA_SHARED_MODEL_ADD_ASSET_QUANTITY_HPP
 #define IROHA_SHARED_MODEL_ADD_ASSET_QUANTITY_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 
 namespace shared_model {

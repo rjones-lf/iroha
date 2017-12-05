@@ -21,7 +21,7 @@
 #include "cryptography/blob.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "model/signature.hpp"
 #include "utils/string_builder.hpp"
 

@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_ASSET_HPP
 #define IROHA_SHARED_MODEL_ASSET_HPP
 
+#include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/hashable.hpp"
 #include "model/asset.hpp"
 #include "utils/string_builder.hpp"
 

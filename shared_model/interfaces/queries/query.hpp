@@ -20,9 +20,9 @@
 
 #include <boost/variant.hpp>
 
+#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/polymorphic_wrapper.hpp"
-#include "interfaces/primitive.hpp"
 #include "interfaces/queries/get_account.hpp"
 #include "interfaces/queries/get_account_asset_transactions.hpp"
 #include "interfaces/queries/get_account_assets.hpp"
@@ -31,10 +31,10 @@
 #include "interfaces/queries/get_role_permissions.hpp"
 #include "interfaces/queries/get_roles.hpp"
 #include "interfaces/queries/get_signatories.hpp"
-#include "interfaces/signable.hpp"
-#include "interfaces/visitor_apply_for_all.hpp"
 #include "model/query.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

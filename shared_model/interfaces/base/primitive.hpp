@@ -18,7 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_PRIMITIVE_HPP
 #define IROHA_SHARED_MODEL_PRIMITIVE_HPP
 
-#include "interfaces/model_primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/deprecated.hpp"
 
 namespace shared_model {

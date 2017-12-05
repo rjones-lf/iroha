@@ -18,9 +18,9 @@
 #ifndef IROHA_SHARED_MODEL_GET_ROLE_PERMISSIONS_HPP
 #define IROHA_SHARED_MODEL_GET_ROLE_PERMISSIONS_HPP
 
+#include "interfaces/base/hashable.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/hashable.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/queries/get_roles.hpp"
 
 namespace shared_model {

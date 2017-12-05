@@ -18,8 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/queries/get_account.hpp"
 
 namespace shared_model {

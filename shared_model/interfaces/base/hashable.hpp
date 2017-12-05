@@ -20,7 +20,7 @@
 
 #include "cryptography/hash.hpp"
 #include "cryptography/hash_providers/sha3_512.hpp"
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {

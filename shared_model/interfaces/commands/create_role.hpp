@@ -20,8 +20,8 @@
 
 #include <numeric>
 #include <set>
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/primitive.hpp"
 #include "model/commands/create_role.hpp"
 
 namespace shared_model {

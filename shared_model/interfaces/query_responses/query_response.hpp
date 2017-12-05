@@ -19,8 +19,8 @@
 #define IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 
 #include <boost/variant.hpp>
-#include "interfaces/primitive.hpp"
-#include "interfaces/hashable.hpp"
+#include "interfaces/base/hashable.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
@@ -80,8 +80,7 @@ namespace shared_model {
         auto query_response = boost::apply_visitor(
             detail::OldModelCreatorVisitor<OldModelType *>(), get());
         using hashType = decltype(query_response->query_hash);
-        query_response->query_hash =
-            queryHash().makeOldModel<hashType>();
+        query_response->query_hash = queryHash().makeOldModel<hashType>();
         return query_response;
       }
 

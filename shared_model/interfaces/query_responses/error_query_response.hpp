@@ -19,7 +19,7 @@
 #define IROHA_SHARED_MODEL_QUERY_ERROR_RESPONSE_HPP
 
 #include <boost/variant.hpp>
-#include "interfaces/primitive.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_asset_error_response.hpp"
