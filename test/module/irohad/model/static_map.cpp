@@ -30,7 +30,7 @@ TEST(HandlerTest, CommandRegistration) {
   auto log = logger::testLog("HandlerTest");
 
   CommandRegistry registry;
-  ASSERT_EQ(14, registry.command_handler.types().size());
+  ASSERT_EQ(15, registry.command_handler.types().size());
 }
 
 TEST(HandlerTest, QueryRegistration) {
