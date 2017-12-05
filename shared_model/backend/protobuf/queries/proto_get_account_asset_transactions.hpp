@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_GET_ACCOUNT_TRANSACTIONS_H
-#define IROHA_GET_ACCOUNT_TRANSACTIONS_H
+#ifndef IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
+#define IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
 
-#include "interfaces/queries/get_transactions.hpp"
+#include "interfaces/queries/get_account_transactions.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -26,37 +26,6 @@
 
 namespace shared_model {
   namespace proto {
-    class GetAccountTransactions final
-        : public CopyableProto<interface::GetAccountTransactions,
-                               iroha::protocol::Query,
-                               GetAccountTransactions> {
-     public:
-      template <typename QueryType>
-      explicit GetAccountTransactions(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            account_id_(detail::makeReferenceGenerator(
-                &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account_transactions)) {}
-
-      GetAccountTransactions(const GetAccountTransactions &o)
-          : GetAccountTransactions(o.proto_) {}
-
-      GetAccountTransactions(GetAccountTransactions &&o) noexcept
-          : GetAccountTransactions(std::move(o.proto_)) {}
-
-      const interface::types::AccountIdType &accountId() const override {
-        return account_id_->account_id();
-      }
-
-     private:
-      // ------------------------------| fields |-------------------------------
-
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<const iroha::protocol::GetAccountTransactions &> account_id_;
-    };
-
     class GetAccountAssetTransactions final
         : public CopyableProto<interface::GetAccountAssetTransactions,
                                iroha::protocol::Query,
@@ -99,4 +68,4 @@ namespace shared_model {
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_GET_ACCOUNT_TRANSACTIONS_H
+#endif  // IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H

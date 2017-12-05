@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_GET_ACCOUNT_ASSETS_H
-#define IROHA_PROTO_GET_ACCOUNT_ASSETS_H
+#ifndef IROHA_GET_ACCOUNT_TRANSACTIONS_H
+#define IROHA_GET_ACCOUNT_TRANSACTIONS_H
 
-#include "interfaces/queries/get_account_assets.hpp"
+#include "interfaces/queries/get_account_transactions.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -26,33 +26,26 @@
 
 namespace shared_model {
   namespace proto {
-    class GetAccountAssets final
-        : public CopyableProto<interface::GetAccountAssets,
+    class GetAccountTransactions final
+        : public CopyableProto<interface::GetAccountTransactions,
                                iroha::protocol::Query,
-                               GetAccountAssets> {
+                               GetAccountTransactions> {
      public:
       template <typename QueryType>
-      explicit GetAccountAssets(QueryType &&query)
+      explicit GetAccountTransactions(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
             account_id_(detail::makeReferenceGenerator(
                 &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account)),
-            asset_id_(detail::makeReferenceGenerator(
-                &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account_assets)) {}
+                &iroha::protocol::Query::Payload::get_account_transactions)) {}
 
-      GetAccountAssets(const GetAccountAssets &o)
-          : GetAccountAssets(o.proto_) {}
+      GetAccountTransactions(const GetAccountTransactions &o)
+          : GetAccountTransactions(o.proto_) {}
 
-      GetAccountAssets(GetAccountAssets &&o) noexcept
-          : GetAccountAssets(std::move(o.proto_)) {}
+      GetAccountTransactions(GetAccountTransactions &&o) noexcept
+          : GetAccountTransactions(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
         return account_id_->account_id();
-      }
-
-      const interface::types::AssetIdType &assetId() const override {
-        return asset_id_->asset_id();
       }
 
      private:
@@ -61,11 +54,10 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::GetAccount &> account_id_;
-      const Lazy<const iroha::protocol::GetAccountAssets &> asset_id_;
+      const Lazy<const iroha::protocol::GetAccountTransactions &> account_id_;
     };
 
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_PROTO_GET_ACCOUNT_ASSETS_H
+#endif  // IROHA_GET_ACCOUNT_TRANSACTIONS_H
