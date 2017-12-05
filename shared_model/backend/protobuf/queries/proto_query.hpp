@@ -20,20 +20,27 @@
 
 #include <boost/range/numeric.hpp>
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query.hpp"
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
 
+#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_account_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_role_permissions.hpp"
+#include "backend/protobuf/queries/proto_get_roles.hpp"
+#include "backend/protobuf/queries/proto_get_signatories.hpp"
+
 template <typename... T, typename Archive>
 auto load_query(Archive &&ar) {
   int which = ar.payload()
                   .GetDescriptor()
-                  ->FindOneofByName("query")
-                  ->field(ar.payload().query_case())
+                  ->FindFieldByNumber(ar.payload().query_case())
                   ->index_in_oneof();
   return shared_model::detail::variant_impl<T...>::template load<
       shared_model::interface::Query::QueryVariantType>(
@@ -50,7 +57,6 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
 
-
       /// lazy variant shortcut
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
@@ -59,7 +65,14 @@ namespace shared_model {
 
      public:
       /// type of proto variant
-      using ProtoQueryVariantType = wrap<GetAccount>;
+      using ProtoQueryVariantType = wrap<GetAccount,
+                                         GetSignatories,
+                                         GetAccountTransactions,
+                                         GetAccountAssetTransactions,
+                                         GetAccountAssets,
+                                         GetRoles,
+                                         GetRolePermissions,
+                                         GetAssetInfo>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
@@ -98,8 +111,12 @@ namespace shared_model {
       }
 
       bool addSignature(const SignatureType &signature) override {
-        //It is forbidden to change query signature
-        return false;
+        if (proto_->has_signature()) return false;
+
+        auto sig = proto_->mutable_signature();
+        sig->set_pubkey(signature->publicKey().blob());
+        sig->set_signature(signature->signedData().blob());
+        return true;
       }
 
       TimestampType createdTime() const override {

@@ -32,15 +32,15 @@
 
 TEST(ProtoQuery, QueryLoad) {
   iroha::protocol::Query query;
-  auto refl = query.GetReflection();
-  auto desc = query.GetDescriptor();
+  auto payload = query.mutable_payload();
+  auto refl = payload->GetReflection();
+  auto desc = payload->GetDescriptor()->FindOneofByName("query");
   boost::for_each(
-      // TODO 03/12/17 dumitru replace 1 with desc->field_count()
-      boost::irange(0, 1),
+      boost::irange(0, desc->field_count()),
       [&](auto i) {
         auto field = desc->field(i);
         refl->SetAllocatedMessage(
-            &query, refl->GetMessage(query, field).New(), field);
+            payload, refl->GetMessage(*payload, field).New(), field);
         ASSERT_EQ(i, shared_model::proto::Query(query).get().which());
       });
 }

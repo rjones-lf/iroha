@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_GET_ACCOUNT_H
-#define IROHA_PROTO_GET_ACCOUNT_H
+#ifndef IROHA_PROTO_GET_SIGNATORIES_H
+#define IROHA_PROTO_GET_SIGNATORIES_H
 
-#include "interfaces/queries/get_account.hpp"
+#include "interfaces/queries/get_signatories.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -26,21 +26,21 @@
 
 namespace shared_model {
   namespace proto {
-    class GetAccount final : public CopyableProto<interface::GetAccount,
-                                                  iroha::protocol::Query,
-                                                  GetAccount> {
+    class GetSignatories final : public CopyableProto<interface::GetSignatories,
+                                                      iroha::protocol::Query,
+                                                      GetSignatories> {
      public:
       template <typename QueryType>
-      explicit GetAccount(QueryType &&query)
+      explicit GetSignatories(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-
             account_id_(detail::makeReferenceGenerator(
                 &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account)) {}
+                &iroha::protocol::Query::Payload::get_account_signatories)) {}
 
-      GetAccount(const GetAccount &o) : GetAccount(o.proto_) {}
+      GetSignatories(const GetSignatories &o) : GetSignatories(o.proto_) {}
 
-      GetAccount(GetAccount &&o) noexcept : GetAccount(std::move(o.proto_)) {}
+      GetSignatories(GetSignatories &&o) noexcept
+          : GetSignatories(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
         return account_id_->account_id();
@@ -48,11 +48,14 @@ namespace shared_model {
 
      private:
       // ------------------------------| fields |-------------------------------
-      const detail::LazyInitializer<const iroha::protocol::GetAccount &>
-          account_id_;
+
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      const Lazy<const iroha::protocol::GetSignatories &> account_id_;
     };
 
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_PROTO_GET_ACCOUNT_H
+#endif  // IROHA_PROTO_GET_SIGNATORIES_H

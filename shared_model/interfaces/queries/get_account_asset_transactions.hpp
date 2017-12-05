@@ -15,44 +15,53 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SHARED_MODEL_GET_ASSET_INFO_HPP
-#define IROHA_SHARED_MODEL_GET_ASSET_INFO_HPP
-
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/primitive.hpp"
-#include "model/queries/get_asset_info.hpp"
+#include "model/queries/get_transactions.hpp"
+
+#ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP
+#define IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP
 
 namespace shared_model {
   namespace interface {
+
     /**
-     * Get meta data of asset
+     * Query for getting transactions of given asset of an account
      */
-    class GetAssetInfo
-        : public Primitive<GetAssetInfo, iroha::model::GetAssetInfo> {
+    class GetAccountAssetTransactions
+        : public Primitive<GetAccountAssetTransactions,
+                           iroha::model::GetAccountAssetTransactions> {
      public:
       /**
-       * @return asset identifier to get asset's information
+       * @return account_id of requested transactions
        */
-      virtual const types::AssetIdType &assetId() const = 0;
+      virtual const types::AccountIdType &accountId() const = 0;
+      /**
+       * @return assetId of requested transactions
+       */
+      virtual const types::AccountIdType &assetId() const = 0;
 
       OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAssetInfo;
+        auto oldModel = new iroha::model::GetAccountAssetTransactions;
+        oldModel->account_id = accountId();
         oldModel->asset_id = assetId();
         return oldModel;
       }
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
-            .init("GetAssetInfo")
+            .init("GetAccountAssetTransactions")
+            .append("account_id", accountId())
             .append("asset_id", assetId())
             .finalize();
       }
 
       bool operator==(const ModelType &rhs) const override {
-        return assetId() == rhs.assetId();
+        return accountId() == rhs.accountId() and assetId() == rhs.assetId();
       }
     };
+
   }  // namespace interface
 }  // namespace shared_model
 
-#endif  // IROHA_SHARED_MODEL_GET_ASSET_INFO_HPP
+#endif  // IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP

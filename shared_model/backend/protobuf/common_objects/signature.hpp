@@ -19,7 +19,7 @@
 #define IROHA_PROTO_SIGNATURE_HPP
 
 #include "interfaces/common_objects/signature.hpp"
-
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "primitive.pb.h"
 
 namespace shared_model {
