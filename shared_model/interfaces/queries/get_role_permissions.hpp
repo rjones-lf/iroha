@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SHARED_MODEL_GET_ROLES_HPP
-#define IROHA_SHARED_MODEL_GET_ROLES_HPP
+#ifndef IROHA_SHARED_MODEL_GET_ROLE_PERMISSIONS_HPP
+#define IROHA_SHARED_MODEL_GET_ROLE_PERMISSIONS_HPP
 
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/hashable.hpp"
@@ -25,22 +25,36 @@
 
 namespace shared_model {
   namespace interface {
+
     /**
-     * Get all roles in the current system
+     * Get all permissions related to specific role
      */
-    class GetRoles : public Primitive<GetRoles, iroha::model::GetRoles> {
+    class GetRolePermissions
+        : public Primitive<GetRolePermissions,
+                           iroha::model::GetRolePermissions> {
      public:
+      /**
+       * @return role identifier containing requested permissions
+       */
+      virtual const types::RoleIdType &roleId() const = 0;
+
       OldModelType *makeOldModel() const override {
-        return new iroha::model::GetRoles;
+        auto oldModel = new iroha::model::GetRolePermissions;
+        oldModel->role_id = roleId();
+        return oldModel;
       }
 
       std::string toString() const override {
-        return detail::PrettyStringBuilder().init("GetRoles").finalize();
+        return detail::PrettyStringBuilder()
+            .init("GetRolePermissions")
+            .append("role_id", roleId())
+            .finalize();
       }
 
-      bool operator==(const ModelType &rhs) const override { return true; }
+      bool operator==(const ModelType &rhs) const override {
+        return roleId() == rhs.roleId();
+      }
     };
-
   }  // namespace interface
 }  // namespace shared_model
 

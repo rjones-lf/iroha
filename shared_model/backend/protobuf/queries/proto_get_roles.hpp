@@ -39,34 +39,6 @@ namespace shared_model {
       GetRoles(GetRoles &&o) noexcept : GetRoles(std::move(o.proto_)) {}
     };
 
-    class GetRolePermissions final
-        : public CopyableProto<interface::GetRolePermissions,
-                               iroha::protocol::Query,
-                               GetRolePermissions> {
-     public:
-      template <typename QueryType>
-      explicit GetRolePermissions(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            role_id_(detail::makeReferenceGenerator(
-                &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_role_permissions)) {}
-
-      GetRolePermissions(const GetRolePermissions &o)
-          : GetRolePermissions(o.proto_) {}
-
-      GetRolePermissions(GetRolePermissions &&o) noexcept
-          : GetRolePermissions(std::move(o.proto_)) {}
-
-      const interface::types::RoleIdType &roleId() const override {
-        return role_id_->role_id();
-      }
-
-     private:
-      // ------------------------------| fields |-------------------------------
-      const detail::LazyInitializer<const iroha::protocol::GetRolePermissions &>
-          role_id_;
-    };
-
   }  // namespace proto
 }  // namespace shared_model
 
