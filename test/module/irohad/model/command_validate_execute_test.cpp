@@ -282,8 +282,7 @@ TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
   ASSERT_TRUE(validateAndExecute());
 }
 
-
-TEST_F(SubtractAssetQuantityTest, ValidWhenOverAmount) {
+TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
   Amount amount(1204, 2);
   subtract_asset_quantity->amount = amount;
   EXPECT_CALL(*wsv_query,
