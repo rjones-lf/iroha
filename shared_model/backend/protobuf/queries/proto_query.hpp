@@ -109,8 +109,12 @@ namespace shared_model {
       }
 
       bool addSignature(const SignatureType &signature) override {
-        // It is forbidden to change query signature
-        return false;
+        if (proto_->has_signature()) return false;
+
+        auto sig = proto_->mutable_signature();
+        sig->set_pubkey(signature->publicKey().blob());
+        sig->set_signature(signature->signedData().blob());
+        return true;
       }
 
       TimestampType createdTime() const override {
