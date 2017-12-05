@@ -50,14 +50,14 @@ namespace shared_model {
 
      public:
       /// Type of variant, that handle concrete query
-      using QueryVariantType = wrap<GetAccount, GetSignatories>;
-      //                                              w<GetAccountAssets>,
-      //                                              w<GetAssetInfo>,
-      //                                              w<GetRoles>,
-      //                                              w<GetRolePermissions>,
-      //                                              w<GetAccountAssetTransactions>,
-      //                                              w<GetAccountTransactions>,
-      //                                              w<GetSignatories>>;
+      using QueryVariantType = wrap<GetAccount,
+                                    GetSignatories,
+                                    GetAccountTransactions,
+                                    GetAccountAssetTransactions,
+                                    GetAccountAssets,
+                                    GetRoles,
+                                    GetRolePermissions,
+                                    GetAssetInfo>;
 
       /// Types of concrete commands, in attached variant
       using QueryListType = QueryVariantType::types;

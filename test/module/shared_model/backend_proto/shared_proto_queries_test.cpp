@@ -35,8 +35,7 @@ TEST(ProtoQuery, QueryLoad) {
   auto refl = payload->GetReflection();
   auto desc = payload->GetDescriptor()->FindOneofByName("query");
   boost::for_each(
-      // TODO 03/12/17 dumitru replace 1 with desc->field_count()
-      boost::irange(0, 2),
+      boost::irange(0, desc->field_count()),
       [&](auto i) {
         auto field = desc->field(i);
         refl->SetAllocatedMessage(

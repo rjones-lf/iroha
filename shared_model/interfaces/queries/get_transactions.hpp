@@ -30,7 +30,7 @@ namespace shared_model {
      */
     class GetAccountAssetTransactions
         : public Primitive<GetAccountAssetTransactions,
-                          iroha::model::GetAccountAssetTransactions> {
+                           iroha::model::GetAccountAssetTransactions> {
      public:
       /**
        * @return account_id of requested transactions
@@ -55,14 +55,18 @@ namespace shared_model {
             .append("asset_id", assetId())
             .finalize();
       }
+
+      bool operator==(const ModelType &rhs) const override {
+        return accountId() == rhs.accountId() and assetId() == rhs.assetId();
+      }
     };
 
     /**
      * Query for getting transactions of account
      */
     class GetAccountTransactions
-        : public Hashable<GetAccountTransactions,
-                          iroha::model::GetAccountTransactions> {
+        : public Primitive<GetAccountTransactions,
+                           iroha::model::GetAccountTransactions> {
      public:
       /**
        * @return account_id of requested transactions
@@ -80,6 +84,10 @@ namespace shared_model {
             .init("GetAccountTransactions")
             .append("account_id", accountId())
             .finalize();
+      }
+
+      bool operator==(const ModelType &rhs) const override {
+        return accountId() == rhs.accountId();
       }
     };
   }  // namespace interface

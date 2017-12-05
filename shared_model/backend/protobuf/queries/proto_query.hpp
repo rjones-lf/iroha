@@ -28,9 +28,11 @@
 #include "utils/variant_deserializer.hpp"
 
 #include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_roles.hpp"
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
-
-
+#include "backend/protobuf/queries/proto_get_transactions.hpp"
 
 template <typename... T, typename Archive>
 auto load_query(Archive &&ar) {
@@ -61,7 +63,14 @@ namespace shared_model {
 
      public:
       /// type of proto variant
-      using ProtoQueryVariantType = wrap<GetAccount, GetSignatories>;
+      using ProtoQueryVariantType = wrap<GetAccount,
+                                         GetSignatories,
+                                         GetAccountTransactions,
+                                         GetAccountAssetTransactions,
+                                         GetAccountAssets,
+                                         GetRoles,
+                                         GetRolePermissions,
+                                         GetAssetInfo>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
@@ -100,7 +109,7 @@ namespace shared_model {
       }
 
       bool addSignature(const SignatureType &signature) override {
-        //It is forbidden to change query signature
+        // It is forbidden to change query signature
         return false;
       }
 

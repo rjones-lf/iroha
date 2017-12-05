@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_GET_ACCOUNT_H
-#define IROHA_PROTO_GET_ACCOUNT_H
+#ifndef IROHA_PROTO_GET_ASSET_INFO_H
+#define IROHA_PROTO_GET_ASSET_INFO_H
 
-#include "interfaces/queries/get_account.hpp"
+#include "interfaces/queries/get_asset_info.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -26,33 +26,33 @@
 
 namespace shared_model {
   namespace proto {
-    class GetAccount final : public CopyableProto<interface::GetAccount,
-                                                  iroha::protocol::Query,
-                                                  GetAccount> {
+    class GetAssetInfo final : public CopyableProto<interface::GetAssetInfo,
+                                                    iroha::protocol::Query,
+                                                    GetAssetInfo> {
      public:
       template <typename QueryType>
-      explicit GetAccount(QueryType &&query)
+      explicit GetAssetInfo(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-
-            account_id_(detail::makeReferenceGenerator(
+            asset_id_(detail::makeReferenceGenerator(
                 &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account)) {}
+                &iroha::protocol::Query::Payload::get_asset_info)) {}
 
-      GetAccount(const GetAccount &o) : GetAccount(o.proto_) {}
+      GetAssetInfo(const GetAssetInfo &o) : GetAssetInfo(o.proto_) {}
 
-      GetAccount(GetAccount &&o) noexcept : GetAccount(std::move(o.proto_)) {}
+      GetAssetInfo(GetAssetInfo &&o) noexcept
+          : GetAssetInfo(std::move(o.proto_)) {}
 
-      const interface::types::AccountIdType &accountId() const override {
-        return account_id_->account_id();
+      const interface::types::AssetIdType &assetId() const override {
+        return asset_id_->asset_id();
       }
 
      private:
       // ------------------------------| fields |-------------------------------
-      const detail::LazyInitializer<const iroha::protocol::GetAccount &>
-          account_id_;
+      const detail::LazyInitializer<const iroha::protocol::GetAssetInfo &>
+          asset_id_;
     };
 
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_PROTO_GET_ACCOUNT_H
+#endif  // IROHA_PROTO_GET_ASSET_INFO_H

@@ -47,6 +47,10 @@ namespace shared_model {
             .append("asset_id", assetId())
             .finalize();
       }
+
+      bool operator==(const ModelType &rhs) const override {
+        return assetId() == rhs.assetId();
+      }
     };
   }  // namespace interface
 }  // namespace shared_model
