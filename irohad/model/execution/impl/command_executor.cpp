@@ -274,7 +274,7 @@ namespace iroha {
         auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
 
         auto asset = queries.getAsset(subtract_asset_quantity.asset_id);
-        if (asset) {
+        if (not asset) {
           log_->info("asset {} is absent", subtract_asset_quantity.asset_id);
           return false;
         }
