@@ -116,19 +116,19 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
 }
 
 TEST_F(JsonCommandTest, subtract_asset_quantity) {
-auto orig_command = std::make_shared<SubtractAssetQuantity>();
-orig_command->account_id = "23";
-iroha::Amount amount(150, 2);
+  auto orig_command = std::make_shared<SubtractAssetQuantity>();
+  orig_command->account_id = "23";
+  iroha::Amount amount(150, 2);
 
-orig_command->amount = amount;
-orig_command->asset_id = "23";
+  orig_command->amount = amount;
+  orig_command->asset_id = "23";
 
-auto json_command = factory.serializeSubtractAssetQuantity(orig_command);
-auto serial_command = factory.deserializeSubtractAssetQuantity(json_command);
+  auto json_command = factory.serializeSubtractAssetQuantity(orig_command);
+  auto serial_command = factory.deserializeSubtractAssetQuantity(json_command);
 
-ASSERT_TRUE(serial_command.has_value());
-ASSERT_EQ(*orig_command, *serial_command.value());
-command_converter_test(orig_command);
+  ASSERT_TRUE(serial_command.has_value());
+  ASSERT_EQ(*orig_command, *serial_command.value());
+  command_converter_test(orig_command);
 }
 
 TEST_F(JsonCommandTest, add_peer) {

@@ -77,10 +77,10 @@ TEST(ModelOperatorTest, AddAssetQuantityTest) {
 
 SubtractAssetQuantity createSubtractAssetQuantity() {
   SubtractAssetQuantity saq;
-  saq.account_id = "123";
+  saq.account_id = "acc";
   iroha::Amount amount(1010, 2);
   saq.amount = amount;
-  saq.asset_id = "123";
+  saq.asset_id = "ass";
   return saq;
 }
 
