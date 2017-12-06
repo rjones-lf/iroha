@@ -27,6 +27,7 @@ namespace iroha {
     const std::string can_append_role = "CanAppendRole";
     const std::string can_create_role = "CanCreateRole";
     const std::string can_add_asset_qty = "CanAddAssetQuantity";
+    const std::string can_subtract_asset_qty = "CanSubtractAssetQuantity";
     const std::string can_add_peer = "CanAddPeer";
     const std::string can_add_signatory = "CanAddSignatory";
     const std::string can_create_account = "CanCreateAccount";
@@ -108,6 +109,7 @@ namespace iroha {
         can_remove_signatory,
         can_create_asset,
         can_add_asset_qty,
+        can_subtract_asset_qty,
         can_append_role,
         can_create_role,
         can_create_account,

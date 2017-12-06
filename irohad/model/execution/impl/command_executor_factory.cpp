@@ -29,6 +29,8 @@ CommandExecutorFactory::create() {
 
   executors[typeid(AddAssetQuantity)] =
       std::make_shared<AddAssetQuantityExecutor>();
+  executors[typeid(SubtractAssetQuantity)] =
+      std::make_shared<SubtractAssetQuantityExecutor>();
   executors[typeid(AddPeer)] = std::make_shared<AddPeerExecutor>();
   executors[typeid(AddSignatory)] = std::make_shared<AddSignatoryExecutor>();
   executors[typeid(CreateAccount)] = std::make_shared<CreateAccountExecutor>();

@@ -28,6 +28,7 @@
 #include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 
 namespace iroha {
@@ -86,6 +87,15 @@ namespace iroha {
       return add_asset_quantity.account_id == account_id
           && add_asset_quantity.asset_id == asset_id
           && add_asset_quantity.amount == amount;
+    }
+
+    /* SubtractAssetQuantity */
+    bool SubtractAssetQuantity::operator==(const Command &command) const {
+      if (! instanceof <SubtractAssetQuantity>(command)) return false;
+      auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
+      return subtract_asset_quantity.account_id == account_id
+             && subtract_asset_quantity.asset_id == asset_id
+             && subtract_asset_quantity.amount == amount;
     }
 
     /* AddPeer */
