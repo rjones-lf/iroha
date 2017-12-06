@@ -274,14 +274,14 @@ namespace iroha {
         auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
 
         auto asset = queries.getAsset(subtract_asset_quantity.asset_id);
-        if (not asset.has_value()) {
+        if (asset) {
           log_->info("asset {} is absent", subtract_asset_quantity.asset_id);
           return false;
         }
         auto precision = asset.value().precision;
 
         if (subtract_asset_quantity.amount.getPrecision() != precision) {
-          log_->info("amount is wrongly formed:");
+          log_->info("amount is wrongly formed");
           return false;
         }
         if (not queries.getAccount(subtract_asset_quantity.account_id).has_value()) {
@@ -295,16 +295,15 @@ namespace iroha {
                      subtract_asset_quantity.account_id,
                      subtract_asset_quantity.asset_id);
           return false;
-        } else {
-          auto account_asset_value = account_asset.value();
-
-          auto new_balance =
-            account_asset_value.balance - subtract_asset_quantity.amount;
-          if (not new_balance.has_value()) {
-            return false;
-          }
-          account_asset->balance = new_balance.value();
         }
+        auto account_asset_value = account_asset.value();
+
+        auto new_balance =
+          account_asset_value.balance - subtract_asset_quantity.amount;
+        if (not new_balance.has_value()) {
+          return false;
+        }
+        account_asset->balance = new_balance.value();
 
         // accountAsset.value().balance -= amount;
         return commands.upsertAccountAsset(account_asset.value());
@@ -321,7 +320,6 @@ namespace iroha {
 
       bool SubtractAssetQuantityExecutor::isValid(const Command &command,
                                              WsvQuery &queries) {
-        auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
         return true;
       }
 
