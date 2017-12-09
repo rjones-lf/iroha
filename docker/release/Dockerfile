@@ -7,7 +7,8 @@ RUN apt-get update;\
     apt-get upgrade; \
     apt-get install -y \
         libc-ares-dev \
-        gdebi-core
+        gdebi-core \
+        libboost-all-dev
 
 #Install iroha
 COPY iroha.deb /tmp/iroha.deb
