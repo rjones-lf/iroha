@@ -43,7 +43,7 @@ namespace shared_model {
                   PermissionNameCollectionType{},
                   [](auto &&permissions, const auto &permission) {
                     permissions.emplace_back(permission);
-                    return std::forward<decltype(permissions)>(permissions);
+                    return std::move<decltype(permissions)>(permissions);
                   });
             }) {}
 

@@ -44,7 +44,7 @@ namespace shared_model {
                   TransactionsCollectionType{},
                   [](auto &&txs, const auto &tx) {
                     txs.emplace_back(new Transaction(tx));
-                    return std::forward<decltype(txs)>(txs);
+                    return std::move<decltype(txs)>(txs);
                   });
             }) {}
 

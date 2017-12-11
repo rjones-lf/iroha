@@ -42,7 +42,7 @@ namespace shared_model {
                   RolesIdType{},
                   [](auto &&roles, const auto &role) {
                     roles.emplace_back(role);
-                    return std::forward<decltype(roles)>(roles);
+                    return std::move<decltype(roles)>(roles);
                   });
             }) {}
 

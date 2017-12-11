@@ -19,19 +19,11 @@
 #define IROHA_SHARED_MODEL_PROTO_ERROR_RESPONSE_HPP
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/query_responses/proto_concrete_error_query_response.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/reference_holder.hpp"
-
-#include "backend/protobuf/query_responses/error_responses/proto_no_account_assets_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_no_account_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_no_asset_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_no_roles_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_no_signatories_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_not_supported_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_stateful_failed_error_response.hpp"
-#include "backend/protobuf/query_responses/error_responses/proto_stateless_failed_error_response.hpp"
 
 template <typename... T, typename Archive>
 auto loadErrorResponse(Archive &&ar) {

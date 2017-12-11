@@ -42,7 +42,7 @@ namespace shared_model {
                   interface::types::PublicKeyCollectionType{},
                   [](auto &&acc, const auto &key) {
                     acc.emplace_back(new interface::types::PubkeyType(key));
-                    return std::forward<decltype(acc)>(acc);
+                    return std::move<decltype(acc)>(acc);
                   });
             }) {}
 

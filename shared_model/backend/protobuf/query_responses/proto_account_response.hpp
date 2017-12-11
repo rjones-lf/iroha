@@ -43,7 +43,7 @@ namespace shared_model {
                   SetRoleIdType{},
                   [](auto &&roles, const auto &role) {
                     roles.push_back(interface::types::RoleIdType(role));
-                    return std::forward<decltype(roles)>(roles);
+                    return std::move<decltype(roles)>(roles);
                   });
             }),
             account_([this] { return Account(accountResponse_->account()); }) {}
