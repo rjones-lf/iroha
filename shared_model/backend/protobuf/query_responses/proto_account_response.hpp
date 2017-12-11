@@ -18,6 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_ACCOUNT_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_PROTO_ACCOUNT_RESPONSE_HPP
 
+#include <boost/range/numeric.hpp>
+
 #include "backend/protobuf/common_objects/account.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/account_response.hpp"

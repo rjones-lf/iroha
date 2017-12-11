@@ -44,3 +44,11 @@ addtest(shared_proto_queries_test
 target_link_libraries(shared_proto_queries_test
     shared_model_proto_backend
     )
+
+addtest(shared_proto_query_responses_test
+    shared_proto_query_responses_test.cpp
+    )
+target_link_libraries(shared_proto_query_responses_test
+    shared_model_proto_backend
+    shared_model_ed25519_sha3
+    )

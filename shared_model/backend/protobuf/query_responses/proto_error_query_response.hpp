@@ -24,6 +24,7 @@
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/reference_holder.hpp"
+#include "utils/variant_deserializer.hpp"
 
 template <typename... T, typename Archive>
 auto loadErrorResponse(Archive &&ar) {
