@@ -34,7 +34,7 @@ namespace iroha {
    * @param s - string to convert
    * @return blob, if conversion was successful, otherwise nullopt
    */
-  template<size_t size>
+  template <size_t size>
   nonstd::optional<blob_t<size>> stringToBlob(const std::string &string) {
     if (size != string.size()) {
       return nonstd::nullopt;
@@ -45,15 +45,68 @@ namespace iroha {
   }
 
   /**
-   * Convert hexstring to array of given size
-   * @tparam size - output array size
-   * @param string - input string for transform
-   * @return array of given size if size matches, nullopt otherwise
+   * Convert string of raw bytes to printable hex string
+   * @param str
+   * @return
    */
+  inline std::string bytestringToHexstring(const std::string &str) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (const auto &c : str) {
+      ss << std::setw(2) << (static_cast<int>(c) & 0xff);
+    }
+    return ss.str();
+  }
+
+  /**
+   * Convert printable hex string to string of raw bytes
+   * @param str
+   * @return
+   */
+  inline nonstd::optional<std::string> hexstringToBytestring(
+      const std::string &str) {
+    if (str.empty() or str.size() % 2 != 0) {
+      return nonstd::nullopt;
+    }
+    std::string result(str.size() / 2, 0);
+    for (size_t i = 0; i < result.length(); ++i) {
+      std::string byte = str.substr(i * 2, 2);
+      try {
+        result.at(i) = std::stoul(byte, nullptr, 16);
+      } catch (const std::invalid_argument &e) {
+        return nonstd::nullopt;
+      } catch (const std::out_of_range &e) {
+        return nonstd::nullopt;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Generates new random string from lower-case letters
+   * @param len - size of string to generate
+   * @return generated string
+   */
+  inline std::string randomString(int len) {
+    std::string str(len, 0);
+    std::generate_n(str.begin(), len, []() {
+      char c = 'a';
+      return c + std::rand() % ('z' - 'a' + 1);
+    });
+    return str;
+  }
+
+  /**
+  * Convert hexstring to array of given size
+  * @tparam size - output array size
+  * @param string - input string for transform
+  * @return array of given size if size matches, nullopt otherwise
+  */
   template <size_t size>
   nonstd::optional<blob_t<size>> hexstringToArray(const std::string &string) {
     return hexstringToBytestring(string) | stringToBlob<size>;
   }
-}
+
+}  // namespace iroha
 
 #endif  // IROHA_BYTEUTILS_H

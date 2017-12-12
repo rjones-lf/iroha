@@ -40,6 +40,15 @@ namespace shared_model {
        * @return generated keypair
        */
       crypto::Keypair generateKeypair(const std::string &seed);
+
+      /**
+       * Retrieves Keypair object (ed25519) from existing keypair.
+       * @param publicKey - ed25519 hex-encoded public key
+       * @param privateKey - ed25519 hex-encoded private key
+       * @return keypair from provided keys
+       */
+      crypto::Keypair convertFromExisting(const std::string &publicKey,
+                                          const std::string &privateKey);
     };
   }  // namespace bindings
 }  // namespace shared_model
