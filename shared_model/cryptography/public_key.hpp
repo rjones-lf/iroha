@@ -31,6 +31,9 @@ namespace shared_model {
     class PublicKey : public Blob {
      public:
       explicit PublicKey(const std::string &publicKey) : Blob(publicKey) {}
+
+      explicit PublicKey(const Blob &blob) : Blob(blob.blob()) {}
+
       using OldPublicKeyType = iroha::pubkey_t;
       std::string toString() const override {
         return detail::PrettyStringBuilder()

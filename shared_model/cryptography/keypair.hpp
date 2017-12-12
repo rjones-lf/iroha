@@ -38,8 +38,8 @@ namespace shared_model {
       /// Type of private key
       using PrivateKeyType = PrivateKey;
 
-      explicit Keypair(PublicKeyType publickKey, PrivateKeyType privateKey)
-          : publicKey_(publickKey), privateKey_(privateKey) {}
+      explicit Keypair(PublicKeyType publicKey, PrivateKeyType privateKey)
+          : publicKey_(publicKey), privateKey_(privateKey) {}
 
       /**
        * @return public key
