@@ -141,6 +141,7 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
         }], "created_ts": 0,
           "creator_account_id": "123",
           "tx_counter": 0,
+          "quorum": 1,
           "commands": [{
             "command_type": "AddPeer",
             "address": "localhost",
@@ -189,6 +190,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
         }], "created_ts": 0,
           "creator_account_id": "123",
           "tx_counter": 0,
+          "quorum": 1,
           "commands": [{
             "command_type": "AddPeer",
             "address": "localhost",
