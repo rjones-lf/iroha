@@ -34,6 +34,12 @@ namespace shared_model {
        * @return generated keypair
        */
       crypto::Keypair generateKeypair();
+
+      /**
+       * Generates new keypair (ed25519) based on user-provided seed
+       * @return generated keypair
+       */
+      crypto::Keypair generateKeypair(const std::string &seed);
     };
   }  // namespace bindings
 }  // namespace shared_model
