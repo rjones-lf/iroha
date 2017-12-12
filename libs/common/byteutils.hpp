@@ -18,12 +18,9 @@
 #ifndef IROHA_BYTEUTILS_H
 #define IROHA_BYTEUTILS_H
 
-#include <string>
-
+#include <algorithm>
 #include <nonstd/optional.hpp>
-
-#include "crypto/base64.hpp"
-
+#include <string>
 #include "common/types.hpp"
 
 namespace iroha {
@@ -97,11 +94,11 @@ namespace iroha {
   }
 
   /**
-  * Convert hexstring to array of given size
-  * @tparam size - output array size
-  * @param string - input string for transform
-  * @return array of given size if size matches, nullopt otherwise
-  */
+   * Convert hexstring to array of given size
+   * @tparam size - output array size
+   * @param string - input string for transform
+   * @return array of given size if size matches, nullopt otherwise
+   */
   template <size_t size>
   nonstd::optional<blob_t<size>> hexstringToArray(const std::string &string) {
     return hexstringToBytestring(string) | stringToBlob<size>;
