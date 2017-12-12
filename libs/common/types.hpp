@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <nonstd/optional.hpp>
+#include "crypto/base64.hpp"
 
 /**
  * This file defines common types used in iroha.
