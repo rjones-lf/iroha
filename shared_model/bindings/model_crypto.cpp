@@ -26,7 +26,26 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::generateKeypair(const std::string &seed) {
       return crypto::CryptoProviderEd25519Sha3::generateKeypair(
-              crypto::Seed(seed));
+          crypto::Seed(seed));
+    }
+
+    crypto::Keypair ModelCrypto::convertFromExisting(
+        const std::string &publicKey, const std::string &privateKey) {
+      crypto::Keypair keypair((crypto::Keypair::PublicKeyType(
+                                  crypto::Blob::fromHexString(publicKey))),
+                              crypto::Keypair::PrivateKeyType(
+                                  crypto::Blob::fromHexString(privateKey)));
+
+      auto randStr = iroha::randomString(32);
+      if (not crypto::CryptoProviderEd25519Sha3::verify(
+              crypto::CryptoProviderEd25519Sha3::sign(crypto::Blob(randStr),
+                                                      keypair),
+              crypto::Blob(randStr),
+              keypair.publicKey())) {
+        throw std::invalid_argument("Provided keypair is not correct");
+      }
+
+      return keypair;
     }
   }  // namespace bindings
 }  // namespace shared_model
