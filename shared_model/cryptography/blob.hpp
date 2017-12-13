@@ -58,6 +58,18 @@ namespace shared_model {
       }
 
       /**
+       * Creates new Blob object from provided hex string
+       * @param hex - string in hex format to create Blob from
+       * @return created Blob object
+       */
+      static Blob fromHexString(const std::string &hex) {
+        using iroha::operator|;
+        Blob b("");
+        iroha::hexstringToBytestring(hex) | [&](auto &&s){b = Blob(s);};
+        return b;
+      }
+
+      /**
        * @return provides raw representation of blob
        */
       virtual const Bytes &blob() const { return blob_; }
