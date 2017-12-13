@@ -66,6 +66,26 @@ namespace iroha {
                                      ametsuchi::WsvCommand &commands) {
       auto cmd_value = static_cast<const AppendRole &>(command);
 
+      auto role_permissions = queries.getRolePermissions(cmd_value.role_name);
+      auto account_roles = queries.getAccountRoles(cmd_value.account_id);
+
+      if(not role_permissions.has_value() or not account_roles.has_value())
+        return false;
+
+      std::set<std::string> account_permissions;
+      for(const auto& role: *account_roles) {
+        auto permissions = queries.getRolePermissions(role);
+        if(not permissions.has_value())
+          return false;
+        for(const auto& permission: *permissions)
+          account_permissions.insert(permission);
+      }
+
+      for(const auto& role_permission: *role_permissions)
+        if(account_permissions.find(role_permission) == account_permissions.end())
+          return false;
+
+
       return commands.insertAccountRole(cmd_value.account_id,
                                         cmd_value.role_name);
     }
