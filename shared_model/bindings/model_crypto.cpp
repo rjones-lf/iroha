@@ -30,17 +30,17 @@ namespace shared_model {
     }
 
     crypto::Keypair ModelCrypto::convertFromExisting(
-        const std::string &publicKey, const std::string &privateKey) {
+        const std::string &public_key, const std::string &private_key) {
       crypto::Keypair keypair((crypto::Keypair::PublicKeyType(
-                                  crypto::Blob::fromHexString(publicKey))),
+                                  crypto::Blob::fromHexString(public_key))),
                               crypto::Keypair::PrivateKeyType(
-                                  crypto::Blob::fromHexString(privateKey)));
+                                  crypto::Blob::fromHexString(private_key)));
 
-      auto randStr = iroha::randomString(32);
+      auto rand_str = iroha::randomString(32);
       if (not crypto::CryptoProviderEd25519Sha3::verify(
-              crypto::CryptoProviderEd25519Sha3::sign(crypto::Blob(randStr),
+              crypto::CryptoProviderEd25519Sha3::sign(crypto::Blob(rand_str),
                                                       keypair),
-              crypto::Blob(randStr),
+              crypto::Blob(rand_str),
               keypair.publicKey())) {
         throw std::invalid_argument("Provided keypair is not correct");
       }
