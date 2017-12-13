@@ -30,7 +30,7 @@ namespace shared_model {
      */
     class PublicKey : public Blob {
      public:
-      explicit PublicKey(const std::string &publicKey) : Blob(publicKey) {}
+      explicit PublicKey(const std::string &public_key) : Blob(public_key) {}
 
       explicit PublicKey(const Blob &blob) : Blob(blob.blob()) {}
 

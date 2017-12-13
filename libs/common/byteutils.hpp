@@ -87,8 +87,7 @@ namespace iroha {
   inline std::string randomString(int len) {
     std::string str(len, 0);
     std::generate_n(str.begin(), len, []() {
-      char c = 'a';
-      return c + std::rand() % ('z' - 'a' + 1);
+      return 'a' + std::rand() % ('z' - 'a' + 1);
     });
     return str;
   }
