@@ -47,8 +47,8 @@ namespace shared_model {
        * @param privateKey - ed25519 hex-encoded private key
        * @return keypair from provided keys
        */
-      crypto::Keypair convertFromExisting(const std::string &publicKey,
-                                          const std::string &privateKey);
+      crypto::Keypair convertFromExisting(const std::string &public_key,
+                                          const std::string &private_key);
     };
   }  // namespace bindings
 }  // namespace shared_model
