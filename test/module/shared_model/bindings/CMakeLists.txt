@@ -15,10 +15,10 @@
 
 if (SWIG_PYTHON)
   find_package(PythonInterp 2.7 REQUIRED)
-  set(CTEST_ENVIRONMENT "$ENV{PYTHONPATH}")
   add_test(NAME python_bindings_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
     WORKING_DIRECTORY $ENV{PYTHONPATH})
   set_tests_properties(python_bindings_test
-    PROPERTIES DEPENDS bindings)
+    PROPERTIES DEPENDS bindings
+               ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
 endif()
