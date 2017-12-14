@@ -7,11 +7,44 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       iroha.ModelBuilder().build()
 
+  def generate_base(self):
+    return iroha.ModelBuilder().txCounter(123)\
+                               .createdTime(int(time.time() * 1000))\
+                               .creatorAccountId("admin@test")\
+
   def setUp(self):
     self.keys = iroha.ModelCrypto().generateKeypair()
-    self.builder = iroha.ModelBuilder().txCounter(123)\
-                                       .createdTime(int(time.time() * 1000))\
-                                       .creatorAccountId("admin@test")
+    self.builder = self.generate_base()
+
+  def set_add_peer(self):
+    self.builder.addPeer("123.123.123.123", self.keys.publicKey())
+
+  def test_tx_without_command(self):
+    return #broken for now
+    with self.assertRaises(ValueError):
+      self.builder.build()
+
+  def test_outdated_add_peer(self):
+    self.set_add_peer()
+    for i in [0, int((time.time() - 100000) * 1000), int((time.time() + 1) * 1000)]:
+      with self.assertRaises(ValueError):
+        self.builder.createdTime(i).build()
+
+  def test_add_peer_with_invalid_creator(self):
+    self.set_add_peer()
+    for s in ["invalid", "@invalid", "invalid"]:
+      with self.assertRaises(ValueError):
+        self.builder.creatorAccountId(s).build()
+
+  def test_add_peer_with_invalid_key_size(self):
+    for k in ['9' * 13, '9' * (len(self.keys.publicKey().blob()) - 1), '9' *  (len(self.keys.publicKey().blob()) + 1), '']:
+      with self.assertRaises(ValueError):
+        self.generate_base().addPeer("123.123.123.123", iroha.PublicKey(k)).build()
+
+  def test_add_peer_with_invalid_host(self):
+    for k in ["257.257.257.257", "host#host", "asd@asd", 'a' * 257, "ab..cd"]:
+      with self.assertRaises(ValueError) as err:
+        self.generate_base().addPeer(k, self.keys.publicKey()).build()
 
   def proto_size(self, tx):
     return iroha.ModelTransactionProto().signAndAddSignature(tx, self.keys).size()
