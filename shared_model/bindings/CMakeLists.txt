@@ -34,10 +34,10 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP)
     set(CMAKE_SWIG_FLAGS "")
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
+    set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 if (SWIG_PYTHON)
-    set(ENV{PYTHONPATH} ${CMAKE_CURRENT_BINARY_DIR})
     find_package(PythonLibs 2.7 REQUIRED)
     # path to where Python.h is found
     include_directories(${PYTHON_INCLUDE_DIRS})
