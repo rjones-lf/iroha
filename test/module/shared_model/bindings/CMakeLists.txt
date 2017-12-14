@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if (SWIG_PYTHON OR SWIG_JAVA)
+  get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)
+endif()
 
 if (SWIG_PYTHON)
   find_package(PythonInterp 2.7 REQUIRED)
-  add_test(NAME python_bindings_test
+  add_test(NAME python_builders_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
-    WORKING_DIRECTORY $ENV{PYTHONPATH})
-  set_tests_properties(python_bindings_test
-    PROPERTIES DEPENDS bindings
-               ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}")
+    WORKING_DIRECTORY ${SWIG_BUILD_DIR})
+  set_tests_properties(python_builders_test
+    PROPERTIES DEPENDS builders
+               ENVIRONMENT "PYTHONPATH=${SWIG_BUILD_DIR}")
 endif()
