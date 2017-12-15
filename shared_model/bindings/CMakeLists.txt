@@ -14,9 +14,8 @@
 
 
 add_library(bindings
-        model_builder.cpp
+        model_transaction_builder.cpp
         model_crypto.cpp
-        model_transaction_proto.cpp
         )
 
 target_link_libraries(bindings

@@ -39,9 +39,9 @@
 %rename(kp_equal) shared_model::crypto::Keypair::operator==;
 
 %{
-#include "bindings/model_builder.hpp"
+#include "bindings/model_transaction_builder.hpp"
 #include "bindings/model_crypto.hpp"
-#include "bindings/model_transaction_proto.hpp"
+#include "bindings/model_proto.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 %}
 
@@ -55,8 +55,9 @@
 %include "backend/protobuf/transaction.hpp"
 %include "builders/protobuf/transaction.hpp"
 %include "builders/protobuf/unsigned_proto.hpp"
-%include "bindings/model_builder.hpp"
+%include "bindings/model_transaction_builder.hpp"
 %include "bindings/model_crypto.hpp"
-%include "bindings/model_transaction_proto.hpp"
+%include "bindings/model_proto.hpp"
 
 %template (UnsignedTx) shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>;
+%template (ModelProtoTransaction) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>>;

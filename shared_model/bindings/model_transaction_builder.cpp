@@ -15,79 +15,79 @@
  * limitations under the License.
  */
 
-#include "bindings/model_builder.hpp"
+#include "bindings/model_transaction_builder.hpp"
 
 namespace shared_model {
   namespace bindings {
-    ModelBuilder ModelBuilder::creatorAccountId(
+    ModelTransactionBuilder ModelTransactionBuilder::creatorAccountId(
         const interface::types::AccountIdType &account_id) {
-      return ModelBuilder(builder_.creatorAccountId(account_id));
+      return ModelTransactionBuilder(builder_.creatorAccountId(account_id));
     }
 
-    ModelBuilder ModelBuilder::txCounter(uint64_t tx_counter) {
-      return ModelBuilder(builder_.txCounter(tx_counter));
+    ModelTransactionBuilder ModelTransactionBuilder::txCounter(uint64_t tx_counter) {
+      return ModelTransactionBuilder(builder_.txCounter(tx_counter));
     }
 
-    ModelBuilder ModelBuilder::createdTime(
+    ModelTransactionBuilder ModelTransactionBuilder::createdTime(
         interface::types::TimestampType created_time) {
-      return ModelBuilder(builder_.createdTime(created_time));
+      return ModelTransactionBuilder(builder_.createdTime(created_time));
     }
 
-    ModelBuilder ModelBuilder::addAssetQuantity(
+    ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(
         const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
-      return ModelBuilder(builder_.addAssetQuantity(account_id, asset_id, amount));
+      return ModelTransactionBuilder(builder_.addAssetQuantity(account_id, asset_id, amount));
     }
 
-    ModelBuilder ModelBuilder::addPeer(
+    ModelTransactionBuilder ModelTransactionBuilder::addPeer(
         const interface::types::AddressType &address,
         const interface::types::PubkeyType &peer_key) {
-      return ModelBuilder(builder_.addPeer(address, peer_key));
+      return ModelTransactionBuilder(builder_.addPeer(address, peer_key));
     }
 
-    ModelBuilder ModelBuilder::addSignatory(
+    ModelTransactionBuilder ModelTransactionBuilder::addSignatory(
         const interface::types::AddressType &account_id,
         const interface::types::PubkeyType &public_key) {
-      return ModelBuilder(builder_.addSignatory(account_id, public_key));
+      return ModelTransactionBuilder(builder_.addSignatory(account_id, public_key));
     }
 
-    ModelBuilder ModelBuilder::removeSignatory(
+    ModelTransactionBuilder ModelTransactionBuilder::removeSignatory(
         const interface::types::AddressType &account_id,
         const interface::types::PubkeyType &public_key) {
-      return ModelBuilder(builder_.removeSignatory(account_id, public_key));
+      return ModelTransactionBuilder(builder_.removeSignatory(account_id, public_key));
     }
 
-    ModelBuilder ModelBuilder::createAccount(
+    ModelTransactionBuilder ModelTransactionBuilder::createAccount(
         const std::string &account_name,
         const interface::types::AddressType &domain_id,
         const interface::types::PubkeyType &main_pubkey) {
-      return ModelBuilder(
+      return ModelTransactionBuilder(
           builder_.createAccount(account_name, domain_id, main_pubkey));
     }
 
-    ModelBuilder ModelBuilder::createDomain(
+    ModelTransactionBuilder ModelTransactionBuilder::createDomain(
         const interface::types::AddressType &domain_id,
         const interface::types::RoleIdType &default_role) {
-      return ModelBuilder(builder_.createDomain(domain_id, default_role));
+      return ModelTransactionBuilder(builder_.createDomain(domain_id, default_role));
     }
 
-    ModelBuilder ModelBuilder::setAccountQuorum(
+    ModelTransactionBuilder ModelTransactionBuilder::setAccountQuorum(
         const interface::types::AddressType &account_id, uint32_t quorum) {
-      return ModelBuilder(builder_.setAccountQuorum(account_id, quorum));
+      return ModelTransactionBuilder(builder_.setAccountQuorum(account_id, quorum));
     }
 
-    ModelBuilder ModelBuilder::transferAsset(
+    ModelTransactionBuilder ModelTransactionBuilder::transferAsset(
         const interface::types::AccountIdType &src_account_id,
         const interface::types::AccountIdType &dest_account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &description,
         const std::string &amount) {
-      return ModelBuilder(builder_.transferAsset(
+      return ModelTransactionBuilder(builder_.transferAsset(
           src_account_id, dest_account_id, asset_id, description, amount));
     }
 
-    proto::UnsignedWrapper<proto::Transaction> ModelBuilder::build() {
+    proto::UnsignedWrapper<proto::Transaction> ModelTransactionBuilder::build() {
       return builder_.build();
     }
   }  // namespace bindings

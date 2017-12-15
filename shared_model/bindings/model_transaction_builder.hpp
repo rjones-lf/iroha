@@ -28,21 +28,21 @@ namespace shared_model {
      * Wrapper class for transaction builder. Designed only for SWIG bindings,
      * don't use in other cases.
      */
-    class ModelBuilder {
+    class ModelTransactionBuilder {
      private:
       template <int Sp>
-      explicit ModelBuilder(const proto::TemplateTransactionBuilder<Sp> &o)
+      explicit ModelTransactionBuilder(const proto::TemplateTransactionBuilder<Sp> &o)
           : builder_(o) {}
 
      public:
-      ModelBuilder() = default;
+      ModelTransactionBuilder() = default;
 
       /**
        * Sets id of account creator
        * @param account_id - account id
        * @return builder with account_id field appended
        */
-      ModelBuilder creatorAccountId(
+      ModelTransactionBuilder creatorAccountId(
           const interface::types::AccountIdType &account_id);
 
       /**
@@ -50,14 +50,14 @@ namespace shared_model {
        * @param tx_counter - transaction counter
        * @return builder with tx_counter field appended
        */
-      ModelBuilder txCounter(uint64_t tx_counter);
+      ModelTransactionBuilder txCounter(uint64_t tx_counter);
 
       /**
        * Sets time of creation
        * @param created_time - time of creation
        * @return builder with created_time field appended
        */
-      ModelBuilder createdTime(interface::types::TimestampType created_time);
+      ModelTransactionBuilder createdTime(interface::types::TimestampType created_time);
 
       /**
        * Adds given quantity of given asset to account
@@ -66,7 +66,7 @@ namespace shared_model {
        * @param amount - amount of asset to add
        * @return builder with asset quantity command appended
        */
-      ModelBuilder addAssetQuantity(
+      ModelTransactionBuilder addAssetQuantity(
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount);
@@ -77,7 +77,7 @@ namespace shared_model {
        * @param peer_key - peer public key
        * @return builder with added peer command appended
        */
-      ModelBuilder addPeer(const interface::types::AddressType &address,
+      ModelTransactionBuilder addPeer(const interface::types::AddressType &address,
                            const crypto::PublicKey &peer_key);
 
       /**
@@ -86,7 +86,7 @@ namespace shared_model {
        * @param public_key - public key of signatory
        * @return builder with added signatory command appended
        */
-      ModelBuilder addSignatory(const interface::types::AddressType &account_id,
+      ModelTransactionBuilder addSignatory(const interface::types::AddressType &account_id,
                                 const crypto::PublicKey &public_key);
 
       /**
@@ -95,7 +95,7 @@ namespace shared_model {
        * @param public_key - public key of signatory
        * @return builder with removed signatory command appended
        */
-      ModelBuilder removeSignatory(
+      ModelTransactionBuilder removeSignatory(
           const interface::types::AddressType &account_id,
           const crypto::PublicKey &public_key);
 
@@ -106,7 +106,7 @@ namespace shared_model {
        * @param main_pubkey - main public key of account
        * @return builder with new account command appended
        */
-      ModelBuilder createAccount(const std::string &account_name,
+      ModelTransactionBuilder createAccount(const std::string &account_name,
                                  const interface::types::AddressType &domain_id,
                                  const crypto::PublicKey &main_pubkey);
 
@@ -116,7 +116,7 @@ namespace shared_model {
        * @param default_role - default role name
        * @return builder with new domain command appended
        */
-      ModelBuilder createDomain(
+      ModelTransactionBuilder createDomain(
           const interface::types::AddressType &domain_id,
           const interface::types::RoleIdType &default_role);
 
@@ -126,7 +126,7 @@ namespace shared_model {
        * @param quorum - quorum amount
        * @return builder with set account quorum command appended
        */
-      ModelBuilder setAccountQuorum(
+      ModelTransactionBuilder setAccountQuorum(
           const interface::types::AddressType &account_id, uint32_t quorum);
 
       /**
@@ -138,7 +138,7 @@ namespace shared_model {
        * @param amount - amount of asset to transfer
        * @return buidler with transfer asset command appended
        */
-      ModelBuilder transferAsset(
+      ModelTransactionBuilder transferAsset(
           const interface::types::AccountIdType &src_account_id,
           const interface::types::AccountIdType &dest_account_id,
           const interface::types::AssetIdType &asset_id,
