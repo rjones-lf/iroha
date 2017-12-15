@@ -18,10 +18,15 @@ else()
   message(STATUS "Target cppcheck enabled")
   add_custom_target(cppcheck
     COMMAND ${CPPCHECK_BIN} --xml --xml-version=2 ${CMAKE_SOURCE_DIR}
-      -I ${CMAKE_SOURCE_DIR}/irohad/ -I ${CMAKE_SOURCE_DIR}/iroha-cli/
-      -I ${CMAKE_SOURCE_DIR}/libs/ -I ${CMAKE_SOURCE_DIR}/test/
-      -i ${CMAKE_SOURCE_DIR}/external/ -i ${CMAKE_SOURCE_DIR}/schema/
-      -i ${CMAKE_BINARY_DIR} --enable=all
+      -I ${CMAKE_SOURCE_DIR}                # include
+#      -I ${CMAKE_SOURCE_DIR}/irohad/
+#      -I ${CMAKE_SOURCE_DIR}/iroha-cli/
+#      -I ${CMAKE_SOURCE_DIR}/libs/
+#      -I ${CMAKE_SOURCE_DIR}/shared_model
+#      -I ${CMAKE_SOURCE_DIR}/test/
+      -i ${CMAKE_SOURCE_DIR}/external/      # exclude
+      -i ${CMAKE_SOURCE_DIR}/schema/        # exclude
+      -i ${CMAKE_BINARY_DIR} --enable=all   # exclude
       2> ${REPORT_DIR}/cppcheck.xml
     COMMENT "Analyzing sources with cppcheck" VERBATIM
     )
@@ -47,8 +52,10 @@ else()
   message(STATUS "Target gcovr enabled")
   add_custom_target(gcovr
     COMMAND ${GCOVR_BIN} -s -x -r '${CMAKE_SOURCE_DIR}'
-      -e '${CMAKE_SOURCE_DIR}/external/*' -e '${CMAKE_SOURCE_DIR}/schema/*'
-      -e '${CMAKE_BINARY_DIR}/*' -o ${REPORT_DIR}/gcovr.xml
+      -e '${CMAKE_SOURCE_DIR}/external/*'
+      -e '${CMAKE_SOURCE_DIR}/schema/*'
+      -e '${CMAKE_BINARY_DIR}/*'
+      -o ${REPORT_DIR}/gcovr.xml
     COMMENT "Collecting coverage data with gcovr"
     )
 endif()
