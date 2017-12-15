@@ -19,6 +19,7 @@ else()
   add_custom_target(cppcheck
     COMMAND ${CPPCHECK_BIN} --xml --xml-version=2 ${CMAKE_SOURCE_DIR}
       -I ${CMAKE_SOURCE_DIR}/irohad/        # include (include_directories(...)
+      -I ${CMAKE_SOURCE_DIR}/iroha-cli/     # include
       -I ${CMAKE_SOURCE_DIR}/libs/          # include
       -I ${CMAKE_SOURCE_DIR}/shared_model   # include
       -i ${CMAKE_SOURCE_DIR}/external/      # exclude
