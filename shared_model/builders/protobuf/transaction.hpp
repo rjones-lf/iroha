@@ -63,25 +63,27 @@ namespace shared_model {
 
       /**
        * Make transformation on copied content
+       * @tparam Transformation - callable type for changing the copy
        * @param f - transform function for proto object
        * @return new builder with updated state
        */
-      template <int Fields>
-      NextBuilder<Fields> transform(std::function<void(ProtoTx &)> f) const {
+      template <int Fields, typename Transformation>
+      NextBuilder<Fields> transform(Transformation t) const {
         auto copy = transaction_;
-        f(copy);
+        t(copy);
         return {copy, stateless_validator_};
       }
 
       /**
        * Make add command transformation on copied object
+       * @tparam Transformation - callable type for changing command
        * @param f - transform function for proto command
        * @return new builder with added command
        */
-      NextBuilder<Command> addCommand(
-          std::function<void(ProtoCommand *)> f) const {
+      template <typename Transformation>
+      NextBuilder<Command> addCommand(Transformation t) const {
         auto copy = transaction_;
-        f(copy.mutable_payload()->add_commands());
+        t(copy.mutable_payload()->add_commands());
         return {copy, stateless_validator_};
       }
 
