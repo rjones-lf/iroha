@@ -115,11 +115,11 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount) const {
-        return addCommand([&](auto command) {
-          auto cmd = command->mutable_add_asset_quantity();
-          cmd->set_account_id(account_id);
-          cmd->set_asset_id(asset_id);
-          addAmount(cmd->mutable_amount(), amount);
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_add_asset_quantity();
+          command->set_account_id(account_id);
+          command->set_asset_id(asset_id);
+          addAmount(command->mutable_amount(), amount);
         });
       }
 
