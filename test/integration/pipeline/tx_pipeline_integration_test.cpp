@@ -85,7 +85,5 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   iroha::model::ModelCryptoProviderImpl provider(keypair);
   provider.sign(tx);
 
-  sendTransactions({tx});
-
-  validate();
+  sendTxsInOrderAndValidate({tx});
 }
