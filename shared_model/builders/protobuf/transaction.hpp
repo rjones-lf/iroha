@@ -31,6 +31,7 @@
 
 namespace shared_model {
   namespace proto {
+
     template <int S = 0, typename SV = validation::DefaultValidator>
     class TemplateTransactionBuilder {
      private:
@@ -46,115 +47,152 @@ namespace shared_model {
       };
 
       template <int s>
-      using NextBuilder = TemplateTransactionBuilder<S | (1 << s)>;
+      using NextBuilder = TemplateTransactionBuilder<S | (1 << s), SV>;
 
-      iroha::protocol::Transaction transaction_;
+      using ProtoTx = iroha::protocol::Transaction;
+      using ProtoCommand = iroha::protocol::Command;
 
       template <int Sp>
-      TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp> &o,
-                                 SV &&stateless_validator = SV())
+      TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp> &o)
           : transaction_(o.transaction_),
-            stateless_validator_(std::forward<SV>(stateless_validator)) {}
+            stateless_validator_(o.stateless_validator_) {}
 
-      SV stateless_validator_;
+      TemplateTransactionBuilder(const ProtoTx &tx,
+                                 const SV &stateless_validator)
+          : transaction_(tx), stateless_validator_(stateless_validator) {}
+
+      /**
+       * Make transformation on copied content
+       * @param f - transform function for proto object
+       * @return new builder with updated state
+       */
+      template <int Fields>
+      NextBuilder<Fields> transform(std::function<void(ProtoTx &)> f) const {
+        auto copy = transaction_;
+        f(copy);
+        return {copy, stateless_validator_};
+      }
+
+      /**
+       * Make add command transformation on copied object
+       * @param f - transform function for proto command
+       * @return new builder with added command
+       */
+      NextBuilder<Command> addCommand(
+          std::function<void(ProtoCommand *)> f) const {
+        auto copy = transaction_;
+        f(copy.mutable_payload()->add_commands());
+        return {copy, stateless_validator_};
+      }
 
      public:
       TemplateTransactionBuilder() = default;
 
       NextBuilder<CreatorAccountId> creatorAccountId(
-          const interface::types::AccountIdType &account_id) {
-        transaction_.mutable_payload()->set_creator_account_id(account_id);
-        return *this;
+          const interface::types::AccountIdType &account_id) const {
+        return transform<CreatorAccountId>([&](auto &tx) {
+          tx.mutable_payload()->set_creator_account_id(account_id);
+        });
       }
 
       NextBuilder<TxCounter> txCounter(
-          interface::types::CounterType tx_counter) {
-        transaction_.mutable_payload()->set_tx_counter(tx_counter);
-        return *this;
+          interface::types::CounterType tx_counter) const {
+        return transform<CreatorAccountId>([&](auto &tx){
+          tx.mutable_payload()->set_tx_counter(tx_counter);
+        });
       }
 
       NextBuilder<CreatedTime> createdTime(
-          interface::types::TimestampType created_time) {
-        transaction_.mutable_payload()->set_created_time(created_time);
-        return *this;
+          interface::types::TimestampType created_time) const {
+        return transform<CreatorAccountId>([&](auto &tx) {
+          tx.mutable_payload()->set_created_time(created_time);
+        });
       }
 
       NextBuilder<Command> addAssetQuantity(
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
-          const std::string &amount) {
-        auto command = proto_command()->mutable_add_asset_quantity();
-        command->set_account_id(account_id);
-        command->set_asset_id(asset_id);
-        addAmount(command->mutable_amount(), amount);
-        return *this;
+          const std::string &amount) const {
+        return addCommand([&](auto command) {
+          auto cmd = command->mutable_add_asset_quantity();
+          cmd->set_account_id(account_id);
+          cmd->set_asset_id(asset_id);
+          addAmount(cmd->mutable_amount(), amount);
+        });
       }
 
       NextBuilder<Command> addPeer(
           const interface::types::AddressType &address,
-          const interface::types::PubkeyType &peer_key) {
-        auto command = proto_command()->mutable_add_peer();
-        command->set_address(address);
-        command->set_peer_key(peer_key.blob());
-        return *this;
+          const interface::types::PubkeyType &peer_key) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_add_peer();
+          command->set_address(address);
+          command->set_peer_key(peer_key.blob());
+        });
       }
 
       NextBuilder<Command> addSignatory(
           const interface::types::AddressType &account_id,
-          const interface::types::PubkeyType &public_key) {
-        auto command = proto_command()->mutable_add_signatory();
-        command->set_account_id(account_id);
-        command->set_public_key(public_key.blob());
-        return *this;
+          const interface::types::PubkeyType &public_key) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_add_signatory();
+          command->set_account_id(account_id);
+          command->set_public_key(public_key.blob());
+        });
       }
 
       NextBuilder<Command> removeSignatory(
           const interface::types::AddressType &account_id,
-          const interface::types::PubkeyType &public_key) {
-        auto command = proto_command()->mutable_remove_sign();
-        command->set_account_id(account_id);
-        command->set_public_key(public_key.blob());
-        return *this;
+          const interface::types::PubkeyType &public_key) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_remove_sign();
+          command->set_account_id(account_id);
+          command->set_public_key(public_key.blob());
+        });
       }
 
       NextBuilder<Command> createAsset(
           const interface::types::AssetNameType &asset_name,
           const interface::types::AddressType &domain_id,
-          interface::types::PrecisionType precision) {
-        auto command = proto_command()->mutable_create_asset();
-        command->set_asset_name(asset_name);
-        command->set_domain_id(domain_id);
-        command->set_precision(precision);
-        return *this;
+          interface::types::PrecisionType precision) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_create_asset();
+          command->set_asset_name(asset_name);
+          command->set_domain_id(domain_id);
+          command->set_precision(precision);
+        });
       }
 
       NextBuilder<Command> createAccount(
           const interface::types::AccountNameType &account_name,
           const interface::types::AddressType &domain_id,
-          const interface::types::PubkeyType &main_pubkey) {
-        auto command = proto_command()->mutable_create_account();
-        command->set_account_name(account_name);
-        command->set_domain_id(domain_id);
-        command->set_main_pubkey(main_pubkey.blob());
-        return *this;
+          const interface::types::PubkeyType &main_pubkey) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_create_account();
+          command->set_account_name(account_name);
+          command->set_domain_id(domain_id);
+          command->set_main_pubkey(main_pubkey.blob());
+        });
       }
 
       NextBuilder<Command> createDomain(
           const interface::types::AddressType &domain_id,
-          const interface::types::RoleIdType &default_role) {
-        auto command = proto_command()->mutable_create_domain();
-        command->set_domain_id(domain_id);
-        command->set_default_role(default_role);
-        return *this;
+          const interface::types::RoleIdType &default_role) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_create_domain();
+          command->set_domain_id(domain_id);
+          command->set_default_role(default_role);
+        });
       }
 
       NextBuilder<Command> setAccountQuorum(
           const interface::types::AddressType &account_id,
-          interface::types::QuorumType quorum) {
-        auto command = proto_command()->mutable_set_quorum();
-        command->set_account_id(account_id);
-        command->set_quorum(quorum);
-        return *this;
+          interface::types::QuorumType quorum) const {
+        return addCommand([&](auto proto_command){
+          auto command = proto_command->mutable_set_quorum();
+          command->set_account_id(account_id);
+          command->set_quorum(quorum);
+        });
       }
 
       NextBuilder<Command> transferAsset(
@@ -162,17 +200,18 @@ namespace shared_model {
           const interface::types::AccountIdType &dest_account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &description,
-          const std::string &amount) {
-        auto command = proto_command()->mutable_transfer_asset();
-        command->set_src_account_id(src_account_id);
-        command->set_dest_account_id(dest_account_id);
-        command->set_asset_id(asset_id);
-        command->set_description(description);
-        addAmount(command->mutable_amount(), amount);
-        return *this;
+          const std::string &amount) const {
+        return addCommand([&](auto proto_command) {
+          auto command = proto_command->mutable_transfer_asset();
+          command->set_src_account_id(src_account_id);
+          command->set_dest_account_id(dest_account_id);
+          command->set_asset_id(asset_id);
+          command->set_description(description);
+          addAmount(command->mutable_amount(), amount);
+        });
       }
 
-      UnsignedWrapper<Transaction> build() {
+      UnsignedWrapper<Transaction> build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
 
         auto answer = stateless_validator_.validate(
@@ -187,9 +226,8 @@ namespace shared_model {
       static const int total = RequiredFields::TOTAL;
 
      private:
-      iroha::protocol::Command *proto_command() {
-        return transaction_.mutable_payload()->add_commands();
-      }
+      ProtoTx transaction_;
+      SV stateless_validator_;
     };
 
     using TransactionBuilder = TemplateTransactionBuilder<>;

@@ -296,7 +296,8 @@ namespace shared_model {
        * @param tx
        * @return Answer containing found error if any
        */
-      Answer validate(detail::PolymorphicWrapper<interface::Transaction> tx) {
+      Answer validate(
+          detail::PolymorphicWrapper<interface::Transaction> tx) const {
         Answer answer;
         std::string tx_reason_name = "Transaction";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
@@ -339,7 +340,7 @@ namespace shared_model {
 
       void validateCreatedTime(
           ReasonsGroupType &reason,
-          const interface::types::TimestampType &timestamp) {
+          const interface::types::TimestampType &timestamp) const {
         iroha::ts64_t now = iroha::time::now();
         // TODO 06/08/17 Muratov: make future gap for passing timestamp, like
         // with old timestamps IR-511 #goodfirstissue
