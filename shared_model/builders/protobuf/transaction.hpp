@@ -99,14 +99,14 @@ namespace shared_model {
 
       NextBuilder<TxCounter> txCounter(
           interface::types::CounterType tx_counter) const {
-        return transform<CreatorAccountId>([&](auto &tx){
+        return transform<TxCounter>([&](auto &tx){
           tx.mutable_payload()->set_tx_counter(tx_counter);
         });
       }
 
       NextBuilder<CreatedTime> createdTime(
           interface::types::TimestampType created_time) const {
-        return transform<CreatorAccountId>([&](auto &tx) {
+        return transform<CreatedTime>([&](auto &tx) {
           tx.mutable_payload()->set_created_time(created_time);
         });
       }
@@ -190,7 +190,7 @@ namespace shared_model {
       NextBuilder<Command> setAccountQuorum(
           const interface::types::AddressType &account_id,
           interface::types::QuorumType quorum) const {
-        return addCommand([&](auto proto_command){
+        return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_set_quorum();
           command->set_account_id(account_id);
           command->set_quorum(quorum);
