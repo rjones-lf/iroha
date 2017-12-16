@@ -15,6 +15,7 @@
 
 add_library(bindings
         model_transaction_builder.cpp
+        model_query_builder.cpp
         model_crypto.cpp
         )
 

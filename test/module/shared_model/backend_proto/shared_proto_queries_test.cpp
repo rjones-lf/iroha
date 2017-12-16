@@ -52,8 +52,8 @@ TEST(ProtoQueryBuilder, Builder) {
   uint64_t created_time = 10000000000ull, query_counter = 1;
   std::string account_id = "admin@test", asset_id = "coin#test";
 
-  iroha::protocol::Query proto_tx;
-  auto &payload = *proto_tx.mutable_payload();
+  iroha::protocol::Query proto_query;
+  auto &payload = *proto_query.mutable_payload();
   payload.set_created_time(created_time);
   payload.set_creator_account_id(account_id);
   payload.set_query_counter(query_counter);
@@ -63,13 +63,23 @@ TEST(ProtoQueryBuilder, Builder) {
     query.set_asset_id(asset_id);
   }
 
+  auto keypair =
+      shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
+  auto signedProto = shared_model::crypto::CryptoSigner<>::sign(
+      shared_model::crypto::Blob(proto_query.payload().SerializeAsString()),
+      keypair);
+
+  auto sig = proto_query.mutable_signature();
+  sig->set_pubkey(keypair.publicKey().blob());
+  sig->set_signature(signedProto.blob());
+
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)
                    .creatorAccountId(account_id)
                    .getAccountAssets(account_id, asset_id)
                    .queryCounter(query_counter)
                    .build();
-  auto &proto = query.getTransport();
 
-  ASSERT_EQ(proto_tx.SerializeAsString(), proto.SerializeAsString());
+  auto proto = query.signAndAddSignature(keypair).getTransport();
+  ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
 }
