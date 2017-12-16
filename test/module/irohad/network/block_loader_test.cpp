@@ -39,9 +39,6 @@ using testing::A;
 class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
-    peer = Peer();
-    peer.address = "0.0.0.0:50051";
-    peers.push_back(peer);
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
     provider = std::make_shared<MockCryptoProvider>();
@@ -50,14 +47,20 @@ class BlockLoaderTest : public testing::Test {
 
     grpc::ServerBuilder builder;
     int port = 0;
-    builder.AddListeningPort(peer.address, grpc::InsecureServerCredentials(),
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials(),
                              &port);
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
+
+    peer = Peer();
+    peer.address = "0.0.0.0:" + std::to_string(port);
+    peers.push_back(peer);
+
     ASSERT_TRUE(server);
     ASSERT_NE(port, 0);
   }
 
+  std::string address{"0.0.0.0:0"};
   Peer peer;
   std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
