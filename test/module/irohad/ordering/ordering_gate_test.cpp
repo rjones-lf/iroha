@@ -48,9 +48,6 @@ class MockOrderingGateTransportGrpcService
 class OrderingGateTest : public ::testing::Test {
  public:
   OrderingGateTest() {
-    transport = std::make_shared<OrderingGateTransportGrpc>(address);
-    gate_impl = std::make_shared<OrderingGateImpl>(transport);
-    transport->subscribe(gate_impl);
     fake_service = std::make_shared<MockOrderingGateTransportGrpcService>();
   }
 
@@ -64,6 +61,11 @@ class OrderingGateTest : public ::testing::Test {
       builder.RegisterService(fake_service.get());
 
       server = builder.BuildAndStart();
+      address = "0.0.0.0:" + std::to_string(port);
+      // Initialize components after port has been bind
+      transport = std::make_shared<OrderingGateTransportGrpc>(address);
+      gate_impl = std::make_shared<OrderingGateImpl>(transport);
+      transport->subscribe(gate_impl);
 
       ASSERT_NE(port, 0);
       ASSERT_TRUE(server);
@@ -84,7 +86,7 @@ class OrderingGateTest : public ::testing::Test {
 
   std::unique_ptr<grpc::Server> server;
 
-  std::string address{"0.0.0.0:50051"};
+  std::string address{"0.0.0.0:0"};
   std::shared_ptr<OrderingGateTransportGrpc> transport;
   std::shared_ptr<OrderingGateImpl> gate_impl;
   std::shared_ptr<MockOrderingGateTransportGrpcService> fake_service;
