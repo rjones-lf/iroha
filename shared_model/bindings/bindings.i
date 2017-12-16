@@ -40,6 +40,7 @@
 
 %{
 #include "bindings/model_transaction_builder.hpp"
+#include "bindings/model_query_builder.hpp"
 #include "bindings/model_crypto.hpp"
 #include "bindings/model_proto.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
@@ -53,11 +54,17 @@
 %include "cryptography/keypair.hpp"
 %include "cryptography/signed.hpp"
 %include "backend/protobuf/transaction.hpp"
+%include "backend/protobuf/queries/proto_query.hpp"
+%include "builders/protobuf/queries.hpp"
 %include "builders/protobuf/transaction.hpp"
+
 %include "builders/protobuf/unsigned_proto.hpp"
 %include "bindings/model_transaction_builder.hpp"
+%include "bindings/model_query_builder.hpp"
 %include "bindings/model_crypto.hpp"
 %include "bindings/model_proto.hpp"
 
 %template (UnsignedTx) shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>;
+%template (UnsignedQuery) shared_model::proto::UnsignedWrapper<shared_model::proto::Query>;
 %template (ModelProtoTransaction) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>>;
+%template (ModelProtoQuery) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;

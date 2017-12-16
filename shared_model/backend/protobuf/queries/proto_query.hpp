@@ -37,7 +37,7 @@
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
 
 template <typename... T, typename Archive>
-auto load_query(Archive &&ar) {
+shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
   int which = ar.payload()
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
@@ -49,13 +49,13 @@ auto load_query(Archive &&ar) {
 
 namespace shared_model {
   namespace proto {
-    class Query final : public CopyableProto<interface::Query,
+    class Query FINAL : public CopyableProto<interface::Query,
                                              iroha::protocol::Query,
                                              Query> {
      private:
       /// polymorphic wrapper type shortcut
-      template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      template <typename Value>
+      using wrap = detail::PolymorphicWrapper<Value>;
 
       /// lazy variant shortcut
       template <typename T>
@@ -65,14 +65,15 @@ namespace shared_model {
 
      public:
       /// type of proto variant
-      using ProtoQueryVariantType = wrap<GetAccount,
-                                         GetSignatories,
-                                         GetAccountTransactions,
-                                         GetAccountAssetTransactions,
-                                         GetAccountAssets,
-                                         GetRoles,
-                                         GetRolePermissions,
-                                         GetAssetInfo>;
+      using ProtoQueryVariantType =
+          boost::variant<wrap<GetAccount>,
+                         wrap<GetSignatories>,
+                         wrap<GetAccountTransactions>,
+                         wrap<GetAccountAssetTransactions>,
+                         wrap<GetAccountAssets>,
+                         wrap<GetRoles>,
+                         wrap<GetRolePermissions>,
+                         wrap<GetAssetInfo>>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
@@ -96,22 +97,33 @@ namespace shared_model {
 
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
-      const QueryVariantType &get() const override { return *variant_; }
+      const shared_model::interface::Query::QueryVariantType &get()
+          const override {
+        return *variant_;
+      }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return proto_->payload().creator_account_id();
       }
 
-      QueryCounterType queryCounter() const override {
+      shared_model::interface::Query::QueryCounterType queryCounter()
+          const override {
         return proto_->payload().query_counter();
       }
 
-      const BlobType &blob() const override { return *blob_; }
+      const shared_model::interface::Hashable<shared_model::interface::Query,
+                                              iroha::model::Query>::BlobType &
+      blob() const override {
+        return *blob_;
+      }
 
-      const BlobType &payload() const override { return *payload_; }
+      const crypto::Blob &payload() const override { return *payload_; }
 
       // ------------------------| Signable override  |-------------------------
-      const SignatureSetType &signatures() const override {
+      const shared_model::interface::Signable<
+          shared_model::interface::Query,
+          iroha::model::Query>::SignatureSetType &
+      signatures() const override {
         return *signatures_;
       }
 
