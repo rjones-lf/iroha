@@ -30,7 +30,6 @@
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/revoke_permission.hpp"
-#include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/transfer_asset.hpp"
@@ -61,29 +60,40 @@ namespace iroha {
       log_ = logger::log("AppendRoleExecutor");
     }
 
+    bool AppendRoleExecutor::validate(const Command &command,
+                                      ametsuchi::WsvQuery &queries,
+                                      const Account &creator) {
+
+      //return CommandExecutor::validate(command, queries, creator);
+
+      auto cmd_value = static_cast<const AppendRole &>(command);
+      auto role_permissions = queries.getRolePermissions(cmd_value.role_name);
+      auto account_roles = queries.getAccountRoles(creator.account_id);
+
+      if (not role_permissions.has_value() or not account_roles.has_value())
+        return false;
+
+      std::set<std::string> account_permissions;
+      for (const auto &role : *account_roles) {
+        auto permissions = queries.getRolePermissions(role);
+        if (not permissions.has_value())
+          continue;
+        for (const auto &permission : *permissions)
+          account_permissions.insert(permission);
+      }
+
+      for (const auto &role_permission : *role_permissions)
+        if (account_permissions.find(role_permission)
+            == account_permissions.end())
+          return false;
+
+      return CommandExecutor::validate(command, queries, creator);
+
+    }
     bool AppendRoleExecutor::execute(const Command &command,
                                      ametsuchi::WsvQuery &queries,
                                      ametsuchi::WsvCommand &commands) {
       auto cmd_value = static_cast<const AppendRole &>(command);
-
-      auto role_permissions = queries.getRolePermissions(cmd_value.role_name);
-      auto account_roles = queries.getAccountRoles(cmd_value.account_id);
-
-      if(not role_permissions.has_value() or not account_roles.has_value())
-        return false;
-
-      std::set<std::string> account_permissions;
-      for(const auto& role: *account_roles) {
-        auto permissions = queries.getRolePermissions(role);
-        if(not permissions.has_value())
-          return false;
-        for(const auto& permission: *permissions)
-          account_permissions.insert(permission);
-      }
-
-      for(const auto& role_permission: *role_permissions)
-        if(account_permissions.find(role_permission) == account_permissions.end())
-          return false;
 
 
       return commands.insertAccountRole(cmd_value.account_id,
@@ -647,8 +657,7 @@ namespace iroha {
 
       return
           // Case 1. Creator set details for his account
-          creator.account_id == cmd.account_id
-          or
+          creator.account_id == cmd.account_id or
           // Case 2. Creator has grantable permission to set account key/value
           queries.hasAccountGrantablePermission(
               creator.account_id, cmd.account_id, can_set_detail);
