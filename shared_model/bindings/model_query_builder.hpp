@@ -41,21 +41,24 @@ namespace shared_model {
        * @param created_time - time to set
        * @return builder with created time field appended
        */
-      ModelQueryBuilder createdTime(uint64_t created_time);
+      ModelQueryBuilder createdTime(
+          interface::types::TimestampType created_time);
 
       /**
        * Sets account id of query creator
        * @param creator_account_id - account of query creator
        * @return builder with query account creator field appended
        */
-      ModelQueryBuilder creatorAccountId(const std::string &creator_account_id);
+      ModelQueryBuilder creatorAccountId(
+          const interface::types::AccountIdType &creator_account_id);
 
       /**
        * Sets query counter
        * @param query_counter - number to set as a query counter
        * @return builder with query counter field appended
        */
-      ModelQueryBuilder queryCounter(uint64_t query_counter);
+      ModelQueryBuilder queryCounter(
+          interface::types::QueryCounterType query_counter);
 
       /**
        * Queries state of account

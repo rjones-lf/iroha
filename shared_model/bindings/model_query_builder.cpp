@@ -19,16 +19,18 @@
 
 namespace shared_model {
   namespace bindings {
-    ModelQueryBuilder ModelQueryBuilder::createdTime(uint64_t created_time) {
+    ModelQueryBuilder ModelQueryBuilder::createdTime(
+        interface::types::TimestampType created_time) {
       return ModelQueryBuilder(builder_.createdTime(created_time));
     }
 
     ModelQueryBuilder ModelQueryBuilder::creatorAccountId(
-        const std::string &creator_account_id) {
+        const interface::types::AccountIdType &creator_account_id) {
       return ModelQueryBuilder(builder_.creatorAccountId(creator_account_id));
     }
 
-    ModelQueryBuilder ModelQueryBuilder::queryCounter(uint64_t query_counter) {
+    ModelQueryBuilder ModelQueryBuilder::queryCounter(
+        interface::types::QueryCounterType query_counter) {
       return ModelQueryBuilder(builder_.queryCounter(query_counter));
     }
 

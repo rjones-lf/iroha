@@ -103,7 +103,7 @@ namespace shared_model {
         return proto_->payload().creator_account_id();
       }
 
-      Query::QueryCounterType queryCounter() const override {
+      interface::types::QueryCounterType queryCounter() const override {
         return proto_->payload().query_counter();
       }
 

@@ -57,6 +57,8 @@ namespace shared_model {
       using TimestampType = uint64_t;
       /// Type of peer address
       using AddressType = std::string;
+      /// Type of query counter
+      using QueryCounterType = uint64_t;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model
