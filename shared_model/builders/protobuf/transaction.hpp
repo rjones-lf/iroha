@@ -107,7 +107,7 @@ namespace shared_model {
         });
       }
 
-      auto assetQuantity(
+      auto addAssetQuantity(
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount) const {
