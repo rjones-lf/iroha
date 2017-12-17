@@ -57,6 +57,11 @@ namespace shared_model {
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
+      template <int Sp>
+      TemplateTransactionBuilder(TemplateTransactionBuilder<Sp> &&o)
+          : transaction_(std::move(o.transaction_)),
+            stateless_validator_(std::move(o.stateless_validator_)) {}
+
       /**
        * Make transformation on copied content
        * @tparam Transformation - callable type for changing the copy
@@ -86,6 +91,10 @@ namespace shared_model {
      public:
       TemplateTransactionBuilder() = default;
 
+      TemplateTransactionBuilder(const TemplateTransactionBuilder &o) = default;
+
+      TemplateTransactionBuilder(TemplateTransactionBuilder &&o) = default;
+
       auto creatorAccountId(
           const interface::types::AccountIdType &account_id) const {
         return transform<CreatorAccountId>([&](auto &tx) {
@@ -93,24 +102,21 @@ namespace shared_model {
         });
       }
 
-      auto txCounter(
-          interface::types::CounterType tx_counter) const {
-        return transform<TxCounter>([&](auto &tx){
+      auto txCounter(interface::types::CounterType tx_counter) const {
+        return transform<TxCounter>([&](auto &tx) {
           tx.mutable_payload()->set_tx_counter(tx_counter);
         });
       }
 
-      auto createdTime(
-          interface::types::TimestampType created_time) const {
+      auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &tx) {
           tx.mutable_payload()->set_created_time(created_time);
         });
       }
 
-      auto addAssetQuantity(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id,
-          const std::string &amount) const {
+      auto addAssetQuantity(const interface::types::AccountIdType &account_id,
+                            const interface::types::AssetIdType &asset_id,
+                            const std::string &amount) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_asset_quantity();
           command->set_account_id(account_id);
@@ -119,9 +125,8 @@ namespace shared_model {
         });
       }
 
-      auto addPeer(
-          const interface::types::AddressType &address,
-          const interface::types::PubkeyType &peer_key) const {
+      auto addPeer(const interface::types::AddressType &address,
+                   const interface::types::PubkeyType &peer_key) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_peer();
           command->set_address(address);
@@ -129,9 +134,8 @@ namespace shared_model {
         });
       }
 
-      auto addSignatory(
-          const interface::types::AddressType &account_id,
-          const interface::types::PubkeyType &public_key) const {
+      auto addSignatory(const interface::types::AddressType &account_id,
+                        const interface::types::PubkeyType &public_key) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_signatory();
           command->set_account_id(account_id);
@@ -149,10 +153,9 @@ namespace shared_model {
         });
       }
 
-      auto createAsset(
-          const interface::types::AssetNameType &asset_name,
-          const interface::types::AddressType &domain_id,
-          interface::types::PrecisionType precision) const {
+      auto createAsset(const interface::types::AssetNameType &asset_name,
+                       const interface::types::AddressType &domain_id,
+                       interface::types::PrecisionType precision) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_create_asset();
           command->set_asset_name(asset_name);
@@ -183,9 +186,8 @@ namespace shared_model {
         });
       }
 
-      auto setAccountQuorum(
-          const interface::types::AddressType &account_id,
-          interface::types::QuorumType quorum) const {
+      auto setAccountQuorum(const interface::types::AddressType &account_id,
+                            interface::types::QuorumType quorum) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_set_quorum();
           command->set_account_id(account_id);
@@ -193,12 +195,11 @@ namespace shared_model {
         });
       }
 
-      auto transferAsset(
-          const interface::types::AccountIdType &src_account_id,
-          const interface::types::AccountIdType &dest_account_id,
-          const interface::types::AssetIdType &asset_id,
-          const std::string &description,
-          const std::string &amount) const {
+      auto transferAsset(const interface::types::AccountIdType &src_account_id,
+                         const interface::types::AccountIdType &dest_account_id,
+                         const interface::types::AssetIdType &asset_id,
+                         const std::string &description,
+                         const std::string &amount) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_transfer_asset();
           command->set_src_account_id(src_account_id);
