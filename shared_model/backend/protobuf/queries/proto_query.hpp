@@ -97,33 +97,22 @@ namespace shared_model {
 
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
-      const shared_model::interface::Query::QueryVariantType &get()
-          const override {
-        return *variant_;
-      }
+      const Query::QueryVariantType &get() const override { return *variant_; }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return proto_->payload().creator_account_id();
       }
 
-      shared_model::interface::Query::QueryCounterType queryCounter()
-          const override {
+      Query::QueryCounterType queryCounter() const override {
         return proto_->payload().query_counter();
       }
 
-      const shared_model::interface::Hashable<shared_model::interface::Query,
-                                              iroha::model::Query>::BlobType &
-      blob() const override {
-        return *blob_;
-      }
+      const Query::BlobType &blob() const override { return *blob_; }
 
-      const crypto::Blob &payload() const override { return *payload_; }
+      const Query::BlobType &payload() const override { return *payload_; }
 
       // ------------------------| Signable override  |-------------------------
-      const shared_model::interface::Signable<
-          shared_model::interface::Query,
-          iroha::model::Query>::SignatureSetType &
-      signatures() const override {
+      const Query::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
