@@ -57,11 +57,6 @@ namespace shared_model {
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
-      template <int Sp>
-      TemplateTransactionBuilder(TemplateTransactionBuilder<Sp> &&o)
-          : transaction_(std::move(o.transaction_)),
-            stateless_validator_(std::move(o.stateless_validator_)) {}
-
       /**
        * Make transformation on copied content
        * @tparam Transformation - callable type for changing the copy
