@@ -59,6 +59,12 @@ namespace shared_model {
       using AddressType = std::string;
       /// Type of query counter
       using QueryCounterType = uint64_t;
+      /// Type of transaction counter
+      using TxCounterType = uint64_t;
+      /// Type of account name
+      using AccountNameType = std::string;
+      /// Type of asset name
+      using AssetNameType = std::string;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

@@ -42,13 +42,10 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
-      /// Type of counter
-      using TxCounterType = uint64_t;
-
       /**
        * @return actual number of transaction of this user
        */
-      virtual TxCounterType transactionCounter() const = 0;
+      virtual types::TxCounterType transactionCounter() const = 0;
 
       /// Type of command
       using CommandType = detail::PolymorphicWrapper<Command>;

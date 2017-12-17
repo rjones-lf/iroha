@@ -25,13 +25,13 @@ namespace shared_model {
 
     class CreateAccount final : public CopyableProto<interface::CreateAccount,
                                                      iroha::protocol::Command,
-                                                     CreateAccount>{
+                                                     CreateAccount> {
      public:
       template <typename CommandType>
       explicit CreateAccount(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-      create_account_(detail::makeReferenceGenerator(
-          proto_, &iroha::protocol::Command::create_account)),
+            create_account_(detail::makeReferenceGenerator(
+                proto_, &iroha::protocol::Command::create_account)),
             pubkey_([this] {
               return interface::types::PubkeyType(
                   create_account_->main_pubkey());
@@ -46,7 +46,7 @@ namespace shared_model {
         return *pubkey_;
       }
 
-      const AccountNameType &accountName() const override {
+      const interface::types::AccountNameType &accountName() const override {
         return create_account_->account_name();
       }
 

@@ -24,7 +24,8 @@ namespace shared_model {
       return ModelTransactionBuilder(builder_.creatorAccountId(account_id));
     }
 
-    ModelTransactionBuilder ModelTransactionBuilder::txCounter(uint64_t tx_counter) {
+    ModelTransactionBuilder ModelTransactionBuilder::txCounter(
+        interface::types::TxCounterType tx_counter) {
       return ModelTransactionBuilder(builder_.txCounter(tx_counter));
     }
 
@@ -37,7 +38,8 @@ namespace shared_model {
         const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
-      return ModelTransactionBuilder(builder_.addAssetQuantity(account_id, asset_id, amount));
+      return ModelTransactionBuilder(
+          builder_.addAssetQuantity(account_id, asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addPeer(
@@ -49,17 +51,19 @@ namespace shared_model {
     ModelTransactionBuilder ModelTransactionBuilder::addSignatory(
         const interface::types::AddressType &account_id,
         const interface::types::PubkeyType &public_key) {
-      return ModelTransactionBuilder(builder_.addSignatory(account_id, public_key));
+      return ModelTransactionBuilder(
+          builder_.addSignatory(account_id, public_key));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::removeSignatory(
         const interface::types::AddressType &account_id,
         const interface::types::PubkeyType &public_key) {
-      return ModelTransactionBuilder(builder_.removeSignatory(account_id, public_key));
+      return ModelTransactionBuilder(
+          builder_.removeSignatory(account_id, public_key));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::createAccount(
-        const std::string &account_name,
+        const interface::types::AccountNameType &account_name,
         const interface::types::AddressType &domain_id,
         const interface::types::PubkeyType &main_pubkey) {
       return ModelTransactionBuilder(
@@ -69,12 +73,15 @@ namespace shared_model {
     ModelTransactionBuilder ModelTransactionBuilder::createDomain(
         const interface::types::AddressType &domain_id,
         const interface::types::RoleIdType &default_role) {
-      return ModelTransactionBuilder(builder_.createDomain(domain_id, default_role));
+      return ModelTransactionBuilder(
+          builder_.createDomain(domain_id, default_role));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::setAccountQuorum(
-        const interface::types::AddressType &account_id, uint32_t quorum) {
-      return ModelTransactionBuilder(builder_.setAccountQuorum(account_id, quorum));
+        const interface::types::AddressType &account_id,
+        interface::types::QuorumType quorum) {
+      return ModelTransactionBuilder(
+          builder_.setAccountQuorum(account_id, quorum));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::transferAsset(
@@ -87,7 +94,8 @@ namespace shared_model {
           src_account_id, dest_account_id, asset_id, description, amount));
     }
 
-    proto::UnsignedWrapper<proto::Transaction> ModelTransactionBuilder::build() {
+    proto::UnsignedWrapper<proto::Transaction>
+    ModelTransactionBuilder::build() {
       return builder_.build();
     }
   }  // namespace bindings

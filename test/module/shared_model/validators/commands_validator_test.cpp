@@ -24,7 +24,7 @@
 
 iroha::protocol::Transaction generateEmptyTransaction() {
   auto created_time = 10000000000ull;
-  shared_model::interface::Transaction::TxCounterType tx_counter = 1;
+  shared_model::interface::types::TxCounterType tx_counter = 1;
   std::string creator_account_id = "admin@test";
 
   iroha::protocol::Transaction proto_tx;
@@ -203,7 +203,7 @@ TEST(commandsValidatorTest, EmptyTransactionTest) {
   tx.mutable_payload()->set_created_time(iroha::time::now());
   shared_model::validation::CommandsValidator commands_validator;
   auto answer = commands_validator.validate(
-          detail::make_polymorphic<proto::Transaction>(tx));
+      detail::make_polymorphic<proto::Transaction>(tx));
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
 }
 

@@ -52,7 +52,7 @@ namespace shared_model {
 
       template <int Sp>
       TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp> &o,
-                                 SV&& stateless_validator = SV())
+                                 SV &&stateless_validator = SV())
           : transaction_(o.transaction_),
             stateless_validator_(std::forward<SV>(stateless_validator)) {}
 
@@ -67,7 +67,8 @@ namespace shared_model {
         return *this;
       }
 
-      NextBuilder<TxCounter> txCounter(Transaction::TxCounterType tx_counter) {
+      NextBuilder<TxCounter> txCounter(
+          interface::types::TxCounterType tx_counter) {
         transaction_.mutable_payload()->set_tx_counter(tx_counter);
         return *this;
       }
@@ -117,9 +118,9 @@ namespace shared_model {
       }
 
       NextBuilder<Command> createAsset(
-          const std::string &asset_name,
+          const interface::types::AssetNameType &asset_name,
           const interface::types::AddressType &domain_id,
-          uint32_t precision) {
+          interface::types::PrecisionType precision) {
         auto command = proto_command()->mutable_create_asset();
         command->set_asset_name(asset_name);
         command->set_domain_id(domain_id);
@@ -128,7 +129,7 @@ namespace shared_model {
       }
 
       NextBuilder<Command> createAccount(
-          const std::string &account_name,
+          const interface::types::AccountNameType &account_name,
           const interface::types::AddressType &domain_id,
           const interface::types::PubkeyType &main_pubkey) {
         auto command = proto_command()->mutable_create_account();
@@ -148,7 +149,8 @@ namespace shared_model {
       }
 
       NextBuilder<Command> setAccountQuorum(
-          const interface::types::AddressType &account_id, uint32_t quorum) {
+          const interface::types::AddressType &account_id,
+          interface::types::QuorumType quorum) {
         auto command = proto_command()->mutable_set_quorum();
         command->set_account_id(account_id);
         command->set_quorum(quorum);

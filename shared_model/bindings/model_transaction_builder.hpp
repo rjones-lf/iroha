@@ -31,7 +31,8 @@ namespace shared_model {
     class ModelTransactionBuilder {
      private:
       template <int Sp>
-      explicit ModelTransactionBuilder(const proto::TemplateTransactionBuilder<Sp> &o)
+      explicit ModelTransactionBuilder(
+          const proto::TemplateTransactionBuilder<Sp> &o)
           : builder_(o) {}
 
      public:
@@ -50,14 +51,16 @@ namespace shared_model {
        * @param tx_counter - transaction counter
        * @return builder with tx_counter field appended
        */
-      ModelTransactionBuilder txCounter(uint64_t tx_counter);
+      ModelTransactionBuilder txCounter(
+          interface::types::TxCounterType tx_counter);
 
       /**
        * Sets time of creation
        * @param created_time - time of creation
        * @return builder with created_time field appended
        */
-      ModelTransactionBuilder createdTime(interface::types::TimestampType created_time);
+      ModelTransactionBuilder createdTime(
+          interface::types::TimestampType created_time);
 
       /**
        * Adds given quantity of given asset to account
@@ -77,8 +80,9 @@ namespace shared_model {
        * @param peer_key - peer public key
        * @return builder with added peer command appended
        */
-      ModelTransactionBuilder addPeer(const interface::types::AddressType &address,
-                           const crypto::PublicKey &peer_key);
+      ModelTransactionBuilder addPeer(
+          const interface::types::AddressType &address,
+          const crypto::PublicKey &peer_key);
 
       /**
        * Adds new signatory
@@ -86,8 +90,9 @@ namespace shared_model {
        * @param public_key - public key of signatory
        * @return builder with added signatory command appended
        */
-      ModelTransactionBuilder addSignatory(const interface::types::AddressType &account_id,
-                                const crypto::PublicKey &public_key);
+      ModelTransactionBuilder addSignatory(
+          const interface::types::AddressType &account_id,
+          const crypto::PublicKey &public_key);
 
       /**
        * Removes signatory
@@ -106,9 +111,10 @@ namespace shared_model {
        * @param main_pubkey - main public key of account
        * @return builder with new account command appended
        */
-      ModelTransactionBuilder createAccount(const std::string &account_name,
-                                 const interface::types::AddressType &domain_id,
-                                 const crypto::PublicKey &main_pubkey);
+      ModelTransactionBuilder createAccount(
+          const interface::types::AccountNameType &account_name,
+          const interface::types::AddressType &domain_id,
+          const crypto::PublicKey &main_pubkey);
 
       /**
        * Creates new domain
@@ -127,7 +133,8 @@ namespace shared_model {
        * @return builder with set account quorum command appended
        */
       ModelTransactionBuilder setAccountQuorum(
-          const interface::types::AddressType &account_id, uint32_t quorum);
+          const interface::types::AddressType &account_id,
+          interface::types::QuorumType quorum);
 
       /**
        * Transfers asset from one account to another

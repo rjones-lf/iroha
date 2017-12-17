@@ -31,12 +31,10 @@ namespace shared_model {
     class CreateAccount
         : public Primitive<CreateAccount, iroha::model::CreateAccount> {
      public:
-      /// Type returned by accountName method
-      using AccountNameType = std::string;
       /**
        * @return Name of the account to create in Iroha
        */
-      virtual const AccountNameType &accountName() const = 0;
+      virtual const types::AccountNameType &accountName() const = 0;
       /**
        * @return Iroha domain in which account will be created
        */
