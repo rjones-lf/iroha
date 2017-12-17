@@ -219,6 +219,7 @@ TEST(CommandsValidatorTest, StatelessValidTest) {
   std::string valid_role_name = "user";
   std::string valid_account_name = "admin";
   std::string valid_domain_id = "ru";
+  uint8_t valid_precision = 42;
   std::vector<RolePermission> valid_role_permissions;
   iroha::protocol::GrantablePermission valid_grantable_permission =
       iroha::protocol::GrantablePermission ::can_add_my_signatory;
@@ -255,6 +256,10 @@ TEST(CommandsValidatorTest, StatelessValidTest) {
   payload->add_commands()->mutable_create_account()->CopyFrom(
       generateCreateAccount(
           valid_account_name, valid_domain_id, valid_public_key));
+
+  // Create Asset
+  payload->add_commands()->mutable_create_asset()->CopyFrom(generateCreateAsset(
+      valid_account_name, valid_domain_id, valid_precision));
 
   // Create Domain
   payload->add_commands()->mutable_create_domain()->CopyFrom(
@@ -313,6 +318,7 @@ TEST(CommandsValidatorTest, StatelessInvalidTest) {
   payload->add_commands()->mutable_add_signatory()->CopyFrom(AddSignatory());
   payload->add_commands()->mutable_append_role()->CopyFrom(AppendRole());
   payload->add_commands()->mutable_create_account()->CopyFrom(CreateAccount());
+  payload->add_commands()->mutable_create_asset()->CopyFrom(CreateAsset());
   payload->add_commands()->mutable_create_domain()->CopyFrom(CreateDomain());
   payload->add_commands()->mutable_create_role()->CopyFrom(CreateRole());
   payload->add_commands()->mutable_grant_permission()->CopyFrom(
@@ -329,5 +335,5 @@ TEST(CommandsValidatorTest, StatelessInvalidTest) {
 
   // in total there should be 13 reasons of bad answer: 12 for each command + 1
   // for transaction metadata
-  ASSERT_EQ(answer.getReasonsMap().size(), 13);
+  ASSERT_EQ(answer.getReasonsMap().size(), 14);
 }
