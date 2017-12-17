@@ -57,10 +57,6 @@ namespace shared_model {
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
-      TemplateTransactionBuilder(const ProtoTx &tx,
-                                 const SV &stateless_validator)
-          : transaction_(tx), stateless_validator_(stateless_validator) {}
-
       /**
        * Make transformation on copied content
        * @tparam Transformation - callable type for changing the copy
@@ -69,9 +65,9 @@ namespace shared_model {
        */
       template <int Fields, typename Transformation>
       NextBuilder<Fields> transform(Transformation t) const {
-        auto copy = transaction_;
-        t(copy);
-        return {copy, stateless_validator_};
+        auto copy = *this;
+        t(copy.transaction_);
+        return copy;
       }
 
       /**
@@ -82,36 +78,36 @@ namespace shared_model {
        */
       template <typename Transformation>
       NextBuilder<Command> addCommand(Transformation t) const {
-        auto copy = transaction_;
-        t(copy.mutable_payload()->add_commands());
-        return {copy, stateless_validator_};
+        auto copy = *this;
+        t(copy.transaction_.mutable_payload()->add_commands());
+        return copy;
       }
 
      public:
       TemplateTransactionBuilder() = default;
 
-      NextBuilder<CreatorAccountId> creatorAccountId(
+      auto creatorAccountId(
           const interface::types::AccountIdType &account_id) const {
         return transform<CreatorAccountId>([&](auto &tx) {
           tx.mutable_payload()->set_creator_account_id(account_id);
         });
       }
 
-      NextBuilder<TxCounter> txCounter(
+      auto txCounter(
           interface::types::CounterType tx_counter) const {
         return transform<TxCounter>([&](auto &tx){
           tx.mutable_payload()->set_tx_counter(tx_counter);
         });
       }
 
-      NextBuilder<CreatedTime> createdTime(
+      auto createdTime(
           interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &tx) {
           tx.mutable_payload()->set_created_time(created_time);
         });
       }
 
-      NextBuilder<Command> addAssetQuantity(
+      auto addAssetQuantity(
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount) const {
@@ -123,7 +119,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> addPeer(
+      auto addPeer(
           const interface::types::AddressType &address,
           const interface::types::PubkeyType &peer_key) const {
         return addCommand([&](auto proto_command) {
@@ -133,7 +129,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> addSignatory(
+      auto addSignatory(
           const interface::types::AddressType &account_id,
           const interface::types::PubkeyType &public_key) const {
         return addCommand([&](auto proto_command) {
@@ -143,7 +139,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> removeSignatory(
+      auto removeSignatory(
           const interface::types::AddressType &account_id,
           const interface::types::PubkeyType &public_key) const {
         return addCommand([&](auto proto_command) {
@@ -153,7 +149,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> createAsset(
+      auto createAsset(
           const interface::types::AssetNameType &asset_name,
           const interface::types::AddressType &domain_id,
           interface::types::PrecisionType precision) const {
@@ -165,7 +161,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> createAccount(
+      auto createAccount(
           const interface::types::AccountNameType &account_name,
           const interface::types::AddressType &domain_id,
           const interface::types::PubkeyType &main_pubkey) const {
@@ -177,7 +173,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> createDomain(
+      auto createDomain(
           const interface::types::AddressType &domain_id,
           const interface::types::RoleIdType &default_role) const {
         return addCommand([&](auto proto_command) {
@@ -187,7 +183,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> setAccountQuorum(
+      auto setAccountQuorum(
           const interface::types::AddressType &account_id,
           interface::types::QuorumType quorum) const {
         return addCommand([&](auto proto_command) {
@@ -197,7 +193,7 @@ namespace shared_model {
         });
       }
 
-      NextBuilder<Command> transferAsset(
+      auto transferAsset(
           const interface::types::AccountIdType &src_account_id,
           const interface::types::AccountIdType &dest_account_id,
           const interface::types::AssetIdType &asset_id,
