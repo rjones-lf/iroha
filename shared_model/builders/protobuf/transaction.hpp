@@ -64,8 +64,8 @@ namespace shared_model {
        * @return new builder with updated state
        */
       template <int Fields, typename Transformation>
-      NextBuilder<Fields> transform(Transformation t) const {
-        auto copy = *this;
+      auto transform(Transformation t) const {
+        NextBuilder<Fields> copy = *this;
         t(copy.transaction_);
         return copy;
       }
@@ -77,18 +77,15 @@ namespace shared_model {
        * @return new builder with added command
        */
       template <typename Transformation>
-      NextBuilder<Command> addCommand(Transformation t) const {
-        auto copy = *this;
+      auto addCommand(Transformation t) const {
+        NextBuilder<Command> copy = *this;
         t(copy.transaction_.mutable_payload()->add_commands());
         return copy;
       }
 
      public:
-      TemplateTransactionBuilder() = default;
-
-      TemplateTransactionBuilder(const TemplateTransactionBuilder &o) = default;
-
-      TemplateTransactionBuilder(TemplateTransactionBuilder &&o) = default;
+      TemplateTransactionBuilder(const SV &validator = SV())
+          : stateless_validator_(validator) {}
 
       auto creatorAccountId(
           const interface::types::AccountIdType &account_id) const {
@@ -205,7 +202,7 @@ namespace shared_model {
         });
       }
 
-      UnsignedWrapper<Transaction> build() const {
+      auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
 
         auto answer = stateless_validator_.validate(
