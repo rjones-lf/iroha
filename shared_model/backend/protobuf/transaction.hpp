@@ -69,24 +69,21 @@ namespace shared_model {
         return payload_->creator_account_id();
       }
 
-      shared_model::interface::Transaction::TxCounterType transactionCounter()
-          const override {
+      interface::types::CounterType transactionCounter() const override {
         return payload_->tx_counter();
       }
 
-      const shared_model::interface::Transaction::CommandsType &commands()
-          const override {
+      const Transaction::CommandsType &commands() const override {
         return *commands_;
       }
 
-      const crypto::Blob &blob() const override { return *blob_; }
+      const Transaction::BlobType &blob() const override { return *blob_; }
 
-      const crypto::Blob &payload() const override { return *blobTypePayload_; }
+      const Transaction::BlobType &payload() const override {
+        return *blobTypePayload_;
+      }
 
-      const shared_model::interface::Signable<
-          shared_model::interface::Transaction,
-          iroha::model::Transaction>::SignatureSetType &
-      signatures() const override {
+      const Transaction::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 

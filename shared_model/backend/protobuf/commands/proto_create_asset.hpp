@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 #ifndef IROHA_PROTO_CREATE_ASSET_HPP
 #define IROHA_PROTO_CREATE_ASSET_HPP
 
@@ -40,7 +39,7 @@ namespace shared_model {
       CreateAsset(CreateAsset &&o) noexcept
           : CreateAsset(std::move(o.proto_)) {}
 
-      const AssetNameType &assetName() const override {
+      const interface::types::AssetNameType &assetName() const override {
         return create_asset_->asset_name();
       }
 

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SIMPLE_TRANSACTION_PROTO_HPP
-#define IROHA_SIMPLE_TRANSACTION_PROTO_HPP
+#ifndef IROHA_SHARED_MODEL_MODEL_PROTO_HPP
+#define IROHA_SHARED_MODEL_MODEL_PROTO_HPP
 
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
@@ -26,8 +26,10 @@ namespace shared_model {
   namespace bindings {
     /**
      * Class for proto operations for SWIG
+     * @tparam Unsigned - type of unsigned model proto object
      */
-    class ModelTransactionProto {
+    template <typename Unsigned>
+    class ModelProto {
      public:
       /**
        * Signs unsigned transaction and adds signature to its internal proto
@@ -36,11 +38,12 @@ namespace shared_model {
        * @param keypair - keypair to sign
        * @return blob of signed transaction
        */
-      crypto::Blob signAndAddSignature(
-          proto::UnsignedWrapper<proto::Transaction> &tx,
-          const crypto::Keypair &keypair);
+      crypto::Blob signAndAddSignature(Unsigned &us,
+                                       const crypto::Keypair &keypair) {
+        return us.signAndAddSignature(keypair).blob();
+      }
     };
   }  // namespace bindings
 }  // namespace shared_model
 
-#endif  // IROHA_SIMPLE_TRANSACTION_PROTO_HPP
+#endif  // IROHA_SHARED_MODEL_MODEL_PROTO_HPP

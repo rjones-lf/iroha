@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SIMPLE_CRYPTO_HPP
-#define IROHA_SIMPLE_CRYPTO_HPP
+#ifndef IROHA_SHARED_MODEL_MODEL_CRYPTO_HPP
+#define IROHA_SHARED_MODEL_MODEL_CRYPTO_HPP
 
 #include "cryptography/blob.hpp"
 #include "cryptography/keypair.hpp"
@@ -38,4 +38,4 @@ namespace shared_model {
   }  // namespace bindings
 }  // namespace shared_model
 
-#endif  // IROHA_SIMPLE_CRYPTO_HPP
+#endif  // IROHA_SHARED_MODEL_MODEL_CRYPTO_HPP

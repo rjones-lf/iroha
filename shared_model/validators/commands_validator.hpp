@@ -245,9 +245,9 @@ namespace shared_model {
           }
         }
 
-        void validateAccountName(ReasonsGroupType &reason,
-                                 const interface::CreateAccount::AccountNameType
-                                     &account_name) const {
+        void validateAccountName(
+            ReasonsGroupType &reason,
+            const interface::types::AccountNameType &account_name) const {
           std::regex e(R"([a-z]{1,9})");
           if (not std::regex_match(account_name, e)) {
             reason.second.push_back("Wrongly formed account_name");
@@ -265,7 +265,7 @@ namespace shared_model {
 
         void validateAssetName(
             ReasonsGroupType &reason,
-            const interface::CreateAsset::AssetNameType &asset_name) const {
+            const interface::types::AssetNameType &asset_name) const {
           std::regex e(R"([a-z]{1,9})");
           if (not std::regex_match(asset_name, e)) {
             reason.second.push_back("Wrongly formed asset_name");

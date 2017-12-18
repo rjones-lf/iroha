@@ -74,14 +74,12 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
-      /// Type of query counter
-      using QueryCounterType = uint64_t;
       /**
        * Query counter - incremental variable reflect for number of sent to
        * system queries plus 1. Required for preventing replay attacks.
        * @return attached query counter
        */
-      virtual QueryCounterType queryCounter() const = 0;
+      virtual types::CounterType queryCounter() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 

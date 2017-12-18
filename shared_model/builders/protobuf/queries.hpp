@@ -19,6 +19,7 @@
 #define IROHA_PROTO_QUERY_BUILDER_HPP
 
 #include "backend/protobuf/queries/proto_query.hpp"
+#include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "queries.pb.h"
 
@@ -62,43 +63,43 @@ namespace shared_model {
       }
 
       NextBuilder<QueryField> getAccount(
-          const interface::types::AccountIdType &accound_id) {
+          const interface::types::AccountIdType &account_id) {
         auto query = query_.mutable_payload()->mutable_get_account();
-        query->set_account_id(accound_id);
+        query->set_account_id(account_id);
         return *this;
       }
 
       NextBuilder<QueryField> getSignatories(
-          const interface::types::AccountIdType &accound_id) {
+          const interface::types::AccountIdType &account_id) {
         auto query =
             query_.mutable_payload()->mutable_get_account_signatories();
-        query->set_account_id(accound_id);
+        query->set_account_id(account_id);
         return *this;
       }
 
       NextBuilder<QueryField> getAccountTransactions(
-          const interface::types::AccountIdType &accound_id) {
+          const interface::types::AccountIdType &account_id) {
         auto query =
             query_.mutable_payload()->mutable_get_account_transactions();
-        query->set_account_id(accound_id);
+        query->set_account_id(account_id);
         return *this;
       }
 
       NextBuilder<QueryField> getAccountAssetTransactions(
-          const interface::types::AccountIdType &accound_id,
+          const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id) {
         auto query =
             query_.mutable_payload()->mutable_get_account_asset_transactions();
-        query->set_account_id(accound_id);
+        query->set_account_id(account_id);
         query->set_asset_id(asset_id);
         return *this;
       }
 
       NextBuilder<QueryField> getAccountAssets(
-          const interface::types::AccountIdType &accound_id,
+          const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id) {
         auto query = query_.mutable_payload()->mutable_get_account_assets();
-        query->set_account_id(accound_id);
+        query->set_account_id(account_id);
         query->set_asset_id(asset_id);
         return *this;
       }
@@ -127,10 +128,12 @@ namespace shared_model {
         return *this;
       }
 
-      Query build() {
+      UnsignedWrapper<Query> build() {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-        return Query(iroha::protocol::Query(query_));
+        return UnsignedWrapper<Query>(Query(iroha::protocol::Query(query_)));
       }
+
+      static const int total = RequiredFields::TOTAL;
     };
 
     using QueryBuilder = TemplateQueryBuilder<>;

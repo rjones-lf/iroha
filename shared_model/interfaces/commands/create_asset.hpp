@@ -30,12 +30,10 @@ namespace shared_model {
     class CreateAsset
         : public Primitive<CreateAsset, iroha::model::CreateAsset> {
      public:
-      /// Type returned by assetName function
-      using AssetNameType = std::string;
       /**
        * @return Asset name to create
        */
-      virtual const AssetNameType &assetName() const = 0;
+      virtual const types::AssetNameType &assetName() const = 0;
       /**
        * @return Iroha domain of the asset
        */
