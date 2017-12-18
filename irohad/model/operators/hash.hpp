@@ -32,7 +32,7 @@ namespace iroha {
      public:
       using TxType = Tx;
       size_t operator()(const TxType &tx) const {
-        auto hash = string_hasher(tx->tx_hash.to_string());
+        auto hash = string_hasher(tx->tx_hash.to_hexstring());
         return hash;
       }
 

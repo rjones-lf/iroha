@@ -23,7 +23,6 @@
 #include <vector>
 #include "logger/logger.hpp"
 
-#include "common/types.hpp"
 #include "model/operators/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
@@ -51,6 +50,14 @@ namespace iroha {
     virtual bool operator()(const DataType &tx, const TimeType &time) const = 0;
 
     virtual ~Completer() = default;
+  };
+
+  class TxHashEquality {
+   public:
+    bool operator()(const DataType &left_tx, const DataType &right_tx) const {
+      return (*left_tx).tx_hash.to_hexstring()
+          == (*right_tx).tx_hash.to_hexstring();
+    }
   };
 
   /**
@@ -144,7 +151,7 @@ namespace iroha {
 
     using InternalStateType =
         std::unordered_set<DataType, iroha::model::PointerTxHasher<DataType>,
-                           iroha::DereferenceEquals<DataType>>;
+                           TxHashEquality>;
 
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;
