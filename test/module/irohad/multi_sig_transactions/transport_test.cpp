@@ -30,9 +30,14 @@ using ::testing::AtLeast;
 using ::testing::InvokeWithoutArgs;
 
 /**
- * Sends data over MstTransportGrpc (MstState and Peer objects) and receives
+ * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and receives
  * them. When received deserializes them end ensures that deserialized
  * objects equal to objects before sending.
+ *
+ * @given Initialized transport
+ * AND MstState for transfer
+ * @when Send state via transport
+ * @then Assume that received state same as sent
  */
 TEST(TransportTest, SendAndReceive) {
   auto transport = std::make_shared<MstTransportGrpc>();
