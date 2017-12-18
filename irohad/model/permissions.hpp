@@ -91,7 +91,8 @@ namespace iroha {
                                                      can_get_domain_acc_ast,
                                                      can_get_domain_acc_detail,
                                                      can_get_domain_acc_ast_txs,
-                                                     can_get_domain_signatories};
+                                                     can_get_domain_signatories,
+                                                     can_get_my_acc_detail};
 
     const std::string can_grant = "CanGrant";
     const std::set<std::string> grant_group = {can_grant + can_set_quorum,
@@ -110,6 +111,7 @@ namespace iroha {
         can_get_my_account,
         can_get_my_acc_txs,
         can_get_my_acc_ast,
+        can_get_my_acc_detail,
         can_get_my_acc_ast_txs,
         can_get_my_signatories,
         can_get_all_accounts,
