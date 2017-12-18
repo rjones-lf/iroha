@@ -103,7 +103,7 @@ namespace shared_model {
         return proto_->payload().creator_account_id();
       }
 
-      interface::types::QueryCounterType queryCounter() const override {
+      interface::types::CounterType queryCounter() const override {
         return proto_->payload().query_counter();
       }
 
@@ -142,4 +142,4 @@ namespace shared_model {
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_SHARED_MODEL_PROTO_COMMAND_HPP
+#endif  // IROHA_SHARED_MODEL_PROTO_QUERY_HPP

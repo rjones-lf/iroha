@@ -58,7 +58,7 @@ namespace shared_model {
        * @return builder with query counter field appended
        */
       ModelQueryBuilder queryCounter(
-          interface::types::QueryCounterType query_counter);
+          interface::types::CounterType query_counter);
 
       /**
        * Queries state of account

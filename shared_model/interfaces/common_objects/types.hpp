@@ -57,10 +57,8 @@ namespace shared_model {
       using TimestampType = uint64_t;
       /// Type of peer address
       using AddressType = std::string;
-      /// Type of query counter
-      using QueryCounterType = uint64_t;
-      /// Type of transaction counter
-      using TxCounterType = uint64_t;
+      /// Type of counter
+      using CounterType = uint64_t;
       /// Type of account name
       using AccountNameType = std::string;
       /// Type of asset name

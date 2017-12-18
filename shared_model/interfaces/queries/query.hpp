@@ -79,7 +79,7 @@ namespace shared_model {
        * system queries plus 1. Required for preventing replay attacks.
        * @return attached query counter
        */
-      virtual types::QueryCounterType queryCounter() const = 0;
+      virtual types::CounterType queryCounter() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 

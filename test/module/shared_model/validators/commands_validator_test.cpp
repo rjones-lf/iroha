@@ -24,7 +24,7 @@
 
 iroha::protocol::Transaction generateEmptyTransaction() {
   auto created_time = 10000000000ull;
-  shared_model::interface::types::TxCounterType tx_counter = 1;
+  shared_model::interface::types::CounterType tx_counter = 1;
   std::string creator_account_id = "admin@test";
 
   iroha::protocol::Transaction proto_tx;

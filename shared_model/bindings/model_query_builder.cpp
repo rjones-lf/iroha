@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "model_query_builder.hpp"
+#include "bindings/model_query_builder.hpp"
 
 namespace shared_model {
   namespace bindings {
@@ -30,7 +30,7 @@ namespace shared_model {
     }
 
     ModelQueryBuilder ModelQueryBuilder::queryCounter(
-        interface::types::QueryCounterType query_counter) {
+        interface::types::CounterType query_counter) {
       return ModelQueryBuilder(builder_.queryCounter(query_counter));
     }
 

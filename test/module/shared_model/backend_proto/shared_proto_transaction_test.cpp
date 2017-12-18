@@ -37,7 +37,7 @@ TEST(ProtoTransaction, Create) {
 
 // common data for tests
 auto created_time = iroha::time::now();
-shared_model::interface::types::TxCounterType tx_counter = 1;
+shared_model::interface::types::CounterType tx_counter = 1;
 std::string creator_account_id = "admin@test";
 
 /**

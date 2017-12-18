@@ -45,7 +45,7 @@ namespace shared_model {
       /**
        * @return actual number of transaction of this user
        */
-      virtual types::TxCounterType transactionCounter() const = 0;
+      virtual types::CounterType transactionCounter() const = 0;
 
       /// Type of command
       using CommandType = detail::PolymorphicWrapper<Command>;

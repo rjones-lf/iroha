@@ -52,7 +52,7 @@ namespace shared_model {
        * @return builder with tx_counter field appended
        */
       ModelTransactionBuilder txCounter(
-          interface::types::TxCounterType tx_counter);
+          interface::types::CounterType tx_counter);
 
       /**
        * Sets time of creation

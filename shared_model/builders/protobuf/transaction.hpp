@@ -68,7 +68,7 @@ namespace shared_model {
       }
 
       NextBuilder<TxCounter> txCounter(
-          interface::types::TxCounterType tx_counter) {
+          interface::types::CounterType tx_counter) {
         transaction_.mutable_payload()->set_tx_counter(tx_counter);
         return *this;
       }

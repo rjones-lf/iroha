@@ -25,7 +25,7 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::txCounter(
-        interface::types::TxCounterType tx_counter) {
+        interface::types::CounterType tx_counter) {
       return ModelTransactionBuilder(builder_.txCounter(tx_counter));
     }
 
