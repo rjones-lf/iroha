@@ -23,7 +23,6 @@
 #include <vector>
 #include "logger/logger.hpp"
 
-#include "common/types.hpp"
 #include "model/operators/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
@@ -55,9 +54,9 @@ namespace iroha {
 
   class TxHashEquality {
    public:
-    bool operator()(const DataType &left_tx, const DataType &rightTx) const {
+    bool operator()(const DataType &left_tx, const DataType &right_tx) const {
       return (*left_tx).tx_hash.to_hexstring()
-          == (*rightTx).tx_hash.to_hexstring();
+          == (*right_tx).tx_hash.to_hexstring();
     }
   };
 
