@@ -20,11 +20,13 @@ else()
     COMMAND ${CPPCHECK_BIN} --xml --xml-version=2 ${CMAKE_SOURCE_DIR}
       -I ${CMAKE_SOURCE_DIR}/irohad/        # include (include_directories(...)
       -I ${CMAKE_SOURCE_DIR}/iroha-cli/     # include
+      -I ${CMAKE_SOURCE_DIR}/test/          # include
       -I ${CMAKE_SOURCE_DIR}/libs/          # include
-      -I ${CMAKE_SOURCE_DIR}/shared_model   # include
+      -I ${CMAKE_SOURCE_DIR}/shared_model/  # include
       -i ${CMAKE_SOURCE_DIR}/external/      # exclude
       -i ${CMAKE_SOURCE_DIR}/schema/        # exclude
-      -i ${CMAKE_BINARY_DIR} --enable=all   # exclude
+      -i ${CMAKE_BINARY_DIR}                # exclude
+      --enable=all
       2> ${REPORT_DIR}/cppcheck.xml
     COMMENT "Analyzing sources with cppcheck" VERBATIM
     )

@@ -6,7 +6,7 @@ coverage:
     patch: # measures only changes made in PR/commit
       default:
         # basic
-        target: 50..100
+        target: auto
         base: auto
         # advanced
         branches: null
@@ -22,9 +22,9 @@ coverage:
         target: auto
         threshold: 0%
         base: auto
-      tests:
+      test:
         target: auto
-        paths: "tests/"  # only include coverage in "tests/" folder
+        paths: "test/"  # only include coverage in "test/" folder
       cli:
         target: auto
         paths: "iroha-cli/"
@@ -35,7 +35,6 @@ coverage:
         target: auto
         paths:
           - "libs/"
-          - "schema/"
       model:
         target: auto
         paths: "shared_model/"
