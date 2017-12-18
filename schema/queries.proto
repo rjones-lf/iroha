@@ -29,6 +29,11 @@ message GetAccountAssets {
   string asset_id = 2;
 }
 
+message GetAccountDetail {
+  string account_id = 1;
+  string detail = 2;
+}
+
 message GetAssetInfo {
   string asset_id = 1;
 }
