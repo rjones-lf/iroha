@@ -26,6 +26,7 @@
 #include "interfaces/queries/get_account.hpp"
 #include "interfaces/queries/get_account_asset_transactions.hpp"
 #include "interfaces/queries/get_account_assets.hpp"
+#include "interfaces/queries/get_account_detail.hpp"
 #include "interfaces/queries/get_account_transactions.hpp"
 #include "interfaces/queries/get_asset_info.hpp"
 #include "interfaces/queries/get_role_permissions.hpp"
@@ -59,6 +60,7 @@ namespace shared_model {
                                     GetAccountAssetTransactions,
                                     GetTransactions,
                                     GetAccountAssets,
+                                    GetAccountDetail,
                                     GetRoles,
                                     GetRolePermissions,
                                     GetAssetInfo>;

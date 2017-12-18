@@ -22,6 +22,7 @@
 
 // ----------| query responses |----------
 #include "model/queries/responses/account_assets_response.hpp"
+#include "model/queries/responses/account_detail_response.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "model/queries/responses/error_response.hpp"
 #include "model/queries/responses/signatories_response.hpp"
@@ -41,6 +42,7 @@ namespace iroha {
      public:
       QueryResponseRegistry() {
         query_response_handler.register_type(typeid(AccountAssetResponse));
+        query_response_handler.register_type(typeid(AccountDetailResponse));
         query_response_handler.register_type(typeid(AccountResponse));
         query_response_handler.register_type(typeid(ErrorResponse));
         query_response_handler.register_type(typeid(SignatoriesResponse));

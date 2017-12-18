@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 #ifndef IROHA_GET_ACCOUNT_DETAIL_HPP
 #define IROHA_GET_ACCOUNT_DETAIL_HPP
 
@@ -29,7 +28,6 @@ namespace iroha {
          */
         struct GetAccountDetail : Query {
             std::string account_id{};
-            std::string creator_account_id{};
             std::string detail{};
         };
     }  // namespace model

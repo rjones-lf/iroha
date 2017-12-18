@@ -30,6 +30,7 @@
 #include "backend/protobuf/queries/proto_get_account.hpp"
 #include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_account_detail.hpp"
 #include "backend/protobuf/queries/proto_get_account_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_asset_info.hpp"
 #include "backend/protobuf/queries/proto_get_role_permissions.hpp"
@@ -74,6 +75,7 @@ namespace shared_model {
                          wrap<GetAccountAssetTransactions>,
                          wrap<GetTransactions>,
                          wrap<GetAccountAssets>,
+                         wrap<GetAccountDetail>,
                          wrap<GetRoles>,
                          wrap<GetRolePermissions>,
                          wrap<GetAssetInfo>>;

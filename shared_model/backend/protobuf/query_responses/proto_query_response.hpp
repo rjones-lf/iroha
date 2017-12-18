@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_PROTO_QUERY_RESPONSE_HPP
 
 #include "backend/protobuf/query_responses/proto_account_asset_response.hpp"
+#include "backend/protobuf/query_responses/proto_account_detail_response.hpp"
 #include "backend/protobuf/query_responses/proto_account_response.hpp"
 #include "backend/protobuf/query_responses/proto_asset_response.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
@@ -61,6 +62,7 @@ namespace shared_model {
      public:
       /// type of proto variant
       using ProtoQueryResponseVariantType = w<AccountAssetResponse,
+                                              AccountDetailResponse,
                                               AccountResponse,
                                               ErrorQueryResponse,
                                               SignatoriesResponse,
