@@ -4,7 +4,7 @@ package iroha.protocol;
 enum RolePermission {
    // Command Permissions
     can_append_role = 0;
-    can_detach_role = 30;
+    can_detach_role = 31;
     can_create_role = 1;
     can_add_asset_qty = 2;
     can_add_peer = 3;
@@ -25,17 +25,18 @@ enum RolePermission {
     can_get_my_signatories = 17;
     can_get_all_signatories = 18;
     can_get_my_acc_ast = 19;
-    can_get_all_acc_ast = 20;
-    can_get_my_acc_txs = 21;
-    can_get_all_acc_txs = 22;
-    can_get_my_acc_ast_txs = 23;
-    can_get_all_acc_ast_txs = 24;
+    can_get_my_acc_detail = 20;
+    can_get_all_acc_ast = 21;
+    can_get_my_acc_txs = 22;
+    can_get_all_acc_txs = 23;
+    can_get_my_acc_ast_txs = 24;
+    can_get_all_acc_ast_txs = 25;
    // Grant permissions
-    can_grant_add_signatory = 25;
-    can_grant_remove_signatory = 26;
-    can_grant_set_quorum = 27;
-    can_grant_can_transfer = 28;
-    can_grant_can_set_detail = 29;
+    can_grant_add_signatory = 26;
+    can_grant_remove_signatory = 27;
+    can_grant_set_quorum = 28;
+    can_grant_can_transfer = 29;
+    can_grant_can_set_detail = 30;
 }
 
 enum GrantablePermission {
