@@ -21,6 +21,7 @@
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
+#include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -35,6 +36,8 @@ namespace iroha {
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
         serializers_[typeid(GetAccountAssets)] =
             &PbQueryFactory::serializeGetAccountAssets;
+        serializers_[typeid(GetAccountDetail)] =
+            &PbQueryFactory::serializeGetAccountDetail;
         serializers_[typeid(GetAccountTransactions)] =
             &PbQueryFactory::serializeGetAccountTransactions;
         serializers_[typeid(GetAccountAssetTransactions)] =
@@ -74,6 +77,16 @@ namespace iroha {
               query.account_id = pb_cast.account_id();
               query.asset_id = pb_cast.asset_id();
               val = std::make_shared<model::GetAccountAssets>(query);
+              break;
+            }
+            case Query_Payload::QueryCase::kGetAccountDetail: {
+              // Convert to get Account Asset
+              const auto &pb_cast = pl.get_account_detail();
+              auto query = GetAccountDetail();
+              query.account_id = pb_cast.account_id();
+              query.creator_account_id = pb_cast.creator_account_id();
+              query.detail = pb_cast.detail();
+              val = std::make_shared<model::GetAccountDetail>(query);
               break;
             }
             case Query_Payload::QueryCase::kGetAccountAssetTransactions: {
@@ -191,6 +204,19 @@ namespace iroha {
             pb_query.mutable_payload()->mutable_get_account_assets();
         pb_query_mut->set_account_id(tmp->account_id);
         pb_query_mut->set_asset_id(tmp->asset_id);
+        return pb_query;
+      }
+
+      protocol::Query PbQueryFactory::serializeGetAccountDetail(
+        std::shared_ptr<const Query> query) const {
+        protocol::Query pb_query;
+        serializeQueryMetaData(pb_query, query);
+        auto tmp = std::static_pointer_cast<const GetAccountDetail>(query);
+        auto pb_query_mut =
+          pb_query.mutable_payload()->mutable_get_account_detail();
+        pb_query_mut->set_account_id(tmp->account_id);
+        pb_query_mut->set_creator_account_id(tmp->creator_account_id);
+        pb_query_mut->set_detail(tmp->detail);
         return pb_query;
       }
 

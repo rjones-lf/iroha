@@ -61,6 +61,11 @@ namespace iroha {
         model::AccountAssetResponse deserializeAccountAssetResponse(
             const protocol::AccountAssetResponse &account_asset_response) const;
 
+        protocol::AccountDetailResponse serializeAccountDetailResponse(
+          const model::AccountDetailResponse &accountDetailResponse) const;
+        model::AccountDetailResponse deserializeAccountDetailResponse(
+          const protocol::AccountDetailResponse &account_detail_response) const;
+
         protocol::SignatoriesResponse serializeSignatoriesResponse(
             const model::SignatoriesResponse &signatoriesResponse) const;
         model::SignatoriesResponse deserializeSignatoriesResponse(

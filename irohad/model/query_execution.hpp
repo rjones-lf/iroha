@@ -23,6 +23,7 @@
 
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
+#include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -72,6 +73,8 @@ namespace iroha {
 
       bool validate(const model::GetAccountAssetTransactions& query);
 
+      bool validate(const model::GetAccountDetail& query);
+
       std::shared_ptr<iroha::model::QueryResponse> executeGetAssetInfo(
           const model::GetAssetInfo& query);
 
@@ -83,6 +86,9 @@ namespace iroha {
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAccountAssets(
           const model::GetAccountAssets& query);
+
+      std::shared_ptr<iroha::model::QueryResponse> executeGetAccountDetail(
+          const model::GetAccountDetail& query);
 
       std::shared_ptr<iroha::model::QueryResponse> executeGetAccount(
           const model::GetAccount& query);
