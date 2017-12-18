@@ -17,16 +17,16 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;
 
-using ::testing::AtLeast;
 using ::testing::_;
+using ::testing::AtLeast;
 using ::testing::InvokeWithoutArgs;
 
 /**
@@ -47,19 +47,11 @@ TEST(TransportTest, SendAndReceive) {
 
   auto peer = makePeer("localhost:50051", "abcdabcdabcdabcdabcdabcdabcdabcd");
 
-  auto tx1 = makeTx("1", "4", 3);
-  auto tx2 = makeTx("2", "5", 4);
-  auto tx3 = makeTx("3", "6", 5);
-  auto tx4 = Transaction{};
-  tx4.creator_account_id = "me";
-  tx4.quorum = 11;
-  tx4.created_ts = 12345;
-
   MstState state = MstState::empty();
-  state += tx1;
-  state += tx2;
-  state += tx3;
-  state += std::make_shared<Transaction>(tx4);
+  state += makeTx("1", "5", 3);
+  state += makeTx("2", "6", 4);
+  state += makeTx("3", "7", 5);
+  state += makeTx("4", "8", 5);
 
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side

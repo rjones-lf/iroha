@@ -53,6 +53,14 @@ namespace iroha {
     virtual ~Completer() = default;
   };
 
+  class TxHashEquality {
+   public:
+    bool operator()(const DataType &left_tx, const DataType &rightTx) const {
+      return (*left_tx).tx_hash.to_hexstring()
+          == (*rightTx).tx_hash.to_hexstring();
+    }
+  };
+
   /**
    * Class provide default behaviour for transaction completer
    */
@@ -144,7 +152,7 @@ namespace iroha {
 
     using InternalStateType =
         std::unordered_set<DataType, iroha::model::PointerTxHasher<DataType>,
-                           iroha::DereferenceEquals<DataType>>;
+                           TxHashEquality>;
 
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;
