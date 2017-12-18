@@ -25,3 +25,12 @@ if (SWIG_PYTHON)
     PROPERTIES DEPENDS builders
                ENVIRONMENT "PYTHONPATH=${SWIG_BUILD_DIR}")
 endif()
+
+if (SWIG_JAVA)
+  find_package(Java REQUIRED)
+  add_test(NAME java_builders_test
+    COMMAND gradle test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  set_tests_properties(java_builders_test
+    PROPERTIES DEPENDS builders)
+endif()
