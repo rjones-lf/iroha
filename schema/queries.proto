@@ -31,7 +31,8 @@ message GetAccountAssets {
 
 message GetAccountDetail {
   string account_id = 1;
-  string detail = 2;
+  string creator_account_id = 2;
+  string detail = 3;
 }
 
 message GetAssetInfo {
