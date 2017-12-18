@@ -31,8 +31,7 @@ message GetAccountAssets {
 
 message GetAccountDetail {
   string account_id = 1;
-  string creator_account_id = 2;
-  string detail = 3;
+  string detail = 2;
 }
 
 message GetAssetInfo {
@@ -59,12 +58,13 @@ message Query {
        GetAccountAssetTransactions get_account_asset_transactions = 6;
        GetTransactions get_transactions = 7;
        GetAccountAssets get_account_assets = 8;
-       GetRoles get_roles = 9;
-       GetRolePermissions get_role_permissions = 10;
+       GetAccountDetail get_account_detail = 9;
+       GetRoles get_roles = 10;
        GetAssetInfo get_asset_info = 11;
+       GetRolePermissions get_role_permissions = 12;
      }
      // used to prevent replay attacks.
-     uint64 query_counter = 12;
+     uint64 query_counter = 13;
   }
 
   Payload payload = 1;

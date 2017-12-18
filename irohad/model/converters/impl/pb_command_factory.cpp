@@ -25,6 +25,8 @@ namespace iroha {
 
       PbCommandFactory::PbCommandFactory() {
         boost::assign::insert(pb_role_map_)
+            // Can Get My Account Detail
+            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
             // Can Get My Account Assets
             (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
             // Can Get My Signatories

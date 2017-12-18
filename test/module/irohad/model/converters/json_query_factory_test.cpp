@@ -108,9 +108,35 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
   ASSERT_EQ("coin#test", casted->asset_id);
 }
 
-TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
+/**
+ * @given The json transaction that has valid and invalid hashes.
+ * @when Deserialize the json transaction.
+ * @then Validate the invalid hash is skipped and the only valid deserialized.
+ */
+TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
   JsonQueryFactory querySerializer;
   auto json_query = R"({
+    "signature":{
+        "pubkey":"2323232323232323232323232323232323232323232323232323232323232323",
+        "signature":"23232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323"
+    },
+    "created_ts":0,
+    "creator_account_id":"123",
+    "query_counter":0,
+    "query_type":"GetAccountDetail",
+    "account_id":"test@test",
+    "detail":"key"
+  })";
+  auto res = querySerializer.deserialize(json_query);
+  ASSERT_TRUE(res.has_value());
+  auto casted = std::static_pointer_cast<iroha::model::GetAccountDetail>(res.value());
+  ASSERT_EQ("test@test", casted->account_id);
+  ASSERT_EQ("key", casted->detail);
+}
+
+TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
+  JsonQueryFactory querySerializer;
+  auto json_query = R"(
     "signature":{
         "pubkey":"2323232323232323232323232323232323232323232323232323232323232323",
         "signature":"23232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323"

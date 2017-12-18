@@ -22,6 +22,7 @@
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
+#include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
@@ -48,6 +49,7 @@ namespace shared_model {
      public:
       /// Type of container with all concrete query response
       using QueryResponseVariantType = w<AccountAssetResponse,
+                                         AccountDetailResponse,
                                          AccountResponse,
                                          ErrorQueryResponse,
                                          SignatoriesResponse,
