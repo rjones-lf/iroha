@@ -55,8 +55,6 @@
 %include "cryptography/signed.hpp"
 %include "backend/protobuf/transaction.hpp"
 %include "backend/protobuf/queries/proto_query.hpp"
-%include "builders/protobuf/queries.hpp"
-%include "builders/protobuf/transaction.hpp"
 
 %include "builders/protobuf/unsigned_proto.hpp"
 %include "bindings/model_transaction_builder.hpp"

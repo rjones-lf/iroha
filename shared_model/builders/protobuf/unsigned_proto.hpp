@@ -38,6 +38,8 @@ namespace shared_model {
        */
       explicit UnsignedWrapper(const T &o) : unsigned_(o) {}
 
+      explicit UnsignedWrapper(T &&o) : unsigned_(std::move(o)) {}
+
       /**
        * Add signature and retrieve signed result
        * @param signature - signature to add
