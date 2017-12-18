@@ -1,28 +1,45 @@
 codecov:
   branch: default
 coverage:
-  range: 50...100
+  range: auto
   status:
-    patch:
+    patch: # measures only changes made in PR/commit
       default:
-        target: 50
-    project:
-      default:
+        # basic
         target: auto
-        threshold: 0.05
+        base: auto
+        # advanced
+        branches: null
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+        flags: null
+        paths: null
+    project:
+      default: # measures whole project
+        # basic
+        target: auto
+        threshold: 0%
+        base: auto
+      test:
+        target: auto
+        paths: "test/"  # only include coverage in "test/" folder
       cli:
         target: auto
-        threshold: 0.05
         paths: "iroha-cli/"
-      daemon:
+      irohad:
         target: auto
-        threshold: 0.05
         paths: "irohad/"
-      tests:
+      libs:
         target: auto
-        paths: "test/"
-    changes:
-      default:
-        enabled: no
+        paths:
+          - "libs/"
+      model:
+        target: auto
+        paths: "shared_model/"
+
+
 comment:
   layout: "reach, diff, flags, files, footer"
+  require_changes: true  # if true: only post the comment if coverage changes
