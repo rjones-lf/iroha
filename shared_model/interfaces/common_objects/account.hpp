@@ -45,7 +45,7 @@ namespace shared_model {
       /**
        * @return Minimum quorum of signatures needed for transactions
        */
-      virtual const types::QuorumType &quorum() const = 0;
+      virtual types::QuorumType quorum() const = 0;
 
       /**
        * @return JSON data stored in account

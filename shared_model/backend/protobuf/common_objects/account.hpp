@@ -34,10 +34,6 @@ namespace shared_model {
       template <typename AccountType>
       explicit Account(AccountType &&account)
           : CopyableProto(std::forward<AccountType>(account)),
-            accountId_(proto_->account_id()),
-            domainId_(proto_->domain_id()),
-            quorum_(proto_->quorum()),
-            json_data_(proto_->json_data()),
             blob_([this] { return makeBlob(*proto_); }) {}
 
       Account(const Account &o) : Account(o.proto_) {}
@@ -45,19 +41,19 @@ namespace shared_model {
       Account(Account &&o) noexcept : Account(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return accountId_;
+        return proto_->account_id();
       }
 
       const interface::types::DomainIdType &domainId() const override {
-        return domainId_;
+        return proto_->domain_id();
       }
 
-      const interface::types::QuorumType &quorum() const override {
-        return quorum_;
+      interface::types::QuorumType quorum() const override {
+        return proto_->quorum();
       }
 
       const interface::types::JsonType &jsonData() const override {
-        return json_data_;
+        return proto_->json_data();
       }
 
       const BlobType &blob() const override { return *blob_; }
@@ -65,14 +61,6 @@ namespace shared_model {
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
-
-      interface::types::AccountIdType accountId_;
-
-      interface::types::DomainIdType domainId_;
-
-      interface::types::QuorumType quorum_;
-
-      interface::types::JsonType json_data_;
 
       const Lazy<BlobType> blob_;
     };

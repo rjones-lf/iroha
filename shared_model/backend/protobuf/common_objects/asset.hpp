@@ -33,9 +33,6 @@ namespace shared_model {
       template <typename AssetType>
       explicit Asset(AssetType &&account)
           : CopyableProto(std::forward<AssetType>(account)),
-            assetId_(proto_->asset_id()),
-            domainId_(proto_->domain_id()),
-            precision_(proto_->precision()),
             blob_([this] { return makeBlob(*proto_); }) {}
 
       Asset(const Asset &o) : Asset(o.proto_) {}
@@ -43,15 +40,15 @@ namespace shared_model {
       Asset(Asset &&o) noexcept : Asset(std::move(o.proto_)) {}
 
       const interface::types::AssetIdType &assetId() const override {
-        return assetId_;
+        return proto_->asset_id();
       }
 
       const interface::types::DomainIdType &domainId() const override {
-        return domainId_;
+        return proto_->domain_id();
       }
 
-      const interface::types::PrecisionType &precision() const override {
-        return precision_;
+      interface::types::PrecisionType precision() const override {
+        return proto_->precision();
       }
 
       const BlobType &blob() const override { return *blob_; }
@@ -59,12 +56,6 @@ namespace shared_model {
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
-
-      interface::types::AssetIdType assetId_;
-
-      interface::types::DomainIdType domainId_;
-
-      interface::types::PrecisionType precision_;
 
       const Lazy<BlobType> blob_;
     };
