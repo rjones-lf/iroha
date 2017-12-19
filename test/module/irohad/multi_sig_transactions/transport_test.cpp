@@ -17,7 +17,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <crypto/hash.hpp>
+#include "crypto/hash.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"

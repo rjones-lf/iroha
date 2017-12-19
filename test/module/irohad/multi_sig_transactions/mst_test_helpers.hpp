@@ -18,9 +18,9 @@
 #ifndef IROHA_MST_TEST_HELPERS_HPP
 #define IROHA_MST_TEST_HELPERS_HPP
 
-#include <crypto/hash.hpp>
 #include <string>
 #include "common/types.hpp"
+#include "crypto/hash.hpp"
 #include "model/transaction.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
