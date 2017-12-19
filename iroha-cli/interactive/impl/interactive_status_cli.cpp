@@ -17,6 +17,7 @@
 
 #include "interactive/interactive_status_cli.hpp"
 #include "client.hpp"
+#include "common/byteutils.hpp"
 
 namespace iroha_cli {
   namespace interactive {
@@ -152,5 +153,5 @@ namespace iroha_cli {
     std::string InteractiveStatusCli::parseGetHash(ActionParams params) {
       return params[0];
     }
-  }
-}
+  }  // namespace interactive
+}  // namespace iroha_cli
