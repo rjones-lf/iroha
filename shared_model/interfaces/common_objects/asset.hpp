@@ -44,7 +44,7 @@ namespace shared_model {
       /**
        * @return Asset's fixed precision
        */
-      virtual const types::PrecisionType &precision() const = 0;
+      virtual types::PrecisionType precision() const = 0;
 
       /**
        * Stringify the data.
