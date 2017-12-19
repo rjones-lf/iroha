@@ -105,6 +105,28 @@ namespace shared_model {
           const crypto::PublicKey &public_key);
 
       /**
+       *
+       * @param account_id
+       * @param role_name
+       * @return
+       */
+      ModelTransactionBuilder appendRole(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::RoleIdType &role_name);
+
+      /**
+       *
+       * @param asset_name
+       * @param domain_id
+       * @param precision
+       * @return
+       */
+      ModelTransactionBuilder createAsset(
+          const interface::types::AssetNameType &asset_name,
+          const interface::types::DomainIdType &domain_id,
+          interface::types::PrecisionType precision);
+
+      /**
        * Creates new account
        * @param account_name - name of account to create
        * @param domain_id - id of domain where account will be created
@@ -127,6 +149,58 @@ namespace shared_model {
           const interface::types::RoleIdType &default_role);
 
       /**
+       *
+       * @param role_name
+       * @param permissions
+       * @return
+       */
+      ModelTransactionBuilder createRole(
+          const interface::types::RoleIdType &role_name,
+          std::vector<interface::types::PermissionNameType> permissions);
+
+      /**
+       *
+       * @param account_id
+       * @param role_name
+       * @return
+       */
+      ModelTransactionBuilder detachRole(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::RoleIdType &role_name);
+
+      /**
+       *
+       * @param account_id
+       * @param permission
+       * @return
+       */
+      ModelTransactionBuilder grantPermission(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::PermissionNameType &permission);
+
+      /**
+       *
+       * @param account_id
+       * @param permission
+       * @return
+       */
+      ModelTransactionBuilder revokePermission(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::PermissionNameType &permission);
+
+      /**
+       *
+       * @param account_id
+       * @param key
+       * @param value
+       * @return
+       */
+      ModelTransactionBuilder setAccountDetail(
+          const interface::types::AccountIdType &account_id,
+          const interface::SetAccountDetail::AccountDetailKeyType &key,
+          const interface::SetAccountDetail::AccountDetailValueType &value);
+
+      /**
        * Sets account quorum
        * @param account_id - id of account to set quorum
        * @param quorum - quorum amount
@@ -135,6 +209,18 @@ namespace shared_model {
       ModelTransactionBuilder setAccountQuorum(
           const interface::types::AddressType &account_id,
           interface::types::QuorumType quorum);
+
+      /**
+       *
+       * @param account_id
+       * @param asset_id
+       * @param amount
+       * @return
+       */
+      ModelTransactionBuilder subtractAssetQuantity(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::AssetIdType &asset_id,
+          const std::string &amount);
 
       /**
        * Transfers asset from one account to another
