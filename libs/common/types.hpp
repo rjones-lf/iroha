@@ -307,7 +307,7 @@ namespace iroha {
 
   using sig_t = blob_t<64>;  // ed25519 sig is 64 bytes length
   using pubkey_t = blob_t<32>;
-  using privkey_t = blob_t<64>;
+  using privkey_t = blob_t<32>;
 
   struct keypair_t {
     keypair_t() = default;

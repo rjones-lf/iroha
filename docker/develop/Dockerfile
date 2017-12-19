@@ -184,5 +184,13 @@ RUN git clone git://sourceware.org/git/valgrind.git /tmp/valgrind; \
     make -C /tmp/valgrind install; \
     rm -rf /tmp/valgrind
 
+# install ed25519
+RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
+    (cd /tmp/ed25519 ; git checkout 0d31b082e0f0d4144fe598fb0f2a120e36de2a8f); \
+    cmake -DCMAKE_BUILD_TYPE=Debug -DTESTING=OFF -H/tmp/ed25519 -B/tmp/ed25519/build; \
+    cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
+    rm -rf /tmp/ed25519
+
 WORKDIR /opt/iroha
 CMD ["/bin/bash"]
