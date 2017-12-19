@@ -60,12 +60,26 @@ namespace iroha {
       log_ = logger::log("AppendRoleExecutor");
     }
 
-    bool AppendRoleExecutor::validate(const Command &command,
-                                      ametsuchi::WsvQuery &queries,
-                                      const Account &creator) {
+    bool AppendRoleExecutor::execute(const Command &command,
+                                     ametsuchi::WsvQuery &queries,
+                                     ametsuchi::WsvCommand &commands) {
+      auto cmd_value = static_cast<const AppendRole &>(command);
 
-      //return CommandExecutor::validate(command, queries, creator);
+      return commands.insertAccountRole(cmd_value.account_id,
+                                        cmd_value.role_name);
+    }
 
+    bool AppendRoleExecutor::hasPermissions(const Command &command,
+                                            ametsuchi::WsvQuery &queries,
+                                            const Account &creator) {
+      creator_ = creator;
+      return checkAccountRolePermission(
+          creator.account_id, queries, can_append_role);
+    }
+
+    bool AppendRoleExecutor::isValid(const Command &command,
+                                     ametsuchi::WsvQuery &queries) {
+      auto creator = creator_;
       auto cmd_value = static_cast<const AppendRole &>(command);
       auto role_permissions = queries.getRolePermissions(cmd_value.role_name);
       auto account_roles = queries.getAccountRoles(creator.account_id);
@@ -86,30 +100,6 @@ namespace iroha {
         if (account_permissions.find(role_permission)
             == account_permissions.end())
           return false;
-
-      return CommandExecutor::validate(command, queries, creator);
-
-    }
-    bool AppendRoleExecutor::execute(const Command &command,
-                                     ametsuchi::WsvQuery &queries,
-                                     ametsuchi::WsvCommand &commands) {
-      auto cmd_value = static_cast<const AppendRole &>(command);
-
-
-      return commands.insertAccountRole(cmd_value.account_id,
-                                        cmd_value.role_name);
-    }
-
-    bool AppendRoleExecutor::hasPermissions(const Command &command,
-                                            ametsuchi::WsvQuery &queries,
-                                            const Account &creator) {
-      return checkAccountRolePermission(
-          creator.account_id, queries, can_append_role);
-    }
-
-    bool AppendRoleExecutor::isValid(const Command &command,
-                                     ametsuchi::WsvQuery &queries) {
-      // TODO 26/09/17 grimadas: check. No additional checks required
       return true;
     }
 

@@ -1155,9 +1155,15 @@ class AppendRoleTest : public CommandValidateExecuteTest {
 
 TEST_F(AppendRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
+      .Times(2)
+      .WillRepeatedly(Return(admin_roles));
+
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
       .WillOnce(Return(role_permissions));
+
   EXPECT_CALL(*wsv_command, insertAccountRole(_, _)).WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
