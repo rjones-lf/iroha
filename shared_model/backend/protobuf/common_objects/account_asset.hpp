@@ -36,8 +36,6 @@ namespace shared_model {
       template <typename AccountAssetType>
       explicit AccountAsset(AccountAssetType &&accountAssetType)
           : CopyableProto(std::forward<AccountAssetType>(accountAssetType)),
-            accountId_(proto_->account_id()),
-            assetId_(proto_->asset_id()),
             balance_([this] { return Amount(proto_->balance()); }),
             blob_([this] { return makeBlob(*proto_); }) {}
 
@@ -47,11 +45,11 @@ namespace shared_model {
           : AccountAsset(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return accountId_;
+        return proto_->account_id();
       }
 
       const interface::types::AssetIdType &assetId() const override {
-        return assetId_;
+        return proto_->asset_id();
       }
 
       const interface::Amount &balance() const override { return *balance_; }
@@ -61,10 +59,6 @@ namespace shared_model {
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
-
-      interface::types::AccountIdType accountId_;
-
-      interface::types::AssetIdType assetId_;
 
       const Lazy<Amount> balance_;
 
