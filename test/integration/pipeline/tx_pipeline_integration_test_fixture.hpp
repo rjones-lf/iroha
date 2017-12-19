@@ -18,6 +18,7 @@
 #ifndef TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 #define TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 
+#include <atomic>
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "datetime/time.hpp"
@@ -98,8 +99,7 @@ class TxPipelineIntegrationTestFixture
   void sendTxsInOrderAndValidate(
       const std::vector<iroha::model::Transaction> &transactions) {
     // test subscribers can't solve duplicate func call.
-    ASSERT_FALSE(duplicate_sent);
-    duplicate_sent = true;
+    ASSERT_FALSE(duplicate_sent.exchange(true));
 
     const auto num_blocks =
         transactions.size();  // Use one block per one transaction
@@ -147,7 +147,7 @@ class TxPipelineIntegrationTestFixture
 
   std::shared_ptr<iroha::KeysManager> manager;
 
-  bool duplicate_sent = false;
+  std::atomic_bool duplicate_sent {false};
   size_t next_height_count = 2;
 
  private:
@@ -167,7 +167,7 @@ class TxPipelineIntegrationTestFixture
       commit.subscribe([this](auto block) { blocks.push_back(block); });
     });
     irohad->getPeerCommunicationService()->on_commit().subscribe(
-        [this](auto) { cv.notify_all(); });
+        [this](auto) { cv.notify_one(); });
   }
 
   void sendTransaction(const iroha::model::Transaction &transaction) {
