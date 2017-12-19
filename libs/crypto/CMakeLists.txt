@@ -15,25 +15,25 @@
 # limitations under the License.
 #
 
-add_subdirectory(ed25519)
-
-add_library(hash
-    hash.cpp
+add_library(ed25519_impl
+    crypto.cpp
+    )
+target_link_libraries(ed25519_impl PUBLIC
+    ed25519 # importedc
+    sha3_impl
     )
 
-target_link_libraries(hash
-    ed25519
-    common
+add_library(sha3_impl
+    hash.cpp
+    )
+target_link_libraries(sha3_impl PUBLIC
+    ed25519 # contains hash
+
+    # TODO: should not be here
     pb_model_converters
     )
 
-add_library(cryptography
-    ed25519_impl.cpp
-    )
-target_link_libraries(cryptography
-    ed25519
-    hash
-    )
+
 
 add_library(keys_manager
     keys_manager_impl.cpp
@@ -41,5 +41,5 @@ add_library(keys_manager
 
 target_link_libraries(keys_manager
     optional
-    cryptography
+    ed25519_impl
     )

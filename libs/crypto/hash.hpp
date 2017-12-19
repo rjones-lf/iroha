@@ -25,8 +25,8 @@
 
 namespace iroha {
 
-  void sha3_256(unsigned char *output, unsigned char *input, size_t in_size);
-  void sha3_512(unsigned char *output, unsigned char *input, size_t in_size);
+  void sha3_256(unsigned char *output, const unsigned char *input, size_t in_size);
+  void sha3_512(unsigned char *output, const unsigned char *input, size_t in_size);
 
   hash256_t sha3_256(const uint8_t *input, size_t in_size);
   hash256_t sha3_256(const std::string &msg);

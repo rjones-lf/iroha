@@ -18,8 +18,7 @@
 addtest(model_crypto_provider_test model_crypto_provider_test.cpp)
 target_link_libraries(model_crypto_provider_test
     model
-    hash
-    cryptography
+    ed25519_impl
     model_generators
     )
 

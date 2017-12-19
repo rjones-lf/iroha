@@ -36,5 +36,5 @@ target_link_libraries(yac
     optional
     yac_grpc
     logger
-    hash
+    sha3_impl
     )

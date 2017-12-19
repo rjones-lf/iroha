@@ -45,11 +45,10 @@ target_link_libraries(application
     networking
     ordering_service
     chain_validator
-    hash
     stateless_validator
     stateful_validator
     processors
-    cryptography
+    ed25519_impl
     simulator
     block_loader
     block_loader_service

@@ -18,17 +18,14 @@
 # Hash Test
 AddTest(hash_test hash_test.cpp)
 target_link_libraries(hash_test
-    cryptography
+    sha3_impl
     )
 
 # Base64 Test
 AddTest(base64_test base64_test.cpp)
-target_link_libraries(base64_test
-    cryptography
-    )
 
 # Singature Test
 AddTest(signature_test signature_test.cpp)
 target_link_libraries(signature_test
-    cryptography
+    ed25519_impl
     )
