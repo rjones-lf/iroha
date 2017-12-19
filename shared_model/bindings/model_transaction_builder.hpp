@@ -105,21 +105,21 @@ namespace shared_model {
           const crypto::PublicKey &public_key);
 
       /**
-       *
-       * @param account_id
-       * @param role_name
-       * @return
+       * Appends role
+       * @param account_id - account id to append role
+       * @param role_name - role name to append
+       * @return builder with append role command appended
        */
       ModelTransactionBuilder appendRole(
           const interface::types::AccountIdType &account_id,
           const interface::types::RoleIdType &role_name);
 
       /**
-       *
-       * @param asset_name
-       * @param domain_id
-       * @param precision
-       * @return
+       * Creates asset
+       * @param asset_name - asset name to create
+       * @param domain_id - domain id to create asset in
+       * @param precision - asset precision
+       * @return builder with create asset command appended
        */
       ModelTransactionBuilder createAsset(
           const interface::types::AssetNameType &asset_name,
@@ -149,51 +149,51 @@ namespace shared_model {
           const interface::types::RoleIdType &default_role);
 
       /**
-       *
-       * @param role_name
-       * @param permissions
-       * @return
+       * Creates role
+       * @param role_name - role name to create
+       * @param permissions - permissions to include in new role
+       * @return builder with create role command appended
        */
       ModelTransactionBuilder createRole(
           const interface::types::RoleIdType &role_name,
           std::vector<interface::types::PermissionNameType> permissions);
 
       /**
-       *
-       * @param account_id
-       * @param role_name
-       * @return
+       * Detaches role
+       * @param account_id - account id to detach role from
+       * @param role_name - role name to detach
+       * @return builder with detach role command appended
        */
       ModelTransactionBuilder detachRole(
           const interface::types::AccountIdType &account_id,
           const interface::types::RoleIdType &role_name);
 
       /**
-       *
-       * @param account_id
-       * @param permission
-       * @return
+       * Grants permission
+       * @param account_id - account id to grant permission
+       * @param permission - permission to grant
+       * @return builder with grant permission command appended
        */
       ModelTransactionBuilder grantPermission(
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission);
 
       /**
-       *
-       * @param account_id
-       * @param permission
-       * @return
+       * Revokes permission
+       * @param account_id - accound id to revoke permission
+       * @param permission - permission to revoke
+       * @return builder with revoke permission command appended
        */
       ModelTransactionBuilder revokePermission(
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission);
 
       /**
-       *
-       * @param account_id
-       * @param key
-       * @param value
-       * @return
+       * Sets account detail
+       * @param account_id - account id to set detail
+       * @param key - detail key
+       * @param value - detail value
+       * @return builder with set account detail command appended
        */
       ModelTransactionBuilder setAccountDetail(
           const interface::types::AccountIdType &account_id,
@@ -211,11 +211,11 @@ namespace shared_model {
           interface::types::QuorumType quorum);
 
       /**
-       *
-       * @param account_id
-       * @param asset_id
-       * @param amount
-       * @return
+       * Subtracts asset quantity
+       * @param account_id - account id to subtract asset quantity from
+       * @param asset_id - asset id to subtract
+       * @param amount - amount to subtract
+       * @return builder with subtract asset quantity command appended
        */
       ModelTransactionBuilder subtractAssetQuantity(
           const interface::types::AccountIdType &account_id,
