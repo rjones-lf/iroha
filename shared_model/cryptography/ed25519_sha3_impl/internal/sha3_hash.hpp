@@ -30,8 +30,10 @@ namespace iroha {
 
   hash256_t sha3_256(const uint8_t *input, size_t in_size);
   hash256_t sha3_256(const std::string &msg);
+  hash256_t sha3_256(const std::vector<uint8_t> &msg);
   hash512_t sha3_512(const uint8_t *input, size_t in_size);
   hash512_t sha3_512(const std::string &msg);
+  hash512_t sha3_512(const std::vector<uint8_t> &msg);
 
   hash256_t hash(const model::Transaction &tx);
   hash256_t hash(const model::Block &tx);

@@ -23,6 +23,7 @@
 #include <numeric>
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "primitive.pb.h"
 #include "utils/lazy_initializer.hpp"
 
@@ -47,7 +48,7 @@ namespace shared_model {
               return result;
             }),
             precision_([this] { return proto_->precision(); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }) {}
+            blob_([this] { return make_blob(*proto_); }) {}
 
       Amount(const Amount &o) : Amount(o.proto_) {}
 

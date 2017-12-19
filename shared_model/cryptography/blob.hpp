@@ -20,10 +20,11 @@
 
 #include <iomanip>
 #include <sstream>
+#include <vector>
 #include "interfaces/base/model_primitive.hpp"
-#include "utils/swig_keyword_hider.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -34,11 +35,21 @@ namespace shared_model {
      */
     class Blob : public interface::ModelPrimitive<Blob> {
      public:
+      using bytes = std::vector<uint8_t>;
+
       /**
        * Create blob from a string
        * @param blob - string to create blob from
        */
-      explicit Blob(const std::string &blob) : blob_(blob) {
+      explicit Blob(const std::string &blob)
+          : Blob(bytes(blob.begin(), blob.end())) {}
+
+      /**
+       * Create blob from a vector
+       * @param blob - vector to create blob from
+       */
+      explicit Blob(const bytes &blob) : Blob(bytes(blob)) {}
+      explicit Blob(bytes &&blob) : blob_(std::move(blob)) {
         std::stringstream ss;
         ss << std::hex << std::setfill('0');
         for (const auto &c : blob_) {
@@ -50,10 +61,18 @@ namespace shared_model {
       /**
        * @return provides raw representation of blob
        */
-      virtual const std::string &blob() const { return blob_; }
+      virtual const bytes &blob() const { return blob_; }
 
       /**
-       * @return provides human-readable representation of blob without leading 0x
+       * @return provides raw representation of blob as string
+       */
+      virtual const std::string str() const {
+        return std::string(blob_.begin(), blob_.end());
+      }
+
+      /**
+       * @return provides human-readable representation of blob without leading
+       * 0x
        */
       virtual const std::string &hex() const { return hex_; }
 
@@ -85,12 +104,12 @@ namespace shared_model {
 
       template <typename BlobType>
       DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(blob());
+        return BlobType::from_string(str());
       }
 
      private:
       // TODO: 17/11/2017 luckychess use improved Lazy with references support
-      std::string blob_;
+      bytes blob_;
       std::string hex_;
     };
   }  // namespace crypto

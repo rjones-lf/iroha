@@ -49,8 +49,8 @@ namespace shared_model {
         auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
             shared_model::crypto::Blob(unsigned_.payload()), keypair);
         iroha::protocol::Signature protosig;
-        protosig.set_pubkey(keypair.publicKey().blob());
-        protosig.set_signature(signedBlob.blob());
+        protosig.set_pubkey(keypair.publicKey().str());
+        protosig.set_signature(signedBlob.str());
         auto *s1 = new Signature(protosig);
         unsigned_.addSignature(detail::PolymorphicWrapper<Signature>(
             s1));  // TODO: 05.12.2017 luckychess think about false case

@@ -36,6 +36,7 @@
 #include "backend/protobuf/queries/proto_get_roles.hpp"
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
 #include "backend/protobuf/queries/proto_get_transactions.hpp"
+#include "backend/protobuf/util.hpp"
 
 template <typename... T, typename Archive>
 shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
@@ -85,10 +86,8 @@ namespace shared_model {
           : CopyableProto(std::forward<QueryType>(query)),
             variant_(
                 [this] { return load_query<ProtoQueryListType>(*proto_); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }),
-            payload_([this] {
-              return BlobType(proto_->payload().SerializeAsString());
-            }),
+            blob_([this] { return make_blob(*proto_); }),
+            payload_([this] { return make_blob(proto_->payload()); }),
             signatures_([this] {
               SignatureSetType set;
               set.emplace(new Signature(proto_->signature()));
@@ -123,8 +122,8 @@ namespace shared_model {
         if (proto_->has_signature()) return false;
 
         auto sig = proto_->mutable_signature();
-        sig->set_pubkey(signature->publicKey().blob());
-        sig->set_signature(signature->signedData().blob());
+        sig->set_pubkey(signature->publicKey().str());
+        sig->set_signature(signature->signedData().str());
         return true;
       }
 

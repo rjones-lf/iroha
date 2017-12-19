@@ -47,9 +47,8 @@ namespace shared_model {
                     return std::forward<decltype(acc)>(acc);
                   });
             }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }),
-            blobTypePayload_(
-                [this] { return BlobType(payload_->SerializeAsString()); }),
+            blob_([this] { return make_blob(*proto_); }),
+            blobTypePayload_([this] { return make_blob(*payload_); }),
             signatures_([this] {
               return boost::accumulate(
                   proto_->signature(),
@@ -93,8 +92,8 @@ namespace shared_model {
           return false;
         }
         auto sig = proto_->add_signature();
-        sig->set_pubkey(signature->publicKey().blob());
-        sig->set_signature(signature->signedData().blob());
+        sig->set_pubkey(signature->publicKey().str());
+        sig->set_signature(signature->signedData().str());
         signatures_.invalidate();
         return true;
       }

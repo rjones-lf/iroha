@@ -15,19 +15,25 @@
  * limitations under the License.
  */
 
-#include "cryptography/ed25519_sha3_impl/signer.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#ifndef IROHA_SHARED_MODEL_PROTO_UTIL_HPP
+#define IROHA_SHARED_MODEL_PROTO_UTIL_HPP
+
+#include <google/protobuf/message.h>
+#include <vector>
+#include "cryptography/blob.hpp"
 
 namespace shared_model {
-  namespace crypto {
-    Signed Signer::sign(const Blob &blob, const Keypair &keypair) {
-      return Signed(
-          iroha::sign(
-              blob.str(),
-              keypair.publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
-              keypair.privateKey()
-                  .makeOldModel<PrivateKey::OldPrivateKeyType>())
-              .to_string());
+  namespace proto {
+
+    template <typename T>
+    crypto::Blob make_blob(T &message) {
+      crypto::Blob::bytes data;
+      data.resize(message.ByteSizeLong());
+      message.SerializeToArray(data.data(), data.size());
+      return crypto::Blob(std::move(data));
     }
-  }  // namespace crypto
+
+  }  // namespace proto
 }  // namespace shared_model
+
+#endif  // IROHA_SHARED_MODEL_PROTO_UTIL_HPP

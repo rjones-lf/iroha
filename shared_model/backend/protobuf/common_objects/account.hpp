@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_PROTO_ACCOUNT_HPP
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -37,7 +38,7 @@ namespace shared_model {
             domainId_(proto_->domain_id()),
             quorum_(proto_->quorum()),
             json_data_(proto_->json_data()),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }) {}
+            blob_([this] { return make_blob(*proto_); }) {}
 
       Account(const Account &o) : Account(o.proto_) {}
 
