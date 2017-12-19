@@ -62,6 +62,21 @@ namespace shared_model {
           builder_.removeSignatory(account_id, public_key));
     }
 
+    ModelTransactionBuilder ModelTransactionBuilder::appendRole(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::RoleIdType &role_name) {
+      return ModelTransactionBuilder(
+          builder_.appendRole(account_id, role_name));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::createAsset(
+        const interface::types::AssetNameType &asset_name,
+        const interface::types::DomainIdType &domain_id,
+        interface::types::PrecisionType precision) {
+      return ModelTransactionBuilder(
+          builder_.createAsset(asset_name, domain_id, precision));
+    }
+
     ModelTransactionBuilder ModelTransactionBuilder::createAccount(
         const interface::types::AccountNameType &account_name,
         const interface::types::AddressType &domain_id,
@@ -77,11 +92,55 @@ namespace shared_model {
           builder_.createDomain(domain_id, default_role));
     }
 
+    ModelTransactionBuilder ModelTransactionBuilder::createRole(
+        const interface::types::RoleIdType &role_name,
+        std::vector<interface::types::PermissionNameType> permissions) {
+      return ModelTransactionBuilder(
+          builder_.createRole(role_name, permissions));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::detachRole(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::RoleIdType &role_name) {
+      return ModelTransactionBuilder(
+          builder_.detachRole(account_id, role_name));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::grantPermission(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::PermissionNameType &permission) {
+      return ModelTransactionBuilder(
+          builder_.grantPermission(account_id, permission));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::revokePermission(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::PermissionNameType &permission) {
+      return ModelTransactionBuilder(
+          builder_.revokePermission(account_id, permission));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::setAccountDetail(
+        const interface::types::AccountIdType &account_id,
+        const interface::SetAccountDetail::AccountDetailKeyType &key,
+        const interface::SetAccountDetail::AccountDetailValueType &value) {
+      return ModelTransactionBuilder(
+          builder_.setAccountDetail(account_id, key, value));
+    }
+
     ModelTransactionBuilder ModelTransactionBuilder::setAccountQuorum(
         const interface::types::AddressType &account_id,
         interface::types::QuorumType quorum) {
       return ModelTransactionBuilder(
           builder_.setAccountQuorum(account_id, quorum));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::subtractAssetQuantity(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::AssetIdType &asset_id,
+        const std::string &amount) {
+      return ModelTransactionBuilder(
+          builder_.subtractAssetQuantity(account_id, asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::transferAsset(
