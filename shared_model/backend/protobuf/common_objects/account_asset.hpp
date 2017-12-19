@@ -20,6 +20,7 @@
 
 #include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -38,7 +39,7 @@ namespace shared_model {
             accountId_(proto_->account_id()),
             assetId_(proto_->asset_id()),
             balance_([this] { return Amount(proto_->balance()); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }) {}
+            blob_([this] { return make_blob(*proto_); }) {}
 
       AccountAsset(const AccountAsset &o) : AccountAsset(o.proto_) {}
 

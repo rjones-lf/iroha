@@ -61,6 +61,18 @@ namespace iroha {
     return h;
   }
 
+  hash512_t sha3_512(const std::vector<uint8_t> &msg) {
+    hash512_t h;
+    ::sha3_512(msg.data(), msg.size(), h.data());
+    return h;
+  }
+
+  hash256_t sha3_256(const std::vector<uint8_t> &msg) {
+    hash256_t h;
+    ::sha3_256(msg.data(), msg.size(), h.data());
+    return h;
+  }
+
   // TODO: remove factories
   const static model::converters::PbTransactionFactory tx_factory;
   const static model::converters::PbBlockFactory block_factory;

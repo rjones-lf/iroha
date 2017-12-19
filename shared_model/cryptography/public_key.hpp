@@ -39,9 +39,7 @@ namespace shared_model {
             .finalize();
       }
 
-      PublicKey *copy() const override {
-        return new PublicKey(blob());
-      }
+      PublicKey *copy() const override { return new PublicKey(str()); }
     };
   }  // namespace crypto
 }  // namespace shared_model
