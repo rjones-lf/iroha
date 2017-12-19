@@ -15,7 +15,16 @@
  * limitations under the License.
  */
 
+#include <responses.pb.h>
+#include "datetime/time.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include "model/generators/query_generator.hpp"
+
+using iroha::model::generators::CommandGenerator;
+using iroha::model::generators::QueryGenerator;
+using iroha::model::generators::TransactionGenerator;
+using iroha::model::converters::PbTransactionFactory;
+using iroha::model::converters::PbQueryFactory;
 
 // TODO: refactor services to allow dynamic port binding IR-741
 class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
@@ -70,6 +79,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
 };
 
 TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
+  //TODO 19/12/17 motxx - Rework integration test using shared model (IR-715 comment)
   // generate test command
   auto cmd =
       iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
@@ -87,4 +97,46 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   provider.sign(tx);
 
   sendTxsInOrderAndValidate({tx});
+}
+
+/**
+ * @given Admin sends some transaction and keep its hash
+ * @when GetTransactions query with the hash is sent
+ * @then Validate the transaction
+ */
+TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
+  //TODO 19/12/17 motxx - Rework integration test using shared model (IR-715 comment)
+  const auto CREATOR_ACCOUNT_ID = "admin@test";
+  // send some transaction
+  const auto cmd =
+      iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
+          CREATOR_ACCOUNT_ID,
+          "coin#test",
+          iroha::Amount().createFromString("20.00").value());
+  auto given_tx =
+      iroha::model::generators::TransactionGenerator().generateTransaction(
+          CREATOR_ACCOUNT_ID, 1, {cmd});
+  iroha::KeysManagerImpl manager(CREATOR_ACCOUNT_ID);
+  const auto keypair = manager.loadKeys().value();
+  iroha::model::ModelCryptoProviderImpl provider(keypair);
+  provider.sign(given_tx);
+
+  sendTxsInOrderAndValidate({given_tx});
+
+  // keep sent tx's hash
+  const auto given_tx_hash = iroha::hash(given_tx);
+
+  auto query =
+      iroha::model::generators::QueryGenerator().generateGetTransactions(
+        iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
+  provider.sign(*query);
+
+  const auto pb_query = PbQueryFactory{}.serialize(query);
+  ASSERT_TRUE(pb_query.has_value());
+
+  iroha::protocol::QueryResponse response;
+  irohad->getQueryService()->FindAsync(pb_query.value(), response);
+  ASSERT_FALSE(response.transactions_response().transactions().empty());
+  const auto got_pb_tx = response.transactions_response().transactions()[0];
+  ASSERT_EQ(given_tx, *PbTransactionFactory{}.deserialize(got_pb_tx));
 }
