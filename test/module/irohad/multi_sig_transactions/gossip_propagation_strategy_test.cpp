@@ -75,7 +75,7 @@ PropagationData subscribe_and_emit(nonstd::optional<PropagationData> data,
   auto subscriber = rxcpp::make_subscriber<Peers>([&emitted](auto v) {
     std::copy(v.begin(), v.end(), std::back_inserter(emitted));
   });
-  strategy.emitter().take(take).subscribe(subscriber);
+  strategy.emitter().take(take).as_blocking().subscribe(subscriber);
 
   return emitted;
 }

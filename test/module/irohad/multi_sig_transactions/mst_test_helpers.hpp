@@ -18,10 +18,11 @@
 #ifndef IROHA_MST_TEST_HELPERS_HPP
 #define IROHA_MST_TEST_HELPERS_HPP
 
+#include <crypto/hash.hpp>
+#include <string>
 #include "common/types.hpp"
 #include "model/transaction.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
-#include <string>
 
 using namespace std;
 using namespace iroha;
@@ -47,6 +48,14 @@ inline auto makeTx(const string &hash_value,
   return make_shared<Transaction>(tx);
 }
 
+inline auto makeTxWithCorrectHash(const string &signature_value,
+                                  uint8_t quorum = 3,
+                                  iroha::TimeType created_time = 1) {
+  auto tx = makeTx("0", signature_value, quorum, created_time);
+  tx->tx_hash = iroha::hash(*tx);
+  return tx;
+}
+
 inline auto makePeer(const string &address, const string &pub_key) {
   iroha::model::Peer p;
   p.address = address;
@@ -54,4 +63,4 @@ inline auto makePeer(const string &address, const string &pub_key) {
   return p;
 }
 
-#endif //IROHA_MST_TEST_HELPERS_HPP
+#endif  // IROHA_MST_TEST_HELPERS_HPP

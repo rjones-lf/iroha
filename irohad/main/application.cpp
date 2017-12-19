@@ -194,6 +194,7 @@ void Irohad::initMstProcessor() {
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
   mst_processor = std::make_shared<FairMstProcessor>(mst_transport, mst_storage,
                                                      mst_propagation, mst_time);
+  log_->info("[Init] => MST processor");
 }
 
 void Irohad::initTransactionCommandService() {

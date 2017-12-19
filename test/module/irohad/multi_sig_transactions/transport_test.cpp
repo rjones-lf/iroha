@@ -17,6 +17,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <crypto/hash.hpp>
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
@@ -30,8 +31,8 @@ using ::testing::AtLeast;
 using ::testing::InvokeWithoutArgs;
 
 /**
- * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and receives
- * them. When received deserializes them end ensures that deserialized
+ * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and
+ * receives them. When received deserializes them end ensures that deserialized
  * objects equal to objects before sending.
  *
  * @given Initialized transport
@@ -53,10 +54,10 @@ TEST(TransportTest, SendAndReceive) {
   auto peer = makePeer("localhost:50051", "abcdabcdabcdabcdabcdabcdabcdabcd");
 
   MstState state = MstState::empty();
-  state += makeTx("1", "5", 3);
-  state += makeTx("2", "6", 4);
-  state += makeTx("3", "7", 5);
-  state += makeTx("4", "8", 5);
+  state += makeTxWithCorrectHash("5", 3);
+  state += makeTxWithCorrectHash("6", 4);
+  state += makeTxWithCorrectHash("7", 5);
+  state += makeTxWithCorrectHash("8", 5);
 
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
@@ -66,8 +67,8 @@ TEST(TransportTest, SendAndReceive) {
 
   grpc::ServerBuilder builder;
   int port = 0;
-  builder.AddListeningPort(peer.address, grpc::InsecureServerCredentials(),
-                           &port);
+  builder.AddListeningPort(
+      peer.address, grpc::InsecureServerCredentials(), &port);
   builder.RegisterService(transport.get());
   server = builder.BuildAndStart();
   ASSERT_TRUE(server);

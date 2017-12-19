@@ -24,6 +24,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
 
     auto genesis_tx =
         TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+    genesis_tx.quorum = 1;
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
             0, {genesis_tx});

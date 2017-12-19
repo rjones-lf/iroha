@@ -48,7 +48,7 @@ namespace iroha {
                     })) {}
 
   rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
-    return emitent;
+    return emitent.subscribe_on(rxcpp::observe_on_new_thread());
   }
 
   bool GossipPropagationStrategy::initQueue() {
