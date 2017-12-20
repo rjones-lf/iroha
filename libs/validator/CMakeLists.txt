@@ -14,6 +14,7 @@
 
 add_library(validator
     domain_name_validator.cpp
+    address_validator.hpp
     )
 target_link_libraries(validator
     boost
