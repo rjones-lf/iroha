@@ -15,12 +15,9 @@
  * limitations under the License.
  */
 
-#include "sha3_hash.hpp"
 
-extern "C" {
-#include "cryptography/ed25519_sha3_impl/internal/impl/sha3.h"
-}
-
+#include <ed25519/ed25519/sha256.h>
+#include <ed25519/ed25519/sha512.h>
 #include "common/types.hpp"
 #include "model/converters/pb_block_factory.hpp"
 #include "model/converters/pb_common.hpp"
@@ -30,34 +27,34 @@ extern "C" {
 namespace iroha {
 
   void sha3_256(uint8_t *output, const uint8_t *input, size_t in_size) {
-    ::sha3_256(input, in_size, output);
+    sha256(output, input, in_size);
   }
 
   void sha3_512(uint8_t *output, const uint8_t *input, size_t in_size) {
-    ::sha3_512(input, in_size, output);
+    sha512(output, input, in_size);
   }
 
   hash256_t sha3_256(const uint8_t *input, size_t in_size) {
     hash256_t h;
-    ::sha3_256(input, in_size, h.data());
+    sha3_256(h.data(), input, in_size);
     return h;
   }
 
   hash512_t sha3_512(const uint8_t *input, size_t in_size) {
     hash512_t h;
-    ::sha3_512(input, in_size, h.data());
+    sha3_512(h.data(), input, in_size);
     return h;
   }
 
   hash256_t sha3_256(const std::string &msg) {
     hash256_t h;
-    ::sha3_256((uint8_t *)msg.data(), msg.size(), h.data());
+    sha3_256(h.data(), reinterpret_cast<const uint8_t *>(msg.data()), msg.size());
     return h;
   }
 
   hash512_t sha3_512(const std::string &msg) {
     hash512_t h;
-    ::sha3_512((uint8_t *)msg.data(), msg.size(), h.data());
+    sha3_512(h.data(), reinterpret_cast<const uint8_t *>(msg.data()), msg.size());
     return h;
   }
 
