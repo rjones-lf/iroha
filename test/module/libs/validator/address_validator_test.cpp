@@ -53,7 +53,6 @@ TEST(AddressValidatorTest, ValidHostnameTest) {
   auto valid_addresses = {
       "abc.efg:0", "abc.efg.hij:65535", "a-hyphen.ru:8080", "altplus.com.jp:80"};
   for (std::string valid_address : valid_addresses) {
-    std::cout << valid_address << std::endl;
     ASSERT_TRUE(iroha::validator::is_valid_hostname(valid_address));
   }
 }

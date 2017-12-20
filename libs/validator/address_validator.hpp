@@ -47,7 +47,7 @@ namespace iroha {
    */
     bool is_valid_hostname(const std::string &address) {
       std::regex valid_hostname(
-          R"((^([a-zA-Z0-9]*[a-zA-Z\-]+[a-zA-Z0-9]*\.?)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]):(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$))");
+          R"((^([a-zA-Z]+[a-zA-Z\-]+[a-zA-Z0-9]*\.?)(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]):(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$))");
       return std::regex_match(address, valid_hostname);
     }
 
