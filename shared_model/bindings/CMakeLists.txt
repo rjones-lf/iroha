@@ -26,7 +26,7 @@ target_link_libraries(bindings
 
 
 
-if (SWIG_PYTHON OR SWIG_JAVA)
+if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP)
     find_package(SWIG 3.0.12 REQUIRED)
     include(${SWIG_USE_FILE})
 
@@ -57,4 +57,9 @@ if (SWIG_JAVA)
 
     swig_add_library(iroha LANGUAGE java SOURCES bindings.i)
     swig_link_libraries(iroha ${Java_LIBRARIES} bindings)
+endif()
+
+if (SWIG_CSHARP)
+    swig_add_library(libirohacs LANGUAGE csharp SOURCES bindings.i)
+    swig_link_libraries(libirohacs bindings)
 endif()
