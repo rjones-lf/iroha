@@ -31,6 +31,7 @@ using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 using ::testing::Return;
 
+// TODO: refactor services to allow dynamic port binding IR-741
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
