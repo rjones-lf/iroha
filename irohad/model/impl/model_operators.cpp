@@ -222,9 +222,8 @@ namespace iroha {
     bool Block::operator==(const Block &rhs) const {
       return rhs.hash == hash && rhs.height == height
           && rhs.prev_hash == prev_hash && rhs.txs_number == txs_number
-          && rhs.merkle_root == merkle_root && rhs.sigs == sigs
-          && rhs.transactions == transactions && rhs.created_ts == created_ts
-          && rhs.hash == hash;
+          && rhs.sigs == sigs && rhs.transactions == transactions
+          && rhs.created_ts == created_ts && rhs.hash == hash;
     }
 
   }  // namespace model

@@ -59,7 +59,6 @@ TEST(BlockTest, bl_test) {
   std::fill(orig_block.prev_hash.begin(), orig_block.prev_hash.end(), 0x3);
   orig_block.sigs = {siga};
 
-  std::fill(orig_block.merkle_root.begin(), orig_block.merkle_root.end(), 0x14);
   orig_block.height = 3;
   orig_block.txs_number = 1;
   orig_block.transactions = {orig_tx};
@@ -73,7 +72,6 @@ TEST(BlockTest, bl_test) {
   ASSERT_EQ(orig_block.transactions, serial_block.transactions);
   ASSERT_EQ(orig_block.sigs, serial_block.sigs);
   ASSERT_EQ(orig_block.hash, serial_block.hash);
-  ASSERT_EQ(orig_block.merkle_root, serial_block.merkle_root);
   ASSERT_EQ(orig_block.prev_hash, serial_block.prev_hash);
   ASSERT_EQ(orig_block.txs_number, serial_block.txs_number);
   ASSERT_EQ(orig_block, serial_block);

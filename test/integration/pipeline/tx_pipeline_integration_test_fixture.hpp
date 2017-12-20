@@ -186,7 +186,6 @@ class TxPipelineIntegrationTestFixture
     expected_block.transactions = expected_proposal.transactions;
     expected_block.txs_number = expected_proposal.transactions.size();
     expected_block.created_ts = 0;
-    expected_block.merkle_root.fill(0);
     expected_block.hash = iroha::hash(expected_block);
     irohad->getCryptoProvider()->sign(expected_block);
     expected_blocks.emplace_back(expected_block);

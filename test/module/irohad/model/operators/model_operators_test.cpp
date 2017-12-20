@@ -362,7 +362,6 @@ Block createBlock() {
   block.created_ts = 1;
   block.txs_number = 2;
   std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0x23);
-  std::fill(block.merkle_root.begin(), block.merkle_root.end(), 0x23);
   block.sigs.push_back(createSignature());
   block.transactions.push_back(createTransaction());
   block.height = 123;

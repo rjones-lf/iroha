@@ -32,7 +32,6 @@ namespace iroha {
         auto pl = pb_block.mutable_payload();
         pl->set_tx_number(block.txs_number);
         pl->set_height(block.height);
-        pl->set_merkle_root(block.merkle_root.to_string());
         pl->set_prev_block_hash(block.prev_hash.to_string());
         pl->set_created_time(block.created_ts);
 
@@ -63,7 +62,6 @@ namespace iroha {
 
         block.txs_number = static_cast<uint16_t>(pl.tx_number());
         block.height = pl.height();
-        block.merkle_root = hash256_t::from_string(pl.merkle_root());
         block.prev_hash = hash256_t::from_string(pl.prev_block_hash());
         block.created_ts = pl.created_time();
 
