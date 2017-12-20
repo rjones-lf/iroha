@@ -195,7 +195,7 @@ TEST_F(CommandsValidatorTest, StatelessInvalidTest) {
   iroha::protocol::Transaction tx = generateEmptyTransaction();
   auto payload = tx.mutable_payload();
 
-  iroha::ts64_t invalid_time = 10000000000ull;;
+  iroha::ts64_t invalid_time = 10000000000ull;
   payload->set_created_time(invalid_time);
 
   // create commands from default constructors, which will have empty, therefore
