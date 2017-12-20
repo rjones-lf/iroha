@@ -18,7 +18,6 @@
 #include "model/execution/command_executor.hpp"
 #include <algorithm>
 #include "model/commands/add_asset_quantity.hpp"
-#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -32,6 +31,7 @@
 #include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/execution/common_executor.hpp"
 #include "model/permissions.hpp"
@@ -79,13 +79,13 @@ namespace iroha {
 
     bool AppendRoleExecutor::isValid(const Command &command,
                                      ametsuchi::WsvQuery &queries) {
-      auto creator = creator_;
       auto cmd_value = static_cast<const AppendRole &>(command);
       auto role_permissions = queries.getRolePermissions(cmd_value.role_name);
-      auto account_roles = queries.getAccountRoles(creator.account_id);
+      auto account_roles = queries.getAccountRoles(creator_.account_id);
 
-      if (not role_permissions.has_value() or not account_roles.has_value())
+      if (not role_permissions.has_value() or not account_roles.has_value()) {
         return false;
+      }
 
       std::set<std::string> account_permissions;
       for (const auto &role : *account_roles) {
@@ -96,11 +96,11 @@ namespace iroha {
           account_permissions.insert(permission);
       }
 
-      for (const auto &role_permission : *role_permissions)
-        if (account_permissions.find(role_permission)
-            == account_permissions.end())
-          return false;
-      return true;
+      return std::none_of((*role_permissions).begin(),
+                          (*role_permissions).end(),
+                          [&account_permissions](const auto &perm) {
+                            return account_permissions.find(perm) == account_permissions.end();
+                          });
     }
 
     // ----------------------------| Detach Role |-----------------------------
@@ -111,7 +111,7 @@ namespace iroha {
     bool DetachRoleExecutor::execute(const Command &command,
                                      ametsuchi::WsvQuery &queries,
                                      ametsuchi::WsvCommand &commands) {
-      auto cmd_value = static_cast<const DetachRole&>(command);
+      auto cmd_value = static_cast<const DetachRole &>(command);
 
       return commands.deleteAccountRole(cmd_value.account_id,
                                         cmd_value.role_name);
@@ -309,62 +309,63 @@ namespace iroha {
       return true;
     }
 
-      // ----------------------------|SubtractAssetQuantity|-----------------------------
+    // ----------------------------|SubtractAssetQuantity|-----------------------------
 
-      SubtractAssetQuantityExecutor::SubtractAssetQuantityExecutor() {
-        log_ = logger::log("SubtractAssetQuantityExecutor");
+    SubtractAssetQuantityExecutor::SubtractAssetQuantityExecutor() {
+      log_ = logger::log("SubtractAssetQuantityExecutor");
+    }
+
+    bool SubtractAssetQuantityExecutor::execute(const Command &command,
+                                                WsvQuery &queries,
+                                                WsvCommand &commands) {
+      auto subtract_asset_quantity =
+          static_cast<const SubtractAssetQuantity &>(command);
+
+      auto asset = queries.getAsset(subtract_asset_quantity.asset_id);
+      if (not asset) {
+        log_->info("asset {} is absent", subtract_asset_quantity.asset_id);
+        return false;
       }
+      auto precision = asset.value().precision;
 
-      bool SubtractAssetQuantityExecutor::execute(const Command &command,
-                                             WsvQuery &queries,
-                                             WsvCommand &commands) {
-        auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
-
-        auto asset = queries.getAsset(subtract_asset_quantity.asset_id);
-        if (not asset) {
-          log_->info("asset {} is absent", subtract_asset_quantity.asset_id);
-          return false;
-        }
-        auto precision = asset.value().precision;
-
-        if (subtract_asset_quantity.amount.getPrecision() != precision) {
-          log_->info("amount is wrongly formed");
-          return false;
-        }
-        auto account_asset = queries.getAccountAsset(
+      if (subtract_asset_quantity.amount.getPrecision() != precision) {
+        log_->info("amount is wrongly formed");
+        return false;
+      }
+      auto account_asset = queries.getAccountAsset(
           subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id);
-        if (not account_asset.has_value()) {
-          log_->info("{} do not have {}",
-                     subtract_asset_quantity.account_id,
-                     subtract_asset_quantity.asset_id);
-          return false;
-        }
-        auto account_asset_value = account_asset.value();
+      if (not account_asset.has_value()) {
+        log_->info("{} do not have {}",
+                   subtract_asset_quantity.account_id,
+                   subtract_asset_quantity.asset_id);
+        return false;
+      }
+      auto account_asset_value = account_asset.value();
 
-        auto new_balance =
+      auto new_balance =
           account_asset_value.balance - subtract_asset_quantity.amount;
-        if (not new_balance.has_value()) {
-          return false;
-        }
-        account_asset->balance = new_balance.value();
-
-        // accountAsset.value().balance -= amount;
-        return commands.upsertAccountAsset(account_asset.value());
+      if (not new_balance.has_value()) {
+        return false;
       }
+      account_asset->balance = new_balance.value();
 
-      bool SubtractAssetQuantityExecutor::hasPermissions(const Command &command,
-                                                    WsvQuery &queries,
-                                                    const Account &creator) {
-        auto cmd_value = static_cast<const SubtractAssetQuantity &>(command);
-        return creator.account_id == cmd_value.account_id
-               and checkAccountRolePermission(
-          creator.account_id, queries, can_subtract_asset_qty);
-      }
+      // accountAsset.value().balance -= amount;
+      return commands.upsertAccountAsset(account_asset.value());
+    }
 
-      bool SubtractAssetQuantityExecutor::isValid(const Command &command,
-                                             WsvQuery &queries) {
-        return true;
-      }
+    bool SubtractAssetQuantityExecutor::hasPermissions(const Command &command,
+                                                       WsvQuery &queries,
+                                                       const Account &creator) {
+      auto cmd_value = static_cast<const SubtractAssetQuantity &>(command);
+      return creator.account_id == cmd_value.account_id
+          and checkAccountRolePermission(
+                  creator.account_id, queries, can_subtract_asset_qty);
+    }
+
+    bool SubtractAssetQuantityExecutor::isValid(const Command &command,
+                                                WsvQuery &queries) {
+      return true;
+    }
 
     // --------------------------|AddPeer|------------------------------
 
