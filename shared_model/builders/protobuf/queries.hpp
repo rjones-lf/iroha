@@ -23,13 +23,15 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "queries.pb.h"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace proto {
-    template <int S = 0>
+
+    template <int S = 0, typename SV = validation::DefaultValidator>
     class TemplateQueryBuilder {
      private:
-      template <int>
+      template <int, typename>
       friend class TemplateQueryBuilder;
 
       enum RequiredFields {
@@ -41,131 +43,169 @@ namespace shared_model {
       };
 
       template <int s>
-      using NextBuilder = TemplateQueryBuilder<S | (1 << s)>;
+      using NextBuilder = TemplateQueryBuilder<S | (1 << s), SV>;
 
-      iroha::protocol::Query query_;
+      using ProtoQuery = iroha::protocol::Query;
 
       template <int Sp>
       TemplateQueryBuilder(const TemplateQueryBuilder<Sp> &o)
-          : query_(o.query_) {}
+          : query_(o.query_), stateless_validator_(o.stateless_validator_) {}
+
+      /**
+       * Make transformation on copied content
+       * @tparam Transformation - callable type for changing the copy
+       * @param t - transform function for proto object
+       * @return new builder with updated state
+       */
+      template <int Fields, typename Transformation>
+      auto transform(Transformation t) const {
+        NextBuilder<Fields> copy = *this;
+        t(copy.query_);
+        return copy;
+      }
+
+      /**
+       * Make query field transformation on copied object
+       * @tparam Transformation - callable type for changing query
+       * @param t - transform function for proto query
+       * @return new builder with set query
+       */
+      template <typename Transformation>
+      auto queryField(Transformation t) const {
+        NextBuilder<QueryField> copy = *this;
+        t(copy.query_.mutable_payload());
+        return copy;
+      }
 
      public:
-      TemplateQueryBuilder() = default;
+      TemplateQueryBuilder(const SV &validator = SV())
+          : stateless_validator_(validator) {}
 
-      NextBuilder<CreatedTime> createdTime(
-          interface::types::TimestampType created_time) {
-        query_.mutable_payload()->set_created_time(created_time);
-        return *this;
+      auto createdTime(interface::types::TimestampType created_time) const {
+        return transform<CreatedTime>([&](auto &qry) {
+          qry.mutable_payload()->set_created_time(created_time);
+        });
       }
 
-      NextBuilder<CreatorAccountId> creatorAccountId(
-          const interface::types::AccountIdType &creator_account_id) {
-        query_.mutable_payload()->set_creator_account_id(creator_account_id);
-        return *this;
+      auto creatorAccountId(
+          const interface::types::AccountIdType &creator_account_id) const {
+        return transform<CreatorAccountId>([&](auto &qry) {
+          qry.mutable_payload()->set_creator_account_id(creator_account_id);
+        });
       }
 
-      NextBuilder<QueryField> getAccount(
-          const interface::types::AccountIdType &account_id) {
-        auto query = query_.mutable_payload()->mutable_get_account();
-        query->set_account_id(account_id);
-        return *this;
+      auto queryCounter(interface::types::CounterType query_counter) const {
+        return transform<QueryCounter>([&](auto &qry) {
+          qry.mutable_payload()->set_query_counter(query_counter);
+        });
       }
 
-      NextBuilder<QueryField> getSignatories(
-          const interface::types::AccountIdType &account_id) {
-        auto query =
-            query_.mutable_payload()->mutable_get_account_signatories();
-        query->set_account_id(account_id);
-        return *this;
+      auto getAccount(const interface::types::AccountIdType &account_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_account();
+          query->set_account_id(account_id);
+        });
       }
 
-      NextBuilder<QueryField> getAccountTransactions(
-          const interface::types::AccountIdType &account_id) {
-        auto query =
-            query_.mutable_payload()->mutable_get_account_transactions();
-        query->set_account_id(account_id);
-        return *this;
+      auto getSignatories(
+          const interface::types::AccountIdType &account_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_account_signatories();
+          query->set_account_id(account_id);
+        });
       }
 
-      NextBuilder<QueryField> getAccountAssetTransactions(
+      auto getAccountTransactions(
+          const interface::types::AccountIdType &account_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_account_transactions();
+          query->set_account_id(account_id);
+        });
+      }
+
+      auto getAccountAssetTransactions(
           const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id) {
-        auto query =
-            query_.mutable_payload()->mutable_get_account_asset_transactions();
-        query->set_account_id(account_id);
-        query->set_asset_id(asset_id);
-        return *this;
+          const interface::types::AssetIdType &asset_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_account_asset_transactions();
+          query->set_account_id(account_id);
+          query->set_asset_id(asset_id);
+        });
       }
 
-      NextBuilder<QueryField> getAccountDetail(
-        const interface::types::AccountIdType &account_id,
-        const interface::types::DetailType &detail) {
-        auto query =
-          query_.mutable_payload()->mutable_get_account_detail();
-        query->set_account_id(account_id);
-        query->set_detail(detail);
-        return *this;
-      }
-
-      NextBuilder<QueryField> getAccountAssets(
+      auto getAccountAssets(
           const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id) {
-        auto query = query_.mutable_payload()->mutable_get_account_assets();
-        query->set_account_id(account_id);
-        query->set_asset_id(asset_id);
-        return *this;
+          const interface::types::AssetIdType &asset_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_account_assets();
+          query->set_account_id(account_id);
+          query->set_asset_id(asset_id);
+        });
       }
 
-      NextBuilder<QueryField> getRoles() {
-        query_.mutable_payload()->mutable_get_roles();
-        return *this;
+      auto getAccountDetail(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::DetailType &detail) {
+        return queryField([&](auto proto_query) {
+          auto query =
+              proto_query->mutable_get_account_detail();
+          query->set_account_id(account_id);
+          query->set_detail(detail);
+        });
       }
 
-      NextBuilder<QueryField> getAssetInfo(
-          const interface::types::AssetIdType &asset_id) {
-        auto query = query_.mutable_payload()->mutable_get_asset_info();
-        query->set_asset_id(asset_id);
-        return *this;
+      auto getRoles() const {
+        return queryField([&](auto proto_query) {
+          proto_query->mutable_get_roles();
+        });
       }
 
-      NextBuilder<QueryField> getRolePermissions(
-          const interface::types::RoleIdType &role_id) {
-        auto query = query_.mutable_payload()->mutable_get_role_permissions();
-        query->set_role_id(role_id);
-        return *this;
+      auto getAssetInfo(const interface::types::AssetIdType &asset_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_asset_info();
+          query->set_asset_id(asset_id);
+        });
       }
 
-      NextBuilder<QueryField> getTransactions(
-          std::initializer_list<interface::Transaction::HashType> hashes) {
+      auto getRolePermissions(
+          const interface::types::RoleIdType &role_id) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_role_permissions();
+          query->set_role_id(role_id);
+        });
+      }
+
+      auto getTransactions(
+          std::initializer_list<interface::Transaction::HashType> hashes)
+          const {
         return getTransactions(hashes);
       }
 
       template <typename... Hash>
-      NextBuilder<QueryField> getTransactions(const Hash &... hashes) {
+      auto getTransactions(const Hash &... hashes) const {
         return getTransactions({hashes...});
       }
 
       template <typename Collection>
-      NextBuilder<QueryField> getTransactions(const Collection &hashes) {
-        auto query = query_.mutable_payload()->mutable_get_transactions();
-        boost::for_each(hashes, [&query](const auto &hash) {
-          query->add_tx_hashes(hash.blob());
+      auto getTransactions(const Collection &hashes) const {
+        return queryField([&](auto proto_query) {
+          auto query = proto_query->mutable_get_transactions();
+          boost::for_each(hashes, [&query](const auto &hash) {
+            query->add_tx_hashes(hash.blob());
+          });
         });
-        return *this;
       }
 
-      NextBuilder<QueryCounter> queryCounter(
-          interface::types::CounterType query_counter) {
-        query_.mutable_payload()->set_query_counter(query_counter);
-        return *this;
-      }
-
-      UnsignedWrapper<Query> build() {
+      auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
         return UnsignedWrapper<Query>(Query(iroha::protocol::Query(query_)));
       }
 
       static const int total = RequiredFields::TOTAL;
+
+     private:
+      ProtoQuery query_;
+      SV stateless_validator_;
     };
 
     using QueryBuilder = TemplateQueryBuilder<>;
