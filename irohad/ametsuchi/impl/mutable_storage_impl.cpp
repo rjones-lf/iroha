@@ -28,7 +28,7 @@ namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         hash256_t top_hash,
-        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<cpp_redis::client> index,
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction,
         std::shared_ptr<model::CommandExecutorFactory> command_executors)

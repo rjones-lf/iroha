@@ -16,11 +16,11 @@ find_package_handle_standard_args(cpp_redis DEFAULT_MSG
     )
 
 set(URL1 https://github.com/Cylix/cpp_redis.git)
-set(VERSION1 727aa5f06c8ce498168cbab5a023cad5b9c00bc0)
+set(VERSION1 f390eef447a62dcb6da288fb1e91f25f8a9b838c)
 set_target_description(cpp_redis "C++ redis client" ${URL1} ${VERSION1})
 
 set(URL2 https://github.com/Cylix/tacopie.git)
-set(VERSION2 290dc38681f346adae41d3cc8feabbe534424675)
+set(VERSION2 4c551b8ff1c53c5fa63286371c9c884254fc9423)
 set_target_description(tacopie "C++ tcp library" ${URL2} ${VERSION2})
 
 if (NOT cpp_redis_FOUND)

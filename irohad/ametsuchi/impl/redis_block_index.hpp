@@ -21,13 +21,13 @@
 #include "ametsuchi/impl/block_index.hpp"
 
 #include <boost/format.hpp>
-#include <cpp_redis/redis_client.hpp>
+#include <cpp_redis/cpp_redis>
 
 namespace iroha {
   namespace ametsuchi {
     class RedisBlockIndex : public BlockIndex {
      public:
-      explicit RedisBlockIndex(cpp_redis::redis_client &client);
+      explicit RedisBlockIndex(cpp_redis::client &client);
 
       void index(const model::Block &block) override;
 
@@ -54,7 +54,7 @@ namespace iroha {
                              const std::string &index,
                              const model::Transaction::CommandsType &commands);
 
-      cpp_redis::redis_client &client_;
+      cpp_redis::client &client_;
       /// format strings for index keys
       boost::format account_id_height_, account_id_height_asset_id_;
     };
