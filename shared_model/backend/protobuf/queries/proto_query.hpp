@@ -119,7 +119,9 @@ namespace shared_model {
 
       bool addSignature(
           const interface::types::SignatureType &signature) override {
-        if (proto_->has_signature()) return false;
+        if (proto_->has_signature()) {
+          return false;
+        }
 
         auto sig = proto_->mutable_signature();
         sig->set_pubkey(signature->publicKey().str());

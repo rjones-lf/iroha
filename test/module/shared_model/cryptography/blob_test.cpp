@@ -15,19 +15,37 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
 #include "cryptography/blob.hpp"
+#include <gtest/gtest.h>
 
 using namespace shared_model::crypto;
+
+auto data = "Hello World";
 
 /**
  * @given arbitrary string and known its hex representation
  * @when conversion of this string to hex is done
  * @then conversion is done right
  */
-TEST(BlobTest, HexConversionTest){
-  auto data = "Hello World";
+TEST(BlobTest, HexConversionTest) {
   Blob blob(data);
   auto hex = blob.hex();
   ASSERT_EQ("48656c6c6f20576f726c64", hex);
+}
+
+/**
+ * @given arbitrary string
+ * @when making a blob from it
+ * @then make sure that the blob's blob stores the same data as string
+ */
+TEST(BlobTest, BlobIsString) {
+  Blob blob(data);
+  auto str = blob.str();
+  auto binary = blob.blob();
+  size_t sz = binary.size();
+
+  ASSERT_EQ(str.size(), sz);
+  for (size_t i = 0; i < sz; ++i) {
+    ASSERT_EQ(binary[i], str[i]);
+  }
 }
