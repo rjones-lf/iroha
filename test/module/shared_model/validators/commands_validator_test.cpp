@@ -220,10 +220,15 @@ TEST_F(CommandsValidatorTest, StatelessInvalidTest) {
   ASSERT_EQ(answer.getReasonsMap().size(), desc->field_count() + 1);
 }
 
-TEST_F(CommandsValidatorTest, AddressTest) {
+/**
+ * @given valid addresses
+ * @when AddPeer command with these addresses is validated
+ * @then answer contains no errors
+ */
+TEST_F(CommandsValidatorTest, ValidAddressTest) {
   auto valid_addresses = {"localhost:8080", "192.168.0.255:65535", "soramitsu.co.jp:8080"};
-  auto invalid_addresses = {"localhost::8080", "192.168.0.256:8080", "192.168.0.255:65536", "soramitsu.co.:8080"};
 
+  // add peer with valid peer key and missing address
   AddPeer add_peer;
   add_peer.set_peer_key(valid_public_key);
 
@@ -240,6 +245,21 @@ TEST_F(CommandsValidatorTest, AddressTest) {
     }
   }
 
+}
+
+/**
+ * @given invalid addresses
+ * @when AddPeer command with these addresses is validated
+ * @then answer contains errors
+ */
+TEST_F(CommandsValidatorTest, InvalidAddressTest) {
+  auto invalid_addresses = {"localhost::8080", "192.168.0.256:8080", "192.168.0.255:65536", "soramitsu.co.:8080"};
+
+  // add peer with valid peer key and missing address
+  AddPeer add_peer;
+  add_peer.set_peer_key(valid_public_key);
+
+  shared_model::validation::CommandsValidator commands_validator;
   for (auto address: invalid_addresses){
     auto tx = generateEmptyTransaction();
     AddPeer invalid_add_peer(add_peer);
@@ -249,5 +269,4 @@ TEST_F(CommandsValidatorTest, AddressTest) {
         detail::make_polymorphic<proto::Transaction>(tx));
     ASSERT_TRUE(answer.hasErrors());
   }
-
 }
