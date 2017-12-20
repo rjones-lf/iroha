@@ -20,6 +20,7 @@ if (NOT ed25519_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DEDIMPL=ref10
         -DHASH=sha3_brainhub
         -DRANDOM=dev_urandom
