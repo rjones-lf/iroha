@@ -30,4 +30,11 @@ namespace generator {
     return (uint8_t)random_number(32, 126 + 1);
   }
 
+  std::string randomString(int len) {
+    std::string str(len, 0);
+    std::generate_n(
+        str.begin(), len, []() { return 'a' + std::rand() % ('z' - 'a' + 1); });
+    return str;
+  }
+
 }  // namespace generator

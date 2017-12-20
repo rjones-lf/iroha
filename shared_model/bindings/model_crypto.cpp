@@ -17,6 +17,7 @@
 
 #include "bindings/model_crypto.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
+#include "generator/generator.hpp"
 
 namespace shared_model {
   namespace bindings {
@@ -36,7 +37,7 @@ namespace shared_model {
                               crypto::Keypair::PrivateKeyType(
                                   crypto::Blob::fromHexString(private_key)));
 
-      auto rand_str = iroha::randomString(32);
+      auto rand_str = generator::randomString(32);
       if (not crypto::CryptoProviderEd25519Sha3::verify(
               crypto::CryptoProviderEd25519Sha3::sign(crypto::Blob(rand_str),
                                                       keypair),
