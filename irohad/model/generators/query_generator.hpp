@@ -16,6 +16,7 @@
  */
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
+#include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_signatories.hpp"
 #include "model/queries/get_transactions.hpp"
 
@@ -39,6 +40,13 @@ namespace iroha {
                                                   uint64_t query_counter,
                                                   std::string account_id,
                                                   std::string asset_id);
+
+        std::shared_ptr<GetAccountDetail> generateGetAccountDetail(ts64_t timestamp,
+                                                  std::string creator,
+                                                  uint64_t query_counter,
+                                                  std::string account_id,
+                                                  std::string creator_account_id,
+                                                  std::string detail);
 
         std::shared_ptr<GetSignatories> generateGetSignatories(ts64_t timestamp,
                                               std::string creator,

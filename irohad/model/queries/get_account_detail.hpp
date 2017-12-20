@@ -15,22 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_GET_ACCOUNT_ASSETS_HPP
-#define IROHA_GET_ACCOUNT_ASSETS_HPP
+#ifndef IROHA_GET_ACCOUNT_DETAIL_HPP
+#define IROHA_GET_ACCOUNT_DETAIL_HPP
 
-#include "model/query.hpp"
+#include <model/query.hpp>
 #include <string>
 
 namespace iroha {
-  namespace model {
-
-    /**
-     * Query for get all account's assets and balance
-     */
-    struct GetAccountAssets : Query {
-      std::string account_id{};
-      std::string asset_id{};
-    };
-  }  // namespace model
+    namespace model {
+        /**
+         * Query for get all account's detail
+         */
+        struct GetAccountDetail : Query {
+            std::string account_id{};
+            std::string detail{};
+        };
+    }  // namespace model
 }  // namespace iroha
-#endif  // IROHA_GET_ACCOUNT_ASSETS_HPP
+#endif //IROHA_GET_ACCOUNT_DETAIL_HPP
