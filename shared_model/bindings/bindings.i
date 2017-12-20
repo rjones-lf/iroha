@@ -24,6 +24,11 @@
 %include "std_string.i"
 %include "stdint.i"
 %include "exception.i"
+%include "std_vector.i"
+
+namespace std {
+  %template(ByteVector) vector<uint8_t>;
+};
 
 %exception {
   try {
