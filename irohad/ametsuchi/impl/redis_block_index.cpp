@@ -31,7 +31,7 @@
 namespace iroha {
   namespace ametsuchi {
 
-    RedisBlockIndex::RedisBlockIndex(cpp_redis::redis_client &client)
+    RedisBlockIndex::RedisBlockIndex(cpp_redis::client &client)
         : client_(client),
           account_id_height_("%s:%s"),
           account_id_height_asset_id_("%s:%s:%s") {}

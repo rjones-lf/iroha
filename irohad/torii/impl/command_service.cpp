@@ -65,8 +65,8 @@ namespace torii {
         case iroha::model::TransactionResponse::COMMITTED:
           res->set_tx_status(iroha::protocol::TxStatus::COMMITTED);
           break;
-        case iroha::model::TransactionResponse::ON_PROCESS:
-          res->set_tx_status(iroha::protocol::TxStatus::ON_PROCESS);
+        case iroha::model::TransactionResponse::IN_PROGRESS:
+          res->set_tx_status(iroha::protocol::TxStatus::IN_PROGRESS);
           break;
         case iroha::model::TransactionResponse::NOT_RECEIVED:
         default:
@@ -89,7 +89,7 @@ namespace torii {
 
     iroha::protocol::ToriiResponse response;
     response.set_tx_hash(tx_hash);
-    response.set_tx_status(iroha::protocol::TxStatus::ON_PROCESS);
+    response.set_tx_status(iroha::protocol::TxStatus::IN_PROGRESS);
 
     cache_->addItem(tx_hash, response);
     // Send transaction to iroha
