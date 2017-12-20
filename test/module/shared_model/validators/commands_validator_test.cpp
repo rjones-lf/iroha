@@ -20,21 +20,45 @@
 #include "builders/protobuf/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
-// TODO kamilsa 08.12.2017 IR-701 improve transaction builder api, so that we
-// can omit generate methods below
 
-iroha::protocol::Transaction generateEmptyTransaction() {
-  auto created_time = 10000000000ull;
-  shared_model::interface::types::CounterType tx_counter = 1;
-  std::string creator_account_id = "admin@test";
+class CommandsValidatorTest : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    valid_created_time = iroha::time::now();
 
-  iroha::protocol::Transaction proto_tx;
-  auto &payload = *proto_tx.mutable_payload();
-  payload.set_tx_counter(tx_counter);
-  payload.set_creator_account_id(creator_account_id);
-  payload.set_created_time(created_time);
-  return proto_tx;
-}
+    auto public_key_size = 32;
+    valid_public_key = std::string(public_key_size, '0');
+  }
+  std::string valid_account_id = "account@domain";
+  std::string valid_asset_name = "asset";
+  std::string valid_asset_id = "asset#domain";
+  std::string valid_address_localhost = "localhost:65535";
+  std::string valid_address_ipv4 = "192.168.255.1:8080";
+  std::string valid_address_hostname = "google.ru:8080";
+  std::string valid_role_name = "user";
+  std::string valid_account_name = "admin";
+  std::string valid_domain_id = "ru";
+  iroha::protocol::GrantablePermission valid_grantable_permission =
+      iroha::protocol::GrantablePermission::can_add_my_signatory;
+  uint8_t valid_quorum = 2;
+  std::string valid_amount = "12.34";
+  std::string valid_description = "this is meaningless description";
+  iroha::ts64_t valid_created_time;
+  std::string valid_public_key;
+  uint8_t valid_precision = 42;
+
+  iroha::protocol::Transaction generateEmptyTransaction() {
+    shared_model::interface::types::CounterType tx_counter = 1;
+    std::string creator_account_id = "admin@test";
+
+    iroha::protocol::Transaction proto_tx;
+    auto &payload = *proto_tx.mutable_payload();
+    payload.set_tx_counter(tx_counter);
+    payload.set_creator_account_id(creator_account_id);
+    payload.set_created_time(valid_created_time);
+    return proto_tx;
+  }
+};
 
 using namespace iroha::protocol;
 using namespace shared_model;
@@ -44,7 +68,7 @@ using namespace shared_model;
  * @when commands validator is invoked
  * @then answer has error about empty transaction
  */
-TEST(commandsValidatorTest, EmptyTransactionTest) {
+TEST_F(CommandsValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
   tx.mutable_payload()->set_created_time(iroha::time::now());
   shared_model::validation::CommandsValidator commands_validator;
@@ -58,11 +82,11 @@ TEST(commandsValidatorTest, EmptyTransactionTest) {
  * @when commands validation is invoked
  * @then answer has no errors
  */
-TEST(CommandsValidatorTest, StatelessValidTest) {
+TEST_F(CommandsValidatorTest, StatelessValidTest) {
   // Valid values for fields in commands
   std::string valid_account_id = "account@domain";
   std::string valid_asset_id = "asset#domain";
-  std::string valid_address = "localhost";
+  std::string valid_address = "localhost:8080";
   iroha::protocol::Amount valid_amount;
   valid_amount.set_precision(2);
   valid_amount.mutable_value()->set_fourth(1000);
@@ -167,9 +191,12 @@ TEST(CommandsValidatorTest, StatelessValidTest) {
  * @then answer has errors and number of errors in answer is the same as the
  * number of commands in tx
  */
-TEST(CommandsValidatorTest, StatelessInvalidTest) {
+TEST_F(CommandsValidatorTest, StatelessInvalidTest) {
   iroha::protocol::Transaction tx = generateEmptyTransaction();
   auto payload = tx.mutable_payload();
+
+  iroha::ts64_t invalid_time = 10000000000ull;;
+  payload->set_created_time(invalid_time);
 
   // create commands from default constructors, which will have empty, therefore
   // invalid values
@@ -191,4 +218,36 @@ TEST(CommandsValidatorTest, StatelessInvalidTest) {
   // in total there should be number_of_commands + 1 reasons of bad answer:
   // number_of_commands for each command + 1 for transaction metadata
   ASSERT_EQ(answer.getReasonsMap().size(), desc->field_count() + 1);
+}
+
+TEST_F(CommandsValidatorTest, AddressTest) {
+  auto valid_addresses = {"localhost:8080", "192.168.0.255:65535", "soramitsu.co.jp:8080"};
+  auto invalid_addresses = {"localhost::8080", "192.168.0.256:8080", "192.168.0.255:65536", "soramitsu.co.:8080"};
+
+  AddPeer add_peer;
+  add_peer.set_peer_key(valid_public_key);
+
+  shared_model::validation::CommandsValidator commands_validator;
+  for (auto address: valid_addresses){
+    auto tx = generateEmptyTransaction();
+    AddPeer valid_add_peer(add_peer);
+    valid_add_peer.set_address(address);
+    tx.mutable_payload()->add_commands()->mutable_add_peer()->CopyFrom(valid_add_peer);
+    auto answer = commands_validator.validate(
+        detail::make_polymorphic<proto::Transaction>(tx));
+    if (answer.hasErrors()) {
+      ASSERT_FALSE(answer.hasErrors());
+    }
+  }
+
+  for (auto address: invalid_addresses){
+    auto tx = generateEmptyTransaction();
+    AddPeer invalid_add_peer(add_peer);
+    invalid_add_peer.set_address(address);
+    tx.mutable_payload()->add_commands()->mutable_add_peer()->CopyFrom(invalid_add_peer);
+    auto answer = commands_validator.validate(
+        detail::make_polymorphic<proto::Transaction>(tx));
+    ASSERT_TRUE(answer.hasErrors());
+  }
+
 }
