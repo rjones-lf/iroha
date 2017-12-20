@@ -47,9 +47,8 @@ class MockOrderingGateTransportGrpcService
 
 class OrderingGateTest : public ::testing::Test {
  public:
-  OrderingGateTest() {
-    fake_service = std::make_shared<MockOrderingGateTransportGrpcService>();
-  }
+  OrderingGateTest():
+    fake_service{std::make_shared<MockOrderingGateTransportGrpcService>()} {}
 
   void SetUp() override {
     thread = std::thread([this] {
