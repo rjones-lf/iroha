@@ -20,8 +20,9 @@
 
 #include <responses.pb.h>
 #include <model/account_asset.hpp>
-#include <model/queries/responses/account_assets_response.hpp>
-#include <model/queries/responses/account_response.hpp>
+#include "model/queries/responses/account_assets_response.hpp"
+#include "model/queries/responses/account_detail_response.hpp"
+#include "model/queries/responses/account_response.hpp"
 #include <nonstd/optional.hpp>
 #include "model/queries/responses/error_response.hpp"
 #include "model/queries/responses/signatories_response.hpp"
