@@ -219,11 +219,9 @@ namespace shared_model {
       auto detachRole(const interface::types::AccountIdType &account_id,
                       const interface::types::RoleIdType &role_name) const {
         return addCommand([&](auto proto_command) {
-          return addCommand([&](auto proto_command) {
-            auto command = proto_command->mutable_detach_role();
-            command->set_account_id(account_id);
-            command->set_role_name(role_name);
-          });
+          auto command = proto_command->mutable_detach_role();
+          command->set_account_id(account_id);
+          command->set_role_name(role_name);
         });
       }
 
