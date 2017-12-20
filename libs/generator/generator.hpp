@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef __IROHA_GENERATOR_GENERATOR_HPP__
-#define __IROHA_GENERATOR_GENERATOR_HPP__
+#ifndef IROHA_GENERATOR_HPP
+#define IROHA_GENERATOR_HPP
 
 #include <algorithm>
 #include "common/types.hpp"
@@ -38,6 +38,13 @@ namespace generator {
     return v;
   }
 
+  /**
+   * Generates new random string from lower-case letters
+   * @param len - size of string to generate
+   * @return generated string
+   */
+  std::string randomString(int len);
+
 }  // namespace generator
 
-#endif  // __IROHA_GENERATOR_GENERATOR_HPP__
+#endif  // IROHA_GENERATOR_HPP
