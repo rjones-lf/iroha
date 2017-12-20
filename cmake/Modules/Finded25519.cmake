@@ -20,7 +20,13 @@ if (NOT ed25519_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
-      -DTESTING=OFF
+        -DEDIMPL=ref10
+        -DHASH=sha3_brainhub
+        -DRANDOM=dev_urandom
+        -DBUILD=SHARED
+        -DBENCHMARKING=OFF
+        -DCOVERAGE=OFF
+        -DTESTING=OFF
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step
@@ -29,7 +35,6 @@ if (NOT ed25519_FOUND)
   externalproject_get_property(warchant_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
   set(ed25519_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}ed25519${CMAKE_SHARED_LIBRARY_SUFFIX})
-  message(STATUS ${ed25519_LIBRARY})
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
 
   add_dependencies(ed25519 warchant_ed25519)
