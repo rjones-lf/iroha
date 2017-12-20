@@ -43,12 +43,13 @@ namespace torii {
   /**
    * shuts down service handler. (actually, shuts down completion queue only)
    */
-  void ToriiServiceHandler::shutdown() { completionQueue_->Shutdown();
-    void* tag = nullptr;
+  void ToriiServiceHandler::shutdown() {
+    completionQueue_->Shutdown();
+    void *tag = nullptr;
     bool ok = false;
 
-    while (completionQueue_->Next(&tag, &ok)){
-     //wait until completion queue shuts down
+    while (completionQueue_->Next(&tag, &ok)) {
+      // wait until completion queue shuts down
     }
   }
 
