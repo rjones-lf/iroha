@@ -17,6 +17,7 @@
 
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 
+// TODO: refactor services to allow dynamic port binding IR-741
 class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
  public:
   void SetUp() override {

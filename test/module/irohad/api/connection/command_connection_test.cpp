@@ -23,6 +23,7 @@ limitations under the License.
 
 using iroha::protocol::Transaction;
 
+// TODO: allow dynamic port binding in ServerRunner IR-741
 class CommandConnectionTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
