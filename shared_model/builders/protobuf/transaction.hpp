@@ -206,7 +206,7 @@ namespace shared_model {
       auto createRole(const interface::types::RoleIdType &role_name,
                       const Collection &permissions) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_create_role();
+          auto command = proto_command->mutable_create_role();
           command->set_role_name(role_name);
           boost::for_each(permissions, [&command](const auto &perm) {
             iroha::protocol::RolePermission p;
@@ -231,7 +231,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_grant_permission();
+          auto command = proto_command->mutable_grant_permission();
           command->set_account_id(account_id);
           iroha::protocol::GrantablePermission p;
           iroha::protocol::GrantablePermission_Parse(permission, &p);
@@ -243,7 +243,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_revoke_permission();
+          auto command = proto_command->mutable_revoke_permission();
           command->set_account_id(account_id);
           iroha::protocol::GrantablePermission p;
           iroha::protocol::GrantablePermission_Parse(permission, &p);
@@ -257,7 +257,7 @@ namespace shared_model {
           const interface::SetAccountDetail::AccountDetailValueType &value)
           const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_set_account_detail();
+          auto command = proto_command->mutable_set_account_detail();
           command->set_account_id(account_id);
           command->set_key(key);
           command->set_value(value);
