@@ -21,8 +21,8 @@ add_subdirectory(validators)
 AddTest(lazy_test
     lazy_test.cpp
     )
-target_include_directories(lazy_test PUBLIC
-    ${Boost_INCLUDE_DIRS}
+target_link_libraries(lazy_test
+    boost
     )
 
 AddTest(crypto_usage_test
@@ -33,11 +33,16 @@ target_link_libraries(crypto_usage_test
     logger
     )
 
-AddTest(blob_test cryptography/blob_test.cpp)
+AddTest(blob_test
+    cryptography/blob_test.cpp
+    )
+target_link_libraries(blob_test
+    boost
+    )
 
 AddTest(reference_holder_test
     reference_holder_test.cpp
     )
-target_include_directories(reference_holder_test PUBLIC
-    ${Boost_INCLUDE_DIRS}
+target_link_libraries(reference_holder_test
+    boost
     )
