@@ -136,9 +136,9 @@ RUN git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
 
 # install cpp_redis with tacopie
 RUN git clone https://github.com/Cylix/cpp_redis /tmp/cpp_redis; \
-    (cd /tmp/cpp_redis ; git checkout 727aa5f06c8ce498168cbab5a023cad5b9c00bc0); \
+    (cd /tmp/cpp_redis ; git checkout f390eef447a62dcb6da288fb1e91f25f8a9b838c); \
     git clone https://github.com/Cylix/tacopie /tmp/cpp_redis/tacopie; \
-    (cd /tmp/cpp_redis/tacopie ; git checkout 290dc38681f346adae41d3cc8feabbe534424675); \
+    (cd /tmp/cpp_redis/tacopie ; git checkout 4c551b8ff1c53c5fa63286371c9c884254fc9423); \
     cmake -H/tmp/cpp_redis -B/tmp/cpp_redis/build; \
     cmake --build /tmp/cpp_redis/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/cpp_redis
