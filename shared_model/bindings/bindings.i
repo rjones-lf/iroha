@@ -24,6 +24,10 @@
 %include "std_string.i"
 %include "stdint.i"
 %include "exception.i"
+%include "std_vector.i"
+namespace std {
+  %template(StringVector) vector<string>;
+};
 
 %exception {
   try {
