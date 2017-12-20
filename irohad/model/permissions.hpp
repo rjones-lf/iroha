@@ -58,6 +58,7 @@ namespace iroha {
     const std::string can_get_domain_acc_ast = "CanGetDomainAccountAssets";
     const std::string can_get_my_acc_detail = "CanGetMyAccountDetail";
       const std::string can_get_all_acc_detail = "CanGetAllAccountDetail";
+    const std::string can_get_domain_acc_detail = "CanGetDomainAccountDetail";
 
     const std::string can_get_my_acc_txs = "CanGetMyAccountTransactions";
     const std::string can_get_all_acc_txs = "CanGetAllAccountTransactions";
@@ -88,6 +89,7 @@ namespace iroha {
     const std::set<std::string> read_domain_group = {can_get_domain_accounts,
                                                      can_get_domain_acc_txs,
                                                      can_get_domain_acc_ast,
+                                                     can_get_domain_acc_detail,
                                                      can_get_domain_acc_ast_txs,
                                                      can_get_domain_signatories};
 
