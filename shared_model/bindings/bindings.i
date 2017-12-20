@@ -28,6 +28,7 @@
 
 namespace std {
   %template(ByteVector) vector<uint8_t>;
+  %template(StringVector) vector<string>;
 };
 
 %exception {
