@@ -80,19 +80,6 @@ namespace iroha {
   }
 
   /**
-   * Generates new random string from lower-case letters
-   * @param len - size of string to generate
-   * @return generated string
-   */
-  inline std::string randomString(int len) {
-    std::string str(len, 0);
-    std::generate_n(str.begin(), len, []() {
-      return 'a' + std::rand() % ('z' - 'a' + 1);
-    });
-    return str;
-  }
-
-  /**
    * Convert hexstring to array of given size
    * @tparam size - output array size
    * @param string - input string for transform
