@@ -20,13 +20,6 @@ if (NOT ed25519_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
-        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-        -DEDIMPL=ref10
-        -DHASH=sha3_brainhub
-        -DRANDOM=dev_urandom
-        -DBUILD=SHARED
-        -DBENCHMARKING=OFF
-        -DCOVERAGE=OFF
         -DTESTING=OFF
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step

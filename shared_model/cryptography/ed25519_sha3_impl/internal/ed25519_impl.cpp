@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#include "ed25519_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include <ed25519/ed25519.h>
-#include "sha3_hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
 
@@ -88,10 +88,11 @@ namespace iroha {
    */
   keypair_t create_keypair(blob_t<32> seed) {
     pubkey_t pub;
-    privkey_t priv;
+    privkey_t priv = seed;
 
-    ed25519_create_keypair(reinterpret_cast<private_key_t *>(priv.data()),
-                           reinterpret_cast<public_key_t *>(pub.data()));
+    ed25519_derive_public_key(
+        reinterpret_cast<const private_key_t *>(priv.data()),
+        reinterpret_cast<public_key_t *>(pub.data()));
 
     return {pub, priv};
   }
