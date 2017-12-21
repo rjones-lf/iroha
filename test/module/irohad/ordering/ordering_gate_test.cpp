@@ -55,12 +55,12 @@ class OrderingGateTest : public ::testing::Test {
       grpc::ServerBuilder builder;
       int port = 0;
       builder.AddListeningPort(
-          address, grpc::InsecureServerCredentials(), &port);
+           "0.0.0.0:0", grpc::InsecureServerCredentials(), &port);
 
       builder.RegisterService(fake_service.get());
 
       server = builder.BuildAndStart();
-      address = "0.0.0.0:" + std::to_string(port);
+      auto address = "0.0.0.0:" + std::to_string(port);
       // Initialize components after port has been bind
       transport = std::make_shared<OrderingGateTransportGrpc>(address);
       gate_impl = std::make_shared<OrderingGateImpl>(transport);
@@ -85,7 +85,7 @@ class OrderingGateTest : public ::testing::Test {
 
   std::unique_ptr<grpc::Server> server;
 
-  std::string address{"0.0.0.0:0"};
+
   std::shared_ptr<OrderingGateTransportGrpc> transport;
   std::shared_ptr<OrderingGateImpl> gate_impl;
   std::shared_ptr<MockOrderingGateTransportGrpcService> fake_service;
