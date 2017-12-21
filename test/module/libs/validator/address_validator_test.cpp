@@ -50,8 +50,10 @@ TEST(AddressValidatorTest, InvalidIpV4AddressTest) {
  * @then true is returned
  */
 TEST(AddressValidatorTest, ValidHostnameTest) {
-  auto valid_addresses = {
-      "abc.efg:0", "abc.efg.hij:65535", "a-hyphen.ru:8080", "altplus.com.jp:80"};
+  auto valid_addresses = {"abc.efg:0",
+                          "abc.efg.hij:65535",
+                          "a-hyphen.ru:8080",
+                          "altplus.com.jp:80"};
   for (std::string valid_address : valid_addresses) {
     ASSERT_TRUE(iroha::validator::is_valid_hostname(valid_address));
   }
@@ -64,10 +66,11 @@ TEST(AddressValidatorTest, ValidHostnameTest) {
  */
 TEST(AddressValidatorTest, InvalidHostnameTest) {
   auto invalid_addresses = {"9.start.with.non.letter:0",
-                          "-startWithDash:65535",
-                          "@.is.not.allowed:8080",
-                          "no space is allowed:80",
-                          "endWith-:909"};
+                            "-startWithDash:65535",
+                            "@.is.not.allowed:8080",
+                            "no space is allowed:80",
+                            "some\u2063host:123"
+                            "endWith-:909"};
   for (std::string invalid_address : invalid_addresses) {
     ASSERT_FALSE(iroha::validator::is_valid_hostname(invalid_address));
   }
