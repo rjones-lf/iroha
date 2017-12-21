@@ -19,8 +19,9 @@
 #include <gtest/gtest.h>
 
 using namespace shared_model::crypto;
+using namespace std::literals::string_literals;
 
-auto data = "Hello World";
+auto data = "Hello \0World"s;
 
 /**
  * @given arbitrary string and known its hex representation
@@ -30,7 +31,7 @@ auto data = "Hello World";
 TEST(BlobTest, HexConversionTest) {
   Blob blob(data);
   auto hex = blob.hex();
-  ASSERT_EQ("48656c6c6f20576f726c64", hex);
+  ASSERT_EQ("48656c6c6f2000576f726c64", hex);
 }
 
 /**
