@@ -36,7 +36,7 @@ namespace shared_model {
             assetId_(proto_->asset_id()),
             domainId_(proto_->domain_id()),
             precision_(proto_->precision()),
-            blob_([this] { return make_blob(*proto_); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Asset(const Asset &o) : Asset(o.proto_) {}
 

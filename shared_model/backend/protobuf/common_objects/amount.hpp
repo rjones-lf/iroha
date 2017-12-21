@@ -48,7 +48,7 @@ namespace shared_model {
               return result;
             }),
             precision_([this] { return proto_->precision(); }),
-            blob_([this] { return make_blob(*proto_); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Amount(const Amount &o) : Amount(o.proto_) {}
 

@@ -92,7 +92,7 @@ namespace shared_model {
       explicit Command(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
             variant_([this] { return load<ProtoCommandListType>(*proto_); }),
-            blob_([this] { return make_blob(*proto_); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Command(const Command &o) : Command(o.proto_) {}
 

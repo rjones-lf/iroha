@@ -39,7 +39,7 @@ namespace shared_model {
             accountId_(proto_->account_id()),
             assetId_(proto_->asset_id()),
             balance_([this] { return Amount(proto_->balance()); }),
-            blob_([this] { return make_blob(*proto_); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       AccountAsset(const AccountAsset &o) : AccountAsset(o.proto_) {}
 

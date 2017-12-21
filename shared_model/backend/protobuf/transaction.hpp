@@ -47,8 +47,8 @@ namespace shared_model {
                     return std::forward<decltype(acc)>(acc);
                   });
             }),
-            blob_([this] { return make_blob(*proto_); }),
-            blobTypePayload_([this] { return make_blob(*payload_); }),
+            blob_([this] { return makeBlob(*proto_); }),
+            blobTypePayload_([this] { return makeBlob(*payload_); }),
             signatures_([this] {
               return boost::accumulate(
                   proto_->signature(),

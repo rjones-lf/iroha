@@ -32,7 +32,7 @@ using shared_model::crypto::toBinaryString;
 TEST(UtilTest, StringFromMakeBlob) {
   protocol::Header base, deserialized;
   base.set_created_time(100);
-  auto blob = make_blob(base);
+  auto blob = makeBlob(base);
 
   ASSERT_TRUE(deserialized.ParseFromString(toBinaryString(blob)));
   ASSERT_EQ(deserialized.created_time(), base.created_time());

@@ -38,7 +38,7 @@ namespace shared_model {
             domainId_(proto_->domain_id()),
             quorum_(proto_->quorum()),
             json_data_(proto_->json_data()),
-            blob_([this] { return make_blob(*proto_); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Account(const Account &o) : Account(o.proto_) {}
 

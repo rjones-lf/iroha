@@ -86,8 +86,8 @@ namespace shared_model {
           : CopyableProto(std::forward<QueryType>(query)),
             variant_(
                 [this] { return load_query<ProtoQueryListType>(*proto_); }),
-            blob_([this] { return make_blob(*proto_); }),
-            payload_([this] { return make_blob(proto_->payload()); }),
+            blob_([this] { return makeBlob(*proto_); }),
+            payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {
               SignatureSetType set;
               set.emplace(new Signature(proto_->signature()));

@@ -305,7 +305,7 @@ namespace shared_model {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
 
         auto answer = stateless_validator_.validate(
-            detail::make_polymorphic<Transaction>(transaction_));
+            detail::makePolymorphic<Transaction>(transaction_));
         if (answer.hasErrors()) {
           throw std::invalid_argument(answer.reason());
         }
