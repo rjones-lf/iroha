@@ -40,6 +40,7 @@ option(PACKAGE_DEB  "Create DEB package"             OFF)
 option(ENABLE_LIBS_PACKAGING "Enable libs packaging" ON)
 option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
 option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
+option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
@@ -57,6 +58,7 @@ message(STATUS "-DPACKAGE_DEB=${PACKAGE_DEB}")
 message(STATUS "-DENABLE_LIBS_PACKAGING=${ENABLE_LIBS_PACKAGING}")
 message(STATUS "-DSWIG_PYTHON=${SWIG_PYTHON}")
 message(STATUS "-DSWIG_JAVA=${SWIG_JAVA}")
+message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
