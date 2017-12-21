@@ -12,15 +12,14 @@ find_package_handle_standard_args(ed25519 DEFAULT_MSG
     )
 
 set(URL https://github.com/warchant/ed25519.git)
-set(VERSION 0d31b082e0f0d4144fe598fb0f2a120e36de2a8f)
+set(VERSION 56d926c4489aa7b2bb664a48294c5ee2d6e1c283)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
 if (NOT ed25519_FOUND)
   externalproject_add(warchant_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS
-        -DTESTING=OFF
+      CMAKE_ARGS     -DTESTING=OFF
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step
