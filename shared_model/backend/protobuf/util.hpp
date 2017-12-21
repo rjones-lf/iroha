@@ -27,7 +27,7 @@ namespace shared_model {
 
     template <typename T>
     crypto::Blob make_blob(T &message) {
-      crypto::Blob::bytes data;
+      crypto::Blob::Bytes data;
       data.resize(message.ByteSizeLong());
       message.SerializeToArray(data.data(), data.size());
       return crypto::Blob(std::move(data));
