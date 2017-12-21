@@ -38,18 +38,23 @@ namespace shared_model {
       /// Type of private key
       using PrivateKeyType = PrivateKey;
 
-      explicit Keypair(PublicKeyType public_key, PrivateKeyType private_key)
+      explicit Keypair(const PublicKeyType &public_key,
+                       const PrivateKeyType &private_key)
           : public_key_(public_key), private_key_(private_key) {}
 
       /**
        * @return public key
        */
-      const PublicKeyType &publicKey() const { return public_key_; };
+      const PublicKeyType &publicKey() const {
+        return public_key_;
+      };
 
       /**
        * @return private key
        */
-      const PrivateKeyType &privateKey() const { return private_key_; };
+      const PrivateKeyType &privateKey() const {
+        return private_key_;
+      };
 
       bool operator==(const Keypair &keypair) const override {
         return publicKey() == keypair.publicKey()

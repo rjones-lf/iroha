@@ -43,8 +43,8 @@ namespace iroha {
 
   /**
    * Convert string of raw bytes to printable hex string
-   * @param str
-   * @return
+   * @param str - raw bytes string to convert
+   * @return - converted hex string
    */
   inline std::string bytestringToHexstring(const std::string &str) {
     std::stringstream ss;
@@ -57,8 +57,9 @@ namespace iroha {
 
   /**
    * Convert printable hex string to string of raw bytes
-   * @param str
-   * @return
+   * @param str - hex string to convert
+   * @return - raw bytes converted string or nonstd::nullopt if provided string
+   * was not a correct hex string
    */
   inline nonstd::optional<std::string> hexstringToBytestring(
       const std::string &str) {
