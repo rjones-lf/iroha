@@ -29,6 +29,8 @@
 namespace shared_model {
   namespace crypto {
 
+    class Blob;
+    static inline std::string toBinaryString(const Blob &b);
     /**
      * Blob class present user-friendly blob for working with low-level
      * binary stuff. Its length is not fixed in compile time.
@@ -64,13 +66,6 @@ namespace shared_model {
       virtual const Bytes &blob() const { return blob_; }
 
       /**
-       * @return provides raw representation of blob as string
-       */
-      virtual const std::string str() const {
-        return std::string(blob_.begin(), blob_.end());
-      }
-
-      /**
        * @return provides human-readable representation of blob without leading
        * 0x
        */
@@ -104,7 +99,7 @@ namespace shared_model {
 
       template <typename BlobType>
       DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(str());
+        return BlobType::from_string(toBinaryString(*this));
       }
 
      private:
@@ -112,6 +107,10 @@ namespace shared_model {
       Bytes blob_;
       std::string hex_;
     };
+
+    static inline std::string toBinaryString(const Blob &b) {
+      return std::string(b.blob().begin(), b.blob().end());
+    }
   }  // namespace crypto
 }  // namespace shared_model
 #endif  // IROHA_SHARED_MODEL_BLOB_HPP

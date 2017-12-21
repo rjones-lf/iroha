@@ -70,8 +70,8 @@ TEST(ProtoQueryBuilder, Builder) {
       keypair);
 
   auto sig = proto_query.mutable_signature();
-  sig->set_pubkey(keypair.publicKey().str());
-  sig->set_signature(signedProto.str());
+  sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
+  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)

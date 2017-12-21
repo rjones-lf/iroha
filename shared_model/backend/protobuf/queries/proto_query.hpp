@@ -124,8 +124,8 @@ namespace shared_model {
         }
 
         auto sig = proto_->mutable_signature();
-        sig->set_pubkey(signature->publicKey().str());
-        sig->set_signature(signature->signedData().str());
+        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
+        sig->set_signature(crypto::toBinaryString(signature->signedData()));
         return true;
       }
 

@@ -24,7 +24,7 @@ namespace shared_model {
                           const Blob &orig,
                           const PublicKey &publicKey) {
       return iroha::verify(
-          orig.str(),
+          crypto::toBinaryString(orig),
           publicKey.makeOldModel<PublicKey::OldPublicKeyType>(),
           signedData.makeOldModel<Signed::OldSignatureType>());
     }
