@@ -49,7 +49,7 @@ TEST(commandsValidatorTest, EmptyTransactionTest) {
   tx.mutable_payload()->set_created_time(iroha::time::now());
   shared_model::validation::CommandsValidator commands_validator;
   auto answer = commands_validator.validate(
-      detail::make_polymorphic<proto::Transaction>(tx));
+      detail::makePolymorphic<proto::Transaction>(tx));
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
 }
 
@@ -96,9 +96,9 @@ TEST(CommandsValidatorTest, StatelessValidTest) {
   auto setEnum = setField(&google::protobuf::Reflection::SetEnumValue);
 
   // List all used fields in commands
-  std::unordered_map<std::string,
-                     std::function<void(
-                         const google::protobuf::Reflection *,
+  std::unordered_map<
+      std::string,
+      std::function<void(const google::protobuf::Reflection *,
                          google::protobuf::Message *,
                          const google::protobuf::FieldDescriptor *)>>
       field_setters;
@@ -156,7 +156,7 @@ TEST(CommandsValidatorTest, StatelessValidTest) {
 
   shared_model::validation::CommandsValidator commands_validator;
   auto answer = commands_validator.validate(
-      detail::make_polymorphic<proto::Transaction>(tx));
+      detail::makePolymorphic<proto::Transaction>(tx));
 
   ASSERT_FALSE(answer.hasErrors());
 }
@@ -186,7 +186,7 @@ TEST(CommandsValidatorTest, StatelessInvalidTest) {
 
   shared_model::validation::CommandsValidator commands_validator;
   auto answer = commands_validator.validate(
-      detail::make_polymorphic<proto::Transaction>(tx));
+      detail::makePolymorphic<proto::Transaction>(tx));
 
   // in total there should be number_of_commands + 1 reasons of bad answer:
   // number_of_commands for each command + 1 for transaction metadata
