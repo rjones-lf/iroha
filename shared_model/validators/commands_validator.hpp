@@ -265,8 +265,8 @@ namespace shared_model {
         void validatePeerAddress(
             ReasonsGroupType &reason,
             const interface::AddPeer::AddressType &address) const {
-          if (not(iroha::validator::is_valid_ipv4(address)
-                  or iroha::validator::is_valid_hostname(address))) {
+          if (not(iroha::validator::isValidIpV4(address)
+                  or iroha::validator::isValidHostname(address))) {
             reason.second.push_back("Wrongly formed PeerAddress: " + address);
           }
         }
