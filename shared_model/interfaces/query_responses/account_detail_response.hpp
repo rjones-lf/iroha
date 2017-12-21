@@ -18,7 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 
-#include <new>
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/base/primitive.hpp"
@@ -35,10 +34,12 @@ namespace shared_model {
           : public Primitive<AccountDetailResponse,
             iroha::model::AccountDetailResponse> {
         public:
+            /// Detail
+            using DetailType = std::string;
             /**
              * @return Account has Asset model
              */
-            virtual const std::string &detail() const = 0;
+            virtual const DetailType &detail() const = 0;
 
             /**
              * Stringify the data.
@@ -66,7 +67,6 @@ namespace shared_model {
              */
             OldModelType *makeOldModel() const override {
               OldModelType *oldModel = new OldModelType();
-              const auto vs = detail();
               oldModel->detail = detail();
               return oldModel;
             }

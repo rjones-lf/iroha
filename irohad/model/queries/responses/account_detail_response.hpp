@@ -18,7 +18,7 @@
 #ifndef IROHA_ACCOUNT_DETAIL_RESPONSE_HPP
 #define IROHA_ACCOUNT_DETAIL_RESPONSE_HPP
 
-#include <vector>
+#include <string>
 #include "model/query_response.hpp"
 
 namespace iroha {

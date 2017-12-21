@@ -23,6 +23,7 @@
 // ----------| queries |----------
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
+#include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -40,6 +41,7 @@ namespace iroha {
       QueryRegistry() {
         query_handler.register_type(typeid(GetAccount));
         query_handler.register_type(typeid(GetAccountAssets));
+        query_handler.register_type(typeid(GetAccountDetail));
         query_handler.register_type(typeid(GetSignatories));
         query_handler.register_type(typeid(GetAccountTransactions));
         query_handler.register_type(typeid(GetAccountAssetTransactions));
