@@ -35,21 +35,21 @@ namespace shared_model {
      */
     class Blob : public interface::ModelPrimitive<Blob> {
      public:
-      using bytes = std::vector<uint8_t>;
+      using Bytes = std::vector<uint8_t>;
 
       /**
        * Create blob from a string
        * @param blob - string to create blob from
        */
       explicit Blob(const std::string &blob)
-          : Blob(bytes(blob.begin(), blob.end())) {}
+          : Blob(Bytes(blob.begin(), blob.end())) {}
 
       /**
        * Create blob from a vector
        * @param blob - vector to create blob from
        */
-      explicit Blob(const bytes &blob) : Blob(bytes(blob)) {}
-      explicit Blob(bytes &&blob) : blob_(std::move(blob)) {
+      explicit Blob(const Bytes &blob) : Blob(Bytes(blob)) {}
+      explicit Blob(Bytes &&blob) : blob_(std::move(blob)) {
         std::stringstream ss;
         ss << std::hex << std::setfill('0');
         for (const auto &c : blob_) {
@@ -61,7 +61,7 @@ namespace shared_model {
       /**
        * @return provides raw representation of blob
        */
-      virtual const bytes &blob() const { return blob_; }
+      virtual const Bytes &blob() const { return blob_; }
 
       /**
        * @return provides raw representation of blob as string
@@ -109,7 +109,7 @@ namespace shared_model {
 
      private:
       // TODO: 17/11/2017 luckychess use improved Lazy with references support
-      bytes blob_;
+      Bytes blob_;
       std::string hex_;
     };
   }  // namespace crypto
