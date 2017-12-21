@@ -72,8 +72,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   bool validateAndExecute() {
     auto executor = factory->getCommandExecutor(command);
-    return executor->validate(*command, *wsv_query, creator)
-        and executor->execute(*command, *wsv_query, *wsv_command);
+    return executor->validate(*command, *wsv_query, creator.account_id)
+        and executor->execute(
+                *command, *wsv_query, *wsv_command, creator.account_id);
   }
 
   std::string admin_id = "admin@test", account_id = "test@test",
@@ -217,35 +218,35 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
 }
 
 class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
-public:
-    void SetUp() override {
-      CommandValidateExecuteTest::SetUp();
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
 
-      asset = Asset();
-      asset.asset_id = asset_id;
-      asset.domain_id = domain_id;
-      asset.precision = 2;
+    asset = Asset();
+    asset.asset_id = asset_id;
+    asset.domain_id = domain_id;
+    asset.precision = 2;
 
-      wallet = AccountAsset();
-      wallet.asset_id = asset_id;
-      wallet.account_id = account_id;
-      wallet.balance = balance;
+    wallet = AccountAsset();
+    wallet.asset_id = asset_id;
+    wallet.account_id = account_id;
+    wallet.balance = balance;
 
-      subtract_asset_quantity = std::make_shared<SubtractAssetQuantity>();
-      subtract_asset_quantity->account_id = creator.account_id;
-      Amount amount(100, 2);
-      subtract_asset_quantity->amount = amount;
-      subtract_asset_quantity->asset_id = asset_id;
+    subtract_asset_quantity = std::make_shared<SubtractAssetQuantity>();
+    subtract_asset_quantity->account_id = creator.account_id;
+    Amount amount(100, 2);
+    subtract_asset_quantity->amount = amount;
+    subtract_asset_quantity->asset_id = asset_id;
 
-      command = subtract_asset_quantity;
-      role_permissions = {can_subtract_asset_qty};
-    }
+    command = subtract_asset_quantity;
+    role_permissions = {can_subtract_asset_qty};
+  }
 
-    decltype(AccountAsset().balance) balance = Amount(150ul, 2);
-    Asset asset;
-    AccountAsset wallet;
+  decltype(AccountAsset().balance) balance = Amount(150ul, 2);
+  Asset asset;
+  AccountAsset wallet;
 
-    std::shared_ptr<SubtractAssetQuantity> subtract_asset_quantity;
+  std::shared_ptr<SubtractAssetQuantity> subtract_asset_quantity;
 };
 
 /**
@@ -257,14 +258,14 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
   // Subtract asset - no wallet
   // When there is no wallet - Failed
   EXPECT_CALL(*wsv_query,
-    getAccountAsset(subtract_asset_quantity->account_id,
-                    subtract_asset_quantity->asset_id))
-    .WillOnce(Return(nonstd::nullopt));
+              getAccountAsset(subtract_asset_quantity->account_id,
+                              subtract_asset_quantity->asset_id))
+      .WillOnce(Return(nonstd::nullopt));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
-    .WillOnce(Return(admin_roles));
+      .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-    .WillOnce(Return(role_permissions));
+      .WillOnce(Return(role_permissions));
   EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
   ASSERT_FALSE(validateAndExecute());
 }
@@ -278,8 +279,8 @@ TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
   // There is already asset- there is a wallet
   // When there is a wallet - no new accountAsset created
   EXPECT_CALL(*wsv_query,
-      getAccountAsset(subtract_asset_quantity->account_id,
-                      subtract_asset_quantity->asset_id))
+              getAccountAsset(subtract_asset_quantity->account_id,
+                              subtract_asset_quantity->asset_id))
       .WillOnce(Return(wallet));
 
   EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
@@ -300,8 +301,8 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
   Amount amount(1204, 2);
   subtract_asset_quantity->amount = amount;
   EXPECT_CALL(*wsv_query,
-    getAccountAsset(subtract_asset_quantity->account_id,
-                    subtract_asset_quantity->asset_id))
+              getAccountAsset(subtract_asset_quantity->account_id,
+                              subtract_asset_quantity->asset_id))
       .WillOnce(Return(wallet));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->account_id))
@@ -336,9 +337,9 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenZeroAmount) {
   subtract_asset_quantity->amount = amount;
   EXPECT_CALL(*wsv_query, getAsset(asset.asset_id)).WillOnce(Return(asset));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator.account_id))
-    .WillOnce(Return(admin_roles));
+      .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-    .WillOnce(Return(role_permissions));
+      .WillOnce(Return(role_permissions));
   ASSERT_FALSE(validateAndExecute());
 }
 
@@ -1109,8 +1110,12 @@ TEST_F(CreateRoleTest, ValidCase) {
       .WillRepeatedly(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillRepeatedly(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertRole(_)).WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, insertRolePermissions(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command, insertRole(create_role->role_name))
+      .WillOnce(Return(true));
+  EXPECT_CALL(
+      *wsv_command,
+      insertRolePermissions(create_role->role_name, create_role->permissions))
+      .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
 
@@ -1164,7 +1169,10 @@ TEST_F(AppendRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions("master"))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*wsv_command, insertAccountRole(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(
+      *wsv_command,
+      insertAccountRole(exact_command->account_id, exact_command->role_name))
+      .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
 
@@ -1192,7 +1200,10 @@ TEST_F(DetachRoleTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, deleteAccountRole(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountRole(exact_command->account_id, exact_command->role_name))
+      .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
 
@@ -1220,7 +1231,10 @@ TEST_F(GrantPermissionTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertAccountGrantablePermission(_, _, _))
+  EXPECT_CALL(*wsv_command,
+              insertAccountGrantablePermission(exact_command->account_id,
+                                               creator.account_id,
+                                               exact_command->permission_name))
       .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
@@ -1249,7 +1263,10 @@ TEST_F(RevokePermissionTest, ValidCase) {
       hasAccountGrantablePermission(
           exact_command->account_id, admin_id, exact_command->permission_name))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, deleteAccountGrantablePermission(_, _, _))
+  EXPECT_CALL(*wsv_command,
+              deleteAccountGrantablePermission(exact_command->account_id,
+                                               creator.account_id,
+                                               exact_command->permission_name))
       .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
@@ -1282,8 +1299,11 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
  * @when creator is setting details to their account
  * @then successfully execute the command
  */
-TEST_F(SetAccountDetailTest, ValidWhenCreatorHasPermissions) {
-  EXPECT_CALL(*wsv_command, setAccountKV(_, _, _, _)).WillOnce(Return(true));
+TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
+  EXPECT_CALL(
+      *wsv_command,
+      setAccountKV(cmd->account_id, creator.account_id, cmd->key, cmd->value))
+      .WillOnce(Return(true));
   ASSERT_TRUE(validateAndExecute());
 }
 
@@ -1298,4 +1318,21 @@ TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
                   admin_id, cmd->account_id, needed_permission))
       .WillOnce(Return(false));
   ASSERT_FALSE(validateAndExecute());
+}
+
+/**
+ * @when creator is setting details to their account
+ * @then successfully execute the command
+ */
+TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
+  cmd->account_id = account_id;
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, cmd->account_id, needed_permission))
+      .WillOnce(Return(true));
+  EXPECT_CALL(
+      *wsv_command,
+      setAccountKV(cmd->account_id, creator.account_id, cmd->key, cmd->value))
+      .WillOnce(Return(true));
+  ASSERT_TRUE(validateAndExecute());
 }
