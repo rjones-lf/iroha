@@ -20,7 +20,6 @@ add_library(stateful_validator
     )
 target_link_libraries(stateful_validator
     optional
-    cryptography
     rxcpp
     model
     logger
@@ -38,7 +37,6 @@ add_library(chain_validator
     impl/chain_validator_impl.cpp)
 target_link_libraries(chain_validator
     optional
-    cryptography
     rxcpp
     model
     logger

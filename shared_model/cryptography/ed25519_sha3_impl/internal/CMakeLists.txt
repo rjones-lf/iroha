@@ -19,7 +19,7 @@ add_library(hash
         sha3_hash.cpp
         )
 
-target_link_libraries(hash PUBLIC
+target_link_libraries(hash
         common
         pb_model_converters
         ed25519
