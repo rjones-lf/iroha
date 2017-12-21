@@ -32,7 +32,7 @@ namespace parser {
    * @param s
    * @return
    */
-  bool isIntNumber(const std::string& s);
+  bool isIntNumber(const std::string &s);
 
   /**
    * Parse the first command in the line
@@ -51,7 +51,7 @@ namespace parser {
   template <typename T>
   nonstd::optional<T> parseValue(std::string word) {
     std::stringstream ss(word);
-    if (not isIntNumber(word)){
+    if (not isIntNumber(word)) {
       return nonstd::nullopt;
     }
     T val;
@@ -60,6 +60,21 @@ namespace parser {
     } else {
       return nonstd::nullopt;
     }
+  }
+
+  template <typename Out>
+  void split(const std::string &s, char delim, Out result) {
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+      *(result++) = item;
+    }
+  }
+
+  std::vector<std::string> split(const std::string &s, char delim) {
+    std::vector<std::string> elems;
+    split(s, delim, std::back_inserter(elems));
+    return elems;
   }
 
 }  // namespace parser
