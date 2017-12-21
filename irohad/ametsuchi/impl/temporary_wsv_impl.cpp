@@ -17,8 +17,8 @@
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
-#include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
+#include "ametsuchi/impl/postgres_wsv_query.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -40,14 +40,17 @@ namespace iroha {
       auto execute_command = [this, transaction](auto command) {
         auto executor = command_executors_->getCommandExecutor(command);
         auto account = wsv_->getAccount(transaction.creator_account_id).value();
-        return executor->validate(*command, *wsv_, account) &&
-            executor->execute(*command, *wsv_, *executor_);
+        return executor->validate(
+                   *command, *wsv_, transaction.creator_account_id)
+            && executor->execute(
+                   *command, *wsv_, *executor_, transaction.creator_account_id);
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result = function(transaction, *wsv_) &&
-          std::all_of(transaction.commands.begin(),
-                      transaction.commands.end(), execute_command);
+      auto result = function(transaction, *wsv_)
+          && std::all_of(transaction.commands.begin(),
+                         transaction.commands.end(),
+                         execute_command);
       if (result) {
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
@@ -56,6 +59,8 @@ namespace iroha {
       return result;
     }
 
-    TemporaryWsvImpl::~TemporaryWsvImpl() { transaction_->exec("ROLLBACK;"); }
+    TemporaryWsvImpl::~TemporaryWsvImpl() {
+      transaction_->exec("ROLLBACK;");
+    }
   }  // namespace ametsuchi
 }  // namespace iroha
