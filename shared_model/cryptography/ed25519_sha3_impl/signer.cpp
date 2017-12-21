@@ -23,7 +23,7 @@ namespace shared_model {
     Signed Signer::sign(const Blob &blob, const Keypair &keypair) {
       return Signed(
           iroha::sign(
-              blob.str(),
+              crypto::toBinaryString(blob),
               keypair.publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
               keypair.privateKey()
                   .makeOldModel<PrivateKey::OldPrivateKeyType>())

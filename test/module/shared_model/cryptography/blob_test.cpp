@@ -41,12 +41,12 @@ TEST(BlobTest, HexConversionTest) {
  */
 TEST(BlobTest, BlobIsString) {
   Blob blob(data);
-  auto str = blob.str();
+  auto bin_str = toBinaryString(blob);
   auto binary = blob.blob();
   size_t sz = binary.size();
 
-  ASSERT_EQ(str.size(), sz);
+  ASSERT_EQ(bin_str.size(), sz);
   for (size_t i = 0; i < sz; ++i) {
-    ASSERT_EQ(binary[i], str[i]);
+    ASSERT_EQ(binary[i], bin_str[i]);
   }
 }

@@ -124,7 +124,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_peer();
           command->set_address(address);
-          command->set_peer_key(peer_key.str());
+          command->set_peer_key(crypto::toBinaryString(peer_key));
         });
       }
 
@@ -133,7 +133,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_signatory();
           command->set_account_id(account_id);
-          command->set_public_key(public_key.str());
+          command->set_public_key(crypto::toBinaryString(public_key));
         });
       }
 
@@ -143,7 +143,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_remove_sign();
           command->set_account_id(account_id);
-          command->set_public_key(public_key.str());
+          command->set_public_key(crypto::toBinaryString(public_key));
         });
       }
 
@@ -175,7 +175,7 @@ namespace shared_model {
           auto command = proto_command->mutable_create_account();
           command->set_account_name(account_name);
           command->set_domain_id(domain_id);
-          command->set_main_pubkey(main_pubkey.str());
+          command->set_main_pubkey(crypto::toBinaryString(main_pubkey));
         });
       }
 

@@ -94,8 +94,8 @@ TEST(ProtoTransaction, Builder) {
       keypair);
 
   auto sig = proto_tx.add_signature();
-  sig->set_pubkey(keypair.publicKey().str());
-  sig->set_signature(signedProto.str());
+  sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
+  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto tx = shared_model::proto::TransactionBuilder()
                 .txCounter(tx_counter)

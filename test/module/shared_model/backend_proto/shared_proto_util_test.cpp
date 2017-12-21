@@ -22,6 +22,7 @@
 
 using namespace iroha;
 using namespace shared_model::proto;
+using shared_model::crypto::toBinaryString;
 
 /**
  * @given some protobuf object
@@ -33,6 +34,6 @@ TEST(UtilTest, StringFromMakeBlob) {
   base.set_created_time(100);
   auto blob = make_blob(base);
 
-  ASSERT_TRUE(deserialized.ParseFromString(blob.str()));
+  ASSERT_TRUE(deserialized.ParseFromString(toBinaryString(blob)));
   ASSERT_EQ(deserialized.created_time(), base.created_time());
 }

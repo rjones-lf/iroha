@@ -92,8 +92,8 @@ namespace shared_model {
           return false;
         }
         auto sig = proto_->add_signature();
-        sig->set_pubkey(signature->publicKey().str());
-        sig->set_signature(signature->signedData().str());
+        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
+        sig->set_signature(crypto::toBinaryString(signature->signedData()));
         signatures_.invalidate();
         return true;
       }
