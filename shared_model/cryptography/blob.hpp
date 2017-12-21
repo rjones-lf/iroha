@@ -60,7 +60,8 @@ namespace shared_model {
       /**
        * Creates new Blob object from provided hex string
        * @param hex - string in hex format to create Blob from
-       * @return created Blob object
+       * @return Blob from provided hex string if it was correct or
+       * Blob from empty string if provided string was not a correct hex string
        */
       static Blob fromHexString(const std::string &hex) {
         using iroha::operator|;
