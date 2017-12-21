@@ -97,6 +97,16 @@ namespace shared_model {
         return *this;
       }
 
+      NextBuilder<QueryField> getAccountDetail(
+        const interface::types::AccountIdType &account_id,
+        const interface::types::DetailType &detail) {
+        auto query =
+          query_.mutable_payload()->mutable_get_account_detail();
+        query->set_account_id(account_id);
+        query->set_detail(detail);
+        return *this;
+      }
+
       NextBuilder<QueryField> getAccountAssets(
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id) {

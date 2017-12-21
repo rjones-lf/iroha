@@ -105,9 +105,9 @@ TEST(QueryResponseTest, AccountDetailResponse) {
   model::AccountDetailResponse account_detail_response;
   account_detail_response.detail = detail;
 
-  auto shrd_aar = std::make_shared<decltype(account_detail_response)>(
+  auto shrd_acc_detail_res = std::make_shared<decltype(account_detail_response)>(
     account_detail_response);
-  auto query_response = *pb_factory.serialize(shrd_aar);
+  auto query_response = *pb_factory.serialize(shrd_acc_detail_res);
 
   auto des_account_detail_response = pb_factory.deserializeAccountDetailResponse(
     query_response.account_detail_response());
