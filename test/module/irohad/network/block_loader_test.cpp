@@ -47,7 +47,7 @@ class BlockLoaderTest : public testing::Test {
 
     grpc::ServerBuilder builder;
     int port = 0;
-    builder.AddListeningPort(address, grpc::InsecureServerCredentials(),
+    builder.AddListeningPort("0.0.0.0:0", grpc::InsecureServerCredentials(),
                              &port);
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
@@ -60,7 +60,6 @@ class BlockLoaderTest : public testing::Test {
     ASSERT_NE(port, 0);
   }
 
-  std::string address{"0.0.0.0:0"};
   Peer peer;
   std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
