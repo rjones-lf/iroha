@@ -72,16 +72,21 @@ namespace iroha {
     const std::string can_get_domain_acc_ast_txs =
         "CanGetDomainAccountAssetsTransactions";
 
+    const std::string can_get_my_txs = "CanGetMyTransactions";
+    const std::string can_get_all_txs = "CanGetAllTransactions";
+
     const std::set<std::string> read_self_group = {can_get_my_account,
-                                                   can_get_my_acc_txs,
                                                    can_get_my_acc_ast,
+                                                   can_get_my_acc_txs,
                                                    can_get_my_acc_ast_txs,
+                                                   can_get_my_txs,
                                                    can_get_my_signatories};
 
     const std::set<std::string> read_all_group = {can_get_all_accounts,
-                                                  can_get_all_acc_txs,
                                                   can_get_all_acc_ast,
+                                                  can_get_all_acc_txs,
                                                   can_get_all_acc_ast_txs,
+                                                  can_get_all_txs,
                                                   can_get_all_signatories,
                                                   can_get_roles,
                                                   can_read_assets};
@@ -109,15 +114,17 @@ namespace iroha {
 
     const std::set<std::string> all_perm_group = {
         can_get_my_account,
-        can_get_my_acc_txs,
         can_get_my_acc_ast,
         can_get_my_acc_detail,
+        can_get_my_acc_txs,
         can_get_my_acc_ast_txs,
+        can_get_my_txs,
         can_get_my_signatories,
         can_get_all_accounts,
-        can_get_all_acc_txs,
         can_get_all_acc_ast,
+        can_get_all_acc_txs,
         can_get_all_acc_ast_txs,
+        can_get_all_txs,
         can_get_all_signatories,
         can_get_roles,
         can_read_assets,
