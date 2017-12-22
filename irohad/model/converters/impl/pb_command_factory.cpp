@@ -43,6 +43,10 @@ namespace iroha {
             // Can get all account asset transactions
             (protocol::RolePermission::can_get_all_acc_ast_txs,
              can_get_all_acc_ast_txs)
+            // Can get my transactions
+            (protocol::RolePermission::can_get_my_txs, can_get_my_txs)
+            // Can get all transactions
+            (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
             // Can Get all account transactions
             (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
             // Can get all account
