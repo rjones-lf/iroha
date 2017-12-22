@@ -38,6 +38,7 @@ AddTest(blob_test
     )
 target_link_libraries(blob_test
     boost
+    optional
     )
 
 AddTest(reference_holder_test
