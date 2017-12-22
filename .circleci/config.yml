@@ -281,8 +281,8 @@ jobs:
             - ~/.ccache
       - restore_cache:
           keys:
-            - external-{{ arch }}-{{ .Branch }}
-            - external-{{ arch }}
+            - v0-external-{{ arch }}-{{ .Branch }}
+            - v0-external-{{ arch }}
           paths:
             - external
       - run:
@@ -315,7 +315,7 @@ jobs:
           paths:
             - ~/.ccache
       - save_cache:
-          key: external-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v0-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - external
       - run: ccache --show-stats
