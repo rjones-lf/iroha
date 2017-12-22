@@ -18,12 +18,9 @@
 #ifndef IROHA_BYTEUTILS_H
 #define IROHA_BYTEUTILS_H
 
-#include <string>
-
+#include <algorithm>
 #include <nonstd/optional.hpp>
-
-#include "crypto/base64.hpp"
-
+#include <string>
 #include "common/types.hpp"
 
 namespace iroha {
@@ -34,7 +31,7 @@ namespace iroha {
    * @param s - string to convert
    * @return blob, if conversion was successful, otherwise nullopt
    */
-  template<size_t size>
+  template <size_t size>
   nonstd::optional<blob_t<size>> stringToBlob(const std::string &string) {
     if (size != string.size()) {
       return nonstd::nullopt;
@@ -42,6 +39,45 @@ namespace iroha {
     blob_t<size> array;
     std::copy(string.begin(), string.end(), array.begin());
     return array;
+  }
+
+  /**
+   * Convert string of raw bytes to printable hex string
+   * @param str - raw bytes string to convert
+   * @return - converted hex string
+   */
+  inline std::string bytestringToHexstring(const std::string &str) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (const auto &c : str) {
+      ss << std::setw(2) << (static_cast<int>(c) & 0xff);
+    }
+    return ss.str();
+  }
+
+  /**
+   * Convert printable hex string to string of raw bytes
+   * @param str - hex string to convert
+   * @return - raw bytes converted string or nonstd::nullopt if provided string
+   * was not a correct hex string
+   */
+  inline nonstd::optional<std::string> hexstringToBytestring(
+      const std::string &str) {
+    if (str.empty() or str.size() % 2 != 0) {
+      return nonstd::nullopt;
+    }
+    std::string result(str.size() / 2, 0);
+    for (size_t i = 0; i < result.length(); ++i) {
+      std::string byte = str.substr(i * 2, 2);
+      try {
+        result.at(i) = std::stoul(byte, nullptr, 16);
+      } catch (const std::invalid_argument &e) {
+        return nonstd::nullopt;
+      } catch (const std::out_of_range &e) {
+        return nonstd::nullopt;
+      }
+    }
+    return result;
   }
 
   /**
@@ -54,6 +90,7 @@ namespace iroha {
   nonstd::optional<blob_t<size>> hexstringToArray(const std::string &string) {
     return hexstringToBytestring(string) | stringToBlob<size>;
   }
-}
+
+}  // namespace iroha
 
 #endif  // IROHA_BYTEUTILS_H

@@ -21,7 +21,9 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include "common/byteutils.hpp"
 #include "interfaces/base/model_primitive.hpp"
+#include "utils/swig_keyword_hider.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/swig_keyword_hider.hpp"
@@ -52,12 +54,20 @@ namespace shared_model {
        */
       explicit Blob(const Bytes &blob) : Blob(Bytes(blob)) {}
       explicit Blob(Bytes &&blob) : blob_(std::move(blob)) {
-        std::stringstream ss;
-        ss << std::hex << std::setfill('0');
-        for (const auto &c : blob_) {
-          ss << std::setw(2) << (static_cast<int>(c) & 0xff);
-        }
-        hex_ = ss.str();
+        hex_ = iroha::bytestringToHexstring(toBinaryString(*this));
+      }
+
+      /**
+       * Creates new Blob object from provided hex string
+       * @param hex - string in hex format to create Blob from
+       * @return Blob from provided hex string if it was correct or
+       * Blob from empty string if provided string was not a correct hex string
+       */
+      static Blob fromHexString(const std::string &hex) {
+        using iroha::operator|;
+        Blob b("");
+        iroha::hexstringToBytestring(hex) | [&](auto &&s){b = Blob(s);};
+        return b;
       }
 
       /**

@@ -17,12 +17,36 @@
 
 #include "bindings/model_crypto.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
+#include "generator/generator.hpp"
 
 namespace shared_model {
   namespace bindings {
     crypto::Keypair ModelCrypto::generateKeypair() {
-      // TODO: 06.12.2017 luckychess create keypair generation interface IR-684
       return crypto::CryptoProviderEd25519Sha3::generateKeypair();
+    }
+
+    crypto::Keypair ModelCrypto::generateKeypair(const std::string &seed) {
+      return crypto::CryptoProviderEd25519Sha3::generateKeypair(
+          crypto::Seed(seed));
+    }
+
+    crypto::Keypair ModelCrypto::convertFromExisting(
+        const std::string &public_key, const std::string &private_key) {
+      crypto::Keypair keypair((crypto::Keypair::PublicKeyType(
+                                  crypto::Blob::fromHexString(public_key))),
+                              crypto::Keypair::PrivateKeyType(
+                                  crypto::Blob::fromHexString(private_key)));
+
+      auto rand_str = generator::randomString(32);
+      if (not crypto::CryptoProviderEd25519Sha3::verify(
+              crypto::CryptoProviderEd25519Sha3::sign(crypto::Blob(rand_str),
+                                                      keypair),
+              crypto::Blob(rand_str),
+              keypair.publicKey())) {
+        throw std::invalid_argument("Provided keypair is not correct");
+      }
+
+      return keypair;
     }
   }  // namespace bindings
 }  // namespace shared_model
