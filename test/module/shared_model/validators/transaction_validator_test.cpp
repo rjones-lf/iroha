@@ -21,7 +21,7 @@
 #include "utils/polymorphic_wrapper.hpp"
 
 
-class CommandsValidatorTest : public ::testing::Test {
+class TransactionValidatorTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
     valid_created_time = iroha::time::now();
@@ -68,11 +68,11 @@ using namespace shared_model;
  * @when commands validator is invoked
  * @then answer has error about empty transaction
  */
-TEST_F(CommandsValidatorTest, EmptyTransactionTest) {
+TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
   tx.mutable_payload()->set_created_time(iroha::time::now());
-  shared_model::validation::CommandsValidator commands_validator;
-  auto answer = commands_validator.validate(
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  auto answer = transaction_validator.validate(
       detail::makePolymorphic<proto::Transaction>(tx));
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
 }
@@ -82,7 +82,7 @@ TEST_F(CommandsValidatorTest, EmptyTransactionTest) {
  * @when commands validation is invoked
  * @then answer has no errors
  */
-TEST_F(CommandsValidatorTest, StatelessValidTest) {
+TEST_F(TransactionValidatorTest, StatelessValidTest) {
   // Valid values for fields in commands
   std::string valid_account_id = "account@domain";
   std::string valid_asset_id = "asset#domain";
@@ -178,8 +178,8 @@ TEST_F(CommandsValidatorTest, StatelessValidTest) {
     });
   });
 
-  shared_model::validation::CommandsValidator commands_validator;
-  auto answer = commands_validator.validate(
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  auto answer = transaction_validator.validate(
       detail::makePolymorphic<proto::Transaction>(tx));
 
   ASSERT_FALSE(answer.hasErrors());
@@ -191,7 +191,7 @@ TEST_F(CommandsValidatorTest, StatelessValidTest) {
  * @then answer has errors and number of errors in answer is the same as the
  * number of commands in tx
  */
-TEST_F(CommandsValidatorTest, StatelessInvalidTest) {
+TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
   iroha::protocol::Transaction tx = generateEmptyTransaction();
   auto payload = tx.mutable_payload();
 
@@ -211,8 +211,8 @@ TEST_F(CommandsValidatorTest, StatelessInvalidTest) {
     // Note that no fields are set
   });
 
-  shared_model::validation::CommandsValidator commands_validator;
-  auto answer = commands_validator.validate(
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  auto answer = transaction_validator.validate(
       detail::makePolymorphic<proto::Transaction>(tx));
 
   // in total there should be number_of_commands + 1 reasons of bad answer:

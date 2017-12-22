@@ -30,7 +30,7 @@
 namespace shared_model {
   namespace proto {
 
-    template <int S = 0, typename SV = validation::DefaultValidator>
+    template <int S = 0, typename SV = validation::DefaultQueryValidator>
     class TemplateQueryBuilder {
      private:
       template <int, typename>
@@ -189,6 +189,11 @@ namespace shared_model {
 
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
+        auto answer = stateless_validator_.validate(
+            detail::makePolymorphic<Query>(query_));
+        if (answer.hasErrors()) {
+          throw std::invalid_argument(answer.reason());
+        }
         return UnsignedWrapper<Query>(Query(iroha::protocol::Query(query_)));
       }
 
@@ -202,4 +207,5 @@ namespace shared_model {
     using QueryBuilder = TemplateQueryBuilder<>;
   }  // namespace proto
 }  // namespace shared_model
+
 #endif  // IROHA_PROTO_QUERY_BUILDER_HPP
