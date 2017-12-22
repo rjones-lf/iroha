@@ -15,15 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_DEFAULT_VALIDATOR_HPP
-#define IROHA_DEFAULT_VALIDATOR_HPP
+#ifndef IROHA_SHARED_MODEL_DEFAULT_VALIDATOR_HPP
+#define IROHA_SHARED_MODEL_DEFAULT_VALIDATOR_HPP
 
-#include "validators/commands_validator.hpp"
+#include "validators/field_validator.hpp"
+#include "validators/query_validator.hpp"
+#include "validators/transaction_validator.hpp"
 
 namespace shared_model {
   namespace validation {
-    using DefaultValidator = CommandsValidator;
-  }
+    using DefaultTransactionValidator =
+        TransactionValidator<FieldValidator,
+                             CommandValidatorVisitor<FieldValidator>>;
+    using DefaultQueryValidator =
+        QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
+  }  // namespace validation
 }  // namespace shared_model
 
-#endif  // IROHA_DEFAULT_VALIDATOR_HPP
+#endif  // IROHA_SHARED_MODEL_DEFAULT_VALIDATOR_HPP
