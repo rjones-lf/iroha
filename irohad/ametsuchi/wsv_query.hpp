@@ -102,6 +102,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
+       // do nothing
       virtual nonstd::optional<std::vector<pubkey_t>> getSignatories(
           const std::string &account_id) = 0;
 
