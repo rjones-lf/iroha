@@ -230,7 +230,7 @@ namespace iroha {
         ametsuchi::WsvCommand &commands,
         const std::string &creator_account_id) {
       if (creator_account_id.empty()) {
-        log_->error("Creator account is empty");
+        log_->info("Creator account is empty");
         return false;
       }
       auto cmd_value = static_cast<const RevokePermission &>(command);
@@ -717,7 +717,7 @@ namespace iroha {
 
       auto account = queries.getAccount(set_quorum.account_id);
       if (not account.has_value()) {
-        log_->error("absent account {}", set_quorum.account_id);
+        log_->info("absent account {}", set_quorum.account_id);
         return false;
       }
       account.value().quorum = set_quorum.new_quorum;
