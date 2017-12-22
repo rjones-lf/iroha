@@ -43,7 +43,7 @@ namespace generator {
    * @param len - size of string to generate
    * @return generated string
    */
-  std::string randomString(int len);
+  std::string randomString(size_t len);
 
 }  // namespace generator
 
