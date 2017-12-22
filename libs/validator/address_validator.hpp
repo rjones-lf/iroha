@@ -18,20 +18,18 @@
 #ifndef IROHA_ADDRESS_VALIDATOR_HPP
 #define IROHA_ADDRESS_VALIDATOR_HPP
 
-#include <boost/algorithm/string.hpp>
 #include <regex>
 #include <string>
 
 namespace iroha {
   namespace validator {
-
     /**
      * validates ip v4 address ending with port number
      * @param address
      * @return true if address is valid
      */
     bool isValidIpV4(const std::string &address) {
-      std::regex valid_ipv4(
+      static const std::regex valid_ipv4(
           R"#((^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3})#"
           R"#(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])):)#"
           R"#((6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$))#");
@@ -44,50 +42,18 @@ namespace iroha {
      * 1. start with label containing at least one letter
      * 2. every label should be split by dots
      * 3. label may contain letters, numbers and dashes
-     * 4. address may contain single label without dots (i.e. localhost:8080)
+     * 4. address may contain single label without dots (i.e.
+     * localhost:8080)
      * 5. labels should not have more than 63 characters length
      * @param address
      * @return true if address is valid
      */
     bool isValidHostname(const std::string &address) {
-      std::vector<std::string> domain_and_port;
-      boost::split(domain_and_port, address, boost::is_any_of(":"));
-
-      if (domain_and_port.size() != 2) {
-        return false;
-      }
-
-      // domain is first element
-      auto domain = domain_and_port.at(0);
-      if (domain.length() > 255) {
-        return false;
-      }
-
-      // get vector of labels
-      std::vector<std::string> labels;
-      boost::split(labels, domain, boost::is_any_of("."));
-      if (labels.empty()) {
-        return false;
-      }
-
-      std::regex valid_label_regex(
-          R"#(([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]+|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9]))#");
-      // check if all labels are valid using valid_label_regex and checking
-      // label size
-      if (not std::all_of(
-              labels.begin(), labels.end(), [&valid_label_regex](auto label) {
-                return label.size() < 64
-                    && std::regex_match(label, valid_label_regex);
-              })) {
-        return false;
-      }
-
-      // get port
-      auto port = domain_and_port.at(1);
-
-      std::regex valid_port_regex(
-          R"#(^(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$)#");
-      return std::regex_match(port, valid_port_regex);
+      static const std::regex valid_hostname(
+          R"#((([a-zA-Z0-9][a-zA-Z]{1,61}[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*)#"
+          R"#(([a-zA-Z0-9][a-zA-Z]{1,61}[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]):)#"
+          R"#((6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0))#");
+      return std::regex_match(address, valid_hostname);
     }
 
   }  // namespace validator
