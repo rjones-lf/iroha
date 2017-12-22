@@ -72,11 +72,19 @@ TEST(AddressValidatorTest, InvalidHostnameTest) {
       "-startWithDash:65535",
       "@.is.not.allowed:8080",
       "no space is allowed:80",
+      "too.big.port:65536",
       "some\u2063host:123",
       "endWith-:909",
       "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters:9090",
+      // 256 character domain
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256",
       "",
-      ":6565"};
+      ":6565",
+      "::6565:"
+  };
   for (std::string invalid_address : invalid_addresses) {
     ASSERT_FALSE(iroha::validator::isValidHostname(invalid_address));
   }

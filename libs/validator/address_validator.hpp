@@ -18,10 +18,9 @@
 #ifndef IROHA_ADDRESS_VALIDATOR_HPP
 #define IROHA_ADDRESS_VALIDATOR_HPP
 
-#include <iostream>
+#include <boost/algorithm/string.hpp>
 #include <regex>
 #include <string>
-#include "parser/parser.hpp"
 
 namespace iroha {
   namespace validator {
@@ -51,32 +50,40 @@ namespace iroha {
      * @return true if address is valid
      */
     bool isValidHostname(const std::string &address) {
-      // get domain and port
-      auto domain_and_port = ::parser::split(address, ':');
-      // should have exactly two parts: labels and port
+      std::vector<std::string> domain_and_port;
+      boost::split(domain_and_port, address, boost::is_any_of(":"));
+
       if (domain_and_port.size() != 2) {
         return false;
       }
 
-      auto labels = ::parser::split(domain_and_port[0], '.');
-      // should have at least one label
+      // domain is first element
+      auto domain = domain_and_port.at(0);
+      if (domain.length() > 255) {
+        return false;
+      }
+
+      // get vector of labels
+      std::vector<std::string> labels;
+      boost::split(labels, domain, boost::is_any_of("."));
       if (labels.empty()) {
         return false;
       }
 
       std::regex valid_label_regex(
-          R"#((([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]+|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])))#");
-      // check if all labels are valid using valid_label_regex
+          R"#(([a-zA-Z0-9]*[a-zA-Z]+[a-zA-Z0-9]+|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9]))#");
+      // check if all labels are valid using valid_label_regex and checking
+      // label size
       if (not std::all_of(
-              labels.begin(), labels.end(), [valid_label_regex](auto label) {
+              labels.begin(), labels.end(), [&valid_label_regex](auto label) {
                 return label.size() < 64
                     && std::regex_match(label, valid_label_regex);
               })) {
         return false;
       }
-      std::cout << "here" << std::endl;
+
       // get port
-      auto port = domain_and_port[1];
+      auto port = domain_and_port.at(1);
 
       std::regex valid_port_regex(
           R"#(^(6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$)#");
