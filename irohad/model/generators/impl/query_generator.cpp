@@ -72,7 +72,7 @@ namespace iroha {
       }
 
 
-        std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
+      std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
           ts64_t timestamp, std::string creator, uint64_t query_counter,
           std::string account_id) {
         auto query = std::make_shared<GetSignatories>();

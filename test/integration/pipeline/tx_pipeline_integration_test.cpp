@@ -15,16 +15,13 @@
  * limitations under the License.
  */
 
-#include <responses.pb.h>
+#include "responses.pb.h"
 #include "datetime/time.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include "model/generators/query_generator.hpp"
 
-using iroha::model::generators::CommandGenerator;
-using iroha::model::generators::QueryGenerator;
-using iroha::model::generators::TransactionGenerator;
-using iroha::model::converters::PbTransactionFactory;
-using iroha::model::converters::PbQueryFactory;
+using namespace iroha::model::generators;
+using namespace iroha::model::converters;
 
 // TODO: refactor services to allow dynamic port binding IR-741
 class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
@@ -136,7 +133,7 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
 
   iroha::protocol::QueryResponse response;
   irohad->getQueryService()->FindAsync(pb_query.value(), response);
-  ASSERT_FALSE(response.transactions_response().transactions().empty());
+  ASSERT_EQ(1, response.transactions_response().transactions().size());
   const auto got_pb_tx = response.transactions_response().transactions()[0];
   ASSERT_EQ(given_tx, *PbTransactionFactory{}.deserialize(got_pb_tx));
 }
