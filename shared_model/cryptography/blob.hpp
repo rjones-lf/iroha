@@ -54,7 +54,7 @@ namespace shared_model {
        */
       explicit Blob(const Bytes &blob) : Blob(Bytes(blob)) {}
       explicit Blob(Bytes &&blob) : blob_(std::move(blob)) {
-        hex_ = iroha::bytestringToHexstring(blob_);
+        hex_ = iroha::bytestringToHexstring(toBinaryString(*this));
       }
 
       /**
