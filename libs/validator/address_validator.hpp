@@ -28,7 +28,7 @@ namespace iroha {
      * @param address
      * @return true if address is valid
      */
-    bool isValidIpV4(const std::string &address) {
+    inline bool isValidIpV4(const std::string &address) {
       static const std::regex valid_ipv4(
           R"#((^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3})#"
           R"#(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])):)#"
@@ -48,7 +48,7 @@ namespace iroha {
      * @param address
      * @return true if address is valid
      */
-    bool isValidHostname(const std::string &address) {
+    inline bool isValidHostname(const std::string &address) {
       static const std::regex valid_hostname(
           R"#((([a-zA-Z0-9][a-zA-Z]{1,61}[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])\.)*)#"
           R"#(([a-zA-Z0-9][a-zA-Z]{1,61}[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]):)#"
