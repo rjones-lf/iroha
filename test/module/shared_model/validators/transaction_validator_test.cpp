@@ -112,7 +112,7 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
                      return command->GetReflection()->MutableMessage(command,
                                                                      field);
                    },
-                   [this](auto, auto) {
+                   [](auto, auto) {
                      // Note that no fields are set
                    },
                    [] {});
