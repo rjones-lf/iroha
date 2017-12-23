@@ -34,7 +34,7 @@
 namespace shared_model {
   namespace proto {
 
-    template <int S = 0, typename SV = validation::DefaultValidator>
+    template <int S = 0, typename SV = validation::DefaultTransactionValidator>
     class TemplateTransactionBuilder {
      private:
       template <int, typename>

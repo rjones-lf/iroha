@@ -79,6 +79,21 @@ namespace shared_model {
 
     /**
      * Create lambda which will return reference to value returned by function f
+     * lvalue reference specialization
+     * @tparam T object type
+     * @tparam F pointer to member function type
+     * @param t object to invoke method on
+     * @param f method to be invoked
+     * @return specified lambda
+     */
+    template <typename T, typename F>
+    auto makeReferenceGenerator(T &t, F &&f) {
+      return [&t, f]() -> decltype(auto) { return ((*t.*f)()); };
+    }
+
+    /**
+     * Create lambda which will return reference to value returned by function f
+     * rvalue reference specialization
      * @tparam T object type
      * @tparam F pointer to member function type
      * @param t object to invoke method on
@@ -87,7 +102,9 @@ namespace shared_model {
      */
     template <typename T, typename F>
     auto makeReferenceGenerator(T &&t, F &&f) {
-      return [&t, f]() -> decltype(auto) { return ((*t.*f)()); };
+      return [ t{std::move(t)}, f ]()->decltype(auto) {
+        return ((*t.*f)());
+      };
     }
   }  // namespace detail
 }  // namespace shared_model

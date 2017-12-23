@@ -15,9 +15,16 @@
 # limitations under the License.
 #
 
-addtest(commands_validator_test
-        commands_validator_test.cpp
-        )
-target_link_libraries(commands_validator_test
-        shared_model_proto_backend
-        )
+addtest(transaction_validator_test
+    transaction_validator_test.cpp
+    )
+target_link_libraries(transaction_validator_test
+    shared_model_proto_backend
+    )
+
+addtest(query_validator_test
+    query_validator_test.cpp
+    )
+target_link_libraries(query_validator_test
+    shared_model_proto_backend
+    )
