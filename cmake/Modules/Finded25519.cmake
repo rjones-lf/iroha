@@ -29,6 +29,7 @@ if (NOT ed25519_FOUND)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
   set(ed25519_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}ed25519${CMAKE_SHARED_LIBRARY_SUFFIX})
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
+  link_directories(${binary_dir})
 
   add_dependencies(ed25519 warchant_ed25519)
 endif ()
