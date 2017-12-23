@@ -17,13 +17,14 @@
 
 #include "cryptography/ed25519_sha3_impl/signer.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace shared_model {
   namespace crypto {
     Signed Signer::sign(const Blob &blob, const Keypair &keypair) {
       return Signed(
           iroha::sign(
-              crypto::toBinaryString(blob),
+              iroha::sha3_256(crypto::toBinaryString(blob)).to_string(),
               keypair.publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
               keypair.privateKey()
                   .makeOldModel<PrivateKey::OldPrivateKeyType>())
