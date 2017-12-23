@@ -47,12 +47,6 @@ public class BuilderTest {
     }
 
     @Test
-    void txWithoutCommand() {
-//        broken for now
-//        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
     void outdatedAddPeer() {
         setAddPeer();
         for (BigInteger i : new BigInteger[]{BigInteger.valueOf(0),
