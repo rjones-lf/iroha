@@ -25,10 +25,10 @@ endif()
 
 if (SWIG_PYTHON)
   find_package(PythonInterp 2.7 REQUIRED)
-  add_test(NAME python_builders_test
+  add_test(NAME python_transaction_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
-  add_test(NAME python_queries_test
+  add_test(NAME python_query_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
 
@@ -39,7 +39,7 @@ if (SWIG_PYTHON)
 
   add_custom_target(python_tests
     DEPENDS "${PROTO_SWIG_DEPS}")
-  foreach(test "python_builders_test" "python_queries_test")
+  foreach(test "python_transaction_test" "python_query_test")
     set_tests_properties(${test}
       PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
                  ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}:${SWIG_BUILD_DIR}"
