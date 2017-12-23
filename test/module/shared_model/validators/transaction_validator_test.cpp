@@ -79,13 +79,14 @@ TEST_F(TransactionValidatorTest, StatelessValidTest) {
                      // Will throw key exception in case new field is added
                      field_setters.at(field->name())(
                          command->GetReflection(), command, field);
-                   });
+                   },
+                   [] {});
 
   shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto answer = transaction_validator.validate(
       detail::makePolymorphic<proto::Transaction>(tx));
 
-  ASSERT_FALSE(answer.hasErrors());
+  ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
 
 /**
@@ -113,7 +114,8 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
                    },
                    [this](auto, auto) {
                      // Note that no fields are set
-                   });
+                   },
+                   [] {});
 
   shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto answer = transaction_validator.validate(
