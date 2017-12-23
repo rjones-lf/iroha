@@ -28,19 +28,23 @@ if (SWIG_PYTHON)
   add_test(NAME python_builders_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
+  add_test(NAME python_queries_test
+    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
+    WORKING_DIRECTORY ${SWIG_BUILD_DIR})
 
-  foreach(item "block" "commands" "primitive")
+  foreach(item "block" "commands" "primitive" "queries")
     compile_proto_to_python("${item}.proto")
     list(APPEND PROTO_SWIG_DEPS "${SWIG_BUILD_DIR}/${item}_pb2.py")
   endforeach(item)
 
-  add_custom_target(python_builders_test
+  add_custom_target(python_tests
     DEPENDS "${PROTO_SWIG_DEPS}")
-  set_tests_properties(python_builders_test
-    PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
-               ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}:${SWIG_BUILD_DIR}"
-               DEPENDS bindings)
-
+  foreach(test "python_builders_test" "python_queries_test")
+    set_tests_properties(${test}
+      PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
+                 ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}:${SWIG_BUILD_DIR}"
+                 DEPENDS python_tests)
+  endforeach(test)
 endif()
 
 if (SWIG_JAVA)
