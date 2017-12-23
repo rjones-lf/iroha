@@ -75,6 +75,18 @@ function(compile_proto_to_grpc_cpp PROTO)
 endfunction()
 
 
+function(compile_proto_to_python PROTO)
+  string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
+  add_custom_command(
+      OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
+      COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
+      ARGS -I${protobuf_INCLUDE_DIR} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
+      DEPENDS protoc
+      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
+      )
+endfunction()
+
+
 macro(set_target_description target description url commit)
   set_package_properties(${target}
       PROPERTIES
