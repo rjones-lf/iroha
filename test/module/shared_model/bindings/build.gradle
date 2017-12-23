@@ -6,9 +6,11 @@ buildscript {
     }
     dependencies {
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.2'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
     }
 }
 apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'com.google.protobuf'
 
 repositories {
     mavenCentral()
@@ -18,14 +20,21 @@ def junitVersion = "5.0.0"
 dependencies {
     testCompile 'org.junit.jupiter:junit-jupiter-api:' + junitVersion
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:' + junitVersion
+
+    testCompile 'com.google.protobuf:protobuf-java:3.4.0'
 }
 
-def swigBuildDir = System.getenv("SWIG_BUILD_DIR")
+protobuf {
+  generatedFilesBaseDir = SWIG_BUILD_DIR + '/gen'
+}
 
 sourceSets {
     test {
         java {
-            srcDirs = ['.', swigBuildDir]
+            srcDirs = ['.', SWIG_BUILD_DIR]
+        }
+        proto {
+            srcDirs = [SCHEMA_DIR]
         }
     }
 }
@@ -42,7 +51,7 @@ junitPlatform {
 }
 
 junitPlatformTest {
-    systemProperty 'java.library.path', swigBuildDir
+    systemProperty 'java.library.path', SWIG_BUILD_DIR
 }
 
-project.buildDir = swigBuildDir
+project.buildDir = SWIG_BUILD_DIR
