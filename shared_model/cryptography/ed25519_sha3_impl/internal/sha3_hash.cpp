@@ -60,13 +60,13 @@ namespace iroha {
 
   hash512_t sha3_512(const std::vector<uint8_t> &msg) {
     hash512_t h;
-    ::sha3_512(msg.data(), msg.size(), h.data());
+    sha3_512(h.data(), msg.data(), msg.size());
     return h;
   }
 
   hash256_t sha3_256(const std::vector<uint8_t> &msg) {
     hash256_t h;
-    ::sha3_256(msg.data(), msg.size(), h.data());
+    sha3_256(h.data(), msg.data(), msg.size());
     return h;
   }
 
