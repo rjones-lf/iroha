@@ -49,7 +49,7 @@ TEST(ProtoQuery, QueryLoad) {
  * @then query is built correctly
  */
 TEST(ProtoQueryBuilder, Builder) {
-  uint64_t created_time = 10000000000ull, query_counter = 1;
+  uint64_t created_time = iroha::time::now(), query_counter = 1;
   std::string account_id = "admin@test", asset_id = "coin#test";
 
   iroha::protocol::Query proto_query;
