@@ -20,11 +20,11 @@
 
 #include <gtest/gtest.h>
 #include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/irange.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/irange.hpp>
 
-#include "primitive.pb.h"
 #include "datetime/time.hpp"
+#include "primitive.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -42,6 +42,7 @@ class ValidatorsTest : public ::testing::Test {
     };
 
     auto setString = setField(&google::protobuf::Reflection::SetString);
+    auto addString = setField(&google::protobuf::Reflection::AddString);
     auto setUInt32 = setField(&google::protobuf::Reflection::SetUInt32);
     auto addEnum = setField(&google::protobuf::Reflection::AddEnumValue);
     auto setEnum = setField(&google::protobuf::Reflection::SetEnumValue);
@@ -52,7 +53,7 @@ class ValidatorsTest : public ::testing::Test {
     for (const auto &id : {"peer_key", "public_key", "main_pubkey"}) {
       field_setters[id] = setString(valid_public_key);
     }
-    for (const auto &id : {"role_name", "default_role"}) {
+    for (const auto &id : {"role_name", "default_role", "role_id"}) {
       field_setters[id] = setString(valid_role_name);
     }
     field_setters["asset_id"] = setString(valid_asset_id);
@@ -65,6 +66,7 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["permission"] = setEnum(valid_grantable_permission);
     field_setters["key"] = setString(valid_detail_key);
     field_setters["value"] = setString("");
+    field_setters["tx_hashes"] = addString(valid_hash);
     field_setters["quorum"] = setUInt32(valid_quorum);
     field_setters["description"] = setString("");
     field_setters["amount"] = [&](auto refl, auto msg, auto field) {
@@ -74,18 +76,25 @@ class ValidatorsTest : public ::testing::Test {
 
   /**
    * Iterate the container (transaction or query), generating concrete subtypes
-   * and doing operation on concrete subtype fields
+   * and doing operation on concrete subtype fields. Call validator after each
+   * subtype
    * @tparam DescGen oneof descriptor generator type
    * @tparam ConcreteGen concrete subtype generator type
    * @tparam FieldOp field operation type
+   * @tparam Validator validator type
    * @param desc_gen descriptor generator callable object
    * @param concrete_gen concrete subtype generator callable object
    * @param field_op field operation callable object
+   * @param validator validator callable object
    */
-  template <typename DescGen, typename ConcreteGen, typename FieldOp>
+  template <typename DescGen,
+            typename ConcreteGen,
+            typename FieldOp,
+            typename Validator>
   void iterateContainer(DescGen &&desc_gen,
                         ConcreteGen &&concrete_gen,
-                        FieldOp &&field_op) {
+                        FieldOp &&field_op,
+                        Validator &&validator) {
     auto desc = desc_gen();
     // Get field descriptor for concrete type
     const auto &range = boost::irange(0, desc->field_count())
@@ -99,8 +108,9 @@ class ValidatorsTest : public ::testing::Test {
       // Get field descriptor for concrete type field
       const auto &range = boost::irange(0, concrete_desc->field_count())
           | boost::adaptors::transformed(
-                        [&](auto i) { return concrete_desc->field(i); });
+                              [&](auto i) { return concrete_desc->field(i); });
       boost::for_each(range, [&](auto field) { field_op(field, concrete); });
+      validator();
     });
   }
 
@@ -109,31 +119,32 @@ class ValidatorsTest : public ::testing::Test {
     valid_created_time = iroha::time::now();
   }
 
+  size_t public_key_size = 32, hash_size = 32;
   std::string valid_account_id = "account@domain", valid_asset_name = "asset",
-       valid_asset_id = "asset#domain",
-       valid_address_localhost = "localhost:65535",
-       valid_address_ipv4 = "192.168.255.1:8080",
-       valid_address_hostname = "google.ru:8080", valid_role_name = "user",
-       valid_account_name = "admin", valid_domain_id = "ru",
-       valid_detail_key = "key";
+              valid_asset_id = "asset#domain",
+              valid_address_localhost = "localhost:65535",
+              valid_address_ipv4 = "192.168.255.1:8080",
+              valid_address_hostname = "google.ru:8080",
+              valid_role_name = "user", valid_account_name = "admin",
+              valid_domain_id = "ru", valid_detail_key = "key",
+              valid_public_key = std::string(public_key_size, '0'),
+              valid_hash = std::string(public_key_size, '0');
   iroha::protocol::RolePermission valid_role_permission =
       iroha::protocol::RolePermission::can_append_role;
   iroha::protocol::GrantablePermission valid_grantable_permission =
       iroha::protocol::GrantablePermission::can_add_my_signatory;
   uint8_t valid_quorum = 2;
-  size_t public_key_size = 32;
-  std::string valid_public_key = std::string(public_key_size, '0');
   uint8_t valid_precision = 42;
   iroha::protocol::Amount valid_amount;
   decltype(iroha::time::now()) valid_created_time;
 
   // List all used fields in commands
-  std::unordered_map<
-      std::string,
-      std::function<void(const google::protobuf::Reflection *,
+  std::unordered_map<std::string,
+                     std::function<void(
+                         const google::protobuf::Reflection *,
                          google::protobuf::Message *,
                          const google::protobuf::FieldDescriptor *)>>
       field_setters;
 };
 
-#endif //IROHA_VALIDATORS_FIXTURE_HPP
+#endif  // IROHA_VALIDATORS_FIXTURE_HPP
