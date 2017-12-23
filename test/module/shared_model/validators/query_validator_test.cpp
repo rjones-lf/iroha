@@ -84,7 +84,7 @@ TEST_F(QueryValidatorTest, StatelessInvalidTest) {
         // Set concrete type for new query
         return payload->GetReflection()->MutableMessage(payload, field);
       },
-      [this](auto, auto) {
+      [](auto, auto) {
         // Note that no fields are set
       },
       [&] {
