@@ -19,11 +19,6 @@ class BuilderTest(unittest.TestCase):
   def set_add_peer(self):
     self.builder.addPeer("123.123.123.123", self.keys.publicKey())
 
-  def test_tx_without_command(self):
-    return #broken for now
-    with self.assertRaises(ValueError):
-      self.builder.build()
-
   def test_outdated_add_peer(self):
     self.set_add_peer()
     for i in [0, int((time.time() - 100000) * 1000), int((time.time() + 1) * 1000)]:
