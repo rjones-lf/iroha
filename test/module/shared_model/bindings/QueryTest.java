@@ -77,11 +77,11 @@ public class QueryTest {
     }
 
     /**
-     * Performs check that Blob contains valid proto Transaction
+     * Performs check that Blob contains valid proto Query
      * @param serialized blob with binary data for check
      * @return true if valid
      */
-    private <T> boolean checkProtoTx(Blob serialized) {
+    private <T> boolean checkProtoQuery(Blob serialized) {
         ByteVector blob = serialized.blob();
         byte bs[] = new byte[(int)blob.size()];
 
@@ -102,48 +102,48 @@ public class QueryTest {
     @Test
     void getAccount() {
         UnsignedQuery query = builder.getAccount("user@test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getSignatories() {
         UnsignedQuery query = builder.getSignatories("user@test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getAccountTransactions() {
         UnsignedQuery query = builder.getAccountTransactions("user@test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getAccountAssetTransactions() {
         UnsignedQuery query = builder.getAccountAssetTransactions("user@test", "coin#test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getAccountAssets() {
         UnsignedQuery query = builder.getAccountAssets("user@test", "coin#test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getRoles() {
         UnsignedQuery query = builder.getRoles().build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getAssetInfo() {
         UnsignedQuery query = builder.getAssetInfo("coin#test").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 
     @Test
     void getRolePermissions() {
         UnsignedQuery query = builder.getRolePermissions("user").build();
-        assertTrue(checkProtoTx(proto(query)));
+        assertTrue(checkProtoQuery(proto(query)));
     }
 }
