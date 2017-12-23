@@ -29,7 +29,7 @@ endif()
 if (SWIG_JAVA)
   find_package(Java REQUIRED)
   add_test(NAME java_builders_test
-    COMMAND gradle test
+    COMMAND gradle test -PSWIG_BUILD_DIR=${SWIG_BUILD_DIR} -PSCHEMA_DIR=${IROHA_SCHEMA_DIR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   set_tests_properties(java_builders_test
     PROPERTIES DEPENDS builders)
