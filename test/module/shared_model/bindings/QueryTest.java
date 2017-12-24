@@ -70,12 +70,6 @@ public class QueryTest {
         return new ModelProtoQuery().signAndAddSignature(query, keys);
     }
 
-    @Test
-    void keygen() {
-        assertEquals(keys.publicKey().size(), 32);
-        assertEquals(keys.privateKey().size(), 64);
-    }
-
     /**
      * Performs check that Blob contains valid proto Query
      * @param serialized blob with binary data for check

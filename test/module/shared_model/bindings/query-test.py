@@ -45,10 +45,6 @@ class BuilderTest(unittest.TestCase):
       return False
     return True
 
-  def test_keygen(self):
-    self.assertEqual(len(self.keys.privateKey().blob()), 64)
-    self.assertEqual(len(self.keys.publicKey().blob()), 32)
-
   def test_get_account(self):
     query = self.builder.getAccount("user@test").build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
