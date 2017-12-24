@@ -156,7 +156,7 @@ namespace shared_model {
        */
       ModelTransactionBuilder createRole(
           const interface::types::RoleIdType &role_name,
-          std::vector<interface::types::PermissionNameType> permissions);
+          const std::vector<interface::types::PermissionNameType> &permissions);
 
       /**
        * Detaches role

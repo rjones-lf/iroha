@@ -127,6 +127,14 @@ namespace shared_model {
           const interface::types::RoleIdType &role_id);
 
       /**
+       * Queries transactions for given hashes
+       * @param hashes - list of transaction hashes to query
+       * @return builder with getTransactions query inside
+       */
+      ModelQueryBuilder getTransactions(
+          const std::vector<crypto::Hash> &hashes);
+
+      /**
        * Builds result with all appended fields
        * @return wrapper on unsigned query
        */
