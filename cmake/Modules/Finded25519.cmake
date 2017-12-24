@@ -38,3 +38,7 @@ set_target_properties(ed25519 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${ed25519_INCLUDE_DIR}
     IMPORTED_LOCATION ${ed25519_LIBRARY}
     )
+
+if(ENABLE_LIBS_PACKAGING)
+  add_install_step_for_lib(${ed25519_LIBRARY})
+endif()
