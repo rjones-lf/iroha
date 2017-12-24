@@ -14,7 +14,7 @@ protoQueryHelper = iroha.ModelProtoQuery()
 
 me_kp = crypto.convertFromExisting("407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83", "1d7e0a32ee0affeb4d22acd73c2c6fb6bd58e266c8c2ce4fa0ffe3dd6a253ffb")
 
-print(me_kp.publicKey().hex())
+# print(me_kp.publicKey().hex())
 
 peer_kp = crypto.generateKeypair()
 signatory_kp = crypto.generateKeypair()
@@ -42,13 +42,13 @@ stub = endpoint_pb2_grpc.CommandServiceStub(channel)
 
 stub.Torii(proto_tx)
 
-time.sleep(2)
+time.sleep(5)
 
 # create status request
 print("Hash in hex", tx.hash().hex())
 tx_hash = tx.hash().blob()
 tx_hash = ''.join(map(chr, tx_hash))
-print "Tx hash is", tx_hash
+# print "Tx hash is", tx_hash
 
 request = endpoint_pb2.TxStatusRequest()
 request.tx_hash = tx_hash
