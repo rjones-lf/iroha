@@ -19,7 +19,7 @@
 #define IROHA_HASHABLE_HPP
 
 #include "cryptography/hash.hpp"
-#include "cryptography/hash_providers/sha3_512.hpp"
+#include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "utils/lazy_initializer.hpp"
 
@@ -27,7 +27,7 @@ namespace shared_model {
   namespace interface {
     template <typename ModelType,
               typename OldModel,
-              typename HashProvider = shared_model::crypto::Sha3_512>
+              typename HashProvider = shared_model::crypto::Sha3_256>
     class Hashable : public Primitive<ModelType, OldModel> {
      public:
       /// Type of hash
@@ -35,10 +35,12 @@ namespace shared_model {
 
       using BlobType = crypto::Blob;
 
+      using HashProviderType = HashProvider;
+
       /**
        * @return hash of object.
        */
-      const HashType &hash() const { return *hash_; }
+      virtual const HashType &hash() const { return *hash_; }
 
       /**
        * @return blob representation of object

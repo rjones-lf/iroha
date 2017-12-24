@@ -33,6 +33,9 @@ namespace shared_model {
                                                    iroha::protocol::Transaction,
                                                    Transaction> {
      public:
+      using HashProviderType = typename interface::
+          Hashable<Transaction, iroha::model::Transaction>::HashProviderType;
+
       template <typename TransactionType>
       explicit Transaction(TransactionType &&transaction)
           : CopyableProto(std::forward<TransactionType>(transaction)),
@@ -57,7 +60,8 @@ namespace shared_model {
                     acc.emplace(new Signature(sig));
                     return std::forward<decltype(acc)>(acc);
                   });
-            }) {}
+            }),
+            txhash_([this] { return HashProviderType::makeHash(payload()); }) {}
 
       Transaction(const Transaction &o) : Transaction(o.proto_) {}
 
@@ -76,10 +80,16 @@ namespace shared_model {
         return *commands_;
       }
 
-      const Transaction::BlobType &blob() const override { return *blob_; }
+      const Transaction::BlobType &blob() const override {
+        return *blob_;
+      }
 
       const Transaction::BlobType &payload() const override {
         return *blobTypePayload_;
+      }
+
+      const Transaction::HashType &hash() const override {
+        return *txhash_;
       }
 
       const Transaction::SignatureSetType &signatures() const override {
@@ -116,6 +126,8 @@ namespace shared_model {
       const Lazy<BlobType> blobTypePayload_;
 
       const Lazy<SignatureSetType> signatures_;
+
+      const Lazy<HashType> txhash_;
     };
   }  // namespace proto
 }  // namespace shared_model
