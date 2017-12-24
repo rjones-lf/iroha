@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+addtest(model_query_builder_test
+    model_query_builder_test.cpp
+    )
+target_link_libraries(model_query_builder_test
+    bindings
+    )
+
 if (SWIG_PYTHON OR SWIG_JAVA)
   get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)
 endif()
