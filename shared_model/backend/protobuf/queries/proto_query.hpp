@@ -41,6 +41,9 @@
 
 template <typename... T, typename Archive>
 shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
+  if (not ar.has_payload()) {
+    throw std::invalid_argument("Query missing payload");
+  }
   int which = ar.payload()
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
