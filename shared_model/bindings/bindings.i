@@ -26,9 +26,16 @@
 %include "exception.i"
 %include "std_vector.i"
 
+%{
+#include "cryptography/hash.hpp"
+%}
+
+%std_nodefconst_type(shared_model::crypto::Hash);
+
 namespace std {
   %template(ByteVector) vector<uint8_t>;
   %template(StringVector) vector<string>;
+  %template(HashVector) vector<shared_model::crypto::Hash>;
 };
 
 %exception {
@@ -53,10 +60,12 @@ namespace std {
 %}
 
 %include "interfaces/common_objects/types.hpp"
+%include "interfaces/base/hashable.hpp"
 %include "interfaces/base/signable.hpp"
 %include "cryptography/blob.hpp"
 %include "cryptography/public_key.hpp"
 %include "cryptography/private_key.hpp"
+%include "cryptography/hash.hpp"
 %include "cryptography/keypair.hpp"
 %include "cryptography/signed.hpp"
 %include "backend/protobuf/transaction.hpp"
