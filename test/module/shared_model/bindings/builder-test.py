@@ -55,10 +55,6 @@ class BuilderTest(unittest.TestCase):
       return False
     return True
 
-  def test_keygen(self):
-    self.assertEqual(len(self.keys.privateKey().blob()), 32)
-    self.assertEqual(len(self.keys.publicKey().blob()), 32)
-
   def test_add_peer(self):
     tx = self.builder.addPeer("123.123.123.123:123", self.keys.publicKey()).build()
     self.assertTrue(self.check_proto_tx(self.proto(tx)))

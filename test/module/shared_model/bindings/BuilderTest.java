@@ -88,12 +88,6 @@ public class BuilderTest {
         return new ModelProtoTransaction().signAndAddSignature(tx, keys);
     }
 
-    @Test
-    void keygen() {
-        assertEquals(keys.publicKey().size(), 32);
-        assertEquals(keys.privateKey().size(), 32);
-    }
-
     /**
      * Performs check that Blob contains valid proto Transaction
      * @param serialized blob with binary data for check
