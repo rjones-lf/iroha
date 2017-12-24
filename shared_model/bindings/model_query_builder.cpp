@@ -76,6 +76,11 @@ namespace shared_model {
       return ModelQueryBuilder(builder_.getRolePermissions(role_id));
     }
 
+    ModelQueryBuilder ModelQueryBuilder::getTransactions(
+        const std::vector<crypto::Hash> &hashes) {
+      return ModelQueryBuilder(builder_.getTransactions(hashes));
+    }
+
     proto::UnsignedWrapper<proto::Query> ModelQueryBuilder::build() {
       return builder_.build();
     }

@@ -94,7 +94,7 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::createRole(
         const interface::types::RoleIdType &role_name,
-        std::vector<interface::types::PermissionNameType> permissions) {
+        const std::vector<interface::types::PermissionNameType> &permissions) {
       return ModelTransactionBuilder(
           builder_.createRole(role_name, permissions));
     }
