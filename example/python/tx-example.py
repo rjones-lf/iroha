@@ -1,3 +1,6 @@
+import sys
+# import iroha library from nested folder
+sys.path.insert(0, 'shared_model/bindings')
 import iroha
 
 import time
@@ -13,7 +16,10 @@ crypto = iroha.ModelCrypto()
 protoTxHelper = iroha.ModelProtoTransaction()
 protoQueryHelper = iroha.ModelProtoQuery()
 
-me_kp = crypto.convertFromExisting("407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83", "1d7e0a32ee0affeb4d22acd73c2c6fb6bd58e266c8c2ce4fa0ffe3dd6a253ffb")
+admin_priv = open("../admin@test.priv", "r").read()
+admin_pub = open("../admin@test.pub", "r").read()
+
+me_kp = crypto.convertFromExisting(admin_pub, admin_priv)
 
 current_time = int(round(time.time() * 1000)) - 10**5
 startCounter = 1
@@ -41,7 +47,7 @@ stub.Torii(proto_tx)
 time.sleep(5)
 
 # create status request
-print("Hash in hex", tx.hash().hex())
+print "Hash of the transaction: ", tx.hash().hex()
 tx_hash = tx.hash().blob()
 tx_hash = ''.join(map(chr, tx_hash))
 
