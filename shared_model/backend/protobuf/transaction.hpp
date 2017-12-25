@@ -33,9 +33,6 @@ namespace shared_model {
                                                    iroha::protocol::Transaction,
                                                    Transaction> {
      public:
-      using HashProviderType = typename interface::
-          Hashable<Transaction, iroha::model::Transaction>::HashProviderType;
-
       template <typename TransactionType>
       explicit Transaction(TransactionType &&transaction)
           : CopyableProto(std::forward<TransactionType>(transaction)),
