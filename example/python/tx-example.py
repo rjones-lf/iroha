@@ -62,7 +62,7 @@ print("Status of transaction is:", status)
 
 if status != "COMMITTED":
     print("Your transaction wasn't committed")
-    exit()
+    exit(1)
 
 query = queryBuilder.creatorAccountId(creator) \
     .createdTime(current_time) \
@@ -78,7 +78,7 @@ query_response = query_stub.Find(proto_query)
 
 if not query_response.HasField("asset_response"):
     print("Query response error")
-    exit(0)
+    exit(1)
 else:
     print("Query responsed with asset response")
 
@@ -87,3 +87,4 @@ print("Asset Id =", asset_info.asset_id)
 print("Precision =", asset_info.precision)
 
 print("done!")
+exit(0)
