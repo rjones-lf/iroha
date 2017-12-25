@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 # import iroha library from nested folder
 sys.path.insert(0, 'shared_model/bindings')
@@ -47,7 +49,7 @@ stub.Torii(proto_tx)
 time.sleep(5)
 
 # create status request
-print "Hash of the transaction: ", tx.hash().hex()
+print("Hash of the transaction: ", tx.hash().hex())
 tx_hash = tx.hash().blob()
 tx_hash = ''.join(map(chr, tx_hash))
 
@@ -56,10 +58,10 @@ request.tx_hash = tx_hash
 
 response = stub.Status(request)
 status = endpoint_pb2.TxStatus.Name(response.tx_status)
-print"Status of transaction is:", status
+print("Status of transaction is:", status)
 
 if status != "COMMITTED":
-    print "Your transaction wasn't committed"
+    print("Your transaction wasn't committed")
     exit()
 
 query = queryBuilder.creatorAccountId(creator) \
@@ -78,10 +80,10 @@ if not query_response.HasField("asset_response"):
     print("Query response error")
     exit(0)
 else:
-    print "Query responsed with asset response"
+    print("Query responsed with asset response")
 
 asset_info = query_response.asset_response.asset
-print"Asset Id =", asset_info.asset_id
-print"Precision =", asset_info.precision
+print("Asset Id =", asset_info.asset_id)
+print("Precision =", asset_info.precision)
 
 print("done!")
