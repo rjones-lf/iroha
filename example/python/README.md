@@ -6,7 +6,7 @@ In order to execute script demonstrating execution of python client library you 
 
 1. To compile grpc proto files it is needed to have grpc-io installed:
 ```sh
-pip install grpcio-tools
+pip2 install grpcio-tools
 ```
 
 2. Run prepare.sh script to build iroha python library and compile proto files:
