@@ -1,0 +1,6 @@
+*
+!.gitignore
+!build.gradle
+!settings.gradle
+!TransactionExample.java
+!prepare.sh
