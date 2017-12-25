@@ -87,4 +87,3 @@ print("Asset Id =", asset_info.asset_id)
 print("Precision =", asset_info.precision)
 
 print("done!")
-exit(0)
