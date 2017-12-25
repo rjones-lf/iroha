@@ -35,6 +35,7 @@
 namespace std {
   %template(ByteVector) vector<uint8_t>;
   %template(StringVector) vector<string>;
+  %ignore vector<shared_model::crypto::Hash>::vector(size_type);
   %template(HashVector) vector<shared_model::crypto::Hash>;
 };
 
