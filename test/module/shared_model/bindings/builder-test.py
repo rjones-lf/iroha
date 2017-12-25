@@ -56,7 +56,7 @@ class BuilderTest(unittest.TestCase):
     return True
 
   def test_keygen(self):
-    self.assertEqual(len(self.keys.privateKey().blob()), 64)
+    self.assertEqual(len(self.keys.privateKey().blob()), 32)
     self.assertEqual(len(self.keys.publicKey().blob()), 32)
 
   def test_add_peer(self):

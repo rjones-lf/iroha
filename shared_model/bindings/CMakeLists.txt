@@ -48,6 +48,8 @@ if (SWIG_PYTHON)
 
     swig_add_library(iroha LANGUAGE python SOURCES bindings.i)
     swig_link_libraries(iroha ${Python_LIBRARIES} bindings ${MAC_OPTS})
+    add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
+
 endif()
 
 if (SWIG_JAVA)
@@ -57,11 +59,12 @@ if (SWIG_JAVA)
     # the include path to jni_md.h
     include_directories(${JAVA_INCLUDE_PATH2})
 
-    swig_add_library(iroha LANGUAGE java SOURCES bindings.i)
-    swig_link_libraries(iroha ${Java_LIBRARIES} bindings)
+    swig_add_library(irohajava LANGUAGE java SOURCES bindings.i)
+    swig_link_libraries(irohajava ${Java_LIBRARIES} bindings)
 endif()
 
 if (SWIG_CSHARP)
     swig_add_library(libirohacs LANGUAGE csharp SOURCES bindings.i)
     swig_link_libraries(libirohacs bindings)
+    add_custom_target(irohacs DEPENDS ${SWIG_MODULE_libirohacs_REAL_NAME})
 endif()

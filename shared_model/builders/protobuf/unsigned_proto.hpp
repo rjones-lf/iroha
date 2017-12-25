@@ -22,6 +22,7 @@
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "utils/polymorphic_wrapper.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -32,6 +33,9 @@ namespace shared_model {
     template <typename T>
     class UnsignedWrapper {
      public:
+
+      using ModelType = T;
+
       /**
        * Constructs new unsigned object instance
        * @param o - object received from builder
@@ -55,6 +59,10 @@ namespace shared_model {
         unsigned_.addSignature(detail::PolymorphicWrapper<Signature>(
             s1));  // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;
+      }
+
+      crypto::Blob hash() {
+        return unsigned_.hash();
       }
 
      private:
