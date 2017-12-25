@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class BuilderTest {
     static {
         try {
-            System.loadLibrary("iroha");
+            System.loadLibrary("irohajava");
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Native code library failed to load. \n" + e);
             System.exit(1);
@@ -91,7 +91,7 @@ public class BuilderTest {
     @Test
     void keygen() {
         assertEquals(keys.publicKey().size(), 32);
-        assertEquals(keys.privateKey().size(), 64);
+        assertEquals(keys.privateKey().size(), 32);
     }
 
     /**
