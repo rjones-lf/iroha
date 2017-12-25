@@ -46,9 +46,9 @@ if (SWIG_PYTHON)
         set(MAC_OPTS "-flat_namespace -undefined suppress")
     endif()
 
-    swig_add_library(irohapy LANGUAGE python SOURCES bindings.i)
-    swig_link_libraries(irohapy ${Python_LIBRARIES} bindings ${MAC_OPTS})
-    add_custom_target(irohapy DEPENDS ${SWIG_MODULE_irohapy_REAL_NAME})
+    swig_add_library(iroha LANGUAGE python SOURCES bindings.i)
+    swig_link_libraries(iroha ${Python_LIBRARIES} bindings ${MAC_OPTS})
+    add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
 
 endif()
 
