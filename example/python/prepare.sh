@@ -3,8 +3,10 @@
 cd $(dirname $0)
 
 # generate iroha lib
-cmake -DSWIG_PYTHON=ON ../..
-make -j"$(getconf _NPROCESSORS_ONLN)" irohapy
+CURDIR="$(cd "$(dirname "$0")"; pwd)"
+IROHA_HOME="$(dirname $(dirname "${CURDIR}"))"
+cmake -H$IROHA_HOME -Bbuild -DSWIG_PYTHON=ON;
+cmake --build build/ --target irohapy -- -j"$(getconf _NPROCESSORS_ONLN)"
 
 # generate proto files in current dir
 protoc --proto_path=../../schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
