@@ -33,8 +33,6 @@ namespace shared_model {
       explicit ModelQueryBuilder(const proto::TemplateQueryBuilder<Sp> &o)
           : builder_(o) {}
 
-      void setDefaultValues();
-
      public:
       ModelQueryBuilder();
 
