@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import sys
 # import iroha library from nested folder
-sys.path.insert(0, 'shared_model/bindings')
+sys.path.insert(0, 'build/shared_model/bindings')
 import iroha
 
 import time
