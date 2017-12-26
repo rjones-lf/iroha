@@ -44,6 +44,10 @@ shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
   if (not ar.has_payload()) {
     throw std::invalid_argument("Query missing payload");
   }
+  if (ar.payload().query_case()
+      == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
+    throw std::invalid_argument("Missing concrete query");
+  }
   int which = ar.payload()
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
@@ -103,7 +107,9 @@ namespace shared_model {
 
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
-      const Query::QueryVariantType &get() const override { return *variant_; }
+      const Query::QueryVariantType &get() const override {
+        return *variant_;
+      }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return proto_->payload().creator_account_id();
@@ -113,9 +119,13 @@ namespace shared_model {
         return proto_->payload().query_counter();
       }
 
-      const Query::BlobType &blob() const override { return *blob_; }
+      const Query::BlobType &blob() const override {
+        return *blob_;
+      }
 
-      const Query::BlobType &payload() const override { return *payload_; }
+      const Query::BlobType &payload() const override {
+        return *payload_;
+      }
 
       // ------------------------| Signable override  |-------------------------
       const Query::SignatureSetType &signatures() const override {
