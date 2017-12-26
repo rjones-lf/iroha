@@ -1,0 +1,61 @@
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'application'
+
+def BUILD_DIR = "./ build/shared_model/bindings"
+def SCHEMA_DIR = "../../schema"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.protobuf:protobuf-java:3.5.0'
+    compile 'io.grpc:grpc-netty:1.8.0'
+    compile 'io.grpc:grpc-protobuf:1.8.0'
+    compile 'io.grpc:grpc-stub:1.8.0'
+}
+
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['.']
+        }
+        proto {
+            srcDirs = [SCHEMA_DIR]
+        }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.5.0"
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.8.0'
+        }
+    }
+    generateProtoTasks {
+        all()*.plugins {
+            grpc {}
+        }
+    }
+}
+
+project.buildDir = BUILD_DIR
+
+mainClassName = 'TransactionExample'
+
+applicationDefaultJvmArgs = ["-Djava.library.path=./build/shared_model/bindings/"]
