@@ -58,4 +58,4 @@ project.buildDir = BUILD_DIR
 
 mainClassName = 'TransactionExample'
 
-applicationDefaultJvmArgs = ["-Djava.library.path=./shared_model/bindings/"]
+applicationDefaultJvmArgs = ["-Djava.library.path=./build/shared_model/bindings/"]
