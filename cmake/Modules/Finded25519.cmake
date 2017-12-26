@@ -19,7 +19,7 @@ if (NOT ed25519_FOUND)
   externalproject_add(warchant_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS     -DTESTING=OFF
+      CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step
@@ -27,7 +27,7 @@ if (NOT ed25519_FOUND)
   externalproject_get_property(warchant_ed25519 binary_dir)
   externalproject_get_property(warchant_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
-  set(ed25519_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}ed25519${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
   link_directories(${binary_dir})
 
