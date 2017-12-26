@@ -69,9 +69,12 @@ class TransactionExample {
         long currentTime = System.currentTimeMillis();
         String creator = "admin@test";
 
+        long startTxCounter = 1, startQueryCounter = 1;
+
         // build transaction (still unsigned)
         UnsignedTx utx = txBuilder.creatorAccountId(creator)
             .createdTime(BigInteger.valueOf(currentTime))
+            .txCounter(BigInteger.valueOf(startTxCounter))
             .createDomain("ru", "user")
             .createAsset("dollar", "ru", (short)2).build();
 
@@ -122,9 +125,10 @@ class TransactionExample {
 
         // query result of transaction we've just sent
         UnsignedQuery uquery = queryBuilder.creatorAccountId(creator)
-                                           .createdTime(BigInteger.valueOf(currentTime))
-                                           .getAssetInfo("dollar#ru")
-                                           .build();
+            .queryCounter(BigInteger.valueOf(startQueryCounter))
+            .createdTime(BigInteger.valueOf(currentTime))
+            .getAssetInfo("dollar#ru")
+            .build();
         ByteVector queryBlob = protoQueryHelper.signAndAddSignature(uquery, keys).blob();
         byte bquery[] = toByteArray(queryBlob);
 
