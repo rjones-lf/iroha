@@ -44,23 +44,29 @@ class TransactionExample {
     private static ModelProtoTransaction protoTxHelper = new ModelProtoTransaction();
     private static ModelProtoQuery protoQueryHelper = new ModelProtoQuery();
 
+    public static byte[] toByteArray(ByteVector blob) {
+        byte bs[] = new byte[(int)blob.size()];
+        for (int i = 0; i < blob.size(); ++i) {
+            bs[i] = (byte)blob.get(i);
+        }
+        return bs;
+    }
 
-
-    public static void main(String[] args) {
-        String adminPub = "", adminPriv = "";
-
+    public static String readKeyFromFile(String path) {
         try {
-            adminPub = new String(Files.readAllBytes(Paths.get("../admin@test.pub")));
-            adminPriv = new String(Files.readAllBytes(Paths.get("../admin@test.priv")));
+            return new String(Files.readAllBytes(Paths.get(path)));
         } catch (IOException e) {
             System.err.println("Unable to read key files.\n " + e);
             System.exit(1);
         }
+        return "";
+    }
 
-        Keypair keys = crypto.convertFromExisting(adminPub, adminPriv);
+    public static void main(String[] args) {
+        Keypair keys = crypto.convertFromExisting(readKeyFromFile("../admin@test.pub"),
+            readKeyFromFile("../admin@test.priv"));
 
         long currentTime = System.currentTimeMillis();
-        //long startCounter = 1;
         String creator = "admin@test";
 
         // build transaction (still unsigned)
@@ -73,14 +79,10 @@ class TransactionExample {
         ByteVector txblob = protoTxHelper.signAndAddSignature(utx, keys).blob();
 
         // Convert ByteVector to byte array
-        byte bs[] = new byte[(int)txblob.size()];
-        for (int i = 0; i < txblob.size(); ++i) {
-            bs[i] = (byte)txblob.get(i);
-        }
+        byte bs[] = toByteArray(txblob);
 
         // create proto object
         BlockOuterClass.Transaction protoTx = null;
-
         try {
             protoTx = BlockOuterClass.Transaction.parseFrom(bs);
         } catch (InvalidProtocolBufferException e) {
@@ -105,13 +107,7 @@ class TransactionExample {
         System.out.println("Hash of the transaction: " + utx.hash().hex());
 
         ByteVector txhash = utx.hash().blob();
-
-
-        byte bshash[] = new byte[(int)txhash.size()];
-        for (int i = 0; i < txhash.size(); ++i) {
-            bshash[i] = (byte)txhash.get(i);
-        }
-        String strHash = new String(bshash);
+        byte bshash[] = toByteArray(txhash);
 
         TxStatusRequest request = TxStatusRequest.newBuilder().setTxHash(ByteString.copyFrom(bshash)).build();
         ToriiResponse response = stub.status(request);
@@ -129,14 +125,10 @@ class TransactionExample {
                                            .createdTime(BigInteger.valueOf(currentTime))
                                            .getAssetInfo("dollar#ru")
                                            .build();
-        ByteVector queryblob = protoQueryHelper.signAndAddSignature(uquery, keys).blob();
-        byte bquery[] = new byte[(int)queryblob.size()];
-        for (int i = 0; i < queryblob.size(); ++i) {
-            bquery[i] = (byte)queryblob.get(i);
-        }
+        ByteVector queryBlob = protoQueryHelper.signAndAddSignature(uquery, keys).blob();
+        byte bquery[] = toByteArray(queryBlob);
 
         Query protoQuery = null;
-
         try {
             protoQuery = Query.parseFrom(bquery);
         } catch (InvalidProtocolBufferException e) {

@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.google.protobuf:protobuf-java:3.4.0'
+    compile 'com.google.protobuf:protobuf-java:3.5.0'
     compile 'io.grpc:grpc-netty:1.8.0'
     compile 'io.grpc:grpc-protobuf:1.8.0'
     compile 'io.grpc:grpc-stub:1.8.0'
