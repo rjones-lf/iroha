@@ -2,18 +2,25 @@ import iroha.protocol.Commands;
 import iroha.protocol.BlockOuterClass;
 import iroha.protocol.Endpoint;
 import iroha.protocol.Queries;
+import iroha.protocol.Queries.Query;
+import iroha.protocol.Queries.GetAssetInfo;
 
 import iroha.protocol.QueryServiceGrpc;
+import iroha.protocol.QueryServiceGrpc.QueryServiceBlockingStub;
 import iroha.protocol.CommandServiceGrpc;
 import iroha.protocol.CommandServiceGrpc.CommandServiceBlockingStub;
 import iroha.protocol.Endpoint.TxStatus;
 import iroha.protocol.Endpoint.TxStatusRequest;
 import iroha.protocol.Endpoint.ToriiResponse;
+import iroha.protocol.Responses.QueryResponse;
+import iroha.protocol.Responses.AssetResponse;
+import iroha.protocol.Responses.Asset;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -116,5 +123,41 @@ class TransactionExample {
             System.err.println("Your transaction wasn't committed");
             System.exit(1);
         }
+
+        // query result of transaction we've just sent
+        UnsignedQuery uquery = queryBuilder.creatorAccountId(creator)
+                                           .createdTime(BigInteger.valueOf(currentTime))
+                                           .getAssetInfo("dollar#ru")
+                                           .build();
+        ByteVector queryblob = protoQueryHelper.signAndAddSignature(uquery, keys).blob();
+        byte bquery[] = new byte[(int)queryblob.size()];
+        for (int i = 0; i < queryblob.size(); ++i) {
+            bquery[i] = (byte)queryblob.get(i);
+        }
+
+        Query protoQuery = null;
+
+        try {
+            protoQuery = Query.parseFrom(bquery);
+        } catch (InvalidProtocolBufferException e) {
+            System.err.println("Exception while converting byte array to protobuf:" + e.getMessage());
+            System.exit(1);
+        }
+
+        QueryServiceBlockingStub queryStub = QueryServiceGrpc.newBlockingStub(channel);
+        QueryResponse queryResponse = queryStub.find(protoQuery);
+
+        FieldDescriptor fieldDescriptor = queryResponse.getDescriptorForType().findFieldByName("asset_response");
+        if (!queryResponse.hasField(fieldDescriptor)) {
+            System.err.println("Query response error");
+            System.exit(1);
+        } else {
+            System.out.println("Query responsed with asset response");
+        }
+
+        Asset asset = queryResponse.getAssetResponse().getAsset();
+        System.out.println("Asset Id = " + asset.getAssetId());
+        System.out.println("Precision = " + asset.getPrecision());
+        System.out.println("done!");
     }
 }
