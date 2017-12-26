@@ -36,7 +36,7 @@ namespace shared_model {
           : builder_(o) {}
 
      public:
-      ModelTransactionBuilder() = default;
+      ModelTransactionBuilder();
 
       /**
        * Sets id of account creator

@@ -34,7 +34,7 @@ namespace shared_model {
           : builder_(o) {}
 
      public:
-      ModelQueryBuilder() = default;
+      ModelQueryBuilder();
 
       /**
        * Sets time of query creation (Unix time in milliseconds)

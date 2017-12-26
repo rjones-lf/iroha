@@ -19,6 +19,10 @@
 
 namespace shared_model {
   namespace bindings {
+    ModelQueryBuilder::ModelQueryBuilder() {
+      *this = creatorAccountId("").createdTime(0).queryCounter(0);
+    }
+
     ModelQueryBuilder ModelQueryBuilder::createdTime(
         interface::types::TimestampType created_time) {
       return ModelQueryBuilder(builder_.createdTime(created_time));
