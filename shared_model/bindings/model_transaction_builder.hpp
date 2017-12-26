@@ -35,8 +35,6 @@ namespace shared_model {
           const proto::TemplateTransactionBuilder<Sp> &o)
           : builder_(o) {}
 
-      void setDefaultValues();
-
      public:
       ModelTransactionBuilder();
 

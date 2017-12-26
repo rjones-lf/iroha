@@ -19,12 +19,8 @@
 
 namespace shared_model {
   namespace bindings {
-    void ModelQueryBuilder::setDefaultValues() {
-      *this = creatorAccountId("").createdTime(0).queryCounter(0);
-    }
-
     ModelQueryBuilder::ModelQueryBuilder() {
-      setDefaultValues();
+      *this = creatorAccountId("").createdTime(0).queryCounter(0);
     }
 
     ModelQueryBuilder ModelQueryBuilder::createdTime(
