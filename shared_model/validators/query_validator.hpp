@@ -164,6 +164,7 @@ namespace shared_model {
         field_validator_.validateCreatorAccountId(qry_reason,
                                                   qry->creatorAccountId());
         field_validator_.validateCreatedTime(qry_reason, qry->createdTime());
+        field_validator_.validateCounter(qry_reason, qry->queryCounter());
 
         if (not qry_reason.second.empty()) {
           answer.addReason(std::move(qry_reason));

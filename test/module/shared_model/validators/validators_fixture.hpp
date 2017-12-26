@@ -120,6 +120,7 @@ class ValidatorsTest : public ::testing::Test {
   }
 
   size_t public_key_size = 32, hash_size = 32;
+  uint64_t valid_counter = 1048576;
   std::string valid_account_id = "account@domain", valid_asset_name = "asset",
               valid_asset_id = "asset#domain",
               valid_address_localhost = "localhost:65535",
@@ -139,9 +140,9 @@ class ValidatorsTest : public ::testing::Test {
   decltype(iroha::time::now()) valid_created_time;
 
   // List all used fields in commands
-  std::unordered_map<std::string,
-                     std::function<void(
-                         const google::protobuf::Reflection *,
+  std::unordered_map<
+      std::string,
+      std::function<void(const google::protobuf::Reflection *,
                          google::protobuf::Message *,
                          const google::protobuf::FieldDescriptor *)>>
       field_setters;

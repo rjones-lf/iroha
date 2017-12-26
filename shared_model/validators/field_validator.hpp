@@ -164,15 +164,21 @@ namespace shared_model {
           reason.second.push_back(boost::str(
               boost::format(
                   "timestamp broken: send from future (%llu, now %llu)")
-              % timestamp
-              % now));
+              % timestamp % now));
         }
 
         if (now - timestamp > MAX_DELAY) {
           reason.second.push_back(boost::str(
               boost::format("timestamp broken: too old (%llu, now %llu)")
-              % timestamp
-              % now));
+              % timestamp % now));
+        }
+      }
+
+      void validateCounter(ReasonsGroupType &reason,
+                           const interface::types::CounterType &counter) const {
+        if (counter == 0) {
+          reason.second.push_back(
+              boost::str(boost::format("Counter should be > 0")));
         }
       }
 
