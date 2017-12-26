@@ -6,10 +6,14 @@ import iroha.protocol.Queries;
 import iroha.protocol.QueryServiceGrpc;
 import iroha.protocol.CommandServiceGrpc;
 import iroha.protocol.CommandServiceGrpc.CommandServiceBlockingStub;
+import iroha.protocol.Endpoint.TxStatus;
+import iroha.protocol.Endpoint.TxStatusRequest;
+import iroha.protocol.Endpoint.ToriiResponse;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import com.google.protobuf.ByteString;
 
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -91,8 +95,26 @@ class TransactionExample {
         }
 
         // create status request
-        // System.out.println("Hash of the transaction: " + utx.hash().hex());
+        System.out.println("Hash of the transaction: " + utx.hash().hex());
+
+        ByteVector txhash = utx.hash().blob();
 
 
+        byte bshash[] = new byte[(int)txhash.size()];
+        for (int i = 0; i < txhash.size(); ++i) {
+            bshash[i] = (byte)txhash.get(i);
+        }
+        String strHash = new String(bshash);
+
+        TxStatusRequest request = TxStatusRequest.newBuilder().setTxHash(ByteString.copyFrom(bshash)).build();
+        ToriiResponse response = stub.status(request);
+        String status = response.getTxStatus().name();
+
+        System.out.println("Status of the transaction is: " + status);
+
+        if (!status.equals("COMMITTED")) {
+            System.err.println("Your transaction wasn't committed");
+            System.exit(1);
+        }
     }
 }
