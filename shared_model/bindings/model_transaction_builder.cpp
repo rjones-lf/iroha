@@ -19,6 +19,14 @@
 
 namespace shared_model {
   namespace bindings {
+    void ModelTransactionBuilder::setDefaultValues() {
+      *this = creatorAccountId("").createdTime(0).txCounter(0);
+    }
+
+    ModelTransactionBuilder::ModelTransactionBuilder() {
+      setDefaultValues();
+    }
+
     ModelTransactionBuilder ModelTransactionBuilder::creatorAccountId(
         const interface::types::AccountIdType &account_id) {
       return ModelTransactionBuilder(builder_.creatorAccountId(account_id));
