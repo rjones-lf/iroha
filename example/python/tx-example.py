@@ -12,11 +12,11 @@ import endpoint_pb2_grpc
 import queries_pb2
 import grpc
 
-txbuilder = iroha.ModelTransactionBuilder()
-queryBuilder = iroha.ModelQueryBuilder()
+tx_builder = iroha.ModelTransactionBuilder()
+query_builder = iroha.ModelQueryBuilder()
 crypto = iroha.ModelCrypto()
-protoTxHelper = iroha.ModelProtoTransaction()
-protoQueryHelper = iroha.ModelProtoQuery()
+proto_tx_helper = iroha.ModelProtoTransaction()
+proto_query_helper = iroha.ModelProtoQuery()
 
 admin_priv = open("../admin@test.priv", "r").read()
 admin_pub = open("../admin@test.pub", "r").read()
@@ -24,17 +24,19 @@ admin_pub = open("../admin@test.pub", "r").read()
 me_kp = crypto.convertFromExisting(admin_pub, admin_priv)
 
 current_time = int(round(time.time() * 1000)) - 10**5
-startCounter = 1
+start_tx_counter = 1
+start_query_counter = 1
 creator = "admin@test"
 
 
 # build transaction
-tx = txbuilder.creatorAccountId(creator) \
+tx = tx_builder.creatorAccountId(creator) \
+    .txCounter(start_tx_counter) \
     .createdTime(current_time) \
     .createDomain("ru", "user") \
     .createAsset("dollar", "ru", 2).build()
 
-tx_blob = protoTxHelper.signAndAddSignature(tx, me_kp).blob()
+tx_blob = proto_tx_helper.signAndAddSignature(tx, me_kp).blob()
 
 # create proto object and send to iroha
 
@@ -64,11 +66,12 @@ if status != "COMMITTED":
     print("Your transaction wasn't committed")
     exit(1)
 
-query = queryBuilder.creatorAccountId(creator) \
+query = query_builder.creatorAccountId(creator) \
     .createdTime(current_time) \
+    .queryCounter(start_query_counter) \
     .getAssetInfo("dollar#ru") \
     .build()
-query_blob = protoQueryHelper.signAndAddSignature(query, me_kp).blob()
+query_blob = proto_query_helper.signAndAddSignature(query, me_kp).blob()
 
 proto_query = queries_pb2.Query()
 proto_query.ParseFromString(''.join(map(chr, query_blob)))
@@ -80,7 +83,7 @@ if not query_response.HasField("asset_response"):
     print("Query response error")
     exit(1)
 else:
-    print("Query responsed with asset response")
+    print("Query responded with asset response")
 
 asset_info = query_response.asset_response.asset
 print("Asset Id =", asset_info.asset_id)
