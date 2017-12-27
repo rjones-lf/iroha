@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class QueryTest {
     static {
         try {
-            System.loadLibrary("iroha");
+            System.loadLibrary("irohajava");
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Native code library failed to load. \n" + e);
             System.exit(1);
