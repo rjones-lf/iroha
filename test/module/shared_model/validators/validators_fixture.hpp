@@ -65,6 +65,7 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["permissions"] = addEnum(valid_role_permission);
     field_setters["permission"] = setEnum(valid_grantable_permission);
     field_setters["key"] = setString(valid_detail_key);
+    field_setters["detail"] = setString(valid_detail_key);
     field_setters["value"] = setString("");
     field_setters["tx_hashes"] = addString(valid_hash);
     field_setters["quorum"] = setUInt32(valid_quorum);
