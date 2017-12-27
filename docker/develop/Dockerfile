@@ -9,24 +9,46 @@ ENV IROHA_BUILD /opt/iroha/build
 
 RUN apt-get update; \
     apt-get -y upgrade; \
-    apt-get -y --no-install-recommends install apt-utils; \
+    apt-get -y --no-install-recommends install apt-utils software-properties-common; \
     apt-get -y clean
+
+# add git repository
+RUN add-apt-repository -y ppa:git-core/ppa; \
+    apt-get update
 
 RUN apt-get -y --no-install-recommends install build-essential python-software-properties \
         automake libtool \
         # dev dependencies
-        libssl-dev zlib1g-dev libboost-all-dev libc6-dbg golang \
+        libssl-dev zlib1g-dev libc6-dbg golang \
         # CircleCI dependencies
         git ssh tar gzip ca-certificates python3 python3-pip python3-setuptools \
         # code coverage
         lcov \
         # other
-        wget curl cmake file unzip gdb iputils-ping vim ccache \
-        gcovr vera++ cppcheck doxygen graphviz graphviz-dev; \
+        wget curl file unzip gdb iputils-ping vim ccache \
+        gcovr cppcheck doxygen graphviz graphviz-dev; \
     apt-get -y clean
 
 RUN pip3 install --upgrade pip; \
     pip3 install flask requests
+
+# install cmake 3.5.1
+RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
+    (cd /tmp/cmake ; git checkout 64130a7e793483e24c1d68bdd234f81d5edb2d51); \
+    (cd /tmp/cmake ; /tmp/cmake/bootstrap --parallel=${PARALLELISM} --enable-ccache); \
+    make -j${PARALLELISM} -C /tmp/cmake; \
+    make -C /tmp/cmake install; \
+    rm -rf /tmp/cmake
+
+# install boost 1.65.1
+RUN git clone https://github.com/boostorg/boost /tmp/boost; \
+    (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
+    (cd /tmp/boost ; git submodule init); \
+    (cd /tmp/boost ; git submodule update --recursive -j ${PARALLELISM}); \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
+    (cd /tmp/boost ; /tmp/boost/b2 headers); \
+    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install); \
+    rm -rf /tmp/boost
 
 # install protobuf
 RUN git clone https://github.com/google/protobuf /tmp/protobuf; \
@@ -112,11 +134,10 @@ RUN git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     make -C /tmp/libpqxx install; \
     rm -rf /tmp/libpqxx
 
-# install cpp_redis with tacopie
+# install cpp_redis 4.3.0
 RUN git clone https://github.com/Cylix/cpp_redis /tmp/cpp_redis; \
-    (cd /tmp/cpp_redis ; git checkout 727aa5f06c8ce498168cbab5a023cad5b9c00bc0); \
-    git clone https://github.com/Cylix/tacopie /tmp/cpp_redis/tacopie; \
-    (cd /tmp/cpp_redis/tacopie ; git checkout 290dc38681f346adae41d3cc8feabbe534424675); \
+    (cd /tmp/cpp_redis ; git checkout f390eef447a62dcb6da288fb1e91f25f8a9b838c); \
+    (cd /tmp/cpp_redis ; git submodule update --init --recursive); \
     cmake -H/tmp/cpp_redis -B/tmp/cpp_redis/build; \
     cmake --build /tmp/cpp_redis/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/cpp_redis
@@ -162,6 +183,14 @@ RUN git clone git://sourceware.org/git/valgrind.git /tmp/valgrind; \
     make -j${PARALLELISM} -C /tmp/valgrind; \
     make -C /tmp/valgrind install; \
     rm -rf /tmp/valgrind
+
+# install ed25519
+RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
+    (cd /tmp/ed25519 ; git checkout 56d926c4489aa7b2bb664a48294c5ee2d6e1c283); \
+    cmake -DCMAKE_BUILD_TYPE=Debug -DTESTING=OFF -H/tmp/ed25519 -B/tmp/ed25519/build; \
+    cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
+    rm -rf /tmp/ed25519
 
 WORKDIR /opt/iroha
 CMD ["/bin/bash"]

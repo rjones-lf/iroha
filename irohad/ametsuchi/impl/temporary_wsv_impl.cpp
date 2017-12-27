@@ -17,8 +17,8 @@
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
-#include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
+#include "ametsuchi/impl/postgres_wsv_query.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -36,18 +36,21 @@ namespace iroha {
 
     bool TemporaryWsvImpl::apply(
         const model::Transaction &transaction,
-        std::function<bool(const model::Transaction &, WsvQuery &)> function) {
-      auto execute_command = [this, transaction](auto command) {
+        std::function<bool(const model::Transaction &, WsvQuery &)>
+            apply_function) {
+      const auto &tx_creator = transaction.creator_account_id;
+      auto execute_command = [this, &tx_creator](auto command) {
         auto executor = command_executors_->getCommandExecutor(command);
-        auto account = wsv_->getAccount(transaction.creator_account_id).value();
-        return executor->validate(*command, *wsv_, account) &&
-            executor->execute(*command, *wsv_, *executor_);
+        auto account = wsv_->getAccount(tx_creator).value();
+        return executor->validate(*command, *wsv_, tx_creator)
+            && executor->execute(*command, *wsv_, *executor_, tx_creator);
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result = function(transaction, *wsv_) &&
-          std::all_of(transaction.commands.begin(),
-                      transaction.commands.end(), execute_command);
+      auto result = apply_function(transaction, *wsv_)
+          && std::all_of(transaction.commands.begin(),
+                         transaction.commands.end(),
+                         execute_command);
       if (result) {
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
@@ -56,6 +59,8 @@ namespace iroha {
       return result;
     }
 
-    TemporaryWsvImpl::~TemporaryWsvImpl() { transaction_->exec("ROLLBACK;"); }
+    TemporaryWsvImpl::~TemporaryWsvImpl() {
+      transaction_->exec("ROLLBACK;");
+    }
   }  // namespace ametsuchi
 }  // namespace iroha

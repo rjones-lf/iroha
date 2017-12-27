@@ -16,7 +16,7 @@
  */
 
 #include "simulator/impl/simulator.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -75,7 +75,6 @@ namespace iroha {
       new_block.transactions = proposal.transactions;
       new_block.txs_number = proposal.transactions.size();
       new_block.created_ts = 0; // TODO 14/08/17 Muratov set timestamp from proposal & for new model IR-501
-      new_block.merkle_root.fill(0); // TODO 14/08/17 Muratov make effective impl IR-464
       new_block.hash = hash(new_block);
       crypto_provider_->sign(new_block);
 

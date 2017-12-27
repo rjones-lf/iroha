@@ -16,8 +16,9 @@
  */
 
 #include <boost/optional.hpp>
-#include "ametsuchi/impl/storage_impl.hpp"
-#include "crypto/hash.hpp"
+#include "ametsuchi/impl/redis_block_index.hpp"
+#include "ametsuchi/impl/redis_block_query.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
@@ -29,12 +30,12 @@ class BlockQueryTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
-    storage =
-        StorageImpl::create(block_store_path, redishost_, redisport_, pgopt_);
 
-    ASSERT_TRUE(storage);
+    file = FlatFile::create(block_store_path);
+    ASSERT_TRUE(file);
+    index = std::make_shared<RedisBlockIndex>(client);
+    blocks = std::make_shared<RedisBlockQuery>(client, *file);
 
-    blocks = storage->getBlockQuery();
     // First transaction in block1
     Transaction txn1_1;
     txn1_1.creator_account_id = creator1;
@@ -68,15 +69,17 @@ class BlockQueryTest : public AmetsuchiTest {
     block2.transactions.push_back(txn2_1);
     block2.transactions.push_back(txn2_2);
 
-    auto ms = storage->createMutableStorage();
-    ms->apply(block1, [](const auto &, auto &, const auto &) { return true; });
-    ms->apply(block2, [](const auto &, auto &, const auto &) { return true; });
-    storage->commit(std::move(ms));
+    for (const auto &b : {block1, block2}) {
+      file->add(b.height, iroha::stringToBytes(converters::jsonToString(
+          converters::JsonBlockFactory().serialize(b))));
+      index->index(b);
+    }
   }
 
   std::vector<iroha::hash256_t> tx_hashes;
-  std::shared_ptr<StorageImpl> storage;
   std::shared_ptr<BlockQuery> blocks;
+  std::shared_ptr<BlockIndex> index;
+  std::unique_ptr<FlatFile> file;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
 };

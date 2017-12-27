@@ -17,7 +17,7 @@
 
 #include <chrono>
 #include <model/commands/create_role.hpp>
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "framework/test_block_generator.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/create_domain.hpp"

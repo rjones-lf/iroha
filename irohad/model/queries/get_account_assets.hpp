@@ -18,7 +18,7 @@
 #ifndef IROHA_GET_ACCOUNT_ASSETS_HPP
 #define IROHA_GET_ACCOUNT_ASSETS_HPP
 
-#include <model/query.hpp>
+#include "model/query.hpp"
 #include <string>
 
 namespace iroha {

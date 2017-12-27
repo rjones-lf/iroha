@@ -20,6 +20,7 @@ if (NOT gflags_FOUND)
   externalproject_add(gflags_gflags
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
+      BUILD_BYPRODUCTS ${EP_PREFIX}/src/gflags_gflags-build/lib/libgflags.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step

@@ -16,13 +16,8 @@
  */
 
 #include "model/converters/pb_command_factory.hpp"
-#include "model/converters/pb_common.hpp"
-
-#include <commands.pb.h>
-#include <model/permissions.hpp>
-#include <set>
-
 #include <boost/assign/list_inserter.hpp>
+#include "model/converters/pb_common.hpp"
 
 namespace iroha {
   namespace model {
@@ -30,6 +25,8 @@ namespace iroha {
 
       PbCommandFactory::PbCommandFactory() {
         boost::assign::insert(pb_role_map_)
+            // Can Get My Account Detail
+            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
             // Can Get My Account Assets
             (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
             // Can Get My Signatories
@@ -60,14 +57,16 @@ namespace iroha {
             (protocol::RolePermission::can_create_domain, can_create_domain)
             // Can create account
             (protocol::RolePermission::can_create_account, can_create_account)
-            // Can set quorum
-            (protocol::RolePermission::can_set_quorum, can_set_quorum)
             // Can add peer
             (protocol::RolePermission::can_add_peer, can_add_peer)
             // Can add asset quantity
             (protocol::RolePermission::can_add_asset_qty, can_add_asset_qty)
+            // Can subtract asset quantity
+            (protocol::RolePermission::can_subtract_asset_qty, can_subtract_asset_qty)
             // Can append role
             (protocol::RolePermission::can_append_role, can_append_role)
+            // Can append role
+            (protocol::RolePermission::can_detach_role, can_detach_role)
             // Can create asset
             (protocol::RolePermission::can_create_asset, can_create_asset)
             // Can create role
@@ -93,11 +92,14 @@ namespace iroha {
             // Can grant add signatory
             (protocol::RolePermission::can_grant_add_signatory,
              can_grant + can_add_signatory)
-             // Can grant + can_transfer
-             (protocol::RolePermission::can_grant_can_transfer,
+            // Can grant + can_transfer
+            (protocol::RolePermission::can_grant_can_transfer,
              can_grant + can_transfer)
             // Can get roles
-            (protocol::RolePermission::can_get_roles, can_get_roles);
+            (protocol::RolePermission::can_get_roles, can_get_roles)
+            // Can write details to other accounts
+            (protocol::RolePermission::can_grant_can_set_detail,
+             can_grant + can_set_detail);
 
         boost::assign::insert(pb_grant_map_)
             // Can add my signatory
@@ -107,7 +109,10 @@ namespace iroha {
             (protocol::GrantablePermission::can_remove_my_signatory,
              can_remove_signatory)
             // Can set my quorum
-            (protocol::GrantablePermission::can_set_my_quorum, can_set_quorum);
+            (protocol::GrantablePermission::can_set_my_quorum, can_set_quorum)
+            // Can write details to other accounts
+            (protocol::GrantablePermission::can_set_my_account_detail,
+             can_set_detail);
       }
 
       // asset quantity
@@ -130,6 +135,28 @@ namespace iroha {
             deserializeAmount(pb_add_asset_quantity.amount());
 
         return add_asset_quantity;
+      }
+
+      // subtract asset quantity
+      protocol::SubtractAssetQuantity PbCommandFactory::serializeSubtractAssetQuantity(
+        const model::SubtractAssetQuantity &subtract_asset_quantity) {
+        protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
+        pb_subtract_asset_quantity.set_account_id(subtract_asset_quantity.account_id);
+        pb_subtract_asset_quantity.set_asset_id(subtract_asset_quantity.asset_id);
+        auto amount = pb_subtract_asset_quantity.mutable_amount();
+        amount->CopyFrom(serializeAmount(subtract_asset_quantity.amount));
+        return pb_subtract_asset_quantity;
+      }
+
+      model::SubtractAssetQuantity PbCommandFactory::deserializeSubtractAssetQuantity(
+        const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
+        model::SubtractAssetQuantity subtract_asset_quantity;
+        subtract_asset_quantity.account_id = pb_subtract_asset_quantity.account_id();
+        subtract_asset_quantity.asset_id = pb_subtract_asset_quantity.asset_id();
+        subtract_asset_quantity.amount =
+          deserializeAmount(pb_subtract_asset_quantity.amount());
+
+        return subtract_asset_quantity;
       }
 
       // add peer
@@ -305,6 +332,20 @@ namespace iroha {
         return cmd;
       }
 
+      // Append Role
+      model::DetachRole PbCommandFactory::deserializeDetachRole(
+          const protocol::DetachRole &command) {
+        return DetachRole(command.account_id(), command.role_name());
+      }
+
+      protocol::DetachRole PbCommandFactory::serializeDetachRole(
+          const model::DetachRole &command) {
+        protocol::DetachRole cmd;
+        cmd.set_account_id(command.account_id);
+        cmd.set_role_name(command.role_name);
+        return cmd;
+      }
+
       // Create Role
       model::CreateRole PbCommandFactory::deserializeCreateRole(
           const protocol::CreateRole &command) {
@@ -410,6 +451,13 @@ namespace iroha {
           cmd.set_allocated_append_role(new protocol::AppendRole(serialized));
         }
 
+        // -----|DetachRole|-----
+        if (instanceof <model::DetachRole>(command)) {
+          auto serialized = commandFactory.serializeDetachRole(
+              static_cast<const model::DetachRole &>(command));
+          cmd.set_allocated_detach_role(new protocol::DetachRole(serialized));
+        }
+
         // -----|GrantPermission|-----
         if (instanceof <model::GrantPermission>(command)) {
           auto serialized = commandFactory.serializeGrantPermission(
@@ -432,6 +480,14 @@ namespace iroha {
               static_cast<const model::AddAssetQuantity &>(command));
           cmd.set_allocated_add_asset_quantity(
               new protocol::AddAssetQuantity(serialized));
+        }
+
+        // -----|SubtractAssetQuantity|-----
+        if (instanceof <model::SubtractAssetQuantity>(command)) {
+          auto serialized = commandFactory.serializeSubtractAssetQuantity(
+            static_cast<const model::SubtractAssetQuantity &>(command));
+          cmd.set_allocated_subtract_asset_quantity(
+            new protocol::SubtractAssetQuantity(serialized));
         }
 
         // -----|AddPeer|-----
@@ -527,6 +583,13 @@ namespace iroha {
           val = std::make_shared<model::AppendRole>(cmd);
         }
 
+        // -----|DetachRole|-----
+        if (command.has_detach_role()) {
+          auto pb_command = command.detach_role();
+          auto cmd = commandFactory.deserializeDetachRole(pb_command);
+          val = std::make_shared<model::DetachRole>(cmd);
+        }
+
         // -----|GrantPermission|-----
         if (command.has_grant_permission()) {
           auto pb_command = command.grant_permission();
@@ -546,6 +609,13 @@ namespace iroha {
           auto pb_command = command.add_asset_quantity();
           auto cmd = commandFactory.deserializeAddAssetQuantity(pb_command);
           val = std::make_shared<model::AddAssetQuantity>(cmd);
+        }
+
+        // -----|SubtractAssetQuantity|-----
+        if (command.has_subtract_asset_quantity()) {
+          auto pb_command = command.subtract_asset_quantity();
+          auto cmd = commandFactory.deserializeSubtractAssetQuantity(pb_command);
+          val = std::make_shared<model::SubtractAssetQuantity>(cmd);
         }
 
         // -----|AddPeer|-----

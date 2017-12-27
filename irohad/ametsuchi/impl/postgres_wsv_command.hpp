@@ -33,6 +33,8 @@ namespace iroha {
 
       bool insertAccountRole(const std::string &account_id,
                              const std::string &role_name) override;
+      bool deleteAccountRole(const std::string &account_id,
+                             const std::string &role_name) override;
 
       bool insertRolePermissions(
           const std::string &role_id,
@@ -40,6 +42,10 @@ namespace iroha {
 
       bool insertAccount(const model::Account &account) override;
       bool updateAccount(const model::Account &account) override;
+      bool setAccountKV(const std::string &account_id,
+                        const std::string &creator_account_id,
+                        const std::string &key,
+                        const std::string &val) override;
       bool insertAsset(const model::Asset &asset) override;
       bool upsertAccountAsset(const model::AccountAsset &asset) override;
       bool insertSignatory(const pubkey_t &signatory) override;
@@ -53,13 +59,17 @@ namespace iroha {
       bool insertDomain(const model::Domain &domain) override;
       bool insertAccountGrantablePermission(
           const std::string &permittee_account_id,
-          const std::string &account_id, const std::string &permission_id) override;
+          const std::string &account_id,
+          const std::string &permission_id) override;
 
       bool deleteAccountGrantablePermission(
           const std::string &permittee_account_id,
-          const std::string &account_id, const std::string &permission_id) override;
+          const std::string &account_id,
+          const std::string &permission_id) override;
 
      private:
+      const size_t default_tx_counter = 0;
+
       pqxx::nontransaction &transaction_;
 
       logger::Logger log_;

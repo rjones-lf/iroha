@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-addtest(stateless_transaction_validator_test stateless/transaction_validator_test.cpp)
+addtest(stateless_transaction_validator_test stateless_validation_test.cpp)
 target_link_libraries(stateless_transaction_validator_test
     stateless_validator
     hash

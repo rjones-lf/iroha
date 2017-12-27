@@ -25,13 +25,12 @@ namespace iroha {
     class WsvQueryCommandTest : public AmetsuchiTest {
      public:
       WsvQueryCommandTest() {
-        spdlog::set_level(spdlog::level::off);
-
         domain.domain_id = "domain";
         domain.default_role = role;
         account.domain_id = domain.domain_id;
         account.account_id = "id@" + account.domain_id;
         account.quorum = 1;
+        account.json_data = R"({"id@domain": {"key": "value"}})";
       }
 
       void SetUp() override {
@@ -80,6 +79,7 @@ CREATE TABLE IF NOT EXISTS account (
     domain_id character varying(164) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
     transaction_count int NOT NULL DEFAULT 0,
+    data JSONB,
     PRIMARY KEY (account_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (
@@ -128,7 +128,6 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
 
     TEST_F(RoleTest, InsertRoleWhenValidName) {
       ASSERT_TRUE(command->insertRole(role));
-
       auto roles = query->getRoles();
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
@@ -168,6 +167,85 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       ASSERT_EQ(0, permissions->size());
     }
 
+    class AccountTest : public WsvQueryCommandTest {
+      void SetUp() override {
+        WsvQueryCommandTest::SetUp();
+        ASSERT_TRUE(command->insertRole(role));
+        ASSERT_TRUE(command->insertDomain(domain));
+      }
+    };
+
+    /**
+     * @given inserted role, domain
+     * @when insert account with filled json data
+     * @then get account and check json data is the same
+     */
+    TEST_F(AccountTest, InsertAccountWithJSONData) {
+      ASSERT_TRUE(command->insertAccount(account));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(account.json_data, acc.value().json_data);
+    }
+
+    /**
+     * @given inserted role, domain, account
+     * @when insert to account new json data
+     * @then get account and check json data is the same
+     */
+    TEST_F(AccountTest, InsertNewJSONDataAccount) {
+      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(command->setAccountKV(
+          account.account_id, account.account_id, "id", "val"));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(R"({"id@domain": {"id": "val", "key": "value"}})",
+                acc.value().json_data);
+    }
+
+    /**
+     * @given inserted role, domain, account
+     * @when insert to account new json data
+     * @then get account and check json data is the same
+     */
+    TEST_F(AccountTest, InsertNewJSONDataToOtherAccount) {
+      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->setAccountKV(account.account_id, "admin", "id", "val"));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(R"({"admin": {"id": "val"}, "id@domain": {"key": "value"}})",
+                acc.value().json_data);
+    }
+
+    /**
+     * @given inserted role, domain, account
+     * @when insert to account new complex json data
+     * @then get account and check json data is the same
+     */
+    TEST_F(AccountTest, InsertNewComplexJSONDataAccount) {
+      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(command->setAccountKV(
+          account.account_id, account.account_id, "id", "[val1, val2]"));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(R"({"id@domain": {"id": "[val1, val2]", "key": "value"}})",
+                acc.value().json_data);
+    }
+
+    /**
+     * @given inserted role, domain, account
+     * @when update  json data in account
+     * @then get account and check json data is the same
+     */
+    TEST_F(AccountTest, UpdateAccountJSONData) {
+      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(command->setAccountKV(
+          account.account_id, account.account_id, "key", "val2"));
+      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(acc.has_value());
+      ASSERT_EQ(R"({"id@domain": {"key": "val2"}})", acc.value().json_data);
+    }
+
     class AccountRoleTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
@@ -202,6 +280,45 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       auto roles = query->getAccountRoles(account.account_id);
       ASSERT_TRUE(roles);
       ASSERT_EQ(0, roles->size());
+    }
+
+    /**
+     * @given inserted role, domain
+     * @when insert and delete account role
+     * @then role is detached
+     */
+    TEST_F(AccountRoleTest, DeleteAccountRoleWhenExist) {
+      ASSERT_TRUE(command->insertAccountRole(account.account_id, role));
+      ASSERT_TRUE(command->deleteAccountRole(account.account_id, role));
+      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(roles);
+      ASSERT_EQ(0, roles->size());
+    }
+
+    /**
+     * @given inserted role, domain
+     * @when no account exist
+     * @then nothing is deleted
+     */
+    TEST_F(AccountRoleTest, DeleteAccountRoleWhenNoAccount) {
+      ASSERT_TRUE(command->insertAccountRole(account.account_id, role));
+      ASSERT_TRUE(command->deleteAccountRole("no", role));
+      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(roles);
+      ASSERT_EQ(1, roles->size());
+    }
+
+    /**
+     * @given inserted role, domain
+     * @when no role exist
+     * @then nothing is deleted
+     */
+    TEST_F(AccountRoleTest, DeleteAccountRoleWhenNoRole) {
+      ASSERT_TRUE(command->insertAccountRole(account.account_id, role));
+      ASSERT_TRUE(command->deleteAccountRole(account.account_id, "no"));
+      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(roles);
+      ASSERT_EQ(1, roles->size());
     }
 
     class AccountGrantablePermissionTest : public WsvQueryCommandTest {

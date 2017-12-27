@@ -18,7 +18,7 @@
 #ifndef IROHA_SIGNATURE_HPP
 #define IROHA_SIGNATURE_HPP
 
-#include <common/types.hpp>
+#include "common/types.hpp"
 
 namespace iroha {
   namespace model {

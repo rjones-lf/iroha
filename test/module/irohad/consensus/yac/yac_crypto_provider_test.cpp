@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "crypto/crypto.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
 namespace iroha {
   namespace consensus {

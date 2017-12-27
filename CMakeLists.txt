@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5.1)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -29,19 +29,33 @@ endif()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-option(BENCHMARKING "Build benchmarks"       OFF)
-option(TESTING      "Build tests"            ON )
-option(COVERAGE     "Enable coverage"        OFF)
-option(FUZZING      "Build fuzzing binaries" OFF)
-option(PACKAGE_ZIP  "Create ZIP package"     OFF)
-option(PACKAGE_TGZ  "Create TGZ package"     OFF)
-option(PACKAGE_RPM  "Create RPM package"     OFF)
-option(PACKAGE_DEB  "Create DEB package"     OFF)
+option(BENCHMARKING "Build benchmarks"               OFF)
+option(TESTING      "Build tests"                    ON )
+option(COVERAGE     "Enable coverage"                OFF)
+option(FUZZING      "Build fuzzing binaries"         OFF)
+option(PACKAGE_ZIP  "Create ZIP package"             OFF)
+option(PACKAGE_TGZ  "Create TGZ package"             OFF)
+option(PACKAGE_RPM  "Create RPM package"             OFF)
+option(PACKAGE_DEB  "Create DEB package"             OFF)
 option(ENABLE_LIBS_PACKAGING "Enable libs packaging" ON)
+option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
+option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
+option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
 endif()
+
+if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
+  message(STATUS "Packaging enabled: forcing non-packaging options to OFF")
+  set(BENCHMARKING OFF)
+  set(TESTING OFF)
+  set(COVERAGE OFF)
+  set(FUZZING OFF)
+  set(SWIG_PYTHON OFF)
+  set(SWIG_JAVA OFF)
+endif()
+
 message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 message(STATUS "-DTESTING=${TESTING}")
 message(STATUS "-DBENCHMARKING=${BENCHMARKING}")
@@ -52,10 +66,14 @@ message(STATUS "-DPACKAGE_TGZ=${PACKAGE_TGZ}")
 message(STATUS "-DPACKAGE_RPM=${PACKAGE_RPM}")
 message(STATUS "-DPACKAGE_DEB=${PACKAGE_DEB}")
 message(STATUS "-DENABLE_LIBS_PACKAGING=${ENABLE_LIBS_PACKAGING}")
+message(STATUS "-DSWIG_PYTHON=${SWIG_PYTHON}")
+message(STATUS "-DSWIG_JAVA=${SWIG_JAVA}")
+message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
+  ${PROJECT_SOURCE_DIR}/shared_model
   ${PROJECT_SOURCE_DIR}/libs
   ${IROHA_SCHEMA_DIR}
 )
@@ -64,7 +82,7 @@ include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
 
-if(NOT PACKAGE_TGZ OR NOT PACKAGE_ZIP OR NOT PACKAGE_RPM OR NOT PACKAGE_DEB)
+if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
 endif()
 
@@ -72,7 +90,7 @@ add_subdirectory(schema)
 add_subdirectory(libs)
 add_subdirectory(irohad)
 add_subdirectory(iroha-cli)
-
+add_subdirectory(shared_model)
 
 if(TESTING)
   enable_testing()

@@ -18,7 +18,7 @@
 #ifndef IROHA_REDIS_FLAT_BLOCK_QUERY_HPP
 #define IROHA_REDIS_FLAT_BLOCK_QUERY_HPP
 
-#include <cpp_redis/redis_client.hpp>
+#include <cpp_redis/cpp_redis>
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 
@@ -33,7 +33,7 @@ namespace iroha {
      */
     class RedisBlockQuery : public BlockQuery {
      public:
-      RedisBlockQuery(cpp_redis::redis_client &client, FlatFile &file_store);
+      RedisBlockQuery(cpp_redis::client &client, FlatFile &file_store);
 
       rxcpp::observable<model::Transaction> getAccountTransactions(
           const std::string &account_id) override;
@@ -82,7 +82,7 @@ namespace iroha {
           const rxcpp::subscriber<model::Transaction> &s, uint64_t block_id);
 
       FlatFile &block_store_;
-      cpp_redis::redis_client &client_;
+      cpp_redis::client &client_;
       model::converters::JsonBlockFactory serializer_;
     };
   }  // namespace ametsuchi

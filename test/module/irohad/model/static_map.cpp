@@ -21,7 +21,6 @@
 #include "model/registration/command_registration.hpp"
 #include "model/registration/query_registration.hpp"
 #include "model/registration/query_response_registration.hpp"
-#include "model/registration/transaction_response_registration.hpp"
 
 using namespace std;
 using namespace iroha::model;
@@ -30,7 +29,7 @@ TEST(HandlerTest, CommandRegistration) {
   auto log = logger::testLog("HandlerTest");
 
   CommandRegistry registry;
-  ASSERT_EQ(13, registry.command_handler.types().size());
+  ASSERT_EQ(16, registry.command_handler.types().size());
 }
 
 TEST(HandlerTest, QueryRegistration) {
@@ -38,7 +37,7 @@ TEST(HandlerTest, QueryRegistration) {
 
   QueryRegistry registry;
 
-  ASSERT_EQ(8, registry.query_handler.types().size());
+  ASSERT_EQ(10, registry.query_handler.types().size());
 }
 
 TEST(HandlerTest, QueryResponseRegistration) {
@@ -46,14 +45,7 @@ TEST(HandlerTest, QueryResponseRegistration) {
 
   QueryResponseRegistry registry;
 
-  ASSERT_EQ(8, registry.query_response_handler.types().size());
+  ASSERT_EQ(9, registry.query_response_handler.types().size());
 }
 
-TEST(HandlerTest, TransactionResponseRegistration) {
-  auto log = logger::testLog("HandlerTest");
-
-  TransactionResponseRegistry registry;
-
-  ASSERT_EQ(1, registry.transaction_response_handler.types().size());
-}
 

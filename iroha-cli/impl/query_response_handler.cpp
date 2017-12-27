@@ -50,7 +50,6 @@ namespace iroha_cli {
         "Account assets not found";
     error_handler_map_[ErrorResponse::NO_SIGNATORIES] = "No signatories found";
     error_handler_map_[ErrorResponse::NOT_SUPPORTED] = "Query not supported";
-    error_handler_map_[ErrorResponse::WRONG_FORMAT] = "Query has wrong format";
     error_handler_map_[ErrorResponse::NO_ROLES] = "No roles in the system";
     error_handler_map_[ErrorResponse::NO_ASSET] = "No asset found";
   }
@@ -90,6 +89,7 @@ namespace iroha_cli {
     std::for_each(roles.begin(), roles.end(), [](auto role){
       std::cout << " " << role;
     });
+    log_->info("-Data-: {}", account.json_data());
   }
 
   void QueryResponseHandler::handleRolesResponse(

@@ -47,8 +47,6 @@ namespace iroha {
                            allocator);
         document.AddMember("height", block.height, allocator);
         document.AddMember("txs_number", block.txs_number, allocator);
-        document.AddMember("merkle_root", block.merkle_root.to_hexstring(),
-                           allocator);
 
         Value commands;
         commands.SetArray();
@@ -87,7 +85,6 @@ namespace iroha {
             | des.Uint(&Block::txs_number, "txs_number")
             | des.String(&Block::hash, "hash")
             | des.String(&Block::prev_hash, "prev_hash")
-            | des.String(&Block::merkle_root, "merkle_root")
             | des.Array(&Block::sigs, "signatures")
             | des.Array(&Block::transactions, "transactions", des_transactions);
       }

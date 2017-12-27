@@ -16,12 +16,12 @@
  */
 
 #include "ametsuchi/impl/redis_block_query.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
 
-    RedisBlockQuery::RedisBlockQuery(cpp_redis::redis_client &client,
+    RedisBlockQuery::RedisBlockQuery(cpp_redis::client &client,
                                      FlatFile &file_store)
         : block_store_(file_store), client_(client) {}
 

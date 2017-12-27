@@ -31,9 +31,13 @@ add_library(schema
     primitive.pb.cc
     queries.pb.cc
     responses.pb.cc
+    endpoint.pb.cc
     )
 target_link_libraries(schema
     protobuf
+    )
+target_include_directories(schema PUBLIC
+    .
     )
 
 add_library(endpoint

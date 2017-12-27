@@ -92,6 +92,30 @@ TEST(QueryResponseTest, AccountAsset) {
             des_account_asset.account_id);
 }
 
+/**
+ * @given AccountDetailResponse
+ * @when Set all data
+ * @then Return Protobuf Data
+ */
+TEST(QueryResponseTest, AccountDetailResponse) {
+  model::converters::PbQueryResponseFactory pb_factory;
+
+  std::string detail = "{}";
+
+  model::AccountDetailResponse account_detail_response;
+  account_detail_response.detail = detail;
+
+  auto shrd_acc_detail_res = std::make_shared<decltype(account_detail_response)>(
+    account_detail_response);
+  auto query_response = *pb_factory.serialize(shrd_acc_detail_res);
+
+  auto des_account_detail_response = pb_factory.deserializeAccountDetailResponse(
+    query_response.account_detail_response());
+
+  ASSERT_EQ(des_account_detail_response.detail,
+            account_detail_response.detail);
+}
+
 TEST(QueryResponseTest, SignatoriesTest) {
   model::converters::PbQueryResponseFactory pb_factory;
 

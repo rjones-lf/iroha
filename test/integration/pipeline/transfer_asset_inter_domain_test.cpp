@@ -74,10 +74,6 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     ASSERT_TRUE(irohad->storage);
 
     iroha::main::BlockInserter(irohad->storage).applyToLedger({genesis_block});
-    irohad->storage->getBlockQuery()->getTopBlocks(1).subscribe([](auto block) {
-      std::cout << "hoge\n";
-      EXPECT_EQ(block.transactions.size(), 2);
-    });
     irohad->init();
     irohad->run();
   }
@@ -171,6 +167,5 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
           getVal(iroha::Amount().createFromString("5.50")))});
   iroha::model::ModelCryptoProviderImpl(ivanKeypair_).sign(tx3);
 
-  sendTransactions({tx1, tx2, tx3});
-  validate();
+  sendTxsInOrderAndValidate({tx1, tx2, tx3});
 }

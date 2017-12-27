@@ -22,6 +22,7 @@
 
 // ----------| commands |----------
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -33,8 +34,10 @@
 
 #include "model/commands/append_role.hpp"
 #include "model/commands/create_role.hpp"
+#include "model/commands/detach_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 
 /**
  * File contains registration for all command subclasses
@@ -47,6 +50,7 @@ namespace iroha {
      public:
       CommandRegistry() {
         command_handler.register_type(typeid(AddAssetQuantity));
+        command_handler.register_type(typeid(SubtractAssetQuantity));
         command_handler.register_type(typeid(AddPeer));
         command_handler.register_type(typeid(AddSignatory));
         command_handler.register_type(typeid(CreateAccount));
@@ -56,15 +60,17 @@ namespace iroha {
         command_handler.register_type(typeid(SetQuorum));
         command_handler.register_type(typeid(TransferAsset));
         command_handler.register_type(typeid(AppendRole));
+        command_handler.register_type(typeid(DetachRole));
         command_handler.register_type(typeid(CreateRole));
         command_handler.register_type(typeid(GrantPermission));
         command_handler.register_type(typeid(RevokePermission));
+        command_handler.register_type(typeid(SetAccountDetail));
       }
 
       ClassHandler command_handler{};
     };
 
-  } // namespace model
-} // namespace iroha
+  }  // namespace model
+}  // namespace iroha
 
-#endif //IROHA_COMMAND_REGISTRATION_HPP
+#endif  // IROHA_COMMAND_REGISTRATION_HPP

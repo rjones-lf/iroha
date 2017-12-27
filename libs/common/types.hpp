@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <nonstd/optional.hpp>
+#include "crypto/base64.hpp"
 
 /**
  * This file defines common types used in iroha.
@@ -124,44 +125,6 @@ namespace iroha {
    */
   inline std::string bytesToString(const std::vector<uint8_t> &source) {
     return std::string(source.begin(), source.end());
-  }
-
-  /**
-   * Convert string of raw bytes to printable hex string
-   * @param str
-   * @return
-   */
-  inline std::string bytestringToHexstring(const std::string &str) {
-    std::stringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (const auto &c : str) {
-      ss << std::setw(2) << static_cast<int>(c);
-    }
-    return ss.str();
-  }
-
-  /**
-   * Convert printable hex string to string of raw bytes
-   * @param str
-   * @return
-   */
-  inline nonstd::optional<std::string> hexstringToBytestring(
-      const std::string &str) {
-    if (str.empty() or str.size() % 2 != 0) {
-      return nonstd::nullopt;
-    }
-    std::string result(str.size() / 2, 0);
-    for (size_t i = 0; i < result.length(); ++i) {
-      std::string byte = str.substr(i * 2, 2);
-      try {
-        result.at(i) = std::stoul(byte, nullptr, 16);
-      } catch (const std::invalid_argument &e) {
-        return nonstd::nullopt;
-      } catch (const std::out_of_range &e) {
-        return nonstd::nullopt;
-      }
-    }
-    return result;
   }
 
   /**
@@ -307,7 +270,7 @@ namespace iroha {
 
   using sig_t = blob_t<64>;  // ed25519 sig is 64 bytes length
   using pubkey_t = blob_t<32>;
-  using privkey_t = blob_t<64>;
+  using privkey_t = blob_t<32>;
 
   struct keypair_t {
     keypair_t() = default;

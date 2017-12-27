@@ -48,6 +48,18 @@ namespace iroha {
        */
       std::string account_id{};
     };
+
+    /**
+     * Query for getting transactions of given transactions' hashes
+     */
+    struct GetTransactions : Query {
+      using TxHashType = iroha::hash256_t;
+      using TxHashCollectionType = std::vector<TxHashType>;
+      /**
+       * Hashes of the transaction to be retrieved
+       */
+      TxHashCollectionType tx_hashes{};
+    };
   }  // namespace model
 }  // namespace iroha
 #endif  // IROHA_GET_TRANSACTIONS_HPP

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include <crypto/hash.hpp>
+#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/converters/pb_command_factory.hpp"

@@ -18,19 +18,20 @@
 #include <gtest/gtest.h>
 #include "commands.pb.h"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
+#include "model/commands/append_role.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
+#include "model/commands/create_role.hpp"
+#include "model/commands/detach_role.hpp"
+#include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
+#include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/transfer_asset.hpp"
-
-#include "model/commands/create_role.hpp"
-#include "model/commands/append_role.hpp"
-#include "model/commands/grant_permission.hpp"
-#include "model/commands/revoke_permission.hpp"
 
 #include "model/converters/pb_command_factory.hpp"
 #include "model/permissions.hpp"
@@ -47,7 +48,7 @@ void command_converter_test(iroha::model::Command &abstract_command) {
 TEST(CommandTest, add_asset_quantity) {
   auto orig_command = iroha::model::AddAssetQuantity();
   orig_command.account_id = "23";
-  iroha::Amount amount(50,1);
+  iroha::Amount amount(50, 1);
 
   orig_command.amount = amount;
   orig_command.asset_id = "23";
@@ -55,6 +56,27 @@ TEST(CommandTest, add_asset_quantity) {
   auto factory = iroha::model::converters::PbCommandFactory();
   auto proto_command = factory.serializeAddAssetQuantity(orig_command);
   auto serial_command = factory.deserializeAddAssetQuantity(proto_command);
+
+  ASSERT_EQ(orig_command, serial_command);
+  command_converter_test(orig_command);
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when Set all data
+ * @then Return Protobuf Data
+ */
+TEST(CommandTest, subtract_asset_quantity) {
+  auto orig_command = iroha::model::SubtractAssetQuantity();
+  orig_command.account_id = "23";
+  iroha::Amount amount(50,1);
+
+  orig_command.amount = amount;
+  orig_command.asset_id = "23";
+
+  auto factory = iroha::model::converters::PbCommandFactory();
+  auto proto_command = factory.serializeSubtractAssetQuantity(orig_command);
+  auto serial_command = factory.deserializeSubtractAssetQuantity(proto_command);
 
   ASSERT_EQ(orig_command, serial_command);
   command_converter_test(orig_command);
@@ -98,7 +120,7 @@ TEST(CommandTest, add_signatory_abstract_factory) {
   command_converter_test(orig_command);
 }
 
-TEST(CommandTest, create_domain){
+TEST(CommandTest, create_domain) {
   auto factory = iroha::model::converters::PbCommandFactory();
   auto orig_command = CreateDomain("soramitsu", "jp-user");
   auto proto_command = factory.serializeCreateDomain(orig_command);
@@ -149,7 +171,6 @@ TEST(CommandTest, remove_signatory) {
   command_converter_test(orig_command);
 }
 
-
 TEST(CommandTest, set_account_quorum) {
   auto factory = iroha::model::converters::PbCommandFactory();
 
@@ -183,20 +204,20 @@ TEST(CommandTest, set_transfer_asset) {
   command_converter_test(orig_command);
 }
 
-class TestablePbCommandFactory : public iroha::model::converters::PbCommandFactory{
+class TestablePbCommandFactory
+    : public iroha::model::converters::PbCommandFactory {
  public:
-  auto& getPermMap(){
+  auto &getPermMap() {
     return pb_role_map_;
   }
 };
-
 
 TEST(CommandTest, create_role) {
   auto factory = iroha::model::converters::PbCommandFactory();
   std::set<std::string> perms;
   perms.insert(all_perm_group.begin(), all_perm_group.end());
 
-  for (auto perm : perms){
+  for (auto perm : perms) {
     TestablePbCommandFactory test_factory;
     auto map = test_factory.getPermMap();
     auto it = map.right.find(perm);
@@ -206,7 +227,6 @@ TEST(CommandTest, create_role) {
     auto proto_command = factory.serializeCreateRole(orig_command);
     auto serial_command = factory.deserializeCreateRole(proto_command);
     ASSERT_EQ(orig_command, serial_command);
-
   }
   auto orig_command = CreateRole("master", perms);
   auto proto_command = factory.serializeCreateRole(orig_command);
@@ -222,6 +242,19 @@ TEST(CommandTest, append_role) {
 
   auto proto_command = factory.serializeAppendRole(orig_command);
   auto serial_command = factory.deserializeAppendRole(proto_command);
+
+  ASSERT_EQ(orig_command, serial_command);
+
+  command_converter_test(orig_command);
+}
+
+TEST(CommandTest, detach_role) {
+  auto factory = iroha::model::converters::PbCommandFactory();
+
+  auto orig_command = DetachRole("test@test", "master");
+
+  auto proto_command = factory.serializeDetachRole(orig_command);
+  auto serial_command = factory.deserializeDetachRole(proto_command);
 
   ASSERT_EQ(orig_command, serial_command);
 
@@ -263,6 +296,6 @@ TEST(CommandTest, set_account_detail) {
   auto serial_command = factory.deserializeSetAccountDetail(proto_command);
 
   ASSERT_EQ(orig_command, serial_command);
-  
+
   command_converter_test(orig_command);
 }

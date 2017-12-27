@@ -17,7 +17,7 @@
 #include <memory>
 
 #include "model/generators/query_generator.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace model {
@@ -57,7 +57,22 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
+      std::shared_ptr<GetAccountDetail> QueryGenerator::generateGetAccountDetail(
+          ts64_t timestamp, std::string creator, uint64_t query_counter,
+          std::string account_id, std::string creator_account_id,
+          std::string detail){
+        auto query = std::make_shared<GetAccountDetail>();
+        query->created_ts = timestamp;
+        query->creator_account_id = creator;
+        query->query_counter = query_counter;
+        query->account_id = account_id;
+        query->creator_account_id = creator_account_id;
+        query->detail = detail;
+        return query;
+      }
+
+
+        std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
           ts64_t timestamp, std::string creator, uint64_t query_counter,
           std::string account_id) {
         auto query = std::make_shared<GetSignatories>();
@@ -88,6 +103,17 @@ namespace iroha {
         query->query_counter = query_counter;
         query->account_id = account_id;
         query->asset_id = asset_id;
+        return query;
+      }
+
+      std::shared_ptr<GetTransactions> QueryGenerator::generateGetTransactions(
+          ts64_t timestamp, const std::string& creator, uint64_t query_counter,
+          const std::vector<iroha::hash256_t>& tx_hashes) {
+        auto query = std::make_shared<GetTransactions>();
+        query->created_ts = timestamp;
+        query->creator_account_id = creator;
+        query->query_counter = query_counter;
+        query->tx_hashes = tx_hashes;
         return query;
       }
 

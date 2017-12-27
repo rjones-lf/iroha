@@ -68,6 +68,7 @@ namespace iroha_cli {
       const std::string GET_ACC = "get_acc";
       const std::string GET_ACC_AST = "get_acc_ast";
       const std::string GET_ACC_TX = "get_acc_tx";
+      const std::string GET_TX = "get_tx";
       const std::string GET_ACC_SIGN = "get_acc_sign";
       const std::string GET_ROLES = "get_roles";
       const std::string GET_AST_INFO = "get_ast_info";
@@ -95,6 +96,8 @@ namespace iroha_cli {
       std::shared_ptr<iroha::model::Query> parseGetAccountAssets(
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAccountTransactions(
+          QueryParams params);
+      std::shared_ptr<iroha::model::Query> parseGetTransactions(
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetSignatories(
           QueryParams params);

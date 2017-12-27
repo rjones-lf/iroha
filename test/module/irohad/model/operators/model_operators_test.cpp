@@ -16,22 +16,24 @@
  */
 
 #include <gtest/gtest.h>
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
+#include "model/commands/append_role.hpp"
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
+#include "model/commands/create_role.hpp"
+#include "model/commands/detach_role.hpp"
+#include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
+#include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/transaction.hpp"
-#include "model/commands/create_role.hpp"
-#include "model/commands/append_role.hpp"
-#include "model/commands/grant_permission.hpp"
-#include "model/commands/revoke_permission.hpp"
 
 using namespace iroha::model;
 
@@ -66,6 +68,31 @@ AddAssetQuantity createAddAssetQuantity() {
 TEST(ModelOperatorTest, AddAssetQuantityTest) {
   auto first = createAddAssetQuantity();
   auto second = createAddAssetQuantity();
+
+  ASSERT_EQ(first, second);
+  second.asset_id = "22";
+  ASSERT_NE(first, second);
+}
+
+// -----|SubtractAssetQuantity|-----
+
+SubtractAssetQuantity createSubtractAssetQuantity() {
+  SubtractAssetQuantity saq;
+  saq.account_id = "acc";
+  iroha::Amount amount(1010, 2);
+  saq.amount = amount;
+  saq.asset_id = "ast";
+  return saq;
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when Same data
+ * @then Return true.
+ */
+TEST(ModelOperatorTest, SubtractAssetQuantityTest) {
+  auto first = createSubtractAssetQuantity();
+  auto second = createSubtractAssetQuantity();
 
   ASSERT_EQ(first, second);
   second.asset_id = "22";
@@ -204,7 +231,6 @@ TEST(ModelOperatorTest, TransferAssetTest) {
   ASSERT_NE(first, second);
 }
 
-
 // -----|CreateRole|-----
 
 TEST(ModelOperatorTest, CreateRoleTest) {
@@ -219,8 +245,19 @@ TEST(ModelOperatorTest, CreateRoleTest) {
 // -----|AppendRole|-----
 
 TEST(ModelOperatorTest, AppendRoleTest) {
-  auto first = AppendRole("yoda","master");
-  auto second = AppendRole("yoda","master");
+  auto first = AppendRole("yoda", "master");
+  auto second = AppendRole("yoda", "master");
+
+  ASSERT_EQ(first, second);
+  second.account_id = "obi";
+  ASSERT_NE(first, second);
+}
+
+// -----|AppendRole|-----
+
+TEST(ModelOperatorTest, DetachRoleTest) {
+  auto first = DetachRole("yoda", "master");
+  auto second = DetachRole("yoda", "master");
 
   ASSERT_EQ(first, second);
   second.account_id = "obi";
@@ -230,8 +267,8 @@ TEST(ModelOperatorTest, AppendRoleTest) {
 // -----|GrantPermission|-----
 
 TEST(ModelOperatorTest, GrantPermissionTest) {
-  auto first = GrantPermission("admin","can_read");
-  auto second = GrantPermission("admin","can_read");
+  auto first = GrantPermission("admin", "can_read");
+  auto second = GrantPermission("admin", "can_read");
 
   ASSERT_EQ(first, second);
   second.account_id = "non-admin";
@@ -241,8 +278,8 @@ TEST(ModelOperatorTest, GrantPermissionTest) {
 // -----|RevokePermission|-----
 
 TEST(ModelOperatorTest, RevokePermissionTest) {
-  auto first = RevokePermission("admin","can_read");
-  auto second = RevokePermission("admin","can_read");
+  auto first = RevokePermission("admin", "can_read");
+  auto second = RevokePermission("admin", "can_read");
 
   ASSERT_EQ(first, second);
   second.account_id = "non-admin";
@@ -291,6 +328,8 @@ Transaction createTransaction() {
   // commands
   transaction.commands.push_back(
       std::make_shared<AddAssetQuantity>(createAddAssetQuantity()));
+  transaction.commands.push_back(
+      std::make_shared<SubtractAssetQuantity>(createSubtractAssetQuantity()));
   transaction.commands.push_back(std::make_shared<AddPeer>(createAddPeer()));
   transaction.commands.push_back(
       std::make_shared<AddSignatory>(createAddSignatory()));
@@ -318,12 +357,11 @@ TEST(ModelOperatorTest, TransactionTest) {
 
 // -----|Block|-----
 
-Block createBlock(){
+Block createBlock() {
   Block block;
   block.created_ts = 1;
   block.txs_number = 2;
   std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0x23);
-  std::fill(block.merkle_root.begin(), block.merkle_root.end(), 0x23);
   block.sigs.push_back(createSignature());
   block.transactions.push_back(createTransaction());
   block.height = 123;

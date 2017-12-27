@@ -16,7 +16,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/generators/query_generator.hpp"
 
@@ -76,6 +76,22 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
+/**
+ * @given GetAccountDetail
+ * @when Set all data
+ * @then Return Protobuf Data
+ */
+TEST(PbQueryFactoryTest, SerializeGetAccountDetail){
+  PbQueryFactory query_factory;
+  QueryGenerator query_generator;
+  auto query = query_generator.generateGetAccountDetail(0, "123", 0, "test", "test2", "key");
+  auto pb_query = query_factory.serialize(query);
+  ASSERT_TRUE(pb_query.has_value());
+  auto res_query = query_factory.deserialize(pb_query.value());
+  ASSERT_TRUE(res_query.has_value());
+  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+}
+
 TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
   PbQueryFactory query_factory;
   QueryGenerator query_generator;
@@ -86,6 +102,14 @@ TEST(PbQueryFactoryTest, SerializeGetAccountTransactions){
   ASSERT_TRUE(res_query.has_value());
   // TODO 26/09/17 grimadas: overload operator == for queries and replace with it IR-512 #goodfirstissue
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+}
+
+TEST(PbQueryFactoryTest, SerializeGetTransactions){
+  iroha::hash256_t hash1, hash2;
+  hash1[0] = 1;
+  hash2[1] = 2;
+  auto query = QueryGenerator{}.generateGetTransactions(0, "admin", 1, {hash1, hash2});
+  runQueryTest(query);
 }
 
 TEST(PbQueryFactoryTest, SerializeGetSignatories){

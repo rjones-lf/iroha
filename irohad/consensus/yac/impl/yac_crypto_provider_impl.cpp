@@ -17,8 +17,8 @@
 
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
-#include "crypto/crypto.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace consensus {
