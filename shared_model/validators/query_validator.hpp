@@ -103,6 +103,18 @@ namespace shared_model {
         return reason;
       }
 
+      ReasonsGroupType operator()
+          (const detail::PolymorphicWrapper<interface::GetAccountDetail> &qry)
+          const {
+        ReasonsGroupType reason;
+        reason.first = "GetAccountDetail";
+
+        validator_.validateAccountId(reason, qry->accountId());
+        validator_.validateAccountDetailKey(reason, qry->detail());
+
+        return reason;
+      }
+
       ReasonsGroupType operator()(
           const detail::PolymorphicWrapper<interface::GetRoles> &qry) const {
         ReasonsGroupType reason;
