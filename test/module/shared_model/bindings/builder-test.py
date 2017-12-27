@@ -49,7 +49,7 @@ class BuilderTest(unittest.TestCase):
 
   def check_proto_tx(self, blob):
     try:
-      blk.Transaction.FromString(b''.join(map(bytes, blob.blob())))
+      blk.Transaction.FromString(b''.join(map(chr, blob.blob())))
     except DecodeError as e:
       print(e)
       return False

@@ -39,7 +39,7 @@ class BuilderTest(unittest.TestCase):
 
   def check_proto_query(self, blob):
     try:
-      qry.Query.FromString(b''.join(map(bytes, blob.blob())))
+      qry.Query.FromString(b''.join(map(chr, blob.blob())))
     except DecodeError as e:
       print(e)
       return False
