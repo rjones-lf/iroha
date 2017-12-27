@@ -33,6 +33,7 @@
 #include "model/block.hpp"
 #include "model/common.hpp"
 #include "model/signature.hpp"
+#include "model/queries/get_transactions.hpp"
 
 namespace iroha {
   namespace model {
@@ -251,6 +252,38 @@ namespace iroha {
           return std::accumulate(x.begin(), x.end(),
                                  nonstd::make_optional<Block::SignaturesType>(),
                                  acc_signatures);
+        }
+      };
+
+      template <>
+      struct Convert<GetTransactions::TxHashCollectionType> {
+        template <typename T>
+        auto operator()(T &&x) {
+          auto acc_hashes = [](auto init, auto &x) {
+            return init | [&x](auto tx_hashes)
+              -> nonstd::optional<GetTransactions::TxHashCollectionType>
+            {
+              // If invalid type included, returns nullopt
+              if (not x.IsString()) {
+                return nonstd::nullopt;
+              }
+              auto tx_hash_opt =
+                Convert<GetTransactions::TxHashType>()(x.GetString());
+              if (not tx_hash_opt) {
+                // If the the hash is wrong, just skip.
+                return nonstd::make_optional(tx_hashes);
+              }
+              return tx_hash_opt | [&tx_hashes](auto tx_hash) {
+                tx_hashes.push_back(tx_hash);
+                return nonstd::make_optional(tx_hashes);
+              };
+            };
+          };
+          return std::accumulate(
+            x.begin(),
+            x.end(),
+            nonstd::make_optional<GetTransactions::TxHashCollectionType>(),
+            acc_hashes);
         }
       };
 

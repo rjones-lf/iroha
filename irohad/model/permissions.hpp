@@ -18,15 +18,17 @@
 #ifndef IROHA_PERMISSIONS_HPP
 #define IROHA_PERMISSIONS_HPP
 
-#include <string>
 #include <set>
+#include <string>
 
 namespace iroha {
   namespace model {
 
     const std::string can_append_role = "CanAppendRole";
     const std::string can_create_role = "CanCreateRole";
+    const std::string can_detach_role = "CanDetachRole";
     const std::string can_add_asset_qty = "CanAddAssetQuantity";
+    const std::string can_subtract_asset_qty = "CanSubtractAssetQuantity";
     const std::string can_add_peer = "CanAddPeer";
     const std::string can_add_signatory = "CanAddSignatory";
     const std::string can_create_account = "CanCreateAccount";
@@ -36,60 +38,80 @@ namespace iroha {
     const std::string can_set_quorum = "CanSetQuorum";
     const std::string can_transfer = "CanTransfer";
     const std::string can_receive = "CanReceive";
+    const std::string can_set_detail = "CanSetAccountInfo";
 
     // ---------|Query permissions|-------------
     const std::string can_read_assets = "CanReadAssets";
     const std::string can_get_roles = "CanGetRoles";
+
+
     const std::string can_get_my_account = "CanGetMyAccount";
     const std::string can_get_all_accounts = "CanGetAllAccounts";
+    const std::string can_get_domain_accounts = "CanGetDomainAccounts";
 
     const std::string can_get_my_signatories = "CanGetMySignatories";
     const std::string can_get_all_signatories = "CanGetAllSignatories";
+    const std::string can_get_domain_signatories = "CanGetDomainSignatories";
 
     const std::string can_get_my_acc_ast = "CanGetMyAccountAssets";
-    const std::string can_get_all_acc_ast = "CanGetAllAccountAssets";
+      const std::string can_get_all_acc_ast = "CanGetAllAccountAssets";
+    const std::string can_get_domain_acc_ast = "CanGetDomainAccountAssets";
+    const std::string can_get_my_acc_detail = "CanGetMyAccountDetail";
+      const std::string can_get_all_acc_detail = "CanGetAllAccountDetail";
+    const std::string can_get_domain_acc_detail = "CanGetDomainAccountDetail";
 
     const std::string can_get_my_acc_txs = "CanGetMyAccountTransactions";
     const std::string can_get_all_acc_txs = "CanGetAllAccountTransactions";
+    const std::string can_get_domain_acc_txs =
+        "CanGetDomainAccountTransactions";
 
     const std::string can_get_my_acc_ast_txs =
         "CanGetMyAccountAssetsTransactions";
     const std::string can_get_all_acc_ast_txs =
         "CanGetAllAccountAssetsTransactions";
+    const std::string can_get_domain_acc_ast_txs =
+        "CanGetDomainAccountAssetsTransactions";
 
-    const std::set<std::string> read_self_group = {
-        can_get_my_account,
-        can_get_my_acc_txs,
-        can_get_my_acc_ast,
-        can_get_my_acc_ast_txs,
-        can_get_my_signatories};
+    const std::set<std::string> read_self_group = {can_get_my_account,
+                                                   can_get_my_acc_txs,
+                                                   can_get_my_acc_ast,
+                                                   can_get_my_acc_ast_txs,
+                                                   can_get_my_signatories};
 
-    const std::set<std::string> read_all_group = {
-        can_get_all_accounts,
-        can_get_all_acc_txs,
-        can_get_all_acc_ast,
-        can_get_all_acc_ast_txs,
-        can_get_all_signatories,
-        can_get_roles,
-        can_read_assets};
+    const std::set<std::string> read_all_group = {can_get_all_accounts,
+                                                  can_get_all_acc_txs,
+                                                  can_get_all_acc_ast,
+                                                  can_get_all_acc_ast_txs,
+                                                  can_get_all_signatories,
+                                                  can_get_roles,
+                                                  can_read_assets};
+
+    const std::set<std::string> read_domain_group = {can_get_domain_accounts,
+                                                     can_get_domain_acc_txs,
+                                                     can_get_domain_acc_ast,
+                                                     can_get_domain_acc_detail,
+                                                     can_get_domain_acc_ast_txs,
+                                                     can_get_domain_signatories,
+                                                     can_get_my_acc_detail};
+
     const std::string can_grant = "CanGrant";
-    const std::set<std::string> grant_group = {
-        can_grant + can_set_quorum,
-        can_grant + can_add_signatory,
-        can_grant + can_remove_signatory,
-        can_grant + can_transfer
-        };
+    const std::set<std::string> grant_group = {can_grant + can_set_quorum,
+                                               can_grant + can_add_signatory,
+                                               can_grant + can_remove_signatory,
+                                               can_grant + can_transfer,
+                                               can_grant + can_set_detail};
 
     const std::set<std::string> edit_self_group = {
         can_set_quorum, can_add_signatory, can_remove_signatory};
 
-    const std::set<std::string> asset_creator_group = {
-        can_create_asset, can_add_asset_qty};
+    const std::set<std::string> asset_creator_group = {can_create_asset,
+                                                       can_add_asset_qty};
 
     const std::set<std::string> all_perm_group = {
         can_get_my_account,
         can_get_my_acc_txs,
         can_get_my_acc_ast,
+        can_get_my_acc_detail,
         can_get_my_acc_ast_txs,
         can_get_my_signatories,
         can_get_all_accounts,
@@ -103,13 +125,16 @@ namespace iroha {
         can_grant + can_add_signatory,
         can_grant + can_remove_signatory,
         can_grant + can_transfer,
+        can_grant + can_set_detail,
         can_set_quorum,
         can_add_signatory,
         can_remove_signatory,
         can_create_asset,
         can_add_asset_qty,
+        can_subtract_asset_qty,
         can_append_role,
         can_create_role,
+        can_detach_role,
         can_create_account,
         can_add_peer,
         can_create_domain};

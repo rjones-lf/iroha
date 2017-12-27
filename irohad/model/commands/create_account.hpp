@@ -30,17 +30,17 @@ namespace iroha {
       /**
        * Account's user name
        */
-      std::string account_name{};
+      std::string account_name;
 
       /**
        * Account's domain (full name)
        */
-      std::string domain_id{};
+      std::string domain_id;
 
       /**
        * Signatory of account
        */
-      pubkey_t pubkey{};
+      pubkey_t pubkey;
 
       bool operator==(const Command &command) const override;
 

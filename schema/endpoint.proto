@@ -14,12 +14,13 @@ enum TxStatus {
   STATEFUL_VALIDATION_FAILED = 2;
   STATEFUL_VALIDATION_SUCCESS = 3;
   COMMITTED = 4;
-  ON_PROCESS = 5;
+  IN_PROGRESS = 5;
   NOT_RECEIVED = 6;
 }
 
 message ToriiResponse {
   TxStatus tx_status = 1;
+  bytes tx_hash = 2;
 }
 
 message TxStatusRequest{

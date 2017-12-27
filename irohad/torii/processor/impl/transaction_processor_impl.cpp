@@ -19,7 +19,7 @@
 #include <endpoint.pb.h>
 #include <iostream>
 #include <utility>
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/transaction_response.hpp"
 
 namespace iroha {

@@ -17,7 +17,7 @@ limitations under the License.
 #include "common/byteutils.hpp"
 #include "common/types.hpp"
 #include "crypto/base64.hpp"
-#include "crypto/crypto.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
 #include <gtest/gtest.h>
 

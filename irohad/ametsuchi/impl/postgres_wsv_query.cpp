@@ -127,8 +127,40 @@ namespace iroha {
       row.at("account_id") >> account.account_id;
       row.at("domain_id") >> account.domain_id;
       row.at("quorum") >> account.quorum;
+      row.at("data") >> account.json_data;
       //      row.at("transaction_count") >> ?
       return account;
+    }
+
+    nonstd::optional<std::string> PostgresWsvQuery::getAccountDetail(
+        const std::string &account_id,
+        const std::string &creator_account_id,
+        const std::string &detail) {
+      pqxx::result result;
+      try {
+        result = transaction_.exec(
+            "SELECT data#>>"
+            + transaction_.quote("{" + creator_account_id + ", " + detail + "}")
+            + " FROM account WHERE account_id = "
+            + transaction_.quote(account_id)
+            + ";");
+      } catch (const std::exception &e) {
+        log_->error(e.what());
+        return nullopt;
+      }
+      if (result.empty()) {
+        log_->info("Account {} not found", account_id);
+        return nullopt;
+      }
+      auto row = result.at(0);
+      std::string res;
+      row.at(0) >> res;
+
+      // if res is empty, then that key does not exist for this account
+      if (res.empty()) {
+        return nullopt;
+      }
+      return res;
     }
 
     nonstd::optional<std::vector<pubkey_t>> PostgresWsvQuery::getSignatories(

@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -27,6 +28,7 @@
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
 #include "model/commands/create_role.hpp"
+#include "model/commands/detach_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/revoke_permission.hpp"
@@ -35,7 +37,7 @@
 #include "model/commands/transfer_asset.hpp"
 #include "model/converters/json_command_factory.hpp"
 
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 using namespace rapidjson;
 using namespace iroha;
@@ -57,6 +59,7 @@ class JsonCommandTest : public ::testing::Test {
 TEST_F(JsonCommandTest, ClassHandlerTest) {
   std::vector<std::shared_ptr<Command>> commands = {
       std::make_shared<AddAssetQuantity>(),
+      std::make_shared<SubtractAssetQuantity>(),
       std::make_shared<AddPeer>(),
       std::make_shared<AddSignatory>(),
       std::make_shared<CreateAccount>(),
@@ -64,7 +67,8 @@ TEST_F(JsonCommandTest, ClassHandlerTest) {
       std::make_shared<CreateDomain>(),
       std::make_shared<RemoveSignatory>(),
       std::make_shared<SetQuorum>(),
-      std::make_shared<TransferAsset>()};
+      std::make_shared<TransferAsset>(),
+      std::make_shared<DetachRole>()};
   for (const auto &command : commands) {
     auto ser = factory.serializeAbstractCommand(command);
     auto des = factory.deserializeAbstractCommand(ser);
@@ -107,6 +111,27 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
 
   auto json_command = factory.serializeAddAssetQuantity(orig_command);
   auto serial_command = factory.deserializeAddAssetQuantity(json_command);
+
+  ASSERT_TRUE(serial_command.has_value());
+  ASSERT_EQ(*orig_command, *serial_command.value());
+  command_converter_test(orig_command);
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when Set all data
+ * @then Return Json Data
+ */
+TEST_F(JsonCommandTest, subtract_asset_quantity) {
+  auto orig_command = std::make_shared<SubtractAssetQuantity>();
+  orig_command->account_id = "23";
+  iroha::Amount amount(150, 2);
+
+  orig_command->amount = amount;
+  orig_command->asset_id = "23";
+
+  auto json_command = factory.serializeSubtractAssetQuantity(orig_command);
+  auto serial_command = factory.deserializeSubtractAssetQuantity(json_command);
 
   ASSERT_TRUE(serial_command.has_value());
   ASSERT_EQ(*orig_command, *serial_command.value());
@@ -240,6 +265,17 @@ TEST_F(JsonCommandTest, append_role) {
   auto orig_command = std::make_shared<AppendRole>("test@test", "master");
   auto json_command = factory.serializeAppendRole(orig_command);
   auto serial_command = factory.deserializeAppendRole(json_command);
+
+  ASSERT_TRUE(serial_command.has_value());
+  ASSERT_EQ(*orig_command, *serial_command.value());
+
+  command_converter_test(orig_command);
+}
+
+TEST_F(JsonCommandTest, detach_role) {
+  auto orig_command = std::make_shared<DetachRole>("test@test", "master");
+  auto json_command = factory.serializeDetachRole(orig_command);
+  auto serial_command = factory.deserializeDetachRole(json_command);
 
   ASSERT_TRUE(serial_command.has_value());
   ASSERT_EQ(*orig_command, *serial_command.value());

@@ -38,6 +38,12 @@ namespace iroha {
         optional_ptr<Command> deserializeAddAssetQuantity(
             const rapidjson::Value &document);
 
+        // SubtractAssetQuantity
+        rapidjson::Document serializeSubtractAssetQuantity(
+          std::shared_ptr<Command> command);
+        optional_ptr<Command> deserializeSubtractAssetQuantity(
+          const rapidjson::Value &document);
+
         // AddPeer
         rapidjson::Document serializeAddPeer(std::shared_ptr<Command> command);
         optional_ptr<Command> deserializeAddPeer(
@@ -95,6 +101,12 @@ namespace iroha {
         rapidjson::Document serializeAppendRole(
             std::shared_ptr<Command> command);
         optional_ptr<Command> deserializeAppendRole(
+            const rapidjson::Value &document);
+
+        // DetachRole
+        rapidjson::Document serializeDetachRole(
+            std::shared_ptr<Command> command);
+        optional_ptr<Command> deserializeDetachRole(
             const rapidjson::Value &document);
 
         // CreateRole

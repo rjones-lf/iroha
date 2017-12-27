@@ -22,25 +22,47 @@ using namespace iroha::ametsuchi;
 namespace iroha {
   namespace model {
 
+    nonstd::optional<std::set<std::string>> getAccountPermissions(
+        const std::string &account_id, iroha::ametsuchi::WsvQuery &queries) {
+      auto roles = queries.getAccountRoles(account_id);
+      if (not roles.has_value()) {
+        return nonstd::nullopt;
+      }
+      std::set<std::string> account_permissions;
+      std::for_each(roles.value().begin(),
+                    roles.value().end(),
+                    [&account_permissions, &queries](auto role) {
+                      auto perms = queries.getRolePermissions(role);
+                      if (perms.has_value()) {
+                        account_permissions.insert(perms.value().begin(),
+                                                   perms.value().end());
+                      }
+                    });
+      return account_permissions;
+    }
+
+    bool accountHasPermission(const std::set<std::string> &perms,
+                              const std::string &permission_id) {
+      return perms.count(permission_id) == 1;
+    }
+
     bool checkAccountRolePermission(const std::string &account_id,
                                     WsvQuery &queries,
                                     const std::string &permission_id) {
       auto roleHasPermission = [&permission_id](auto permissions) {
         return std::any_of(
-            permissions.begin(), permissions.end(),
+            permissions.begin(),
+            permissions.end(),
             [&permission_id](auto perm) { return permission_id == perm; });
       };
 
       auto checkRolesPermission = [&](auto roles) {
-        return std::any_of(roles.begin(), roles.end(),
-                           [&](auto role) {
-                             return queries.getRolePermissions(role)
-                                 | roleHasPermission;
-                           });
+        return std::any_of(roles.begin(), roles.end(), [&](auto role) {
+          return queries.getRolePermissions(role) | roleHasPermission;
+        });
       };
 
-      return queries.getAccountRoles(account_id)
-          | checkRolesPermission;
+      return queries.getAccountRoles(account_id) | checkRolesPermission;
     }
 
   }  // namespace model

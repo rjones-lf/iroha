@@ -20,8 +20,9 @@
 
 #include <responses.pb.h>
 #include <model/account_asset.hpp>
-#include <model/queries/responses/account_assets_response.hpp>
-#include <model/queries/responses/account_response.hpp>
+#include "model/queries/responses/account_assets_response.hpp"
+#include "model/queries/responses/account_detail_response.hpp"
+#include "model/queries/responses/account_response.hpp"
 #include <nonstd/optional.hpp>
 #include "model/queries/responses/error_response.hpp"
 #include "model/queries/responses/signatories_response.hpp"
@@ -59,6 +60,11 @@ namespace iroha {
             const model::AccountAssetResponse &accountAssetResponse) const;
         model::AccountAssetResponse deserializeAccountAssetResponse(
             const protocol::AccountAssetResponse &account_asset_response) const;
+
+        protocol::AccountDetailResponse serializeAccountDetailResponse(
+          const model::AccountDetailResponse &accountDetailResponse) const;
+        model::AccountDetailResponse deserializeAccountDetailResponse(
+          const protocol::AccountDetailResponse &account_detail_response) const;
 
         protocol::SignatoriesResponse serializeSignatoriesResponse(
             const model::SignatoriesResponse &signatoriesResponse) const;

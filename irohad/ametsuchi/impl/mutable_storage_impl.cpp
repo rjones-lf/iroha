@@ -20,14 +20,15 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/impl/redis_block_index.hpp"
 
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         hash256_t top_hash,
-        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<cpp_redis::client> index,
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction,
         std::shared_ptr<model::CommandExecutorFactory> command_executors)
@@ -37,68 +38,22 @@ namespace iroha {
           transaction_(std::move(transaction)),
           wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
+          block_index_(std::make_unique<RedisBlockIndex>(*index_)),
           command_executors_(std::move(command_executors)),
           committed(false) {
       index_->multi();
       transaction_->exec("BEGIN;");
     }
 
-    void MutableStorageImpl::index_block(uint64_t height, model::Block block) {
-      for (size_t i = 0; i < block.transactions.size(); i++) {
-        auto tx = block.transactions.at(i);
-        auto account_id = tx.creator_account_id;
-        auto hash = iroha::hash(tx).to_string();
-
-        // tx hash -> block where hash is stored
-        index_->set(hash, std::to_string(height));
-
-        // to make index account_id -> list of blocks where his txs exist
-        index_->sadd(account_id, {std::to_string(height)});
-
-        // to make index account_id:height -> list of tx indexes (where
-        // tx is placed in the block)
-        index_->rpush(account_id + ":" + std::to_string(height),
-                      {std::to_string(i)});
-
-        // collect all assets belonging to user "account_id"
-        std::set<std::string> users_assets_in_tx;
-        std::for_each(tx.commands.begin(),
-                      tx.commands.end(),
-                      [&account_id, &users_assets_in_tx](auto command) {
-                        if (instanceof <model::TransferAsset>(*command)) {
-                          auto transferAsset =
-                              (model::TransferAsset *)command.get();
-                          if (transferAsset->dest_account_id == account_id
-                              or transferAsset->src_account_id == account_id) {
-                            users_assets_in_tx.insert(transferAsset->asset_id);
-                          }
-                        }
-                      });
-
-        // to make account_id:height:asset_id -> list of tx indexes (where tx
-        // with certain asset is placed in the block )
-        for (const auto &asset_id : users_assets_in_tx) {
-          // create key to put user's txs with given asset_id
-          std::string account_assets_key;
-          account_assets_key.append(account_id);
-          account_assets_key.append(":");
-          account_assets_key.append(std::to_string(height));
-          account_assets_key.append(":");
-          account_assets_key.append(asset_id);
-          index_->rpush(account_assets_key, {std::to_string(i)});
-        }
-      }
-    }
-
     bool MutableStorageImpl::apply(
         const model::Block &block,
         std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
             function) {
-      auto execute_command = [this](auto command) {
-        return command_executors_->getCommandExecutor(command)->execute(
-            *command, *wsv_, *executor_);
-      };
-      auto execute_transaction = [execute_command](auto &transaction) {
+      auto execute_transaction = [this](auto &transaction) {
+        auto execute_command = [this, &transaction](auto command) {
+          return command_executors_->getCommandExecutor(command)->execute(
+              *command, *wsv_, *executor_, transaction.creator_account_id);
+        };
         return std::all_of(transaction.commands.begin(),
                            transaction.commands.end(),
                            execute_command);
@@ -112,7 +67,7 @@ namespace iroha {
 
       if (result) {
         block_store_.insert(std::make_pair(block.height, block));
-        index_block(block.height, block);
+        block_index_->index(block);
 
         top_hash_ = block.hash;
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");

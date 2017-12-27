@@ -25,14 +25,16 @@
 #include <cpp_redis/cpp_redis>
 #include <pqxx/pqxx>
 
+#include "model/generators/command_generator.hpp"
+
 namespace iroha {
   namespace ametsuchi {
     /**
      * Class with ametsuchi initialization
      */
     class AmetsuchiTest : public ::testing::Test {
-     protected:
-      virtual void SetUp() {
+     public:
+      AmetsuchiTest() {
         auto log = logger::testLog("AmetsuchiTest");
 
         mkdir(block_store_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -54,6 +56,20 @@ namespace iroha {
         log->info("host={}, port={}, user={}, password={}", pg_host, pg_port,
                   pg_user, pg_pass);
       }
+     protected:
+      virtual void SetUp() {
+        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
+        try {
+          connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
+        try {
+          client.connect(redishost_, redisport_);
+        } catch (const cpp_redis::redis_error &e) {
+          FAIL() << "Connection to Redis broken: " << e.what();
+        }
+      }
       virtual void TearDown() {
         const auto drop = R"(
 DROP TABLE IF EXISTS account_has_signatory;
@@ -69,19 +85,23 @@ DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
 )";
 
-        pqxx::connection connection(pgopt_);
-        pqxx::work txn(connection);
+        pqxx::work txn(*connection);
         txn.exec(drop);
         txn.commit();
-        connection.disconnect();
+        connection->disconnect();
 
-        cpp_redis::redis_client client;
-        client.connect(redishost_, redisport_);
         client.flushall();
         client.sync_commit();
+        client.disconnect(true);
 
         iroha::remove_all(block_store_path);
       }
+
+      std::shared_ptr<pqxx::lazyconnection> connection;
+
+      cpp_redis::client client;
+
+      model::generators::CommandGenerator cmd_gen;
 
       std::string pgopt_ =
           "host=localhost port=5432 user=postgres password=mysecretpassword";

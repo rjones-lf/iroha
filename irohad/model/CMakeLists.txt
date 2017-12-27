@@ -32,8 +32,8 @@ add_library(command_execution
     execution/impl/command_executor_factory.cpp
     )
 target_link_libraries(command_execution
-  common_execution
-  validator
+    common_execution
+    validator
     )
 
 add_library(model

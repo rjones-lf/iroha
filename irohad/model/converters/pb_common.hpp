@@ -21,8 +21,8 @@
 #include "amount/amount.hpp"
 #include "commands.pb.h"
 #include "common/types.hpp"
-#include "crypto/crypto.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/signature.hpp"
 
 namespace iroha {

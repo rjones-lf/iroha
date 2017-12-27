@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 #include <gtest/gtest.h>
-#include <crypto/hash.hpp>
+#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 
 #define LOOP_N (100)
 

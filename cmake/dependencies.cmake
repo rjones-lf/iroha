@@ -77,16 +77,22 @@ find_package(tbb)
 ##########################
 #         boost          #
 ##########################
-find_package(Boost 1.58.0 REQUIRED
+find_package(Boost 1.65.0 REQUIRED
     COMPONENTS
     filesystem
     system
     )
 add_library(boost INTERFACE IMPORTED)
 set_target_properties(boost PROPERTIES
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
+    INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
     INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
     )
+
+if(ENABLE_LIBS_PACKAGING)
+  foreach (library ${Boost_LIBRARIES})
+    add_install_step_for_lib(${library})
+  endforeach(library)
+endif()
 
 ##########################
 #       benchmark        #
@@ -95,4 +101,7 @@ if(BENCHMARKING)
   find_package(benchmark)
 endif()
 
-
+###################################
+#          ed25519/sha3           #
+###################################
+find_package(ed25519)

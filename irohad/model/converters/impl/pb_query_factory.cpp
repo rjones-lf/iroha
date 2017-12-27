@@ -17,10 +17,11 @@
 
 #include "model/converters/pb_query_factory.hpp"
 #include <queries.pb.h>
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
+#include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
@@ -35,10 +36,14 @@ namespace iroha {
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
         serializers_[typeid(GetAccountAssets)] =
             &PbQueryFactory::serializeGetAccountAssets;
+        serializers_[typeid(GetAccountDetail)] =
+            &PbQueryFactory::serializeGetAccountDetail;
         serializers_[typeid(GetAccountTransactions)] =
             &PbQueryFactory::serializeGetAccountTransactions;
         serializers_[typeid(GetAccountAssetTransactions)] =
             &PbQueryFactory::serializeGetAccountAssetTransactions;
+        serializers_[typeid(GetTransactions)] =
+            &PbQueryFactory::serializeGetTransactions;
         serializers_[typeid(GetSignatories)] =
             &PbQueryFactory::serializeGetSignatories;
         serializers_[typeid(GetRolePermissions)] =
@@ -74,6 +79,15 @@ namespace iroha {
               val = std::make_shared<model::GetAccountAssets>(query);
               break;
             }
+            case Query_Payload::QueryCase::kGetAccountDetail: {
+              // Convert to get Account Asset
+              const auto &pb_cast = pl.get_account_detail();
+              auto query = GetAccountDetail();
+              query.account_id = pb_cast.account_id();
+              query.detail = pb_cast.detail();
+              val = std::make_shared<model::GetAccountDetail>(query);
+              break;
+            }
             case Query_Payload::QueryCase::kGetAccountAssetTransactions: {
               const auto &pb_cast = pl.get_account_asset_transactions();
               auto query = GetAccountAssetTransactions();
@@ -96,6 +110,19 @@ namespace iroha {
               auto query = GetAccountTransactions();
               query.account_id = pb_cast.account_id();
               val = std::make_shared<model::GetAccountTransactions>(query);
+              break;
+            }
+            case Query_Payload::QueryCase::kGetTransactions: {
+              // Convert to get transactions
+              const auto &pb_cast = pl.get_transactions();
+              auto query = GetTransactions();
+              std::transform(pb_cast.tx_hashes().begin(),
+                             pb_cast.tx_hashes().end(),
+                             std::back_inserter(query.tx_hashes),
+                             [](auto tx_hash) {
+                               return iroha::hash256_t::from_string(tx_hash);
+                             });
+              val = std::make_shared<GetTransactions>(query);
               break;
             }
             case Query_Payload::QueryCase::kGetRoles: {
@@ -179,6 +206,18 @@ namespace iroha {
         return pb_query;
       }
 
+      protocol::Query PbQueryFactory::serializeGetAccountDetail(
+        std::shared_ptr<const Query> query) const {
+        protocol::Query pb_query;
+        serializeQueryMetaData(pb_query, query);
+        auto tmp = std::static_pointer_cast<const GetAccountDetail>(query);
+        auto pb_query_mut =
+          pb_query.mutable_payload()->mutable_get_account_detail();
+        pb_query_mut->set_account_id(tmp->account_id);
+        pb_query_mut->set_detail(tmp->detail);
+        return pb_query;
+      }
+
       protocol::Query PbQueryFactory::serializeGetAccountTransactions(
           std::shared_ptr<const Query> query) const {
         protocol::Query pb_query;
@@ -203,6 +242,22 @@ namespace iroha {
                                 ->mutable_get_account_asset_transactions();
         pb_query_mut->set_account_id(account_id);
         pb_query_mut->set_asset_id(asset_id);
+        return pb_query;
+      }
+
+      protocol::Query PbQueryFactory::serializeGetTransactions(
+          std::shared_ptr<const Query> query) const {
+        protocol::Query pb_query;
+        serializeQueryMetaData(pb_query, query);
+        auto tmp = std::static_pointer_cast<const GetTransactions>(query);
+        auto pb_query_mut =
+          pb_query.mutable_payload()->mutable_get_transactions();
+        std::for_each(tmp->tx_hashes.begin(),
+                      tmp->tx_hashes.end(),
+                      [&pb_query_mut](auto tx_hash) {
+                        auto adder = pb_query_mut->add_tx_hashes();
+                        *adder = tx_hash.to_string();
+                      });
         return pb_query;
       }
 

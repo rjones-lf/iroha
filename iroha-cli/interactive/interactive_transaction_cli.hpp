@@ -72,11 +72,13 @@ namespace iroha_cli {
       const std::string CREATE_DOMAIN = "crt_dmn";
       const std::string REMOVE_SIGN = "rem_sign";
       const std::string SET_QUO = "set_qrm";
+      const std::string SET_ACC_KV = "set_acc_kv";
       const std::string SUB_ASSET_QTY = "sub_ast_qty";
       const std::string TRAN_ASSET = "tran_ast";
 
       const std::string CREATE_ROLE = "crt_role";
       const std::string APPEND_ROLE = "apnd_role";
+      const std::string DETACH_ROLE = "detach";
       const std::string GRANT_PERM = "grant_perm";
       const std::string REVOKE_PERM = "revoke_perm";
 
@@ -117,11 +119,15 @@ namespace iroha_cli {
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSetQuorum(
           std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseSetAccountDetail(
+          std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseSubtractAssetQuantity(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseTransferAsset(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseAppendRole(
+          std::vector<std::string> line);
+      std::shared_ptr<iroha::model::Command> parseDetachRole(
           std::vector<std::string> line);
       std::shared_ptr<iroha::model::Command> parseCreateRole(
           std::vector<std::string> line);

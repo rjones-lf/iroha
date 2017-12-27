@@ -13,6 +13,10 @@
 # limitations under the License.
 
 add_library(validator
-  domain_name_validator.cpp
-  domain_name_validator.hpp
-  )
+    domain_name_validator.cpp
+    address_validator.hpp
+    )
+target_link_libraries(validator
+    boost
+    optional
+    )

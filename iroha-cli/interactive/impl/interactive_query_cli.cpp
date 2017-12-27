@@ -17,11 +17,13 @@
 
 #include "interactive/interactive_query_cli.hpp"
 
+#include <boost/algorithm/string.hpp>
 #include <fstream>
 
+#include "byteutils.hpp"
 #include "client.hpp"
-#include "crypto/crypto.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "datetime/time.hpp"
 #include "grpc_response_handler.hpp"
@@ -39,6 +41,7 @@ namespace iroha_cli {
           {GET_ACC, "Get Account Information"},
           {GET_ACC_AST, "Get Account's Assets"},
           {GET_ACC_TX, "Get Account's Transactions"},
+          {GET_TX, "Get Transactions by transactions' hashes"},
           {GET_ACC_SIGN, "Get Account's Signatories"},
           {GET_ROLES, "Get all current roles in the system"},
           {GET_AST_INFO, "Get information about asset"},
@@ -49,11 +52,13 @@ namespace iroha_cli {
       const auto acc_id = "Requested account Id";
       const auto ast_id = "Requested asset Id";
       const auto role_id = "Requested role name";
+      const auto tx_hashes = "Requested tx hashes";
 
       query_params_descriptions_ = {
           {GET_ACC, {acc_id}},
           {GET_ACC_AST, {acc_id, ast_id}},
           {GET_ACC_TX, {acc_id}},
+          {GET_TX, {tx_hashes}},
           {GET_ACC_SIGN, {acc_id}},
           {GET_ROLES, {}},
           {GET_AST_INFO, {ast_id}},
@@ -65,6 +70,7 @@ namespace iroha_cli {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
           {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
           {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
+          {GET_TX, &InteractiveQueryCli::parseGetTransactions},
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
           {GET_ROLE_PERM, &InteractiveQueryCli::parseGetRolePermissions},
           {GET_ROLES, &InteractiveQueryCli::parseGetRoles},
@@ -165,6 +171,20 @@ namespace iroha_cli {
       auto account_id = params[0];
       return generator_.generateGetAccountTransactions(
           local_time_, creator_, counter_, account_id);
+    }
+
+    std::shared_ptr<iroha::model::Query>
+    InteractiveQueryCli::parseGetTransactions(QueryParams params) {
+      // Parser definition: hash1 hash2 ...
+      GetTransactions::TxHashCollectionType tx_hashes;
+      std::for_each(params.begin(), params.end(), [&tx_hashes](auto const& hex_hash){
+        if (auto opt =
+          iroha::hexstringToArray<GetTransactions::TxHashType::size()>(hex_hash)) {
+          tx_hashes.push_back(*opt);
+        }
+      });
+      return generator_.generateGetTransactions(
+        local_time_, creator_, counter_, tx_hashes);
     }
 
     std::shared_ptr<iroha::model::Query>

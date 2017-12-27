@@ -17,6 +17,7 @@
 
 #include "interactive/interactive_status_cli.hpp"
 #include "client.hpp"
+#include "common/byteutils.hpp"
 
 namespace iroha_cli {
   namespace interactive {
@@ -32,7 +33,7 @@ namespace iroha_cli {
              "Transaction has successfully passed stateful validation."},
             {iroha::protocol::TxStatus::COMMITTED,
              "Transaction was successfully committed."},
-            {iroha::protocol::TxStatus::ON_PROCESS,
+            {iroha::protocol::TxStatus::IN_PROGRESS,
              "Transaction is being processed at the moment."},
             {iroha::protocol::TxStatus::NOT_RECEIVED,
              "Transaction was not found in the system."}};
@@ -152,5 +153,5 @@ namespace iroha_cli {
     std::string InteractiveStatusCli::parseGetHash(ActionParams params) {
       return params[0];
     }
-  }
-}
+  }  // namespace interactive
+}  // namespace iroha_cli

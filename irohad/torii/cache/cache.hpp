@@ -54,7 +54,7 @@ namespace iroha {
         if (found == handler_map_.end()) {
           return boost::none;
         } else {
-          return boost::make_optional<ValueType>(handler_map_.at(key));
+          return handler_map_.at(key);
         }
       }
 

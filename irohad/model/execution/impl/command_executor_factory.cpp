@@ -29,6 +29,8 @@ CommandExecutorFactory::create() {
 
   executors[typeid(AddAssetQuantity)] =
       std::make_shared<AddAssetQuantityExecutor>();
+  executors[typeid(SubtractAssetQuantity)] =
+      std::make_shared<SubtractAssetQuantityExecutor>();
   executors[typeid(AddPeer)] = std::make_shared<AddPeerExecutor>();
   executors[typeid(AddSignatory)] = std::make_shared<AddSignatoryExecutor>();
   executors[typeid(CreateAccount)] = std::make_shared<CreateAccountExecutor>();
@@ -42,6 +44,8 @@ CommandExecutorFactory::create() {
   executors[typeid(CreateRole)] = std::make_shared<CreateRoleExecutor>();
   executors[typeid(GrantPermission)] = std::make_shared<GrantPermissionExecutor>();
   executors[typeid(RevokePermission)] = std::make_shared<RevokePermissionExecutor>();
+  executors[typeid(SetAccountDetail)] = std::make_shared<SetAccountDetailExecutor>();
+  executors[typeid(DetachRole)] = std::make_shared<DetachRoleExecutor>();
 
 
   auto result =

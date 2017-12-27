@@ -18,14 +18,14 @@
 #ifndef IROHA_WSV_COMMAND_HPP
 #define IROHA_WSV_COMMAND_HPP
 
-#include <common/types.hpp>
-#include <model/account.hpp>
-#include <model/account_asset.hpp>
-#include <model/asset.hpp>
-#include <model/domain.hpp>
-#include <model/peer.hpp>
-#include <string>
 #include <set>
+#include <string>
+#include "common/types.hpp"
+#include "model/account.hpp"
+#include "model/account_asset.hpp"
+#include "model/asset.hpp"
+#include "model/domain.hpp"
+#include "model/peer.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -52,7 +52,14 @@ namespace iroha {
        */
       virtual bool insertAccountRole(const std::string &account_id,
                                      const std::string &role_name) = 0;
-
+      /**
+        * Unbind account and role
+        * @param account_id
+        * @param role_name
+        * @return true if delete successful
+        */
+      virtual bool deleteAccountRole(const std::string &account_id,
+                                     const std::string &role_name) = 0;
 
       /**
        * Bind role and permissions
@@ -60,7 +67,8 @@ namespace iroha {
        * @param permissions
        * @return true is insert successful, false otherwise
        */
-      virtual bool insertRolePermissions(const std::string &role_id,
+      virtual bool insertRolePermissions(
+          const std::string &role_id,
           const std::set<std::string> &permissions) = 0;
 
       /**
@@ -72,18 +80,21 @@ namespace iroha {
        */
       virtual bool insertAccountGrantablePermission(
           const std::string &permittee_account_id,
-          const std::string &account_id, const std::string &permission_id) = 0;
+          const std::string &account_id,
+          const std::string &permission_id) = 0;
 
       /**
        * Delete grantable permission
-       * @param permittee_account_id to who the grant permission was previously granted
+       * @param permittee_account_id to who the grant permission was previously
+       * granted
        * @param account_id on which account
        * @param permission_id what permission
        * @return true is execution is successful
        */
       virtual bool deleteAccountGrantablePermission(
           const std::string &permittee_account_id,
-          const std::string &account_id, const std::string &permission_id) = 0;
+          const std::string &account_id,
+          const std::string &permission_id) = 0;
 
       /**
        *
@@ -98,6 +109,19 @@ namespace iroha {
        * @return true if no error occurred, false otherwise
        */
       virtual bool updateAccount(const model::Account &account) = 0;
+
+      /**
+       * @param account_id  account in which update key value
+       * @param creator_account_id creator's account who wants to update
+       * account_id
+       * @param key - key to set
+       * @param val - value of the key/value pair
+       * @return true if no error occurred, false otherwise
+       */
+      virtual bool setAccountKV(const std::string &account_id,
+                                const std::string &creator_account_id,
+                                const std::string &key,
+                                const std::string &val) = 0;
 
       /**
        *
@@ -126,9 +150,8 @@ namespace iroha {
        * @param signatory
        * @return
        */
-      virtual bool insertAccountSignatory(
-          const std::string &account_id,
-          const pubkey_t &signatory) = 0;
+      virtual bool insertAccountSignatory(const std::string &account_id,
+                                          const pubkey_t &signatory) = 0;
 
       /**
        * Delete account signatory relationship
@@ -136,17 +159,15 @@ namespace iroha {
        * @param signatory
        * @return
        */
-      virtual bool deleteAccountSignatory(
-          const std::string &account_id,
-          const pubkey_t &signatory) = 0;
+      virtual bool deleteAccountSignatory(const std::string &account_id,
+                                          const pubkey_t &signatory) = 0;
 
       /**
        * Delete signatory
        * @param signatory
        * @return
        */
-      virtual bool deleteSignatory(
-          const pubkey_t &signatory) = 0;
+      virtual bool deleteSignatory(const pubkey_t &signatory) = 0;
 
       /**
        *

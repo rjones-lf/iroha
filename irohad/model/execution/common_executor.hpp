@@ -18,22 +18,40 @@
 #ifndef IROHA_COMMON_EXECUTOR_HPP
 #define IROHA_COMMON_EXECUTOR_HPP
 
+#include <set>
 #include "ametsuchi/wsv_query.hpp"
 
 namespace iroha {
   namespace model {
 
-  /**
-   * Check that account has role permission
-   * @param account_id - account to check
-   * @param queries - WsvQueries
-   * @param permission_id  = permission to check
-   * @return  True if account has permission, false otherwise
-   */
-  bool checkAccountRolePermission(const std::string &account_id,
-                                  iroha::ametsuchi::WsvQuery &queries,
-                                  const std::string &permission_id);
+    /**
+     * Check that account has role permission
+     * @param account_id - account to check
+     * @param queries - WsvQueries
+     * @param permission_id  = permission to check
+     * @return  True if account has permission, false otherwise
+     */
+    bool checkAccountRolePermission(const std::string &account_id,
+                                    iroha::ametsuchi::WsvQuery &queries,
+                                    const std::string &permission_id);
 
+    /**
+     * Accumulate all account's role permissions
+     * @param account_id
+     * @param queries - WSVqueries
+     * @return set of account's role permissions
+     */
+    nonstd::optional<std::set<std::string>> getAccountPermissions(
+        const std::string &account_id, iroha::ametsuchi::WsvQuery &queries);
+
+    /**
+     * Check if account has specific permission
+     * @param perms - a set of account's permissions
+     * @param permission_id - specific permission to check
+     * @return true if the set contains permission
+     */
+    bool accountHasPermission(const std::set<std::string> &perms,
+                              const std::string &permission_id);
   }
 }  // namespace iroha
 

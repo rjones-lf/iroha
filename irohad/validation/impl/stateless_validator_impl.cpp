@@ -44,7 +44,6 @@ namespace iroha {
       ts64_t now = time::now();
 
       // tx is not sent from future
-      // TODO 06/08/17 Muratov: make future gap for passing timestamp, like with old timestamps IR-511 #goodfirstissue
       if (now < transaction.created_ts) {
         log_->warn("timestamp broken: send from future ({}, now {})",
                    transaction.created_ts,

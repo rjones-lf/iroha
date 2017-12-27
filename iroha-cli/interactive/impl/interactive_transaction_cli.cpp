@@ -18,20 +18,19 @@
 #include "interactive/interactive_transaction_cli.hpp"
 
 #include <fstream>
-
 #include "client.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/commands/append_role.hpp"
 #include "model/commands/create_role.hpp"
+#include "model/commands/detach_role.hpp"
 #include "model/commands/grant_permission.hpp"
 #include "model/commands/revoke_permission.hpp"
+#include "model/commands/set_account_detail.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
-#include "model/generators/transaction_generator.hpp"
 #include "model/permissions.hpp"
-#include "parser/parser.hpp"
 
 using namespace iroha::model;
 
@@ -52,8 +51,10 @@ namespace iroha_cli {
           {TRAN_ASSET, "Transfer Assets"},
           {CREATE_ROLE, "Create new role"},
           {APPEND_ROLE, "Add new role to account"},
+          {DETACH_ROLE, "Detach role from account"},
           {GRANT_PERM, "Grant permission over your account"},
-          {REVOKE_PERM, "Revoke permission from account"}
+          {REVOKE_PERM, "Revoke permission from account"},
+          {SET_ACC_KV, "Set account key/value detail"}
           // commands_description_map_
       };
 
@@ -105,8 +106,10 @@ namespace iroha_cli {
             can_roles,
             can_create_account}},
           {APPEND_ROLE, {acc_id, role}},
+          {DETACH_ROLE, {acc_id, role}},
           {GRANT_PERM, {acc_id, perm}},
-          {REVOKE_PERM, {acc_id, perm}}
+          {REVOKE_PERM, {acc_id, perm}},
+          {SET_ACC_KV, {acc_id, "key", "value"}}
           // command parameters descriptions
       };
 
@@ -124,8 +127,10 @@ namespace iroha_cli {
           {TRAN_ASSET, &InteractiveTransactionCli::parseTransferAsset},
           {CREATE_ROLE, &InteractiveTransactionCli::parseCreateRole},
           {APPEND_ROLE, &InteractiveTransactionCli::parseAppendRole},
+          {DETACH_ROLE, &InteractiveTransactionCli::parseDetachRole},
           {GRANT_PERM, &InteractiveTransactionCli::parseGrantPermission},
-          {REVOKE_PERM, &InteractiveTransactionCli::parseGrantPermission}
+          {REVOKE_PERM, &InteractiveTransactionCli::parseGrantPermission},
+          {SET_ACC_KV, &InteractiveTransactionCli::parseSetAccountDetail}
           // Command parsers
       };
 
@@ -235,13 +240,15 @@ namespace iroha_cli {
       auto roles = parser::parseValue<bool>(params[7]);
       auto create_account = parser::parseValue<bool>(params[8]);
 
-      if (not read_self.has_value() or not edit_self.has_value()
-          or not read_all.has_value() or not transfer_receive.has_value()
-          or not asset_create.has_value() or not create_domain.has_value()
-          or not roles.has_value() or not create_account.has_value()) {
+      if (not(read_self and edit_self and read_all and transfer_receive
+              and asset_create
+              and create_domain
+              and roles
+              and create_account)) {
         std::cout << "Wrong format for permission" << std::endl;
         return nullptr;
       }
+
       std::set<std::string> perms;
       if (read_self.value()) {
         perms.insert(read_self_group.begin(), read_self_group.end());
@@ -281,6 +288,14 @@ namespace iroha_cli {
       auto acc_id = params[0];
       auto role = params[1];
       return std::make_shared<AppendRole>(acc_id, role);
+    }
+
+    std::shared_ptr<iroha::model::Command>
+    InteractiveTransactionCli::parseDetachRole(
+        std::vector<std::string> params) {
+      auto acc_id = params[0];
+      auto role = params[1];
+      return std::make_shared<DetachRole>(acc_id, role);
     }
 
     std::shared_ptr<iroha::model::Command>
@@ -416,6 +431,15 @@ namespace iroha_cli {
       iroha::Amount amount(val_int.value(), precision.value());
       return generator_.generateTransferAsset(
           src_account_id, dest_account_id, asset_id, amount);
+    }
+
+    std::shared_ptr<iroha::model::Command>
+    InteractiveTransactionCli::parseSetAccountDetail(
+        std::vector<std::string> params) {
+      auto account_id = params[0];
+      auto key = params[1];
+      auto value = params[2];
+      return std::make_shared<SetAccountDetail>(account_id, key, value);
     }
 
     // --------- Result parsers -------------

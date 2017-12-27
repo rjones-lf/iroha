@@ -19,7 +19,7 @@
 
 #include <endpoint.pb.h>
 
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
@@ -259,15 +259,15 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   auto account_test = iroha::model::Account();
   account_test.account_id = "test@test";
 
-  EXPECT_CALL(*wsv_query, hasAccountGrantablePermission(
-                              "admin@test", "test@test", can_get_my_account))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  "admin@test", "test@test", can_get_my_account))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_query, getAccount("test@test"))
       .WillOnce(Return(account_test));
 
   std::vector<std::string> roles = {"user"};
-  EXPECT_CALL(*wsv_query, getAccountRoles("test@test"))
-      .WillOnce(Return(roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles("test@test")).WillOnce(Return(roles));
   EXPECT_CALL(*wsv_query, getAccountRoles("admin@test"))
       .WillOnce(Return(nonstd::nullopt));
 
@@ -303,8 +303,9 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   auto account_test = iroha::model::Account();
   account_test.account_id = "test@test";
 
-  EXPECT_CALL(*wsv_query, hasAccountGrantablePermission(
-      "admin@test", "test@test", can_get_my_account))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  "admin@test", "test@test", can_get_my_account))
       .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccount("test@test")).Times(0);
 
