@@ -24,6 +24,7 @@
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 #include "model/queries/get_transactions.hpp"
 #include "model/queries/get_account_transactions.hpp"
 
@@ -117,9 +118,31 @@ namespace iroha {
       JsonQueryFactory::deserializeGetAccountAssetTransactions(
           const Value &obj_query) {
         auto des = makeFieldDeserializer(obj_query);
+
+        auto des_assets_id = [this](auto assets_id) {
+          auto acc_string = [this](auto init, auto &x) {
+            return init | [this, &x](auto commands) {
+              return (x.IsString() ? nonstd::make_optional(x.GetString())
+                                   : nonstd::nullopt)
+                     | [&commands](auto command) {
+                commands.push_back(command);
+                return nonstd::make_optional(commands);
+              };
+            };
+          };
+          return std::accumulate(
+            assets_id.begin(),
+            assets_id.end(),
+            nonstd::make_optional<
+              GetAccountAssetTransactions::AssetsIdType>(),
+            acc_string);
+        };
+
         return make_optional_ptr<GetAccountAssetTransactions>()
             | des.String(&GetAccountAssetTransactions::account_id, "account_id")
-            | des.String(&GetAccountAssetTransactions::asset_id, "asset_id")
+            | des.Array(&GetAccountAssetTransactions::assets_id, "assets_id",
+                        des_assets_id)
+            | des.Object(&GetAccountAssetTransactions::pager, "pager")
             | toQuery;
       }
 
@@ -250,7 +273,21 @@ namespace iroha {
             std::static_pointer_cast<const GetAccountAssetTransactions>(query);
         json_doc.AddMember("account_id", get_account_asset->account_id,
                            allocator);
-        json_doc.AddMember("asset_id", get_account_asset->asset_id, allocator);
+        Value json_assets_id;
+        json_assets_id.SetArray();
+        const auto& assets_id = get_account_asset->assets_id;
+        std::for_each(assets_id.begin(), assets_id.end(),
+                      [&json_assets_id, &allocator](auto asset_id) {
+                        Value json_id;
+                        json_id.Set(asset_id, allocator);
+                        json_assets_id.PushBack(json_id, allocator);
+                      });
+        json_doc.AddMember("assets_id", json_assets_id, allocator);
+        Value json_pager;
+        json_pager.SetObject();
+        json_pager.CopyFrom(
+          serializePager(get_account_asset->pager, allocator), allocator);
+        json_doc.AddMember("pager", json_pager, allocator);
       }
 
       void JsonQueryFactory::serializeGetTransactions(
