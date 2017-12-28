@@ -108,7 +108,8 @@ namespace iroha {
      * @given block store and index with block containing 1 transaction
      * from creator 3 with transfer from creator 1 to creator 2 sending asset
      * @when query to get asset transactions of transaction creator
-     * @then query returns the transaction
+     * @then query returns nothing because api account_id and
+     * creator_account_id are unrelated.
      */
     TEST_F(BlockQueryTransferTest, GrantedTransfer) {
       model::Block block;
@@ -122,8 +123,23 @@ namespace iroha {
       block.height = 1;
       insert(block);
 
+      // creator_account_id is unrelated to account_id
       auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator3, assets), 1);
+          blocks->getAccountAssetTransactions(creator3, assets), 0);
+      wrapper.subscribe(
+          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
+      ASSERT_TRUE(wrapper.validate());
+
+      // src_account_id is related to account_id
+      wrapper = make_test_subscriber<CallExact>(
+          blocks->getAccountAssetTransactions(creator1, assets), 1);
+      wrapper.subscribe(
+          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
+      ASSERT_TRUE(wrapper.validate());
+
+      // dest_account_id is related to account_id
+      wrapper = make_test_subscriber<CallExact>(
+          blocks->getAccountAssetTransactions(creator2, assets), 1);
       wrapper.subscribe(
           [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
       ASSERT_TRUE(wrapper.validate());
