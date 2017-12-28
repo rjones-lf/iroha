@@ -52,10 +52,11 @@ namespace iroha {
        * @param pager - pager for transactions
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<model::Transaction>
-      getAccountAssetTransactions(const std::string& account_id,
-                                  const std::vector<std::string>& assets_id,
-                                  const model::Pager& pager) = 0;
+      virtual rxcpp::observable<model::Transaction> getAccountAssetTransactions(
+          const std::string &account_id,
+          const std::vector<std::string> &assets_id,
+          const model::Pager &pager = model::Pager{
+              iroha::hash256_t{}, model::Pager::MAX_PAGER_LIMIT}) = 0;
 
       /**
        * Get transactions from transactions' hashes

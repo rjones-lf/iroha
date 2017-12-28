@@ -100,13 +100,6 @@ namespace iroha {
       }
 
       /**
-       * @param o - given observable
-       * @return observable reversed the elements to emit
-       */
-      rxcpp::observable<model::Transaction> reverseObservable(
-        const rxcpp::observable<model::Transaction> &o) const;
-
-      /**
        * @param account_id - account identifier
        * @param assets_id - asset identifiers
        * @param command - command to check if it is account asset related

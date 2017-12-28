@@ -53,6 +53,7 @@ namespace iroha {
       std::string creator2 = "user2@test";
       std::string creator3 = "user3@test";
       std::string asset = "coin#test";
+      std::vector<std::string> assets = {asset};
     };
 
     /**
@@ -73,7 +74,7 @@ namespace iroha {
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 1);
+          blocks->getAccountAssetTransactions(creator1, assets), 1);
       wrapper.subscribe(
           [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
       ASSERT_TRUE(wrapper.validate());
@@ -97,7 +98,7 @@ namespace iroha {
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator2, asset), 1);
+          blocks->getAccountAssetTransactions(creator2, assets), 1);
       wrapper.subscribe(
           [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
       ASSERT_TRUE(wrapper.validate());
@@ -122,7 +123,7 @@ namespace iroha {
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator3, asset), 1);
+          blocks->getAccountAssetTransactions(creator3, assets), 1);
       wrapper.subscribe(
           [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
       ASSERT_TRUE(wrapper.validate());
@@ -156,7 +157,7 @@ namespace iroha {
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 2);
+          blocks->getAccountAssetTransactions(creator1, assets), 2);
       wrapper.subscribe([ i = 0, this ](auto val) mutable {
         ASSERT_EQ(tx_hashes.at(i), iroha::hash(val));
         ++i;

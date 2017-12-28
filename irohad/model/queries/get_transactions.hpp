@@ -26,21 +26,6 @@
 namespace iroha {
   namespace model {
     /**
-     * Query for getting transactions of given asset of an account
-     */
-    struct GetAccountAssetTransactions : Query {
-      /**
-       * Account identifier
-       */
-      std::string account_id{};
-
-      /**
-       * Asset identifier
-       */
-      std::string asset_id{};
-    };
-
-    /**
      * Query for getting transactions of given transactions' hashes
      */
     struct GetTransactions : Query {

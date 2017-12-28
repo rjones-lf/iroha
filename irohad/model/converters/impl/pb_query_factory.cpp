@@ -91,14 +91,6 @@ namespace iroha {
               val = std::make_shared<model::GetAccountDetail>(query);
               break;
             }
-            case Query_Payload::QueryCase::kGetAccountAssetTransactions: {
-              const auto &pb_cast = pl.get_account_asset_transactions();
-              auto query = GetAccountAssetTransactions();
-              query.account_id = pb_cast.account_id();
-              query.asset_id = pb_cast.asset_id();
-              val = std::make_shared<model::GetAccountAssetTransactions>(query);
-              break;
-            }
             case Query_Payload::QueryCase::kGetAccountSignatories: {
               // Convert to get Signatories
               const auto &pb_cast = pl.get_account_signatories();

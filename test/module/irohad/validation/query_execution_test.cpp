@@ -721,13 +721,14 @@ TEST_F(GetAccountTransactionsTest, NoAccountExist) {
   auto cast_resp = std::static_pointer_cast<TransactionsResponse>(response);
 }
 
-/// --------- Get Account Assets Transactions-------------
-class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
+/// --------- Get Account Asset Transactions -------------
+class GetAccountAssetTransactionsTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
     get_tx = std::make_shared<GetAccountAssetTransactions>();
-    get_tx->asset_id = asset_id;
+    get_tx->pager = NO_PAGER;
+    get_tx->assets_id.emplace_back(asset_id);
     get_tx->account_id = account_id;
     get_tx->creator_account_id = admin_id;
     query = get_tx;
@@ -749,6 +750,7 @@ class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
     }());
   }
 
+  std::vector<std::string> assets = {asset_id};
   rxcpp::observable<Transaction> txs_observable;
   std::shared_ptr<GetAccountAssetTransactions> get_tx;
   size_t N = 3;
@@ -759,7 +761,7 @@ class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
  * @when get account assets
  * @then Return account asset of user
  */
-TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
+TEST_F(GetAccountAssetTransactionsTest, MyAccountValidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
@@ -767,7 +769,7 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
   get_tx->account_id = admin_id;
   txs_observable = getDefaultTransactions(admin_id, asset_id);
 
-  EXPECT_CALL(*block_query, getAccountAssetTransactions(admin_id, asset_id))
+  EXPECT_CALL(*block_query, getAccountAssetTransactions(admin_id, assets, NO_PAGER))
       .WillOnce(Return(txs_observable));
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<TransactionsResponse>(response);
@@ -783,7 +785,7 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
  * @when get account information about other user
  * @then Return account asset
  */
-TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
+TEST_F(GetAccountAssetTransactionsTest, AllAccountValidCase) {
   get_tx->account_id = account_id;
   role_permissions = {can_get_all_acc_ast_txs};
 
@@ -792,7 +794,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
+  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, assets, NO_PAGER))
       .WillOnce(Return(txs_observable));
   auto response = validateAndExecute();
 
@@ -807,7 +809,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
  * @when get account information about other user in the same domain
  * @then Return account
  */
-TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
+TEST_F(GetAccountAssetTransactionsTest, DomainAccountValidCase) {
   get_tx->account_id = account_id;
   role_permissions = {can_get_domain_acc_ast_txs};
 
@@ -816,7 +818,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
+  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, assets, NO_PAGER))
       .WillOnce(Return(txs_observable));
   auto response = validateAndExecute();
 
@@ -831,7 +833,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
  * @when get account information about other user
  * @then Return error
  */
-TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
+TEST_F(GetAccountAssetTransactionsTest, GrantAccountValidCase) {
   get_tx->account_id = account_id;
   role_permissions = {};
 
@@ -844,7 +846,7 @@ TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
                   admin_id, get_tx->account_id, can_get_my_acc_ast_txs))
       .WillOnce(Return(true));
 
-  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
+  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, assets, NO_PAGER))
       .WillOnce(Return(txs_observable));
   auto response = validateAndExecute();
 
@@ -859,7 +861,7 @@ TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
  * @when get account information about other user in the other domain
  * @then Return error
  */
-TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
+TEST_F(GetAccountAssetTransactionsTest, DifferentDomainAccountInValidCase) {
   get_tx->account_id = "test@test2";
   role_permissions = {can_get_domain_acc_ast_txs};
 
@@ -882,7 +884,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
  * @when get account information about non existing account
  * @then Return empty response
  */
-TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
+TEST_F(GetAccountAssetTransactionsTest, NoAccountExist) {
   get_tx->account_id = "none";
   role_permissions = {can_get_all_acc_ast_txs};
 
@@ -892,7 +894,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query,
-              getAccountAssetTransactions(get_tx->account_id, asset_id))
+              getAccountAssetTransactions(get_tx->account_id, assets, NO_PAGER))
       .WillOnce(Return(rxcpp::observable<>::empty<Transaction>()));
 
   auto response = validateAndExecute();
@@ -904,9 +906,9 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
  * @when get account information about non existing asset
  * @then Return empty response
  */
-TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
+TEST_F(GetAccountAssetTransactionsTest, NoAssetExist) {
   get_tx->account_id = account_id;
-  get_tx->asset_id = "none";
+  get_tx->assets_id.emplace_back("none");
   role_permissions = {can_get_all_acc_ast_txs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -915,7 +917,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query,
-              getAccountAssetTransactions(get_tx->account_id, get_tx->asset_id))
+              getAccountAssetTransactions(get_tx->account_id, get_tx->assets_id, NO_PAGER))
       .WillOnce(Return(rxcpp::observable<>::empty<Transaction>()));
 
   auto response = validateAndExecute();

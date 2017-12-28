@@ -17,7 +17,7 @@
 
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
-#include "crypto/hash.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "framework/test_subscriber.hpp"
 #include "generator/generator.hpp"
 #include "model/commands/add_asset_quantity.hpp"
