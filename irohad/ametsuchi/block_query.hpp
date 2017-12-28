@@ -48,11 +48,14 @@ namespace iroha {
       /**
        * Get asset transactions of an account.
        * @param account_id - account_id (accountName@domainName)
-       * @param asset_id - asset_id (assetName#domainName)
+       * @param assets_id - list of asset_id (assetName#domainName)
+       * @param pager - pager for transactions
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          const std::string &account_id, const std::string &asset_id) = 0;
+      virtual rxcpp::observable<model::Transaction>
+      getAccountAssetTransactions(const std::string& account_id,
+                                  const std::vector<std::string>& assets_id,
+                                  const model::Pager& pager) = 0;
 
       /**
        * Get transactions from transactions' hashes
