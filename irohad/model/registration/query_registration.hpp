@@ -27,6 +27,8 @@
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
+#include "model/queries/get_account_transactions.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 #include "model/queries/get_transactions.hpp"
 #include "model/queries/get_account_transactions.hpp"
 
