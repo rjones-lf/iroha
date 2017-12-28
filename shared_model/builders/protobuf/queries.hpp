@@ -89,13 +89,18 @@ namespace shared_model {
 
       NextBuilder<QueryField> getAccountAssetTransactions(
           const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdCollectionType &assets_id) {
+          const interface::types::AssetIdCollectionType &assets_id,
+          const interface::Pager &pager) {
         auto query =
             query_.mutable_payload()->mutable_get_account_asset_transactions();
         query->set_account_id(account_id);
         boost::for_each(assets_id, [&query](const auto &asset) {
           query->add_assets_id(asset);
         });
+        auto &mutable_pager = *query->mutable_pager();
+        mutable_pager.set_tx_hash(
+          shared_model::crypto::toBinaryString(pager.transactionHash()));
+        mutable_pager.set_limit(pager.limit());
         return *this;
       }
 

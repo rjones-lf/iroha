@@ -18,8 +18,9 @@
 #ifndef IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
 #define IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
 
-#include "interfaces/queries/get_account_transactions.hpp"
+#include "backend/protobuf/common_objects/pager.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/queries/get_account_transactions.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -47,7 +48,8 @@ namespace shared_model {
                     acc.emplace_back(asset);
                     return std::forward<decltype(acc)>(acc);
                   });
-            }) {}
+            }),
+            pager_([this] { return Pager(account_asset_transactions_->pager()); }) {}
 
       GetAccountAssetTransactions(const GetAccountAssetTransactions &o)
           : GetAccountAssetTransactions(o.proto_) {}
@@ -63,6 +65,10 @@ namespace shared_model {
         return *assets_id_;
       }
 
+      const Pager &pager() const override {
+        return *pager_;
+      }
+
      private:
       // ------------------------------| fields |-------------------------------
 
@@ -73,6 +79,8 @@ namespace shared_model {
           account_asset_transactions_;
 
       const Lazy<interface::types::AssetIdCollectionType> assets_id_;
+
+      const Lazy<Pager> pager_;
     };
 
   }  // namespace proto
