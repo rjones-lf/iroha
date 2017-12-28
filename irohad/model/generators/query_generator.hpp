@@ -19,6 +19,8 @@
 #include "model/queries/get_account_assets.hpp"
 #include "model/queries/get_account_detail.hpp"
 #include "model/queries/get_signatories.hpp"
+#include "model/queries/get_account_transactions.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 #include "model/queries/get_transactions.hpp"
 #include "model/queries/get_account_transactions.hpp"
 #include "model/queries/get_asset_info.hpp"
@@ -54,10 +56,6 @@ namespace iroha {
                                               uint64_t query_counter,
                                               std::string account_id);
 
-        std::shared_ptr<GetAccountAssetTransactions> generateGetAccountAssetTransactions(
-            ts64_t timestamp, std::string creator, uint64_t query_counter,
-            std::string account_id, std::string asset_id);
-
         std::shared_ptr<GetTransactions> generateGetTransactions(
             ts64_t timestamp, const std::string& creator, uint64_t query_counter,
             const std::vector<iroha::hash256_t>& tx_hahses);
@@ -68,6 +66,16 @@ namespace iroha {
             uint64_t query_counter,
             const std::string &account_id,
             const model::Pager &pager = model::Pager{
+              iroha::hash256_t{}, model::Pager::MAX_PAGER_LIMIT}) const;
+
+        optional_ptr<GetAccountAssetTransactions>
+        generateGetAccountAssetTransactions(
+            ts64_t timestamp,
+            const std::string& creator,
+            uint64_t query_counter,
+            const std::string& account_id,
+            const std::vector<std::string>& assets_id,
+            const model::Pager& pager = model::Pager{
               iroha::hash256_t{}, model::Pager::MAX_PAGER_LIMIT}) const;
 
         /**
