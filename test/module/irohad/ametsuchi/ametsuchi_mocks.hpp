@@ -123,10 +123,9 @@ namespace iroha {
       MOCK_METHOD1(
           getTxByHashSync,
           boost::optional<model::Transaction>(const std::string &hash));
-      MOCK_METHOD2(
-          getAccountAssetTransactions,
-          rxcpp::observable<model::Transaction>(const std::string &account_id,
-                                                const std::string &asset_id));
+      MOCK_METHOD3(getAccountAssetTransactions,
+                   rxcpp::observable<model::Transaction>(const std::string&,
+                     const std::vector<std::string>&, const model::Pager&));
       MOCK_METHOD1(getTransactions,
                    rxcpp::observable<boost::optional<model::Transaction>>(
                        const std::vector<iroha::hash256_t> &tx_hashes));
