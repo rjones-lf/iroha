@@ -24,6 +24,7 @@
 #include "model/generators/signature_generator.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -46,6 +47,8 @@ TEST(QuerySerializerTest, ClassHandlerTest) {
       std::make_shared<GetAccountAssets>(),
       std::make_shared<GetSignatories>(),
       std::make_shared<GetAccountTransactions>(),
+      std::make_shared<GetAccountAssetTransactions>(),
+      std::make_shared<GetTransactions>(),
       std::make_shared<GetRoles>(),
       std::make_shared<GetAssetInfo>(),
       std::make_shared<GetRolePermissions>()
@@ -216,7 +219,6 @@ TEST(QuerySerializerTest, SerializeGetAccountAssets){
   ASSERT_TRUE(ser_val.has_value());
   ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
   ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
-
 }
 
 TEST(QuerySerializerTest, SerialiizeGetTransactions) {
@@ -307,6 +309,22 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions){
   auto val_ = queryGenerator.generateGetAccountTransactions(
     0, "123", 0, "test", Pager{iroha::hash256_t{}, 1});
   ASSERT_TRUE(val_.has_value());
+  auto val = *val_;
+  val->signature = generateSignature(42);
+  runQueryTest(val);
+}
+
+/**
+ * @given Generated GetAccountAssetTransactions query with random signature.
+ * @when serialize it, then deserialize the product.
+ * @then Validate the generated value is equal to the deserialized value.
+ */
+TEST(QuerySerializerTest, SerializeGetAccountAssetTransactions) {
+  QueryGenerator queryGenerator;
+  auto val_ = queryGenerator.generateGetAccountAssetTransactions(
+    0, "admin", 0, "alice", {"a", "b"},
+    iroha::model::Pager{iroha::hash256_t{}, 1});
+  ASSERT_TRUE(val.has_value());
   auto val = *val_;
   val->signature = generateSignature(42);
   runQueryTest(val);
