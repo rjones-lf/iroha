@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
+#include <boost/algorithm/string/join.hpp>
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/queries/get_transactions.hpp"
+#include "model/queries/get_account_asset_transactions.hpp"
 
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_ASSET_TRANSACTIONS_HPP
@@ -37,14 +38,15 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &accountId() const = 0;
       /**
-       * @return assetId of requested transactions
+       * @return assetsId of requested transactions
        */
-      virtual const types::AccountIdType &assetId() const = 0;
+      virtual const types::AssetIdCollectionType &assetsId() const = 0;
+      //virtual const
 
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::GetAccountAssetTransactions;
         oldModel->account_id = accountId();
-        oldModel->asset_id = assetId();
+        oldModel->assets_id = assetsId();
         return oldModel;
       }
 
@@ -52,12 +54,12 @@ namespace shared_model {
         return detail::PrettyStringBuilder()
             .init("GetAccountAssetTransactions")
             .append("account_id", accountId())
-            .append("asset_id", assetId())
+            .append("assets_id", boost::algorithm::join(assetsId(), ","))
             .finalize();
       }
 
       bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and assetId() == rhs.assetId();
+        return accountId() == rhs.accountId() and assetsId() == rhs.assetsId();
       }
     };
 

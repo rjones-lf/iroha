@@ -19,6 +19,7 @@
 #define IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
 
 #include "interfaces/queries/get_account_transactions.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -37,7 +38,16 @@ namespace shared_model {
             account_asset_transactions_(detail::makeReferenceGenerator(
                 &proto_->payload(),
                 &iroha::protocol::Query::Payload::
-                    get_account_asset_transactions)) {}
+                    get_account_asset_transactions)),
+            assets_id_([this] {
+              return boost::accumulate(
+                  account_asset_transactions_->assets_id(),
+                  interface::types::AssetIdCollectionType{},
+                  [](auto &&acc, const auto &asset) {
+                    acc.emplace_back(asset);
+                    return std::forward<decltype(acc)>(acc);
+                  });
+            }) {}
 
       GetAccountAssetTransactions(const GetAccountAssetTransactions &o)
           : GetAccountAssetTransactions(o.proto_) {}
@@ -49,8 +59,8 @@ namespace shared_model {
         return account_asset_transactions_->account_id();
       }
 
-      const interface::types::AssetIdType &assetId() const override {
-        return account_asset_transactions_->asset_id();
+      const interface::types::AssetIdCollectionType &assetsId() const override {
+        return *assets_id_;
       }
 
      private:
@@ -61,6 +71,8 @@ namespace shared_model {
 
       const Lazy<const iroha::protocol::GetAccountAssetTransactions &>
           account_asset_transactions_;
+
+      const Lazy<interface::types::AssetIdCollectionType> assets_id_;
     };
 
   }  // namespace proto

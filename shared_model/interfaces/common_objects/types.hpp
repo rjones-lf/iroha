@@ -47,6 +47,8 @@ namespace shared_model {
       using DomainIdType = std::string;
       /// Type of asset id
       using AssetIdType = std::string;
+      /// Type of asset id collection
+      using AssetIdCollectionType = std::vector<AssetIdType>;
       /// Permission type used in permission commands
       using PermissionNameType = std::string;
       /// Type of Quorum used in transaction and set quorum
