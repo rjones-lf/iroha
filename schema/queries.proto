@@ -23,7 +23,8 @@ message GetAccountTransactions {
 
 message GetAccountAssetTransactions {
   string account_id = 1;
-  string asset_id = 2;
+  repeated string assets_id = 2;
+  Pager pager = 3;
 }
 
 message GetTransactions {
