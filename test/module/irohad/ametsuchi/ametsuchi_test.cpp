@@ -97,8 +97,10 @@ void validateAccountAssetTransactions(B &&blocks,
                                       const std::vector<std::string> &assets,
                                       int call_count,
                                       int command_count) {
+  // to check only latest account asset tx
+  const Pager pager {iroha::hash256_t{}, 1};
   validateCalls(
-      blocks->getAccountAssetTransactions(account, assets),
+      blocks->getAccountAssetTransactions(account, assets, pager),
       [&](const auto &tx) { EXPECT_EQ(tx.commands.size(), command_count); },
       call_count,
       " for " + account + " " + boost::algorithm::join(assets, ","));
