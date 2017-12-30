@@ -27,7 +27,13 @@ if (NOT ed25519_FOUND)
   externalproject_get_property(warchant_ed25519 binary_dir)
   externalproject_get_property(warchant_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
-  set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+  if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(ed25519_LIBRARY ${binary_dir}/Debug/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
+  else ()
+    set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
+  endif ()
+  
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
   link_directories(${binary_dir})
 
