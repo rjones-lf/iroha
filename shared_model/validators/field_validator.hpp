@@ -48,7 +48,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AccountIdType &account_id) const {
         if (not std::regex_match(account_id, account_id_)) {
-          reason.second.push_back("Wrongly formed account_id");
+          auto message =
+              generateErrorMessage("Wrongly formed account_id",
+                                   static_cast<std::string>(account_id));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -56,7 +59,9 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AssetIdType &asset_id) const {
         if (not std::regex_match(asset_id, asset_id_)) {
-          reason.second.push_back("Wrongly formed asset_id");
+          auto message = generateErrorMessage(
+              "Wrongly formed asset_id", static_cast<std::string>(asset_id));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -68,7 +73,9 @@ namespace shared_model {
       void validatePubkey(ReasonsGroupType &reason,
                           const interface::types::PubkeyType &pubkey) const {
         if (pubkey.blob().size() != 32) {
-          reason.second.push_back("Public key has wrong size");
+          auto message = generateErrorMessage("Public key has wrong size",
+                                              pubkey.hex());
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -77,14 +84,18 @@ namespace shared_model {
           const interface::AddPeer::AddressType &address) const {
         if (not(iroha::validator::isValidIpV4(address)
                 or iroha::validator::isValidHostname(address))) {
-          reason.second.push_back("Wrongly formed PeerAddress: " + address);
+          auto message = generateErrorMessage(
+              "Wrongly formed PeerAddress", static_cast<std::string>(address));
+          reason.second.push_back(std::move(message));
         }
       }
 
       void validateRoleId(ReasonsGroupType &reason,
                           const interface::types::RoleIdType &role_id) const {
         if (not std::regex_match(role_id, name_)) {
-          reason.second.push_back("Wrongly formed role_id");
+          auto message = generateErrorMessage(
+              "Wrongly formed role_id", static_cast<std::string>(role_id));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -92,7 +103,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AccountNameType &account_name) const {
         if (not std::regex_match(account_name, name_)) {
-          reason.second.push_back("Wrongly formed account_name");
+          auto message =
+              generateErrorMessage("Wrongly formed account_name",
+                                   static_cast<std::string>(account_name));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -100,7 +114,9 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::DomainIdType &domain_id) const {
         if (not std::regex_match(domain_id, name_)) {
-          reason.second.push_back("Wrongly formed domain_id");
+          auto message = generateErrorMessage(
+              "Wrongly formed domain_id", static_cast<std::string>(domain_id));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -108,7 +124,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AssetNameType &asset_name) const {
         if (not std::regex_match(asset_name, name_)) {
-          reason.second.push_back("Wrongly formed asset_name");
+          auto message =
+              generateErrorMessage("Wrongly formed asset_name",
+                                   static_cast<std::string>(asset_name));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -116,7 +135,9 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::SetAccountDetail::AccountDetailKeyType &key) const {
         if (not std::regex_match(key, detail_key_)) {
-          reason.second.push_back("Wrongly formed key");
+          auto message = generateErrorMessage("Wrongly formed key",
+                                              static_cast<std::string>(key));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -150,7 +171,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AccountIdType &account_id) const {
         if (not std::regex_match(account_id, account_id_)) {
-          reason.second.push_back("Wrongly formed creator_account_id");
+          auto message =
+              generateErrorMessage("Wrongly formed creator_account_id",
+                                   static_cast<std::string>(account_id));
+          reason.second.push_back(std::move(message));
         }
       }
 
@@ -160,25 +184,26 @@ namespace shared_model {
         iroha::ts64_t now = iroha::time::now();
         // TODO 06/08/17 Muratov: make future gap for passing timestamp, like
         // with old timestamps IR-511 #goodfirstissue
+
+        auto time_message =
+            (boost::format("%llu, now: %llu") % timestamp % now).str();
         if (now < timestamp) {
-          reason.second.push_back(boost::str(
-              boost::format(
-                  "timestamp broken: send from future (%llu, now %llu)")
-              % timestamp % now));
+          auto message = generateErrorMessage(
+              "timestamp broken: sent from future", time_message);
+          reason.second.push_back(std::move(message));
         }
 
         if (now - timestamp > MAX_DELAY) {
-          reason.second.push_back(boost::str(
-              boost::format("timestamp broken: too old (%llu, now %llu)")
-              % timestamp % now));
+          auto message =
+              generateErrorMessage("timestamp broken: too old ", time_message);
+          reason.second.push_back(std::move(message));
         }
       }
 
       void validateCounter(ReasonsGroupType &reason,
                            const interface::types::CounterType &counter) const {
         if (counter == 0) {
-          reason.second.push_back(
-              boost::str(boost::format("Counter should be > 0")));
+          reason.second.push_back("Counter should be > 0");
         }
       }
 
@@ -187,6 +212,12 @@ namespace shared_model {
       // max-delay between tx creation and validation
       static constexpr auto MAX_DELAY =
           std::chrono::hours(24) / std::chrono::milliseconds(1);
+
+      std::string generateErrorMessage(const std::string &error,
+                                       const std::string &field_value) const {
+        return (boost::format("%s, passed value: %s") % error % field_value)
+            .str();
+      }
     };
   }  // namespace validation
 }  // namespace shared_model
