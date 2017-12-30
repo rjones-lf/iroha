@@ -33,7 +33,6 @@ namespace iroha {
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
 
-          peer = mk_peer("0.0.0.0:50051");
           network = std::make_shared<NetworkImpl>();
 
           message.hash.proposal_hash = "proposal";
@@ -43,13 +42,15 @@ namespace iroha {
 
           grpc::ServerBuilder builder;
           int port = 0;
-          builder.AddListeningPort(peer.address,
+          builder.AddListeningPort("0.0.0.0:0",
                                    grpc::InsecureServerCredentials(),
                                    &port);
           builder.RegisterService(network.get());
           server = builder.BuildAndStart();
           ASSERT_TRUE(server);
           ASSERT_NE(port, 0);
+
+          peer = mk_peer("0.0.0.0:" + std::to_string(port));
         }
 
         void TearDown() override {
