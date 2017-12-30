@@ -279,7 +279,6 @@ namespace shared_model {
       }
 
      private:
-      Answer answer_;
       FieldValidator field_validator_;
       CommandValidator command_validator_;
     };
