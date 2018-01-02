@@ -45,7 +45,7 @@ class FieldValidatorTest : public ValidatorsTest {
       {"amount",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validateAmount(reason, *lazy_amount);
+         field_validator.validateAmount(reason, proto::Amount(amount));
          return reason;
        }},
       {"address",
@@ -57,13 +57,15 @@ class FieldValidatorTest : public ValidatorsTest {
       {"peer_key",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePubkey(reason, public_key);
+         field_validator.validatePubkey(
+             reason, interface::types::PubkeyType(public_key));
          return reason;
        }},
       {"public_key",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePubkey(reason, public_key);
+         field_validator.validatePubkey(
+             reason, interface::types::PubkeyType(public_key));
          return reason;
        }},
       {"role_name",
@@ -87,7 +89,8 @@ class FieldValidatorTest : public ValidatorsTest {
       {"main_pubkey",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePubkey(reason, public_key);
+         field_validator.validatePubkey(
+             reason, interface::types::PubkeyType(public_key));
          return reason;
        }},
       {"asset_name",
@@ -108,33 +111,31 @@ class FieldValidatorTest : public ValidatorsTest {
          field_validator.validateRoleId(reason, role_name);
          return reason;
        }},
-      {"permissions",
-       [&] {
-         validation::ReasonsGroupType reason;
-         //  field_validator.validatePermissions(reason, role_permission);
-         return reason;
-       }},
       {"permission",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePermission(reason, grantable_permission);
+         field_validator.validatePermission(
+             reason,
+             iroha::protocol::GrantablePermission_Name(grantable_permission));
          return reason;
        }},
       {"permissions",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePermissions(reason, role_permission);
+         field_validator.validatePermissions(
+             reason, {iroha::protocol::RolePermission_Name(role_permission)});
          return reason;
        }},
       {"key",
        [&] {
          validation::ReasonsGroupType reason;
-         //  field_validator.validatePubkey(reason, public_key);
+         field_validator.validatePubkey(
+             reason, interface::types::PubkeyType(public_key));
          return reason;
        }},
       {"value",
        [&] {
-         // TODO: wtf is value?
+         // TODO: add validation to a value
          validation::ReasonsGroupType reason;
          //  field_validator.validateValue(reason, "");
          return reason;
@@ -159,9 +160,9 @@ class FieldValidatorTest : public ValidatorsTest {
        }},
       {"description",
        [&] {
-         //  TODO: wtf is description?
+         //  TODO: add validation to description
          validation::ReasonsGroupType reason;
-         //  field_validator.validateDescription(reason, account_id);
+         //  field_validator.validateDescription(reason, description);
          return reason;
        }},
   };
