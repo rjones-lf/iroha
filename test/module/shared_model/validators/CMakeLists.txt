@@ -28,3 +28,10 @@ addtest(query_validator_test
 target_link_libraries(query_validator_test
     shared_model_proto_backend
     )
+
+addtest(field_validator_test
+    field_validator_test.cpp
+    )
+target_link_libraries(field_validator_test
+    shared_model_proto_backend
+    )
