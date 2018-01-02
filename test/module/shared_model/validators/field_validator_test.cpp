@@ -16,6 +16,7 @@
  */
 
 #include "validators/field_validator.hpp"
+#include <unordered_set>
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
@@ -47,6 +48,13 @@ class FieldValidatorTest : public ValidatorsTest {
   // inputs
   using FieldTest = std::pair<ValidationFunction, std::vector<FieldTestCase>>;
 
+  // Because we use Protobuf reflection to generate fields by generating all
+  // possible commands, some fields are checked several times
+  // because they are present in several commands. To prevent that, this set
+  // contains all already tested fields, and checked each time we try to test
+  // a field
+  std::unordered_set<std::string> checked_fields;
+
   std::vector<FieldTestCase> account_id_test_cases{
       // valid
       {[&] { account_id = "account@domain"; }, true, ""},
@@ -54,6 +62,15 @@ class FieldValidatorTest : public ValidatorsTest {
       {[&] { account_id = "1abs@domain"; },
        false,
        "Wrongly formed account_id, passed value: 1abs@domain"},
+  };
+
+  std::vector<FieldTestCase> asset_id_test_cases{
+     // valid
+      {[&] { asset_id = "asset#domain"; }, true, ""},
+      // cannot start with a digit
+      {[&] { asset_id = "1abs#domain"; },
+       false,
+       "Wrongly formed asset_id, passed value: 1abs#domain"},
   };
 
   std::unordered_map<std::string, FieldTest> field_validators{
@@ -70,7 +87,7 @@ class FieldValidatorTest : public ValidatorsTest {
           field_validator.validateAssetId(reason, asset_id);
           return reason;
         },
-        {}}},
+        asset_id_test_cases}},
       {"amount",
        {[&] {
           validation::ReasonsGroupType reason;
@@ -225,7 +242,6 @@ class FieldValidatorTest : public ValidatorsTest {
 TEST_F(FieldValidatorTest, TestCasesValidation) {
   iroha::protocol::Transaction proto_tx;
   auto payload = proto_tx.mutable_payload();
-  // TODO: generate fields only once
   iterateContainer(
       [] { return iroha::protocol::Command::descriptor(); },
       [&](auto field) {
@@ -235,6 +251,12 @@ TEST_F(FieldValidatorTest, TestCasesValidation) {
         return command->GetReflection()->MutableMessage(command, field);
       },
       [this](auto field, auto command) {
+        // skip field, if already tested
+        if (checked_fields.find(field->name()) != checked_fields.end()) {
+          return;
+        }
+        checked_fields.insert(field->name());
+
         // Will throw key exception in case new field is added
         auto field_test = field_validators.at(field->name());
         auto validate = field_test.first;
