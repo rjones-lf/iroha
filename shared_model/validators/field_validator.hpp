@@ -73,8 +73,8 @@ namespace shared_model {
       void validatePubkey(ReasonsGroupType &reason,
                           const interface::types::PubkeyType &pubkey) const {
         if (pubkey.blob().size() != 32) {
-          auto message = generateErrorMessage("Public key has wrong size",
-                                              pubkey.hex());
+          auto message =
+              generateErrorMessage("Public key has wrong size", pubkey.hex());
           reason.second.push_back(std::move(message));
         }
       }
