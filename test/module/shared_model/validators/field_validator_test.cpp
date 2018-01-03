@@ -21,6 +21,7 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
 
+#include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
@@ -48,11 +49,13 @@ class FieldValidatorTest : public ValidatorsTest {
     std::string expected_message;
   };
 
+ public:
   // To test one field, validation function is required,
   // which is always the same, and several test cases, which represent various
   // inputs
   using FieldTest = std::pair<ValidationFunction, std::vector<FieldTestCase>>;
 
+ protected:
   // Because we use Protobuf reflection to generate fields by generating all
   // possible commands, some fields are checked several times
   // because they are present in several commands. To prevent that, this set
@@ -104,6 +107,9 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> created_time_test_cases;
   std::vector<FieldTestCase> pubkey_test_cases;
   std::vector<FieldTestCase> signature_test_cases;
+  std::vector<FieldTestCase> role_id_test_cases;
+  std::vector<FieldTestCase> detail_test_cases;
+  std::vector<FieldTestCase> tx_hashes_test_cases;
 
   // register validation function and test cases
   std::unordered_map<std::string, FieldTest> field_validators{
@@ -300,7 +306,29 @@ class FieldValidatorTest : public ValidatorsTest {
           // field_validator.validate();
           return reason;
         },
-        signature_test_cases}}};
+        signature_test_cases}},
+      // Query fields
+      {"role_id",
+       {[&] {
+          validation::ReasonsGroupType reason;
+          field_validator.validateRoleId(reason, role_name);
+          return reason;
+        },
+        role_id_test_cases}},
+      {"detail",
+       {[&] {
+          validation::ReasonsGroupType reason;
+          field_validator.validateAccountDetailKey(reason, detail_key);
+          return reason;
+        },
+        detail_test_cases}},
+      {"tx_hashes",
+       {[&] {
+          validation::ReasonsGroupType reason;
+          field_validator.validateAccountDetailKey(reason, detail_key);
+          return reason;
+        },
+        tx_hashes_test_cases}}};
 };
 
 /**
@@ -330,7 +358,12 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
         checked_fields.insert(field->name());
 
         // Will throw key exception in case new field is added
-        auto field_test = field_validators.at(field->name());
+        FieldTest field_test;
+        try {
+          field_test = field_validators.at(field->name());
+        } catch (const std::out_of_range &e) {
+          FAIL() << "Missing field setter: " << field->name();
+        }
         auto validate = field_test.first;
         for (auto &testcase : field_test.second) {
           // Initialize field
@@ -385,7 +418,12 @@ TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
         }
 
         // Will throw key exception in case new field is added
-        auto field_test = field_validators.at(field->name());
+        FieldTest field_test;
+        try {
+          field_test = field_validators.at(field->name());
+        } catch (const std::out_of_range &e) {
+          FAIL() << "Missing field setter: " << field->name();
+        }
         auto validate = field_test.first;
         for (auto &testcase : field_test.second) {
           // Initialize field
@@ -404,4 +442,64 @@ TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
         }
       },
       [] {});
+}
+
+/**
+ * @given field values from test cases
+ * @when field validator is invoked on query's fields
+ * @then field validator correctly rejects invalid values, and provides
+ * meaningful message
+ */
+TEST_F(FieldValidatorTest, QueryFieldsValidation) {
+  iroha::protocol::Query qry;
+  auto payload = qry.mutable_payload();
+  // iterate over all field in query
+  iterateContainer(
+      [] {
+        return iroha::protocol::Query::Payload::descriptor()->FindOneofByName(
+            "query");
+      },
+      [&](auto field) {
+        // Set concrete type for new query
+        return payload->GetReflection()->MutableMessage(payload, field);
+      },
+      [this](auto field, auto query) {
+        // skip field, if already tested
+        if (checked_fields.find(field->name()) != checked_fields.end()) {
+          return;
+        }
+        checked_fields.insert(field->name());
+
+        // skip field, if it is of complex type (like command)
+        // these must be tested separately
+        if (field->type()
+            == google::protobuf::FieldDescriptor::Type::TYPE_MESSAGE) {
+          return;
+        }
+
+        // Will throw key exception in case new field is added
+        FieldTest field_test;
+        try {
+          field_test = field_validators.at(field->name());
+        } catch (const std::out_of_range &e) {
+          FAIL() << "Missing field setter: " << field->name();
+        }
+        auto validate = field_test.first;
+        for (auto &testcase : field_test.second) {
+          // Initialize field
+          testcase.init_func();
+          // Perform validation
+          auto reason = validate();
+          // if value supposed to be invalid, check that there is a reason
+          // and that error message is as expected.
+          // If value supposed to be valid, check for empty reason.
+          if (!testcase.value_is_valid) {
+            EXPECT_TRUE(!reason.second.empty());
+            EXPECT_EQ(testcase.expected_message, reason.second.at(0));
+          } else {
+            EXPECT_TRUE(reason.second.empty());
+          }
+        }
+      },
+      [&] {});
 }
