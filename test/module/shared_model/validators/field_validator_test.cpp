@@ -55,6 +55,47 @@ class FieldValidatorTest : public ValidatorsTest {
   // inputs
   using FieldTest = std::pair<ValidationFunction, std::vector<FieldTestCase>>;
 
+  // Run all test cases for given field
+  void runTestCases(const google::protobuf::FieldDescriptor *field) {
+    auto field_name = field->name();
+    // skip field, if already tested
+    if (checked_fields.find(field_name) != checked_fields.end()) {
+      return;
+    }
+    checked_fields.insert(field_name);
+
+    // skip field, if it is of complex type (like command)
+    // these must be tested separately
+    if (field->type()
+        == google::protobuf::FieldDescriptor::Type::TYPE_MESSAGE) {
+      return;
+    }
+
+    // Will throw key exception in case new field is added
+    FieldTest field_test;
+    try {
+      field_test = field_validators.at(field_name);
+    } catch (const std::out_of_range &e) {
+      FAIL() << "Missing field setter: " << field_name;
+    }
+    auto validate = field_test.first;
+    for (auto &testcase : field_test.second) {
+      // Initialize field
+      testcase.init_func();
+      // Perform validation
+      auto reason = validate();
+      // if value supposed to be invalid, check that there is a reason
+      // and that error message is as expected.
+      // If value supposed to be valid, check for empty reason.
+      if (!testcase.value_is_valid) {
+        EXPECT_TRUE(!reason.second.empty());
+        EXPECT_EQ(testcase.expected_message, reason.second.at(0));
+      } else {
+        EXPECT_TRUE(reason.second.empty());
+      }
+    }
+  }
+
  protected:
   // Because we use Protobuf reflection to generate fields by generating all
   // possible commands, some fields are checked several times
@@ -350,37 +391,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
         //  // Set concrete type for new command
         return command->GetReflection()->MutableMessage(command, field);
       },
-      [this](auto field, auto command) {
-        // skip field, if already tested
-        if (checked_fields.find(field->name()) != checked_fields.end()) {
-          return;
-        }
-        checked_fields.insert(field->name());
-
-        // Will throw key exception in case new field is added
-        FieldTest field_test;
-        try {
-          field_test = field_validators.at(field->name());
-        } catch (const std::out_of_range &e) {
-          FAIL() << "Missing field setter: " << field->name();
-        }
-        auto validate = field_test.first;
-        for (auto &testcase : field_test.second) {
-          // Initialize field
-          testcase.init_func();
-          // Perform validation
-          auto reason = validate();
-          // if value supposed to be invalid, check that there is a reason
-          // and that error message is as expected.
-          // If value supposed to be valid, check for empty reason.
-          if (!testcase.value_is_valid) {
-            EXPECT_TRUE(!reason.second.empty());
-            EXPECT_EQ(testcase.expected_message, reason.second.at(0));
-          } else {
-            EXPECT_TRUE(reason.second.empty());
-          }
-        }
-      },
+      [this](auto field, auto command) { this->runTestCases(field); },
       [] {});
 }
 
@@ -402,45 +413,7 @@ TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
         EXPECT_NE(nullptr, field_desc);
         return message_factory.GetPrototype(field_desc)->New();
       },
-
-      [this](auto field, auto transaction_field) {
-        // skip field, if already tested
-        if (checked_fields.find(field->name()) != checked_fields.end()) {
-          return;
-        }
-        checked_fields.insert(field->name());
-
-        // skip field, if it is of complex type (like command)
-        // these must be tested separately
-        if (field->type()
-            == google::protobuf::FieldDescriptor::Type::TYPE_MESSAGE) {
-          return;
-        }
-
-        // Will throw key exception in case new field is added
-        FieldTest field_test;
-        try {
-          field_test = field_validators.at(field->name());
-        } catch (const std::out_of_range &e) {
-          FAIL() << "Missing field setter: " << field->name();
-        }
-        auto validate = field_test.first;
-        for (auto &testcase : field_test.second) {
-          // Initialize field
-          testcase.init_func();
-          // Perform validation
-          auto reason = validate();
-          // if value supposed to be invalid, check that there is a reason
-          // and that error message is as expected.
-          // If value supposed to be valid, check for empty reason.
-          if (!testcase.value_is_valid) {
-            EXPECT_TRUE(!reason.second.empty());
-            EXPECT_EQ(testcase.expected_message, reason.second.at(0));
-          } else {
-            EXPECT_TRUE(reason.second.empty());
-          }
-        }
-      },
+      [this](auto field, auto transaction_field) { this->runTestCases(field); },
       [] {});
 }
 
@@ -463,43 +436,6 @@ TEST_F(FieldValidatorTest, QueryFieldsValidation) {
         // Set concrete type for new query
         return payload->GetReflection()->MutableMessage(payload, field);
       },
-      [this](auto field, auto query) {
-        // skip field, if already tested
-        if (checked_fields.find(field->name()) != checked_fields.end()) {
-          return;
-        }
-        checked_fields.insert(field->name());
-
-        // skip field, if it is of complex type (like command)
-        // these must be tested separately
-        if (field->type()
-            == google::protobuf::FieldDescriptor::Type::TYPE_MESSAGE) {
-          return;
-        }
-
-        // Will throw key exception in case new field is added
-        FieldTest field_test;
-        try {
-          field_test = field_validators.at(field->name());
-        } catch (const std::out_of_range &e) {
-          FAIL() << "Missing field setter: " << field->name();
-        }
-        auto validate = field_test.first;
-        for (auto &testcase : field_test.second) {
-          // Initialize field
-          testcase.init_func();
-          // Perform validation
-          auto reason = validate();
-          // if value supposed to be invalid, check that there is a reason
-          // and that error message is as expected.
-          // If value supposed to be valid, check for empty reason.
-          if (!testcase.value_is_valid) {
-            EXPECT_TRUE(!reason.second.empty());
-            EXPECT_EQ(testcase.expected_message, reason.second.at(0));
-          } else {
-            EXPECT_TRUE(reason.second.empty());
-          }
-        }
-      },
+      [this](auto field, auto query) { this->runTestCases(field); },
       [&] {});
 }
