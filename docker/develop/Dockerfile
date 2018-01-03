@@ -65,14 +65,16 @@ RUN git clone https://github.com/gflags/gflags /tmp/gflags; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/gflags
 
-# install grpc
+# install c-ares
 RUN git clone https://github.com/c-ares/c-ares /tmp/c-ares; \
     (cd /tmp/c-ares ; git checkout 3be1924221e1326df520f8498d704a5c4c8d0cce); \
     cmake -H/tmp/c-ares -B/tmp/c-ares/build; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
-    rm -rf /tmp/c-ares; \
-    git clone https://github.com/grpc/grpc /tmp/grpc; \
+    rm -rf /tmp/c-ares
+    
+# install grpc
+RUN git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bfcbad3b86c7912968dc8e64f2121c920dad4dfb); \
     (cd /tmp/grpc ; git submodule update --init third_party/benchmark); \
     cmake -DgRPC_ZLIB_PROVIDER=package -DgRPC_CARES_PROVIDER=package -DgRPC_SSL_PROVIDER=package \
