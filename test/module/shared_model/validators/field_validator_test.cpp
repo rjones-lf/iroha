@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <limits>
 #include <memory>
 #include <unordered_set>
 
@@ -130,6 +131,12 @@ class FieldValidatorTest : public ValidatorsTest {
        "Wrongly formed account_id, passed value: @domain"},
   };
 
+  std::vector<FieldTestCase> &src_account_id_test_cases = account_id_test_cases;
+  std::vector<FieldTestCase> &dest_account_id_test_cases =
+      account_id_test_cases;
+  std::vector<FieldTestCase> &creator_account_id_test_cases =
+      account_id_test_cases;
+
   std::vector<FieldTestCase> asset_id_test_cases{
       // valid
       {[&] { asset_id = "asset#domain"; }, true, ""},
@@ -157,16 +164,11 @@ class FieldValidatorTest : public ValidatorsTest {
       {[&] { asset_id = "#domain"; },
        false,
        "Wrongly formed asset_id, passed value: #domain"},
-
   };
 
   std::vector<FieldTestCase> amount_test_cases{
       // valid amount
       {[&] { amount.mutable_value()->set_fourth(100); }, true, ""},
-      // 0 amount
-      {[&] { amount.mutable_value()->set_fourth(0); },
-       false,
-       "Amount cannot be equal to 0"},
   };
 
   // Address validation test is handled in libs/validator,
@@ -184,19 +186,11 @@ class FieldValidatorTest : public ValidatorsTest {
        "Wrongly formed PeerAddress, passed value: "},
   };
 
-  std::vector<FieldTestCase> key_test_cases{};
-
   std::vector<FieldTestCase> public_key_test_cases{
       // valid key
-      {[&] {
-         public_key = std::string(32, '0');
-       },
-       true,
-       ""},
+      {[&] { public_key = std::string(32, '0'); }, true, ""},
       // invalid key length
-      {[&] {
-         public_key = std::string(64, '0');
-       },
+      {[&] { public_key = std::string(64, '0'); },
        false,
        "Public key has wrong size, passed value: 64"},
       // empty string
@@ -209,26 +203,120 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> &pubkey_test_cases = public_key_test_cases;
   std::vector<FieldTestCase> &main_pubkey_test_cases = public_key_test_cases;
 
-  std::vector<FieldTestCase> role_name_test_cases;
-  std::vector<FieldTestCase> account_name_test_cases;
-  std::vector<FieldTestCase> domain_id_test_cases;
-  std::vector<FieldTestCase> asset_name_test_cases;
+  std::vector<FieldTestCase> role_name_test_cases{
+      // valid name
+      {[&] { role_name = "admin"; }, true, ""},
+      // empty string
+      {[&] { role_name = ""; },
+       false,
+       "Wrongly formed role_id, passed value: "},
+      // invalid characters
+      {[&] { role_name = "+math+"; },
+       false,
+       "Wrongly formed role_id, passed value: +math+"},
+      // long name
+      {[&] { role_name = "somelongname"; },
+       false,
+       "Wrongly formed role_id, passed value: somelongname"},
+  };
+
+  std::vector<FieldTestCase> &default_role_test_cases = role_name_test_cases;
+  std::vector<FieldTestCase> &role_id_test_cases = role_name_test_cases;
+
+  std::vector<FieldTestCase> account_name_test_cases{
+      // valid name
+      {[&] { account_name = "admin"; }, true, ""},
+      // empty string
+      {[&] { account_name = ""; },
+       false,
+       "Wrongly formed account_name, passed value: "},
+      // invalid characters
+      {[&] { account_name = "+math+"; },
+       false,
+       "Wrongly formed account_name, passed value: +math+"},
+      // long name
+      {[&] { account_name = "somelongname"; },
+       false,
+       "Wrongly formed account_name, passed value: somelongname"},
+  };
+
+  std::vector<FieldTestCase> domain_id_test_cases{
+      // valid name
+      {[&] { domain_id = "admin"; }, true, ""},
+      // empty string
+      {[&] { domain_id = ""; },
+       false,
+       "Wrongly formed domain_id, passed value: "},
+      // invalid characters
+      {[&] { domain_id = "+math+"; },
+       false,
+       "Wrongly formed domain_id, passed value: +math+"},
+      // long name
+      {[&] { domain_id = "somelongname"; },
+       false,
+       "Wrongly formed domain_id, passed value: somelongname"},
+  };
+
+  std::vector<FieldTestCase> asset_name_test_cases{
+      // valid name
+      {[&] { asset_name = "admin"; }, true, ""},
+      // empty string
+      {[&] { asset_name = ""; },
+       false,
+       "Wrongly formed asset_name, passed value: "},
+      // invalid characters
+      {[&] { asset_name = "+math+"; },
+       false,
+       "Wrongly formed asset_name, passed value: +math+"},
+      // long name
+      {[&] { asset_name = "somelongname"; },
+       false,
+       "Wrongly formed asset_name, passed value: somelongname"},
+  };
+
+  std::vector<FieldTestCase> permissions_test_cases{
+      // valid role
+      {[&] {
+         role_permission = iroha::protocol::RolePermission::can_append_role;
+         ;
+       },
+       true,
+       ""},
+  };
+
+  std::vector<FieldTestCase> tx_counter_test_cases{
+      // valid counter
+      {[&] { counter = 5; }, true, ""},
+      // counter is 0
+      {[&] { counter = 0; }, false, "Counter should be > 0"},
+  };
+  std::vector<FieldTestCase> created_time_test_cases{
+      // valid time
+      {[&] { created_time = iroha::time::now(); }, true, ""},
+  };
+
+  std::vector<FieldTestCase> detail_test_cases{
+      // valid detail key
+      {[&] { detail_key = "happy"; }, true, ""},
+      // empty string
+      {[&] { detail_key = ""; }, false, "Wrongly formed key, passed value: "},
+      // invalid characters
+      {[&] { detail_key = "hi*there"; },
+       false,
+       "Wrongly formed key, passed value: hi*there"},
+  };
+  std::vector<FieldTestCase> &key_test_cases = detail_test_cases;
+
+  // no constraints yet
   std::vector<FieldTestCase> precision_test_cases;
-  std::vector<FieldTestCase> default_role_test_cases;
   std::vector<FieldTestCase> permission_test_cases;
-  std::vector<FieldTestCase> permissions_test_cases;
   std::vector<FieldTestCase> value_test_cases;
   std::vector<FieldTestCase> quorum_test_cases;
-  std::vector<FieldTestCase> src_account_id_test_cases;
-  std::vector<FieldTestCase> dest_account_id_test_cases;
   std::vector<FieldTestCase> description_test_cases;
-  std::vector<FieldTestCase> creator_account_id_test_cases;
-  std::vector<FieldTestCase> tx_counter_test_cases;
-  std::vector<FieldTestCase> created_time_test_cases;
   std::vector<FieldTestCase> signature_test_cases;
-  std::vector<FieldTestCase> role_id_test_cases;
-  std::vector<FieldTestCase> detail_test_cases;
   std::vector<FieldTestCase> tx_hashes_test_cases;
+
+  /**************************************************************************/
 
   // register validation function and test cases
   std::unordered_map<std::string, FieldTest> field_validators{
