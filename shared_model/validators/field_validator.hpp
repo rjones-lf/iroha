@@ -74,7 +74,8 @@ namespace shared_model {
                           const interface::types::PubkeyType &pubkey) const {
         if (pubkey.blob().size() != 32) {
           auto message =
-              generateErrorMessage("Public key has wrong size", pubkey.hex());
+              generateErrorMessage("Public key has wrong size",
+                                   std::to_string(pubkey.blob().size()));
           reason.second.push_back(std::move(message));
         }
       }

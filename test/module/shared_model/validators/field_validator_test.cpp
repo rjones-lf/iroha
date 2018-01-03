@@ -64,13 +64,6 @@ class FieldValidatorTest : public ValidatorsTest {
     }
     checked_fields.insert(field_name);
 
-    // skip field, if it is of complex type (like command)
-    // these must be tested separately
-    if (field->type()
-        == google::protobuf::FieldDescriptor::Type::TYPE_MESSAGE) {
-      return;
-    }
-
     // Will throw key exception in case new field is added
     FieldTest field_test;
     try {
@@ -88,10 +81,12 @@ class FieldValidatorTest : public ValidatorsTest {
       // and that error message is as expected.
       // If value supposed to be valid, check for empty reason.
       if (!testcase.value_is_valid) {
-        EXPECT_TRUE(!reason.second.empty());
-        EXPECT_EQ(testcase.expected_message, reason.second.at(0));
+        ASSERT_TRUE(!reason.second.empty()) << "field: " << field_name;
+        EXPECT_EQ(testcase.expected_message, reason.second.at(0))
+            << "field: " << field_name;
       } else {
-        EXPECT_TRUE(reason.second.empty());
+        EXPECT_TRUE(reason.second.empty()) << reason.second.at(0) << "\n"
+                                           << "field: " << field_name;
       }
     }
   }
@@ -113,6 +108,26 @@ class FieldValidatorTest : public ValidatorsTest {
       {[&] { account_id = "1abs@domain"; },
        false,
        "Wrongly formed account_id, passed value: 1abs@domain"},
+      // domain cannot start with number
+      {[&] { account_id = "account@3domain"; },
+       false,
+       "Wrongly formed account_id, passed value: account@3domain"},
+      // empty string
+      {[&] { account_id = ""; },
+       false,
+       "Wrongly formed account_id, passed value: "},
+      // char other than letter or digit string
+      {[&] { account_id = "abs^@domain"; },
+       false,
+       "Wrongly formed account_id, passed value: abs^@domain"},
+      // no @
+      {[&] { account_id = "absdomain"; },
+       false,
+       "Wrongly formed account_id, passed value: absdomain"},
+      // no name
+      {[&] { account_id = "@domain"; },
+       false,
+       "Wrongly formed account_id, passed value: @domain"},
   };
 
   std::vector<FieldTestCase> asset_id_test_cases{
@@ -122,22 +137,86 @@ class FieldValidatorTest : public ValidatorsTest {
       {[&] { asset_id = "1abs#domain"; },
        false,
        "Wrongly formed asset_id, passed value: 1abs#domain"},
+      // domain cannot start with a digit
+      {[&] { asset_id = "abs#3domain"; },
+       false,
+       "Wrongly formed asset_id, passed value: abs#3domain"},
+      // Empty string
+      {[&] { asset_id = ""; },
+       false,
+       "Wrongly formed asset_id, passed value: "},
+      // invalid chars
+      {[&] { asset_id = "ab++s#do()main"; },
+       false,
+       "Wrongly formed asset_id, passed value: ab++s#do()main"},
+      // no # char
+      {[&] { asset_id = "absdomain"; },
+       false,
+       "Wrongly formed asset_id, passed value: absdomain"},
+      // no asset
+      {[&] { asset_id = "#domain"; },
+       false,
+       "Wrongly formed asset_id, passed value: #domain"},
+
   };
 
-  std::vector<FieldTestCase> amount_test_cases;
-  std::vector<FieldTestCase> address_test_cases;
-  std::vector<FieldTestCase> peer_key_test_cases;
-  std::vector<FieldTestCase> public_key_test_cases;
+  std::vector<FieldTestCase> amount_test_cases{
+      // valid amount
+      {[&] { amount.mutable_value()->set_fourth(100); }, true, ""},
+      // 0 amount
+      {[&] { amount.mutable_value()->set_fourth(0); },
+       false,
+       "Amount cannot be equal to 0"},
+  };
+
+  // Address validation test is handled in libs/validator,
+  // so test cases are not exhaustive
+  std::vector<FieldTestCase> address_test_cases{
+      // valid ip address
+      {[&] { address_localhost = "182.13.35.1:3040"; }, true, ""},
+      // invalid address
+      {[&] { address_localhost = "182.13.35.1:3040^^"; },
+       false,
+       "Wrongly formed PeerAddress, passed value: 182.13.35.1:3040^^"},
+      // empty string
+      {[&] { address_localhost = ""; },
+       false,
+       "Wrongly formed PeerAddress, passed value: "},
+  };
+
+  std::vector<FieldTestCase> key_test_cases{};
+
+  std::vector<FieldTestCase> public_key_test_cases{
+      // valid key
+      {[&] {
+         public_key = std::string(32, '0');
+       },
+       true,
+       ""},
+      // invalid key length
+      {[&] {
+         public_key = std::string(64, '0');
+       },
+       false,
+       "Public key has wrong size, passed value: 64"},
+      // empty string
+      {[&] { public_key = ""; },
+       false,
+       "Public key has wrong size, passed value: 0"},
+  };
+  // All public keys are currently the same, and follow the same rules
+  std::vector<FieldTestCase> &peer_key_test_cases = public_key_test_cases;
+  std::vector<FieldTestCase> &pubkey_test_cases = public_key_test_cases;
+  std::vector<FieldTestCase> &main_pubkey_test_cases = public_key_test_cases;
+
   std::vector<FieldTestCase> role_name_test_cases;
   std::vector<FieldTestCase> account_name_test_cases;
   std::vector<FieldTestCase> domain_id_test_cases;
-  std::vector<FieldTestCase> main_pubkey_test_cases;
   std::vector<FieldTestCase> asset_name_test_cases;
   std::vector<FieldTestCase> precision_test_cases;
   std::vector<FieldTestCase> default_role_test_cases;
   std::vector<FieldTestCase> permission_test_cases;
   std::vector<FieldTestCase> permissions_test_cases;
-  std::vector<FieldTestCase> key_test_cases;
   std::vector<FieldTestCase> value_test_cases;
   std::vector<FieldTestCase> quorum_test_cases;
   std::vector<FieldTestCase> src_account_id_test_cases;
@@ -146,7 +225,6 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> creator_account_id_test_cases;
   std::vector<FieldTestCase> tx_counter_test_cases;
   std::vector<FieldTestCase> created_time_test_cases;
-  std::vector<FieldTestCase> pubkey_test_cases;
   std::vector<FieldTestCase> signature_test_cases;
   std::vector<FieldTestCase> role_id_test_cases;
   std::vector<FieldTestCase> detail_test_cases;
@@ -344,10 +422,16 @@ class FieldValidatorTest : public ValidatorsTest {
       {"signature",
        {[&] {
           validation::ReasonsGroupType reason;
-          // field_validator.validate();
           return reason;
         },
         signature_test_cases}},
+      {"commands",
+       {[&] {
+          validation::ReasonsGroupType reason;
+          return reason;
+        },
+        {}}},
+
       // Query fields
       {"role_id",
        {[&] {
@@ -369,7 +453,8 @@ class FieldValidatorTest : public ValidatorsTest {
           field_validator.validateAccountDetailKey(reason, detail_key);
           return reason;
         },
-        tx_hashes_test_cases}}};
+        tx_hashes_test_cases}},
+  };
 };
 
 /**
