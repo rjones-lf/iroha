@@ -67,7 +67,9 @@ namespace shared_model {
 
       void validateAmount(ReasonsGroupType &reason,
                           const interface::Amount &amount) const {
-        /* put here any validations*/
+        if (amount.intValue() == 0) {
+          reason.second.push_back("Amount must be greater than 0");
+        }
       }
 
       void validatePubkey(ReasonsGroupType &reason,
