@@ -238,13 +238,13 @@ class FieldValidatorTest : public ValidatorsTest {
           "invalid_ip_address",
           [&] { address_localhost = "182.13.35.1:3040^^"; },
           false,
-          "Wrongly formed PeerAddress, passed value: '182.13.35.1:3040^^'",
+          "Wrongly formed peer address, passed value: '182.13.35.1:3040^^'",
       },
       {
           "empty_string",
           [&] { address_localhost = ""; },
           false,
-          "Wrongly formed PeerAddress, passed value: ''",
+          "Wrongly formed peer address, passed value: ''",
       },
   };
 
@@ -259,13 +259,13 @@ class FieldValidatorTest : public ValidatorsTest {
           "invalid_key_length",
           [&] { public_key = std::string(64, '0'); },
           false,
-          "Public key has wrong size, passed value: '64'",
+          "Public key has wrong size, passed size: 64",
       },
       {
           "empty_string",
           [&] { public_key = ""; },
           false,
-          "Public key has wrong size, passed value: '0'",
+          "Public key has wrong size, passed size: 0",
       },
   };
   // All public keys are currently the same, and follow the same rules
