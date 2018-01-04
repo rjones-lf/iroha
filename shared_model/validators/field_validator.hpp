@@ -204,18 +204,20 @@ namespace shared_model {
         // TODO 06/08/17 Muratov: make future gap for passing timestamp, like
         // with old timestamps IR-511 #goodfirstissue
 
-        auto time_message =
-            (boost::format("%llu, now: %llu") % timestamp % now).str();
         if (now < timestamp) {
-          auto message = (boost::format("timestamp broken: sent from future")
-                          % time_message)
+          auto message = (boost::format("bad timestamp: sent from future, "
+                                        "timestamp: %llu, now: %llu")
+                          % timestamp % now)
                              .str();
           reason.second.push_back(std::move(message));
         }
 
         if (now - timestamp > max_delay) {
           auto message =
-              (boost::format("timestamp broken: too old") % time_message).str();
+              (boost::format(
+                   "bad timestamp: too old, timestamp: %llu, now: %llu")
+               % timestamp % now)
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
