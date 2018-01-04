@@ -67,7 +67,7 @@ namespace shared_model {
 
       void validateAmount(ReasonsGroupType &reason,
                           const interface::Amount &amount) const {
-        if (amount.intValue() == 0) {
+        if (amount.intValue() <= 0) {
           reason.second.push_back("Amount must be greater than 0");
         }
       }
@@ -205,7 +205,7 @@ namespace shared_model {
 
       void validateCounter(ReasonsGroupType &reason,
                            const interface::types::CounterType &counter) const {
-        if (counter == 0) {
+        if (counter <= 0) {
           reason.second.push_back("Counter should be > 0");
         }
       }

@@ -55,7 +55,7 @@ class FieldValidatorTest : public ValidatorsTest {
   // Returns string containing field name and test case name for debug output
   std::string testFailMessage(const std::string &field_name,
                               const std::string &testcase_name) const {
-    return (boost::format("Field: %s\nTest Case: %s") % field_name
+    return (boost::format("Field: %s\nTest Case: %s\n") % field_name
             % testcase_name)
         .str();
   }
