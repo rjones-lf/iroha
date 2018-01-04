@@ -196,7 +196,7 @@ namespace shared_model {
 
         if (now - timestamp > max_delay) {
           auto message =
-              generateErrorMessage("timestamp broken: too old ", time_message);
+              generateErrorMessage("timestamp broken: too old", time_message);
           reason.second.push_back(std::move(message));
         }
       }
