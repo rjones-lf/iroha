@@ -31,6 +31,9 @@ class ValidatorsTest : public ::testing::Test {
   ValidatorsTest() {
     amount.set_precision(2);
     amount.mutable_value()->set_fourth(1000);
+    public_key_size = 32;
+    hash_size = 32;
+    counter = 0;
 
     // Generate protobuf reflection setter for given type and value
     auto setField = [&](auto setter) {
