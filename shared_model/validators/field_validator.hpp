@@ -49,8 +49,9 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id) const {
         if (not std::regex_match(account_id, account_id_)) {
           auto message =
-              generateErrorMessage("Wrongly formed account_id",
-                                   static_cast<std::string>(account_id));
+              (boost::format("Wrongly formed account_id, passed value: '%s'")
+               % static_cast<std::string>(account_id))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -59,8 +60,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AssetIdType &asset_id) const {
         if (not std::regex_match(asset_id, asset_id_)) {
-          auto message = generateErrorMessage(
-              "Wrongly formed asset_id", static_cast<std::string>(asset_id));
+          auto message =
+              (boost::format("Wrongly formed asset_id, passed value: '%s'")
+               % static_cast<std::string>(asset_id))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -76,8 +79,9 @@ namespace shared_model {
                           const interface::types::PubkeyType &pubkey) const {
         if (pubkey.blob().size() != key_size) {
           auto message =
-              generateErrorMessage("Public key has wrong size",
-                                   std::to_string(pubkey.blob().size()));
+              (boost::format("Public key has wrong size, passed size: %d")
+               % pubkey.blob().size())
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -87,8 +91,10 @@ namespace shared_model {
           const interface::AddPeer::AddressType &address) const {
         if (not(iroha::validator::isValidIpV4(address)
                 or iroha::validator::isValidHostname(address))) {
-          auto message = generateErrorMessage(
-              "Wrongly formed PeerAddress", static_cast<std::string>(address));
+          auto message =
+              (boost::format("Wrongly formed peer address, passed value: '%s'")
+               % static_cast<std::string>(address))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -96,8 +102,10 @@ namespace shared_model {
       void validateRoleId(ReasonsGroupType &reason,
                           const interface::types::RoleIdType &role_id) const {
         if (not std::regex_match(role_id, name_)) {
-          auto message = generateErrorMessage(
-              "Wrongly formed role_id", static_cast<std::string>(role_id));
+          auto message =
+              (boost::format("Wrongly formed role_id, passed value: '%s'")
+               % static_cast<std::string>(role_id))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -107,8 +115,9 @@ namespace shared_model {
           const interface::types::AccountNameType &account_name) const {
         if (not std::regex_match(account_name, name_)) {
           auto message =
-              generateErrorMessage("Wrongly formed account_name",
-                                   static_cast<std::string>(account_name));
+              (boost::format("Wrongly formed account_name, passed value: '%s'")
+               % static_cast<std::string>(account_name))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -117,8 +126,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::DomainIdType &domain_id) const {
         if (not std::regex_match(domain_id, name_)) {
-          auto message = generateErrorMessage(
-              "Wrongly formed domain_id", static_cast<std::string>(domain_id));
+          auto message =
+              (boost::format("Wrongly formed domain_id, passed value: '%s'")
+               % static_cast<std::string>(domain_id))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -128,8 +139,9 @@ namespace shared_model {
           const interface::types::AssetNameType &asset_name) const {
         if (not std::regex_match(asset_name, name_)) {
           auto message =
-              generateErrorMessage("Wrongly formed asset_name",
-                                   static_cast<std::string>(asset_name));
+              (boost::format("Wrongly formed asset_name, passed value: '%s'")
+               % static_cast<std::string>(asset_name))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -138,8 +150,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::SetAccountDetail::AccountDetailKeyType &key) const {
         if (not std::regex_match(key, detail_key_)) {
-          auto message = generateErrorMessage("Wrongly formed key",
-                                              static_cast<std::string>(key));
+          auto message =
+              (boost::format("Wrongly formed key, passed value: '%s'")
+               % static_cast<std::string>(key))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -175,8 +189,10 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id) const {
         if (not std::regex_match(account_id, account_id_)) {
           auto message =
-              generateErrorMessage("Wrongly formed creator_account_id",
-                                   static_cast<std::string>(account_id));
+              (boost::format(
+                   "Wrongly formed creator_account_id, passed value: '%s'")
+               % static_cast<std::string>(account_id))
+                  .str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -191,14 +207,15 @@ namespace shared_model {
         auto time_message =
             (boost::format("%llu, now: %llu") % timestamp % now).str();
         if (now < timestamp) {
-          auto message = generateErrorMessage(
-              "timestamp broken: sent from future", time_message);
+          auto message = (boost::format("timestamp broken: sent from future")
+                          % time_message)
+                             .str();
           reason.second.push_back(std::move(message));
         }
 
         if (now - timestamp > max_delay) {
           auto message =
-              generateErrorMessage("timestamp broken: too old", time_message);
+              (boost::format("timestamp broken: too old") % time_message).str();
           reason.second.push_back(std::move(message));
         }
       }
@@ -217,12 +234,6 @@ namespace shared_model {
           std::chrono::hours(24) / std::chrono::milliseconds(1);
       // size of key
       static constexpr auto key_size = 32;
-
-      std::string generateErrorMessage(const std::string &error,
-                                       const std::string &field_value) const {
-        return (boost::format("%s, passed value: '%s'") % error % field_value)
-            .str();
-      }
     };
   }  // namespace validation
 }  // namespace shared_model
