@@ -218,7 +218,7 @@ namespace shared_model {
 
       std::string generateErrorMessage(const std::string &error,
                                        const std::string &field_value) const {
-        return (boost::format("%s, passed value: %s") % error % field_value)
+        return (boost::format("%s, passed value: '%s'") % error % field_value)
             .str();
       }
     };

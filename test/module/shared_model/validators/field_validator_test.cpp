@@ -125,37 +125,37 @@ class FieldValidatorTest : public ValidatorsTest {
           "start_with_digit",
           [&] { account_id = "1abs@domain"; },
           false,
-          "Wrongly formed account_id, passed value: 1abs@domain",
+          "Wrongly formed account_id, passed value: '1abs@domain'",
       },
       {
           "domain_start_with_digit",
           [&] { account_id = "account@3domain"; },
           false,
-          "Wrongly formed account_id, passed value: account@3domain",
+          "Wrongly formed account_id, passed value: 'account@3domain'",
       },
       {
           "empty_string",
           [&] { account_id = ""; },
           false,
-          "Wrongly formed account_id, passed value: ",
+          "Wrongly formed account_id, passed value: ''",
       },
       {
           "illegal_char",
           [&] { account_id = "abs^@domain"; },
           false,
-          "Wrongly formed account_id, passed value: abs^@domain",
+          "Wrongly formed account_id, passed value: 'abs^@domain'",
       },
       {
           "missing_@_char",
           [&] { account_id = "absdomain"; },
           false,
-          "Wrongly formed account_id, passed value: absdomain",
+          "Wrongly formed account_id, passed value: 'absdomain'",
       },
       {
           "missing_name",
           [&] { account_id = "@domain"; },
           false,
-          "Wrongly formed account_id, passed value: @domain",
+          "Wrongly formed account_id, passed value: '@domain'",
       },
   };
 
@@ -176,37 +176,37 @@ class FieldValidatorTest : public ValidatorsTest {
           "start_with_digit",
           [&] { asset_id = "1abs#domain"; },
           false,
-          "Wrongly formed asset_id, passed value: 1abs#domain",
+          "Wrongly formed asset_id, passed value: '1abs#domain'",
       },
       {
           "domain_start_with_digit",
           [&] { asset_id = "abs#3domain"; },
           false,
-          "Wrongly formed asset_id, passed value: abs#3domain",
+          "Wrongly formed asset_id, passed value: 'abs#3domain'",
       },
       {
           "empty_string",
           [&] { asset_id = ""; },
           false,
-          "Wrongly formed asset_id, passed value: ",
+          "Wrongly formed asset_id, passed value: ''",
       },
       {
           "illegal_char",
           [&] { asset_id = "ab++s#do()main"; },
           false,
-          "Wrongly formed asset_id, passed value: ab++s#do()main",
+          "Wrongly formed asset_id, passed value: 'ab++s#do()main'",
       },
       {
           "missing_#",
           [&] { asset_id = "absdomain"; },
           false,
-          "Wrongly formed asset_id, passed value: absdomain",
+          "Wrongly formed asset_id, passed value: 'absdomain'",
       },
       {
           "missing_asset",
           [&] { asset_id = "#domain"; },
           false,
-          "Wrongly formed asset_id, passed value: #domain",
+          "Wrongly formed asset_id, passed value: '#domain'",
       },
   };
 
@@ -232,13 +232,13 @@ class FieldValidatorTest : public ValidatorsTest {
           "invalid_ip_address",
           [&] { address_localhost = "182.13.35.1:3040^^"; },
           false,
-          "Wrongly formed PeerAddress, passed value: 182.13.35.1:3040^^",
+          "Wrongly formed PeerAddress, passed value: '182.13.35.1:3040^^'",
       },
       {
           "empty_string",
           [&] { address_localhost = ""; },
           false,
-          "Wrongly formed PeerAddress, passed value: ",
+          "Wrongly formed PeerAddress, passed value: ''",
       },
   };
 
@@ -253,13 +253,13 @@ class FieldValidatorTest : public ValidatorsTest {
           "invalid_key_length",
           [&] { public_key = std::string(64, '0'); },
           false,
-          "Public key has wrong size, passed value: 64",
+          "Public key has wrong size, passed value: '64'",
       },
       {
           "empty_string",
           [&] { public_key = ""; },
           false,
-          "Public key has wrong size, passed value: 0",
+          "Public key has wrong size, passed value: '0'",
       },
   };
   // All public keys are currently the same, and follow the same rules
@@ -278,19 +278,19 @@ class FieldValidatorTest : public ValidatorsTest {
           "empty_string",
           [&] { role_name = ""; },
           false,
-          "Wrongly formed role_id, passed value: ",
+          "Wrongly formed role_id, passed value: ''",
       },
       {
           "illegal_characters",
           [&] { role_name = "+math+"; },
           false,
-          "Wrongly formed role_id, passed value: +math+",
+          "Wrongly formed role_id, passed value: '+math+'",
       },
       {
           "name_too_long",
           [&] { role_name = "somelongname"; },
           false,
-          "Wrongly formed role_id, passed value: somelongname",
+          "Wrongly formed role_id, passed value: 'somelongname'",
       },
   };
 
@@ -308,19 +308,19 @@ class FieldValidatorTest : public ValidatorsTest {
           "empty_string",
           [&] { account_name = ""; },
           false,
-          "Wrongly formed account_name, passed value: ",
+          "Wrongly formed account_name, passed value: ''",
       },
       {
           "illegal_char",
           [&] { account_name = "+math+"; },
           false,
-          "Wrongly formed account_name, passed value: +math+",
+          "Wrongly formed account_name, passed value: '+math+'",
       },
       {
           "name_too_long",
           [&] { account_name = "somelongname"; },
           false,
-          "Wrongly formed account_name, passed value: somelongname",
+          "Wrongly formed account_name, passed value: 'somelongname'",
       },
   };
 
@@ -335,19 +335,19 @@ class FieldValidatorTest : public ValidatorsTest {
           "empty_string",
           [&] { domain_id = ""; },
           false,
-          "Wrongly formed domain_id, passed value: ",
+          "Wrongly formed domain_id, passed value: ''",
       },
       {
           "illegal_char",
           [&] { domain_id = "+math+"; },
           false,
-          "Wrongly formed domain_id, passed value: +math+",
+          "Wrongly formed domain_id, passed value: '+math+'",
       },
       {
           "id_too_long",
           [&] { domain_id = "somelongname"; },
           false,
-          "Wrongly formed domain_id, passed value: somelongname",
+          "Wrongly formed domain_id, passed value: 'somelongname'",
       },
   };
 
@@ -362,19 +362,19 @@ class FieldValidatorTest : public ValidatorsTest {
           "empty_string",
           [&] { asset_name = ""; },
           false,
-          "Wrongly formed asset_name, passed value: ",
+          "Wrongly formed asset_name, passed value: ''",
       },
       {
           "illegal_char",
           [&] { asset_name = "+math+"; },
           false,
-          "Wrongly formed asset_name, passed value: +math+",
+          "Wrongly formed asset_name, passed value: '+math+'",
       },
       {
           "name_too_long",
           [&] { asset_name = "somelongname"; },
           false,
-          "Wrongly formed asset_name, passed value: somelongname",
+          "Wrongly formed asset_name, passed value: 'somelongname'",
       },
   };
 
@@ -423,13 +423,13 @@ class FieldValidatorTest : public ValidatorsTest {
           "empty_string",
           [&] { detail_key = ""; },
           false,
-          "Wrongly formed key, passed value: ",
+          "Wrongly formed key, passed value: ''",
       },
       {
           "illegal_char",
           [&] { detail_key = "hi*there"; },
           false,
-          "Wrongly formed key, passed value: hi*there",
+          "Wrongly formed key, passed value: 'hi*there'",
       },
   };
   std::vector<FieldTestCase> &key_test_cases = detail_test_cases;
