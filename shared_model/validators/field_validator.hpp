@@ -72,7 +72,7 @@ namespace shared_model {
 
       void validatePubkey(ReasonsGroupType &reason,
                           const interface::types::PubkeyType &pubkey) const {
-        if (pubkey.blob().size() != 32) {
+        if (pubkey.blob().size() != key_size) {
           auto message =
               generateErrorMessage("Public key has wrong size",
                                    std::to_string(pubkey.blob().size()));
@@ -194,7 +194,7 @@ namespace shared_model {
           reason.second.push_back(std::move(message));
         }
 
-        if (now - timestamp > MAX_DELAY) {
+        if (now - timestamp > max_delay) {
           auto message =
               generateErrorMessage("timestamp broken: too old ", time_message);
           reason.second.push_back(std::move(message));
@@ -211,8 +211,10 @@ namespace shared_model {
      private:
       std::regex account_id_, asset_id_, ip_address_, name_, detail_key_;
       // max-delay between tx creation and validation
-      static constexpr auto MAX_DELAY =
+      static constexpr auto max_delay =
           std::chrono::hours(24) / std::chrono::milliseconds(1);
+      // size of key
+      static constexpr auto key_size = 32;
 
       std::string generateErrorMessage(const std::string &error,
                                        const std::string &field_value) const {
