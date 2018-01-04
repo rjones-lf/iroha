@@ -189,7 +189,7 @@ namespace shared_model {
       ReasonsGroupType operator()(
           const detail::PolymorphicWrapper<interface::SetQuorum> &sq) const {
         ReasonsGroupType reason;
-        addInvalidCommand(reason, "SetAccountQuorum");
+        addInvalidCommand(reason, "SetQuorum");
 
 
         validator_.validateAccountId(reason, sq->accountId());
