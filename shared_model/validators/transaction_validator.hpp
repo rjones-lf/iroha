@@ -144,7 +144,7 @@ namespace shared_model {
           const detail::PolymorphicWrapper<interface::GrantPermission> &gp)
           const {
         ReasonsGroupType reason;
-       addInvalidCommand(reason, "GrantPermission");
+        addInvalidCommand(reason, "GrantPermission");
 
         validator_.validateAccountId(reason, gp->accountId());
 
@@ -191,7 +191,6 @@ namespace shared_model {
         ReasonsGroupType reason;
         addInvalidCommand(reason, "SetQuorum");
 
-
         validator_.validateAccountId(reason, sq->accountId());
         validator_.validateQuorum(reason, sq->newQuorum());
 
@@ -202,7 +201,7 @@ namespace shared_model {
           const detail::PolymorphicWrapper<interface::SubtractAssetQuantity>
               &saq) const {
         ReasonsGroupType reason;
-        addInvalidCommand(reason,"SubtractAssetQuantity");
+        addInvalidCommand(reason, "SubtractAssetQuantity");
 
         validator_.validateAccountId(reason, saq->accountId());
         validator_.validateAssetId(reason, saq->assetId());

@@ -47,7 +47,7 @@ namespace shared_model {
         if (not std::regex_match(account_id, account_id_regex)) {
           auto message =
               (boost::format("Wrongly formed account_id, passed value: '%s'")
-               % static_cast<std::string>(account_id))
+               % account_id)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -59,7 +59,7 @@ namespace shared_model {
         if (not std::regex_match(asset_id, asset_id_regex)) {
           auto message =
               (boost::format("Wrongly formed asset_id, passed value: '%s'")
-               % static_cast<std::string>(asset_id))
+               % asset_id)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -90,7 +90,7 @@ namespace shared_model {
                 or iroha::validator::isValidHostname(address))) {
           auto message =
               (boost::format("Wrongly formed peer address, passed value: '%s'")
-               % static_cast<std::string>(address))
+               % address)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -101,7 +101,7 @@ namespace shared_model {
         if (not std::regex_match(role_id, name_regex)) {
           auto message =
               (boost::format("Wrongly formed role_id, passed value: '%s'")
-               % static_cast<std::string>(role_id))
+               % role_id)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -113,7 +113,7 @@ namespace shared_model {
         if (not std::regex_match(account_name, name_regex)) {
           auto message =
               (boost::format("Wrongly formed account_name, passed value: '%s'")
-               % static_cast<std::string>(account_name))
+               % account_name)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -125,7 +125,7 @@ namespace shared_model {
         if (not std::regex_match(domain_id, name_regex)) {
           auto message =
               (boost::format("Wrongly formed domain_id, passed value: '%s'")
-               % static_cast<std::string>(domain_id))
+               % domain_id)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -137,7 +137,7 @@ namespace shared_model {
         if (not std::regex_match(asset_name, name_regex)) {
           auto message =
               (boost::format("Wrongly formed asset_name, passed value: '%s'")
-               % static_cast<std::string>(asset_name))
+               % asset_name)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -149,7 +149,7 @@ namespace shared_model {
         if (not std::regex_match(key, detail_key_regex)) {
           auto message =
               (boost::format("Wrongly formed key, passed value: '%s'")
-               % static_cast<std::string>(key))
+               % key)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -188,7 +188,7 @@ namespace shared_model {
           auto message =
               (boost::format(
                    "Wrongly formed creator_account_id, passed value: '%s'")
-               % static_cast<std::string>(account_id))
+               % account_id)
                   .str();
           reason.second.push_back(std::move(message));
         }
