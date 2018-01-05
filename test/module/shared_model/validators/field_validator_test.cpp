@@ -221,7 +221,7 @@ class FieldValidatorTest : public ValidatorsTest {
           "zero_amount",
           [&] { amount.mutable_value()->set_fourth(0); },
           false,
-          "Amount must be greater than 0",
+          "Amount must be greater than 0, passed value: 0",
       },
   };
 
@@ -406,7 +406,7 @@ class FieldValidatorTest : public ValidatorsTest {
           "zero_counter",
           [&] { counter = 0; },
           false,
-          "Counter should be > 0",
+          "Counter should be > 0, passed value: 0",
       },
   };
   std::vector<FieldTestCase> created_time_test_cases{

@@ -68,7 +68,11 @@ namespace shared_model {
       void validateAmount(ReasonsGroupType &reason,
                           const interface::Amount &amount) const {
         if (amount.intValue() <= 0) {
-          reason.second.push_back("Amount must be greater than 0");
+          auto message =
+              (boost::format("Amount must be greater than 0, passed value: %d")
+               % amount.intValue())
+                  .str();
+          reason.second.push_back(message);
         }
       }
 
@@ -148,8 +152,7 @@ namespace shared_model {
           const interface::SetAccountDetail::AccountDetailKeyType &key) const {
         if (not std::regex_match(key, detail_key_regex)) {
           auto message =
-              (boost::format("Wrongly formed key, passed value: '%s'")
-               % key)
+              (boost::format("Wrongly formed key, passed value: '%s'") % key)
                   .str();
           reason.second.push_back(std::move(message));
         }
@@ -222,7 +225,11 @@ namespace shared_model {
       void validateCounter(ReasonsGroupType &reason,
                            const interface::types::CounterType &counter) const {
         if (counter <= 0) {
-          reason.second.push_back("Counter should be > 0");
+          auto message =
+              (boost::format("Counter should be > 0, passed value: %d")
+               % counter)
+                  .str();
+          reason.second.push_back(message);
         }
       }
 
