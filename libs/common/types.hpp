@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <nonstd/optional.hpp>
-#include "crypto/base64.hpp"
 
 /**
  * This file defines common types used in iroha.
@@ -73,13 +72,6 @@ namespace iroha {
      */
     std::string to_string() const noexcept {
       return std::string{this->begin(), this->end()};
-    }
-
-    /**
-     * Converts current blob to base64, represented as std::string
-     */
-    std::string to_base64() const noexcept {
-      return base64_encode(this->data(), size_);
     }
 
     /**

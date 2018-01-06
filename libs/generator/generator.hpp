@@ -28,8 +28,6 @@ namespace generator {
    */
   int64_t random_number(int64_t min, int64_t max);
 
-  uint8_t random_printable_char();
-
   template <size_t size_>
   iroha::blob_t<size_> random_blob(size_t seed) {
     iroha::blob_t<size_> v;
