@@ -18,11 +18,11 @@
 #ifndef IROHA_FLAT_FILE_HPP
 #define IROHA_FLAT_FILE_HPP
 
+#include <atomic>
 #include <memory>
 #include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
-#include <atomic>
 
 #include "logger/logger.hpp"
 
@@ -38,6 +38,12 @@ namespace iroha {
      * Solid storage based on raw files
      */
     class FlatFile {
+      /**
+       * Private tag used to construct unique and shared pointers
+       * without new operator
+       */
+      struct private_tag {};
+
      public:
       // ----------| public API |----------
 
@@ -84,7 +90,6 @@ namespace iroha {
 
       FlatFile &operator=(FlatFile &&rhs) = delete;
 
-     private:
       // ----------| private API |----------
 
       /**
@@ -92,8 +97,11 @@ namespace iroha {
        * @param last_id - maximal key written in storage
        * @param path - folder of storage
        */
-      FlatFile(Identifier last_id, const std::string &path);
+      FlatFile(Identifier last_id,
+               const std::string &path,
+               FlatFile::private_tag);
 
+     private:
       // ----------| private fields |----------
 
       /**

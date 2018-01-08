@@ -16,6 +16,8 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include "ametsuchi/impl/flat_file/flat_file.cpp"
+
 #include <gtest/gtest.h>
 #include "common/files.hpp"
 #include "common/types.hpp"
@@ -121,4 +123,27 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder){
 
   // check that last ids of both block storages are the same
   ASSERT_EQ(bl_store1->last_id(), bl_store2->last_id());
+}
+
+TEST_F(BlStore_Test, EmptyDumpDir) {
+  auto res = check_consistency("");
+  ASSERT_EQ(res, nonstd::nullopt);
+}
+
+TEST_F(BlStore_Test, CreateFileEmptyDir) {
+  //auto res = FlatFile::create("");
+  //ASSERT_EQ(res, nullptr);
+}
+
+
+TEST_F(BlStore_Test, GetNonExistingFile) {
+  auto store = FlatFile::create(block_store_path);
+  Identifier id = 98759385; //random number that will not exist
+  auto res = store->get(id);
+  ASSERT_EQ(res, nonstd::nullopt);
+}
+
+TEST_F(BlStore_Test, GetDirectory) {
+  auto store = FlatFile::create(block_store_path);
+  ASSERT_EQ(store->directory(), block_store_path);
 }

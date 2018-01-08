@@ -104,7 +104,7 @@ std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
     log_->error("Checking consistency for {} - failed", path);
     return nullptr;
   }
-  return std::unique_ptr<FlatFile>(new FlatFile(*res, path));
+  return std::make_unique<FlatFile>(*res, path, private_tag{});
 }
 
 void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
@@ -173,7 +173,7 @@ void FlatFile::dropAll() {
 
 // ----------| private API |----------
 
-FlatFile::FlatFile(Identifier current_id, const std::string &path)
+FlatFile::FlatFile(Identifier current_id, const std::string &path, FlatFile::private_tag)
     : dump_dir_(path) {
   log_ = logger::log("FlatFile");
   current_id_.store(current_id);
