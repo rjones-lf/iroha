@@ -93,6 +93,12 @@ class FieldValidatorTest : public ValidatorsTest {
                         &FieldValidatorTest::detail_key,
                         detail_test_cases));
     }
+    for (const auto &field : {"tx_counter", "query_counter"}) {
+      field_validators.insert(makeValidator(field,
+                                            &FieldValidator::validateCounter,
+                                            &FieldValidatorTest::counter,
+                                            tx_counter_test_cases));
+    }
 
     // TODO: add validation to all fields
     for (const auto &field : {"value",
@@ -160,14 +166,7 @@ class FieldValidatorTest : public ValidatorsTest {
 
   /************************** TEST CASES ***************************/
 
-  template <typename F>
-  FieldTestCase makeTestCase(const std::string &case_name,
-                             F function,
-                             bool valid,
-                             const std::string &message) {
-    return {case_name, function, valid, message};
-  }
-
+  /// Create test case with field assignment initialization function
   template <typename F, typename V>
   FieldTestCase makeTestCase(const std::string &case_name,
                              F field,
@@ -178,6 +177,13 @@ class FieldValidatorTest : public ValidatorsTest {
         case_name, [&, field, value] { this->*field = value; }, valid, message};
   }
 
+  /// Create valid case with "valid" name, and empty message
+  template <typename F, typename V>
+  FieldTestCase makeValidCase(F field, const V &value) {
+    return makeTestCase("valid", field, value, true, "");
+  }
+
+  /// Create invalid case with default message
   template <typename F>
   FieldTestCase makeInvalidCase(const std::string &case_name,
                                 const std::string &field_name,
@@ -192,6 +198,7 @@ class FieldValidatorTest : public ValidatorsTest {
                             .str());
   }
 
+  /// Generate test cases for id types with name, separator, and domain
   template <typename F>
   std::vector<FieldTestCase> idTestCases(const std::string &field_name,
                                          F field,
@@ -201,10 +208,10 @@ class FieldValidatorTest : public ValidatorsTest {
     };
 
     auto c = [&](const auto &n, const auto &v) {
-      return makeInvalidCase(n, field_name, field, v);
+      return this->makeInvalidCase(n, field_name, field, v);
     };
 
-    return {makeTestCase("valid", field, f("name%cdomain"), true, ""),
+    return {makeValidCase(field, f("name%cdomain")),
             c("start_with_digit", f("1abs%cdomain")),
             c("domain_start_with_digit", f("abs%c3domain")),
             c("empty_string", ""),
@@ -220,14 +227,14 @@ class FieldValidatorTest : public ValidatorsTest {
       idTestCases("asset_id", &FieldValidatorTest::asset_id, '#');
 
   std::vector<FieldTestCase> amount_test_cases{
-      makeTestCase("valid_amount",
-                   [&] { amount.mutable_value()->set_fourth(100); },
-                   true,
-                   ""),
-      makeTestCase("zero_amount",
-                   [&] { amount.mutable_value()->set_fourth(0); },
-                   false,
-                   "Amount must be greater than 0, passed value: 0")};
+      {"valid_amount",
+       [&] { amount.mutable_value()->set_fourth(100); },
+       true,
+       ""},
+      {"zero_amount",
+       [&] { amount.mutable_value()->set_fourth(0); },
+       false,
+       "Amount must be greater than 0, passed value: 0"}};
 
   FieldTestCase invalidAddressTestCase(const std::string &case_name,
                                        const std::string &address) {
@@ -240,11 +247,7 @@ class FieldValidatorTest : public ValidatorsTest {
   // Address validation test is handled in libs/validator,
   // so test cases are not exhaustive
   std::vector<FieldTestCase> address_test_cases{
-      makeTestCase("valid_ip_address",
-                   &FieldValidatorTest::address_localhost,
-                   "182.13.35.1:3040",
-                   true,
-                   ""),
+      makeValidCase(&FieldValidatorTest::address_localhost, "182.13.35.1:3040"),
       invalidAddressTestCase("invalid_ip_address", "182.13.35.1:3040^^"),
       invalidAddressTestCase("empty_string", "")};
 
@@ -261,14 +264,11 @@ class FieldValidatorTest : public ValidatorsTest {
   }
 
   std::vector<FieldTestCase> public_key_test_cases{
-      makeTestCase("valid_key",
-                   &FieldValidatorTest::public_key,
-                   std::string(32, '0'),
-                   true,
-                   ""),
+      makeValidCase(&FieldValidatorTest::public_key, std::string(32, '0')),
       invalidPublicKeyTestCase("invalid_key_length", std::string(64, '0')),
       invalidPublicKeyTestCase("empty_string", "")};
 
+  /// Generate test cases for name types
   template <typename F>
   std::vector<FieldTestCase> nameTestCases(const std::string &field_name,
                                            F field) {
@@ -292,32 +292,21 @@ class FieldValidatorTest : public ValidatorsTest {
       nameTestCases("asset_name", &FieldValidatorTest::asset_name);
 
   std::vector<FieldTestCase> permissions_test_cases{
-      makeTestCase("valid_role",
-                   &FieldValidatorTest::role_permission,
-                   iroha::protocol::RolePermission::can_append_role,
-                   true,
-                   "")};
+      makeValidCase(&FieldValidatorTest::role_permission,
+                    iroha::protocol::RolePermission::can_append_role)};
 
   std::vector<FieldTestCase> tx_counter_test_cases{
-      makeTestCase("valid_counter", &FieldValidatorTest::counter, 5, true, ""),
+      makeValidCase(&FieldValidatorTest::counter, 5),
       makeTestCase("zero_counter",
                    &FieldValidatorTest::counter,
                    0,
                    false,
                    "Counter should be > 0, passed value: 0")};
   std::vector<FieldTestCase> created_time_test_cases{
-      makeTestCase("valid_time",
-                   &FieldValidatorTest::created_time,
-                   iroha::time::now(),
-                   true,
-                   "")};
+      makeValidCase(&FieldValidatorTest::created_time, iroha::time::now())};
 
   std::vector<FieldTestCase> detail_test_cases{
-      makeTestCase("valid_detail_key",
-                   &FieldValidatorTest::detail_key,
-                   "happy",
-                   true,
-                   ""),
+      makeValidCase(&FieldValidatorTest::detail_key, "happy"),
       makeInvalidCase(
           "empty_string", "key", &FieldValidatorTest::detail_key, ""),
       makeInvalidCase(
@@ -325,11 +314,13 @@ class FieldValidatorTest : public ValidatorsTest {
 
   /**************************************************************************/
 
+  /// Create no-operation validator
   std::pair<std::string, FieldTest> makeNullValidator(
       const std::string &field_name) {
     return {field_name, {}};
   }
 
+  /// Create validator with given field transformation
   template <typename F, typename V, typename T>
   std::pair<std::string, FieldTest> makeTransformValidator(
       const std::string &field_name,
@@ -346,6 +337,7 @@ class FieldValidatorTest : public ValidatorsTest {
              cases}};
   }
 
+  /// Create validator with identity transformation
   template <typename F, typename V>
   std::pair<std::string, FieldTest> makeValidator(
       const std::string &field_name,
@@ -395,21 +387,10 @@ class FieldValidatorTest : public ValidatorsTest {
                              },
                              permissions_test_cases),
 
-      // Transaction fields
-      makeValidator("tx_counter",
-                    &FieldValidator::validateCounter,
-                    &FieldValidatorTest::counter,
-                    tx_counter_test_cases),
       makeValidator("created_time",
                     &FieldValidator::validateCreatedTime,
                     &FieldValidatorTest::created_time,
-                    created_time_test_cases),
-
-      // Query container fields
-      makeValidator("query_counter",
-                    &FieldValidator::validateCounter,
-                    &FieldValidatorTest::counter,
-                    tx_counter_test_cases)};
+                    created_time_test_cases)};
 };
 
 /**
