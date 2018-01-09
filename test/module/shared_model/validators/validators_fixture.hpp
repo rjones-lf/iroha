@@ -29,12 +29,6 @@
 class ValidatorsTest : public ::testing::Test {
  public:
   ValidatorsTest() {
-    amount.set_precision(2);
-    amount.mutable_value()->set_fourth(1000);
-    public_key_size = 32;
-    hash_size = 32;
-    counter = 0;
-
     // Generate protobuf reflection setter for given type and value
     auto setField = [&](auto setter) {
       return [setter](const auto &value) {
@@ -122,6 +116,9 @@ class ValidatorsTest : public ::testing::Test {
   void SetUp() override {
     // Fill fields with valid values
     created_time = iroha::time::now();
+    precision = 2;
+    amount.set_precision(precision);
+    amount.mutable_value()->set_fourth(1000);
     public_key_size = 32;
     hash_size = 32;
     counter = 1048576;
@@ -141,7 +138,6 @@ class ValidatorsTest : public ::testing::Test {
     grantable_permission =
         iroha::protocol::GrantablePermission::can_add_my_signatory;
     quorum = 2;
-    precision = 42;
   }
 
   size_t public_key_size;
