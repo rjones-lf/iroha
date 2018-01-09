@@ -403,7 +403,13 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidator("created_time",
                     &FieldValidator::validateCreatedTime,
                     &FieldValidatorTest::created_time,
-                    created_time_test_cases)};
+                    created_time_test_cases),
+
+      // Query container fields
+      makeValidator("query_counter",
+                    &FieldValidator::validateCounter,
+                    &FieldValidatorTest::counter,
+                    tx_counter_test_cases)};
 };
 
 /**
@@ -472,4 +478,34 @@ TEST_F(FieldValidatorTest, QueryFieldsValidation) {
       },
       [this](auto field, auto query) { this->runTestCases(field); },
       [&] {});
+}
+
+/**
+ * @given field values from test cases
+ * @when field validator is invoked on query container's fields
+ * @then field validator correctly rejects invalid values, and provides
+ * meaningful message
+ */
+TEST_F(FieldValidatorTest, QueryContainerFieldsValidation) {
+  // iterate over all fields in transaction
+  iterateContainer(
+      [] { return iroha::protocol::Query::descriptor(); },
+      [&](auto field) {
+        // generate message from field of transaction
+        google::protobuf::DynamicMessageFactory message_factory;
+        auto field_desc = field->message_type();
+        // will be null if field is not of message type
+        EXPECT_NE(nullptr, field_desc);
+        return message_factory.GetPrototype(field_desc)->New();
+      },
+      [this](auto field, auto) {
+        // Skip oneof types
+        if (field->containing_oneof()
+            == iroha::protocol::Query::Payload::descriptor()->FindOneofByName(
+                   "query")) {
+          return;
+        }
+        this->runTestCases(field);
+      },
+      [] {});
 }
