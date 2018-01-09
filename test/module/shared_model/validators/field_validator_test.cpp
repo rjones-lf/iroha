@@ -61,6 +61,52 @@ class FieldValidatorTest : public ValidatorsTest {
   }
 
  public:
+  FieldValidatorTest() {
+    for (const auto &field :
+         {"peer_key", "public_key", "main_pubkey", "pubkey"}) {
+      field_validators.insert(makeTransformValidator(
+          field,
+          &FieldValidator::validatePubkey,
+          &FieldValidatorTest::public_key,
+          [](auto &&x) { return interface::types::PubkeyType(x); },
+          public_key_test_cases));
+    }
+    for (const auto &field : {"role_name", "default_role", "role_id"}) {
+      field_validators.insert(makeValidator(field,
+                                            &FieldValidator::validateRoleId,
+                                            &FieldValidatorTest::role_name,
+                                            role_name_test_cases));
+    }
+    for (const auto &field : {"account_id",
+                              "src_account_id",
+                              "dest_account_id",
+                              "creator_account_id"}) {
+      field_validators.insert(makeValidator(field,
+                                            &FieldValidator::validateAccountId,
+                                            &FieldValidatorTest::account_id,
+                                            account_id_test_cases));
+    }
+    for (const auto &field : {"key", "detail"}) {
+      field_validators.insert(
+          makeValidator(field,
+                        &FieldValidator::validateAccountDetailKey,
+                        &FieldValidatorTest::detail_key,
+                        detail_test_cases));
+    }
+
+    // TODO: add validation to all fields
+    for (const auto &field : {"value",
+                              "description",
+                              "signature",
+                              "commands",
+                              "quorum",
+                              "tx_hashes",
+                              "precision",
+                              "permission"}) {
+      field_validators.insert(makeNullValidator(field));
+    }
+  }
+
   // To test one field, validation function is required,
   // which is always the same, and several test cases, which represent
   // various inputs
@@ -114,568 +160,250 @@ class FieldValidatorTest : public ValidatorsTest {
 
   /************************** TEST CASES ***************************/
 
-  std::vector<FieldTestCase> account_id_test_cases{
-      {
-          "valid",
-          [&] { account_id = "account@domain"; },
-          true,
-          "",
-      },
-      {
-          "start_with_digit",
-          [&] { account_id = "1abs@domain"; },
-          false,
-          "Wrongly formed account_id, passed value: '1abs@domain'",
-      },
-      {
-          "domain_start_with_digit",
-          [&] { account_id = "account@3domain"; },
-          false,
-          "Wrongly formed account_id, passed value: 'account@3domain'",
-      },
-      {
-          "empty_string",
-          [&] { account_id = ""; },
-          false,
-          "Wrongly formed account_id, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { account_id = "abs^@domain"; },
-          false,
-          "Wrongly formed account_id, passed value: 'abs^@domain'",
-      },
-      {
-          "missing_@_char",
-          [&] { account_id = "absdomain"; },
-          false,
-          "Wrongly formed account_id, passed value: 'absdomain'",
-      },
-      {
-          "missing_name",
-          [&] { account_id = "@domain"; },
-          false,
-          "Wrongly formed account_id, passed value: '@domain'",
-      },
-  };
+  template <typename F>
+  FieldTestCase makeTestCase(const std::string &case_name,
+                             F function,
+                             bool valid,
+                             const std::string &message) {
+    return {case_name, function, valid, message};
+  }
 
-  std::vector<FieldTestCase> &src_account_id_test_cases = account_id_test_cases;
-  std::vector<FieldTestCase> &dest_account_id_test_cases =
-      account_id_test_cases;
-  std::vector<FieldTestCase> &creator_account_id_test_cases =
-      account_id_test_cases;
+  template <typename F, typename V>
+  FieldTestCase makeTestCase(const std::string &case_name,
+                             F field,
+                             const V &value,
+                             bool valid,
+                             const std::string &message) {
+    return {
+        case_name, [&, field, value] { this->*field = value; }, valid, message};
+  }
 
-  std::vector<FieldTestCase> asset_id_test_cases{
-      {
-          "valid",
-          [&] { asset_id = "asset#domain"; },
-          true,
-          "",
-      },
-      {
-          "start_with_digit",
-          [&] { asset_id = "1abs#domain"; },
-          false,
-          "Wrongly formed asset_id, passed value: '1abs#domain'",
-      },
-      {
-          "domain_start_with_digit",
-          [&] { asset_id = "abs#3domain"; },
-          false,
-          "Wrongly formed asset_id, passed value: 'abs#3domain'",
-      },
-      {
-          "empty_string",
-          [&] { asset_id = ""; },
-          false,
-          "Wrongly formed asset_id, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { asset_id = "ab++s#do()main"; },
-          false,
-          "Wrongly formed asset_id, passed value: 'ab++s#do()main'",
-      },
-      {
-          "missing_#",
-          [&] { asset_id = "absdomain"; },
-          false,
-          "Wrongly formed asset_id, passed value: 'absdomain'",
-      },
-      {
-          "missing_asset",
-          [&] { asset_id = "#domain"; },
-          false,
-          "Wrongly formed asset_id, passed value: '#domain'",
-      },
-  };
+  template <typename F>
+  FieldTestCase makeInvalidCase(const std::string &case_name,
+                                const std::string &field_name,
+                                F field,
+                                const std::string &value) {
+    return makeTestCase(case_name,
+                        field,
+                        value,
+                        false,
+                        (boost::format("Wrongly formed %s, passed value: '%s'")
+                         % field_name % value)
+                            .str());
+  }
+
+  template <typename F>
+  std::vector<FieldTestCase> idTestCases(const std::string &field_name,
+                                         F field,
+                                         char separator) {
+    auto f = [&](const auto &s) {
+      return (boost::format(s) % separator).str();
+    };
+
+    auto c = [&](const auto &n, const auto &v) {
+      return makeInvalidCase(n, field_name, field, v);
+    };
+
+    return {makeTestCase("valid", field, f("name%cdomain"), true, ""),
+            c("start_with_digit", f("1abs%cdomain")),
+            c("domain_start_with_digit", f("abs%c3domain")),
+            c("empty_string", ""),
+            c("illegal_char", f("ab++s%cdo()main")),
+            c(f("missing_%c"), "absdomain"),
+            c("missing_name", f("%cdomain"))};
+  }
+
+  std::vector<FieldTestCase> account_id_test_cases =
+      idTestCases("account_id", &FieldValidatorTest::account_id, '@');
+
+  std::vector<FieldTestCase> asset_id_test_cases =
+      idTestCases("asset_id", &FieldValidatorTest::asset_id, '#');
 
   std::vector<FieldTestCase> amount_test_cases{
-      {
-          "valid_amount",
-          [&] { amount.mutable_value()->set_fourth(100); },
-          true,
-          "",
-      },
-      {
-          "zero_amount",
-          [&] { amount.mutable_value()->set_fourth(0); },
-          false,
-          "Amount must be greater than 0, passed value: 0",
-      },
-  };
+      makeTestCase("valid_amount",
+                   [&] { amount.mutable_value()->set_fourth(100); },
+                   true,
+                   ""),
+      makeTestCase("zero_amount",
+                   [&] { amount.mutable_value()->set_fourth(0); },
+                   false,
+                   "Amount must be greater than 0, passed value: 0")};
+
+  FieldTestCase invalidAddressTestCase(const std::string &case_name,
+                                       const std::string &address) {
+    return makeInvalidCase(case_name,
+                           "peer address",
+                           &FieldValidatorTest::address_localhost,
+                           address);
+  }
 
   // Address validation test is handled in libs/validator,
   // so test cases are not exhaustive
   std::vector<FieldTestCase> address_test_cases{
-      {
-          "valid_ip_address",
-          [&] { address_localhost = "182.13.35.1:3040"; },
-          true,
-          "",
-      },
-      {
-          "invalid_ip_address",
-          [&] { address_localhost = "182.13.35.1:3040^^"; },
-          false,
-          "Wrongly formed peer address, passed value: '182.13.35.1:3040^^'",
-      },
-      {
-          "empty_string",
-          [&] { address_localhost = ""; },
-          false,
-          "Wrongly formed peer address, passed value: ''",
-      },
-  };
+      makeTestCase("valid_ip_address",
+                   &FieldValidatorTest::address_localhost,
+                   "182.13.35.1:3040",
+                   true,
+                   ""),
+      invalidAddressTestCase("invalid_ip_address", "182.13.35.1:3040^^"),
+      invalidAddressTestCase("empty_string", "")};
+
+  FieldTestCase invalidPublicKeyTestCase(const std::string &case_name,
+                                         const std::string &public_key) {
+    return makeTestCase(
+        case_name,
+        &FieldValidatorTest::public_key,
+        public_key,
+        false,
+        (boost::format("Public key has wrong size, passed size: %d")
+         % public_key.size())
+            .str());
+  }
 
   std::vector<FieldTestCase> public_key_test_cases{
-      {
-          "valid_key",
-          [&] { public_key = std::string(32, '0'); },
-          true,
-          "",
-      },
-      {
-          "invalid_key_length",
-          [&] { public_key = std::string(64, '0'); },
-          false,
-          "Public key has wrong size, passed size: 64",
-      },
-      {
-          "empty_string",
-          [&] { public_key = ""; },
-          false,
-          "Public key has wrong size, passed size: 0",
-      },
-  };
-  // All public keys are currently the same, and follow the same rules
-  std::vector<FieldTestCase> &peer_key_test_cases = public_key_test_cases;
-  std::vector<FieldTestCase> &pubkey_test_cases = public_key_test_cases;
-  std::vector<FieldTestCase> &main_pubkey_test_cases = public_key_test_cases;
+      makeTestCase("valid_key",
+                   &FieldValidatorTest::public_key,
+                   std::string(32, '0'),
+                   true,
+                   ""),
+      invalidPublicKeyTestCase("invalid_key_length", std::string(64, '0')),
+      invalidPublicKeyTestCase("empty_string", "")};
 
-  std::vector<FieldTestCase> role_name_test_cases{
-      {
-          "valid_name",
-          [&] { role_name = "admin"; },
-          true,
-          "",
-      },
-      {
-          "empty_string",
-          [&] { role_name = ""; },
-          false,
-          "Wrongly formed role_id, passed value: ''",
-      },
-      {
-          "illegal_characters",
-          [&] { role_name = "+math+"; },
-          false,
-          "Wrongly formed role_id, passed value: '+math+'",
-      },
-      {
-          "name_too_long",
-          [&] { role_name = "somelongname"; },
-          false,
-          "Wrongly formed role_id, passed value: 'somelongname'",
-      },
-  };
+  template <typename F>
+  std::vector<FieldTestCase> nameTestCases(const std::string &field_name,
+                                           F field) {
+    return {
+        makeTestCase("valid_name", field, "admin", true, ""),
+        makeInvalidCase("empty_string", field_name, field, ""),
+        makeInvalidCase("illegal_characters", field_name, field, "+math+"),
+        makeInvalidCase("name_too_long", field_name, field, "somelongname")};
+  }
 
-  std::vector<FieldTestCase> &default_role_test_cases = role_name_test_cases;
-  std::vector<FieldTestCase> &role_id_test_cases = role_name_test_cases;
+  std::vector<FieldTestCase> role_name_test_cases =
+      nameTestCases("role_id", &FieldValidatorTest::role_name);
 
-  std::vector<FieldTestCase> account_name_test_cases{
-      {
-          "valid_name",
-          [&] { account_name = "admin"; },
-          true,
-          "",
-      },
-      {
-          "empty_string",
-          [&] { account_name = ""; },
-          false,
-          "Wrongly formed account_name, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { account_name = "+math+"; },
-          false,
-          "Wrongly formed account_name, passed value: '+math+'",
-      },
-      {
-          "name_too_long",
-          [&] { account_name = "somelongname"; },
-          false,
-          "Wrongly formed account_name, passed value: 'somelongname'",
-      },
-  };
+  std::vector<FieldTestCase> account_name_test_cases =
+      nameTestCases("account_name", &FieldValidatorTest::account_name);
 
-  std::vector<FieldTestCase> domain_id_test_cases{
-      {
-          "valid_id",
-          [&] { domain_id = "admin"; },
-          true,
-          "",
-      },
-      {
-          "empty_string",
-          [&] { domain_id = ""; },
-          false,
-          "Wrongly formed domain_id, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { domain_id = "+math+"; },
-          false,
-          "Wrongly formed domain_id, passed value: '+math+'",
-      },
-      {
-          "id_too_long",
-          [&] { domain_id = "somelongname"; },
-          false,
-          "Wrongly formed domain_id, passed value: 'somelongname'",
-      },
-  };
+  std::vector<FieldTestCase> domain_id_test_cases =
+      nameTestCases("domain_id", &FieldValidatorTest::domain_id);
 
-  std::vector<FieldTestCase> asset_name_test_cases{
-      {
-          "valid_name",
-          [&] { asset_name = "admin"; },
-          true,
-          "",
-      },
-      {
-          "empty_string",
-          [&] { asset_name = ""; },
-          false,
-          "Wrongly formed asset_name, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { asset_name = "+math+"; },
-          false,
-          "Wrongly formed asset_name, passed value: '+math+'",
-      },
-      {
-          "name_too_long",
-          [&] { asset_name = "somelongname"; },
-          false,
-          "Wrongly formed asset_name, passed value: 'somelongname'",
-      },
-  };
+  std::vector<FieldTestCase> asset_name_test_cases =
+      nameTestCases("asset_name", &FieldValidatorTest::asset_name);
 
   std::vector<FieldTestCase> permissions_test_cases{
-      {
-          "valid_role",
-          [&] {
-            role_permission = iroha::protocol::RolePermission::can_append_role;
-          },
-          true,
-          "",
-      },
-  };
+      makeTestCase("valid_role",
+                   &FieldValidatorTest::role_permission,
+                   iroha::protocol::RolePermission::can_append_role,
+                   true,
+                   "")};
 
   std::vector<FieldTestCase> tx_counter_test_cases{
-      {
-          "valid_counter",
-          [&] { counter = 5; },
-          true,
-          "",
-      },
-      {
-          "zero_counter",
-          [&] { counter = 0; },
-          false,
-          "Counter should be > 0, passed value: 0",
-      },
-  };
+      makeTestCase("valid_counter", &FieldValidatorTest::counter, 5, true, ""),
+      makeTestCase("zero_counter",
+                   &FieldValidatorTest::counter,
+                   0,
+                   false,
+                   "Counter should be > 0, passed value: 0")};
   std::vector<FieldTestCase> created_time_test_cases{
-      {
-          "valid_time",
-          [&] { created_time = iroha::time::now(); },
-          true,
-          "",
-      },
-  };
+      makeTestCase("valid_time",
+                   &FieldValidatorTest::created_time,
+                   iroha::time::now(),
+                   true,
+                   "")};
 
   std::vector<FieldTestCase> detail_test_cases{
-      {
-          "valid_detail_key",
-          [&] { detail_key = "happy"; },
-          true,
-          "",
-      },
-      {
-          "empty_string",
-          [&] { detail_key = ""; },
-          false,
-          "Wrongly formed key, passed value: ''",
-      },
-      {
-          "illegal_char",
-          [&] { detail_key = "hi*there"; },
-          false,
-          "Wrongly formed key, passed value: 'hi*there'",
-      },
-  };
-  std::vector<FieldTestCase> &key_test_cases = detail_test_cases;
-
-  // no constraints yet
-  std::vector<FieldTestCase> precision_test_cases;
-  std::vector<FieldTestCase> permission_test_cases;
-  std::vector<FieldTestCase> value_test_cases;
-  std::vector<FieldTestCase> quorum_test_cases;
-  std::vector<FieldTestCase> description_test_cases;
-  std::vector<FieldTestCase> signature_test_cases;
-  std::vector<FieldTestCase> tx_hashes_test_cases;
+      makeTestCase("valid_detail_key",
+                   &FieldValidatorTest::detail_key,
+                   "happy",
+                   true,
+                   ""),
+      makeInvalidCase(
+          "empty_string", "key", &FieldValidatorTest::detail_key, ""),
+      makeInvalidCase(
+          "illegal_char", "key", &FieldValidatorTest::detail_key, "hi*there")};
 
   /**************************************************************************/
+
+  std::pair<std::string, FieldTest> makeNullValidator(
+      const std::string &field_name) {
+    return {field_name, {}};
+  }
+
+  template <typename F, typename V, typename T>
+  std::pair<std::string, FieldTest> makeTransformValidator(
+      const std::string &field_name,
+      F field,
+      V value,
+      T transform,
+      const std::vector<FieldTestCase> &cases) {
+    return {field_name,
+            {[&, field, value] {
+               validation::ReasonsGroupType reason;
+               (field_validator.*field)(reason, transform(this->*value));
+               return reason;
+             },
+             cases}};
+  }
+
+  template <typename F, typename V>
+  std::pair<std::string, FieldTest> makeValidator(
+      const std::string &field_name,
+      F field,
+      V value,
+      const std::vector<FieldTestCase> &cases) {
+    return makeTransformValidator(
+        field_name, field, value, [](auto &&x) { return x; }, cases);
+  }
+
+  using FieldValidator = validation::FieldValidator;
 
   // register validation function and test cases
   std::unordered_map<std::string, FieldTest> field_validators{
       // Command fields
-      {"account_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountId(reason, account_id);
-          return reason;
-        },
-        account_id_test_cases}},
-      {"asset_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAssetId(reason, asset_id);
-          return reason;
-        },
-        asset_id_test_cases}},
-      {"amount",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAmount(reason, proto::Amount(amount));
-          return reason;
-        },
-        amount_test_cases}},
-      {"address",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePeerAddress(reason, address_localhost);
-          return reason;
-        },
-        address_test_cases}},
-      {"peer_key",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePubkey(
-              reason, interface::types::PubkeyType(public_key));
-          return reason;
-        },
-        peer_key_test_cases}},
-      {"public_key",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePubkey(
-              reason, interface::types::PubkeyType(public_key));
-          return reason;
-        },
-        public_key_test_cases}},
-      {"role_name",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateRoleId(reason, role_name);
-          return reason;
-        },
-        role_name_test_cases}},
-      {"account_name",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountName(reason, account_name);
-          return reason;
-        },
-        account_name_test_cases}},
-      {"domain_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateDomainId(reason, domain_id);
-          return reason;
-        },
-        domain_id_test_cases}},
-      {"main_pubkey",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePubkey(
-              reason, interface::types::PubkeyType(public_key));
-          return reason;
-        },
-        main_pubkey_test_cases}},
-      {"asset_name",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAssetName(reason, asset_name);
-          return reason;
-        },
-        asset_name_test_cases}},
-      {"precision",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePrecision(reason, precision);
-          return reason;
-        },
-        precision_test_cases}},
-      {"default_role",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateRoleId(reason, role_name);
-          return reason;
-        },
-        default_role_test_cases}},
-      {"permission",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePermission(
-              reason,
-              iroha::protocol::GrantablePermission_Name(grantable_permission));
-          return reason;
-        },
-        permission_test_cases}},
-      {"permissions",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePermissions(
-              reason, {iroha::protocol::RolePermission_Name(role_permission)});
-          return reason;
-        },
-        permissions_test_cases}},
-      {"key",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountDetailKey(reason, detail_key);
-          return reason;
-        },
-        key_test_cases}},
-      {"value",
-       {[&] {
-          // TODO: add validation to a value
-          validation::ReasonsGroupType reason;
-          //  field_validator.validateValue(reason, "");
-          return reason;
-        },
-        value_test_cases}},
-      {"quorum",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateQuorum(reason, quorum);
-          return reason;
-        },
-        quorum_test_cases}},
-      {"src_account_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountId(reason, account_id);
-          return reason;
-        },
-        src_account_id_test_cases}},
-      {"dest_account_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountId(reason, account_id);
-          return reason;
-        },
-        dest_account_id_test_cases}},
-      {"description",
-       {[&] {
-          //  TODO: add validation to description
-          validation::ReasonsGroupType reason;
-          //  field_validator.validateDescription(reason, description);
-          return reason;
-        },
-        description_test_cases}},
+      makeValidator("asset_id",
+                    &FieldValidator::validateAssetId,
+                    &FieldValidatorTest::asset_id,
+                    asset_id_test_cases),
+      makeTransformValidator("amount",
+                             &FieldValidator::validateAmount,
+                             &FieldValidatorTest::amount,
+                             [](auto &&x) { return proto::Amount(x); },
+                             amount_test_cases),
+      makeValidator("address",
+                    &FieldValidator::validatePeerAddress,
+                    &FieldValidatorTest::address_localhost,
+                    address_test_cases),
+      makeValidator("account_name",
+                    &FieldValidator::validateAccountName,
+                    &FieldValidatorTest::account_name,
+                    account_name_test_cases),
+      makeValidator("domain_id",
+                    &FieldValidator::validateDomainId,
+                    &FieldValidatorTest::domain_id,
+                    domain_id_test_cases),
+      makeValidator("asset_name",
+                    &FieldValidator::validateAssetName,
+                    &FieldValidatorTest::asset_name,
+                    asset_name_test_cases),
+      makeTransformValidator("permissions",
+                             &FieldValidator::validatePermissions,
+                             &FieldValidatorTest::role_permission,
+                             [](auto &&x) {
+                               return interface::CreateRole::PermissionsType{
+                                   iroha::protocol::RolePermission_Name(x)};
+                             },
+                             permissions_test_cases),
 
       // Transaction fields
-      {"creator_account_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountId(reason, account_id);
-          return reason;
-        },
-        creator_account_id_test_cases}},
-      {"tx_counter",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateCounter(reason, counter);
-          return reason;
-        },
-        tx_counter_test_cases}},
-      {"created_time",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateCreatedTime(reason, created_time);
-          return reason;
-        },
-        created_time_test_cases}},
-      {"pubkey",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validatePubkey(
-              reason, interface::types::PubkeyType(public_key));
-          return reason;
-        },
-        pubkey_test_cases}},
-      {"signature",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          return reason;
-        },
-        signature_test_cases}},
-      {"commands",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          return reason;
-        },
-        {}}},
-
-      // Query fields
-      {"role_id",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateRoleId(reason, role_name);
-          return reason;
-        },
-        role_id_test_cases}},
-      {"detail",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountDetailKey(reason, detail_key);
-          return reason;
-        },
-        detail_test_cases}},
-      {"tx_hashes",
-       {[&] {
-          validation::ReasonsGroupType reason;
-          field_validator.validateAccountDetailKey(reason, detail_key);
-          return reason;
-        },
-        tx_hashes_test_cases}},
-  };
+      makeValidator("tx_counter",
+                    &FieldValidator::validateCounter,
+                    &FieldValidatorTest::counter,
+                    tx_counter_test_cases),
+      makeValidator("created_time",
+                    &FieldValidator::validateCreatedTime,
+                    &FieldValidatorTest::created_time,
+                    created_time_test_cases)};
 };
 
 /**
