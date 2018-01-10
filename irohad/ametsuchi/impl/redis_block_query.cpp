@@ -27,12 +27,12 @@ namespace iroha {
 
     rxcpp::observable<model::Block> RedisBlockQuery::getBlocks(uint32_t height,
                                                                uint32_t count) {
-      auto to = height + count;
       auto last_id = block_store_.last_id();
-      to = std::min(to, last_id);
-      if (height > to) {
+      auto to = std::min(last_id, height + count - 1);
+      if (height > to or count == 0) {
         return rxcpp::observable<>::empty<model::Block>();
       }
+
       return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
         auto bytes = block_store_.get(i);
         return rxcpp::observable<>::create<model::Block>([this, bytes](auto s) {

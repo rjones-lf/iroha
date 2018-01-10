@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/redis_block_index.hpp"
 #include "ametsuchi/impl/redis_block_query.hpp"
@@ -217,19 +218,6 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
   ASSERT_TRUE(wrapper.validate());
 }
 
-///**
-// * @given block store with 2 blocks totally containing 3 txs created by
-// * user1@test AND 1 tx created by user2@test
-// * @when get block 0
-// * @then returned empty block
-// */
-//TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetZeroBlock) {
-//  auto wrapper = make_test_subscriber<CallExact>(
-//      blocks->getBlocks(0, 1), 0);
-//  wrapper.subscribe();
-//  ASSERT_TRUE(wrapper.validate());
-//}
-
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
@@ -246,6 +234,35 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetNonExistentBlock) {
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
+ * @when height=1, count=1
+ * @then returned exactly 1 block
+ *
+ * @note test for bug, when <total_blocks=2, height=1, count=1>, then
+ * min(1+1, 2)=2, and it reads from 1 to 2 (2 blocks).
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetExactlyOneBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(1, 1), 1);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when count=0
+ * @then returned empty block
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetCountZero) {
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(1, 0), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
  * @when get all blocks starting from 1
  * @then returned all blocks (2)
  */
@@ -253,10 +270,69 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetAllBlocksFrom1) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocksFrom(1), this->blocks_total);
   size_t counter = 1;
-  wrapper.subscribe([this, &counter](Block b){
+  wrapper.subscribe([this, &counter](Block b) {
     // wrapper returns blocks 1 and 2
-    ASSERT_EQ(b.height, counter++);
+    ASSERT_EQ(b.height, counter++)
+        << "block height: " << b.height << "counter: " << counter;
   });
   ASSERT_TRUE(wrapper.validate());
 }
 
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data (NOT JSON).
+ * @when read block #1
+ * @then get no blocks / error
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsNotJSON) {
+  namespace fs = boost::filesystem;
+  size_t block_n = 1;
+
+  // write something that is NOT JSON to block #1
+  auto block_path = fs::path{this->block_store_path} / FlatFile::id_to_name(block_n);
+  fs::ofstream block_file(block_path);
+  std::string content = R"(this is definitely not json)";
+  block_file << content;
+  block_file.close();
+
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(block_n, 1), 0);
+  wrapper.subscribe([this, block_n](Block block) {
+    FAIL() << "should not get here"
+           << "received height " << block.height
+           << ", expected height: " << block_n;
+  });
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data (NOT JSON).
+ * @when read block #1
+ * @then get no blocks / error
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsInvalidBlock) {
+  namespace fs = boost::filesystem;
+  size_t block_n = 1;
+
+  // write bad block instead of block #1
+  auto block_path = fs::path{this->block_store_path} / FlatFile::id_to_name(block_n);
+  fs::ofstream block_file(block_path);
+  std::string content = R"({
+  "testcase": [],
+  "description": "make sure this is valid json, but definitely not a block"
+})";
+  block_file << content;
+  block_file.close();
+
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(block_n, 1), 0);
+  wrapper.subscribe([this, block_n](Block block) {
+    FAIL() << "should not get here"
+           << "received height " << block.height
+           << ", expected height: " << block_n;
+  });
+
+  ASSERT_TRUE(wrapper.validate());
+}
