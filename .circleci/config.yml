@@ -65,6 +65,9 @@ jobs:
       - run:
           name: cppcheck
           command: cmake --build $IROHA_BUILD --target cppcheck
+      - run:
+          name: codecov.io
+          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
       - persist_to_workspace:
           root: /opt/iroha/build
           paths:
@@ -195,9 +198,6 @@ jobs:
       - attach_workspace:
           at: /opt/iroha/build
       - run:
-          name: codecov.io
-          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
-      - run:
           name: execute sonar-scanner to analyze PR
           command: >
             if [ ! -z "$SONAR_TOKEN" ] && \
@@ -234,9 +234,6 @@ jobs:
             - sonar-
       - attach_workspace:
           at: /opt/iroha/build
-      - run:
-          name: codecov.io
-          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
       - run:
           name: execute sonar-scanner
           command: >
