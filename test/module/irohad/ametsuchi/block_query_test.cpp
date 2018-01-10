@@ -263,6 +263,19 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetCountZero) {
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
  * user1@test AND 1 tx created by user2@test
+ * @when get zero block
+ * @then returned empty block
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetZeroBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(0, 1), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
  * @when get all blocks starting from 1
  * @then returned all blocks (2)
  */
@@ -284,7 +297,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetAllBlocksFrom1) {
  * @when read block #1
  * @then get no blocks / error
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsNotJSON) {
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsNotJSON) {
   namespace fs = boost::filesystem;
   size_t block_n = 1;
 
@@ -312,7 +325,7 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsNotJSON) {
  * @when read block #1
  * @then get no blocks / error
  */
-TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsInvalidBlock) {
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetBlockButItIsInvalidBlock) {
   namespace fs = boost::filesystem;
   size_t block_n = 1;
 
