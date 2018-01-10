@@ -75,6 +75,7 @@ class BlockQueryTest : public AmetsuchiTest {
       file->add(b.height, iroha::stringToBytes(converters::jsonToString(
           converters::JsonBlockFactory().serialize(b))));
       index->index(b);
+      this->blocks_total++;
     }
   }
 
@@ -84,6 +85,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::unique_ptr<FlatFile> file;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
+  std::size_t blocks_total{0};
 };
 
 /**
@@ -214,3 +216,47 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
   });
   ASSERT_TRUE(wrapper.validate());
 }
+
+///**
+// * @given block store with 2 blocks totally containing 3 txs created by
+// * user1@test AND 1 tx created by user2@test
+// * @when get block 0
+// * @then returned empty block
+// */
+//TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetZeroBlock) {
+//  auto wrapper = make_test_subscriber<CallExact>(
+//      blocks->getBlocks(0, 1), 0);
+//  wrapper.subscribe();
+//  ASSERT_TRUE(wrapper.validate());
+//}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get non-existent 1000 block
+ * @then nothing is returned
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocks_GetNonExistentBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocks(1000, 1), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get all blocks starting from 1
+ * @then returned all blocks (2)
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetAllBlocksFrom1) {
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getBlocksFrom(1), this->blocks_total);
+  size_t counter = 1;
+  wrapper.subscribe([this, &counter](Block b){
+    // wrapper returns blocks 1 and 2
+    ASSERT_EQ(b.height, counter++);
+  });
+  ASSERT_TRUE(wrapper.validate());
+}
+

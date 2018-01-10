@@ -154,13 +154,10 @@ namespace iroha {
 
             for (auto block_id : block_ids) {
               // create key for querying redis
-              std::string account_assets_key;
-              account_assets_key.append(account_id);
-              account_assets_key.append(":");
-              account_assets_key.append(std::to_string(block_id));
-              account_assets_key.append(":");
-              account_assets_key.append(asset_id);
-              client_.lrange(account_assets_key,
+              std::stringstream account_assets_key;
+              account_assets_key << account_id << ':' << block_id << ':'
+                                 << asset_id;
+              client_.lrange(account_assets_key.str(),
                              0,
                              -1,
                              this->callbackToLrange(subscriber, block_id));
