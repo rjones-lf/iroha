@@ -336,3 +336,22 @@ TEST_F(BlockQueryTest, BlockQuery_GetBlocksFrom_GetBlockButItIsInvalidBlock) {
 
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get top 2 blocks
+ * @then last 2 blocks returned with correct height
+ */
+TEST_F(BlockQueryTest, BlockQuery_GetTopBlocks) {
+  size_t blocks_n = 2; // top 2 blocks
+  auto wrapper = make_test_subscriber<CallExact>(
+      blocks->getTopBlocks(blocks_n), blocks_n);
+
+  size_t counter = this->blocks_total - blocks_n + 1;
+  wrapper.subscribe([this, &counter](Block b) {
+    ASSERT_EQ(b.height, counter++);
+  });
+
+  ASSERT_TRUE(wrapper.validate());
+}
