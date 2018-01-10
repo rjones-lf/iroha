@@ -107,10 +107,10 @@ std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
   return std::make_unique<FlatFile>(*res, path, private_tag{});
 }
 
-void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
+bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   if (id != current_id_ + 1) {
     log_->warn("Cannot append non-consecutive block");
-    return;
+    return false;
   }
 
   auto next_id = id;
@@ -120,13 +120,13 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   if (boost::filesystem::exists(file_name)) {
     // File already exist
     log_->warn("insertion for {} failed, because file already exists", id);
-    return;
+    return false;
   }
   // New file will be created
   boost::filesystem::ofstream file(file_name.native(), std::ofstream::binary);
   if (not file.is_open()) {
     log_->warn("Cannot open file by index {} for writing", id);
-    return;
+    return false;
   }
 
   auto val_size =
@@ -137,6 +137,7 @@ void FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
 
   // Update internals, release lock
   current_id_ = next_id;
+  return true;
 }
 
 nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {

@@ -48,6 +48,9 @@ jobs:
               -DCMAKE_BUILD_TYPE=Debug \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
       - run:
+          name: whoami
+          command: whoami
+      - run:
           name: make
           command: |
             cmake --build $IROHA_BUILD -- -j4

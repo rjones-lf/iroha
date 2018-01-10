@@ -59,7 +59,7 @@ namespace iroha {
        * @param id - reference key
        * @param blob - data associated with key
        */
-      void add(Identifier id, const std::vector<uint8_t> &blob);
+      bool add(Identifier id, const std::vector<uint8_t> &blob);
 
       /**
        * Get data associated with

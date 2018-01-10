@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <sys/stat.h>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.cpp"
 
@@ -137,13 +138,39 @@ TEST_F(BlStore_Test, CreateFileEmptyDir) {
 
 
 TEST_F(BlStore_Test, GetNonExistingFile) {
-  auto store = FlatFile::create(block_store_path);
+  auto bl_store = FlatFile::create(block_store_path);
   Identifier id = 98759385; //random number that will not exist
-  auto res = store->get(id);
+  auto res = bl_store->get(id);
   ASSERT_EQ(res, nonstd::nullopt);
 }
 
 TEST_F(BlStore_Test, GetDirectory) {
-  auto store = FlatFile::create(block_store_path);
-  ASSERT_EQ(store->directory(), block_store_path);
+  auto bl_store = FlatFile::create(block_store_path);
+  ASSERT_EQ(bl_store->directory(), block_store_path);
+}
+
+TEST_F(BlStore_Test, GetDeniedBlock) {
+  std::vector<uint8_t> block(100000, 5);
+  auto bl_store = FlatFile::create(block_store_path);
+  auto id = 1u;
+  bl_store->add(id, block);
+
+  auto filename = boost::filesystem::path{block_store_path} / id_to_name(id);
+  chmod(filename.string().data(), 0);
+
+  auto res = bl_store->get(id);
+  ASSERT_EQ(res, nonstd::nullopt);
+}
+
+TEST_F(BlStore_Test, AddExistingId) {
+  std::vector<uint8_t> block(100000, 5);
+  auto bl_store = FlatFile::create(block_store_path);
+  auto id = 1u;
+  const auto file_name = boost::filesystem::path{block_store_path} / id_to_name(id);
+  std::ofstream fout(file_name.string());
+  fout.close();
+
+  auto res = bl_store->add(id, block);
+  ASSERT_FALSE(res);
+
 }
