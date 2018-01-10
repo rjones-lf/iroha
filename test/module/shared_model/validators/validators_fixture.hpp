@@ -140,9 +140,9 @@ class ValidatorsTest : public ::testing::Test {
     quorum = 2;
   }
 
-  size_t public_key_size;
-  size_t hash_size;
-  uint64_t counter;
+  size_t public_key_size{0};
+  size_t hash_size{0};
+  uint64_t counter{0};
   std::string account_id;
   std::string asset_name;
   std::string asset_id;
