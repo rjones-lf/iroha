@@ -5,10 +5,10 @@ IROHA_HOME=$(dirname $(realpath ${BASH_SOURCE[0]}))/..
 MOUNT=/tmp/iroha
 BUILD_PATH=/tmp/build
 PROJ_BIN=/opt/iroha
-docker pull hyperledger/iroha-docker-develop
+docker pull hyperledger/iroha-docker-develop:v1
 # docker build $IROHA_HOME/docker/develop -t iroha-dev
 echo $IROHA_HOME\;$MOUNT\;$BUILD_PATH\;$PROJ_BIN
-# docker run -tdv $IROHA_HOME:$MOUNT hyperledger/iroha-docker-develop "/bin/bash" >/tmp/iroha-build.id
+# docker run -tdv $IROHA_HOME:$MOUNT hyperledger/iroha-docker-develop:v1 "/bin/bash" >/tmp/iroha-build.id
 CONTAINER=$(cat /tmp/iroha-build.id)
 docker exec $CONTAINER sh <<EOF
 mkdir -p $BUILD_PATH $PROJ_BIN;
