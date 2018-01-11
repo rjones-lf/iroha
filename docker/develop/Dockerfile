@@ -197,8 +197,7 @@ RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
 RUN adduser iroha-ci
 WORKDIR /opt/iroha
 RUN chmod -R 777 /opt/iroha; \
-    mkdir -p /tmp/ccache; \
-    chmod -R 777 /tmp/
+    mkdir -p /tmp/ccache -m 777;
 
 USER iroha-ci
 
