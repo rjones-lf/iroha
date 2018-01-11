@@ -24,7 +24,6 @@ jobs:
     steps:
       - checkout
       - run: echo $(eval echo "$IROHA_VERSION")
-      - run: echo ~/.ccache; whoami
       - restore_cache:
           keys:
             - v1-build-cache-debug-{{ arch }}-{{ .Branch }}-
@@ -48,9 +47,6 @@ jobs:
               -B$IROHA_BUILD \
               -DCMAKE_BUILD_TYPE=Debug \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
-      - run:
-          name: whoami
-          command: whoami
       - run:
           name: make
           command: |
