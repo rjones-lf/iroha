@@ -30,6 +30,8 @@ namespace iroha {
     namespace yac {
       class YacNetworkTest : public ::testing::Test {
        public:
+        static constexpr auto default_ip = "0.0.0.0";
+        static constexpr auto default_address = "0.0.0.0:0";
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
 
@@ -42,7 +44,7 @@ namespace iroha {
 
           grpc::ServerBuilder builder;
           int port = 0;
-          builder.AddListeningPort("0.0.0.0:0",
+          builder.AddListeningPort(default_address,
                                    grpc::InsecureServerCredentials(),
                                    &port);
           builder.RegisterService(network.get());
@@ -50,7 +52,7 @@ namespace iroha {
           ASSERT_TRUE(server);
           ASSERT_NE(port, 0);
 
-          peer = mk_peer("0.0.0.0:" + std::to_string(port));
+          peer = mk_peer(std::string(default_ip) + ":" + std::to_string(port));
         }
 
         void TearDown() override {
