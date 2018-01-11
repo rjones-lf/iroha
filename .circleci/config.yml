@@ -283,7 +283,7 @@ jobs:
           keys:
             - v1-build-cache-{{ arch }}-{{ .Branch }}
           paths:
-            - $CCAHCE_DIR
+            - $CCACHE_DIR
       - restore_cache:
           keys:
             - v1-external-{{ arch }}-{{ .Branch }}
@@ -318,7 +318,7 @@ jobs:
       - save_cache:
           key: v1-build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - $CCAHCE_DIR
+            - $CCACHE_DIR
       - save_cache:
           key: v1-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
