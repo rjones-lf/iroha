@@ -3,7 +3,7 @@ defaults: &defaults
   environment:
     IROHA_HOME: /opt/iroha
     IROHA_BUILD: /opt/iroha/build
-    CCHACHE_DIR: /opt/.ccache
+    CCACHE_DIR: /opt/.ccache
     SONAR_DIR: /opt/.sonar
 
 
@@ -30,7 +30,7 @@ jobs:
             - v1-build-cache-debug-{{ arch }}-{{ .Branch }}-
             - v1-build-cache-debug-{{ arch }}-
           paths:
-            - $CCHACHE_DIR
+            - $CCACHE_DIR
 
       - run:
           name: ccache setup
@@ -63,7 +63,7 @@ jobs:
       - save_cache:
           key: v1-build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - $CCHACHE_DIR
+            - $CCACHE_DIR
       - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
@@ -96,7 +96,7 @@ jobs:
             - v1-build-cache-release-{{ arch }}-{{ .Branch }}-
             - v1-build-cache-release-{{ arch }}-
           paths:
-            - $CCHACHE_DIR
+            - $CCACHE_DIR
       - run:
           name: ccache setup
           command: |
@@ -128,7 +128,7 @@ jobs:
       - save_cache:
           key: v1-build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - $CCHACHE_DIR
+            - $CCACHE_DIR
       - run:
           name: copy deb file
           command: |
