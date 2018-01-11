@@ -3,6 +3,9 @@ defaults: &defaults
   environment:
     IROHA_HOME: /opt/iroha
     IROHA_BUILD: /opt/iroha/build
+    CCHACHE_DIR: /opt/.ccache
+    SONAR_DIR: /opt/.sonar
+
 
 defaults: &version
   environment:
@@ -21,12 +24,14 @@ jobs:
     steps:
       - checkout
       - run: echo $(eval echo "$IROHA_VERSION")
+      - run: echo ~/.ccache; whoami
       - restore_cache:
           keys:
-            - build-cache-debug-{{ arch }}-{{ .Branch }}-
-            - build-cache-debug-{{ arch }}-
+            - v1-build-cache-debug-{{ arch }}-{{ .Branch }}-
+            - v1-build-cache-debug-{{ arch }}-
           paths:
-            - ~/.ccache
+            - $CCHACHE_DIR
+
       - run:
           name: ccache setup
           command: |
@@ -44,6 +49,9 @@ jobs:
               -DCMAKE_BUILD_TYPE=Debug \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
       - run:
+          name: whoami
+          command: whoami
+      - run:
           name: make
           command: |
             cmake --build $IROHA_BUILD -- -j4
@@ -53,9 +61,9 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCHACHE_DIR
       - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
@@ -85,10 +93,10 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - build-cache-release-{{ arch }}-{{ .Branch }}-
-            - build-cache-release-{{ arch }}-
+            - v1-build-cache-release-{{ arch }}-{{ .Branch }}-
+            - v1-build-cache-release-{{ arch }}-
           paths:
-            - ~/.ccache
+            - $CCHACHE_DIR
       - run:
           name: ccache setup
           command: |
@@ -118,9 +126,9 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCHACHE_DIR
       - run:
           name: copy deb file
           command: |
@@ -194,7 +202,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - sonar-
+            - v1-sonar-
       - attach_workspace:
           at: /opt/iroha/build
       - run:
@@ -216,9 +224,9 @@ jobs:
               echo "required env vars not found"
             fi
       - save_cache:
-          key: sonar-{{ epoch }}
+          key: v1-sonar-{{ epoch }}
           paths:
-            - ~/.sonar
+            - $SONAR_DIR
 
 
   # executed only for develop, master and release branches
@@ -231,7 +239,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - sonar-
+            - v1-sonar-
       - attach_workspace:
           at: /opt/iroha/build
       - run:
@@ -248,9 +256,9 @@ jobs:
               echo "required env vars not found"
             fi
       - save_cache:
-          key: sonar-{{ epoch }}
+          key: v1-sonar-{{ epoch }}
           paths:
-            - ~/.sonar
+            - $SONAR_DIR
 
 
   build-macos-release:
@@ -261,7 +269,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - brew-{{ arch }}
+            - v1-brew-{{ arch }}
           paths:
             - Library/Caches/Homebrew
       - run:
@@ -273,13 +281,13 @@ jobs:
             - Library/Caches/Homebrew
       - restore_cache:
           keys:
-            - build-cache-{{ arch }}-{{ .Branch }}
+            - v1-build-cache-{{ arch }}-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - $CCAHCE_DIR
       - restore_cache:
           keys:
-            - v0-external-{{ arch }}-{{ .Branch }}
-            - v0-external-{{ arch }}
+            - v1-external-{{ arch }}-{{ .Branch }}
+            - v1-external-{{ arch }}
           paths:
             - external
       - run:
@@ -308,11 +316,11 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCAHCE_DIR
       - save_cache:
-          key: v0-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - external
       - run: ccache --show-stats
