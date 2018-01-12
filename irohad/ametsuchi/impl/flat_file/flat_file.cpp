@@ -22,6 +22,7 @@
 #include <boost/range/algorithm/find_if.hpp>
 #include <iomanip>
 #include <sstream>
+#include <iostream>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;

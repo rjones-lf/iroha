@@ -172,5 +172,14 @@ TEST_F(BlStore_Test, AddExistingId) {
 
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
+}
 
+TEST_F(BlStore_Test, WriteDeniedFolder) {
+  std::vector<uint8_t> block(100000, 5);
+  auto bl_store = FlatFile::create(block_store_path);
+  auto id = 1u;
+  const auto file_name = boost::filesystem::path{block_store_path} / id_to_name(id);
+  chmod(block_store_path.data(), 0500);
+  auto res = bl_store->add(id, block);
+  ASSERT_FALSE(res);
 }
