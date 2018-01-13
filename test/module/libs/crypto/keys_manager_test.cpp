@@ -30,20 +30,24 @@ using namespace std::string_literals;
 class KeyManager : public ::testing::Test {
  public:
   bool create_file(const path &ph, const std::string &contents) {
-    std::ofstream f(ph.c_str(), std::ifstream::binary);
-    if (!f)
+    std::ofstream f(ph.c_str());
+    if (not f)
       return false;
-    if (!contents.empty())
+    if (not contents.empty())
       f.write(contents.c_str(), contents.size());
     return f.good();
   }
 
-  void TearDown() {
-    remove(pub_key_path);
-    remove(pri_key_path);
+  void SetUp() {
+    create_directory(test_dir);
   }
 
-  const std::string filepath = "/tmp/iroha_keymanager_test_file";
+  void TearDown() {
+    remove_all(test_dir);
+  }
+
+  const path test_dir = "/tmp/iroha";
+  const std::string filepath = (test_dir / "keymanager_test_file").string();
   const path pub_key_path = filepath + ".pub";
   const path pri_key_path = filepath + ".priv";
   const std::string pubkey =
