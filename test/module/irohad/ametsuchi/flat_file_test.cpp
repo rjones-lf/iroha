@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <sys/stat.h>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include <sys/stat.h>
 #include "ametsuchi/impl/flat_file/flat_file.cpp"
 
 #include <gtest/gtest.h>
@@ -63,8 +63,9 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
   log_->info("----------| Simulate removal of the block |----------");
   // Remove file in the middle of the block store
   {
-    log_->info("----------| create blockstore and insert 3 elements "
-                   "|----------");
+    log_->info(
+        "----------| create blockstore and insert 3 elements "
+        "|----------");
 
     auto bl_store = FlatFile::create(block_store_path);
     ASSERT_TRUE(bl_store);
@@ -89,8 +90,9 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
 }
 
 TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
-  log_->info("----------| Check that folder absent => create => "
-                 "make storage => remove storage |----------");
+  log_->info(
+      "----------| Check that folder absent => create => "
+      "make storage => remove storage |----------");
   std::string target_path = "/tmp/bump";
   rmdir(target_path.c_str());
   {
@@ -110,7 +112,7 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
  * @when new block storage is initialized
  * @then new block storage has all blocks from the folder
  */
-TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder){
+TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
   auto bl_store1 = FlatFile::create(block_store_path);
   ASSERT_TRUE(bl_store1);
 
@@ -132,14 +134,13 @@ TEST_F(BlStore_Test, EmptyDumpDir) {
 }
 
 TEST_F(BlStore_Test, CreateFileEmptyDir) {
-  //auto res = FlatFile::create("");
-  //ASSERT_EQ(res, nullptr);
+  // auto res = FlatFile::create("");
+  // ASSERT_EQ(res, nullptr);
 }
-
 
 TEST_F(BlStore_Test, GetNonExistingFile) {
   auto bl_store = FlatFile::create(block_store_path);
-  Identifier id = 98759385; //random number that will not exist
+  Identifier id = 98759385;  // random number that will not exist
   auto res = bl_store->get(id);
   ASSERT_EQ(res, nonstd::nullopt);
 }
@@ -166,7 +167,8 @@ TEST_F(BlStore_Test, AddExistingId) {
   std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   auto id = 1u;
-  const auto file_name = boost::filesystem::path{block_store_path} / id_to_name(id);
+  const auto file_name =
+      boost::filesystem::path{block_store_path} / id_to_name(id);
   std::ofstream fout(file_name.string());
   fout.close();
 
@@ -176,10 +178,6 @@ TEST_F(BlStore_Test, AddExistingId) {
 
 TEST_F(BlStore_Test, WriteDeniedFolder) {
   std::vector<uint8_t> block(100000, 5);
-  auto bl_store = FlatFile::create(block_store_path);
-  auto id = 1u;
-  const auto file_name = boost::filesystem::path{block_store_path} / id_to_name(id);
-  chmod(block_store_path.data(), 0500);
-  auto res = bl_store->add(id, block);
-  ASSERT_FALSE(res);
+  auto bl_store = FlatFile::create("");
+  ASSERT_EQ(bl_store, nullptr);
 }

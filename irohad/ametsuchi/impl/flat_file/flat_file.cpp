@@ -21,8 +21,8 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <iomanip>
-#include <sstream>
 #include <iostream>
+#include <sstream>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;
@@ -95,16 +95,14 @@ namespace {
 std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
-  if (boost::filesystem::create_directory(path)) {
-    if (!boost::filesystem::is_directory(path)) {
-      log_->error("Cannot create storage dir: {}", path);
-    }
-  }
-  auto res = check_consistency(path);
-  if (not res) {
-    log_->error("Checking consistency for {} - failed", path);
+  boost::system::error_code err;
+  if (not boost::filesystem::is_directory(path, err)
+      and not boost::filesystem::create_directory(path, err)) {
+    log_->error("Cannot create storage dir: {}\n{}", path, err.message());
     return nullptr;
   }
+
+  auto res = check_consistency(path);
   return std::make_unique<FlatFile>(*res, path, private_tag{});
 }
 
@@ -175,7 +173,9 @@ void FlatFile::dropAll() {
 
 // ----------| private API |----------
 
-FlatFile::FlatFile(Identifier current_id, const std::string &path, FlatFile::private_tag)
+FlatFile::FlatFile(Identifier current_id,
+                   const std::string &path,
+                   FlatFile::private_tag)
     : dump_dir_(path) {
   log_ = logger::log("FlatFile");
   current_id_.store(current_id);
