@@ -16,7 +16,6 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include <sys/stat.h>
 #include "ametsuchi/impl/flat_file/flat_file.cpp"
 
 #include <gtest/gtest.h>
@@ -91,7 +90,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
 
 TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
   log_->info(
-      "----------| Check that folder absent => create => "
+      "----------| Check that folder is absent => create => "
       "make storage => remove storage |----------");
   std::string target_path = "/tmp/bump";
   rmdir(target_path.c_str());
@@ -152,10 +151,14 @@ TEST_F(BlStore_Test, GetDeniedBlock) {
   bl_store->add(id, block);
 
   auto filename = boost::filesystem::path{block_store_path} / id_to_name(id);
-  chmod(filename.string().data(), 0);
 
+  using perms = boost::filesystem::perms;
+  auto curr = boost::filesystem::status(boost::filesystem::path(filename));
+
+  boost::filesystem::permissions(filename.string().data(), perms::no_perms);
   auto res = bl_store->get(id);
   ASSERT_EQ(res, nonstd::nullopt);
+  boost::filesystem::permissions(filename.string().data(), curr.permissions());
 }
 
 TEST_F(BlStore_Test, AddExistingId) {
@@ -181,8 +184,13 @@ TEST_F(BlStore_Test, WriteDeniedFolder) {
   std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   auto id = 1u;
-  chmod(block_store_path.data(), S_IRUSR | S_IXUSR);
+
+  using perms = boost::filesystem::perms;
+  auto path = boost::filesystem::path(block_store_path);
+  auto curr = boost::filesystem::status(path);
+
+  boost::filesystem::permissions(path, perms::owner_read | perms::owner_exe);
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
-  chmod(block_store_path.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  boost::filesystem::permissions(path, curr.permissions());
 }
