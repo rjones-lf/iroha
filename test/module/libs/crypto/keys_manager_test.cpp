@@ -62,15 +62,27 @@ TEST_F(KeyManager, LoadNonExistentKeyFile) {
   ASSERT_FALSE(manager.loadKeys());
 }
 
-TEST_F(KeyManager, LoadEmptyFiles) {
-  create_file(pub_key_path, "");
+TEST_F(KeyManager, LoadEmptyPubkey) {
+  create_file(pub_key_path, pubkey);
   create_file(pri_key_path, "");
   ASSERT_FALSE(manager.loadKeys());
 }
 
-TEST_F(KeyManager, LoadInvalid) {
-  create_file(pub_key_path, std::string(PUBKEY_SIZE, '1'));
+TEST_F(KeyManager, LoadEmptyFilesPrikey) {
+  create_file(pub_key_path, "");
+  create_file(pri_key_path, prikey);
+  ASSERT_FALSE(manager.loadKeys());
+}
+
+TEST_F(KeyManager, LoadInvalidPubkey) {
+  create_file(pub_key_path, pubkey);
   create_file(pri_key_path, std::string(PRIVKEY_SIZE, '1'));
+  ASSERT_FALSE(manager.loadKeys());
+}
+
+TEST_F(KeyManager, LoadInvalidPrikey) {
+  create_file(pub_key_path, std::string(PUBKEY_SIZE, '1'));
+  create_file(pri_key_path, prikey);
   ASSERT_FALSE(manager.loadKeys());
 }
 
