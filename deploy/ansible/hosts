@@ -1,9 +1,0 @@
-[hosts]
-104.155.94.58
-35.205.142.238
-
-
-[all:vars]
-ansible_ssh_user=iroha
-#Does not check host ssh keys. If we check keys and recreate VM with the same IP, it will cause troubles.
-host_key_checking=False

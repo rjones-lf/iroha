@@ -1,0 +1,3 @@
+config/retry/*
+config/vault_password
+config/tmp/ansible.log

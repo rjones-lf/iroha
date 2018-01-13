@@ -1,0 +1,32 @@
+---
+  - name: Purge old Docker versions if any
+    apt: purge=yes state=absent name={{ item }} 
+    with_items:
+      - docker
+      - docker-engine
+      - docker.io
+
+  - name: Update APT cache
+    apt:
+      update_cache: yes
+
+  - name: Install packages
+    apt: pkg={{ item }} state=installed
+    with_items:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+
+  - name: Add GPG key
+    shell: 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
+
+  - name: Add repository
+    shell: 'add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"'
+
+  - name: Install docker
+    apt: 
+      name: docker-ce={{ dockerVersion }}
+      state: present
+      update_cache: yes
+  

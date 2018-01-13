@@ -1,0 +1,8 @@
+---
+users:
+  - username: abakhtin
+    name: Artyom Bakhtin
+    groups: ['sudo']
+    home: /home/abakhtin
+    ssh-key:
+      - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDphN0lYnTbsAr/a8N3C2Rxo83t6wu6b23l2T7Nw7qoP1SNRHdbyDHdfQpM6fwRdkHRyO3IQGcUtiouKF9/Vd/6ecX6/J6XaTlJr6YtmNyR50i2v7gZubJCEnCI4i8WWwyF3glFNXmIrsnw+Pvwp/6TUT6kx9PYTD+SesJkJekf4ad1OidQeNv9YZS2Ws0AtoHh2LutevDEAy/udsYpaeZ7QNXUvrdmUfftUUZStzFNFBAj9FcxzBZBsA+ss6/0GXBHxD9YrSaUIp8K1v7RQukgbBfEvrmG1Nrnw3uMAUB3DLeofE5StyT+XBMZI4I0e8RdW4Dm9KsuERj0qSQakgAJ abakhtin@horn"
