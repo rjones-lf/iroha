@@ -26,3 +26,9 @@ AddTest(signature_test signature_test.cpp)
 target_link_libraries(signature_test
     cryptography
     )
+
+# Key manager Test
+AddTest(keys_manager_test keys_manager_test.cpp)
+target_link_libraries(keys_manager_test
+    keys_manager
+    )
