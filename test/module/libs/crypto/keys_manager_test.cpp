@@ -43,7 +43,7 @@ class KeyManager : public ::testing::Test {
     remove(pri_key_path);
   }
 
-  const std::string filepath = "/tmp/iroha/keymanager_test_file";
+  const std::string filepath = "/tmp/iroha_keymanager_test_file";
   const path pub_key_path = filepath + ".pub";
   const path pri_key_path = filepath + ".priv";
   const std::string pubkey =
