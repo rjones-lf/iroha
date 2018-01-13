@@ -110,3 +110,17 @@ TEST_F(KeyManager, LoadInaccessiblePrikey) {
   permissions(pri_key_path, no_perms);
   ASSERT_FALSE(manager.loadKeys());
 }
+
+TEST_F(KeyManager, CreateInaccessiblePubkey) {
+  create_file(pub_key_path, "");
+  create_file(pri_key_path, "");
+  permissions(pub_key_path, no_perms);
+  ASSERT_FALSE(manager.createKeys(passphrase));
+}
+
+TEST_F(KeyManager, CreateInaccessiblePrikey) {
+  create_file(pub_key_path, "");
+  create_file(pri_key_path, "");
+  permissions(pri_key_path, no_perms);
+  ASSERT_FALSE(manager.createKeys(passphrase));
+}
