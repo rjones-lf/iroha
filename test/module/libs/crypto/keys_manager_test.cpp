@@ -20,8 +20,8 @@ limitations under the License.
 #include <string>
 #include "crypto/keys_manager_impl.hpp"
 
-#define PUBKEY_SIZE 32
-#define PRIVKEY_SIZE 32
+#define PUBKEY_HEX_SIZE 64
+#define PRIVKEY_HEX_SIZE 64
 
 using namespace iroha;
 using namespace boost::filesystem;
@@ -76,12 +76,12 @@ TEST_F(KeyManager, LoadEmptyFilesPrikey) {
 
 TEST_F(KeyManager, LoadInvalidPubkey) {
   create_file(pub_key_path, pubkey);
-  create_file(pri_key_path, std::string(PRIVKEY_SIZE, '1'));
+  create_file(pri_key_path, std::string(PUBKEY_HEX_SIZE, '1'));
   ASSERT_FALSE(manager.loadKeys());
 }
 
 TEST_F(KeyManager, LoadInvalidPrikey) {
-  create_file(pub_key_path, std::string(PUBKEY_SIZE, '1'));
+  create_file(pub_key_path, std::string(PRIVKEY_HEX_SIZE, '1'));
   create_file(pri_key_path, prikey);
   ASSERT_FALSE(manager.loadKeys());
 }
