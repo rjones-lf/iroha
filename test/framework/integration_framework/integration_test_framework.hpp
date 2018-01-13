@@ -124,11 +124,23 @@ namespace integration_framework {
     // deserialize
     auto pb_tx = iroha::model::converters::PbTransactionFactory().serialize(tx);
     // send
-    google::protobuf::Empty response;
-    iroha_instance_->getIrohaInstance()->getCommandService()->ToriiAsync(
-        pb_tx, response);
+    {
+      google::protobuf::Empty response;
+      iroha_instance_->getIrohaInstance()->getCommandService()->ToriiAsync(
+          pb_tx, response);
+    }
     // fetch status of transaction
+    iroha::protocol::TxStatus status;
+    {
+      iroha::protocol::TxStatusRequest request;
+      request.set_tx_hash(iroha::hash(tx).to_string());
+      iroha::protocol::ToriiResponse response;
+      iroha_instance_->getIrohaInstance()->getCommandService()->StatusAsync(
+          request, response);
+      status = response.tx_status();
+    }
     // check validation function
+    validation(status);
     return *this;
   }
 

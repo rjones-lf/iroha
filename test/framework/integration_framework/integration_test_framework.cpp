@@ -103,7 +103,7 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       iroha::model::Transaction tx) {
-    sendTx(tx, [] {});
+    sendTx(tx, [](auto) {});
     return *this;
   }
 
