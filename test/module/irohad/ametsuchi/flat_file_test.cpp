@@ -133,11 +133,6 @@ TEST_F(BlStore_Test, EmptyDumpDir) {
   ASSERT_EQ(res, nonstd::nullopt);
 }
 
-TEST_F(BlStore_Test, CreateFileEmptyDir) {
-  // auto res = FlatFile::create("");
-  // ASSERT_EQ(res, nullptr);
-}
-
 TEST_F(BlStore_Test, GetNonExistingFile) {
   auto bl_store = FlatFile::create(block_store_path);
   Identifier id = 98759385;  // random number that will not exist
@@ -176,8 +171,18 @@ TEST_F(BlStore_Test, AddExistingId) {
   ASSERT_FALSE(res);
 }
 
-TEST_F(BlStore_Test, WriteDeniedFolder) {
+TEST_F(BlStore_Test, WriteEmptyFolder) {
   std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create("");
   ASSERT_EQ(bl_store, nullptr);
+}
+
+TEST_F(BlStore_Test, WriteDeniedFolder) {
+  std::vector<uint8_t> block(100000, 5);
+  auto bl_store = FlatFile::create(block_store_path);
+  auto id = 1u;
+  chmod(block_store_path.data(), S_IRUSR | S_IXUSR);
+  auto res = bl_store->add(id, block);
+  ASSERT_FALSE(res);
+  chmod(block_store_path.data(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
