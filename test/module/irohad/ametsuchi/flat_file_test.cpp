@@ -15,8 +15,11 @@
  * limitations under the License.
  */
 
+
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include "ametsuchi/impl/flat_file/flat_file.cpp"
 
 #include <gtest/gtest.h>
 #include "common/files.hpp"
@@ -32,16 +35,17 @@ class BlStore_Test : public ::testing::Test {
  protected:
   void SetUp() override {
     mkdir(block_store_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    block = std::vector<uint8_t>(100000, 5);
   }
   void TearDown() override {
     iroha::remove_all(block_store_path);
     rmdir(block_store_path.c_str());
   }
   std::string block_store_path = "/tmp/dump";
+  std::vector<uint8_t> block;
 };
 
 TEST_F(BlStore_Test, Read_Write_Test) {
-  std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   ASSERT_TRUE(bl_store);
 
@@ -69,7 +73,6 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
     auto bl_store = FlatFile::create(block_store_path);
     ASSERT_TRUE(bl_store);
 
-    std::vector<uint8_t> block(1000, 5);
     // Adding three blocks
     auto id = 1u;
     bl_store->add(id, block);
@@ -81,7 +84,6 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
 
   log_->info("----------| remove second and init new storage |----------");
   std::remove((block_store_path + "/0000000000000002").c_str());
-  std::vector<uint8_t> block(1000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   ASSERT_TRUE(bl_store);
   auto res = bl_store->last_id();
@@ -97,7 +99,6 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
   {
     auto bl_store = FlatFile::create(block_store_path);
     ASSERT_TRUE(bl_store);
-    std::vector<uint8_t> block(100000, 5);
     auto id = 1u;
     bl_store->add(id, block);
     auto res = bl_store->last_id();
@@ -129,14 +130,14 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
 
 TEST_F(BlStore_Test, EmptyDumpDir) {
   auto res = check_consistency("");
-  ASSERT_EQ(res, nonstd::nullopt);
+  ASSERT_FALSE(res);
 }
 
 TEST_F(BlStore_Test, GetNonExistingFile) {
   auto bl_store = FlatFile::create(block_store_path);
-  Identifier id = 98759385;  // random number that will not exist
+  Identifier id = 98759385;  // random number that does not exist
   auto res = bl_store->get(id);
-  ASSERT_EQ(res, nonstd::nullopt);
+  ASSERT_FALSE(res);
 }
 
 TEST_F(BlStore_Test, GetDirectory) {
@@ -145,7 +146,6 @@ TEST_F(BlStore_Test, GetDirectory) {
 }
 
 TEST_F(BlStore_Test, GetDeniedBlock) {
-  std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   auto id = 1u;
   bl_store->add(id, block);
@@ -153,12 +153,10 @@ TEST_F(BlStore_Test, GetDeniedBlock) {
   auto filename = boost::filesystem::path{block_store_path} / id_to_name(id);
 
   using perms = boost::filesystem::perms;
-  auto curr = boost::filesystem::status(boost::filesystem::path(filename));
 
   boost::filesystem::permissions(filename.string().data(), perms::no_perms);
   auto res = bl_store->get(id);
   ASSERT_EQ(res, nonstd::nullopt);
-  boost::filesystem::permissions(filename.string().data(), curr.permissions());
 }
 
 TEST_F(BlStore_Test, AddExistingId) {
@@ -175,22 +173,18 @@ TEST_F(BlStore_Test, AddExistingId) {
 }
 
 TEST_F(BlStore_Test, WriteEmptyFolder) {
-  std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create("");
   ASSERT_EQ(bl_store, nullptr);
 }
 
 TEST_F(BlStore_Test, WriteDeniedFolder) {
-  std::vector<uint8_t> block(100000, 5);
   auto bl_store = FlatFile::create(block_store_path);
   auto id = 1u;
 
   using perms = boost::filesystem::perms;
   auto path = boost::filesystem::path(block_store_path);
-  auto curr = boost::filesystem::status(path);
 
   boost::filesystem::permissions(path, perms::owner_read | perms::owner_exe);
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
-  boost::filesystem::permissions(path, curr.permissions());
 }
