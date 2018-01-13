@@ -1,0 +1,37 @@
+---
+galaxy_info:
+  author: Mark Harrison (Modified by SinglePlatform Engineering)
+  description: User creation role
+  license: MIT
+  min_ansible_version: 1.3
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: GenericUNIX
+      versions:
+        - all
+        - any
+    - name: Fedora
+      versions:
+        - all
+    - name: opensuse
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: SLES
+      versions:
+        - all
+    - name: GenericLinux
+      versions:
+        - all
+        - any
+    - name: Debian
+      versions:
+        - all
+  galaxy_tags:
+    - system
+
+dependencies: []

@@ -1,0 +1,86 @@
+---
+  - set_fact: confPath="/opt/docker/iroha/conf"
+
+  - name: install python 2
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+
+  - name: Install easy_install
+    apt: state=installed name=python-setuptools
+
+  - easy_install:
+      name: docker-py
+
+  - name: Setup iroha docker network
+    docker_network:
+      name: iroha_network
+
+  - name: Run postgres in docker
+    docker_container:
+      name: "{{ postgresName }}"
+      image: postgres:9.5
+      state: started
+      recreate: yes
+      restart: yes
+      env:
+        POSTGRES_USER: '{{ postgresUser }}'
+        POSTGRES_PASSWORD: '{{ postgresPassword }}'
+      networks:
+        - name: iroha_network
+
+  - name: Run redis in docker
+    docker_container:
+      name: "{{ redisName }}"
+      image: redis:3.2.8
+      state: started
+      recreate: yes
+      restart: yes
+      networks:
+        - name: iroha_network
+
+  - name: Make conf dir
+    file:
+      path: '/opt/docker/iroha/conf'
+      state: directory
+      mode: 0755
+      owner: root
+
+  - name: Copy config
+    template:
+      src: config.j2
+      dest: "{{ confPath }}/config.sample"
+      mode: 0600
+
+  - name: Copy peers list
+    template:
+      src: peers.list.j2
+      dest: "{{ confPath }}/peers.list"
+      mode: 0644
+
+  - name: Get list of files to publish into container
+    find:
+      paths: "{{ confPath }}"
+    register: findResult
+
+  - name: Run iroha in docker
+    docker_container:
+      name: iroha
+      image: hyperledger/iroha-docker:develop
+      state: started
+      restart: yes
+      recreate: yes
+      pull: yes
+      ports:
+        - "50051:50051"
+        - "10001:10001"
+      networks:
+        - name: iroha_network
+      volumes:
+        - "{{ confPath }}:/opt/iroha_data"
+      env:
+        POSTGRES_HOST: "{{ postgresName }}"
+        POSTGRES_PORT: 5432        
+        POSTGRES_USER: "{{ postgresUser }}"
+        POSTGRES_PASSWORD: "{{ postgresPassword }}"
+        REDIS_HOST: "{{ redisName }}"
+        REDIS_PORT: 6379
+        KEY: node{{ key }}
