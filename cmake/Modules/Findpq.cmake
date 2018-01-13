@@ -1,10 +1,10 @@
 add_library(pq UNKNOWN IMPORTED)
 add_executable(pg_config IMPORTED)
 
-find_path(pq_INCLUDE_DIR libpq-fe.h)
+find_path(pq_INCLUDE_DIR libpq-fe.h PATH_SUFFIXES postgresql)
 mark_as_advanced(pq_INCLUDE_DIR)
 
-find_path(postgres_INCLUDE_DIR postgres_ext.h)
+find_path(postgres_INCLUDE_DIR postgres_ext.h PATH_SUFFIXES postgresql)
 mark_as_advanced(postgres_INCLUDE_DIR)
 
 find_library(pq_LIBRARY pq)
