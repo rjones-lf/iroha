@@ -18,14 +18,45 @@
 #include "consensus/yac/cluster_order.hpp"
 #include <gtest/gtest.h>
 
-TEST(ClusterOrderTest, ClusterOrderOnNext) {
+class ClusterOrderTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    p1.address = "1";
+    p2.address = "2";
+    peers_list = {p1, p2};
+  }
+
   iroha::model::Peer p1;
-  p1.address = "1";
   iroha::model::Peer p2;
-  p2.address = "2";
-  std::vector<iroha::model::Peer> peers = {p1, p2};
-  auto order = iroha::consensus::yac::ClusterOrdering::create(peers);
-  ASSERT_TRUE(order);
+
+  std::vector<iroha::model::Peer> peers_list;
+  std::vector<iroha::model::Peer> empty_peers_list;
+};
+
+/**
+ * @given nonempty peers list
+ * @when cluster order is created
+ * @then create function returns nonempty object
+ */
+TEST_F(ClusterOrderTest, GoodClusterOrderCreation) {
+  auto order = iroha::consensus::yac::ClusterOrdering::create(peers_list);
+  ASSERT_TRUE(order.has_value());
+}
+
+/**
+ * @given empty peers list
+ * @when cluster order is created
+ * @then create function returns empty object
+ */
+TEST_F(ClusterOrderTest, BadClusterOrderCreation) {
+  auto empty_order =
+      iroha::consensus::yac::ClusterOrdering::create(empty_peers_list);
+  ASSERT_FALSE(empty_order.has_value());
+}
+
+TEST_F(ClusterOrderTest, ClusterOrderOnNext) {
+  auto order = iroha::consensus::yac::ClusterOrdering::create(peers_list);
+  ASSERT_TRUE(order.has_value());
   ASSERT_EQ("1", order->currentLeader().address);
   ASSERT_EQ("2", order->switchToNext().currentLeader().address);
   ASSERT_EQ("1", order->switchToNext().currentLeader().address);
