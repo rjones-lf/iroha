@@ -27,7 +27,7 @@ namespace iroha {
 
       nonstd::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
         return query_->getLedgerPeers() | [](const auto &peers) {
-          return nonstd::make_optional<ClusterOrdering>(peers);
+          return ClusterOrdering::create(peers);
         };
       }
 

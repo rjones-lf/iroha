@@ -51,11 +51,14 @@ TEST_F(YacTest, YacWhenInit) {
 
   auto fake_delay_ = 100500;
 
+  auto order = ClusterOrdering::create(default_peers);
+  ASSERT_TRUE(order.has_value());
+
   auto yac_ = Yac::create(YacVoteStorage(),
                           std::make_shared<MockYacNetwork>(network_),
                           std::make_shared<MockYacCryptoProvider>(crypto_),
                           std::make_shared<MockTimer>(timer_),
-                          ClusterOrdering(default_peers),
+                          order.value(),
                           fake_delay_);
 
   network_.subscribe(yac_);
@@ -72,7 +75,11 @@ TEST_F(YacTest, YacWhenVoting) {
   EXPECT_CALL(*network, send_vote(_, _)).Times(default_peers.size());
 
   YacHash my_hash("my_proposal_hash", "my_block_hash");
-  yac->vote(my_hash, ClusterOrdering(default_peers));
+
+  auto order = ClusterOrdering::create(default_peers);
+  ASSERT_TRUE(order.has_value());
+
+  yac->vote(my_hash, order.value());
 }
 
 /**

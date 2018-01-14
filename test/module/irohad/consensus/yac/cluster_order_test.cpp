@@ -24,8 +24,9 @@ TEST(ClusterOrderTest, ClusterOrderOnNext) {
   iroha::model::Peer p2;
   p2.address = "2";
   std::vector<iroha::model::Peer> peers = {p1, p2};
-  iroha::consensus::yac::ClusterOrdering order(peers);
-  ASSERT_EQ("1", order.currentLeader().address);
-  ASSERT_EQ("2", order.switchToNext().currentLeader().address);
-  ASSERT_EQ("1", order.switchToNext().currentLeader().address);
+  auto order = iroha::consensus::yac::ClusterOrdering::create(peers);
+  ASSERT_TRUE(order);
+  ASSERT_EQ("1", order->currentLeader().address);
+  ASSERT_EQ("2", order->switchToNext().currentLeader().address);
+  ASSERT_EQ("1", order->switchToNext().currentLeader().address);
 }

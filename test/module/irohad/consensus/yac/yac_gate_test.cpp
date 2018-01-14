@@ -89,7 +89,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering({mk_peer("fake_node")})));
+      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
@@ -143,7 +143,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering({mk_peer("fake_node")})));
+      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
 
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
