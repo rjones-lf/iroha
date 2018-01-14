@@ -43,7 +43,7 @@ namespace iroha {
     };
   }
 
-  KeysManagerImpl::KeysManagerImpl(std::string account_name)
+  KeysManagerImpl::KeysManagerImpl(const std::string &account_name)
       : account_name_(std::move(account_name)),
         log_(logger::log("KeysManagerImpl")) {}
 
@@ -52,66 +52,51 @@ namespace iroha {
     auto sig = iroha::sign(
         iroha::sha3_256(test).to_string(), keypair.pubkey, keypair.privkey);
     if (not iroha::verify(
-        iroha::sha3_256(test).to_string(), keypair.pubkey, sig)) {
+            iroha::sha3_256(test).to_string(), keypair.pubkey, sig)) {
       log_->error("key validation failed");
       return false;
     }
     return true;
   }
 
-  nonstd::optional<iroha::keypair_t> KeysManagerImpl::loadKeys() {
-    // Try to load from local file
-    auto loadFile = [this](auto filename, auto &res) {
-      return [that = this, &filename, &res](auto keypair)
-          ->nonstd::optional<iroha::keypair_t> {
-        std::ifstream file(filename);
-        if (not file) {
-          that->log_->error("Cannot read '" + filename + "'");
-          return nonstd::nullopt;
-        }
-        file >> res;
-        return keypair;
-      };
-    };
-
-    std::string client_pub_key;
-    std::string client_priv_key;
-
-    //TODO 15/11/17 motxx - better way to suppress the evaluation?
-    auto blocking = nonstd::make_optional<iroha::keypair_t>()
-        | loadFile(account_name_ + ".pub", client_pub_key)
-        | loadFile(account_name_ + ".priv", client_priv_key);
-
-    return blocking
-               | deserializeKeypairField(&iroha::keypair_t::pubkey,
-                                         client_pub_key)
-               | deserializeKeypairField(&iroha::keypair_t::privkey,
-                                         client_priv_key)
-               | [this](auto keypair) -> nonstd::optional<iroha::keypair_t> {
-      return this->validate(keypair) ? nonstd::make_optional(keypair)
-                                     : nonstd::nullopt;
-    };
-  }
-
-  bool KeysManagerImpl::createKeys(std::string pass_phrase) {
-    auto seed = iroha::create_seed(pass_phrase);
-    auto key_pairs = iroha::create_keypair(seed);
-    std::ifstream pb_file(account_name_ + ".pub");
-    std::ifstream pr_file(account_name_ + ".priv");
-    if (pb_file && pr_file) {
+  bool KeysManagerImpl::loadFile(const std::string &filename,
+                                 std::string &res) {
+    std::ifstream file(filename);
+    if (not file) {
+      log_->error("Cannot read '" + filename + "'");
       return false;
     }
-    // Save pubkey to file
+    file >> res;
+    return true;
+  }
+
+  nonstd::optional<iroha::keypair_t> KeysManagerImpl::loadKeys() {
+    std::string pub_key;
+    std::string priv_key;
+
+    if (!loadFile(account_name_ + ".pub", pub_key)
+        || !loadFile(account_name_ + ".priv", priv_key))
+      return nonstd::nullopt;
+
+    return nonstd::make_optional<iroha::keypair_t>()
+        | deserializeKeypairField(&iroha::keypair_t::pubkey, pub_key)
+        | deserializeKeypairField(&iroha::keypair_t::privkey, priv_key) |
+        [this](auto keypair) {
+          return this->validate(keypair) ? nonstd::make_optional(keypair)
+                                         : nonstd::nullopt;
+        };
+  }
+
+  bool KeysManagerImpl::createKeys(const std::string &pass_phrase) {
+    auto seed = iroha::create_seed(pass_phrase);
+    auto key_pairs = iroha::create_keypair(seed);
+
     std::ofstream pub_file(account_name_ + ".pub");
-    if (not pub_file) {
+    std::ofstream priv_file(account_name_ + ".priv");
+    if (not pub_file or not priv_file) {
       return false;
     }
     pub_file << key_pairs.pubkey.to_hexstring();
-    // Save privkey to file
-    std::ofstream priv_file(account_name_ + ".priv");
-    if (not priv_file) {
-      return false;
-    }
     priv_file << key_pairs.privkey.to_hexstring();
     return true;
   }

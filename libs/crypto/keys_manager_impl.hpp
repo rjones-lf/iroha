@@ -26,14 +26,13 @@
 namespace iroha {
   class KeysManagerImpl : public KeysManager {
    public:
-    explicit KeysManagerImpl(std::string account_name);
+    explicit KeysManagerImpl(const std::string &account_name);
 
     nonstd::optional<iroha::keypair_t> loadKeys() override;
 
-    bool createKeys(std::string pass_phrase) override;
+    bool createKeys(const std::string &pass_phrase) override;
 
    private:
-
     /**
      * Check if keypair provides valid signature
      * @param keypair - keypair for validation
@@ -41,8 +40,16 @@ namespace iroha {
      */
     bool validate(const iroha::keypair_t &keypair) const;
 
+    /**
+     * Tries to load file to the resulting string
+     * @param filename file to read from
+     * @param res is where result is stored
+     * @return true, if no problem with file reading
+     */
+    bool loadFile(const std::string &filename, std::string &res);
+
     std::string account_name_;
     logger::Logger log_;
   };
-}  // namespace iroha_cli
+}  // namespace iroha
 #endif  // IROHA_CLI_KEYS_MANAGER_IMPL_HPP
