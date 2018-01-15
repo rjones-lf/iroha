@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <string>
+#include <gmock/gmock.h>
 #include <utility>
-#include "framework/test_subscriber.hpp"
+#include <string>
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "framework/test_subscriber.hpp"
 
-#include <iostream>
 #include <vector>
+#include <iostream>
 
 using ::testing::Return;
 using ::testing::_;

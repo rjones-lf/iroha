@@ -17,9 +17,10 @@
 
 #include <gtest/gtest.h>
 #include <nonstd/optional.hpp>
+
 #include "consensus/yac/storage/yac_vote_storage.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "logger/logger.hpp"
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
 using namespace iroha::consensus::yac;
 
@@ -36,14 +37,11 @@ class YacBlockStorageTest : public ::testing::Test {
     hash = YacHash("proposal", "commit");
     number_of_peers = 4;
     storage = YacBlockStorage(hash, number_of_peers);
-    valid_votes = {
-        create_vote(hash, "one"),
-        create_vote(hash, "two"),
-        create_vote(hash, "three"),
-        create_vote(hash, "four")
-    };
+    valid_votes = {create_vote(hash, "one"),
+                   create_vote(hash, "two"),
+                   create_vote(hash, "three"),
+                   create_vote(hash, "four")};
   }
-
 };
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenNormalDataInput) {
@@ -57,15 +55,11 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNormalDataInput) {
 
   auto insert_3 = storage.insert(valid_votes.at(2));
   ASSERT_NE(nonstd::nullopt, insert_3);
-  ASSERT_NE(nonstd::nullopt, insert_3->commit);
-  ASSERT_EQ(3, insert_3->commit->votes.size());
-  ASSERT_EQ(nonstd::nullopt, insert_3->reject);
+  ASSERT_EQ(3, boost::get<CommitMessage>(*insert_3).votes.size());
 
   auto insert_4 = storage.insert(valid_votes.at(3));
   ASSERT_NE(nonstd::nullopt, insert_4);
-  ASSERT_NE(nonstd::nullopt, insert_4->commit);
-  ASSERT_EQ(4, insert_4->commit->votes.size());
-  ASSERT_EQ(nonstd::nullopt, insert_4->reject);
+  ASSERT_EQ(4, boost::get<CommitMessage>(*insert_4).votes.size());
 }
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
@@ -74,11 +68,10 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
   auto insert_1 = storage.insert(valid_votes.at(0));
   ASSERT_EQ(nonstd::nullopt, insert_1);
 
-  decltype(YacBlockStorageTest::valid_votes)
-      for_insert(valid_votes.begin() + 1, valid_votes.end());
+  decltype(YacBlockStorageTest::valid_votes) for_insert(valid_votes.begin() + 1,
+                                                        valid_votes.end());
   auto insert_commit = storage.insert(for_insert);
-  ASSERT_EQ(4, insert_commit->commit->votes.size());
-  ASSERT_EQ(nonstd::nullopt, insert_commit->reject);
+  ASSERT_EQ(4, boost::get<CommitMessage>(*insert_commit).votes.size());
 }
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenGetVotes) {
@@ -89,11 +82,12 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenGetVotes) {
 }
 
 TEST_F(YacBlockStorageTest, YacBlockStorageWhenIsContains) {
-  log_->info("-----------| Init storage => "
-                 "verify ok and fail cases of contains |-----------");
+  log_->info(
+      "-----------| Init storage => "
+      "verify ok and fail cases of contains |-----------");
 
-  decltype(YacBlockStorageTest::valid_votes)
-      for_insert(valid_votes.begin(), valid_votes.begin() + 2);
+  decltype(YacBlockStorageTest::valid_votes) for_insert(
+      valid_votes.begin(), valid_votes.begin() + 2);
 
   storage.insert(for_insert);
 
