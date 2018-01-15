@@ -31,8 +31,10 @@ class BlockQueryTest : public AmetsuchiTest {
   void SetUp() override {
     AmetsuchiTest::SetUp();
 
-    file = FlatFile::create(block_store_path);
-    ASSERT_TRUE(file);
+    auto tmp = FlatFile::create(block_store_path);
+    ASSERT_TRUE(tmp);
+    file = std::move(*tmp);
+
     index = std::make_shared<RedisBlockIndex>(client);
     blocks = std::make_shared<RedisBlockQuery>(client, *file);
 

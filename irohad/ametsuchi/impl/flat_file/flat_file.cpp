@@ -27,11 +27,10 @@
 
 namespace iroha {
   namespace ametsuchi {
-    const uint32_t DIGIT_CAPACITY = 16;
 
     std::string id_to_name(Identifier id) {
       std::ostringstream os;
-      os << std::setw(DIGIT_CAPACITY) << std::setfill('0') << id;
+      os << std::setw(FlatFile::DIGIT_CAPACITY) << std::setfill('0') << id;
       return os.str();
     }
 

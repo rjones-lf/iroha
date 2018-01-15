@@ -19,11 +19,11 @@
 #define IROHA_FLAT_FILE_HPP
 
 #include <atomic>
+#include <boost/optional.hpp>
 #include <memory>
 #include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
-#include <boost/optional.hpp>
 
 #include "logger/logger.hpp"
 
@@ -36,17 +36,17 @@ namespace iroha {
     using Identifier = uint32_t;
 
     /**
-    * Convert id to a string representation. The string representation is
-    * always DIGIT_CAPACITY-character width regardless of the value of `id`. If
-    * the length of the string representation of `id` is less than
-    * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
-    *
-    * For example, if str_rep(`id`) is "123", then the returned value is
-    * "0000000000000123".
-    *
-    * @param id - for conversion
-    * @return string repr of identifier
-    */
+     * Convert id to a string representation. The string representation is
+     * always DIGIT_CAPACITY-character width regardless of the value of `id`. If
+     * the length of the string representation of `id` is less than
+     * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
+     *
+     * For example, if str_rep(`id`) is "123", then the returned value is
+     * "0000000000000123".
+     *
+     * @param id - for conversion
+     * @return string repr of identifier
+     */
     std::string id_to_name(Identifier id);
 
     /**
@@ -71,12 +71,15 @@ namespace iroha {
      public:
       // ----------| public API |----------
 
+      static const uint32_t DIGIT_CAPACITY = 16;
+
       /**
        * Create storage in paths
        * @param path - target path for creating
        * @return created storage
        */
-      static nonstd::optional<std::unique_ptr<FlatFile>> create(const std::string &path);
+      static nonstd::optional<std::unique_ptr<FlatFile>> create(
+          const std::string &path);
 
       /**
        * Add entity with binary data
