@@ -71,7 +71,7 @@ namespace iroha {
           auto block_state = iter->insert(msg);
 
           if (block_state.has_value() and
-              block_state->commit.has_value()) {
+              block_state->result.type() == typeid(CommitMessage)) {
             // supermajority on block achieved
             current_state_ = std::move(block_state);
           } else {

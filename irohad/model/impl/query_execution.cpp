@@ -29,6 +29,7 @@
 #include "model/queries/responses/transactions_response.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <rxcpp/rx-observable.hpp>
 #include <utility>
 
 using namespace iroha::model;
@@ -161,6 +162,16 @@ bool QueryProcessingFactory::validate(
                             can_get_domain_acc_ast_txs);
 }
 
+bool QueryProcessingFactory::validate(
+  const model::GetTransactions& query) {
+  // TODO: check signatures
+  return
+    checkAccountRolePermission(query.creator_account_id, *_wsvQuery,
+                               can_get_my_txs) or
+    checkAccountRolePermission(query.creator_account_id, *_wsvQuery,
+                               can_get_all_txs);
+}
+
 std::shared_ptr<QueryResponse>
 QueryProcessingFactory::executeGetAssetInfo(const model::GetAssetInfo &query) {
   auto ast = _wsvQuery->getAsset(query.asset_id);
@@ -281,6 +292,22 @@ QueryProcessingFactory::executeGetAccountTransactions(
   return std::make_shared<TransactionsResponse>(response);
 }
 
+std::shared_ptr<iroha::model::QueryResponse>
+iroha::model::QueryProcessingFactory::executeGetTransactions(
+    const model::GetTransactions &query) {
+  auto txs = _blockQuery->getTransactions(query.tx_hashes);
+  std::vector<iroha::model::Transaction> transactions;
+  txs.subscribe([&transactions](auto const &tx_opt) {
+    if (tx_opt) {
+      transactions.push_back(*tx_opt);
+    }
+  });
+  iroha::model::TransactionsResponse response;
+  response.query_hash = iroha::hash(query);
+  response.transactions = rxcpp::observable<>::iterate(transactions);
+  return std::make_shared<iroha::model::TransactionsResponse>(response);
+}
+
 std::shared_ptr<QueryResponse>
 QueryProcessingFactory::executeGetSignatories(
     const model::GetSignatories &query) {
@@ -368,6 +395,16 @@ QueryProcessingFactory::execute(
       return std::make_shared<ErrorResponse>(response);
     }
     return executeGetAccountAssetTransactions(*qry);
+  }
+  if (instanceof <GetTransactions>(query.get())) {
+    auto qry = std::static_pointer_cast<const GetTransactions>(query);
+    if (not validate(*qry)) {
+      ErrorResponse response;
+      response.query_hash = iroha::hash(*qry);
+      response.reason = ErrorResponse::STATEFUL_INVALID;
+      return std::make_shared<ErrorResponse>(response);
+    }
+    return executeGetTransactions(*qry);
   }
   if (instanceof <GetRoles>(query.get())) {
     auto qry = std::static_pointer_cast<const GetRoles>(query);

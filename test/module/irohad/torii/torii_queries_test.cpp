@@ -43,6 +43,7 @@ using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
+// TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {

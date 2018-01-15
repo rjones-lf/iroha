@@ -20,9 +20,10 @@
 
 #include <utility>
 
-#include "consensus/yac/storage/yac_common.hpp"
+#include <boost/variant.hpp>
 #include "consensus/yac/messages.hpp"
-#include <nonstd/optional.hpp>
+#include "consensus/yac/storage/yac_common.hpp"
+//#include <nonstd/optional.hpp>
 
 namespace iroha {
   namespace consensus {
@@ -33,30 +34,25 @@ namespace iroha {
        * Guarantee that at least one optional will be empty
        */
       struct Answer {
-        explicit Answer(CommitMessage cmt){
-          commit = std::move(cmt);
+        explicit Answer(CommitMessage cmt) {
+          result = std::move(cmt);
         }
 
-        explicit Answer(RejectMessage rjt){
-          reject = std::move(rjt);
+        explicit Answer(RejectMessage rjt) {
+          result = std::move(rjt);
         }
 
         Answer() = delete;
 
         /**
-         * Result contains commit if it available
+         * Result contains commit or reject.
          */
-        nonstd::optional<CommitMessage> commit;
-
-        /**
-         * Result contains reject if it available
-         */
-        nonstd::optional<RejectMessage> reject;
+        boost::variant<CommitMessage, RejectMessage> result;
 
         bool operator==(const Answer &rhs) const;
       };
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_STORAGE_RESULT_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_STORAGE_RESULT_HPP

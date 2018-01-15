@@ -22,7 +22,7 @@ if (NOT tbb_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND make tbb_build_prefix=build
+      BUILD_COMMAND $(MAKE) tbb_build_prefix=build
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/01org_tbb/build/build_debug/${CMAKE_SHARED_LIBRARY_PREFIX}tbb_debug${CMAKE_SHARED_LIBRARY_SUFFIX}
                        ${EP_PREFIX}/src/01org_tbb/build/build_release/${CMAKE_SHARED_LIBRARY_PREFIX}tbb${CMAKE_SHARED_LIBRARY_SUFFIX}
       CONFIGURE_COMMAND "" # remove configure step

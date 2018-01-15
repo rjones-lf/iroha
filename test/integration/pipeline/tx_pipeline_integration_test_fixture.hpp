@@ -62,6 +62,10 @@ class TestIrohad : public Irohad {
     return command_service;
   }
 
+  auto &getQueryService() {
+    return query_service;
+  }
+
   auto &getPeerCommunicationService() {
     return pcs;
   }

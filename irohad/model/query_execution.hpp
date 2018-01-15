@@ -75,6 +75,8 @@ namespace iroha {
 
       bool validate(const model::GetAccountDetail& query);
 
+      bool validate(const model::GetTransactions& query);
+
       std::shared_ptr<iroha::model::QueryResponse> executeGetAssetInfo(
           const model::GetAssetInfo& query);
 
@@ -102,6 +104,9 @@ namespace iroha {
 
       std::shared_ptr<iroha::model::QueryResponse>
       executeGetAccountTransactions(const model::GetAccountTransactions& query);
+
+      std::shared_ptr<iroha::model::QueryResponse>
+      executeGetTransactions(const model::GetTransactions& query);
 
       std::shared_ptr<ametsuchi::WsvQuery> _wsvQuery;
       std::shared_ptr<ametsuchi::BlockQuery> _blockQuery;
