@@ -22,11 +22,12 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
+
 #include "framework/test_subscriber.hpp"
 #include "yac_mocks.hpp"
-#include <string>
 
 using ::testing::Return;
 using ::testing::_;
@@ -109,7 +110,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   cout << "----------|Start => receive supermajority of votes"
-      "|----------"
+          "|----------"
        << endl;
 
   // verify that commit not emitted
@@ -159,7 +160,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
   auto committed_peer = default_peers.at(0);
-  auto msg = CommitMessage();
+  auto msg = CommitMessage(std::vector<VoteMessage>{});
   for (size_t i = 0; i < default_peers.size(); ++i) {
     msg.votes.push_back(create_vote(propagated_hash, std::to_string(i)));
   }
