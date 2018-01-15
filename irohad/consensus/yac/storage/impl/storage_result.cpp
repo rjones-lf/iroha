@@ -22,9 +22,8 @@ namespace iroha {
     namespace yac {
 
       bool Answer::operator==(const Answer &rhs) const {
-        return this->commit == rhs.commit and
-            this->reject == rhs.reject;
+        return this->result == rhs.result;
       }
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
