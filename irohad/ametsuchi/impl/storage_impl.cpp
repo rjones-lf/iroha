@@ -178,7 +178,7 @@ DROP TABLE IF EXISTS role;
       log_->info("Start storage creation");
 
       auto block_store = FlatFile::create(block_store_dir);
-      if (!block_store) {
+      if (not block_store) {
         log_->error("Cannot create block store in {}", block_store_dir);
         return nonstd::nullopt;
       }
@@ -209,7 +209,7 @@ DROP TABLE IF EXISTS role;
       log_->info("transaction to PostgreSQL initialized");
 
       return nonstd::make_optional<ConnectionContext>(
-          std::move(block_store),
+          std::move(*block_store),
           std::move(index),
           std::move(postgres_connection),
           std::move(wsv_transaction));

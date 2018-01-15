@@ -23,6 +23,7 @@
 #include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
+#include <boost/optional.hpp>
 
 #include "logger/logger.hpp"
 
@@ -75,7 +76,7 @@ namespace iroha {
        * @param path - target path for creating
        * @return created storage
        */
-      static std::unique_ptr<FlatFile> create(const std::string &path);
+      static nonstd::optional<std::unique_ptr<FlatFile>> create(const std::string &path);
 
       /**
        * Add entity with binary data

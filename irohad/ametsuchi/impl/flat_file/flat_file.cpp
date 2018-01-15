@@ -77,14 +77,14 @@ using namespace iroha::ametsuchi;
 
 // ----------| public API |----------
 
-std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
+nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
   boost::system::error_code err;
   if (not boost::filesystem::is_directory(path, err)
       and not boost::filesystem::create_directory(path, err)) {
     log_->error("Cannot create storage dir: {}\n{}", path, err.message());
-    return nullptr;
+    return nonstd::nullopt;
   }
 
   auto res = check_consistency(path);
@@ -92,6 +92,8 @@ std::unique_ptr<FlatFile> FlatFile::create(const std::string &path) {
 }
 
 bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
+  // TODO(x3medima17): Change bool to generic Result return type
+
   if (id != current_id_ + 1) {
     log_->warn("Cannot append non-consecutive block");
     return false;
