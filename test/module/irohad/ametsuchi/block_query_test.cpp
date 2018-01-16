@@ -283,7 +283,7 @@ TEST_F(BlockQueryTest, GetBlocksFrom1) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getBlocksFrom(1), this->blocks_total);
   size_t counter = 1;
-  wrapper.subscribe([this, &counter](Block b) {
+  wrapper.subscribe([&counter](Block b) {
     // wrapper returns blocks 1 and 2
     ASSERT_EQ(b.height, counter++)
         << "block height: " << b.height << "counter: " << counter;
@@ -354,7 +354,7 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
       blocks->getTopBlocks(blocks_n), blocks_n);
 
   size_t counter = this->blocks_total - blocks_n + 1;
-  wrapper.subscribe([this, &counter](Block b) {
+  wrapper.subscribe([&counter](Block b) {
     ASSERT_EQ(b.height, counter++);
   });
 
