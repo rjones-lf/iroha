@@ -17,11 +17,11 @@
 
 #include <algorithm>
 #include <numeric>
+
 #include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 using namespace logger;
-
 
 namespace iroha {
   namespace consensus {
@@ -31,22 +31,22 @@ namespace iroha {
 
       auto YacProposalStorage::findStore(ProposalHash proposal_hash,
                                          BlockHash block_hash) {
-
         // find exist
         auto iter =
-            std::find_if(block_storages_.begin(), block_storages_.end(),
+            std::find_if(block_storages_.begin(),
+                         block_storages_.end(),
                          [&proposal_hash, &block_hash](auto block_storage) {
                            auto yac_hash = block_storage.getStorageHash();
-                           return yac_hash.proposal_hash == proposal_hash and
-                               yac_hash.block_hash == block_hash;
+                           return yac_hash.proposal_hash == proposal_hash
+                               and yac_hash.block_hash == block_hash;
                          });
         if (iter != block_storages_.end()) {
           return iter;
         }
         // insert and return new
-        return block_storages_
-            .emplace(block_storages_.end(),
-                     YacHash(proposal_hash, block_hash), peers_in_round_);
+        return block_storages_.emplace(block_storages_.end(),
+                                       YacHash(proposal_hash, block_hash),
+                                       peers_in_round_);
       }
 
       // --------| public api |--------
@@ -70,8 +70,8 @@ namespace iroha {
           auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
           auto block_state = iter->insert(msg);
 
-          if (block_state.has_value() and
-              block_state->commit.has_value()) {
+          if (block_state.has_value()
+              and block_state->type() == typeid(CommitMessage)) {
             // supermajority on block achieved
             current_state_ = std::move(block_state);
           } else {
@@ -86,12 +86,11 @@ namespace iroha {
         return getState();
       }
 
-      nonstd::optional<Answer> YacProposalStorage::insert(std::vector<
-          VoteMessage> messages) {
-        std::for_each(messages.begin(), messages.end(),
-                      [this](auto vote) {
-                        this->insert(std::move(vote));
-                      });
+      nonstd::optional<Answer> YacProposalStorage::insert(
+          std::vector<VoteMessage> messages) {
+        std::for_each(messages.begin(), messages.end(), [this](auto vote) {
+          this->insert(std::move(vote));
+        });
         return getState();
       }
       ProposalHash YacProposalStorage::getProposalHash() {
@@ -105,8 +104,8 @@ namespace iroha {
       // --------| private api |--------
 
       bool YacProposalStorage::shouldInsert(const VoteMessage &msg) {
-        return checkProposalHash(msg.hash.proposal_hash) and
-            checkPeerUniqueness(msg);
+        return checkProposalHash(msg.hash.proposal_hash)
+            and checkPeerUniqueness(msg);
       }
 
       bool YacProposalStorage::checkProposalHash(ProposalHash vote_hash) {
@@ -114,7 +113,8 @@ namespace iroha {
       }
 
       bool YacProposalStorage::checkPeerUniqueness(const VoteMessage &msg) {
-        return std::all_of(block_storages_.begin(), block_storages_.end(),
+        return std::all_of(block_storages_.begin(),
+                           block_storages_.end(),
                            [&msg](YacBlockStorage &storage) {
                              if (storage.getStorageHash() != msg.hash) {
                                return true;
@@ -124,25 +124,29 @@ namespace iroha {
       }
 
       nonstd::optional<Answer> YacProposalStorage::findRejectProof() {
-        auto max_vote =
-            std::max_element(block_storages_.begin(), block_storages_.end(),
-                             [](auto &left, auto &right) {
-                               return left.getNumberOfVotes() <
-                                   right.getNumberOfVotes();
-                             })->getNumberOfVotes();
+        auto max_vote = std::max_element(block_storages_.begin(),
+                                         block_storages_.end(),
+                                         [](auto &left, auto &right) {
+                                           return left.getNumberOfVotes()
+                                               < right.getNumberOfVotes();
+                                         })
+                            ->getNumberOfVotes();
 
         auto all_votes =
-            std::accumulate(block_storages_.begin(), block_storages_.end(),
-                            0ull, [](auto &acc, auto &storage) {
-                  return acc + storage.getNumberOfVotes();
-                });
+            std::accumulate(block_storages_.begin(),
+                            block_storages_.end(),
+                            0ull,
+                            [](auto &acc, auto &storage) {
+                              return acc + storage.getNumberOfVotes();
+                            });
 
         auto is_reject = hasReject(max_vote, all_votes, peers_in_round_);
 
         if (is_reject) {
           std::vector<VoteMessage> result;
           result.reserve(all_votes);
-          std::for_each(block_storages_.begin(), block_storages_.end(),
+          std::for_each(block_storages_.begin(),
+                        block_storages_.end(),
                         [&result](auto &storage) {
                           auto votes_from_block_storage = storage.getVotes();
                           std::move(votes_from_block_storage.begin(),
@@ -156,6 +160,6 @@ namespace iroha {
         return nonstd::nullopt;
       }
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha

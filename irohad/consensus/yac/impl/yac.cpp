@@ -17,6 +17,7 @@
 
 #include <utility>
 
+#include "common/inplace_visitor.hpp"
 #include "consensus/yac/yac.hpp"
 
 namespace iroha {
@@ -136,7 +137,9 @@ namespace iroha {
         }
       }
 
-      void Yac::closeRound() { timer_->deny(); }
+      void Yac::closeRound() {
+        timer_->deny();
+      }
 
       nonstd::optional<model::Peer> Yac::findPeer(const VoteMessage &vote) {
         auto peers = cluster_order_.getPeers();
@@ -157,15 +160,15 @@ namespace iroha {
           auto proposal_hash = getProposalHash(commit.votes).value();
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
-
           if (not already_processed) {
-            answer.commit | [&](const auto &commit) {
-              notifier_.get_subscriber().on_next(commit);
-            };
-            answer.reject | [&](const auto &reject) {
-              log_->warn("reject case");
-              // TODO 14/08/17 Muratov: work on reject case IR-497
-            };
+            visit_in_place(answer,
+                           [&](const CommitMessage &commit) {
+                             notifier_.get_subscriber().on_next(commit);
+                           },
+                           [&](const RejectMessage &reject) {
+                             log_->warn("reject case");
+                             // TODO 14/08/17 Muratov: work on reject case IR-497
+                           });
             vote_storage_.markAsProcessedState(proposal_hash);
           }
           this->closeRound();
@@ -199,37 +202,33 @@ namespace iroha {
               vote_storage_.getProcessingState(proposal_hash);
 
           if (not already_processed) {
-            answer.commit | [&](const auto &commit) {
-              // propagate for all
-
-              log_->info("Propagate commit {} to whole network",
-                         vote.hash.block_hash);
-
-              this->propagateCommit(commit);
-            };
-            answer.reject | [&](const auto &reject) {
-              log_->info("Reject case on hash {} achieved", proposal_hash);
-
-              // propagate reject for all
-              this->propagateReject(reject);
-            };
+            visit_in_place(answer,
+                           [&](const CommitMessage &commit) {
+                             // propagate for all
+                             log_->info("Propagate commit {} to whole network",
+                                        vote.hash.block_hash);
+                             this->propagateCommit(commit);
+                           },
+                           [&](const RejectMessage &reject) {
+                             // propagate reject for all
+                             log_->info("Reject case on hash {} achieved",
+                                        proposal_hash);
+                             this->propagateReject(reject);
+                           });
           } else {
             from | [&](const auto &from) {
-              answer.commit | [&](const auto &commit) {
-                // propagate directly
-
-                log_->info("Propagate commit {} directly to {}",
-                           vote.hash.block_hash,
-                           from.address);
-
-                this->propagateCommitDirectly(from, commit);
-              };
-              answer.reject | [&](const auto &reject) {
-                log_->info("Reject case on hash {} achieved", proposal_hash);
-
-                // propagate directly
-                this->propagateRejectDirectly(from, reject);
-              };
+              visit_in_place(answer,
+                             [&](const CommitMessage &commit) {
+                               log_->info("Propagate commit {} directly to {}",
+                                          vote.hash.block_hash,
+                                          from.address);
+                               this->propagateCommitDirectly(from, commit);
+                             },
+                             [&](const RejectMessage &reject) {
+                               log_->info("Reject case on hash {} achieved",
+                                          proposal_hash);
+                               this->propagateRejectDirectly(from, reject);
+                             });
             };
           }
         };
