@@ -70,8 +70,9 @@ namespace iroha {
           auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
           auto block_state = iter->insert(msg);
 
-          if (block_state.has_value()
-              and block_state->type() == typeid(CommitMessage)) {
+          // Single BlockStorage always returns CommitMessage because it
+          // aggregates votes for a single hash.
+          if (block_state.has_value()) {
             // supermajority on block achieved
             current_state_ = std::move(block_state);
           } else {

@@ -48,8 +48,6 @@ namespace iroha {
        * All nodes deals on some solution
        */
       struct CommitMessage {
-        CommitMessage() = delete;
-
         explicit CommitMessage(std::vector<VoteMessage> votes)
             : votes(std::move(votes)) {}
 
@@ -65,8 +63,6 @@ namespace iroha {
        * to collect supermajority for any block
        */
       struct RejectMessage {
-        RejectMessage() = delete;
-
         explicit RejectMessage(std::vector<VoteMessage> votes)
             : votes(std::move(votes)) {}
 
