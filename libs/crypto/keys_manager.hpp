@@ -19,12 +19,15 @@
 #define IROHA_CLI_KEYS_MANAGER_HPP
 
 #include <nonstd/optional.hpp>
+
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
 namespace iroha {
 
   class KeysManager {
    public:
+    virtual ~KeysManager() = default;
+
     /**
      * Load keys associated with account
      * Validate loaded keypair by signing and verifying signature
