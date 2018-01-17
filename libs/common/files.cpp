@@ -21,16 +21,31 @@
 
 void iroha::remove_all(const std::string &dump_dir) {
   auto log = logger::log("common::remove_all");
-  try {
-    if (not boost::filesystem::exists(dump_dir)) {
-      log->error("Directory does not exist {}", dump_dir);
-    } else if (not boost::filesystem::is_directory(dump_dir)) {
-      log->error("{} is not a directory", dump_dir);
-    } else {
-      for (auto entry : boost::filesystem::directory_iterator(dump_dir))
-        boost::filesystem::remove_all(entry.path());
-    }
-  } catch (const boost::filesystem::filesystem_error &error) {
-    log->error(error.what());
+  boost::system::error_code error_code;
+
+  bool exists = boost::filesystem::exists(dump_dir, error_code);
+  if (error_code != boost::system::errc::success) {
+    log->error(error_code.message());
+    return;
+  }
+  if (not exists) {
+    log->error("Directory does not exist {}", dump_dir);
+    return;
+  }
+
+  bool is_dir = boost::filesystem::is_directory(dump_dir, error_code);
+  if (error_code != boost::system::errc::success) {
+    log->error(error_code.message());
+    return;
+  }
+  if (not is_dir) {
+    log->error("{} is not a directory", dump_dir);
+    return;
+  }
+
+  for (auto entry : boost::filesystem::directory_iterator(dump_dir)) {
+    boost::filesystem::remove_all(entry.path(), error_code);
+    if (error_code != boost::system::errc::success)
+      log->error(error_code.message());
   }
 }
