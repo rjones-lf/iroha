@@ -14,32 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <dirent.h>
-#include "logger/logger.hpp"
+#include <boost/filesystem.hpp>
 
 #include "common/files.hpp"
+#include "logger/logger.hpp"
 
 void iroha::remove_all(const std::string &dump_dir) {
   auto log = logger::log("common::remove_all");
-  if (!dump_dir.empty()) {
-    // Directory iterator:
-    struct dirent **namelist;
-    auto status = scandir(dump_dir.c_str(), &namelist, nullptr, alphasort);
-    if (status < 0) {
-      log->error("Internal error on scanning folder {}", dump_dir);
+  try {
+    if (not boost::filesystem::exists(dump_dir)) {
+      log->error("Directory does not exist {}", dump_dir);
+    } else if (not boost::filesystem::is_directory(dump_dir)) {
+      log->error("{} is not a directory", dump_dir);
     } else {
-      uint n = status;
-      uint i = 1;
-      while (++i < n) {
-        if (std::remove((dump_dir + "/" + namelist[i]->d_name).c_str())) {
-          log->error("Error on deletion file {}", namelist[i]->d_name);
-        }
-      }
-      for (uint j = 0; j < n; ++j) {
-        free(namelist[j]);
-      }
-      free(namelist);
+      for (auto entry : boost::filesystem::directory_iterator(dump_dir))
+        boost::filesystem::remove_all(entry.path());
     }
+  } catch (const boost::filesystem::filesystem_error &error) {
+    log->error(error.what());
   }
 }
