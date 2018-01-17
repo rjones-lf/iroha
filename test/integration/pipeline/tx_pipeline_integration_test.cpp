@@ -53,9 +53,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
     ASSERT_TRUE(irohad->storage);
 
     // insert genesis block
-    iroha::main::BlockInserter inserter(irohad->storage);
-
-    inserter.applyToLedger({genesis_block});
+    irohad->storage->insertBlock(genesis_block);
 
     // initialize irohad
     irohad->init();

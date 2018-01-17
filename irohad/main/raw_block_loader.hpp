@@ -35,9 +35,9 @@ namespace iroha {
      * This class will be useful for creating test environment
      * and testing pipeline.
      */
-    class BlockInserter {
+    class BlockLoader {
      public:
-      explicit BlockInserter(std::shared_ptr<ametsuchi::MutableFactory> factory);
+      BlockLoader() = default;
 
       /**
        * Parse block from file
@@ -45,12 +45,6 @@ namespace iroha {
        * @return object if operation done successfully, nullopt otherwise
        */
       nonstd::optional<model::Block> parseBlock(std::string data);
-
-      /**
-       * Apply block to current state of ledger
-       * @param blocks - list of blocks for insertion
-       */
-      void applyToLedger(std::vector<model::Block> blocks);
 
       /**
        * Additional method

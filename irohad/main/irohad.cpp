@@ -22,7 +22,7 @@
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
-#include "main/raw_block_insertion.hpp"
+#include "main/raw_block_loader.hpp"
 
 #include "logger/logger.hpp"
 
@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
   }
 
   if (not FLAGS_genesis_block.empty()) {
-    iroha::main::BlockInserter inserter(irohad.storage);
-    auto file = inserter.loadFile(FLAGS_genesis_block);
-    auto block = inserter.parseBlock(file.value());
+    iroha::main::BlockLoader loader;
+    auto file = loader.loadFile(FLAGS_genesis_block);
+    auto block = loader.parseBlock(file.value());
 
     if (not block.has_value()) {
       log->error("Failed to parse genesis block");
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
 
     log->info("Block is parsed");
 
-    inserter.applyToLedger({block.value()});
+    irohad.storage->insertBlock(block.value());
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());
   }

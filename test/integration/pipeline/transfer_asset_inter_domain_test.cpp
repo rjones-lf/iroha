@@ -73,7 +73,7 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
                                           keypair);
     ASSERT_TRUE(irohad->storage);
 
-    iroha::main::BlockInserter(irohad->storage).applyToLedger({genesis_block});
+    irohad->storage->insertBlock(genesis_block);
     irohad->init();
     irohad->run();
   }

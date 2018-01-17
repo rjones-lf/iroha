@@ -23,7 +23,7 @@
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
 #include "main/application.hpp"
-#include "main/raw_block_insertion.hpp"
+#include "main/raw_block_loader.hpp"
 #include "model/generators/block_generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 

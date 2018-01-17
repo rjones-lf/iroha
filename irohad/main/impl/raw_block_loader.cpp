@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "main/raw_block_insertion.hpp"
+#include "main/raw_block_loader.hpp"
 #include "model/converters/json_common.hpp"
 #include <fstream>
 #include <utility>
@@ -24,12 +24,7 @@
 namespace iroha {
   namespace main {
 
-    BlockInserter::BlockInserter(std::shared_ptr<ametsuchi::MutableFactory> factory)
-        : factory_(std::move(factory)) {
-      log_ = logger::log("BlockInserter");
-    }
-
-    nonstd::optional<model::Block> BlockInserter::parseBlock(std::string data) {
+    nonstd::optional<model::Block> BlockLoader::parseBlock(std::string data) {
       auto document = model::converters::stringToJson(data);
       if (not document.has_value()) {
         log_->error("Blob parsing failed");
@@ -38,16 +33,7 @@ namespace iroha {
       return block_factory_.deserialize(document.value());
     }
 
-    void BlockInserter::applyToLedger(std::vector<model::Block> blocks) {
-      auto storage = factory_->createMutableStorage();
-      for (auto &&block : blocks) {
-        storage->apply(block, [](const auto &current_block, auto &query,
-                                 const auto &top_hash) { return true; });
-      }
-      factory_->commit(std::move(storage));
-    }
-
-    nonstd::optional<std::string> BlockInserter::loadFile(std::string path) {
+    nonstd::optional<std::string> BlockLoader::loadFile(std::string path) {
       std::ifstream file(path);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
