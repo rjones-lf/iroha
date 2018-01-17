@@ -28,7 +28,7 @@ using namespace iroha::torii;
 using namespace iroha::model::converters;
 using namespace iroha::consensus::yac;
 
-/*
+/**
  * Configuring iroha daemon
  */
 Irohad::Irohad(const std::string &block_store_dir,
@@ -79,7 +79,7 @@ Irohad::~Irohad() {
   }
 }
 
-/*
+/**
  * Initializing iroha daemon
  */
 void Irohad::init() {
@@ -99,14 +99,14 @@ void Irohad::init() {
   initQueryService();
 }
 
-/*
+/**
  * Dropping iroha daemon storage
  */
 void Irohad::dropStorage() {
   storage->dropStorage();
 }
 
-/*
+/**
  * Initializing iroha daemon storage
  */
 void Irohad::initStorage() {
@@ -116,7 +116,7 @@ void Irohad::initStorage() {
   log_->info("[Init] => storage", logger::logBool(storage));
 }
 
-/*
+/**
  * Creating transaction, query and query response factories
  */
 void Irohad::initProtoFactories() {
@@ -127,7 +127,7 @@ void Irohad::initProtoFactories() {
   log_->info("[Init] => converters");
 }
 
-/*
+/**
  * Initializing peer query interface
  */
 void Irohad::initPeerQuery() {
@@ -136,7 +136,7 @@ void Irohad::initPeerQuery() {
   log_->info("[Init] => peer query");
 }
 
-/*
+/**
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
@@ -145,7 +145,7 @@ void Irohad::initCryptoProvider() {
   log_->info("[Init] => crypto provider");
 }
 
-/*
+/**
  * Initializing validators
  */
 void Irohad::initValidators() {
@@ -157,7 +157,7 @@ void Irohad::initValidators() {
   log_->info("[Init] => validators");
 }
 
-/*
+/**
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
@@ -167,7 +167,7 @@ void Irohad::initOrderingGate() {
              logger::logBool(ordering_gate));
 }
 
-/*
+/**
  * Initializing iroha proposal creator and block creator
  */
 void Irohad::initSimulator() {
@@ -180,7 +180,7 @@ void Irohad::initSimulator() {
   log_->info("[Init] => init simulator");
 }
 
-/*
+/**
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
@@ -190,7 +190,7 @@ void Irohad::initBlockLoader() {
   log_->info("[Init] => block loader");
 }
 
-/*
+/**
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
@@ -200,7 +200,7 @@ void Irohad::initConsensusGate() {
   log_->info("[Init] => consensus gate");
 }
 
-/*
+/**
  * Initializing synchronizer
  */
 void Irohad::initSynchronizer() {
@@ -210,7 +210,7 @@ void Irohad::initSynchronizer() {
   log_->info("[Init] => synchronizer");
 }
 
-/*
+/**
  * Initializing peer communication service
  */
 void Irohad::initPeerCommunicationService() {
@@ -226,7 +226,7 @@ void Irohad::initPeerCommunicationService() {
   log_->info("[Init] => pcs");
 }
 
-/*
+/**
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
@@ -239,7 +239,7 @@ void Irohad::initTransactionCommandService() {
   log_->info("[Init] => command service");
 }
 
-/*
+/**
  * Initializing query command service
  */
 void Irohad::initQueryService() {
@@ -254,7 +254,7 @@ void Irohad::initQueryService() {
 
   log_->info("[Init] => query service");
 }
-/*
+/**
  * Run iroha deamon
  */
 void Irohad::run() {

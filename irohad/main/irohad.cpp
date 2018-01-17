@@ -26,7 +26,7 @@
 
 #include "logger/logger.hpp"
 
-/*
+/**
  * Validator for the configuration file path input argument.
  * Path is considered to be valid if it is not empty.
  */
@@ -34,7 +34,7 @@ bool validate_config(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
-/*
+/**
  * Validator for the keypair files path input argument.
  * Path is considered to be valid if it is not empty.
  */
@@ -42,25 +42,25 @@ bool validate_keypair_name(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
-/*
+/**
  * Creating input argument for the configuration file location.
  */
 DEFINE_string(config, "", "Specify iroha provisioning path.");
-/*
+/**
  * Registering validator for the configuration file location.
  */
 DEFINE_validator(config, &validate_config);
 
-/*
+/**
  * Creating input argument for the genesis block file location.
  */
 DEFINE_string(genesis_block, "", "Specify file with initial block");
 
-/*
+/**
  * Creating input argument for the keypair files location.
  */
 DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
-/*
+/**
  * Registering validator for the keypair files location.
  */
 DEFINE_validator(keypair_name, &validate_keypair_name);
