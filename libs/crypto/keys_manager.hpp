@@ -40,8 +40,8 @@ namespace iroha {
      * @param pass_phrase
      * @return false if create account failed
      */
-    virtual bool createKeys(std::string pass_phrase) = 0;
+    virtual bool createKeys(const std::string &pass_phrase) = 0;
   };
 
-}  // namepsace iroha_cli
+}  // namespace iroha
 #endif  // IROHA_CLI_KEYS_MANAGER_HPP

@@ -26,50 +26,80 @@
 
 #include "logger/logger.hpp"
 
+/*
+ * Validator for the configuration file path input argument.
+ * Path is considered to be valid if it is not empty.
+ */
 bool validate_config(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
-
+/*
+ * Validator for the keypair files path input argument.
+ * Path is considered to be valid if it is not empty.
+ */
 bool validate_keypair_name(const char *flag_name, std::string const &path) {
   return not path.empty();
 }
 
+/*
+ * Creating input argument for the configuration file location.
+ */
 DEFINE_string(config, "", "Specify iroha provisioning path.");
+/*
+ * Registering validator for the configuration file location.
+ */
 DEFINE_validator(config, &validate_config);
 
+/*
+ * Creating input argument for the genesis block file location.
+ */
 DEFINE_string(genesis_block, "", "Specify file with initial block");
 
+/*
+ * Creating input argument for the keypair files location.
+ */
 DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
+/*
+ * Registering validator for the keypair files location.
+ */
 DEFINE_validator(keypair_name, &validate_keypair_name);
 
 int main(int argc, char *argv[]) {
   auto log = logger::log("MAIN");
   log->info("start");
 
+  // Check if validators are registered.
   if (not config_validator_registered
       or not keypair_name_validator_registered) {
+    // Abort execution if not
     log->error("Flag validator is not registered");
     return EXIT_FAILURE;
   }
 
   namespace mbr = config_members;
 
+  // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   gflags::ShutDownCommandLineFlags();
 
+  // Reading iroha configuration file
   auto config = parse_iroha_config(FLAGS_config);
   log->info("config initialized");
 
+  // Reading public and private key files
   iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
   iroha::keypair_t keypair{};
+  // Check if both keys are read properly
   if (auto loadedKeypair = keysManager.loadKeys()) {
     keypair = *loadedKeypair;
   } else {
+    // Abort execution if not
     log->error("Failed to load keypair");
     return EXIT_FAILURE;
   }
 
+  // Configuring iroha daemon
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::RedisHost].GetString(),
                 config[mbr::RedisPort].GetUint(),
@@ -82,17 +112,23 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
                 keypair);
 
+  // Check if iroha daemon storage is properly set
   if (not irohad.storage) {
+    // Abort execution if not
     log->error("Failed to initialize storage");
     return EXIT_FAILURE;
   }
 
+  // Check if genesis block path was specified
   if (not FLAGS_genesis_block.empty()) {
+    // If it is so, read genesis block and store it to iroha storage
     iroha::main::BlockInserter inserter(irohad.storage);
     auto file = inserter.loadFile(FLAGS_genesis_block);
     auto block = inserter.parseBlock(file.value());
 
+    // Check if genesis block was empty
     if (not block.has_value()) {
+      // Abort execution if not
       log->error("Failed to parse genesis block");
       return EXIT_FAILURE;
     }
@@ -102,6 +138,7 @@ int main(int argc, char *argv[]) {
 
     log->info("Block is parsed");
 
+    // Applying transactions from genesis block to iroha storage
     inserter.applyToLedger({block.value()});
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());

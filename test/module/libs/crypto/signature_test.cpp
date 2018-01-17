@@ -15,8 +15,6 @@ limitations under the License.
 */
 
 #include "common/byteutils.hpp"
-#include "common/types.hpp"
-#include "crypto/base64.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
 #include <gtest/gtest.h>
@@ -37,10 +35,4 @@ TEST(Signature, sign_data_size) {
 
   ASSERT_TRUE(verify((const unsigned char*)nonce.c_str(), nonce.size(),
                      keypair.pubkey, signature));
-}
-
-TEST(Signature, PrintkeyPair) {
-  auto keypair = iroha::create_keypair();
-  ASSERT_NO_THROW({ std::cout << keypair.pubkey.to_base64() << std::endl; });
-  ASSERT_NO_THROW({ std::cout << keypair.privkey.to_base64() << std::endl; });
 }

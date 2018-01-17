@@ -77,5 +77,9 @@ class BuilderTest(unittest.TestCase):
     query = self.builder.getRolePermissions("user").build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
+  def test_get_transactions(self):
+    query = self.builder.getTransactions([iroha.Hash("1" * 32), iroha.Hash("2" * 32)]).build()
+    self.assertTrue(self.check_proto_query(self.proto(query)))
+
 if __name__ == '__main__':
   unittest.main()

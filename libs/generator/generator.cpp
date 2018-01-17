@@ -26,10 +26,6 @@ namespace generator {
     return min + (rand_r(&SEED_) % (max - min));
   }
 
-  uint8_t random_printable_char() {
-    return (uint8_t)random_number(32, 126 + 1);
-  }
-
   std::string randomString(size_t len) {
     std::string str(len, 0);
     std::generate_n(

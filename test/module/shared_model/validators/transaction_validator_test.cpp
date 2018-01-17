@@ -33,7 +33,7 @@ class TransactionValidatorTest : public ValidatorsTest {
     auto &payload = *proto_tx.mutable_payload();
     payload.set_tx_counter(tx_counter);
     payload.set_creator_account_id(creator_account_id);
-    payload.set_created_time(valid_created_time);
+    payload.set_created_time(created_time);
     return proto_tx;
   }
 };
@@ -48,7 +48,7 @@ using namespace shared_model;
  */
 TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
-  tx.mutable_payload()->set_created_time(valid_created_time);
+  tx.mutable_payload()->set_created_time(created_time);
   shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto answer = transaction_validator.validate(
       detail::makePolymorphic<proto::Transaction>(tx));
@@ -62,8 +62,8 @@ TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
  */
 TEST_F(TransactionValidatorTest, StatelessValidTest) {
   iroha::protocol::Transaction tx = generateEmptyTransaction();
-  tx.mutable_payload()->set_creator_account_id(valid_account_id);
-  tx.mutable_payload()->set_created_time(valid_created_time);
+  tx.mutable_payload()->set_creator_account_id(account_id);
+  tx.mutable_payload()->set_created_time(created_time);
   auto payload = tx.mutable_payload();
 
   // Iterate through all command types, filling command fields with valid values
