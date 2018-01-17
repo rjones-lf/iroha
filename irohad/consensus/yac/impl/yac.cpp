@@ -17,7 +17,7 @@
 
 #include <utility>
 
-#include "common/inplace_visitor.hpp"
+#include "common/visitor.hpp"
 #include "consensus/yac/yac.hpp"
 
 namespace iroha {
@@ -167,7 +167,8 @@ namespace iroha {
                            },
                            [&](const RejectMessage &reject) {
                              log_->warn("reject case");
-                             // TODO 14/08/17 Muratov: work on reject case IR-497
+                             // TODO 14/08/17 Muratov: work on reject case
+                             // IR-497
                            });
             vote_storage_.markAsProcessedState(proposal_hash);
           }

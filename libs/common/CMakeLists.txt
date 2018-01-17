@@ -1,6 +1,6 @@
 add_library(libs_common
     files.cpp
-    )
+    visitor.hpp)
 
 target_link_libraries(libs_common
     logger
