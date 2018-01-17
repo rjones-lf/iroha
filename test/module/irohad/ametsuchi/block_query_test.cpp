@@ -236,9 +236,6 @@ TEST_F(BlockQueryTest, GetNonExistentBlock) {
  * user1@test AND 1 tx created by user2@test
  * @when height=1, count=1
  * @then returned exactly 1 block
- *
- * @note test for bug, when <total_blocks=2, height=1, count=1>, then
- * min(1+1, 2)=2, and it reads from 1 to 2 (2 blocks).
  */
 TEST_F(BlockQueryTest, GetExactlyOneBlock) {
   auto wrapper = make_test_subscriber<CallExact>(
