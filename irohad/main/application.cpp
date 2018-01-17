@@ -254,6 +254,7 @@ void Irohad::initQueryService() {
 
   log_->info("[Init] => query service");
 }
+
 /**
  * Run iroha deamon
  */
