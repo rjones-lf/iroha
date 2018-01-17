@@ -15,25 +15,16 @@
  * limitations under the License.
  */
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "main/raw_block_loader.hpp"
 
-#include <fstream>
 #include "framework/test_block_generator.hpp"
-#include "logger/logger.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/pb_command_factory.hpp"
-
-using ::testing::_;
-using ::testing::DefaultValue;
 using namespace iroha::main;
-using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace iroha::model::converters;
 using namespace iroha;
-using namespace std;
 
 /**
  * @given generated block
@@ -44,10 +35,6 @@ using namespace std;
  * @then check that blocks are equal
  */
 TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
-  cout << "----------| block => string_repr(block)"
-          " => parseBlock() |----------"
-       << endl;
-
   BlockLoader loader;
   auto block = framework::generator::generateBlock();
   auto doc = JsonBlockFactory().serialize(block);

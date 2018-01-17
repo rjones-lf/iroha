@@ -16,13 +16,15 @@
  */
 
 #include "main/raw_block_loader.hpp"
-#include "model/converters/json_common.hpp"
 #include <fstream>
 #include <utility>
 #include "common/types.hpp"
+#include "model/converters/json_common.hpp"
 
 namespace iroha {
   namespace main {
+
+    BlockLoader::BlockLoader() : log_(logger::log("BlockLoader")) {}
 
     nonstd::optional<model::Block> BlockLoader::parseBlock(std::string data) {
       auto document = model::converters::stringToJson(data);
@@ -35,10 +37,14 @@ namespace iroha {
 
     nonstd::optional<std::string> BlockLoader::loadFile(std::string path) {
       std::ifstream file(path);
+      if (not file) {
+        log_->error("Cannot read '" + path + "'");
+        return nonstd::nullopt;
+      }
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
       return str;
     }
 
-  } // namespace main
-} // namespace iroha
+  }  // namespace main
+}  // namespace iroha

@@ -37,7 +37,7 @@ namespace iroha {
      */
     class BlockLoader {
      public:
-      BlockLoader() = default;
+      BlockLoader();
 
       /**
        * Parse block from file
@@ -55,12 +55,11 @@ namespace iroha {
       nonstd::optional<std::string> loadFile(std::string path);
 
      private:
-      std::shared_ptr<ametsuchi::MutableFactory> factory_;
       model::converters::JsonBlockFactory block_factory_;
 
       logger::Logger log_;
     };
 
-  } // namespace main
-} // namespace iroha
-#endif //IROHA_RAW_BLOCK_INSERTION_HPP
+  }  // namespace main
+}  // namespace iroha
+#endif  // IROHA_RAW_BLOCK_INSERTION_HPP
