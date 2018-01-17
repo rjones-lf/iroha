@@ -22,6 +22,7 @@
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/pb_command_factory.hpp"
+
 using namespace iroha::main;
 using namespace iroha::model::converters;
 using namespace iroha;
