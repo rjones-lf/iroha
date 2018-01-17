@@ -17,7 +17,6 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <iomanip>
@@ -25,58 +24,19 @@
 #include <sstream>
 #include "common/files.hpp"
 
-namespace iroha {
-  namespace ametsuchi {
-
-    std::string id_to_name(Identifier id) {
-      std::ostringstream os;
-      os << std::setw(FlatFile::DIGIT_CAPACITY) << std::setfill('0') << id;
-      return os.str();
-    }
-
-    nonstd::optional<Identifier> check_consistency(
-        const std::string &dump_dir) {
-      auto log = logger::log("FLAT_FILE");
-
-      if (dump_dir.empty()) {
-        log->error("check_consistency({}), not directory", dump_dir);
-        return nonstd::nullopt;
-      }
-
-      auto const files = [&dump_dir] {
-        std::vector<boost::filesystem::path> ps;
-        std::copy(boost::filesystem::directory_iterator{dump_dir},
-                  boost::filesystem::directory_iterator{},
-                  std::back_inserter(ps));
-        std::sort(ps.begin(),
-                  ps.end(),
-                  [](const boost::filesystem::path &lhs,
-                     const boost::filesystem::path &rhs) {
-                    return lhs.compare(rhs) < 0;
-                  });
-        return ps;
-      }();
-
-      auto const missing = boost::range::find_if(
-          files | boost::adaptors::indexed(1), [](const auto &it) {
-            return id_to_name(it.index()) != it.value().filename();
-          });
-
-      std::for_each(
-          missing.get(), files.cend(), [](const boost::filesystem::path &p) {
-            boost::filesystem::remove(p);
-          });
-
-      return missing.get() - files.cbegin();
-    }
-  }  // namespace ametsuchi
-}  // namespace iroha
-
 using namespace iroha::ametsuchi;
+using Identifier = FlatFile::Identifier;
 
 // ----------| public API |----------
 
-nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(const std::string &path) {
+std::string FlatFile::id_to_name(Identifier id) {
+  std::ostringstream os;
+  os << std::setw(FlatFile::DIGIT_CAPACITY) << std::setfill('0') << id;
+  return os.str();
+}
+
+nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(
+    const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
   boost::system::error_code err;
@@ -86,7 +46,7 @@ nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(const std::string &
     return nonstd::nullopt;
   }
 
-  auto res = check_consistency(path);
+  auto res = FlatFile::check_consistency(path);
   return std::make_unique<FlatFile>(*res, path, private_tag{});
 }
 
@@ -126,7 +86,7 @@ bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
 }
 
 nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
-  const auto filename = boost::filesystem::path{dump_dir_} / id_to_name(id);
+  const auto filename = boost::filesystem::path{dump_dir_} / FlatFile::id_to_name(id);
   if (not boost::filesystem::exists(filename)) {
     log_->info("get({}) file not found", id);
     return nonstd::nullopt;
@@ -153,7 +113,7 @@ Identifier FlatFile::last_id() const {
 
 void FlatFile::dropAll() {
   remove_all(dump_dir_);
-  auto res = check_consistency(dump_dir_);
+  auto res = FlatFile::check_consistency(dump_dir_);
   current_id_.store(*res);
 }
 
@@ -165,4 +125,40 @@ FlatFile::FlatFile(Identifier current_id,
     : dump_dir_(path) {
   log_ = logger::log("FlatFile");
   current_id_.store(current_id);
+}
+
+nonstd::optional<Identifier> FlatFile::check_consistency(
+    const std::string &dump_dir) {
+  auto log = logger::log("FLAT_FILE");
+
+  if (dump_dir.empty()) {
+    log->error("check_consistency({}), not directory", dump_dir);
+    return nonstd::nullopt;
+  }
+
+  auto const files = [&dump_dir] {
+    std::vector<boost::filesystem::path> ps;
+    std::copy(boost::filesystem::directory_iterator{dump_dir},
+              boost::filesystem::directory_iterator{},
+              std::back_inserter(ps));
+    std::sort(ps.begin(),
+              ps.end(),
+              [](const boost::filesystem::path &lhs,
+                 const boost::filesystem::path &rhs) {
+                return lhs.compare(rhs) < 0;
+              });
+    return ps;
+  }();
+
+  auto const missing = boost::range::find_if(
+      files | boost::adaptors::indexed(1), [](const auto &it) {
+        return FlatFile::id_to_name(it.index()) != it.value().filename();
+      });
+
+  std::for_each(
+      missing.get(), files.cend(), [](const boost::filesystem::path &p) {
+        boost::filesystem::remove(p);
+      });
+
+  return missing.get() - files.cbegin();
 }

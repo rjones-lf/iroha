@@ -27,6 +27,7 @@
 #include "logger/logger.hpp"
 
 using namespace iroha::ametsuchi;
+using Identifier = FlatFile::Identifier;
 
 static logger::Logger log_ = logger::testLog("BlockStore");
 
@@ -138,7 +139,7 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
  * @then check consistency fails
  */
 TEST_F(BlStore_Test, EmptyDumpDir) {
-  auto res = check_consistency("");
+  auto res = FlatFile::check_consistency("");
   ASSERT_FALSE(res);
 }
 
@@ -180,7 +181,7 @@ TEST_F(BlStore_Test, GetDeniedBlock) {
   auto id = 1u;
   bl_store->add(id, block);
 
-  auto filename = boost::filesystem::path{block_store_path} / id_to_name(id);
+  auto filename = boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
 
   using perms = boost::filesystem::perms;
 
@@ -200,7 +201,7 @@ TEST_F(BlStore_Test, AddExistingId) {
   auto bl_store = std::move(*store);
   auto id = 1u;
   const auto file_name =
-      boost::filesystem::path{block_store_path} / id_to_name(id);
+      boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
   std::ofstream fout(file_name.string());
   fout.close();
 
