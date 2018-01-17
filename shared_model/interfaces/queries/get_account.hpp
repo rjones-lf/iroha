@@ -32,9 +32,9 @@ namespace shared_model {
       virtual const types::AccountIdType &accountId() const = 0;
 
       OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAccount;
-        oldModel->account_id = accountId();
-        return oldModel;
+          auto oldModel = new iroha::model::GetAccount;
+          oldModel->account_id = accountId();
+          return oldModel;
       }
 
       std::string toString() const override {
