@@ -365,7 +365,7 @@ workflows:
               only:
                 - develop
                 - master
-                - trunk/.*
+                - /trunk\/.*/
             tags:
               only: /v[\.0-9]+.*/
 
