@@ -22,7 +22,7 @@ namespace iroha {
     namespace yac {
 
       nonstd::optional<ClusterOrdering> ClusterOrdering::create(
-          std::vector<model::Peer> order) {
+          const std::vector<model::Peer> &order) {
         if (order.empty()) {
           return nonstd::nullopt;
         }

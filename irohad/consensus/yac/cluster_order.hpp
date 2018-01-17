@@ -30,14 +30,13 @@ namespace iroha {
        */
       class ClusterOrdering {
        public:
-
         /**
          * Creates cluster ordering from the vector of peers
          * @param order vector of peers
          * @return false if vector is empty, true otherwise
          */
         static nonstd::optional<ClusterOrdering> create(
-            std::vector<model::Peer> order);
+            const std::vector<model::Peer> &order);
 
         /**
          * Provide current leader peer
