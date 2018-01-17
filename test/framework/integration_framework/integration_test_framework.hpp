@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "crypto/keys_manager_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "datetime/time.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "logger/logger.hpp"
 #include "model/block.hpp"
@@ -50,11 +48,6 @@ namespace integration_framework {
         const iroha::keypair_t &keypair = iroha::create_keypair());
     IntegrationTestFramework &setInitialState(const iroha::keypair_t &keypair,
                                               const iroha::model::Block &block);
-
-    IntegrationTestFramework &addUser(
-        std::string account_id,
-        const iroha::keypair_t &keypair,
-        std::vector<iroha::pubkey_t> signatories = {});
 
     template <typename Lambda>
     IntegrationTestFramework &sendTx(iroha::model::Transaction tx,
