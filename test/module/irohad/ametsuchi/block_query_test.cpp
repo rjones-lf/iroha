@@ -76,7 +76,7 @@ class BlockQueryTest : public AmetsuchiTest {
       file->add(b.height, iroha::stringToBytes(converters::jsonToString(
           converters::JsonBlockFactory().serialize(b))));
       index->index(b);
-      this->blocks_total++;
+      blocks_total++;
     }
   }
 
@@ -150,10 +150,10 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
     subs_cnt++;
     if (subs_cnt == 1) {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[1], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[1], iroha::hash(*tx));
     } else {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[3], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[3], iroha::hash(*tx));
     }
   });
   ASSERT_TRUE(wrapper.validate());
@@ -212,7 +212,7 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
       EXPECT_EQ(boost::none, tx);
     } else {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[0], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[0], iroha::hash(*tx));
     }
   });
   ASSERT_TRUE(wrapper.validate());
@@ -281,7 +281,7 @@ TEST_F(BlockQueryTest, GetZeroBlock) {
  */
 TEST_F(BlockQueryTest, GetBlocksFrom1) {
   auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getBlocksFrom(1), this->blocks_total);
+      blocks->getBlocksFrom(1), blocks_total);
   size_t counter = 1;
   wrapper.subscribe([&counter](Block b) {
     // wrapper returns blocks 1 and 2
@@ -302,7 +302,7 @@ TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
   size_t block_n = 1;
 
   // write something that is NOT JSON to block #1
-  auto block_path = fs::path{this->block_store_path} / FlatFile::id_to_name(block_n);
+  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
   fs::ofstream block_file(block_path);
   std::string content = R"(this is definitely not json)";
   block_file << content;
@@ -326,7 +326,7 @@ TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
   size_t block_n = 1;
 
   // write bad block instead of block #1
-  auto block_path = fs::path{this->block_store_path} / FlatFile::id_to_name(block_n);
+  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
   fs::ofstream block_file(block_path);
   std::string content = R"({
   "testcase": [],
@@ -353,7 +353,7 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTopBlocks(blocks_n), blocks_n);
 
-  size_t counter = this->blocks_total - blocks_n + 1;
+  size_t counter = blocks_total - blocks_n + 1;
   wrapper.subscribe([&counter](Block b) {
     ASSERT_EQ(b.height, counter++);
   });
