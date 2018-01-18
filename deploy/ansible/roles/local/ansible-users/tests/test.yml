@@ -1,0 +1,105 @@
+---
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    groups_to_create:
+      - name: ansibletestgroup
+        gid: 4000
+    users:
+      - name: Ansible Test User
+        username: ansibletestuser
+        uid: 2222
+        groups: [users, bin]
+        shell: /bin/sh
+        profile: |
+          alias ll='ls -lah'
+          alias cp='cp -iv'
+        ssh_key:
+          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26WoUYva2aCr9IRvKdYreAK08OiMdZedpOye0ZdvIYJGcyITwc6YMmrAhP7jZlrk/mDEkf2a4eBp+475o7MJtaC9npqYkToM8vqvx5AGEKqXt7/f1/paOY7KsR+VGPQy6k2RkXjWBsXPesZ3d3XLZHE60wAk0EsuJO8A25+uWSB6ILQeRSYYmGea/WIf6kd noone@throwaway.example.com"
+
+  roles:
+    - ansible-users
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    users:
+      - name: Ansible Test User2
+        username: ansibletestuser2
+        uid: 2223
+        groups: [users, bin]
+        shell: /bin/sh
+        home: /home/otherdirectory
+        profile: |
+          alias ll='ls -lah'
+          alias cp='cp -iv'
+        ssh_key:
+          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26WoUYva2aCr9IRvKdYreAK08OiMdZedpOye0ZdvIYJGcyITwc6YMmrAhP7jZlrk/mDEkf2a4eBp+475o7MJtaC9npqYkToM8vqvx5AGEKqXt7/f1/paOY7KsR+VGPQy6k2RkXjWBsXPesZ3d3XLZHE60wAk0EsuJO8A25+uWSB6ILQeRSYYmGea/WIf6kd noone@throwaway.example.com"
+
+  roles:
+    - ansible-users
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    users_create_per_user_group: false
+    users_group: ansibletestgroup
+    groups_to_create:
+      - name: ansibletestgroup1
+        gid: 4001
+    users:
+      - name: Ansible Test User3
+        username: ansibletestuser3
+        uid: 2224
+        group: ansibletestgroup1
+        groups: [users, bin]
+        shell: /bin/sh
+        profile: |
+          alias ll='ls -lah'
+          alias cp='cp -iv'
+        ssh_key:
+          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26WoUYva2aCr9IRvKdYreAK08OiMdZedpOye0ZdvIYJGcyITwc6YMmrAhP7jZlrk/mDEkf2a4eBp+475o7MJtaC9npqYkToM8vqvx5AGEKqXt7/f1/paOY7KsR+VGPQy6k2RkXjWBsXPesZ3d3XLZHE60wAk0EsuJO8A25+uWSB6ILQeRSYYmGea/WIf6kd noone@throwaway.example.com"
+
+  roles:
+    - ansible-users
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    users_create_per_user_group: false
+    users_group: users
+    users:
+      - name: Ansible Test User4
+        username: ansibletestuser4
+        uid: 2225
+        groups: [users, bin]
+        shell: /bin/sh
+        home: /home/otherdirectory1
+        profile: |
+          alias ll='ls -lah'
+          alias cp='cp -iv'
+        ssh_key:
+          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26WoUYva2aCr9IRvKdYreAK08OiMdZedpOye0ZdvIYJGcyITwc6YMmrAhP7jZlrk/mDEkf2a4eBp+475o7MJtaC9npqYkToM8vqvx5AGEKqXt7/f1/paOY7KsR+VGPQy6k2RkXjWBsXPesZ3d3XLZHE60wAk0EsuJO8A25+uWSB6ILQeRSYYmGea/WIf6kd noone@throwaway.example.com"
+
+  roles:
+    - ansible-users
+
+- hosts: localhost
+  remote_user: root
+  vars:
+    users:
+      - name: Ansible Test User5
+        username: ansibletestuser5
+        uid: 2226
+        group: ansibletestgroup
+        groups: [users, bin]
+        shell: /bin/sh
+        profile: |
+          alias ll='ls -lah'
+          alias cp='cp -iv'
+        ssh_key:
+          - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDVpUJQCOaPg3p5xro9e+1fkGRWNOGrrExiKMqTE91Fwu349bxfMnMzRS0PAERouR9EEL+Ee4Yzhav/uNc35eCtXzACtluXnAncMrQj6pM3IqASynhvXTygHljmcMbBSDQtLrTZeW+YzIcOgk5UM1yBi26WoUYva2aCr9IRvKdYreAK08OiMdZedpOye0ZdvIYJGcyITwc6YMmrAhP7jZlrk/mDEkf2a4eBp+475o7MJtaC9npqYkToM8vqvx5AGEKqXt7/f1/paOY7KsR+VGPQy6k2RkXjWBsXPesZ3d3XLZHE60wAk0EsuJO8A25+uWSB6ILQeRSYYmGea/WIf6kd noone@throwaway.example.com"
+
+  roles:
+    - ansible-users
