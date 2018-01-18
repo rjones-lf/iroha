@@ -33,19 +33,21 @@ namespace shared_model {
   namespace interface {
 
     class Proposal
-            : public Primitive<Proposal, iroha::model::Proposal> {
+            : public Hashable<Proposal, iroha::model::Proposal> {
     public:
 
-      using wTransaction = detail::PolymorphicWrapper<Transaction>;
+      template<class T>
+      using w = detail::PolymorphicWrapper<T>;
+
       /**
        * @return transactions
        */
-      virtual const std::vector<wTransaction> &transactions() const = 0;
+      virtual const std::vector<w<Transaction>> &transactions() const = 0;
 
       /**
        * @return the height
        */
-      virtual uint64_t height() const = 0;
+      virtual types::HeightType height() const = 0;
 
       iroha::model::Proposal *makeOldModel() const override {
 
@@ -55,17 +57,18 @@ namespace shared_model {
           txs.push_back(*ptr);
         }
         auto oldModel = new iroha::model::Proposal(txs);
+        oldModel->height = height();
         return oldModel;
       }
 
-//      std::string toString() const override {
-//        return detail::PrettyStringBuilder()
-//                .init("Proposal")
-//                .append("height", std::to_string(transactions()))
-//                .appendAll(transactions(),
-//                           [](auto &transaction) { return transaction->toString(); })
-//                .finalize();
-//      }
+      std::string toString() const override {
+        return detail::PrettyStringBuilder()
+                .init("Proposal")
+                .append("height", std::to_string(height()))
+                .appendAll(transactions(),
+                           [](auto &transaction) { return transaction->toString(); })
+                .finalize();
+      }
 
       bool operator==(const ModelType &rhs) const override {
         return transactions() == rhs.transactions() and height() == rhs.height();

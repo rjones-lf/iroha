@@ -42,19 +42,22 @@ namespace shared_model {
           : CopyableProto(
                 std::forward<ProposalType>(proposal)),
             transactions_([this] {
-              std::vector<wTransaction> txs;
+              std::vector<w<interface::Transaction>> txs;
               for(const auto& tx: proto_->transactions()){
                 auto tmp = detail::make_polymorphic<proto::Transaction>(tx);
                 txs.emplace_back(tmp);
               }
               return txs;
-            }) {}
+            }),
+            blob_([this]{
+              return BlobType(proto_->SerializeAsString());
+            }){}
 
       Proposal(const Proposal &o) : Proposal(o.proto_) {}
 
       Proposal(Proposal &&o) noexcept : Proposal(std::move(o.proto_)) {}
 
-      const std::vector<wTransaction> &transactions() const override {
+      const std::vector<w<interface::Transaction>> &transactions() const override {
         return *transactions_;
       }
 
@@ -62,14 +65,19 @@ namespace shared_model {
         return proto_->height();
       }
 
+      const BlobType &blob() const override {
+        return *blob_;
+      }
      private:
-      using wTransaction = detail::PolymorphicWrapper<interface::Transaction>;
+      template<class T>
+      using w = detail::PolymorphicWrapper<T>;
 
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<std::vector<wTransaction>> transactions_;
+      const Lazy<std::vector<w<interface::Transaction>>> transactions_;
+      const Lazy<BlobType> blob_;
 
     };
   }  // namespace proto

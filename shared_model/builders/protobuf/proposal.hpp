@@ -30,17 +30,14 @@ namespace shared_model {
   namespace proto {
     template <int S = 0>
     class TemplateProposalBuilder {
-    private:
-      using wTransaction = detail::PolymorphicWrapper<interface::Transaction>;
+     private:
+      template <class T>
+      using w = detail::PolymorphicWrapper<T>;
 
       template <int>
       friend class TemplateProposalBuilder;
 
-      enum RequiredFields {
-        Transactions,
-        Height,
-        TOTAL
-      };
+      enum RequiredFields { Transactions, Height, TOTAL };
 
       template <int s>
       using NextBuilder = TemplateProposalBuilder<S | (1 << s)>;
@@ -49,35 +46,34 @@ namespace shared_model {
 
       template <int Sp>
       TemplateProposalBuilder(const TemplateProposalBuilder<Sp> &o)
-              : proposal_(o.proposal_) {}
+          : proposal_(o.proposal_) {}
 
-    public:
+     public:
       TemplateProposalBuilder() = default;
 
-      NextBuilder<Height> height(
-              uint64_t height) {
+      NextBuilder<Height> height(uint64_t height) {
         proposal_.set_height(height);
         return *this;
       }
 
       NextBuilder<Transactions> transactions(
-              const std::vector<wTransaction> &transactions) {
-        for(const auto& tx: transactions){
-          auto tmp = detail::make_polymorphic<Transaction>(tx);
-          proposal_.mutable_transactions()->Add(tmp->getTransport());
+          const std::vector<w<Transaction>> &transactions) {
+        for (const auto &tx : transactions) {
+          proposal_.mutable_transactions()->Add(tx->getTransport());
         }
         return *this;
       }
 
       UnsignedWrapper<Proposal> build() {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-        return UnsignedWrapper<Proposal>(Proposal(iroha::ordering::proto::Proposal(proposal_)));
+        return UnsignedWrapper<Proposal>(
+            Proposal(iroha::ordering::proto::Proposal(proposal_)));
       }
 
       static const int total = RequiredFields::TOTAL;
     };
 
-    using QueryBuilder = TemplateProposalBuilder<>;
+    using ProposalBuilder = TemplateProposalBuilder<>;
   }  // namespace proto
 }  // namespace shared_model
 #endif  // IROHA_PROTO_PROPOSAL_BUILDER_HPP
