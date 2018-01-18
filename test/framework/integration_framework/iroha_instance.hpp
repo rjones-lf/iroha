@@ -27,21 +27,35 @@ namespace integration_framework {
 
   using namespace std::chrono_literals;
 
+  /**
+   * Class provides interfaces for running Iroha instance.
+   */
   class IrohaInstance {
    public:
+    /**
+     * Saves block as genesis block.
+     * @param block - block to be as genesis block
+     */
     void makeGenesis(const iroha::model::Block &block) {
       instance_->storage->dropStorage();
       rawInsertBlock(block);
       instance_->init();
     }
 
+    /**
+     * Inserts block without validation.
+     * @param block - block to be inserted
+     */
     void rawInsertBlock(const iroha::model::Block &block) {
       iroha::main::BlockInserter inserter(instance_->storage);
       inserter.applyToLedger({block});
     }
 
-    void initPipeline(const iroha::keypair_t &key_pair) {
-      keypair_ = key_pair;
+    /**
+     * Creates instance.
+     * @param key_pair
+     */
+    void initPipeline() {
       instance_ = std::make_shared<TestIrohad>(block_store_dir_,
                                                redis_host_,
                                                redis_port_,
@@ -55,16 +69,112 @@ namespace integration_framework {
                                                keypair_);
     }
 
+    /**
+     * Runs instance.
+     */
     void run() {
       instance_->run();
     }
 
+    /**
+     * Get instance of Iroha.
+     * @return Iroha instance.
+     */
     auto getIrohaInstance() {
       return instance_;
     }
 
+    /**
+     * Set block storage directory for Iroha server.
+     * @param block_store_dir - director to store blocks
+     */
+    void setBlockStoreDir(const std::string &block_store_dir) {
+      block_store_dir_ = block_store_dir;
+    }
+
+    /**
+     * Set Redis host.
+     * @param redis_host - redis host address
+     */
+    void setRedisHost(const std::string &redis_host) {
+      redis_host_ = redis_host;
+    }
+
+    /**
+     * Set PostgreSQL connection string as
+     * @code
+     * "host=host_address port=5432 user=username password=user_password"
+     * @endcode
+     * @param pg_conn - PostgreSQL connection string
+     */
+    void setPgConn(const std::string &pg_conn) {
+      pg_conn_ = pg_conn;
+    }
+
+    /**
+     * Set Torii port.
+     * @param torii_port
+     */
+    void setToriiPort(const size_t torii_port) {
+      torii_port_ = torii_port;
+    }
+
+    /**
+     * Set internal port.
+     * @param internal_port
+     */
+    void setInternalPort(const size_t internal_port) {
+      internal_port_ = internal_port;
+    }
+
+    /**
+     * Set maximum proposal size.
+     * @param max_proposal_size
+     */
+    void setMaxProposalSize(const size_t max_proposal_size) {
+      max_proposal_size_ = max_proposal_size;
+    }
+
+    /**
+     * Set proposal delay.
+     * @param proposal_delay
+     */
+    void setProposalDelay(const std::chrono::milliseconds &proposal_delay) {
+      proposal_delay_ = proposal_delay;
+    }
+
+    /**
+     * Set vote delay.
+     * @param vote_delay
+     */
+    void setVoteDelay(const std::chrono::milliseconds &vote_delay) {
+      vote_delay_ = vote_delay;
+    }
+
+    /**
+     * Set load delay.
+     * @param load_delay
+     */
+    void setLoadDelay(const std::chrono::milliseconds &load_delay) {
+      load_delay_ = load_delay;
+    }
+
+    /**
+     * Set keypair.
+     * @param keypair
+     */
+    void setKeypair(const iroha::keypair_t &keypair) {
+      keypair_ = keypair;
+    }
+
     std::shared_ptr<TestIrohad> instance_;
 
+    /**
+     * Returns PostgreSQL credentials.
+     * 1. Tries get credential from system environments.
+     * 2. If not, uses default hard coded credentials.
+     * @return
+     */
     std::string getPostgreCreds() {
       auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
       auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
@@ -82,16 +192,16 @@ namespace integration_framework {
     }
 
     // config area
-    const std::string block_store_dir_ = "/tmp/block_store";
-    const std::string redis_host_ = std::getenv("IROHA_REDIS_HOST");
-    const size_t redis_port_ = std::stoull(std::getenv("IROHA_REDIS_PORT"));
-    const std::string pg_conn_ = getPostgreCreds();
-    const size_t torii_port_ = 11501;
-    const size_t internal_port_ = 10001;
-    const size_t max_proposal_size_ = 10;
-    const std::chrono::milliseconds proposal_delay_ = 5000ms;
-    const std::chrono::milliseconds vote_delay_ = 5000ms;
-    const std::chrono::milliseconds load_delay_ = 5000ms;
+    std::string block_store_dir_ = "/tmp/block_store";
+    std::string redis_host_ = std::getenv("IROHA_REDIS_HOST");
+    size_t redis_port_ = std::stoull(std::getenv("IROHA_REDIS_PORT"));
+    std::string pg_conn_ = getPostgreCreds();
+    size_t torii_port_ = 11501;
+    size_t internal_port_ = 10001;
+    size_t max_proposal_size_ = 10;
+    std::chrono::milliseconds proposal_delay_ = 5000ms;
+    std::chrono::milliseconds vote_delay_ = 5000ms;
+    std::chrono::milliseconds load_delay_ = 5000ms;
     iroha::keypair_t keypair_;
   };
 }  // namespace integration_framework
