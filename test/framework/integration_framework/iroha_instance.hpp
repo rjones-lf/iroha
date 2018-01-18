@@ -59,8 +59,7 @@ namespace integration_framework {
       instance_->run();
     }
 
-    // TODO 20/12/2017 muratovv replace with auto return type
-    std::shared_ptr<TestIrohad> getIrohaInstance() {
+    auto getIrohaInstance() {
       return instance_;
     }
 
