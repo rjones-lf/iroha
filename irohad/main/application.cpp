@@ -61,7 +61,7 @@ Irohad::Irohad(const std::string &block_store_dir,
 }
 
 Irohad::~Irohad() {
-  // Shutting down listing services used by internal server
+  // Shutting down services used by internal server
   if (internal_server) {
     internal_server->Shutdown();
   }
