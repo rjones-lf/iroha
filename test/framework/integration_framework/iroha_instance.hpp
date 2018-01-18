@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 
-#include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include "integration/pipeline/test_irohad.hpp"
 #include "main/raw_block_insertion.hpp"
 
 namespace integration_framework {
