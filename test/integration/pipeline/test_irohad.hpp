@@ -70,6 +70,7 @@ class TestIrohad : public Irohad {
     builder.AddListeningPort("0.0.0.0:" + std::to_string(internal_port_),
                              grpc::InsecureServerCredentials(),
                              &port);
+    BOOST_ASSERT_MSG(port != 0, "grpc port is 0");
     builder.RegisterService(ordering_init.ordering_gate_transport.get());
     builder.RegisterService(ordering_init.ordering_service_transport.get());
     builder.RegisterService(yac_init.consensus_network.get());
