@@ -87,7 +87,7 @@ namespace integration_framework {
      * @param queue - queue instance for fetching
      * @param ref_for_insertion - reference to insert object
      * @param wait - time of waiting
-     * @param error_reason - reason if thehre is no appeared object at all
+     * @param error_reason - reason if there is no appeared object at all
      */
     template <typename Queue, typename ObjectType, typename WaitTime>
     static void fetchFromQueue(Queue &queue,

@@ -43,7 +43,8 @@ namespace integration_framework {
       const iroha::keypair_t &keypair, const iroha::model::Block &block) {
     log_->info("init state");
     // peer initialization
-    iroha_instance_->initPipeline(keypair);
+    iroha_instance_->setKeypair(keypair);
+    iroha_instance_->initPipeline();
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
