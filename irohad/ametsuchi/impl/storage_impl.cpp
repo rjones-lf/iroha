@@ -32,7 +32,7 @@ namespace iroha {
         std::size_t redis_port,
         std::string postgres_options,
         std::unique_ptr<FlatFile> block_store,
-        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<cpp_redis::client> index,
         std::unique_ptr<pqxx::lazyconnection> wsv_connection,
         std::unique_ptr<pqxx::nontransaction> wsv_transaction)
         : block_store_dir_(std::move(block_store_dir)),
@@ -94,7 +94,7 @@ namespace iroha {
       auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
           *postgres_connection, "TemporaryWsv");
 
-      auto index = std::make_unique<cpp_redis::redis_client>();
+      auto index = std::make_unique<cpp_redis::client>();
       try {
         index->connect(redis_host_, redis_port_);
       } catch (const cpp_redis::redis_error &e) {
@@ -159,7 +159,7 @@ DROP TABLE IF EXISTS role;
 
       // erase tx index
       log_->info("drop redis");
-      cpp_redis::redis_client client;
+      cpp_redis::client client;
       client.connect(redis_host_, redis_port_);
       client.flushall();
       client.sync_commit();
@@ -178,13 +178,13 @@ DROP TABLE IF EXISTS role;
       log_->info("Start storage creation");
 
       auto block_store = FlatFile::create(block_store_dir);
-      if (!block_store) {
+      if (not block_store) {
         log_->error("Cannot create block store in {}", block_store_dir);
         return nonstd::nullopt;
       }
       log_->info("block store created");
 
-      auto index = std::make_unique<cpp_redis::redis_client>();
+      auto index = std::make_unique<cpp_redis::client>();
       try {
         index->connect(redis_host, redis_port);
       } catch (const cpp_redis::redis_error &e) {
@@ -209,7 +209,7 @@ DROP TABLE IF EXISTS role;
       log_->info("transaction to PostgreSQL initialized");
 
       return nonstd::make_optional<ConnectionContext>(
-          std::move(block_store),
+          std::move(*block_store),
           std::move(index),
           std::move(postgres_connection),
           std::move(wsv_transaction));

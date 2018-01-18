@@ -16,7 +16,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "common/types.hpp"
+#include "common/byteutils.hpp"
 
 using namespace iroha;
 using namespace std::string_literals;

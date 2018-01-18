@@ -25,6 +25,8 @@ namespace iroha {
 
       PbCommandFactory::PbCommandFactory() {
         boost::assign::insert(pb_role_map_)
+            // Can Get My Account Detail
+            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
             // Can Get My Account Assets
             (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
             // Can Get My Signatories
@@ -41,6 +43,10 @@ namespace iroha {
             // Can get all account asset transactions
             (protocol::RolePermission::can_get_all_acc_ast_txs,
              can_get_all_acc_ast_txs)
+            // Can get my transactions
+            (protocol::RolePermission::can_get_my_txs, can_get_my_txs)
+            // Can get all transactions
+            (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
             // Can Get all account transactions
             (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
             // Can get all account

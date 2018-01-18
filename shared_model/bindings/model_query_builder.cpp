@@ -19,6 +19,10 @@
 
 namespace shared_model {
   namespace bindings {
+    ModelQueryBuilder::ModelQueryBuilder() {
+      *this = creatorAccountId("").createdTime(0).queryCounter(0);
+    }
+
     ModelQueryBuilder ModelQueryBuilder::createdTime(
         interface::types::TimestampType created_time) {
       return ModelQueryBuilder(builder_.createdTime(created_time));
@@ -74,6 +78,11 @@ namespace shared_model {
     ModelQueryBuilder ModelQueryBuilder::getRolePermissions(
         const interface::types::RoleIdType &role_id) {
       return ModelQueryBuilder(builder_.getRolePermissions(role_id));
+    }
+
+    ModelQueryBuilder ModelQueryBuilder::getTransactions(
+        const std::vector<crypto::Hash> &hashes) {
+      return ModelQueryBuilder(builder_.getTransactions(hashes));
     }
 
     proto::UnsignedWrapper<proto::Query> ModelQueryBuilder::build() {

@@ -49,7 +49,7 @@ TEST(ProtoQuery, QueryLoad) {
  * @then query is built correctly
  */
 TEST(ProtoQueryBuilder, Builder) {
-  uint64_t created_time = 10000000000ull, query_counter = 1;
+  uint64_t created_time = iroha::time::now(), query_counter = 1;
   std::string account_id = "admin@test", asset_id = "coin#test";
 
   iroha::protocol::Query proto_query;
@@ -70,8 +70,8 @@ TEST(ProtoQueryBuilder, Builder) {
       keypair);
 
   auto sig = proto_query.mutable_signature();
-  sig->set_pubkey(keypair.publicKey().blob());
-  sig->set_signature(signedProto.blob());
+  sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
+  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)

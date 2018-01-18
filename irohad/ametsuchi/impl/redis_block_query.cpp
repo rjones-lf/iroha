@@ -21,18 +21,18 @@
 namespace iroha {
   namespace ametsuchi {
 
-    RedisBlockQuery::RedisBlockQuery(cpp_redis::redis_client &client,
+    RedisBlockQuery::RedisBlockQuery(cpp_redis::client &client,
                                      FlatFile &file_store)
         : block_store_(file_store), client_(client) {}
 
     rxcpp::observable<model::Block> RedisBlockQuery::getBlocks(uint32_t height,
                                                                uint32_t count) {
-      auto to = height + count;
       auto last_id = block_store_.last_id();
-      to = std::min(to, last_id);
-      if (height > to) {
+      auto to = std::min(last_id, height + count - 1);
+      if (height > to or count == 0) {
         return rxcpp::observable<>::empty<model::Block>();
       }
+
       return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
         auto bytes = block_store_.get(i);
         return rxcpp::observable<>::create<model::Block>([this, bytes](auto s) {
@@ -154,13 +154,10 @@ namespace iroha {
 
             for (auto block_id : block_ids) {
               // create key for querying redis
-              std::string account_assets_key;
-              account_assets_key.append(account_id);
-              account_assets_key.append(":");
-              account_assets_key.append(std::to_string(block_id));
-              account_assets_key.append(":");
-              account_assets_key.append(asset_id);
-              client_.lrange(account_assets_key,
+              std::stringstream account_assets_key;
+              account_assets_key << account_id << ':' << block_id << ':'
+                                 << asset_id;
+              client_.lrange(account_assets_key.str(),
                              0,
                              -1,
                              this->callbackToLrange(subscriber, block_id));

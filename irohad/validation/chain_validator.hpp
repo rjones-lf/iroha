@@ -19,6 +19,7 @@
 #define IROHA_CHAIN_VALIDATOR_HPP
 
 #include <rxcpp/rx-observable.hpp>
+
 #include "ametsuchi/mutable_storage.hpp"
 #include "model/block.hpp"
 #include "model/commit.hpp"
@@ -32,6 +33,8 @@ namespace iroha {
      */
     class ChainValidator {
      public:
+      virtual ~ChainValidator() = default;
+
       /**
        * Validate method provide chain validation for application it to ledger.
        *

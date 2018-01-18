@@ -65,14 +65,16 @@ RUN git clone https://github.com/gflags/gflags /tmp/gflags; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/gflags
 
-# install grpc
+# install c-ares
 RUN git clone https://github.com/c-ares/c-ares /tmp/c-ares; \
     (cd /tmp/c-ares ; git checkout 3be1924221e1326df520f8498d704a5c4c8d0cce); \
     cmake -H/tmp/c-ares -B/tmp/c-ares/build; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
-    rm -rf /tmp/c-ares; \
-    git clone https://github.com/grpc/grpc /tmp/grpc; \
+    rm -rf /tmp/c-ares
+    
+# install grpc
+RUN git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bfcbad3b86c7912968dc8e64f2121c920dad4dfb); \
     (cd /tmp/grpc ; git submodule update --init third_party/benchmark); \
     cmake -DgRPC_ZLIB_PROVIDER=package -DgRPC_CARES_PROVIDER=package -DgRPC_SSL_PROVIDER=package \
@@ -134,11 +136,10 @@ RUN git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     make -C /tmp/libpqxx install; \
     rm -rf /tmp/libpqxx
 
-# install cpp_redis with tacopie
+# install cpp_redis 4.3.0
 RUN git clone https://github.com/Cylix/cpp_redis /tmp/cpp_redis; \
-    (cd /tmp/cpp_redis ; git checkout 727aa5f06c8ce498168cbab5a023cad5b9c00bc0); \
-    git clone https://github.com/Cylix/tacopie /tmp/cpp_redis/tacopie; \
-    (cd /tmp/cpp_redis/tacopie ; git checkout 290dc38681f346adae41d3cc8feabbe534424675); \
+    (cd /tmp/cpp_redis ; git checkout f390eef447a62dcb6da288fb1e91f25f8a9b838c); \
+    (cd /tmp/cpp_redis ; git submodule update --init --recursive); \
     cmake -H/tmp/cpp_redis -B/tmp/cpp_redis/build; \
     cmake --build /tmp/cpp_redis/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/cpp_redis
@@ -185,5 +186,19 @@ RUN git clone git://sourceware.org/git/valgrind.git /tmp/valgrind; \
     make -C /tmp/valgrind install; \
     rm -rf /tmp/valgrind
 
+# install ed25519
+RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
+    (cd /tmp/ed25519 ; git checkout 56d926c4489aa7b2bb664a48294c5ee2d6e1c283); \
+    cmake -DCMAKE_BUILD_TYPE=Debug -DTESTING=OFF -H/tmp/ed25519 -B/tmp/ed25519/build; \
+    cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
+    rm -rf /tmp/ed25519
+
+RUN adduser iroha-ci
 WORKDIR /opt/iroha
+RUN chmod -R 777 /opt/iroha; \
+    mkdir -p /tmp/ccache -m 777;
+
+USER iroha-ci
+
 CMD ["/bin/bash"]

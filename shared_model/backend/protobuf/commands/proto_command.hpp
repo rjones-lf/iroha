@@ -37,6 +37,7 @@
 #include "backend/protobuf/commands/proto_subtract_asset_quantity.hpp"
 #include "backend/protobuf/commands/proto_transfer_asset.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "commands.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
@@ -91,7 +92,7 @@ namespace shared_model {
       explicit Command(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
             variant_([this] { return load<ProtoCommandListType>(*proto_); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Command(const Command &o) : Command(o.proto_) {}
 

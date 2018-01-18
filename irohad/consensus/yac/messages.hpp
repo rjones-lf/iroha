@@ -19,6 +19,7 @@
 #define IROHA_MESSAGES_HPP
 
 #include <vector>
+
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "model/signature.hpp"
 
@@ -47,11 +48,8 @@ namespace iroha {
        * All nodes deals on some solution
        */
       struct CommitMessage {
-        CommitMessage() = default;
-
         explicit CommitMessage(std::vector<VoteMessage> votes)
-            : votes(std::move(votes)) {
-        }
+            : votes(std::move(votes)) {}
 
         std::vector<VoteMessage> votes;
 
@@ -65,11 +63,8 @@ namespace iroha {
        * to collect supermajority for any block
        */
       struct RejectMessage {
-        RejectMessage() = default;
-
         explicit RejectMessage(std::vector<VoteMessage> votes)
-            : votes(std::move(votes)) {
-        }
+            : votes(std::move(votes)) {}
 
         std::vector<VoteMessage> votes;
 

@@ -3,6 +3,9 @@ defaults: &defaults
   environment:
     IROHA_HOME: /opt/iroha
     IROHA_BUILD: /opt/iroha/build
+    CCACHE_DIR: /opt/.ccache
+    SONAR_DIR: /opt/.sonar
+
 
 defaults: &version
   environment:
@@ -15,7 +18,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop
+      - image: hyperledger/iroha-docker-develop:v1
       - image: postgres:9.5
       - image: redis:3.2.8
     steps:
@@ -23,10 +26,11 @@ jobs:
       - run: echo $(eval echo "$IROHA_VERSION")
       - restore_cache:
           keys:
-            - build-cache-debug-{{ arch }}-{{ .Branch }}-
-            - build-cache-debug-{{ arch }}-
+            - v1-build-cache-debug-{{ arch }}-{{ .Branch }}-
+            - v1-build-cache-debug-{{ arch }}-
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
+
       - run:
           name: ccache setup
           command: |
@@ -53,9 +57,9 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
       - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
@@ -65,6 +69,9 @@ jobs:
       - run:
           name: cppcheck
           command: cmake --build $IROHA_BUILD --target cppcheck
+      - run:
+          name: codecov.io
+          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
       - persist_to_workspace:
           root: /opt/iroha/build
           paths:
@@ -77,15 +84,15 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop
+      - image: hyperledger/iroha-docker-develop:v1
     steps:
       - checkout
       - restore_cache:
           keys:
-            - build-cache-release-{{ arch }}-{{ .Branch }}-
-            - build-cache-release-{{ arch }}-
+            - v1-build-cache-release-{{ arch }}-{{ .Branch }}-
+            - v1-build-cache-release-{{ arch }}-
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
       - run:
           name: ccache setup
           command: |
@@ -115,9 +122,9 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
       - run:
           name: copy deb file
           command: |
@@ -148,7 +155,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop
+      - image: hyperledger/iroha-docker-develop:v1
       - image: docker:17.05.0-ce-git
     steps:
       - checkout
@@ -186,17 +193,14 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop
+      - image: hyperledger/iroha-docker-develop:v1
     steps:
       - checkout
       - restore_cache:
           keys:
-            - sonar-
+            - v1-sonar-
       - attach_workspace:
           at: /opt/iroha/build
-      - run:
-          name: codecov.io
-          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
       - run:
           name: execute sonar-scanner to analyze PR
           command: >
@@ -216,9 +220,9 @@ jobs:
               echo "required env vars not found"
             fi
       - save_cache:
-          key: sonar-{{ epoch }}
+          key: v1-sonar-{{ epoch }}
           paths:
-            - ~/.sonar
+            - $SONAR_DIR
 
 
   # executed only for develop, master and release branches
@@ -226,17 +230,14 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop
+      - image: hyperledger/iroha-docker-develop:v1
     steps:
       - checkout
       - restore_cache:
           keys:
-            - sonar-
+            - v1-sonar-
       - attach_workspace:
           at: /opt/iroha/build
-      - run:
-          name: codecov.io
-          command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
       - run:
           name: execute sonar-scanner
           command: >
@@ -251,9 +252,9 @@ jobs:
               echo "required env vars not found"
             fi
       - save_cache:
-          key: sonar-{{ epoch }}
+          key: v1-sonar-{{ epoch }}
           paths:
-            - ~/.sonar
+            - $SONAR_DIR
 
 
   build-macos-release:
@@ -264,7 +265,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - brew-{{ arch }}
+            - v1-brew-{{ arch }}
           paths:
             - Library/Caches/Homebrew
       - run:
@@ -276,13 +277,13 @@ jobs:
             - Library/Caches/Homebrew
       - restore_cache:
           keys:
-            - build-cache-{{ arch }}-{{ .Branch }}
+            - v1-build-cache-{{ arch }}-{{ .Branch }}
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
       - restore_cache:
           keys:
-            - external-{{ arch }}-{{ .Branch }}
-            - external-{{ arch }}
+            - v1-external-{{ arch }}-{{ .Branch }}
+            - v1-external-{{ arch }}
           paths:
             - external
       - run:
@@ -311,11 +312,11 @@ jobs:
             ccache --cleanup
             ccache --show-stats
       - save_cache:
-          key: build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
-            - ~/.ccache
+            - $CCACHE_DIR
       - save_cache:
-          key: external-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          key: v1-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - external
       - run: ccache --show-stats
@@ -364,7 +365,7 @@ workflows:
               only:
                 - develop
                 - master
-                - trunk/.*
+                - /trunk\/.*/
             tags:
               only: /v[\.0-9]+.*/
 

@@ -117,7 +117,7 @@ TEST_F(KVTest, GetNonexistingDetail) {
   auto account = wsv_query->getAccount(account_id1);
 
   auto age =
-      wsv_query->getAccountDetail(account_id1, "genesis", "nonexisting-field");
+      wsv_query->getAccountDetail(account_id1, "user1@ru", "nonexisting-field");
   ASSERT_FALSE(age);
 }
 
@@ -128,7 +128,7 @@ TEST_F(KVTest, GetNonexistingDetail) {
  */
 TEST_F(KVTest, SetAccountDetail) {
   auto account_id2 = account_name2 + "@" + domain_id;
-  auto age = wsv_query->getAccountDetail(account_id2, "genesis", "age");
+  auto age = wsv_query->getAccountDetail(account_id2, "user1@ru", "age");
 
   ASSERT_TRUE(age);
   ASSERT_EQ(age.value(), "24");

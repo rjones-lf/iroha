@@ -67,11 +67,14 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     network = std::make_shared<NetworkImpl>();
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>();
+    auto order = ClusterOrdering::create(default_peers);
+    ASSERT_TRUE(order);
+
     yac = Yac::create(YacVoteStorage(),
                       network,
                       crypto,
                       timer,
-                      ClusterOrdering(default_peers),
+                      order.value(),
                       delay);
     network->subscribe(yac);
 
@@ -143,7 +146,11 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
   YacHash my_hash("proposal_hash", "block_hash");
-  yac->vote(my_hash, ClusterOrdering(default_peers));
+
+  auto order = ClusterOrdering::create(default_peers);
+  ASSERT_TRUE(order.has_value());
+
+  yac->vote(my_hash, order.value());
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());

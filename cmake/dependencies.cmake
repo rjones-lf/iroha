@@ -101,4 +101,7 @@ if(BENCHMARKING)
   find_package(benchmark)
 endif()
 
-
+###################################
+#          ed25519/sha3           #
+###################################
+find_package(ed25519)

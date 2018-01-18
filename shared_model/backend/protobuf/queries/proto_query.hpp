@@ -30,15 +30,24 @@
 #include "backend/protobuf/queries/proto_get_account.hpp"
 #include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_account_detail.hpp"
 #include "backend/protobuf/queries/proto_get_account_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_asset_info.hpp"
 #include "backend/protobuf/queries/proto_get_role_permissions.hpp"
 #include "backend/protobuf/queries/proto_get_roles.hpp"
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
 #include "backend/protobuf/queries/proto_get_transactions.hpp"
+#include "backend/protobuf/util.hpp"
 
 template <typename... T, typename Archive>
 shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
+  if (not ar.has_payload()) {
+    throw std::invalid_argument("Query missing payload");
+  }
+  if (ar.payload().query_case()
+      == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
+    throw std::invalid_argument("Missing concrete query");
+  }
   int which = ar.payload()
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
@@ -73,6 +82,7 @@ namespace shared_model {
                          wrap<GetAccountAssetTransactions>,
                          wrap<GetTransactions>,
                          wrap<GetAccountAssets>,
+                         wrap<GetAccountDetail>,
                          wrap<GetRoles>,
                          wrap<GetRolePermissions>,
                          wrap<GetAssetInfo>>;
@@ -85,10 +95,8 @@ namespace shared_model {
           : CopyableProto(std::forward<QueryType>(query)),
             variant_(
                 [this] { return load_query<ProtoQueryListType>(*proto_); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }),
-            payload_([this] {
-              return BlobType(proto_->payload().SerializeAsString());
-            }),
+            blob_([this] { return makeBlob(*proto_); }),
+            payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {
               SignatureSetType set;
               set.emplace(new Signature(proto_->signature()));
@@ -99,7 +107,9 @@ namespace shared_model {
 
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
-      const Query::QueryVariantType &get() const override { return *variant_; }
+      const Query::QueryVariantType &get() const override {
+        return *variant_;
+      }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return proto_->payload().creator_account_id();
@@ -109,9 +119,13 @@ namespace shared_model {
         return proto_->payload().query_counter();
       }
 
-      const Query::BlobType &blob() const override { return *blob_; }
+      const Query::BlobType &blob() const override {
+        return *blob_;
+      }
 
-      const Query::BlobType &payload() const override { return *payload_; }
+      const Query::BlobType &payload() const override {
+        return *payload_;
+      }
 
       // ------------------------| Signable override  |-------------------------
       const Query::SignatureSetType &signatures() const override {
@@ -120,11 +134,13 @@ namespace shared_model {
 
       bool addSignature(
           const interface::types::SignatureType &signature) override {
-        if (proto_->has_signature()) return false;
+        if (proto_->has_signature()) {
+          return false;
+        }
 
         auto sig = proto_->mutable_signature();
-        sig->set_pubkey(signature->publicKey().blob());
-        sig->set_signature(signature->signedData().blob());
+        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
+        sig->set_signature(crypto::toBinaryString(signature->signedData()));
         return true;
       }
 

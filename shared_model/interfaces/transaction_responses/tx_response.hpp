@@ -75,7 +75,7 @@ namespace shared_model {
       OldModelType *makeOldModel() const override {
         auto response = boost::apply_visitor(
             detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        response->tx_hash = transactionHash().blob();
+        response->tx_hash = crypto::toBinaryString(transactionHash());
         return response;
       }
 

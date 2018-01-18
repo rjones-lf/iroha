@@ -26,9 +26,10 @@
 namespace iroha {
 
   /**
-   * Remove all files inside folder
+   * Remove all files and directories inside a folder.
+   * Keeps the target folder.
    * @param dump_dir - target folder
    */
   void remove_all(const std::string &dump_dir);
-} // namespace iroha
-#endif //IROHA_FILES_HPP
+}  // namespace iroha
+#endif  // IROHA_FILES_HPP

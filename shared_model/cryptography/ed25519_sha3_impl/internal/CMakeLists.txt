@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-add_subdirectory(impl)
-
 add_library(hash
         sha3_hash.cpp
         )
@@ -24,6 +22,7 @@ add_library(hash
 target_link_libraries(hash
         common
         pb_model_converters
+        ed25519
         )
 
 add_library(cryptography
@@ -31,6 +30,6 @@ add_library(cryptography
         )
 
 target_link_libraries(cryptography
-        ed25519_sha3
+        ed25519
         hash
         )

@@ -40,6 +40,12 @@ namespace iroha {
               serializeAccountAssetResponse(
                   static_cast<model::AccountAssetResponse &>(*query_response)));
         }
+        if (instanceof <model::AccountDetailResponse>(*query_response)) {
+          response = nonstd::make_optional<protocol::QueryResponse>();
+          response->mutable_account_detail_response()->CopyFrom(
+            serializeAccountDetailResponse(
+              static_cast<model::AccountDetailResponse &>(*query_response)));
+        }
         if (instanceof <model::AccountResponse>(*query_response)) {
           response = nonstd::make_optional<protocol::QueryResponse>();
           response->mutable_account_response()->CopyFrom(
@@ -164,7 +170,24 @@ namespace iroha {
         return res;
       }
 
-      protocol::SignatoriesResponse
+      protocol::AccountDetailResponse
+      PbQueryResponseFactory::serializeAccountDetailResponse(
+        const model::AccountDetailResponse &accountDetailResponse) const {
+        protocol::AccountDetailResponse pb_response;
+        pb_response.set_detail(accountDetailResponse.detail);
+        return pb_response;
+      }
+
+      model::AccountDetailResponse
+      PbQueryResponseFactory::deserializeAccountDetailResponse(
+        const protocol::AccountDetailResponse &account_detail_response) const {
+        model::AccountDetailResponse res;
+        res.detail = account_detail_response.detail();
+        return res;
+      }
+
+
+        protocol::SignatoriesResponse
       PbQueryResponseFactory::serializeSignatoriesResponse(
           const model::SignatoriesResponse &signatoriesResponse) const {
         protocol::SignatoriesResponse pb_response;
@@ -278,6 +301,9 @@ namespace iroha {
             break;
           case ErrorResponse::NO_ACCOUNT_ASSETS:
             pb_response.set_reason(protocol::ErrorResponse::NO_ACCOUNT_ASSETS);
+            break;
+          case ErrorResponse::NO_ACCOUNT_DETAIL:
+            pb_response.set_reason(protocol::ErrorResponse::NO_ACCOUNT_DETAIL);
             break;
           case ErrorResponse::NO_SIGNATORIES:
             pb_response.set_reason(protocol::ErrorResponse::NO_SIGNATORIES);

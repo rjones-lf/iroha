@@ -34,7 +34,7 @@ namespace shared_model {
           : builder_(o) {}
 
      public:
-      ModelQueryBuilder() = default;
+      ModelQueryBuilder();
 
       /**
        * Sets time of query creation (Unix time in milliseconds)
@@ -125,6 +125,14 @@ namespace shared_model {
        */
       ModelQueryBuilder getRolePermissions(
           const interface::types::RoleIdType &role_id);
+
+      /**
+       * Queries transactions for given hashes
+       * @param hashes - list of transaction hashes to query
+       * @return builder with getTransactions query inside
+       */
+      ModelQueryBuilder getTransactions(
+          const std::vector<crypto::Hash> &hashes);
 
       /**
        * Builds result with all appended fields

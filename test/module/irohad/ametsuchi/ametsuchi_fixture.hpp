@@ -99,7 +99,7 @@ DROP TABLE IF EXISTS role;
 
       std::shared_ptr<pqxx::lazyconnection> connection;
 
-      cpp_redis::redis_client client;
+      cpp_redis::client client;
 
       model::generators::CommandGenerator cmd_gen;
 

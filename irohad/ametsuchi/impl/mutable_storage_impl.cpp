@@ -28,7 +28,7 @@ namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         hash256_t top_hash,
-        std::unique_ptr<cpp_redis::redis_client> index,
+        std::unique_ptr<cpp_redis::client> index,
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction,
         std::shared_ptr<model::CommandExecutorFactory> command_executors)
@@ -49,11 +49,11 @@ namespace iroha {
         const model::Block &block,
         std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
             function) {
-      auto execute_command = [this](auto command) {
-        return command_executors_->getCommandExecutor(command)->execute(
-            *command, *wsv_, *executor_);
-      };
-      auto execute_transaction = [execute_command](auto &transaction) {
+      auto execute_transaction = [this](auto &transaction) {
+        auto execute_command = [this, &transaction](auto command) {
+          return command_executors_->getCommandExecutor(command)->execute(
+              *command, *wsv_, *executor_, transaction.creator_account_id);
+        };
         return std::all_of(transaction.commands.begin(),
                            transaction.commands.end(),
                            execute_command);

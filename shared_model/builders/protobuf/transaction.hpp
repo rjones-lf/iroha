@@ -34,7 +34,7 @@
 namespace shared_model {
   namespace proto {
 
-    template <int S = 0, typename SV = validation::DefaultValidator>
+    template <int S = 0, typename SV = validation::DefaultTransactionValidator>
     class TemplateTransactionBuilder {
      private:
       template <int, typename>
@@ -124,7 +124,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_peer();
           command->set_address(address);
-          command->set_peer_key(peer_key.blob());
+          command->set_peer_key(crypto::toBinaryString(peer_key));
         });
       }
 
@@ -133,7 +133,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_signatory();
           command->set_account_id(account_id);
-          command->set_public_key(public_key.blob());
+          command->set_public_key(crypto::toBinaryString(public_key));
         });
       }
 
@@ -143,7 +143,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_remove_sign();
           command->set_account_id(account_id);
-          command->set_public_key(public_key.blob());
+          command->set_public_key(crypto::toBinaryString(public_key));
         });
       }
 
@@ -175,7 +175,7 @@ namespace shared_model {
           auto command = proto_command->mutable_create_account();
           command->set_account_name(account_name);
           command->set_domain_id(domain_id);
-          command->set_main_pubkey(main_pubkey.blob());
+          command->set_main_pubkey(crypto::toBinaryString(main_pubkey));
         });
       }
 
@@ -203,11 +203,10 @@ namespace shared_model {
       }
 
       template <typename Collection>
-      auto createRole(
-          const interface::types::RoleIdType &role_name,
-          const Collection &permissions) const {
+      auto createRole(const interface::types::RoleIdType &role_name,
+                      const Collection &permissions) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_create_role();
+          auto command = proto_command->mutable_create_role();
           command->set_role_name(role_name);
           boost::for_each(permissions, [&command](const auto &perm) {
             iroha::protocol::RolePermission p;
@@ -220,11 +219,9 @@ namespace shared_model {
       auto detachRole(const interface::types::AccountIdType &account_id,
                       const interface::types::RoleIdType &role_name) const {
         return addCommand([&](auto proto_command) {
-          return addCommand([&](auto proto_command) {
-            auto command = proto_command->mutable_detach_role();
-            command->set_account_id(account_id);
-            command->set_role_name(role_name);
-          });
+          auto command = proto_command->mutable_detach_role();
+          command->set_account_id(account_id);
+          command->set_role_name(role_name);
         });
       }
 
@@ -232,7 +229,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_grant_permission();
+          auto command = proto_command->mutable_grant_permission();
           command->set_account_id(account_id);
           iroha::protocol::GrantablePermission p;
           iroha::protocol::GrantablePermission_Parse(permission, &p);
@@ -244,7 +241,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::PermissionNameType &permission) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_revoke_permission();
+          auto command = proto_command->mutable_revoke_permission();
           command->set_account_id(account_id);
           iroha::protocol::GrantablePermission p;
           iroha::protocol::GrantablePermission_Parse(permission, &p);
@@ -258,7 +255,7 @@ namespace shared_model {
           const interface::SetAccountDetail::AccountDetailValueType &value)
           const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command()->mutable_set_account_detail();
+          auto command = proto_command->mutable_set_account_detail();
           command->set_account_id(account_id);
           command->set_key(key);
           command->set_value(value);
@@ -306,7 +303,7 @@ namespace shared_model {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
 
         auto answer = stateless_validator_.validate(
-            detail::make_polymorphic<Transaction>(transaction_));
+            detail::makePolymorphic<Transaction>(transaction_));
         if (answer.hasErrors()) {
           throw std::invalid_argument(answer.reason());
         }

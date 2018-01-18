@@ -31,6 +31,8 @@ namespace iroha {
      */
     class ModelCryptoProvider {
      public:
+      virtual ~ModelCryptoProvider() = default;
+
       /**
        * Method for signature verification of a transaction.
        * @param tx - transaction for verification

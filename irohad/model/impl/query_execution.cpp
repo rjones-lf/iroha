@@ -20,6 +20,7 @@
 #include "model/execution/common_executor.hpp"
 #include "model/permissions.hpp"
 #include "model/queries/responses/account_assets_response.hpp"
+#include "model/queries/responses/account_detail_response.hpp"
 #include "model/queries/responses/account_response.hpp"
 #include "model/queries/responses/asset_response.hpp"
 #include "model/queries/responses/error_response.hpp"
@@ -28,6 +29,7 @@
 #include "model/queries/responses/transactions_response.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <rxcpp/rx-observable.hpp>
 #include <utility>
 
 using namespace iroha::model;
@@ -127,6 +129,18 @@ bool QueryProcessingFactory::validate(
 }
 
 bool QueryProcessingFactory::validate(
+  const model::GetAccountDetail& query) {
+  // TODO: check signatures
+  return hasQueryPermission(query.creator_account_id,
+                            query.account_id,
+                            *_wsvQuery,
+                            can_get_my_acc_detail,
+                            can_get_all_acc_detail,
+                            can_get_domain_acc_detail
+                            );
+}
+
+bool QueryProcessingFactory::validate(
     const model::GetAccountTransactions &query) {
   // TODO: check signatures
   return hasQueryPermission(query.creator_account_id,
@@ -146,6 +160,16 @@ bool QueryProcessingFactory::validate(
                             can_get_my_acc_ast_txs,
                             can_get_all_acc_ast_txs,
                             can_get_domain_acc_ast_txs);
+}
+
+bool QueryProcessingFactory::validate(
+  const model::GetTransactions& query) {
+  // TODO: check signatures
+  return
+    checkAccountRolePermission(query.creator_account_id, *_wsvQuery,
+                               can_get_my_txs) or
+    checkAccountRolePermission(query.creator_account_id, *_wsvQuery,
+                               can_get_all_txs);
 }
 
 std::shared_ptr<QueryResponse>
@@ -230,9 +254,26 @@ QueryProcessingFactory::executeGetAccountAssets(
   return std::make_shared<AccountAssetResponse>(response);
 }
 
-std::shared_ptr<QueryResponse>
-QueryProcessingFactory::executeGetAccountAssetTransactions(
-    const model::GetAccountAssetTransactions &query) {
+std::shared_ptr<iroha::model::QueryResponse>
+iroha::model::QueryProcessingFactory::executeGetAccountDetail(
+  const model::GetAccountDetail& query) {
+  auto acct_detail =
+    _wsvQuery->getAccountDetail(query.account_id, query.creator_account_id, query.detail);
+  if (!acct_detail.has_value()) {
+    iroha::model::ErrorResponse response;
+    response.query_hash = iroha::hash(query);
+    response.reason = iroha::model::ErrorResponse::NO_ACCOUNT_DETAIL;
+    return std::make_shared<iroha::model::ErrorResponse>(response);
+  }
+  iroha::model::AccountDetailResponse response;
+  response.detail = acct_detail.value();
+  response.query_hash = iroha::hash(query);
+  return std::make_shared<iroha::model::AccountDetailResponse>(response);
+}
+
+std::shared_ptr<iroha::model::QueryResponse>
+iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
+    const model::GetAccountAssetTransactions& query) {
   auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(query.account_id,
                                                                query.asset_id);
   TransactionsResponse response;
@@ -249,6 +290,22 @@ QueryProcessingFactory::executeGetAccountTransactions(
   response.query_hash = iroha::hash(query);
   response.transactions = acc_tx;
   return std::make_shared<TransactionsResponse>(response);
+}
+
+std::shared_ptr<iroha::model::QueryResponse>
+iroha::model::QueryProcessingFactory::executeGetTransactions(
+    const model::GetTransactions &query) {
+  auto txs = _blockQuery->getTransactions(query.tx_hashes);
+  std::vector<iroha::model::Transaction> transactions;
+  txs.subscribe([&transactions](auto const &tx_opt) {
+    if (tx_opt) {
+      transactions.push_back(*tx_opt);
+    }
+  });
+  iroha::model::TransactionsResponse response;
+  response.query_hash = iroha::hash(query);
+  response.transactions = rxcpp::observable<>::iterate(transactions);
+  return std::make_shared<iroha::model::TransactionsResponse>(response);
 }
 
 std::shared_ptr<QueryResponse>
@@ -293,7 +350,18 @@ QueryProcessingFactory::execute(
     }
     return executeGetAccountAssets(*qry);
   }
-  if (instanceof <GetSignatories>(query.get())) {
+  if (instanceof <iroha::model::GetAccountDetail>(query.get())) {
+    auto qry =
+      std::static_pointer_cast<const iroha::model::GetAccountDetail>(query);
+    if (!validate(*qry)) {
+      iroha::model::ErrorResponse response;
+      response.query_hash = iroha::hash(*qry);
+      response.reason = model::ErrorResponse::STATEFUL_INVALID;
+      return std::make_shared<iroha::model::ErrorResponse>(response);
+    }
+    return executeGetAccountDetail(*qry);
+  }
+  if (instanceof <iroha::model::GetSignatories>(query.get())) {
     auto qry =
         std::static_pointer_cast<const GetSignatories>(query);
     if (!validate(*qry)) {
@@ -327,6 +395,16 @@ QueryProcessingFactory::execute(
       return std::make_shared<ErrorResponse>(response);
     }
     return executeGetAccountAssetTransactions(*qry);
+  }
+  if (instanceof <GetTransactions>(query.get())) {
+    auto qry = std::static_pointer_cast<const GetTransactions>(query);
+    if (not validate(*qry)) {
+      ErrorResponse response;
+      response.query_hash = iroha::hash(*qry);
+      response.reason = ErrorResponse::STATEFUL_INVALID;
+      return std::make_shared<ErrorResponse>(response);
+    }
+    return executeGetTransactions(*qry);
   }
   if (instanceof <GetRoles>(query.get())) {
     auto qry = std::static_pointer_cast<const GetRoles>(query);

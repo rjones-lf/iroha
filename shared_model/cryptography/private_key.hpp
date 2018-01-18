@@ -30,7 +30,10 @@ namespace shared_model {
      */
     class PrivateKey : public Blob {
      public:
-      explicit PrivateKey(const std::string &privateKey) : Blob(privateKey) {}
+      explicit PrivateKey(const std::string &private_key) : Blob(private_key) {}
+
+      explicit PrivateKey(const Blob &blob) : Blob(blob.blob()) {}
+
       using OldPrivateKeyType = iroha::privkey_t;
       std::string toString() const override {
         return detail::PrettyStringBuilder()

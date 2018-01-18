@@ -123,7 +123,7 @@ namespace shared_model {
     };
 
     template <class T, class... Args>
-    PolymorphicWrapper<T> make_polymorphic(Args &&... args) {
+    PolymorphicWrapper<T> makePolymorphic(Args &&... args) {
       return PolymorphicWrapper<T>(
           std::make_shared<T>(std::forward<Args>(args)...));
     }

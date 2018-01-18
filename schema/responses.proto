@@ -28,6 +28,10 @@ message AccountAssetResponse {
     AccountAsset account_asset = 1;
 }
 
+message AccountDetailResponse {
+    string detail = 1;
+}
+
 message AccountResponse {
     Account account = 1;
     repeated string account_roles = 2;
@@ -51,10 +55,12 @@ message ErrorResponse {
         STATEFUL_INVALID = 1;
         NO_ACCOUNT = 2; // when requested account does not exist
         NO_ACCOUNT_ASSETS = 3; // when requested account asset does not exist
-        NO_SIGNATORIES = 4; // when requested signatories does not exist
-        NOT_SUPPORTED = 5; // when unidentified request was received
-        NO_ASSET = 6; // when requested asset does not exist
-        NO_ROLES = 7; // when there are no roles defined in the system
+        NO_ACCOUNT_DETAIL = 4; // when requested account detail does not exist
+        NO_SIGNATORIES = 5; // when requested signatories does not exist
+        NOT_SUPPORTED = 6; // when unidentified request was received
+        WRONG_FORMAT = 7; // when json format wrong
+        NO_ASSET = 8; // when requested asset does not exist
+        NO_ROLES = 9; // when there are no roles defined in the system
     }
     Reason reason = 1;
 }
@@ -72,13 +78,14 @@ message TransactionsResponse {
 message QueryResponse {
     oneof response {
         AccountAssetResponse account_assets_response = 1;
-        AccountResponse account_response = 2;
-        ErrorResponse error_response = 3;
-        SignatoriesResponse signatories_response = 4;
-        TransactionsResponse transactions_response = 5;
-        AssetResponse asset_response = 6;
-        RolesResponse roles_response = 7;
-        RolePermissionsResponse role_permissions_response = 8;
+        AccountDetailResponse account_detail_response = 2;
+        AccountResponse account_response = 3;
+        ErrorResponse error_response = 4;
+        SignatoriesResponse signatories_response = 5;
+        TransactionsResponse transactions_response = 6;
+        AssetResponse asset_response = 7;
+        RolesResponse roles_response = 8;
+        RolePermissionsResponse role_permissions_response = 9;
     }
-    bytes query_hash = 9;
+    bytes query_hash = 10;
 }

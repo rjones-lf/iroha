@@ -40,9 +40,20 @@ option(PACKAGE_DEB  "Create DEB package"             OFF)
 option(ENABLE_LIBS_PACKAGING "Enable libs packaging" ON)
 option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
 option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
+option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
+endif()
+
+if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
+  message(STATUS "Packaging enabled: forcing non-packaging options to OFF")
+  set(BENCHMARKING OFF)
+  set(TESTING OFF)
+  set(COVERAGE OFF)
+  set(FUZZING OFF)
+  set(SWIG_PYTHON OFF)
+  set(SWIG_JAVA OFF)
 endif()
 
 message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
@@ -57,6 +68,7 @@ message(STATUS "-DPACKAGE_DEB=${PACKAGE_DEB}")
 message(STATUS "-DENABLE_LIBS_PACKAGING=${ENABLE_LIBS_PACKAGING}")
 message(STATUS "-DSWIG_PYTHON=${SWIG_PYTHON}")
 message(STATUS "-DSWIG_JAVA=${SWIG_JAVA}")
+message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
@@ -70,7 +82,7 @@ include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
 
-if(NOT PACKAGE_TGZ OR NOT PACKAGE_ZIP OR NOT PACKAGE_RPM OR NOT PACKAGE_DEB)
+if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
 endif()
 

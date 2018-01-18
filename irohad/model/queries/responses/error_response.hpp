@@ -57,6 +57,10 @@ namespace iroha {
          */
         NO_ACCOUNT_ASSETS,
         /**
+         * when requested account detail does not exist
+         */
+        NO_ACCOUNT_DETAIL,
+        /**
          * when requested signatories does not exist
          */
         NO_SIGNATORIES,

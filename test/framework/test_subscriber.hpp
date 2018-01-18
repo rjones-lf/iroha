@@ -175,7 +175,7 @@ namespace framework {
     }
 
     /**
-     * CallExact check invariant that subscriber called exact number of timers
+     * CallExact check invariant that subscriber called exact number of times
      * @tparam T - observable parameter
      */
     template <typename T>

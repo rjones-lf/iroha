@@ -23,6 +23,7 @@
 #include <numeric>
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "primitive.pb.h"
 #include "utils/lazy_initializer.hpp"
 
@@ -46,8 +47,7 @@ namespace shared_model {
               result |= value.fourth() << offset * times--;
               return result;
             }),
-            precision_([this] { return proto_->precision(); }),
-            blob_([this] { return BlobType(proto_->SerializeAsString()); }) {}
+            blob_([this] { return makeBlob(*proto_); }) {}
 
       Amount(const Amount &o) : Amount(o.proto_) {}
 
@@ -58,7 +58,7 @@ namespace shared_model {
       }
 
       interface::types::PrecisionType precision() const override {
-        return *precision_;
+        return proto_->precision();
       }
 
       const BlobType &blob() const override { return *blob_; }
@@ -69,8 +69,6 @@ namespace shared_model {
       using Lazy = detail::LazyInitializer<T>;
 
       const Lazy<boost::multiprecision::uint256_t> multiprecision_repr_;
-
-      const Lazy<interface::types::PrecisionType> precision_;
 
       const Lazy<BlobType> blob_;
     };

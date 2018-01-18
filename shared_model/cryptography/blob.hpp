@@ -20,40 +20,64 @@
 
 #include <iomanip>
 #include <sstream>
+#include <vector>
+#include "common/byteutils.hpp"
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/swig_keyword_hider.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/string_builder.hpp"
+#include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
   namespace crypto {
 
+    class Blob;
+    static inline std::string toBinaryString(const Blob &b);
     /**
      * Blob class present user-friendly blob for working with low-level
      * binary stuff. Its length is not fixed in compile time.
      */
     class Blob : public interface::ModelPrimitive<Blob> {
      public:
+      using Bytes = std::vector<uint8_t>;
+
       /**
        * Create blob from a string
        * @param blob - string to create blob from
        */
-      explicit Blob(const std::string &blob) : blob_(blob) {
-        std::stringstream ss;
-        ss << std::hex << std::setfill('0');
-        for (const auto &c : blob_) {
-          ss << std::setw(2) << (static_cast<int>(c) & 0xff);
-        }
-        hex_ = ss.str();
+      explicit Blob(const std::string &blob)
+          : Blob(Bytes(blob.begin(), blob.end())) {}
+
+      /**
+       * Create blob from a vector
+       * @param blob - vector to create blob from
+       */
+      explicit Blob(const Bytes &blob) : Blob(Bytes(blob)) {}
+      explicit Blob(Bytes &&blob) : blob_(std::move(blob)) {
+        hex_ = iroha::bytestringToHexstring(toBinaryString(*this));
+      }
+
+      /**
+       * Creates new Blob object from provided hex string
+       * @param hex - string in hex format to create Blob from
+       * @return Blob from provided hex string if it was correct or
+       * Blob from empty string if provided string was not a correct hex string
+       */
+      static Blob fromHexString(const std::string &hex) {
+        using iroha::operator|;
+        Blob b("");
+        iroha::hexstringToBytestring(hex) | [&](auto &&s){b = Blob(s);};
+        return b;
       }
 
       /**
        * @return provides raw representation of blob
        */
-      virtual const std::string &blob() const { return blob_; }
+      virtual const Bytes &blob() const { return blob_; }
 
       /**
-       * @return provides human-readable representation of blob without leading 0x
+       * @return provides human-readable representation of blob without leading
+       * 0x
        */
       virtual const std::string &hex() const { return hex_; }
 
@@ -85,14 +109,18 @@ namespace shared_model {
 
       template <typename BlobType>
       DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(blob());
+        return BlobType::from_string(toBinaryString(*this));
       }
 
      private:
       // TODO: 17/11/2017 luckychess use improved Lazy with references support
-      std::string blob_;
+      Bytes blob_;
       std::string hex_;
     };
+
+    static inline std::string toBinaryString(const Blob &b) {
+      return std::string(b.blob().begin(), b.blob().end());
+    }
   }  // namespace crypto
 }  // namespace shared_model
 #endif  // IROHA_SHARED_MODEL_BLOB_HPP

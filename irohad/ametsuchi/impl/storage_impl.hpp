@@ -35,7 +35,7 @@ namespace iroha {
 
     struct ConnectionContext {
       ConnectionContext(std::unique_ptr<FlatFile> block_store,
-                        std::unique_ptr<cpp_redis::redis_client> index,
+                        std::unique_ptr<cpp_redis::client> index,
                         std::unique_ptr<pqxx::lazyconnection> pg_lazy,
                         std::unique_ptr<pqxx::nontransaction> pg_nontx)
           : block_store(std::move(block_store)),
@@ -45,7 +45,7 @@ namespace iroha {
       }
 
       std::unique_ptr<FlatFile> block_store;
-      std::unique_ptr<cpp_redis::redis_client> index;
+      std::unique_ptr<cpp_redis::client> index;
       std::unique_ptr<pqxx::lazyconnection> pg_lazy;
       std::unique_ptr<pqxx::nontransaction> pg_nontx;
     };
@@ -84,7 +84,7 @@ namespace iroha {
                   std::size_t redis_port,
                   std::string postgres_options,
                   std::unique_ptr<FlatFile> block_store,
-                  std::unique_ptr<cpp_redis::redis_client> index,
+                  std::unique_ptr<cpp_redis::client> index,
                   std::unique_ptr<pqxx::lazyconnection> wsv_connection,
                   std::unique_ptr<pqxx::nontransaction> wsv_transaction);
 
@@ -104,7 +104,7 @@ namespace iroha {
       /**
        * Redis connection
        */
-      std::unique_ptr<cpp_redis::redis_client> index_;
+      std::unique_ptr<cpp_redis::client> index_;
 
       /**
        * Pg connection with direct transaction management
