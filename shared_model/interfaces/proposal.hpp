@@ -67,9 +67,9 @@ namespace shared_model {
 //                .finalize();
 //      }
 
-//      bool operator==(const ModelType &rhs) const override {
-//        return transactions() == rhs.transactions() and height() == rhs.height();
-//      }
+      bool operator==(const ModelType &rhs) const override {
+        return transactions() == rhs.transactions() and height() == rhs.height();
+      }
 
     };
 

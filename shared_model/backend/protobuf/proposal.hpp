@@ -19,45 +19,58 @@
 #define IROHA_SHARED_MODEL_PROTO_PROPOSAL_HPP
 
 #include "interfaces/proposal.hpp"
+#include "interfaces/transaction.hpp"
+
+#include <boost/range/numeric.hpp>
 #include "common_objects/trivial_proto.hpp"
 #include "model/proposal.hpp"
-#include <boost/range/numeric.hpp>
 
 #include "block.pb.h"
 #include "ordering.pb.h"
 #include "utils/lazy_initializer.hpp"
 
+#include "transaction.hpp"
 namespace shared_model {
   namespace proto {
-    class Proposal FINAL : public CopyableProto<interface::Proposal,
-                                                iroha::protocol::Proposal,
-                                                Proposal> {
+    class Proposal FINAL
+        : public CopyableProto<interface::Proposal,
+                               iroha::ordering::proto::Proposal,
+                               Proposal> {
      public:
-      explicit Proposal(iroha::protocol::Proposal &&proposal)
-          : CopyableProto(std::forward<Proposal>(proposal)),
-            proposal_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Proposal)),
-            transactions_([this] { return proposal_->transactions(); }) {}
+      template <class ProposalType>
+      explicit Proposal(ProposalType &&proposal)
+          : CopyableProto(
+                std::forward<ProposalType>(proposal)),
+            transactions_([this] {
+              std::vector<wTransaction> txs;
+              for(const auto& tx: proto_->transactions()){
+                auto tmp = detail::make_polymorphic<proto::Transaction>(tx);
+                txs.emplace_back(tmp);
+              }
+              return txs;
+            }) {}
 
       Proposal(const Proposal &o) : Proposal(o.proto_) {}
 
       Proposal(Proposal &&o) noexcept : Proposal(std::move(o.proto_)) {}
 
-      const std::vector<shared_model::Transaction> &transactions() const override {
+      const std::vector<wTransaction> &transactions() const override {
         return *transactions_;
       }
 
       uint64_t height() const override {
-        return proposal_->height();
+        return proto_->height();
       }
 
      private:
+      using wTransaction = detail::PolymorphicWrapper<interface::Transaction>;
+
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::Proposal &> proposal_;
-      const Lazy<std::vector<Transaction>> proposal_;
+      const Lazy<std::vector<wTransaction>> transactions_;
+
     };
   }  // namespace proto
 }  // namespace shared_model

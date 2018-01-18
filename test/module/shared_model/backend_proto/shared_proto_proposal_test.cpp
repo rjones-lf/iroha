@@ -16,6 +16,7 @@
  */
 
 #include "backend/protobuf/proposal.hpp"
+#include "builders/protobuf/proposal.hpp"
 #include "ordering.pb.h"
 #include <gtest/gtest.h>
 
@@ -25,8 +26,8 @@
  * @then shared model is created correctly
  */
 TEST(ProtoTransaction, Create) {
-  iroha::protocol::Proposal proposal;
+  iroha::ordering::proto::Proposal proposal;
 
-  shared_model::proto::Transaction proto(transaction);
+  shared_model::proto::Proposal proto(std::move(proposal));
   //ASSERT_EQ(proto.transactionCounter(), transaction.payload().tx_counter());
 }
