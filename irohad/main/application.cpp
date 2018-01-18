@@ -55,13 +55,13 @@ Irohad::Irohad(const std::string &block_store_dir,
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
-  // Initializing storage at this point in order to read genesis block before
+  // Initializing storage at this point in order to insert genesis block before
   // initialization of iroha deamon
   initStorage();
 }
 
 Irohad::~Irohad() {
-  // Shutting down grpc server
+  // Shutting down listing services used by internal server
   if (internal_server) {
     internal_server->Shutdown();
   }
@@ -69,7 +69,7 @@ Irohad::~Irohad() {
   if (torii_server) {
     torii_server->shutdown();
   }
-  // Waiting until grpc server thread dies
+  // Waiting until internal server thread dies
   if (internal_thread.joinable()) {
     internal_thread.join();
   }
@@ -168,7 +168,7 @@ void Irohad::initOrderingGate() {
 }
 
 /**
- * Initializing iroha proposal creator and block creator
+ * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
   simulator = std::make_shared<Simulator>(ordering_gate,
@@ -263,7 +263,7 @@ void Irohad::run() {
   torii_server =
       std::make_unique<ServerRunner>("0.0.0.0:" + std::to_string(torii_port_));
 
-  // Initializing grpc server
+  // Initializing internal server
   grpc::ServerBuilder builder;
   int port = 0;
   builder.AddListeningPort("0.0.0.0:" + std::to_string(internal_port_),
@@ -273,7 +273,7 @@ void Irohad::run() {
   builder.RegisterService(ordering_init.ordering_service_transport.get());
   builder.RegisterService(yac_init.consensus_network.get());
   builder.RegisterService(loader_init.service.get());
-  // Run grpc server
+  // Run internal server
   internal_server = builder.BuildAndStart();
   // Run torii server
   server_thread = std::thread([this] {

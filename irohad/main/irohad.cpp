@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
                 keypair);
 
-  // Check if iroha daemon storage is properly set
+  // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {
     // Abort execution if not
     log->error("Failed to initialize storage");
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
     auto file = loader.loadFile(FLAGS_genesis_block);
     auto block = loader.parseBlock(file.value());
 
-    // Check if genesis block was empty
+    // Check that provided genesis block file was correct
     if (not block.has_value()) {
       // Abort execution if not
       log->error("Failed to parse genesis block");
