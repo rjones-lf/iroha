@@ -44,7 +44,7 @@ namespace shared_model {
             transactions_([this] {
               std::vector<w<interface::Transaction>> txs;
               for(const auto& tx: proto_->transactions()){
-                auto tmp = detail::make_polymorphic<proto::Transaction>(tx);
+                auto tmp = detail::makePolymorphic<proto::Transaction>(tx);
                 txs.emplace_back(tmp);
               }
               return txs;

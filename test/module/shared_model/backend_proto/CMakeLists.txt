@@ -61,10 +61,3 @@ target_link_libraries(shared_proto_util_test
     shared_model_proto_backend
     )
 
-addtest(shared_proto_proposal_test
-        shared_proto_proposal_test.cpp
-        )
-target_link_libraries(shared_proto_proposal_test
-        ordering_grpc
-        shared_model_proto_backend
-        )
