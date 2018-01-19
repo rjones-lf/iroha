@@ -48,7 +48,7 @@ namespace integration_framework {
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
-    iroha_instance_->makeGenesis(block);
+    iroha_instance_->insertGenesis(block);
     log_->info("added genesis block");
 
     // subscribing for components

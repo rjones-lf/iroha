@@ -86,7 +86,7 @@ namespace integration_framework {
 
     /**
      * Set block storage directory for Iroha server.
-     * @param block_store_dir - director to store blocks
+     * @param block_store_dir - directory to store blocks
      */
     void setBlockStoreDir(const std::string &block_store_dir) {
       block_store_dir_ = block_store_dir;
@@ -115,7 +115,7 @@ namespace integration_framework {
      * Set Torii port.
      * @param torii_port
      */
-    void setToriiPort(const size_t torii_port) {
+    void setToriiPort(size_t torii_port) {
       torii_port_ = torii_port;
     }
 
@@ -123,7 +123,7 @@ namespace integration_framework {
      * Set internal port.
      * @param internal_port
      */
-    void setInternalPort(const size_t internal_port) {
+    void setInternalPort(size_t internal_port) {
       internal_port_ = internal_port;
     }
 
@@ -131,7 +131,7 @@ namespace integration_framework {
      * Set maximum proposal size.
      * @param max_proposal_size
      */
-    void setMaxProposalSize(const size_t max_proposal_size) {
+    void setMaxProposalSize(size_t max_proposal_size) {
       max_proposal_size_ = max_proposal_size;
     }
 
