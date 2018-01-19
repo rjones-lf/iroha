@@ -33,8 +33,8 @@ namespace integration_framework {
   class IrohaInstance {
    public:
     /**
-     * Save block as genesis block.
-     * @param block - block to be as genesis block
+     * Save the block as genesis block.
+     * @param block - block to be saved as genesis block
      */
     void makeGenesis(const iroha::model::Block &block) {
       instance_->storage->dropStorage();
@@ -43,7 +43,7 @@ namespace integration_framework {
     }
 
     /**
-     * Inserts block without validation.
+     * Insert the block without validation.
      * @param block - block to be inserted
      */
     void rawInsertBlock(const iroha::model::Block &block) {
@@ -180,12 +180,6 @@ namespace integration_framework {
       return redis_port ? std::stoull(redis_port) : default_port;
     }
 
-    /**
-     * Returns PostgreSQL credentials.
-     * 1. Tries get credential from system environments.
-     * 2. If not, uses default hard coded credentials.
-     * @return
-     */
     std::string getRedisHostOrDefault(
         const std::string &default_host = "localhost") {
       auto redis_host = std::getenv("IROHA_REDIS_HOST");
@@ -197,6 +191,12 @@ namespace integration_framework {
       return redis_port ? std::stoull(redis_port) : default_port;
     }
 
+    /**
+     * Return PostgreSQL credentials as follow:
+     * 1. Try get credential from system environments.
+     * 2. If not, use default hard-coded credentials.
+     * @return
+     */
     std::string getPostgreCredsOrDefault(const std::string &default_conn =
                                              "host=localhost port=5432 "
                                              "user=postgres "
