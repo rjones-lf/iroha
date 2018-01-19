@@ -36,7 +36,7 @@ namespace integration_framework {
      * Save the block as genesis block.
      * @param block - block to be saved as genesis block
      */
-    void makeGenesis(const iroha::model::Block &block) {
+    void insertGenesis(const iroha::model::Block &block) {
       instance_->storage->dropStorage();
       rawInsertBlock(block);
       instance_->init();
@@ -169,33 +169,31 @@ namespace integration_framework {
 
     std::shared_ptr<TestIrohad> instance_;
 
+    /**
+     * Get Redis host.
+     * @param default_host - default value
+     * @return host defined in environment variable if exists, otherwise default
+     */
     std::string getRedisHostOrDefault(
         const std::string &default_host = "localhost") {
       auto redis_host = std::getenv("IROHA_REDIS_HOST");
       return redis_host ? redis_host : default_host;
     }
 
-    size_t getRedisPortOrDefault(size_t default_port = 6379) {
-      auto redis_port = std::getenv("IROHA_REDIS_PORT");
-      return redis_port ? std::stoull(redis_port) : default_port;
-    }
-
-    std::string getRedisHostOrDefault(
-        const std::string &default_host = "localhost") {
-      auto redis_host = std::getenv("IROHA_REDIS_HOST");
-      return redis_host ? redis_host : default_host;
-    }
-
+    /**
+     * Get Redis port.
+     * @param default_port - default value
+     * @return port defined in environment variable if exists, otherwise or default
+     */
     size_t getRedisPortOrDefault(size_t default_port = 6379) {
       auto redis_port = std::getenv("IROHA_REDIS_PORT");
       return redis_port ? std::stoull(redis_port) : default_port;
     }
 
     /**
-     * Return PostgreSQL credentials as follow:
-     * 1. Try get credential from system environments.
-     * 2. If not, use default hard-coded credentials.
-     * @return
+     * Get PostgreSQL credentials.
+     * @return PostgreSQL credential string constructed from system
+     * environment if exists, otherwise default value.
      */
     std::string getPostgreCredsOrDefault(const std::string &default_conn =
                                              "host=localhost port=5432 "
@@ -215,6 +213,7 @@ namespace integration_framework {
       }
     }
 
+   private:
     // config area
     std::string block_store_dir_ = "/tmp/block_store";
     std::string redis_host_ = getRedisHostOrDefault();
