@@ -29,8 +29,3 @@ target_link_libraries(transfer_asset_inter_domain_test
   raw_block_insertion
   model_generators
   )
-
-addtest(tx_pipeline_test tx_pipeline_test.cpp)
-target_link_libraries(tx_pipeline_test
-  integration_framework
-  )
