@@ -68,6 +68,15 @@ namespace iroha {
           const std::string &permission_id) override;
 
      private:
+      template <typename T>
+      friend std::string try_quote(PostgresWsvCommand *,
+                                   std::initializer_list<T>) noexcept;
+      template <typename T>
+      friend std::string try_quote(PostgresWsvCommand *, const T &) noexcept;
+      friend std::string try_concat(
+          PostgresWsvCommand *, std::initializer_list<const char *>) noexcept;
+      friend bool try_exec(PostgresWsvCommand *, const std::string &) noexcept;
+
       const size_t default_tx_counter = 0;
 
       pqxx::nontransaction &transaction_;
