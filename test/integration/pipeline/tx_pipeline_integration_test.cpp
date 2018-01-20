@@ -172,8 +172,12 @@ TEST(PipelineIntegrationTest, SendTx) {
   tx.commands.push_back(gen.generateAddAssetQuantity(
       "user", "test", iroha::Amount().createFromString("0").value()));
 
+  auto check = [](auto status) {
+    ASSERT_EQ(iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS,
+              status);
+  };
   integration_framework::IntegrationTestFramework()
       .setInitialState()
-      .sendTx(tx)
+      .sendTx(tx, check)
       .done();
 }
