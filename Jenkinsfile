@@ -228,9 +228,6 @@ pipeline {
     post {
         always {
             script {
-                IROHA_POSTGRES_HOST = readFile('pg-host').trim()
-                IROHA_REDIS_HOST = readFile('redis-host').trim()
-                IROHA_NETWORK = readFile('iroha-network').trim()
                 sh """
                   docker stop $IROHA_POSTGRES_HOST $IROHA_REDIS_HOST
                   docker rm $IROHA_POSTGRES_HOST $IROHA_REDIS_HOST
