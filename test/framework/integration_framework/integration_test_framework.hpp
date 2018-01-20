@@ -123,14 +123,44 @@ namespace integration_framework {
           pb_tx, response);
     }
     // fetch status of transaction
-    iroha::protocol::TxStatus status;
+    iroha::model::TransactionResponse::Status status;
     {
+      iroha::protocol::TxStatus proto_status;
       iroha::protocol::TxStatusRequest request;
       request.set_tx_hash(iroha::hash(tx).to_string());
       iroha::protocol::ToriiResponse response;
       iroha_instance_->getIrohaInstance()->getCommandService()->StatusAsync(
           request, response);
-      status = response.tx_status();
+      proto_status = response.tx_status();
+
+      switch (proto_status) {
+        case iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED:
+          status =
+              iroha::model::TransactionResponse::STATELESS_VALIDATION_FAILED;
+          break;
+        case iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS:
+          status =
+              iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS;
+          break;
+        case iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED:
+          status =
+              iroha::model::TransactionResponse::STATEFUL_VALIDATION_FAILED;
+          break;
+        case iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS:
+          status =
+              iroha::model::TransactionResponse::STATEFUL_VALIDATION_SUCCESS;
+          break;
+        case iroha::protocol::TxStatus::COMMITTED:
+          status = iroha::model::TransactionResponse::COMMITTED;
+          break;
+        case iroha::protocol::TxStatus::IN_PROGRESS:
+          status = iroha::model::TransactionResponse::IN_PROGRESS;
+          break;
+        case iroha::protocol::TxStatus::NOT_RECEIVED:
+        default:
+          status = iroha::model::TransactionResponse::NOT_RECEIVED;
+          break;
+      }
     }
     // check validation function
     validation(status);
