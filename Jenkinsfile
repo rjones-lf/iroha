@@ -74,19 +74,17 @@ pipeline {
                                 + "-e POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}" 
                                 + "--name ${IROHA_POSTGRES_HOST}" 
                                 + "--network=${IROHA_NETWORK}")
-                    
-                            def r_c = docker.image('redis:3.2.8').run(" \ 
-                                --name ${IROHA_REDIS_HOST} \ 
-                                --network=${IROHA_NETWORK}")
 
-                            docker.image("${env.DOCKER_IMAGE}").inside(" \ 
-                                -e IROHA_POSTGRES_HOST=${IROHA_POSTGRES_HOST} \ 
-                                -e IROHA_POSTGRES_PORT=${env.POSTGRES_PORT} \ 
-                                -e IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER} \ 
-                                -e IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD} \ 
-                                -e IROHA_REDIS_HOST=${IROHA_REDIS_HOST} \ 
-                                -e IROHA_REDIS_PORT=${env.REDIS_PORT} \ 
-                                --network=${IROHA_NETWORK}") {
+                            def r_c = docker.image('redis:3.2.8').run(" --name ${IROHA_REDIS_HOST}" 
+                                + "--network=${IROHA_NETWORK}")
+
+                            docker.image("${env.DOCKER_IMAGE}").inside(" -e IROHA_POSTGRES_HOST=${IROHA_POSTGRES_HOST}"
+                                + "-e IROHA_POSTGRES_PORT=${env.POSTGRES_PORT}" 
+                                + "-e IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}" 
+                                + "-e IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}"
+                                + "-e IROHA_REDIS_HOST=${IROHA_REDIS_HOST}" 
+                                + "-e IROHA_REDIS_PORT=${env.REDIS_PORT}" 
+                                + "--network=${IROHA_NETWORK}") {
 
                                 def scmVars = checkout scm
                                 env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
