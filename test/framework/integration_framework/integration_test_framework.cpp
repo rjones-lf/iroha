@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
  */
 
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/integration_framework/iroha_instance.hpp"
 
 namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
@@ -76,34 +75,9 @@ namespace integration_framework {
     return *this;
   }
 
-  IntegrationTestFramework &IntegrationTestFramework::addUser(
-      std::string account_id,
-      const iroha::keypair_t &keypair,
-      std::vector<iroha::pubkey_t> signatories) {
-    iroha::model::generators::CommandGenerator gen;
-    iroha::model::Transaction tx;
-
-    // add an account
-    tx.commands.push_back(
-        gen.generateCreateAccount(account_id, default_domain, keypair.pubkey));
-
-    // set the account quorum
-    tx.commands.push_back(
-        gen.generateSetQuorum(account_id, signatories.size() + 1));
-
-    // add the signatories to the account
-    std::for_each(signatories.begin(), signatories.end(), [&](auto &s) {
-      tx.commands.push_back(gen.generateAddSignatory(account_id, s));
-    });
-
-    tx.created_ts = iroha::time::now();
-    iroha::model::ModelCryptoProviderImpl(keypair).sign(tx);
-    return sendTx(tx);
-  }
-
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       iroha::model::Transaction tx) {
-    sendTx(tx, [] {});
+    sendTx(tx, [](auto) {});
     return *this;
   }
 

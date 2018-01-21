@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "crypto/keys_manager_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "datetime/time.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "logger/logger.hpp"
 #include "model/block.hpp"
@@ -50,11 +48,6 @@ namespace integration_framework {
         const iroha::keypair_t &keypair = iroha::create_keypair());
     IntegrationTestFramework &setInitialState(const iroha::keypair_t &keypair,
                                               const iroha::model::Block &block);
-
-    IntegrationTestFramework &addUser(
-        std::string account_id,
-        const iroha::keypair_t &keypair,
-        std::vector<iroha::pubkey_t> signatories = {});
 
     template <typename Lambda>
     IntegrationTestFramework &sendTx(iroha::model::Transaction tx,
@@ -124,11 +117,53 @@ namespace integration_framework {
     // deserialize
     auto pb_tx = iroha::model::converters::PbTransactionFactory().serialize(tx);
     // send
-    google::protobuf::Empty response;
-    iroha_instance_->getIrohaInstance()->getCommandService()->ToriiAsync(
-        pb_tx, response);
+    {
+      google::protobuf::Empty response;
+      iroha_instance_->getIrohaInstance()->getCommandService()->ToriiAsync(
+          pb_tx, response);
+    }
     // fetch status of transaction
+    iroha::model::TransactionResponse::Status status;
+    {
+      iroha::protocol::TxStatus proto_status;
+      iroha::protocol::TxStatusRequest request;
+      request.set_tx_hash(iroha::hash(tx).to_string());
+      iroha::protocol::ToriiResponse response;
+      iroha_instance_->getIrohaInstance()->getCommandService()->StatusAsync(
+          request, response);
+      proto_status = response.tx_status();
+
+      switch (proto_status) {
+        case iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED:
+          status =
+              iroha::model::TransactionResponse::STATELESS_VALIDATION_FAILED;
+          break;
+        case iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS:
+          status =
+              iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS;
+          break;
+        case iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED:
+          status =
+              iroha::model::TransactionResponse::STATEFUL_VALIDATION_FAILED;
+          break;
+        case iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS:
+          status =
+              iroha::model::TransactionResponse::STATEFUL_VALIDATION_SUCCESS;
+          break;
+        case iroha::protocol::TxStatus::COMMITTED:
+          status = iroha::model::TransactionResponse::COMMITTED;
+          break;
+        case iroha::protocol::TxStatus::IN_PROGRESS:
+          status = iroha::model::TransactionResponse::IN_PROGRESS;
+          break;
+        case iroha::protocol::TxStatus::NOT_RECEIVED:
+        default:
+          status = iroha::model::TransactionResponse::NOT_RECEIVED;
+          break;
+      }
+    }
     // check validation function
+    validation(status);
     return *this;
   }
 
