@@ -25,6 +25,7 @@
 
 namespace iroha {
 
+ // TODO(@warchant): IR-814 remove 'using namespace' from all headers #goodfirstissue
   using namespace boost::multiprecision;
 
   /**

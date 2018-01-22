@@ -194,7 +194,23 @@ RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
     ldconfig; \
     rm -rf /tmp/ed25519
 
-RUN adduser iroha-ci
+RUN git clone https://github.com/warchant/rttr /tmp/rttr; \
+    (cd /tmp/rttr; git checkout a7c2fb3d14996c4a8d8383917864780e47d5c618); \
+    cmake -DCMAKE_BUILD_TYPE=Debug \
+          -DBUILD_UNIT_TESTS=OFF   \
+          -DBUILD_BENCHMARKS=OFF   \
+          -DBUILD_EXAMPLES=OFF     \
+          -DBUILD_DOCUMENTATION=OFF\
+          -DBUILD_STATIC=OFF       \
+          -DUSE_PCH=OFF            \
+          -DCMAKE_DEBUG_POSTFIX=   \
+          -DCMAKE_INSTALL_PREFIX="/usr/local" \
+          -H/tmp/rttr -B/tmp/rttr/build; \
+    cmake --build /tmp/rttr/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
+    rm -rf /tmp/rttr
+
+RUN useradd -ms /bin/bash iroha-ci
 WORKDIR /opt/iroha
 RUN chmod -R 777 /opt/iroha; \
     mkdir -p /tmp/ccache -m 777;
