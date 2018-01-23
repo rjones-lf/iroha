@@ -61,7 +61,9 @@ namespace shared_model {
         iroha::model::Block *oldStyleBlock = new iroha::model::Block();
         oldStyleBlock->height = height();
         oldStyleBlock->prev_hash =
-            iroha::model::Block::HashType::from_string(prevHash().toString());
+            iroha::model::Block::HashType::from_string(prevHash().toString(),
+                                                       "Block::makeOldModel",
+                                                       "prevHash().toString()");
         oldStyleBlock->txs_number = txsNumber();
         std::for_each(
             transactions().begin(),
@@ -70,8 +72,8 @@ namespace shared_model {
               oldStyleBlock->transactions.emplace_back(*tx->makeOldModel());
             });
         oldStyleBlock->created_ts = createdTime();
-        oldStyleBlock->hash =
-            iroha::model::Block::HashType::from_string(hash().toString());
+        oldStyleBlock->hash = iroha::model::Block::HashType::from_string(
+            hash().toString(), "Block::makeOldModel", "hash().toString()");
         std::for_each(signatures().begin(),
                       signatures().end(),
                       [oldStyleBlock](auto &sig) {

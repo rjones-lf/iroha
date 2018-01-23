@@ -63,10 +63,14 @@ namespace shared_model {
             new iroha::model::Signature();
         oldStyleSignature->signature =
             iroha::model::Signature::SignatureType::from_string(
-                signedData().toString());
+                crypto::toBinaryString(signedData()),
+                "Signature::makeOldModel",
+                "crypto::toBinaryString(signedData())");
         oldStyleSignature->pubkey =
             iroha::model::Signature::KeyType::from_string(
-                publicKey().toString());
+                crypto::toBinaryString(publicKey()),
+                "Signature::makeOldModel",
+                "crypto::toBinaryString(publicKey())");
         return oldStyleSignature;
       }
 

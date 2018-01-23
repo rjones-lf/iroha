@@ -23,7 +23,6 @@
 #include <vector>
 #include "common/byteutils.hpp"
 #include "interfaces/base/model_primitive.hpp"
-#include "utils/swig_keyword_hider.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/swig_keyword_hider.hpp"
@@ -66,25 +65,31 @@ namespace shared_model {
       static Blob fromHexString(const std::string &hex) {
         using iroha::operator|;
         Blob b("");
-        iroha::hexstringToBytestring(hex) | [&](auto &&s){b = Blob(s);};
+        iroha::hexstringToBytestring(hex) | [&](auto &&s) { b = Blob(s); };
         return b;
       }
 
       /**
        * @return provides raw representation of blob
        */
-      virtual const Bytes &blob() const { return blob_; }
+      virtual const Bytes &blob() const {
+        return blob_;
+      }
 
       /**
        * @return provides human-readable representation of blob without leading
        * 0x
        */
-      virtual const std::string &hex() const { return hex_; }
+      virtual const std::string &hex() const {
+        return hex_;
+      }
 
       /**
        * @return size of raw representation of blob
        */
-      virtual size_t size() const { return blob_.size(); }
+      virtual size_t size() const {
+        return blob_.size();
+      }
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -97,7 +102,9 @@ namespace shared_model {
         return blob() == rhs.blob();
       }
 
-      Blob *copy() const override { return new Blob(blob()); };
+      Blob *copy() const override {
+        return new Blob(blob());
+      };
 
       /**
        * Method perform transforming object to old-fashion blob_t format
@@ -109,7 +116,9 @@ namespace shared_model {
 
       template <typename BlobType>
       DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(toBinaryString(*this));
+        return BlobType::from_string(toBinaryString(*this),
+                                     "BlobType::makeOldModel",
+                                     "toBinaryString(*this)");
       }
 
      private:

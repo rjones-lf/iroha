@@ -37,6 +37,56 @@ void runQueryTest(std::shared_ptr<Query> query){
   ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
 }
 
+/**
+ * @given Query which query pubkey length is invalid
+ * @when deserialize query
+ * @then validate the thrown exception
+ */
+TEST(PbQueryFactoryTest, DeserializeInvalidQueryPubkey) {
+  iroha::protocol::Query proto_query;
+  iroha::protocol::GetAccount proto_get_account;
+  proto_query.mutable_payload()->mutable_get_account()->CopyFrom(
+      proto_get_account);
+  proto_query.mutable_signature()->set_pubkey(std::string(10, 1));
+  proto_query.mutable_signature()->set_signature(std::string(iroha::sig_t::size(), 1));
+  try {
+    PbQueryFactory{}.deserialize(proto_query);
+    FAIL() << "must not be passed";
+  } catch (const std::invalid_argument &e) {
+    ASSERT_STREQ(
+        "PbQueryFactory::deserialize: 'Signature::pubkey()' has incorrect "
+        "length\nExpected: 32 bytes\nActual: 10 bytes\n",
+        e.what());
+  } catch (...) {
+    FAIL() << "std::invalid_argument must be thrown";
+  }
+}
+
+/**
+ * @given Query which query signature length is invalid
+ * @when deserialize query
+ * @then validate the thrown exception
+ */
+TEST(PbQueryFactoryTest, DeserializeInvalidQuerySignature) {
+  iroha::protocol::Query proto_query;
+  iroha::protocol::GetAccount proto_get_account;
+  proto_query.mutable_payload()->mutable_get_account()->CopyFrom(
+      proto_get_account);
+  proto_query.mutable_signature()->set_pubkey(std::string(iroha::pubkey_t::size(), 1));
+  proto_query.mutable_signature()->set_signature(std::string(10, 1));
+  try {
+    PbQueryFactory{}.deserialize(proto_query);
+    FAIL() << "must not be passed";
+  } catch (const std::invalid_argument &e) {
+    ASSERT_STREQ(
+        "PbQueryFactory::deserialize: 'Signature::signature()' has incorrect "
+        "length\nExpected: 64 bytes\nActual: 10 bytes\n",
+        e.what());
+  } catch (...) {
+    FAIL() << "std::invalid_argument must be thrown";
+  }
+}
+
 TEST(PbQueryFactoryTest, SerializeGetAccount){
   auto created_time = 111u;
   auto creator_account_id = "creator";
@@ -110,6 +160,28 @@ TEST(PbQueryFactoryTest, SerializeGetTransactions){
   hash2[1] = 2;
   auto query = QueryGenerator{}.generateGetTransactions(0, "admin", 1, {hash1, hash2});
   runQueryTest(query);
+}
+
+/**
+ * @given GetTransactions which tx_hash length is invalid
+ * @when deserialize query
+ * @then validate the thrown exception
+ */
+TEST(PbQueryFactoryTest, DeserializeInvalidGetTransactions) {
+  iroha::protocol::Query proto_query;
+  auto proto_gettxs = proto_query.mutable_payload()->mutable_get_transactions();
+  proto_gettxs->add_tx_hashes(std::string(10, 1));
+  try {
+    PbQueryFactory{}.deserialize(proto_query);
+    FAIL() << "must not be passed";
+  } catch (const std::invalid_argument &e) {
+    ASSERT_STREQ(
+      "PbQueryFactory::deserialize kGetTransactions: 'tx_hash' has incorrect "
+        "length\nExpected: 32 bytes\nActual: 10 bytes\n",
+      e.what());
+  } catch (...) {
+    FAIL() << "std::invalid_argument must be thrown";
+  }
 }
 
 TEST(PbQueryFactoryTest, SerializeGetSignatories){

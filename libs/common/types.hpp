@@ -89,9 +89,17 @@ namespace iroha {
       return res;
     }
 
-    static blob_t<size_> from_string(const std::string &data) {
+    static blob_t<size_> from_string(const std::string &data,
+                                     const std::string &where = "blob_t",
+                                     const std::string &what = "input string") {
       if (data.size() != size_) {
-        throw BadFormatException("blob_t: input string has incorrect length");
+        const std::string expected_message =
+            "Expected: " + std::to_string(size_) + " bytes\n";
+        const std::string actual_message =
+            "Actual: " + std::to_string(data.size()) + " bytes\n";
+        throw BadFormatException(where + ": '" + what + "' has incorrect length\n"
+                                 + expected_message
+                                 + actual_message);
       }
 
       blob_t<size_> b;
