@@ -22,6 +22,10 @@
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 
+//TODO: Please review as to whether it is really necessary to have both a YacPeerOrderer and a ClusterOrdering.
+//It seems nothing is gained in terms of encapsulation, as the validator ordering is the heart and soul of YAC and
+//is not something that is going to be pluggable. The negative effect of splitting this up is you have more files
+//for people to spend time going through and it hurts understandability.
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -32,14 +36,16 @@ namespace iroha {
       class YacPeerOrderer {
        public:
         /**
-         * Provide initial order for voting, useful when consensus initialized,
-         * bot not voted before.
+         * Provide initial order for voting; useful when consensus has been initialized,
+         * but not voted before.
+         *
          * @return ordering, like in ledger
          */
         virtual nonstd::optional<ClusterOrdering> getInitialOrdering() = 0;
 
         /**
          * Provide order of peers based on hash and initial order of peers
+         *
          * @param hash - hash-object that used as seed of ordering shuffle
          * @return shuffled cluster order
          */

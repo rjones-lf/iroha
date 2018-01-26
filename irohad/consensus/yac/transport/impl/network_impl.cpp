@@ -81,8 +81,7 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        call->response_reader =
-            peers_.at(to)->AsyncSendReject(&call->context, request, &cq_);
+        call->response_reader = peers_.at(to)->AsyncSendReject(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -97,8 +96,7 @@ namespace iroha {
           ::google::protobuf::Empty *response) {
         auto vote = *PbConverters::deserializeVote(*request);
 
-        log_->info(
-            "Receive vote {} from {}", vote.hash.block_hash, context->peer());
+        log_->info("Receive vote {} from {}", vote.hash.block_hash, context->peer());
 
         handler_.lock()->on_vote(vote);
         return grpc::Status::OK;

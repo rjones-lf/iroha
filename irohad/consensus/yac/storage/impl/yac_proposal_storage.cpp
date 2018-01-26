@@ -51,8 +51,7 @@ namespace iroha {
 
       // --------| public api |--------
 
-      YacProposalStorage::YacProposalStorage(ProposalHash hash,
-                                             uint64_t peers_in_round)
+      YacProposalStorage::YacProposalStorage(ProposalHash hash, uint64_t peers_in_round)
           : current_state_(nonstd::nullopt),
             hash_(std::move(hash)),
             peers_in_round_(peers_in_round) {
@@ -63,9 +62,7 @@ namespace iroha {
         if (shouldInsert(msg)) {
           // insert to block store
 
-          log_->info("Vote [{}, {}] looks valid",
-                     msg.hash.proposal_hash,
-                     msg.hash.block_hash);
+          log_->info("Vote [{}, {}] looks valid", msg.hash.proposal_hash, msg.hash.block_hash);
 
           auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
           auto block_state = iter->insert(msg);
@@ -105,18 +102,23 @@ namespace iroha {
       // --------| private api |--------
 
       bool YacProposalStorage::shouldInsert(const VoteMessage &msg) {
-        return checkProposalHash(msg.hash.proposal_hash)
-            and checkPeerUniqueness(msg);
+        return checkProposalHash(msg.hash.proposal_hash) and checkPeerUniqueness(msg);
       }
 
       bool YacProposalStorage::checkProposalHash(ProposalHash vote_hash) {
         return vote_hash == hash_;
       }
 
+        //TODO: it is not really clear what "peer uniqueness" means. Either a better name or comments
+        // are needed here.
       bool YacProposalStorage::checkPeerUniqueness(const VoteMessage &msg) {
+            //TODO: rather than having complex return statements like this, it is usually a better design decision
+            // to encapsulate some of the logic in other functions (that are then easily testable using unit tests;
+            // the below code is extremely fragile)
         return std::all_of(block_storages_.begin(),
                            block_storages_.end(),
                            [&msg](YacBlockStorage &storage) {
+
                              if (storage.getStorageHash() != msg.hash) {
                                return true;
                              }
@@ -124,6 +126,8 @@ namespace iroha {
                            });
       }
 
+        //TODO: this function is fairly complex and you should probably refactor it to be several functions that are
+        //then easily testable using unit testing
       nonstd::optional<Answer> YacProposalStorage::findRejectProof() {
         auto max_vote = std::max_element(block_storages_.begin(),
                                          block_storages_.end(),
@@ -144,6 +148,8 @@ namespace iroha {
         auto is_reject = hasReject(max_vote, all_votes, peers_in_round_);
 
         if (is_reject) {
+            // TODO: for example, one way to improve the testability and decrease the fragility of this code would be
+            // to encapsulate the following in another function
           std::vector<VoteMessage> result;
           result.reserve(all_votes);
           std::for_each(block_storages_.begin(),

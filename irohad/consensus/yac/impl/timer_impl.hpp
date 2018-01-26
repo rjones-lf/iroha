@@ -21,6 +21,7 @@
 #include <rxcpp/rx.hpp>
 #include "consensus/yac/timer.hpp"
 
+// TODO: This timer should not be here under YAC, but should be some generic util that YAC uses.
 namespace iroha {
   namespace consensus {
     namespace yac {

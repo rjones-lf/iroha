@@ -26,13 +26,17 @@ namespace iroha {
     namespace yac {
 
       /**
-       * Class provide ordering on cluster for current round
+       * Provider for the validator order for the current consensus round.
+       *
+       * TODO: I don't like the name Cluster. ValidatorOrdering is better.
+       * -ing is also unnecessary, so just ValidatorOrder is fine.
        */
       class ClusterOrdering {
        public:
         /**
-         * Creates cluster ordering from the vector of peers
-         * @param order vector of peers
+         * Creates the validator ordering from the vector of peers.
+         *
+         * @param order vector of validating peers (validators)
          * @return false if vector is empty, true otherwise
          */
         static nonstd::optional<ClusterOrdering> create(

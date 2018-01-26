@@ -41,6 +41,7 @@ namespace iroha {
 
         /**
          * Retrieve iterator for storage with parameters hash
+         *
          * @param hash - object for finding
          * @return iterator to proposal storage
          */
@@ -48,6 +49,7 @@ namespace iroha {
 
         /**
          * Find existed proposal storage or create new if required
+         *
          * @param msg - vote for finding
          * @param peers_in_round - number of peer required
          * for verify supermajority;
@@ -62,6 +64,7 @@ namespace iroha {
 
         /**
          * Insert vote in storage
+         *
          * @param msg - current vote message
          * @param peers_in_round - number of peers participated in round
          * @return structure with result of inserting. Nullopt if mgs not valid.
@@ -71,6 +74,7 @@ namespace iroha {
 
         /**
          * Insert commit in storage
+         *
          * @param commit - message with votes
          * @param peers_in_round - number of peers in current consensus round
          * @return structure with result of inserting.
@@ -81,6 +85,7 @@ namespace iroha {
 
         /**
          * Insert reject message in storage
+         *
          * @param reject - message with votes
          * @param peers_in_round - number of peers in current consensus round
          * @return structure with result of inserting.
@@ -91,6 +96,7 @@ namespace iroha {
 
         /**
          * Provide status about closing round with parameters hash
+         *
          * @param hash - target hash of round
          * @return true, if rould closed
          */
@@ -98,6 +104,7 @@ namespace iroha {
 
         /**
          * Method provide state of processing for concrete hash
+         *
          * @param hash - target tag
          * @return value attached to parameter's hash. Default is false.
          */
@@ -105,6 +112,7 @@ namespace iroha {
 
         /**
          * Mark hash as processed.
+         *
          * @param hash - target tag
          */
         void markAsProcessedState(const ProposalHash &hash);
@@ -114,6 +122,7 @@ namespace iroha {
 
         /**
          * Insert votes in storage
+         *
          * @param votes - collection for insertion
          * @param peers_in_round - number of peers in current round
          * @return answer after insertion collection
