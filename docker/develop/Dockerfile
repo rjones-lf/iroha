@@ -32,9 +32,9 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
 RUN pip3 install --upgrade pip; \
     pip3 install flask requests
 
-# install cmake 3.5.1
+# install cmake 3.10.2
 RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout 64130a7e793483e24c1d68bdd234f81d5edb2d51); \
+    (cd /tmp/cmake ; git checkout c1e087a9d3af74299d7681c9f9de59e5977a1539); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \
