@@ -40,8 +40,7 @@ namespace iroha {
                           network::AsyncGrpcClient<google::protobuf::Empty> {
        public:
         NetworkImpl();
-        void subscribe(
-            std::shared_ptr<YacNetworkNotifications> handler) override;
+        void subscribe(std::shared_ptr<YacNetworkNotifications> handler) override;
         void send_commit(model::Peer to, CommitMessage commit) override;
         void send_reject(model::Peer to, RejectMessage reject) override;
         void send_vote(model::Peer to, VoteMessage vote) override;
@@ -87,8 +86,7 @@ namespace iroha {
         /**
          * Mapping of peer objects to connections
          */
-        std::unordered_map<model::Peer, std::unique_ptr<proto::Yac::Stub>>
-            peers_;
+        std::unordered_map<model::Peer, std::unique_ptr<proto::Yac::Stub>> peers_;
 
         /**
          * Subscriber of network messages

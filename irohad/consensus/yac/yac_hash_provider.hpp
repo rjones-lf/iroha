@@ -63,7 +63,7 @@ namespace iroha {
       };
 
       /**
-       * Provide methods related to hash operations in ya consensus
+       * Provide methods related to hash operations in YAC.
        */
       class YacHashProvider {
        public:

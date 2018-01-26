@@ -20,6 +20,8 @@
 
 #include <functional>
 
+//TODO: This timer interface should not be under YAC. It should be under something like utils and made available
+// to other parts of code that need a timer.
 namespace iroha {
   namespace consensus {
     namespace yac {
