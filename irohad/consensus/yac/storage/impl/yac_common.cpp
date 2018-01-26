@@ -48,6 +48,8 @@ namespace iroha {
         return nonstd::nullopt;
       }
 
+        //TODO: this code is somewhat fragile. How about just putting this logic in VoteMessage itself,
+        // so you don't have to check this everytime?
       nonstd::optional<YacHash> getHash(const std::vector<VoteMessage> &votes) {
         if (not sameProposals(votes)) {
           return nonstd::nullopt;

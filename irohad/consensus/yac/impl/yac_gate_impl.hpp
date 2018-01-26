@@ -42,8 +42,11 @@ namespace iroha {
 
        private:
         /**
-         * Update current block with signatures from commit message
-         * @param commit - commit message to get signatures from
+         * Update current block with signatures from the commit message.
+         * NOTE: This function hsa the side affect of mutating the current_block_,
+         * so use carefully.
+         *
+         * @param commit - commit message to copy signatures from
          */
         void copySignatures(const CommitMessage &commit);
 

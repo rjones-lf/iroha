@@ -40,6 +40,7 @@ namespace iroha {
        public:
         /**
          * Method for creating Yac consensus object
+         *
          * @param delay for timer in milliseconds
          */
         static std::shared_ptr<Yac> create(

@@ -29,7 +29,9 @@ namespace iroha {
       class YacGate : public network::ConsensusGate {};
 
       /**
-       * Provide gate for ya consensus
+       * Provide gate for YAC
+       * //TODO: I don't really like this class name or file name. The key point here is not about creating hashes
+       * // but rather about voting as a part of the consensus process.
        */
       class HashGate {
        public:
