@@ -184,7 +184,7 @@ pipeline {
               sh "cmake --build build -- -j${params.PARALLELISM}"
               sh "ccache --show-stats"
               if ( coverageEnabled ) {
-                sh "lcov -i --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.init.info"
+                sh "cmake --build build --target coverage.init.info"
               }
               sh """
                 export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
@@ -212,11 +212,10 @@ pipeline {
                       -Dsonar.github.oauth=${SORABOT_TOKEN}
                   """
                 }
-                sh "lcov --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.info"
-                sh "lcov -a build/reports/coverage.init.info -a build/reports/coverage.info --config-file .lcovrc -o build/reports/coverage.info"
-                sh "lcov --remove build/reports/coverage.info 'external/*' '/usr/*' 'schema/*' --config-file .lcovrc -o build/reports/coverage.info"
+                sh "cmake --build build --target coverage.info"
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
+
               }
               
               // TODO: replace with upload to artifactory server

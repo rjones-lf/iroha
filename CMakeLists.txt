@@ -16,6 +16,15 @@ SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 SET(CMAKE_INSTALL_RPATH "../lib")
 
 if(COVERAGE)
+  find_program(LCOV_PROGRAM lcov)
+  if(NOT LCOV_PROGRAM)
+    message(FATAL_ERROR "lcov not found! Aborting...")
+  endif()
+  find_file(LCOV_CONFIG_FILE .lcovrc ${PROJECT_SOURCE_DIR})
+  if(NOT LCOV_CONFIG_FILE)
+    message(FATAL_ERROR "lcov config file not found in project root! Aborting...")
+  endif()
+  message(STATUS "lcov enabled (${LCOV_PROGRAM})")
   # remove -g flag to reduce binary size
   list(REMOVE_ITEM CMAKE_CXX_FLAGS -g)
   set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
@@ -23,7 +32,14 @@ if(COVERAGE)
   set(CMAKE_C_FLAGS "--coverage ${CMAKE_C_FLAGS}")
   set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
-
+  add_custom_target(coverage.init.info
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.init.info -c -i -d ${PROJECT_BINARY_DIR}
+      )
+  add_custom_target(coverage.info
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -c -d ${PROJECT_BINARY_DIR}
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -a ${PROJECT_BINARY_DIR}/reports/coverage.init.info -a ${PROJECT_BINARY_DIR}/reports/coverage.info
+      COMMAND ${LCOV_PROGRAM} --config-file ${LCOV_CONFIG_FILE} -o ${PROJECT_BINARY_DIR}/reports/coverage.info -r ${PROJECT_BINARY_DIR}/reports/coverage.info '/usr*' '${CMAKE_SOURCE_DIR}/external/*' '${CMAKE_SOURCE_DIR}/schema/*'
+      )
   set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
   file(MAKE_DIRECTORY ${REPORT_DIR})
   include(cmake/analysis.cmake)
@@ -124,5 +140,3 @@ if (FUZZING)
     message(Fuzzing with compilers other than clang does not supported yet)
   endif()
 endif()
-
-

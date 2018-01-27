@@ -69,7 +69,7 @@ def doDebugBuild(coverageEnabled=false) {
     sh "cmake --build build -- -j${parallelism}"
     sh "ccache --show-stats"
     if ( coverageEnabled ) {
-      sh "lcov -i --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.init.info"
+      sh "cmake --build build --target coverage.init.info"
     }
     def testExitCode = sh(script: 'cmake --build build --target test', returnStatus: true)
     if (testExitCode != 0) {
@@ -91,9 +91,7 @@ def doDebugBuild(coverageEnabled=false) {
         """
       }
 
-      sh "lcov --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.info"
-      sh "lcov -a build/reports/coverage.init.info -a build/reports/coverage.info --config-file .lcovrc -o build/reports/coverage.info"
-      sh "lcov --remove build/reports/coverage.info 'external/*' '/usr/*' 'schema/*' --config-file .lcovrc -o build/reports/coverage.info"
+      sh "cmake --build build --target coverage.info"
       sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
     }
