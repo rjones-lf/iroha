@@ -10,7 +10,7 @@ def doReleaseBuild() {
   // pull docker image for building release package of Iroha
   // speeds up consequent image builds as we simply tag them 
   sh "docker pull ${DOCKER_BASE_IMAGE_DEVELOP}"
-  iC = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
+  iC = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}", "--build-arg PARALLELISM=${env.parallelism} -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
 
   sh "mkdir /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER} || true"
   iC.inside(""
@@ -39,7 +39,7 @@ def doReleaseBuild() {
         -DCOVERAGE=OFF \
         -DTESTING=OFF
     """
-    sh "cmake --build build --target package -- -j${parallelism}"
+    sh "cmake --build build --target package -- -j${env.parallelism}"
     sh "ccache --show-stats"
 
     // copy build package to the volume
