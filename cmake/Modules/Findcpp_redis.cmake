@@ -31,9 +31,16 @@ if (NOT cpp_redis_FOUND)
       TEST_COMMAND "" # remove test step
       )
   externalproject_get_property(cylix_cpp_redis source_dir binary_dir)
+
+  if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(cpp_redis_LIBRARY ${binary_dir}/lib/Debug/libcpp_redis.a)
+    set(tacopie_LIBRARY ${binary_dir}/lib/Debug/libtacopie.a)
+  else ()
+    set(cpp_redis_LIBRARY ${binary_dir}/lib/libcpp_redis.a)
+    set(tacopie_LIBRARY ${binary_dir}/lib/libtacopie.a)
+  endif ()
+
   set(cpp_redis_INCLUDE_DIRS "${source_dir}/tacopie/includes;${source_dir}/includes")
-  set(cpp_redis_LIBRARY ${binary_dir}/lib/libcpp_redis.a)
-  set(tacopie_LIBRARY ${binary_dir}/lib/libtacopie.a)
   file(MAKE_DIRECTORY ${source_dir}/tacopie/includes)
   file(MAKE_DIRECTORY ${source_dir}/includes)
 
