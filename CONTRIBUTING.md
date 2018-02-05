@@ -101,13 +101,16 @@ Read our [C++ Style Guide](#c++-style-guide) and start with beginner-friendly is
 
 - Include issue numbers in Pull Request body only.
 
-- When finished work, **rebase onto base branch** with 
+- When finished work, **merge into base branch** by following simple steps:
+    1. Checkout the base branch
+    2. Merge feature branch and write meaninful merge commit (include PR number and title):
     ```bash
-    $ git fetch
-    $ git rebase -i <base-branch>
+    $ git checkout <base-branch>
+    $ git merge <feature-branch>
+    $ git commit -s -am "Merge pull request #XXX from feature/branch"
     ```
-
-    [Step-by-step guide](https://soramitsu.atlassian.net/wiki/spaces/IS/pages/11173889/Rebase+and+merge+guide).
+    3. Check if the build passes the tests.
+    4. Only after that push to remote.
 
 - Follow the [C++ Style Guide](#C++-style-guide).
 
