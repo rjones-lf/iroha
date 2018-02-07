@@ -16,13 +16,13 @@
  */
 
 #include <boost/optional.hpp>
-#include "ametsuchi/impl/flat_file/flat_file.hpp"  // for FlatFile
 #include "ametsuchi/impl/redis_block_index.hpp"
 #include "ametsuchi/impl/redis_block_query.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "ametsuchi/impl/block_storage_nudb.hpp"
 
 using namespace framework::test_subscriber;
 
@@ -33,16 +33,17 @@ namespace iroha {
       void SetUp() override {
         AmetsuchiTest::SetUp();
 
-        auto tmp = FlatFile::create(block_store_path);
+        // TODO(warchant): BlockStorage should be inside AmetushiTest::SetUp()
+        auto tmp = BlockStorageNuDB::create(block_store_path);
         ASSERT_TRUE(tmp);
-        file = std::move(*tmp);
+        bs = std::move(*tmp);
 
         index = std::make_shared<RedisBlockIndex>(client);
-        blocks = std::make_shared<RedisBlockQuery>(client, *file);
+        blocks = std::make_shared<RedisBlockQuery>(client, *bs);
       }
 
       void insert(const model::Block &block) {
-        file->add(block.height,
+        bs->add(block.height,
                   iroha::stringToBytes(model::converters::jsonToString(
                       model::converters::JsonBlockFactory().serialize(block))));
         index->index(block);
@@ -51,7 +52,7 @@ namespace iroha {
       std::vector<iroha::hash256_t> tx_hashes;
       std::shared_ptr<BlockQuery> blocks;
       std::shared_ptr<BlockIndex> index;
-      std::unique_ptr<FlatFile> file;
+      std::unique_ptr<BlockStorage> bs;
       std::string creator1 = "user1@test";
       std::string creator2 = "user2@test";
       std::string creator3 = "user3@test";

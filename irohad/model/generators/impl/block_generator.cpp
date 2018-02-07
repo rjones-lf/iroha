@@ -27,7 +27,7 @@ namespace iroha {
           ts64_t created_ts, const std::vector<Transaction> &transactions) {
         Block block{};
         block.created_ts = created_ts;
-        block.height = 1;
+        block.height = 0;  /** never hardcode data **/
         std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0);
         block.txs_number = 1;
         block.transactions = transactions;

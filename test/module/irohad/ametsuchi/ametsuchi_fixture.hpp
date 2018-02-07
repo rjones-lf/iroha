@@ -29,6 +29,7 @@
 
 namespace iroha {
   namespace ametsuchi {
+
     /**
      * Class with ametsuchi initialization
      */
@@ -62,19 +63,15 @@ namespace iroha {
 
      protected:
       virtual void SetUp() {
-        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
-        try {
-          connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-        try {
-          client.connect(redishost_, redisport_);
-        } catch (const cpp_redis::redis_error &e) {
-          FAIL() << "Connection to Redis broken: " << e.what();
-        }
+        connect();
+        clear();
       }
       virtual void TearDown() {
+        clear();
+        disconnect();
+      }
+
+      void clear(){
         const auto drop = R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
@@ -92,13 +89,30 @@ DROP TABLE IF EXISTS role;
         pqxx::work txn(*connection);
         txn.exec(drop);
         txn.commit();
-        connection->disconnect();
 
         client.flushall();
         client.sync_commit();
-        client.disconnect(true);
 
         iroha::remove_all(block_store_path);
+      }
+
+      void disconnect(){
+        connection->disconnect();
+        client.disconnect(true);
+      }
+
+      void connect(){
+        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
+        try {
+          connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
+        try {
+          client.connect(redishost_, redisport_);
+        } catch (const cpp_redis::redis_error &e) {
+          FAIL() << "Connection to Redis broken: " << e.what();
+        }
       }
 
       std::shared_ptr<pqxx::lazyconnection> connection;
@@ -114,6 +128,9 @@ DROP TABLE IF EXISTS role;
       size_t redisport_ = 6379;
 
       std::string block_store_path = "/tmp/block_store";
+
+     public:
+      static const size_t FIRST_BLOCK = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

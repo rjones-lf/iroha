@@ -25,18 +25,17 @@
 
 #include "model/converters/json_block_factory.hpp"
 
-
 namespace iroha {
   namespace ametsuchi {
 
-    class FlatFile;
+    class BlockStorage;
 
     /**
      * Class which implements BlockQuery with a Redis backend.
      */
     class RedisBlockQuery : public BlockQuery {
      public:
-      RedisBlockQuery(cpp_redis::client &client, FlatFile &file_store);
+      RedisBlockQuery(cpp_redis::client &client, BlockStorage &bs);
 
       rxcpp::observable<model::Transaction> getAccountTransactions(
           const std::string &account_id) override;
@@ -84,7 +83,7 @@ namespace iroha {
       std::function<void(cpp_redis::reply &)> callbackToLrange(
           const rxcpp::subscriber<model::Transaction> &s, uint64_t block_id);
 
-      FlatFile &block_store_;
+      BlockStorage &block_store_;
       cpp_redis::client &client_;
       model::converters::JsonBlockFactory serializer_;
     };

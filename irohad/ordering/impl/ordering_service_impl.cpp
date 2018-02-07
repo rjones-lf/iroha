@@ -18,6 +18,9 @@
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "model/peer.hpp"
 
+// TODO(@warchant): move to separate config file (header)
+#define FIRST_BLOCK_STARTS_WITH 0
+
 namespace iroha {
   namespace ordering {
     OrderingServiceImpl::OrderingServiceImpl(
@@ -29,7 +32,12 @@ namespace iroha {
           max_size_(max_size),
           delay_milliseconds_(delay_milliseconds),
           transport_(transport),
-          proposal_height(2) {
+
+          // TODO(@warchant):  this is ill-formed, design should be reviewed. It
+          // is easy to make a mistake.
+          // we expect to receive proposal with height = 1 as first proposal, if
+          // blocks start with 0
+          expected_proposal_height(FIRST_BLOCK_STARTS_WITH + 1) {
       updateTimer();
     }
 
@@ -51,7 +59,7 @@ namespace iroha {
       }
 
       model::Proposal proposal(txs);
-      proposal.height = proposal_height++;
+      proposal.height = expected_proposal_height++;
 
       publishProposal(std::move(proposal));
     }

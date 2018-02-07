@@ -17,58 +17,69 @@
 
 #include "ametsuchi/impl/redis_block_query.hpp"
 
-#include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include "ametsuchi/block_storage.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
 
     RedisBlockQuery::RedisBlockQuery(cpp_redis::client &client,
-                                     FlatFile &file_store)
-        : block_store_(file_store), client_(client) {}
+                                     BlockStorage &bs)
+        : block_store_(bs), client_(client) {}
 
     rxcpp::observable<model::Block> RedisBlockQuery::getBlocks(uint32_t height,
                                                                uint32_t count) {
-      auto last_id = block_store_.last_id();
-      auto to = std::min(last_id, height + count - 1);
-      if (height > to or count == 0) {
+      size_t total = block_store_.total_keys();
+
+      // next we do height+count-1, if height+count=0, then it will result in
+      // uint32 overflow, so we put this check here to ensure height+count >= 1
+      if (count == 0) {
         return rxcpp::observable<>::empty<model::Block>();
       }
 
-      return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
-        auto bytes = block_store_.get(i);
-        return rxcpp::observable<>::create<model::Block>([this, bytes](auto s) {
-          if (not bytes.has_value()) {
-            s.on_completed();
-            return;
-          }
-          auto document =
-              model::converters::stringToJson(bytesToString(bytes.value()));
-          if (not document.has_value()) {
-            s.on_completed();
-            return;
-          }
-          auto block = serializer_.deserialize(document.value());
-          if (not block.has_value()) {
-            s.on_completed();
-            return;
-          }
-          s.on_next(block.value());
-          s.on_completed();
-        });
-      });
+      auto to = std::min(static_cast<uint32_t>(total), height + count - 1);
+      if (height > to) {
+        return rxcpp::observable<>::empty<model::Block>();
+      }
+
+      // [height; to]
+      return rxcpp::observable<>::range(height, to)
+          .flat_map([this, total](auto i) {
+            auto bytes = block_store_.get(i);
+            return rxcpp::observable<>::create<model::Block>([this,
+                                                              bytes](auto s) {
+              if (not bytes) {
+                s.on_completed();
+                return;
+              }
+              auto document =
+                  model::converters::stringToJson(bytesToString(bytes.value()));
+              if (not document.has_value()) {
+                s.on_completed();
+                return;
+              }
+              auto block = serializer_.deserialize(document.value());
+              if (not block.has_value()) {
+                s.on_completed();
+                return;
+              }
+              s.on_next(block.value());
+              s.on_completed();
+            });
+          });
     }
 
     rxcpp::observable<model::Block> RedisBlockQuery::getBlocksFrom(
         uint32_t height) {
-      return getBlocks(height, block_store_.last_id());
+      return getBlocks(height,
+                       static_cast<uint32_t>(block_store_.total_keys()));
     }
 
     rxcpp::observable<model::Block> RedisBlockQuery::getTopBlocks(
         uint32_t count) {
-      auto last_id = block_store_.last_id();
-      count = std::min(count, last_id);
-      return getBlocks(last_id - count + 1, count);
+      auto total = block_store_.total_keys();
+      auto from = count >= total ? 0 : total - count;
+      return getBlocks(static_cast<uint32_t>(from), count);
     }
 
     std::vector<iroha::model::Block::BlockHeightType>

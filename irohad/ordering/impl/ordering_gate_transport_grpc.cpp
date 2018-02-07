@@ -27,7 +27,7 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
   auto transactions = decltype(std::declval<model::Proposal>().transactions)();
   for (const auto &tx : request->transactions()) {
-    transactions.push_back(*factory_.deserialize(tx));
+    transactions.emplace_back(*factory_.deserialize(tx));
   }
   log_->info("transactions in proposal: {}", transactions.size());
 
