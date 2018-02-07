@@ -102,7 +102,7 @@ namespace iroha {
        */
       const size_t delay_milliseconds_;
       std::shared_ptr<network::OrderingServiceTransport> transport_;
-      size_t proposal_height;
+      size_t expected_proposal_height;
     };
   }  // namespace ordering
 }  // namespace iroha

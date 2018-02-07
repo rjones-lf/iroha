@@ -20,7 +20,6 @@
 
 #include <pqxx/nontransaction>
 #include "ametsuchi/block_query.hpp"
-#include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "logger/logger.hpp"
 #include "postgres_wsv_common.hpp"
 
@@ -30,19 +29,18 @@
 
 #include "model/converters/json_block_factory.hpp"
 
-
 namespace iroha {
   namespace ametsuchi {
 
-    class FlatFile;
+    class BlockStorage;
 
     /**
-     * Class which implements BlockQuery with a Redis backend.
+     * Class which implements BlockQuery with a Postgres backend.
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
       PostgresBlockQuery(pqxx::nontransaction &transaction_,
-                         FlatFile &file_store);
+                         BlockStorage &bs);
 
       rxcpp::observable<model::Transaction> getAccountTransactions(
           const std::string &account_id) override;
@@ -90,7 +88,7 @@ namespace iroha {
       std::function<void(pqxx::result &result)> callback(
           const rxcpp::subscriber<model::Transaction> &s, uint64_t block_id);
 
-      FlatFile &block_store_;
+      BlockStorage &block_store_;
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
       using ExecuteType = decltype(makeExecute(transaction_, log_));

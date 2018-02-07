@@ -32,7 +32,7 @@ namespace iroha {
      */
     struct Proposal {
       explicit Proposal(std::vector<Transaction> txs)
-          : transactions(txs), height(0) {}
+          : transactions(std::move(txs)), height(0) {}
 
       /**
        * Bunch of transactions provided by ordering service.

@@ -2,7 +2,7 @@ version: '3'
 
 services:
   node:
-    image: hyperledger/iroha-docker-develop:v1
+    image: hyperledger/iroha-docker-develop:v2
     ports:
       - "50051:50051"
       - "20000:20000"

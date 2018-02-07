@@ -28,11 +28,13 @@
 
 namespace iroha {
   namespace ametsuchi {
+
     /**
      * Class with ametsuchi initialization
      */
     class AmetsuchiTest : public ::testing::Test {
      public:
+
       AmetsuchiTest() {
         auto log = logger::testLog("AmetsuchiTest");
 
@@ -56,15 +58,17 @@ namespace iroha {
       }
 
      protected:
-      virtual void SetUp() {
-        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
-        try {
-          connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
+      void SetUp() override {
+        connect();
+        clear();
       }
-      virtual void TearDown() {
+
+      void TearDown() override {
+        clear();
+        disconnect();
+      }
+
+      void clear(){
         const auto drop = R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
@@ -86,9 +90,21 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
         pqxx::work txn(*connection);
         txn.exec(drop);
         txn.commit();
-        connection->disconnect();
 
         iroha::remove_all(block_store_path);
+      }
+
+      void disconnect(){
+        connection->disconnect();
+      }
+
+      void connect(){
+        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
+        try {
+          connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
       }
 
       std::shared_ptr<pqxx::lazyconnection> connection;
@@ -182,6 +198,9 @@ CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
     index text
 );
 )";
+
+     public:
+      static const size_t FIRST_BLOCK = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

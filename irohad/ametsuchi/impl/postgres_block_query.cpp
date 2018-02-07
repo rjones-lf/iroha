@@ -18,30 +18,39 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include "ametsuchi/impl/block_storage_nudb.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
 
     PostgresBlockQuery::PostgresBlockQuery(pqxx::nontransaction &transaction,
-                                           FlatFile &file_store)
-        : block_store_(file_store),
+                                           BlockStorage &bs)
+        : block_store_(bs),
           transaction_(transaction),
           log_(logger::log("PostgresBlockIndex")),
           execute_{makeExecute(transaction_, log_)} {}
 
     rxcpp::observable<model::Block> PostgresBlockQuery::getBlocks(
         uint32_t height, uint32_t count) {
-      auto last_id = block_store_.last_id();
-      auto to = std::min(last_id, height + count - 1);
-      if (height > to or count == 0) {
+      size_t total = block_store_.total_keys();
+
+      // next we do height+count-1, if height+count=0, then it will result in
+      // uint32 overflow, so we put this check here to ensure height+count >= 1
+      if (count == 0) {
         return rxcpp::observable<>::empty<model::Block>();
       }
 
+      auto to = std::min(static_cast<uint32_t>(total), height + count - 1);
+      if (height > to) {
+        return rxcpp::observable<>::empty<model::Block>();
+      }
+
+      // [height; to]
       return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
         auto bytes = block_store_.get(i);
         return rxcpp::observable<>::create<model::Block>([this, bytes](auto s) {
-          if (not bytes.has_value()) {
+          if (not bytes) {
             s.on_completed();
             return;
           }
@@ -64,14 +73,15 @@ namespace iroha {
 
     rxcpp::observable<model::Block> PostgresBlockQuery::getBlocksFrom(
         uint32_t height) {
-      return getBlocks(height, block_store_.last_id());
+      return getBlocks(height,
+                       static_cast<uint32_t>(block_store_.total_keys()));
     }
 
     rxcpp::observable<model::Block> PostgresBlockQuery::getTopBlocks(
         uint32_t count) {
-      auto last_id = block_store_.last_id();
-      count = std::min(count, last_id);
-      return getBlocks(last_id - count + 1, count);
+      auto total = block_store_.total_keys();
+      auto from = count >= total ? 0 : total - count;
+      return getBlocks(static_cast<uint32_t>(from), count);
     }
 
     std::vector<iroha::model::Block::BlockHeightType>
@@ -79,7 +89,8 @@ namespace iroha {
       return execute_(
                  "SELECT DISTINCT height FROM height_by_account_set WHERE "
                  "account_id = "
-                 + transaction_.quote(account_id) + ";")
+                 + transaction_.quote(account_id)
+                 + ";")
                  | [&](const auto &result)
                  -> std::vector<iroha::model::Block::BlockHeightType> {
         return transform<iroha::model::Block::BlockHeightType>(
@@ -141,7 +152,9 @@ namespace iroha {
                   "SELECT DISTINCT index FROM index_by_creator_height WHERE "
                   "creator_id = "
                   + transaction_.quote(account_id)
-                  + " AND height = " + transaction_.quote(block_id) + ";")
+                  + " AND height = "
+                  + transaction_.quote(block_id)
+                  + ";")
                   | this->callback(subscriber, block_id);
             }
             subscriber.on_completed();
@@ -151,8 +164,10 @@ namespace iroha {
     rxcpp::observable<model::Transaction>
     PostgresBlockQuery::getAccountAssetTransactions(
         const std::string &account_id, const std::string &asset_id) {
-      return rxcpp::observable<>::create<
-          model::Transaction>([this, account_id, asset_id](auto subscriber) {
+      return rxcpp::observable<>::create<model::Transaction>([this,
+                                                              account_id,
+                                                              asset_id](
+          auto subscriber) {
         auto block_ids = this->getBlockIds(account_id);
         if (block_ids.empty()) {
           subscriber.on_completed();
@@ -164,8 +179,11 @@ namespace iroha {
           execute_(
               "SELECT DISTINCT index FROM index_by_id_height_asset WHERE id = "
               + transaction_.quote(account_id)
-              + " AND height = " + transaction_.quote(block_id)
-              + " AND asset_id = " + transaction_.quote(asset_id) + ";")
+              + " AND height = "
+              + transaction_.quote(block_id)
+              + " AND asset_id = "
+              + transaction_.quote(asset_id)
+              + ";")
               | this->callback(subscriber, block_id);
         }
         subscriber.on_completed();
@@ -179,7 +197,7 @@ namespace iroha {
           [this, tx_hashes](auto subscriber) {
             std::for_each(tx_hashes.begin(),
                           tx_hashes.end(),
-                          [that = this, &subscriber](auto tx_hash) {
+                          [ that = this, &subscriber ](auto tx_hash) {
                             subscriber.on_next(
                                 that->getTxByHashSync(tx_hash.to_string()));
                           });
