@@ -92,7 +92,7 @@ RUN git clone https://github.com/google/googletest /tmp/googletest; \
 
 # install spdlog
 RUN git clone https://github.com/gabime/spdlog /tmp/spdlog; \
-    (cd /tmp/spdlog ; git checkout f85a08622e20b74bff34381cafcb8ef8167b29d0); \
+    (cd /tmp/spdlog ; git checkout ccd675a286f457068ee8c823f8207f13c2325b26); \
     cmake -DSPDLOG_BUILD_TESTING=OFF -H/tmp/spdlog -B/tmp/spdlog/build; \
     cmake --build /tmp/spdlog/build --target install; \
     rm -rf /tmp/spdlog
