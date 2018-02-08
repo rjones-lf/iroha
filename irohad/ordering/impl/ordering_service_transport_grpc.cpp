@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "datetime/time.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::protocol;
@@ -52,6 +53,7 @@ void OrderingServiceTransportGrpc::publishProposal(
 
   protocol::Proposal pb_proposal;
   pb_proposal.set_height(proposal.height);
+  pb_proposal.set_created_time(iroha::time::now());
   for (const auto &tx : proposal.transactions) {
     new (pb_proposal.add_transactions())
         protocol::Transaction(factory_.serialize(tx));

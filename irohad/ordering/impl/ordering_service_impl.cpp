@@ -16,6 +16,7 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+#include "datetime/time.hpp"
 #include "model/peer.hpp"
 
 namespace iroha {
@@ -52,6 +53,7 @@ namespace iroha {
 
       model::Proposal proposal(txs);
       proposal.height = proposal_height++;
+      proposal.created_time = iroha::time::now();
 
       publishProposal(std::move(proposal));
     }
