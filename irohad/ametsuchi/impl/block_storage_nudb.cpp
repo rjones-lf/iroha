@@ -29,23 +29,34 @@ namespace iroha {
 
     /** implementation **/
 
-    boost::optional<std::unique_ptr<BlockStorageNuDB>> BlockStorageNuDB::create(
-        const std::string &path) {
-      auto log_ = logger::log("BlockStorageNuDB");
+    bool BlockStorageNuDB::init_directory(const std::string &path) {
+      auto log_ = logger::log("BlockStorageNuDB::init_directory()");
 
       // first, check if directory exists. if not -- create.
       sys::error_code err;
       if (fs::exists(path)) {
         if (not fs::is_directory(path, err)) {
-          log_->error("BlockStore path {} is a file: {}", path, err.message());
-          return boost::none;
+          log_->error("path {} is a file: {}", path, err.message());
+          return false;
         }
       } else {
         // dir does not exist, so then create
         if (not fs::create_directory(path, err)) {
-          log_->error("Cannot create storage dir: {}\n{}", path, err.message());
-          return boost::none;
+          log_->error(
+              "can not create storage dir: {}\n{}", path, err.message());
+          return false;
         }
+      }
+
+      return true;
+    }
+
+    boost::optional<std::unique_ptr<BlockStorageNuDB>> BlockStorageNuDB::create(
+        const std::string &path) {
+      auto log_ = logger::log("BlockStorageNuDB");
+
+      if (!init_directory(path)) {
+        return boost::none;
       }
 
       // paths to NuDB files
@@ -159,6 +170,8 @@ namespace iroha {
 
     uint32_t BlockStorageNuDB::count_blocks(nudb::store &db,
                                             nudb::error_code &ec) {
+      auto log_ = logger::log("BlockStorageNuDB::count_blocks");
+
       BlockStorage::Identifier current = 0;
 
       bool found_last = false;
@@ -181,6 +194,7 @@ namespace iroha {
           return current;
         } else if (ec) {
           // some other error occurred
+          log_->error("{}", ec.message());
           return 0;
         }
       } while (not found_last);

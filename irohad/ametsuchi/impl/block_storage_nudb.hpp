@@ -48,6 +48,18 @@ namespace iroha {
                const std::vector<uint8_t> &blob) override;
 
       /**
+       *
+       */
+
+      /**
+       * Initialize database directory given path.
+       * @param path path in filesystem to the directory.
+       * @return false if path is a file or no directory can be created, true
+       * otherwise.
+       */
+      static bool init_directory(const std::string &path);
+
+      /**
        * Fetch value by key.
        * @param id - key
        * @return blob if success (value), boost::none otherwise
@@ -73,13 +85,6 @@ namespace iroha {
        */
       const std::string &directory() const override;
 
-      /**
-       * Serializes uint32 as 4-byte big-endian array.
-       * @param t a number
-       * @return array of 4 bytes
-       */
-      static std::array<uint8_t, sizeof(uint32_t)> serialize_uint32(uint32_t t);
-
       //< arbitrary number, app-specific
       static constexpr size_t appid_{0x1337u};
 
@@ -95,6 +100,13 @@ namespace iroha {
        * @return number of non-empty keys.
        */
       static uint32_t count_blocks(nudb::store &db, nudb::error_code &ec);
+
+      /**
+       * Serializes uint32 as 4-byte big-endian array.
+       * @param t a number
+       * @return array of 4 bytes
+       */
+      static std::array<uint8_t, sizeof(uint32_t)> serialize_uint32(uint32_t t);
 
       BlockStorageNuDB(std::unique_ptr<nudb::store> db,
                        const std::string &path,

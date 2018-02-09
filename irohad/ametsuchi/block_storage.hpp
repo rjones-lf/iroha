@@ -19,12 +19,16 @@
 #define IROHA_BLOCK_STORE_HPP
 
 #include <boost/optional.hpp>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace iroha {
   namespace ametsuchi {
 
+    /**
+     * A key-value database, which stores blocks (data blob, value) by keys
+     * (Identifiers)
+     */
     class BlockStorage {
      public:
       /**
@@ -42,14 +46,15 @@ namespace iroha {
       /**
        * Returns directory, where database is stored.
        */
-      virtual const std::string& directory() const = 0;
+      virtual const std::string &directory() const = 0;
 
       /**
        * Get data associated with
        * @param id - reference key
        * @return - blob, if exists
        */
-      virtual boost::optional<std::vector<uint8_t>> get(Identifier id) const = 0;
+      virtual boost::optional<std::vector<uint8_t>> get(
+          Identifier id) const = 0;
 
       /**
        * @return number of identifiers in block storage.
