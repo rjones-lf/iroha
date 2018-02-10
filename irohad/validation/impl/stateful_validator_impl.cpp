@@ -68,7 +68,7 @@ namespace iroha {
       model::Proposal validated_proposal(
           std::accumulate(txs.begin(), txs.end(), valid, filter));
       validated_proposal.height = proposal.height;
-      validated_proposal.height = iroha::time::now();
+      validated_proposal.created_time = iroha::time::now();
       log_->info("transactions in verified proposal: {}",
                  validated_proposal.transactions.size());
       return validated_proposal;

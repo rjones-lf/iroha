@@ -53,6 +53,7 @@ namespace shared_model {
         const iroha::model::Proposal &proposal) {
       iroha::protocol::Proposal proto;
       proto.set_height(proposal.height);
+      proto.set_created_time(proposal.created_time);
       for (const auto &tx : proposal.transactions) {
         new (proto.add_transactions()) iroha::protocol::Transaction(
             iroha::model::converters::PbTransactionFactory().serialize(tx));
