@@ -170,6 +170,8 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
+  size_t height = AmetsuchiTest::FIRST_BLOCK;
+
   auto storage = StorageImpl::create(block_store_path, pgopt_);
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
@@ -199,7 +201,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Compose block
   Block block;
   block.transactions.push_back(txn);
-  block.height = 1;
+  block.height = height++;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
   block.hash = block1hash;
@@ -230,7 +232,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Compose block
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 2;
+  block.height = height++;
   block.prev_hash = block1hash;
   auto block2hash = iroha::hash(block);
   block.hash = block2hash;
@@ -244,7 +246,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Block store tests
   auto hashes = {block1hash, block2hash};
   validateCalls(
-      blocks->getBlocks(1, 2),
+      blocks->getBlocks(AmetsuchiTest::FIRST_BLOCK, 2),
       [i = 0, &hashes](auto eachBlock) mutable {
         EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash);
         ++i;
@@ -284,6 +286,8 @@ TEST_F(AmetsuchiTest, PeerTest) {
 }
 
 TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
+  size_t height = AmetsuchiTest::FIRST_BLOCK;
+
   auto storage = StorageImpl::create(block_store_path, pgopt_);
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
@@ -327,7 +331,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   Block block;
   block.transactions.push_back(txn);
-  block.height = 1;
+  block.height = height++;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
   block.hash = block1hash;
@@ -354,7 +358,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 2;
+  block.height = height++;
   block.prev_hash = block1hash;
   auto block2hash = iroha::hash(block);
   block.hash = block2hash;
@@ -379,7 +383,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 3;
+  block.height = height++;
   block.prev_hash = block2hash;
   auto block3hash = iroha::hash(block);
   block.hash = block3hash;
@@ -393,7 +397,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Block store test
   auto hashes = {block1hash, block2hash, block3hash};
-  validateCalls(blocks->getBlocks(1, 3),
+  validateCalls(blocks->getBlocks(AmetsuchiTest::FIRST_BLOCK, 3),
                 [i = 0, &hashes](
                     auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash);
@@ -418,6 +422,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 }
 
 TEST_F(AmetsuchiTest, AddSignatoryTest) {
+  size_t height = AmetsuchiTest::FIRST_BLOCK;
+
   auto storage = StorageImpl::create(block_store_path, pgopt_);
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
@@ -451,7 +457,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   Block block;
   block.transactions.push_back(txn);
-  block.height = 1;
+  block.height = height++;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
   block.hash = block1hash;
@@ -482,7 +488,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 2;
+  block.height = height++;
   block.prev_hash = block1hash;
   auto block2hash = iroha::hash(block);
   block.hash = block2hash;
@@ -513,7 +519,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 3;
+  block.height = height++;
   block.prev_hash = block2hash;
   auto block3hash = iroha::hash(block);
   block.hash = block3hash;
@@ -551,7 +557,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 4;
+  block.height = height++;
   block.prev_hash = block3hash;
   auto block4hash = iroha::hash(block);
   block.hash = block4hash;
@@ -592,7 +598,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 5;
+  block.height = height++;
   block.prev_hash = block4hash;
   auto block5hash = iroha::hash(block);
   block.hash = block5hash;
@@ -624,7 +630,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
 
   block = Block();
   block.transactions.push_back(txn);
-  block.height = 6;
+  block.height = height++;
   block.prev_hash = block5hash;
   auto block6hash = iroha::hash(block);
   block.hash = block6hash;
@@ -649,7 +655,7 @@ Block getBlock() {
   txn.commands.push_back(std::make_shared<AddPeer>(add_peer));
   Block block;
   block.transactions.push_back(txn);
-  block.height = 1;
+  block.height = AmetsuchiTest::FIRST_BLOCK;
   block.prev_hash.fill(0);
   auto block1hash = iroha::hash(block);
   block.txs_number = block.transactions.size();
@@ -727,6 +733,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
  * with some other hash is not found.
  */
 TEST_F(AmetsuchiTest, FindTxByHashTest) {
+  size_t height = AmetsuchiTest::FIRST_BLOCK;
+
   auto storage = StorageImpl::create(block_store_path, pgopt_);
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
@@ -769,7 +777,7 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   Block block;
   block.transactions.push_back(tx1);
   block.transactions.push_back(tx2);
-  block.height = 1;
+  block.height = height++;
   block.prev_hash.fill(0);
   block.txs_number = block.transactions.size();
   block.hash = iroha::hash(block);

@@ -30,10 +30,14 @@
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "integration/pipeline/test_irohad.hpp"
 
+// TODO(@warchant): move to separate configuration file
+#define MAX_WAITING_TIME 11s
+
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
 using namespace iroha::model::generators;
 using iroha::model::Transaction;
+using iroha::model::converters::PbTransactionFactory;
 
 class TxPipelineIntegrationTestFixture
     : public iroha::ametsuchi::AmetsuchiTest {
@@ -50,17 +54,20 @@ class TxPipelineIntegrationTestFixture
     // test subscribers can't solve duplicate func call.
     ASSERT_FALSE(duplicate_sent.exchange(true));
 
-    const auto num_blocks =
-        transactions.size();  // Use one block per one transaction
+    // Use one block per one transaction
+    const auto num_blocks = transactions.size();
+
     setTestSubscribers(num_blocks);
+
     std::for_each(
         transactions.begin(), transactions.end(), [this](auto const &tx) {
           // this-> is needed by gcc
           this->sendTransaction(tx);
           // wait for commit
           std::unique_lock<std::mutex> lk(m);
-          cv.wait_for(lk, 20s);
+          cv.wait_for(lk, MAX_WAITING_TIME);
         });
+
     ASSERT_TRUE(proposal_wrapper->validate());
     ASSERT_EQ(num_blocks, proposals.size());
     ASSERT_EQ(expected_proposals, proposals);
@@ -97,7 +104,7 @@ class TxPipelineIntegrationTestFixture
   std::shared_ptr<iroha::KeysManager> manager;
 
   std::atomic_bool duplicate_sent{false};
-  size_t next_height_count = 2;
+  size_t current_height = AmetsuchiTest::FIRST_BLOCK;
 
  private:
   void setTestSubscribers(size_t num_blocks) {
@@ -121,27 +128,30 @@ class TxPipelineIntegrationTestFixture
 
   void sendTransaction(const iroha::model::Transaction &transaction) {
     // generate expected proposal
-    iroha::model::Proposal expected_proposal{
-        std::vector<Transaction>{transaction}};
-    expected_proposal.height = next_height_count++;
+    iroha::model::Proposal expected_proposal{{transaction}};
+
+    expected_proposal.height = ++current_height;
     expected_proposals.emplace_back(expected_proposal);
 
     // generate expected block
-    iroha::model::Block expected_block = iroha::model::Block{};
+    iroha::model::Block expected_block{};
     expected_block.height = expected_proposal.height;
-    expected_block.prev_hash = next_height_count == 3
-        ? genesis_block.hash
-        : expected_blocks.back().hash;
+    if(current_height == AmetsuchiTest::FIRST_BLOCK + 1){
+      expected_block.prev_hash = genesis_block.hash;
+    } else {
+      expected_block.prev_hash = expected_blocks.back().hash;
+    }
     expected_block.transactions = expected_proposal.transactions;
     expected_block.txs_number = expected_proposal.transactions.size();
     expected_block.created_ts = 0;
     expected_block.hash = iroha::hash(expected_block);
+
     irohad->getCryptoProvider()->sign(expected_block);
-    expected_blocks.emplace_back(expected_block);
+
+    expected_blocks.push_back(std::move(expected_block));
 
     // send transactions to torii
-    auto pb_tx =
-        iroha::model::converters::PbTransactionFactory().serialize(transaction);
+    auto pb_tx = PbTransactionFactory().serialize(transaction);
 
     irohad->getCommandService()->Torii(pb_tx);
   }

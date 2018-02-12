@@ -25,20 +25,23 @@
 
 #include <nonstd/optional.hpp>
 #include <pqxx/pqxx>
+#include <shared_mutex>
+
+#include "ametsuchi/block_storage.hpp"
 #include "logger/logger.hpp"
 #include "model/converters/json_block_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
 
-    class FlatFile;
+    class BlockStorage;
 
     struct ConnectionContext {
-      ConnectionContext(std::unique_ptr<FlatFile> block_store,
+      ConnectionContext(std::unique_ptr<BlockStorage> block_store,
                         std::unique_ptr<pqxx::lazyconnection> pg_lazy,
                         std::unique_ptr<pqxx::nontransaction> pg_nontx);
 
-      std::unique_ptr<FlatFile> block_store;
+      std::unique_ptr<BlockStorage> block_store;
       std::unique_ptr<pqxx::lazyconnection> pg_lazy;
       std::unique_ptr<pqxx::nontransaction> pg_nontx;
     };
@@ -69,7 +72,7 @@ namespace iroha {
      protected:
       StorageImpl(std::string block_store_dir,
                   std::string postgres_options,
-                  std::unique_ptr<FlatFile> block_store,
+                  std::unique_ptr<BlockStorage> block_store,
                   std::unique_ptr<pqxx::lazyconnection> wsv_connection,
                   std::unique_ptr<pqxx::nontransaction> wsv_transaction);
 
@@ -82,7 +85,7 @@ namespace iroha {
       const std::string postgres_options_;
 
      private:
-      std::unique_ptr<FlatFile> block_store_;
+      std::unique_ptr<BlockStorage> block_store_;
 
       /**
        * Pg connection with direct transaction management

@@ -29,14 +29,17 @@
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
 
+#define INTERNAL_PORT 10001
+
 // TODO: refactor services to allow dynamic port binding IR-741
 class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
  public:
   void SetUp() override {
     iroha::ametsuchi::AmetsuchiTest::SetUp();
 
+    std::string address = "0.0.0.0:" + std::to_string(INTERNAL_PORT);
     auto genesis_tx =
-        TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+        TransactionGenerator().generateGenesisTransaction(0, {address});
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
             0, {genesis_tx});
@@ -48,7 +51,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
         block_store_path,
         pgopt_,
         0,
-        10001,
+        INTERNAL_PORT,
         10,
         5000ms,
         5000ms,
@@ -79,19 +82,16 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
 };
 
 TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
-  // TODO 19/12/17 motxx - Rework integration test using shared model (IR-715
-  // comment)
+  // TODO 19/12/17 motxx - Rework integration test using shared model (IR-715)
   // generate test command
-  auto cmd =
-      iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
-          "admin@test",
-          "coin#test",
-          iroha::Amount().createFromString("20.00").value());
+  auto cmd = CommandGenerator().generateAddAssetQuantity(
+      "admin@test",
+      "coin#test",
+      iroha::Amount::createFromString("20.00").value());
 
   // generate test transaction
-  auto tx =
-      iroha::model::generators::TransactionGenerator().generateTransaction(
-          "admin@test", 1, {cmd});
+  auto tx = TransactionGenerator().generateTransaction("admin@test", 1, {cmd});
+
   iroha::KeysManagerImpl manager("admin@test");
   auto keypair = manager.loadKeys().value();
   iroha::model::ModelCryptoProviderImpl provider(keypair);
@@ -107,19 +107,22 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
  */
 TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   // TODO 19/12/17 motxx - Rework integration test using shared model (IR-715
-  // comment)
+  // )
+
   const auto CREATOR_ACCOUNT_ID = "admin@test";
   // send some transaction
-  const auto cmd =
-      iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
-          CREATOR_ACCOUNT_ID,
-          "coin#test",
-          iroha::Amount().createFromString("20.00").value());
+
+  const auto cmd = CommandGenerator().generateAddAssetQuantity(
+      CREATOR_ACCOUNT_ID,
+      "coin#test",
+      iroha::Amount::createFromString("20.00").value());
   auto given_tx =
-      iroha::model::generators::TransactionGenerator().generateTransaction(
-          CREATOR_ACCOUNT_ID, 1, {cmd});
+      TransactionGenerator().generateTransaction(CREATOR_ACCOUNT_ID, 1, {cmd});
+
   iroha::KeysManagerImpl manager(CREATOR_ACCOUNT_ID);
+
   const auto keypair = manager.loadKeys().value();
+
   iroha::model::ModelCryptoProviderImpl provider(keypair);
   provider.sign(given_tx);
 
@@ -128,9 +131,9 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   // keep sent tx's hash
   const auto given_tx_hash = iroha::hash(given_tx);
 
-  auto query =
-      iroha::model::generators::QueryGenerator().generateGetTransactions(
-          iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
+  auto query = QueryGenerator().generateGetTransactions(
+      iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
+
   provider.sign(*query);
 
   const auto pb_query = PbQueryFactory{}.serialize(query);
@@ -138,6 +141,7 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
 
   iroha::protocol::QueryResponse response;
   irohad->getQueryService()->Find(pb_query.value(), response);
+
   ASSERT_EQ(1, response.transactions_response().transactions().size());
   const auto got_pb_tx = response.transactions_response().transactions()[0];
   ASSERT_EQ(given_tx, *PbTransactionFactory{}.deserialize(got_pb_tx));

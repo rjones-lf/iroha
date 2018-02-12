@@ -11,16 +11,15 @@ target_link_libraries(wsv_query_command_test
     libs_common
     )
 
-addtest(flat_file_test flat_file_test.cpp)
-target_link_libraries(flat_file_test
-    ametsuchi
-    libs_common
+addtest(block_storage_test block_storage_test.cpp)
+target_link_libraries(block_storage_test
+    block_storage_nudb
+    logger
     )
 
-addtest(block_query_test block_query_test.cpp)
-target_link_libraries(block_query_test
+addtest(integration_block_query_nudb_test integration_block_query_nudb_test.cpp)
+target_link_libraries(integration_block_query_nudb_test
     ametsuchi
-    libs_common
     )
 
 addtest(block_query_transfer_test block_query_transfer_test.cpp)
@@ -40,4 +39,10 @@ add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     pqxx
     model_generators
+    )
+
+
+addtest(unit_block_query_test unit_block_query_test.cpp)
+target_link_libraries(unit_block_query_test
+    ametsuchi
     )
