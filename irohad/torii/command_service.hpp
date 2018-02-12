@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "ametsuchi/storage.hpp"
 #include "cache/cache.hpp"
+#include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "model/converters/pb_transaction_factory.hpp"
@@ -142,8 +143,8 @@ namespace torii {
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
     std::chrono::milliseconds proposal_delay_;
     std::chrono::milliseconds start_tx_processing_duration_;
-    std::shared_ptr<
-        iroha::cache::Cache<std::string, iroha::protocol::ToriiResponse>>
+    std::shared_ptr<iroha::cache::Cache<shared_model::crypto::Hash,
+                                        iroha::protocol::ToriiResponse, shared_model::crypto::Hash::Hasher>>
         cache_;
   };
 
