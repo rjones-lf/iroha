@@ -14,9 +14,3 @@ target_link_libraries(client_test
 target_include_directories(client_test PUBLIC
     ${PROJECT_SOURCE_DIR}/iroha-cli
     )
-
-addtest(irohad_test irohad_test.cpp)
-target_link_libraries(irohad_test
-    boost
-    )
-add_definitions(-DPATHIROHAD="${PROJECT_BINARY_DIR}/bin")
