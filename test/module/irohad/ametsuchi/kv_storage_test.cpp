@@ -44,7 +44,14 @@ class KVTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
-    storage = StorageImpl::create(block_store_path, pgopt_);
+    auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+    storageResult.match(
+        [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
+          storage = _storage.value;
+        },
+        [](iroha::expected::Error<std::string> &error) {
+          FAIL() << "StorageImpl: " << error.error;
+        });
     ASSERT_TRUE(storage);
     blocks = storage->getBlockQuery();
     wsv_query = storage->getWsvQuery();
@@ -94,8 +101,15 @@ class KVTest : public AmetsuchiTest {
     block1.txs_number = block1.transactions.size();
 
     {
-      auto ms = storage->createMutableStorage();
-      auto new_block1 = shared_model::proto::from_old(block1);
+      std::unique_ptr<MutableStorage> ms;
+      auto storageResult = storage->createMutableStorage();
+      storageResult.match(
+          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                  &_storage) { ms = std::move(_storage.value); },
+          [](iroha::expected::Error<std::string> &error) {
+            FAIL() << "MutableStorage: " << error.error;
+          });
+      auto new_block1 = shared_model::proto::from_old(block1); // TODO remove this after relocation to shared_model
       ms->apply(new_block1, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });

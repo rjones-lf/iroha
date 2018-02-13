@@ -70,8 +70,8 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   Block test_block;
   test_block.height = 5;
 
-  DefaultValue<std::unique_ptr<MutableStorage>>::SetFactory(
-      &createMockMutableStorage);
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
@@ -106,7 +106,8 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   // commit from consensus => storage not created => no commit
   Block test_block;
 
-  DefaultValue<std::unique_ptr<MutableStorage>>::Clear();
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>,
+                                std::string>>::Clear();
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
@@ -135,8 +136,8 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
   test_block.height = 5;
   test_block.sigs.emplace_back();
 
-  DefaultValue<std::unique_ptr<MutableStorage>>::SetFactory(
-      &createMockMutableStorage);
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);

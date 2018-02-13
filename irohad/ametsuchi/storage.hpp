@@ -20,6 +20,7 @@
 
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
+#include "common/result.hpp"
 
 namespace iroha {
 
