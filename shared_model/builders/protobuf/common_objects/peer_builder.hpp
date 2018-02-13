@@ -15,21 +15,23 @@
  * limitations under the License.
  */
 
-#include <numeric>
+#ifndef IROHA_PEER_BUILDER_HPP
+#define IROHA_PEER_BUILDER_HPP
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
-#include "ametsuchi/wsv_query.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "interfaces/common_objects/account.hpp"
 
-namespace iroha {
-  namespace ametsuchi {
+namespace shared_model {
+  namespace proto {
+    class PeerBuilder {
+     public:
+      std::shared_ptr<shared_model::interface::Peer> build();
 
-    PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
-        : wsv_(std::move(wsv)) {}
+      PeerBuilder address(
+          const interface::types::AddressType &address);
 
-    nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> PeerQueryWsv::getLedgerPeers() {
-      return wsv_->getPeers();
-    }
+      PeerBuilder pubkey(const interface::types::PubkeyType &key);
+    };
+  }  // namespace proto
+}  // namespace shared_model
 
-  }  // namespace ametsuchi
-}  // namespace iroha
+#endif  // IROHA_PEER_BUILDER_HPP

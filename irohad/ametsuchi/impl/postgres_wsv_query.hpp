@@ -33,7 +33,7 @@ namespace iroha {
       nonstd::optional<std::vector<std::string>> getRolePermissions(
           const std::string &role_name) override;
 
-      nonstd::optional<model::Account> getAccount(
+      nonstd::optional<std::shared_ptr<shared_model::interface::Account>> getAccount(
           const std::string &account_id) override;
       nonstd::optional<std::string> getAccountDetail(
           const std::string &account_id,
@@ -41,11 +41,11 @@ namespace iroha {
           const std::string &detail) override;
       nonstd::optional<std::vector<pubkey_t>> getSignatories(
           const std::string &account_id) override;
-      nonstd::optional<model::Asset> getAsset(
+      nonstd::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const std::string &asset_id) override;
-      nonstd::optional<model::AccountAsset> getAccountAsset(
+      nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>> getAccountAsset(
           const std::string &account_id, const std::string &asset_id) override;
-      nonstd::optional<std::vector<model::Peer>> getPeers() override;
+      nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> getPeers() override;
       nonstd::optional<std::vector<std::string>> getRoles() override;
       nonstd::optional<model::Domain> getDomain(
           const std::string &domain_id) override;

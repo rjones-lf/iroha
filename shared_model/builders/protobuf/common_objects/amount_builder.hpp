@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,24 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_QUERY_BUILDER_HPP
-#define IROHA_PROTO_QUERY_BUILDER_HPP
+#ifndef IROHA_AMOUNT_BUILDER_HPP
+#define IROHA_AMOUNT_BUILDER_HPP
 
-#include "builders/protobuf/builder_templates/query_template.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace shared_model {
   namespace proto {
+    class AmountBuilder {
+     public:
+      std::shared_ptr<shared_model::interface::Amount> build();
 
-    using QueryBuilder = TemplateQueryBuilder<>;
+      AmountBuilder intValue(const boost::multiprecision::uint256_t &amount);
 
+      AmountBuilder precision(const interface::types::PrecisionType &precision);
+
+      static std::shared_ptr<interface::Amount> fromString(
+          const std::string &amount_str);
+    };
   }  // namespace proto
 }  // namespace shared_model
-
-#endif  // IROHA_PROTO_QUERY_BUILDER_HPP
+#endif  // IROHA_AMOUNT_BUILDER_HPP

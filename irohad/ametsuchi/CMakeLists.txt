@@ -21,4 +21,6 @@ target_link_libraries(ametsuchi
     command_execution
     boost
     model_interfaces
+    shared_model_proto_backend
+    shared_model_proto_builders
     )

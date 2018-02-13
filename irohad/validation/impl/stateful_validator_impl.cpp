@@ -41,7 +41,7 @@ namespace iroha {
                 [&](const auto &account) {
                   // Check if tx creator has account and has quorum to execute
                   // transaction
-                  return tx.signatures().size() >= account.quorum
+                  return tx.signatures.size() >= account->quorum()
                       ? queries.getSignatories(tx.creatorAccountId())
                       : nonstd::nullopt;
                 }

@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,29 @@
 #include <vector>
 #include "common/types.hpp"
 
+#include <nonstd/optional.hpp>
+
+#include "common/types.hpp"
+#include "interfaces/common_objects/account.hpp"
+#include "interfaces/common_objects/account_asset.hpp"
+#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/transaction.hpp"
+#include "interfaces/transaction_responses/tx_response.hpp"
+
+
+
 namespace iroha {
 
   namespace model {
     struct Domain;
-    struct Account;
-    struct AccountAsset;
-    struct Peer;
-    struct Asset;
-  }  // namespace model
+//    struct Account;
+//    struct AccountAsset;
+//    struct Peer;
+//    struct Asset;
+  }
 
   namespace ametsuchi {
 
@@ -88,7 +102,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<model::Account> getAccount(
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Account>> getAccount(
           const std::string &account_id) = 0;
 
       /**
@@ -116,7 +130,7 @@ namespace iroha {
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<model::Asset> getAsset(
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const std::string &asset_id) = 0;
 
       /**
@@ -125,14 +139,14 @@ namespace iroha {
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<model::AccountAsset> getAccountAsset(
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>> getAccountAsset(
           const std::string &account_id, const std::string &asset_id) = 0;
 
       /**
        *
        * @return
        */
-      virtual nonstd::optional<std::vector<model::Peer>> getPeers() = 0;
+      virtual nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> getPeers() = 0;
     };
 
   }  // namespace ametsuchi

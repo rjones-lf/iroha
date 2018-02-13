@@ -124,9 +124,9 @@ void validateAccountAsset(W &&wsv,
                           const iroha::Amount &amount) {
   auto account_asset = wsv->getAccountAsset(account, asset);
   ASSERT_TRUE(account_asset);
-  ASSERT_EQ(account_asset->account_id, account);
-  ASSERT_EQ(account_asset->asset_id, asset);
-  ASSERT_EQ(account_asset->balance, amount);
+  ASSERT_EQ((*account_asset)->accountId(), account);
+  ASSERT_EQ((*account_asset)->assetId(), asset);
+  ASSERT_EQ(*((*account_asset)->balance().makeOldModel()), amount);
 }
 
 /**
@@ -142,8 +142,8 @@ void validateAccount(W &&wsv,
                      const std::string &domain) {
   auto account = wsv->getAccount(id);
   ASSERT_TRUE(account);
-  ASSERT_EQ(account->account_id, id);
-  ASSERT_EQ(account->domain_id, domain);
+  ASSERT_EQ((*account)->accountId(), id);
+  ASSERT_EQ((*account)->domainId(), domain);
 }
 
 /**
@@ -306,10 +306,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
   auto peers = wsv->getPeers();
   ASSERT_TRUE(peers);
   ASSERT_EQ(peers->size(), 1);
-  ASSERT_EQ(peers->at(0).address, "192.168.9.1:50051");
-
-  auto pubkey = iroha::blob_t<32>::from_string(zero_string);
-  ASSERT_EQ(peers->at(0).pubkey, pubkey);
+  ASSERT_EQ(*(peers->at(0)->makeOldModel()), addPeer.peer);
 }
 
 TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
@@ -487,10 +484,11 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block1);
 
   {
-    auto account = wsv->getAccount(user1id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->account_id, user1id);
-    ASSERT_EQ(account->domain_id, "domain");
+    auto account_opt = wsv->getAccount(user1id);
+    ASSERT_TRUE(account_opt);
+    auto account = account_opt.value();
+    ASSERT_EQ(account->accountId(), user1id);
+    ASSERT_EQ(account->domainId(), createAccount.domain_id);
 
     auto signatories = wsv->getSignatories(user1id);
     ASSERT_TRUE(signatories);
@@ -619,9 +617,10 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block5);
 
   {
-    auto account = wsv->getAccount(user2id);
-    ASSERT_TRUE(account);
-    ASSERT_EQ(account->quorum, 2);
+    auto account_opt = wsv->getAccount(user2id);
+    ASSERT_TRUE(account_opt);
+    auto &account = account_opt.value();
+    ASSERT_EQ(account->quorum(), 2);
 
     // user2 has pubkey1 and pubkey2.
     auto signatories = wsv->getSignatories(user2id);

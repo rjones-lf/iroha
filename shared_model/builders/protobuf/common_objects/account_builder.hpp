@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,27 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_QUERY_BUILDER_HPP
-#define IROHA_PROTO_QUERY_BUILDER_HPP
+#ifndef IROHA_ACCOUNT_BUILDER_HPP
+#define IROHA_ACCOUNT_BUILDER_HPP
 
-#include "builders/protobuf/builder_templates/query_template.hpp"
+#include "interfaces/common_objects/account.hpp"
 
 namespace shared_model {
   namespace proto {
+    class AccountBuilder {
+     public:
+      std::shared_ptr<shared_model::interface::Account> build();
 
-    using QueryBuilder = TemplateQueryBuilder<>;
+      AccountBuilder accountId(
+          const interface::types::AccountIdType &account_id);
 
+      AccountBuilder domainId(const interface::types::DomainIdType &domainId);
+
+      AccountBuilder quorum(const interface::types::QuorumType &quorum);
+
+      AccountBuilder jsonData(const interface::types::JsonType &json);
+    };
   }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_PROTO_QUERY_BUILDER_HPP
+#endif  // IROHA_ACCOUNT_BUILDER_HPP

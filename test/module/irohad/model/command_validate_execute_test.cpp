@@ -16,6 +16,7 @@
  */
 
 #include <limits>
+#include <builders/protobuf/common_objects/asset_builder.hpp>
 
 #include "framework/result_fixture.hpp"
 #include "model/commands/add_asset_quantity.hpp"
@@ -118,12 +119,10 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    asset = Asset();
-    asset.asset_id = asset_id;
-    asset.domain_id = domain_id;
-    asset.precision = 2;
+    asset = shared_model::proto::AssetBuilder().assetId(asset_id).domainId(domain_id).precision(2).build();
 
-    wallet = AccountAsset();
+
+    wallet = shared_model::proto::AccountAssetBuilder().assetId().accountId().balance();
     wallet.asset_id = asset_id;
     wallet.account_id = account_id;
     wallet.balance = balance;
@@ -139,8 +138,8 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
   }
 
   decltype(AccountAsset().balance) balance = Amount(150ul, 2);
-  Asset asset;
-  AccountAsset wallet;
+  std::shared_ptr<shared_model::interface::Asset> asset;
+  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
 
   std::shared_ptr<AddAssetQuantity> add_asset_quantity;
 };

@@ -166,7 +166,10 @@ bool QueryProcessingFactory::validate(const model::GetTransactions &query) {
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAssetInfo(
     const model::GetAssetInfo &query) {
-  auto ast = _wsvQuery->getAsset(query.asset_id);
+  auto shared_ast = _wsvQuery->getAsset(query.asset_id);
+  auto ast = shared_ast | [&](auto &asset) {
+    return nonstd::make_optional(*(asset->makeOldModel()));
+  };
   if (!ast.has_value()) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
@@ -212,7 +215,11 @@ QueryProcessingFactory::executeGetRolePermissions(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
     const model::GetAccount &query) {
-  auto acc = _wsvQuery->getAccount(query.account_id);
+  auto shared_acc = _wsvQuery->getAccount(query.account_id);
+  auto acc = shared_acc | [](auto &account) {
+    return nonstd::make_optional(*(account->makeOldModel()));
+  };
+
   auto roles = _wsvQuery->getAccountRoles(query.account_id);
   if (not acc.has_value() or not roles.has_value()) {
     ErrorResponse response;
@@ -230,8 +237,11 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccountAssets(
     const model::GetAccountAssets &query) {
-  auto acct_asset =
-      _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
+  auto shared_acct_asset =  _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
+  auto acct_asset = shared_acct_asset | [](auto &account_asset) {
+    return nonstd::make_optional(*(account_asset->makeOldModel()));
+  };
+
   if (!acct_asset.has_value()) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);

@@ -28,21 +28,6 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      template <class NewModel,
-                class OldModel = typename NewModel::OldModelType>
-      std::vector<OldModel> toOldVector(
-          const std::vector<std::shared_ptr<NewModel>> &vec) {
-        return std::accumulate(
-            vec.begin(),
-            vec.end(),
-            std::vector<OldModel>{},
-            [](auto &out, const auto &item) {
-              auto ptr = std::unique_ptr<OldModel>(item->makeOldModel());
-              out.emplace_back(*ptr);
-              return out;
-            });
-      };
-
       PeerOrdererImpl::PeerOrdererImpl(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query)
           : query_(std::move(peer_query)) {}

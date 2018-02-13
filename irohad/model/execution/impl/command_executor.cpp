@@ -272,7 +272,7 @@ namespace iroha {
             (boost::format("asset %s is absent") % add_asset_quantity.asset_id)
                 .str());
       }
-      auto precision = asset.value().precision;
+      auto precision = asset.value()->precision();
 
       if (add_asset_quantity.amount.getPrecision() != precision) {
         return makeExecutionResult(
@@ -286,8 +286,13 @@ namespace iroha {
                                     % add_asset_quantity.account_id)
                                        .str());
       }
-      auto account_asset = queries.getAccountAsset(
+      auto account_asset_shared = queries.getAccountAsset(
           add_asset_quantity.account_id, add_asset_quantity.asset_id);
+      auto account_asset = account_asset_shared | []
+          (auto &a) {
+        return nonstd::make_optional(*(a->makeOldModel()
+        ));
+      };
       if (not account_asset.has_value()) {
         account_asset = AccountAsset();
         account_asset->asset_id = add_asset_quantity.asset_id;
@@ -348,7 +353,7 @@ namespace iroha {
                                     % subtract_asset_quantity.asset_id)
                                        .str());
       }
-      auto precision = asset.value().precision;
+      auto precision = asset.value()->precision();
 
       if (subtract_asset_quantity.amount.getPrecision() != precision) {
         return makeExecutionResult(
@@ -356,8 +361,11 @@ namespace iroha {
              % precision % subtract_asset_quantity.amount.getPrecision())
                 .str());
       }
-      auto account_asset = queries.getAccountAsset(
+      auto account_asset_shared = queries.getAccountAsset(
           subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id);
+      auto account_asset = account_asset_shared | [&](auto &a) {
+        return nonstd::make_optional(*(a->makeOldModel()));
+      };
       if (not account_asset.has_value()) {
         return makeExecutionResult((boost::format("account %s does not have %s")
                                     % subtract_asset_quantity.account_id
@@ -671,7 +679,7 @@ namespace iroha {
       auto newSignatoriesSize = signatories.value().size() - 1;
 
       // You can't remove if size of rest signatories less than the quorum
-      return newSignatoriesSize >= account.value().quorum;
+      return newSignatoriesSize >= account.value()->quorum();
     }
 
     // -----------------------|SetAccountDetail|-------------------------
@@ -727,7 +735,10 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto set_quorum = static_cast<const SetQuorum &>(command);
 
-      auto account = queries.getAccount(set_quorum.account_id);
+      auto shared_account = queries.getAccount(set_quorum.account_id);
+      auto account = shared_account | [](auto &a) {
+        return nonstd::make_optional(*(a->makeOldModel()));
+      };
       if (not account.has_value()) {
         return makeExecutionResult(
             (boost::format("absent account %s") % set_quorum.account_id).str());
@@ -779,8 +790,11 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto transfer_asset = static_cast<const TransferAsset &>(command);
 
-      auto src_account_asset = queries.getAccountAsset(
+      auto src_account_asset_shared = queries.getAccountAsset(
           transfer_asset.src_account_id, transfer_asset.asset_id);
+      auto src_account_asset = src_account_asset_shared | [](auto &a) {
+        return nonstd::make_optional(*(a->makeOldModel()));
+      };
       if (not src_account_asset.has_value()) {
         return makeExecutionResult((boost::format("asset %s is absent of %s")
                                     % transfer_asset.asset_id
@@ -789,8 +803,11 @@ namespace iroha {
       }
 
       AccountAsset dest_AccountAsset;
-      auto dest_account_asset = queries.getAccountAsset(
+      auto dest_account_asset_shared = queries.getAccountAsset(
           transfer_asset.dest_account_id, transfer_asset.asset_id);
+      auto dest_account_asset = dest_account_asset_shared | [](auto &a) {
+        return nonstd::make_optional(*(a->makeOldModel()));
+      };
       auto asset = queries.getAsset(transfer_asset.asset_id);
       if (not asset.has_value()) {
         return makeExecutionResult((boost::format("asset %s is absent of %s")
@@ -799,7 +816,7 @@ namespace iroha {
                                        .str());
       }
       // Precision for both wallets
-      auto precision = asset.value().precision;
+      auto precision = asset.value()->precision();
       if (transfer_asset.amount.getPrecision() != precision) {
         return makeExecutionResult(
             (boost::format("precision %d is wrong") % precision).str());
@@ -887,7 +904,7 @@ namespace iroha {
         return false;
       }
       // Amount is formed wrong
-      if (transfer_asset.amount.getPrecision() != asset.value().precision) {
+      if (transfer_asset.amount.getPrecision() != asset.value()->precision()) {
         return false;
       }
       auto account_asset = queries.getAccountAsset(
@@ -897,7 +914,7 @@ namespace iroha {
           // Check if dest account exist
           and queries.getAccount(transfer_asset.dest_account_id) and
           // Balance in your wallet should be at least amount of transfer
-          account_asset.value().balance >= transfer_asset.amount;
+          account_asset.value()->makeOldModel()->balance >= transfer_asset.amount;
     }
 
   }  // namespace model

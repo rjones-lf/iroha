@@ -127,10 +127,17 @@ nonstd::optional<Wrapper<Block>> BlockLoaderImpl::retrieveBlock(
   return nonstd::optional<Wrapper<Block>>(std::move(result));
 }
 
-nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
-    const PublicKey &pubkey) {
-  auto peers = peer_query_->getLedgerPeers();
-  if (not peers) {
+nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
+  auto shared_peers = peer_query_->getLedgerPeers();
+  auto peers = shared_peers | [](auto &a) {
+    std::vector<model::Peer> peers;
+    std::transform(
+        a.begin(), a.end(), std::back_inserter(peers), [](auto &peer) {
+          return *(peer->makeOldModel());
+        });
+    return nonstd::make_optional(peers);
+  };
+  if (not peers.has_value()) {
     log_->error(kPeerRetrieveFail);
     return nonstd::nullopt;
   }

@@ -15,21 +15,24 @@
  * limitations under the License.
  */
 
-#include <numeric>
+#ifndef IROHA_ASSET_BUILDER_HPP
+#define IROHA_ASSET_BUILDER_HPP
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
-#include "ametsuchi/wsv_query.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "interfaces/common_objects/asset.hpp"
 
-namespace iroha {
-  namespace ametsuchi {
+namespace shared_model {
+  namespace proto {
+    class AssetBuilder {
+     public:
+      std::shared_ptr<shared_model::interface::Asset> build();
 
-    PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
-        : wsv_(std::move(wsv)) {}
+      AssetBuilder assetId(const interface::types::AccountIdType &asset_id);
 
-    nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> PeerQueryWsv::getLedgerPeers() {
-      return wsv_->getPeers();
-    }
+      AssetBuilder domainId(const interface::types::DomainIdType &domainId);
 
-  }  // namespace ametsuchi
-}  // namespace iroha
+      AssetBuilder precision(const interface::types::PrecisionType &precision);
+    };
+  }  // namespace proto
+}  // namespace shared_model
+
+#endif  // IROHA_ASSET_BUILDER_HPP

@@ -33,7 +33,15 @@ namespace iroha {
                  block.hash.to_hexstring());
       auto apply_block = [](
           const auto &block, auto &queries, const auto &top_hash) {
-        auto peers = queries.getPeers();
+        auto shared_peers = queries.getPeers();
+        auto peers = shared_peers | [](auto &a) {
+          std::vector<model::Peer> peers;
+          std::transform(
+              a.begin(), a.end(), std::back_inserter(peers), [](auto &peer) {
+                return *(peer->makeOldModel());
+              });
+          return nonstd::make_optional(peers);
+        };
         if (not peers.has_value()) {
           return false;
         }
