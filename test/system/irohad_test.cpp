@@ -106,8 +106,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
  */
 TEST_F(IrohadTest, RunIrohadWithoutArgs) {
   child c(irohad_executable);
-  c.wait_for(timeout);
-  ASSERT_FALSE(c.running());
+  ASSERT_TRUE(c.wait_for(timeout));
 }
 
 /*
