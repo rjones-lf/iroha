@@ -30,31 +30,35 @@ using namespace std::chrono_literals;
 class IrohadTest : public testing::Test {
  public:
   virtual void SetUp() {
+    timeout = 1s;
     setPaths();
-    auto config = parse_iroha_config(path_config.string());
-    blockstore_path = config[config_members::BlockStorePath].GetString();
-    pgopts = config[config_members::PgOpt].GetString();
+    setParams();
+    auto config = parse_iroha_config(path_config_.string());
+    blockstore_path_ = config[config_members::BlockStorePath].GetString();
+    pgopts_ = config[config_members::PgOpt].GetString();
   }
   virtual void TearDown() {
-    iroha::remove_all(blockstore_path);
+    iroha::remove_all(blockstore_path_);
     dropPostgres();
   }
 
  private:
   void setPaths() {
-    path_irohad = boost::filesystem::path(PATHIROHAD);
-    irohad_executable = path_irohad / "irohad";
-    path_example = path_irohad / ".." / ".." / "example";
-    path_config = path_example / "config.sample";
-    path_genesis = path_example / "genesis.block";
-    path_keypair = path_example / "node0";
-    params = " --config " + path_config.string() + " --genesis_block "
-        + path_genesis.string() + " --keypair_name " + path_keypair.string();
-    timeout = 1s;
+    path_irohad_ = boost::filesystem::path(PATHIROHAD);
+    irohad_executable = path_irohad_ / "irohad";
+    path_example_ = path_irohad_.parent_path().parent_path() / "example";
+    path_config_ = path_example_ / "config.sample";
+    path_genesis_ = path_example_ / "genesis.block";
+    path_keypair_ = path_example_ / "node0";
+  }
+
+  void setParams() {
+    params = " --config " + path_config_.string() + " --genesis_block "
+        + path_genesis_.string() + " --keypair_name " + path_keypair_.string();
   }
 
   void dropPostgres() {
-    connection = std::make_shared<pqxx::lazyconnection>(pgopts);
+    auto connection = std::make_shared<pqxx::lazyconnection>(pgopts_);
     try {
       connection->activate();
     } catch (const pqxx::broken_connection &e) {
@@ -86,17 +90,18 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
   }
 
  public:
-  boost::filesystem::path path_irohad;
   boost::filesystem::path irohad_executable;
-  boost::filesystem::path path_example;
-  boost::filesystem::path path_config;
-  boost::filesystem::path path_genesis;
-  boost::filesystem::path path_keypair;
   std::string params;
-  std::chrono::milliseconds timeout;
-  std::shared_ptr<pqxx::lazyconnection> connection;
-  std::string pgopts;
-  std::string blockstore_path;
+  std::chrono::milliseconds timeout = 1s;
+
+ private:
+  boost::filesystem::path path_irohad_;
+  boost::filesystem::path path_example_;
+  boost::filesystem::path path_config_;
+  boost::filesystem::path path_genesis_;
+  boost::filesystem::path path_keypair_;
+  std::string pgopts_;
+  std::string blockstore_path_;
 };
 
 /*
