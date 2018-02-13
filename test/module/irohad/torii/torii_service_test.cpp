@@ -31,6 +31,8 @@ limitations under the License.
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
 
+#include "builders/protobuf/transaction.hpp"
+
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 constexpr size_t TimesToriiBlocking = 5;
@@ -229,10 +231,16 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
 
   // create transactions and send them to Torii
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
-    auto new_tx = iroha::protocol::Transaction();
-    auto payload = new_tx.mutable_payload();
-    payload->set_tx_counter(i);
-    payload->set_creator_account_id("accountA");
+    auto shm_tx = shared_model::proto::TransactionBuilder()
+                   .creatorAccountId("some@account")
+                   .txCounter(i + 1)
+                   .createdTime(iroha::time::now())
+                   .setAccountQuorum("some@account", 2)
+                   .build()
+                   .signAndAddSignature(
+                       shared_model::crypto::CryptoProviderEd25519Sha3::
+                           generateKeypair());
+    auto new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);
 
