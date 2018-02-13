@@ -28,7 +28,7 @@ namespace shared_model {
           asset_id_pattern_(R"([a-z]{1,9}\#[a-z]{1,9})"),
           name_pattern_(R"([a-z]{1,9})"),
           detail_key_pattern_(R"([A-Za-z0-9_]{1,})"),
-          future_gap_(future_gap) {}
+          future_gap_(default_future_gap) {}
 
     void FieldValidator::validateAccountId(
         ReasonsGroupType &reason,

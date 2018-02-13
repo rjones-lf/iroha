@@ -17,7 +17,6 @@
 
 #include <thread>
 
-#include "ametsuchi/block_query.hpp"
 #include <validators/default_validator.hpp>
 #include <validators/transaction_validator.hpp>
 #include "ametsuchi/block_query.hpp"
@@ -44,7 +43,7 @@ namespace torii {
         storage_(storage),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
-        cache_(decltype(cache_)()) {
+        cache_(std::make_shared<CacheType>()) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe(
         [this](
@@ -60,14 +59,14 @@ namespace torii {
             return;
           }
 
-          auto proto_status = convertStatusToProto(iroha_response->current_status);
+          auto proto_status =
+              convertStatusToProto(iroha_response->current_status);
           res->set_tx_status(proto_status);
           cache_->addItem(tx_hash, *res);
         });
   }
 
-  void CommandService::Torii(iroha::protocol::Transaction const &request,
-                             google::protobuf::Empty &empty) {
+  void CommandService::Torii(const iroha::protocol::Transaction &request) {
     shared_model::proto::TransportBuilder<
         shared_model::proto::Transaction,
         shared_model::validation::DefaultTransactionValidator>()
@@ -94,7 +93,7 @@ namespace torii {
             [this, &request](const auto &error) {
               // stateless validation in transport validator failed
 
-              // TODO omit creation of invalid transaction
+              // TODO remove creation of invalid transaction
               auto tx_hash =
                   shared_model::proto::Transaction(std::move(request)).hash();
 
@@ -115,7 +114,7 @@ namespace torii {
     return grpc::Status::OK;
   }
 
-  void CommandService::Status(iroha::protocol::TxStatusRequest const &request,
+  void CommandService::Status(const iroha::protocol::TxStatusRequest &request,
                               iroha::protocol::ToriiResponse &response) {
     auto tx_hash = shared_model::crypto::Hash(request.tx_hash());
     auto resp = cache_->findItem(tx_hash);
@@ -143,7 +142,7 @@ namespace torii {
   void CommandService::StatusStream(
       iroha::protocol::TxStatusRequest const &request,
       grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer) {
-    auto resp = cache_->findItem(request.tx_hash());
+    auto resp = cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
     checkCacheAndSend(resp, response_writer);
 
     bool finished = false;

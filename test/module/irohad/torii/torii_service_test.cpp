@@ -26,9 +26,7 @@ limitations under the License.
 #include "torii/command_client.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 
-#include "torii/command_client.hpp"
 #include "torii/command_service.hpp"
-#include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
@@ -149,6 +147,7 @@ class ToriiServiceTest : public testing::Test {
  */
 TEST_F(ToriiServiceTest, CommandClient) {
   iroha::protocol::TxStatusRequest tx_request;
+  tx_request.set_tx_hash("asdads");
   iroha::protocol::ToriiResponse toriiResponse;
 
   auto client1 = torii::CommandSyncClient(Ip, Port);
