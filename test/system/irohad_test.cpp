@@ -93,6 +93,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
   boost::filesystem::path irohad_executable;
   std::string params;
   std::chrono::milliseconds timeout = 1s;
+  std::chrono::milliseconds short_timeout = 100ms;
 
  private:
   boost::filesystem::path path_irohad_;
@@ -111,7 +112,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
  */
 TEST_F(IrohadTest, RunIrohadWithoutArgs) {
   child c(irohad_executable);
-  ASSERT_TRUE(c.wait_for(timeout));
+  std::this_thread::sleep_for(short_timeout);
+  ASSERT_FALSE(c.running());
 }
 
 /*
