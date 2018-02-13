@@ -25,6 +25,8 @@
 #include "model/converters/json_common.hpp"
 #include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 
+#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -120,8 +122,9 @@ namespace iroha {
     bool StorageImpl::insertBlock(model::Block block) {
       log_->info("create mutable storage");
       auto storage = createMutableStorage();
+      auto new_block = shared_model::proto::from_old(block); // TODO replace with shared_model
       auto inserted = storage->apply(
-          block,
+          new_block,
           [](const auto &current_block, auto &query, const auto &top_hash) {
             return true;
           });

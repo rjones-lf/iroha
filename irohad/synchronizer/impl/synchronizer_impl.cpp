@@ -18,6 +18,9 @@
 #include <utility>
 
 #include "synchronizer/impl/synchronizer_impl.hpp"
+#include "ametsuchi/mutable_storage.hpp"
+
+#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
 
 namespace iroha {
   namespace synchronizer {
@@ -42,7 +45,8 @@ namespace iroha {
         log_->error("Cannot create mutable storage");
         return;
       }
-      if (validator_->validateBlock(commit_message, *storage)) {
+      auto new_commit_message = shared_model::proto::from_old(commit_message); // TODO remove this after relocation to shared_model
+      if (validator_->validateBlock(new_commit_message, *storage)) {
         // Block can be applied to current storage
         // Commit to main Ametsuchi
         mutableFactory_->commit(std::move(storage));

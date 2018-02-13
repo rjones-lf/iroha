@@ -32,6 +32,8 @@
 #include "model/peer.hpp"
 #include "model/domain.hpp"
 #include "model/account_asset.hpp"
+#include "cryptography/hash.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 
 #include <boost/optional.hpp>
@@ -151,9 +153,10 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           apply,
-          bool(const model::Block &,
-               std::function<
-                   bool(const model::Block &, WsvQuery &, const hash256_t &)>));
+          bool(const shared_model::interface::Block &,
+               std::function<bool(const shared_model::interface::Block &,
+                                  WsvQuery &,
+                                  const shared_model::crypto::Hash &)>));
     };
 
     /**

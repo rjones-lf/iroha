@@ -18,18 +18,20 @@
 #ifndef IROHA_MUTABLE_STORAGE_IMPL_HPP
 #define IROHA_MUTABLE_STORAGE_IMPL_HPP
 
+#include <map>
 #include <pqxx/connection>
 #include <pqxx/nontransaction>
-#include <unordered_map>
 
 #include "ametsuchi/mutable_storage.hpp"
+#include "cryptography/hash.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
 
   namespace model {
     class CommandExecutorFactory;
-  }
+    struct Block;
+  }  // namespace model
 
   namespace ametsuchi {
 
@@ -46,10 +48,11 @@ namespace iroha {
           std::unique_ptr<pqxx::nontransaction> transaction,
           std::shared_ptr<model::CommandExecutorFactory> command_executors);
 
-      bool apply(const model::Block &block,
-                 std::function<bool(const model::Block &,
+      bool apply(const shared_model::interface::Block &block,
+                 std::function<bool(const shared_model::interface::Block &,
                                     WsvQuery &,
-                                    const hash256_t &)> function) override;
+                                    const shared_model::crypto::Hash &)>
+                     function) override;
 
       ~MutableStorageImpl() override;
 

@@ -30,6 +30,8 @@
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
+#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
@@ -93,7 +95,8 @@ class KVTest : public AmetsuchiTest {
 
     {
       auto ms = storage->createMutableStorage();
-      ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
+      auto new_block1 = shared_model::proto::from_old(block1);
+      ms->apply(new_block1, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });
       storage->commit(std::move(ms));

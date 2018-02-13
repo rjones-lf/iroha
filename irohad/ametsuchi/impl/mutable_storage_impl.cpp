@@ -14,15 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
+
+#include <memory>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-
+#include "interfaces/iroha_internal/block.hpp"
 #include "model/execution/command_executor_factory.hpp"
-
-#include "ametsuchi/wsv_command.hpp"
 #include "model/sha3_hash.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"  // TODO remove this after relocation to shared_model
 
 namespace iroha {
   namespace ametsuchi {
@@ -44,9 +47,14 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(
-        const model::Block &block,
-        std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
-            function) {
+        const shared_model::interface::Block &new_block,
+        std::function<bool(const shared_model::interface::Block &,
+                           WsvQuery &,
+                           const shared_model::crypto::Hash &)> function) {
+      std::shared_ptr<model::Block> block(
+          new_block.makeOldModel());  // TODO remove this after relocation to
+                                      // shared_model
+
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
           auto result =
@@ -65,16 +73,20 @@ namespace iroha {
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(block.transactions.begin(),
-                          block.transactions.end(),
+      shared_model::crypto::Hash new_hash(
+          {top_hash_.begin(),
+           top_hash_
+               .end()});  // TODO remove this after relocation to shared_model
+      auto result = function(new_block, *wsv_, new_hash)
+          and std::all_of(block->transactions.begin(),
+                          block->transactions.end(),
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(block.height, block));
-        block_index_->index(block);
+        block_store_.insert(std::make_pair(block->height, *block));
+        block_index_->index(*block);
 
-        top_hash_ = block.hash;
+        top_hash_ = block->hash;
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
         transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");

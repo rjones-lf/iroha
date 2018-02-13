@@ -18,7 +18,6 @@
 #define IROHA_CHAIN_VALIDATOR_IMPL_HPP
 
 #include "logger/logger.hpp"
-#include "model/model_crypto_provider.hpp"
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
@@ -30,7 +29,7 @@ namespace iroha {
       bool validateChain(Commit blocks,
                          ametsuchi::MutableStorage &storage) override;
 
-      bool validateBlock(const model::Block &block,
+      bool validateBlock(const shared_model::interface::Block &block,
                          ametsuchi::MutableStorage &storage) override;
 
      private:

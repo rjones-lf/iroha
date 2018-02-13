@@ -15,20 +15,23 @@
  * limitations under the License.
  */
 
+#include "builders/protobuf/builder_templates/block_template.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"  // TODO remove this after relocation to shared_model
 
 using namespace iroha;
 using namespace iroha::model;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 
-using ::testing::_;
 using ::testing::A;
 using ::testing::ByRef;
 using ::testing::InvokeArgument;
 using ::testing::Return;
+using ::testing::_;
 
 class ChainValidationTest : public ::testing::Test {
  public:
@@ -46,6 +49,22 @@ class ChainValidationTest : public ::testing::Test {
     hash = block.prev_hash;
   }
 
+  /**
+   * Get block builder to build blocks for tests
+   * @return block builder
+   */
+  auto getBlockBuilder() const {
+    constexpr auto kTotal = (1 << 5) - 1;
+    return shared_model::proto::TemplateBlockBuilder<
+               kTotal,
+               shared_model::validation::DefaultBlockValidator,
+               shared_model::proto::Block>()
+        .txNumber(0)
+        .height(1)
+        .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+        .createdTime(iroha::time::now());
+  }
+
   Peer peer;
   std::vector<Peer> peers;
   Block block;
@@ -59,62 +78,96 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
+  // TODO add signatures and replace with shared_model block
+  //  auto new_block = getBlockBuilder().build();
+  auto new_block = shared_model::proto::from_old(block);
+  auto new_hash = new_block.prevHash();
+  // end of TODO
+
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
 
-  ASSERT_TRUE(validator->validateBlock(block, *storage));
+  ASSERT_TRUE(validator->validateBlock(new_block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   // Invalid previous hash, has supermajority, correct peers subset => invalid
 
-  hash.fill(1);
+  // TODO add signatures and replace with shared_model block
+  //  auto new_block = getBlockBuilder().build();
+  auto new_block = shared_model::proto::from_old(block);
+  // end of TODO
+
+  shared_model::crypto::Hash another_hash =
+      shared_model::crypto::Hash(std::string(32, '1'));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
+      .WillOnce(InvokeArgument<1>(
+          ByRef(new_block), ByRef(*query), ByRef(another_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
-
   block.sigs.clear();
+
+  // TODO add signatures and replace with shared_model block
+  //  auto new_block = getBlockBuilder().build();
+  auto new_block = shared_model::proto::from_old(block);
+  auto new_hash = new_block.prevHash();
+  // end of TODO
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenBadPeer) {
   // Valid previous hash, has supermajority, incorrect peers subset => invalid
-
   block.sigs.back().pubkey.fill(1);
+
+  // TODO add signatures and replace with shared_model block
+  //  auto new_block = getBlockBuilder().build();
+  auto new_block = shared_model::proto::from_old(block);
+  auto new_hash = new_block.prevHash();
+  // end of TODO
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
 }
 
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
+  // TODO add signatures and replace with shared_model block
+  //  auto new_block = getBlockBuilder().build();
+  auto new_block = shared_model::proto::from_old(block);
+  auto new_hash = new_block.prevHash();
+  // end of TODO
+
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto block_observable = rxcpp::observable<>::just(block);
+  auto block_observable = rxcpp::observable<>::just(block); // TODO replace with shared model
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  // TODO replace with shared_model block
+  EXPECT_CALL(*storage, apply(/* TODO block */ _, _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }
