@@ -188,8 +188,8 @@ parts:
     source: git://sourceware.org/git/valgrind.git
     plugin: autotools
   ed25519:
-    source: https://github.com/warchant/ed25519.git
-    source-commit: 56d926c4489aa7b2bb664a48294c5ee2d6e1c283
+    source: https://github.com/hyperledger/iroha-ed25519.git
+    source-commit: e7188b8393dbe5ac54378610d53630bd4a180038
     plugin: cmake
     configflags: [-DTESTING=OFF]
     after: [cmake]
