@@ -20,6 +20,7 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
+#include "interfaces/query_responses/error_responses/no_account_detail_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_asset_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_roles_error_response.hpp"
@@ -42,6 +43,9 @@ namespace shared_model {
                      iroha::protocol::ErrorResponse>;
     using NoAccountAssetsErrorResponse =
         TrivialProto<interface::NoAccountAssetsErrorResponse,
+                     iroha::protocol::ErrorResponse>;
+    using NoAccountDetailErrorResponse =
+        TrivialProto<interface::NoAccountDetailErrorResponse,
                      iroha::protocol::ErrorResponse>;
     using NoSignatoriesErrorResponse =
         TrivialProto<interface::NoSignatoriesErrorResponse,
