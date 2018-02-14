@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
+#include "builders/common_objects/signature_builder.hpp"
 #include "builders/protobuf/builder_templates/block_template.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
@@ -41,13 +43,11 @@ class ChainValidationTest : public ::testing::Test {
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockWsvQuery>();
 
-    peer.pubkey.fill(2);
+    // TODO: 14-02-2018 Alexey Chernyshov remove after replacement
+    // with shared_model https://soramitsu.atlassian.net/browse/IR-903
+    std::copy(
+        public_key.blob().begin(), public_key.blob().end(), peer.pubkey.data());
     peers = std::vector<Peer>{peer};
-
-    block.sigs.emplace_back();
-    block.sigs.back().pubkey = peer.pubkey;
-    block.prev_hash.fill(0);
-    hash = block.prev_hash;
   }
 
   /**
@@ -62,14 +62,42 @@ class ChainValidationTest : public ::testing::Test {
                shared_model::proto::Block>()
         .txNumber(0)
         .height(1)
-        .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+        .prevHash(hash)
         .createdTime(iroha::time::now());
   }
 
+  /**
+   * Add signature to the block.
+   */
+  void addSignature(shared_model::interface::Block &block,
+                    shared_model::interface::types::PubkeyType &pubkey) {
+    shared_model::builder::SignatureBuilder<
+        shared_model::proto::SignatureBuilder,
+        shared_model::validation::FieldValidator>
+        builder;
+    auto signature = builder.publicKey(pubkey).build();
+
+    signature.match(
+        [&](shared_model::builder::BuilderResult<
+            shared_model::interface::Signature>::ValueType &sig) {
+          block.addSignature(sig.value);
+        },
+        [](shared_model::builder::BuilderResult<
+            shared_model::interface::Signature>::ErrorType &e) {
+          FAIL() << *e.error;
+        });
+  }
+
+  shared_model::interface::types::PubkeyType public_key =
+      shared_model::interface::types::PubkeyType(std::string(32, '2'));
+
+  // TODO: 14-02-2018 Alexey Chernyshov remove after replacement
+  // with shared_model https://soramitsu.atlassian.net/browse/IR-903
   Peer peer;
   std::vector<Peer> peers;
-  Block block;
-  hash256_t hash;
+
+  shared_model::crypto::Hash hash =
+      shared_model::crypto::Hash(std::string(32, '0'));
 
   std::shared_ptr<ChainValidatorImpl> validator;
   std::shared_ptr<MockMutableStorage> storage;
@@ -78,99 +106,78 @@ class ChainValidationTest : public ::testing::Test {
 
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-
-// TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
-  //  auto new_block = getBlockBuilder().build();
-  auto new_block = shared_model::proto::from_old(block);
-  auto new_hash = new_block.prevHash();
-  // end of TODO
+  auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
+      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_TRUE(validator->validateBlock(new_block, *storage));
+  ASSERT_TRUE(validator->validateBlock(block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   // Invalid previous hash, has supermajority, correct peers subset => invalid
-
-  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
-  //  auto new_block = getBlockBuilder().build();
-  auto new_block = shared_model::proto::from_old(block);
-  // end of TODO
+  auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
 
   shared_model::crypto::Hash another_hash =
       shared_model::crypto::Hash(std::string(32, '1'));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
-      .WillOnce(InvokeArgument<1>(
-          ByRef(new_block), ByRef(*query), ByRef(another_hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(another_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
+  ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
-  block.sigs.clear();
-
-  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
-  //  auto new_block = getBlockBuilder().build();
-  auto new_block = shared_model::proto::from_old(block);
-  auto new_hash = new_block.prevHash();
-  // end of TODO
+  auto block = getBlockBuilder().build();
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
+      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
+  ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenBadPeer) {
   // Valid previous hash, has supermajority, incorrect peers subset => invalid
-  block.sigs.back().pubkey.fill(1);
-
-  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
-  //  auto new_block = getBlockBuilder().build();
-  auto new_block = shared_model::proto::from_old(block);
-  auto new_hash = new_block.prevHash();
-  // end of TODO
+  shared_model::interface::types::PubkeyType wrong_public_key =
+      shared_model::interface::types::PubkeyType(std::string(32, '1'));
+  auto block = getBlockBuilder().build();
+  addSignature(block, wrong_public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(new_block), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
+  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
+      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateBlock(new_block, *storage));
+  ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
 
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-
-  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block
-  // shared_model https://soramitsu.atlassian.net/browse/IR-903
-  //  auto new_block = getBlockBuilder().build();
-  auto new_block = shared_model::proto::from_old(block);
-  auto new_hash = new_block.prevHash();
-  // end of TODO
+  auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto block_observable = rxcpp::observable<>::just(block);
-
   // TODO: 14-02-2018 Alexey Chernyshov add argument after replacement
   // with shared_model https://soramitsu.atlassian.net/browse/IR-903
+  iroha::model::Block old_block;
+  old_block.sigs.emplace_back();
+  old_block.sigs.back().pubkey = peer.pubkey;
+  old_block.prev_hash.fill(0);
+  auto block_observable = rxcpp::observable<>::just(old_block);
+
   EXPECT_CALL(*storage, apply(/* TODO block */ _, _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }

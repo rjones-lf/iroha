@@ -32,4 +32,5 @@ target_link_libraries(query_execution
 addtest(chain_validation_test chain_validation_test.cpp)
 target_link_libraries(chain_validation_test
     chain_validator
+    shared_model_stateless_validation
     )
