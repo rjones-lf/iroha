@@ -56,9 +56,12 @@ namespace iroha {
             return std::find_if(peers.begin(),
                                 peers.end(),
                                 [signature](auto peer) {
-                                  // TODO remove new_pubkey after relocation to shared_model
+
+                                  // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+                                  // shared_model https://soramitsu.atlassian.net/browse/IR-903
                                   shared_model::crypto::PublicKey new_pubkey(
                                   {peer.pubkey.begin(), peer.pubkey.end()});
+
                                   return signature->publicKey() == new_pubkey;
                                 })
                 != peers.end();

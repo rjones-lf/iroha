@@ -27,11 +27,12 @@
 
 #include <boost/format.hpp>
 
-#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
-
     const char *kCommandExecutorError = "Cannot create CommandExecutorFactory";
     const char *kPsqlBroken = "Connection to PostgreSQL broken: {}";
     const char *kTmpWsv = "TemporaryWsv";
@@ -130,7 +131,11 @@ namespace iroha {
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
-            auto new_block = shared_model::proto::from_old(block); // TODO replace with shared_model
+
+            // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+            // shared_model https://soramitsu.atlassian.net/browse/IR-887
+            auto new_block = shared_model::proto::from_old(block);
+
             inserted =
                 storage.value->apply(new_block,
                                      [](const auto &current_block,

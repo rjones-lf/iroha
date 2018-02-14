@@ -36,7 +36,10 @@
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-880
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -274,7 +277,9 @@ TEST_F(AmetsuchiTest, SampleTest) {
   auto hashes = {block1hash, block2hash};
   validateCalls(blocks->getBlocks(1, 2),
                 [ i = 0, &hashes ](auto eachBlock) mutable {
-//                EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash); // TODO uncomment this after relocation to shared_model
+                  // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+                  // shared_model https://soramitsu.atlassian.net/browse/IR-880
+//                EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash);
                   ++i;
                 },
                 2);
@@ -443,7 +448,9 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   auto hashes = {block1hash, block2hash, block3hash};
   validateCalls(blocks->getBlocks(1, 3),
                 [ i = 0, &hashes ](auto eachBlock) mutable {
-//                  EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash); // TODO uncomment this after relocation to shared_model
+                  // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+                  // shared_model https://soramitsu.atlassian.net/browse/IR-880
+//                  EXPECT_EQ(*(hashes.begin() + i), eachBlock.hash);
                   ++i;
                 },
                 3);

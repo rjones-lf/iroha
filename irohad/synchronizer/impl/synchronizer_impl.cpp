@@ -20,7 +20,9 @@
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 
-#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -52,7 +54,10 @@ namespace iroha {
       if (not storage) {
         return;
       }
-      auto new_commit_message = shared_model::proto::from_old(commit_message); // TODO remove this after relocation to shared_model
+
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-903
+      auto new_commit_message = shared_model::proto::from_old(commit_message);
       if (validator_->validateBlock(new_commit_message, *storage)) {
         // Block can be applied to current storage
         // Commit to main Ametsuchi

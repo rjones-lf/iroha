@@ -25,7 +25,9 @@
 #include "model/execution/command_executor_factory.hpp"
 #include "model/sha3_hash.hpp"
 
-#include "backend/protobuf/from_old_model.hpp"  // TODO remove this after relocation to shared_model
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-881
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -51,9 +53,9 @@ namespace iroha {
         std::function<bool(const shared_model::interface::Block &,
                            WsvQuery &,
                            const shared_model::crypto::Hash &)> function) {
-      std::shared_ptr<model::Block> block(
-          new_block.makeOldModel());  // TODO remove this after relocation to
-                                      // shared_model
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-881
+      std::shared_ptr<model::Block> block(new_block.makeOldModel());
 
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
@@ -73,10 +75,10 @@ namespace iroha {
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      shared_model::crypto::Hash new_hash(
-          {top_hash_.begin(),
-           top_hash_
-               .end()});  // TODO remove this after relocation to shared_model
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-881
+      shared_model::crypto::Hash new_hash({top_hash_.begin(), top_hash_.end()});
+
       auto result = function(new_block, *wsv_, new_hash)
           and std::all_of(block->transactions.begin(),
                           block->transactions.end(),

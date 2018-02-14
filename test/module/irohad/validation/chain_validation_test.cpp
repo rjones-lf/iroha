@@ -20,7 +20,8 @@
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 
-#include "backend/protobuf/from_old_model.hpp"  // TODO remove this after relocation to shared_model
+// TODO: 14-02-2018 Alexey Chernyshov remove after relocation to shared_model
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -78,7 +79,7 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
-  // TODO add signatures and replace with shared_model block
+// TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
   //  auto new_block = getBlockBuilder().build();
   auto new_block = shared_model::proto::from_old(block);
   auto new_hash = new_block.prevHash();
@@ -96,7 +97,7 @@ TEST_F(ChainValidationTest, ValidCase) {
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   // Invalid previous hash, has supermajority, correct peers subset => invalid
 
-  // TODO add signatures and replace with shared_model block
+  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
   //  auto new_block = getBlockBuilder().build();
   auto new_block = shared_model::proto::from_old(block);
   // end of TODO
@@ -117,7 +118,7 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
   block.sigs.clear();
 
-  // TODO add signatures and replace with shared_model block
+  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
   //  auto new_block = getBlockBuilder().build();
   auto new_block = shared_model::proto::from_old(block);
   auto new_hash = new_block.prevHash();
@@ -136,7 +137,7 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
   // Valid previous hash, has supermajority, incorrect peers subset => invalid
   block.sigs.back().pubkey.fill(1);
 
-  // TODO add signatures and replace with shared_model block
+  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block shared_model
   //  auto new_block = getBlockBuilder().build();
   auto new_block = shared_model::proto::from_old(block);
   auto new_hash = new_block.prevHash();
@@ -154,7 +155,8 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
-  // TODO add signatures and replace with shared_model block
+  // TODO: 14-02-2018 Alexey Chernyshov add signatures and replace with shared_model block
+  // shared_model https://soramitsu.atlassian.net/browse/IR-903
   //  auto new_block = getBlockBuilder().build();
   auto new_block = shared_model::proto::from_old(block);
   auto new_hash = new_block.prevHash();
@@ -162,9 +164,10 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto block_observable = rxcpp::observable<>::just(block); // TODO replace with shared model
+  auto block_observable = rxcpp::observable<>::just(block);
 
-  // TODO replace with shared_model block
+  // TODO: 14-02-2018 Alexey Chernyshov add argument after replacement
+  // with shared_model https://soramitsu.atlassian.net/browse/IR-903
   EXPECT_CALL(*storage, apply(/* TODO block */ _, _))
       .WillOnce(
           InvokeArgument<1>(ByRef(new_block), ByRef(*query), ByRef(new_hash)));

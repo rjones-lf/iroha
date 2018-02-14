@@ -76,7 +76,9 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _)) // TODO replace _ with shared model block
+// TODO: 14-02-2018 Alexey Chernyshov replace with expected argument after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
@@ -112,7 +114,9 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
 
-  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _)).Times(0); // TODO replace _ with shared model block
+// TODO: 14-02-2018 Alexey Chernyshov replace with expected argument after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _)).Times(0);
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
@@ -142,7 +146,9 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _)) // TODO replace _ with shared model block
+// TODO: 14-02-2018 Alexey Chernyshov replace with expected argument after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+  EXPECT_CALL(*chain_validator, validateBlock(/* testing::Ref(new_test_block) */ _, _))
       .WillOnce(Return(false));
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 

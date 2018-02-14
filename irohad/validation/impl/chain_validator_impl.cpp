@@ -21,7 +21,9 @@
 #include "consensus/consensus_common.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 
-#include "backend/protobuf/from_old_model.hpp" // TODO remove this after relocation to shared_model
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace validation {
@@ -50,12 +52,18 @@ namespace iroha {
       return storage.apply(block, apply_block);
     }
 
+
+    // TODO: 14-02-2018 Alexey Chernyshov replace commit after relocation to
+    // shared_model https://soramitsu.atlassian.net/browse/IR-903 or https://soramitsu.atlassian.net/browse/IR-902
     bool ChainValidatorImpl::validateChain(Commit blocks,
                                            ametsuchi::MutableStorage &storage) {
       log_->info("validate chain...");
       return blocks
           .all([this, &storage](auto old_block) {
-            auto block = shared_model::proto::from_old(old_block); // TODO remove this after relocation to shared_model
+
+            // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+            // shared_model https://soramitsu.atlassian.net/browse/IR-903
+            auto block = shared_model::proto::from_old(old_block);
             log_->info("Validating block: height {}, hash {}",
                        block.height(),
                        block.hash().hex());

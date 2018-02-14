@@ -29,7 +29,6 @@ namespace shared_model {
 }
 
 namespace iroha {
-
   namespace ametsuchi {
     class MutableStorage;
   }
@@ -55,6 +54,8 @@ namespace iroha {
        * @param storage - storage that may be modified during loading
        * @return true if commit is valid, false otherwise
        */
+      // TODO: 14-02-2018 Alexey Chernyshov replace commit after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-903 or https://soramitsu.atlassian.net/browse/IR-902
       virtual bool validateChain(Commit commit,
                                  ametsuchi::MutableStorage &storage) = 0;
 
