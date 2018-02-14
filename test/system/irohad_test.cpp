@@ -18,21 +18,23 @@
 #include <gtest/gtest.h>
 #include <rapidjson/document.h>
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 #include <boost/process.hpp>
 #include <pqxx/pqxx>
 
 #include "common/files.hpp"
+#include "common/types.hpp"
 #include "main/iroha_conf_loader.hpp"
 
 using namespace boost::process;
 using namespace std::chrono_literals;
+using iroha::operator|;
 
 class IrohadTest : public testing::Test {
  public:
   virtual void SetUp() {
     timeout = 1s;
     setPaths();
-    setParams();
     auto config = parse_iroha_config(path_config_.string());
     blockstore_path_ = config[config_members::BlockStorePath].GetString();
     pgopts_ = config[config_members::PgOpt].GetString();
@@ -40,6 +42,21 @@ class IrohadTest : public testing::Test {
   virtual void TearDown() {
     iroha::remove_all(blockstore_path_);
     dropPostgres();
+  }
+
+  std::string params(const boost::optional<std::string> &config_path,
+                     const boost::optional<std::string> &genesis_block,
+                     const boost::optional<std::string> &keypair_path) {
+    std::string res;
+    config_path | [&res](auto &&s) { res += " --config " + s; };
+    genesis_block | [&res](auto &&s) { res += " --genesis_block " + s; };
+    keypair_path | [&res](auto &&s) { res += " --keypair_name " + s; };
+    return res;
+  }
+
+  std::string setDefaultParams() {
+    return params(
+        path_config_.string(), path_genesis_.string(), path_keypair_.string());
   }
 
  private:
@@ -50,11 +67,6 @@ class IrohadTest : public testing::Test {
     path_config_ = path_example_ / "config.sample";
     path_genesis_ = path_example_ / "genesis.block";
     path_keypair_ = path_example_ / "node0";
-  }
-
-  void setParams() {
-    params = " --config " + path_config_.string() + " --genesis_block "
-        + path_genesis_.string() + " --keypair_name " + path_keypair_.string();
   }
 
   void dropPostgres() {
@@ -91,7 +103,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  public:
   boost::filesystem::path irohad_executable;
-  std::string params;
   std::chrono::milliseconds timeout = 1s;
   std::chrono::milliseconds short_timeout = 100ms;
 
@@ -123,7 +134,7 @@ TEST_F(IrohadTest, RunIrohadWithoutArgs) {
  * @then irohad should be started and running until timeout expired
  */
 TEST_F(IrohadTest, RunIrohad) {
-  child c(irohad_executable.string() + params);
+  child c(irohad_executable.string() + setDefaultParams());
   std::this_thread::sleep_for(timeout);
   ASSERT_TRUE(c.running());
   c.terminate();
