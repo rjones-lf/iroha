@@ -17,11 +17,13 @@
 
 #include "model/execution/command_executor.hpp"
 #include <algorithm>
+#include <interfaces/common_objects/account.hpp>
+#include "backend/protobuf/from_old_model.hpp"
 #include "model/account.hpp"
-#include "model/asset.hpp"
-#include "model/domain.hpp"
 #include "model/account_asset.hpp"
+#include "model/asset.hpp"
 #include "model/commands/all.hpp"
+#include "model/domain.hpp"
 #include "model/execution/common_executor.hpp"
 #include "model/permissions.hpp"
 #include "validator/domain_name_validator.hpp"
@@ -315,8 +317,10 @@ namespace iroha {
         account_asset->balance = new_balance.value();
       }
 
-      return errorIfNot(commands.upsertAccountAsset(account_asset.value()),
-                        "failed to update account asset");
+      return errorIfNot(
+          commands.upsertAccountAsset(
+              shared_model::proto::from_old(account_asset.value())),
+          "failed to update account asset");
     }
 
     bool AddAssetQuantityExecutor::hasPermissions(
@@ -384,8 +388,10 @@ namespace iroha {
       }
       account_asset->balance = new_balance.value();
 
-      return errorIfNot(commands.upsertAccountAsset(account_asset.value()),
-                        "Failed to upsert account asset");
+      return errorIfNot(
+          commands.upsertAccountAsset(
+              shared_model::proto::from_old(account_asset.value())),
+          "Failed to upsert account asset");
     }
 
     bool SubtractAssetQuantityExecutor::hasPermissions(
@@ -417,7 +423,9 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto add_peer = static_cast<const AddPeer &>(command);
       // Will return false if peer is not unique
-      return errorIfNot(commands.insertPeer(add_peer.peer), "peer is not unique");
+      return errorIfNot(
+          commands.insertPeer(shared_model::proto::from_old(add_peer.peer)),
+          "peer is not unique");
     }
 
     bool AddPeerExecutor::hasPermissions(
@@ -446,12 +454,16 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto add_signatory = static_cast<const AddSignatory &>(command);
 
-      if (not commands.insertSignatory(add_signatory.pubkey)) {
+      if (not commands.insertSignatory(shared_model::crypto::PublicKey(
+              {add_signatory.pubkey.begin(), add_signatory.pubkey.end()}))) {
         return makeExecutionError("failed to insert signatory");
       }
-      return errorIfNot(commands.insertAccountSignatory(
-                            add_signatory.account_id, add_signatory.pubkey),
-                        "failed to insert account signatory");
+      return errorIfNot(
+          commands.insertAccountSignatory(
+              add_signatory.account_id,
+              shared_model::crypto::PublicKey(
+                  {add_signatory.pubkey.begin(), add_signatory.pubkey.end()})),
+          "failed to insert account signatory");
     }
 
     bool AddSignatoryExecutor::hasPermissions(
@@ -504,14 +516,18 @@ namespace iroha {
                 .str());
       }
       // TODO: remove insert signatory from here ?
-      if (not commands.insertSignatory(create_account.pubkey)) {
+      if (not commands.insertSignatory(shared_model::crypto::PublicKey(
+              {create_account.pubkey.begin(), create_account.pubkey.end()}))) {
         return makeExecutionError("failed to insert signatory");
       }
-      if (not commands.insertAccount(account)) {
+      shared_model::proto::Account acc = shared_model::proto::from_old(account);
+      if (not commands.insertAccount(acc)) {
         return makeExecutionError("failed to insert account");
       }
-      if (not commands.insertAccountSignatory(account.account_id,
-                                              create_account.pubkey)) {
+      if (not commands.insertAccountSignatory(
+              account.account_id,
+              shared_model::crypto::PublicKey({create_account.pubkey.begin(),
+                                               create_account.pubkey.end()}))) {
         return makeExecutionError("failed to insert account signatory");
       }
       return errorIfNot(commands.insertAccountRole(account.account_id,
@@ -558,8 +574,9 @@ namespace iroha {
       new_asset.domain_id = create_asset.domain_id;
       new_asset.precision = create_asset.precision;
       // The insert will fail if asset already exists
-      return errorIfNot(commands.insertAsset(new_asset),
-                        "failed to insert asset");
+      return errorIfNot(
+          commands.insertAsset(shared_model::proto::from_old(new_asset)),
+          "failed to insert asset");
     }
 
     bool CreateAssetExecutor::hasPermissions(
@@ -602,8 +619,9 @@ namespace iroha {
       new_domain.domain_id = create_domain.domain_id;
       new_domain.default_role = create_domain.user_default_role;
       // The insert will fail if domain already exist
-      return errorIfNot(commands.insertDomain(new_domain),
-                        "failed to insert domain");
+      return errorIfNot(
+          commands.insertDomain(shared_model::proto::from_old(new_domain)),
+          "failed to insert domain");
     }
 
     bool CreateDomainExecutor::hasPermissions(
@@ -643,12 +661,18 @@ namespace iroha {
       auto remove_signatory = static_cast<const RemoveSignatory &>(command);
 
       // Delete will fail if account signatory doesn't exist
-      if (not commands.deleteAccountSignatory(remove_signatory.account_id,
-                                              remove_signatory.pubkey)) {
+      if (not commands.deleteAccountSignatory(
+              remove_signatory.account_id,
+              shared_model::crypto::PublicKey(
+                  {remove_signatory.pubkey.begin(),
+                   remove_signatory.pubkey.end()}))) {
         return makeExecutionError("failed to delete account signatory");
       }
-      return errorIfNot(commands.deleteSignatory(remove_signatory.pubkey),
-                        "failed to delete signatory");
+      return errorIfNot(
+          commands.deleteSignatory(
+              shared_model::crypto::PublicKey({remove_signatory.pubkey.begin(),
+                                               remove_signatory.pubkey.end()})),
+          "failed to delete signatory");
     }
 
     bool RemoveSignatoryExecutor::hasPermissions(
@@ -720,8 +744,7 @@ namespace iroha {
 
       return
           // Case 1. Creator set details for his account
-          creator_account_id == cmd.account_id
-          or
+          creator_account_id == cmd.account_id or
           // Case 2. Creator has grantable permission to set account key/value
           queries.hasAccountGrantablePermission(
               creator_account_id, cmd.account_id, can_set_detail);
@@ -752,7 +775,9 @@ namespace iroha {
             (boost::format("absent account %s") % set_quorum.account_id).str());
       }
       account.value().quorum = set_quorum.new_quorum;
-      return errorIfNot(commands.updateAccount(account.value()),
+      shared_model::proto::Account acc =
+          shared_model::proto::from_old(account.value());
+      return errorIfNot(commands.updateAccount(acc),
                         "failed to update account");
     }
 
@@ -857,11 +882,14 @@ namespace iroha {
         dest_AccountAsset.balance = dest_balance;
       }
 
-      if (not commands.upsertAccountAsset(dest_AccountAsset)) {
+      if (not commands.upsertAccountAsset(
+              shared_model::proto::from_old(dest_AccountAsset))) {
         return makeExecutionError("failed to upsert destination balance");
       }
-      return errorIfNot(commands.upsertAccountAsset(src_account_asset.value()),
-                        "failed to upsert source account");
+      return errorIfNot(
+          commands.upsertAccountAsset(
+              shared_model::proto::from_old(src_account_asset.value())),
+          "failed to upsert source account");
     }
 
     bool TransferAssetExecutor::hasPermissions(

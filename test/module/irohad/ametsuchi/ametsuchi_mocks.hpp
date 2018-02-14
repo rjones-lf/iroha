@@ -28,11 +28,10 @@
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "model/account.hpp"
-#include "model/asset.hpp"
-#include "model/peer.hpp"
-#include "model/domain.hpp"
 #include "model/account_asset.hpp"
-
+#include "model/asset.hpp"
+#include "model/domain.hpp"
+#include "model/peer.hpp"
 
 #include <boost/optional.hpp>
 
@@ -96,24 +95,31 @@ namespace iroha {
                    bool(const std::string &permittee_account_id,
                         const std::string &account_id,
                         const std::string &permission_id));
-      MOCK_METHOD1(insertAccount, bool(const model::Account &));
-      MOCK_METHOD1(updateAccount, bool(const model::Account &));
-      MOCK_METHOD1(insertAsset, bool(const model::Asset &));
-      MOCK_METHOD1(upsertAccountAsset, bool(const model::AccountAsset &));
-      MOCK_METHOD1(insertSignatory, bool(const pubkey_t &));
-      MOCK_METHOD1(deleteSignatory, bool(const pubkey_t &));
+      MOCK_METHOD1(insertAccount,
+                   bool(const shared_model::interface::Account &));
+      MOCK_METHOD1(updateAccount,
+                   bool(const shared_model::interface::Account &));
+      MOCK_METHOD1(insertAsset, bool(const shared_model::interface::Asset &));
+      MOCK_METHOD1(upsertAccountAsset,
+                   bool(const shared_model::interface::AccountAsset &));
+      MOCK_METHOD1(insertSignatory,
+                   bool(const shared_model::crypto::PublicKey &));
+      MOCK_METHOD1(deleteSignatory,
+                   bool(const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(insertAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   bool(const std::string &,
+                        const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(deleteAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   bool(const std::string &,
+                        const shared_model::crypto::PublicKey &));
 
-      MOCK_METHOD1(insertPeer, bool(const model::Peer &));
+      MOCK_METHOD1(insertPeer, bool(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(deletePeer, bool(const model::Peer &));
+      MOCK_METHOD1(deletePeer, bool(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(insertDomain, bool(const model::Domain &));
+      MOCK_METHOD1(insertDomain, bool(const shared_model::interface::Domain &));
       MOCK_METHOD4(setAccountKV,
                    bool(const std::string &,
                         const std::string &,

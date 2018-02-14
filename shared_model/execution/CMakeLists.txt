@@ -1,4 +1,4 @@
-# Copyright 2017 Soramitsu Co., Ltd.
+# Copyright 2018 Soramitsu Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,19 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(old_model INTERFACE)
-
-if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
-    target_link_libraries(old_model INTERFACE
-        model
+add_library(shared_model_command_execution
+        impl/command_executor.cpp
+        impl/common_executor.cpp
         )
-endif()
-
-add_subdirectory(backend)
-add_subdirectory(bindings)
-add_subdirectory(builders)
-add_subdirectory(converters)
-add_subdirectory(cryptography)
-add_subdirectory(interfaces)
-add_subdirectory(validators)
-add_subdirectory(execution)
+target_link_libraries(shared_model_command_execution
+        ${Boost_LIBRARIES}
+        optional
+        logger
+        )

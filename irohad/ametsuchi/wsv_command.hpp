@@ -22,6 +22,11 @@
 #include <string>
 
 #include "common/types.hpp"  // for pubkey_t
+#include "interfaces/common_objects/account.hpp"
+#include "interfaces/common_objects/account_asset.hpp"
+#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/common_objects/domain.hpp"
+#include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
 
@@ -31,7 +36,7 @@ namespace iroha {
     struct Domain;
     struct Peer;
     struct AccountAsset;
-  }
+  }  // namespace model
 
   namespace ametsuchi {
 
@@ -106,14 +111,16 @@ namespace iroha {
        * @param account
        * @return
        */
-      virtual bool insertAccount(const model::Account &account) = 0;
+      virtual bool insertAccount(
+          const shared_model::interface::Account &account) = 0;
 
       /**
        *
        * @param account
        * @return true if no error occurred, false otherwise
        */
-      virtual bool updateAccount(const model::Account &account) = 0;
+      virtual bool updateAccount(
+          const shared_model::interface::Account &account) = 0;
 
       /**
        * @param account_id  account in which update key value
@@ -133,21 +140,23 @@ namespace iroha {
        * @param asset
        * @return
        */
-      virtual bool insertAsset(const model::Asset &asset) = 0;
+      virtual bool insertAsset(const shared_model::interface::Asset &asset) = 0;
 
       /**
        * Update or insert account asset
        * @param asset
        * @return
        */
-      virtual bool upsertAccountAsset(const model::AccountAsset &asset) = 0;
+      virtual bool upsertAccountAsset(
+          const shared_model::interface::AccountAsset &asset) = 0;
 
       /**
        *
        * @param signatory
        * @return
        */
-      virtual bool insertSignatory(const pubkey_t &signatory) = 0;
+      virtual bool insertSignatory(
+          const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
        * Insert account signatory relationship
@@ -155,8 +164,9 @@ namespace iroha {
        * @param signatory
        * @return
        */
-      virtual bool insertAccountSignatory(const std::string &account_id,
-                                          const pubkey_t &signatory) = 0;
+      virtual bool insertAccountSignatory(
+          const std::string &account_id,
+          const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
        * Delete account signatory relationship
@@ -164,36 +174,39 @@ namespace iroha {
        * @param signatory
        * @return
        */
-      virtual bool deleteAccountSignatory(const std::string &account_id,
-                                          const pubkey_t &signatory) = 0;
+      virtual bool deleteAccountSignatory(
+          const std::string &account_id,
+          const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
        * Delete signatory
        * @param signatory
        * @return
        */
-      virtual bool deleteSignatory(const pubkey_t &signatory) = 0;
+      virtual bool deleteSignatory(
+          const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
        *
        * @param peer
        * @return
        */
-      virtual bool insertPeer(const model::Peer &peer) = 0;
+      virtual bool insertPeer(const shared_model::interface::Peer &peer) = 0;
 
       /**
        *
        * @param peer
        * @return
        */
-      virtual bool deletePeer(const model::Peer &peer) = 0;
+      virtual bool deletePeer(const shared_model::interface::Peer &peer) = 0;
 
       /**
        *
        * @param peer
        * @return
        */
-      virtual bool insertDomain(const model::Domain &domain) = 0;
+      virtual bool insertDomain(
+          const shared_model::interface::Domain &domain) = 0;
     };
 
   }  // namespace ametsuchi

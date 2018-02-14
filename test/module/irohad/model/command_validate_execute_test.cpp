@@ -38,11 +38,11 @@
 #include "model/execution/command_executor_factory.hpp"
 #include "model/permissions.hpp"
 
+using ::testing::_;
 using ::testing::AllOf;
 using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::StrictMock;
-using ::testing::_;
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -468,11 +468,16 @@ TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
               hasAccountGrantablePermission(
                   admin_id, add_signatory->account_id, can_add_signatory))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
-      .WillOnce(Return(true));
   EXPECT_CALL(
       *wsv_command,
-      insertAccountSignatory(add_signatory->account_id, add_signatory->pubkey))
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {add_signatory->pubkey.begin(),
+                                          add_signatory->pubkey.end()})))
       .WillOnce(Return(true));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -485,11 +490,16 @@ TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
       .WillOnce(Return(role_permissions));
   add_signatory->account_id = creator.account_id;
 
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
-      .WillOnce(Return(true));
   EXPECT_CALL(
       *wsv_command,
-      insertAccountSignatory(add_signatory->account_id, add_signatory->pubkey))
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {add_signatory->pubkey.begin(),
+                                          add_signatory->pubkey.end()})))
       .WillOnce(Return(true));
 
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
@@ -522,7 +532,10 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
                   admin_id, add_signatory->account_id, can_add_signatory))
       .WillOnce(Return(true));
   add_signatory->pubkey.fill(2);
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -554,14 +567,20 @@ TEST_F(CreateAccountTest, ValidWhenNewAccount) {
   EXPECT_CALL(*wsv_query, getDomain(domain_id))
       .WillOnce(Return(default_domain));
 
-  EXPECT_CALL(*wsv_command, insertSignatory(create_account->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      insertSignatory(shared_model::crypto::PublicKey(
+          {create_account->pubkey.begin(), create_account->pubkey.end()})))
       .Times(1)
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_command, insertAccount(_)).WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_command,
-              insertAccountSignatory(account_id, create_account->pubkey))
+              insertAccountSignatory(account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {create_account->pubkey.begin(),
+                                          create_account->pubkey.end()})))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_command, insertAccountRole(account_id, admin_role))
@@ -752,9 +771,14 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
 
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteSignatory(shared_model::crypto::PublicKey(
+          {remove_signatory->pubkey.begin(), remove_signatory->pubkey.end()})))
       .WillOnce(Return(true));
 
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
@@ -777,9 +801,15 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
   // delete methods must not be called because the account quorum is 1.
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .Times(0);
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey)).Times(0);
+  EXPECT_CALL(
+      *wsv_command,
+      deleteSignatory(shared_model::crypto::PublicKey(
+          {remove_signatory->pubkey.begin(), remove_signatory->pubkey.end()})))
+      .Times(0);
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -904,7 +934,9 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
 TEST_F(RemoveSignatoryTest, InvalidWhenAccountSignatoryDeletionFails) {
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(execute()));

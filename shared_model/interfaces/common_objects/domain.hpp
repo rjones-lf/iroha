@@ -27,57 +27,58 @@
 #endif
 
 namespace shared_model {
-    namespace interface {
+  namespace interface {
 
-        /**
-         * Representation of valuable goods in the system
-         */
-        class Domain : public PRIMITIVE(Domain) {
-        public:
-                /**
-                 * @return Identity of domain
-                 */
-                virtual const types::DomainIdType &domainId() const = 0;
+    /**
+     * Representation of valuable goods in the system
+     */
+    class Domain : public PRIMITIVE(Domain) {
+     public:
+      /**
+       * @return Identity of domain
+       */
+      virtual const types::DomainIdType &domainId() const = 0;
 
-                /**
-                 * @return Default role of domain
-                 */
-                virtual const types::RoleIdType &defaultRole() const = 0;
-                /**
-                 * Stringify the data.
-                 * @return the content of asset.
-                 */
-                std::string toString() const override {
-                    return detail::PrettyStringBuilder()
-                            .init("Domain")
-                            .append("domainId", domainId())
-                            .append("defaultRole", defaultRole())
-                            .finalize();
-                }
+      /**
+       * @return Default role of domain
+       */
+      virtual const types::RoleIdType &defaultRole() const = 0;
+      /**
+       * Stringify the data.
+       * @return the content of asset.
+       */
+      std::string toString() const override {
+        return detail::PrettyStringBuilder()
+            .init("Domain")
+            .append("domainId", domainId())
+            .append("defaultRole", defaultRole())
+            .finalize();
+      }
 
-                /**
-                 * Checks equality of objects inside
-                 * @param rhs - other wrapped value
-                 * @return true, if wrapped objects are same
-                 */
-                bool operator==(const ModelType &rhs) const override {
-                    return domainId() == rhs.domainId() and defaultRole() == rhs.defaultRole();
-                }
+      /**
+       * Checks equality of objects inside
+       * @param rhs - other wrapped value
+       * @return true, if wrapped objects are same
+       */
+      bool operator==(const ModelType &rhs) const override {
+        return domainId() == rhs.domainId()
+            and defaultRole() == rhs.defaultRole();
+      }
 
 #ifndef DISABLE_BACKWARD
-                /**
-                 * Makes old model.
-                 * @return An allocated old model of account asset response.
-                 */
-                OldModelType *makeOldModel() const override {
-                    OldModelType *oldModel = new OldModelType();
-                    oldModel->domain_id = domainId();
-                    oldModel->default_role = defaultRole();
-                    return oldModel;
-                }
+      /**
+       * Makes old model.
+       * @return An allocated old model of account asset response.
+       */
+      OldModelType *makeOldModel() const override {
+        OldModelType *oldModel = new OldModelType();
+        oldModel->domain_id = domainId();
+        oldModel->default_role = defaultRole();
+        return oldModel;
+      }
 #endif
-        };
-    }  // namespace interface
+    };
+  }  // namespace interface
 }  // namespace shared_model
 
-#endif //IROHA_SHARED_MODEL_DOMAIN_HPP
+#endif  // IROHA_SHARED_MODEL_DOMAIN_HPP
