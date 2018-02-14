@@ -19,6 +19,7 @@
 #define IROHA_MUTABLE_FACTORY_HPP
 
 #include <memory>
+#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -30,9 +31,10 @@ namespace iroha {
       /**
        * Creates a mutable storage from the current state.
        * Mutable storage is the only way to commit the block to the ledger.
-       * @return Created mutable storage
+       * @return Created Result with mutable storage or error string
        */
-      virtual std::unique_ptr<MutableStorage> createMutableStorage() = 0;
+      virtual expected::Result<std::unique_ptr<MutableStorage>, std::string>
+      createMutableStorage() = 0;
 
       /**
        * Commit mutable storage to Ametsuchi.

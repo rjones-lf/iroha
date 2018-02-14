@@ -45,16 +45,18 @@ namespace iroha {
 
     class StorageImpl : public Storage {
      protected:
-      static nonstd::optional<ConnectionContext> initConnections(
+      static expected::Result<ConnectionContext, std::string> initConnections(
           std::string block_store_dir, std::string postgres_options);
 
      public:
-      static std::shared_ptr<StorageImpl> create(
+      static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
           std::string block_store_dir, std::string postgres_connection);
 
-      std::unique_ptr<TemporaryWsv> createTemporaryWsv() override;
+      expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
+      createTemporaryWsv() override;
 
-      std::unique_ptr<MutableStorage> createMutableStorage() override;
+      expected::Result<std::unique_ptr<MutableStorage>, std::string>
+      createMutableStorage() override;
 
       virtual bool insertBlock(model::Block block) override;
 

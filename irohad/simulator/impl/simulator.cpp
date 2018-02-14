@@ -59,9 +59,19 @@ namespace iroha {
                    proposal.height);
         return;
       }
-      auto temporaryStorage = ametsuchi_factory_->createTemporaryWsv();
-      notifier_.get_subscriber().on_next(
-          validator_->validate(proposal, *temporaryStorage));
+      auto temporaryStorageResult = ametsuchi_factory_->createTemporaryWsv();
+      temporaryStorageResult.match(
+          [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
+                  &temporaryStorage) {
+            notifier_.get_subscriber().on_next(
+                validator_->validate(proposal, *(temporaryStorage.value)));
+          },
+          [&](expected::Error<std::string> &error) {
+            log_->error(error.error);
+            // TODO: 13/02/18 Solonets - Handle the case when TemporaryWsv was
+            // failed to produced - IR-966
+            throw std::runtime_error(error.error);
+          });
     }
 
     void Simulator::process_verified_proposal(model::Proposal proposal) {

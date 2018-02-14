@@ -19,3 +19,51 @@ target_link_libraries(transport_builder_test
     shared_model_proto_builders
     shared_model_stateless_validation
     )
+
+addtest(proto_peer_builder_test
+    common_objects/proto_peer_builder_test.cpp
+    )
+
+target_link_libraries(proto_peer_builder_test
+        shared_model_proto_builders
+        )
+
+addtest(proto_account_builder_test
+        common_objects/proto_account_builder_test.cpp
+        )
+
+target_link_libraries(proto_account_builder_test
+        shared_model_proto_builders
+        )
+
+addtest(proto_amount_builder_test
+        common_objects/proto_amount_builder_test.cpp
+        )
+
+target_link_libraries(proto_amount_builder_test
+        shared_model_proto_builders
+        )
+
+addtest(proto_signature_builder_test
+        common_objects/proto_signature_builder_test.cpp
+        )
+
+target_link_libraries(proto_signature_builder_test
+        shared_model_proto_builders
+        )
+
+addtest(proto_asset_builder_test
+        common_objects/proto_asset_builder_test.cpp
+        )
+
+target_link_libraries(proto_asset_builder_test
+        shared_model_proto_builders
+        )
+
+addtest(proto_account_asset_builder_test
+        common_objects/proto_account_asset_builder_test.cpp
+        )
+
+target_link_libraries(proto_account_asset_builder_test
+        shared_model_proto_builders
+        )
