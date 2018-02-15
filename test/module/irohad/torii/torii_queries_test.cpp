@@ -28,6 +28,7 @@ limitations under the License.
 #include "model/permissions.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "torii/command_service.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
 
