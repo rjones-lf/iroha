@@ -16,30 +16,34 @@ set(URL https://github.com/01org/tbb.git)
 set(VERSION eb6336ad29450f2a64af5123ca1b9429ff6bc11d)
 set_target_description(tbb "Concurrent queue" ${URL} ${VERSION})
 
+iroha_get_lib_name(DLIB tbb_debug SHARED)
+iroha_get_lib_name(RLIB tbb       SHARED)
 
 if (NOT tbb_FOUND)
   ExternalProject_Add(01org_tbb
-      GIT_REPOSITORY ${URL}
-      GIT_TAG        ${VERSION}
+      GIT_REPOSITORY  ${URL}
+      GIT_TAG         ${VERSION}
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND $(MAKE) tbb_build_prefix=build
-      BUILD_BYPRODUCTS ${EP_PREFIX}/src/01org_tbb/build/build_debug/${CMAKE_SHARED_LIBRARY_PREFIX}tbb_debug${CMAKE_SHARED_LIBRARY_SUFFIX}
-                       ${EP_PREFIX}/src/01org_tbb/build/build_release/${CMAKE_SHARED_LIBRARY_PREFIX}tbb${CMAKE_SHARED_LIBRARY_SUFFIX}
+      BUILD_COMMAND   ${MAKE} tbb_build_prefix=build
+      BUILD_BYPRODUCTS
+          ${EP_PREFIX}/src/01org_tbb/build/build_debug/${DLIB}
+          ${EP_PREFIX}/src/01org_tbb/build/build_release/${RLIB}
       CONFIGURE_COMMAND "" # remove configure step
-      INSTALL_COMMAND "" # remove install step
-      TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
+      INSTALL_COMMAND   "" # remove install step
+      TEST_COMMAND      "" # remove test step
+      UPDATE_COMMAND    "" # remove update step
       )
   ExternalProject_Get_Property(01org_tbb source_dir)
   set(tbb_INCLUDE_DIR ${source_dir}/include)
+
   if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(tbb_LIBRARY ${source_dir}/build/build_debug/${CMAKE_SHARED_LIBRARY_PREFIX}tbb_debug${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(tbb_LIBRARY ${source_dir}/build/build_debug/${DLIB})
   else()
-    set(tbb_LIBRARY ${source_dir}/build/build_release/${CMAKE_SHARED_LIBRARY_PREFIX}tbb${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(tbb_LIBRARY ${source_dir}/build/build_release/${RLIB})
   endif ()
   file(MAKE_DIRECTORY ${tbb_INCLUDE_DIR})
-  link_directories(${source_dir}/build/build_debug)
-  link_directories(${source_dir}/build/build_release)
+#  link_directories(${source_dir}/build/build_debug)
+#  link_directories(${source_dir}/build/build_release)
 
   add_dependencies(tbb 01org_tbb)
 endif ()

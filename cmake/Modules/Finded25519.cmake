@@ -15,6 +15,8 @@ set(URL https://github.com/hyperledger/iroha-ed25519)
 set(VERSION e7188b8393dbe5ac54378610d53630bd4a180038)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
+iroha_get_lib_name(EDLIB ed25519 STATIC)
+
 if (NOT ed25519_FOUND)
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
@@ -27,7 +29,13 @@ if (NOT ed25519_FOUND)
   externalproject_get_property(hyperledger_ed25519 binary_dir)
   externalproject_get_property(hyperledger_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
-  set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
+
+  if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(ed25519_LIBRARY ${binary_dir}/${CMAKE_BUILD_TYPE}/${EDLIB})
+  else ()
+    set(ed25519_LIBRARY ${binary_dir}/${EDLIB})
+  endif ()
+  
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
   link_directories(${binary_dir})
 

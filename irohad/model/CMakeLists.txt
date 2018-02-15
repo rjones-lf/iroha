@@ -34,7 +34,6 @@ add_library(command_execution
 target_link_libraries(command_execution
     common_execution
     validator
-    boost
     )
 
 add_library(sha3_hash
@@ -60,7 +59,7 @@ target_link_libraries(model
     common_execution
     schema
     cryptography
-    rapidjson
+    RapidJSON::rapidjson
     )
 
 add_library(model_registrations INTERFACE)

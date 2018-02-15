@@ -17,6 +17,5 @@ add_library(validator
     address_validator.hpp
     )
 target_link_libraries(validator
-    boost
     optional
     )

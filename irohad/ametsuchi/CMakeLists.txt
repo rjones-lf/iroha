@@ -18,5 +18,6 @@ target_link_libraries(ametsuchi
     pqxx
     libs_common
     command_execution
-    boost
+    Boost::filesystem
+    Boost::system
     )

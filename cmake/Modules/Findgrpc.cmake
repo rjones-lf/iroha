@@ -34,26 +34,37 @@ set(URL https://github.com/grpc/grpc)
 set(VERSION bfcbad3b86c7912968dc8e64f2121c920dad4dfb)
 set_target_description(grpc "Remote Procedure Call library" ${URL} ${VERSION})
 
+iroha_get_lib_name(GPRLIB       gpr               SHARED)
+iroha_get_lib_name(GRPCLIB      grpc              SHARED)
+iroha_get_lib_name(GRPCPPLIB    grpc++            SHARED)
+iroha_get_lib_name(GRPCPPREFLIB grpc++_reflection SHARED)
+
 if (NOT grpc_FOUND)
   find_package(Git REQUIRED)
   externalproject_add(grpc_grpc
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS -DgRPC_PROTOBUF_PROVIDER=package -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf -DgRPC_ZLIB_PROVIDER=package -DBUILD_SHARED_LIBS=ON
+      CMAKE_ARGS
+          -DgRPC_PROTOBUF_PROVIDER=package
+          -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
+          -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf
+          -DgRPC_ZLIB_PROVIDER=package
+          -DBUILD_SHARED_LIBS=ON
       PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch || true
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/grpc_grpc-build/grpc_cpp_plugin
-                       ${EP_PREFIX}/src/grpc_grpc-build/${CMAKE_SHARED_LIBRARY_PREFIX}grpc${CMAKE_SHARED_LIBRARY_SUFFIX}
-                       ${EP_PREFIX}/src/grpc_grpc-build/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++${CMAKE_SHARED_LIBRARY_SUFFIX}
-                       ${EP_PREFIX}/src/grpc_grpc-build/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++_reflection${CMAKE_SHARED_LIBRARY_SUFFIX}
+                       ${EP_PREFIX}/src/grpc_grpc-build/${GPRLIB}
+                       ${EP_PREFIX}/src/grpc_grpc-build/${GRPCLIB}
+                       ${EP_PREFIX}/src/grpc_grpc-build/${GRPCPPLIB}
+                       ${EP_PREFIX}/src/grpc_grpc-build/${GRPCPPREFLIB}
       INSTALL_COMMAND "" # remove install step
-      TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
+      TEST_COMMAND    "" # remove test step
+      UPDATE_COMMAND  "" # remove update step
       )
   externalproject_get_property(grpc_grpc source_dir binary_dir)
   set(grpc_INCLUDE_DIR ${source_dir}/include)
-  set(grpc_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc${CMAKE_SHARED_LIBRARY_SUFFIX})
-  set(grpc_grpc++_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++${CMAKE_SHARED_LIBRARY_SUFFIX})
-  set(grpc_grpc++_reflection_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++_reflection${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(grpc_LIBRARY ${binary_dir}/${GRPCLIB})
+  set(grpc_grpc++_LIBRARY ${binary_dir}${GRPCPPLIB})
+  set(grpc_grpc++_reflection_LIBRARY ${binary_dir}/${GRPCPPREFLIB})
   set(grpc_CPP_PLUGIN ${binary_dir}/grpc_cpp_plugin)
   file(MAKE_DIRECTORY ${grpc_INCLUDE_DIR})
   link_directories(${binary_dir})
@@ -94,5 +105,6 @@ set_target_properties(gpr PROPERTIES
 if(ENABLE_LIBS_PACKAGING)
   add_install_step_for_lib(${grpc_LIBRARY})
   add_install_step_for_lib(${grpc_grpc++_LIBRARY})
+  add_install_step_for_lib(${grpc_grpc++_reflection_LIBRARY})
   add_install_step_for_lib(${gpr_LIBRARY})
 endif()

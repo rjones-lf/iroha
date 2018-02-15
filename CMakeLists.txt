@@ -1,33 +1,76 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.7)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK    "${CCACHE_PROGRAM}")
   message(STATUS "ccache enabled (${CCACHE_PROGRAM})")
 endif()
 
-PROJECT(iroha C CXX)
+##################################
+## setup Hunter and its modules ##
+##################################
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+SET(HUNTER_STATUS_PRINT ON  CACHE BOOL "Verbose info")
+SET(HUNTER_STATUS_DEBUG OFF CACHE BOOL "Debug info"  )
 
-SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
-SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-SET(CMAKE_INSTALL_RPATH "../lib")
+# hunter binary cache server
+set(
+    HUNTER_CACHE_SERVERS
+    "https://github.com/soramitsu/hunter-binary-cache;https://github.com/elucideye/hunter-cache;https://github.com/ingenue/hunter-cache"
+    CACHE
+    STRING
+    "Hunter cache servers"
+)
 
-if(COVERAGE)
-  set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
-  set(CMAKE_CXX_FLAGS "--coverage ${CMAKE_CXX_FLAGS}")
-  set(CMAKE_C_FLAGS "--coverage ${CMAKE_C_FLAGS}")
-  set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
-
-  set(REPORT_DIR ${CMAKE_BINARY_DIR}/reports)
-  file(MAKE_DIRECTORY ${REPORT_DIR})
-  include(cmake/analysis.cmake)
+# enable this option to upload your binary cache
+# GITHUB_USER=<github_user> environment variable must be set
+# GITHUB_USER_PASSWORD=<github_personal_token> environment variable must be set
+option(HUNTER_RUN_UPLOAD "Upload cache binaries" OFF)
+if(HUNTER_RUN_UPLOAD)
+  if(NOT DEFINED "ENV{GITHUB_USER}")
+    message(FATAL_ERROR "HUNTER_RUN_UPLOAD=ON, but GITHUB_USER env variable is empty")
+  endif()
+  if(NOT DEFINED "ENV{GITHUB_USER_PASSWORD}")
+    message(FATAL_ERROR "HUNTER_RUN_UPLOAD=ON, but GITHUB_USER_PASSWORD env variable is empty, set to personal access token from github")
+  endif()
 endif()
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+
+set(
+    HUNTER_PASSWORDS_PATH
+    "${CMAKE_SOURCE_DIR}/cmake/hunter-binary-cache.cmake"
+    CACHE
+    FILEPATH
+    "Hunter passwords"
+)
+
+#########################
+## configuration types ##
+#########################
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Coverage" CACHE STRING "" FORCE)
+
+# we do not gather coverage information for dependencies, so we do not need
+# Coverage configuration type here
+set(HUNTER_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "")
+
+
+include(HunterGate)
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.20.3.tar.gz"
+    SHA1 "32f280cd3883f25446a578a39bfab702d6b1c60c"
+    FILEPATH ${CMAKE_SOURCE_DIR}/cmake/hunter-config.cmake
+)
+
+######################
+## project settings ##
+######################
+
+PROJECT(
+    iroha
+    LANGUAGES C CXX
+)
+
 
 option(BENCHMARKING "Build benchmarks"               OFF)
 option(TESTING      "Build tests"                    ON )
@@ -44,10 +87,6 @@ option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 option(SHARED_MODEL_DISABLE_COMPATIBILITY "Disable backward compatibility in shared model" OFF)
 
-
-if (NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Debug)
-endif()
 
 if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   message(STATUS "Packaging enabled: forcing non-packaging options to OFF")
@@ -83,10 +122,9 @@ include_directories(
   ${IROHA_SCHEMA_DIR}
 )
 
-include(FeatureSummary)
-include(cmake/functions.cmake)
-include(cmake/dependencies.cmake)
-include(cmake/clang-cxx-dev-tools.cmake)
+# main setup stage
+# must be at this place
+include(cmake/setup.cmake)
 
 if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
@@ -106,15 +144,4 @@ if(TESTING)
   enable_testing()
   add_subdirectory(test)
 endif()
-
-if (FUZZING)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_subdirectory(fuzz)
-  else()
-    message(Fuzzing with compilers other than clang does not supported yet)
-  endif()
-endif()
-
-
-
 

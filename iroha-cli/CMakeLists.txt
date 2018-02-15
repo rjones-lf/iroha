@@ -38,7 +38,7 @@ target_link_libraries(client
     cryptography
     optional
     logger
-    rapidjson
+    RapidJSON::rapidjson
     pb_model_converters
     json_model_converters
     model_generators
@@ -61,7 +61,6 @@ target_link_libraries(iroha-cli
     client
     cli-flags_validators
     keys_manager
-    boost
     )
 
 add_install_step_for_bin(iroha-cli)

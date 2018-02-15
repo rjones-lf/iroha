@@ -31,5 +31,6 @@ target_link_libraries(signature_test
 AddTest(keys_manager_test keys_manager_test.cpp)
 target_link_libraries(keys_manager_test
     keys_manager
-    boost
+    Boost::filesystem
+    Boost::system
     )

@@ -60,7 +60,7 @@ target_link_libraries(irohad
     application
     raw_block_insertion
     gflags
-    rapidjson
+    RapidJSON::rapidjson
     keys_manager
     )
 

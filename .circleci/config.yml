@@ -5,6 +5,7 @@ defaults: &defaults
     IROHA_BUILD: /opt/iroha/build
     CCACHE_DIR: /opt/.ccache
     SONAR_DIR: /opt/.sonar
+    HUNTER_ROOT: /tmp/hunter
 
 
 defaults: &version
@@ -18,9 +19,8 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v3
       - image: postgres:9.5
-      - image: redis:3.2.8
     steps:
       - checkout
       - run: echo $(eval echo "$IROHA_VERSION")
@@ -30,7 +30,12 @@ jobs:
             - v1-build-cache-debug-{{ arch }}-
           paths:
             - $CCACHE_DIR
-
+      - restore_cache:
+          keys:
+            # can be one for all branches, architectures and versions
+            - hunter-cache
+          paths:
+            - $HUNTER_ROOT
       - run:
           name: ccache setup
           command: |
@@ -45,7 +50,7 @@ jobs:
               -DCOVERAGE=ON \
               -H$IROHA_HOME \
               -B$IROHA_BUILD \
-              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_BUILD_TYPE=Coverage \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
       - run:
           name: make
@@ -54,12 +59,15 @@ jobs:
       - run:
           name: ccache teardown
           command: |
-            ccache --cleanup
             ccache --show-stats
       - save_cache:
           key: v1-build-cache-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - $CCACHE_DIR
+      - save_cache:
+          key: hunter-root-{{ epoch }}
+          paths:
+            - $HUNTER_ROOT
       - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
@@ -84,7 +92,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v3
     steps:
       - checkout
       - restore_cache:
@@ -93,6 +101,11 @@ jobs:
             - v1-build-cache-release-{{ arch }}-
           paths:
             - $CCACHE_DIR
+      - restore_cache:
+          keys:
+            - hunter-cache
+          paths:
+            - $HUNTER_ROOT
       - run:
           name: ccache setup
           command: |
@@ -119,12 +132,15 @@ jobs:
       - run:
           name: ccache teardown
           command: |
-            ccache --cleanup
             ccache --show-stats
       - save_cache:
           key: v1-build-cache-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - $CCACHE_DIR
+      - save_cache:
+          key: hunter-root-{{ epoch }}
+          paths:
+            - $HUNTER_ROOT
       - run:
           name: copy deb file
           command: |
@@ -155,7 +171,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v3
       - image: docker:17.05.0-ce-git
     steps:
       - checkout
@@ -193,7 +209,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v3
     steps:
       - checkout
       - restore_cache:
@@ -230,7 +246,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v3
     steps:
       - checkout
       - restore_cache:
@@ -282,6 +298,11 @@ jobs:
             - $CCACHE_DIR
       - restore_cache:
           keys:
+            - hunter-cache
+          paths:
+            - $HUNTER_ROOT
+      - restore_cache:
+          keys:
             - v1-external-{{ arch }}-{{ .Branch }}
             - v1-external-{{ arch }}
           paths:
@@ -309,7 +330,6 @@ jobs:
       - run:
           name: ccache teardown
           command: |
-            ccache --cleanup
             ccache --show-stats
       - save_cache:
           key: v1-build-cache-{{ arch }}-{{ .Branch }}-{{ epoch }}
@@ -319,6 +339,10 @@ jobs:
           key: v1-external-{{ arch }}-{{ .Branch }}-{{ epoch }}
           paths:
             - external
+      - save_cache:
+          key: hunter-root-{{ epoch }}
+          paths:
+            - $HUNTER_ROOT
       - run: ccache --show-stats
       - run:
           name: rename artifacts
