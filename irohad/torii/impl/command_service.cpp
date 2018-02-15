@@ -50,7 +50,7 @@ namespace torii {
         [this](
             std::shared_ptr<iroha::model::TransactionResponse> iroha_response) {
           // Find response in cache
-          auto tx_hash = shared_model::crypto::Hash(iroha_response->tx_hash);
+          shared_model::crypto::Hash tx_hash(iroha_response->tx_hash);
           auto res = cache_->findItem(tx_hash);
           if (not res) {
             iroha::protocol::ToriiResponse response;

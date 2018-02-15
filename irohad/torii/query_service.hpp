@@ -21,7 +21,8 @@ limitations under the License.
 #include <endpoint.pb.h>
 #include <responses.pb.h>
 #include <unordered_map>
-
+#include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_query_response_factory.hpp"
 #include "torii/processor/query_processor.hpp"
 
 #include "logger/logger.hpp"
@@ -50,7 +51,7 @@ namespace torii {
      * @param response - QueryResponse
      */
     void Find(iroha::protocol::Query const &request,
-                   iroha::protocol::QueryResponse &response);
+              iroha::protocol::QueryResponse &response);
 
     grpc::Status Find(grpc::ServerContext *context,
                       const iroha::protocol::Query *request,

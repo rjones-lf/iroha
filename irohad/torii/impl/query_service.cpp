@@ -18,7 +18,6 @@
 #include "torii/query_service.hpp"
 #include "common/types.hpp"
 #include "model/sha3_hash.hpp"
-#include "builders/protobuf/transport_builder.hpp"
 
 namespace torii {
 
@@ -45,7 +44,6 @@ namespace torii {
   void QueryService::Find(iroha::protocol::Query const &request,
                           iroha::protocol::QueryResponse &response) {
     using iroha::operator|;
-    shared_model::proto::TransportBuilder
     auto deserializedRequest = pb_query_factory_->deserialize(request);
     deserializedRequest | [&](const auto &query) {
       auto hash = iroha::hash(*query).to_string();

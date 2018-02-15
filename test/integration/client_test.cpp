@@ -141,10 +141,9 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
                         shared_model::crypto::DefaultCryptoAlgorithmType::
                             generateKeypair());
 
-  auto old_model = shm_tx.makeOldModel();
+  std::unique_ptr<iroha::model::Transaction> old_model(shm_tx.makeOldModel());
   auto status = client.sendTx(*old_model);
   ASSERT_EQ(status.answer, iroha_cli::CliClient::OK);
-  delete old_model;
 }
 
 TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
@@ -178,17 +177,15 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
                     .createdTime(iroha::time::now())
                     .setAccountQuorum("some@@account", 2)
                     .build();
-  auto *old_tx = shm_tx.makeOldModel();
+  std::unique_ptr<iroha::model::Transaction> old_tx(shm_tx.makeOldModel());
 
   ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(*old_tx).answer,
             iroha_cli::CliClient::OK);
   auto tx_hash = shm_tx.hash();
-  ASSERT_EQ(
-      iroha_cli::CliClient(Ip, Port)
-          .getTxStatus(shared_model::crypto::toBinaryString(tx_hash))
-          .answer.tx_status(),
-      iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-  delete old_tx;
+  ASSERT_EQ(iroha_cli::CliClient(Ip, Port)
+                .getTxStatus(shared_model::crypto::toBinaryString(tx_hash))
+                .answer.tx_status(),
+            iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
