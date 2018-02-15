@@ -304,12 +304,27 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 }
 
 TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
-  // TODO 19.02.2018 kamilsa remove old model
-  iroha::model::AccountAsset account_asset;
-  account_asset.account_id = "a";
-  account_asset.asset_id = "usd";
-  iroha::Amount amount(100, 2);
-  account_asset.balance = amount;
+  EXPECT_CALL(*statelessValidatorMock,
+              validate(A<const iroha::model::Query &>()))
+      .WillOnce(Return(true));
+
+  auto account = shared_model::builder::AccountBuilder<
+      shared_model::proto::AccountBuilder,
+      shared_model::validation::FieldValidator>()
+      .accountId("accountA")
+      .build();
+
+  auto amount = shared_model::builder::AmountBuilder<
+      shared_model::proto::AmountBuilder,
+      shared_model::validation::FieldValidator>().intValue(100).precision(2).build();
+
+  auto account_asset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>().accountId("accountA").assetId("usd").balance(amount),build();
+
+  auto asset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>().assetId("usd").domainId("USA").precision(2).build();
 
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";

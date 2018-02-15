@@ -19,6 +19,8 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
+#include <backend/protobuf/common_objects/peer.hpp>
+#include <validators/field_validator.hpp>
 
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
@@ -65,10 +67,8 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    Peer peer;
-    peer.address = "0.0.0.0:" + std::to_string(port);
-    std::copy_n(
-        peer_key.blob().begin(), peer.pubkey.size(), peer.pubkey.begin());
+    peer = shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>()
+        .address("0.0.0.0:" + std::to_string(port)).build();
     peers.push_back(peer);
 
     ASSERT_TRUE(server);
@@ -78,15 +78,17 @@ class BlockLoaderTest : public testing::Test {
   auto getBaseBlockBuilder() const {
     constexpr auto kTotal = (1 << 5) - 1;
     return shared_model::proto::TemplateBlockBuilder<
-               kTotal,
-               shared_model::validation::DefaultBlockValidator,
-               shared_model::proto::Block>()
+        kTotal,
+        shared_model::validation::DefaultBlockValidator,
+        shared_model::proto::Block>()
         .txNumber(0)
         .height(1)
         .prevHash(Hash(std::string(32, '0')))
         .createdTime(iroha::time::now());
   }
 
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   std::vector<Peer> peers;
@@ -123,7 +125,7 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 0);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(old_peer.pubkey), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -203,6 +205,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
           [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(next_height))
       .WillOnce(Return(rxcpp::observable<>::iterate(blocks)));
+  auto old_peer = *peer->makeOldModel();
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;

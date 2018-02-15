@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <builders/protobuf/common_objects/account_asset_builder.hpp>
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -279,15 +280,24 @@ class GetAccountAssetsTest : public QueryValidateExecuteTest {
     get_account_assets->creator_account_id = admin_id;
     query = get_account_assets;
 
-    accountAsset.asset_id = asset_id;
-    accountAsset.account_id = admin_id;
-    iroha::Amount amount(100, 2);
-    accountAsset.balance = amount;
+    auto amount = shared_model::builder::AmountBuilder<
+                      shared_model::proto::AmountBuilder,
+                      shared_model::validation::FieldValidator>()
+                      .intValue(100)
+                      .precision(2)
+                      .build();
+
+    accountAsset = shared_model::builder::AccountAssetBuilder<
+                       shared_model::proto::AccountAssetBuilder,
+                       shared_model::validation::FieldValidator>()
+                       .assetId(asset_id)
+                       .accountId(admin_id)
+                       .balance(amount);
 
     role_permissions = {can_get_my_acc_ast};
   }
   std::shared_ptr<GetAccountAssets> get_account_assets;
-  AccountAsset accountAsset;
+  std::shared_ptr<shared_model::interface::AccountAsset> accountAsset;
 };
 
 /**
@@ -315,7 +325,13 @@ TEST_F(GetAccountAssetsTest, MyAccountValidCase) {
  */
 TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
   get_account_assets->account_id = account_id;
-  accountAsset.account_id = account_id;
+  accountAsset = shared_model::builder::AccountAssetBuilder<
+                     shared_model::proto::AccountAssetBuilder,
+                     shared_model::validation::FieldValidator>()
+                     .assetId(accountAsset->assetId())
+                     .accountId(account_id)
+                     .balance(accountAsset->balance())
+                     .build();
   role_permissions = {can_get_all_acc_ast};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -337,7 +353,13 @@ TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
  */
 TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
   get_account_assets->account_id = account_id;
-  accountAsset.account_id = account_id;
+  accountAsset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>()
+      .assetId(accountAsset->assetId())
+      .accountId(account_id)
+      .balance(accountAsset->balance())
+      .build();
   role_permissions = {can_get_domain_acc_ast};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -359,7 +381,13 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
  */
 TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
   get_account_assets->account_id = account_id;
-  accountAsset.account_id = account_id;
+  accountAsset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>()
+      .assetId(accountAsset->assetId())
+      .accountId(account_id)
+      .balance(accountAsset->balance())
+      .build();
   role_permissions = {};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -387,7 +415,13 @@ TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
  */
 TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
   get_account_assets->account_id = "test@test2";
-  accountAsset.account_id = account_id;
+  accountAsset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>()
+      .assetId(accountAsset->assetId())
+      .accountId(account_id)
+      .balance(accountAsset->balance())
+      .build();
   role_permissions = {can_get_domain_acc_ast};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -411,7 +445,13 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
  */
 TEST_F(GetAccountAssetsTest, NoAccountExist) {
   get_account_assets->account_id = "none";
-  accountAsset.account_id = account_id;
+  accountAsset = shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>()
+      .assetId(accountAsset->assetId())
+      .accountId(account_id)
+      .balance(accountAsset->balance())
+      .build();
   role_permissions = {can_get_all_acc_ast};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))

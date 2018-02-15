@@ -52,10 +52,12 @@ class YacPeerOrdererTest : public ::testing::Test {
     orderer = PeerOrdererImpl(wsv);
   }
 
-  std::vector<iroha::model::Peer> peers = [] {
-    std::vector<iroha::model::Peer> result;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
+    std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      result.push_back(iroha::consensus::yac::mk_peer(std::to_string(i)));
+      auto peer = shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>().
+      address(std::to_string(i)).build();
+      result.push_back(peer);
     }
     return result;
   }();
@@ -84,7 +86,14 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeNormalCase) {
 
   EXPECT_CALL(*wsv, getLedgerPeers()).WillOnce(Return(s_peers));
   auto order = orderer.getInitialOrdering();
-  ASSERT_EQ(order.value().getPeers(), peers);
+  auto old_peers = [this] {
+    std::vector<iroha::model::Peer> result;
+    for(auto &peer : peers) {
+      result.push_back(*peer->makeOldModel());
+    }
+    return result;
+  }();
+  ASSERT_EQ(order.value().getPeers(), old_peers);
 }
 
 TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeFailCase) {

@@ -40,7 +40,11 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-    peer.address = address;
+    peer = shared_model::builder::PeerBuilder<
+               shared_model::proto::PeerBuilder,
+               shared_model::validation::FieldValidator>()
+               .address(address)
+               .build();
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
     gate = std::make_shared<OrderingGateImpl>(gate_transport);
     gate_transport->subscribe(gate);
@@ -115,7 +119,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::thread thread;
   std::shared_ptr<grpc::Server> server;
 
-  Peer peer;
+  std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<OrderingGateTransportGrpc> gate_transport;
   std::shared_ptr<OrderingServiceTransportGrpc> service_transport;
   std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
