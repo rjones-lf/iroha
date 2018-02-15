@@ -20,6 +20,8 @@
 
 #include "validator/address_validator.hpp"
 
+// TODO: 15.02.18 nickaleks Change structure to compositional IR-978
+
 namespace shared_model {
   namespace validation {
 

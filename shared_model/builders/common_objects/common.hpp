@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_COMMON_HPP
-#define IROHA_COMMON_HPP
+#ifndef IROHA_BUILDERS_COMMON_HPP
+#define IROHA_BUILDERS_COMMON_HPP
 
 #include "common/result.hpp"
 #include "utils/polymorphic_wrapper.hpp"
@@ -24,13 +24,19 @@
 
 namespace shared_model {
   namespace builder {
+
+    /**
+     * BuilderResult represents return value of a builder,
+     * it either contains a value of ModelType, an error,
+     * which indicates why construction of an object went wrong.
+     *
+     * Since ModelType is an abstract class, its value has to be wrapped
+     * in something which has polymorphic behaviour, such as PolymorphicWrapper
+     */
     template <typename ModelType>
     using BuilderResult = iroha::expected::PolymorphicResult<
         ModelType,
-        std::string,
-        shared_model::detail::PolymorphicWrapper<ModelType>,
-        std::shared_ptr<std::string>>;
-
+        std::string>;
   }
 }  // namespace shared_model
-#endif  // IROHA_COMMON_HPP
+#endif  // IROHA_BUILDERS_COMMON_HPP

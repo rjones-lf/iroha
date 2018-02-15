@@ -21,8 +21,19 @@
 #include "builders/common_objects/common.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
+//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+
 namespace shared_model {
   namespace builder {
+
+    /**
+     * PeerBuilder is a class, used for construction of Peer objects
+     * @tparam BuilderImpl is a type, which defines builder for implementation
+     * of shared_model. Since we return abstract classes, it is necessary for
+     * them to be instantiated with some concrete implementation
+     * @tparam Validator is a type, whose responsibility is
+     * to perform stateless validation on model fields
+     */
     template <typename BuilderImpl, typename Validator>
     class PeerBuilder {
      public:
@@ -39,9 +50,7 @@ namespace shared_model {
               std::make_shared<std::string>(answer.reason()));
         }
         std::shared_ptr<shared_model::interface::Peer> peer_ptr(peer.copy());
-        return iroha::expected::makeValue(
-            shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Peer>(peer_ptr));
+        return iroha::expected::makeValue(peer_ptr);
       }
 
       PeerBuilder &address(const interface::types::AddressType &address) {

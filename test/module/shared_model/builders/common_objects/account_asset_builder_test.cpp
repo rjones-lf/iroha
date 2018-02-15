@@ -22,8 +22,8 @@
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "validators/field_validator.hpp"
 
-// TODO: Add mocks for template parameters
-// TODO: Add more test cases
+// TODO: 14.02.2018 nickaleks mock builder implementation IR-970
+// TODO: 14.02.2018 nickaleks mock field validator IR-971
 
 TEST(AccountAsset, StatelessValidAllFields) {
   shared_model::builder::AccountAssetBuilder<

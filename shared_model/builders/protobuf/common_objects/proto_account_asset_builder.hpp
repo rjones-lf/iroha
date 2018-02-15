@@ -24,6 +24,10 @@
 
 namespace shared_model {
   namespace proto {
+    /**
+     * AccountAssetBuilder is used to construct AccountAsset proto objects with initialized
+     * protobuf implementation
+     */
     class AccountAssetBuilder {
      public:
       shared_model::proto::AccountAsset build() {
@@ -42,11 +46,11 @@ namespace shared_model {
         return *this;
       }
 
-      AccountAssetBuilder &balance(
-          const interface::Amount &amount) {
+      AccountAssetBuilder &balance(const interface::Amount &amount) {
+        // TODO: 14.02.2018 nickaleks add proper amount initialization IR-972
         auto *amount_proto = new iroha::protocol::Amount();
-        // TODO: add amount initialization
-        amount_proto->mutable_value()->set_first(amount.intValue().template convert_to<uint64_t>());
+        amount_proto->mutable_value()->set_first(
+            amount.intValue().template convert_to<uint64_t>());
         amount_proto->set_precision(amount.precision());
         account_asset_.set_allocated_balance(amount_proto);
         return *this;

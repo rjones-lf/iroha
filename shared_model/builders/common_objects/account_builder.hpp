@@ -21,8 +21,19 @@
 #include "builders/common_objects/common.hpp"
 #include "interfaces/common_objects/account.hpp"
 
+//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+
 namespace shared_model {
   namespace builder {
+
+    /**
+     * AccountBuilder is a class, used for construction of Account objects
+     * @tparam BuilderImpl is a type, which defines builder for implementation
+     * of shared_model. Since we return abstract classes, it is necessary for
+     * them to be instantiated with some concrete implementation
+     * @tparam Validator is a type, whose responsibility is
+     * to perform stateless validation on model fields
+     */
     template <typename BuilderImpl, typename Validator>
     class AccountBuilder {
      public:
@@ -43,9 +54,7 @@ namespace shared_model {
         }
 
         std::shared_ptr<shared_model::interface::Account> account_ptr(account.copy());
-        return iroha::expected::makeValue(
-            shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Account>(account_ptr));
+        return iroha::expected::makeValue(account_ptr);
       }
 
       AccountBuilder &accountId(const interface::types::AccountIdType &account_id) {

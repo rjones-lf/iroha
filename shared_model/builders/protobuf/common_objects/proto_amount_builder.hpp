@@ -24,6 +24,11 @@
 
 namespace shared_model {
   namespace proto {
+
+    /**
+     * AmountBuilder is used to construct Amount proto objects with initialized
+     * protobuf implementation
+     */
     class AmountBuilder {
      public:
       shared_model::proto::Amount build() {
@@ -31,7 +36,7 @@ namespace shared_model {
       }
 
       AmountBuilder &intValue(const boost::multiprecision::uint256_t &value) {
-        // TODO: add proper initialization
+        // TODO: 14.02.2018 nickaleks add proper amount initialization IR-972
         amount_.mutable_value()->set_fourth(value.template convert_to<uint64_t>());
         return *this;
       }

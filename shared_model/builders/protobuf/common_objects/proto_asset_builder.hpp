@@ -24,6 +24,11 @@
 
 namespace shared_model {
   namespace proto {
+
+    /**
+     * AssetBuilder is used to construct Asset proto objects with initialized
+     * protobuf implementation
+     */
     class AssetBuilder {
      public:
       shared_model::proto::Asset build() {

@@ -173,8 +173,7 @@ namespace iroha {
      */
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     createMockMutableStorage() {
-      return expected::makeValue<std::unique_ptr<MutableStorage>>(
-          std::move(std::make_unique<MockMutableStorage>()));
+      return expected::makeValue<std::unique_ptr<MutableStorage>>(std::make_unique<MockMutableStorage>());
     }
 
     class MockMutableFactory : public MutableFactory {

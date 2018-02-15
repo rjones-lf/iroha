@@ -24,6 +24,11 @@
 
 namespace shared_model {
   namespace proto {
+
+    /**
+     * AccountBuilder is used to construct Account proto objects with initialized
+     * protobuf implementation
+     */
     class AccountBuilder {
      public:
       shared_model::proto::Account build() {

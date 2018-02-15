@@ -22,8 +22,19 @@
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 
+//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+
 namespace shared_model {
   namespace builder {
+
+    /**
+     * SignatureBuilder is a class, used for construction of Signature objects
+     * @tparam BuilderImpl is a type, which defines builder for implementation
+     * of shared_model. Since we return abstract classes, it is necessary for
+     * them to be instantiated with some concrete implementation
+     * @tparam Validator is a type, whose responsibility is
+     * to perform stateless validation on model fields
+     */
     template <typename BuilderImpl, typename Validator>
     class SignatureBuilder {
      public:
@@ -40,9 +51,7 @@ namespace shared_model {
               std::make_shared<std::string>(answer.reason()));
         }
         std::shared_ptr<shared_model::interface::Signature> signature_ptr(signature.copy());
-        return iroha::expected::makeValue(
-            shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Signature>(signature_ptr));
+        return iroha::expected::makeValue(signature_ptr);
       }
 
       SignatureBuilder &publicKey(const shared_model::interface::types::PubkeyType &key) {

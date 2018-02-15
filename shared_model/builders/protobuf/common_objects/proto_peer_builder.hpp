@@ -18,12 +18,16 @@
 #ifndef IROHA_PROTO_PEER_BUILDER_HPP
 #define IROHA_PROTO_PEER_BUILDER_HPP
 
-#include "utils/polymorphic_wrapper.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "primitive.pb.h"
 
 namespace shared_model {
   namespace proto {
+
+    /**
+     * PeerBuilder is used to construct Peer proto objects with initialized
+     * protobuf implementation
+     */
     class PeerBuilder {
      public:
       shared_model::proto::Peer build() {
