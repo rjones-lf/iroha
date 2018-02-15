@@ -26,7 +26,7 @@ namespace shared_model {
   namespace proto {
 
     template <typename T>
-    crypto::Blob makeBlob(T &message) {
+    crypto::Blob makeBlob(T &&message) {
       crypto::Blob::Bytes data;
       data.resize(message.ByteSizeLong());
       message.SerializeToArray(data.data(), data.size());

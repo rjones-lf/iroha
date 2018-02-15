@@ -149,7 +149,7 @@ class ToriiServiceTest : public testing::Test {
  */
 TEST_F(ToriiServiceTest, CommandClient) {
   iroha::protocol::TxStatusRequest tx_request;
-  tx_request.set_tx_hash("asdads");
+  tx_request.set_tx_hash(std::string('1', 32));
   iroha::protocol::ToriiResponse toriiResponse;
 
   auto client1 = torii::CommandSyncClient(Ip, Port);
@@ -230,16 +230,17 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   auto client1 = torii::CommandSyncClient(Ip, Port);
 
   // create transactions and send them to Torii
+  std::string account_id = "some@account";
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto shm_tx = shared_model::proto::TransactionBuilder()
-                   .creatorAccountId("some@account")
-                   .txCounter(i + 1)
-                   .createdTime(iroha::time::now())
-                   .setAccountQuorum("some@account", 2)
-                   .build()
-                   .signAndAddSignature(
-                       shared_model::crypto::CryptoProviderEd25519Sha3::
-                           generateKeypair());
+                      .creatorAccountId(account_id)
+                      .txCounter(i + 1)
+                      .createdTime(iroha::time::now())
+                      .setAccountQuorum(account_id, 2)
+                      .build()
+                      .signAndAddSignature(
+                          shared_model::crypto::DefaultCryptoAlgorithmType::
+                              generateKeypair());
     auto new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);

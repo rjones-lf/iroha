@@ -31,8 +31,11 @@ namespace shared_model {
      */
     class Hash : public Blob {
      public:
+      /**
+       * To calculate hash used by some standard containers
+       */
       struct Hasher {
-        std::size_t operator()(const Hash& h) const {
+        std::size_t operator()(const Hash &h) const {
           using boost::hash_value;
           using boost::hash_combine;
 
@@ -42,8 +45,7 @@ namespace shared_model {
           return seed;
         }
       };
-
-      explicit Hash(const std::string &hash) : Blob(hash) {}
+      using Blob::Blob;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

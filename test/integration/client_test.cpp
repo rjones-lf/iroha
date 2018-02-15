@@ -23,6 +23,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
 
@@ -131,17 +132,19 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
   EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
 
   auto shm_tx = shared_model::proto::TransactionBuilder()
-      .creatorAccountId("some@account")
-      .txCounter(1)
-      .createdTime(iroha::time::now())
-      .setAccountQuorum("some@account", 2)
-      .build()
-      .signAndAddSignature(
-          shared_model::crypto::CryptoProviderEd25519Sha3::
-          generateKeypair());
+                    .creatorAccountId("some@account")
+                    .txCounter(1)
+                    .createdTime(iroha::time::now())
+                    .setAccountQuorum("some@account", 2)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
 
-  auto status = client.sendTx(*shm_tx.makeOldModel());
+  auto old_model = shm_tx.makeOldModel();
+  auto status = client.sendTx(*old_model);
   ASSERT_EQ(status.answer, iroha_cli::CliClient::OK);
+  delete old_model;
 }
 
 TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
@@ -168,25 +171,24 @@ TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
 }
 
 TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
-  EXPECT_CALL(*svMock, validate(A<const iroha::model::Transaction &>()))
-      .WillOnce(Return(false));
-  auto shm_tx = shared_model::proto::TransactionBuilder()
-      .creatorAccountId("some@account")
-      .txCounter(1)
-      .createdTime(iroha::time::now())
-      .setAccountQuorum("some@account", 2)
-      .build()
-      .signAndAddSignature(
-          shared_model::crypto::CryptoProviderEd25519Sha3::
-          generateKeypair());
-  auto tx = *shm_tx.makeOldModel();
+  // creating stateless invalid tx
+  auto shm_tx = TestTransactionBuilder()
+                    .creatorAccountId("some@account")
+                    .txCounter(1)
+                    .createdTime(iroha::time::now())
+                    .setAccountQuorum("some@@account", 2)
+                    .build();
+  auto *old_tx = shm_tx.makeOldModel();
 
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(tx).answer,
+  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(*old_tx).answer,
             iroha_cli::CliClient::OK);
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port)
-                .getTxStatus(iroha::hash(tx).to_string())
-                .answer.tx_status(),
-            iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+  auto tx_hash = shm_tx.hash();
+  ASSERT_EQ(
+      iroha_cli::CliClient(Ip, Port)
+          .getTxStatus(shared_model::crypto::toBinaryString(tx_hash))
+          .answer.tx_status(),
+      iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+  delete old_tx;
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {

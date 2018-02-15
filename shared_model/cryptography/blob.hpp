@@ -40,6 +40,7 @@ namespace shared_model {
      public:
       using Bytes = std::vector<uint8_t>;
 
+      Blob() : blob_() {}
       /**
        * Create blob from a string
        * @param blob - string to create blob from
