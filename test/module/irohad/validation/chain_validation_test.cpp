@@ -15,9 +15,12 @@
  * limitations under the License.
  */
 
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -37,8 +40,17 @@ class ChainValidationTest : public ::testing::Test {
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockWsvQuery>();
 
-    peer = shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>().
-        pubkey(shared_model::crypto::fromBinaryString(std::string(2, 32)).build();
+    shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>()
+        .pubkey(shared_model::interface::types::PubkeyType(std::string(2, 32)))
+        .build()
+        .match(
+            [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>>
+                    &v) { peer = v.value; },
+            [](expected::Error<std::shared_ptr<std::string>>) {});
+
+
     peers = std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer};
 
     block.sigs.emplace_back();

@@ -17,6 +17,7 @@
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/common_objects/peer_builder.hpp"
 #include "framework/test_subscriber.hpp"
 #include "mock_ordering_service_persistent_state.hpp"
 #include "model/asset.hpp"
@@ -25,6 +26,7 @@
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::model;
@@ -40,11 +42,17 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-    peer = shared_model::builder::PeerBuilder<
-               shared_model::proto::PeerBuilder,
-               shared_model::validation::FieldValidator>()
-               .address(address)
-               .build();
+    shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>()
+        .address(address)
+        .build()
+        .match(
+            [&](iroha::expected::Value<
+                std::shared_ptr<shared_model::interface::Peer>> &v) {
+              peer = v.value;
+            },
+            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
     gate = std::make_shared<OrderingGateImpl>(gate_transport);
     gate_transport->subscribe(gate);

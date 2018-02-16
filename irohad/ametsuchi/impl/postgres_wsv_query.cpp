@@ -16,18 +16,26 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include <builders/protobuf/common_objects/account_asset_builder.hpp>
-#include "builders/protobuf/common_objects/amount_builder.hpp"
-#include <builders/protobuf/common_objects/asset_builder.hpp>
-#include <builders/protobuf/proposal.hpp>
-#include <builders/protobuf/common_objects/peer_builder.hpp>
 
-#include "builders/protobuf/common_objects/account_builder.hpp"
+#include "builders/common_objects/account_asset_builder.hpp"
+#include "builders/common_objects/account_builder.hpp"
+#include "builders/common_objects/amount_builder.hpp"
+#include "builders/common_objects/asset_builder.hpp"
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/common_objects/signature_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
 #include "model/domain.hpp"
 #include "model/peer.hpp"
+#include "validators/field_validator.hpp"
+#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -102,14 +110,30 @@ namespace iroha {
           log_->info(kAccountNotFound, account_id);
           return nonstd::nullopt;
         }
-        shared_model::proto::AccountBuilder builder;
+
+        shared_model::builder::AccountBuilder<
+            shared_model::proto::AccountBuilder,
+            shared_model::validation::FieldValidator>
+            builder;
         auto row = result.at(0);
-        auto account = builder.accountId(row.at(kAccountId).template as<std::string>())
-                           .domainId(row.at(kDomainId).template as<std::string>())
-                           .quorum(row.at("quorum").template as<shared_model::interface::types::QuorumType>())
-                           .jsonData(row.at("data").template as<std::string>())
-                           .build();
-        return account;
+        auto account =
+            builder.accountId(row.at(kAccountId).template as<std::string>())
+                .domainId(row.at(kDomainId).template as<std::string>())
+                .quorum(row.at("quorum")
+                            .template as<
+                                shared_model::interface::types::QuorumType>())
+                .jsonData(row.at("data").template as<std::string>())
+                .build();
+        return account.match(
+            [](expected::Value<
+                std::shared_ptr<shared_model::interface::Account>> &v) {
+              return nonstd::make_optional(v.value);
+            },
+            [](expected::Error<std::shared_ptr<std::string>> &e)
+                -> nonstd::optional<
+                    std::shared_ptr<shared_model::interface::Account>> {
+              return nonstd::nullopt;
+            });
       };
     }
 
@@ -169,18 +193,24 @@ namespace iroha {
           log_->info("Asset {} not found", asset_id);
           return nonstd::nullopt;
         }
-        shared_model::proto::AssetBuilder builder;
+        shared_model::builder::AssetBuilder<
+            shared_model::proto::AssetBuilder,
+            shared_model::validation::FieldValidator>
+            builder;
         auto row = result.at(0);
-        auto asset = builder.assetId(row.at(kAssetId).template as<std::string>())
-                         .domainId(row.at(kAssetId).template as<std::string>())
-                         .precision(row.at("precision").template as<int32_t>())
-                         .build();
-        //        row.at(kAssetId) >> asset.asset_id;
-        //        row.at(kDomainId) >> asset.domain_id;
-        //        int32_t precision;
-        //        row.at("precision") >> precision;
-        //        asset.precision = precision;
-        return asset;
+        auto asset =
+            builder.assetId(row.at(kAssetId).template as<std::string>())
+                .domainId(row.at(kAssetId).template as<std::string>())
+                .precision(row.at("precision").template as<int32_t>())
+                .build();
+        return asset.match(
+            [](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
+                   &v) { return nonstd::make_optional(v.value); },
+            [](expected::Error<std::shared_ptr<std::string>> &e)
+                -> nonstd::optional<
+                    std::shared_ptr<shared_model::interface::Asset>> {
+              return nonstd::nullopt;
+            });
       };
     }
 
@@ -197,18 +227,34 @@ namespace iroha {
           log_->info("Account {} does not have asset {}", account_id, asset_id);
           return nonstd::nullopt;
         }
-        shared_model::proto::AccountAssetBuilder builder;
+        shared_model::builder::AccountAssetBuilder<
+            shared_model::proto::AccountAssetBuilder,
+            shared_model::validation::FieldValidator>
+            builder;
 
         model::AccountAsset asset;
         auto row = result.at(0);
-        auto account_asset =
-            builder.accountId(row.at(kAccountId).template as<std::string>())
-                .assetId(row.at(kAssetId).template as<std::string>())
-                .balance(*shared_model::proto::AmountBuilder::fromString(
-                    row.at("amount").template as<std::string>()))
-                .build();
-
-        return account_asset;
+        auto balance = shared_model::builder::AmountBuilder<
+            shared_model::proto::AmountBuilder,
+            shared_model::validation::FieldValidator>::
+            fromString(row.at("amount").template as<std::string>());
+        auto account_asset = balance | [&](const auto &balance_ptr) {
+          return builder
+              .accountId(row.at(kAccountId).template as<std::string>())
+              .assetId(row.at(kAssetId).template as<std::string>())
+              .balance(*balance_ptr)
+              .build();
+        };
+        return account_asset.match(
+            [](expected::Value<
+                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
+              return nonstd::make_optional(v.value);
+            },
+            [&](expected::Error<std::shared_ptr<std::string>> &e)
+                -> nonstd::optional<
+                    std::shared_ptr<shared_model::interface::AccountAsset>> {
+              return nonstd::nullopt;
+            });
       };
     }
 
@@ -233,15 +279,38 @@ namespace iroha {
         std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
       pqxx::result result;
-      return execute_("SELECT * FROM peer;") | [&](const auto &result) {
-        return transform<std::shared_ptr<shared_model::interface::Peer>>(result, [](const auto &row) {
-          shared_model::proto::PeerBuilder builder;
+      return execute_("SELECT * FROM peer;") | [&](const auto &result) -> nonstd::optional<
+      std::vector<std::shared_ptr<shared_model::interface::Peer>>>{
+        auto builders = transform<shared_model::builder::PeerBuilder<
+            shared_model::proto::PeerBuilder,
+            shared_model::validation::FieldValidator>>(
+            result, [](const auto &row) {
+              shared_model::builder::PeerBuilder<
+                  shared_model::proto::PeerBuilder,
+                  shared_model::validation::FieldValidator>
+                  builder;
 
-          pqxx::binarystring public_key_str(row.at(kPublicKey));
-          shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
-          auto peer = builder.pubkey(pubkey).address(row.at("address").template as<std::string>()).build();
-          return peer;
-        });
+              pqxx::binarystring public_key_str(row.at(kPublicKey));
+              shared_model::interface::types::PubkeyType pubkey(
+                  public_key_str.str());
+              auto peer =
+                  builder.pubkey(pubkey)
+                      .address(row.at("address").template as<std::string>());
+              return peer;
+            });
+        std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
+        for (auto &builder : builders) {
+          builder.build().match(
+              [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>> &v) {
+                peers.push_back(v.value);
+              },
+              [&](expected::Error<std::shared_ptr<std::string>> &e) {}
+          );
+        }
+        if (not peers.empty()) {
+          return nonstd::make_optional(peers);
+        }
+        return nonstd::nullopt;
       };
     }
   }  // namespace ametsuchi

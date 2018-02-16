@@ -21,7 +21,8 @@
 #include <gtest/gtest.h>
 #include <backend/protobuf/common_objects/peer.hpp>
 #include <validators/field_validator.hpp>
-
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -38,6 +39,7 @@
 #include "datetime/time.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
@@ -67,8 +69,12 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    peer = shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>()
-        .address("0.0.0.0:" + std::to_string(port)).build();
+    shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>()
+        .address("0.0.0.0:" + std::to_string(port)).build().match(
+        [&](iroha::expected::Value<std::shared_ptr<shared_model::interface::Peer>>
+            &v) { peer = v.value; },
+        [](iroha::expected::Error<std::shared_ptr<std::string>>) {}
+    );
     peers.push_back(peer);
 
     ASSERT_TRUE(server);

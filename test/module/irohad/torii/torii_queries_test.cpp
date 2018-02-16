@@ -16,6 +16,11 @@ limitations under the License.
 
 #include "generator/generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/validation/validation_mocks.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 // to compare pb amount and iroha amount
 #include "model/converters/pb_common.hpp"
@@ -308,23 +313,16 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
               validate(A<const iroha::model::Query &>()))
       .WillOnce(Return(true));
 
-  auto account = shared_model::builder::AccountBuilder<
-      shared_model::proto::AccountBuilder,
-      shared_model::validation::FieldValidator>()
+  auto account = shared_model::proto::AccountBuilder()
       .accountId("accountA")
       .build();
 
-  auto amount = shared_model::builder::AmountBuilder<
-      shared_model::proto::AmountBuilder,
-      shared_model::validation::FieldValidator>().intValue(100).precision(2).build();
+  auto amount =
+      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
 
-  auto account_asset = shared_model::builder::AccountAssetBuilder<
-      shared_model::proto::AccountAssetBuilder,
-      shared_model::validation::FieldValidator>().accountId("accountA").assetId("usd").balance(amount),build();
+  auto account_asset = shared_model::proto::AccountAssetBuilder().accountId("accountA").assetId("usd").balance(amount),build();
 
-  auto asset = shared_model::builder::AccountAssetBuilder<
-      shared_model::proto::AccountAssetBuilder,
-      shared_model::validation::FieldValidator>().assetId("usd").domainId("USA").precision(2).build();
+  auto asset = shared_model::proto::AccountAssetBuilder().assetId("usd").domainId("USA").precision(2).build();
 
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";

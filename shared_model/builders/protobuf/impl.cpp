@@ -20,9 +20,4 @@
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "builders/protobuf/common_objects/account_builder.hpp"
-#include "builders/protobuf/common_objects/account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/asset_builder.hpp"
-#include "builders/protobuf/common_objects/peer_builder.hpp"
-#include "builders/protobuf/common_objects/amount_builder.hpp"
 

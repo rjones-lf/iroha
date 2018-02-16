@@ -26,10 +26,13 @@
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "mock_ordering_service_persistent_state.hpp"
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "validators/field_validator.hpp"
 
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
@@ -76,11 +79,15 @@ class MockOrderingServiceTransport : public network::OrderingServiceTransport {
 class OrderingServiceTest : public ::testing::Test {
  public:
   OrderingServiceTest() {
-    peer = shared_model::builder::PeerBuilder<
-               shared_model::proto::PeerBuilder,
-               shared_model::validation::FieldValidator>()
-               .address(address)
-               .build();
+    shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>()
+        .address(address)
+        .build()
+        .match(
+            [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>>
+                    &v) { peer = v.value; },
+            [](expected::Error<std::shared_ptr<std::string>>) {});
   }
 
   void SetUp() override {
