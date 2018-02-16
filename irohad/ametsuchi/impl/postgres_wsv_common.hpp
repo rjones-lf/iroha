@@ -20,9 +20,23 @@
 
 #include <boost/optional.hpp>
 #include <pqxx/nontransaction>
+
+#include "builders/common_objects/account_asset_builder.hpp"
+#include "builders/common_objects/account_builder.hpp"
+#include "builders/common_objects/amount_builder.hpp"
+#include "builders/common_objects/asset_builder.hpp"
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/common_objects/signature_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include <pqxx/result>
 #include "common/result.hpp"
 #include "logger/logger.hpp"
+#include "validators/field_validator.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -86,6 +100,77 @@ namespace iroha {
                      transform_func);
 
       return values;
+    }
+
+    using shared_model::builder::BuilderResult;
+    using shared_model::interface::Account;
+    using shared_model::interface::AccountAsset;
+    using shared_model::interface::Amount;
+    using shared_model::interface::Asset;
+    using shared_model::interface::Peer;
+    using shared_model::interface::Signature;
+
+    using AccountBuilder = shared_model::builder::AccountBuilder<
+        shared_model::proto::AccountBuilder,
+        shared_model::validation::FieldValidator>;
+
+    using AssetBuilder = shared_model::builder::AssetBuilder<
+        shared_model::proto::AssetBuilder,
+        shared_model::validation::FieldValidator>;
+
+    using AccountAssetBuilder = shared_model::builder::AccountAssetBuilder<
+        shared_model::proto::AccountAssetBuilder,
+        shared_model::validation::FieldValidator>;
+
+    using PeerBuilder = shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>;
+
+    using AmountBuilder = shared_model::builder::AmountBuilder<
+        shared_model::proto::AmountBuilder,
+        shared_model::validation::FieldValidator>;
+
+    static inline BuilderResult<Account> makeAccount(
+        const pqxx::row &row) noexcept {
+      return AccountBuilder()
+          .accountId(row.at("account_id").template as<std::string>())
+          .domainId(row.at("domain_id").template as<std::string>())
+          .quorum(
+              row.at("quorum")
+                  .template as<shared_model::interface::types::QuorumType>())
+          .jsonData(row.at("data").template as<std::string>())
+          .build();
+    }
+
+    static inline BuilderResult<Asset> makeAsset(const pqxx::row &row) {
+      AssetBuilder builder;
+      return AssetBuilder()
+          .assetId(row.at("asset_id").template as<std::string>())
+          .domainId(row.at("domain_id").template as<std::string>())
+          .precision(row.at("precision").template as<int32_t>())
+          .build();
+    }
+
+    static inline BuilderResult<AccountAsset> makeAccountAsset(
+        const pqxx::row &row) {
+      auto balance = AmountBuilder::fromString(
+          row.at("amount").template as<std::string>());
+      return balance | [&](const auto &balance_ptr) {
+        return AccountAssetBuilder()
+            .accountId(row.at("account_id").template as<std::string>())
+            .assetId(row.at("asset_id").template as<std::string>())
+            .balance(*balance_ptr)
+            .build();
+      };
+    }
+
+    static inline BuilderResult<Peer> makePeer(const pqxx::row &row) {
+      pqxx::binarystring public_key_str(row.at("public_key"));
+      shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
+      return PeerBuilder()
+          .pubkey(pubkey)
+          .address(row.at("address").template as<std::string>())
+          .build();
     }
   }  // namespace ametsuchi
 }  // namespace iroha

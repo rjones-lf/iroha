@@ -41,10 +41,6 @@ namespace iroha {
 
   namespace model {
     struct Domain;
-//    struct Account;
-//    struct AccountAsset;
-//    struct Peer;
-//    struct Asset;
   }
 
   namespace ametsuchi {
