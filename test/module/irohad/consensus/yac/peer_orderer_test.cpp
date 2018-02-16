@@ -58,19 +58,10 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto peer = shared_model::builder::PeerBuilder<
-                      shared_model::proto::PeerBuilder,
-                      shared_model::validation::FieldValidator>()
-                      .address(std::to_string(i))
-                      .build();
-      peer.match(
-          [&](iroha::expected::Value<
-              std::shared_ptr<shared_model::interface::Peer>> &v) {
-            result.push_back(v.value);
-          },
-          [](iroha::expected::Error<std::shared_ptr<std::string>> &e) {
-            FAIL();
-          });
+      auto peer = std::shared_ptr<shared_model::interface::Peer>(shared_model::proto::PeerBuilder()
+                      .address(std::to_string(i)).pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
+                      .build().copy());
+      result.push_back(peer);
     }
     return result;
   }();

@@ -70,7 +70,7 @@ class BlockLoaderTest : public testing::Test {
     server = builder.BuildAndStart();
 
     shared_model::builder::PeerBuilder<shared_model::proto::PeerBuilder, shared_model::validation::FieldValidator>()
-        .address("0.0.0.0:" + std::to_string(port)).build().match(
+        .address("0.0.0.0:" + std::to_string(port)).pubkey(peer_key).build().match(
         [&](iroha::expected::Value<std::shared_ptr<shared_model::interface::Peer>>
             &v) { peer = v.value; },
         [](iroha::expected::Error<std::shared_ptr<std::string>>) {}
@@ -80,6 +80,9 @@ class BlockLoaderTest : public testing::Test {
     ASSERT_TRUE(server);
     ASSERT_NE(port, 0);
   }
+
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
 
   auto getBaseBlockBuilder() const {
     constexpr auto kTotal = (1 << 5) - 1;

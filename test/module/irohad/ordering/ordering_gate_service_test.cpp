@@ -42,17 +42,11 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-    shared_model::builder::PeerBuilder<
-        shared_model::proto::PeerBuilder,
-        shared_model::validation::FieldValidator>()
+
+    peer = std::shared_ptr<shared_model::interface::Peer>(shared_model::proto::PeerBuilder()
         .address(address)
-        .build()
-        .match(
-            [&](iroha::expected::Value<
-                std::shared_ptr<shared_model::interface::Peer>> &v) {
-              peer = v.value;
-            },
-            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
+        .pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
+        .build().copy());
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
     gate = std::make_shared<OrderingGateImpl>(gate_transport);
     gate_transport->subscribe(gate);

@@ -40,15 +40,9 @@ class ChainValidationTest : public ::testing::Test {
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockWsvQuery>();
 
-    shared_model::builder::PeerBuilder<
-        shared_model::proto::PeerBuilder,
-        shared_model::validation::FieldValidator>()
-        .pubkey(shared_model::interface::types::PubkeyType(std::string(2, 32)))
-        .build()
-        .match(
-            [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>>
-                    &v) { peer = v.value; },
-            [](expected::Error<std::shared_ptr<std::string>>) {});
+    peer = std::shared_ptr<shared_model::interface::Peer>(shared_model::proto::PeerBuilder()
+        .pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
+        .build().copy());
 
 
     peers = std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer};

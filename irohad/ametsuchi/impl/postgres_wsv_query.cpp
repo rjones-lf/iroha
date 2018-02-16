@@ -132,6 +132,7 @@ namespace iroha {
             [](expected::Error<std::shared_ptr<std::string>> &e)
                 -> nonstd::optional<
                     std::shared_ptr<shared_model::interface::Account>> {
+              throw std::invalid_argument(*e.error);
               return nonstd::nullopt;
             });
       };
@@ -200,7 +201,7 @@ namespace iroha {
         auto row = result.at(0);
         auto asset =
             builder.assetId(row.at(kAssetId).template as<std::string>())
-                .domainId(row.at(kAssetId).template as<std::string>())
+                .domainId(row.at(kDomainId).template as<std::string>())
                 .precision(row.at("precision").template as<int32_t>())
                 .build();
         return asset.match(
@@ -307,10 +308,7 @@ namespace iroha {
               [&](expected::Error<std::shared_ptr<std::string>> &e) {}
           );
         }
-        if (not peers.empty()) {
-          return nonstd::make_optional(peers);
-        }
-        return nonstd::nullopt;
+        return peers;
       };
     }
   }  // namespace ametsuchi
