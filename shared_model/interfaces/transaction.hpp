@@ -23,9 +23,12 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/transaction.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -34,8 +37,7 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    class Transaction
-        : public Signable<Transaction, iroha::model::Transaction> {
+    class Transaction : public SIGNABLE(Transaction) {
      public:
       /**
        * @return creator of transaction
@@ -58,6 +60,7 @@ namespace shared_model {
        */
       virtual const CommandsType &commands() const = 0;
 
+#ifndef DISABLE_BACKWARD
       iroha::model::Transaction *makeOldModel() const override {
         iroha::model::Transaction *oldStyleTransaction =
             new iroha::model::Transaction();
@@ -83,6 +86,7 @@ namespace shared_model {
         return oldStyleTransaction;
       }
 
+#endif
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Transaction")

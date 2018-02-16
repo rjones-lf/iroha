@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include "framework/test_subscriber.hpp"
 #include <gtest/gtest.h>
+#include "framework/test_subscriber.hpp"
 
 #include <iostream>
 

@@ -21,8 +21,8 @@
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -33,7 +33,6 @@ namespace shared_model {
     template <typename T>
     class UnsignedWrapper {
      public:
-
       using ModelType = T;
 
       /**

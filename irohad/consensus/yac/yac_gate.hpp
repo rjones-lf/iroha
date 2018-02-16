@@ -18,14 +18,18 @@
 #ifndef IROHA_YAC_GATE_HPP
 #define IROHA_YAC_GATE_HPP
 
-#include "consensus/yac/cluster_order.hpp"
-#include "consensus/yac/messages.hpp"
-#include "consensus/yac/yac_hash_provider.hpp"
 #include "network/consensus_gate.hpp"
+#include <rxcpp/rx-observable.hpp>
+
 
 namespace iroha {
   namespace consensus {
     namespace yac {
+
+      class YacHash;
+      class ClusterOrdering;
+      struct CommitMessage;
+
       class YacGate : public network::ConsensusGate {};
 
       /**

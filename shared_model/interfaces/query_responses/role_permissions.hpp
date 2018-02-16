@@ -20,17 +20,18 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/queries/responses/roles_response.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/queries/responses/roles_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Response with all permissions related to role
      */
-    class RolePermissionsResponse
-        : public Primitive<RolePermissionsResponse,
-                           iroha::model::RolePermissionsResponse> {
+    class RolePermissionsResponse : public PRIMITIVE(RolePermissionsResponse) {
      public:
       /// type of role permissions collection
       using PermissionNameCollectionType =
@@ -61,6 +62,7 @@ namespace shared_model {
         return rolePermissions() == rhs.rolePermissions();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of role permissions response.
@@ -70,6 +72,8 @@ namespace shared_model {
         oldModel->role_permissions = rolePermissions();
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

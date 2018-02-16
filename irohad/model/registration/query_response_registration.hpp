@@ -24,12 +24,11 @@
 #include "model/queries/responses/account_assets_response.hpp"
 #include "model/queries/responses/account_detail_response.hpp"
 #include "model/queries/responses/account_response.hpp"
+#include "model/queries/responses/asset_response.hpp"
 #include "model/queries/responses/error_response.hpp"
+#include "model/queries/responses/roles_response.hpp"
 #include "model/queries/responses/signatories_response.hpp"
 #include "model/queries/responses/transactions_response.hpp"
-#include "model/queries/responses/asset_response.hpp"
-#include "model/queries/responses/roles_response.hpp"
-
 
 /**
  * File contains registration for all query response subclasses
@@ -55,7 +54,7 @@ namespace iroha {
       ClassHandler query_response_handler{};
     };
 
-  } // namespace model
-} // namespace iroha
+  }  // namespace model
+}  // namespace iroha
 
-#endif //IROHA_QUERY_RESPONSE_REGISTRATION_HPP
+#endif  // IROHA_QUERY_RESPONSE_REGISTRATION_HPP

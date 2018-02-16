@@ -19,25 +19,30 @@
 #define IROHA_YAC_HPP
 
 #include <memory>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 #include <mutex>
 #include <nonstd/optional.hpp>
+#include <rxcpp/rx-observable.hpp>
 
-#include "consensus/yac/yac_gate.hpp"
-#include "consensus/yac/transport/yac_network_interface.hpp"
-#include "consensus/yac/yac_crypto_provider.hpp"
-#include "consensus/yac/timer.hpp"
-#include "consensus/yac/storage/yac_vote_storage.hpp"
+#include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
+#include "consensus/yac/messages.hpp"       // because messages passed by value
+#include "consensus/yac/storage/yac_vote_storage.hpp"  // for VoteStorage
+#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetworkNotifications
+#include "consensus/yac/yac_gate.hpp"                         // for HashGate
 #include "logger/logger.hpp"
 
 namespace iroha {
+
+  namespace model {
+    struct Peer;
+  }
+
   namespace consensus {
     namespace yac {
-      class Yac : public HashGate,
-                  public YacNetworkNotifications {
+
+      class YacCryptoProvider;
+      class Timer;
+
+      class Yac : public HashGate, public YacNetworkNotifications {
        public:
         /**
          * Method for creating Yac consensus object
@@ -129,7 +134,6 @@ namespace iroha {
 
         // ------|Logger|------
         logger::Logger log_;
-
       };
     }  // namespace yac
   }    // namespace consensus

@@ -30,11 +30,16 @@ namespace shared_model {
     class NoAccountErrorResponse
         : public AbstractErrorResponse<NoAccountErrorResponse> {
      private:
-      std::string reason() const override { return "NoAccountErrorResponse"; }
+      std::string reason() const override {
+        return "NoAccountErrorResponse";
+      }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::ErrorResponse::Reason oldModelReason() const override {
         return iroha::model::ErrorResponse::Reason::NO_ACCOUNT;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -33,9 +33,10 @@ namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
-      BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query,
-                      std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
+      BlockLoaderImpl(
+          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+          std::shared_ptr<ametsuchi::BlockQuery> block_query,
+          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
 
       rxcpp::observable<model::Block> retrieveBlocks(
           model::Peer::KeyType peer_pubkey) override;

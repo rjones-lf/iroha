@@ -32,4 +32,4 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
-#endif //IROHA_YAC_HASH_PROVIDER_IMPL_HPP
+#endif  // IROHA_YAC_HASH_PROVIDER_IMPL_HPP

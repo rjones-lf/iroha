@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-
-#include <datetime/time.hpp>
 #include <gtest/gtest.h>
+#include <datetime/time.hpp>
 
 TEST(Time, Now) {
   auto time = iroha::time::now();

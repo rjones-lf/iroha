@@ -18,10 +18,12 @@
 #ifndef IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 #define IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 
-#include <vector>
 #include <nonstd/optional.hpp>
+#include <vector>
+
+#include "consensus/yac/messages.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
+#include "consensus/yac/yac_hash_provider.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -33,7 +35,6 @@ namespace iroha {
        */
       class YacBlockStorage {
        private:
-
         // --------| fields |--------
 
         /**
@@ -42,7 +43,6 @@ namespace iroha {
         std::vector<VoteMessage> votes_;
 
        public:
-
         YacBlockStorage(YacHash hash, uint64_t peers_in_round);
 
         /**
@@ -64,12 +64,12 @@ namespace iroha {
         /**
          * @return votes attached to storage
          */
-        auto getVotes() -> decltype(votes_);
+        std::vector<VoteMessage> getVotes() const;
 
         /**
          * @return number of votes attached to storage
          */
-        auto getNumberOfVotes() -> decltype(votes_)::size_type;
+        size_t getNumberOfVotes() const;
 
         /**
          * @return current block store state
@@ -123,7 +123,7 @@ namespace iroha {
         logger::Logger log_;
       };
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_YAC_BLOCK_VOTE_STORAGE_HPP

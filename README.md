@@ -10,7 +10,7 @@
 
 Blockchain platform Hyperledger Iroha is designed for simple creation and management of assets. This is a distributed ledger of transactions.
 
-<img height="300px" src="docs/Iroha_3_sm.png"
+<img height="300px" src="docs/image_assets/Iroha_3_sm.png"
  alt="Iroha logo" title="Iroha" align="right" />
 
 Iroha has the following features:
@@ -48,7 +48,7 @@ After building Iroha daemon, try to use [CLI](https://hyperledger.github.io/iroh
 
 | Technical docs | Guides | Contributing |
 |---|---|---|
-|[![Technical docs](docs/icons/docs.png)](https://hyperledger.github.io/iroha-api)| [![How-to](docs/icons/how-to.png)](https://github.com/hyperledger/iroha/wiki) |[![Contributing](docs/icons/contributing.png)](https://github.com/hyperledger/iroha/wiki/How-to-contribute)|
+|[![Technical docs](docs/image_assets/icons/docs.png)](https://hyperledger.github.io/iroha-api)| [![How-to](docs/image_assets/icons/how-to.png)](https://github.com/hyperledger/iroha/wiki) |[![Contributing](docs/image_assets/icons/contributing.png)](https://github.com/hyperledger/iroha/wiki/How-to-contribute)|
 
 ## Need help?
 

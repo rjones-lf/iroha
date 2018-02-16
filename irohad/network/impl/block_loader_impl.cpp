@@ -32,6 +32,12 @@ BlockLoaderImpl::BlockLoaderImpl(
   log_ = logger::log("BlockLoaderImpl");
 }
 
+const char *kPeerNotFound = "Cannot find peer";
+const char *kTopBlockRetrieveFail = "Failed to retrieve top block";
+const char *kInvalidBlockSignatures = "Block signatures are invalid";
+const char *kPeerRetrieveFail = "Failed to retrieve peers";
+const char *kPeerFindFail = "Failed to find requested peer";
+
 rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
     model::Peer::KeyType peer_pubkey) {
   return rxcpp::observable<>::create<Block>(
@@ -42,14 +48,14 @@ rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
             .as_blocking()
             .subscribe([&top_block](auto block) { top_block = block; });
         if (not top_block.has_value()) {
-          log_->error("Failed to retrieve top block");
+          log_->error(kTopBlockRetrieveFail);
           subscriber.on_completed();
           return;
         }
 
         auto peer = this->findPeer(peer_pubkey);
         if (not peer.has_value()) {
-          log_->error("Cannot find peer");
+          log_->error(kPeerNotFound);
           subscriber.on_completed();
           return;
         }
@@ -66,7 +72,7 @@ rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
         while (reader->Read(&block)) {
           auto &&result = factory_.deserialize(block);
           if (not crypto_provider_->verify(result)) {
-            log_->error("Block signatures are invalid");
+            log_->error(kInvalidBlockSignatures);
             context.TryCancel();
           } else {
             subscriber.on_next(result);
@@ -81,7 +87,7 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
     Peer::KeyType peer_pubkey, Block::HashType block_hash) {
   auto peer = findPeer(peer_pubkey);
   if (not peer.has_value()) {
-    log_->error("Cannot find peer");
+    log_->error(kPeerNotFound);
     return nonstd::nullopt;
   }
 
@@ -101,7 +107,7 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
 
   auto &&result = factory_.deserialize(block);
   if (not crypto_provider_->verify(result)) {
-    log_->error("Block signatures are invalid");
+    log_->error(kInvalidBlockSignatures);
     return nonstd::nullopt;
   }
 
@@ -111,15 +117,16 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
 nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers.has_value()) {
-    log_->error("Failed to retrieve peers");
+    log_->error(kPeerRetrieveFail);
     return nonstd::nullopt;
   }
 
   auto it = std::find_if(
-      peers.value().begin(), peers.value().end(),
-      [pubkey](auto peer) { return peer.pubkey == pubkey; });
+      peers.value().begin(), peers.value().end(), [&pubkey](const auto &peer) {
+        return peer.pubkey == pubkey;
+      });
   if (it == peers.value().end()) {
-    log_->error("Failed to find requested peer");
+    log_->error(kPeerFindFail);
     return nonstd::nullopt;
   }
 
@@ -129,9 +136,12 @@ nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
 proto::Loader::Stub &BlockLoaderImpl::getPeerStub(const Peer &peer) {
   auto it = peer_connections_.find(peer);
   if (it == peer_connections_.end()) {
-    it = peer_connections_.insert(std::make_pair(peer, proto::Loader::NewStub(
-        grpc::CreateChannel(peer.address,
-                            grpc::InsecureChannelCredentials())))).first;
+    it = peer_connections_
+             .insert(std::make_pair(
+                 peer,
+                 proto::Loader::NewStub(grpc::CreateChannel(
+                     peer.address, grpc::InsecureChannelCredentials()))))
+             .first;
   }
   return *it->second;
 }

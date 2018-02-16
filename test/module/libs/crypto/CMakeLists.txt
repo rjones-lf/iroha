@@ -21,14 +21,15 @@ target_link_libraries(hash_test
     cryptography
     )
 
-# Base64 Test
-AddTest(base64_test base64_test.cpp)
-target_link_libraries(base64_test
-    cryptography
-    )
-
 # Singature Test
 AddTest(signature_test signature_test.cpp)
 target_link_libraries(signature_test
     cryptography
+    )
+
+# Key manager Test
+AddTest(keys_manager_test keys_manager_test.cpp)
+target_link_libraries(keys_manager_test
+    keys_manager
+    boost
     )

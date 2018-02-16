@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 #include "consensus/consensus_common.hpp"
+#include "consensus/yac/messages.hpp"
 
 using namespace logger;
 
@@ -39,57 +39,60 @@ namespace iroha {
         if (validScheme(msg) and uniqueVote(msg)) {
           votes_.push_back(msg);
 
-          log_->info("Vote ({}, {}) inserted", msg.hash.proposal_hash,
+          log_->info("Vote ({}, {}) inserted",
+                     msg.hash.proposal_hash,
                      msg.hash.block_hash);
-          log_->info("Votes in storage [{}/{}]", votes_.size(),
-                     peers_in_round_);
+          log_->info(
+              "Votes in storage [{}/{}]", votes_.size(), peers_in_round_);
         }
         return getState();
       }
 
-      nonstd::optional<Answer> YacBlockStorage::insert(std::vector<VoteMessage> votes) {
-        std::for_each(votes.begin(), votes.end(),
-                      [this](auto vote) { this->insert(vote); });
+      nonstd::optional<Answer> YacBlockStorage::insert(
+          std::vector<VoteMessage> votes) {
+        std::for_each(votes.begin(), votes.end(), [this](auto vote) {
+          this->insert(vote);
+        });
         return getState();
       }
 
-      auto YacBlockStorage::getVotes() -> decltype(votes_) {
+      std::vector<VoteMessage> YacBlockStorage::getVotes() const {
         return votes_;
       }
 
-      auto YacBlockStorage::getNumberOfVotes() -> decltype(votes_)::size_type {
-      return votes_.size();
-    }
-
-    nonstd::optional<Answer> YacBlockStorage::getState() {
-      auto supermajority = hasSupermajority(votes_.size(), peers_in_round_);
-      if (supermajority) {
-        return Answer(CommitMessage(votes_));
+      size_t YacBlockStorage::getNumberOfVotes() const {
+        return votes_.size();
       }
-      return nonstd::nullopt;
-    }
 
-    bool YacBlockStorage::isContains(const VoteMessage &msg) const {
-      return std::count(votes_.begin(), votes_.end(), msg) != 0;
-    }
+      nonstd::optional<Answer> YacBlockStorage::getState() {
+        auto supermajority = hasSupermajority(votes_.size(), peers_in_round_);
+        if (supermajority) {
+          return Answer(CommitMessage(votes_));
+        }
+        return nonstd::nullopt;
+      }
 
-    YacHash YacBlockStorage::getStorageHash() {
-      return hash_;
-    }
+      bool YacBlockStorage::isContains(const VoteMessage &msg) const {
+        return std::count(votes_.begin(), votes_.end(), msg) != 0;
+      }
 
-    // --------| private api |--------
+      YacHash YacBlockStorage::getStorageHash() {
+        return hash_;
+      }
 
-    bool YacBlockStorage::uniqueVote(VoteMessage &msg) {
-      // lookup take O(n) times
-      return std::all_of(votes_.begin(), votes_.end(), [&msg](auto vote) {
-        return vote != msg;
-      });
-    }
+      // --------| private api |--------
 
-    bool YacBlockStorage::validScheme(VoteMessage &vote) {
-      return getStorageHash() == vote.hash;
-    }
+      bool YacBlockStorage::uniqueVote(VoteMessage &msg) {
+        // lookup take O(n) times
+        return std::all_of(votes_.begin(), votes_.end(), [&msg](auto vote) {
+          return vote != msg;
+        });
+      }
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
+      bool YacBlockStorage::validScheme(VoteMessage &vote) {
+        return getStorageHash() == vote.hash;
+      }
+
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha

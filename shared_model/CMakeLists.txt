@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_library(old_model INTERFACE)
+
+if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
+    target_link_libraries(old_model INTERFACE
+        model
+        )
+endif()
+
 add_subdirectory(backend)
 add_subdirectory(bindings)
 add_subdirectory(builders)
@@ -19,3 +27,4 @@ add_subdirectory(converters)
 add_subdirectory(cryptography)
 add_subdirectory(interfaces)
 add_subdirectory(validators)
+add_subdirectory(execution)

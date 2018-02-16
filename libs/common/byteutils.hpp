@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <nonstd/optional.hpp>
 #include <string>
+
 #include "common/types.hpp"
 
 namespace iroha {

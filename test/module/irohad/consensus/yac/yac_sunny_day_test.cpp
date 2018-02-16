@@ -15,44 +15,38 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <utility>
+#include <gtest/gtest.h>
 #include <string>
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include <utility>
+
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "framework/test_subscriber.hpp"
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
-#include <vector>
-#include <iostream>
-
-using ::testing::Return;
 using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
+using ::testing::Return;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
 using namespace std;
 
 TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
-  cout << "-----------| Start => vote => propagate commit |-----------" << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order.has_value());
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(YacVoteStorage(),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -60,13 +54,12 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(0);
+  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
   YacHash my_hash("proposal_hash", "block_hash");
-  yac->vote(my_hash, my_order);
+  yac->vote(my_hash, my_order.value());
 
   for (auto i = 0; i < 3; ++i) {
     yac->on_vote(create_vote(my_hash, std::to_string(i)));
@@ -74,31 +67,24 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 }
 
 TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
-  cout << "-----------| Start => vote => receive commit |-----------" << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order.has_value());
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(YacVoteStorage(),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe([my_hash](auto val) {
-    ASSERT_EQ(my_hash, val.votes.at(0).hash);
-    cout << "catched" << endl;
-  });
+  wrapper.subscribe(
+      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -111,7 +97,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
-  yac->vote(my_hash, my_order);
+  yac->vote(my_hash, my_order.value());
 
   auto votes = std::vector<VoteMessage>();
 
@@ -123,33 +109,25 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
 }
 
 TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
-  cout << "-----------|Start => vote => receive commit twice|-----------"
-       << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order);
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
   EXPECT_CALL(*timer, deny()).Times(2);
 
-  yac = Yac::create(YacVoteStorage(),
-                    network,
-                    crypto,
-                    timer,
-                    my_order,
-                    delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe([my_hash](auto val) {
-    ASSERT_EQ(my_hash, val.votes.at(0).hash);
-    cout << "catched" << endl;
-  });
+  wrapper.subscribe(
+      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -160,7 +138,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
-  yac->vote(my_hash, my_order);
+  yac->vote(my_hash, my_order.value());
 
   auto votes = std::vector<VoteMessage>();
 
@@ -180,21 +158,18 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 }
 
 TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
-  cout << "-----------| Start => vote => propagate commit => receive commit "
-      "|-----------"
-       << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>({default_peers.at(0)});
   ASSERT_EQ(1, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order);
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(YacVoteStorage(), network, crypto, timer,
-                    my_order, delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -213,12 +188,10 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
   YacHash my_hash("proposal_hash", "block_hash");
 
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe([my_hash](auto val) {
-    ASSERT_EQ(my_hash, val.votes.at(0).hash);
-    cout << "catched" << endl;
-  });
+  wrapper.subscribe(
+      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
 
-  yac->vote(my_hash, my_order);
+  yac->vote(my_hash, my_order.value());
 
   auto vote_message = create_vote(my_hash, std::to_string(0));
 
@@ -232,21 +205,19 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 }
 
 TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
-  cout << "-----------| Start => receive commit => don't vote |-----------"
-       << endl;
-
   auto my_peers = std::vector<iroha::model::Peer>(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order);
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(YacVoteStorage(), network, crypto, timer,
-                    my_order, delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -269,5 +240,5 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
   };
   yac->on_commit(CommitMessage(votes));
 
-  yac->vote(my_hash, my_order);
+  yac->vote(my_hash, my_order.value());
 }

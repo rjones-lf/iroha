@@ -24,7 +24,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "parser/parser.hpp"
+
+namespace parser {
+  nonstd::optional<std::string> parseFirstCommand(std::string line);
+}
 
 namespace iroha_cli {
   namespace interactive {
@@ -67,7 +70,8 @@ namespace iroha_cli {
      * Return mapping of Command_name to parameters descriptions
      * @return Map with parameters of common commands
      */
-    ParamsMap getCommonParamsMap();
+    ParamsMap getCommonParamsMap(const std::string &default_ip,
+                                 int default_port);
 
     /**
      * Handle error with empty command
@@ -116,9 +120,9 @@ namespace iroha_cli {
     /**
      * Get string input from user
      * @param message Message to ask user
-     * @return user's input
+     * @return nullopt if termintaing symbol, else user's input
      */
-    std::string promtString(const std::string &message);
+    nonstd::optional<std::string> promptString(const std::string &message);
 
     /**
      * Parse parameters in interactive and shortcuted mode.
@@ -184,7 +188,9 @@ namespace iroha_cli {
      * @return pair if ip and port if formed right, nullopt otherwise
      */
     nonstd::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
-        std::vector<std::string> params);
+        std::vector<std::string> params,
+        const std::string &default_ip,
+        int default_port);
 
     /**
      * Handle parsing routine:

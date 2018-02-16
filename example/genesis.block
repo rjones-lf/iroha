@@ -1,7 +1,7 @@
 {
     "signatures": [],
     "created_ts": 0,
-    "hash": "bf6edb882d53f5532cb416455834878db7af08fb814f8c95d6867a6d9eea4057",
+    "hash": "ef9781aadf6d4d5ac8d01e14f7bbc805278ed9bb7200dafe8335bfc3a254e82b",
     "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
     "height": 1,
     "txs_number": 1,
@@ -14,57 +14,61 @@
             "commands": [
                 {
                     "command_type": "AddPeer",
-                    "address": "localhost:10001",
-                    "peer_key": "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
+                    "peer": {
+                        "address": "localhost:10001",
+                        "peer_key": "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
+                    }
                 },
                 {
                     "command_type": "CreateRole",
                     "role_name": "admin",
                     "permissions": [
-                        "CanAddPeer",
-                        "CanAddSignatory",
-                        "CanCreateAccount",
-                        "CanCreateDomain",
-                        "CanGetAllAccountAssets",
-                        "CanGetAllAccountAssetsTransactions",
-                        "CanGetAllAccountTransactions",
-                        "CanGetAllAccounts",
-                        "CanGetAllSignatories",
-                        "CanGetRoles",
-                        "CanReadAssets",
-                        "CanRemoveSignatory",
-                        "CanSetQuorum"
+                        "can_add_peer",
+                        "can_add_signatory",
+                        "can_create_account",
+                        "can_create_domain",
+                        "can_get_all_acc_ast",
+                        "can_get_all_acc_ast_txs",
+                        "can_get_all_acc_txs",
+                        "can_get_all_accounts",
+                        "can_get_all_signatories",
+                        "can_get_all_txs",
+                        "can_get_roles",
+                        "can_read_assets",
+                        "can_remove_signatory",
+                        "can_set_quorum"
                     ]
                 },
                 {
                     "command_type": "CreateRole",
                     "role_name": "user",
                     "permissions": [
-                        "CanAddSignatory",
-                        "CanGetMyAccount",
-                        "CanGetMyAccountAssets",
-                        "CanGetMyAccountAssetsTransactions",
-                        "CanGetMyAccountTransactions",
-                        "CanGetMySignatories",
-                        "CanGrantCanAddSignatory",
-                        "CanGrantCanRemoveSignatory",
-                        "CanGrantCanSetAccountInfo",
-                        "CanGrantCanSetQuorum",
-                        "CanGrantCanTransfer",
-                        "CanReceive",
-                        "CanRemoveSignatory",
-                        "CanSetQuorum",
-                        "CanTransfer"
+                        "can_add_signatory",
+                        "can_get_my_account",
+                        "can_get_my_acc_ast",
+                        "can_get_my_acc_ast_txs",
+                        "can_get_my_acc_txs",
+                        "can_get_my_signatories",
+                        "can_get_my_txs",
+                        "can_grant_can_add_signatory",
+                        "can_grant_can_remove_signatory",
+                        "can_grant_can_set_detail",
+                        "can_grant_can_set_quorum",
+                        "can_grant_can_transfer",
+                        "can_receive",
+                        "can_remove_signatory",
+                        "can_set_quorum",
+                        "can_transfer"
                     ]
                 },
                 {
                     "command_type": "CreateRole",
                     "role_name": "money_creator",
                     "permissions": [
-                        "CanAddAssetQuantity",
-                        "CanCreateAsset",
-                        "CanReceive",
-                        "CanTransfer"
+                        "can_add_asset_qty",
+                        "can_create_asset",
+                        "can_receive",
+                        "can_transfer"
                     ]
                 },
                 {

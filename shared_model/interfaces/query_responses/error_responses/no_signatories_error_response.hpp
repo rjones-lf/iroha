@@ -34,9 +34,12 @@ namespace shared_model {
         return "NoSignatoriesErrorResponse";
       }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::ErrorResponse::Reason oldModelReason() const override {
         return iroha::model::ErrorResponse::Reason::NO_SIGNATORIES;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -18,14 +18,13 @@
 #include "model/generators/block_generator.hpp"
 #include <chrono>
 #include <utility>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "model/sha3_hash.hpp"
 
 namespace iroha {
   namespace model {
     namespace generators {
       Block BlockGenerator::generateGenesisBlock(
-          ts64_t created_ts,
-          const std::vector<Transaction>& transactions) {
+          ts64_t created_ts, const std::vector<Transaction> &transactions) {
         Block block{};
         block.created_ts = created_ts;
         block.height = 1;

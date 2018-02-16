@@ -18,12 +18,9 @@
 #ifndef IROHA_YAC_HASH_PROVIDER_HPP
 #define IROHA_YAC_HASH_PROVIDER_HPP
 
-#include <functional>
 #include <string>
-#include <vector>
-#include "consensus/yac/cluster_order.hpp"
-#include "model/block.hpp"
-#include "model/peer.hpp"
+#include "model/block.hpp"      // for Block::HashType
+#include "model/signature.hpp"  // for model::Signature
 
 namespace iroha {
   namespace consensus {
@@ -33,8 +30,7 @@ namespace iroha {
        public:
         YacHash(std::string proposal, std::string block)
             : proposal_hash(std::move(proposal)),
-              block_hash(std::move(block)) {
-        }
+              block_hash(std::move(block)) {}
 
         YacHash() = default;
 
@@ -54,8 +50,8 @@ namespace iroha {
         model::Signature block_signature;
 
         bool operator==(const YacHash &obj) const {
-          return proposal_hash == obj.proposal_hash and
-              block_hash == obj.block_hash;
+          return proposal_hash == obj.proposal_hash
+              and block_hash == obj.block_hash;
         };
 
         bool operator!=(const YacHash &obj) const {

@@ -56,7 +56,9 @@ namespace shared_model {
         return proto_->json_data();
       }
 
-      const BlobType &blob() const override { return *blob_; }
+      const BlobType &blob() const override {
+        return *blob_;
+      }
 
      private:
       template <typename T>

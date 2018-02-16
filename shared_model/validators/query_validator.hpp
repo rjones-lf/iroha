@@ -70,9 +70,8 @@ namespace shared_model {
       }
 
       ReasonsGroupType operator()(
-          const detail::
-              PolymorphicWrapper<interface::GetAccountAssetTransactions> &qry)
-          const {
+          const detail::PolymorphicWrapper<
+              interface::GetAccountAssetTransactions> &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccountAssetTransactions";
 
@@ -103,8 +102,8 @@ namespace shared_model {
         return reason;
       }
 
-      ReasonsGroupType operator()
-          (const detail::PolymorphicWrapper<interface::GetAccountDetail> &qry)
+      ReasonsGroupType operator()(
+          const detail::PolymorphicWrapper<interface::GetAccountDetail> &qry)
           const {
         ReasonsGroupType reason;
         reason.first = "GetAccountDetail";

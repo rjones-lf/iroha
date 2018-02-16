@@ -17,7 +17,6 @@
 
 #include "model/converters/pb_query_factory.hpp"
 #include <queries.pb.h>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
@@ -137,7 +136,7 @@ namespace iroha {
             }
             case Query_Payload::QueryCase::kGetRolePermissions: {
               const auto &pb_cast = pl.get_role_permissions();
-              val = std::make_shared <GetRolePermissions>(pb_cast.role_id());
+              val = std::make_shared<GetRolePermissions>(pb_cast.role_id());
               break;
             }
             default: {
@@ -207,12 +206,12 @@ namespace iroha {
       }
 
       protocol::Query PbQueryFactory::serializeGetAccountDetail(
-        std::shared_ptr<const Query> query) const {
+          std::shared_ptr<const Query> query) const {
         protocol::Query pb_query;
         serializeQueryMetaData(pb_query, query);
         auto tmp = std::static_pointer_cast<const GetAccountDetail>(query);
         auto pb_query_mut =
-          pb_query.mutable_payload()->mutable_get_account_detail();
+            pb_query.mutable_payload()->mutable_get_account_detail();
         pb_query_mut->set_account_id(tmp->account_id);
         pb_query_mut->set_detail(tmp->detail);
         return pb_query;
@@ -251,7 +250,7 @@ namespace iroha {
         serializeQueryMetaData(pb_query, query);
         auto tmp = std::static_pointer_cast<const GetTransactions>(query);
         auto pb_query_mut =
-          pb_query.mutable_payload()->mutable_get_transactions();
+            pb_query.mutable_payload()->mutable_get_transactions();
         std::for_each(tmp->tx_hashes.begin(),
                       tmp->tx_hashes.end(),
                       [&pb_query_mut](auto tx_hash) {

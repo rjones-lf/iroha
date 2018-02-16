@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,55 +15,75 @@
  * limitations under the License.
  */
 
-#include "interfaces/base/hashable.hpp"
-#include "interfaces/transaction.hpp"
-#include "model/proposal.hpp"
-#include "utils/string_builder.hpp"
-
 #ifndef IROHA_SHARED_MODEL_PROPOSAL_HPP
 #define IROHA_SHARED_MODEL_PROPOSAL_HPP
+
+#include <boost/range/numeric.hpp>
+#include <vector>
+#include "interfaces/base/primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
+#include "interfaces/transaction.hpp"
+#include "utils/polymorphic_wrapper.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/proposal.hpp"
+#endif
+
 namespace shared_model {
   namespace interface {
 
-    class Proposal : public Hashable<Proposal, iroha::model::Proposal> {
-      /// Type of a single Transaction
-      using TransactionType = detail::PolymorphicWrapper<Transaction>;
-
-      /// Type of proposal transactions' collection
-      using TransactionsCollectionType = std::vector<TransactionType>;
-
-      /**
-       * @return collection of proposal's transactions
-       */
-      virtual const TransactionsCollectionType &transactions() const = 0;
+    class Proposal : public HASHABLE(Proposal) {
+     public:
+      template <class T>
+      using w = detail::PolymorphicWrapper<T>;
+      using TransactionContainer = std::vector<w<interface::Transaction>>;
 
       /**
-       * @return number of proposal
+       * @return transactions
        */
-      virtual types::HeightType &height() const = 0;
+      virtual const std::vector<w<Transaction>> &transactions() const = 0;
 
+      /**
+       * @return the height
+       */
+      virtual types::HeightType height() const = 0;
+
+      /**
+       * @return created time
+       */
+      virtual types::TimestampType created_time() const = 0;
+
+#ifndef DISABLE_BACKWARD
       iroha::model::Proposal *makeOldModel() const override {
-        std::vector<iroha::model::Transaction> txs;
-        std::for_each(
-            transactions().begin(), transactions().end(), [&txs](auto &tx) {
-              txs.emplace_back(*tx->makeOldModel());
-            });
-        iroha::model::Proposal *oldStyleProposal =
-            new iroha::model::Proposal(txs);
-        oldStyleProposal->height = height();
-        return oldStyleProposal;
+        auto txs =
+            boost::accumulate(transactions(),
+                              std::vector<iroha::model::Transaction>{},
+                              [](auto &&vec, const auto &tx) {
+                                std::unique_ptr<iroha::model::Transaction> ptr(
+                                    tx->makeOldModel());
+                                vec.emplace_back(*ptr);
+                                return std::forward<decltype(vec)>(vec);
+                              });
+
+        auto oldModel = new iroha::model::Proposal(txs);
+        oldModel->height = height();
+        return oldModel;
       }
+#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Proposal")
             .append("height", std::to_string(height()))
             .append("transactions")
-            .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
+            .appendAll(
+                transactions(),
+                [](auto &transaction) { return transaction->toString(); })
             .finalize();
       }
     };
 
   }  // namespace interface
 }  // namespace shared_model
+
 #endif  // IROHA_SHARED_MODEL_PROPOSAL_HPP

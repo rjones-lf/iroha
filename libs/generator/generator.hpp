@@ -19,6 +19,7 @@
 #define IROHA_GENERATOR_HPP
 
 #include <algorithm>
+
 #include "common/types.hpp"
 
 namespace generator {
@@ -27,8 +28,6 @@ namespace generator {
    * returns a number in a range [min, max)
    */
   int64_t random_number(int64_t min, int64_t max);
-
-  uint8_t random_printable_char();
 
   template <size_t size_>
   iroha::blob_t<size_> random_blob(size_t seed) {

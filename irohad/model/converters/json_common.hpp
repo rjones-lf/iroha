@@ -32,8 +32,8 @@
 #include "common/byteutils.hpp"
 #include "model/block.hpp"
 #include "model/common.hpp"
-#include "model/signature.hpp"
 #include "model/queries/get_transactions.hpp"
+#include "model/signature.hpp"
 
 namespace iroha {
   namespace model {
@@ -107,9 +107,12 @@ namespace iroha {
          * @return function, which takes block, returns block with deserialized
          * member on success, nullopt otherwise
          */
-        template <typename T, typename V, typename B,
+        template <typename T,
+                  typename V,
+                  typename B,
                   typename Convert = Convert<V>>
-        auto deserialize(V B::*member, const std::string &field,
+        auto deserialize(V B::*member,
+                         const std::string &field,
                          Convert transform = Convert()) {
           return [this, member, field, transform](auto block) {
             return deserializeField<T>(document, field) | transform
@@ -190,10 +193,11 @@ namespace iroha {
          * @return @see deserialize
          */
         template <typename V, typename B, typename Convert = Convert<V>>
-        auto Array(V B::*member, const std::string &field,
+        auto Array(V B::*member,
+                   const std::string &field,
                    Convert transform = Convert()) {
-          return deserialize<rapidjson::Value::ConstArray>(member, field,
-                                                           transform);
+          return deserialize<rapidjson::Value::ConstArray>(
+              member, field, transform);
         }
 
         /**
@@ -205,10 +209,11 @@ namespace iroha {
          * @return @see deserialize
          */
         template <typename V, typename B, typename Convert = Convert<V>>
-        auto Object(V B::*member, const std::string &field,
+        auto Object(V B::*member,
+                    const std::string &field,
                     Convert transform = Convert()) {
-          return deserialize<rapidjson::Value::ConstObject>(member, field,
-                                                            transform);
+          return deserialize<rapidjson::Value::ConstObject>(
+              member, field, transform);
         }
 
         // document for deserialization
@@ -249,7 +254,8 @@ namespace iroha {
               };
             };
           };
-          return std::accumulate(x.begin(), x.end(),
+          return std::accumulate(x.begin(),
+                                 x.end(),
                                  nonstd::make_optional<Block::SignaturesType>(),
                                  acc_signatures);
         }
@@ -261,14 +267,14 @@ namespace iroha {
         auto operator()(T &&x) {
           auto acc_hashes = [](auto init, auto &x) {
             return init | [&x](auto tx_hashes)
-              -> nonstd::optional<GetTransactions::TxHashCollectionType>
-            {
+                       -> nonstd::optional<
+                           GetTransactions::TxHashCollectionType> {
               // If invalid type included, returns nullopt
               if (not x.IsString()) {
                 return nonstd::nullopt;
               }
               auto tx_hash_opt =
-                Convert<GetTransactions::TxHashType>()(x.GetString());
+                  Convert<GetTransactions::TxHashType>()(x.GetString());
               if (not tx_hash_opt) {
                 // If the the hash is wrong, just skip.
                 return nonstd::make_optional(tx_hashes);
@@ -280,10 +286,10 @@ namespace iroha {
             };
           };
           return std::accumulate(
-            x.begin(),
-            x.end(),
-            nonstd::make_optional<GetTransactions::TxHashCollectionType>(),
-            acc_hashes);
+              x.begin(),
+              x.end(),
+              nonstd::make_optional<GetTransactions::TxHashCollectionType>(),
+              acc_hashes);
         }
       };
 

@@ -18,10 +18,6 @@
 #ifndef IROHA_COMMAND_HPP
 #define IROHA_COMMAND_HPP
 
-#include <ametsuchi/wsv_command.hpp>
-#include <ametsuchi/wsv_query.hpp>
-#include <model/account.hpp>
-
 namespace iroha {
   namespace model {
     /**
@@ -30,9 +26,9 @@ namespace iroha {
     struct Command {
       virtual ~Command() = default;
 
-      virtual bool operator==(const Command& rhs) const = 0;
+      virtual bool operator==(const Command &rhs) const = 0;
 
-      virtual bool operator!=(const Command& rhs) const;
+      virtual bool operator!=(const Command &rhs) const;
     };
   }  // namespace model
 }  // namespace iroha

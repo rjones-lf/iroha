@@ -23,6 +23,7 @@
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
+#include "logger/logger.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 
 namespace iroha {
@@ -69,8 +70,13 @@ namespace iroha {
 
       std::shared_ptr<ordering::OrderingServiceImpl> ordering_service;
       std::shared_ptr<ordering::OrderingGateImpl> ordering_gate;
-      std::shared_ptr<ordering::OrderingGateTransportGrpc> ordering_gate_transport;
-      std::shared_ptr<ordering::OrderingServiceTransportGrpc> ordering_service_transport;
+      std::shared_ptr<ordering::OrderingGateTransportGrpc>
+          ordering_gate_transport;
+      std::shared_ptr<ordering::OrderingServiceTransportGrpc>
+          ordering_service_transport;
+
+     protected:
+      logger::Logger log_ = logger::log("OrderingInit");
     };
   }  // namespace network
 }  // namespace iroha

@@ -11,12 +11,12 @@ find_package_handle_standard_args(ed25519 DEFAULT_MSG
     ed25519_LIBRARY
     )
 
-set(URL https://github.com/warchant/ed25519.git)
-set(VERSION 56d926c4489aa7b2bb664a48294c5ee2d6e1c283)
+set(URL https://github.com/hyperledger/iroha-ed25519)
+set(VERSION e7188b8393dbe5ac54378610d53630bd4a180038)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
 if (NOT ed25519_FOUND)
-  externalproject_add(warchant_ed25519
+  externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
@@ -24,14 +24,14 @@ if (NOT ed25519_FOUND)
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step
       )
-  externalproject_get_property(warchant_ed25519 binary_dir)
-  externalproject_get_property(warchant_ed25519 source_dir)
+  externalproject_get_property(hyperledger_ed25519 binary_dir)
+  externalproject_get_property(hyperledger_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
   set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
   link_directories(${binary_dir})
 
-  add_dependencies(ed25519 warchant_ed25519)
+  add_dependencies(ed25519 hyperledger_ed25519)
 endif ()
 
 set_target_properties(ed25519 PROPERTIES

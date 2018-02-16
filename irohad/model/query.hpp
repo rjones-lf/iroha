@@ -35,9 +35,9 @@ namespace iroha {
       Signature signature{};
 
       /**
-      * Account id of transaction creator.
-      *
-      */
+       * Account id of transaction creator.
+       *
+       */
       std::string creator_account_id{};
 
       /**

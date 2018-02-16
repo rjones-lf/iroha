@@ -49,7 +49,7 @@ namespace shared_model {
 
     Keypair CryptoProviderEd25519Sha3::generateKeypair(const Seed &seed) {
       auto keypair =
-          iroha::create_keypair(seed.makeOldModel<Seed::OldSeedType>());
+          iroha::create_keypair(iroha::blob_t<32>::from_string(toBinaryString(seed)));
       return Keypair(PublicKey(keypair.pubkey.to_string()),
                      PrivateKey(keypair.privkey.to_string()));
     }

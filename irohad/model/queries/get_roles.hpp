@@ -26,16 +26,16 @@ namespace iroha {
      * Get all roles in the current system
      */
     struct GetRoles : Query {
-      GetRoles(){}
+      GetRoles() {}
     };
 
     /**
      * Get all permissions related to specific role
      */
     struct GetRolePermissions : Query {
-      GetRolePermissions(){}
+      GetRolePermissions() {}
 
-      GetRolePermissions(std::string role_id): role_id(role_id) {}
+      GetRolePermissions(std::string role_id) : role_id(role_id) {}
       /**
        * Role to query
        */

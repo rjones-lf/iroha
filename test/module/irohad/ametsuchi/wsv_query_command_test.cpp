@@ -17,6 +17,11 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+#include "model/account.hpp"
+#include "model/asset.hpp"
+#include "model/domain.hpp"
+#include "model/peer.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
 namespace iroha {
@@ -59,69 +64,6 @@ namespace iroha {
 
       std::unique_ptr<WsvCommand> command;
       std::unique_ptr<WsvQuery> query;
-
-      const std::string init_ = R"(
-CREATE TABLE IF NOT EXISTS role (
-    role_id character varying(45),
-    PRIMARY KEY (role_id)
-);
-CREATE TABLE IF NOT EXISTS domain (
-    domain_id character varying(164),
-    default_role character varying(45) NOT NULL REFERENCES role(role_id),
-    PRIMARY KEY (domain_id)
-);
-CREATE TABLE IF NOT EXISTS signatory (
-    public_key bytea NOT NULL,
-    PRIMARY KEY (public_key)
-);
-CREATE TABLE IF NOT EXISTS account (
-    account_id character varying(197),
-    domain_id character varying(164) NOT NULL REFERENCES domain,
-    quorum int NOT NULL,
-    transaction_count int NOT NULL DEFAULT 0,
-    data JSONB,
-    PRIMARY KEY (account_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_signatory (
-    account_id character varying(197) NOT NULL REFERENCES account,
-    public_key bytea NOT NULL REFERENCES signatory,
-    PRIMARY KEY (account_id, public_key)
-);
-CREATE TABLE IF NOT EXISTS peer (
-    public_key bytea NOT NULL,
-    address character varying(21) NOT NULL UNIQUE,
-    PRIMARY KEY (public_key)
-);
-CREATE TABLE IF NOT EXISTS asset (
-    asset_id character varying(197),
-    domain_id character varying(164) NOT NULL REFERENCES domain,
-    precision int NOT NULL,
-    data json,
-    PRIMARY KEY (asset_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_asset (
-    account_id character varying(197) NOT NULL REFERENCES account,
-    asset_id character varying(197) NOT NULL REFERENCES asset,
-    amount bigint NOT NULL,
-    PRIMARY KEY (account_id, asset_id)
-);
-CREATE TABLE IF NOT EXISTS role_has_permissions (
-    role_id character varying(45) NOT NULL REFERENCES role,
-    permission_id character varying(45),
-    PRIMARY KEY (role_id, permission_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_roles (
-    account_id character varying(197) NOT NULL REFERENCES account,
-    role_id character varying(45) NOT NULL REFERENCES role,
-    PRIMARY KEY (account_id, role_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
-    permittee_account_id character varying(197) NOT NULL REFERENCES account,
-    account_id character varying(197) NOT NULL REFERENCES account,
-    permission_id character varying(45),
-    PRIMARY KEY (permittee_account_id, account_id, permission_id)
-);
-)";
     };
 
     class RoleTest : public WsvQueryCommandTest {};
@@ -171,7 +113,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_TRUE(command->insertRole(role));
-        ASSERT_TRUE(command->insertDomain(domain));
+        ASSERT_TRUE(
+            command->insertDomain(shared_model::proto::from_old(domain)));
       }
     };
 
@@ -181,7 +124,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertAccountWithJSONData) {
-      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->insertAccount(shared_model::proto::from_old(account)));
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
       ASSERT_EQ(account.json_data, acc.value().json_data);
@@ -193,7 +137,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewJSONDataAccount) {
-      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->insertAccount(shared_model::proto::from_old(account)));
       ASSERT_TRUE(command->setAccountKV(
           account.account_id, account.account_id, "id", "val"));
       auto acc = query->getAccount(account.account_id);
@@ -208,7 +153,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewJSONDataToOtherAccount) {
-      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->insertAccount(shared_model::proto::from_old(account)));
       ASSERT_TRUE(
           command->setAccountKV(account.account_id, "admin", "id", "val"));
       auto acc = query->getAccount(account.account_id);
@@ -223,7 +169,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewComplexJSONDataAccount) {
-      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->insertAccount(shared_model::proto::from_old(account)));
       ASSERT_TRUE(command->setAccountKV(
           account.account_id, account.account_id, "id", "[val1, val2]"));
       auto acc = query->getAccount(account.account_id);
@@ -238,7 +185,8 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, UpdateAccountJSONData) {
-      ASSERT_TRUE(command->insertAccount(account));
+      ASSERT_TRUE(
+          command->insertAccount(shared_model::proto::from_old(account)));
       ASSERT_TRUE(command->setAccountKV(
           account.account_id, account.account_id, "key", "val2"));
       auto acc = query->getAccount(account.account_id);
@@ -246,12 +194,33 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       ASSERT_EQ(R"({"id@domain": {"key": "val2"}})", acc.value().json_data);
     }
 
+    /**
+     * @given database without needed account
+     * @when performing query to retrieve non-existent account
+     * @then getAccount will return nullopt
+     */
+    TEST_F(AccountTest, GetAccountInvalidWhenNotFound) {
+      EXPECT_FALSE(query->getAccount("invalid account id"));
+    }
+
+    /**
+     * @given database without needed account
+     * @when performing query to retrieve non-existent account's details
+     * @then getAccountDetail will return nullopt
+     */
+    TEST_F(AccountTest, GetAccountDetailInvalidWhenNotFound) {
+      EXPECT_FALSE(query->getAccountDetail(
+          "invalid account id", "invalid_creator", "invalid_detail"));
+    }
+
     class AccountRoleTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_TRUE(command->insertRole(role));
-        ASSERT_TRUE(command->insertDomain(domain));
-        ASSERT_TRUE(command->insertAccount(account));
+        ASSERT_TRUE(
+            command->insertDomain(shared_model::proto::from_old(domain)));
+        ASSERT_TRUE(
+            command->insertAccount(shared_model::proto::from_old(account)));
       }
     };
 
@@ -332,9 +301,12 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_TRUE(command->insertRole(role));
-        ASSERT_TRUE(command->insertDomain(domain));
-        ASSERT_TRUE(command->insertAccount(account));
-        ASSERT_TRUE(command->insertAccount(permittee_account));
+        ASSERT_TRUE(
+            command->insertDomain(shared_model::proto::from_old(domain)));
+        ASSERT_TRUE(
+            command->insertAccount(shared_model::proto::from_old(account)));
+        ASSERT_TRUE(command->insertAccount(
+            shared_model::proto::from_old(permittee_account)));
       }
 
       model::Account permittee_account;
@@ -376,6 +348,80 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
           permittee_account.account_id, account.account_id, permission));
+    }
+
+    class DeletePeerTest : public WsvQueryCommandTest {
+     public:
+      DeletePeerTest() {
+        peer = model::Peer();
+      }
+
+      void SetUp() override {
+        WsvQueryCommandTest::SetUp();
+      }
+      model::Peer peer;
+    };
+
+    /**
+     * @given storage with peer
+     * @when trying to delete existing peer
+     * @then peer is successfully deleted
+     */
+    TEST_F(DeletePeerTest, DeletePeerValidWhenPeerExists) {
+      ASSERT_TRUE(command->insertPeer(shared_model::proto::from_old(peer)));
+
+      EXPECT_TRUE(command->deletePeer(shared_model::proto::from_old(peer)));
+    }
+
+    class GetAssetTest : public WsvQueryCommandTest {};
+
+    /**
+     * @given database without needed asset
+     * @when performing query to retrieve non-existent asset
+     * @then getAsset will return nullopt
+     */
+    TEST_F(GetAssetTest, GetAssetInvalidWhenAssetDoesNotExist) {
+      EXPECT_FALSE(query->getAsset("invalid asset"));
+    }
+
+    class GetDomainTest : public WsvQueryCommandTest {};
+
+    /**
+     * @given database without needed domain
+     * @when performing query to retrieve non-existent asset
+     * @then getAsset will return nullopt
+     */
+    TEST_F(GetDomainTest, GetDomainInvalidWhenDomainDoesNotExist) {
+      EXPECT_FALSE(query->getDomain("invalid domain"));
+    }
+
+    // Since mocking database is not currently possible, use SetUp to create
+    // invalid database
+    class DatabaseInvalidTest : public WsvQueryCommandTest {
+      // skip database setup
+      void SetUp() override {
+        AmetsuchiTest::SetUp();
+        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
+        try {
+          postgres_connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
+        wsv_transaction =
+            std::make_unique<pqxx::nontransaction>(*postgres_connection);
+
+        command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
+        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+      }
+    };
+
+    /**
+     * @given not set up database
+     * @when performing query to retrieve information from nonexisting tables
+     * @then query will return nullopt
+     */
+    TEST_F(DatabaseInvalidTest, QueryInvalidWhenDatabaseInvalid) {
+      EXPECT_FALSE(query->getAccount("some account"));
     }
   }  // namespace ametsuchi
 }  // namespace iroha

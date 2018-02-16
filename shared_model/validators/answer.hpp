@@ -36,7 +36,9 @@ namespace shared_model {
      */
     class Answer {
      public:
-      operator bool() const { return not reasons_map_.empty(); }
+      operator bool() const {
+        return not reasons_map_.empty();
+      }
 
       /**
        * @return string representation of errors
@@ -50,7 +52,8 @@ namespace shared_model {
                          .init(command_reasons.first)
                          .appendAll(command_reasons.second,
                                     [](auto &element) { return element; })
-                         .finalize() + "\n";
+                         .finalize()
+                  + "\n";
               return std::forward<decltype(acc)>(acc);
             });
       }
@@ -59,7 +62,9 @@ namespace shared_model {
        * Check if any error has been recorded to the answer
        * @return true if there are any errors, false otherwise
        */
-      bool hasErrors() { return not reasons_map_.empty(); }
+      bool hasErrors() {
+        return not reasons_map_.empty();
+      }
 
       /**
        * Adds error to map
@@ -69,7 +74,7 @@ namespace shared_model {
         reasons_map_.insert(std::move(reasons));
       }
 
-      std::map<ReasonsGroupName, GroupedReasons> getReasonsMap(){
+      std::map<ReasonsGroupName, GroupedReasons> getReasonsMap() {
         return reasons_map_;
       };
 

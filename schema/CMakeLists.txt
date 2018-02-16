@@ -16,6 +16,7 @@
 #
 
 compile_proto_to_cpp(block.proto)
+compile_proto_to_cpp(proposal.proto)
 compile_proto_to_cpp(primitive.proto)
 compile_proto_to_cpp(commands.proto)
 compile_proto_to_cpp(queries.proto)
@@ -32,6 +33,7 @@ add_library(schema
     queries.pb.cc
     responses.pb.cc
     endpoint.pb.cc
+    proposal.pb.cc
     )
 target_link_libraries(schema
     protobuf

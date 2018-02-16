@@ -26,11 +26,11 @@ namespace shared_model {
     /**
      * Initialize protobuf Amout by text number representation
      * @param proto is Amount that is being set
-     * @param name is string representation of Amount
+     * @param str_amount is string representation of Amount
      */
-    static inline void addAmount(iroha::protocol::Amount *proto,
-                                 const std::string &name) {
-      iroha::Amount::createFromString(name) | [proto](auto &&amount) {
+    static inline void initializeProtobufAmount(iroha::protocol::Amount *proto,
+                                 const std::string &str_amount) {
+      iroha::Amount::createFromString(str_amount) | [proto](auto &&amount) {
         auto proto_value = proto->mutable_value();
         auto uint64s = amount.to_uint64s();
         proto_value->set_first(uint64s.at(0));

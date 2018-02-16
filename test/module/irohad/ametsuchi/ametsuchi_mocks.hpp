@@ -27,8 +27,15 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "model/account.hpp"
+#include "model/account_asset.hpp"
+#include "model/asset.hpp"
+#include "model/domain.hpp"
+#include "model/peer.hpp"
 
 #include <boost/optional.hpp>
+
+#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -90,24 +97,31 @@ namespace iroha {
                    bool(const std::string &permittee_account_id,
                         const std::string &account_id,
                         const std::string &permission_id));
-      MOCK_METHOD1(insertAccount, bool(const model::Account &));
-      MOCK_METHOD1(updateAccount, bool(const model::Account &));
-      MOCK_METHOD1(insertAsset, bool(const model::Asset &));
-      MOCK_METHOD1(upsertAccountAsset, bool(const model::AccountAsset &));
-      MOCK_METHOD1(insertSignatory, bool(const pubkey_t &));
-      MOCK_METHOD1(deleteSignatory, bool(const pubkey_t &));
+      MOCK_METHOD1(insertAccount,
+                   bool(const shared_model::interface::Account &));
+      MOCK_METHOD1(updateAccount,
+                   bool(const shared_model::interface::Account &));
+      MOCK_METHOD1(insertAsset, bool(const shared_model::interface::Asset &));
+      MOCK_METHOD1(upsertAccountAsset,
+                   bool(const shared_model::interface::AccountAsset &));
+      MOCK_METHOD1(insertSignatory,
+                   bool(const shared_model::crypto::PublicKey &));
+      MOCK_METHOD1(deleteSignatory,
+                   bool(const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(insertAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   bool(const std::string &,
+                        const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(deleteAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   bool(const std::string &,
+                        const shared_model::crypto::PublicKey &));
 
-      MOCK_METHOD1(insertPeer, bool(const model::Peer &));
+      MOCK_METHOD1(insertPeer, bool(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(deletePeer, bool(const model::Peer &));
+      MOCK_METHOD1(deletePeer, bool(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(insertDomain, bool(const model::Domain &));
+      MOCK_METHOD1(insertDomain, bool(const shared_model::interface::Domain &));
       MOCK_METHOD4(setAccountKV,
                    bool(const std::string &,
                         const std::string &,
@@ -138,7 +152,9 @@ namespace iroha {
 
     class MockTemporaryFactory : public TemporaryFactory {
      public:
-      MOCK_METHOD0(createTemporaryWsv, std::unique_ptr<TemporaryWsv>());
+      MOCK_METHOD0(
+          createTemporaryWsv,
+          expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
     };
 
     class MockMutableStorage : public MutableStorage {
@@ -153,15 +169,18 @@ namespace iroha {
     /**
      * Factory for generation mock mutable storages.
      * This method provide technique,
-     * when required to return object wrapped in unique pointer.
+     * when required to return object wrapped in Result.
      */
-    std::unique_ptr<MutableStorage> createMockMutableStorage() {
-      return std::make_unique<MockMutableStorage>();
+    expected::Result<std::unique_ptr<MutableStorage>, std::string>
+    createMockMutableStorage() {
+      return expected::makeValue<std::unique_ptr<MutableStorage>>(std::make_unique<MockMutableStorage>());
     }
 
     class MockMutableFactory : public MutableFactory {
      public:
-      MOCK_METHOD0(createMutableStorage, std::unique_ptr<MutableStorage>());
+      MOCK_METHOD0(
+          createMutableStorage,
+          expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override {
         // gmock workaround for non-copyable parameters
@@ -183,8 +202,12 @@ namespace iroha {
      public:
       MOCK_CONST_METHOD0(getWsvQuery, std::shared_ptr<WsvQuery>(void));
       MOCK_CONST_METHOD0(getBlockQuery, std::shared_ptr<BlockQuery>(void));
-      MOCK_METHOD0(createTemporaryWsv, std::unique_ptr<TemporaryWsv>(void));
-      MOCK_METHOD0(createMutableStorage, std::unique_ptr<MutableStorage>(void));
+      MOCK_METHOD0(
+          createTemporaryWsv,
+          expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
+      MOCK_METHOD0(
+          createMutableStorage,
+          expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(model::Block block));
       MOCK_METHOD0(dropStorage, void(void));

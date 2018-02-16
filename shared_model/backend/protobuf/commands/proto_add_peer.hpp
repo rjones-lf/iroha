@@ -18,7 +18,9 @@
 #ifndef IROHA_PROTO_ADD_PEER_HPP
 #define IROHA_PROTO_ADD_PEER_HPP
 
+#include "backend/protobuf/common_objects/peer.hpp"
 #include "interfaces/commands/add_peer.hpp"
+#include "interfaces/common_objects/peer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -30,23 +32,16 @@ namespace shared_model {
       template <typename CommandType>
       explicit AddPeer(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            add_peer_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::add_peer)),
-            pubkey_([this] {
-              return interface::types::PubkeyType(add_peer_->peer_key());
-            }) {}
+            add_peer_(proto_->add_peer()),
+            peer_([this] { return proto::Peer(add_peer_.peer()); }) {}
+
 
       AddPeer(const AddPeer &o) : AddPeer(o.proto_) {}
 
-      AddPeer(AddPeer &&o) noexcept
-          : AddPeer(std::move(o.proto_)) {}
+      AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(o.proto_)) {}
 
-      const AddressType &peerAddress() const override {
-        return add_peer_->address();
-      }
-
-      const interface::types::PubkeyType &peerKey() const override {
-        return *pubkey_;
+      const interface::Peer &peer() const override {
+        return *peer_;
       }
 
      private:
@@ -54,8 +49,8 @@ namespace shared_model {
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const Lazy<const iroha::protocol::AddPeer &> add_peer_;
-      const Lazy<interface::types::PubkeyType> pubkey_;
+      const iroha::protocol::AddPeer &add_peer_;
+      const Lazy<proto::Peer> peer_;
     };
   }  // namespace proto
 }  // namespace shared_model

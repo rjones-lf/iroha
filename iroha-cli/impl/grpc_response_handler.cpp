@@ -16,6 +16,7 @@
  */
 
 #include "grpc_response_handler.hpp"
+#include "logger/logger.hpp"
 
 using namespace grpc;
 namespace iroha_cli {
@@ -34,7 +35,6 @@ namespace iroha_cli {
     handler_map_[FAILED_PRECONDITION] = "FAILED_PRECONDITION";
     handler_map_[ABORTED] = "ABORTED";
     handler_map_[OUT_OF_RANGE] = "OUT_OF_RANGE";
-    handler_map_[UNIMPLEMENTED] = "UNIMPLEMENTED";
     handler_map_[INTERNAL] = "INTERNAL";
     handler_map_[UNIMPLEMENTED] = "UNIMPLEMENTED";
     handler_map_[UNAVAILABLE] = "Server is unavailable";

@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 
+#include "framework/test_block_generator.hpp"
 #include <chrono>
 #include <model/commands/create_role.hpp>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "framework/test_block_generator.hpp"
 #include "model/commands/add_peer.hpp"
-#include "model/commands/create_domain.hpp"
-#include "model/commands/create_asset.hpp"
 #include "model/commands/create_account.hpp"
-#include "model/commands/create_role.hpp"
+#include "model/commands/create_asset.hpp"
+#include "model/commands/create_domain.hpp"
 #include "model/permissions.hpp"
+#include "model/sha3_hash.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -39,8 +38,8 @@ namespace framework {
       transaction.signatures = {sign};
 
       auto add_peer = std::make_shared<AddPeer>();
-      add_peer->address = address;
-      add_peer->peer_key = {};
+      add_peer->peer.address = address;
+      add_peer->peer.pubkey = {};
 
       transaction.commands = {add_peer};
       return transaction;
@@ -71,8 +70,8 @@ namespace framework {
       create_acc->domain_id = "test";
       create_acc->account_name = "test";
 
-      transaction.commands =
-          {create_domain, create_asset, create_admin, create_acc};
+      transaction.commands = {
+          create_domain, create_asset, create_admin, create_acc};
       return transaction;
     }
 
@@ -97,5 +96,5 @@ namespace framework {
       block.hash = hash(block);
       return block;
     }
-  } // namespace generator
-} // namespace framework
+  }  // namespace generator
+}  // namespace framework

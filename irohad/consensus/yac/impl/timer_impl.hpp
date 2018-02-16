@@ -18,8 +18,8 @@
 #ifndef IROHA_TIMER_IMPL_HPP
 #define IROHA_TIMER_IMPL_HPP
 
-#include "consensus/yac/timer.hpp"
 #include <rxcpp/rx.hpp>
+#include "consensus/yac/timer.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -27,8 +27,8 @@ namespace iroha {
       class TimerImpl : public Timer {
        public:
         TimerImpl() = default;
-        TimerImpl(const TimerImpl&) = delete;
-        TimerImpl& operator=(const TimerImpl&) = delete;
+        TimerImpl(const TimerImpl &) = delete;
+        TimerImpl &operator=(const TimerImpl &) = delete;
 
         void invokeAfterDelay(uint64_t millis,
                               std::function<void()> handler) override;

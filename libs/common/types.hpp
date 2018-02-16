@@ -21,14 +21,12 @@
 #include <array>
 #include <cstdio>
 #include <iomanip>
+#include <nonstd/optional.hpp>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 #include <type_traits>
+#include <typeinfo>
 #include <vector>
-
-#include <nonstd/optional.hpp>
-#include "crypto/base64.hpp"
 
 /**
  * This file defines common types used in iroha.
@@ -43,8 +41,22 @@ namespace iroha {
   using BadFormatException = std::invalid_argument;
   using byte_t = uint8_t;
 
-  static const std::string code = {'0', '1', '2', '3', '4', '5', '6', '7',
-                                   '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+  static const std::string code = {'0',
+                                   '1',
+                                   '2',
+                                   '3',
+                                   '4',
+                                   '5',
+                                   '6',
+                                   '7',
+                                   '8',
+                                   '9',
+                                   'a',
+                                   'b',
+                                   'c',
+                                   'd',
+                                   'e',
+                                   'f'};
 
   /**
    * Base type which represents blob of fixed size.
@@ -57,29 +69,25 @@ namespace iroha {
   template <size_t size_>
   class blob_t : public std::array<byte_t, size_> {
    public:
-
     /**
      * Initialize blob value
      */
-    blob_t() { this->fill(0); }
+    blob_t() {
+      this->fill(0);
+    }
 
     /**
      * In compile-time returns size of current blob.
      */
-    constexpr static size_t size() { return size_; }
+    constexpr static size_t size() {
+      return size_;
+    }
 
     /**
      * Converts current blob to std::string
      */
     std::string to_string() const noexcept {
       return std::string{this->begin(), this->end()};
-    }
-
-    /**
-     * Converts current blob to base64, represented as std::string
-     */
-    std::string to_base64() const noexcept {
-      return base64_encode(this->data(), size_);
     }
 
     /**
@@ -175,9 +183,8 @@ namespace iroha {
    * @return monadic value, which can be of another type
    */
   template <typename T, typename Transform>
-  auto operator|(T t, Transform f) ->
-      typename std::enable_if<std::is_same<decltype(f(*t)),
-                                           void>::value>::type {
+  auto operator|(T t, Transform f) -> typename std::
+      enable_if<std::is_same<decltype(f(*t)), void>::value>::type {
     if (t) {
       f(*t);
     }
@@ -221,9 +228,7 @@ namespace iroha {
    */
   template <typename T, typename... Args>
   auto makeMethodInvoke(T &object, Args &&... args) {
-    return [&](auto f) {
-      return (object.*f)(std::forward<Args>(args)...);
-    };
+    return [&](auto f) { return (object.*f)(std::forward<Args>(args)...); };
   }
 
   /**

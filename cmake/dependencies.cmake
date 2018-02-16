@@ -45,11 +45,6 @@ find_package(rapidjson)
 find_package(optional)
 
 ##########################
-#       cpp_redis        #
-##########################
-find_package(cpp_redis)
-
-##########################
 #           pq           #
 ##########################
 find_package(pq)

@@ -23,16 +23,15 @@
 namespace shared_model {
   namespace proto {
 
-    class GrantPermission final : public CopyableProto<interface::GrantPermission,
-                                                       iroha::protocol::Command,
-                                                       GrantPermission>  {
+    class GrantPermission final
+        : public CopyableProto<interface::GrantPermission,
+                               iroha::protocol::Command,
+                               GrantPermission> {
      public:
       template <typename CommandType>
       explicit GrantPermission(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            grant_permission_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::grant_permission)) {
-      }
+            grant_permission_(proto_->grant_permission()) {}
 
       GrantPermission(const GrantPermission &o) : GrantPermission(o.proto_) {}
 
@@ -40,20 +39,17 @@ namespace shared_model {
           : GrantPermission(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return grant_permission_->account_id();
+        return grant_permission_.account_id();
       }
 
       const interface::types::PermissionNameType &permissionName()
           const override {
         return iroha::protocol::GrantablePermission_Name(
-            grant_permission_->permission());
+            grant_permission_.permission());
       }
 
      private:
-      // lazy
-      template <typename Value>
-      using Lazy = detail::LazyInitializer<Value>;
-      const Lazy<const iroha::protocol::GrantPermission &> grant_permission_;
+      const iroha::protocol::GrantPermission &grant_permission_;
     };
 
   }  // namespace proto

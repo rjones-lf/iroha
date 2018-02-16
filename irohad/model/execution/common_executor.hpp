@@ -52,7 +52,7 @@ namespace iroha {
      */
     bool accountHasPermission(const std::set<std::string> &perms,
                               const std::string &permission_id);
-  }
+  }  // namespace model
 }  // namespace iroha
 
 #endif  // IROHA_COMMON_EXECUTOR_HPP

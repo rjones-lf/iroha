@@ -21,6 +21,7 @@
 #include <boost/variant.hpp>
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
+#include "interfaces/query_responses/error_responses/no_account_detail_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_asset_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_roles_error_response.hpp"
@@ -37,7 +38,8 @@ namespace shared_model {
      * possible achieved in the system.
      */
     class ErrorQueryResponse
-        : public Primitive<ErrorQueryResponse, iroha::model::ErrorResponse> {
+        : public PRIMITIVE_WITH_OLD(ErrorQueryResponse,
+                                    iroha::model::ErrorResponse) {
      private:
       /// Shortcut type for polymorphic wrapper
       template <typename... Value>
@@ -49,6 +51,7 @@ namespace shared_model {
                                               StatefulFailedErrorResponse,
                                               NoAccountErrorResponse,
                                               NoAccountAssetsErrorResponse,
+                                              NoAccountDetailErrorResponse,
                                               NoSignatoriesErrorResponse,
                                               NotSupportedErrorResponse,
                                               NoAssetErrorResponse,
@@ -68,10 +71,12 @@ namespace shared_model {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         return boost::apply_visitor(
             detail::OldModelCreatorVisitor<OldModelType *>(), get());
       }
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return get() == rhs.get();

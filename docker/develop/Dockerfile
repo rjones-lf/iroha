@@ -65,14 +65,16 @@ RUN git clone https://github.com/gflags/gflags /tmp/gflags; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/gflags
 
-# install grpc
+# install c-ares
 RUN git clone https://github.com/c-ares/c-ares /tmp/c-ares; \
     (cd /tmp/c-ares ; git checkout 3be1924221e1326df520f8498d704a5c4c8d0cce); \
     cmake -H/tmp/c-ares -B/tmp/c-ares/build; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
-    rm -rf /tmp/c-ares; \
-    git clone https://github.com/grpc/grpc /tmp/grpc; \
+    rm -rf /tmp/c-ares
+    
+# install grpc
+RUN git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bfcbad3b86c7912968dc8e64f2121c920dad4dfb); \
     (cd /tmp/grpc ; git submodule update --init third_party/benchmark); \
     cmake -DgRPC_ZLIB_PROVIDER=package -DgRPC_CARES_PROVIDER=package -DgRPC_SSL_PROVIDER=package \
@@ -88,9 +90,9 @@ RUN git clone https://github.com/google/googletest /tmp/googletest; \
     cmake --build /tmp/googletest/build --target install -- -j${PARALLELISM}; \
     rm -rf /tmp/googletest
 
-# install spdlog
+# install spdlog v0.16.3
 RUN git clone https://github.com/gabime/spdlog /tmp/spdlog; \
-    (cd /tmp/spdlog ; git checkout f85a08622e20b74bff34381cafcb8ef8167b29d0); \
+    (cd /tmp/spdlog ; git checkout ccd675a286f457068ee8c823f8207f13c2325b26); \
     cmake -DSPDLOG_BUILD_TESTING=OFF -H/tmp/spdlog -B/tmp/spdlog/build; \
     cmake --build /tmp/spdlog/build --target install; \
     rm -rf /tmp/spdlog
@@ -185,12 +187,25 @@ RUN git clone git://sourceware.org/git/valgrind.git /tmp/valgrind; \
     rm -rf /tmp/valgrind
 
 # install ed25519
-RUN git clone git://github.com/warchant/ed25519.git /tmp/ed25519; \
-    (cd /tmp/ed25519 ; git checkout 56d926c4489aa7b2bb664a48294c5ee2d6e1c283); \
+RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
+    (cd /tmp/ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038); \
     cmake -DCMAKE_BUILD_TYPE=Debug -DTESTING=OFF -H/tmp/ed25519 -B/tmp/ed25519/build; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
 
+# non-interactive adduser
+#   -m = create home dir
+#   -s = set default shell
+#   iroha-ci = username
+#   -u = userid, default for Ubuntu is 1000
+#   -U = create a group same as username
+#   no password
+RUN useradd -ms /bin/bash iroha-ci -u 1000 -U
+
 WORKDIR /opt/iroha
+RUN chmod -R 777 /opt/iroha; \
+    mkdir -p /tmp/ccache -m 777;
+
+USER iroha-ci
 CMD ["/bin/bash"]

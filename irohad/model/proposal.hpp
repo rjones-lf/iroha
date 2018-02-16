@@ -45,8 +45,8 @@ namespace iroha {
        */
       uint64_t height{};
 
-      bool operator==(const Proposal& rhs) const;
-      bool operator!=(const Proposal& rhs) const;
+      bool operator==(const Proposal &rhs) const;
+      bool operator!=(const Proposal &rhs) const;
     };
   }  // namespace model
 }  // namespace iroha

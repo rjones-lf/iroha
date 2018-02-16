@@ -19,6 +19,8 @@
 #define IROHA_MODEL_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "ametsuchi/wsv_command.hpp"
+#include "ametsuchi/wsv_query.hpp"
 #include "model/command.hpp"
 #include "model/model_crypto_provider.hpp"
 #include "model/query_execution.hpp"
@@ -43,7 +45,9 @@ namespace iroha {
                    bool(ametsuchi::WsvQuery &, ametsuchi::WsvCommand &));
 
       MOCK_CONST_METHOD1(Equals, bool(const Command &));
-      bool operator==(const Command &rhs) const override { return Equals(rhs); }
+      bool operator==(const Command &rhs) const override {
+        return Equals(rhs);
+      }
 
       MOCK_CONST_METHOD1(NotEquals, bool(const Command &));
       bool operator!=(const Command &rhs) const override {

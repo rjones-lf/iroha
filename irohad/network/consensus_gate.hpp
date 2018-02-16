@@ -18,8 +18,8 @@
 #ifndef IROHA_CONSENSUS_GATE_HPP
 #define IROHA_CONSENSUS_GATE_HPP
 
-#include <rxcpp/rx.hpp>
 #include <model/block.hpp>
+#include <rxcpp/rx.hpp>
 
 namespace iroha {
   namespace network {
@@ -29,7 +29,6 @@ namespace iroha {
      */
     class ConsensusGate {
      public:
-
       /**
        * Providing data for consensus for voting
        */
@@ -44,6 +43,6 @@ namespace iroha {
 
       virtual ~ConsensusGate() = default;
     };
-  } // namespace network
-} // namespace iroha
-#endif //IROHA_CONSENSUS_GATE_HPP
+  }  // namespace network
+}  // namespace iroha
+#endif  // IROHA_CONSENSUS_GATE_HPP

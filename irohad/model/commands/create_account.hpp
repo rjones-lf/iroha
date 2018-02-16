@@ -18,7 +18,7 @@
 #ifndef IROHA_CREATE_ACCOUNT_HPP
 #define IROHA_CREATE_ACCOUNT_HPP
 
-#include <model/command.hpp>
+#include "model/command.hpp"
 
 namespace iroha {
   namespace model {

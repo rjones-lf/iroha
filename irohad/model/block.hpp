@@ -84,10 +84,10 @@ namespace iroha {
 
       using TransactionsType = decltype(transactions);
 
-      bool operator==(const Block& rhs) const;
-      bool operator!=(const Block& rhs) const;
+      bool operator==(const Block &rhs) const;
+      bool operator!=(const Block &rhs) const;
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 #endif  // IROHA_BLOCK_HPP

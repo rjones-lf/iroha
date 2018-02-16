@@ -20,23 +20,24 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/queries/responses/signatories_response.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/queries/responses/signatories_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Container of asset, for fetching data.
      */
-    class SignatoriesResponse
-        : public Primitive<SignatoriesResponse,
-                           iroha::model::SignatoriesResponse> {
+    class SignatoriesResponse : public PRIMITIVE(SignatoriesResponse) {
      public:
       /**
        * @return All public keys attached to account
        */
-      virtual const types::PublicKeyCollectionType& keys() const = 0;
+      virtual const types::PublicKeyCollectionType &keys() const = 0;
 
       /**
        * Stringify the data.
@@ -56,6 +57,7 @@ namespace shared_model {
         return keys() == rhs.keys();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of signatories response.
@@ -69,6 +71,8 @@ namespace shared_model {
         });
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

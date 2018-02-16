@@ -28,21 +28,21 @@ namespace iroha {
      * Asset Data Model
      */
     struct Asset {
-      Asset() {}
+      Asset() = default;
 
       Asset(std::string asset_id, std::string domain_id, uint8_t precision)
           : asset_id(asset_id), domain_id(domain_id), precision(precision) {}
       /**
        * Asset unique identifier
        */
-      std::string asset_id{};
+      std::string asset_id;
 
-      std::string domain_id{};
+      std::string domain_id;
 
       /**
        * Precision of asset
        */
-      uint8_t precision{};
+      uint8_t precision;
     };
   }  // namespace model
 }  // namespace iroha

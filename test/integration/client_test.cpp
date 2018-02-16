@@ -19,7 +19,7 @@
 
 #include <endpoint.pb.h>
 
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
@@ -29,6 +29,7 @@
 #include "main/server_runner.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "torii/query_service.hpp"
 
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_query_factory.hpp"
@@ -38,16 +39,19 @@
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
-using ::testing::Return;
-using ::testing::A;
 using ::testing::_;
+using ::testing::A;
 using ::testing::AtLeast;
+using ::testing::Return;
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
 using namespace iroha::validation;
 using namespace iroha::model::converters;
 using namespace iroha::model;
+
+using namespace std::chrono_literals;
+constexpr std::chrono::milliseconds proposal_delay = 10s;
 
 class ClientServerTest : public testing::Test {
  public:
@@ -78,8 +82,6 @@ class ClientServerTest : public testing::Test {
                                                                    svMock);
       auto pb_tx_factory =
           std::make_shared<iroha::model::converters::PbTransactionFactory>();
-      auto command_service = std::make_unique<torii::CommandService>(
-          pb_tx_factory, tx_processor, storageMock);
 
       //----------- Query Service ----------
       auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
@@ -93,11 +95,13 @@ class ClientServerTest : public testing::Test {
       auto pb_query_resp_factory =
           std::make_shared<iroha::model::converters::PbQueryResponseFactory>();
 
-      auto query_service = std::make_unique<torii::QueryService>(
-          pb_query_factory, pb_query_resp_factory, qpi);
-
       //----------- Server run ----------------
-      runner->run(std::move(command_service), std::move(query_service));
+      runner
+          ->append(std::make_unique<torii::CommandService>(
+              pb_tx_factory, tx_processor, storageMock, proposal_delay))
+          .append(std::make_unique<torii::QueryService>(
+              pb_query_factory, pb_query_resp_factory, qpi))
+          .run();
     });
 
     runner->waitForServersReady();
@@ -135,8 +139,10 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
           "tx_counter": 0,
           "commands": [{
             "command_type": "AddPeer",
-            "address": "localhost",
-            "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            "peer": {
+              "address": "localhost",
+              "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            }
         }]})";
 
   JsonTransactionFactory tx_factory;
@@ -158,8 +164,10 @@ TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
       R"({"creator_account_id": "test",
           "commands":[{
             "command_type": "AddPeer",
-            "address": "localhost",
-            "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            "peer": {
+              "address": "localhost",
+              "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            }
           }]
         })";
   JsonTransactionFactory tx_factory;
@@ -173,7 +181,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   EXPECT_CALL(*svMock, validate(A<const iroha::model::Transaction &>()))
       .WillOnce(Return(false));
   auto json_string =
-      R"({"signatures": [ {
+      R"({"signatures": [{
             "pubkey":
               "2423232323232323232323232323232323232323232323232323232323232323",
             "signature":
@@ -183,8 +191,10 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
           "tx_counter": 0,
           "commands": [{
             "command_type": "AddPeer",
-            "address": "localhost",
-            "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+              "peer": {
+                "address": "localhost",
+                "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+              }
         }]})";
 
   auto doc = iroha::model::converters::stringToJson(json_string).value();
@@ -209,8 +219,10 @@ TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
       R"({"creator_account_id": "test",
           "commands":[{
             "command_type": "AddPeer",
-            "address": "localhost",
-            "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            "peer": {
+              "address": "localhost",
+              "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
+            }
           }]
         })";
 

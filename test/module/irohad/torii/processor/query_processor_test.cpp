@@ -29,9 +29,9 @@ using namespace iroha::ametsuchi;
 using namespace iroha::validation;
 using namespace framework::test_subscriber;
 
-using ::testing::Return;
 using ::testing::_;
 using ::testing::A;
+using ::testing::Return;
 
 TEST(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wsv_queries = std::make_shared<MockWsvQuery>();

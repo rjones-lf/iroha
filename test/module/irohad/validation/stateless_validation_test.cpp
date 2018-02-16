@@ -15,16 +15,13 @@
  * limitations under the License.
  */
 
+#include <gtest/gtest.h>
+#include <chrono>
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "datetime/time.hpp"
+#include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 
-#include <chrono>
-
-#include <gtest/gtest.h>
-
-#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "module/irohad/model/model_mocks.hpp"
-#include "datetime/time.hpp"
 
 using namespace std::chrono_literals;
 using ::testing::A;

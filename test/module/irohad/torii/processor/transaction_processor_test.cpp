@@ -31,9 +31,9 @@ using namespace iroha::model;
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
 
-using ::testing::Return;
 using ::testing::_;
 using ::testing::A;
+using ::testing::Return;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:

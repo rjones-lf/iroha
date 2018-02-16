@@ -21,7 +21,10 @@
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/commands/add_asset_quantity.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -29,8 +32,7 @@ namespace shared_model {
     /**
      * Add amount of asset to an account
      */
-    class AddAssetQuantity
-        : public Primitive<AddAssetQuantity, iroha::model::AddAssetQuantity> {
+    class AddAssetQuantity : public PRIMITIVE(AddAssetQuantity) {
      public:
       /**
        * @return Identity of user, that add quantity
@@ -54,6 +56,7 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::AddAssetQuantity;
         using OldAmountType = iroha::Amount;
@@ -65,6 +68,7 @@ namespace shared_model {
         oldModel->asset_id = assetId();
         return oldModel;
       }
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and assetId() == rhs.assetId()

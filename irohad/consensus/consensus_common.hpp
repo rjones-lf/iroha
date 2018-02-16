@@ -52,10 +52,12 @@ namespace iroha {
                             std::vector<model::Peer> peers) {
       return std::all_of(
           signatures.begin(), signatures.end(), [peers](auto signature) {
-            return std::find_if(peers.begin(), peers.end(),
+            return std::find_if(peers.begin(),
+                                peers.end(),
                                 [signature](auto peer) {
                                   return signature.pubkey == peer.pubkey;
-                                }) != peers.end();
+                                })
+                != peers.end();
           });
     }
   }  // namespace consensus

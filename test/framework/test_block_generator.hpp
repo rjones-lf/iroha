@@ -18,17 +18,17 @@
 #ifndef IROHA_TEST_BLOCK_GENERATOR_HPP
 #define IROHA_TEST_BLOCK_GENERATOR_HPP
 
-#include "model/transaction.hpp"
 #include "model/block.hpp"
+#include "model/transaction.hpp"
 
 namespace framework {
   namespace generator {
     iroha::model::Transaction getAddPeerTransaction(uint64_t create_time,
-                                      std::string address);
+                                                    std::string address);
 
     iroha::model::Transaction getTestCreateTransaction(uint64_t create_time);
 
     iroha::model::Block generateBlock();
-  } // namespace generator
-} // namespace framework
-#endif //IROHA_TEST_BLOCK_GENERATOR_HPP
+  }  // namespace generator
+}  // namespace framework
+#endif  // IROHA_TEST_BLOCK_GENERATOR_HPP

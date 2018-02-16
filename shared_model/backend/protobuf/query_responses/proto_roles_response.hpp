@@ -34,29 +34,29 @@ namespace shared_model {
       template <typename QueryResponseType>
       explicit RolesResponse(QueryResponseType &&queryResponse)
           : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            rolesResponse_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::QueryResponse::roles_response)),
+            rolesResponse_(proto_->roles_response()),
             roles_([this] {
-              return boost::accumulate(
-                  rolesResponse_->roles(),
-                  RolesIdType{},
-                  [](auto &&roles, const auto &role) {
-                    roles.emplace_back(role);
-                    return std::move(roles);
-                  });
+              return boost::accumulate(rolesResponse_.roles(),
+                                       RolesIdType{},
+                                       [](auto &&roles, const auto &role) {
+                                         roles.emplace_back(role);
+                                         return std::move(roles);
+                                       });
             }) {}
 
       RolesResponse(const RolesResponse &o) : RolesResponse(o.proto_) {}
 
       RolesResponse(RolesResponse &&o) : RolesResponse(std::move(o.proto_)) {}
 
-      const RolesIdType &roles() const override { return *roles_; }
+      const RolesIdType &roles() const override {
+        return *roles_;
+      }
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::RolesResponse &> rolesResponse_;
+      const iroha::protocol::RolesResponse &rolesResponse_;
       const Lazy<RolesIdType> roles_;
     };
   }  // namespace proto

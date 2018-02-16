@@ -20,8 +20,11 @@
 
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/asset.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/asset.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -29,7 +32,7 @@ namespace shared_model {
     /**
      * Representation of valuable goods in the system
      */
-    class Asset : public Hashable<Asset, iroha::model::Asset> {
+    class Asset : public HASHABLE(Asset) {
      public:
       /**
        * @return Identity of asset
@@ -69,6 +72,7 @@ namespace shared_model {
             and precision() == rhs.precision();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of account asset response.
@@ -80,6 +84,7 @@ namespace shared_model {
         oldModel->precision = precision();
         return oldModel;
       }
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -18,9 +18,10 @@
 #ifndef IROHA_TRANSFER_ASSET_HPP
 #define IROHA_TRANSFER_ASSET_HPP
 
-#include <model/command.hpp>
 #include <string>
 #include "common/types.hpp"
+#include "model/command.hpp"
+#include "amount/amount.hpp"
 
 namespace iroha {
   namespace model {
@@ -32,27 +33,27 @@ namespace iroha {
       /**
        * Source account
        */
-      std::string src_account_id{};
+      std::string src_account_id;
 
       /**
        * Destination account
        */
-      std::string dest_account_id{};
+      std::string dest_account_id;
 
       /**
        * Asset to transfer. Identifier is asset_id
        */
-      std::string asset_id{};
+      std::string asset_id;
 
       /**
        * Transfer description
        */
-      std::string description{};
+      std::string description;
 
       /**
        * Amount of transferred asset
        */
-      Amount amount{};
+      Amount amount;
 
       bool operator==(const Command &command) const override;
 
@@ -60,7 +61,8 @@ namespace iroha {
 
       TransferAsset(const std::string &src_account_id,
                     const std::string &dest_account_id,
-                    const std::string &asset_id, const Amount &amount)
+                    const std::string &asset_id,
+                    const Amount &amount)
           : src_account_id(src_account_id),
             dest_account_id(dest_account_id),
             asset_id(asset_id),

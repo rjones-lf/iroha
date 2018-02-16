@@ -21,7 +21,7 @@ if (NOT pqxx_FOUND)
       GIT_TAG        ${VERSION}
       CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env CXXFLAGS=${CMAKE_CXX_FLAGS} CPPFLAGS=-I${postgres_INCLUDE_DIR} PG_CONFIG=${pg_config_EXECUTABLE} ./configure --disable-documentation --with-postgres-include=${pq_INCLUDE_DIR} --with-postgres-lib=${pq_INCLUDE_DIR}
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND make
+      BUILD_COMMAND $(MAKE)
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/jtv_libpqxx/src/.libs/libpqxx.a
                        ${EP_PREFIX}/src/jtv_libpqxx/src/libpqxx.la
                        ${EP_PREFIX}/src/jtv_libpqxx/src/.libs/libpqxx.la

@@ -18,14 +18,21 @@
 #ifndef IROHA_PEER_QUERY_WSV_HPP
 #define IROHA_PEER_QUERY_WSV_HPP
 
-#include <vector>
-#include <memory>
-#include "model/peer.hpp"
-#include "ametsuchi/wsv_query.hpp"
 #include "ametsuchi/peer_query.hpp"
 
+#include <memory>
+#include <nonstd/optional.hpp>
+#include <vector>
+
 namespace iroha {
+
+  namespace model {
+    struct Peer;
+  }
+
   namespace ametsuchi {
+
+    class WsvQuery;
 
     /**
      * Implementation of PeerQuery interface based on WsvQuery fetching
@@ -46,4 +53,4 @@ namespace iroha {
 
   }  // namespace ametsuchi
 }  // namespace iroha
-#endif //IROHA_PEER_QUERY_WSV_HPP
+#endif  // IROHA_PEER_QUERY_WSV_HPP

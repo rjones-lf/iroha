@@ -17,8 +17,7 @@
 #ifndef IROHA_CREATE_DOMAIN_HPP
 #define IROHA_CREATE_DOMAIN_HPP
 
-#include <model/command.hpp>
-#include <model/domain.hpp>
+#include "model/command.hpp"
 
 namespace iroha {
   namespace model {
@@ -37,7 +36,7 @@ namespace iroha {
        */
       std::string user_default_role;
 
-      bool operator==(const Command& command) const override;
+      bool operator==(const Command &command) const override;
 
       CreateDomain() {}
 
@@ -45,8 +44,8 @@ namespace iroha {
        * @param domain_id - id of the domain to create
        * @param user_default_role - default role of the user in this domain
        */
-      CreateDomain(const std::string& domain_id,
-                   const std::string& user_default_role)
+      CreateDomain(const std::string &domain_id,
+                   const std::string &user_default_role)
           : domain_id(domain_id), user_default_role(user_default_role) {}
     };
   }  // namespace model

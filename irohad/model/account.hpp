@@ -28,7 +28,6 @@ namespace iroha {
      * Account Model
      */
     struct Account {
-
       /**
        * User name is used as unique identifier of an account
        */
@@ -52,7 +51,7 @@ namespace iroha {
 
       Account() {}
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 #endif  // IROHA_ACCOUNT_HPP

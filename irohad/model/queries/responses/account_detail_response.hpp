@@ -22,11 +22,11 @@
 #include "model/query_response.hpp"
 
 namespace iroha {
-    namespace model {
+  namespace model {
 
-        struct AccountDetailResponse : public QueryResponse {
-            std::string detail{};
-        };
-    }  // namespace model
+    struct AccountDetailResponse : public QueryResponse {
+      std::string detail{};
+    };
+  }  // namespace model
 }  // namespace iroha
-#endif //IROHA_ACCOUNT_DETAIL_RESPONSE_HPP
+#endif  // IROHA_ACCOUNT_DETAIL_RESPONSE_HPP

@@ -19,8 +19,8 @@
 #define IROHA_RXCPP_SUBJECT_USAGE_HPP
 #include <gtest/gtest.h>
 
-#include "rxcpp/rx.hpp"
 #include <iostream>
+#include "rxcpp/rx.hpp"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -38,10 +38,8 @@ TEST(rxcppTest, usage_subject_test) {
   subject<Person> person;
 
   // group ages by gender
-  auto agebygender = person.
-      get_observable().subscribe([](auto val) {
-    cout << val.name << " " << val.gender << endl;
-  });
+  auto agebygender = person.get_observable().subscribe(
+      [](auto val) { cout << val.name << " " << val.gender << endl; });
 
   person.get_observable().subscribe([](auto val) {
     cout << "YET ANOTHER " << val.name << " " << val.gender << endl;
@@ -54,4 +52,4 @@ TEST(rxcppTest, usage_subject_test) {
   person.get_subscriber().on_completed();
   person.get_subscriber().on_next(Person{"Vasya", "Male", 32});
 }
-#endif //IROHA_RXCPP_SUBJECT_USAGE_HPP
+#endif  // IROHA_RXCPP_SUBJECT_USAGE_HPP

@@ -30,7 +30,6 @@ namespace iroha {
      */
     class Synchronizer {
      public:
-
       /**
        * Processing block last committed block
        */
@@ -44,6 +43,6 @@ namespace iroha {
 
       virtual ~Synchronizer() = default;
     };
-  } // namespace synchronizer
-} // namespace iroha
-#endif //IROHA_SYNCHRONIZER_HPP
+  }  // namespace synchronizer
+}  // namespace iroha
+#endif  // IROHA_SYNCHRONIZER_HPP

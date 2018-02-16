@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include "logger/logger.hpp"
+#include <gtest/gtest.h>
 
 #include <vector>
 
@@ -27,8 +27,9 @@ TEST(LoggerTest, getLoggerTest) {
   another_logger->warn("another logger");
   another_logger->info("temporal output {}, {}", 123, "string param");
   another_logger->info(logger::red("color output"));
-  another_logger->info(logger::yellow(
-      "color args output {} // note: require char *").c_str(), "=^._.^=");
+  another_logger->info(
+      logger::yellow("color args output {} // note: require char *").c_str(),
+      "=^._.^=");
 }
 
 TEST(LoggerTest, boolReprTest) {
@@ -43,16 +44,14 @@ TEST(LoggerTest, logBoolTest) {
 
 TEST(LoggerTest, collectionToStringNotEmpty) {
   std::vector<int> collection{1, 2, 3};
-  auto res = logger::to_string(collection, [](auto val) {
-    return std::to_string(val);
-  });
+  auto res = logger::to_string(collection,
+                               [](auto val) { return std::to_string(val); });
   ASSERT_EQ("{1, 2, 3}", res);
 }
 
 TEST(LoggerTest, collectionToStringEmpty) {
   std::vector<int> collection{};
-  auto res = logger::to_string(collection, [](auto val) {
-    return std::to_string(val);
-  });
+  auto res = logger::to_string(collection,
+                               [](auto val) { return std::to_string(val); });
   ASSERT_EQ("{}", res);
 }

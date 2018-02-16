@@ -16,9 +16,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "model/converters/json_transaction_factory.hpp"
-#include "model/converters/json_common.hpp"
 #include "model/commands/add_asset_quantity.hpp"
+#include "model/converters/json_common.hpp"
+#include "model/converters/json_transaction_factory.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -29,7 +29,7 @@ class JsonTransactionTest : public ::testing::Test {
   JsonTransactionFactory factory;
 };
 
-TEST_F(JsonTransactionTest, ValidWhenWellFormed){
+TEST_F(JsonTransactionTest, ValidWhenWellFormed) {
   Transaction transaction{};
   transaction.signatures.emplace_back();
   transaction.commands.push_back(std::make_shared<AddAssetQuantity>());
@@ -41,13 +41,13 @@ TEST_F(JsonTransactionTest, ValidWhenWellFormed){
   ASSERT_EQ(transaction, serial_transaction.value());
 }
 
-TEST_F(JsonTransactionTest, InvalidWhenFieldsMissing){
+TEST_F(JsonTransactionTest, InvalidWhenFieldsMissing) {
   Transaction transaction{};
 
   auto json_transaction = factory.serialize(transaction);
-  
+
   json_transaction.RemoveMember("created_ts");
-  
+
   auto serial_transaction = factory.deserialize(json_transaction);
 
   ASSERT_FALSE(serial_transaction.has_value());

@@ -22,20 +22,22 @@
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/queries/responses/account_response.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/queries/responses/account_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with account
      */
-    class AccountResponse
-        : public Primitive<AccountResponse, iroha::model::AccountResponse> {
+    class AccountResponse : public PRIMITIVE(AccountResponse) {
      public:
       /// Collection of role_id types
-      using SetRoleIdType = std::vector<types::RoleIdType>;
+      using AccountRolesIdType = std::vector<types::RoleIdType>;
 
       /**
        * @return the fetched account.
@@ -45,7 +47,7 @@ namespace shared_model {
       /**
        * @return roles attached to the account
        */
-      virtual const SetRoleIdType &roles() const = 0;
+      virtual const AccountRolesIdType &roles() const = 0;
 
       /**
        * Stringify the data.
@@ -69,6 +71,7 @@ namespace shared_model {
         return account() == rhs.account() and roles() == rhs.roles();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of asset response.
@@ -82,6 +85,8 @@ namespace shared_model {
         new (&oldModel->account) OldAccountType(*p);
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

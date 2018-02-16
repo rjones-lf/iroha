@@ -33,12 +33,12 @@ namespace iroha {
        * Permission will be granted from creator to account_id on
        * *permission_name*
        */
-      std::string account_id{};
+      std::string account_id;
 
       /**
        * Permission to grant (what)
        */
-      std::string permission_name{};
+      std::string permission_name;
 
       bool operator==(const Command &command) const override;
 

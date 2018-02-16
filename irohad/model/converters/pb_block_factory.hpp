@@ -37,14 +37,14 @@ namespace iroha {
          * @param block - reference to block
          * @return proto block
          */
-        protocol::Block serialize(const model::Block& block) const;
+        protocol::Block serialize(const model::Block &block) const;
 
         /**
          * Convert proto block to model block
          * @param pb_block - reference to proto block
          * @return model block
          */
-         model::Block deserialize(const protocol::Block& pb_block) const;
+        model::Block deserialize(const protocol::Block &pb_block) const;
       };
     }  // namespace converters
   }    // namespace model

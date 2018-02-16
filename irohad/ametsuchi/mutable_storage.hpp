@@ -18,19 +18,24 @@
 #ifndef IROHA_MUTABLE_STORAGE_HPP
 #define IROHA_MUTABLE_STORAGE_HPP
 
-#include <ametsuchi/block_query.hpp>
-#include <ametsuchi/wsv_command.hpp>
-#include <ametsuchi/wsv_query.hpp>
+#include "common/types.hpp"  // for hash256_t
 
 namespace iroha {
+
+  namespace model {
+    struct Block;
+  }
+
   namespace ametsuchi {
+
+    class WsvQuery;
+
     /**
      * Mutable storage is used apply blocks to the storage.
      * Allows to query the world state view, transactions, and blocks.
      */
     class MutableStorage {
      public:
-
       /**
        * Applies a block to current mutable state
        * using logic specified in function
@@ -46,9 +51,9 @@ namespace iroha {
        * @return True if block was successfully applied, false otherwise.
        */
       virtual bool apply(const model::Block &block,
-                         std::function<bool(const model::Block &, WsvQuery &,
-                                            const hash256_t &)>
-                             function) = 0;
+                         std::function<bool(const model::Block &,
+                                            WsvQuery &,
+                                            const hash256_t &)> function) = 0;
 
       virtual ~MutableStorage() = default;
     };

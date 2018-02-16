@@ -16,10 +16,8 @@
  */
 
 #include <gtest/gtest.h>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"
-#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -32,7 +30,9 @@
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
+#include "model/sha3_hash.hpp"
 #include "model/transaction.hpp"
 
 using namespace iroha::model;
@@ -41,8 +41,8 @@ using namespace iroha::model;
 
 AddPeer createAddPeer() {
   AddPeer addPeer;
-  addPeer.address = "localhost";
-  std::fill(addPeer.peer_key.begin(), addPeer.peer_key.end(), 0x1);
+  addPeer.peer.address = "localhost";
+  std::fill(addPeer.peer.pubkey.begin(), addPeer.peer.pubkey.end(), 0x1);
   return addPeer;
 }
 
@@ -50,7 +50,7 @@ TEST(ModelOperatorTest, AddPeerTest) {
   AddPeer first = createAddPeer();
   AddPeer second = createAddPeer();
   ASSERT_EQ(first, second);
-  second.address = "127.0.0.1";
+  second.peer.address = "127.0.0.1";
   ASSERT_NE(first, second);
 }
 

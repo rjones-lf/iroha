@@ -34,12 +34,10 @@ namespace shared_model {
       template <typename QueryType>
       explicit GetTransactions(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-            get_transactions_(detail::makeReferenceGenerator(
-                &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_transactions)),
+            get_transactions_(proto_->payload().get_transactions()),
             transaction_hashes_([this] {
               return boost::accumulate(
-                  get_transactions_->tx_hashes(),
+                  get_transactions_.tx_hashes(),
                   TransactionHashesType{},
                   [](auto &&acc, const auto &hash) {
                     acc.emplace_back(hash);
@@ -59,10 +57,10 @@ namespace shared_model {
      private:
       // ------------------------------| fields |-------------------------------
 
+      const iroha::protocol::GetTransactions &get_transactions_;
+
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<const iroha::protocol::GetTransactions &> get_transactions_;
 
       const Lazy<TransactionHashesType> transaction_hashes_;
     };

@@ -18,8 +18,8 @@
 #include "interactive/interactive_transaction_cli.hpp"
 
 #include <fstream>
+#include <utility>
 #include "client.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/commands/append_role.hpp"
 #include "model/commands/create_role.hpp"
@@ -30,7 +30,10 @@
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
+#include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/permissions.hpp"
+#include "model/sha3_hash.hpp"
+#include "parser/parser.hpp"  // for parser::ParseValue
 
 using namespace iroha::model;
 
@@ -152,7 +155,8 @@ namespace iroha_cli {
       result_desciption.insert(
           {BACK_CODE, "Go back and start a new transaction"});
 
-      result_params_descriptions = getCommonParamsMap();
+      result_params_descriptions =
+          getCommonParamsMap(default_peer_ip_, default_port_);
 
       result_params_descriptions.insert({ADD_CMD, {}});
       result_params_descriptions.insert({BACK_CODE, {}});
@@ -171,10 +175,14 @@ namespace iroha_cli {
 
     InteractiveTransactionCli::InteractiveTransactionCli(
         const std::string &creator_account,
+        const std::string &default_peer_ip,
+        int default_port,
         uint64_t tx_counter,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(creator_account),
+          default_peer_ip_(default_peer_ip),
+          default_port_(default_port),
           tx_counter_(tx_counter),
           provider_(provider) {
       log_ = logger::log("InteractiveTransactionCli");
@@ -183,7 +191,6 @@ namespace iroha_cli {
     }
 
     void InteractiveTransactionCli::run() {
-      std::string line;
       bool is_parsing = true;
       current_context_ = MAIN;
       printMenu("Forming a new transactions, choose command to add: ",
@@ -191,13 +198,18 @@ namespace iroha_cli {
       // Creating a new transaction, increment local tx_counter
       ++tx_counter_;
       while (is_parsing) {
-        line = promtString("> ");
+        auto line = promptString("> ");
+        if (not line) {
+          // The promtSting returns error, terminating symbol
+          is_parsing = false;
+          break;
+        }
         switch (current_context_) {
           case MAIN:
-            is_parsing = parseCommand(line);
+            is_parsing = parseCommand(line.value());
             break;
           case RESULT:
-            is_parsing = parseResult(line);
+            is_parsing = parseResult(line.value());
             break;
           default:
             // shouldn't get here
@@ -341,7 +353,7 @@ namespace iroha_cli {
       auto key = params[1];
       iroha::pubkey_t pubkey;
       pubkey = iroha::hexstringToArray<iroha::pubkey_t::size()>(key).value();
-      return generator_.generateAddPeer(address, pubkey);
+      return generator_.generateAddPeer(Peer(address, pubkey));
     }
 
     std::shared_ptr<iroha::model::Command>
@@ -453,7 +465,8 @@ namespace iroha_cli {
 
     bool InteractiveTransactionCli::parseSendToIroha(
         std::vector<std::string> params) {
-      auto address = parseIrohaPeerParams(params);
+      auto address = parseIrohaPeerParams(
+          std::move(params), default_peer_ip_, default_port_);
       if (not address.has_value()) {
         return true;
       }

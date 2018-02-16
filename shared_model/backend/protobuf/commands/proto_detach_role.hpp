@@ -30,25 +30,22 @@ namespace shared_model {
       template <typename CommandType>
       explicit DetachRole(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            detach_role_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::detach_role)) {}
+            detach_role_(proto_->detach_role()) {}
 
       DetachRole(const DetachRole &o) : DetachRole(o.proto_) {}
 
       DetachRole(DetachRole &&o) noexcept : DetachRole(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return detach_role_->account_id();
+        return detach_role_.account_id();
       }
 
       const interface::types::RoleIdType &roleName() const override {
-        return detach_role_->role_name();
+        return detach_role_.role_name();
       }
 
      private:
-      template <typename Value>
-      using Lazy = detail::LazyInitializer<Value>;
-      const Lazy<const iroha::protocol::DetachRole &> detach_role_;
+      const iroha::protocol::DetachRole &detach_role_;
     };
 
   }  // namespace proto

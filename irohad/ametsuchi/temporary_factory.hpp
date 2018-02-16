@@ -19,10 +19,12 @@
 #define IROHA_TEMPORARY_FACTORY_HPP
 
 #include <memory>
-#include "ametsuchi/temporary_wsv.hpp"
+#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+
+    class TemporaryWsv;
 
     class TemporaryFactory {
      public:
@@ -31,13 +33,14 @@ namespace iroha {
        * Temporary state will be not committed and will be erased on destructor
        * call.
        * Temporary state might be used for transaction validation.
-       * @return Created temporary wsv
+       * @return Created Result with temporary wsv or string error
        */
-      virtual std::unique_ptr<TemporaryWsv> createTemporaryWsv() = 0;
+      virtual expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
+      createTemporaryWsv() = 0;
 
       virtual ~TemporaryFactory() = default;
     };
 
-  } // namespace ametsuchi
-} // namespace iroha
-#endif //IROHA_TEMPORARY_FACTORY_HPP
+  }  // namespace ametsuchi
+}  // namespace iroha
+#endif  // IROHA_TEMPORARY_FACTORY_HPP

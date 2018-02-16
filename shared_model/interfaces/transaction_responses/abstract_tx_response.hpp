@@ -19,8 +19,11 @@
 #define IROHA_ABSTRACT_TX_RESPONSE_HPP
 
 #include "interfaces/base/primitive.hpp"
-#include "model/transaction_response.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/transaction_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -30,19 +33,21 @@ namespace shared_model {
      */
     template <typename Model>
     class AbstractTxResponse
-        : public Primitive<Model, iroha::model::TransactionResponse> {
+        : public PRIMITIVE_WITH_OLD(Model, iroha::model::TransactionResponse) {
      private:
       /**
        * @return string representation of class name
        */
       virtual std::string className() const = 0;
 
+#ifndef DISABLE_BACKWARD
       /**
        * @return old model status
        */
       virtual iroha::model::TransactionResponse::Status oldModelStatus()
           const = 0;
 
+#endif
      public:
       // ------------------------| Primitive override |-------------------------
 
@@ -50,13 +55,18 @@ namespace shared_model {
         return detail::PrettyStringBuilder().init(className()).finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::TransactionResponse *makeOldModel() const override {
         auto tx_response = new iroha::model::TransactionResponse();
         tx_response->current_status = oldModelStatus();
         return tx_response;
       }
 
-      bool operator==(const Model &rhs) const override { return true; }
+#endif
+
+      bool operator==(const Model &rhs) const override {
+        return true;
+      }
     };
   }  // namespace interface
 }  // namespace shared_model

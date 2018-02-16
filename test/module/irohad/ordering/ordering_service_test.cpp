@@ -36,10 +36,10 @@ using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 
 using ::testing::_;
+using ::testing::AtLeast;
+using ::testing::DoAll;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
-using ::testing::DoAll;
-using ::testing::AtLeast;
 using ::testing::Return;
 
 static logger::Logger log_ = logger::testLog("OrderingService");
@@ -65,7 +65,9 @@ class MockOrderingServiceTransport : public network::OrderingServiceTransport {
 
 class OrderingServiceTest : public ::testing::Test {
  public:
-  OrderingServiceTest() { peer.address = address; }
+  OrderingServiceTest() {
+    peer.address = address;
+  }
 
   void SetUp() override {
     wsv = std::make_shared<MockPeerQuery>();

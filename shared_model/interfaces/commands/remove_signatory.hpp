@@ -20,15 +20,17 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/commands/remove_signatory.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Remove signatory from the account
      */
-    class RemoveSignatory
-        : public Primitive<RemoveSignatory, iroha::model::RemoveSignatory> {
+    class RemoveSignatory : public PRIMITIVE(RemoveSignatory) {
      public:
       /**
        * @return account from which remove signatory
@@ -47,12 +49,15 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::RemoveSignatory;
         oldModel->account_id = accountId();
         oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
         return oldModel;
       }
+
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and pubkey() == rhs.pubkey();

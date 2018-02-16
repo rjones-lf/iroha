@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
+#include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
-#include "ametsuchi/impl/redis_block_index.hpp"
-#include "ametsuchi/impl/redis_block_query.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "ametsuchi/impl/postgres_block_index.hpp"
+#include "ametsuchi/impl/postgres_block_query.hpp"
 #include "framework/test_subscriber.hpp"
+#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
 using namespace iroha::ametsuchi;
@@ -31,10 +32,22 @@ class BlockQueryTest : public AmetsuchiTest {
   void SetUp() override {
     AmetsuchiTest::SetUp();
 
-    file = FlatFile::create(block_store_path);
-    ASSERT_TRUE(file);
-    index = std::make_shared<RedisBlockIndex>(client);
-    blocks = std::make_shared<RedisBlockQuery>(client, *file);
+    auto tmp = FlatFile::create(block_store_path);
+    ASSERT_TRUE(tmp);
+    file = std::move(*tmp);
+    postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
+    try {
+      postgres_connection->activate();
+    } catch (const pqxx::broken_connection &e) {
+      FAIL() << "Connection to PostgreSQL broken: " << e.what();
+    }
+    transaction = std::make_unique<pqxx::nontransaction>(
+        *postgres_connection, "Postgres block indexes");
+
+    index = std::make_shared<PostgresBlockIndex>(*transaction);
+    blocks = std::make_shared<PostgresBlockQuery>(*transaction, *file);
+
+    transaction->exec(init_);
 
     // First transaction in block1
     Transaction txn1_1;
@@ -70,18 +83,23 @@ class BlockQueryTest : public AmetsuchiTest {
     block2.transactions.push_back(txn2_2);
 
     for (const auto &b : {block1, block2}) {
-      file->add(b.height, iroha::stringToBytes(converters::jsonToString(
-          converters::JsonBlockFactory().serialize(b))));
+      file->add(b.height,
+                iroha::stringToBytes(converters::jsonToString(
+                    converters::JsonBlockFactory().serialize(b))));
       index->index(b);
+      blocks_total++;
     }
   }
 
+  std::unique_ptr<pqxx::nontransaction> transaction;
+  std::unique_ptr<pqxx::lazyconnection> postgres_connection;
   std::vector<iroha::hash256_t> tx_hashes;
   std::shared_ptr<BlockQuery> blocks;
   std::shared_ptr<BlockIndex> index;
   std::unique_ptr<FlatFile> file;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
+  std::size_t blocks_total{0};
 };
 
 /**
@@ -145,10 +163,10 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
     subs_cnt++;
     if (subs_cnt == 1) {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[1], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[1], iroha::hash(*tx));
     } else {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[3], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[3], iroha::hash(*tx));
     }
   });
   ASSERT_TRUE(wrapper.validate());
@@ -207,8 +225,144 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
       EXPECT_EQ(boost::none, tx);
     } else {
       EXPECT_TRUE(tx);
-      EXPECT_EQ(this->tx_hashes[0], iroha::hash(*tx));
+      EXPECT_EQ(tx_hashes[0], iroha::hash(*tx));
     }
   });
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get non-existent 1000th block
+ * @then nothing is returned
+ */
+TEST_F(BlockQueryTest, GetNonExistentBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1000, 1), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when height=1, count=1
+ * @then returned exactly 1 block
+ */
+TEST_F(BlockQueryTest, GetExactlyOneBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 1), 1);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when count=0
+ * @then no blocks returned
+ */
+TEST_F(BlockQueryTest, GetBlocks_Count0) {
+  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 0), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get zero block
+ * @then no blocks returned
+ */
+TEST_F(BlockQueryTest, GetZeroBlock) {
+  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(0, 1), 0);
+  wrapper.subscribe();
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get all blocks starting from 1
+ * @then returned all blocks (2)
+ */
+TEST_F(BlockQueryTest, GetBlocksFrom1) {
+  auto wrapper =
+      make_test_subscriber<CallExact>(blocks->getBlocksFrom(1), blocks_total);
+  size_t counter = 1;
+  wrapper.subscribe([&counter](Block b) {
+    // wrapper returns blocks 1 and 2
+    ASSERT_EQ(b.height, counter++)
+        << "block height: " << b.height << "counter: " << counter;
+  });
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data
+ * (NOT JSON).
+ * @when read block #1
+ * @then get no blocks
+ */
+TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
+  namespace fs = boost::filesystem;
+  size_t block_n = 1;
+
+  // write something that is NOT JSON to block #1
+  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
+  fs::ofstream block_file(block_path);
+  std::string content = R"(this is definitely not json)";
+  block_file << content;
+  block_file.close();
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
+  wrapper.subscribe();
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data
+ * (NOT JSON).
+ * @when read block #1
+ * @then get no blocks
+ */
+TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
+  namespace fs = boost::filesystem;
+  size_t block_n = 1;
+
+  // write bad block instead of block #1
+  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
+  fs::ofstream block_file(block_path);
+  std::string content = R"({
+  "testcase": [],
+  "description": "make sure this is valid json, but definitely not a block"
+})";
+  block_file << content;
+  block_file.close();
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
+  wrapper.subscribe();
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with 2 blocks totally containing 3 txs created by
+ * user1@test AND 1 tx created by user2@test
+ * @when get top 2 blocks
+ * @then last 2 blocks returned with correct height
+ */
+TEST_F(BlockQueryTest, GetTop2Blocks) {
+  size_t blocks_n = 2;  // top 2 blocks
+  auto wrapper =
+      make_test_subscriber<CallExact>(blocks->getTopBlocks(blocks_n), blocks_n);
+
+  size_t counter = blocks_total - blocks_n + 1;
+  wrapper.subscribe([&counter](Block b) { ASSERT_EQ(b.height, counter++); });
+
   ASSERT_TRUE(wrapper.validate());
 }

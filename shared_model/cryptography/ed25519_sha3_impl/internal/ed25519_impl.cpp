@@ -17,8 +17,8 @@
 
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include <ed25519/ed25519.h>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "common/types.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
 
@@ -60,10 +60,11 @@ namespace iroha {
   }
 
   bool verify(const std::string &msg, const pubkey_t &pub, const sig_t &sig) {
-    return 1 == verify(reinterpret_cast<const uint8_t *>(msg.data()),
-                       msg.size(),
-                       pub,
-                       sig);
+    return 1
+        == verify(reinterpret_cast<const uint8_t *>(msg.data()),
+                  msg.size(),
+                  pub,
+                  sig);
   }
 
   /**

@@ -30,9 +30,13 @@ namespace iroha {
                      .subscribe([this](auto) { handler_(); });
       }
 
-      void TimerImpl::deny() { handle.unsubscribe(); }
+      void TimerImpl::deny() {
+        handle.unsubscribe();
+      }
 
-      TimerImpl::~TimerImpl() { deny(); }
+      TimerImpl::~TimerImpl() {
+        deny();
+      }
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

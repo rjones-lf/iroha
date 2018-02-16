@@ -17,268 +17,221 @@
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 
+#include "model/account.hpp"
+#include "model/account_asset.hpp"
+#include "model/asset.hpp"
+#include "model/domain.hpp"
+#include "model/peer.hpp"
+
 namespace iroha {
   namespace ametsuchi {
 
-    using std::string;
-
-    using nonstd::optional;
-    using nonstd::nullopt;
-    using model::Account;
-    using model::Asset;
-    using model::AccountAsset;
-    using model::Peer;
-    using model::Domain;
+    const std::string kRoleId = "role_id";
+    const char *kAccountNotFound = "Account {} not found";
+    const std::string kPublicKey = "public_key";
+    const std::string kAssetId = "asset_id";
+    const std::string kAccountId = "account_id";
+    const std::string kDomainId = "domain_id";
 
     PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
-        : transaction_(transaction), log_(logger::log("PostgresWsvQuery")) {}
+        : transaction_(transaction),
+          log_(logger::log("PostgresWsvQuery")),
+          execute_{makeExecute(transaction_, log_)} {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const std::string &permitee_account_id,
         const std::string &account_id,
         const std::string &permission_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT * FROM account_has_grantable_permissions WHERE "
-            "permittee_account_id = "
-            + transaction_.quote(permitee_account_id)
-            + " AND account_id = "
-            + transaction_.quote(account_id)
-            + " AND permission_id = "
-            + transaction_.quote(permission_id)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return false;
-      }
-      return result.size() == 1;
+      return execute_(
+                 "SELECT * FROM account_has_grantable_permissions WHERE "
+                 "permittee_account_id = "
+                 + transaction_.quote(permitee_account_id)
+                 + " AND account_id = "
+                 + transaction_.quote(account_id)
+                 + " AND permission_id = "
+                 + transaction_.quote(permission_id)
+                 + ";")
+          | [](const auto &result) { return result.size() == 1; };
     }
 
     nonstd::optional<std::vector<std::string>>
     PostgresWsvQuery::getAccountRoles(const std::string &account_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT role_id FROM account_has_roles WHERE account_id = "
-            + transaction_.quote(account_id)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      std::vector<std::string> roles;
-      for (const auto &row : result) {
-        roles.emplace_back(row.at("role_id").c_str());
-      }
-      return roles;
+      return execute_(
+                 "SELECT role_id FROM account_has_roles WHERE account_id = "
+                 + transaction_.quote(account_id)
+                 + ";")
+          | [&](const auto &result) {
+              return transform<std::string>(result, [](const auto &row) {
+                return row.at(kRoleId).c_str();
+              });
+            };
     }
 
     nonstd::optional<std::vector<std::string>>
     PostgresWsvQuery::getRolePermissions(const std::string &role_name) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT permission_id FROM role_has_permissions WHERE role_id = "
-            + transaction_.quote(role_name)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      std::vector<std::string> permissions;
-      for (const auto &row : result) {
-        permissions.emplace_back(row.at("permission_id").c_str());
-      }
-      return permissions;
+      return execute_(
+                 "SELECT permission_id FROM role_has_permissions WHERE role_id "
+                 "= "
+                 + transaction_.quote(role_name)
+                 + ";")
+          | [&](const auto &result) {
+              return transform<std::string>(result, [](const auto &row) {
+                return row.at("permission_id").c_str();
+              });
+            };
     }
 
     nonstd::optional<std::vector<std::string>> PostgresWsvQuery::getRoles() {
-      pqxx::result result;
-      try {
-        result = transaction_.exec("SELECT role_id FROM role;");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      std::vector<std::string> roles;
-      for (const auto &row : result) {
-        roles.emplace_back(row.at("role_id").c_str());
-      }
-      return roles;
+      return execute_("SELECT role_id FROM role;") | [&](const auto &result) {
+        return transform<std::string>(
+            result, [](const auto &row) { return row.at(kRoleId).c_str(); });
+      };
     }
 
-    optional<Account> PostgresWsvQuery::getAccount(const string &account_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec("SELECT * FROM account WHERE account_id = "
-                                   + transaction_.quote(account_id)
-                                   + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      if (result.empty()) {
-        log_->info("Account {} not found", account_id);
-        return nullopt;
-      }
-      Account account;
-      auto row = result.at(0);
-      row.at("account_id") >> account.account_id;
-      row.at("domain_id") >> account.domain_id;
-      row.at("quorum") >> account.quorum;
-      row.at("data") >> account.json_data;
-      //      row.at("transaction_count") >> ?
-      return account;
+    nonstd::optional<model::Account> PostgresWsvQuery::getAccount(
+        const std::string &account_id) {
+      return execute_("SELECT * FROM account WHERE account_id = "
+                      + transaction_.quote(account_id)
+                      + ";")
+                 | [&](const auto &result) -> nonstd::optional<model::Account> {
+        if (result.empty()) {
+          log_->info(kAccountNotFound, account_id);
+          return nonstd::nullopt;
+        }
+        model::Account account;
+        auto row = result.at(0);
+        row.at(kAccountId) >> account.account_id;
+        row.at(kDomainId) >> account.domain_id;
+        row.at("quorum") >> account.quorum;
+        row.at("data") >> account.json_data;
+        return account;
+      };
     }
 
     nonstd::optional<std::string> PostgresWsvQuery::getAccountDetail(
         const std::string &account_id,
         const std::string &creator_account_id,
         const std::string &detail) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT data#>>"
-            + transaction_.quote("{" + creator_account_id + ", " + detail + "}")
-            + " FROM account WHERE account_id = "
-            + transaction_.quote(account_id)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      if (result.empty()) {
-        log_->info("Account {} not found", account_id);
-        return nullopt;
-      }
-      auto row = result.at(0);
-      std::string res;
-      row.at(0) >> res;
+      return execute_("SELECT data#>>"
+                      + transaction_.quote(
+                            "{" + creator_account_id + ", " + detail + "}")
+                      + " FROM account WHERE account_id = "
+                      + transaction_.quote(account_id)
+                      + ";")
+                 | [&](const auto &result) -> nonstd::optional<std::string> {
+        if (result.empty()) {
+          log_->info(kAccountNotFound, account_id);
+          return nonstd::nullopt;
+        }
+        auto row = result.at(0);
+        std::string res;
+        row.at(0) >> res;
 
-      // if res is empty, then that key does not exist for this account
-      if (res.empty()) {
-        return nullopt;
-      }
-      return res;
+        // if res is empty, then that key does not exist for this account
+        if (res.empty()) {
+          return nonstd::nullopt;
+        }
+        return res;
+      };
     }
 
     nonstd::optional<std::vector<pubkey_t>> PostgresWsvQuery::getSignatories(
-        const string &account_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT public_key FROM account_has_signatory WHERE account_id = "
-            + transaction_.quote(account_id)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      std::vector<pubkey_t> signatories;
-      for (const auto &row : result) {
-        pqxx::binarystring public_key_str(row.at("public_key"));
-        pubkey_t pubkey;
-        std::copy(public_key_str.begin(), public_key_str.end(), pubkey.begin());
-        signatories.push_back(pubkey);
-      }
-      return signatories;
+        const std::string &account_id) {
+      return execute_(
+                 "SELECT public_key FROM account_has_signatory WHERE "
+                 "account_id = "
+                 + transaction_.quote(account_id)
+                 + ";")
+          |
+          [&](const auto &result) {
+            return transform<pubkey_t>(result, [&](const auto &row) {
+              pqxx::binarystring public_key_str(row.at(kPublicKey));
+              pubkey_t pubkey;
+              std::copy(
+                  public_key_str.begin(), public_key_str.end(), pubkey.begin());
+              return pubkey;
+            });
+          };
     }
 
-    optional<Asset> PostgresWsvQuery::getAsset(const string &asset_id) {
+    nonstd::optional<model::Asset> PostgresWsvQuery::getAsset(
+        const std::string &asset_id) {
       pqxx::result result;
-      try {
-        result = transaction_.exec("SELECT * FROM asset WHERE asset_id = "
-                                   + transaction_.quote(asset_id)
-                                   + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      if (result.empty()) {
-        log_->info("Asset {} not found", asset_id);
-        return nullopt;
-      }
-      Asset asset;
-      auto row = result.at(0);
-      row.at("asset_id") >> asset.asset_id;
-      row.at("domain_id") >> asset.domain_id;
-      int32_t precision;
-      row.at("precision") >> precision;
-      asset.precision = precision;
-      //      row.at("data") >> ?
-      return asset;
+      return execute_("SELECT * FROM asset WHERE asset_id = "
+                      + transaction_.quote(asset_id)
+                      + ";")
+                 | [&](const auto &result) -> nonstd::optional<model::Asset> {
+        if (result.empty()) {
+          log_->info("Asset {} not found", asset_id);
+          return nonstd::nullopt;
+        }
+        model::Asset asset;
+        auto row = result.at(0);
+        row.at(kAssetId) >> asset.asset_id;
+        row.at(kDomainId) >> asset.domain_id;
+        int32_t precision;
+        row.at("precision") >> precision;
+        asset.precision = precision;
+        return asset;
+      };
     }
 
-    optional<AccountAsset> PostgresWsvQuery::getAccountAsset(
+    nonstd::optional<model::AccountAsset> PostgresWsvQuery::getAccountAsset(
         const std::string &account_id, const std::string &asset_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec(
-            "SELECT * FROM account_has_asset WHERE account_id = "
-            + transaction_.quote(account_id)
-            + " AND asset_id = "
-            + transaction_.quote(asset_id)
-            + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      if (result.empty()) {
-        log_->info("Account {} does not have asset {}", account_id, asset_id);
-        return nullopt;
-      }
-      model::AccountAsset asset;
-      auto row = result.at(0);
-      row.at("account_id") >> asset.account_id;
-      row.at("asset_id") >> asset.asset_id;
-      std::string amount_str;
-      row.at("amount") >> amount_str;
-      asset.balance = Amount::createFromString(amount_str).value();
-      return asset;
+      return execute_("SELECT * FROM account_has_asset WHERE account_id = "
+                      + transaction_.quote(account_id)
+                      + " AND asset_id = "
+                      + transaction_.quote(asset_id)
+                      + ";")
+                 | [&](const auto &result)
+                 -> nonstd::optional<model::AccountAsset> {
+        if (result.empty()) {
+          log_->info("Account {} does not have asset {}", account_id, asset_id);
+          return nonstd::nullopt;
+        }
+        model::AccountAsset asset;
+        auto row = result.at(0);
+        row.at(kAccountId) >> asset.account_id;
+        row.at(kAssetId) >> asset.asset_id;
+        std::string amount_str;
+        row.at("amount") >> amount_str;
+        asset.balance = Amount::createFromString(amount_str).value();
+        return asset;
+      };
     }
 
     nonstd::optional<model::Domain> PostgresWsvQuery::getDomain(
         const std::string &domain_id) {
-      pqxx::result result;
-      try {
-        result = transaction_.exec("SELECT * FROM domain WHERE domain_id = "
-                                   + transaction_.quote(domain_id)
-                                   + ";");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      if (result.empty()) {
-        log_->info("Domain {} not found", domain_id);
-        return nullopt;
-      }
-      Domain domain;
-      auto row = result.at(0);
-      row.at("domain_id") >> domain.domain_id;
-      row.at("default_role") >> domain.default_role;
-      return domain;
+      return execute_("SELECT * FROM domain WHERE domain_id = "
+                      + transaction_.quote(domain_id)
+                      + ";")
+                 | [&](const auto &result) -> nonstd::optional<model::Domain> {
+        if (result.empty()) {
+          log_->info("Domain {} not found", domain_id);
+          return nonstd::nullopt;
+        }
+        model::Domain domain;
+        auto row = result.at(0);
+        row.at(kDomainId) >> domain.domain_id;
+        row.at("default_role") >> domain.default_role;
+        return domain;
+      };
     }
 
     nonstd::optional<std::vector<model::Peer>> PostgresWsvQuery::getPeers() {
       pqxx::result result;
-      try {
-        result = transaction_.exec("SELECT * FROM peer;");
-      } catch (const std::exception &e) {
-        log_->error(e.what());
-        return nullopt;
-      }
-      std::vector<Peer> peers;
-      for (const auto &row : result) {
-        model::Peer peer;
-        pqxx::binarystring public_key_str(row.at("public_key"));
-        pubkey_t pubkey;
-        std::copy(public_key_str.begin(), public_key_str.end(), pubkey.begin());
-        peer.pubkey = pubkey;
-        row.at("address") >> peer.address;
-        peers.push_back(peer);
-      }
-      return peers;
+      return execute_("SELECT * FROM peer;") | [&](const auto &result) {
+        return transform<model::Peer>(result, [](const auto &row) {
+          model::Peer peer;
+          pqxx::binarystring public_key_str(row.at(kPublicKey));
+          pubkey_t pubkey;
+          std::copy(
+              public_key_str.begin(), public_key_str.end(), pubkey.begin());
+          peer.pubkey = pubkey;
+          row.at("address") >> peer.address;
+          return peer;
+        });
+      };
     }
   }  // namespace ametsuchi
 }  // namespace iroha

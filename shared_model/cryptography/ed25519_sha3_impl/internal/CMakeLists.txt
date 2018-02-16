@@ -21,7 +21,6 @@ add_library(hash
 
 target_link_libraries(hash
         common
-        pb_model_converters
         ed25519
         )
 
@@ -30,6 +29,5 @@ add_library(cryptography
         )
 
 target_link_libraries(cryptography
-        ed25519
         hash
         )

@@ -53,7 +53,10 @@ namespace iroha {
 
     Amount(uint64_t first, uint64_t second, uint64_t third, uint64_t fourth);
 
-    Amount(uint64_t first, uint64_t second, uint64_t third, uint64_t fourth,
+    Amount(uint64_t first,
+           uint64_t second,
+           uint64_t third,
+           uint64_t fourth,
            uint8_t precision);
 
     std::vector<uint64_t> to_uint64s();
@@ -61,14 +64,14 @@ namespace iroha {
     /**
      * Copy constructor
      */
-    Amount(const Amount&);
-    Amount& operator=(const Amount&);
+    Amount(const Amount &);
+    Amount &operator=(const Amount &);
 
     /**
      * Move constructor
      */
-    Amount(Amount&&);
-    Amount& operator=(Amount&&);
+    Amount(Amount &&);
+    Amount &operator=(Amount &&);
 
     uint256_t getIntValue();
     uint8_t getPrecision();
@@ -88,7 +91,7 @@ namespace iroha {
      * @param percents
      * @return
      */
-    Amount percentage(const Amount& percents) const;
+    Amount percentage(const Amount &percents) const;
 
     /**
      * Sums up two optionals of the amounts.
@@ -138,12 +141,12 @@ namespace iroha {
      *
      * @return
      */
-    bool operator==(const Amount&) const;
-    bool operator!=(const Amount&) const;
-    bool operator<(const Amount&) const;
-    bool operator>(const Amount&) const;
-    bool operator<=(const Amount&) const;
-    bool operator>=(const Amount&) const;
+    bool operator==(const Amount &) const;
+    bool operator!=(const Amount &) const;
+    bool operator<(const Amount &) const;
+    bool operator>(const Amount &) const;
+    bool operator<=(const Amount &) const;
+    bool operator>=(const Amount &) const;
 
     std::string to_string() const;
     ~Amount() = default;
@@ -156,23 +159,23 @@ namespace iroha {
      * @param other
      * @return
      */
-    int compareTo(const Amount& other) const;
+    int compareTo(const Amount &other) const;
 
     /**
      * Sums two amounts.
      * @return
      */
-    Amount add(const Amount&) const;
+    Amount add(const Amount &) const;
     /**
      * Subtracts one amount from another.
      * Requires to have the same scale between both amounts.
      * Otherwise nullopt is returned
      * @return
      */
-    Amount subtract(const Amount&) const;
+    Amount subtract(const Amount &) const;
 
     boost::multiprecision::uint256_t value_{0};
     uint8_t precision_{0};
   };
-}
+}  // namespace iroha
 #endif  // IROHA_AMOUNT_H

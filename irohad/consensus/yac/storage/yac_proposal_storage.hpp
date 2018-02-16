@@ -18,26 +18,25 @@
 #ifndef IROHA_YAC_PROPOSAL_STORAGE_HPP
 #define IROHA_YAC_PROPOSAL_STORAGE_HPP
 
-#include <vector>
-#include <unordered_map>
 #include <nonstd/optional.hpp>
+#include <vector>
 
-#include "consensus/yac/messages.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
+#include "consensus/yac/storage/yac_common.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      struct VoteMessage;
+
       /**
        * Class for storing votes related to given proposal hash
        * and gain information about commits/rejects for those hash
        */
       class YacProposalStorage {
-
        private:
         // --------| private api |--------
 
@@ -113,8 +112,6 @@ namespace iroha {
          */
         nonstd::optional<Answer> findRejectProof();
 
-
-
         // --------| fields |--------
 
         /**
@@ -142,7 +139,7 @@ namespace iroha {
          */
         logger::Logger log_;
       };
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_YAC_PROPOSAL_STORAGE_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_YAC_PROPOSAL_STORAGE_HPP

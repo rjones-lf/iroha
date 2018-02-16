@@ -6,8 +6,8 @@ add_library(ametsuchi
     impl/postgres_wsv_query.cpp
     impl/postgres_wsv_command.cpp
     impl/peer_query_wsv.cpp
-    impl/redis_block_query.cpp
-    impl/redis_block_index.cpp
+    impl/postgres_block_query.cpp
+    impl/postgres_block_index.cpp
     )
 
 target_link_libraries(ametsuchi
@@ -16,8 +16,8 @@ target_link_libraries(ametsuchi
     rxcpp
     optional
     pqxx
-    cpp_redis
     libs_common
     command_execution
+    shared_model_command_execution
     boost
     )

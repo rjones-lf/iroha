@@ -17,6 +17,7 @@
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha::ordering;
+using namespace iroha::protocol;
 using namespace iroha::model;
 using namespace iroha::network;
 
@@ -39,7 +40,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
 }
 
 void OrderingServiceTransportGrpc::publishProposal(
-    Proposal &&proposal, const std::vector<std::string> &peers) {
+    model::Proposal &&proposal, const std::vector<std::string> &peers) {
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
@@ -49,11 +50,11 @@ void OrderingServiceTransportGrpc::publishProposal(
         grpc::CreateChannel(peer, grpc::InsecureChannelCredentials()));
   }
 
-  proto::Proposal pb_proposal;
+  protocol::Proposal pb_proposal;
   pb_proposal.set_height(proposal.height);
   for (const auto &tx : proposal.transactions) {
-    auto pb_tx = pb_proposal.add_transactions();
-    new (pb_tx) protocol::Transaction(factory_.serialize(tx));
+    new (pb_proposal.add_transactions())
+        protocol::Transaction(factory_.serialize(tx));
   }
 
   for (const auto &peer : peers_map) {

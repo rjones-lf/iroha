@@ -18,59 +18,64 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/base/primitive.hpp"
 #include "model/queries/responses/account_detail_response.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
+#ifndef DISABLE_BACKWARD
+#include "model/queries/responses/account_detail_response.hpp"
+#endif
+
 namespace shared_model {
-    namespace interface {
-        /**
-         * Provide response with account asset
-         */
-        class AccountDetailResponse
-          : public Primitive<AccountDetailResponse,
-            iroha::model::AccountDetailResponse> {
-        public:
-            /// Detail
-            using DetailType = std::string;
-            /**
-             * @return Account has Asset model
-             */
-            virtual const DetailType &detail() const = 0;
+  namespace interface {
+    /**
+     * Provide response with account asset
+     */
+    class AccountDetailResponse : public PRIMITIVE(AccountDetailResponse) {
+     public:
+      /// Detail
+      using DetailType = std::string;
+      /**
+       * @return Account has Asset model
+       */
+      virtual const DetailType &detail() const = 0;
 
-            /**
-             * Stringify the data.
-             * @return string representation of data.
-             */
-            std::string toString() const override {
-              return detail::PrettyStringBuilder()
-                .init("AccountDetailResponse")
-                .append(detail())
-                .finalize();
-            }
+      /**
+       * Stringify the data.
+       * @return string representation of data.
+       */
+      std::string toString() const override {
+        return detail::PrettyStringBuilder()
+            .init("AccountDetailResponse")
+            .append(detail())
+            .finalize();
+      }
 
-            /**
-             * Implementation of operator ==
-             * @param rhs - the right-hand side of AccountAssetResponse object
-             * @return true if they are same.
-             */
-            bool operator==(const ModelType &rhs) const override {
-              return detail() == rhs.detail();
-            }
+      /**
+       * Implementation of operator ==
+       * @param rhs - the right-hand side of AccountAssetResponse object
+       * @return true if they are same.
+       */
+      bool operator==(const ModelType &rhs) const override {
+        return detail() == rhs.detail();
+      }
 
-            /**
-             * Makes old model.
-             * @return An allocated old model of account asset response.
-             */
-            OldModelType *makeOldModel() const override {
-              OldModelType *oldModel = new OldModelType();
-              oldModel->detail = detail();
-              return oldModel;
-            }
-        };
-    }  // namespace interface
+#ifndef DISABLE_BACKWARD
+      /**
+       * Makes old model.
+       * @return An allocated old model of account asset response.
+       */
+      OldModelType *makeOldModel() const override {
+        OldModelType *oldModel = new OldModelType();
+        oldModel->detail = detail();
+        return oldModel;
+      }
+
+#endif
+    };
+  }  // namespace interface
 }  // namespace shared_model
-#endif //IROHA_ACCOUNT_DETAIL_RESPONSE_HPP
+#endif  // IROHA_ACCOUNT_DETAIL_RESPONSE_HPP

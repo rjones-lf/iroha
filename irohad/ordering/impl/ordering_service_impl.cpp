@@ -16,6 +16,7 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+#include "model/peer.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -75,6 +76,8 @@ namespace iroha {
                    .subscribe([this](auto) { this->updateTimer(); });
     }
 
-    OrderingServiceImpl::~OrderingServiceImpl() { handle.unsubscribe(); }
+    OrderingServiceImpl::~OrderingServiceImpl() {
+      handle.unsubscribe();
+    }
   }  // namespace ordering
 }  // namespace iroha

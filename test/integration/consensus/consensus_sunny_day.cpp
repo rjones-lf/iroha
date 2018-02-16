@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-
 #include <grpc++/grpc++.h>
 #include "consensus/yac/impl/timer_impl.hpp"
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "framework/test_subscriber.hpp"
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
-using ::testing::Return;
 using ::testing::An;
+using ::testing::Return;
 
 using namespace iroha::model;
 using namespace iroha::consensus::yac;
@@ -67,12 +67,11 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     network = std::make_shared<NetworkImpl>();
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>();
-    yac = Yac::create(YacVoteStorage(),
-                      network,
-                      crypto,
-                      timer,
-                      ClusterOrdering(default_peers),
-                      delay);
+    auto order = ClusterOrdering::create(default_peers);
+    ASSERT_TRUE(order);
+
+    yac = Yac::create(
+        YacVoteStorage(), network, crypto, timer, order.value(), delay);
     network->subscribe(yac);
 
     std::mutex mtx;
@@ -143,7 +142,11 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
   YacHash my_hash("proposal_hash", "block_hash");
-  yac->vote(my_hash, ClusterOrdering(default_peers));
+
+  auto order = ClusterOrdering::create(default_peers);
+  ASSERT_TRUE(order.has_value());
+
+  yac->vote(my_hash, order.value());
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());

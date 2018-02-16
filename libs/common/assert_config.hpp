@@ -18,8 +18,8 @@
 #ifndef IROHA_CLI_ASSERT_CONFIG_HPP
 #define IROHA_CLI_ASSERT_CONFIG_HPP
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace assert_config {
   /**
@@ -29,7 +29,8 @@ namespace assert_config {
     return "No member '" + member + "'";
   }
 
-  inline std::string type_error(std::string const &value, std::string const &type) {
+  inline std::string type_error(std::string const &value,
+                                std::string const &type) {
     return "'" + value + "' is not " + type;
   }
 
@@ -55,6 +56,6 @@ namespace assert_config {
       fatal_error(error);
     }
   }
-}  // namespace iroha_cli
+}  // namespace assert_config
 
 #endif  // IROHA_CLI_ASSERT_CONFIG_HPP

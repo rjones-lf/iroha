@@ -32,12 +32,10 @@ TEST(ProtoCommand, CommandLoad) {
   iroha::protocol::Command command;
   auto refl = command.GetReflection();
   auto desc = command.GetDescriptor();
-  boost::for_each(
-      boost::irange(0, desc->field_count()),
-      [&](auto i) {
-        auto field = desc->field(i);
-        refl->SetAllocatedMessage(
-            &command, refl->GetMessage(command, field).New(), field);
-        ASSERT_EQ(i, shared_model::proto::Command(command).get().which());
-      });
+  boost::for_each(boost::irange(0, desc->field_count()), [&](auto i) {
+    auto field = desc->field(i);
+    refl->SetAllocatedMessage(
+        &command, refl->GetMessage(command, field).New(), field);
+    ASSERT_EQ(i, shared_model::proto::Command(command).get().which());
+  });
 }

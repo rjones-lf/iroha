@@ -16,15 +16,16 @@
  */
 
 #include <gtest/gtest.h>
-#include "common/types.hpp"
 #include <iostream>
+#include "common/types.hpp"
 
 using namespace iroha;
 using namespace std;
 
 TEST(ConverterTest, UsageTest) {
   cout << "----------| string => convert to blob"
-      " => convert to string |----------" << endl;
+          " => convert to string |----------"
+       << endl;
 
   std::string source = "blob was here!";
   auto blob = stringToBytes(source);

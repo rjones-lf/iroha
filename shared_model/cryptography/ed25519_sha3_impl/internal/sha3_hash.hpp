@@ -19,9 +19,6 @@
 #define IROHA_HASH_H
 
 #include "common/types.hpp"
-#include "model/block.hpp"
-#include "model/query.hpp"
-#include "model/transaction.hpp"
 
 namespace iroha {
 
@@ -34,11 +31,6 @@ namespace iroha {
   hash512_t sha3_512(const uint8_t *input, size_t in_size);
   hash512_t sha3_512(const std::string &msg);
   hash512_t sha3_512(const std::vector<uint8_t> &msg);
-
-  hash256_t hash(const model::Transaction &tx);
-  hash256_t hash(const model::Block &tx);
-  hash256_t hash(const model::Query &tx);
-
 }  // namespace iroha
 
 #endif  // IROHA_HASH_H

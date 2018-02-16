@@ -36,10 +36,9 @@ namespace shared_model {
       template <typename CommandType>
       explicit SubtractAssetQuantity(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            subtract_asset_quantity_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::subtract_asset_quantity)),
+            subtract_asset_quantity_(proto_->subtract_asset_quantity()),
             amount_([this] {
-              return proto::Amount(subtract_asset_quantity_->amount());
+              return proto::Amount(subtract_asset_quantity_.amount());
             }) {}
 
       SubtractAssetQuantity(const SubtractAssetQuantity &o)
@@ -49,11 +48,11 @@ namespace shared_model {
           : SubtractAssetQuantity(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return subtract_asset_quantity_->account_id();
+        return subtract_asset_quantity_.account_id();
       }
 
       const interface::types::AssetIdType &assetId() const override {
-        return subtract_asset_quantity_->asset_id();
+        return subtract_asset_quantity_.asset_id();
       }
 
       const interface::Amount &amount() const override {
@@ -65,8 +64,7 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::SubtractAssetQuantity &>
-          subtract_asset_quantity_;
+      const iroha::protocol::SubtractAssetQuantity &subtract_asset_quantity_;
 
       const Lazy<proto::Amount> amount_;
     };

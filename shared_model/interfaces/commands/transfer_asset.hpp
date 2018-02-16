@@ -20,15 +20,17 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/commands/transfer_asset.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Grant permission to account
      */
-    class TransferAsset
-        : public Primitive<TransferAsset, iroha::model::TransferAsset> {
+    class TransferAsset : public PRIMITIVE(TransferAsset) {
      public:
       /**
        * @return Id of the account from which transfer assets
@@ -65,6 +67,7 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::TransferAsset;
         oldModel->src_account_id = srcAccountId();
@@ -78,6 +81,8 @@ namespace shared_model {
         oldModel->description = message();
         return oldModel;
       }
+
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return srcAccountId() == rhs.srcAccountId()

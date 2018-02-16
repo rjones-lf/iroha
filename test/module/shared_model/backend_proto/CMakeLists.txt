@@ -16,11 +16,11 @@
 #
 
 addtest(shared_proto_commands_test
-        shared_proto_commands_test.cpp
-        )
+    shared_proto_commands_test.cpp
+    )
 target_link_libraries(shared_proto_commands_test
-        shared_model_proto_backend
-        )
+    shared_model_proto_backend
+    )
 
 addtest(shared_proto_tx_response_test
     shared_proto_tx_response_test.cpp
@@ -36,6 +36,7 @@ target_link_libraries(shared_proto_transaction_test
     shared_model_proto_backend
     shared_model_ed25519_sha3
     shared_model_stateless_validation
+    iroha_amount
     )
 
 addtest(shared_proto_queries_test
@@ -44,6 +45,7 @@ addtest(shared_proto_queries_test
 target_link_libraries(shared_proto_queries_test
     shared_model_proto_backend
     shared_model_ed25519_sha3
+    shared_model_stateless_validation
     )
 
 addtest(shared_proto_query_responses_test

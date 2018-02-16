@@ -32,11 +32,14 @@ namespace shared_model {
         return "StatelessFailedTxResponse";
       }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::TransactionResponse::Status oldModelStatus()
           const override {
         return iroha::model::TransactionResponse::Status::
             STATELESS_VALIDATION_FAILED;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -24,19 +24,31 @@
 #include "interactive/interactive_common_cli.hpp"
 #include "logger/logger.hpp"
 #include "model/generators/query_generator.hpp"
-#include "model/model_crypto_provider.hpp"
-#include "model/query.hpp"
+
+namespace iroha {
+  namespace model {
+    class ModelCryptoProvider;
+    struct Query;
+  }
+}
 
 namespace iroha_cli {
   namespace interactive {
     class InteractiveQueryCli {
      public:
+
       /**
-       * @param account_id creator's account identification
+       * Class to form and send Iroha queries  in interactive mode
+       * @param creator_account creator's account identification
+       * @param default_peer_ip of Iroha peer
+       * @param default_port of Iroha peer
        * @param query_counter counter associated with creator's account
+       * @param provider for signing queries
        */
       InteractiveQueryCli(
           const std::string &account_id,
+          const std::string &default_peer_ip,
+          int default_port,
           uint64_t query_counter,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
       /**
@@ -131,6 +143,9 @@ namespace iroha_cli {
       // ------- Query data -----------
       // Creator account id
       std::string creator_;
+      // Default Iroha peer address
+      std::string default_peer_ip_;
+      int default_port_;
 
       // Local query counter of account creator_
       uint64_t counter_;

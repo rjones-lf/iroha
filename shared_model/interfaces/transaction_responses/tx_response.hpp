@@ -27,18 +27,19 @@
 #include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/unknown_tx_response.hpp"
-#include "model/transaction_response.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/transaction_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * TransactionResponse is a status of transaction in system
      */
-    class TransactionResponse
-        : public Primitive<TransactionResponse,
-                           iroha::model::TransactionResponse> {
+    class TransactionResponse : public PRIMITIVE(TransactionResponse) {
      private:
       /// PolymorphicWrapper shortcut type
       template <typename... Value>
@@ -72,12 +73,15 @@ namespace shared_model {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto response = boost::apply_visitor(
             detail::OldModelCreatorVisitor<OldModelType *>(), get());
         response->tx_hash = crypto::toBinaryString(transactionHash());
         return response;
       }
+
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return transactionHash() == rhs.transactionHash()

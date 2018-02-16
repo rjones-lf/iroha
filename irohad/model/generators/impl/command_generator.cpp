@@ -38,8 +38,8 @@ namespace iroha {
     namespace generators {
 
       std::shared_ptr<Command> CommandGenerator::generateAddPeer(
-          const std::string &address, const pubkey_t &key) {
-        return generateCommand<AddPeer>(key, address);
+          const Peer &peer) {
+        return generateCommand<AddPeer>(peer);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddSignatory(
@@ -56,8 +56,7 @@ namespace iroha {
           const std::string &account_name,
           const std::string &domain_id,
           const pubkey_t &key) {
-        return generateCommand<CreateAccount>(
-            account_name, domain_id, key);
+        return generateCommand<CreateAccount>(account_name, domain_id, key);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateCreateDomain(
@@ -108,10 +107,11 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-        const std::string &account_id,
-        const std::string &asset_id,
-        const Amount &amount) {
-        return generateCommand<SubtractAssetQuantity>(account_id, asset_id, amount);
+          const std::string &account_id,
+          const std::string &asset_id,
+          const Amount &amount) {
+        return generateCommand<SubtractAssetQuantity>(
+            account_id, asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetQuorum(
@@ -129,8 +129,7 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAppendRole(
-          const std::string &account_id,
-          const std::string &role_name) {
+          const std::string &account_id, const std::string &role_name) {
         return generateCommand<AppendRole>(account_id, role_name);
       }
 

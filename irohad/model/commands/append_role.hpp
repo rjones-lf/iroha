@@ -30,11 +30,11 @@ namespace iroha {
       /**
        * Account to which add new role
        */
-      std::string account_id{};
+      std::string account_id;
       /**
        * Role to add to account
        */
-      std::string role_name{};
+      std::string role_name;
 
       bool operator==(const Command &command) const override;
 

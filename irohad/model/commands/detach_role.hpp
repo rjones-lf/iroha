@@ -17,6 +17,9 @@
 
 #ifndef IROHA_DETACH_ROLE_HPP
 #define IROHA_DETACH_ROLE_HPP
+
+#include "model/command.hpp"
+
 namespace iroha {
   namespace model {
 
@@ -45,4 +48,5 @@ namespace iroha {
     };
   }  // namespace model
 }  // namespace iroha
+
 #endif  // IROHA_DETACH_ROLE_HPP

@@ -1,67 +1,149 @@
-/*
-Copyright 2017 Soramitsu Co., Ltd.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
+ * http://soramitsu.co.jp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef TORII_COMMAND_SERVICE_HPP
 #define TORII_COMMAND_SERVICE_HPP
 
-#include <endpoint.grpc.pb.h>
-#include <endpoint.pb.h>
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include "ametsuchi/storage.hpp"
+#include "cache/cache.hpp"
+#include "endpoint.grpc.pb.h"
+#include "endpoint.pb.h"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/transaction_response.hpp"
-#include "torii/cache/cache.hpp"
 #include "torii/processor/transaction_processor.hpp"
 
 namespace torii {
-
   /**
-   * Actual implementation of async CommandService.
-   * ToriiServiceHandler::(SomeMethod)Handler calls a corresponding method in
-   * this class.
+   * Actual implementation of sync CommandService.
    */
-  class CommandService {
+  class CommandService : public iroha::protocol::CommandService::Service {
    public:
+    /**
+     * Creates a new instance of CommandService
+     * @param pb_factory - model->protobuf and vice versa converter
+     * @param tx_processor - processor of received transactions
+     * @param storage - storage to request transactions outside the cache
+     * @param proposal_delay - time of a one proposal propagation.
+     */
     CommandService(
         std::shared_ptr<iroha::model::converters::PbTransactionFactory>
             pb_factory,
-        std::shared_ptr<iroha::torii::TransactionProcessor> txProcessor,
-        std::shared_ptr<iroha::ametsuchi::Storage> storage);
+        std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
+        std::shared_ptr<iroha::ametsuchi::Storage> storage,
+        std::chrono::milliseconds proposal_delay);
 
+    /**
+     * Disable copying in any way to prevent potential issues with common
+     * storage/tx_processor
+     */
     CommandService(const CommandService &) = delete;
     CommandService &operator=(const CommandService &) = delete;
-    /**
-     * actual implementation of async Torii in CommandService
-     * @param request - Transaction
-     * @param response - ToriiResponse
-     */
-    void ToriiAsync(iroha::protocol::Transaction const &request,
-                    google::protobuf::Empty &response);
 
-    void StatusAsync(iroha::protocol::TxStatusRequest const &request,
-                     iroha::protocol::ToriiResponse &response);
+    /**
+     * Actual implementation of sync Torii in CommandService
+     * @param tx - Transaction we've received
+     */
+    void Torii(iroha::protocol::Transaction const &tx);
+
+    /**
+     * Torii call via grpc
+     * @param context - call context (see grpc docs for details)
+     * @param request - transaction received
+     * @param response - no actual response (grpc stub for empty answer)
+     * @return - grpc::Status
+     */
+    virtual grpc::Status Torii(grpc::ServerContext *context,
+                               const iroha::protocol::Transaction *request,
+                               google::protobuf::Empty *response) override;
+
+    /**
+     * Request to retrieve a status of any particular transaction
+     * @param request - TxStatusRequest object which identifies transaction
+     * uniquely
+     * @param response - ToriiResponse which contains a current state of
+     * requested transaction
+     */
+    void Status(iroha::protocol::TxStatusRequest const &request,
+                iroha::protocol::ToriiResponse &response);
+
+    /**
+     * Status call via grpc
+     * @param context - call context
+     * @param request - TxStatusRequest object which identifies transaction
+     * uniquely
+     * @param response - ToriiResponse which contains a current state of
+     * requested transaction
+     * @return - grpc::Status
+     */
+    virtual grpc::Status Status(
+        grpc::ServerContext *context,
+        const iroha::protocol::TxStatusRequest *request,
+        iroha::protocol::ToriiResponse *response) override;
+
+    /**
+     * Streaming call which will repeatedly send all statuses of requested
+     * transaction from its status at the moment of receiving this request to
+     * the some final transaction status (which cannot change anymore)
+     * @param request- TxStatusRequest object which identifies transaction
+     * uniquely
+     * @param response_writer - grpc::ServerWriter which can repeatedly send
+     * transaction statuses back to the client
+     */
+    void StatusStream(
+        iroha::protocol::TxStatusRequest const &request,
+        grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer);
+
+    /**
+     * StatusStream call via grpc
+     * @param context - call context
+     * @param request - TxStatusRequest object which identifies transaction
+     * uniquely
+     * @param response_writer - grpc::ServerWriter which can repeatedly send
+     * transaction statuses back to the client
+     * @return - grpc::Status
+     */
+    virtual grpc::Status StatusStream(
+        grpc::ServerContext *context,
+        const iroha::protocol::TxStatusRequest *request,
+        grpc::ServerWriter<iroha::protocol::ToriiResponse> *response_writer)
+        override;
+
+   private:
+    void checkCacheAndSend(
+        const boost::optional<iroha::protocol::ToriiResponse> &resp,
+        grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer)
+        const;
+
+    iroha::protocol::TxStatus convertStatusToProto(
+        const iroha::model::TransactionResponse::Status &status);
+
+    bool isFinalStatus(const iroha::protocol::TxStatus &status) const;
 
    private:
     std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_factory_;
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
-    std::shared_ptr<iroha::cache::Cache<std::string,
-                                        iroha::protocol::ToriiResponse>>
+    std::chrono::milliseconds proposal_delay_;
+    std::chrono::milliseconds start_tx_processing_duration_;
+    std::shared_ptr<
+        iroha::cache::Cache<std::string, iroha::protocol::ToriiResponse>>
         cache_;
   };
 

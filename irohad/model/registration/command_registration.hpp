@@ -22,7 +22,6 @@
 
 // ----------| commands |----------
 #include "model/commands/add_asset_quantity.hpp"
-#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/create_account.hpp"
@@ -30,6 +29,7 @@
 #include "model/commands/create_domain.hpp"
 #include "model/commands/remove_signatory.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 
 #include "model/commands/append_role.hpp"

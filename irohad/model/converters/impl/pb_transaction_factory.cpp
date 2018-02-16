@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 #include "model/converters/pb_transaction_factory.hpp"
+#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/converters/pb_command_factory.hpp"
 
@@ -24,7 +24,7 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      protocol::Transaction PbTransactionFactory::serialize (
+      protocol::Transaction PbTransactionFactory::serialize(
           const model::Transaction &tx) {
         model::converters::PbCommandFactory factory;
         protocol::Transaction pb_tx;
@@ -50,7 +50,7 @@ namespace iroha {
         return pbtx;
       }
 
-      std::shared_ptr<model::Transaction> PbTransactionFactory::deserialize (
+      std::shared_ptr<model::Transaction> PbTransactionFactory::deserialize(
           const protocol::Transaction &pb_tx) {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
@@ -63,7 +63,7 @@ namespace iroha {
         for (const auto &pb_sig : pb_tx.signature()) {
           model::Signature sig{};
           sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
-          sig.signature =  sig_t::from_string(pb_sig.signature());
+          sig.signature = sig_t::from_string(pb_sig.signature());
           tx.signatures.push_back(sig);
         }
 

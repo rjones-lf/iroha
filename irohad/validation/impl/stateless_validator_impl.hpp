@@ -42,7 +42,7 @@ namespace iroha {
 
       logger::Logger log_;
     };
-  }
-}
+  }  // namespace validation
+}  // namespace iroha
 
 #endif  // IROHA_STATELESS_VALIDATOR_IMPL_HPP

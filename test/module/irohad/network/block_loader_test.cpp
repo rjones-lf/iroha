@@ -20,8 +20,8 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "framework/test_subscriber.hpp"
+#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 
@@ -33,15 +33,12 @@ using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
 
-using testing::Return;
 using testing::A;
+using testing::Return;
 
 class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
-    peer = Peer();
-    peer.address = "0.0.0.0:50051";
-    peers.push_back(peer);
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
     provider = std::make_shared<MockCryptoProvider>();
@@ -50,10 +47,15 @@ class BlockLoaderTest : public testing::Test {
 
     grpc::ServerBuilder builder;
     int port = 0;
-    builder.AddListeningPort(peer.address, grpc::InsecureServerCredentials(),
-                             &port);
+    builder.AddListeningPort(
+        "0.0.0.0:0", grpc::InsecureServerCredentials(), &port);
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
+
+    peer = Peer();
+    peer.address = "0.0.0.0:" + std::to_string(port);
+    peers.push_back(peer);
+
     ASSERT_TRUE(server);
     ASSERT_NE(port, 0);
   }

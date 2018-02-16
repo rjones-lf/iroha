@@ -18,7 +18,9 @@
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
 #include <grpc++/grpc++.h>
+#include <memory>
 
+#include "consensus/yac/messages.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "logger/logger.hpp"
 
@@ -110,7 +112,7 @@ namespace iroha {
           ::grpc::ServerContext *context,
           const ::iroha::consensus::yac::proto::Commit *request,
           ::google::protobuf::Empty *response) {
-        CommitMessage commit;
+        CommitMessage commit(std::vector<VoteMessage>{});
         for (const auto &pb_vote : request->votes()) {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           commit.votes.push_back(vote);
@@ -128,7 +130,7 @@ namespace iroha {
           ::grpc::ServerContext *context,
           const ::iroha::consensus::yac::proto::Reject *request,
           ::google::protobuf::Empty *response) {
-        RejectMessage reject;
+        RejectMessage reject(std::vector<VoteMessage>{});
         for (const auto &pb_vote : request->votes()) {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           reject.votes.push_back(vote);

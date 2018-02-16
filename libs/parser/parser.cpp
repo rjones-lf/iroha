@@ -19,10 +19,11 @@
 
 namespace parser {
 
-  bool isIntNumber(const std::string& s) {
-    return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
-      return not std::isdigit(c);
-    }) == s.end();
+  bool isIntNumber(const std::string &s) {
+    return !s.empty()
+        && std::find_if(
+               s.begin(), s.end(), [](char c) { return not std::isdigit(c); })
+        == s.end();
   }
 
   nonstd::optional<std::string> parseFirstCommand(std::string line) {

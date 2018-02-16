@@ -17,11 +17,11 @@
 
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "model/asset.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::model;
@@ -31,6 +31,7 @@ using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 using ::testing::Return;
 
+// TODO: refactor services to allow dynamic port binding IR-741
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {

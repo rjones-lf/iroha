@@ -20,7 +20,10 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/commands/detach_role.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -28,7 +31,7 @@ namespace shared_model {
     /**
      * Remove role from account used in Iroha
      */
-    class DetachRole : public Primitive<DetachRole, iroha::model::DetachRole> {
+    class DetachRole : public PRIMITIVE(DetachRole) {
      public:
       /**
        * @return Account to remove the role
@@ -47,12 +50,15 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::DetachRole;
         oldModel->role_name = roleName();
         oldModel->account_id = accountId();
         return oldModel;
       }
+
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and roleName() == rhs.roleName();

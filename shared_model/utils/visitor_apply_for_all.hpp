@@ -35,6 +35,7 @@ namespace shared_model {
       }
     };
 
+#ifndef DISABLE_BACKWARD
     /**
      * Class provides generic converter for old-fashion domain objects
      * @tparam T abstract return type
@@ -47,6 +48,7 @@ namespace shared_model {
         return operand->makeOldModel();
       }
     };
+#endif
 
   }  // namespace detail
 }  // namespace shared_model

@@ -31,7 +31,6 @@ namespace iroha {
      */
     class BlockLoader {
      public:
-
       /**
        * Retrieve block from given peer starting from current top
        * @param peer_pubkey - peer for requesting blocks
@@ -52,7 +51,7 @@ namespace iroha {
 
       virtual ~BlockLoader() = default;
     };
-  } // namespace network
-} // namespace iroha
+  }  // namespace network
+}  // namespace iroha
 
-#endif //IROHA_BLOCK_LOADER_HPP
+#endif  // IROHA_BLOCK_LOADER_HPP

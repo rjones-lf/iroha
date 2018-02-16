@@ -18,8 +18,8 @@
 #ifndef IROHA_CLASS_HANDLER_HPP
 #define IROHA_CLASS_HANDLER_HPP
 
-#include <unordered_set>
 #include <typeindex>
+#include <unordered_set>
 
 /**
  * Class provides handling of classes
@@ -43,8 +43,8 @@ class ClassHandler {
   std::unordered_set<std::type_index> types() {
     return set;
   }
+
  private:
   std::unordered_set<std::type_index> set;
-
 };
-#endif //IROHA_CLASS_HANDLER_HPP
+#endif  // IROHA_CLASS_HANDLER_HPP

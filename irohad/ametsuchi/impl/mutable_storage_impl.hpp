@@ -18,32 +18,40 @@
 #ifndef IROHA_MUTABLE_STORAGE_IMPL_HPP
 #define IROHA_MUTABLE_STORAGE_IMPL_HPP
 
-#include "ametsuchi/mutable_storage.hpp"
-
-#include <unordered_map>
-#include <cpp_redis/cpp_redis>
 #include <pqxx/connection>
 #include <pqxx/nontransaction>
+#include <unordered_map>
 
-#include "model/execution/command_executor_factory.hpp"
-#include "ametsuchi/impl/block_index.hpp"
+#include "ametsuchi/mutable_storage.hpp"
+#include "logger/logger.hpp"
+#include "execution/command_executor.hpp"
 
 namespace iroha {
+
+  namespace model {
+    class CommandExecutorFactory;
+  }
+
   namespace ametsuchi {
+
+    class BlockIndex;
+    class WsvCommand;
+
     class MutableStorageImpl : public MutableStorage {
       friend class StorageImpl;
 
      public:
       MutableStorageImpl(
-          hash256_t top_hash, std::unique_ptr<cpp_redis::client> index,
+          hash256_t top_hash,
           std::unique_ptr<pqxx::lazyconnection> connection,
           std::unique_ptr<pqxx::nontransaction> transaction,
-          std::shared_ptr<model::CommandExecutorFactory> command_executors);
+          std::shared_ptr<model::CommandExecutorFactory> command_executors
+      );
 
       bool apply(const model::Block &block,
                  std::function<bool(const model::Block &,
-                                    WsvQuery &, const hash256_t &)>
-                 function) override;
+                                    WsvQuery &,
+                                    const hash256_t &)> function) override;
 
       ~MutableStorageImpl() override;
 
@@ -52,16 +60,17 @@ namespace iroha {
       // ordered collection is used to enforce block insertion order in
       // StorageImpl::commit
       std::map<uint32_t, model::Block> block_store_;
-      std::unique_ptr<cpp_redis::client> index_;
 
       std::unique_ptr<pqxx::lazyconnection> connection_;
       std::unique_ptr<pqxx::nontransaction> transaction_;
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
-      std::shared_ptr<model::CommandExecutorFactory> command_executors_;
+      std::shared_ptr<shared_model::CommandExecutor> command_executor_;
 
       bool committed;
+
+      logger::Logger log_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

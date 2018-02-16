@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include "commands.pb.h"
 #include "model/commands/add_asset_quantity.hpp"
-#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -37,6 +36,7 @@
 #include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/permissions.hpp"
 
@@ -58,9 +58,9 @@ namespace iroha {
 
         // subtract asset quantity
         protocol::SubtractAssetQuantity serializeSubtractAssetQuantity(
-          const model::SubtractAssetQuantity &subtractAssetQuantity);
+            const model::SubtractAssetQuantity &subtractAssetQuantity);
         model::SubtractAssetQuantity deserializeSubtractAssetQuantity(
-          const protocol::SubtractAssetQuantity &subtractAssetQuantity);
+            const protocol::SubtractAssetQuantity &subtractAssetQuantity);
 
         // add peer
         protocol::AddPeer serializeAddPeer(const model::AddPeer &addPeer);

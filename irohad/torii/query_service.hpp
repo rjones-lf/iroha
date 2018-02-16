@@ -33,7 +33,7 @@ namespace torii {
    * ToriiServiceHandler::(SomeMethod)Handler calls a corresponding method in
    * this class.
    */
-  class QueryService {
+  class QueryService : public iroha::protocol::QueryService::Service {
    public:
     QueryService(
         std::shared_ptr<iroha::model::converters::PbQueryFactory>
@@ -50,8 +50,12 @@ namespace torii {
      * @param request - Query
      * @param response - QueryResponse
      */
-    void FindAsync(iroha::protocol::Query const &request,
+    void Find(iroha::protocol::Query const &request,
                    iroha::protocol::QueryResponse &response);
+
+    grpc::Status Find(grpc::ServerContext *context,
+                      const iroha::protocol::Query *request,
+                      iroha::protocol::QueryResponse *response) override;
 
    private:
     std::shared_ptr<iroha::model::converters::PbQueryFactory> pb_query_factory_;
@@ -59,15 +63,13 @@ namespace torii {
         pb_query_response_factory_;
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
 
-    std::unordered_map<std::string, iroha::protocol::QueryResponse&>
+    std::unordered_map<std::string, iroha::protocol::QueryResponse &>
         handler_map_;
 
     std::unordered_map<std::string, iroha::protocol::QueryResponse>
         old_queries_;
 
-
     logger::Logger log_;
-
   };
 
 }  // namespace torii

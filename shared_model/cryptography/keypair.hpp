@@ -30,7 +30,11 @@ namespace shared_model {
     /**
      * Class for holding a keypair: public key and private key
      */
+#ifndef DISABLE_BACKWARD
     class Keypair : public interface::Primitive<Keypair, iroha::keypair_t> {
+#else
+    class Keypair : public interface::ModelPrimitive<Keypair> {
+#endif
      public:
       /// Type of public key
       using PublicKeyType = PublicKey;
@@ -69,12 +73,15 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       interface::Primitive<Keypair, iroha::keypair_t>::OldModelType *
       makeOldModel() const override {
         return new iroha::keypair_t{
             publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
             privateKey().makeOldModel<PrivateKey::OldPrivateKeyType>()};
       }
+
+#endif
 
       Keypair *copy() const override {
         return new Keypair(publicKey(), privateKey());

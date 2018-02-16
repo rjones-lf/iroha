@@ -18,9 +18,9 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_HPP
 #define IROHA_TRANSACTION_PROCESSOR_HPP
 
-#include <rxcpp/rx.hpp>
-#include <model/transaction.hpp>
 #include <model/client.hpp>
+#include <model/transaction.hpp>
+#include <rxcpp/rx.hpp>
 #include "model/transaction_response.hpp"
 
 namespace iroha {
@@ -32,12 +32,12 @@ namespace iroha {
      */
     class TransactionProcessor {
      public:
-
       /**
        * Add transaction to the system for processing
        * @param transaction - transaction for processing
        */
-      virtual void transactionHandle(std::shared_ptr<model::Transaction> transaction) = 0;
+      virtual void transactionHandle(
+          std::shared_ptr<model::Transaction> transaction) = 0;
 
       /**
        * Subscribers will be notified with transaction status

@@ -41,7 +41,9 @@ namespace shared_model {
 
       using PointerType = typename std::add_pointer_t<Target>;
 
-      const Target &operator*() const { return *ptr(); }
+      const Target &operator*() const {
+        return *ptr();
+      }
 
       const PointerType ptr() const {
         if (target_value_ == boost::none) {
@@ -53,12 +55,16 @@ namespace shared_model {
         return target_value_.get_ptr();
       }
 
-      const PointerType operator->() const { return ptr(); }
+      const PointerType operator->() const {
+        return ptr();
+      }
 
       /**
        * Remove generated value. Next ptr() call will generate new value
        */
-      void invalidate() const { target_value_ = boost::none; }
+      void invalidate() const {
+        target_value_ = boost::none;
+      }
 
      private:
       GeneratorType generator_;
@@ -75,36 +81,6 @@ namespace shared_model {
     auto makeLazyInitializer(Generator &&generator) {
       using targetType = decltype(generator());
       return LazyInitializer<targetType>(std::forward<Generator>(generator));
-    }
-
-    /**
-     * Create lambda which will return reference to value returned by function f
-     * lvalue reference specialization
-     * @tparam T object type
-     * @tparam F pointer to member function type
-     * @param t object to invoke method on
-     * @param f method to be invoked
-     * @return specified lambda
-     */
-    template <typename T, typename F>
-    auto makeReferenceGenerator(T &t, F &&f) {
-      return [&t, f]() -> decltype(auto) { return ((*t.*f)()); };
-    }
-
-    /**
-     * Create lambda which will return reference to value returned by function f
-     * rvalue reference specialization
-     * @tparam T object type
-     * @tparam F pointer to member function type
-     * @param t object to invoke method on
-     * @param f method to be invoked
-     * @return specified lambda
-     */
-    template <typename T, typename F>
-    auto makeReferenceGenerator(T &&t, F &&f) {
-      return [ t{std::move(t)}, f ]()->decltype(auto) {
-        return ((*t.*f)());
-      };
     }
   }  // namespace detail
 }  // namespace shared_model

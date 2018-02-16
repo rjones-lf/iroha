@@ -45,7 +45,7 @@ namespace shared_model {
     template <typename SignerT>
     CryptoModelSigner<SignerT>::CryptoModelSigner(crypto::Keypair kp)
         : keypair_(std::move(kp)) {}
-  }
-}
+  }  // namespace crypto
+}  // namespace shared_model
 
 #endif  //  IROHA_CRYPTO_MODEL_SIGNER_HPP_

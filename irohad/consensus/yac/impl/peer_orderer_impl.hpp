@@ -18,12 +18,21 @@
 #ifndef IROHA_PEER_ORDERER_IMPL_HPP
 #define IROHA_PEER_ORDERER_IMPL_HPP
 
-#include "ametsuchi/peer_query.hpp"
+#include <memory>
+#include <nonstd/optional.hpp>
 #include "consensus/yac/yac_peer_orderer.hpp"
 
 namespace iroha {
+
+  namespace ametsuchi {
+    class PeerQuery;
+  }
+
   namespace consensus {
     namespace yac {
+
+      class ClusterOrdering;
+      class YacHash;
 
       class PeerOrdererImpl : public YacPeerOrderer {
        public:
@@ -32,7 +41,8 @@ namespace iroha {
 
         nonstd::optional<ClusterOrdering> getInitialOrdering() override;
 
-        nonstd::optional<ClusterOrdering> getOrdering(YacHash hash) override;
+        nonstd::optional<ClusterOrdering> getOrdering(
+            const YacHash &hash) override;
 
        private:
         std::shared_ptr<ametsuchi::PeerQuery> query_;

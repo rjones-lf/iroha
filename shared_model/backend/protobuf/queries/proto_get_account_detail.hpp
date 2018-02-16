@@ -25,43 +25,38 @@
 #include "utils/reference_holder.hpp"
 
 namespace shared_model {
-    namespace proto {
-        class GetAccountDetail final
-          : public CopyableProto<interface::GetAccountDetail,
-            iroha::protocol::Query,
-            GetAccountDetail> {
-        public:
-            template <typename QueryType>
-            explicit GetAccountDetail(QueryType &&query)
-              : CopyableProto(std::forward<QueryType>(query)),
-                account_detail_(detail::makeReferenceGenerator(
-                  &proto_->payload(),
-                  &iroha::protocol::Query::Payload::get_account_detail)) {}
+  namespace proto {
+    class GetAccountDetail final
+        : public CopyableProto<interface::GetAccountDetail,
+                               iroha::protocol::Query,
+                               GetAccountDetail> {
+     public:
+      template <typename QueryType>
+      explicit GetAccountDetail(QueryType &&query)
+          : CopyableProto(std::forward<QueryType>(query)),
+            account_detail_(proto_->payload().get_account_detail()) {}
 
-            GetAccountDetail(const GetAccountDetail &o)
-              : GetAccountDetail(o.proto_) {}
+      GetAccountDetail(const GetAccountDetail &o)
+          : GetAccountDetail(o.proto_) {}
 
-            GetAccountDetail(GetAccountDetail &&o) noexcept
-              : GetAccountDetail(std::move(o.proto_)) {}
+      GetAccountDetail(GetAccountDetail &&o) noexcept
+          : GetAccountDetail(std::move(o.proto_)) {}
 
-            const interface::types::AccountIdType &accountId() const override {
-              return account_detail_->account_id();
-            }
+      const interface::types::AccountIdType &accountId() const override {
+        return account_detail_.account_id();
+      }
 
-            const interface::types::DetailType &detail() const override {
-              return account_detail_->detail();
-            }
+      const interface::types::DetailType &detail() const override {
+        return account_detail_.detail();
+      }
 
-        private:
-            // ------------------------------| fields |-------------------------------
+     private:
+      // ------------------------------| fields |-------------------------------
 
-            template <typename T>
-            using Lazy = detail::LazyInitializer<T>;
+      const iroha::protocol::GetAccountDetail &account_detail_;
+    };
 
-            const Lazy<const iroha::protocol::GetAccountDetail &> account_detail_;
-        };
-
-    }  // namespace proto
+  }  // namespace proto
 }  // namespace shared_model
 
-#endif //IROHA_PROTO_GET_ACCOUNT_DETAIL_HPP
+#endif  // IROHA_PROTO_GET_ACCOUNT_DETAIL_HPP

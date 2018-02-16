@@ -20,7 +20,6 @@
 #include <gtest/gtest.h>
 
 #include "model/commands/add_asset_quantity.hpp"
-#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
 #include "model/commands/append_role.hpp"
@@ -34,10 +33,11 @@
 #include "model/commands/revoke_permission.hpp"
 #include "model/commands/set_account_detail.hpp"
 #include "model/commands/set_quorum.hpp"
+#include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/converters/json_command_factory.hpp"
-
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "model/permissions.hpp"
+#include "model/sha3_hash.hpp"
 
 using namespace rapidjson;
 using namespace iroha;
@@ -140,7 +140,7 @@ TEST_F(JsonCommandTest, subtract_asset_quantity) {
 
 TEST_F(JsonCommandTest, add_peer) {
   auto orig_addPeer = std::make_shared<AddPeer>();
-  orig_addPeer->address = "10.90.129.23";
+  orig_addPeer->peer.address = "10.90.129.23";
   auto proto_add_peer = factory.serializeAddPeer(orig_addPeer);
   auto serial_addPeer = factory.deserializeAddPeer(proto_add_peer);
 
@@ -148,7 +148,7 @@ TEST_F(JsonCommandTest, add_peer) {
   ASSERT_EQ(*orig_addPeer, *serial_addPeer.value());
   command_converter_test(orig_addPeer);
 
-  orig_addPeer->address = "134";
+  orig_addPeer->peer.address = "134";
   ASSERT_NE(*serial_addPeer.value(), *orig_addPeer);
 }
 
@@ -285,7 +285,7 @@ TEST_F(JsonCommandTest, detach_role) {
 
 TEST_F(JsonCommandTest, create_role) {
   std::set<std::string> perms = {
-      "CanGetMyAccount", "CanCreateAsset", "CanAddPeer"};
+      can_get_my_account, can_create_asset, can_add_peer};
   auto orig_command = std::make_shared<CreateRole>("master", perms);
   auto json_command = factory.serializeCreateRole(orig_command);
   auto serial_command = factory.deserializeCreateRole(json_command);

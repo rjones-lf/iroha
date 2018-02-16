@@ -18,12 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_FIELD_VALIDATOR_HPP
 #define IROHA_SHARED_MODEL_FIELD_VALIDATOR_HPP
 
-#include <boost/format.hpp>
 #include <regex>
 
 #include "datetime/time.hpp"
 #include "interfaces/commands/command.hpp"
-#include "validator/address_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -35,158 +33,88 @@ namespace shared_model {
      */
     class FieldValidator {
      public:
-      FieldValidator()
-          : account_id_(R"([a-z]{1,9}\@[a-z]{1,9})"),
-            asset_id_(R"([a-z]{1,9}\#[a-z]{1,9})"),
-            ip_address_(
-                "((([0-1]?\\d\\d?)|((2[0-4]\\d)|(25[0-5]))).){3}(([0-1]?\\d\\d?"
-                ")|((2[0-4]\\d)|(25[0-5])))"),
-            name_(R"([a-z]{1,9})"),
-            detail_key_(R"([A-Za-z0-9_]{1,})") {}
+      FieldValidator(time_t future_gap = default_future_gap);
 
       void validateAccountId(
           ReasonsGroupType &reason,
-          const interface::types::AccountIdType &account_id) const {
-        if (not std::regex_match(account_id, account_id_)) {
-          reason.second.push_back("Wrongly formed account_id");
-        }
-      }
+          const interface::types::AccountIdType &account_id) const;
 
-      void validateAssetId(
-          ReasonsGroupType &reason,
-          const interface::types::AssetIdType &asset_id) const {
-        if (not std::regex_match(asset_id, asset_id_)) {
-          reason.second.push_back("Wrongly formed asset_id");
-        }
-      }
+      void validateAssetId(ReasonsGroupType &reason,
+                           const interface::types::AssetIdType &asset_id) const;
+
+      void validatePeer(ReasonsGroupType &reason,
+                        const interface::Peer &peer) const;
 
       void validateAmount(ReasonsGroupType &reason,
-                          const interface::Amount &amount) const {
-        /* put here any validations*/
-      }
+                          const interface::Amount &amount) const;
 
       void validatePubkey(ReasonsGroupType &reason,
-                          const interface::types::PubkeyType &pubkey) const {
-        if (pubkey.blob().size() != 32) {
-          reason.second.push_back("Public key has wrong size");
-        }
-      }
+                          const interface::types::PubkeyType &pubkey) const;
 
       void validatePeerAddress(
           ReasonsGroupType &reason,
-          const interface::AddPeer::AddressType &address) const {
-        if (not(iroha::validator::isValidIpV4(address)
-                or iroha::validator::isValidHostname(address))) {
-          reason.second.push_back("Wrongly formed PeerAddress: " + address);
-        }
-      }
+          const interface::types::AddressType &address) const;
 
       void validateRoleId(ReasonsGroupType &reason,
-                          const interface::types::RoleIdType &role_id) const {
-        if (not std::regex_match(role_id, name_)) {
-          reason.second.push_back("Wrongly formed role_id");
-        }
-      }
+                          const interface::types::RoleIdType &role_id) const;
 
       void validateAccountName(
           ReasonsGroupType &reason,
-          const interface::types::AccountNameType &account_name) const {
-        if (not std::regex_match(account_name, name_)) {
-          reason.second.push_back("Wrongly formed account_name");
-        }
-      }
+          const interface::types::AccountNameType &account_name) const;
 
       void validateDomainId(
           ReasonsGroupType &reason,
-          const interface::types::DomainIdType &domain_id) const {
-        if (not std::regex_match(domain_id, name_)) {
-          reason.second.push_back("Wrongly formed domain_id");
-        }
-      }
+          const interface::types::DomainIdType &domain_id) const;
 
       void validateAssetName(
           ReasonsGroupType &reason,
-          const interface::types::AssetNameType &asset_name) const {
-        if (not std::regex_match(asset_name, name_)) {
-          reason.second.push_back("Wrongly formed asset_name");
-        }
-      }
+          const interface::types::AssetNameType &asset_name) const;
 
       void validateAccountDetailKey(
           ReasonsGroupType &reason,
-          const interface::SetAccountDetail::AccountDetailKeyType &key) const {
-        if (not std::regex_match(key, detail_key_)) {
-          reason.second.push_back("Wrongly formed key");
-        }
-      }
-
+          const interface::SetAccountDetail::AccountDetailKeyType &key) const;
       void validatePrecision(
           ReasonsGroupType &reason,
-          const interface::types::PrecisionType &precision) const {
-        // define precision constraints
-      }
+          const interface::types::PrecisionType &precision) const;
 
       void validatePermission(
           ReasonsGroupType &reason,
-          const interface::types::PermissionNameType &permission_name) const {
-        // define permission constraints
-      }
+          const interface::types::PermissionNameType &permission_name) const;
 
       void validatePermissions(
           ReasonsGroupType &reason,
-          const interface::CreateRole::PermissionsType &permissions) const {
-        if (permissions.empty()) {
-          reason.second.push_back(
-              "Permission set should contain at least one permission");
-        }
-      }
+          const interface::CreateRole::PermissionsType &permissions) const;
 
       void validateQuorum(ReasonsGroupType &reason,
-                          const interface::types::QuorumType &quorum) const {
-        // define quorum constraints
-      }
+                          const interface::types::QuorumType &quorum) const;
 
       void validateCreatorAccountId(
           ReasonsGroupType &reason,
-          const interface::types::AccountIdType &account_id) const {
-        if (not std::regex_match(account_id, account_id_)) {
-          reason.second.push_back("Wrongly formed creator_account_id");
-        }
-      }
+          const interface::types::AccountIdType &account_id) const;
 
       void validateCreatedTime(
           ReasonsGroupType &reason,
-          const interface::types::TimestampType &timestamp) const {
-        iroha::ts64_t now = iroha::time::now();
-        // TODO 06/08/17 Muratov: make future gap for passing timestamp, like
-        // with old timestamps IR-511 #goodfirstissue
-        if (now < timestamp) {
-          reason.second.push_back(boost::str(
-              boost::format(
-                  "timestamp broken: send from future (%llu, now %llu)")
-              % timestamp % now));
-        }
-
-        if (now - timestamp > MAX_DELAY) {
-          reason.second.push_back(boost::str(
-              boost::format("timestamp broken: too old (%llu, now %llu)")
-              % timestamp % now));
-        }
-      }
+          const interface::types::TimestampType &timestamp) const;
 
       void validateCounter(ReasonsGroupType &reason,
-                           const interface::types::CounterType &counter) const {
-        if (counter == 0) {
-          reason.second.push_back(
-              boost::str(boost::format("Counter should be > 0")));
-        }
-      }
+                           const interface::types::CounterType &counter) const;
 
      private:
-      std::regex account_id_, asset_id_, ip_address_, name_, detail_key_;
+      std::regex account_id_pattern_;
+      std::regex asset_id_pattern_;
+      std::regex name_pattern_;
+      std::regex detail_key_pattern_;
+      // gap for future transactions
+      time_t future_gap_;
       // max-delay between tx creation and validation
-      static constexpr auto MAX_DELAY =
+      static constexpr auto max_delay =
           std::chrono::hours(24) / std::chrono::milliseconds(1);
+      // default value for future_gap field of FieldValidator
+      static constexpr auto default_future_gap =
+          std::chrono::minutes(5) / std::chrono::milliseconds(1);
+
+      // size of key
+      static constexpr auto key_size = 32;
     };
   }  // namespace validation
 }  // namespace shared_model

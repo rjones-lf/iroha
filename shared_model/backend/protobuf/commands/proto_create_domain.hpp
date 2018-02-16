@@ -24,14 +24,13 @@ namespace shared_model {
   namespace proto {
 
     class CreateDomain final : public CopyableProto<interface::CreateDomain,
-                                             iroha::protocol::Command,
-                                             CreateDomain> {
+                                                    iroha::protocol::Command,
+                                                    CreateDomain> {
      public:
       template <typename CommandType>
       explicit CreateDomain(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            create_domain_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::create_domain)) {}
+            create_domain_(proto_->create_domain()) {}
 
       CreateDomain(const CreateDomain &o) : CreateDomain(o.proto_) {}
 
@@ -39,19 +38,15 @@ namespace shared_model {
           : CreateDomain(std::move(o.proto_)) {}
 
       const interface::types::DomainIdType &domainId() const override {
-        return create_domain_->domain_id();
+        return create_domain_.domain_id();
       }
 
       const interface::types::RoleIdType &userDefaultRole() const override {
-        return create_domain_->default_role();
+        return create_domain_.default_role();
       }
 
      private:
-      // lazy
-      template <typename Value>
-      using Lazy = detail::LazyInitializer<Value>;
-
-      const Lazy<const iroha::protocol::CreateDomain &> create_domain_;
+      const iroha::protocol::CreateDomain &create_domain_;
     };
 
   }  // namespace proto

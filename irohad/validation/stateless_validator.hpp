@@ -19,6 +19,7 @@
 #define IROHA_STATELESS_VALIDATOR_HPP
 
 #include <memory>
+
 #include "model/query.hpp"
 #include "model/transaction.hpp"
 
@@ -27,10 +28,12 @@ namespace iroha {
 
     class StatelessValidator {
      public:
+      virtual ~StatelessValidator() = default;
+
       virtual bool validate(const model::Transaction &transaction) const = 0;
       virtual bool validate(const model::Query &query) const = 0;
     };
-  }
-}
+  }  // namespace validation
+}  // namespace iroha
 
 #endif  // IROHA_STATELESS_VALIDATOR_HPP

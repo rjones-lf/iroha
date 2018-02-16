@@ -40,7 +40,7 @@
 #include "backend/protobuf/util.hpp"
 
 template <typename... T, typename Archive>
-shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
+shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
   if (not ar.has_payload()) {
     throw std::invalid_argument("Query missing payload");
   }
@@ -93,8 +93,7 @@ namespace shared_model {
       template <typename QueryType>
       explicit Query(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-            variant_(
-                [this] { return load_query<ProtoQueryListType>(*proto_); }),
+            variant_([this] { return loadQuery<ProtoQueryListType>(*proto_); }),
             blob_([this] { return makeBlob(*proto_); }),
             payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {

@@ -60,20 +60,19 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     manager = std::make_shared<iroha::KeysManagerImpl>("node0");
     auto keypair = getVal(manager->loadKeys());
 
-    irohad = std::make_shared<TestIrohad>(block_store_path,
-                                          redishost_,
-                                          redisport_,
-                                          pgopt_,
-                                          0,
-                                          10001,
-                                          10,
-                                          5000ms,
-                                          5000ms,
-                                          5000ms,
-                                          keypair);
+    irohad = std::make_shared<TestIrohad>(
+        block_store_path,
+        pgopt_,
+        0,
+        10001,
+        10,
+        5000ms,
+        5000ms,
+        5000ms,
+        keypair);
     ASSERT_TRUE(irohad->storage);
 
-    iroha::main::BlockInserter(irohad->storage).applyToLedger({genesis_block});
+    irohad->storage->insertBlock(genesis_block);
     irohad->init();
     irohad->run();
   }

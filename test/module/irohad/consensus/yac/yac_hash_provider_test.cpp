@@ -16,11 +16,10 @@
  */
 
 #include <gtest/gtest.h>
-#include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include <string>
+#include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 
 using namespace iroha::consensus::yac;
-
 
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;

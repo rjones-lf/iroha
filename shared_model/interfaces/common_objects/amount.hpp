@@ -32,7 +32,7 @@ namespace shared_model {
     /**
      * Representation of fixed point number
      */
-    class Amount : public Hashable<Amount, iroha::Amount> {
+    class Amount : public HASHABLE_WITH_OLD(Amount, iroha::Amount) {
      public:
       /**
        * Gets integer representation value, which ignores precision
@@ -67,6 +67,7 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of account asset response.
@@ -74,6 +75,8 @@ namespace shared_model {
       OldModelType *makeOldModel() const override {
         return new OldModelType(intValue(), precision());
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

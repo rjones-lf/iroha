@@ -38,8 +38,7 @@ namespace iroha {
          * @param block - reference to block
          * @return proto block
          */
-        static protocol::Transaction serialize(
-            const model::Transaction &tx);
+        static protocol::Transaction serialize(const model::Transaction &tx);
 
         /**
          * Convert proto block to model block

@@ -15,54 +15,53 @@
  * limitations under the License.
  */
 
-#include <fstream>
-#include <iostream>
-
 #include <gflags/gflags.h>
 #include <boost/filesystem.hpp>
+#include <fstream>
+#include <iostream>
 
 #include "client.hpp"
 #include "common/assert_config.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_cli.hpp"
-#include "logger/logger.hpp"
 #include "model/converters/json_block_factory.hpp"
-#include "model/converters/json_common.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/generators/block_generator.hpp"
-#include "model/generators/signature_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
-#include "responses.pb.h"
 #include "validators.hpp"
 
-DEFINE_string(config, "", "Trusted peer's ip addresses");
-// DEFINE_validator(config, &iroha_cli::validate_config);
-
-// DEFINE_string(genesis_block, "", "Genesis block for sending network");
-// DEFINE_validator(genesis_block, &iroha_cli::validate_genesis_block);
-
-DEFINE_bool(new_account, false, "Choose if account does not exist");
-DEFINE_string(name, "", "Name of the account");
-DEFINE_string(pass_phrase, "", "Name of the account");
+// Account information
+DEFINE_bool(
+    new_account,
+    false,
+    "Generate and save locally new public/private keys");
+DEFINE_string(account_name,
+              "",
+              "Name of the account. Must be unique in iroha network");
+DEFINE_string(pass_phrase, "", "Account pass-phrase");
 DEFINE_string(key_path, ".", "Path to user keys");
 
-// Sending transaction to Iroha
-DEFINE_bool(grpc, false, "Send sample transaction to IrohaNetwork");
-DEFINE_string(address, "0.0.0.0", "Address of the Iroha node");
-DEFINE_int32(torii_port, 50051, "Port of iroha's Torii");
-// DEFINE_validator(torii_port, &iroha_cli::validate_port);
+// Iroha peer to connect with
+DEFINE_string(peer_ip, "0.0.0.0", "Address of the Iroha node");
+DEFINE_int32(torii_port, 50051, "Port of Iroha's Torii");
+
+// Send already signed and formed transaction to Iroha peer
 DEFINE_string(json_transaction, "", "Transaction in json format");
+// Send already signed and formed query to Iroha peer
 DEFINE_string(json_query, "", "Query in json format");
 
 // Genesis block generator:
 DEFINE_bool(genesis_block,
             false,
             "Generate genesis block for new Iroha network");
-DEFINE_string(peers_address, "", "File with peers address");
+DEFINE_string(peers_address,
+              "",
+              "File with peers address for new Iroha network");
 
-// Interactive
-DEFINE_bool(interactive, false, "Interactive cli");
+// Run iroha-cli in interactive mode
+DEFINE_bool(interactive, true, "Run iroha-cli in interactive mode");
+
 
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
@@ -74,21 +73,49 @@ int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   gflags::ShutDownCommandLineFlags();
   auto logger = logger::log("CLI-MAIN");
-  if (FLAGS_new_account) {
-    // Create new pub/priv key
-    auto keysManager = iroha::KeysManagerImpl(FLAGS_name);
-    if (not keysManager.createKeys(FLAGS_pass_phrase)) {
+  // Generate new genesis block now Iroha network
+  if (FLAGS_genesis_block) {
+    BlockGenerator generator;
+
+    if (FLAGS_peers_address.empty()) {
+      logger->error("--peers_address is empty");
+      return EXIT_FAILURE;
+    }
+    std::ifstream file(FLAGS_peers_address);
+    std::vector<std::string> peers_address;
+    std::copy(std::istream_iterator<std::string>(file),
+              std::istream_iterator<std::string>(),
+              std::back_inserter(peers_address));
+    // Generate genesis block
+    auto transaction = TransactionGenerator().generateGenesisTransaction(
+        0, std::move(peers_address));
+    auto block = generator.generateGenesisBlock(0, {transaction});
+    // Convert to json
+    JsonBlockFactory json_factory;
+    auto doc = json_factory.serialize(block);
+    std::ofstream output_file("genesis.block");
+    output_file << jsonToString(doc);
+    logger->info("File saved to genesis.block");
+  }
+  // Create new pub/priv key, register in Iroha Network
+  else if (FLAGS_new_account) {
+    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
+    if (not(FLAGS_pass_phrase.size() == 0
+                ? keysManager.createKeys()
+                : keysManager.createKeys(FLAGS_pass_phrase))) {
       logger->error("Keys already exist");
     } else {
       logger->info(
           "Public and private key has been generated in current directory");
-    };
-  } else if (FLAGS_grpc) {
-    iroha_cli::CliClient client(FLAGS_address, FLAGS_torii_port);
+    }
+  }
+  // Send to Iroha Peer json transaction/query
+  else if (not FLAGS_json_transaction.empty() or not FLAGS_json_query.empty()) {
+    iroha_cli::CliClient client(FLAGS_peer_ip, FLAGS_torii_port);
     iroha_cli::GrpcResponseHandler response_handler;
     if (not FLAGS_json_transaction.empty()) {
       logger->info(
-          "Send transaction to {}:{} ", FLAGS_address, FLAGS_torii_port);
+          "Send transaction to {}:{} ", FLAGS_peer_ip, FLAGS_torii_port);
       // Read from file
       std::ifstream file(FLAGS_json_transaction);
       std::string str((std::istreambuf_iterator<char>(file)),
@@ -106,7 +133,7 @@ int main(int argc, char *argv[]) {
       }
     }
     if (not FLAGS_json_query.empty()) {
-      logger->info("Send query to {}:{}", FLAGS_address, FLAGS_torii_port);
+      logger->info("Send query to {}:{}", FLAGS_peer_ip, FLAGS_torii_port);
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
@@ -118,62 +145,49 @@ int main(int argc, char *argv[]) {
         response_handler.handle(client.sendQuery(query_opt.value()));
       }
     }
-
-  } else if (FLAGS_genesis_block) {
-    BlockGenerator generator;
-
-    if (FLAGS_peers_address.empty()) {
-      logger->error("--peers_address is empty");
-      return -1;
-    }
-
-    std::ifstream file(FLAGS_peers_address);
-    std::vector<std::string> peers_address;
-    std::copy(std::istream_iterator<std::string>(file),
-              std::istream_iterator<std::string>(),
-              std::back_inserter(peers_address));
-    // Generate genesis block
-    auto transaction = TransactionGenerator()
-      .generateGenesisTransaction(0, std::move(peers_address));
-    auto block = generator.generateGenesisBlock(0, {transaction});
-
-    // Convert to json
-    JsonBlockFactory json_factory;
-    auto doc = json_factory.serialize(block);
-    std::ofstream output_file("genesis.block");
-    output_file << jsonToString(doc);
-    logger->info("File saved to genesis.block");
-  } else if (FLAGS_interactive) {
-    if (FLAGS_name.empty()) {
-      logger->error("Specify account name");
-      return -1;
-    }
-
-    fs::path path(FLAGS_key_path);
-    if (not fs::exists(path)) {
-      logger->error("Path {} does not exist", path.string());
+  }
+  // Run iroha-cli in interactive mode
+  else if (FLAGS_interactive) {
+    if (FLAGS_account_name.empty()) {
+      logger->error("Specify your account name");
       return EXIT_FAILURE;
     }
-    iroha::KeysManagerImpl manager((path / FLAGS_name).string());
-    auto keypair = manager.loadKeys();
+    fs::path path(FLAGS_key_path);
+    if (not fs::exists(path)) {
+      logger->error("Path {} not found.", path.string());
+      return EXIT_FAILURE;
+    }
+    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string());
+    nonstd::optional<iroha::keypair_t> keypair;
+    if (FLAGS_pass_phrase.size() != 0) {
+      keypair = manager.loadKeys(FLAGS_pass_phrase);
+    } else {
+      keypair = manager.loadKeys();
+    }
     if (not keypair.has_value()) {
       logger->error(
           "Cannot load specified keypair, or keypair is invalid. Path: {}, "
-          "keypair name: {}",
+          "keypair name: {}. Use --key_path to path to your keypair. \nMaybe wrong pass phrase (\"{}\")?",
           path.string(),
-          FLAGS_name);
+          FLAGS_account_name,
+          FLAGS_pass_phrase
+      );
       return EXIT_FAILURE;
     }
-    // TODO 13/09/17 grimadas: Init counters from Iroha, or read from disk? IR-334
+    // TODO 13/09/17 grimadas: Init counters from Iroha, or read from disk?
+    // IR-334
     InteractiveCli interactiveCli(
-        FLAGS_name,
+        FLAGS_account_name,
+        FLAGS_peer_ip,
+        FLAGS_torii_port,
         0,
         0,
         std::make_shared<iroha::model::ModelCryptoProviderImpl>(
             keypair.value()));
     interactiveCli.run();
   } else {
-    assert_config::assert_fatal(false, "Invalid flags");
+    logger->error("Invalid flags");
+    return EXIT_FAILURE;
   }
   return 0;
 }

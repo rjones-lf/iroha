@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_PROTO_ASSET_HPP
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/asset.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -51,7 +52,9 @@ namespace shared_model {
         return proto_->precision();
       }
 
-      const BlobType &blob() const override { return *blob_; }
+      const BlobType &blob() const override {
+        return *blob_;
+      }
 
      private:
       template <typename T>

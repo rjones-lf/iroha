@@ -26,9 +26,9 @@ namespace iroha {
 
     void OrderingGateImpl::propagate_transaction(
         std::shared_ptr<const model::Transaction> transaction) {
-      log_->info("propagate tx, tx_counter: " +
-                 std::to_string(transaction->tx_counter) +
-                 " account_id: " + transaction->creator_account_id);
+      log_->info("propagate tx, tx_counter: "
+                 + std::to_string(transaction->tx_counter)
+                 + " account_id: " + transaction->creator_account_id);
 
       transport_->propagate_transaction(transaction);
     }

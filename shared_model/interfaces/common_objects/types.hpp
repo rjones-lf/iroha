@@ -21,7 +21,6 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "common/types.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "utils/polymorphic_wrapper.hpp"
@@ -36,6 +35,8 @@ namespace shared_model {
       using PrecisionType = uint8_t;
       /// Type of height (for Block, Proposal etc)
       using HeightType = uint64_t;
+      /// Type of peer address
+      using AddressType = std::string;
       /// Type of public key
       using PubkeyType = crypto::PublicKey;
       /// Type of public keys' collection
