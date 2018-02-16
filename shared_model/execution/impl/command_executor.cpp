@@ -17,6 +17,9 @@
 
 #include "execution/command_executor.hpp"
 #include <boost/mpl/contains.hpp>
+#include <builders/protobuf/common_objects/proto_account_asset_builder.hpp>
+#include <builders/protobuf/common_objects/proto_amount_builder.hpp>
+#include <builders/protobuf/common_objects/proto_asset_builder.hpp>
 #include "backend/protobuf/from_old_model.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
@@ -41,409 +44,457 @@ namespace shared_model {
     return {};
   }
 
-  CommandExecutor::CommandExecutor() {}
+  CommandExecutor::CommandExecutor(
+      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
+      std::shared_ptr<iroha::ametsuchi::WsvCommand> commands)
+      : queries(queries), commands(commands) {}
+
+  void CommandExecutor::setCreatorAccountId(std::string creator_account_id) {
+    this->creator_account_id = creator_account_id;
+  }
+
+  /**
+   * Sums up two optionals of the amounts.
+   * Requires to have the same scale.
+   * Otherwise nullopt is returned
+   * @param a left term
+   * @param b right term
+   * @param optional result
+   */
+  boost::optional<shared_model::proto::Amount> operator+(
+      const shared_model::interface::Amount &a,
+      const shared_model::interface::Amount &b) {
+    // check precisions
+    if (a.precision() != b.precision()) {
+      return boost::none;
+    }
+    shared_model::proto::AmountBuilder amount_builder;
+    auto res = amount_builder.precision(a.precision())
+                   .intValue(a.intValue() + b.intValue())
+                   .build();
+    // check overflow
+    if (res.intValue() < a.intValue() or res.intValue() < b.intValue()) {
+      return boost::none;
+    }
+    return boost::optional<shared_model::proto::Amount>(res);
+  }
+
+  /**
+   * Subtracts two optionals of the amounts.
+   * Requires to have the same scale.
+   * Otherwise nullopt is returned
+   * @param a left term
+   * @param b right term
+   * @param optional result
+   */
+  boost::optional<shared_model::proto::Amount> operator-(
+      const shared_model::interface::Amount &a,
+      const shared_model::interface::Amount &b) {
+    // check precisions
+    if (a.precision() != b.precision()) {
+      return boost::none;
+    }
+    // check if a greater than b
+    if (a.intValue() < b.intValue()) {
+      return boost::none;
+    }
+    shared_model::proto::AmountBuilder amount_builder;
+    auto res = amount_builder.precision(a.precision())
+                   .intValue(a.intValue() - b.intValue())
+                   .build();
+    return boost::optional<shared_model::proto::Amount>(res);
+  }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::AddAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::AddAssetQuantity> &command) {
     std::string command_name = "AddAssetQuantity";
-    auto asset = queries.getAsset(command.assetId());
-    if (not asset.has_value()) {
+    auto asset_old = queries->getAsset(command->assetId());  // Old model
+    if (not asset_old.has_value()) {
       return makeExecutionError(
-          (boost::format("asset %s is absent") % command.assetId()).str(),
+          (boost::format("asset %s is absent") % command->assetId()).str(),
           command_name);
     }
-    auto precision = asset.value().precision;
+    auto asset = shared_model::proto::from_old(asset_old.value());
+    auto precision = asset.precision();
 
-    if (command.amount().precision() != precision) {
+    if (command->amount().precision() != precision) {
       return makeExecutionError(
           (boost::format("precision mismatch: expected %d, but got %d")
-           % precision % command.amount().precision())
+           % precision % command->amount().precision())
               .str(),
           command_name);
     }
 
-    if (not queries.getAccount(command.accountId()).has_value()) {
+    if (not queries->getAccount(command->accountId())
+                .has_value()) {  // Old model
       return makeExecutionError(
-          (boost::format("account %s is absent") % command.accountId()).str(),
+          (boost::format("account %s is absent") % command->accountId()).str(),
           command_name);
     }
-    auto account_asset =
-        queries.getAccountAsset(command.accountId(), command.assetId());
-    if (not account_asset.has_value()) {
-      account_asset = iroha::model::AccountAsset();
-      account_asset->asset_id = command.assetId();
-      account_asset->account_id = command.accountId();
-      account_asset->balance =
-          *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
-    } else {
-      auto account_asset_value = account_asset.value();
+    auto account_asset_old = queries->getAccountAsset(
+        command->accountId(), command->assetId());  // Old model
 
-      auto new_balance = account_asset->balance
-          + *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
-      if (not new_balance.has_value()) {
+    shared_model::proto::Amount new_balance =
+        amount_builder.precision(command->amount().precision())
+            .intValue(command->amount().intValue())
+            .build();
+
+    if (account_asset_old.has_value()) {
+      auto account_asset =
+          shared_model::proto::from_old(account_asset_old.value());
+      auto balance = new_balance + account_asset.balance();
+      if (not balance) {
         return makeExecutionError("amount overflows balance", command_name);
       }
-      account_asset->balance = new_balance.value();
+
+      auto account_asset_new = account_asset_builder.balance(balance.value())
+                                   .accountId(command->accountId())
+                                   .assetId(command->assetId())
+                                   .build();
+      return errorIfNot(commands->upsertAccountAsset(account_asset_new),
+                        "failed to update account asset",
+                        command_name);
     }
 
-    return errorIfNot(commands.upsertAccountAsset(
-                          shared_model::proto::from_old(account_asset.value())),
+    auto account_asset = account_asset_builder.balance(new_balance)
+                             .accountId(command->accountId())
+                             .assetId(command->assetId())
+                             .build();
+    return errorIfNot(commands->upsertAccountAsset(account_asset),
                       "failed to update account asset",
                       command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::AddPeer &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::AddPeer> &command) {
     return errorIfNot(
-        commands.insertPeer(command.peer()), "peer is not unique", "AddPeer");
+        commands->insertPeer(command->peer()), "peer is not unique", "AddPeer");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::AddSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::AddSignatory> &command) {
     std::string command_name = "AddSignatory";
-    if (not commands.insertSignatory(command.pubkey())) {
+    if (not commands->insertSignatory(command->pubkey())) {
       return makeExecutionError("failed to insert signatory", command_name);
     }
-    return errorIfNot(
-        commands.insertAccountSignatory(command.accountId(), command.pubkey()),
-        "failed to insert account signatory",
-        command_name);
+    return errorIfNot(commands->insertAccountSignatory(command->accountId(),
+                                                       command->pubkey()),
+                      "failed to insert account signatory",
+                      command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::AppendRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::AppendRole> &command) {
     return errorIfNot(
-        commands.insertAccountRole(command.accountId(), command.roleName()),
+        commands->insertAccountRole(command->accountId(), command->roleName()),
         "failed to insert account role",
         "AppendRole");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::CreateAccount &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::CreateAccount> &command) {
     std::string command_name = "CreateAccount";
-
-    iroha::model::Account account;
-    account.account_id = command.accountName() + "@" + command.domainId();
-
-    account.domain_id = command.domainId();
-    account.quorum = 1;
-    account.json_data = "{}";
-    auto domain = queries.getDomain(command.domainId());
+    auto account =
+        account_builder
+            .accountId(command->accountName() + "@" + command->domainId())
+            .domainId(command->domainId())
+            .quorum(1)
+            .jsonData("{}")
+            .build();
+    auto domain = queries->getDomain(command->domainId());  // Old model
     if (not domain.has_value()) {
       return makeExecutionError(
-          (boost::format("Domain %s not found") % command.domainId()).str(),
+          (boost::format("Domain %s not found") % command->domainId()).str(),
           command_name);
     }
+    std::string domain_default_role = domain.value().default_role;
     // TODO: remove insert signatory from here ?
-    if (not commands.insertSignatory(command.pubkey())) {
+    if (not commands->insertSignatory(command->pubkey())) {
       return makeExecutionError("failed to insert signatory", command_name);
     }
-    shared_model::proto::Account acc = shared_model::proto::from_old(account);
-    if (not commands.insertAccount(acc)) {
+    if (not commands->insertAccount(account)) {
       return makeExecutionError("failed to insert account", command_name);
     }
-    if (not commands.insertAccountSignatory(account.account_id,
-                                            command.pubkey())) {
+    if (not commands->insertAccountSignatory(account.accountId(),
+                                             command->pubkey())) {
       return makeExecutionError("failed to insert account signatory",
                                 command_name);
     }
-    return errorIfNot(commands.insertAccountRole(account.account_id,
-                                                 domain.value().default_role),
-                      "failed to insert account role",
-                      command_name);
+    return errorIfNot(
+        commands->insertAccountRole(account.accountId(), domain_default_role),
+        "failed to insert account role",
+        command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::CreateAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
-    iroha::model::Asset new_asset;
-    new_asset.asset_id = command.assetName() + "#" + command.domainId();
-    new_asset.domain_id = command.domainId();
-    new_asset.precision = command.precision();
+      const detail::PolymorphicWrapper<interface::CreateAsset> &command) {
+    auto new_asset =
+        asset_builder.assetId(command->assetName() + "#" + command->domainId())
+            .domainId(command->domainId())
+            .precision(command->precision())
+            .build();
     // The insert will fail if asset already exists
-    return errorIfNot(
-        commands.insertAsset(shared_model::proto::from_old(new_asset)),
-        "failed to insert asset",
-        "CreateAsset");
+    return errorIfNot(commands->insertAsset(new_asset),
+                      "failed to insert asset",
+                      "CreateAsset");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::CreateDomain &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
-    iroha::model::Domain new_domain;
-    new_domain.domain_id = command.domainId();
-    new_domain.default_role = command.userDefaultRole();
+      const detail::PolymorphicWrapper<interface::CreateDomain> &command) {
+    auto new_domain = domain_builder.domainId(command->domainId())
+                          .defaultRole(command->userDefaultRole())
+                          .build();
     // The insert will fail if domain already exist
-    return errorIfNot(
-        commands.insertDomain(shared_model::proto::from_old(new_domain)),
-        "failed to insert domain",
-        "CreateDomain");
+    return errorIfNot(commands->insertDomain(new_domain),
+                      "failed to insert domain",
+                      "CreateDomain");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::CreateRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::CreateRole> &command) {
     std::string command_name = "CreateRole";
-    if (not commands.insertRole(command.roleName())) {
-      return makeExecutionError("failed to insert role: " + command.roleName(),
+    if (not commands->insertRole(command->roleName())) {
+      return makeExecutionError("failed to insert role: " + command->roleName(),
                                 command_name);
     }
 
-    return errorIfNot(commands.insertRolePermissions(command.roleName(),
-                                                     command.rolePermissions()),
+    return errorIfNot(commands->insertRolePermissions(
+                          command->roleName(), command->rolePermissions()),
                       "failed to insert role permissions",
                       command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::DetachRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::DetachRole> &command) {
     return errorIfNot(
-        commands.deleteAccountRole(command.accountId(), command.roleName()),
+        commands->deleteAccountRole(command->accountId(), command->roleName()),
         "failed to delete account role",
         "DetachRole");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::GrantPermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::GrantPermission> &command) {
     return errorIfNot(
-        commands.insertAccountGrantablePermission(
-            command.accountId(), creator_account_id, command.permissionName()),
+        commands->insertAccountGrantablePermission(command->accountId(),
+                                                   creator_account_id,
+                                                   command->permissionName()),
         "failed to insert account grantable permission",
         "GrantPermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::RemoveSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::RemoveSignatory> &command) {
     std::string command_name = "RemoveSignatory";
 
     // Delete will fail if account signatory doesn't exist
-    if (not commands.deleteAccountSignatory(command.accountId(),
-                                            command.pubkey())) {
+    if (not commands->deleteAccountSignatory(command->accountId(),
+                                             command->pubkey())) {
       return makeExecutionError("failed to delete account signatory",
                                 command_name);
     }
-    return errorIfNot(commands.deleteSignatory(command.pubkey()),
+    return errorIfNot(commands->deleteSignatory(command->pubkey()),
                       "failed to delete signatory",
                       command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::RevokePermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::RevokePermission> &command) {
     return errorIfNot(
-        commands.deleteAccountGrantablePermission(
-            command.accountId(), creator_account_id, command.permissionName()),
+        commands->deleteAccountGrantablePermission(command->accountId(),
+                                                   creator_account_id,
+                                                   command->permissionName()),
         "failed to delete account grantable permision",
         "RevokePermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::SetAccountDetail &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::SetAccountDetail> &command) {
     auto creator = creator_account_id;
     if (creator_account_id.empty()) {
       // When creator is not known, it is genesis block
       creator = "genesis";
     }
     return errorIfNot(
-        commands.setAccountKV(
-            command.accountId(), creator, command.key(), command.value()),
+        commands->setAccountKV(
+            command->accountId(), creator, command->key(), command->value()),
         "failed to set account key-value",
         "SetAccountDetail");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::SetQuorum &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::SetQuorum> &command) {
     std::string command_name = "SetQuorum";
 
-    auto account = queries.getAccount(command.accountId());
-    if (not account.has_value()) {
+    auto account_old = queries->getAccount(command->accountId());  // Old model
+    if (not account_old.has_value()) {
       return makeExecutionError(
-          (boost::format("absent account %s") % command.accountId()).str(),
+          (boost::format("absent account %s") % command->accountId()).str(),
           command_name);
     }
-    account.value().quorum = command.newQuorum();
-    shared_model::proto::Account acc =
-        shared_model::proto::from_old(account.value());
-    return errorIfNot(
-        commands.updateAccount(acc), "failed to update account", command_name);
+    auto account = account_builder.domainId(account_old.value().domain_id)
+                       .accountId(account_old.value().account_id)
+                       .jsonData(account_old.value().json_data)
+                       .quorum(command->newQuorum())
+                       .build();
+    return errorIfNot(commands->updateAccount(account),
+                      "failed to update account",
+                      command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::SubtractAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::SubtractAssetQuantity>
+          &command) {
     std::string command_name = "SubtractAssetQuantity";
-    auto asset = queries.getAsset(command.assetId());
-    if (not asset) {
+    auto asset_old = queries->getAsset(command->assetId());  // Old model
+    if (not asset_old) {
       return makeExecutionError(
-          (boost::format("asset %s is absent") % command.assetId()).str(),
+          (boost::format("asset %s is absent") % command->assetId()).str(),
           command_name);
     }
-    auto precision = asset.value().precision;
+    auto asset = shared_model::proto::from_old(asset_old.value());
+    auto precision = asset.precision();
 
-    if (command.amount().precision() != precision) {
+    if (command->amount().precision() != precision) {
       return makeExecutionError(
           (boost::format("precision mismatch: expected %d, but got %d")
-           % precision % command.amount().precision())
+           % precision % command->amount().precision())
               .str(),
           command_name);
     }
-    auto account_asset =
-        queries.getAccountAsset(command.accountId(), command.assetId());
-    if (not account_asset.has_value()) {
+    auto account_asset_old = queries->getAccountAsset(
+        command->accountId(), command->assetId());  // Old model
+    if (not account_asset_old.has_value()) {
       return makeExecutionError((boost::format("%s do not have %s")
-                                 % command.accountId() % command.assetId())
+                                 % command->accountId() % command->assetId())
                                     .str(),
                                 command_name);
     }
-    auto account_asset_value = account_asset.value();
 
-    auto new_balance = account_asset_value.balance
-        - *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
-    if (not new_balance.has_value()) {
+    auto account_asset =
+        shared_model::proto::from_old(account_asset_old.value());
+
+    auto new_balance = account_asset.balance() - command->amount();
+    if (not new_balance) {
       return makeExecutionError("Not sufficient amount", command_name);
     }
-    account_asset->balance = new_balance.value();
-
-    return errorIfNot(commands.upsertAccountAsset(
-                          shared_model::proto::from_old(account_asset.value())),
+    auto account_asset_new = account_asset_builder.balance(*new_balance)
+                                 .accountId(account_asset.accountId())
+                                 .assetId(account_asset.assetId())
+                                 .build();
+    return errorIfNot(commands->upsertAccountAsset(account_asset_new),
                       "Failed to upsert account asset",
                       command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const interface::TransferAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
-      iroha::ametsuchi::WsvCommand &commands,
-      const std::string &creator_account_id) {
+      const detail::PolymorphicWrapper<interface::TransferAsset> &command) {
     std::string command_name = "TransferAsset";
 
+    auto src_account_asset_old =
+        queries->getAccountAsset(command->srcAccountId(), command->assetId());
+    if (not src_account_asset_old.has_value()) {
+      return makeExecutionError((boost::format("asset %s is absent of %s")
+                                 % command->assetId() % command->srcAccountId())
+                                    .str(),
+                                command_name);
+    }
     auto src_account_asset =
-        queries.getAccountAsset(command.srcAccountId(), command.assetId());
-    if (not src_account_asset.has_value()) {
-      return makeExecutionError((boost::format("asset %s is absent of %s")
-                                 % command.assetId() % command.srcAccountId())
-                                    .str(),
-                                command_name);
-    }
-
+        shared_model::proto::from_old(src_account_asset_old.value());
     iroha::model::AccountAsset dest_AccountAsset;
-    auto dest_account_asset =
-        queries.getAccountAsset(command.destAccountId(), command.assetId());
-    auto asset = queries.getAsset(command.assetId());
-    if (not asset.has_value()) {
-      return makeExecutionError((boost::format("asset %s is absent of %s")
-                                 % command.assetId() % command.destAccountId())
-                                    .str(),
-                                command_name);
+    auto dest_account_asset_old =
+        queries->getAccountAsset(command->destAccountId(), command->assetId());
+    auto asset_old = queries->getAsset(command->assetId());
+    if (not asset_old.has_value()) {
+      return makeExecutionError(
+          (boost::format("asset %s is absent of %s") % command->assetId()
+           % command->destAccountId())
+              .str(),
+          command_name);
     }
+    auto asset = shared_model::proto::from_old(asset_old.value());
     // Precision for both wallets
-    auto precision = asset.value().precision;
-    if (command.amount().precision() != precision) {
+    auto precision = asset.precision();
+    if (command->amount().precision() != precision) {
       return makeExecutionError(
           (boost::format("precision %d is wrong") % precision).str(),
           command_name);
     }
     // Get src balance
-    auto src_balance = src_account_asset.value().balance;
-    auto new_src_balance = src_balance
-        - *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
-    if (not new_src_balance.has_value()) {
+    if (command->amount().precision() != src_account_asset.balance().precision()
+        or command->amount().intValue()
+            > src_account_asset.balance().intValue()) {
       return makeExecutionError("not enough assets on source account",
                                 command_name);
     }
-    src_balance = new_src_balance.value();
+    auto new_src_balance =
+        amount_builder.precision(command->amount().precision())
+            .intValue(src_account_asset.balance().intValue()
+                      - command->amount().intValue())
+            .build();
     // Set new balance for source account
-    src_account_asset.value().balance = src_balance;
+    auto src_account_asset_new =
+        account_asset_builder.assetId(src_account_asset.assetId())
+            .accountId(src_account_asset.accountId())
+            .balance(new_src_balance)
+            .build();
 
-    if (not dest_account_asset.has_value()) {
+    if (not dest_account_asset_old.has_value()) {
       // This assert is new for this account - create new AccountAsset
       dest_AccountAsset = iroha::model::AccountAsset();
-      dest_AccountAsset.asset_id = command.assetId();
-      dest_AccountAsset.account_id = command.destAccountId();
+      dest_AccountAsset.asset_id = command->assetId();
+      dest_AccountAsset.account_id = command->destAccountId();
       // Set new balance for dest account
       dest_AccountAsset.balance =
-          *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
+          *std::shared_ptr<iroha::Amount>(command->amount().makeOldModel());
+      auto dest_account_asset_new = shared_model::proto::from_old(dest_AccountAsset);
 
+      if (not commands->upsertAccountAsset(dest_account_asset_new)) {
+        return makeExecutionError("failed to upsert destination balance",
+                                  command_name);
+      }
+      return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
+                        "failed to upsert source account",
+                        command_name);
     } else {
-      // Account already has such asset
-      dest_AccountAsset = dest_account_asset.value();
-      // Get balance dest account
-      auto dest_balance = dest_account_asset.value().balance;
-
-      auto new_dest_balance = dest_balance
-          + *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
-      if (not new_dest_balance.has_value()) {
+      auto dest_account_asset =
+          shared_model::proto::from_old(dest_account_asset_old.value());
+      auto new_dest_balance = dest_account_asset.balance() + command->amount();
+      if (not new_dest_balance) {
         return makeExecutionError("operation overflows destination balance",
                                   command_name);
       }
-      dest_balance = new_dest_balance.value();
-      // Set new balance for dest
-      dest_AccountAsset.balance = dest_balance;
+      auto dest_account_asset_new =
+          account_asset_builder.assetId(command->assetId())
+              .accountId(command->destAccountId())
+              .balance(new_dest_balance.get())
+              .build();
+      if (not commands->upsertAccountAsset(dest_account_asset_new)) {
+        return makeExecutionError("failed to upsert destination balance",
+                                  command_name);
+      }
+      return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
+                        "failed to upsert source account",
+                        command_name);
     }
 
-    if (not commands.upsertAccountAsset(
-            shared_model::proto::from_old(dest_AccountAsset))) {
-      return makeExecutionError("failed to upsert destination balance",
-                                command_name);
-    }
-    return errorIfNot(commands.upsertAccountAsset(shared_model::proto::from_old(
-                          src_account_asset.value())),
-                      "failed to upsert source account",
-                      command_name);
+    //    if (not commands->upsertAccountAsset(
+    //            shared_model::proto::from_old(dest_AccountAsset))) {
+    //      return makeExecutionError("failed to upsert destination balance",
+    //                                command_name);
+    //    }
+    //    return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
+    //                      "failed to upsert source account",
+    //                      command_name);
   }
 
   // ----------------------| Validator |----------------------
-  CommandValidator::CommandValidator() {}
 
-  template <typename CommandType>
-  bool CommandValidator::operator()(const CommandType &command,
-                                    iroha::ametsuchi::WsvQuery &queries,
-                                    const std::string &creator_account_id) {
-    BOOST_STATIC_ASSERT(
-        boost::mpl::contains<interface::Command::CommandVariantType::types,
-                             CommandType>::value);
-    return hasPermissions(command, queries, creator_account_id)
-        and isValid(command, queries, creator_account_id);
+  CommandValidator::CommandValidator(
+      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries)
+      : queries(queries) {}
+
+  void CommandValidator::setCreatorAccountId(std::string creator_account_id) {
+    this->creator_account_id = creator_account_id;
   }
 
   bool CommandValidator::hasPermissions(
@@ -733,18 +784,20 @@ namespace shared_model {
   bool CommandValidator::isValid(const interface::RemoveSignatory &command,
                                  iroha::ametsuchi::WsvQuery &queries,
                                  const std::string &creator_account_id) {
-    auto account = queries.getAccount(command.accountId());
-    auto signatories = queries.getSignatories(command.accountId());
+    auto account_old = queries.getAccount(command.accountId());  // Old model
+    auto signatories =
+        queries.getSignatories(command.accountId());  // Old model
 
-    if (not(account.has_value() and signatories.has_value())) {
+    if (not(account_old.has_value() and signatories.has_value())) {
       // No account or signatories found
       return false;
     }
+      auto account = shared_model::proto::from_old(account_old.value());
 
     auto newSignatoriesSize = signatories.value().size() - 1;
 
     // You can't remove if size of rest signatories less than the quorum
-    return newSignatoriesSize >= account.value().quorum;
+    return newSignatoriesSize >= account.quorum();
   }
 
   bool CommandValidator::isValid(const interface::RevokePermission &command,
@@ -763,7 +816,8 @@ namespace shared_model {
   bool CommandValidator::isValid(const interface::SetQuorum &command,
                                  iroha::ametsuchi::WsvQuery &queries,
                                  const std::string &creator_account_id) {
-    auto signatories = queries.getSignatories(command.accountId());
+    auto signatories =
+        queries.getSignatories(command.accountId());  // Old model
 
     if (not(signatories.has_value())) {
       // No  signatories of an account found
@@ -788,16 +842,17 @@ namespace shared_model {
       return false;
     }
 
-    auto asset = queries.getAsset(command.assetId());
-    if (not asset.has_value()) {
+    auto asset_old = queries.getAsset(command.assetId());  // Old model
+    if (not asset_old.has_value()) {
       return false;
     }
+    auto asset = shared_model::proto::from_old(asset_old.value());
     // Amount is formed wrong
-    if (command.amount().precision() != asset.value().precision) {
+    if (command.amount().precision() != asset.precision()) {
       return false;
     }
-    auto account_asset =
-        queries.getAccountAsset(command.srcAccountId(), command.assetId());
+    auto account_asset = queries.getAccountAsset(
+        command.srcAccountId(), command.assetId());  // Old model
 
     return account_asset.has_value()
         // Check if dest account exist

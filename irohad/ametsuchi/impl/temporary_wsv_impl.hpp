@@ -23,6 +23,7 @@
 
 #include "ametsuchi/temporary_wsv.hpp"
 #include "logger/logger.hpp"
+#include "execution/command_executor.hpp"
 
 namespace iroha {
 
@@ -51,6 +52,8 @@ namespace iroha {
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::shared_ptr<model::CommandExecutorFactory> command_executors_;
+      std::shared_ptr<shared_model::CommandExecutor> command_executor_;
+        std::shared_ptr<shared_model::CommandValidator> command_validator_;
 
       logger::Logger log_;
     };

@@ -21,6 +21,7 @@
 #include "model/execution/command_executor_factory.hpp"
 #include "model/account.hpp"
 #include "amount/amount.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -34,6 +35,10 @@ namespace iroha {
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           command_executors_(std::move(command_executors)),
           log_(logger::log("TemporaryWSV")) {
+        auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
+        auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
+        command_executor_ = std::make_shared<shared_model::CommandExecutor>(shared_model::CommandExecutor(w, c));
+        command_validator_ = std::make_shared<shared_model::CommandValidator>(shared_model::CommandValidator(w));
       transaction_->exec("BEGIN;");
     }
 
@@ -42,17 +47,24 @@ namespace iroha {
         std::function<bool(const model::Transaction &, WsvQuery &)>
             apply_function) {
       const auto &tx_creator = transaction.creator_account_id;
+        command_executor_->setCreatorAccountId(tx_creator);
+        command_validator_->setCreatorAccountId(tx_creator);
+        auto tx = shared_model::proto::from_old(transaction);
       auto execute_command = [this, &tx_creator](auto command) {
-        auto executor = command_executors_->getCommandExecutor(command);
+//        auto executor = command_executors_->getCommandExecutor(command);
         auto account = wsv_->getAccount(tx_creator).value();
-        if (not executor->validate(*command, *wsv_, tx_creator)) {
-          return false;
-        }
-        auto result =
-            executor->execute(*command, *wsv_, *executor_, tx_creator);
+          if (not boost::apply_visitor(*command_validator_, command->get())) {
+              return false;
+          }
+//        if (not executor->validate(*command, *wsv_, tx_creator)) {
+//          return false;
+//        }
+//        auto result =
+//            executor->execute(*command, *wsv_, *executor_, tx_creator);
+          auto result = boost::apply_visitor(*command_executor_, command->get());
         return result.match(
             [](expected::Value<void> &v) { return true; },
-            [this](expected::Error<iroha::model::ExecutionError> &e) {
+            [this](expected::Error<shared_model::ExecutionError> &e) {
               log_->error(e.error.toString());
               return false;
             });
@@ -60,8 +72,8 @@ namespace iroha {
 
       transaction_->exec("SAVEPOINT savepoint_;");
       auto result = apply_function(transaction, *wsv_)
-          && std::all_of(transaction.commands.begin(),
-                         transaction.commands.end(),
+          && std::all_of(tx.commands().begin(),
+                         tx.commands().end(),
                          execute_command);
       if (result) {
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");

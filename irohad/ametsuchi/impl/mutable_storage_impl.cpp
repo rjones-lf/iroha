@@ -19,7 +19,11 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 
+#include "backend/protobuf/from_old_model.hpp"
+
 #include "model/execution/command_executor_factory.hpp"
+
+#include <boost/variant/apply_visitor.hpp>
 
 #include "ametsuchi/wsv_command.hpp"
 #include "model/sha3_hash.hpp"
@@ -37,9 +41,11 @@ namespace iroha {
           wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
-          command_executors_(std::move(command_executors)),
           committed(false),
           log_(logger::log("MutableStorage")) {
+        auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
+        auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
+        command_executor_ = std::make_shared<shared_model::CommandExecutor>(shared_model::CommandExecutor(w, c));
       transaction_->exec("BEGIN;");
     }
 
@@ -47,27 +53,27 @@ namespace iroha {
         const model::Block &block,
         std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
             function) {
+      auto shared_block = shared_model::proto::from_old(block);
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
-          auto result =
-              command_executors_->getCommandExecutor(command)->execute(
-                  *command, *wsv_, *executor_, transaction.creator_account_id);
+            command_executor_->setCreatorAccountId(transaction->creatorAccountId());
+          auto result = boost::apply_visitor(*command_executor_, command->get());
           return result.match(
               [](expected::Value<void> v) { return true; },
-              [&](expected::Error<iroha::model::ExecutionError> e) {
+              [&](expected::Error<shared_model::ExecutionError> e) {
                 log_->error(e.error.toString());
                 return false;
               });
         };
-        return std::all_of(transaction.commands.begin(),
-                           transaction.commands.end(),
+        return std::all_of(transaction->commands().begin(),
+                           transaction->commands().end(),
                            execute_command);
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
       auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(block.transactions.begin(),
-                          block.transactions.end(),
+          and std::all_of(shared_block.transactions().begin(),
+                          shared_block.transactions().end(),
                           execute_transaction);
 
       if (result) {

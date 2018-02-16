@@ -85,7 +85,8 @@ namespace iroha {
           std::make_unique<TemporaryWsvImpl>(
               std::move(postgres_connection),
               std::move(wsv_transaction),
-              std::move(command_executors.value())));
+              std::move(command_executors.value()))
+      );
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -118,7 +119,8 @@ namespace iroha {
               top_hash.value_or(hash256_t{}),
               std::move(postgres_connection),
               std::move(wsv_transaction),
-              std::move(command_executors.value())));
+              std::move(command_executors.value()))
+      );
     }
 
     bool StorageImpl::insertBlock(model::Block block) {

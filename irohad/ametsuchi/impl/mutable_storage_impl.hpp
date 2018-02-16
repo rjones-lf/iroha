@@ -24,6 +24,7 @@
 
 #include "ametsuchi/mutable_storage.hpp"
 #include "logger/logger.hpp"
+#include "execution/command_executor.hpp"
 
 namespace iroha {
 
@@ -44,7 +45,8 @@ namespace iroha {
           hash256_t top_hash,
           std::unique_ptr<pqxx::lazyconnection> connection,
           std::unique_ptr<pqxx::nontransaction> transaction,
-          std::shared_ptr<model::CommandExecutorFactory> command_executors);
+          std::shared_ptr<model::CommandExecutorFactory> command_executors
+      );
 
       bool apply(const model::Block &block,
                  std::function<bool(const model::Block &,
@@ -64,7 +66,7 @@ namespace iroha {
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
-      std::shared_ptr<model::CommandExecutorFactory> command_executors_;
+      std::shared_ptr<shared_model::CommandExecutor> command_executor_;
 
       bool committed;
 

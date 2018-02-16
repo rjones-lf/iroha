@@ -24,6 +24,7 @@
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "model/converters/pb_block_factory.hpp"
+#include "model/converters/pb_command_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 

@@ -41,6 +41,12 @@
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
+
 #include "common/result.hpp"
 
 namespace shared_model {
@@ -73,99 +79,71 @@ namespace shared_model {
 
   class CommandExecutor : public boost::static_visitor<ExecutionResult> {
    public:
-    CommandExecutor();
+    CommandExecutor(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
+                    std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
 
-    ExecutionResult operator()(const interface::AddAssetQuantity &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
 
-    ExecutionResult operator()(const interface::AddPeer &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::AddAssetQuantity> &command);
 
-    ExecutionResult operator()(const interface::AddSignatory &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::AddPeer> &command);
 
-    ExecutionResult operator()(const interface::AppendRole &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::AddSignatory> &command);
 
-    ExecutionResult operator()(const interface::CreateAccount &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::AppendRole> &command);
 
-    ExecutionResult operator()(const interface::CreateAsset &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::CreateAccount> &command);
 
-    ExecutionResult operator()(const interface::CreateDomain &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::CreateAsset> &command);
 
-    ExecutionResult operator()(const interface::CreateRole &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::CreateDomain> &command);
 
-    ExecutionResult operator()(const interface::DetachRole &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::CreateRole> &command);
 
-    ExecutionResult operator()(const interface::GrantPermission &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::DetachRole> &command);
 
-    ExecutionResult operator()(const interface::RemoveSignatory &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::GrantPermission> &command);
 
-    ExecutionResult operator()(const interface::RevokePermission &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::RemoveSignatory> &command);
 
-    ExecutionResult operator()(const interface::SetAccountDetail &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::RevokePermission> &command);
 
-    ExecutionResult operator()(const interface::SetQuorum &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::SetAccountDetail> &command);
 
-    ExecutionResult operator()(const interface::SubtractAssetQuantity &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::SetQuorum> &command);
 
-    ExecutionResult operator()(const interface::TransferAsset &command,
-                               iroha::ametsuchi::WsvQuery &queries,
-                               iroha::ametsuchi::WsvCommand &commands,
-                               const std::string &creator_account_id);
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::SubtractAssetQuantity> &command);
+
+    ExecutionResult operator()(const detail::PolymorphicWrapper<interface::TransferAsset> &command);
+
+    void setCreatorAccountId(std::string creator_account_id);
+
+  private:
+      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
+      std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
+      std::string creator_account_id;
+
+      shared_model::proto::AmountBuilder amount_builder;
+      shared_model::proto::AccountAssetBuilder account_asset_builder;
+      shared_model::proto::AccountBuilder account_builder;
+      shared_model::proto::AssetBuilder asset_builder;
+      shared_model::proto::DomainBuilder domain_builder;
   };
 
   class CommandValidator : public boost::static_visitor<bool> {
    public:
-    CommandValidator();
+    CommandValidator(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries);
 
     template <typename CommandType>
-    bool operator()(const CommandType &command,
-                    iroha::ametsuchi::WsvQuery &queries,
-                    const std::string &creator_account_id);
+    bool operator()(const detail::PolymorphicWrapper<CommandType> &command) {
+        bool a = hasPermissions(*command.operator->(), *queries, creator_account_id);
+        bool b = isValid(*command.operator->(), *queries, creator_account_id);
+        return a
+               and b;
+    }
 
-   protected:
+      void setCreatorAccountId(std::string creator_account_id);
+
+   private:
     bool hasPermissions(const interface::AddAssetQuantity &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
@@ -293,6 +271,11 @@ namespace shared_model {
     bool isValid(const interface::TransferAsset &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
+
+
+
+      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
+      std::string creator_account_id;
   };
 }  // namespace shared_model
 
