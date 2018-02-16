@@ -118,11 +118,11 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
 /*
  * @given path to irohad executable
- * @when run irohad without any parameters
+ * @when run irohad with invalid parameters
  * @then irohad should not start
  */
-TEST_F(IrohadTest, RunIrohadWithoutArgs) {
-  child c(irohad_executable);
+TEST_F(IrohadTest, RunIrohadWithInvalidArgs) {
+  child c(irohad_executable.string() + " --invalid");
   std::this_thread::sleep_for(short_timeout);
   ASSERT_FALSE(c.running());
 }
