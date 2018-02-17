@@ -287,7 +287,7 @@ namespace shared_model {
         return answer;
       }
 
-     private:
+     protected:
       FieldValidator field_validator_;
       CommandValidator command_validator_;
     };

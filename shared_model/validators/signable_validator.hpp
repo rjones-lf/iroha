@@ -24,15 +24,14 @@
 namespace shared_model {
   namespace validation {
 
-    template <typename ModelValidator, typename Model, typename FieldValidator>
+    template <typename ModelValidator, typename SignableModel>
     class SignableModelValidator : public ModelValidator {
-      // using ModelValidator::ModelValidator;
      public:
-      Answer validate(const Model &model) const {
+      Answer validate(const SignableModel &model) const {
         auto answer = ModelValidator::validate(model);
         std::string reason_name = "Signature";
         ReasonsGroupType reason(reason_name, GroupedReasons());
-        FieldValidator().validateSignatures(
+        ModelValidator::field_validator_.validateSignatures(
             reason, model->signatures(), model->payload());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));

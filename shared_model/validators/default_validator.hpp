@@ -38,13 +38,11 @@ namespace shared_model {
 
     using DefaultSignableTransactionValidator = SignableModelValidator<
         DefaultTransactionValidator,
-        detail::PolymorphicWrapper<interface::Transaction>,
-        FieldValidator>;
+        detail::PolymorphicWrapper<interface::Transaction>>;
 
     using DefaultSignableQueryValidator =
         SignableModelValidator<DefaultQueryValidator,
-                               detail::PolymorphicWrapper<interface::Query>,
-                               FieldValidator>;
+                               detail::PolymorphicWrapper<interface::Query>>;
 
   }  // namespace validation
 }  // namespace shared_model

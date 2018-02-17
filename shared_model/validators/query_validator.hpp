@@ -189,9 +189,11 @@ namespace shared_model {
         return answer;
       }
 
+     protected:
+      FieldValidator field_validator_;
+
      private:
       Answer answer_;
-      FieldValidator field_validator_;
       QueryFieldValidator query_field_validator_;
     };
   }  // namespace validation
