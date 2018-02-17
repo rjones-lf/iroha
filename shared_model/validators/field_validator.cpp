@@ -18,6 +18,7 @@
 #include "validators/field_validator.hpp"
 #include <boost/format.hpp>
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "validator/address_validator.hpp"
 
 namespace shared_model {
   namespace validation {

@@ -20,9 +20,9 @@
 
 #include <boost/functional/hash.hpp>
 #include "interfaces/common_objects/types.hpp"
+#include <unordered_set>
 
 namespace shared_model {
-
   namespace interface {
     /**
      * Hash class for SigWrapper type. It's required since std::unordered_set

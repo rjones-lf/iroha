@@ -24,8 +24,6 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
-#include "interfaces/transaction.hpp"
-#include "validator/address_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
