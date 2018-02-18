@@ -2,6 +2,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
 
 add_subdirectory(consensus)
 add_subdirectory(pipeline)
+add_subdirectory(queries)
 
 addtest(client_test client_test.cpp)
 target_link_libraries(client_test

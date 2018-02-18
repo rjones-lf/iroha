@@ -79,12 +79,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
                 kDefaultRole,
                 // TODO (@l4l) IR-874 create more confort way for
                 // permssion-dependent proto building
-                std::vector<std::string>{iroha::model::can_create_domain,
-                                         iroha::model::can_create_account,
-                                         iroha::model::can_add_asset_qty,
-                                         iroha::model::can_add_peer,
-                                         iroha::model::can_receive,
-                                         iroha::model::can_transfer})
+                std::vector<std::string>{iroha::model::all_perm_group.begin(),
+                                         iroha::model::all_perm_group.end()})
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)
