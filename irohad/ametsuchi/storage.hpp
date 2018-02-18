@@ -55,6 +55,11 @@ namespace iroha {
        */
       virtual void dropStorage() = 0;
 
+      /**
+       * Recover WSV (World State View).
+       */
+      virtual void recoverWSV() = 0;
+
       virtual ~Storage() = default;
     };
 

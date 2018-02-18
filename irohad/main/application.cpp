@@ -16,6 +16,8 @@
  */
 
 #include "main/application.hpp"
+#include <algorithm>
+#include <memory>
 
 using namespace iroha;
 using namespace iroha::ametsuchi;

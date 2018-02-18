@@ -179,6 +179,38 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
+    void StorageImpl::recoverWSV() {
+      log_->info("[Recover WSV] => start");
+
+      // get all blocks starting from the genesis
+      std::vector<model::Block> blocks;
+      getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
+          [&blocks](auto block) { blocks.push_back(block); });
+
+      dropStorage();
+
+      // apply blocks one by one
+      auto storageResult = createMutableStorage();
+      storageResult.match(
+          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                  &mutableStorage) {
+            std::for_each(
+                blocks.begin(), blocks.end(), [&mutableStorage](auto block) {
+                  mutableStorage.value->apply(
+                      block,
+                      [](const auto &block, auto &query, const auto &hash) {
+                        return true;
+                      });
+                });
+            commit(std::move(mutableStorage.value));
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            log_->info("[Init] => query service" + error.error);
+          });
+
+      log_->info("[Recover WSV] => completed");
+    }
+
     expected::Result<ConnectionContext, std::string> StorageImpl::initConnections(
         std::string block_store_dir, std::string postgres_options) {
       auto log_ = logger::log("StorageImpl:initConnection");

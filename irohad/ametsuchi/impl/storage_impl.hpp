@@ -62,6 +62,12 @@ namespace iroha {
 
       virtual void dropStorage() override;
 
+      /**
+       * Recover WSV (World State View).
+       * Drop storage and apply blocks one by one.
+       */
+      virtual void recoverWSV() override;
+
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;

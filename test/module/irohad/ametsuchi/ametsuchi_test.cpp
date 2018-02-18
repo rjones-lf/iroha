@@ -21,7 +21,6 @@
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "common/byteutils.hpp"
 #include "framework/test_subscriber.hpp"
@@ -35,6 +34,8 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "model/generators/block_generator.hpp"
+#include "model/generators/transaction_generator.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -162,15 +163,6 @@ void apply(S &&storage, const Block &block) {
 
 TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
   // Commit block => get block => observable completed
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
 
@@ -186,15 +178,6 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
   auto blocks = storage->getBlockQuery();
@@ -285,16 +268,6 @@ TEST_F(AmetsuchiTest, SampleTest) {
 }
 
 TEST_F(AmetsuchiTest, PeerTest) {
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
-  ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
   Transaction txn;
@@ -315,15 +288,6 @@ TEST_F(AmetsuchiTest, PeerTest) {
 }
 
 TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
   auto blocks = storage->getBlockQuery();
@@ -456,15 +420,6 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 }
 
 TEST_F(AmetsuchiTest, AddSignatoryTest) {
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
@@ -709,15 +664,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
       "Test case: create storage "
       "=> insert block "
       "=> assert that inserted");
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
   ASSERT_EQ(0, wsv->getPeers().value().size());
@@ -797,15 +743,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
  * with some other hash is not found.
  */
 TEST_F(AmetsuchiTest, FindTxByHashTest) {
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
 
@@ -865,4 +802,54 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_EQ(*blocks->getTxByHashSync(tx1hash), tx1);
   ASSERT_EQ(*blocks->getTxByHashSync(tx2hash), tx2);
   ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
+}
+
+/**
+ * @given spoiled WSV
+ * @when WSV is restored
+ * @then WSV is valid
+ */
+TEST_F(AmetsuchiTest, TestRestoreWSV) {
+  ASSERT_TRUE(storage);
+
+  // initialize storage with genesis block
+  auto genesis_tx =
+      iroha::model::generators::TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+  auto genesis_block =
+      iroha::model::generators::BlockGenerator().generateGenesisBlock(
+          0, {genesis_tx});
+  apply(storage, genesis_block);
+
+  auto res = storage->getWsvQuery()->getDomain("test");
+  EXPECT_TRUE(res);
+
+  // spoil WSV
+  pqxx::work txn(*connection);
+  txn.exec(R"(
+DELETE FROM account_has_signatory;
+DELETE FROM account_has_asset;
+DELETE FROM role_has_permissions;
+DELETE FROM account_has_roles;
+DELETE FROM account_has_grantable_permissions;
+DELETE FROM account;
+DELETE FROM asset;
+DELETE FROM domain;
+DELETE FROM signatory;
+DELETE FROM peer;
+DELETE FROM role;
+DELETE FROM height_by_hash;
+DELETE FROM height_by_account_set;
+DELETE FROM index_by_creator_height;
+DELETE FROM index_by_id_height_asset;
+)");
+  txn.commit();
+
+  // check there is no data in WSV
+  res = storage->getWsvQuery()->getDomain("test");
+  EXPECT_FALSE(res);
+
+  // recover storage and check it is recovered
+  storage->recoverWSV();
+  res = storage->getWsvQuery()->getDomain("test");
+  EXPECT_TRUE(res);
 }

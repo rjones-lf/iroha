@@ -18,6 +18,7 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
@@ -28,24 +29,22 @@
 #include "model/model_crypto_provider_impl.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "torii/command_service.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
 #include "validation/chain_validator.hpp"
-#include "validation/impl/stateless_validator_impl.hpp"
-#include "validation/stateful_validator.hpp"
-
-#include "ametsuchi/impl/peer_query_wsv.hpp"
-#include "network/impl/peer_communication_service_impl.hpp"
-#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
+#include "validation/impl/stateless_validator_impl.hpp"
+#include "validation/stateful_validator.hpp"
 
 class Irohad {
  public:

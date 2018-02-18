@@ -18,12 +18,11 @@
 #ifndef IROHA_AMETSUCHI_FIXTURE_HPP
 #define IROHA_AMETSUCHI_FIXTURE_HPP
 
-#include "common/files.hpp"
-#include "logger/logger.hpp"
-
 #include <gtest/gtest.h>
 #include <pqxx/pqxx>
-
+#include "ametsuchi/impl/storage_impl.hpp"
+#include "common/files.hpp"
+#include "logger/logger.hpp"
 #include "model/generators/command_generator.hpp"
 
 namespace iroha {
@@ -63,6 +62,14 @@ namespace iroha {
         } catch (const pqxx::broken_connection &e) {
           FAIL() << "Connection to PostgreSQL broken: " << e.what();
         }
+
+        auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+        storageResult.match(
+            [&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
+                    &_storage) { storage = _storage.value; },
+            [](iroha::expected::Error<std::string> &error) {
+              FAIL() << "StorageImpl: " << error.error;
+            });
       }
       virtual void TearDown() {
         const auto drop = R"(
@@ -90,6 +97,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
         iroha::remove_all(block_store_path);
       }
+
+      std::shared_ptr<StorageImpl> storage;
 
       std::shared_ptr<pqxx::lazyconnection> connection;
 
