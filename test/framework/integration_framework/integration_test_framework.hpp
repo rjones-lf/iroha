@@ -102,6 +102,13 @@ namespace integration_framework {
                         const WaitTime &wait,
                         const std::string &error_reason);
 
+    static const std::string kDefaultDomain;
+    static const std::string kDefaultRole;
+
+    static const std::string kAdminName;
+    static const std::string kAdminId;
+    static const std::string kAssetName;
+
    protected:
     std::shared_ptr<IrohaInstance> iroha_instance_ =
         std::make_shared<IrohaInstance>();
@@ -116,9 +123,6 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next committed block
     const milliseconds block_waiting = milliseconds(20000);
-
-    const std::string default_domain = "test";
-    const std::string default_role = "user";
 
     size_t maximum_block_size_;
 

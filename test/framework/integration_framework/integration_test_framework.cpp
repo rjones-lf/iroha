@@ -31,16 +31,23 @@ using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
 
 namespace integration_framework {
+
+  const std::string IntegrationTestFramework::kDefaultDomain = "test";
+  const std::string IntegrationTestFramework::kDefaultRole = "user";
+  const std::string IntegrationTestFramework::kAdminName = "admin";
+  const std::string IntegrationTestFramework::kAdminId = "admin@test";
+  const std::string IntegrationTestFramework::kAssetName = "coin";
+
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const shared_model::crypto::Keypair &key) {
     auto genesis_tx =
         shared_model::proto::TransactionBuilder()
-            .creatorAccountId("admin@test")
+            .creatorAccountId(kAdminId)
             .txCounter(1)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:10001", key.publicKey())
             .createRole(
-                default_role,
+                kDefaultRole,
                 // TODO (@l4l) IR-874 create more confort way for
                 // permssion-dependent proto building
                 std::vector<std::string>{iroha::model::can_create_domain,
@@ -49,9 +56,9 @@ namespace integration_framework {
                                          iroha::model::can_add_peer,
                                          iroha::model::can_receive,
                                          iroha::model::can_transfer})
-            .createDomain(default_domain, default_role)
-            .createAccount("admin", default_domain, key.publicKey())
-            .createAsset("coin", default_domain, 1)
+            .createDomain(kDefaultDomain, kDefaultRole)
+            .createAccount(kAdminName, kDefaultDomain, key.publicKey())
+            .createAsset(kAssetName, kDefaultDomain, 1)
             .build()
             .signAndAddSignature(key);
     auto genesis_block =
