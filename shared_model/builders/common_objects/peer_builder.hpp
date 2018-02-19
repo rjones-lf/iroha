@@ -35,37 +35,30 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class PeerBuilder {
+    class PeerBuilder: public CommonObjectBuilder<interface::Peer,
+                                                  BuilderImpl,
+                                                  Validator> {
      public:
-      BuilderResult<shared_model::interface::Peer> build() {
-        auto peer = builder_.build();
-        shared_model::validation::ReasonsGroupType reasons(
-            "Peer Builder", shared_model::validation::GroupedReasons());
-        shared_model::validation::Answer answer;
-        validator_.validatePeer(reasons, peer);
-
-        if (!reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-          return iroha::expected::makeError(
-              std::make_shared<std::string>(answer.reason()));
-        }
-        std::shared_ptr<shared_model::interface::Peer> peer_ptr(peer.copy());
-        return iroha::expected::makeValue(peer_ptr);
-      }
 
       PeerBuilder &address(const interface::types::AddressType &address) {
-        builder_ = builder_.address(address);
+        this->builder_ = this->builder_.address(address);
         return *this;
       }
 
       PeerBuilder &pubkey(const interface::types::PubkeyType &key) {
-        builder_ = builder_.pubkey(key);
+        this->builder_ = this->builder_.pubkey(key);
         return *this;
       }
 
-     private:
-      Validator validator_;
-      BuilderImpl builder_;
+     protected:
+      virtual std::string builderName() const override {
+        return "Peer Builder";
+      }
+
+      virtual void validate(validation::ReasonsGroupType &reasons,
+                            const interface::Peer &object) override {
+        this->validator_.validatePeer(reasons, object);
+      }
     };
   }  // namespace builder
 }  // namespace shared_model

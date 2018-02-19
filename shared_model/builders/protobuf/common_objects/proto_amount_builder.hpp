@@ -32,7 +32,7 @@ namespace shared_model {
     class AmountBuilder {
      public:
       shared_model::proto::Amount build() {
-        return shared_model::proto::Amount(amount_);
+        return shared_model::proto::Amount(std::move(amount_));
       }
 
       AmountBuilder &intValue(const boost::multiprecision::uint256_t &value) {

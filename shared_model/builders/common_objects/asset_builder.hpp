@@ -22,7 +22,7 @@
 #include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 
-//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+// TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
 
 namespace shared_model {
   namespace builder {
@@ -36,45 +36,37 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class AssetBuilder {
+    class AssetBuilder
+        : public CommonObjectBuilder<interface::Asset, BuilderImpl, Validator> {
+
      public:
-      BuilderResult<shared_model::interface::Asset> build() {
-        auto asset = builder_.build();
-        shared_model::validation::ReasonsGroupType reasons(
-            "Asset Builder", shared_model::validation::GroupedReasons());
-        shared_model::validation::Answer answer;
-        validator_.validateAssetId(reasons, asset.assetId());
-        validator_.validateDomainId(reasons, asset.domainId());
-        validator_.validatePrecision(reasons, asset.precision());
-
-        if (!reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-          return iroha::expected::makeError(
-              std::make_shared<std::string>(answer.reason()));
-        }
-        std::shared_ptr<shared_model::interface::Asset> asset_ptr(asset.copy());
-        return iroha::expected::makeValue(asset_ptr);
-      }
-
       AssetBuilder &assetId(const interface::types::AccountIdType &asset_id) {
-        builder_ = builder_.assetId(asset_id);
+        this->builder_ = this->builder_.assetId(asset_id);
         return *this;
       }
 
       AssetBuilder &domainId(const interface::types::DomainIdType &domain_id) {
-        builder_ = builder_.domainId(domain_id);
+        this->builder_ = this->builder_.domainId(domain_id);
         return *this;
       }
 
       AssetBuilder &precision(
           const interface::types::PrecisionType &precision) {
-        builder_ = builder_.precision(precision);
+        this->builder_ = this->builder_.precision(precision);
         return *this;
       }
 
-     private:
-      Validator validator_;
-      BuilderImpl builder_;
+     protected:
+      virtual std::string builderName() const override {
+        return "Asset Builder";
+      }
+
+      virtual void validate(validation::ReasonsGroupType &reasons,
+                            const interface::Asset &object) override {
+        this->validator_.validateAssetId(reasons, object.assetId());
+        this->validator_.validateDomainId(reasons, object.domainId());
+        this->validator_.validatePrecision(reasons, object.precision());
+      }
     };
   }  // namespace builder
 }  // namespace shared_model

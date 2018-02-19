@@ -32,7 +32,7 @@ namespace shared_model {
     class AssetBuilder {
      public:
       shared_model::proto::Asset build() {
-        return shared_model::proto::Asset(asset_);
+        return shared_model::proto::Asset(std::move(asset_));
       }
 
       AssetBuilder &assetId(

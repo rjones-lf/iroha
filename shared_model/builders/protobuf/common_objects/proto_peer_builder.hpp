@@ -31,7 +31,7 @@ namespace shared_model {
     class PeerBuilder {
      public:
       shared_model::proto::Peer build() {
-        return shared_model::proto::Peer(peer_);
+        return shared_model::proto::Peer(std::move(peer_));
       }
 
       PeerBuilder &address(const interface::types::AddressType &address) {

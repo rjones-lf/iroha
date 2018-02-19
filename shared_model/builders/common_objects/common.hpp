@@ -22,6 +22,8 @@
 #include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
+// TODO: 16.02.2018 nickaleks: Add validators for common_objects IR-986
+
 namespace shared_model {
   namespace builder {
 
@@ -34,9 +36,61 @@ namespace shared_model {
      * in something which has polymorphic behaviour, such as PolymorphicWrapper
      */
     template <typename ModelType>
-    using BuilderResult = iroha::expected::PolymorphicResult<
-        ModelType,
-        std::string>;
-  }
+    using BuilderResult =
+        iroha::expected::PolymorphicResult<ModelType, std::string>;
+
+
+    /**
+     * CommonObjectBuilder is a base class for all builders of common objects.
+     * It encapsulates common logic
+     * @tparam ModelType - type of object to be built
+     * @tparam BuilderImpl - underlying implementation
+     * @tparam Validator - validation object
+     */
+    template <typename ModelType, typename BuilderImpl, typename Validator>
+    class CommonObjectBuilder {
+     public:
+
+      /**
+       * build() constructs specified object and performs stateless validation on fields.
+       * @return Result which contains either object, or error with explanation,
+       * why object construction is unsuccessful.
+       */
+      BuilderResult<ModelType> build() {
+        auto model_impl = std::shared_ptr<ModelType>(builder_.build().copy());
+
+        shared_model::validation::ReasonsGroupType reasons(
+            builderName(), shared_model::validation::GroupedReasons());
+
+        validate(reasons, *model_impl);
+
+        shared_model::validation::Answer answer;
+        if (!reasons.second.empty()) {
+          answer.addReason(std::move(reasons));
+        }
+
+        if (answer) {
+          return iroha::expected::makeError(
+              std::make_shared<std::string>(answer.reason()));
+        }
+
+        return iroha::expected::makeValue(std::move(model_impl));
+      }
+
+     protected:
+      virtual std::string builderName() const = 0;
+
+      /**
+       * Perform stateless validation on an object
+       * @param reasons - list of reasons, which will be populated by validator
+       * @param object to be validated
+       */
+      virtual void validate(validation::ReasonsGroupType &reasons,
+                            const ModelType &object) = 0;
+
+      Validator validator_;
+      BuilderImpl builder_;
+    };
+  }  // namespace builder
 }  // namespace shared_model
 #endif  // IROHA_BUILDERS_COMMON_HPP

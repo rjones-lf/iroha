@@ -22,7 +22,7 @@
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 
-//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+// TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
 
 namespace shared_model {
   namespace builder {
@@ -36,38 +36,31 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class SignatureBuilder {
+    class SignatureBuilder : public CommonObjectBuilder<interface::Signature,
+                                                        BuilderImpl,
+                                                        Validator> {
      public:
-      BuilderResult<shared_model::interface::Signature> build() {
-        auto signature = builder_.build();
-        shared_model::validation::ReasonsGroupType reasons(
-            "Signature Builder", shared_model::validation::GroupedReasons());
-        shared_model::validation::Answer answer;
-        validator_.validatePubkey(reasons, signature.publicKey());
-
-        if (!reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-          return iroha::expected::makeError(
-              std::make_shared<std::string>(answer.reason()));
-        }
-        std::shared_ptr<shared_model::interface::Signature> signature_ptr(signature.copy());
-        return iroha::expected::makeValue(signature_ptr);
-      }
-
-      SignatureBuilder &publicKey(const shared_model::interface::types::PubkeyType &key) {
-        builder_ = builder_.publicKey(key);
+      SignatureBuilder &publicKey(
+          const shared_model::interface::types::PubkeyType &key) {
+        this->builder_ = this->builder_.publicKey(key);
         return *this;
       }
 
       SignatureBuilder &signedData(
           const interface::Signature::SignedType &signed_data) {
-        builder_ = builder_.signedData(signed_data);
+        this->builder_ = this->builder_.signedData(signed_data);
         return *this;
       }
 
-     private:
-      Validator validator_;
-      BuilderImpl builder_;
+     protected:
+      virtual std::string builderName() const override {
+        return "Signature Builder";
+      }
+
+      virtual void validate(validation::ReasonsGroupType &reasons,
+                            const interface::Signature &object) override {
+        this->validator_.validatePubkey(reasons, object.publicKey());
+      }
     };
   }  // namespace builder
 }  // namespace shared_model

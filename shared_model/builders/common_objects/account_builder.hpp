@@ -21,7 +21,7 @@
 #include "builders/common_objects/common.hpp"
 #include "interfaces/common_objects/account.hpp"
 
-//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+// TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
 
 namespace shared_model {
   namespace builder {
@@ -35,51 +35,43 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class AccountBuilder {
+    class AccountBuilder : public CommonObjectBuilder<interface::Account,
+                                                      BuilderImpl,
+                                                      Validator> {
      public:
-      BuilderResult<shared_model::interface::Account> build() {
-        auto account = builder_.build();
-
-        shared_model::validation::ReasonsGroupType reasons(
-            "Account Builder", shared_model::validation::GroupedReasons());
-        shared_model::validation::Answer answer;
-        validator_.validateAccountId(reasons, account.accountId());
-        validator_.validateDomainId(reasons, account.domainId());
-        validator_.validateQuorum(reasons, account.quorum());
-
-        if (!reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-          return iroha::expected::makeError(
-              std::make_shared<std::string>(answer.reason()));
-        }
-
-        std::shared_ptr<shared_model::interface::Account> account_ptr(account.copy());
-        return iroha::expected::makeValue(account_ptr);
-      }
-
-      AccountBuilder &accountId(const interface::types::AccountIdType &account_id) {
-        builder_ = builder_.accountId(account_id);
+      AccountBuilder &accountId(
+          const interface::types::AccountIdType &account_id) {
+        this->builder_ = this->builder_.accountId(account_id);
         return *this;
       }
 
-      AccountBuilder &domainId(const interface::types::DomainIdType &domain_id) {
-        builder_ = builder_.domainId(domain_id);
+      AccountBuilder &domainId(
+          const interface::types::DomainIdType &domain_id) {
+        this->builder_ = this->builder_.domainId(domain_id);
         return *this;
       }
 
       AccountBuilder &quorum(const interface::types::QuorumType &quorum) {
-        builder_ = builder_.quorum(quorum);
+        this->builder_ = this->builder_.quorum(quorum);
         return *this;
       }
 
       AccountBuilder &jsonData(const interface::types::JsonType &json_data) {
-        builder_ = builder_.jsonData(json_data);
+        this->builder_ = this->builder_.jsonData(json_data);
         return *this;
       }
 
-     private:
-      Validator validator_;
-      BuilderImpl builder_;
+     protected:
+      virtual std::string builderName() const override {
+        return "Account Builder";
+      }
+
+      virtual void validate(validation::ReasonsGroupType &reasons,
+                            const interface::Account &object) override {
+        this->validator_.validateAccountId(reasons, object.accountId());
+        this->validator_.validateDomainId(reasons, object.domainId());
+        this->validator_.validateQuorum(reasons, object.quorum());
+      }
     };
   }  // namespace builder
 }  // namespace shared_model

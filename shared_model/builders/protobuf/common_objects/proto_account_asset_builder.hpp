@@ -31,7 +31,7 @@ namespace shared_model {
     class AccountAssetBuilder {
      public:
       shared_model::proto::AccountAsset build() {
-        return shared_model::proto::AccountAsset(account_asset_);
+        return shared_model::proto::AccountAsset(std::move(account_asset_));
       }
 
       AccountAssetBuilder &accountId(

@@ -32,7 +32,7 @@ namespace shared_model {
     class AccountBuilder {
      public:
       shared_model::proto::Account build() {
-        return shared_model::proto::Account(account_);
+        return shared_model::proto::Account(std::move(account_));
       }
 
       AccountBuilder &accountId(const interface::types::AccountIdType &account_id) {
