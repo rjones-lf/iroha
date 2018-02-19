@@ -107,25 +107,26 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
   auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
+
   auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
   auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
-  addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(bl, _))
       .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
-  ASSERT_TRUE(validator->validateBlock(block, *storage));
+  ASSERT_TRUE(validator->validateBlock(bl, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   // Invalid previous hash, has supermajority, correct peers subset => invalid
   auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
+
   auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
   auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
-
-  addSignature(block, public_key);
 
   shared_model::crypto::Hash another_hash =
       shared_model::crypto::Hash(std::string(32, '1'));
@@ -135,7 +136,7 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   EXPECT_CALL(*storage, apply(bl, _))
       .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(another_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(bl, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
@@ -149,7 +150,7 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   EXPECT_CALL(*storage, apply(bl, _))
       .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(bl, *storage));
 }
 
 TEST_F(ChainValidationTest, FailWhenBadPeer) {
@@ -157,26 +158,26 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
   shared_model::interface::types::PubkeyType wrong_public_key =
       shared_model::interface::types::PubkeyType(std::string(32, '1'));
   auto block = getBlockBuilder().build();
+  addSignature(block, wrong_public_key);
+
   auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
   auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
-
-  addSignature(block, wrong_public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(bl, _))
       .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block, *storage));
+  ASSERT_FALSE(validator->validateBlock(bl, *storage));
 }
 
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
   auto block = getBlockBuilder().build();
+  addSignature(block, public_key);
+
   auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
   auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
-
-  addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 

@@ -26,7 +26,7 @@ namespace shared_model {
   namespace interface {
     class Block;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace ametsuchi {
@@ -40,6 +40,9 @@ namespace iroha {
      * that is required on commit step of consensus
      */
     class ChainValidator {
+     protected:
+      using wBlock = std::shared_ptr<shared_model::interface::Block>;
+
      public:
       virtual ~ChainValidator() = default;
 
@@ -55,7 +58,8 @@ namespace iroha {
        * @return true if commit is valid, false otherwise
        */
       // TODO: 14-02-2018 Alexey Chernyshov replace commit after relocation to
-      // shared_model https://soramitsu.atlassian.net/browse/IR-903 or https://soramitsu.atlassian.net/browse/IR-902
+      // shared_model https://soramitsu.atlassian.net/browse/IR-903 or
+      // https://soramitsu.atlassian.net/browse/IR-902
       virtual bool validateChain(Commit commit,
                                  ametsuchi::MutableStorage &storage) = 0;
 
@@ -65,7 +69,7 @@ namespace iroha {
        * @param storage -  storage that may be modified during block appliance
        * @return true if block is valid and can be applied, false otherwise
        */
-      virtual bool validateBlock(const shared_model::interface::Block &block,
+      virtual bool validateBlock(const wBlock block,
                                  ametsuchi::MutableStorage &storage) = 0;
     };
   }  // namespace validation

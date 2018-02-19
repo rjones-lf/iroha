@@ -43,7 +43,7 @@ namespace iroha {
       MOCK_METHOD2(validateChain, bool(Commit, ametsuchi::MutableStorage &));
 
       MOCK_METHOD2(validateBlock,
-                   bool(const shared_model::interface::Block &, ametsuchi::MutableStorage &));
+                   bool(const wBlock , ametsuchi::MutableStorage &));
     };
   }  // namespace validation
 }  // namespace iroha
