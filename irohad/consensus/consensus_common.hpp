@@ -49,7 +49,7 @@ namespace iroha {
      * @return true, if all public keys of signatures are present in peers
      * collection, false otherwise
      */
-    inline bool peersSubset(const shared_model::interface::Block::SignatureSetType &signatures,
+    inline bool peersSubset(const shared_model::interface::SignatureSetType &signatures,
                             std::vector<model::Peer> peers) {
       return std::all_of(
           signatures.begin(), signatures.end(), [peers](auto signature) {
