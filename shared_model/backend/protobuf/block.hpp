@@ -56,7 +56,7 @@ namespace shared_model {
               return HashType(proto_->payload().prev_block_hash());
             }),
             signatures_([this] {
-              SignatureSetType sigs;
+              interface::SignatureSetType sigs;
               for (const auto &sig : proto_->signatures()) {
                 auto curr = detail::makePolymorphic<proto::Signature>(sig);
                 sigs.insert(curr);
@@ -87,7 +87,7 @@ namespace shared_model {
         return *blob_;
       }
 
-      const SignatureSetType &signatures() const override {
+      const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
@@ -132,7 +132,7 @@ namespace shared_model {
       const Lazy<std::vector<w<interface::Transaction>>> transactions_;
       const Lazy<BlobType> blob_;
       const Lazy<HashType> prev_hash_;
-      const Lazy<SignatureSetType> signatures_;
+      const Lazy<interface::SignatureSetType> signatures_;
       const Lazy<BlobType> payload_blob_;
     };
   }  // namespace proto

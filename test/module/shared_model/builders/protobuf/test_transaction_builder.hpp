@@ -33,4 +33,9 @@ using TestTransactionBuilder =
                                TransactionAlwaysValidValidator,
                                Transaction>;
 
+using TestUnsignedTransactionBuilder =
+    TemplateTransactionBuilder<(1 << TemplateTransactionBuilder<>::total) - 1,
+                               TransactionAlwaysValidValidator,
+                               UnsignedWrapper<Transaction>>;
+
 #endif  // IROHA_TEST_TRANSACTION_BUILDER_HPP

@@ -20,6 +20,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
