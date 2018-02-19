@@ -49,13 +49,13 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(
-        const shared_model::interface::Block &new_block,
-        std::function<bool(const shared_model::interface::Block &,
+        const wBlock new_block,
+        std::function<bool(const wBlock,
                            WsvQuery &,
                            const shared_model::crypto::Hash &)> function) {
       // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
       // shared_model https://soramitsu.atlassian.net/browse/IR-881
-      std::shared_ptr<model::Block> block(new_block.makeOldModel());
+      std::shared_ptr<model::Block> block(new_block->makeOldModel());
 
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {

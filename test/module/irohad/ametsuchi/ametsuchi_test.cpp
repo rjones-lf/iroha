@@ -161,7 +161,9 @@ void apply(S &&storage, const shared_model::interface::Block &block) {
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+  auto tmp = std::unique_ptr<iroha::model::Block>(block.makeOldModel());
+  auto bl = std::make_unique<shared_model::proto::Block>(shared_model::proto::from_old(*tmp));
+  ms->apply(std::move(bl), [](const auto &, auto &, const auto &) { return true; });
   storage->commit(std::move(ms));
 }
 

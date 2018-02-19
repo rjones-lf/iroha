@@ -107,12 +107,14 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
   auto block = getBlockBuilder().build();
+  auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
   addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(bl, _))
+      .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateBlock(block, *storage));
 }
@@ -120,6 +122,9 @@ TEST_F(ChainValidationTest, ValidCase) {
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
   // Invalid previous hash, has supermajority, correct peers subset => invalid
   auto block = getBlockBuilder().build();
+  auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
+
   addSignature(block, public_key);
 
   shared_model::crypto::Hash another_hash =
@@ -127,9 +132,8 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(another_hash)));
+  EXPECT_CALL(*storage, apply(bl, _))
+      .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(another_hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -137,11 +141,13 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
   auto block = getBlockBuilder().build();
+  auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(bl, _))
+      .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -151,12 +157,15 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
   shared_model::interface::types::PubkeyType wrong_public_key =
       shared_model::interface::types::PubkeyType(std::string(32, '1'));
   auto block = getBlockBuilder().build();
+  auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
+
   addSignature(block, wrong_public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(testing::Ref(block), _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, apply(bl, _))
+      .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -164,6 +173,9 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
   auto block = getBlockBuilder().build();
+  auto tmp = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  auto bl = std::dynamic_pointer_cast<shared_model::interface::Block>(tmp);
+
   addSignature(block, public_key);
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
@@ -177,7 +189,7 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   auto block_observable = rxcpp::observable<>::just(old_block);
 
   EXPECT_CALL(*storage, apply(/* TODO block */ _, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(bl, ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }

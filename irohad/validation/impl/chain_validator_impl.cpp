@@ -42,14 +42,16 @@ namespace iroha {
         if (not peers.has_value()) {
           return false;
         }
-        return block.prevHash() == top_hash
-            and consensus::hasSupermajority(block.signatures().size(),
+        return block->prevHash() == top_hash
+            and consensus::hasSupermajority(block->signatures().size(),
                                             peers.value().size())
-            and consensus::peersSubset(block.signatures(), peers.value());
+            and consensus::peersSubset(block->signatures(), peers.value());
       };
 
       // Apply to temporary storage
-      return storage.apply(block, apply_block);
+      auto tmp = std::unique_ptr<iroha::model::Block>(block.makeOldModel());
+      auto bl = std::make_unique<shared_model::proto::Block>(shared_model::proto::from_old(*tmp));
+      return storage.apply(std::move(bl), apply_block);
     }
 
 

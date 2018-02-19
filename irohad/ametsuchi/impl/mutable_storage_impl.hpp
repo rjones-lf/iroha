@@ -48,8 +48,8 @@ namespace iroha {
           std::unique_ptr<pqxx::nontransaction> transaction,
           std::shared_ptr<model::CommandExecutorFactory> command_executors);
 
-      bool apply(const shared_model::interface::Block &block,
-                 std::function<bool(const shared_model::interface::Block &,
+      bool apply(const wBlock block,
+                 std::function<bool(const wBlock,
                                     WsvQuery &,
                                     const shared_model::crypto::Hash &)>
                      function) override;

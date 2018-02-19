@@ -113,10 +113,12 @@ class KVTest : public AmetsuchiTest {
           });
       // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
       // shared_model https://soramitsu.atlassian.net/browse/IR-887
-      auto new_block1 = shared_model::proto::from_old(block1);
-      ms->apply(new_block1, [](const auto &blk, auto &query, const auto &top_hash) {
-        return true;
-      });
+      auto new_block1 = std::make_unique<shared_model::proto::Block>(
+          shared_model::proto::from_old(block1));
+      ms->apply(std::move(new_block1),
+                [](const auto &blk, auto &query, const auto &top_hash) {
+                  return true;
+                });
       storage->commit(std::move(ms));
     }
   }

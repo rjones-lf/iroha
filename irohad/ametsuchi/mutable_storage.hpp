@@ -37,6 +37,9 @@ namespace iroha {
      * Allows to query the world state view, transactions, and blocks.
      */
     class MutableStorage {
+     protected:
+      using wBlock = std::shared_ptr<shared_model::interface::Block>;
+
      public:
       /**
        * Applies a block to current mutable state
@@ -53,8 +56,8 @@ namespace iroha {
        * @return True if block was successfully applied, false otherwise.
        */
       virtual bool apply(
-          const shared_model::interface::Block &block,
-          std::function<bool(const shared_model::interface::Block &,
+          const wBlock block,
+          std::function<bool(const wBlock,
                              WsvQuery &,
                              const shared_model::crypto::Hash &)> function) = 0;
 

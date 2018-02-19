@@ -155,8 +155,8 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           apply,
-          bool(const shared_model::interface::Block &,
-               std::function<bool(const shared_model::interface::Block &,
+          bool(const std::shared_ptr<shared_model::interface::Block> ,
+               std::function<bool(const std::shared_ptr<shared_model::interface::Block>,
                                   WsvQuery &,
                                   const shared_model::crypto::Hash &)>));
     };
