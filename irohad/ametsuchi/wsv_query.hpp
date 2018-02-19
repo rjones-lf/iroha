@@ -29,6 +29,7 @@
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/asset.hpp"
+#include "interfaces/common_objects/domain.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
@@ -69,7 +70,7 @@ namespace iroha {
        * @param domain_id - id in the system
        * @return Domain if exist, nullopt otherwise
        */
-      virtual nonstd::optional<model::Domain> getDomain(
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Domain>> getDomain(
           const std::string &domain_id) = 0;
 
       /**

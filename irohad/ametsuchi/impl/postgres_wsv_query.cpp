@@ -207,20 +207,27 @@ namespace iroha {
       };
     }
 
-    nonstd::optional<model::Domain> PostgresWsvQuery::getDomain(
-        const std::string &domain_id) {
+    nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+    PostgresWsvQuery::getDomain(const std::string &domain_id) {
       return execute_("SELECT * FROM domain WHERE domain_id = "
                       + transaction_.quote(domain_id) + ";")
-                 | [&](const auto &result) -> nonstd::optional<model::Domain> {
+                 | [&](const auto &result) -> nonstd::optional<std::shared_ptr<shared_model::interface::Domain>> {
         if (result.empty()) {
           log_->info("Domain {} not found", domain_id);
           return nonstd::nullopt;
         }
-        model::Domain domain;
-        auto row = result.at(0);
-        row.at(kDomainId) >> domain.domain_id;
-        row.at("default_role") >> domain.default_role;
-        return domain;
+        return makeDomain(result.at(0))
+            .match(
+                [](expected::Value<
+                    std::shared_ptr<shared_model::interface::Domain>> &v) {
+                  return nonstd::make_optional(v.value);
+                },
+                [&](expected::Error<std::shared_ptr<std::string>> &e)
+                    -> nonstd::optional<
+                        std::shared_ptr<shared_model::interface::Domain>> {
+                  return nonstd::nullopt;
+                });
+        ;
       };
     }
 

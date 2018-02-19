@@ -25,12 +25,14 @@
 #include "builders/common_objects/account_builder.hpp"
 #include "builders/common_objects/amount_builder.hpp"
 #include "builders/common_objects/asset_builder.hpp"
+#include "builders/common_objects/domain_builder.hpp"
 #include "builders/common_objects/peer_builder.hpp"
 #include "builders/common_objects/signature_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include <pqxx/result>
@@ -107,6 +109,7 @@ namespace iroha {
     using shared_model::interface::AccountAsset;
     using shared_model::interface::Amount;
     using shared_model::interface::Asset;
+    using shared_model::interface::Domain;
     using shared_model::interface::Peer;
     using shared_model::interface::Signature;
 
@@ -128,6 +131,9 @@ namespace iroha {
 
     using AmountBuilder = shared_model::builder::AmountBuilder<
         shared_model::proto::AmountBuilder,
+        shared_model::validation::FieldValidator>;
+    using DomainBuilder = shared_model::builder::DomainBuilder<
+        shared_model::proto::DomainBuilder,
         shared_model::validation::FieldValidator>;
 
     static inline BuilderResult<Account> makeAccount(
@@ -170,6 +176,13 @@ namespace iroha {
       return PeerBuilder()
           .pubkey(pubkey)
           .address(row.at("address").template as<std::string>())
+          .build();
+    }
+
+    static inline BuilderResult<Domain> makeDomain(const pqxx::row &row) {
+      return DomainBuilder()
+          .domainId(row.at("domain_id").template as<std::string>())
+          .defaultRole(row.at("default_role").template as<std::string>())
           .build();
     }
   }  // namespace ametsuchi

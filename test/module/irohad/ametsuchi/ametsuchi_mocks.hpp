@@ -69,7 +69,7 @@ namespace iroha {
       MOCK_METHOD0(getPeers, nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
       MOCK_METHOD1(
           getDomain,
-          nonstd::optional<model::Domain>(const std::string &domain_id));
+          nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>(const std::string &domain_id));
       MOCK_METHOD3(hasAccountGrantablePermission,
                    bool(const std::string &permitee_account_id,
                         const std::string &account_id,

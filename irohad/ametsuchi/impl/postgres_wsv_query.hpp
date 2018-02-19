@@ -47,7 +47,7 @@ namespace iroha {
           const std::string &account_id, const std::string &asset_id) override;
       nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> getPeers() override;
       nonstd::optional<std::vector<std::string>> getRoles() override;
-      nonstd::optional<model::Domain> getDomain(
+      nonstd::optional<std::shared_ptr<shared_model::interface::Domain>> getDomain(
           const std::string &domain_id) override;
       bool hasAccountGrantablePermission(
           const std::string &permitee_account_id,
