@@ -38,11 +38,20 @@ namespace logger {
   }
 
   static void setGlobalPattern() {
-    spdlog::set_pattern("[%H:%M:%S][th: %t][%l] [%n] << %v");
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%F] %n %v");
   }
 
-  static std::shared_ptr<spdlog::logger> createLogger(const std::string &tag) {
-    setGlobalPattern();
+  static void setDebugPattern() {
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%F][th:%t][%l] %n %v");
+  }
+
+  static std::shared_ptr<spdlog::logger> createLogger(const std::string &tag,
+                                                      bool debug_mode = true) {
+    if (debug_mode) {
+      setDebugPattern();
+    } else {
+      setGlobalPattern();
+    }
     return spdlog::stdout_color_mt(tag);
   }
 

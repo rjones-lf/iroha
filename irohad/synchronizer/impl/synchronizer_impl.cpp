@@ -82,7 +82,15 @@ namespace iroha {
           if (not storage) {
             return;
           }
-          auto chain = blockLoader_->retrieveBlocks(signature.pubkey);
+          auto chain =
+              blockLoader_
+                  ->retrieveBlocks(shared_model::crypto::PublicKey(
+                      {signature.pubkey.begin(), signature.pubkey.end()}))
+                  .map([](auto block) {
+                    std::unique_ptr<iroha::model::Block> old_block(
+                        block->makeOldModel());
+                    return *old_block;
+                  });
           if (validator_->validateChain(chain, *storage)) {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));

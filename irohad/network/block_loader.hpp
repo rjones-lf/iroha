@@ -20,12 +20,12 @@
 
 #include <rxcpp/rx-observable.hpp>
 
-#include "model/block.hpp"
-#include "model/peer.hpp"
+#include "common/wrapper.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace network {
-
     /**
      * Interface for downloading blocks from a network
      */
@@ -36,18 +36,20 @@ namespace iroha {
        * @param peer_pubkey - peer for requesting blocks
        * @return
        */
-      virtual rxcpp::observable<model::Block> retrieveBlocks(
-          model::Peer::KeyType peer_pubkey) = 0;
+      virtual rxcpp::observable<Wrapper<shared_model::interface::Block>>
+      retrieveBlocks(const shared_model::crypto::PublicKey &peer_pubkey) = 0;
 
       /**
        * Retrieve block by its block_hash from given peer
        * @param peer_pubkey - peer for requesting blocks
        * @param block_hash - requested block hash
        * @return block on success, nullopt on failure
+       * TODO 14/02/17 (@l4l) IR-960 rework method with returning result
        */
-      virtual nonstd::optional<model::Block> retrieveBlock(
-          model::Peer::KeyType peer_pubkey,
-          model::Block::HashType block_hash) = 0;
+      virtual nonstd::optional<Wrapper<shared_model::interface::Block>>
+      retrieveBlock(
+          const shared_model::crypto::PublicKey &peer_pubkey,
+          const shared_model::interface::Block::HashType &block_hash) = 0;
 
       virtual ~BlockLoader() = default;
     };

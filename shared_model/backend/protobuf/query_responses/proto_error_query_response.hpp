@@ -28,7 +28,11 @@
 
 template <typename... T, typename Archive>
 auto loadErrorResponse(Archive &&ar) {
-  int which = ar.GetDescriptor()->FindFieldByNumber(ar.reason())->index();
+  unsigned which = ar.GetDescriptor()
+                       ->FindFieldByName("reason")
+                       ->enum_type()
+                       ->FindValueByNumber(ar.reason())
+                       ->index();
   return shared_model::detail::variant_impl<T...>::template load<
       shared_model::interface::ErrorQueryResponse::
           QueryErrorResponseVariantType>(std::forward<Archive>(ar), which);
@@ -58,6 +62,7 @@ namespace shared_model {
                StatefulFailedErrorResponse,
                NoAccountErrorResponse,
                NoAccountAssetsErrorResponse,
+               NoAccountDetailErrorResponse,
                NoSignatoriesErrorResponse,
                NotSupportedErrorResponse,
                NoAssetErrorResponse,

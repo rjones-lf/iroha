@@ -15,14 +15,17 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
-#include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
+#include "backend/protobuf/from_old_model.hpp"
+#include "common/wrapper.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
+#include "cryptography/hash.hpp"
 #include "framework/test_subscriber.hpp"
 
 using namespace iroha::consensus::yac;
@@ -33,10 +36,10 @@ using namespace framework::test_subscriber;
 #include <iostream>
 using namespace std;
 
-using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
 using ::testing::Return;
+using ::testing::_;
 
 class YacGateTest : public ::testing::Test {
  public:
@@ -170,17 +173,25 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
       .WillOnce(Return(expected_block.hash));
 
   // load block
+  auto &pubkey = expected_block.sigs.back().pubkey;
   EXPECT_CALL(
       *block_loader,
-      retrieveBlock(expected_block.sigs.back().pubkey, expected_block.hash))
-      .WillOnce(Return(expected_block));
+      retrieveBlock(
+          shared_model::crypto::PublicKey({pubkey.begin(), pubkey.end()}),
+          shared_model::crypto::Hash(
+              {expected_block.hash.begin(), expected_block.hash.end()})))
+      .WillOnce(Return(iroha::makeWrapper<shared_model::interface::Block,
+                                          shared_model::proto::Block>(
+          shared_model::proto::from_old(expected_block))));
 
   init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(block, expected_block); });
+  gate_wrapper.subscribe([this](auto block) {
+    block.hash = expected_block.hash;
+    ASSERT_EQ(block, expected_block);
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

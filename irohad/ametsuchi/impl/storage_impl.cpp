@@ -114,7 +114,12 @@ namespace iroha {
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block.hash; });
+          .subscribe([&top_hash](auto block) {
+            top_hash = hash256_t();
+            std::copy(block->hash().blob().begin(),
+                      block->hash().blob().end(),
+                      top_hash->data());
+          });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(

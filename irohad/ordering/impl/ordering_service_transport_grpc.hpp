@@ -22,7 +22,6 @@
 #include "logger/logger.hpp"
 #include "ordering.grpc.pb.h"
 
-#include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
 
@@ -39,8 +38,9 @@ namespace iroha {
           std::shared_ptr<iroha::network::OrderingServiceNotification>
               subscriber) override;
 
-      void publishProposal(model::Proposal &&proposal,
-                           const std::vector<std::string> &peers) override;
+      void publishProposal(
+          std::unique_ptr<shared_model::interface::Proposal> proposal,
+          const std::vector<std::string> &peers) override;
 
       grpc::Status onTransaction(::grpc::ServerContext *context,
                                  const protocol::Transaction *request,
@@ -50,7 +50,6 @@ namespace iroha {
 
      private:
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
-      model::converters::PbTransactionFactory factory_;
       logger::Logger log_;
     };
 

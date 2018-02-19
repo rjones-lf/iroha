@@ -19,10 +19,13 @@
 #define SHARED_MODEL_FROM_OLD_HPP
 #ifndef DISABLE_BACKWARD
 
+#include <boost/range/adaptor/transformed.hpp>
+
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/proposal.hpp"
 #include "model/converters/pb_block_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
@@ -51,13 +54,13 @@ namespace shared_model {
 
     inline static shared_model::proto::Proposal from_old(
         const iroha::model::Proposal &proposal) {
-      iroha::protocol::Proposal proto;
-      proto.set_height(proposal.height);
-      for (const auto &tx : proposal.transactions) {
-        new (proto.add_transactions()) iroha::protocol::Transaction(
-            iroha::model::converters::PbTransactionFactory().serialize(tx));
-      }
-      return shared_model::proto::Proposal(std::move(proto));
+      return shared_model::proto::ProposalBuilder()
+          .height(proposal.height)
+          .createdTime(proposal.created_time)
+          .transactions(proposal.transactions
+                        | boost::adaptors::transformed(
+                              [](auto &tx) { return from_old(tx); }))
+          .build();
     }
 
   }  // namespace proto

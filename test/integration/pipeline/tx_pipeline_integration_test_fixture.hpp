@@ -18,17 +18,18 @@
 #ifndef TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 #define TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 
+#include <algorithm>
 #include <atomic>
 
 #include "crypto/keys_manager_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
+#include "integration/pipeline/test_irohad.hpp"
 #include "main/application.hpp"
 #include "main/raw_block_loader.hpp"
 #include "model/generators/block_generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "integration/pipeline/test_irohad.hpp"
 
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
@@ -63,11 +64,27 @@ class TxPipelineIntegrationTestFixture
         });
     ASSERT_TRUE(proposal_wrapper->validate());
     ASSERT_EQ(num_blocks, proposals.size());
-    ASSERT_EQ(expected_proposals, proposals);
+    // Update proposal timestamp and compare it
+    for (auto i = 0u; i < proposals.size(); ++i) {
+      expected_proposals[i].created_time = proposals[i].created_time;
+      ASSERT_EQ(expected_proposals[i], proposals[i]);
+    }
 
     ASSERT_TRUE(commit_wrapper->validate());
     ASSERT_EQ(num_blocks, blocks.size());
-    ASSERT_EQ(expected_blocks, blocks);
+
+    // Update block timestamp and related fields and compare it
+    for (auto i = 0u; i < blocks.size(); ++i) {
+      auto &expected_block = expected_blocks[i];
+      expected_block.created_ts = blocks[i].created_ts;
+      if (i != 0) {
+        expected_block.prev_hash = expected_blocks[i - 1].hash;
+      }
+      expected_block.hash = iroha::hash(expected_block);
+      expected_block.sigs = {};
+      irohad->getCryptoProvider()->sign(expected_block);
+      ASSERT_EQ(expected_block, blocks[i]);
+    }
   }
 
   iroha::keypair_t createNewAccountKeypair(

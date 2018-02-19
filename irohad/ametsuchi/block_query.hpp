@@ -23,13 +23,10 @@
 #include <rxcpp/rx-observable.hpp>
 
 #include "common/types.hpp"
+#include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
-
-  namespace model {
-    struct Transaction;
-    struct Block;
-  }
 
   namespace ametsuchi {
     /**
@@ -43,8 +40,9 @@ namespace iroha {
        * @param account_id - account_id (accountName@domainName)
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) = 0;
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::Transaction>>
+      getAccountTransactions(const std::string &account_id) = 0;
 
       /**
        * Get asset transactions of an account.
@@ -52,16 +50,20 @@ namespace iroha {
        * @param asset_id - asset_id (assetName#domainName)
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          const std::string &account_id, const std::string &asset_id) = 0;
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::Transaction>>
+      getAccountAssetTransactions(const std::string &account_id,
+                                  const std::string &asset_id) = 0;
 
       /**
        * Get transactions from transactions' hashes
        * @param tx_hashes - transactions' hashes to retrieve
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<boost::optional<model::Transaction>>
-      getTransactions(const std::vector<iroha::hash256_t> &tx_hashes) = 0;
+      virtual rxcpp::observable<boost::optional<
+          std::shared_ptr<shared_model::interface::Transaction>>>
+      getTransactions(
+          const std::vector<shared_model::crypto::Hash> &tx_hashes) = 0;
 
       /**
        * Get given number of blocks starting with given height.
@@ -69,31 +71,33 @@ namespace iroha {
        * @param count - number of blocks to retrieve
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<model::Block> getBlocks(uint32_t height,
-                                                        uint32_t count) = 0;
+      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getBlocks(uint32_t height, uint32_t count) = 0;
 
       /**
        * Get all blocks starting from given height.
        * @param from - starting height
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<model::Block> getBlocksFrom(
-          uint32_t height) = 0;
+      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getBlocksFrom(uint32_t height) = 0;
 
       /**
        * Get given number of blocks from top.
        * @param count - number of blocks to retrieve
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<model::Block> getTopBlocks(uint32_t count) = 0;
+      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getTopBlocks(uint32_t count) = 0;
 
       /**
        * Synchronously gets transaction by its hash
        * @param hash - hash to search
        * @return transaction or boost::none
        */
-      virtual boost::optional<model::Transaction> getTxByHashSync(
-          const std::string &hash) = 0;
+      virtual boost::optional<
+          std::shared_ptr<shared_model::interface::Transaction>>
+      getTxByHashSync(const std::string &hash) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

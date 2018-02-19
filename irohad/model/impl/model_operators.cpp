@@ -217,7 +217,8 @@ namespace iroha {
 
     /* Proposal */
     bool Proposal::operator==(const Proposal &rhs) const {
-      return rhs.height == height and rhs.transactions == transactions;
+      return rhs.height == height and rhs.created_time == created_time
+          and rhs.transactions == transactions;
     }
 
     /* Block */

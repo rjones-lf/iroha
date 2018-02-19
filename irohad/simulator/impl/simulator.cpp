@@ -48,7 +48,10 @@ namespace iroha {
       log_->info("process proposal");
       // Get last block from local ledger
       block_queries_->getTopBlocks(1).as_blocking().subscribe(
-          [this](auto block) { last_block = block; });
+          [this](auto block) {
+            last_block =
+                *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
+          });
       if (not last_block.has_value()) {
         log_->warn("Could not fetch last block");
         return;
@@ -81,8 +84,7 @@ namespace iroha {
       new_block.prev_hash = last_block.value().hash;
       new_block.transactions = proposal.transactions;
       new_block.txs_number = proposal.transactions.size();
-      new_block.created_ts = 0;  // TODO 14/08/17 Muratov set timestamp from
-                                 // proposal & for new model IR-501
+      new_block.created_ts = proposal.created_time;
       new_block.hash = hash(new_block);
       crypto_provider_->sign(new_block);
 
