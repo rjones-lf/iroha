@@ -153,7 +153,7 @@ void validateAccount(W &&wsv,
  * @param block to apply
  */
 template <typename S>
-void apply(S &&storage, const shared_model::interface::Block &block) {
+void apply(S &&storage, const std::shared_ptr<shared_model::interface::Block> block) {
   std::unique_ptr<MutableStorage> ms;
   auto storageResult = storage->createMutableStorage();
   storageResult.match(
@@ -163,7 +163,7 @@ void apply(S &&storage, const shared_model::interface::Block &block) {
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(*std::unique_ptr<iroha::model::Block>(block.makeOldModel()),
+  ms->apply(block,
             [](const auto &, auto &, const auto &) { return true; });
   storage->commit(std::move(ms));
 }
@@ -188,7 +188,8 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
                    .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
                    .build();
 
-  apply(storage, block);
+  auto bl = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  apply(storage, bl);
 
   auto completed_wrapper =
       make_test_subscriber<IsCompleted>(blocks->getBlocks(1, 1));
@@ -238,7 +239,8 @@ TEST_F(AmetsuchiTest, SampleTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block1);
+  auto bl = std::make_shared<shared_model::proto::Block>(block1.getTransport());
+  apply(storage, bl);
 
   validateAccount(wsv, user1id, domain);
 
@@ -262,7 +264,8 @@ TEST_F(AmetsuchiTest, SampleTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block2);
+  bl = std::make_shared<shared_model::proto::Block>(block2.getTransport());
+  apply(storage, bl);
   validateAccountAsset(
       wsv, user1id, assetid, *iroha::Amount::createFromString("50.0"));
   validateAccountAsset(
@@ -312,7 +315,8 @@ TEST_F(AmetsuchiTest, PeerTest) {
           .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
           .build();
 
-  apply(storage, block);
+  auto bl = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  apply(storage, bl);
 
   auto peers = wsv->getPeers();
   ASSERT_TRUE(peers);
@@ -379,7 +383,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block1);
+  auto bl = std::make_shared<shared_model::proto::Block>(block1.getTransport());
+  apply(storage, bl);
 
   // Check querying accounts
   for (const auto &id : {user1id, user2id, user3id}) {
@@ -406,7 +411,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block2);
+  bl = std::make_shared<shared_model::proto::Block>(block2.getTransport());
+  apply(storage, bl);
 
   // Check account asset after transfer assets
   validateAccountAsset(
@@ -432,7 +438,8 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block3);
+  bl = std::make_shared<shared_model::proto::Block>(block3.getTransport());
+  apply(storage, bl);
 
   validateAccountAsset(
       wsv, user2id, asset2id, *iroha::Amount::createFromString("90.0"));
@@ -503,7 +510,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block1);
+  auto bl = std::make_shared<shared_model::proto::Block>(block1.getTransport());
+  apply(storage, bl);
 
   {
     auto account = wsv->getAccount(user1id);
@@ -532,7 +540,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block2);
+  bl = std::make_shared<shared_model::proto::Block>(block2.getTransport());
+  apply(storage, bl);
 
   {
     auto account = wsv->getAccount(user1id);
@@ -561,7 +570,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block3);
+  bl = std::make_shared<shared_model::proto::Block>(block3.getTransport());
+  apply(storage, bl);
 
   {
     auto account1 = wsv->getAccount(user1id);
@@ -599,7 +609,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block4);
+  bl = std::make_shared<shared_model::proto::Block>(block4.getTransport());
+  apply(storage, bl);
 
   {
     auto account = wsv->getAccount(user1id);
@@ -635,7 +646,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block5);
+  bl = std::make_shared<shared_model::proto::Block>(block5.getTransport());
+  apply(storage, bl);
 
   {
     auto account = wsv->getAccount(user2id);
@@ -667,7 +679,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
           .txNumber(1)
           .build();
 
-  apply(storage, block6);
+  bl = std::make_shared<shared_model::proto::Block>(block6.getTransport());
+  apply(storage, bl);
 
   {
     // user2 only has pubkey1.
@@ -834,7 +847,8 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
                    .txNumber(2)
                    .build();
 
-  apply(storage, block);
+  auto bl = std::make_shared<shared_model::proto::Block>(block.getTransport());
+  apply(storage, bl);
 
   // TODO: 31.10.2017 luckychess move tx3hash case into a separate test after
   // ametsuchi_test redesign
