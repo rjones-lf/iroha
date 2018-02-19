@@ -179,8 +179,9 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    void StorageImpl::recoverWSV() {
+    bool StorageImpl::recoverWSV() {
       log_->info("[Recover WSV] => start");
+      bool result = true;
 
       // get all blocks starting from the genesis
       std::vector<model::Block> blocks;
@@ -206,9 +207,11 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
           },
           [&](iroha::expected::Error<std::string> &error) {
             log_->info("[Init] => query service" + error.error);
+            result = false;
           });
 
       log_->info("[Recover WSV] => completed");
+      return result;
     }
 
     expected::Result<ConnectionContext, std::string> StorageImpl::initConnections(

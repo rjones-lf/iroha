@@ -65,8 +65,9 @@ namespace iroha {
       /**
        * Recover WSV (World State View).
        * Drop storage and apply blocks one by one.
+       * @return true on success, otherwise false
        */
-      virtual void recoverWSV() override;
+      virtual bool recoverWSV() override;
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
