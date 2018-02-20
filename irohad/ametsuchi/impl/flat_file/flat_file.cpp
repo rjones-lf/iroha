@@ -30,7 +30,7 @@ namespace iroha {
     /** implementation **/
 
     bool FlatFile::init_directory(const std::string &path) {
-      auto log_ = logger::log("BlockStorageNuDB::init_directory()");
+      auto log_ = logger::log("init_directory()");
 
       // first, check if directory exists. if not -- create.
       sys::error_code err;
@@ -53,7 +53,7 @@ namespace iroha {
 
     boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
         const std::string &path) {
-      auto log_ = logger::log("BlockStorageNuDB");
+      auto log_ = logger::log("FlatFile");
 
       if (!FlatFile::init_directory(path)) {
         return boost::none;
@@ -132,7 +132,7 @@ namespace iroha {
       auto key = serialize_uint32(id);
       db_->insert(key.data(), blob.data(), blob.size(), ec);
       if (ec) {
-        log_->error("BlockStorage::add(): {}", ec.message());
+        log_->error("add(): {}", ec.message());
         return false;
       }
       current_id_.store(id);
@@ -154,7 +154,7 @@ namespace iroha {
                  },
                  ec);
       if (ec) {
-        log_->error("BlockStorage::get(): {}", ec.message());
+        log_->error("get(): {}", ec.message());
         return boost::none;
       }
 
@@ -172,7 +172,7 @@ namespace iroha {
     }
 
     uint32_t FlatFile::count_blocks(nudb::store &db, nudb::error_code &ec) {
-      auto log_ = logger::log("BlockStorageNuDB::count_blocks");
+      auto log_ = logger::log("FlatFile::count_blocks");
 
       FlatFile::Identifier current = FIRST_BLOCK_AT;
 

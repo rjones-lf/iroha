@@ -107,7 +107,7 @@ namespace iroha {
       /**
        * Last written key
        */
-      std::atomic<Identifier> current_id_;
+      std::atomic<Identifier> current_id_{FIRST_BLOCK_AT};
 
       std::string path_;
 
