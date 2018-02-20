@@ -91,6 +91,15 @@ class BlockQueryTest : public AmetsuchiTest {
     }
   }
 
+  void TearDown() override {
+    transaction->abort();
+
+    postgres_connection->deactivate();
+    postgres_connection->disconnect();
+
+    AmetsuchiTest::TearDown();
+  }
+
   std::unique_ptr<pqxx::nontransaction> transaction;
   std::unique_ptr<pqxx::lazyconnection> postgres_connection;
   std::vector<iroha::hash256_t> tx_hashes;
@@ -292,7 +301,7 @@ TEST_F(BlockQueryTest, GetBlocksFrom1) {
   wrapper.subscribe([&counter](Block b) {
     // wrapper returns blocks 1 and 2
     ASSERT_EQ(b.height, counter++)
-        << "block height: " << b.height << "counter: " << counter;
+                  << "block height: " << b.height << "counter: " << counter;
   });
   ASSERT_TRUE(wrapper.validate());
 }
