@@ -96,56 +96,81 @@ namespace iroha {
     using shared_model::builder::DefaultDomainBuilder;
     using shared_model::builder::DefaultPeerBuilder;
 
+    /**
+     * Execute build function and return error in case it throws
+     * @tparam T - result value type
+     * @param f - function which returns BuilderResult
+     * @return whatever f returns, or error in case exception has been thrown
+     */
+    template <typename BuildFunc>
+    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
+      try {
+        return f();
+      } catch (std::exception &e) {
+        return expected::makeError(std::make_shared<std::string>(e.what()));
+      }
+    };
+
     static inline BuilderResult<shared_model::interface::Account> makeAccount(
         const pqxx::row &row) noexcept {
-      return DefaultAccountBuilder()
-          .accountId(row.at("account_id").template as<std::string>())
-          .domainId(row.at("domain_id").template as<std::string>())
-          .quorum(
-              row.at("quorum")
-                  .template as<shared_model::interface::types::QuorumType>())
-          .jsonData(row.at("data").template as<std::string>())
-          .build();
+      return tryBuild([&row] {
+        return DefaultAccountBuilder()
+            .accountId(row.at("account_id").template as<std::string>())
+            .domainId(row.at("domain_id").template as<std::string>())
+            .quorum(
+                row.at("quorum")
+                    .template as<shared_model::interface::types::QuorumType>())
+            .jsonData(row.at("data").template as<std::string>())
+            .build();
+      });
     }
 
     static inline BuilderResult<shared_model::interface::Asset> makeAsset(
-        const pqxx::row &row) {
-      return DefaultAssetBuilder()
-          .assetId(row.at("asset_id").template as<std::string>())
-          .domainId(row.at("domain_id").template as<std::string>())
-          .precision(row.at("precision").template as<int32_t>())
-          .build();
+        const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        return DefaultAssetBuilder()
+            .assetId(row.at("asset_id").template as<std::string>())
+            .domainId(row.at("domain_id").template as<std::string>())
+            .precision(row.at("precision").template as<int32_t>())
+            .build();
+      });
     }
 
     static inline BuilderResult<shared_model::interface::AccountAsset>
-    makeAccountAsset(const pqxx::row &row) {
-      auto balance = DefaultAmountBuilder::fromString(
-          row.at("amount").template as<std::string>());
-      return balance | [&](const auto &balance_ptr) {
-        return DefaultAccountAssetBuilder()
-            .accountId(row.at("account_id").template as<std::string>())
-            .assetId(row.at("asset_id").template as<std::string>())
-            .balance(*balance_ptr)
-            .build();
-      };
+    makeAccountAsset(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        auto balance = DefaultAmountBuilder::fromString(
+            row.at("amount").template as<std::string>());
+        return balance | [&](const auto &balance_ptr) {
+          return DefaultAccountAssetBuilder()
+              .accountId(row.at("account_id").template as<std::string>())
+              .assetId(row.at("asset_id").template as<std::string>())
+              .balance(*balance_ptr)
+              .build();
+        };
+      });
     }
 
     static inline BuilderResult<shared_model::interface::Peer> makePeer(
-        const pqxx::row &row) {
-      pqxx::binarystring public_key_str(row.at("public_key"));
-      shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
-      return DefaultPeerBuilder()
-          .pubkey(pubkey)
-          .address(row.at("address").template as<std::string>())
-          .build();
+        const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        pqxx::binarystring public_key_str(row.at("public_key"));
+        shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
+        return DefaultPeerBuilder()
+            .pubkey(pubkey)
+            .address(row.at("address").template as<std::string>())
+            .build();
+      });
     }
 
     static inline BuilderResult<shared_model::interface::Domain> makeDomain(
-        const pqxx::row &row) {
-      return DefaultDomainBuilder()
-          .domainId(row.at("domain_id").template as<std::string>())
-          .defaultRole(row.at("default_role").template as<std::string>())
-          .build();
+        const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        return DefaultDomainBuilder()
+            .domainId(row.at("domain_id").template as<std::string>())
+            .defaultRole(row.at("default_role").template as<std::string>())
+            .build();
+      });
     }
 
     /**
