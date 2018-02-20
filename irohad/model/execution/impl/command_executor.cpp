@@ -18,10 +18,10 @@
 #include "model/execution/command_executor.hpp"
 #include <algorithm>
 #include "model/account.hpp"
-#include "model/asset.hpp"
-#include "model/domain.hpp"
 #include "model/account_asset.hpp"
+#include "model/asset.hpp"
 #include "model/commands/all.hpp"
+#include "model/domain.hpp"
 #include "model/execution/common_executor.hpp"
 #include "model/permissions.hpp"
 #include "validator/domain_name_validator.hpp"
@@ -286,13 +286,15 @@ namespace iroha {
                                     % add_asset_quantity.account_id)
                                        .str());
       }
-      auto account_asset_shared = queries.getAccountAsset(
-          add_asset_quantity.account_id, add_asset_quantity.asset_id);
-      auto account_asset = account_asset_shared | []
-          (auto &a) {
-        return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()
-        ));
-      };
+
+      auto account_asset =
+          queries.getAccountAsset(add_asset_quantity.account_id,
+                                  add_asset_quantity.asset_id)
+          | [](auto &a) {
+              return nonstd::make_optional(
+                  *std::unique_ptr<iroha::model::AccountAsset>(
+                      a->makeOldModel()));
+            };
       if (not account_asset.has_value()) {
         account_asset = AccountAsset();
         account_asset->asset_id = add_asset_quantity.asset_id;
@@ -361,10 +363,10 @@ namespace iroha {
              % precision % subtract_asset_quantity.amount.getPrecision())
                 .str());
       }
-      auto account_asset_shared = queries.getAccountAsset(
-          subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id);
-      auto account_asset = account_asset_shared | [&](auto &a) {
-        return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
+      auto account_asset = queries.getAccountAsset(
+          subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id) | [&](auto &a) {
+        return nonstd::make_optional(
+            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
       };
       if (not account_asset.has_value()) {
         return makeExecutionResult((boost::format("account %s does not have %s")
@@ -735,9 +737,9 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto set_quorum = static_cast<const SetQuorum &>(command);
 
-      auto shared_account = queries.getAccount(set_quorum.account_id);
-      auto account = shared_account | [](auto &a) {
-        return nonstd::make_optional(*std::unique_ptr<iroha::model::Account>(a->makeOldModel()));
+      auto account = queries.getAccount(set_quorum.account_id) | [](auto &a) {
+        return nonstd::make_optional(
+            *std::unique_ptr<iroha::model::Account>(a->makeOldModel()));
       };
       if (not account.has_value()) {
         return makeExecutionResult(
@@ -790,10 +792,10 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto transfer_asset = static_cast<const TransferAsset &>(command);
 
-      auto src_account_asset_shared = queries.getAccountAsset(
-          transfer_asset.src_account_id, transfer_asset.asset_id);
-      auto src_account_asset = src_account_asset_shared | [](auto &a) {
-        return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
+      auto src_account_asset = queries.getAccountAsset(
+          transfer_asset.src_account_id, transfer_asset.asset_id) | [](auto &a) {
+        return nonstd::make_optional(
+            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
       };
       if (not src_account_asset.has_value()) {
         return makeExecutionResult((boost::format("asset %s is absent of %s")
@@ -803,10 +805,10 @@ namespace iroha {
       }
 
       AccountAsset dest_AccountAsset;
-      auto dest_account_asset_shared = queries.getAccountAsset(
-          transfer_asset.dest_account_id, transfer_asset.asset_id);
-      auto dest_account_asset = dest_account_asset_shared | [](auto &a) {
-        return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
+      auto dest_account_asset = queries.getAccountAsset(
+          transfer_asset.dest_account_id, transfer_asset.asset_id) | [](auto &a) {
+        return nonstd::make_optional(
+            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
       };
       auto asset = queries.getAsset(transfer_asset.asset_id);
       if (not asset.has_value()) {
@@ -914,7 +916,10 @@ namespace iroha {
           // Check if dest account exist
           and queries.getAccount(transfer_asset.dest_account_id) and
           // Balance in your wallet should be at least amount of transfer
-          std::unique_ptr<iroha::model::AccountAsset>(account_asset.value()->makeOldModel())->balance >= transfer_asset.amount;
+          std::unique_ptr<iroha::model::AccountAsset>(
+              account_asset.value()->makeOldModel())
+              ->balance
+          >= transfer_asset.amount;
     }
 
   }  // namespace model

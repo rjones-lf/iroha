@@ -91,17 +91,7 @@ namespace iroha {
           return nonstd::nullopt;
         }
 
-        return makeAccount(result.at(0))
-            .match(
-                [](expected::Value<
-                    std::shared_ptr<shared_model::interface::Account>> &v) {
-                  return nonstd::make_optional(v.value);
-                },
-                [](expected::Error<std::shared_ptr<std::string>> &e)
-                    -> nonstd::optional<
-                        std::shared_ptr<shared_model::interface::Account>> {
-                  return nonstd::nullopt;
-                });
+        return fromResult(makeAccount(result.at(0)));
       };
     }
 
@@ -157,17 +147,7 @@ namespace iroha {
           log_->info("Asset {} not found", asset_id);
           return nonstd::nullopt;
         }
-        return makeAsset(result.at(0))
-            .match(
-                [](expected::Value<
-                    std::shared_ptr<shared_model::interface::Asset>> &v) {
-                  return nonstd::make_optional(v.value);
-                },
-                [](expected::Error<std::shared_ptr<std::string>> &e)
-                    -> nonstd::optional<
-                        std::shared_ptr<shared_model::interface::Asset>> {
-                  return nonstd::nullopt;
-                });
+        return fromResult(makeAsset(result.at(0)));
       };
     }
 
@@ -185,15 +165,7 @@ namespace iroha {
           return nonstd::nullopt;
         }
 
-        return makeAccountAsset(result.at(0))
-            .match([](expected::Value<
-                       std::shared_ptr<shared_model::interface::AccountAsset>>
-                          &v) { return nonstd::make_optional(v.value); },
-                   [&](expected::Error<std::shared_ptr<std::string>> &e)
-                       -> nonstd::optional<std::shared_ptr<
-                           shared_model::interface::AccountAsset>> {
-                     return nonstd::nullopt;
-                   });
+        return fromResult(makeAccountAsset(result.at(0)));
       };
     }
 
@@ -208,18 +180,7 @@ namespace iroha {
           log_->info("Domain {} not found", domain_id);
           return nonstd::nullopt;
         }
-        return makeDomain(result.at(0))
-            .match(
-                [](expected::Value<
-                    std::shared_ptr<shared_model::interface::Domain>> &v) {
-                  return nonstd::make_optional(v.value);
-                },
-                [&](expected::Error<std::shared_ptr<std::string>> &e)
-                    -> nonstd::optional<
-                        std::shared_ptr<shared_model::interface::Domain>> {
-                  return nonstd::nullopt;
-                });
-        ;
+        return fromResult(makeDomain(result.at(0)));
       };
     }
 
@@ -231,7 +192,7 @@ namespace iroha {
                  -> nonstd::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
         auto results = transform<BuilderResult<shared_model::interface::Peer>>(
-            result, [](const auto &row) { return makePeer(row); });
+            result, makePeer);
         std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
         for (auto &r : results) {
           r.match(

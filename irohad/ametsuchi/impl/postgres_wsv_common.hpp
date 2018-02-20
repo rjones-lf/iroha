@@ -147,6 +147,27 @@ namespace iroha {
           .defaultRole(row.at("default_role").template as<std::string>())
           .build();
     }
+
+    /**
+     * Transforms result to optional
+     * value -> optional<value>
+     * error -> nullopt
+     * @tparam T type of object inside
+     * @param result BuilderResult
+     * @return optional<T>
+     */
+    template <typename T>
+    static inline nonstd::optional<std::shared_ptr<T>> fromResult(
+        const BuilderResult<T> &result) {
+      return result.match(
+          [](const expected::Value<std::shared_ptr<T>> &v) {
+            return nonstd::make_optional(v.value);
+          },
+          [](const expected::Error<std::shared_ptr<std::string>> &e)
+              -> nonstd::optional<std::shared_ptr<T>> {
+            return nonstd::nullopt;
+          });
+    }
   }  // namespace ametsuchi
 }  // namespace iroha
 #endif  // IROHA_POSTGRES_WSV_COMMON_HPP
