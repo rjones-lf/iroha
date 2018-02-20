@@ -329,7 +329,10 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetSignatories(
   }
   SignatoriesResponse response;
   response.query_hash = iroha::hash(query);
-  response.keys = signs.value();
+  std::for_each(signs.value().begin(), signs.value().end(), [&response](const auto &key) {
+    response.keys.emplace_back(
+        key.template makeOldModel<iroha::pubkey_t>());
+  });
   return std::make_shared<SignatoriesResponse>(response);
 }
 

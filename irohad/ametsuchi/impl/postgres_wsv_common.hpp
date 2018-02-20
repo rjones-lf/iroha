@@ -105,13 +105,6 @@ namespace iroha {
     }
 
     using shared_model::builder::BuilderResult;
-    using shared_model::interface::Account;
-    using shared_model::interface::AccountAsset;
-    using shared_model::interface::Amount;
-    using shared_model::interface::Asset;
-    using shared_model::interface::Domain;
-    using shared_model::interface::Peer;
-    using shared_model::interface::Signature;
 
     using AccountBuilder = shared_model::builder::AccountBuilder<
         shared_model::proto::AccountBuilder,
@@ -136,7 +129,7 @@ namespace iroha {
         shared_model::proto::DomainBuilder,
         shared_model::validation::FieldValidator>;
 
-    static inline BuilderResult<Account> makeAccount(
+    static inline BuilderResult<shared_model::interface::Account> makeAccount(
         const pqxx::row &row) noexcept {
       return AccountBuilder()
           .accountId(row.at("account_id").template as<std::string>())
@@ -148,7 +141,8 @@ namespace iroha {
           .build();
     }
 
-    static inline BuilderResult<Asset> makeAsset(const pqxx::row &row) {
+    static inline BuilderResult<shared_model::interface::Asset> makeAsset(
+        const pqxx::row &row) {
       AssetBuilder builder;
       return AssetBuilder()
           .assetId(row.at("asset_id").template as<std::string>())
@@ -157,8 +151,8 @@ namespace iroha {
           .build();
     }
 
-    static inline BuilderResult<AccountAsset> makeAccountAsset(
-        const pqxx::row &row) {
+    static inline BuilderResult<shared_model::interface::AccountAsset>
+    makeAccountAsset(const pqxx::row &row) {
       auto balance = AmountBuilder::fromString(
           row.at("amount").template as<std::string>());
       return balance | [&](const auto &balance_ptr) {
@@ -170,7 +164,8 @@ namespace iroha {
       };
     }
 
-    static inline BuilderResult<Peer> makePeer(const pqxx::row &row) {
+    static inline BuilderResult<shared_model::interface::Peer> makePeer(
+        const pqxx::row &row) {
       pqxx::binarystring public_key_str(row.at("public_key"));
       shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
       return PeerBuilder()
@@ -179,7 +174,8 @@ namespace iroha {
           .build();
     }
 
-    static inline BuilderResult<Domain> makeDomain(const pqxx::row &row) {
+    static inline BuilderResult<shared_model::interface::Domain> makeDomain(
+        const pqxx::row &row) {
       return DomainBuilder()
           .domainId(row.at("domain_id").template as<std::string>())
           .defaultRole(row.at("default_role").template as<std::string>())

@@ -37,14 +37,18 @@
 #include "interfaces/transaction_responses/tx_response.hpp"
 
 
-
 namespace iroha {
-
-  namespace model {
-    struct Domain;
-  }
-
   namespace ametsuchi {
+
+    using shared_model::interface::types::AccountIdType;
+    using shared_model::interface::types::PermissionNameType;
+    using shared_model::interface::types::DomainIdType;
+    using shared_model::interface::types::AssetIdType;
+    using shared_model::interface::types::JsonType;
+    using shared_model::interface::types::RoleIdType;
+    using shared_model::interface::types::DetailType;
+    using shared_model::interface::types::PubkeyType;
+
 
     /**
      *  Public interface for world state view queries
@@ -61,9 +65,9 @@ namespace iroha {
        * @return true if has permission, false otherwise
        */
       virtual bool hasAccountGrantablePermission(
-          const std::string &permitee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const AccountIdType &permitee_account_id,
+          const AccountIdType &account_id,
+          const PermissionNameType &permission_id) = 0;
 
       /**
        * Get iroha domain
@@ -71,28 +75,27 @@ namespace iroha {
        * @return Domain if exist, nullopt otherwise
        */
       virtual nonstd::optional<std::shared_ptr<shared_model::interface::Domain>> getDomain(
-          const std::string &domain_id) = 0;
+          const DomainIdType &domain_id) = 0;
 
       /**
        * Get account's roles
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<std::vector<std::string>> getAccountRoles(
-          const std::string &account_id) = 0;
-
+      virtual nonstd::optional<std::vector<RoleIdType>> getAccountRoles(
+          const AccountIdType &account_id) = 0;
       /**
        * Get all permissions of a role
        * @param role_name
        * @return
        */
-      virtual nonstd::optional<std::vector<std::string>> getRolePermissions(
-          const std::string &role_name) = 0;
+      virtual nonstd::optional<std::vector<PermissionNameType>> getRolePermissions(
+          const RoleIdType &role_name) = 0;
 
       /**
        * @return All roles currently in the system
        */
-      virtual nonstd::optional<std::vector<std::string>> getRoles() = 0;
+      virtual nonstd::optional<std::vector<RoleIdType>> getRoles() = 0;
 
       /**
        * Get account by user account_id
@@ -100,7 +103,7 @@ namespace iroha {
        * @return
        */
       virtual nonstd::optional<std::shared_ptr<shared_model::interface::Account>> getAccount(
-          const std::string &account_id) = 0;
+          const AccountIdType &account_id) = 0;
 
       /**
        * Get accounts information from its key-value storage
@@ -109,18 +112,18 @@ namespace iroha {
        * @param detail
        * @return
        */
-      virtual nonstd::optional<std::string> getAccountDetail(
-          const std::string &account_id,
-          const std::string &creator_account_id,
-          const std::string &detail) = 0;
+      virtual nonstd::optional<DetailType> getAccountDetail(
+          const AccountIdType &account_id,
+          const AccountIdType &creator_account_id,
+          const DetailType &detail) = 0;
 
       /**
        * Get signatories of account by user account_id
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<std::vector<pubkey_t>> getSignatories(
-          const std::string &account_id) = 0;
+      virtual nonstd::optional<std::vector<PubkeyType>> getSignatories(
+          const AccountIdType &account_id) = 0;
 
       /**
        * Get asset by its name
@@ -128,7 +131,7 @@ namespace iroha {
        * @return
        */
       virtual nonstd::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
-          const std::string &asset_id) = 0;
+          const AssetIdType &asset_id) = 0;
 
       /**
        *
@@ -137,7 +140,7 @@ namespace iroha {
        * @return
        */
       virtual nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) = 0;
+          const AccountIdType &account_id, const AssetIdType &asset_id) = 0;
 
       /**
        *

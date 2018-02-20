@@ -58,7 +58,7 @@ namespace iroha {
           getAccount,
           nonstd::optional<std::shared_ptr<shared_model::interface::Account>>(const std::string &account_id));
       MOCK_METHOD1(getSignatories,
-                   nonstd::optional<std::vector<pubkey_t>>(
+                   nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>(
                        const std::string &account_id));
       MOCK_METHOD1(getAsset,
                    nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>(const std::string &asset_id));

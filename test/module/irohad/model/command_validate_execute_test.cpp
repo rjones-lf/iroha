@@ -809,8 +809,11 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
     creator_key.fill(0x1);
     account_key.fill(0x2);
 
-    account_pubkeys = {account_key};
-    many_pubkeys = {creator_key, account_key};
+    account_pubkeys = {
+        shared_model::interface::types::PubkeyType(account_key.to_string())};
+    many_pubkeys = {
+        shared_model::interface::types::PubkeyType(creator_key.to_string()),
+        shared_model::interface::types::PubkeyType(account_key.to_string())};
 
     remove_signatory = std::make_shared<RemoveSignatory>();
     remove_signatory->account_id = account_id;
@@ -820,8 +823,8 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
     role_permissions = {can_remove_signatory};
   }
 
-  std::vector<pubkey_t> account_pubkeys;
-  std::vector<pubkey_t> many_pubkeys;
+  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
+  std::vector<shared_model::interface::types::PubkeyType> many_pubkeys;
   std::shared_ptr<RemoveSignatory> remove_signatory;
 };
 
@@ -1008,7 +1011,9 @@ class SetQuorumTest : public CommandValidateExecuteTest {
     pubkey_t creator_key, account_key;
     creator_key.fill(0x1);
     account_key.fill(0x2);
-    account_pubkeys = {creator_key, account_key};
+    account_pubkeys = {
+        shared_model::interface::types::PubkeyType(creator_key.to_string()),
+        shared_model::interface::types::PubkeyType(account_key.to_string())};
     set_quorum = std::make_shared<SetQuorum>();
     set_quorum->account_id = account_id;
     set_quorum->new_quorum = 2;
@@ -1017,7 +1022,7 @@ class SetQuorumTest : public CommandValidateExecuteTest {
     role_permissions = {can_set_quorum};
   }
 
-  std::vector<pubkey_t> account_pubkeys;
+  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
   std::shared_ptr<SetQuorum> set_quorum;
 };
 
@@ -1126,7 +1131,8 @@ TEST_F(SetQuorumTest, InvalidWhenNotEnoughSignatories) {
   EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id)).Times(0);
   pubkey_t key;
   key.fill(0x1);
-  std::vector<pubkey_t> acc_pubkeys = {key};
+  std::vector<shared_model::interface::types::PubkeyType> acc_pubkeys = {
+      shared_model::interface::types::PubkeyType(key.to_string())};
   EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
       .WillOnce(Return(acc_pubkeys));
   EXPECT_CALL(*wsv_command, updateAccount(_)).Times(0);

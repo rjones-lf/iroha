@@ -537,11 +537,11 @@ class GetSignatoriesTest : public QueryValidateExecuteTest {
     get_signatories->account_id = admin_id;
     get_signatories->creator_account_id = admin_id;
     query = get_signatories;
-    signs = {iroha::pubkey_t()};
+    signs = {shared_model::interface::types::PubkeyType(std::string(32, '0'))};
     role_permissions = {can_get_my_signatories};
   }
   std::shared_ptr<GetSignatories> get_signatories;
-  std::vector<iroha::pubkey_t> signs;
+  std::vector<shared_model::interface::types::PubkeyType> signs;
 };
 
 /**

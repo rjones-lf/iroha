@@ -457,6 +457,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
+  shared_model::interface::types::PubkeyType pubkey1(std::string(32, '1')), pubkey2(std::string(32, '2'));
   shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
   shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
 
@@ -466,7 +467,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   // 1st tx (create user1 with pubkey1)
   auto txn1 =
       TestTransactionBuilder()
-          .creatorAccountId("admin1")
+          .creatorAccountId("adminone")
           .createRole("user",
                       std::set<std::string>{
                           can_add_peer, can_create_asset, can_get_my_account})

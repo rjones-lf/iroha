@@ -391,8 +391,9 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
 TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
   iroha::pubkey_t pubkey;
   std::fill(pubkey.begin(), pubkey.end(), 0x1);
-  std::vector<iroha::pubkey_t> keys;
-  keys.push_back(pubkey);
+  std::vector<shared_model::interface::types::PubkeyType> keys;
+  keys.push_back(
+      shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";
@@ -431,8 +432,9 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   // TODO: refactor this to use stateful validation mocks
   iroha::pubkey_t pubkey;
   std::fill(pubkey.begin(), pubkey.end(), 0x1);
-  std::vector<iroha::pubkey_t> keys;
-  keys.push_back(pubkey);
+  std::vector<shared_model::interface::types::PubkeyType> keys;
+  keys.push_back(
+      shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles("a@domain")).WillOnce(Return(roles));
