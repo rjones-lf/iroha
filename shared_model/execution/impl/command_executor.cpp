@@ -104,6 +104,32 @@ namespace shared_model {
                    .build();
     return boost::optional<shared_model::proto::Amount>(res);
   }
+  // to raise to power integer values
+  int ipow(int base, int exp) {
+    int result = 1;
+    while (exp != 0) {
+      if (exp & 1) {
+        result *= base;
+      }
+      exp >>= 1;
+      base *= base;
+    }
+
+    return result;
+  }
+  int compareAmount(const shared_model::interface::Amount &a,
+                    const shared_model::interface::Amount &b) {
+    if (a.precision() == b.precision()) {
+      return (a.intValue() < b.intValue())
+          ? -1
+          : (a.intValue() > b.intValue()) ? 1 : 0;
+    }
+    // when different precisions transform to have the same scale
+    auto max_precision = std::max(a.precision(), b.precision());
+    auto val1 = a.intValue() * ipow(10, max_precision - a.precision());
+    auto val2 = b.intValue() * ipow(10, max_precision - b.precision());
+    return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
+  }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::AddAssetQuantity> &command) {
@@ -201,13 +227,14 @@ namespace shared_model {
             .quorum(1)
             .jsonData("{}")
             .build();
-    auto domain = queries->getDomain(command->domainId());  // Old model
-    if (not domain.has_value()) {
+    auto domain_old = queries->getDomain(command->domainId());  // Old model
+    if (not domain_old.has_value()) {
       return makeExecutionError(
           (boost::format("Domain %s not found") % command->domainId()).str(),
           command_name);
     }
-    std::string domain_default_role = domain.value().default_role;
+    auto domain = shared_model::proto::from_old(domain_old.value());
+    std::string domain_default_role = domain.defaultRole();
     // TODO: remove insert signatory from here ?
     if (not commands->insertSignatory(command->pubkey())) {
       return makeExecutionError("failed to insert signatory", command_name);
@@ -440,13 +467,12 @@ namespace shared_model {
 
     if (not dest_account_asset_old.has_value()) {
       // This assert is new for this account - create new AccountAsset
-      dest_AccountAsset = iroha::model::AccountAsset();
-      dest_AccountAsset.asset_id = command->assetId();
-      dest_AccountAsset.account_id = command->destAccountId();
-      // Set new balance for dest account
-      dest_AccountAsset.balance =
-          *std::shared_ptr<iroha::Amount>(command->amount().makeOldModel());
-      auto dest_account_asset_new = shared_model::proto::from_old(dest_AccountAsset);
+
+      auto dest_account_asset_new =
+          account_asset_builder.assetId(command->assetId())
+              .accountId(command->destAccountId())
+              .balance(command->amount())
+              .build();
 
       if (not commands->upsertAccountAsset(dest_account_asset_new)) {
         return makeExecutionError("failed to upsert destination balance",
@@ -476,15 +502,6 @@ namespace shared_model {
                         "failed to upsert source account",
                         command_name);
     }
-
-    //    if (not commands->upsertAccountAsset(
-    //            shared_model::proto::from_old(dest_AccountAsset))) {
-    //      return makeExecutionError("failed to upsert destination balance",
-    //                                command_name);
-    //    }
-    //    return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
-    //                      "failed to upsert source account",
-    //                      command_name);
   }
 
   // ----------------------| Validator |----------------------
@@ -792,7 +809,7 @@ namespace shared_model {
       // No account or signatories found
       return false;
     }
-      auto account = shared_model::proto::from_old(account_old.value());
+    auto account = shared_model::proto::from_old(account_old.value());
 
     auto newSignatoriesSize = signatories.value().size() - 1;
 
@@ -851,14 +868,17 @@ namespace shared_model {
     if (command.amount().precision() != asset.precision()) {
       return false;
     }
-    auto account_asset = queries.getAccountAsset(
+    auto account_asset_old = queries.getAccountAsset(
         command.srcAccountId(), command.assetId());  // Old model
+    if (not account_asset_old.has_value()) {
+      return false;
+    }
+    auto account_asset =
+        shared_model::proto::from_old(account_asset_old.value());
 
-    return account_asset.has_value()
-        // Check if dest account exist
-        and queries.getAccount(command.destAccountId()) and
+    // Check if dest account exist
+    return queries.getAccount(command.destAccountId()) and
         // Balance in your wallet should be at least amount of transfer
-        account_asset.value().balance
-        >= *std::shared_ptr<iroha::Amount>(command.amount().makeOldModel());
+        compareAmount(account_asset.balance(), command.amount()) >= 0;
   }
 }  // namespace shared_model

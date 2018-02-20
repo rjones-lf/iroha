@@ -23,8 +23,8 @@
 #include <unordered_map>
 
 #include "ametsuchi/mutable_storage.hpp"
-#include "logger/logger.hpp"
 #include "execution/command_executor.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
 
@@ -41,12 +41,9 @@ namespace iroha {
       friend class StorageImpl;
 
      public:
-      MutableStorageImpl(
-          hash256_t top_hash,
-          std::unique_ptr<pqxx::lazyconnection> connection,
-          std::unique_ptr<pqxx::nontransaction> transaction,
-          std::shared_ptr<model::CommandExecutorFactory> command_executors
-      );
+      MutableStorageImpl(hash256_t top_hash,
+                         std::unique_ptr<pqxx::lazyconnection> connection,
+                         std::unique_ptr<pqxx::nontransaction> transaction);
 
       bool apply(const model::Block &block,
                  std::function<bool(const model::Block &,

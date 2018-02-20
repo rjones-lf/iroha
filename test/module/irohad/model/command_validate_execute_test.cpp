@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <execution/command_executor.hpp>
 #include <limits>
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -35,8 +36,9 @@
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
-#include "model/execution/command_executor_factory.hpp"
 #include "model/permissions.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"
 
 using ::testing::_;
 using ::testing::AllOf;
@@ -51,10 +53,13 @@ using namespace iroha::model;
 class CommandValidateExecuteTest : public ::testing::Test {
  public:
   void SetUp() override {
-    factory = CommandExecutorFactory::create().value();
-
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
+
+    executor = std::make_shared<shared_model::CommandExecutor>(
+        shared_model::CommandExecutor(wsv_query, wsv_command));
+    validator = std::make_shared<shared_model::CommandValidator>(
+        shared_model::CommandValidator(wsv_query));
 
     creator.account_id = admin_id;
     creator.domain_id = domain_id;
@@ -68,30 +73,35 @@ class CommandValidateExecuteTest : public ::testing::Test {
     default_domain.default_role = admin_role;
   }
 
-  ExecutionResult validateAndExecute() {
-    auto executor = factory->getCommandExecutor(command);
-    if (executor->validate(*command, *wsv_query, creator.account_id)) {
-      return executor->execute(
-          *command, *wsv_query, *wsv_command, creator.account_id);
+  shared_model::ExecutionResult validateAndExecute() {
+    shared_model::proto::Command new_command =
+        shared_model::proto::from_old(*command);
+    validator->setCreatorAccountId(creator.account_id);
+    executor->setCreatorAccountId(creator.account_id);
+
+    if (boost::apply_visitor(*validator, new_command.get())) {
+      return boost::apply_visitor(*executor, new_command.get());
     }
-    return expected::makeError(
-        ExecutionError{"Validate", "validation of a command failed"});
+    return expected::makeError(shared_model::ExecutionError{
+        "Validate", "validation of a command failed"});
   }
 
-  ExecutionResult execute() {
-    auto executor = factory->getCommandExecutor(command);
-    return executor->execute(
-        *command, *wsv_query, *wsv_command, creator.account_id);
+  shared_model::ExecutionResult execute() {
+    shared_model::proto::Command new_command =
+        shared_model::proto::from_old(*command);
+    executor->setCreatorAccountId(creator.account_id);
+    return boost::apply_visitor(*executor, new_command.get());
   }
 
   /// Throws exception if result does not contain value
-  void checkValueCase(const ExecutionResult &result) {
-    boost::get<ExecutionResult::ValueType>(result);
+  void checkValueCase(const shared_model::ExecutionResult &result) {
+    boost::get<shared_model::ExecutionResult::ValueType>(result);
   }
 
   /// Returns error from result or throws error in case result contains value
-  ExecutionResult::ErrorType checkErrorCase(const ExecutionResult &result) {
-    return boost::get<ExecutionResult::ErrorType>(result);
+  shared_model::ExecutionResult::ErrorType checkErrorCase(
+      const shared_model::ExecutionResult &result) {
+    return boost::get<shared_model::ExecutionResult::ErrorType>(result);
   }
 
   Amount max_amount{
@@ -113,7 +123,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<Command> command;
 
-  std::shared_ptr<CommandExecutorFactory> factory;
+  std::shared_ptr<shared_model::CommandExecutor> executor;
+  std::shared_ptr<shared_model::CommandValidator> validator;
 };
 
 class AddAssetQuantityTest : public CommandValidateExecuteTest {
@@ -1736,12 +1747,16 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-    const auto perm = "can_teach";
+    const auto perm = "can_add_signatory";
     exact_command = std::make_shared<GrantPermission>("yoda", perm);
     command = exact_command;
-    role_permissions = {can_grant + perm};
+    // It is different from 'perm' due to realisation of old/new model. See
+    // GrantablePermissions in primitive.proto
+    new_model_permission = "can_add_my_signatory";
+    role_permissions = {can_grant + new_model_permission};
   }
   std::shared_ptr<GrantPermission> exact_command;
+  std::string new_model_permission;
 };
 
 TEST_F(GrantPermissionTest, ValidCase) {
@@ -1749,10 +1764,10 @@ TEST_F(GrantPermissionTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(exact_command->account_id,
-                                               creator.account_id,
-                                               exact_command->permission_name))
+  EXPECT_CALL(
+      *wsv_command,
+      insertAccountGrantablePermission(
+          exact_command->account_id, creator.account_id, new_model_permission))
       .WillOnce(Return(true));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -1771,10 +1786,10 @@ TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
  * @then execute() fails
  */
 TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(exact_command->account_id,
-                                               creator.account_id,
-                                               exact_command->permission_name))
+  EXPECT_CALL(
+      *wsv_command,
+      insertAccountGrantablePermission(
+          exact_command->account_id, creator.account_id, new_model_permission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }
@@ -1783,31 +1798,32 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-    exact_command = std::make_shared<RevokePermission>("yoda", "CanTeach");
+    exact_command =
+        std::make_shared<RevokePermission>("yoda", "can_add_signatory");
+    new_model_permission = "can_add_my_signatory";
     command = exact_command;
   }
   std::shared_ptr<RevokePermission> exact_command;
+  std::string new_model_permission;
 };
 
 TEST_F(RevokePermissionTest, ValidCase) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          exact_command->account_id, admin_id, exact_command->permission_name))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  exact_command->account_id, admin_id, new_model_permission))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(exact_command->account_id,
-                                               creator.account_id,
-                                               exact_command->permission_name))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountGrantablePermission(
+          exact_command->account_id, creator.account_id, new_model_permission))
       .WillOnce(Return(true));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
 
 TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          exact_command->account_id, admin_id, exact_command->permission_name))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  exact_command->account_id, admin_id, new_model_permission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -1818,10 +1834,10 @@ TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
  * @then execute fails
  */
 TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(exact_command->account_id,
-                                               creator.account_id,
-                                               exact_command->permission_name))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountGrantablePermission(
+          exact_command->account_id, creator.account_id, new_model_permission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }

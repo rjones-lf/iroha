@@ -104,6 +104,13 @@ namespace shared_model {
           iroha::model::converters::serializeAmount(amount));
     }
 
+    inline static shared_model::proto::Command from_old(
+        const iroha::model::Command &command) {
+      return shared_model::proto::Command(
+          iroha::model::converters::PbCommandFactory().serializeAbstractCommand(
+              command));
+    }
+
   }  // namespace proto
 }  // namespace shared_model
 

@@ -54,12 +54,17 @@ namespace shared_model {
     for (auto it = accountRoles->begin(); it != accountRoles->end(); ++it) {
       auto rolePerms = queries.getRolePermissions(*it);
       if (not rolePerms)
-        return false;
+        continue;
       for (auto it = rolePerms->begin(); it != rolePerms->end(); ++it) {
-        if (*it == permission_id)
+        std::string pp = *it;
+        if (pp == permission_id)
           return true;
       }
     }
+    //      auto perms = getAccountPermissions(account_id, queries);
+    //      if (perms.has_value())
+    //          return std::find(perms.value().begin(), perms.value().end(),
+    //          permission_id) != perms.value().end();
 
     return false;
   }

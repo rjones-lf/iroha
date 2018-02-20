@@ -21,8 +21,6 @@
 
 #include "backend/protobuf/from_old_model.hpp"
 
-#include "model/execution/command_executor_factory.hpp"
-
 #include <boost/variant/apply_visitor.hpp>
 
 #include "ametsuchi/wsv_command.hpp"
@@ -33,8 +31,7 @@ namespace iroha {
     MutableStorageImpl::MutableStorageImpl(
         hash256_t top_hash,
         std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction,
-        std::shared_ptr<model::CommandExecutorFactory> command_executors)
+        std::unique_ptr<pqxx::nontransaction> transaction)
         : top_hash_(top_hash),
           connection_(std::move(connection)),
           transaction_(std::move(transaction)),
@@ -43,9 +40,10 @@ namespace iroha {
           block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-        auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
-        auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
-        command_executor_ = std::make_shared<shared_model::CommandExecutor>(shared_model::CommandExecutor(w, c));
+      auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
+      auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
+      command_executor_ = std::make_shared<shared_model::CommandExecutor>(
+          shared_model::CommandExecutor(w, c));
       transaction_->exec("BEGIN;");
     }
 
@@ -56,8 +54,10 @@ namespace iroha {
       auto shared_block = shared_model::proto::from_old(block);
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
-            command_executor_->setCreatorAccountId(transaction->creatorAccountId());
-          auto result = boost::apply_visitor(*command_executor_, command->get());
+          command_executor_->setCreatorAccountId(
+              transaction->creatorAccountId());
+          auto result =
+              boost::apply_visitor(*command_executor_, command->get());
           return result.match(
               [](expected::Value<void> v) { return true; },
               [&](expected::Error<shared_model::ExecutionError> e) {

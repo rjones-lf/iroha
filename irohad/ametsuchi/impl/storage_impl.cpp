@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "model/converters/json_common.hpp"
-#include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 
 #include <boost/format.hpp>
 
@@ -65,11 +64,6 @@ namespace iroha {
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors.has_value()) {
-        return expected::makeError(kCommandExecutorError);
-      }
-
       auto postgres_connection =
           std::make_unique<pqxx::lazyconnection>(postgres_options_);
       try {
@@ -82,20 +76,12 @@ namespace iroha {
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(
-              std::move(postgres_connection),
-              std::move(wsv_transaction),
-              std::move(command_executors.value()))
-      );
+          std::make_unique<TemporaryWsvImpl>(std::move(postgres_connection),
+                                             std::move(wsv_transaction)));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
-      auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors.has_value()) {
-        return expected::makeError(kCommandExecutorError);
-      }
-
       auto postgres_connection =
           std::make_unique<pqxx::lazyconnection>(postgres_options_);
       try {
@@ -115,12 +101,9 @@ namespace iroha {
           .subscribe([&top_hash](auto block) { top_hash = block.hash; });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
-          std::make_unique<MutableStorageImpl>(
-              top_hash.value_or(hash256_t{}),
-              std::move(postgres_connection),
-              std::move(wsv_transaction),
-              std::move(command_executors.value()))
-      );
+          std::make_unique<MutableStorageImpl>(top_hash.value_or(hash256_t{}),
+                                               std::move(postgres_connection),
+                                               std::move(wsv_transaction)));
     }
 
     bool StorageImpl::insertBlock(model::Block block) {
@@ -181,15 +164,17 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    expected::Result<ConnectionContext, std::string> StorageImpl::initConnections(
-        std::string block_store_dir, std::string postgres_options) {
+    expected::Result<ConnectionContext, std::string>
+    StorageImpl::initConnections(std::string block_store_dir,
+                                 std::string postgres_options) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
 
       auto block_store = FlatFile::create(block_store_dir);
       if (not block_store) {
         return expected::makeError(
-            (boost::format("Cannot create block store in {}") % block_store_dir).str());
+            (boost::format("Cannot create block store in {}") % block_store_dir)
+                .str());
       }
       log_->info("block store created");
 
@@ -207,10 +192,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
           *postgres_connection, "Storage");
       log_->info("transaction to PostgreSQL initialized");
 
-      return expected::makeValue(ConnectionContext(
-          std::move(*block_store),
-          std::move(postgres_connection),
-          std::move(wsv_transaction)));
+      return expected::makeValue(
+          ConnectionContext(std::move(*block_store),
+                            std::move(postgres_connection),
+                            std::move(wsv_transaction)));
     }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
@@ -219,7 +204,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto ctx_result = initConnections(block_store_dir, postgres_options);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
-          [&](expected::Value<ConnectionContext> &ctx){
+          [&](expected::Value<ConnectionContext> &ctx) {
             storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                 new StorageImpl(block_store_dir,
                                 postgres_options,
@@ -227,10 +212,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
                                 std::move(ctx.value.pg_lazy),
                                 std::move(ctx.value.pg_nontx))));
           },
-          [&](expected::Error<std::string> &error) {
-            storage = error;
-      }
-      );
+          [&](expected::Error<std::string> &error) { storage = error; });
       return storage;
     }
 

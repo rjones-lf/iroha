@@ -17,6 +17,8 @@
 
 #include "model/converters/pb_common.hpp"
 #include <responses.pb.h>
+#include <model/command.hpp>
+#include <model/commands/all.hpp>
 #include <model/domain.hpp>
 
 namespace iroha {

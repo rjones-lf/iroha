@@ -22,8 +22,8 @@
 #include <pqxx/nontransaction>
 
 #include "ametsuchi/temporary_wsv.hpp"
-#include "logger/logger.hpp"
 #include "execution/command_executor.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
 
@@ -35,10 +35,8 @@ namespace iroha {
 
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
-      TemporaryWsvImpl(
-          std::unique_ptr<pqxx::lazyconnection> connection,
-          std::unique_ptr<pqxx::nontransaction> transaction,
-          std::shared_ptr<model::CommandExecutorFactory> command_executors);
+      TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
+                       std::unique_ptr<pqxx::nontransaction> transaction);
 
       bool apply(const model::Transaction &transaction,
                  std::function<bool(const model::Transaction &, WsvQuery &)>
@@ -51,9 +49,8 @@ namespace iroha {
       std::unique_ptr<pqxx::nontransaction> transaction_;
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
-      std::shared_ptr<model::CommandExecutorFactory> command_executors_;
       std::shared_ptr<shared_model::CommandExecutor> command_executor_;
-        std::shared_ptr<shared_model::CommandValidator> command_validator_;
+      std::shared_ptr<shared_model::CommandValidator> command_validator_;
 
       logger::Logger log_;
     };
