@@ -54,6 +54,7 @@ namespace integration_framework {
    public:
     IntegrationTestFramework(size_t maximum_block_size = 10)
         : maximum_block_size_(maximum_block_size) {}
+    ~IntegrationTestFramework();
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
     IntegrationTestFramework &setInitialState(

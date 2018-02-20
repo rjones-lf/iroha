@@ -21,6 +21,7 @@
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "common/files.hpp"
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "datetime/time.hpp"
 // TODO (@l4l) IR-874 create more confort way for permssion-dependent proto
@@ -37,6 +38,34 @@ namespace integration_framework {
   const std::string IntegrationTestFramework::kAdminName = "admin";
   const std::string IntegrationTestFramework::kAdminId = "admin@test";
   const std::string IntegrationTestFramework::kAssetName = "coin";
+
+  IntegrationTestFramework::~IntegrationTestFramework() {
+    pqxx::lazyconnection connection(iroha_instance_->pg_conn_);
+    const auto drop = R"(
+DROP TABLE IF EXISTS account_has_signatory;
+DROP TABLE IF EXISTS account_has_asset;
+DROP TABLE IF EXISTS role_has_permissions;
+DROP TABLE IF EXISTS account_has_roles;
+DROP TABLE IF EXISTS account_has_grantable_permissions;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS asset;
+DROP TABLE IF EXISTS domain;
+DROP TABLE IF EXISTS signatory;
+DROP TABLE IF EXISTS peer;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS height_by_account_set;
+DROP TABLE IF EXISTS index_by_creator_height;
+DROP TABLE IF EXISTS index_by_id_height_asset;
+)";
+
+    pqxx::work txn(connection);
+    txn.exec(drop);
+    txn.commit();
+    connection.disconnect();
+
+    iroha::remove_all(iroha_instance_->block_store_dir_);
+  }
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const shared_model::crypto::Keypair &key) {
