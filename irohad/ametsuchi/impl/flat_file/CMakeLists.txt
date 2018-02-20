@@ -3,4 +3,5 @@ add_library(flat_file
         )
 target_link_libraries(flat_file
         nudb
+        logger
         )
