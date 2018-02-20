@@ -34,7 +34,7 @@ void runQueryTest(std::shared_ptr<Query> val) {
   JsonQueryFactory queryFactory;
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
-  ASSERT_TRUE(ser_val.has_value());
+  ASSERT_TRUE(ser_val);
   ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
   ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
 }
@@ -50,7 +50,7 @@ TEST(QuerySerializerTest, ClassHandlerTest) {
   for (const auto &command : commands) {
     auto ser = factory.serialize(command);
     auto des = factory.deserialize(ser);
-    ASSERT_TRUE(des.has_value());
+    ASSERT_TRUE(des);
   }
 }
 
@@ -69,8 +69,8 @@ TEST(QuerySerializerTest, DeserializeGetAccountWhenValid) {
     "account_id":"test@test"
   })";
   auto res = querySerializer.deserialize(json_query);
-  ASSERT_TRUE(res.has_value());
-  ASSERT_EQ("123", res.value()->creator_account_id);
+  ASSERT_TRUE(res);
+  ASSERT_EQ("123", (*res)->creator_account_id);
 }
 
 TEST(QuerySerializerTest, DeserializeGetAccountWhenInvalid) {
@@ -82,7 +82,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountWhenInvalid) {
     "query_type":"GetAccount"
   })";
   auto res = querySerializer.deserialize(json_query);
-  ASSERT_FALSE(res.has_value());
+  ASSERT_FALSE(res);
 }
 
 TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
@@ -100,9 +100,9 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
     "asset_id":"coin#test"
   })";
   auto res = querySerializer.deserialize(json_query);
-  ASSERT_TRUE(res.has_value());
+  ASSERT_TRUE(res);
   auto casted =
-      std::static_pointer_cast<iroha::model::GetAccountAssets>(res.value());
+      std::static_pointer_cast<iroha::model::GetAccountAssets>(*res);
   ASSERT_EQ("test@test", casted->account_id);
   ASSERT_EQ("coin#test", casted->asset_id);
 }
@@ -126,9 +126,9 @@ TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
     "account_id":"test@test"
   })";
   auto res = querySerializer.deserialize(json_query);
-  ASSERT_TRUE(res.has_value());
+  ASSERT_TRUE(res);
   auto casted =
-      std::static_pointer_cast<iroha::model::GetAccountDetail>(res.value());
+      std::static_pointer_cast<iroha::model::GetAccountDetail>(*res);
   ASSERT_EQ("test@test", casted->account_id);
 }
 
@@ -147,7 +147,7 @@ TEST(QuerySerializerTest, DeserializeWhenUnknownType) {
     "asset_id":"coin#test"
   })";
   auto res = querySerializer.deserialize(json_query);
-  ASSERT_FALSE(res.has_value());
+  ASSERT_FALSE(res);
 }
 
 /**
@@ -165,9 +165,9 @@ TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
   val->signature = generateSignature(42);
   const auto json = queryFactory.serialize(val);
   auto json_doc_opt = iroha::model::converters::stringToJson(json);
-  ASSERT_TRUE(json_doc_opt.has_value());
+  ASSERT_TRUE(json_doc_opt);
 
-  auto &json_doc = json_doc_opt.value();
+  auto &json_doc = *json_doc_opt;
   auto &allocator = json_doc.GetAllocator();
 
   rapidjson::Value tx_hashes;
@@ -184,7 +184,7 @@ TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
   json_doc["tx_hashes"].Swap(tx_hashes);
   auto res = queryFactory.deserialize(
       iroha::model::converters::jsonToString(json_doc));
-  ASSERT_TRUE(res.has_value());
+  ASSERT_TRUE(res);
   auto casted = std::static_pointer_cast<GetTransactions>(*res);
   ASSERT_EQ(1, casted->tx_hashes.size());
   ASSERT_EQ(valid_size_hash, casted->tx_hashes[0]);
@@ -197,9 +197,9 @@ TEST(QuerySerializerTest, SerializeGetAccount) {
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
-  ASSERT_TRUE(ser_val.has_value());
-  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
-  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+  ASSERT_TRUE(ser_val);
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*(*ser_val)));
+  ASSERT_EQ(val->signature.signature, (*ser_val)->signature.signature);
 }
 
 TEST(QuerySerializerTest, SerializeGetAccountAssets) {
@@ -210,9 +210,9 @@ TEST(QuerySerializerTest, SerializeGetAccountAssets) {
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
-  ASSERT_TRUE(ser_val.has_value());
-  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
-  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+  ASSERT_TRUE(ser_val);
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*(*ser_val)));
+  ASSERT_EQ(val->signature.signature, (*ser_val)->signature.signature);
 }
 
 TEST(QuerySerializerTest, SerializeGetAccountTransactions) {
@@ -222,9 +222,9 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions) {
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
-  ASSERT_TRUE(ser_val.has_value());
-  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
-  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+  ASSERT_TRUE(ser_val);
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*(*ser_val)));
+  ASSERT_EQ(val->signature.signature, (*ser_val)->signature.signature);
 }
 
 TEST(QuerySerializerTest, SerialiizeGetTransactions) {
@@ -244,9 +244,9 @@ TEST(QuerySerializerTest, SerializeGetSignatories) {
   val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
-  ASSERT_TRUE(ser_val.has_value());
-  ASSERT_EQ(iroha::hash(*val), iroha::hash(*ser_val.value()));
-  ASSERT_EQ(val->signature.signature, ser_val.value()->signature.signature);
+  ASSERT_TRUE(ser_val);
+  ASSERT_EQ(iroha::hash(*val), iroha::hash(*(*ser_val)));
+  ASSERT_EQ(val->signature.signature, (*ser_val)->signature.signature);
 }
 
 TEST(QuerySerializerTest, get_asset_info) {

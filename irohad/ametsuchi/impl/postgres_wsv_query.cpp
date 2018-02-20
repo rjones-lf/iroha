@@ -54,7 +54,7 @@ namespace iroha {
           | [](const auto &result) { return result.size() == 1; };
     }
 
-    nonstd::optional<std::vector<RoleIdType>> PostgresWsvQuery::getAccountRoles(
+    boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getAccountRoles(
         const AccountIdType &account_id) {
       return execute_(
                  "SELECT role_id FROM account_has_roles WHERE account_id = "
@@ -66,7 +66,7 @@ namespace iroha {
             };
     }
 
-    nonstd::optional<std::vector<PermissionNameType>>
+    boost::optional<std::vector<PermissionNameType>>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
       return execute_(
                  "SELECT permission_id FROM role_has_permissions WHERE role_id "
@@ -79,38 +79,38 @@ namespace iroha {
             };
     }
 
-    nonstd::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {
+    boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {
       return execute_("SELECT role_id FROM role;") | [&](const auto &result) {
         return transform<std::string>(
             result, [](const auto &row) { return row.at(kRoleId).c_str(); });
       };
     }
 
-    nonstd::optional<std::shared_ptr<shared_model::interface::Account>>
+    boost::optional<std::shared_ptr<shared_model::interface::Account>>
     PostgresWsvQuery::getAccount(const AccountIdType &account_id) {
       return execute_("SELECT * FROM account WHERE account_id = "
                       + transaction_.quote(account_id) + ";")
                  | [&](const auto &result)
-                 -> nonstd::optional<
+                 -> boost::optional<
                      std::shared_ptr<shared_model::interface::Account>> {
         if (result.empty()) {
           log_->info(kAccountNotFound, account_id);
-          return nonstd::nullopt;
+          return boost::none;
         }
 
         return fromResult(makeAccount(result.at(0)));
       };
     }
 
-    nonstd::optional<std::string> PostgresWsvQuery::getAccountDetail(
+    boost::optional<std::string> PostgresWsvQuery::getAccountDetail(
         const std::string &account_id) {
       return execute_("SELECT data#>>" + transaction_.quote("{}")
                       + " FROM account WHERE account_id = "
                       + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result) -> nonstd::optional<std::string> {
+                 | [&](const auto &result) -> boost::optional<std::string> {
         if (result.empty()) {
           log_->info(kAccountNotFound, account_id);
-          return nonstd::nullopt;
+          return boost::none;
         }
         auto row = result.at(0);
         std::string res;
@@ -118,13 +118,13 @@ namespace iroha {
 
         // if res is empty, then that key does not exist for this account
         if (res.empty()) {
-          return nonstd::nullopt;
+          return boost::none;
         }
         return res;
       };
     }
 
-    nonstd::optional<std::vector<PubkeyType>> PostgresWsvQuery::getSignatories(
+    boost::optional<std::vector<PubkeyType>> PostgresWsvQuery::getSignatories(
         const AccountIdType &account_id) {
       return execute_(
                  "SELECT public_key FROM account_has_signatory WHERE "
@@ -138,61 +138,61 @@ namespace iroha {
             };
     }
 
-    nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>
+    boost::optional<std::shared_ptr<shared_model::interface::Asset>>
     PostgresWsvQuery::getAsset(const AssetIdType &asset_id) {
       pqxx::result result;
       return execute_("SELECT * FROM asset WHERE asset_id = "
                       + transaction_.quote(asset_id) + ";")
                  | [&](const auto &result)
-                 -> nonstd::optional<
+                 -> boost::optional<
                      std::shared_ptr<shared_model::interface::Asset>> {
         if (result.empty()) {
           log_->info("Asset {} not found", asset_id);
-          return nonstd::nullopt;
+          return boost::none;
         }
         return fromResult(makeAsset(result.at(0)));
       };
     }
 
-    nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
+    boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
     PostgresWsvQuery::getAccountAsset(const AccountIdType &account_id,
                                       const AssetIdType &asset_id) {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
                       + transaction_.quote(account_id)
                       + " AND asset_id = " + transaction_.quote(asset_id) + ";")
                  | [&](const auto &result)
-                 -> nonstd::optional<
+                 -> boost::optional<
                      std::shared_ptr<shared_model::interface::AccountAsset>> {
         if (result.empty()) {
           log_->info("Account {} does not have asset {}", account_id, asset_id);
-          return nonstd::nullopt;
+          return boost::none;
         }
 
         return fromResult(makeAccountAsset(result.at(0)));
       };
     }
 
-    nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+    boost::optional<std::shared_ptr<shared_model::interface::Domain>>
     PostgresWsvQuery::getDomain(const DomainIdType &domain_id) {
       return execute_("SELECT * FROM domain WHERE domain_id = "
                       + transaction_.quote(domain_id) + ";")
                  | [&](const auto &result)
-                 -> nonstd::optional<
+                 -> boost::optional<
                      std::shared_ptr<shared_model::interface::Domain>> {
         if (result.empty()) {
           log_->info("Domain {} not found", domain_id);
-          return nonstd::nullopt;
+          return boost::none;
         }
         return fromResult(makeDomain(result.at(0)));
       };
     }
 
-    nonstd::optional<
+    boost::optional<
         std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
       pqxx::result result;
       return execute_("SELECT * FROM peer;") | [&](const auto &result)
-                 -> nonstd::optional<std::vector<
+                 -> boost::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
         auto results = transform<shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
             result, makePeer);

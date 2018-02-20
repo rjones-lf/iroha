@@ -108,7 +108,7 @@ namespace logger {
   template <class Optional, class Lambda>
   std::string opt_to_string(const Optional &opt, Lambda transform) {
     const std::string null_value = "nullopt";
-    return opt.has_value() ? null_value : transform(*opt);
+    return opt ? null_value : transform(*opt);
   }
 
 }  // namespace logger

@@ -51,5 +51,5 @@ TEST(YacCommonTest, getProposalHashTest) {
   ASSERT_EQ(hash.proposal_hash, getProposalHash(votes).value());
 
   votes.push_back(create_vote(YacHash("not-proposal", "commit"), "five"));
-  ASSERT_EQ(nonstd::nullopt, getProposalHash(votes));
+  ASSERT_FALSE(getProposalHash(votes));
 }

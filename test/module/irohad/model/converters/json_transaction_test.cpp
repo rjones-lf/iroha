@@ -37,8 +37,8 @@ TEST_F(JsonTransactionTest, ValidWhenWellFormed) {
   auto json_transaction = factory.serialize(transaction);
   auto serial_transaction = factory.deserialize(json_transaction);
 
-  ASSERT_TRUE(serial_transaction.has_value());
-  ASSERT_EQ(transaction, serial_transaction.value());
+  ASSERT_TRUE(serial_transaction);
+  ASSERT_EQ(transaction, *serial_transaction);
 }
 
 TEST_F(JsonTransactionTest, InvalidWhenFieldsMissing) {
@@ -50,7 +50,7 @@ TEST_F(JsonTransactionTest, InvalidWhenFieldsMissing) {
 
   auto serial_transaction = factory.deserialize(json_transaction);
 
-  ASSERT_FALSE(serial_transaction.has_value());
+  ASSERT_FALSE(serial_transaction);
 }
 
 TEST_F(JsonTransactionTest, InvalidWhenNegativeAddAssetQuantity) {
@@ -84,9 +84,9 @@ TEST_F(JsonTransactionTest, InvalidWhenNegativeAddAssetQuantity) {
   })";
   auto json = stringToJson(transaction_string);
 
-  ASSERT_TRUE(json.has_value());
+  ASSERT_TRUE(json);
 
   auto transaction = factory.deserialize(json.value());
 
-  ASSERT_FALSE(transaction.has_value());
+  ASSERT_FALSE(transaction);
 }

@@ -30,12 +30,12 @@ using namespace iroha::model;
 void runQueryTest(std::shared_ptr<Query> query) {
   PbQueryFactory query_factory;
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
+  ASSERT_TRUE(pb_query);
   auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
+  ASSERT_TRUE(res_query);
   // TODO 26/09/17 grimadas: overload operator == for queries and replace with
   // it IR-512 #goodfirstissue
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  ASSERT_EQ(iroha::hash(*(*res_query)), iroha::hash(*query));
 }
 
 TEST(PbQueryFactoryTest, SerializeGetAccount) {
@@ -48,7 +48,7 @@ TEST(PbQueryFactoryTest, SerializeGetAccount) {
   auto query = query_generator.generateGetAccount(
       created_time, creator_account_id, query_counter, account_id);
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
+  ASSERT_TRUE(pb_query);
   auto &pl = pb_query.value().payload();
   auto &pb_cast = pb_query.value().payload().get_account();
   ASSERT_EQ(pl.created_time(), created_time);
@@ -56,8 +56,8 @@ TEST(PbQueryFactoryTest, SerializeGetAccount) {
   ASSERT_EQ(pl.query_counter(), query_counter);
   ASSERT_EQ(pb_cast.account_id(), account_id);
   auto res_query_opt = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query_opt.has_value());
-  auto res_query = res_query_opt.value();
+  ASSERT_TRUE(res_query_opt);
+  auto res_query = *res_query_opt;
   ASSERT_EQ(res_query->created_ts, created_time);
   ASSERT_EQ(res_query->creator_account_id, creator_account_id);
   ASSERT_EQ(res_query->query_counter, query_counter);
@@ -74,12 +74,12 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets) {
   auto query =
       query_generator.generateGetAccountAssets(0, "123", 0, "test", "coin");
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
-  auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
+  ASSERT_TRUE(pb_query);
+  auto res_query = query_factory.deserialize(*pb_query);
+  ASSERT_TRUE(res_query);
   // TODO 26/09/17 grimadas: overload operator == for queries and replace with
   // it IR-512 #goodfirstissue
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  ASSERT_EQ(iroha::hash(*(*res_query)), iroha::hash(*query));
 }
 
 /**
@@ -93,10 +93,10 @@ TEST(PbQueryFactoryTest, SerializeGetAccountDetail) {
   auto query =
       query_generator.generateGetAccountDetail(0, "123", 0, "test", "test2");
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
-  auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  ASSERT_TRUE(pb_query);
+  auto res_query = query_factory.deserialize(*pb_query);
+  ASSERT_TRUE(res_query);
+  ASSERT_EQ(iroha::hash(*(*res_query)), iroha::hash(*query));
 }
 
 TEST(PbQueryFactoryTest, SerializeGetAccountTransactions) {
@@ -105,12 +105,12 @@ TEST(PbQueryFactoryTest, SerializeGetAccountTransactions) {
   auto query =
       query_generator.generateGetAccountTransactions(0, "123", 0, "test");
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
-  auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
+  ASSERT_TRUE(pb_query);
+  auto res_query = query_factory.deserialize(*pb_query);
+  ASSERT_TRUE(res_query);
   // TODO 26/09/17 grimadas: overload operator == for queries and replace with
   // it IR-512 #goodfirstissue
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  ASSERT_EQ(iroha::hash(*(*res_query)), iroha::hash(*query));
 }
 
 TEST(PbQueryFactoryTest, SerializeGetTransactions) {
@@ -127,12 +127,12 @@ TEST(PbQueryFactoryTest, SerializeGetSignatories) {
   QueryGenerator query_generator;
   auto query = query_generator.generateGetSignatories(0, "123", 0, "test");
   auto pb_query = query_factory.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
-  auto res_query = query_factory.deserialize(pb_query.value());
-  ASSERT_TRUE(res_query.has_value());
+  ASSERT_TRUE(pb_query);
+  auto res_query = query_factory.deserialize(*pb_query);
+  ASSERT_TRUE(res_query);
   // TODO 26/09/17 grimadas: overload operator == for queries and replace with
   // it IR-512 #goodfirstissue
-  ASSERT_EQ(iroha::hash(*res_query.value()), iroha::hash(*query));
+  ASSERT_EQ(iroha::hash(*(*res_query)), iroha::hash(*query));
 }
 
 TEST(PbQueryFactoryTest, get_roles) {

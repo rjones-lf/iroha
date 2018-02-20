@@ -19,7 +19,6 @@
 #define IROHA_PEER_ORDERER_IMPL_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
 #include "consensus/yac/yac_peer_orderer.hpp"
 
 namespace iroha {
@@ -39,9 +38,9 @@ namespace iroha {
         explicit PeerOrdererImpl(
             std::shared_ptr<ametsuchi::PeerQuery> peer_query);
 
-        nonstd::optional<ClusterOrdering> getInitialOrdering() override;
+        boost::optional<ClusterOrdering> getInitialOrdering() override;
 
-        nonstd::optional<ClusterOrdering> getOrdering(
+        boost::optional<ClusterOrdering> getOrdering(
             const YacHash &hash) override;
 
        private:

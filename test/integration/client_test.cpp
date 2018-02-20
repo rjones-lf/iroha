@@ -150,9 +150,9 @@ TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
         })";
   JsonTransactionFactory tx_factory;
   auto json_doc = stringToJson(json_string);
-  ASSERT_TRUE(json_doc.has_value());
+  ASSERT_TRUE(json_doc);
   auto model_tx = tx_factory.deserialize(json_doc.value());
-  ASSERT_FALSE(model_tx.has_value());
+  ASSERT_FALSE(model_tx);
 }
 
 TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
@@ -192,7 +192,7 @@ TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
 
   JsonQueryFactory queryFactory;
   auto model_query = queryFactory.deserialize(json_query);
-  ASSERT_FALSE(model_query.has_value());
+  ASSERT_FALSE(model_query);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
@@ -228,7 +228,7 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccountDetail("test@test"))
-      .WillOnce(Return(nonstd::make_optional<std::string>("value")));
+      .WillOnce(Return(boost::make_optional(std::string("value"))));
 
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())

@@ -34,7 +34,7 @@ namespace iroha {
         log_ = log("YacBlockStorage");
       }
 
-      nonstd::optional<Answer> YacBlockStorage::insert(VoteMessage msg) {
+      boost::optional<Answer> YacBlockStorage::insert(VoteMessage msg) {
         if (validScheme(msg) and uniqueVote(msg)) {
           votes_.push_back(msg);
 
@@ -47,7 +47,7 @@ namespace iroha {
         return getState();
       }
 
-      nonstd::optional<Answer> YacBlockStorage::insert(
+      boost::optional<Answer> YacBlockStorage::insert(
           std::vector<VoteMessage> votes) {
         std::for_each(votes.begin(), votes.end(), [this](auto vote) {
           this->insert(vote);
@@ -63,13 +63,13 @@ namespace iroha {
         return votes_.size();
       }
 
-      nonstd::optional<Answer> YacBlockStorage::getState() {
+      boost::optional<Answer> YacBlockStorage::getState() {
         auto supermajority =
             supermajority_checker_->checkSize(votes_.size(), peers_in_round_);
         if (supermajority) {
           return Answer(CommitMessage(votes_));
         }
-        return nonstd::nullopt;
+        return boost::none;
       }
 
       bool YacBlockStorage::isContains(const VoteMessage &msg) const {

@@ -18,5 +18,4 @@ add_library(validator
     )
 target_link_libraries(validator
     boost
-    optional
     )

@@ -49,14 +49,14 @@ grpc::Status BlockLoaderService::retrieveBlock(
     const proto::BlockRequest *request,
     protocol::Block *response) {
   const auto hash = stringToBlob<Block::HashType::size()>(request->hash());
-  if (not hash.has_value()) {
+  if (not hash) {
     log_->error("Bad hash in request, {}",
                 bytestringToHexstring(request->hash()));
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Bad hash provided");
   }
 
-  nonstd::optional<protocol::Block> result;
+  boost::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
       .filter([hash](auto block) {
         return shared_model::crypto::toBinaryString(block->hash())
@@ -68,7 +68,7 @@ grpc::Status BlockLoaderService::retrieveBlock(
       })
       .as_blocking()
       .subscribe([&result](auto block) { result = block; });
-  if (not result.has_value()) {
+  if (not result) {
     log_->info("Cannot find block with requested hash");
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }

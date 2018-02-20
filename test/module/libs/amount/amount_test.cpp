@@ -31,12 +31,12 @@ TEST_F(AmountTest, TestBasic) {
 
   // check summation
   auto c = a + b;
-  ASSERT_TRUE(c.has_value());
+  ASSERT_TRUE(c);
   ASSERT_EQ(c->to_string(), "1.84");
 
   // check subtraction by subtracting b from c
   auto aa = c - b;
-  ASSERT_TRUE(aa.has_value());
+  ASSERT_TRUE(aa);
   ASSERT_EQ(a, *aa);
 
   auto d = a.percentage(*c);  // taking 1.84% of 1.23

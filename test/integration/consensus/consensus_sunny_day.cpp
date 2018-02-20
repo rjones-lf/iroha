@@ -144,9 +144,9 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   YacHash my_hash("proposal_hash", "block_hash");
 
   auto order = ClusterOrdering::create(default_peers);
-  ASSERT_TRUE(order.has_value());
+  ASSERT_TRUE(order);
 
-  yac->vote(my_hash, order.value());
+  yac->vote(my_hash, *order);
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());

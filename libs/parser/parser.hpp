@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <iterator>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -39,7 +39,7 @@ namespace parser {
    * @param line string to parse
    * @return nullopt if no command found, string otherwise
    */
-  nonstd::optional<std::string> parseFirstCommand(std::string line);
+  boost::optional<std::string> parseFirstCommand(std::string line);
 
   /**
    * Split line into words
@@ -49,16 +49,16 @@ namespace parser {
   std::vector<std::string> split(std::string line);
 
   template <typename T>
-  nonstd::optional<T> parseValue(std::string word) {
+  boost::optional<T> parseValue(std::string word) {
     std::stringstream ss(word);
     if (not isIntNumber(word)) {
-      return nonstd::nullopt;
+      return boost::none;
     }
     T val;
     if (ss >> val) {
       return val;
     } else {
-      return nonstd::nullopt;
+      return boost::none;
     }
   }
 

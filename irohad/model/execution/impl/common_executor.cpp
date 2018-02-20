@@ -23,18 +23,18 @@ using namespace iroha::ametsuchi;
 namespace iroha {
   namespace model {
 
-    nonstd::optional<std::set<std::string>> getAccountPermissions(
+    boost::optional<std::set<std::string>> getAccountPermissions(
         const std::string &account_id, iroha::ametsuchi::WsvQuery &queries) {
       auto roles = queries.getAccountRoles(account_id);
-      if (not roles.has_value()) {
-        return nonstd::nullopt;
+      if (not roles) {
+        return boost::none;
       }
       std::set<std::string> account_permissions;
       std::for_each(roles.value().begin(),
                     roles.value().end(),
                     [&account_permissions, &queries](auto role) {
                       auto perms = queries.getRolePermissions(role);
-                      if (perms.has_value()) {
+                      if (perms) {
                         account_permissions.insert(perms.value().begin(),
                                                    perms.value().end());
                       }

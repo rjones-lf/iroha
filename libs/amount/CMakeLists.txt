@@ -20,6 +20,6 @@ add_library(iroha_amount
     )
 
 target_link_libraries(iroha_amount
-    optional
+    logger
     boost
     )

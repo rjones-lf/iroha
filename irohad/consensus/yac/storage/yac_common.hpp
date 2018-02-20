@@ -18,7 +18,6 @@
 #ifndef IROHA_YAC_COMMON_HPP
 #define IROHA_YAC_COMMON_HPP
 
-#include <nonstd/optional.hpp>
 #include <vector>
 
 #include "consensus/yac/yac_hash_provider.hpp"  // for YacHash::proposal_hash
@@ -45,7 +44,7 @@ namespace iroha {
        * @param votes - collection with votes
        * @return hash, if collection has same proposal hash, otherwise nullopt
        */
-      nonstd::optional<ProposalHash> getProposalHash(
+      boost::optional<ProposalHash> getProposalHash(
           const std::vector<VoteMessage> &votes);
 
       /**
@@ -53,7 +52,7 @@ namespace iroha {
        * @param votes - collection with votes
        * @return hash, if collection elements have same hash, otherwise nullopt
        */
-      nonstd::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
+      boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

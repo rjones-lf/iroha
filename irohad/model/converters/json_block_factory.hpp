@@ -31,7 +31,7 @@ namespace iroha {
         JsonBlockFactory();
         rapidjson::Document serialize(const Block &block);
 
-        nonstd::optional<Block> deserialize(
+        boost::optional<Block> deserialize(
             const rapidjson::Document &document);
 
        private:

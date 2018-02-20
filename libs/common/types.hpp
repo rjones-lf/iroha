@@ -21,12 +21,12 @@
 #include <array>
 #include <cstdio>
 #include <iomanip>
-#include <nonstd/optional.hpp>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
 #include <vector>
+#include <boost/optional.hpp>
 
 /**
  * This file defines common types used in iroha.
@@ -141,10 +141,10 @@ namespace iroha {
    * operator| is used since it has to be binary and left-associative
    * Non-void returning specialization
    *
-   * nonstd::optional<int> f();
-   * nonstd::optional<double> g(int);
+   * boost::optional<int> f();
+   * boost::optional<double> g(int);
    *
-   * nonstd::optional<double> d = f()
+   * boost::optional<double> d = f()
    *    | g;
    *
    * @tparam T - monadic type
@@ -170,7 +170,7 @@ namespace iroha {
    * operator| is used since it has to be binary and left-associative
    * Void specialization
    *
-   * nonstd::optional<int> f();
+   * boost::optional<int> f();
    * void g(int);
    *
    * f() | g;
@@ -200,12 +200,12 @@ namespace iroha {
    */
   template <typename C>
   auto makeOptionalGet(C map) {
-    return [&map](auto key) -> nonstd::optional<typename C::mapped_type> {
+    return [&map](auto key) -> boost::optional<typename C::mapped_type> {
       auto it = map.find(key);
       if (it != std::end(map)) {
         return it->second;
       }
-      return nonstd::nullopt;
+      return boost::none;
     };
   }
 
@@ -243,7 +243,7 @@ namespace iroha {
   auto assignObjectField(B object, V B::*member) {
     return [=](auto value) mutable {
       object.*member = value;
-      return nonstd::make_optional(object);
+      return boost::make_optional(object);
     };
   }
 
@@ -260,7 +260,7 @@ namespace iroha {
   auto assignObjectField(P<B> object, V B::*member) {
     return [=](auto value) mutable {
       (*object).*member = value;
-      return nonstd::make_optional(object);
+      return boost::make_optional(object);
     };
   }
 
