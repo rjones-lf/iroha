@@ -48,11 +48,10 @@ class ChainValidationTest : public ::testing::Test {
     peers = std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer};
 
     block.sigs.emplace_back();
-    auto old_peer = peer->makeOldModel();
+    std::unique_ptr<iroha::model::Peer> old_peer{peer->makeOldModel()};
     block.sigs.back().pubkey = old_peer->pubkey;
     block.prev_hash.fill(0);
     hash = block.prev_hash;
-    delete old_peer;
   }
 
   std::shared_ptr<shared_model::interface::Peer> peer;

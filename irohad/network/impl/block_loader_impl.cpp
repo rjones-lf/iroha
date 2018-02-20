@@ -151,6 +151,7 @@ nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(Peer::KeyType pub
     log_->error(kPeerFindFail);
     return nonstd::nullopt;
   }
+
   return *std::unique_ptr<iroha::model::Peer>((*it)->makeOldModel());
 }
 

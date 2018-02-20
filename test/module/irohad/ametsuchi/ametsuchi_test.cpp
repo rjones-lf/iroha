@@ -126,7 +126,7 @@ void validateAccountAsset(W &&wsv,
   ASSERT_TRUE(account_asset);
   ASSERT_EQ((*account_asset)->accountId(), account);
   ASSERT_EQ((*account_asset)->assetId(), asset);
-  ASSERT_EQ(*((*account_asset)->balance().makeOldModel()), amount);
+  ASSERT_EQ(*std::unique_ptr<iroha::Amount>((*account_asset)->balance().makeOldModel()), amount);
 }
 
 /**
@@ -306,7 +306,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
   auto peers = wsv->getPeers();
   ASSERT_TRUE(peers);
   ASSERT_EQ(peers->size(), 1);
-  ASSERT_EQ(*(peers->at(0)->makeOldModel()), addPeer.peer);
+  ASSERT_EQ(*std::unique_ptr<iroha::model::Peer>(peers->at(0)->makeOldModel()), addPeer.peer);
 }
 
 TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {

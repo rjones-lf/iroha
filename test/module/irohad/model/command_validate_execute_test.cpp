@@ -15,11 +15,25 @@
  * limitations under the License.
  */
 
-#include <backend/protobuf/common_objects/account_asset.hpp>
-#include <builders/protobuf/common_objects/proto_domain_builder.hpp>
 #include <limits>
 
 #include "framework/result_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+
+#include "backend/protobuf/common_objects/account_asset.hpp"
+#include "builders/common_objects/account_asset_builder.hpp"
+#include "builders/common_objects/account_builder.hpp"
+#include "builders/common_objects/amount_builder.hpp"
+#include "builders/common_objects/asset_builder.hpp"
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/common_objects/signature_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
 #include "model/commands/add_signatory.hpp"
@@ -71,7 +85,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
                 std::shared_ptr<shared_model::interface::Account>> &v) {
               creator = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     shared_model::builder::AccountBuilder<
         shared_model::proto::AccountBuilder,
@@ -85,7 +99,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
                 std::shared_ptr<shared_model::interface::Account>> &v) {
               account = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     default_domain = std::shared_ptr<shared_model::interface::Domain>(
         shared_model::proto::DomainBuilder()
@@ -154,7 +168,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
         .match(
             [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
                     &v) { asset = v.value; },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     shared_model::builder::AmountBuilder<
         shared_model::proto::AmountBuilder,
@@ -167,7 +181,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
                 std::shared_ptr<shared_model::interface::Amount>> &v) {
               balance = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
@@ -181,7 +195,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
                 std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
               wallet = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     add_asset_quantity = std::make_shared<AddAssetQuantity>();
     add_asset_quantity->account_id = creator->accountId();
@@ -344,7 +358,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
                 std::shared_ptr<shared_model::interface::Amount>> &v) {
               balance = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
     ;
 
     shared_model::builder::AssetBuilder<
@@ -357,7 +371,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
         .match(
             [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
                     &v) { asset = v.value; },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
@@ -371,7 +385,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
                 std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
               wallet = v.value;
             },
-            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL(); });
+            [](expected::Error<std::shared_ptr<std::string>> &e) { FAIL() << *e.error; });
 
     subtract_asset_quantity = std::make_shared<SubtractAssetQuantity>();
     subtract_asset_quantity->account_id = creator->accountId();

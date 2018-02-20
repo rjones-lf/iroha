@@ -379,9 +379,10 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
             account_asset->accountId());
   auto iroha_amount_asset = iroha::model::converters::deserializeAmount(
       response.account_assets_response().account_asset().balance());
-  ASSERT_EQ(iroha_amount_asset, *account_asset->balance().makeOldModel());
-  ASSERT_EQ(iroha::hash(model_query.getTransport()).to_string(),
-            response.query_hash());
+  ASSERT_EQ(iroha_amount_asset,
+            *std::unique_ptr<iroha::Amount>(
+                account_asset->balance().makeOldModel()));
+  ASSERT_EQ(iroha::hash(model_query.getTransport()).to_string(), response.query_hash());
 }
 
 /**

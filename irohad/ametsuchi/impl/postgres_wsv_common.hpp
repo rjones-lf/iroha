@@ -21,24 +21,8 @@
 #include <boost/optional.hpp>
 #include <pqxx/nontransaction>
 
-#include "builders/common_objects/account_asset_builder.hpp"
-#include "builders/common_objects/account_builder.hpp"
-#include "builders/common_objects/amount_builder.hpp"
-#include "builders/common_objects/asset_builder.hpp"
-#include "builders/common_objects/domain_builder.hpp"
-#include "builders/common_objects/peer_builder.hpp"
-#include "builders/common_objects/signature_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
-#include <pqxx/result>
-#include "common/result.hpp"
+#include "builders/common_objects/default_builders.hpp"
 #include "logger/logger.hpp"
-#include "validators/field_validator.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -105,33 +89,16 @@ namespace iroha {
     }
 
     using shared_model::builder::BuilderResult;
-
-    using AccountBuilder = shared_model::builder::AccountBuilder<
-        shared_model::proto::AccountBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using AssetBuilder = shared_model::builder::AssetBuilder<
-        shared_model::proto::AssetBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using AccountAssetBuilder = shared_model::builder::AccountAssetBuilder<
-        shared_model::proto::AccountAssetBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using PeerBuilder = shared_model::builder::PeerBuilder<
-        shared_model::proto::PeerBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using AmountBuilder = shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>;
-    using DomainBuilder = shared_model::builder::DomainBuilder<
-        shared_model::proto::DomainBuilder,
-        shared_model::validation::FieldValidator>;
+    using shared_model::builder::DefaultAccountAssetBuilder;
+    using shared_model::builder::DefaultAccountBuilder;
+    using shared_model::builder::DefaultAmountBuilder;
+    using shared_model::builder::DefaultAssetBuilder;
+    using shared_model::builder::DefaultDomainBuilder;
+    using shared_model::builder::DefaultPeerBuilder;
 
     static inline BuilderResult<shared_model::interface::Account> makeAccount(
         const pqxx::row &row) noexcept {
-      return AccountBuilder()
+      return DefaultAccountBuilder()
           .accountId(row.at("account_id").template as<std::string>())
           .domainId(row.at("domain_id").template as<std::string>())
           .quorum(
@@ -143,8 +110,7 @@ namespace iroha {
 
     static inline BuilderResult<shared_model::interface::Asset> makeAsset(
         const pqxx::row &row) {
-      AssetBuilder builder;
-      return AssetBuilder()
+      return DefaultAssetBuilder()
           .assetId(row.at("asset_id").template as<std::string>())
           .domainId(row.at("domain_id").template as<std::string>())
           .precision(row.at("precision").template as<int32_t>())
@@ -153,10 +119,10 @@ namespace iroha {
 
     static inline BuilderResult<shared_model::interface::AccountAsset>
     makeAccountAsset(const pqxx::row &row) {
-      auto balance = AmountBuilder::fromString(
+      auto balance = DefaultAmountBuilder::fromString(
           row.at("amount").template as<std::string>());
       return balance | [&](const auto &balance_ptr) {
-        return AccountAssetBuilder()
+        return DefaultAccountAssetBuilder()
             .accountId(row.at("account_id").template as<std::string>())
             .assetId(row.at("asset_id").template as<std::string>())
             .balance(*balance_ptr)
@@ -168,7 +134,7 @@ namespace iroha {
         const pqxx::row &row) {
       pqxx::binarystring public_key_str(row.at("public_key"));
       shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
-      return PeerBuilder()
+      return DefaultPeerBuilder()
           .pubkey(pubkey)
           .address(row.at("address").template as<std::string>())
           .build();
@@ -176,7 +142,7 @@ namespace iroha {
 
     static inline BuilderResult<shared_model::interface::Domain> makeDomain(
         const pqxx::row &row) {
-      return DomainBuilder()
+      return DefaultDomainBuilder()
           .domainId(row.at("domain_id").template as<std::string>())
           .defaultRole(row.at("default_role").template as<std::string>())
           .build();
