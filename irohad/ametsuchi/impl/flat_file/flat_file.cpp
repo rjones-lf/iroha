@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,145 +16,220 @@
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+
 #include <boost/filesystem.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 #include <iomanip>
-#include <iostream>
-#include <sstream>
-#include "common/files.hpp"
 
-using namespace iroha::ametsuchi;
-using Identifier = FlatFile::Identifier;
+namespace iroha {
+  namespace ametsuchi {
 
-// ----------| public API |----------
+    namespace fs = boost::filesystem;
+    namespace sys = boost::system;
+    using Identifier = FlatFile::Identifier;
 
-std::string FlatFile::id_to_name(Identifier id) {
-  std::ostringstream os;
-  os << std::setw(FlatFile::DIGIT_CAPACITY) << std::setfill('0') << id;
-  return os.str();
-}
+    /** implementation **/
 
-nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(
-    const std::string &path) {
-  auto log_ = logger::log("FlatFile::create()");
+    bool FlatFile::init_directory(const std::string &path) {
+      auto log_ = logger::log("BlockStorageNuDB::init_directory()");
 
-  boost::system::error_code err;
-  if (not boost::filesystem::is_directory(path, err)
-      and not boost::filesystem::create_directory(path, err)) {
-    log_->error("Cannot create storage dir: {}\n{}", path, err.message());
-    return nonstd::nullopt;
-  }
+      // first, check if directory exists. if not -- create.
+      sys::error_code err;
+      if (fs::exists(path)) {
+        if (not fs::is_directory(path, err)) {
+          log_->error("path {} is a file: {}", path, err.message());
+          return false;
+        }
+      } else {
+        // dir does not exist, so then create
+        if (not fs::create_directory(path, err)) {
+          log_->error(
+              "can not create storage dir: {}\n{}", path, err.message());
+          return false;
+        }
+      }
 
-  auto res = FlatFile::check_consistency(path);
-  return std::make_unique<FlatFile>(*res, path, private_tag{});
-}
+      return true;
+    }
 
-bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
-  // TODO(x3medima17): Change bool to generic Result return type
+    boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
+        const std::string &path) {
+      auto log_ = logger::log("BlockStorageNuDB");
 
-  if (id != current_id_ + 1) {
-    log_->warn("Cannot append non-consecutive block");
-    return false;
-  }
+      if (!FlatFile::init_directory(path)) {
+        return boost::none;
+      }
 
-  auto next_id = id;
-  const auto file_name = boost::filesystem::path{dump_dir_} / id_to_name(id);
+      // paths to NuDB files
+      fs::path dat = fs::path{path} / "iroha.dat";
+      fs::path key = fs::path{path} / "iroha.key";
+      fs::path log = fs::path{path} / "iroha.log";
 
-  // Write block to binary file
-  if (boost::filesystem::exists(file_name)) {
-    // File already exist
-    log_->warn("insertion for {} failed, because file already exists", id);
-    return false;
-  }
-  // New file will be created
-  boost::filesystem::ofstream file(file_name.native(), std::ofstream::binary);
-  if (not file.is_open()) {
-    log_->warn("Cannot open file by index {} for writing", id);
-    return false;
-  }
+      // try to open NuDB database
+      nudb::error_code ec;
+      auto db = std::make_unique<nudb::store>();
+      db->open(dat.string(), key.string(), log.string(), ec);
+      if (ec) {
+        // remove error message
+        ec.clear();
 
-  auto val_size =
-      sizeof(std::remove_reference<decltype(block)>::type::value_type);
+        log_->info("no database at {}, creating new", path);
 
-  file.write(reinterpret_cast<const char *>(block.data()),
-             block.size() * val_size);
+        // then no database is there. create new database.
+        nudb::create<nudb::xxhasher>(dat.string(),
+                                     key.string(),
+                                     log.string(),
+                                     FlatFile::appid_,
+                                     nudb::make_salt(),
+                                     sizeof(Identifier),
+                                     nudb::block_size("."),
+                                     FlatFile::load_factor_,
+                                     ec);
+        if (ec) {
+          log_->critical("can not create NuDB database: {}", ec.message());
+          return boost::none;
+        }
 
-  // Update internals, release lock
-  current_id_ = next_id;
-  return true;
-}
+        // and open again
+        db->open(dat.string(), key.string(), log.string(), ec);
+        if (ec) {
+          log_->critical("can not open NuDB database: {}", ec.message());
+          return boost::none;
+        }
+      }
 
-nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
-  const auto filename =
-      boost::filesystem::path{dump_dir_} / FlatFile::id_to_name(id);
-  if (not boost::filesystem::exists(filename)) {
-    log_->info("get({}) file not found", id);
-    return nonstd::nullopt;
-  }
-  const auto fileSize = boost::filesystem::file_size(filename);
-  std::vector<uint8_t> buf;
-  buf.resize(fileSize);
-  boost::filesystem::ifstream file(filename, std::ifstream::binary);
-  if (not file.is_open()) {
-    log_->info("get({}) problem with opening file", id);
-    return nonstd::nullopt;
-  }
-  file.read(reinterpret_cast<char *>(buf.data()), fileSize);
-  return buf;
-}
+      log_->info("database at {} has been successfully opened", path);
 
-std::string FlatFile::directory() const {
-  return dump_dir_;
-}
+      // clear error message
+      ec.clear();
 
-Identifier FlatFile::last_id() const {
-  return current_id_.load();
-}
+      // begin initialization
+      auto total_blocks = FlatFile::count_blocks(*db, ec);
+      // TODO(warchant): validate blocks during initialization
+      if (ec != nudb::error::key_not_found) {
+        // cound_blocks searches for the last empty block sequentially, and ends
+        // with error "nudb::error::key_not_found". If we did not get this type
+        // of error -- something bad happened.
+        log_->critical("can not read database to count blocks: {}",
+                       ec.message());
+        return boost::none;
+      }
 
-void FlatFile::dropAll() {
-  remove_all(dump_dir_);
-  auto res = FlatFile::check_consistency(dump_dir_);
-  current_id_.store(*res);
-}
+      return std::unique_ptr<FlatFile>(
+          new FlatFile(std::move(db), path, total_blocks));
+    }
 
-// ----------| private API |----------
+    const std::string &FlatFile::directory() const {
+      return path_;
+    }
 
-FlatFile::FlatFile(Identifier current_id,
-                   const std::string &path,
-                   FlatFile::private_tag)
-    : dump_dir_(path) {
-  log_ = logger::log("FlatFile");
-  current_id_.store(current_id);
-}
+    bool FlatFile::add(Identifier id, const std::vector<uint8_t> &blob) {
+      if (current_id_ + 1 != id) {
+        log_->warn("add(): appending non-consecutive block");
+        return false;
+      }
 
-nonstd::optional<Identifier> FlatFile::check_consistency(
-    const std::string &dump_dir) {
-  auto log = logger::log("FLAT_FILE");
+      nudb::error_code ec;
+      auto key = serialize_uint32(id);
+      db_->insert(key.data(), blob.data(), blob.size(), ec);
+      if (ec) {
+        log_->error("BlockStorage::add(): {}", ec.message());
+        return false;
+      }
+      current_id_.store(id);
+      return true;
+    }
 
-  if (dump_dir.empty()) {
-    log->error("check_consistency({}), not directory", dump_dir);
-    return nonstd::nullopt;
-  }
+    boost::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
+      nudb::error_code ec;
+      boost::optional<std::vector<uint8_t>> ret;
+      auto key = serialize_uint32(id);
+      db_->fetch(key.data(),
+                 [&ret](const void *p, size_t size) {
+                   if (size == 0) {
+                     ret = boost::none;
+                   } else {
+                     const auto *c = static_cast<const uint8_t *>(p);
+                     ret = std::vector<uint8_t>{c, c + size};
+                   }
+                 },
+                 ec);
+      if (ec) {
+        log_->error("BlockStorage::get(): {}", ec.message());
+        return boost::none;
+      }
 
-  auto const files = [&dump_dir] {
-    std::vector<boost::filesystem::path> ps;
-    std::copy(boost::filesystem::directory_iterator{dump_dir},
-              boost::filesystem::directory_iterator{},
-              std::back_inserter(ps));
-    std::sort(ps.begin(), ps.end(), std::less<boost::filesystem::path>());
-    return ps;
-  }();
+      return ret;
+    }
 
-  auto const missing = boost::range::find_if(
-      files | boost::adaptors::indexed(1), [](const auto &it) {
-        return FlatFile::id_to_name(it.index()) != it.value().filename();
-      });
+    bool FlatFile::dropAll() {
+      nudb::error_code ec1, ec2, ec3;
 
-  std::for_each(
-      missing.get(), files.cend(), [](const boost::filesystem::path &p) {
-        boost::filesystem::remove(p);
-      });
+      nudb::erase_file(db_->dat_path(), ec1);
+      nudb::erase_file(db_->log_path(), ec2);
+      nudb::erase_file(db_->key_path(), ec3);
 
-  return missing.get() - files.cbegin();
-}
+      return not(ec1 or ec2 or ec3);
+    }
+
+    uint32_t FlatFile::count_blocks(nudb::store &db, nudb::error_code &ec) {
+      auto log_ = logger::log("BlockStorageNuDB::count_blocks");
+
+      FlatFile::Identifier current = FIRST_BLOCK_AT;
+
+      bool found_last = false;
+
+      do {
+        auto key = serialize_uint32(current);
+        db.fetch(key.data(),
+                 [&found_last, &current](const void *value, size_t size) {
+                   // if we read 0 bytes, then there is no such key
+                   if (size == 0u) {
+                     found_last = true;
+                     return;
+                   }
+
+                   // go to the next key
+                   current++;
+                 },
+                 ec);
+        if (ec == nudb::error::key_not_found) {
+          return current;
+        } else if (ec) {
+          // some other error occurred
+          log_->error("{}", ec.message());
+          return 0;
+        }
+      } while (not found_last);
+
+      return current;
+    }
+
+    std::array<uint8_t, sizeof(uint32_t)> FlatFile::serialize_uint32(
+        uint32_t t) {
+      std::array<uint8_t, sizeof(uint32_t)> b{};
+
+      uint8_t i = 0;
+      b[i++] = (t >> 24) & 0xFF;
+      b[i++] = (t >> 16) & 0xFF;
+      b[i++] = (t >> 8) & 0xFF;
+      b[i++] = t & 0xFF;
+
+      return b;
+    }
+
+    Identifier FlatFile::last_id() const {
+      return current_id_;
+    }
+
+    /** private **/
+
+    FlatFile::FlatFile(std::unique_ptr<nudb::store> db,
+                       const std::string &path,
+                       uint32_t current)
+        : db_(std::move(db)),
+          current_id_(current),
+          path_(path),
+          log_(logger::log("FlatFile")) {}
+
+  }  // namespace ametsuchi
+}  // namespace iroha

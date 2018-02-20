@@ -15,6 +15,7 @@ addtest(flat_file_test flat_file_test.cpp)
 target_link_libraries(flat_file_test
     ametsuchi
     libs_common
+    flat_file
     )
 
 addtest(block_query_test block_query_test.cpp)

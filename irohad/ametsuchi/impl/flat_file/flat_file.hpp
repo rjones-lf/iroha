@@ -20,9 +20,11 @@
 
 #include <atomic>
 #include <memory>
-#include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
+
+#include <boost/optional.hpp>
+#include <nudb/nudb.hpp>
 
 #include "logger/logger.hpp"
 
@@ -33,13 +35,9 @@ namespace iroha {
      * Solid storage based on raw files
      */
     class FlatFile {
-      /**
-       * Private tag used to construct unique and shared pointers
-       * without new operator
-       */
-      struct private_tag {};
-
      public:
+      ~FlatFile() = default;
+
       // ----------| public API |----------
 
       /**
@@ -47,28 +45,12 @@ namespace iroha {
        */
       using Identifier = uint32_t;
 
-      static const uint32_t DIGIT_CAPACITY = 16;
-
-      /**
-       * Convert id to a string representation. The string representation is
-       * always DIGIT_CAPACITY-character width regardless of the value of `id`.
-       * If the length of the string representation of `id` is less than
-       * DIGIT_CAPACITY, then the returned value is filled with leading zeros.
-       *
-       * For example, if str_rep(`id`) is "123", then the returned value is
-       * "0000000000000123".
-       *
-       * @param id - for conversion
-       * @return string repr of identifier
-       */
-      static std::string id_to_name(Identifier id);
-
       /**
        * Create storage in paths
        * @param path - target path for creating
        * @return created storage
        */
-      static nonstd::optional<std::unique_ptr<FlatFile>> create(
+      static boost::optional<std::unique_ptr<FlatFile>> create(
           const std::string &path);
 
       /**
@@ -83,29 +65,19 @@ namespace iroha {
        * @param id - reference key
        * @return - blob, if exists
        */
-      nonstd::optional<std::vector<uint8_t>> get(Identifier id) const;
+      boost::optional<std::vector<uint8_t>> get(Identifier id) const;
 
       /**
        * @return folder of storage
        */
-      std::string directory() const;
+      const std::string &directory() const;
 
       /**
        * @return maximal not null key
        */
       Identifier last_id() const;
 
-      /**
-       * Checking consistency of storage for provided folder
-       * If some block in the middle is missing all blocks following it are
-       * deleted
-       * @param dump_dir - folder of storage
-       * @return - last available identifier
-       */
-      static nonstd::optional<Identifier> check_consistency(
-          const std::string &dump_dir);
-
-      void dropAll();
+      bool dropAll();
 
       // ----------| modify operations |----------
 
@@ -117,34 +89,40 @@ namespace iroha {
 
       FlatFile &operator=(FlatFile &&rhs) = delete;
 
-      // ----------| private API |----------
-
-      /**
-       * Create storage in path with respect to last key
-       * @param last_id - maximal key written in storage
-       * @param path - folder of storage
-       */
-      FlatFile(Identifier last_id,
-               const std::string &path,
-               FlatFile::private_tag);
+      static const size_t FIRST_BLOCK_AT{1};
 
      private:
-      // ----------| private fields |----------
+      //< arbitrary number, app-specific
+      static constexpr size_t appid_{0x1337u};
+
+      //< load factor for basket
+      static constexpr float load_factor_{0.5f};
+
+      static uint32_t count_blocks(nudb::store &db, nudb::error_code &ec);
+
+      static bool init_directory(const std::string &path);
+
+      std::unique_ptr<nudb::store> db_;
 
       /**
        * Last written key
        */
       std::atomic<Identifier> current_id_;
 
-      /**
-       * Folder of storage
-       */
-      const std::string dump_dir_;
+      std::string path_;
 
       logger::Logger log_;
 
-     public:
-      ~FlatFile() = default;
+      /**
+       * Serializes uint32 as 4-byte big-endian array.
+       * @param t a number
+       * @return array of 4 bytes
+       */
+      static std::array<uint8_t, sizeof(uint32_t)> serialize_uint32(uint32_t t);
+
+      FlatFile(std::unique_ptr<nudb::store> db,
+               const std::string &path,
+               uint32_t current);
     };
   }  // namespace ametsuchi
 }  // namespace iroha

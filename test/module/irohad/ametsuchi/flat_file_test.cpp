@@ -134,14 +134,6 @@ TEST_F(BlStore_Test, BlockStoreInitializationFromNonemptyFolder) {
   ASSERT_EQ(bl_store1->last_id(), bl_store2->last_id());
 }
 
-/**
- * @given empty folder name
- * @then check consistency fails
- */
-TEST_F(BlStore_Test, EmptyDumpDir) {
-  auto res = FlatFile::check_consistency("");
-  ASSERT_FALSE(res);
-}
 
 /**
  * @given empty folder with block store
@@ -169,44 +161,6 @@ TEST_F(BlStore_Test, GetDirectory) {
   ASSERT_EQ(bl_store->directory(), block_store_path);
 }
 
-/**
- * @given block store with one entry
- * @when user has not enough permissions
- * @then get() fails
- */
-TEST_F(BlStore_Test, GetDeniedBlock) {
-  auto store = FlatFile::create(block_store_path);
-  ASSERT_TRUE(store);
-  auto bl_store = std::move(*store);
-  auto id = 1u;
-  bl_store->add(id, block);
-
-  auto filename =
-      boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
-
-  boost::filesystem::remove(filename);
-  auto res = bl_store->get(id);
-  ASSERT_FALSE(res);
-}
-
-/**
- * @given empty folder with one entry
- * @when tries to add an entry with an existing id
- * @then add() fails
- */
-TEST_F(BlStore_Test, AddExistingId) {
-  auto store = FlatFile::create(block_store_path);
-  ASSERT_TRUE(store);
-  auto bl_store = std::move(*store);
-  auto id = 1u;
-  const auto file_name =
-      boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
-  std::ofstream fout(file_name.string());
-  fout.close();
-
-  auto res = bl_store->add(id, block);
-  ASSERT_FALSE(res);
-}
 
 /**
  * @given empty folder

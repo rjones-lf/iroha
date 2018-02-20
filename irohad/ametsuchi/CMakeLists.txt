@@ -1,5 +1,6 @@
+add_subdirectory(impl)
+
 add_library(ametsuchi
-    impl/flat_file/flat_file.cpp
     impl/storage_impl.cpp
     impl/temporary_wsv_impl.cpp
     impl/mutable_storage_impl.cpp
@@ -19,4 +20,5 @@ target_link_libraries(ametsuchi
     libs_common
     command_execution
     boost
+    flat_file
     )
