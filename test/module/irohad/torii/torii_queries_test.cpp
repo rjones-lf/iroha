@@ -18,6 +18,7 @@ limitations under the License.
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 // to compare pb amount and iroha amount
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_query_factory.hpp"
@@ -505,11 +506,14 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   account.account_id = "accountA";
 
   auto txs_observable = rxcpp::observable<>::iterate([account] {
-    std::vector<iroha::model::Transaction> result;
+    std::vector<std::shared_ptr<shared_model::interface::Transaction>> result;
     for (size_t i = 0; i < 3; ++i) {
-      iroha::model::Transaction current;
-      current.creator_account_id = account.account_id;
-      current.tx_counter = i;
+      auto current = std::shared_ptr<shared_model::interface::Transaction>(
+          TestTransactionBuilder()
+              .creatorAccountId(account.account_id)
+              .txCounter(i)
+              .build()
+              .copy());
       result.push_back(current);
     }
     return result;

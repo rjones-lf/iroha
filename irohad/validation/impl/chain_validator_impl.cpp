@@ -18,7 +18,12 @@
 #include "validation/impl/chain_validator_impl.hpp"
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/mutable_storage.hpp"
 #include "consensus/consensus_common.hpp"
+
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-903
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace validation {
@@ -26,36 +31,51 @@ namespace iroha {
       log_ = logger::log("ChainValidator");
     }
 
-    bool ChainValidatorImpl::validateBlock(const model::Block &block,
+    bool ChainValidatorImpl::validateBlock(const wBlock block,
                                            ametsuchi::MutableStorage &storage) {
       log_->info("validate block: height {}, hash {}",
-                 block.height,
-                 block.hash.to_hexstring());
-      auto apply_block = [](
-          const auto &block, auto &queries, const auto &top_hash) {
-        auto peers = queries.getPeers();
-        if (not peers.has_value()) {
-          return false;
-        }
-        return block.prev_hash == top_hash
-            and consensus::hasSupermajority(block.sigs.size(),
-                                            peers.value().size())
-            and consensus::peersSubset(block.sigs, peers.value());
-      };
+                 block->height(),
+                 block->hash().hex());
+      auto apply_block =
+          [](const auto &block, auto &queries, const auto &top_hash) {
+            auto peers = queries.getPeers();
+            if (not peers.has_value()) {
+              return false;
+            }
+            return block->prevHash() == top_hash
+                and consensus::hasSupermajority(block->signatures().size(),
+                                                peers.value().size())
+                and consensus::peersSubset(block->signatures(), peers.value());
+          };
 
       // Apply to temporary storage
+      //      auto tmp =
+      //      std::unique_ptr<iroha::model::Block>(block.makeOldModel()); auto
+      //      bl =
+      //      std::make_unique<shared_model::proto::Block>(shared_model::proto::from_old(*tmp));
       return storage.apply(block, apply_block);
     }
 
+    // TODO: 14-02-2018 Alexey Chernyshov replace commit after relocation to
+    // shared_model https://soramitsu.atlassian.net/browse/IR-903 or
+    // https://soramitsu.atlassian.net/browse/IR-902
     bool ChainValidatorImpl::validateChain(Commit blocks,
                                            ametsuchi::MutableStorage &storage) {
       log_->info("validate chain...");
       return blocks
-          .all([this, &storage](auto block) {
+          .all([this, &storage](auto old_block) {
+
+            // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation
+            // to shared_model https://soramitsu.atlassian.net/browse/IR-903
+            auto block = shared_model::proto::from_old(old_block);
             log_->info("Validating block: height {}, hash {}",
-                       block.height,
-                       block.hash.to_hexstring());
-            return this->validateBlock(block, storage);
+                       block.height(),
+                       block.hash().hex());
+            auto tmp =
+                std::unique_ptr<iroha::model::Block>(block.makeOldModel());
+            auto bl = std::make_unique<shared_model::proto::Block>(
+                shared_model::proto::from_old(*tmp));
+            return this->validateBlock(std::move(bl), storage);
           })
           .as_blocking()
           .first();

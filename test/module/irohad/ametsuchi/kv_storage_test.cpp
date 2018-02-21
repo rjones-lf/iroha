@@ -30,6 +30,10 @@
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
+
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
@@ -107,9 +111,14 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
-      ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
-        return true;
-      });
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-887
+      auto new_block1 = std::make_unique<shared_model::proto::Block>(
+          shared_model::proto::from_old(block1));
+      ms->apply(std::move(new_block1),
+                [](const auto &blk, auto &query, const auto &top_hash) {
+                  return true;
+                });
       storage->commit(std::move(ms));
     }
   }

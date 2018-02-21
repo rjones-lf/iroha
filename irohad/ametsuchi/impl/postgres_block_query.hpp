@@ -28,9 +28,6 @@
 
 #include <boost/optional.hpp>
 
-#include "model/converters/json_block_factory.hpp"
-
-
 namespace iroha {
   namespace ametsuchi {
 
@@ -44,24 +41,29 @@ namespace iroha {
       PostgresBlockQuery(pqxx::nontransaction &transaction_,
                          FlatFile &file_store);
 
-      rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+      getAccountTransactions(const std::string &account_id) override;
 
-      rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          const std::string &account_id, const std::string &asset_id) override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+      getAccountAssetTransactions(const std::string &account_id,
+                                  const std::string &asset_id) override;
 
-      rxcpp::observable<boost::optional<model::Transaction>> getTransactions(
-          const std::vector<iroha::hash256_t> &tx_hashes) override;
+      rxcpp::observable<boost::optional<
+          std::shared_ptr<shared_model::interface::Transaction>>>
+      getTransactions(
+          const std::vector<shared_model::crypto::Hash> &tx_hashes) override;
 
-      boost::optional<model::Transaction> getTxByHashSync(
-          const std::string &hash) override;
+      boost::optional<std::shared_ptr<shared_model::interface::Transaction>>
+      getTxByHashSync(const std::string &hash) override;
 
-      rxcpp::observable<model::Block> getBlocks(uint32_t height,
-                                                uint32_t count) override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getBlocks(uint32_t height, uint32_t count) override;
 
-      rxcpp::observable<model::Block> getBlocksFrom(uint32_t height) override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getBlocksFrom(uint32_t height) override;
 
-      rxcpp::observable<model::Block> getTopBlocks(uint32_t count) override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      getTopBlocks(uint32_t count) override;
 
      private:
       /**
@@ -69,7 +71,7 @@ namespace iroha {
        * @param account_id
        * @return vector of block ids
        */
-      std::vector<iroha::model::Block::BlockHeightType> getBlockIds(
+      std::vector<shared_model::interface::types::HeightType> getBlockIds(
           const std::string &account_id);
 
       /**
@@ -77,7 +79,7 @@ namespace iroha {
        * @param hash - hash of transaction
        * @return block id or boost::none
        */
-      boost::optional<iroha::model::Block::BlockHeightType> getBlockId(
+      boost::optional<shared_model::interface::types::HeightType> getBlockId(
           const std::string &hash);
 
       /**
@@ -88,7 +90,9 @@ namespace iroha {
        * @return
        */
       std::function<void(pqxx::result &result)> callback(
-          const rxcpp::subscriber<model::Transaction> &s, uint64_t block_id);
+          const rxcpp::subscriber<
+              std::shared_ptr<shared_model::interface::Transaction>> &s,
+          uint64_t block_id);
 
       FlatFile &block_store_;
       pqxx::nontransaction &transaction_;

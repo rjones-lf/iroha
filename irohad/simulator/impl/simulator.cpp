@@ -48,7 +48,10 @@ namespace iroha {
       log_->info("process proposal");
       // Get last block from local ledger
       block_queries_->getTopBlocks(1).as_blocking().subscribe(
-          [this](auto block) { last_block = block; });
+          [this](auto block) {
+            last_block =
+                *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
+          });
       if (not last_block.has_value()) {
         log_->warn("Could not fetch last block");
         return;

@@ -24,6 +24,7 @@
 
 #include "model/peer.hpp"
 #include "model/signature.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -48,14 +49,20 @@ namespace iroha {
      * @return true, if all public keys of signatures are present in peers
      * collection, false otherwise
      */
-    inline bool peersSubset(std::vector<model::Signature> signatures,
+    inline bool peersSubset(const shared_model::interface::SignatureSetType &signatures,
                             std::vector<model::Peer> peers) {
       return std::all_of(
           signatures.begin(), signatures.end(), [peers](auto signature) {
             return std::find_if(peers.begin(),
                                 peers.end(),
                                 [signature](auto peer) {
-                                  return signature.pubkey == peer.pubkey;
+
+                                  // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+                                  // shared_model https://soramitsu.atlassian.net/browse/IR-903
+                                  shared_model::crypto::PublicKey new_pubkey(
+                                  {peer.pubkey.begin(), peer.pubkey.end()});
+
+                                  return signature->publicKey() == new_pubkey;
                                 })
                 != peers.end();
           });

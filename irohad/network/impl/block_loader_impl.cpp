@@ -55,7 +55,7 @@ rxcpp::observable<Wrapper<Block>> BlockLoaderImpl::retrieveBlocks(
     block_query_->getTopBlocks(1)
         .subscribe_on(rxcpp::observe_on_new_thread())
         .as_blocking()
-        .subscribe([&top_block](auto block) { top_block = block; });
+        .subscribe([&top_block](auto block) { top_block = *std::shared_ptr<iroha::model::Block>(block->makeOldModel()); });
     if (not top_block.has_value()) {
       log_->error(kTopBlockRetrieveFail);
       subscriber.on_completed();

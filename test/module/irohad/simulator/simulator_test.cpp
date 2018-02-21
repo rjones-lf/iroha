@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+#include <backend/protobuf/transaction.hpp>
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 #include "framework/test_subscriber.hpp"
 #include "simulator/impl/simulator.hpp"
@@ -74,20 +76,30 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal = model::Proposal(txs);
   proposal.height = 2;
 
-  model::Block block;
-  block.height = proposal.height - 1;
+  shared_model::proto::Block block =
+      TestBlockBuilder()
+          .txNumber(0)
+          .transactions(std::vector<shared_model::proto::Transaction>())
+          .height(proposal.height - 1)
+          .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
+          .build();
+  auto blocks_observable = rxcpp::observable<>::create<
+      std::shared_ptr<::shared_model::interface::Block>>([&block](auto s) {
+
+    s.on_next(std::shared_ptr<::shared_model::interface::Block>(block.copy()));
+    s.on_completed();
+  });
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
 
-  EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block)));
+  EXPECT_CALL(*query, getTopBlocks(1)).WillOnce(Return(blocks_observable));
 
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(1);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
 
   init();
 
@@ -120,14 +132,15 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
   EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::empty<model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Block>>()));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
   init();
 
@@ -151,20 +164,30 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   auto proposal = model::Proposal(txs);
   proposal.height = 2;
 
-  model::Block block;
-  block.height = proposal.height;
+  auto block =
+      TestBlockBuilder()
+          .txNumber(0)
+          .transactions(std::vector<shared_model::proto::Transaction>())
+          .height(proposal.height)
+          .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
+          .build();
+  auto blocks_observable = rxcpp::observable<>::create<
+      std::shared_ptr<::shared_model::interface::Block>>([&block](auto s) {
+
+    s.on_next(std::shared_ptr<shared_model::interface::Block>(block.copy()));
+    s.on_completed();
+  });
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
-  EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block)));
+  EXPECT_CALL(*query, getTopBlocks(1)).WillOnce(Return(blocks_observable));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
   init();
 

@@ -16,6 +16,7 @@
  */
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "framework/test_subscriber.hpp"
 #include "model/permissions.hpp"
@@ -549,21 +550,25 @@ class GetAccountTransactionsTest : public QueryValidateExecuteTest {
     txs_observable = getDefaultTransactions(account_id);
   }
 
-  rxcpp::observable<Transaction> getDefaultTransactions(
-      const std::string &creator) {
+  rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+  getDefaultTransactions(const std::string &creator) {
     return rxcpp::observable<>::iterate([&creator, this] {
-      std::vector<::Transaction> result;
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>> result;
       for (size_t i = 0; i < N; ++i) {
-        Transaction current;
-        current.creator_account_id = creator;
-        current.tx_counter = i;
+        auto current = std::shared_ptr<shared_model::interface::Transaction>(
+            TestTransactionBuilder()
+                .creatorAccountId(creator)
+                .txCounter(i)
+                .build()
+                .copy());
         result.push_back(current);
       }
       return result;
     }());
   }
 
-  rxcpp::observable<Transaction> txs_observable;
+  rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+      txs_observable;
   std::shared_ptr<GetAccountTransactions> get_tx;
   size_t N = 3;
 };
@@ -588,7 +593,7 @@ TEST_F(GetAccountTransactionsTest, MyAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(admin_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(admin_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -612,7 +617,7 @@ TEST_F(GetAccountTransactionsTest, AllAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -636,7 +641,7 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -664,7 +669,7 @@ TEST_F(GetAccountTransactionsTest, GrantAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -706,7 +711,9 @@ TEST_F(GetAccountTransactionsTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountTransactions(get_tx->account_id))
-      .WillOnce(Return(rxcpp::observable<>::empty<Transaction>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<
+                 std::shared_ptr<shared_model::interface::Transaction>>()));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<TransactionsResponse>(response);
@@ -726,21 +733,26 @@ class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
     txs_observable = getDefaultTransactions(account_id, asset_id);
   }
 
-  rxcpp::observable<Transaction> getDefaultTransactions(
-      const std::string &creator_id, const std::string &asset_id) {
+  rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+  getDefaultTransactions(const std::string &creator_id,
+                         const std::string &asset_id) {
     return rxcpp::observable<>::iterate([&creator_id, asset_id, this] {
-      std::vector<::Transaction> result;
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>> result;
       for (size_t i = 0; i < N; ++i) {
-        Transaction current;
-        current.creator_account_id = creator_id;
-        current.tx_counter = i;
+        auto current = std::shared_ptr<shared_model::interface::Transaction>(
+            TestTransactionBuilder()
+                .creatorAccountId(creator_id)
+                .txCounter(i)
+                .build()
+                .copy());
         result.push_back(current);
       }
       return result;
     }());
   }
 
-  rxcpp::observable<Transaction> txs_observable;
+  rxcpp::observable<std::shared_ptr<shared_model::interface::Transaction>>
+      txs_observable;
   std::shared_ptr<GetAccountAssetTransactions> get_tx;
   size_t N = 3;
 };
@@ -765,7 +777,7 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(admin_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(admin_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -789,7 +801,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -813,7 +825,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -841,7 +853,7 @@ TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
 
   auto TxWrapper = make_test_subscriber<CallExact>(txs_observable, N);
   TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(account_id, val.creator_account_id); });
+      [this](auto val) { EXPECT_EQ(account_id, val->creatorAccountId()); });
   ASSERT_TRUE(TxWrapper.validate());
 }
 
@@ -884,7 +896,9 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
 
   EXPECT_CALL(*block_query,
               getAccountAssetTransactions(get_tx->account_id, asset_id))
-      .WillOnce(Return(rxcpp::observable<>::empty<Transaction>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<
+                 std::shared_ptr<shared_model::interface::Transaction>>()));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<TransactionsResponse>(response);
@@ -907,7 +921,9 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
 
   EXPECT_CALL(*block_query,
               getAccountAssetTransactions(get_tx->account_id, get_tx->asset_id))
-      .WillOnce(Return(rxcpp::observable<>::empty<Transaction>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<
+                 std::shared_ptr<shared_model::interface::Transaction>>()));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<TransactionsResponse>(response);

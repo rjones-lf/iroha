@@ -27,9 +27,12 @@
 
 #include <boost/format.hpp>
 
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
+
 namespace iroha {
   namespace ametsuchi {
-
     const char *kCommandExecutorError = "Cannot create CommandExecutorFactory";
     const char *kPsqlBroken = "Connection to PostgreSQL broken: {}";
     const char *kTmpWsv = "TemporaryWsv";
@@ -111,7 +114,12 @@ namespace iroha {
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block.hash; });
+          .subscribe([&top_hash](auto block) {
+            top_hash = hash256_t();
+            std::copy(block->hash().blob().begin(),
+                      block->hash().blob().end(),
+                      top_hash->data());
+          });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
@@ -128,8 +136,14 @@ namespace iroha {
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
+
+            // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation
+            // to shared_model https://soramitsu.atlassian.net/browse/IR-887
+            auto new_block = std::make_unique<shared_model::proto::Block>(
+                shared_model::proto::from_old(block));
+
             inserted =
-                storage.value->apply(block,
+                storage.value->apply(std::move(new_block),
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -179,15 +193,17 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    expected::Result<ConnectionContext, std::string> StorageImpl::initConnections(
-        std::string block_store_dir, std::string postgres_options) {
+    expected::Result<ConnectionContext, std::string>
+    StorageImpl::initConnections(std::string block_store_dir,
+                                 std::string postgres_options) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
 
       auto block_store = FlatFile::create(block_store_dir);
       if (not block_store) {
         return expected::makeError(
-            (boost::format("Cannot create block store in {}") % block_store_dir).str());
+            (boost::format("Cannot create block store in {}") % block_store_dir)
+                .str());
       }
       log_->info("block store created");
 
@@ -205,10 +221,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
           *postgres_connection, "Storage");
       log_->info("transaction to PostgreSQL initialized");
 
-      return expected::makeValue(ConnectionContext(
-          std::move(*block_store),
-          std::move(postgres_connection),
-          std::move(wsv_transaction)));
+      return expected::makeValue(
+          ConnectionContext(std::move(*block_store),
+                            std::move(postgres_connection),
+                            std::move(wsv_transaction)));
     }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
@@ -217,7 +233,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto ctx_result = initConnections(block_store_dir, postgres_options);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
-          [&](expected::Value<ConnectionContext> &ctx){
+          [&](expected::Value<ConnectionContext> &ctx) {
             storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                 new StorageImpl(block_store_dir,
                                 postgres_options,
@@ -225,10 +241,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
                                 std::move(ctx.value.pg_lazy),
                                 std::move(ctx.value.pg_nontx))));
           },
-          [&](expected::Error<std::string> &error) {
-            storage = error;
-      }
-      );
+          [&](expected::Error<std::string> &error) { storage = error; });
       return storage;
     }
 

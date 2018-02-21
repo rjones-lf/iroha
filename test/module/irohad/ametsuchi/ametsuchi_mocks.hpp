@@ -19,6 +19,8 @@
 #define IROHA_AMETSUCHI_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include <boost/optional.hpp>
+
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
@@ -27,15 +29,14 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "common/result.hpp"
+#include "cryptography/hash.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
 #include "model/domain.hpp"
 #include "model/peer.hpp"
-
-#include <boost/optional.hpp>
-
-#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -124,23 +125,36 @@ namespace iroha {
 
     class MockBlockQuery : public BlockQuery {
      public:
+      MOCK_METHOD1(getAccountTransactions,
+                   rxcpp::observable<
+                       std::shared_ptr<shared_model::interface::Transaction>>(
+                       const std::string &account_id));
+      MOCK_METHOD1(getTxByHashSync,
+                   boost::optional<
+                       std::shared_ptr<shared_model::interface::Transaction>>(
+                       const std::string &hash));
+      MOCK_METHOD2(getAccountAssetTransactions,
+                   rxcpp::observable<
+                       std::shared_ptr<shared_model::interface::Transaction>>(
+                       const std::string &account_id,
+                       const std::string &asset_id));
       MOCK_METHOD1(
-          getAccountTransactions,
-          rxcpp::observable<model::Transaction>(const std::string &account_id));
-      MOCK_METHOD1(
-          getTxByHashSync,
-          boost::optional<model::Transaction>(const std::string &hash));
+          getTransactions,
+          rxcpp::observable<boost::optional<
+              std::shared_ptr<shared_model::interface::Transaction>>>(
+              const std::vector<shared_model::crypto::Hash> &tx_hashes));
       MOCK_METHOD2(
-          getAccountAssetTransactions,
-          rxcpp::observable<model::Transaction>(const std::string &account_id,
-                                                const std::string &asset_id));
-      MOCK_METHOD1(getTransactions,
-                   rxcpp::observable<boost::optional<model::Transaction>>(
-                       const std::vector<iroha::hash256_t> &tx_hashes));
-      MOCK_METHOD2(getBlocks,
-                   rxcpp::observable<model::Block>(uint32_t, uint32_t));
-      MOCK_METHOD1(getBlocksFrom, rxcpp::observable<model::Block>(uint32_t));
-      MOCK_METHOD1(getTopBlocks, rxcpp::observable<model::Block>(uint32_t));
+          getBlocks,
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
+              uint32_t, uint32_t));
+      MOCK_METHOD1(
+          getBlocksFrom,
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
+              uint32_t));
+      MOCK_METHOD1(
+          getTopBlocks,
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
+              uint32_t));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {
@@ -154,9 +168,10 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           apply,
-          bool(const model::Block &,
-               std::function<bool(
-                   const model::Block &, WsvQuery &, const hash256_t &)>));
+          bool(const std::shared_ptr<shared_model::interface::Block> ,
+               std::function<bool(const std::shared_ptr<shared_model::interface::Block>,
+                                  WsvQuery &,
+                                  const shared_model::crypto::Hash &)>));
     };
 
     /**

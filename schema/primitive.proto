@@ -34,9 +34,9 @@ enum RolePermission {
     can_get_my_txs = 32;
     can_get_all_txs = 33;
    // Grant permissions
-    can_grant_add_signatory = 26;
-    can_grant_remove_signatory = 27;
-    can_grant_set_quorum = 28;
+    can_grant_can_add_signatory = 26;
+    can_grant_can_remove_signatory = 27;
+    can_grant_can_set_quorum = 28;
     can_grant_can_transfer = 29;
     can_grant_can_set_detail = 30;
 }
