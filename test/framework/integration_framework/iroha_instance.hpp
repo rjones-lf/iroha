@@ -37,14 +37,14 @@ namespace integration_framework {
     void rawInsertBlock(const iroha::model::Block &block) {
       instance_->storage->insertBlock({block});
     }
-
-    void initPipeline(const iroha::keypair_t &key_pair) {
+    void initPipeline(const iroha::keypair_t &key_pair,
+                      size_t max_proposal_size = 10) {
       keypair_ = key_pair;
       instance_ = std::make_shared<TestIrohad>(block_store_dir_,
                                                pg_conn_,
                                                torii_port_,
                                                internal_port_,
-                                               max_proposal_size_,
+                                               max_proposal_size,
                                                proposal_delay_,
                                                vote_delay_,
                                                load_delay_,
@@ -84,7 +84,6 @@ namespace integration_framework {
     const std::string pg_conn_ = getPostgreCredsOrDefault();
     const size_t torii_port_ = 11501;
     const size_t internal_port_ = 10001;
-    const size_t max_proposal_size_ = 10;
     const std::chrono::milliseconds proposal_delay_ = 5000ms;
     const std::chrono::milliseconds vote_delay_ = 5000ms;
     const std::chrono::milliseconds load_delay_ = 5000ms;

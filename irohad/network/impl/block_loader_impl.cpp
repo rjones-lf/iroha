@@ -16,11 +16,20 @@
  */
 
 #include "network/impl/block_loader_impl.hpp"
+
+#include <algorithm>
+
 #include <grpc++/create_channel.h>
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+
+using iroha::Wrapper;
+using iroha::makeWrapper;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace iroha::network;
+using namespace shared_model::crypto;
+using namespace shared_model::interface;
 
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
@@ -38,53 +47,54 @@ const char *kInvalidBlockSignatures = "Block signatures are invalid";
 const char *kPeerRetrieveFail = "Failed to retrieve peers";
 const char *kPeerFindFail = "Failed to find requested peer";
 
-rxcpp::observable<Block> BlockLoaderImpl::retrieveBlocks(
-    model::Peer::KeyType peer_pubkey) {
-  return rxcpp::observable<>::create<Block>(
-      [this, peer_pubkey](auto subscriber) {
-        nonstd::optional<Block> top_block;
-        block_query_->getTopBlocks(1)
-            .subscribe_on(rxcpp::observe_on_new_thread())
-            .as_blocking()
-            .subscribe([&top_block](auto block) { top_block = block; });
-        if (not top_block.has_value()) {
-          log_->error(kTopBlockRetrieveFail);
-          subscriber.on_completed();
-          return;
-        }
+rxcpp::observable<Wrapper<Block>> BlockLoaderImpl::retrieveBlocks(
+    const PublicKey &peer_pubkey) {
+  return rxcpp::observable<>::create<Wrapper<Block>>([this, peer_pubkey](
+                                                         auto subscriber) {
+    nonstd::optional<iroha::model::Block> top_block;
+    block_query_->getTopBlocks(1)
+        .subscribe_on(rxcpp::observe_on_new_thread())
+        .as_blocking()
+        .subscribe([&top_block](auto block) { top_block = block; });
+    if (not top_block.has_value()) {
+      log_->error(kTopBlockRetrieveFail);
+      subscriber.on_completed();
+      return;
+    }
 
-        auto peer = this->findPeer(peer_pubkey);
-        if (not peer.has_value()) {
-          log_->error(kPeerNotFound);
-          subscriber.on_completed();
-          return;
-        }
+    auto peer = this->findPeer(peer_pubkey);
+    if (not peer.has_value()) {
+      log_->error(kPeerNotFound);
+      subscriber.on_completed();
+      return;
+    }
 
-        proto::BlocksRequest request;
-        grpc::ClientContext context;
-        protocol::Block block;
+    proto::BlocksRequest request;
+    grpc::ClientContext context;
+    protocol::Block block;
 
-        // request next block to our top
-        request.set_height(top_block->height + 1);
+    // request next block to our top
+    request.set_height(top_block->height + 1);
 
-        auto reader =
-            this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
-        while (reader->Read(&block)) {
-          auto &&result = factory_.deserialize(block);
-          if (not crypto_provider_->verify(result)) {
-            log_->error(kInvalidBlockSignatures);
-            context.TryCancel();
-          } else {
-            subscriber.on_next(result);
-          }
-        }
-        reader->Finish();
-        subscriber.on_completed();
-      });
+    auto reader =
+        this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
+    while (reader->Read(&block)) {
+      auto result = makeWrapper<Block, shared_model::proto::Block>(block);
+      std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
+      if (not crypto_provider_->verify(*old_block)) {
+        log_->error(kInvalidBlockSignatures);
+        context.TryCancel();
+      } else {
+        subscriber.on_next(std::move(result));
+      }
+    }
+    reader->Finish();
+    subscriber.on_completed();
+  });
 }
 
-nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
-    Peer::KeyType peer_pubkey, Block::HashType block_hash) {
+nonstd::optional<Wrapper<Block>> BlockLoaderImpl::retrieveBlock(
+    const PublicKey &peer_pubkey, const Block::HashType &block_hash) {
   auto peer = findPeer(peer_pubkey);
   if (not peer.has_value()) {
     log_->error(kPeerNotFound);
@@ -96,7 +106,7 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
   protocol::Block block;
 
   // request block with specified hash
-  request.set_hash(block_hash.to_string());
+  request.set_hash(toBinaryString(block_hash));
 
   auto status =
       getPeerStub(peer.value()).retrieveBlock(&context, request, &block);
@@ -105,25 +115,32 @@ nonstd::optional<Block> BlockLoaderImpl::retrieveBlock(
     return nonstd::nullopt;
   }
 
-  auto &&result = factory_.deserialize(block);
-  if (not crypto_provider_->verify(result)) {
+  auto result = makeWrapper<Block, shared_model::proto::Block>(block);
+  std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
+  if (not crypto_provider_->verify(*old_block)) {
     log_->error(kInvalidBlockSignatures);
     return nonstd::nullopt;
   }
 
-  return result;
+  return nonstd::optional<Wrapper<Block>>(std::move(result));
 }
 
-nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
+nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
+    const PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers.has_value()) {
     log_->error(kPeerRetrieveFail);
     return nonstd::nullopt;
   }
 
+  auto &blob = pubkey.blob();
   auto it = std::find_if(
-      peers.value().begin(), peers.value().end(), [&pubkey](const auto &peer) {
-        return peer.pubkey == pubkey;
+      peers.value().begin(), peers.value().end(), [&blob](const auto &peer) {
+        return peer.pubkey.size() == blob.size()
+            and std::equal(peer.pubkey.begin(),
+                           peer.pubkey.end(),
+                           blob.begin(),
+                           blob.end());
       });
   if (it == peers.value().end()) {
     log_->error(kPeerFindFail);
@@ -133,7 +150,8 @@ nonstd::optional<Peer> BlockLoaderImpl::findPeer(Peer::KeyType pubkey) {
   return *it;
 }
 
-proto::Loader::Stub &BlockLoaderImpl::getPeerStub(const Peer &peer) {
+proto::Loader::Stub &BlockLoaderImpl::getPeerStub(
+    const iroha::model::Peer &peer) {
   auto it = peer_connections_.find(peer);
   if (it == peer_connections_.end()) {
     it = peer_connections_

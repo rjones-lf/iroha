@@ -51,7 +51,7 @@ namespace torii {
      * @param response - QueryResponse
      */
     void Find(iroha::protocol::Query const &request,
-                   iroha::protocol::QueryResponse &response);
+              iroha::protocol::QueryResponse &response);
 
     grpc::Status Find(grpc::ServerContext *context,
                       const iroha::protocol::Query *request,

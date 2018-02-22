@@ -19,6 +19,8 @@
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 #include "framework/test_subscriber.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/chain_validator.hpp"
@@ -106,8 +108,8 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   // commit from consensus => storage not created => no commit
   Block test_block;
 
-  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>,
-                                std::string>>::Clear();
+  DefaultValue<
+      expected::Result<std::unique_ptr<MutableStorage>, std::string>>::Clear();
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
@@ -147,7 +149,10 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .WillOnce(Return(rxcpp::observable<>::just(test_block)));
+      .WillOnce(Return(rxcpp::observable<>::just(
+          iroha::makeWrapper<shared_model::interface::Block,
+                             shared_model::proto::Block>(
+              shared_model::proto::from_old(test_block)))));
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<Block>()));

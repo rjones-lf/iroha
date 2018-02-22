@@ -36,7 +36,7 @@ namespace iroha {
     PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
         : transaction_(transaction),
           log_(logger::log("PostgresWsvQuery")),
-          execute_{makeExecute(transaction_, log_)} {}
+          execute_{makeExecuteOptional(transaction_, log_)} {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const std::string &permitee_account_id,
@@ -46,10 +46,8 @@ namespace iroha {
                  "SELECT * FROM account_has_grantable_permissions WHERE "
                  "permittee_account_id = "
                  + transaction_.quote(permitee_account_id)
-                 + " AND account_id = "
-                 + transaction_.quote(account_id)
-                 + " AND permission_id = "
-                 + transaction_.quote(permission_id)
+                 + " AND account_id = " + transaction_.quote(account_id)
+                 + " AND permission_id = " + transaction_.quote(permission_id)
                  + ";")
           | [](const auto &result) { return result.size() == 1; };
     }
@@ -58,8 +56,7 @@ namespace iroha {
     PostgresWsvQuery::getAccountRoles(const std::string &account_id) {
       return execute_(
                  "SELECT role_id FROM account_has_roles WHERE account_id = "
-                 + transaction_.quote(account_id)
-                 + ";")
+                 + transaction_.quote(account_id) + ";")
           | [&](const auto &result) {
               return transform<std::string>(result, [](const auto &row) {
                 return row.at(kRoleId).c_str();
@@ -72,8 +69,7 @@ namespace iroha {
       return execute_(
                  "SELECT permission_id FROM role_has_permissions WHERE role_id "
                  "= "
-                 + transaction_.quote(role_name)
-                 + ";")
+                 + transaction_.quote(role_name) + ";")
           | [&](const auto &result) {
               return transform<std::string>(result, [](const auto &row) {
                 return row.at("permission_id").c_str();
@@ -91,8 +87,7 @@ namespace iroha {
     nonstd::optional<model::Account> PostgresWsvQuery::getAccount(
         const std::string &account_id) {
       return execute_("SELECT * FROM account WHERE account_id = "
-                      + transaction_.quote(account_id)
-                      + ";")
+                      + transaction_.quote(account_id) + ";")
                  | [&](const auto &result) -> nonstd::optional<model::Account> {
         if (result.empty()) {
           log_->info(kAccountNotFound, account_id);
@@ -113,11 +108,10 @@ namespace iroha {
         const std::string &creator_account_id,
         const std::string &detail) {
       return execute_("SELECT data#>>"
-                      + transaction_.quote(
-                            "{" + creator_account_id + ", " + detail + "}")
+                      + transaction_.quote("{" + creator_account_id + ", "
+                                           + detail + "}")
                       + " FROM account WHERE account_id = "
-                      + transaction_.quote(account_id)
-                      + ";")
+                      + transaction_.quote(account_id) + ";")
                  | [&](const auto &result) -> nonstd::optional<std::string> {
         if (result.empty()) {
           log_->info(kAccountNotFound, account_id);
@@ -140,8 +134,7 @@ namespace iroha {
       return execute_(
                  "SELECT public_key FROM account_has_signatory WHERE "
                  "account_id = "
-                 + transaction_.quote(account_id)
-                 + ";")
+                 + transaction_.quote(account_id) + ";")
           |
           [&](const auto &result) {
             return transform<pubkey_t>(result, [&](const auto &row) {
@@ -158,8 +151,7 @@ namespace iroha {
         const std::string &asset_id) {
       pqxx::result result;
       return execute_("SELECT * FROM asset WHERE asset_id = "
-                      + transaction_.quote(asset_id)
-                      + ";")
+                      + transaction_.quote(asset_id) + ";")
                  | [&](const auto &result) -> nonstd::optional<model::Asset> {
         if (result.empty()) {
           log_->info("Asset {} not found", asset_id);
@@ -180,9 +172,7 @@ namespace iroha {
         const std::string &account_id, const std::string &asset_id) {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
                       + transaction_.quote(account_id)
-                      + " AND asset_id = "
-                      + transaction_.quote(asset_id)
-                      + ";")
+                      + " AND asset_id = " + transaction_.quote(asset_id) + ";")
                  | [&](const auto &result)
                  -> nonstd::optional<model::AccountAsset> {
         if (result.empty()) {
@@ -203,8 +193,7 @@ namespace iroha {
     nonstd::optional<model::Domain> PostgresWsvQuery::getDomain(
         const std::string &domain_id) {
       return execute_("SELECT * FROM domain WHERE domain_id = "
-                      + transaction_.quote(domain_id)
-                      + ";")
+                      + transaction_.quote(domain_id) + ";")
                  | [&](const auto &result) -> nonstd::optional<model::Domain> {
         if (result.empty()) {
           log_->info("Domain {} not found", domain_id);

@@ -77,56 +77,61 @@ namespace iroha {
 
     class MockWsvCommand : public WsvCommand {
      public:
-      MOCK_METHOD1(insertRole, bool(const std::string &role_name));
+      MOCK_METHOD1(insertRole, WsvCommandResult(const std::string &role_name));
       MOCK_METHOD2(insertAccountRole,
-                   bool(const std::string &account_id,
-                        const std::string &role_name));
+                   WsvCommandResult(const std::string &account_id,
+                                    const std::string &role_name));
       MOCK_METHOD2(deleteAccountRole,
-                   bool(const std::string &account_id,
-                        const std::string &role_name));
+                   WsvCommandResult(const std::string &account_id,
+                                    const std::string &role_name));
       MOCK_METHOD2(insertRolePermissions,
-                   bool(const std::string &role_id,
-                        const std::set<std::string> &permissions));
+                   WsvCommandResult(const std::string &role_id,
+                                    const std::set<std::string> &permissions));
 
       MOCK_METHOD3(insertAccountGrantablePermission,
-                   bool(const std::string &permittee_account_id,
-                        const std::string &account_id,
-                        const std::string &permission_id));
+                   WsvCommandResult(const std::string &permittee_account_id,
+                                    const std::string &account_id,
+                                    const std::string &permission_id));
 
       MOCK_METHOD3(deleteAccountGrantablePermission,
-                   bool(const std::string &permittee_account_id,
-                        const std::string &account_id,
-                        const std::string &permission_id));
+                   WsvCommandResult(const std::string &permittee_account_id,
+                                    const std::string &account_id,
+                                    const std::string &permission_id));
       MOCK_METHOD1(insertAccount,
-                   bool(const shared_model::interface::Account &));
+                   WsvCommandResult(const shared_model::interface::Account &));
       MOCK_METHOD1(updateAccount,
-                   bool(const shared_model::interface::Account &));
-      MOCK_METHOD1(insertAsset, bool(const shared_model::interface::Asset &));
-      MOCK_METHOD1(upsertAccountAsset,
-                   bool(const shared_model::interface::AccountAsset &));
+                   WsvCommandResult(const shared_model::interface::Account &));
+      MOCK_METHOD1(insertAsset,
+                   WsvCommandResult(const shared_model::interface::Asset &));
+      MOCK_METHOD1(
+          upsertAccountAsset,
+          WsvCommandResult(const shared_model::interface::AccountAsset &));
       MOCK_METHOD1(insertSignatory,
-                   bool(const shared_model::crypto::PublicKey &));
+                   WsvCommandResult(const shared_model::crypto::PublicKey &));
       MOCK_METHOD1(deleteSignatory,
-                   bool(const shared_model::crypto::PublicKey &));
+                   WsvCommandResult(const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(insertAccountSignatory,
-                   bool(const std::string &,
-                        const shared_model::crypto::PublicKey &));
+                   WsvCommandResult(const std::string &,
+                                    const shared_model::crypto::PublicKey &));
 
       MOCK_METHOD2(deleteAccountSignatory,
-                   bool(const std::string &,
-                        const shared_model::crypto::PublicKey &));
+                   WsvCommandResult(const std::string &,
+                                    const shared_model::crypto::PublicKey &));
 
-      MOCK_METHOD1(insertPeer, bool(const shared_model::interface::Peer &));
+      MOCK_METHOD1(insertPeer,
+                   WsvCommandResult(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(deletePeer, bool(const shared_model::interface::Peer &));
+      MOCK_METHOD1(deletePeer,
+                   WsvCommandResult(const shared_model::interface::Peer &));
 
-      MOCK_METHOD1(insertDomain, bool(const shared_model::interface::Domain &));
+      MOCK_METHOD1(insertDomain,
+                   WsvCommandResult(const shared_model::interface::Domain &));
       MOCK_METHOD4(setAccountKV,
-                   bool(const std::string &,
-                        const std::string &,
-                        const std::string &,
-                        const std::string &));
+                   WsvCommandResult(const std::string &,
+                                    const std::string &,
+                                    const std::string &,
+                                    const std::string &));
     };
 
     class MockBlockQuery : public BlockQuery {
@@ -162,8 +167,8 @@ namespace iroha {
       MOCK_METHOD2(
           apply,
           bool(const model::Block &,
-               std::function<bool(
-                   const model::Block &, WsvQuery &, const hash256_t &)>));
+               std::function<
+                   bool(const model::Block &, WsvQuery &, const hash256_t &)>));
     };
 
     /**
@@ -173,7 +178,8 @@ namespace iroha {
      */
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     createMockMutableStorage() {
-      return expected::makeValue<std::unique_ptr<MutableStorage>>(std::make_unique<MockMutableStorage>());
+      return expected::makeValue<std::unique_ptr<MutableStorage>>(
+          std::make_unique<MockMutableStorage>());
     }
 
     class MockMutableFactory : public MutableFactory {

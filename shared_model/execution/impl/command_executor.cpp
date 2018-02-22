@@ -35,13 +35,19 @@ namespace shared_model {
         ExecutionError{command_name, error_message});
   }
 
-  ExecutionResult errorIfNot(bool condition,
-                             const std::string &error_message,
-                             const std::string command_name) noexcept {
-    if (not condition) {
-      return makeExecutionError(error_message, command_name);
-    }
-    return {};
+  ExecutionResult makeExecutionResult(
+      const iroha::ametsuchi::WsvCommandResult &result,
+      std::string command_name) noexcept {
+    return result.match(
+        [](const iroha::expected::Value<void> &v) -> ExecutionResult {
+          return {};
+        },
+        [&command_name](
+            const iroha::expected::Error<iroha::ametsuchi::WsvError> &e)
+            -> ExecutionResult {
+          return iroha::expected::makeError(
+              ExecutionError{command_name, e.error});
+        });
   }
 
   CommandExecutor::CommandExecutor(
@@ -177,43 +183,38 @@ namespace shared_model {
                                    .accountId(command->accountId())
                                    .assetId(command->assetId())
                                    .build();
-      return errorIfNot(commands->upsertAccountAsset(account_asset_new),
-                        "failed to update account asset",
-                        command_name);
+      return makeExecutionResult(
+          commands->upsertAccountAsset(account_asset_new), command_name);
     }
 
     auto account_asset = account_asset_builder.balance(new_balance)
                              .accountId(command->accountId())
                              .assetId(command->assetId())
                              .build();
-    return errorIfNot(commands->upsertAccountAsset(account_asset),
-                      "failed to update account asset",
-                      command_name);
+    return makeExecutionResult(commands->upsertAccountAsset(account_asset),
+                               command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::AddPeer> &command) {
-    return errorIfNot(
-        commands->insertPeer(command->peer()), "peer is not unique", "AddPeer");
+    return makeExecutionResult(commands->insertPeer(command->peer()),
+                               "AddPeer");
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::AddSignatory> &command) {
     std::string command_name = "AddSignatory";
-    if (not commands->insertSignatory(command->pubkey())) {
-      return makeExecutionError("failed to insert signatory", command_name);
-    }
-    return errorIfNot(commands->insertAccountSignatory(command->accountId(),
-                                                       command->pubkey()),
-                      "failed to insert account signatory",
-                      command_name);
+    auto result = commands->insertSignatory(command->pubkey()) | [&] {
+      return commands->insertAccountSignatory(command->accountId(),
+                                              command->pubkey());
+    };
+    return makeExecutionResult(result, command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::AppendRole> &command) {
-    return errorIfNot(
+    return makeExecutionResult(
         commands->insertAccountRole(command->accountId(), command->roleName()),
-        "failed to insert account role",
         "AppendRole");
   }
 
@@ -236,21 +237,16 @@ namespace shared_model {
     auto domain = shared_model::proto::from_old(domain_old.value());
     std::string domain_default_role = domain.defaultRole();
     // TODO: remove insert signatory from here ?
-    if (not commands->insertSignatory(command->pubkey())) {
-      return makeExecutionError("failed to insert signatory", command_name);
-    }
-    if (not commands->insertAccount(account)) {
-      return makeExecutionError("failed to insert account", command_name);
-    }
-    if (not commands->insertAccountSignatory(account.accountId(),
-                                             command->pubkey())) {
-      return makeExecutionError("failed to insert account signatory",
-                                command_name);
-    }
-    return errorIfNot(
-        commands->insertAccountRole(account.accountId(), domain_default_role),
-        "failed to insert account role",
-        command_name);
+    auto result = commands->insertSignatory(command->pubkey()) | [&] {
+      return commands->insertAccount(account);
+    } | [&] {
+      return commands->insertAccountSignatory(account.accountId(),
+                                              command->pubkey());
+    } | [&] {
+      return commands->insertAccountRole(account.accountId(),
+                                         domain_default_role);
+    };
+    return makeExecutionResult(result, "CreateAccount");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -261,9 +257,7 @@ namespace shared_model {
             .precision(command->precision())
             .build();
     // The insert will fail if asset already exists
-    return errorIfNot(commands->insertAsset(new_asset),
-                      "failed to insert asset",
-                      "CreateAsset");
+    return makeExecutionResult(commands->insertAsset(new_asset), "CreateAsset");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -272,40 +266,33 @@ namespace shared_model {
                           .defaultRole(command->userDefaultRole())
                           .build();
     // The insert will fail if domain already exist
-    return errorIfNot(commands->insertDomain(new_domain),
-                      "failed to insert domain",
-                      "CreateDomain");
+    return makeExecutionResult(commands->insertDomain(new_domain),
+                               "CreateDomain");
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::CreateRole> &command) {
     std::string command_name = "CreateRole";
-    if (not commands->insertRole(command->roleName())) {
-      return makeExecutionError("failed to insert role: " + command->roleName(),
-                                command_name);
-    }
-
-    return errorIfNot(commands->insertRolePermissions(
-                          command->roleName(), command->rolePermissions()),
-                      "failed to insert role permissions",
-                      command_name);
+    auto result = commands->insertRole(command->roleName()) | [&] {
+      return commands->insertRolePermissions(command->roleName(),
+                                             command->rolePermissions());
+    };
+    return makeExecutionResult(result, command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::DetachRole> &command) {
-    return errorIfNot(
+    return makeExecutionResult(
         commands->deleteAccountRole(command->accountId(), command->roleName()),
-        "failed to delete account role",
         "DetachRole");
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::GrantPermission> &command) {
-    return errorIfNot(
+    return makeExecutionResult(
         commands->insertAccountGrantablePermission(command->accountId(),
                                                    creator_account_id,
                                                    command->permissionName()),
-        "failed to insert account grantable permission",
         "GrantPermission");
   }
 
@@ -314,23 +301,18 @@ namespace shared_model {
     std::string command_name = "RemoveSignatory";
 
     // Delete will fail if account signatory doesn't exist
-    if (not commands->deleteAccountSignatory(command->accountId(),
-                                             command->pubkey())) {
-      return makeExecutionError("failed to delete account signatory",
-                                command_name);
-    }
-    return errorIfNot(commands->deleteSignatory(command->pubkey()),
-                      "failed to delete signatory",
-                      command_name);
+    auto result = commands->deleteAccountSignatory(command->accountId(),
+                                                   command->pubkey())
+        | [&] { return commands->deleteSignatory(command->pubkey()); };
+    return makeExecutionResult(result, command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
       const detail::PolymorphicWrapper<interface::RevokePermission> &command) {
-    return errorIfNot(
+    return makeExecutionResult(
         commands->deleteAccountGrantablePermission(command->accountId(),
                                                    creator_account_id,
                                                    command->permissionName()),
-        "failed to delete account grantable permision",
         "RevokePermission");
   }
 
@@ -341,10 +323,9 @@ namespace shared_model {
       // When creator is not known, it is genesis block
       creator = "genesis";
     }
-    return errorIfNot(
+    return makeExecutionResult(
         commands->setAccountKV(
             command->accountId(), creator, command->key(), command->value()),
-        "failed to set account key-value",
         "SetAccountDetail");
   }
 
@@ -363,9 +344,7 @@ namespace shared_model {
                        .jsonData(account_old.value().json_data)
                        .quorum(command->newQuorum())
                        .build();
-    return errorIfNot(commands->updateAccount(account),
-                      "failed to update account",
-                      command_name);
+    return makeExecutionResult(commands->updateAccount(account), command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -408,9 +387,8 @@ namespace shared_model {
                                  .accountId(account_asset.accountId())
                                  .assetId(account_asset.assetId())
                                  .build();
-    return errorIfNot(commands->upsertAccountAsset(account_asset_new),
-                      "Failed to upsert account asset",
-                      command_name);
+    return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
+                               command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -473,14 +451,9 @@ namespace shared_model {
               .accountId(command->destAccountId())
               .balance(command->amount())
               .build();
-
-      if (not commands->upsertAccountAsset(dest_account_asset_new)) {
-        return makeExecutionError("failed to upsert destination balance",
-                                  command_name);
-      }
-      return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
-                        "failed to upsert source account",
-                        command_name);
+      auto result = commands->upsertAccountAsset(dest_account_asset_new) |
+          [&] { return commands->upsertAccountAsset(src_account_asset_new); };
+      return makeExecutionResult(result, command_name);
     } else {
       auto dest_account_asset =
           shared_model::proto::from_old(dest_account_asset_old.value());
@@ -494,13 +467,9 @@ namespace shared_model {
               .accountId(command->destAccountId())
               .balance(new_dest_balance.get())
               .build();
-      if (not commands->upsertAccountAsset(dest_account_asset_new)) {
-        return makeExecutionError("failed to upsert destination balance",
-                                  command_name);
-      }
-      return errorIfNot(commands->upsertAccountAsset(src_account_asset_new),
-                        "failed to upsert source account",
-                        command_name);
+      auto result = commands->upsertAccountAsset(dest_account_asset_new) |
+          [&] { return commands->upsertAccountAsset(src_account_asset_new); };
+      return makeExecutionResult(result, command_name);
     }
   }
 

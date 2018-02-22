@@ -30,7 +30,6 @@
 
 #include "model/converters/json_block_factory.hpp"
 
-
 namespace iroha {
   namespace ametsuchi {
 
@@ -93,7 +92,7 @@ namespace iroha {
       FlatFile &block_store_;
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecute(transaction_, log_));
+      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
       ExecuteType execute_;
       model::converters::JsonBlockFactory serializer_;
     };

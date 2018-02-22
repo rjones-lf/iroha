@@ -33,4 +33,9 @@ using TestQueryBuilder =
                          QueryAlwaysValidValidator,
                          Query>;
 
+using TestUnsignedQueryBuilder =
+    TemplateQueryBuilder<(1 << TemplateQueryBuilder<>::total) - 1,
+                         QueryAlwaysValidValidator,
+                         UnsignedWrapper<Query>>;
+
 #endif  // IROHA_TEST_QUERY_BUILDER_HPP

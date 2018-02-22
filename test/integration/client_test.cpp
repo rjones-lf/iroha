@@ -23,6 +23,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
 
@@ -35,6 +36,8 @@
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/permissions.hpp"
+
+#include "builders/protobuf/transaction.hpp"
 
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
@@ -128,29 +131,18 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
       .WillOnce(Return(true));
   EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
 
-  auto json_string =
-      R"({"signatures": [ {
-            "pubkey":
-              "2323232323232323232323232323232323232323232323232323232323232323",
-            "signature":
-              "23232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323"
-        }], "created_ts": 0,
-          "creator_account_id": "123",
-          "tx_counter": 0,
-          "commands": [{
-            "command_type": "AddPeer",
-            "peer": {
-              "address": "localhost",
-              "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
-            }
-        }]})";
+  auto shm_tx = shared_model::proto::TransactionBuilder()
+                    .creatorAccountId("some@account")
+                    .txCounter(1)
+                    .createdTime(iroha::time::now())
+                    .setAccountQuorum("some@account", 2)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
 
-  JsonTransactionFactory tx_factory;
-  auto json_doc = stringToJson(json_string);
-  ASSERT_TRUE(json_doc.has_value());
-  auto model_tx = tx_factory.deserialize(json_doc.value());
-  ASSERT_TRUE(model_tx.has_value());
-  auto status = client.sendTx(model_tx.value());
+  std::unique_ptr<iroha::model::Transaction> old_model(shm_tx.makeOldModel());
+  auto status = client.sendTx(*old_model);
   ASSERT_EQ(status.answer, iroha_cli::CliClient::OK);
 }
 
@@ -178,33 +170,20 @@ TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
 }
 
 TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
-  EXPECT_CALL(*svMock, validate(A<const iroha::model::Transaction &>()))
-      .WillOnce(Return(false));
-  auto json_string =
-      R"({"signatures": [{
-            "pubkey":
-              "2423232323232323232323232323232323232323232323232323232323232323",
-            "signature":
-              "23232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323232323"
-        }], "created_ts": 0,
-          "creator_account_id": "123",
-          "tx_counter": 0,
-          "commands": [{
-            "command_type": "AddPeer",
-              "peer": {
-                "address": "localhost",
-                "peer_key": "2323232323232323232323232323232323232323232323232323232323232323"
-              }
-        }]})";
+  // creating stateless invalid tx
+  auto shm_tx = TestTransactionBuilder()
+                    .creatorAccountId("some@account")
+                    .txCounter(1)
+                    .createdTime(iroha::time::now())
+                    .setAccountQuorum("some@@account", 2)
+                    .build();
+  std::unique_ptr<iroha::model::Transaction> old_tx(shm_tx.makeOldModel());
 
-  auto doc = iroha::model::converters::stringToJson(json_string).value();
-  iroha::model::converters::JsonTransactionFactory transactionFactory;
-  auto tx = transactionFactory.deserialize(doc).value();
-
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(tx).answer,
+  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(*old_tx).answer,
             iroha_cli::CliClient::OK);
+  auto tx_hash = shm_tx.hash();
   ASSERT_EQ(iroha_cli::CliClient(Ip, Port)
-                .getTxStatus(iroha::hash(tx).to_string())
+                .getTxStatus(shared_model::crypto::toBinaryString(tx_hash))
                 .answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
 }

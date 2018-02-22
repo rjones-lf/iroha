@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-#include "validation/impl/stateful_validator_impl.hpp"
 #include <numeric>
 #include <set>
+
+#include "datetime/time.hpp"
 #include "model/account.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 
 namespace iroha {
   namespace validation {
@@ -66,6 +68,7 @@ namespace iroha {
       model::Proposal validated_proposal(
           std::accumulate(txs.begin(), txs.end(), valid, filter));
       validated_proposal.height = proposal.height;
+      validated_proposal.created_time = proposal.created_time;
       log_->info("transactions in verified proposal: {}",
                  validated_proposal.transactions.size());
       return validated_proposal;

@@ -58,7 +58,7 @@ namespace iroha {
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
 
-      using ExecuteType = decltype(makeExecute(transaction_, log_));
+      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
       ExecuteType execute_;
     };
   }  // namespace ametsuchi

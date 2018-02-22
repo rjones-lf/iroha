@@ -26,7 +26,6 @@
 #include "ametsuchi/peer_query.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "model/converters/pb_block_factory.hpp"
 #include "model/model_crypto_provider.hpp"
 
 namespace iroha {
@@ -38,20 +37,22 @@ namespace iroha {
           std::shared_ptr<ametsuchi::BlockQuery> block_query,
           std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
 
-      rxcpp::observable<model::Block> retrieveBlocks(
-          model::Peer::KeyType peer_pubkey) override;
+      rxcpp::observable<Wrapper<shared_model::interface::Block>> retrieveBlocks(
+          const shared_model::crypto::PublicKey &peer_pubkey) override;
 
-      nonstd::optional<model::Block> retrieveBlock(
-          model::Peer::KeyType peer_pubkey,
-          model::Block::HashType block_hash) override;
+      nonstd::optional<Wrapper<shared_model::interface::Block>> retrieveBlock(
+          const shared_model::crypto::PublicKey &peer_pubkey,
+          const shared_model::interface::Block::HashType &block_hash) override;
 
      private:
       /**
        * Retrieve peers from database, and find the requested peer by pubkey
        * @param pubkey - public key of requested peer
        * @return peer, if it was found, otherwise nullopt
+       * TODO 14/02/17 (@l4l) IR-960 rework method with returning result
        */
-      nonstd::optional<model::Peer> findPeer(model::Peer::KeyType pubkey);
+      nonstd::optional<model::Peer> findPeer(
+          const shared_model::crypto::PublicKey &pubkey);
       /**
        * Get or create a RPC stub for connecting to peer
        * @param peer for connecting
@@ -59,7 +60,6 @@ namespace iroha {
        */
       proto::Loader::Stub &getPeerStub(const model::Peer &peer);
 
-      model::converters::PbBlockFactory factory_;
       std::unordered_map<model::Peer, std::unique_ptr<proto::Loader::Stub>>
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;

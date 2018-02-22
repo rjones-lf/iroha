@@ -20,19 +20,13 @@
 
 #include <tbb/concurrent_queue.h>
 #include <memory>
+#include <rxcpp/rx.hpp>
 #include <unordered_map>
 
+#include "ametsuchi/peer_query.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service.hpp"
 #include "network/ordering_service_transport.hpp"
-
-#include "ametsuchi/peer_query.hpp"
-#include "ordering.grpc.pb.h"
-
-#include <rxcpp/rx.hpp>
-#include "model/converters/pb_transaction_factory.hpp"
-#include "model/proposal.hpp"
-#include "network/impl/async_grpc_client.hpp"
 #include "ordering.grpc.pb.h"
 
 namespace iroha {
@@ -59,7 +53,8 @@ namespace iroha {
        * Enqueues transaction and publishes corresponding event
        * @param transaction
        */
-      void onTransaction(const model::Transaction &transaction) override;
+      void onTransaction(std::shared_ptr<shared_model::interface::Transaction>
+                             transaction) override;
 
       ~OrderingServiceImpl() override;
 
@@ -68,7 +63,8 @@ namespace iroha {
        * Transform model proposal to transport object and send to peers
        * @param proposal - object for propagation
        */
-      void publishProposal(model::Proposal &&proposal) override;
+      void publishProposal(
+          std::unique_ptr<shared_model::interface::Proposal> proposal) override;
 
      private:
       /**
@@ -90,7 +86,9 @@ namespace iroha {
       rxcpp::composite_subscription handle;
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
-      tbb::concurrent_queue<model::Transaction> queue_;
+      tbb::concurrent_queue<
+          std::shared_ptr<shared_model::interface::Transaction>>
+          queue_;
 
       /**
        * max number of txs in proposal

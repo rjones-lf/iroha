@@ -34,7 +34,7 @@ namespace iroha {
     PostgresBlockIndex::PostgresBlockIndex(pqxx::nontransaction &transaction)
         : transaction_(transaction),
           log_(logger::log("PostgresBlockIndex")),
-          execute_{makeExecute(transaction_, log_)} {}
+          execute_{makeExecuteOptional(transaction_, log_)} {}
 
     auto PostgresBlockIndex::indexAccountIdHeight(const std::string &account_id,
                                                   const std::string &height) {
