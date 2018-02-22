@@ -40,4 +40,5 @@ target_link_libraries(chain_validator
     rxcpp
     model
     logger
+    pqxx
     )
