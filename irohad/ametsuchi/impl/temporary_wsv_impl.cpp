@@ -34,10 +34,10 @@ namespace iroha {
           log_(logger::log("TemporaryWSV")) {
       auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<shared_model::CommandExecutor>(
-          shared_model::CommandExecutor(w, c));
-      command_validator_ = std::make_shared<shared_model::CommandValidator>(
-          shared_model::CommandValidator(w));
+      command_executor_ = std::make_shared<CommandExecutor>(
+          CommandExecutor(w, c));
+      command_validator_ = std::make_shared<CommandValidator>(
+          CommandValidator(w));
       transaction_->exec("BEGIN;");
     }
 
@@ -57,7 +57,7 @@ namespace iroha {
         auto result = boost::apply_visitor(*command_executor_, command->get());
         return result.match(
             [](expected::Value<void> &v) { return true; },
-            [this](expected::Error<shared_model::ExecutionError> &e) {
+            [this](expected::Error<ExecutionError> &e) {
               log_->error(e.error.toString());
               return false;
             });

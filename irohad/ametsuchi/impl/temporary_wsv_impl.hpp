@@ -49,8 +49,8 @@ namespace iroha {
       std::unique_ptr<pqxx::nontransaction> transaction_;
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
-      std::shared_ptr<shared_model::CommandExecutor> command_executor_;
-      std::shared_ptr<shared_model::CommandValidator> command_validator_;
+      std::shared_ptr<CommandExecutor> command_executor_;
+      std::shared_ptr<CommandValidator> command_validator_;
 
       logger::Logger log_;
     };

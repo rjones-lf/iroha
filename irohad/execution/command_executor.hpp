@@ -49,7 +49,7 @@
 
 #include "common/result.hpp"
 
-namespace shared_model {
+namespace iroha {
 
   /**
    * Error for command execution.
@@ -83,53 +83,53 @@ namespace shared_model {
                     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::AddAssetQuantity> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddAssetQuantity> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::AddPeer> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddPeer> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::AddSignatory> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddSignatory> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::AppendRole> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AppendRole> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::CreateAccount> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAccount> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::CreateAsset> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAsset> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::CreateDomain> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateDomain> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::CreateRole> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateRole> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::DetachRole> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::DetachRole> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::GrantPermission> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::GrantPermission> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::RemoveSignatory> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::RemoveSignatory> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::RevokePermission> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::RevokePermission> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::SetAccountDetail> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetAccountDetail> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::SetQuorum> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetQuorum> &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::SubtractAssetQuantity>
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SubtractAssetQuantity>
             &command);
 
     ExecutionResult operator()(
-        const detail::PolymorphicWrapper<interface::TransferAsset> &command);
+        const shared_model::detail::PolymorphicWrapper<shared_model::interface::TransferAsset> &command);
 
     void setCreatorAccountId(std::string creator_account_id);
 
@@ -150,7 +150,7 @@ namespace shared_model {
     CommandValidator(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries);
 
     template <typename CommandType>
-    bool operator()(const detail::PolymorphicWrapper<CommandType> &command) {
+    bool operator()(const shared_model::detail::PolymorphicWrapper<CommandType> &command) {
       return hasPermissions(*command.operator->(), *queries, creator_account_id)
           and isValid(*command.operator->(), *queries, creator_account_id);
     }
@@ -158,131 +158,131 @@ namespace shared_model {
     void setCreatorAccountId(std::string creator_account_id);
 
    private:
-    bool hasPermissions(const interface::AddAssetQuantity &command,
+    bool hasPermissions(const shared_model::interface::AddAssetQuantity &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::AddPeer &command,
+    bool hasPermissions(const shared_model::interface::AddPeer &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::AddSignatory &command,
+    bool hasPermissions(const shared_model::interface::AddSignatory &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::AppendRole &command,
+    bool hasPermissions(const shared_model::interface::AppendRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::CreateAccount &command,
+    bool hasPermissions(const shared_model::interface::CreateAccount &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::CreateAsset &command,
+    bool hasPermissions(const shared_model::interface::CreateAsset &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::CreateDomain &command,
+    bool hasPermissions(const shared_model::interface::CreateDomain &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::CreateRole &command,
+    bool hasPermissions(const shared_model::interface::CreateRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::DetachRole &command,
+    bool hasPermissions(const shared_model::interface::DetachRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::GrantPermission &command,
+    bool hasPermissions(const shared_model::interface::GrantPermission &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::RemoveSignatory &command,
+    bool hasPermissions(const shared_model::interface::RemoveSignatory &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::RevokePermission &command,
+    bool hasPermissions(const shared_model::interface::RevokePermission &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::SetAccountDetail &command,
+    bool hasPermissions(const shared_model::interface::SetAccountDetail &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::SetQuorum &command,
+    bool hasPermissions(const shared_model::interface::SetQuorum &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::SubtractAssetQuantity &command,
+    bool hasPermissions(const shared_model::interface::SubtractAssetQuantity &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool hasPermissions(const interface::TransferAsset &command,
+    bool hasPermissions(const shared_model::interface::TransferAsset &command,
                         iroha::ametsuchi::WsvQuery &queries,
                         const std::string &creator_account_id);
 
-    bool isValid(const interface::AddAssetQuantity &command,
+    bool isValid(const shared_model::interface::AddAssetQuantity &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::AddPeer &command,
+    bool isValid(const shared_model::interface::AddPeer &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::AddSignatory &command,
+    bool isValid(const shared_model::interface::AddSignatory &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::AppendRole &command,
+    bool isValid(const shared_model::interface::AppendRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::CreateAccount &command,
+    bool isValid(const shared_model::interface::CreateAccount &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::CreateAsset &command,
+    bool isValid(const shared_model::interface::CreateAsset &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::CreateDomain &command,
+    bool isValid(const shared_model::interface::CreateDomain &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::CreateRole &command,
+    bool isValid(const shared_model::interface::CreateRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::DetachRole &command,
+    bool isValid(const shared_model::interface::DetachRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::GrantPermission &command,
+    bool isValid(const shared_model::interface::GrantPermission &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::RemoveSignatory &command,
+    bool isValid(const shared_model::interface::RemoveSignatory &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::RevokePermission &command,
+    bool isValid(const shared_model::interface::RevokePermission &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::SetAccountDetail &command,
+    bool isValid(const shared_model::interface::SetAccountDetail &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::SetQuorum &command,
+    bool isValid(const shared_model::interface::SetQuorum &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::SubtractAssetQuantity &command,
+    bool isValid(const shared_model::interface::SubtractAssetQuantity &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 
-    bool isValid(const interface::TransferAsset &command,
+    bool isValid(const shared_model::interface::TransferAsset &command,
                  iroha::ametsuchi::WsvQuery &queries,
                  const std::string &creator_account_id);
 

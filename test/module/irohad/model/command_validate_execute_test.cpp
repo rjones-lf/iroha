@@ -58,10 +58,10 @@ class CommandValidateExecuteTest : public ::testing::Test {
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
 
-    executor = std::make_shared<shared_model::CommandExecutor>(
-        shared_model::CommandExecutor(wsv_query, wsv_command));
-    validator = std::make_shared<shared_model::CommandValidator>(
-        shared_model::CommandValidator(wsv_query));
+    executor = std::make_shared<iroha::CommandExecutor>(
+            iroha::CommandExecutor(wsv_query, wsv_command));
+    validator = std::make_shared<iroha::CommandValidator>(
+            iroha::CommandValidator(wsv_query));
 
     creator.account_id = admin_id;
     creator.domain_id = domain_id;
@@ -75,7 +75,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
     default_domain.default_role = admin_role;
   }
 
-  shared_model::ExecutionResult validateAndExecute() {
+    iroha::ExecutionResult validateAndExecute() {
     shared_model::proto::Command new_command =
         shared_model::proto::from_old(*command);
     validator->setCreatorAccountId(creator.account_id);
@@ -84,11 +84,11 @@ class CommandValidateExecuteTest : public ::testing::Test {
     if (boost::apply_visitor(*validator, new_command.get())) {
       return boost::apply_visitor(*executor, new_command.get());
     }
-    return expected::makeError(shared_model::ExecutionError{
+    return expected::makeError(iroha::ExecutionError{
         "Validate", "validation of a command failed"});
   }
 
-  shared_model::ExecutionResult execute() {
+    iroha::ExecutionResult execute() {
     shared_model::proto::Command new_command =
         shared_model::proto::from_old(*command);
     executor->setCreatorAccountId(creator.account_id);
@@ -96,8 +96,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
   }
 
   /// Throws exception if result does not contain value
-  void checkValueCase(const shared_model::ExecutionResult &result) {
-    boost::get<shared_model::ExecutionResult::ValueType>(result);
+  void checkValueCase(const iroha::ExecutionResult &result) {
+    boost::get<iroha::ExecutionResult::ValueType>(result);
   }
   /// return result with empty error message
   WsvCommandResult makeEmptyError() {
@@ -105,9 +105,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
   }
 
   /// Returns error from result or throws error in case result contains value
-  shared_model::ExecutionResult::ErrorType checkErrorCase(
-      const shared_model::ExecutionResult &result) {
-    return boost::get<shared_model::ExecutionResult::ErrorType>(result);
+  iroha::ExecutionResult::ErrorType checkErrorCase(
+      const iroha::ExecutionResult &result) {
+    return boost::get<iroha::ExecutionResult::ErrorType>(result);
   }
 
   Amount max_amount{
@@ -129,8 +129,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<Command> command;
 
-  std::shared_ptr<shared_model::CommandExecutor> executor;
-  std::shared_ptr<shared_model::CommandValidator> validator;
+  std::shared_ptr<iroha::CommandExecutor> executor;
+  std::shared_ptr<iroha::CommandValidator> validator;
 };
 
 class AddAssetQuantityTest : public CommandValidateExecuteTest {

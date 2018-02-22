@@ -14,7 +14,6 @@
 
 add_library(shared_model_command_execution
         impl/command_executor.cpp
-        impl/common_executor.cpp
         )
 target_link_libraries(shared_model_command_execution
         ${Boost_LIBRARIES}

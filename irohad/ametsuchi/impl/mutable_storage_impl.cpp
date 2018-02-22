@@ -42,8 +42,8 @@ namespace iroha {
           log_(logger::log("MutableStorage")) {
       auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<shared_model::CommandExecutor>(
-          shared_model::CommandExecutor(w, c));
+      command_executor_ = std::make_shared<CommandExecutor>(
+          CommandExecutor(w, c));
       transaction_->exec("BEGIN;");
     }
 
@@ -60,7 +60,7 @@ namespace iroha {
               boost::apply_visitor(*command_executor_, command->get());
           return result.match(
               [](expected::Value<void> v) { return true; },
-              [&](expected::Error<shared_model::ExecutionError> e) {
+              [&](expected::Error<ExecutionError> e) {
                 log_->error(e.error.toString());
                 return false;
               });
