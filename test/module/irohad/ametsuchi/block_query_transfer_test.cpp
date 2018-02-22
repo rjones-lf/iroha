@@ -51,6 +51,15 @@ namespace iroha {
         transaction->exec(init_);
       }
 
+      void TearDown() override {
+        transaction->abort();
+
+        postgres_connection->deactivate();
+        postgres_connection->disconnect();
+
+        AmetsuchiTest::TearDown();
+      }
+
       void insert(const model::Block &block) {
         file->add(block.height,
                   iroha::stringToBytes(model::converters::jsonToString(
@@ -172,7 +181,7 @@ namespace iroha {
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([i = 0, this](auto val) mutable {
+      wrapper.subscribe([ i = 0, this ](auto val) mutable {
         ASSERT_EQ(tx_hashes.at(i), iroha::hash(val));
         ++i;
       });

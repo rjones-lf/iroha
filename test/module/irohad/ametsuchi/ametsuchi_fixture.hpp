@@ -56,7 +56,17 @@ namespace iroha {
       }
 
      protected:
-      virtual void SetUp() {
+      void SetUp() override {
+        connect();
+        clear();
+      }
+
+      void TearDown() override {
+        clear();
+        disconnect();
+      }
+
+      void connect() {
         connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
         try {
           connection->activate();
@@ -64,8 +74,21 @@ namespace iroha {
           FAIL() << "Connection to PostgreSQL broken: " << e.what();
         }
       }
-      virtual void TearDown() {
-        const auto drop = R"(
+
+      void disconnect() {
+        connection->deactivate();
+        connection->disconnect();
+      }
+
+      void clear() {
+        pqxx::work txn(*connection);
+        txn.exec(drop_);
+        txn.commit();
+
+        iroha::remove_all(block_store_path);
+      }
+
+      const std::string drop_ = R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
 DROP TABLE IF EXISTS role_has_permissions;
@@ -82,14 +105,6 @@ DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS index_by_id_height_asset;
 )";
-
-        pqxx::work txn(*connection);
-        txn.exec(drop);
-        txn.commit();
-        connection->disconnect();
-
-        iroha::remove_all(block_store_path);
-      }
 
       std::shared_ptr<pqxx::lazyconnection> connection;
 
