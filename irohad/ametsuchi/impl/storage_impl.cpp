@@ -129,21 +129,15 @@ namespace iroha {
               std::move(command_executors.value())));
     }
 
-    bool StorageImpl::insertBlock(model::Block block) {
+    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
-
-            // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation
-            // to shared_model https://soramitsu.atlassian.net/browse/IR-887
-            auto new_block = std::make_unique<shared_model::proto::Block>(
-                shared_model::proto::from_old(block));
-
             inserted =
-                storage.value->apply(std::move(new_block),
+                storage.value->apply(std::shared_ptr<shared_model::interface::Block>(block.copy()),
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });

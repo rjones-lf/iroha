@@ -27,6 +27,7 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "common/byteutils.hpp"
 #include "framework/test_subscriber.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
@@ -37,7 +38,6 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 
 // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
 // shared_model https://soramitsu.atlassian.net/browse/IR-880
@@ -153,7 +153,8 @@ void validateAccount(W &&wsv,
  * @param block to apply
  */
 template <typename S>
-void apply(S &&storage, const std::shared_ptr<shared_model::interface::Block> block) {
+void apply(S &&storage,
+           const std::shared_ptr<shared_model::interface::Block> block) {
   std::unique_ptr<MutableStorage> ms;
   auto storageResult = storage->createMutableStorage();
   storageResult.match(
@@ -163,8 +164,7 @@ void apply(S &&storage, const std::shared_ptr<shared_model::interface::Block> bl
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(block,
-            [](const auto &, auto &, const auto &) { return true; });
+  ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
   storage->commit(std::move(ms));
 }
 
@@ -730,8 +730,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
 
   log->info("Try insert block");
 
-  auto inserted = storage->insertBlock(
-      *std::unique_ptr<iroha::model::Block>(getBlock().makeOldModel()));
+  auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");
@@ -772,8 +771,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
 
   log->info("Try insert block");
 
-  auto inserted = storage->insertBlock(
-      *std::unique_ptr<iroha::model::Block>(getBlock().makeOldModel()));
+  auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");

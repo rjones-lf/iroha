@@ -21,6 +21,7 @@
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "common/result.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
 
@@ -48,7 +49,7 @@ namespace iroha {
        * @param block - block for insertion
        * @return true if inserted
        */
-      virtual bool insertBlock(model::Block block) = 0;
+      virtual bool insertBlock(const shared_model::interface::Block &block) = 0;
 
       /**
        * Remove all information from ledger

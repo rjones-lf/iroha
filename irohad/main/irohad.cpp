@@ -23,6 +23,7 @@
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 /**
  * Gflag validator.
@@ -143,7 +144,7 @@ int main(int argc, char *argv[]) {
     log->info("Block is parsed");
 
     // Applying transactions from genesis block to iroha storage
-    irohad.storage->insertBlock(block.value());
+    irohad.storage->insertBlock(shared_model::proto::from_old(block.value()));
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());
   }
