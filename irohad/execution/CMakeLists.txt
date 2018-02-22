@@ -12,11 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(shared_model_command_execution
+add_library(common_execution
+        impl/common_executor.cpp
+        )
+target_link_libraries(common_execution
+        optional
+        )
+
+add_library(command_execution
         impl/command_executor.cpp
         )
-target_link_libraries(shared_model_command_execution
+target_link_libraries(command_execution
         ${Boost_LIBRARIES}
         optional
         logger
+        common_execution
+        validator
         )

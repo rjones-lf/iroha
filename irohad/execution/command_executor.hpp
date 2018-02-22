@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SHARED_MODEL_COMMAND_EXECUTOR_HPP
-#define IROHA_SHARED_MODEL_COMMAND_EXECUTOR_HPP
+#ifndef IROHA_COMMAND_EXECUTOR_HPP
+#define IROHA_COMMAND_EXECUTOR_HPP
 
 #include <boost/format.hpp>
 #include <boost/variant/static_visitor.hpp>
@@ -289,6 +289,6 @@ namespace iroha {
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
     std::string creator_account_id;
   };
-}  // namespace shared_model
+}  // namespace iroha
 
-#endif  // IROHA_SHARED_MODEL_COMMAND_EXECUTOR_HPP
+#endif  // IROHA_COMMAND_EXECUTOR_HPP

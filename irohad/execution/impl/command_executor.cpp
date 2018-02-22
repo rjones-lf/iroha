@@ -16,6 +16,7 @@
  */
 
 #include "execution/command_executor.hpp"
+#include "execution/common_executor.hpp"
 #include <boost/mpl/contains.hpp>
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
@@ -26,25 +27,6 @@
 #include "validator/domain_name_validator.hpp"
 
 namespace iroha {
-
-    bool checkAccountRolePermission(const std::string &account_id,
-                                    iroha::ametsuchi::WsvQuery &queries,
-                                    const std::string &permission_id) {
-        auto accountRoles = queries.getAccountRoles(account_id);
-        if (not accountRoles)
-            return false;
-        for (auto it = accountRoles->begin(); it != accountRoles->end(); ++it) {
-            auto rolePerms = queries.getRolePermissions(*it);
-            if (not rolePerms)
-                continue;
-            for (auto it = rolePerms->begin(); it != rolePerms->end(); ++it) {
-                std::string pp = *it;
-                if (pp == permission_id)
-                    return true;
-            }
-        }
-        return false;
-    }
 
   iroha::expected::Error<ExecutionError> makeExecutionError(
       const std::string &error_message,

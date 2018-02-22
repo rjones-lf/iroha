@@ -35,7 +35,6 @@
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
-#include "model/execution/command_executor_factory.hpp"
 #include "model/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
