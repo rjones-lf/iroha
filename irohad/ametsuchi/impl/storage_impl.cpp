@@ -143,6 +143,31 @@ namespace iroha {
       return inserted;
     }
 
+    bool StorageImpl::insertBlocks(const std::vector<model::Block> &blocks) {
+      log_->info("create mutable storage");
+      bool inserted = true;
+      auto storageResult = createMutableStorage();
+      storageResult.match(
+          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+              &mutableStorage) {
+            std::for_each(
+                blocks.begin(), blocks.end(), [&](auto block) {
+                  inserted &= mutableStorage.value->apply(
+                      block,
+                      [](const auto &block, auto &query, const auto &hash) {
+                        return true;
+                      });
+                });
+            commit(std::move(mutableStorage.value));
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            log_->error(error.error);
+            inserted = false;
+          });
+
+      return inserted;
+    }
+
     void StorageImpl::dropStorage() {
       log_->info("Drop ledger");
       auto drop = R"(
@@ -181,37 +206,16 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
     bool StorageImpl::recoverWsv() {
       log_->info("[Recover WSV] => start");
-      bool result = true;
 
       // get all blocks starting from the genesis
       std::vector<model::Block> blocks;
       getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
-          [&blocks](auto block) { blocks.push_back(block); });
+          [&blocks](auto block) { blocks.push_back(std::move(block)); });
 
       dropStorage();
 
-      // apply blocks one by one
-      auto storageResult = createMutableStorage();
-      storageResult.match(
-          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
-                  &mutableStorage) {
-            std::for_each(
-                blocks.begin(), blocks.end(), [&mutableStorage](auto block) {
-                  mutableStorage.value->apply(
-                      block,
-                      [](const auto &block, auto &query, const auto &hash) {
-                        return true;
-                      });
-                });
-            commit(std::move(mutableStorage.value));
-          },
-          [&](iroha::expected::Error<std::string> &error) {
-            log_->error(error.error);
-            result = false;
-          });
-
       log_->info("[Recover WSV] => completed");
-      return result;
+      return insertBlocks(blocks);
     }
 
     expected::Result<ConnectionContext, std::string> StorageImpl::initConnections(
