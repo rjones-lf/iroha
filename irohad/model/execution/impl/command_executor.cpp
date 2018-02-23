@@ -510,7 +510,7 @@ namespace iroha {
                                                create_account.pubkey);
       } | [&] {
         return commands.insertAccountRole(account.account_id,
-                                          domain.value().default_role);
+                                          domain.value()->defaultRole());
       };
 
       return makeExecutionResult(result);
