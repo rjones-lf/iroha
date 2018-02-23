@@ -83,7 +83,9 @@ namespace shared_model {
             variant_([this] {
               return loadQueryResponse<ProtoQueryResponseListType>(*proto_);
             }),
-            hash_([this] { return QueryHashType(proto_->query_hash()); }) {}
+            hash_([this] {
+              return QueryHashType(proto_->query_hash());
+            }) {}
 
       QueryResponse(const QueryResponse &o) : QueryResponse(o.proto_) {}
 

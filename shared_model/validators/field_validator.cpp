@@ -19,6 +19,8 @@
 #include <boost/format.hpp>
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 
+// TODO: 15.02.18 nickaleks Change structure to compositional IR-978
+
 namespace shared_model {
   namespace validation {
 

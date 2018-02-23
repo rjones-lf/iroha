@@ -83,6 +83,9 @@ namespace iroha {
                       *query_response)));
         }
 
+        if (response.has_value()) {
+          response->set_query_hash(query_response->query_hash.to_string());
+        }
         return response;
       }
 

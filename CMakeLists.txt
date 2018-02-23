@@ -16,6 +16,8 @@ SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 SET(CMAKE_INSTALL_RPATH "../lib")
 
 if(COVERAGE)
+  # remove -g flag to reduce binary size
+  list(REMOVE_ITEM CMAKE_CXX_FLAGS -g)
   set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
   set(CMAKE_CXX_FLAGS "--coverage ${CMAKE_CXX_FLAGS}")
   set(CMAKE_C_FLAGS "--coverage ${CMAKE_C_FLAGS}")

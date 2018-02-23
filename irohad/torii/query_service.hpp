@@ -17,13 +17,17 @@ limitations under the License.
 #ifndef TORII_QUERY_SERVICE_HPP
 #define TORII_QUERY_SERVICE_HPP
 
-#include <endpoint.grpc.pb.h>
-#include <endpoint.pb.h>
-#include <responses.pb.h>
 #include <unordered_map>
-#include "model/converters/pb_query_factory.hpp"
-#include "model/converters/pb_query_response_factory.hpp"
+#include "endpoint.grpc.pb.h"
+#include "endpoint.pb.h"
+#include "responses.pb.h"
+
+#include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "builders/protobuf/transport_builder.hpp"
+#include "cache/cache.hpp"
 #include "torii/processor/query_processor.hpp"
+#include "validators/default_validator.hpp"
 
 #include "logger/logger.hpp"
 
@@ -35,12 +39,7 @@ namespace torii {
    */
   class QueryService : public iroha::protocol::QueryService::Service {
    public:
-    QueryService(
-        std::shared_ptr<iroha::model::converters::PbQueryFactory>
-            pb_query_factory,
-        std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
-            pb_query_response_factory,
-        std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
+    QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
 
     QueryService(const QueryService &) = delete;
     QueryService &operator=(const QueryService &) = delete;
@@ -58,16 +57,12 @@ namespace torii {
                       iroha::protocol::QueryResponse *response) override;
 
    private:
-    std::shared_ptr<iroha::model::converters::PbQueryFactory> pb_query_factory_;
-    std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
-        pb_query_response_factory_;
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
 
-    std::unordered_map<std::string, iroha::protocol::QueryResponse &>
-        handler_map_;
-
-    std::unordered_map<std::string, iroha::protocol::QueryResponse>
-        old_queries_;
+    iroha::cache::Cache<shared_model::crypto::Hash,
+                        std::shared_ptr<shared_model::interface::QueryResponse>,
+                        shared_model::crypto::Hash::Hasher>
+        cache_;
 
     logger::Logger log_;
   };

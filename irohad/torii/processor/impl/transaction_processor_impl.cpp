@@ -30,9 +30,8 @@ namespace iroha {
     using validation::StatelessValidator;
 
     TransactionProcessorImpl::TransactionProcessorImpl(
-        std::shared_ptr<PeerCommunicationService> pcs,
-        std::shared_ptr<StatelessValidator> validator)
-        : pcs_(std::move(pcs)), validator_(std::move(validator)) {
+        std::shared_ptr<PeerCommunicationService> pcs)
+        : pcs_(std::move(pcs)) {
       log_ = logger::log("TxProcessor");
 
       // insert all txs from proposal to proposal set
@@ -97,17 +96,11 @@ namespace iroha {
       model::TransactionResponse response;
       response.tx_hash = hash(*transaction).to_string();
       response.current_status =
-          model::TransactionResponse::Status::STATELESS_VALIDATION_FAILED;
+          model::TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
 
-      if (validator_->validate(*transaction)) {
-        response.current_status =
-            TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
-        pcs_->propagate_transaction(transaction);
-      }
-      log_->info(
-          "stateless validation status: {}",
-          response.current_status
-              == TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS);
+      pcs_->propagate_transaction(transaction);
+
+      log_->info("stateless validated");
       notifier_.get_subscriber().on_next(
           std::make_shared<model::TransactionResponse>(response));
     }

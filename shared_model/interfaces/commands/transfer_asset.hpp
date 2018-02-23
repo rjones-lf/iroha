@@ -20,7 +20,7 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
+#include "interfaces/common_objects/amount.hpp"
 #ifndef DISABLE_BACKWARD
 #include "model/commands/transfer_asset.hpp"
 #endif

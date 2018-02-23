@@ -187,6 +187,7 @@ TEST(PipelineIntegrationTest, SendQuery) {
  * @given some user
  * @when sending sample AddAssetQuantity transaction to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status on that tx
+ * @and wait for proposal and block
  */
 TEST(PipelineIntegrationTest, SendTx) {
   auto tx = shared_model::proto::TransactionBuilder()
@@ -199,13 +200,21 @@ TEST(PipelineIntegrationTest, SendTx) {
                     shared_model::crypto::DefaultCryptoAlgorithmType::
                         generateKeypair());
 
-  auto check = [](auto &status) {
+  auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(
         boost::get<shared_model::detail::PolymorphicWrapper<
             shared_model::interface::StatelessValidTxResponse>>(status.get()));
   };
+  auto checkProposal = [](auto &proposal) {
+    ASSERT_EQ(proposal->transactions.size(), 1);
+  };
+  auto checkBlock = [](auto &block) {
+    ASSERT_EQ(block->transactions.size(), 0);
+  };
   integration_framework::IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, check)
+      .sendTx(tx, checkStatelessValid)
+      .checkProposal(checkProposal)
+      .checkBlock(checkBlock)
       .done();
 }

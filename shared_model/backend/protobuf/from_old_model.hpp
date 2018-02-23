@@ -25,9 +25,11 @@
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "model/converters/pb_block_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_query_response_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
 namespace shared_model {
@@ -61,6 +63,18 @@ namespace shared_model {
                         | boost::adaptors::transformed(
                               [](auto &tx) { return from_old(tx); }))
           .build();
+    }
+
+    inline static shared_model::proto::QueryResponse from_old(
+        std::shared_ptr<iroha::model::QueryResponse> queryResponse) {
+      auto sshash = queryResponse->query_hash.to_hexstring();
+      auto proto_resp = *iroha::model::converters::PbQueryResponseFactory().serialize(
+          queryResponse);
+      auto res = shared_model::proto::QueryResponse(std::move(proto_resp));
+      auto hash = res.queryHash();
+      return shared_model::proto::QueryResponse(
+          *iroha::model::converters::PbQueryResponseFactory().serialize(
+              queryResponse));
     }
 
   }  // namespace proto

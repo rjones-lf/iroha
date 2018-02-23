@@ -50,6 +50,8 @@ namespace integration_framework {
     using BlockType = std::shared_ptr<iroha::model::Block>;
 
    public:
+    IntegrationTestFramework(size_t maximum_block_size = 10):
+        maximum_block_size_(maximum_block_size) {}
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
     IntegrationTestFramework &setInitialState(
@@ -93,10 +95,10 @@ namespace integration_framework {
      * @param error_reason - reason if thehre is no appeared object at all
      */
     template <typename Queue, typename ObjectType, typename WaitTime>
-    static void fetchFromQueue(Queue &queue,
-                               ObjectType &ref_for_insertion,
-                               const WaitTime &wait,
-                               const std::string &error_reason);
+    void fetchFromQueue(Queue &queue,
+                        ObjectType &ref_for_insertion,
+                        const WaitTime &wait,
+                        const std::string &error_reason);
 
    protected:
     std::shared_ptr<IrohaInstance> iroha_instance_ =
@@ -108,16 +110,20 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next proposal
     // TODO 21/12/2017 muratovv make relation of time with instance's config
-    const milliseconds proposal_waiting = milliseconds(5000);
+    const milliseconds proposal_waiting = milliseconds(20000);
 
     /// maximum time of waiting before appearing next committed block
-    const milliseconds block_waiting = milliseconds(5000);
+    const milliseconds block_waiting = milliseconds(20000);
 
     const std::string default_domain = "test";
     const std::string default_role = "user";
 
+    size_t maximum_block_size_;
+
    private:
     logger::Logger log_ = logger::log("IntegrationTestFramework");
+    std::mutex queue_mu;
+    std::condition_variable queue_cond;
   };
 
   template <typename Lambda>
@@ -128,6 +134,7 @@ namespace integration_framework {
         tx.getTransport());
     // fetch status of transaction
     shared_model::proto::TransactionResponse status = getTxStatus(tx.hash());
+
     // check validation function
     validation(status);
     return *this;
@@ -155,7 +162,7 @@ namespace integration_framework {
     log_->info("check block");
     BlockType block;
     fetchFromQueue(block_queue_, block, block_waiting, "missed block");
-    validation(*block);
+    validation(block);
     return *this;
   }
 
@@ -167,6 +174,7 @@ namespace integration_framework {
     ProposalType proposal;
     fetchFromQueue(
         proposal_queue_, proposal, proposal_waiting, "missed proposal");
+    validation(proposal);
     return *this;
   }
 
@@ -176,9 +184,8 @@ namespace integration_framework {
       ObjectType &ref_for_insertion,
       const WaitTime &wait,
       const std::string &error_reason) {
-    if (!queue.try_pop(ref_for_insertion)) {
-      std::this_thread::sleep_for(wait);
-    }
+    std::unique_lock<std::mutex> lk(queue_mu);
+    queue_cond.wait_for(lk, wait, [&]() { return not queue.empty(); });
     if (!queue.try_pop(ref_for_insertion)) {
       throw std::runtime_error(error_reason);
     }

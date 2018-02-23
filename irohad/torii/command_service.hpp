@@ -44,8 +44,6 @@ namespace torii {
      * @param proposal_delay - time of a one proposal propagation.
      */
     CommandService(
-        std::shared_ptr<iroha::model::converters::PbTransactionFactory>
-            pb_factory,
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
         std::chrono::milliseconds proposal_delay);

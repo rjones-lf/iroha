@@ -36,7 +36,8 @@ namespace iroha {
     PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
         : transaction_(transaction),
           log_(logger::log("PostgresWsvQuery")),
-          execute_{makeExecute(transaction_, log_)} {}
+          execute_{makeExecuteOptional
+                       (transaction_, log_)} {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const std::string &permitee_account_id,

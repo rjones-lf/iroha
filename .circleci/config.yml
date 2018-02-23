@@ -50,11 +50,6 @@ jobs:
           command: |
             cmake --build $IROHA_BUILD -- -j3
       - run: ccache --show-stats
-      - save_cache:
-          key: build-linux-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
-          paths:
-            - ~/.ccache
-          when: always
       - run:
           name: unit tests, generate xunit-*.xml
           command: cmake --build $IROHA_BUILD --target test
@@ -67,6 +62,11 @@ jobs:
       - run:
           name: codecov.io
           command: bash <(curl -s https://codecov.io/bash) -f $IROHA_BUILD/reports/gcovr.xml || echo "Codecov did not collect coverage reports"
+      - save_cache:
+          key: build-linux-debug-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          paths:
+            - ~/.ccache
+          when: always
       - persist_to_workspace:
           root: /opt/iroha/build
           paths:

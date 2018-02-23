@@ -17,7 +17,7 @@ limitations under the License.
 #define IROHA_VALIDATION_STATEFUL_VALIDATOR_HPP
 
 #include "ametsuchi/temporary_wsv.hpp"
-#include "model/proposal.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 
 namespace iroha {
   namespace validation {
@@ -38,8 +38,8 @@ namespace iroha {
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions
        */
-      virtual model::Proposal validate(
-          const model::Proposal &proposal,
+      virtual std::shared_ptr<shared_model::interface::Proposal> validate(
+          const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) = 0;
     };
   }  // namespace validation

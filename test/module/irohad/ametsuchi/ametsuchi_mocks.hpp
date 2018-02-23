@@ -77,46 +77,46 @@ namespace iroha {
 
     class MockWsvCommand : public WsvCommand {
      public:
-      MOCK_METHOD1(insertRole, bool(const std::string &role_name));
+      MOCK_METHOD1(insertRole, WsvCommandResult(const std::string &role_name));
       MOCK_METHOD2(insertAccountRole,
-                   bool(const std::string &account_id,
+                   WsvCommandResult(const std::string &account_id,
                         const std::string &role_name));
       MOCK_METHOD2(deleteAccountRole,
-                   bool(const std::string &account_id,
+                   WsvCommandResult(const std::string &account_id,
                         const std::string &role_name));
       MOCK_METHOD2(insertRolePermissions,
-                   bool(const std::string &role_id,
+                   WsvCommandResult(const std::string &role_id,
                         const std::set<std::string> &permissions));
 
       MOCK_METHOD3(insertAccountGrantablePermission,
-                   bool(const std::string &permittee_account_id,
+                   WsvCommandResult(const std::string &permittee_account_id,
                         const std::string &account_id,
                         const std::string &permission_id));
 
       MOCK_METHOD3(deleteAccountGrantablePermission,
-                   bool(const std::string &permittee_account_id,
+                   WsvCommandResult(const std::string &permittee_account_id,
                         const std::string &account_id,
                         const std::string &permission_id));
-      MOCK_METHOD1(insertAccount, bool(const model::Account &));
-      MOCK_METHOD1(updateAccount, bool(const model::Account &));
-      MOCK_METHOD1(insertAsset, bool(const model::Asset &));
-      MOCK_METHOD1(upsertAccountAsset, bool(const model::AccountAsset &));
-      MOCK_METHOD1(insertSignatory, bool(const pubkey_t &));
-      MOCK_METHOD1(deleteSignatory, bool(const pubkey_t &));
+      MOCK_METHOD1(insertAccount, WsvCommandResult(const model::Account &));
+      MOCK_METHOD1(updateAccount, WsvCommandResult(const model::Account &));
+      MOCK_METHOD1(insertAsset, WsvCommandResult(const model::Asset &));
+      MOCK_METHOD1(upsertAccountAsset, WsvCommandResult(const model::AccountAsset &));
+      MOCK_METHOD1(insertSignatory, WsvCommandResult(const pubkey_t &));
+      MOCK_METHOD1(deleteSignatory, WsvCommandResult(const pubkey_t &));
 
       MOCK_METHOD2(insertAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   WsvCommandResult(const std::string &, const pubkey_t &));
 
       MOCK_METHOD2(deleteAccountSignatory,
-                   bool(const std::string &, const pubkey_t &));
+                   WsvCommandResult(const std::string &, const pubkey_t &));
 
-      MOCK_METHOD1(insertPeer, bool(const model::Peer &));
+      MOCK_METHOD1(insertPeer, WsvCommandResult(const model::Peer &));
 
-      MOCK_METHOD1(deletePeer, bool(const model::Peer &));
+      MOCK_METHOD1(deletePeer, WsvCommandResult(const model::Peer &));
 
-      MOCK_METHOD1(insertDomain, bool(const model::Domain &));
+      MOCK_METHOD1(insertDomain, WsvCommandResult(const model::Domain &));
       MOCK_METHOD4(setAccountKV,
-                   bool(const std::string &,
+                   WsvCommandResult(const std::string &,
                         const std::string &,
                         const std::string &,
                         const std::string &));
@@ -155,8 +155,8 @@ namespace iroha {
       MOCK_METHOD2(
           apply,
           bool(const model::Block &,
-               std::function<bool(
-                   const model::Block &, WsvQuery &, const hash256_t &)>));
+               std::function<
+                   bool(const model::Block &, WsvQuery &, const hash256_t &)>));
     };
 
     /**

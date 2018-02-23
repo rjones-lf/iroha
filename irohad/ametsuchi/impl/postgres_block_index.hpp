@@ -18,14 +18,13 @@
 #ifndef IROHA_POSTGRES_BLOCK_INDEX_HPP
 #define IROHA_POSTGRES_BLOCK_INDEX_HPP
 
-#include "ametsuchi/impl/block_index.hpp"
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
-#include "logger/logger.hpp"
-
 #include <boost/format.hpp>
 #include <pqxx/nontransaction>
 
-#include "model/transaction.hpp"  // for model::Transaction::CommandsType
+#include "ametsuchi/impl/block_index.hpp"
+#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "logger/logger.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -33,7 +32,7 @@ namespace iroha {
      public:
       explicit PostgresBlockIndex(pqxx::nontransaction &transaction);
 
-      void index(const model::Block &block) override;
+      void index(const shared_model::interface::Block &block) override;
 
      private:
       /**
@@ -53,14 +52,15 @@ namespace iroha {
        * @param index of transaction in the block
        * @param commands in the transaction
        */
-      auto indexAccountAssets(const std::string &account_id,
-                              const std::string &height,
-                              const std::string &index,
-                              const model::Transaction::CommandsType &commands);
+      auto indexAccountAssets(
+          const std::string &account_id,
+          const std::string &height,
+          const std::string &index,
+          const shared_model::interface::Transaction::CommandsType &commands);
 
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecute(transaction_, log_));
+      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
       ExecuteType execute_;
 
       // TODO: refactor to return Result when it is introduced IR-775
