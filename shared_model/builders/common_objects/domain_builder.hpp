@@ -25,39 +25,34 @@
 namespace shared_model {
   namespace builder {
     template <typename BuilderImpl, typename Validator>
-    class DomainBuilder {
+    class DomainBuilder: public CommonObjectBuilder<interface::Domain, BuilderImpl, Validator> {
      public:
-      BuilderResult<shared_model::interface::Domain> build() {
-        auto domain = builder_.build();
-        shared_model::validation::ReasonsGroupType reasons(
-            "Domain Builder", shared_model::validation::GroupedReasons());
-        shared_model::validation::Answer answer;
-        validator_.validateRoleId(reasons, domain.defaultRole());
-        validator_.validateDomainId(reasons, domain.domainId());
-
-        if (!reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-          return iroha::expected::makeError(
-              std::make_shared<std::string>(answer.reason()));
-        }
-        std::shared_ptr<shared_model::interface::Domain> domain_ptr(domain.copy());
-        return iroha::expected::makeValue(domain_ptr);
-      }
-
-      DomainBuilder &defaultRole(
+      DomainBuilder defaultRole(
           const interface::types::RoleIdType &default_role) {
-        builder_ = builder_.defaultRole(default_role);
-        return *this;
+        DomainBuilder copy(*this);
+        copy.builder_ = this->builder_.defaultRole(default_role);
+        return copy;
       }
 
-      DomainBuilder &domainId(const interface::types::DomainIdType &domain_id) {
-        builder_ = builder_.domainId(domain_id);
-        return *this;
+      DomainBuilder domainId(const interface::types::DomainIdType &domain_id) {
+        DomainBuilder copy(*this);
+        copy.builder_ = this->builder_.domainId(domain_id);
+        return copy;
       }
 
-     private:
-      Validator validator_;
-      BuilderImpl builder_;
+     protected:
+      virtual std::string builderName() const override {
+        return "Domain Builder";
+      }
+
+      virtual validation::ReasonsGroupType validate(
+          const interface::Domain &object) override {
+        validation::ReasonsGroupType reasons;
+        this->validator_.validateDomainId(reasons, object.domainId());
+        this->validator_.validateRoleId(reasons, object.defaultRole());
+
+        return reasons;
+      }
     };
   }  // namespace builder
 }  // namespace shared_model
