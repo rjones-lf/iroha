@@ -205,7 +205,7 @@ namespace iroha {
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(model::Block block));
       MOCK_METHOD0(dropStorage, void(void));
-      MOCK_METHOD0(recoverWSV, bool(void));
+      MOCK_METHOD0(recoverWsv, bool(void));
 
       void commit(std::unique_ptr<MutableStorage> storage) override {
         doCommit(storage.get());

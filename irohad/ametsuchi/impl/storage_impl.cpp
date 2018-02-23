@@ -179,7 +179,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    bool StorageImpl::recoverWSV() {
+    bool StorageImpl::recoverWsv() {
       log_->info("[Recover WSV] => start");
       bool result = true;
 
@@ -206,7 +206,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             commit(std::move(mutableStorage.value));
           },
           [&](iroha::expected::Error<std::string> &error) {
-            log_->info("[Init] => query service" + error.error);
+            log_->error(error.error);
             result = false;
           });
 

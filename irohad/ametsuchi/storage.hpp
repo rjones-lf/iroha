@@ -59,7 +59,7 @@ namespace iroha {
        * Recover WSV (World State View).
        * @return true on success, otherwise false
        */
-      virtual bool recoverWSV() = 0;
+      virtual bool recoverWsv() = 0;
 
       virtual ~Storage() = default;
     };

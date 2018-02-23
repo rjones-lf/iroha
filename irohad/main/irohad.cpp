@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
               block.value().transactions.size());
   } else {
     // Recover VSW from the existing ledger to be sure it is consistent
-    if (not irohad.storage->recoverWSV()) {
+    if (not irohad.storage->recoverWsv()) {
       log->error("Failed to recover WSV");
       return EXIT_FAILURE;
     }

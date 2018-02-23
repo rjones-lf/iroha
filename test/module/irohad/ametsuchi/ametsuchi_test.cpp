@@ -22,7 +22,10 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "builders/protobuf/block.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "common/byteutils.hpp"
+#include "cryptography/hash_providers/sha3_256.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
@@ -30,12 +33,12 @@
 #include "model/commands/all.hpp"
 #include "model/converters/pb_block_factory.hpp"
 #include "model/domain.hpp"
+#include "model/generators/block_generator.hpp"
+#include "model/generators/transaction_generator.hpp"
 #include "model/peer.hpp"
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "model/generators/block_generator.hpp"
-#include "model/generators/transaction_generator.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -810,15 +813,44 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
  * @then WSV is valid
  */
 TEST_F(AmetsuchiTest, TestRestoreWSV) {
-  ASSERT_TRUE(storage);
-
   // initialize storage with genesis block
+  std::string default_domain = "test";
+  std::string default_role = "admin";
   auto genesis_tx =
-      iroha::model::generators::TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+      shared_model::proto::TransactionBuilder()
+          .creatorAccountId("admin@test")
+          .txCounter(1)
+          .createdTime(iroha::time::now())
+          .createRole(default_role,
+                      std::vector<std::string>{iroha::model::can_create_domain,
+                                               iroha::model::can_create_account,
+                                               iroha::model::can_add_asset_qty,
+                                               iroha::model::can_add_peer,
+                                               iroha::model::can_receive,
+                                               iroha::model::can_transfer})
+          .createDomain(default_domain, default_role)
+          .build()
+          .signAndAddSignature(
+              shared_model::crypto::DefaultCryptoAlgorithmType::
+                  generateKeypair());
+
   auto genesis_block =
-      iroha::model::generators::BlockGenerator().generateGenesisBlock(
-          0, {genesis_tx});
-  apply(storage, genesis_block);
+      shared_model::proto::BlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>{genesis_tx})
+          .txNumber(1)
+          .height(1)
+          .prevHash(shared_model::crypto::Sha3_256::makeHash(
+              shared_model::crypto::Blob("")))
+          .createdTime(iroha::time::now())
+          .build()
+          .signAndAddSignature(
+              shared_model::crypto::DefaultCryptoAlgorithmType::
+                  generateKeypair());
+
+  // TODO Alexey Chernyshov remove after relocation to shared_model
+  std::unique_ptr<iroha::model::Block> old_block(genesis_block.makeOldModel());
+  apply(storage, *old_block);
 
   auto res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
@@ -826,21 +858,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   // spoil WSV
   pqxx::work txn(*connection);
   txn.exec(R"(
-DELETE FROM account_has_signatory;
-DELETE FROM account_has_asset;
-DELETE FROM role_has_permissions;
-DELETE FROM account_has_roles;
-DELETE FROM account_has_grantable_permissions;
-DELETE FROM account;
-DELETE FROM asset;
 DELETE FROM domain;
-DELETE FROM signatory;
-DELETE FROM peer;
-DELETE FROM role;
-DELETE FROM height_by_hash;
-DELETE FROM height_by_account_set;
-DELETE FROM index_by_creator_height;
-DELETE FROM index_by_id_height_asset;
 )");
   txn.commit();
 
@@ -849,7 +867,7 @@ DELETE FROM index_by_id_height_asset;
   EXPECT_FALSE(res);
 
   // recover storage and check it is recovered
-  storage->recoverWSV();
+  storage->recoverWsv();
   res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
 }

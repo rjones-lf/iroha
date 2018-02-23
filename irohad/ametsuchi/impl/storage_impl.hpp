@@ -67,7 +67,7 @@ namespace iroha {
        * Drop storage and apply blocks one by one.
        * @return true on success, otherwise false
        */
-      virtual bool recoverWSV() override;
+      virtual bool recoverWsv() override;
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
