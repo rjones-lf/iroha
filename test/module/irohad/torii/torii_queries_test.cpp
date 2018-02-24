@@ -16,16 +16,12 @@ limitations under the License.
 
 #include "generator/generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/network/network_mocks.hpp"
-#include "module/irohad/validation/validation_mocks.hpp"
 // to compare pb amount and iroha amount
 #include "model/converters/pb_common.hpp"
 
 #include "main/server_runner.hpp"
 #include "model/permissions.hpp"
 #include "torii/processor/query_processor_impl.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
-#include "torii/command_service.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
 
@@ -43,13 +39,8 @@ using ::testing::A;
 using ::testing::AtLeast;
 using ::testing::Return;
 
-using namespace iroha::network;
-using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
-
-using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds proposal_delay = 10s;
 
 // TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiQueriesTest : public testing::Test {
@@ -57,23 +48,8 @@ class ToriiQueriesTest : public testing::Test {
   virtual void SetUp() {
     runner = new ServerRunner(std::string(Ip) + ":" + std::to_string(Port));
     th = std::thread([this] {
-      // ----------- Command Service --------------
-      pcsMock = std::make_shared<MockPeerCommunicationService>();
       wsv_query = std::make_shared<MockWsvQuery>();
       block_query = std::make_shared<MockBlockQuery>();
-      storageMock = std::make_shared<MockStorage>();
-
-      rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
-      rxcpp::subjects::subject<Commit> commit_notifier;
-
-      EXPECT_CALL(*pcsMock, on_proposal())
-          .WillRepeatedly(Return(prop_notifier.get_observable()));
-
-      EXPECT_CALL(*pcsMock, on_commit())
-          .WillRepeatedly(Return(commit_notifier.get_observable()));
-
-      auto tx_processor =
-          std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
 
       //----------- Query Service ----------
 
@@ -84,11 +60,7 @@ class ToriiQueriesTest : public testing::Test {
           std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
 
       //----------- Server run ----------------
-      runner
-          ->append(std::make_unique<torii::CommandService>(
-              tx_processor, storageMock, proposal_delay))
-          .append(std::make_unique<torii::QueryService>(qpi))
-          .run();
+      runner->append(std::make_unique<torii::QueryService>(qpi)).run();
     });
 
     runner->waitForServersReady();
@@ -102,9 +74,6 @@ class ToriiQueriesTest : public testing::Test {
 
   ServerRunner *runner;
   std::thread th;
-
-  std::shared_ptr<MockPeerCommunicationService> pcsMock;
-  std::shared_ptr<MockStorage> storageMock;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
