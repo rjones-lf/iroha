@@ -97,8 +97,10 @@ namespace shared_model {
             blob_([this] { return makeBlob(*proto_); }),
             payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {
-              SignatureSetType set;
-              set.emplace(new Signature(proto_->signature()));
+              interface::SignatureSetType set;
+              if (proto_->has_signature()) {
+                set.emplace(new Signature(proto_->signature()));
+              }
               return set;
             }) {}
 
@@ -126,8 +128,15 @@ namespace shared_model {
         return *payload_;
       }
 
+      const HashType &hash() const override {
+        if (hash_ == boost::none) {
+          hash_.emplace(HashProviderType::makeHash(payload()));
+        }
+        return *hash_;
+      }
+
       // ------------------------| Signable override  |-------------------------
-      const Query::SignatureSetType &signatures() const override {
+      const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
@@ -154,7 +163,7 @@ namespace shared_model {
 
       const Lazy<BlobType> blob_;
       const Lazy<BlobType> payload_;
-      const Lazy<SignatureSetType> signatures_;
+      const Lazy<interface::SignatureSetType> signatures_;
     };
   }  // namespace proto
 }  // namespace shared_model

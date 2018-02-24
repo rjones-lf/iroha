@@ -16,35 +16,33 @@
  */
 
 #include "torii/processor/query_processor_impl.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "model/queries/responses/error_response.hpp"
-#include "model/sha3_hash.hpp"
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace torii {
 
     QueryProcessorImpl::QueryProcessorImpl(
-        std::unique_ptr<model::QueryProcessingFactory> qpf,
-        std::shared_ptr<validation::StatelessValidator> stateless_validator)
-        : qpf_(std::move(qpf)), validator_(stateless_validator) {}
+        std::unique_ptr<model::QueryProcessingFactory> qpf)
+        : qpf_(std::move(qpf)) {}
 
-    void QueryProcessorImpl::queryHandle(std::shared_ptr<model::Query> query) {
-      // if not valid send wrong response
-      if (!validator_->validate(*query)) {
-        model::ErrorResponse response;
-        response.query_hash = iroha::hash(*query);
-        response.reason = model::ErrorResponse::STATELESS_INVALID;
-        subject_.get_subscriber().on_next(
-            std::make_shared<model::ErrorResponse>(response));
-      } else {  // else execute query
-        auto qpf_response = qpf_->execute(query);
-        subject_.get_subscriber().on_next(qpf_response);
-      }
+    void QueryProcessorImpl::queryHandle(
+        std::shared_ptr<shared_model::interface::Query> qry) {
+      std::shared_ptr<iroha::model::Query> query(qry->makeOldModel());
+      // TODO: 12.02.2018 grimadas Remove when query_executor has new model, as
+      // query is already stateless valid when passing to query  processor
+
+      auto qpf_response =
+          qpf_->execute(std::shared_ptr<const model::Query>(query));
+      auto qry_resp = shared_model::proto::from_old(qpf_response);
+      subject_.get_subscriber().on_next(
+          std::make_shared<shared_model::proto::QueryResponse>(
+              qry_resp.getTransport()));
     }
-
-    rxcpp::observable<std::shared_ptr<model::QueryResponse>>
+    rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
       return subject_.get_observable();
     }
+
   }  // namespace torii
 }  // namespace iroha

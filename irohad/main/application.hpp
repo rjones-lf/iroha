@@ -42,6 +42,7 @@
 #include "validation/stateful_validator.hpp"
 
 #include "ametsuchi/impl/peer_query_wsv.hpp"
+#include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
@@ -80,6 +81,11 @@ class Irohad {
   virtual void init();
 
   /**
+   * Reset oredering service storage state to default
+   */
+  void resetOrderingService();
+
+  /**
    * Drop wsv and block store
    */
   virtual void dropStorage();
@@ -95,8 +101,6 @@ class Irohad {
   // -----------------------| component initialization |------------------------
 
   virtual void initStorage();
-
-  virtual void initProtoFactories();
 
   virtual void initPeerQuery();
 
@@ -132,17 +136,10 @@ class Irohad {
 
   // ------------------------| internal dependencies |-------------------------
 
-  // converter factories
-  std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_tx_factory;
-  std::shared_ptr<iroha::model::converters::PbQueryFactory> pb_query_factory;
-  std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
-      pb_query_response_factory;
-
   // crypto provider
   std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_verifier;
 
   // validators
-  std::shared_ptr<iroha::validation::StatelessValidator> stateless_validator;
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
@@ -187,6 +184,9 @@ class Irohad {
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
+  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
+      ordering_service_storage_;
+
   iroha::keypair_t keypair;
 };
 

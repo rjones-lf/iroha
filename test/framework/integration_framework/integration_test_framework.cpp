@@ -38,13 +38,14 @@ namespace integration_framework {
             .creatorAccountId("admin@test")
             .txCounter(1)
             .createdTime(iroha::time::now())
-            .addPeer("0.0.0.0:123", key.publicKey())
+            .addPeer("0.0.0.0:10001", key.publicKey())
             .createRole(
                 default_role,
                 // TODO (@l4l) IR-874 create more confort way for
                 // permssion-dependent proto building
                 std::vector<std::string>{iroha::model::can_create_domain,
                                          iroha::model::can_create_account,
+                                         iroha::model::can_add_asset_qty,
                                          iroha::model::can_add_peer,
                                          iroha::model::can_receive,
                                          iroha::model::can_transfer})
@@ -71,10 +72,11 @@ namespace integration_framework {
     log_->info("init state");
     // peer initialization
     std::shared_ptr<iroha::keypair_t> old_key(keypair.makeOldModel());
-    iroha_instance_->initPipeline(*old_key);
+    iroha_instance_->initPipeline(*old_key, maximum_block_size_);
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
+    iroha_instance_->instance_->resetOrderingService();
     std::shared_ptr<iroha::model::Block> old_block(block.makeOldModel());
     iroha_instance_->makeGenesis(*old_block);
     log_->info("added genesis block");
@@ -87,6 +89,8 @@ namespace integration_framework {
         .subscribe([this](auto proposal) {
           proposal_queue_.push(
               std::make_shared<iroha::model::Proposal>(proposal));
+          log_->info("proposal");
+          queue_cond.notify_all();
         });
 
     iroha_instance_->getIrohaInstance()
@@ -96,7 +100,11 @@ namespace integration_framework {
           commit_observable.subscribe([this](auto committed_block) {
             block_queue_.push(
                 std::make_shared<iroha::model::Block>(committed_block));
+            log_->info("block");
+            queue_cond.notify_all();
           });
+          log_->info("commit");
+          queue_cond.notify_all();
         });
 
     // start instance
@@ -111,8 +119,8 @@ namespace integration_framework {
     iroha::protocol::TxStatusRequest request;
     request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse response;
-    iroha_instance_->getIrohaInstance()->getCommandService()->Status(
-        request, response);
+    iroha_instance_->getIrohaInstance()->getCommandService()->Status(request,
+                                                                     response);
     return shared_model::proto::TransactionResponse(std::move(response));
   }
 

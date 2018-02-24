@@ -20,22 +20,21 @@
 
 #include <tbb/concurrent_queue.h>
 #include <memory>
-#include <unordered_map>
-
-#include "network/impl/async_grpc_client.hpp"
-#include "network/ordering_service.hpp"
-#include "network/ordering_service_transport.hpp"
-
-#include "ametsuchi/peer_query.hpp"
-#include "ordering.grpc.pb.h"
-
 #include <rxcpp/rx.hpp>
+#include <unordered_map>
+#include "ametsuchi/peer_query.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/proposal.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/ordering_service.hpp"
+#include "network/ordering_service_transport.hpp"
 #include "ordering.grpc.pb.h"
 
 namespace iroha {
+
+  namespace ametsuchi {
+    class OrderingServicePersistentState;
+  }
   namespace ordering {
 
     /**
@@ -45,6 +44,8 @@ namespace iroha {
      * Sends proposal by given timer interval and proposal size
      * @param delay_milliseconds timer delay
      * @param max_size proposal size
+     * @param persistent_state - storage for persistent state of ordering
+     * service
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
@@ -52,14 +53,17 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
           size_t delay_milliseconds,
-          std::shared_ptr<network::OrderingServiceTransport> transport);
+          std::shared_ptr<network::OrderingServiceTransport> transport,
+          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+              persistent_state);
 
       /**
        * Process transaction received from network
        * Enqueues transaction and publishes corresponding event
        * @param transaction
        */
-      void onTransaction(const model::Transaction &transaction) override;
+      void onTransaction(std::shared_ptr<shared_model::interface::Transaction>
+                             transaction) override;
 
       ~OrderingServiceImpl() override;
 
@@ -68,7 +72,8 @@ namespace iroha {
        * Transform model proposal to transport object and send to peers
        * @param proposal - object for propagation
        */
-      void publishProposal(model::Proposal &&proposal) override;
+      void publishProposal(
+          std::unique_ptr<shared_model::interface::Proposal> proposal) override;
 
      private:
       /**
@@ -90,7 +95,9 @@ namespace iroha {
       rxcpp::composite_subscription handle;
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
-      tbb::concurrent_queue<model::Transaction> queue_;
+      tbb::concurrent_queue<
+          std::shared_ptr<shared_model::interface::Transaction>>
+          queue_;
 
       /**
        * max number of txs in proposal
@@ -102,6 +109,19 @@ namespace iroha {
        */
       const size_t delay_milliseconds_;
       std::shared_ptr<network::OrderingServiceTransport> transport_;
+
+      /**
+       * Persistense storage for proposal counter.
+       * In case of relaunch, ordering server will enumerate proposals
+       * consecutively.
+       */
+      std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          persistent_state_;
+
+      /**
+       * Proposal counter of expected proposal. Should be number of blocks in
+       * the ledger + 1.
+       */
       size_t proposal_height;
     };
   }  // namespace ordering

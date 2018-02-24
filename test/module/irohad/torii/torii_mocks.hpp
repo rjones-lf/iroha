@@ -26,9 +26,12 @@ namespace iroha {
   namespace torii {
     class MockQueryProcessor : public QueryProcessor {
      public:
-      MOCK_METHOD1(queryHandle, void(std::shared_ptr<model::Query>));
+      MOCK_METHOD1(queryHandle,
+                   void(std::shared_ptr<
+                        shared_model::interface::Query>));
       MOCK_METHOD0(queryNotifier,
-                   rxcpp::observable<std::shared_ptr<model::QueryResponse>>());
+                   rxcpp::observable<std::shared_ptr<
+                       shared_model::interface::QueryResponse>>());
     };
   }  // namespace torii
 }  // namespace iroha

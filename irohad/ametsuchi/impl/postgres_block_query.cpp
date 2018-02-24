@@ -28,7 +28,7 @@ namespace iroha {
         : block_store_(file_store),
           transaction_(transaction),
           log_(logger::log("PostgresBlockIndex")),
-          execute_{makeExecute(transaction_, log_)} {}
+          execute_{makeExecuteOptional(transaction_, log_)} {}
 
     rxcpp::observable<model::Block> PostgresBlockQuery::getBlocks(
         uint32_t height, uint32_t count) {

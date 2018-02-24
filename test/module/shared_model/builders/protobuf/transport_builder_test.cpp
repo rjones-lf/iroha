@@ -41,39 +41,43 @@ class TransportBuilderTest : public ::testing::Test {
   }
 
   auto createTransaction() {
-    return TestTransactionBuilder()
+    return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
         .txCounter(counter)
         .creatorAccountId(account_id)
         .setAccountQuorum(account_id, quorum)
-        .build();
+        .build()
+        .signAndAddSignature(keypair);
   }
 
   auto createInvalidTransaction() {
-    return TestTransactionBuilder()
+    return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
         .txCounter(counter)
         .creatorAccountId(invalid_account_id)
         .setAccountQuorum(account_id, quorum)
-        .build();
+        .build()
+        .signAndAddSignature(keypair);
   }
 
   auto createQuery() {
-    return TestQueryBuilder()
+    return TestUnsignedQueryBuilder()
         .createdTime(created_time)
         .creatorAccountId(account_id)
         .getAccount(account_id)
         .queryCounter(counter)
-        .build();
+        .build()
+        .signAndAddSignature(keypair);
   }
 
   auto createInvalidQuery() {
-    return TestQueryBuilder()
+    return TestUnsignedQueryBuilder()
         .createdTime(created_time)
         .creatorAccountId(invalid_account_id)
         .getAccount(invalid_account_id)
         .queryCounter(counter)
-        .build();
+        .build()
+        .signAndAddSignature(keypair);
   }
 
   auto createBlock() {
@@ -141,6 +145,8 @@ class TransportBuilderTest : public ::testing::Test {
   uint64_t height;
 
   std::string invalid_account_id;
+  shared_model::crypto::Keypair keypair =
+      shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
 };
 
 //-------------------------------------TRANSACTION-------------------------------------
@@ -152,13 +158,14 @@ class TransportBuilderTest : public ::testing::Test {
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
   auto orig_model = createTransaction();
-  testTransport<decltype(orig_model), validation::DefaultTransactionValidator>(
+  testTransport<decltype(orig_model),
+                validation::DefaultSignableTransactionValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
                   orig_model.getTransport().SerializeAsString());
       },
-      [](const Error<std::string> &) { FAIL(); });
+      [](const Error<std::string> &msg) { std::cout << msg.error << std::endl; FAIL(); });
 }
 
 /**
@@ -168,7 +175,8 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
-  testTransport<decltype(orig_model), validation::DefaultTransactionValidator>(
+  testTransport<decltype(orig_model),
+                validation::DefaultSignableTransactionValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -183,7 +191,8 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, QueryCreationTest) {
   auto orig_model = createQuery();
-  testTransport<decltype(orig_model), validation::DefaultQueryValidator>(
+  testTransport<decltype(orig_model),
+                validation::DefaultSignableQueryValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -199,7 +208,8 @@ TEST_F(TransportBuilderTest, QueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
   auto orig_model = createInvalidQuery();
-  testTransport<decltype(orig_model), validation::DefaultQueryValidator>(
+  testTransport<decltype(orig_model),
+                validation::DefaultSignableQueryValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });

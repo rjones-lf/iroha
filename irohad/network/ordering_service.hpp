@@ -34,7 +34,8 @@ namespace iroha {
        * Transform model proposal to transport object and send to peers
        * @param proposal - object for propagation
        */
-      virtual void publishProposal(model::Proposal &&proposal) = 0;
+      virtual void publishProposal(
+          std::unique_ptr<shared_model::interface::Proposal> proposal) = 0;
     };
   }  // namespace network
 }  // namespace iroha

@@ -18,65 +18,97 @@
 #include <thread>
 
 #include "ametsuchi/block_query.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/transport_builder.hpp"
 #include "common/types.hpp"
 #include "endpoint.pb.h"
+#include "interfaces/base/hashable.hpp"
 #include "model/converters/pb_common.hpp"
 #include "model/sha3_hash.hpp"
 #include "torii/command_service.hpp"
+#include "validators/default_validator.hpp"
+#include "validators/transaction_validator.hpp"
 
 using namespace std::chrono_literals;
 
 namespace torii {
 
   CommandService::CommandService(
-      std::shared_ptr<iroha::model::converters::PbTransactionFactory>
-          pb_factory,
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::chrono::milliseconds proposal_delay)
-      : pb_factory_(pb_factory),
-        tx_processor_(tx_processor),
+      : tx_processor_(tx_processor),
         storage_(storage),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
-        cache_(std::make_shared<
-               iroha::cache::Cache<std::string,
-                                   iroha::protocol::ToriiResponse>>()) {
+        cache_(std::make_shared<CacheType>()) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe(
         [this](
             std::shared_ptr<iroha::model::TransactionResponse> iroha_response) {
           // Find response in cache
-          auto res = cache_->findItem(iroha_response->tx_hash);
+          shared_model::crypto::Hash tx_hash(iroha_response->tx_hash);
+          auto res = cache_->findItem(tx_hash);
           if (not res) {
             iroha::protocol::ToriiResponse response;
-            response.set_tx_hash(iroha_response->tx_hash);
+            response.set_tx_hash(shared_model::crypto::toBinaryString(tx_hash));
             response.set_tx_status(iroha::protocol::NOT_RECEIVED);
-            cache_->addItem(iroha_response->tx_hash, response);
+            cache_->addItem(tx_hash, response);
             return;
           }
 
-          auto proto_status = convertStatusToProto(iroha_response->current_status);
+          auto proto_status =
+              convertStatusToProto(iroha_response->current_status);
           res->set_tx_status(proto_status);
-          cache_->addItem(iroha_response->tx_hash, *res);
+          cache_->addItem(tx_hash, *res);
         });
   }
 
-  void CommandService::Torii(iroha::protocol::Transaction const &tx) {
-    auto iroha_tx = pb_factory_->deserialize(tx);
-    auto tx_hash = iroha::hash<iroha::protocol::Transaction>(tx).to_string();
-
-    if (cache_->findItem(tx_hash)) {
-      return;
-    }
-
+  void CommandService::Torii(const iroha::protocol::Transaction &request) {
+    shared_model::crypto::Hash tx_hash;
     iroha::protocol::ToriiResponse response;
-    response.set_tx_hash(tx_hash);
-    response.set_tx_status(iroha::protocol::TxStatus::IN_PROGRESS);
+
+    shared_model::proto::TransportBuilder<
+        shared_model::proto::Transaction,
+        shared_model::validation::DefaultTransactionValidator>()
+        .build(request)
+        .match(
+            [this, &tx_hash, &response](
+                // success case
+                const iroha::expected::Value<shared_model::proto::Transaction>
+                    &iroha_tx) {
+              tx_hash = iroha_tx.value.hash();
+              if (cache_->findItem(tx_hash)) {
+                return;
+              }
+
+              // setting response
+              response.set_tx_hash(tx_hash.toString());
+              response.set_tx_status(
+                  iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+
+              cache_->addItem(tx_hash, response);
+              // Send transaction to iroha
+              tx_processor_->transactionHandle(
+                  std::shared_ptr<iroha::model::Transaction>(
+                      iroha_tx.value.makeOldModel()));
+            },
+            [this, &tx_hash, &request, &response](const auto &error) {
+              // getting hash from invalid transaction
+              auto blobPayload =
+                  shared_model::proto::makeBlob(request.payload());
+              tx_hash =
+                  shared_model::proto::Transaction::HashProviderType::makeHash(
+                      blobPayload);
+
+              // setting response
+              response.set_tx_hash(
+                  shared_model::crypto::toBinaryString(tx_hash));
+              response.set_tx_status(
+                  iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+            });
 
     cache_->addItem(tx_hash, response);
-    // Send transaction to iroha
-    tx_processor_->transactionHandle(iroha_tx);
   }
 
   grpc::Status CommandService::Torii(
@@ -87,9 +119,10 @@ namespace torii {
     return grpc::Status::OK;
   }
 
-  void CommandService::Status(iroha::protocol::TxStatusRequest const &request,
+  void CommandService::Status(const iroha::protocol::TxStatusRequest &request,
                               iroha::protocol::ToriiResponse &response) {
-    auto resp = cache_->findItem(request.tx_hash());
+    auto tx_hash = shared_model::crypto::Hash(request.tx_hash());
+    auto resp = cache_->findItem(tx_hash);
     if (resp) {
       response.CopyFrom(*resp);
     } else {
@@ -99,7 +132,7 @@ namespace torii {
       } else {
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
-      cache_->addItem(request.tx_hash(), response);
+      cache_->addItem(tx_hash, response);
     }
   }
 
@@ -114,7 +147,7 @@ namespace torii {
   void CommandService::StatusStream(
       iroha::protocol::TxStatusRequest const &request,
       grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer) {
-    auto resp = cache_->findItem(request.tx_hash());
+    auto resp = cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
     checkCacheAndSend(resp, response_writer);
 
     bool finished = false;

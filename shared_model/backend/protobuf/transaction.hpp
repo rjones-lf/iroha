@@ -51,7 +51,7 @@ namespace shared_model {
             signatures_([this] {
               return boost::accumulate(
                   proto_->signature(),
-                  SignatureSetType{},
+                  interface::SignatureSetType{},
                   [](auto &&acc, const auto &sig) {
                     acc.emplace(new Signature(sig));
                     return std::forward<decltype(acc)>(acc);
@@ -88,7 +88,7 @@ namespace shared_model {
         return *txhash_;
       }
 
-      const Transaction::SignatureSetType &signatures() const override {
+      const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
@@ -121,7 +121,7 @@ namespace shared_model {
 
       const Lazy<BlobType> blobTypePayload_;
 
-      const Lazy<SignatureSetType> signatures_;
+      const Lazy<interface::SignatureSetType> signatures_;
 
       const Lazy<HashType> txhash_;
     };

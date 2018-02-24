@@ -20,6 +20,8 @@
 
 #include <boost/serialization/variant.hpp>
 
+#define NORETURN [[noreturn]]
+
 namespace shared_model {
   namespace detail {
     /**
@@ -40,8 +42,9 @@ namespace shared_model {
          * @tparam Archive container type
          */
         template <class V, class T = typename V::types, class Archive>
-        static V invoke(Archive &&, int) {
+        NORETURN static V invoke(Archive &&, int) {
           BOOST_ASSERT_MSG(false, "Required type not found");
+          std::abort();
         }
       };
 

@@ -43,7 +43,12 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP)
 endif()
 
 if (SWIG_PYTHON)
-    find_package(PythonLibs 2.7 REQUIRED)
+    if(SUPPORT_PYTHON2)
+        find_package(PythonLibs 2.7 REQUIRED)
+    else()
+        find_package(PythonLibs 3.6 REQUIRED)
+    endif()
+
     # path to where Python.h is found
     include_directories(${PYTHON_INCLUDE_DIRS})
 

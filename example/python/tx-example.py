@@ -41,7 +41,13 @@ tx_blob = proto_tx_helper.signAndAddSignature(tx, me_kp).blob()
 # create proto object and send to iroha
 
 proto_tx = block_pb2.Transaction()
-proto_tx.ParseFromString(''.join(map(chr, tx_blob)))
+
+if sys.version_info[0] == 2:
+    tmp = ''.join(map(chr, tx_blob))
+else:
+    tmp = bytes(tx_blob)
+
+proto_tx.ParseFromString(tmp)
 
 channel = grpc.insecure_channel('127.0.0.1:50051')
 stub = endpoint_pb2_grpc.CommandServiceStub(channel)
@@ -53,7 +59,12 @@ time.sleep(5)
 # create status request
 print("Hash of the transaction: ", tx.hash().hex())
 tx_hash = tx.hash().blob()
-tx_hash = ''.join(map(chr, tx_hash))
+
+if sys.version_info[0] == 2:
+    tx_hash = ''.join(map(chr, tx_hash))
+else:
+    tx_hash = bytes(tx_hash)
+
 
 request = endpoint_pb2.TxStatusRequest()
 request.tx_hash = tx_hash
@@ -74,7 +85,11 @@ query = query_builder.creatorAccountId(creator) \
 query_blob = proto_query_helper.signAndAddSignature(query, me_kp).blob()
 
 proto_query = queries_pb2.Query()
-proto_query.ParseFromString(''.join(map(chr, query_blob)))
+if sys.version_info[0] == 2:
+    tmp = ''.join(map(chr, query_blob))
+else:
+    tmp = bytes(query_blob)
+proto_query.ParseFromString(tmp)
 
 query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
 query_response = query_stub.Find(proto_query)

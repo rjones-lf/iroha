@@ -19,12 +19,12 @@
 #define IROHA_SIGNABLE_HPP
 
 #include <boost/functional/hash.hpp>
-#include <unordered_set>
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
+#include "interfaces/common_objects/signable_hash.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -50,36 +50,6 @@ namespace shared_model {
     class Signable : public Hashable<Model> {
 #endif
      public:
-      /**
-       * Hash class for SigWrapper type. It's required since std::unordered_set
-       * uses hash inside and it should be declared explicitly for user-defined
-       * types.
-       */
-      class SignableHash {
-       public:
-        /**
-         * Operator which actually calculates hash. Uses boost::hash_combine to
-         * calculate hash from several fields.
-         * @param sig - item to find hash from
-         * @return calculated hash
-         */
-        size_t operator()(const types::SignatureType &sig) const {
-          std::size_t seed = 0;
-          boost::hash_combine(seed, sig->publicKey().blob());
-          boost::hash_combine(seed, sig->signedData().blob());
-          return seed;
-        }
-      };
-
-      /**
-       * Type of set of signatures
-       *
-       * Note: we can't use const SignatureType due to unordered_set
-       * limitations: it requires to have write access for elements for some
-       * internal operations.
-       */
-      using SignatureSetType =
-          std::unordered_set<types::SignatureType, SignableHash>;
 
       /**
        * @return attached signatures

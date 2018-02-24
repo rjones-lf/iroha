@@ -20,6 +20,7 @@
 #include <boost/range/combine.hpp>
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
+#include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
@@ -865,4 +866,115 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_EQ(*blocks->getTxByHashSync(tx1hash), tx1);
   ASSERT_EQ(*blocks->getTxByHashSync(tx2hash), tx2);
   ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
+}
+
+/**
+ * @given initialized storage for ordering service
+ * @when save proposal height
+ * @then load proposal height and ensure it is correct
+ */
+TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
+  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
+      ordering_state;
+  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
+      .match([&](iroha::expected::Value<std::shared_ptr<
+                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
+                     &_storage) { ordering_state = _storage.value; },
+             [](iroha::expected::Error<std::string> &error) {
+               FAIL() << "PostgresOrderingServicePersistentState: "
+                      << error.error;
+             });
+  ASSERT_TRUE(ordering_state);
+
+  ordering_state->resetState();
+  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
+  ASSERT_TRUE(ordering_state->saveProposalHeight(11));
+  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
+  ASSERT_TRUE(ordering_state->saveProposalHeight(33));
+  ASSERT_EQ(33, ordering_state->loadProposalHeight().value());
+  ordering_state->resetState();
+  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
+}
+
+/**
+ * @given initialized storage for ordering service
+ * @when save proposal height
+ * @then load proposal height and ensure it is correct
+ */
+TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
+  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
+      ordering_state;
+  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
+      .match([&](iroha::expected::Value<std::shared_ptr<
+                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
+                     &_storage) { ordering_state = _storage.value; },
+             [](iroha::expected::Error<std::string> &error) {
+               FAIL() << "PostgresOrderingServicePersistentState: "
+                      << error.error;
+             });
+  ASSERT_TRUE(ordering_state);
+
+  ordering_state->resetState();
+  ASSERT_EQ(2, ordering_state->loadProposalHeight().value());
+  ASSERT_TRUE(ordering_state->saveProposalHeight(11));
+  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
+
+  // restart Ordering Service Storage
+  ordering_state.reset();
+  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
+      .match([&](iroha::expected::Value<std::shared_ptr<
+                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
+                     &_storage) { ordering_state = _storage.value; },
+             [](iroha::expected::Error<std::string> &error) {
+               FAIL() << "PostgresOrderingServicePersistentState: "
+                      << error.error;
+             });
+  ASSERT_TRUE(ordering_state);
+  ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
+}
+
+/**
+ * @given 2 different initialized storages for ordering service
+ * @when save proposal height to the first one
+ * @then the state is consistent
+ */
+TEST_F(AmetsuchiTest,
+       OrderingServicePersistentStorageDifferentConnectionsTest) {
+  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
+      ordering_state_1;
+  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
+      .match([&](iroha::expected::Value<std::shared_ptr<
+                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
+                     &_storage) { ordering_state_1 = _storage.value; },
+             [](iroha::expected::Error<std::string> &error) {
+               FAIL() << "PostgresOrderingServicePersistentState: "
+                      << error.error;
+             });
+  ASSERT_TRUE(ordering_state_1);
+
+  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
+      ordering_state_2;
+  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
+      .match([&](iroha::expected::Value<std::shared_ptr<
+                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
+                     &_storage) { ordering_state_2 = _storage.value; },
+             [](iroha::expected::Error<std::string> &error) {
+               FAIL() << "PostgresOrderingServicePersistentState: "
+                      << error.error;
+             });
+  ASSERT_TRUE(ordering_state_2);
+
+  ordering_state_2->resetState();
+  ASSERT_EQ(2, ordering_state_1->loadProposalHeight().value());
+  ASSERT_EQ(2, ordering_state_2->loadProposalHeight().value());
+  ASSERT_TRUE(ordering_state_1->saveProposalHeight(11));
+  ASSERT_EQ(11, ordering_state_1->loadProposalHeight().value());
+  ASSERT_EQ(11, ordering_state_2->loadProposalHeight().value());
+
+  ordering_state_2->resetState();
+  ASSERT_EQ(2, ordering_state_1->loadProposalHeight().value());
+  ASSERT_EQ(2, ordering_state_2->loadProposalHeight().value());
+  ASSERT_TRUE(ordering_state_2->saveProposalHeight(42));
+  ASSERT_EQ(42, ordering_state_1->loadProposalHeight().value());
+  ASSERT_EQ(42, ordering_state_2->loadProposalHeight().value());
 }

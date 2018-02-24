@@ -40,8 +40,9 @@ namespace iroha {
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions
        */
-      model::Proposal validate(const model::Proposal &proposal,
-                               ametsuchi::TemporaryWsv &temporaryWsv) override;
+      std::shared_ptr<shared_model::interface::Proposal> validate(
+          const shared_model::interface::Proposal &proposal,
+          ametsuchi::TemporaryWsv &temporaryWsv) override;
 
      private:
       /**
@@ -52,8 +53,9 @@ namespace iroha {
        * pubkeys
        */
       bool signaturesSubset(
-          const model::Transaction::SignaturesType &signatures,
-          const std::vector<pubkey_t> &public_keys);
+          const shared_model::interface::SignatureSetType
+              &signatures,
+          const std::vector<shared_model::crypto::PublicKey> &public_keys);
 
       logger::Logger log_;
     };

@@ -33,6 +33,8 @@ pipeline {
         IROHA_REDIS_HOST = "redis-${GIT_COMMIT}-${BUILD_NUMBER}"
         IROHA_POSTGRES_PORT = 5432
         IROHA_REDIS_PORT = 6379
+
+        CTEST_OUTPUT_ON_FAILURE = 1
     }
     agent {
         label 'docker_1'

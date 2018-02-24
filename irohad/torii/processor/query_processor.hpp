@@ -24,6 +24,9 @@
 #include "model/query.hpp"
 #include "model/query_response.hpp"
 
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/query_response.hpp"
+
 namespace iroha {
   namespace torii {
 
@@ -37,13 +40,15 @@ namespace iroha {
        * @param client - query emitter
        * @param query - client intent
        */
-      virtual void queryHandle(std::shared_ptr<model::Query> query) = 0;
+      virtual void queryHandle(std::shared_ptr<
+                               shared_model::interface::Query> qry) = 0;
 
       /**
        * Subscribe for query responses
        * @return observable with query responses
        */
-      virtual rxcpp::observable<std::shared_ptr<model::QueryResponse>>
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::QueryResponse>>
       queryNotifier() = 0;
 
       virtual ~QueryProcessor(){};

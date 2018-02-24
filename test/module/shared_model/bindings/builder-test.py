@@ -1,6 +1,7 @@
 import iroha
 import unittest
 import time
+import sys
 
 from google.protobuf.message import DecodeError
 import block_pb2 as blk
@@ -9,7 +10,6 @@ class BuilderTest(unittest.TestCase):
   def test_empty_tx(self):
     with self.assertRaises(ValueError):
       iroha.ModelTransactionBuilder().build()
-
   def generate_base(self):
     return iroha.ModelTransactionBuilder().txCounter(123)\
                                .createdTime(int(time.time() * 1000))\
@@ -49,7 +49,11 @@ class BuilderTest(unittest.TestCase):
 
   def check_proto_tx(self, blob):
     try:
-      blk.Transaction.FromString(b''.join(map(chr, blob.blob())))
+      if sys.version_info[0] == 2:
+        tmp = ''.join(map(chr, blob.blob()))
+      else:
+        tmp = bytes(blob.blob())
+      blk.Transaction.FromString(tmp)
     except DecodeError as e:
       print(e)
       return False

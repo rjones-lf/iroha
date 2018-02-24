@@ -38,4 +38,5 @@ target_link_libraries(torii_service
     stateless_validator
     model
     logger
+    shared_model_stateless_validation
     )

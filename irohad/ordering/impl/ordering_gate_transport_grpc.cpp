@@ -17,11 +17,10 @@
 #include "ordering_gate_transport_grpc.hpp"
 
 using namespace iroha::ordering;
-using namespace iroha::protocol;
 
 grpc::Status OrderingGateTransportGrpc::onProposal(
     ::grpc::ServerContext *context,
-    const protocol::Proposal *request,
+    const iroha::protocol::Proposal *request,
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 

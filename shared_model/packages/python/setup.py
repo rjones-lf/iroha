@@ -1,21 +1,22 @@
+import multiprocessing
 import os
-import re
-import sys
-import platform
+import shutil
 import subprocess
-
+import sys
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from distutils.version import LooseVersion
-import shutil
-import multiprocessing
 
 IROHA_REPO = "https://github.com/hyperledger/iroha"
 IROHA_BRANCH = "develop"
 
 IROHA_CMAKE_ARGS = dict(
     SWIG_PYTHON="ON",
+    SHARED_MODEL_DISABLE_COMPATIBILITY="ON"
 )
+
+if sys.version_info[0] == 2:
+    IROHA_CMAKE_ARGS["SUPPORT_PYTHON2"] = "ON"
+
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -39,20 +40,19 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         self.clone()
+        cfg = 'Debug' if self.debug else 'Release'
 
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
 
-        cfg = 'Debug' if self.debug else 'Release'
-        build_args = ['--config', cfg]
+        IROHA_CMAKE_ARGS["CMAKE_LIBRARY_OUTPUT_DIRECTORY"] = extdir
+        IROHA_CMAKE_ARGS["PYTHON_EXECUTABLE"] = sys.executable
+        IROHA_CMAKE_ARGS["CMAKE_BUILD_TYPE"] = cfg
 
-
-        cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-        for key, value in IROHA_CMAKE_ARGS.iteritems():
+        cmake_args = []
+        for key, value in IROHA_CMAKE_ARGS.items():
             cmake_args.append("-D{}={}".format(key,value))
 
-        build_args += '--target irohapy -- -j{}'.format(multiprocessing.cpu_count()).split(' ')
+        build_args = '--config {} --target irohapy -- -j{}'.format(cfg, multiprocessing.cpu_count()).split(' ')
 
         env = os.environ.copy()
 
@@ -65,7 +65,7 @@ class CMakeBuild(build_ext):
 if __name__ == "__main__":
     setup(
         name='iroha',
-        version='0.0.18',
+        version='0.0.23',
         author='Soramitsu Co Ltd',
         author_email='savva@soramitsu.co.jp',
         description='Python library for Hyperledger Iroha',

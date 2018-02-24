@@ -16,56 +16,76 @@
  */
 
 #include "torii/query_service.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "common/types.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace torii {
 
   QueryService::QueryService(
-      std::shared_ptr<iroha::model::converters::PbQueryFactory>
-          pb_query_factory,
-      std::shared_ptr<iroha::model::converters::PbQueryResponseFactory>
-          pb_query_response_factory,
       std::shared_ptr<iroha::torii::QueryProcessor> query_processor)
-      : pb_query_factory_(pb_query_factory),
-        pb_query_response_factory_(pb_query_response_factory),
-        query_processor_(query_processor) {
-    // Subscribe on result from iroha
-    query_processor_->queryNotifier().subscribe([this](auto iroha_response) {
-      // Find client to respond
-      auto res = handler_map_.find(iroha_response->query_hash.to_string());
-      // Serialize to proto an return to response
-      res->second =
-          pb_query_response_factory_->serialize(iroha_response).value();
+      : query_processor_(query_processor) {
+    //    Subscribe on result from iroha
+    query_processor_->queryNotifier().subscribe(
+        [this](const std::shared_ptr<shared_model::interface::QueryResponse>
+                   &iroha_response) {
+          // Find client to respond
+          auto hash = iroha_response->queryHash();
+          auto res = cache_.findItem(hash);
 
-    });
+          if (res) {
+            cache_.addItem(hash, iroha_response);
+          }
+
+        });
   }
 
   void QueryService::Find(iroha::protocol::Query const &request,
                           iroha::protocol::QueryResponse &response) {
-    using iroha::operator|;
-    auto deserializedRequest = pb_query_factory_->deserialize(request);
-    deserializedRequest | [&](const auto &query) {
-      auto hash = iroha::hash(*query).to_string();
-      if (handler_map_.count(hash) > 0) {
-        // Query was already processed
-        response.mutable_error_response()->set_reason(
-            iroha::protocol::ErrorResponse::STATELESS_INVALID);
-      }
+    //    shared_model::proto::QueryResponse model_response(response);
+    shared_model::crypto::Hash hash;
+    shared_model::proto::TransportBuilder<
+        shared_model::proto::Query,
+        shared_model::validation::DefaultQueryValidator>()
+        .build(request)
+        .match(
+            [this, &hash, &response](
+                const iroha::expected::Value<shared_model::proto::Query>
+                    &query) {
+              hash = query.value.hash();
+              if (cache_.findItem(hash)) {
+                // Query was already processed
 
-      else {
-        // Query - response relationship
-        handler_map_.emplace(hash, response);
-        // Send query to iroha
-        query_processor_->queryHandle(query);
-      }
-      response.set_query_hash(hash);
-    };
+                response.mutable_error_response()->set_reason(
+                    iroha::protocol::ErrorResponse::STATELESS_INVALID);
+              } else {
+                // Query - response relationship
+                cache_.addItem(
+                    hash,
+                    std::make_shared<shared_model::proto::QueryResponse>(
+                        response));
+                // Send query to iroha
+                query_processor_->queryHandle(
+                    std::make_shared<shared_model::proto::Query>(query.value));
+              }
 
-    if (not deserializedRequest) {
-      response.mutable_error_response()->set_reason(
-          iroha::protocol::ErrorResponse::NOT_SUPPORTED);
-    }
+              auto result_response = cache_.findItem(hash).value();
+              response = static_cast<shared_model::proto::QueryResponse &>(
+                             *result_response)
+                             .getTransport();
+            },
+            [&hash, &request, &response](
+                const iroha::expected::Error<std::string> &error) {
+              auto blobPayload =
+                  shared_model::proto::makeBlob(request.payload());
+              hash = shared_model::proto::Query::HashProviderType::makeHash(
+                  blobPayload);
+              response.set_query_hash(
+                  shared_model::crypto::toBinaryString(hash));
+              response.mutable_error_response()->set_reason(
+                  iroha::protocol::ErrorResponse::STATELESS_INVALID);
+            });
   }
 
   grpc::Status QueryService::Find(grpc::ServerContext *context,

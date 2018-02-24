@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "ametsuchi/storage.hpp"
 #include "cache/cache.hpp"
+#include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "model/converters/pb_transaction_factory.hpp"
@@ -43,8 +44,6 @@ namespace torii {
      * @param proposal_delay - time of a one proposal propagation.
      */
     CommandService(
-        std::shared_ptr<iroha::model::converters::PbTransactionFactory>
-            pb_factory,
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
         std::chrono::milliseconds proposal_delay);
@@ -60,7 +59,7 @@ namespace torii {
      * Actual implementation of sync Torii in CommandService
      * @param tx - Transaction we've received
      */
-    void Torii(iroha::protocol::Transaction const &tx);
+    void Torii(const iroha::protocol::Transaction &tx);
 
     /**
      * Torii call via grpc
@@ -80,7 +79,7 @@ namespace torii {
      * @param response - ToriiResponse which contains a current state of
      * requested transaction
      */
-    void Status(iroha::protocol::TxStatusRequest const &request,
+    void Status(const iroha::protocol::TxStatusRequest &request,
                 iroha::protocol::ToriiResponse &response);
 
     /**
@@ -137,14 +136,16 @@ namespace torii {
     bool isFinalStatus(const iroha::protocol::TxStatus &status) const;
 
    private:
+    using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
+                                          iroha::protocol::ToriiResponse,
+                                          shared_model::crypto::Hash::Hasher>;
+
     std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_factory_;
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
     std::chrono::milliseconds proposal_delay_;
     std::chrono::milliseconds start_tx_processing_duration_;
-    std::shared_ptr<
-        iroha::cache::Cache<std::string, iroha::protocol::ToriiResponse>>
-        cache_;
+    std::shared_ptr<CacheType> cache_;
   };
 
 }  // namespace torii

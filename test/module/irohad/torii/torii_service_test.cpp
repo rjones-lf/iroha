@@ -26,12 +26,12 @@ limitations under the License.
 #include "torii/command_client.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 
-#include "torii/command_client.hpp"
 #include "torii/command_service.hpp"
-#include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
+
+#include "builders/protobuf/transaction.hpp"
 
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
@@ -82,14 +82,12 @@ class ToriiServiceTest : public testing::Test {
       // ----------- Command Service --------------
       pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
           prop_notifier_, commit_notifier_);
-      statelessValidatorMock = std::make_shared<MockStatelessValidator>();
       wsv_query = std::make_shared<MockWsvQuery>();
       storageMock = std::make_shared<MockStorage>();
       block_query = std::make_shared<MockBlockQuery>();
 
       auto tx_processor =
-          std::make_shared<iroha::torii::TransactionProcessorImpl>(
-              pcsMock, statelessValidatorMock);
+          std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
       auto pb_tx_factory =
           std::make_shared<iroha::model::converters::PbTransactionFactory>();
 
@@ -97,13 +95,8 @@ class ToriiServiceTest : public testing::Test {
       auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
           wsv_query, block_query);
 
-      auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-          std::move(qpf), statelessValidatorMock);
-
-      auto pb_query_factory =
-          std::make_shared<iroha::model::converters::PbQueryFactory>();
-      auto pb_query_resp_factory =
-          std::make_shared<iroha::model::converters::PbQueryResponseFactory>();
+      auto qpi =
+          std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
 
       EXPECT_CALL(*storageMock, getBlockQuery())
           .WillRepeatedly(Return(block_query));
@@ -112,10 +105,8 @@ class ToriiServiceTest : public testing::Test {
 
       //----------- Server run ----------------
       runner
-          ->append(std::make_unique<torii::CommandService>(
-              pb_tx_factory, tx_processor, storageMock, proposal_delay))
-          .append(std::make_unique<torii::QueryService>(
-              pb_query_factory, pb_query_resp_factory, qpi))
+          ->append(std::make_unique<torii::CommandService>(tx_processor, storageMock, proposal_delay))
+          .append(std::make_unique<torii::QueryService>(qpi))
           .run();
     });
 
@@ -139,7 +130,6 @@ class ToriiServiceTest : public testing::Test {
   rxcpp::subjects::subject<Commit> commit_notifier_;
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
-  std::shared_ptr<MockStatelessValidator> statelessValidatorMock;
 };
 
 /**
@@ -149,6 +139,7 @@ class ToriiServiceTest : public testing::Test {
  */
 TEST_F(ToriiServiceTest, CommandClient) {
   iroha::protocol::TxStatusRequest tx_request;
+  tx_request.set_tx_hash(std::string('1', 32));
   iroha::protocol::ToriiResponse toriiResponse;
 
   auto client1 = torii::CommandSyncClient(Ip, Port);
@@ -216,11 +207,6 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
            then STATEFUL_VALIDATION_FAILED
  */
 TEST_F(ToriiServiceTest, StatusWhenBlocking) {
-  EXPECT_CALL(*statelessValidatorMock,
-              validate(A<const iroha::model::Transaction &>()))
-      .Times(TimesToriiBlocking)
-      .WillRepeatedly(Return(true));
-
   std::vector<iroha::model::Transaction> txs;
   std::vector<std::string> tx_hashes;
 
@@ -229,11 +215,18 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   auto client1 = torii::CommandSyncClient(Ip, Port);
 
   // create transactions and send them to Torii
+  std::string account_id = "some@account";
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
-    auto new_tx = iroha::protocol::Transaction();
-    auto payload = new_tx.mutable_payload();
-    payload->set_tx_counter(i);
-    payload->set_creator_account_id("accountA");
+    auto shm_tx = shared_model::proto::TransactionBuilder()
+                      .creatorAccountId(account_id)
+                      .txCounter(i + 1)
+                      .createdTime(iroha::time::now())
+                      .setAccountQuorum(account_id, 2)
+                      .build()
+                      .signAndAddSignature(
+                          shared_model::crypto::DefaultCryptoAlgorithmType::
+                              generateKeypair());
+    auto new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);
 
@@ -355,10 +348,6 @@ TEST_F(ToriiServiceTest, CheckHash) {
  * and COMMITTED) and the last status should be COMMITTED
  */
 TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
-  EXPECT_CALL(*statelessValidatorMock,
-              validate(A<const iroha::model::Transaction &>()))
-      .WillRepeatedly(Return(true));
-
   iroha::model::converters::PbTransactionFactory tx_factory;
   auto client = torii::CommandSyncClient(Ip, Port);
 

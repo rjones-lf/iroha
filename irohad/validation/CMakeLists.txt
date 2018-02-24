@@ -22,6 +22,7 @@ target_link_libraries(stateful_validator
     optional
     rxcpp
     model
+    model_interfaces
     logger
     )
 
