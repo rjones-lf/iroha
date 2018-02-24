@@ -65,7 +65,8 @@ namespace shared_model {
       using ProtoCommand = iroha::protocol::Command;
 
       template <int Sp>
-      TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp, SV, BT> &o)
+      TemplateTransactionBuilder(
+          const TemplateTransactionBuilder<Sp, SV, BT> &o)
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
@@ -96,8 +97,7 @@ namespace shared_model {
       }
 
      public:
-      TemplateTransactionBuilder(const SV &validator = SV())
-          : stateless_validator_(validator) {}
+      TemplateTransactionBuilder() = default;
 
       auto creatorAccountId(
           const interface::types::AccountIdType &account_id) const {

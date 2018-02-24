@@ -52,9 +52,9 @@ shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
                   ->index_in_oneof();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::Query::QueryVariantType>(
-      std::forward<Archive>(ar), which);
+  return shared_model::detail::variant_impl<T...>::
+      template load<shared_model::interface::Query::QueryVariantType>(
+          std::forward<Archive>(ar), which);
 }
 
 namespace shared_model {
@@ -89,6 +89,10 @@ namespace shared_model {
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
+
+      // TODO(warchant): IR-1020 this constructor is dangerous -- it can be instantiated
+      // with ANY type. Find a soluiton to not repeat constructor code in two
+      // {l,r}value constructors and get rid of general template.
 
       template <typename QueryType>
       explicit Query(QueryType &&query)
