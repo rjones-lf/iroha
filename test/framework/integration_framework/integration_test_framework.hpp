@@ -50,8 +50,8 @@ namespace integration_framework {
     using BlockType = std::shared_ptr<iroha::model::Block>;
 
    public:
-    IntegrationTestFramework(size_t maximum_block_size = 10):
-        maximum_block_size_(maximum_block_size) {}
+    IntegrationTestFramework(size_t maximum_block_size = 10)
+        : maximum_block_size_(maximum_block_size) {}
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
     IntegrationTestFramework &setInitialState(

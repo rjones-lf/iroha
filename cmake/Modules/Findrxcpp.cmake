@@ -15,13 +15,13 @@ set_target_description(rxcpp "Library for reactive programming" ${URL} ${VERSION
 
 if (NOT rxcpp_FOUND)
   externalproject_add(reactive_extensions_rxcpp
-      GIT_REPOSITORY ${URL}
-      GIT_TAG        ${VERSION}
+      GIT_REPOSITORY    ${URL}
+      GIT_TAG           ${VERSION}
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND ""
-      INSTALL_COMMAND "" # remove install step
-      UPDATE_COMMAND "" # remove update step
-      TEST_COMMAND "" # remove test step
+      BUILD_COMMAND     ""
+      INSTALL_COMMAND   "" # remove install step
+      UPDATE_COMMAND    "" # remove update step
+      TEST_COMMAND      "" # remove test step
       )
   externalproject_get_property(reactive_extensions_rxcpp source_dir)
   set(rxcpp_INCLUDE_DIR ${source_dir}/Rx/v2/src)

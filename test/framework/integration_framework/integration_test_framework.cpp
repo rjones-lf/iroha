@@ -76,6 +76,7 @@ namespace integration_framework {
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
+    iroha_instance_->instance_->resetOrderingService();
     std::shared_ptr<iroha::model::Block> old_block(block.makeOldModel());
     iroha_instance_->makeGenesis(*old_block);
     log_->info("added genesis block");

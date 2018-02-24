@@ -140,6 +140,9 @@ int main(int argc, char *argv[]) {
     // clear previous storage if any
     irohad.dropStorage();
 
+    // reset ordering service persistent counter
+    irohad.resetOrderingService();
+
     log->info("Block is parsed");
 
     // Applying transactions from genesis block to iroha storage

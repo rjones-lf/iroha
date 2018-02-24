@@ -20,6 +20,7 @@
 
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -77,6 +78,11 @@ class Irohad {
    * Initialization of whole objects in system
    */
   virtual void init();
+
+  /**
+   * Reset oredering service storage state to default
+   */
+  void resetOrderingService();
 
   /**
    * Drop wsv and block store
@@ -177,6 +183,9 @@ class Irohad {
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
+  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
+      ordering_service_storage_;
+
   iroha::keypair_t keypair;
 };
 

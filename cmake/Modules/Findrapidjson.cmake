@@ -13,13 +13,13 @@ set_target_description(rapidjson "JSON library" ${URL} ${VERSION})
 
 if (NOT rapidjson_FOUND)
   externalproject_add(miloyip_rapidjson
-      GIT_REPOSITORY ${URL}
-      GIT_TAG        ${VERSION}
-      BUILD_COMMAND "" # remove build step, header only lib
+      GIT_REPOSITORY    ${URL}
+      GIT_TAG           ${VERSION}
+      BUILD_COMMAND     "" # remove build step, header only lib
       CONFIGURE_COMMAND "" # remove configure step
-      INSTALL_COMMAND "" # remove install step
-      TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
+      INSTALL_COMMAND   "" # remove install step
+      TEST_COMMAND      "" # remove test step
+      UPDATE_COMMAND    "" # remove update step
       )
   externalproject_get_property(miloyip_rapidjson source_dir)
   set(rapidjson_INCLUDE_DIR "${source_dir}/include")

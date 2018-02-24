@@ -16,12 +16,13 @@
  */
 
 #include "framework/test_subscriber.hpp"
+#include "mock_ordering_service_persistent_state.hpp"
+#include "model/asset.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
-#include "model/asset.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::model;
@@ -44,7 +45,10 @@ class OrderingGateServiceTest : public ::testing::Test {
     counter = 2;
   }
 
-  void SetUp() override {}
+  void SetUp() override {
+    fake_persistent_state =
+        std::make_shared<MockOrderingServicePersistentState>();
+  }
 
   void start() {
     std::mutex mtx;
@@ -110,8 +114,14 @@ class OrderingGateServiceTest : public ::testing::Test {
   Peer peer;
   std::shared_ptr<OrderingGateTransportGrpc> gate_transport;
   std::shared_ptr<OrderingServiceTransportGrpc> service_transport;
+  std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
 };
 
+/**
+ * @given ordering service
+ * @when a bunch of transaction has arrived
+ * @then proposal is sent
+ */
 TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   // 8 transaction -> proposal -> 2 transaction -> proposal
 
@@ -121,8 +131,22 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   const size_t max_proposal = 100;
   const size_t commit_delay = 400;
 
-  service = std::make_shared<OrderingServiceImpl>(
-      wsv, max_proposal, commit_delay, service_transport);
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(2)));
+
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(3))
+      .Times(1)
+      .WillOnce(Return(true));
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(4))
+      .Times(1)
+      .WillOnce(Return(true));
+
+  service = std::make_shared<OrderingServiceImpl>(wsv,
+                                                  max_proposal,
+                                                  commit_delay,
+                                                  service_transport,
+                                                  fake_persistent_state);
   service_transport->subscribe(service);
 
   start();
@@ -153,6 +177,11 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   }
 }
 
+/**
+ * @given ordering service
+ * @when a bunch of transaction has arrived
+ * @then split transactions on to two proposal
+ */
 TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   // commits on the fulfilling proposal queue
   // 10 transaction -> proposal with 5 -> proposal with 5
@@ -163,8 +192,22 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   const size_t max_proposal = 5;
   const size_t commit_delay = 1000;
 
-  service = std::make_shared<OrderingServiceImpl>(
-      wsv, max_proposal, commit_delay, service_transport);
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(2)));
+
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(3))
+      .Times(1)
+      .WillOnce(Return(true));
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(4))
+      .Times(1)
+      .WillOnce(Return(true));
+
+  service = std::make_shared<OrderingServiceImpl>(wsv,
+                                                  max_proposal,
+                                                  commit_delay,
+                                                  service_transport,
+                                                  fake_persistent_state);
   service_transport->subscribe(service);
 
   start();
