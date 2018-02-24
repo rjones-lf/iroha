@@ -64,12 +64,12 @@ class ServerRunner {
   void waitForServersReady();
 
  private:
-  grpc::ServerBuilder builder_;
   std::unique_ptr<grpc::Server> serverInstance_;
   std::mutex waitForServer_;
   std::condition_variable serverInstanceCV_;
 
   std::string serverAddress_;
+  bool reuse_;
   std::vector<std::shared_ptr<grpc::Service>> services_;
 };
 

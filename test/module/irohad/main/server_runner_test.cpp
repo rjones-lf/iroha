@@ -18,34 +18,52 @@
 #include <gtest/gtest.h>
 #include <boost/format.hpp>
 
-#include "endpoint.grpc.pb.h"
+#include "endpoint.grpc.pb.h"  // any gRPC service is required for test
 #include "main/server_runner.hpp"
 
-/**
- * Stub service required to run a server
- */
-class StubQueryService : public iroha::protocol::QueryService::Service {};
+boost::format address{"0.0.0.0:%d"};
+auto port_visitor = iroha::make_visitor(
+    [](iroha::expected::Value<int> x) { return x.value; },
+    [](iroha::expected::Error<std::string> x) { return 0; });
 
 /**
  * @given a running ServerRunner
  * @when another ServerRunner tries to run on the same port without port reuse
  * @then Result with error is returned
  */
-TEST(ServerRunnerTest, SamePort) {
-  boost::format address("0.0.0.0:%d");
-  auto port_visitor = iroha::make_visitor(
-      [](iroha::expected::Value<int> x) { return x.value; },
-      [](iroha::expected::Error<std::string> x) { return 0; });
-
+TEST(ServerRunnerTest, SamePortNoReuse) {
   ServerRunner first_runner((address % 0).str());
-  auto first_query_service = std::make_shared<StubQueryService>();
+  auto first_query_service =
+      std::make_shared<iroha::protocol::QueryService::Service>();
   auto result = first_runner.append(first_query_service).run();
   auto port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);
 
   ServerRunner second_runner((address % port).str(), false);
-  auto second_query_service = std::make_shared<StubQueryService>();
+  auto second_query_service =
+      std::make_shared<iroha::protocol::QueryService::Service>();
   result = second_runner.append(second_query_service).run();
   port = boost::apply_visitor(port_visitor, result);
   ASSERT_EQ(0, port);
+}
+
+/**
+ * @given a running ServerRunner
+ * @when another ServerRunner tries to run on the same port with port reuse
+ * @then Result with port number is returned
+ */
+TEST(ServerRunnerTest, SamePortWithReuse) {
+  ServerRunner first_runner((address % 0).str());
+  auto first_query_service =
+      std::make_shared<iroha::protocol::QueryService::Service>();
+  auto result = first_runner.append(first_query_service).run();
+  auto port = boost::apply_visitor(port_visitor, result);
+  ASSERT_NE(0, port);
+
+  ServerRunner second_runner((address % port).str(), true);
+  auto second_query_service =
+      std::make_shared<iroha::protocol::QueryService::Service>();
+  result = second_runner.append(second_query_service).run();
+  port = boost::apply_visitor(port_visitor, result);
+  ASSERT_NE(0, port);
 }

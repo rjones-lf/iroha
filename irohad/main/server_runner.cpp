@@ -19,27 +19,32 @@
 
 #include <boost/format.hpp>
 
-const auto kPortBindError = "Cannot bind server to address %d";
+const auto kPortBindError = "Cannot bind server to address %s";
 
 ServerRunner::ServerRunner(const std::string &address, bool reuse)
-    : serverAddress_(address) {
-  if (not reuse) {
-    builder_.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
-  }
-}
+    : serverAddress_(address), reuse_(reuse) {}
 
 ServerRunner &ServerRunner::append(std::shared_ptr<grpc::Service> service) {
-  builder_.RegisterService(service.get());
   services_.push_back(service);
   return *this;
 }
 
 iroha::expected::Result<int, std::string> ServerRunner::run() {
+  grpc::ServerBuilder builder;
   int selected_port = 0;
-  builder_.AddListeningPort(
+
+  if (not reuse_) {
+    builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
+  }
+
+  builder.AddListeningPort(
       serverAddress_, grpc::InsecureServerCredentials(), &selected_port);
 
-  serverInstance_ = builder_.BuildAndStart();
+  for (auto &service : services_) {
+    builder.RegisterService(service.get());
+  }
+
+  serverInstance_ = builder.BuildAndStart();
   serverInstanceCV_.notify_one();
 
   if (selected_port == 0) {
