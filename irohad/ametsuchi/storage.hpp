@@ -62,12 +62,6 @@ namespace iroha {
        */
       virtual void dropStorage() = 0;
 
-      /**
-       * Recover WSV (World State View).
-       * @return true on success, otherwise false
-       */
-      virtual bool recoverWsv() = 0;
-
       virtual ~Storage() = default;
     };
 

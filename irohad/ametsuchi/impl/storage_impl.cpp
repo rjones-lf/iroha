@@ -202,19 +202,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    bool StorageImpl::recoverWsv() {
-      log_->info("[Recover WSV] => start");
-
-      // get all blocks starting from the genesis
-      std::vector<model::Block> blocks;
-      getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
-          [&blocks](auto block) { blocks.push_back(std::move(block)); });
-
-      dropStorage();
-
-      return insertBlocks(blocks);
-    }
-
     expected::Result<ConnectionContext, std::string>
     StorageImpl::initConnections(std::string block_store_dir,
                                  std::string postgres_options) {

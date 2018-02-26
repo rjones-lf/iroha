@@ -40,6 +40,7 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -979,7 +980,8 @@ DELETE FROM domain;
   EXPECT_FALSE(res);
 
   // recover storage and check it is recovered
-  storage->recoverWsv();
+  WsvRestorerImpl wsvRestorer;
+  wsvRestorer.restoreWsv(*storage);
   res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
 }

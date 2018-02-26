@@ -23,6 +23,7 @@
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
+#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 
 /**
  * Gflag validator.
@@ -151,7 +152,8 @@ int main(int argc, char *argv[]) {
               block.value().transactions.size());
   } else {
     // Recover VSW from the existing ledger to be sure it is consistent
-    if (not irohad.storage->recoverWsv()) {
+    iroha::ametsuchi::WsvRestorerImpl wsvRestorer;
+    if (not wsvRestorer.restoreWsv(*irohad.storage)) {
       log->error("Failed to recover WSV");
       return EXIT_FAILURE;
     }
