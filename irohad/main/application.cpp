@@ -16,6 +16,7 @@
  */
 
 #include "main/application.hpp"
+#include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -81,7 +82,6 @@ Irohad::~Irohad() {
  * Initializing iroha daemon
  */
 void Irohad::init() {
-  initProtoFactories();
   initPeerQuery();
   initCryptoProvider();
   initValidators();
@@ -113,22 +113,20 @@ void Irohad::initStorage() {
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
       },
-      [](expected::Error<std::string> &error) {
-        throw std::runtime_error(error.error);
-      });
+      [&](expected::Error<std::string> &error) { log_->error(error.error); });
+
+  PostgresOrderingServicePersistentState::create(pg_conn_).match(
+      [&](expected::Value<
+          std::shared_ptr<ametsuchi::PostgresOrderingServicePersistentState>>
+              &_storage) { ordering_service_storage_ = _storage.value; },
+      [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
   log_->info("[Init] => storage", logger::logBool(storage));
 }
 
-/**
- * Creating transaction, query and query response factories
- */
-void Irohad::initProtoFactories() {
-  pb_tx_factory = std::make_shared<PbTransactionFactory>();
-  pb_query_factory = std::make_shared<PbQueryFactory>();
-  pb_query_response_factory = std::make_shared<PbQueryResponseFactory>();
-
-  log_->info("[Init] => converters");
+void Irohad::resetOrderingService() {
+  if (not ordering_service_storage_->resetState())
+    log_->error("cannot reset ordering service storage");
 }
 
 /**
@@ -153,8 +151,6 @@ void Irohad::initCryptoProvider() {
  * Initializing validators
  */
 void Irohad::initValidators() {
-  stateless_validator =
-      std::make_shared<StatelessValidatorImpl>(crypto_verifier);
   stateful_validator = std::make_shared<StatefulValidatorImpl>();
   chain_validator = std::make_shared<ChainValidatorImpl>();
 
@@ -165,8 +161,8 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate =
-      ordering_init.initOrderingGate(wsv, max_proposal_size_, proposal_delay_);
+  ordering_gate = ordering_init.initOrderingGate(
+      wsv, max_proposal_size_, proposal_delay_, ordering_service_storage_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -234,11 +230,10 @@ void Irohad::initPeerCommunicationService() {
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
-  auto tx_processor =
-      std::make_shared<TransactionProcessorImpl>(pcs, stateless_validator);
+  auto tx_processor = std::make_shared<TransactionProcessorImpl>(pcs);
 
   command_service = std::make_unique<::torii::CommandService>(
-      pb_tx_factory, tx_processor, storage, proposal_delay_);
+      tx_processor, storage, proposal_delay_);
 
   log_->info("[Init] => command service");
 }
@@ -250,11 +245,10 @@ void Irohad::initQueryService() {
   auto query_processing_factory = std::make_unique<QueryProcessingFactory>(
       storage->getWsvQuery(), storage->getBlockQuery());
 
-  auto query_processor = std::make_shared<QueryProcessorImpl>(
-      std::move(query_processing_factory), stateless_validator);
+  auto query_processor =
+      std::make_shared<QueryProcessorImpl>(std::move(query_processing_factory));
 
-  query_service = std::make_unique<::torii::QueryService>(
-      pb_query_factory, pb_query_response_factory, query_processor);
+  query_service = std::make_unique<::torii::QueryService>(query_processor);
 
   log_->info("[Init] => query service");
 }

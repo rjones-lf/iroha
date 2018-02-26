@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,33 +15,37 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_BLOCK_INDEX_HPP
-#define IROHA_BLOCK_INDEX_HPP
+#ifndef IROHA_ORDERING_SERVICE_PERSISTENT_STATE_HPP
+#define IROHA_ORDERING_SERVICE_PERSISTENT_STATE_HPP
 
-#include <memory>
-
-namespace shared_model {
-  namespace interface {
-    class Block;
-  }  // namespace interface
-}  // namespace shared_model
+#include <boost/optional.hpp>
 
 namespace iroha {
   namespace ametsuchi {
+
     /**
-     * Internal interface for modifying index on blocks and transactions
+     * Interface for Ordering Service persistence to store proposal's height in
+     * a persistent way
      */
-    class BlockIndex {
+    class OrderingServicePersistentState {
      public:
-      virtual ~BlockIndex() = default;
+      /**
+       * Save proposal height that it can be restored
+       * after launch
+       */
+      virtual bool saveProposalHeight(size_t height) = 0;
 
       /**
-       * Add block to index
-       * @param block to be indexed
+       * Load proposal height
        */
-      virtual void index(const shared_model::interface::Block &) = 0;
+      virtual boost::optional<size_t> loadProposalHeight() const = 0;
+
+      /**
+       * Reset storage to default state
+       */
+      virtual bool resetState() = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
 
-#endif  // IROHA_BLOCK_INDEX_HPP
+#endif  // IROHA_ORDERING_SERVICE_PERSISTENT_STATE_HPP

@@ -42,8 +42,8 @@ namespace iroha {
           log_(logger::log("MutableStorage")) {
       auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<CommandExecutor>(
-          CommandExecutor(w, c));
+      command_executor_ =
+          std::make_shared<CommandExecutor>(CommandExecutor(w, c));
       transaction_->exec("BEGIN;");
     }
 
@@ -58,12 +58,11 @@ namespace iroha {
               transaction->creatorAccountId());
           auto result =
               boost::apply_visitor(*command_executor_, command->get());
-          return result.match(
-              [](expected::Value<void> v) { return true; },
-              [&](expected::Error<ExecutionError> e) {
-                log_->error(e.error.toString());
-                return false;
-              });
+          return result.match([](expected::Value<void> v) { return true; },
+                              [&](expected::Error<ExecutionError> e) {
+                                log_->error(e.error.toString());
+                                return false;
+                              });
         };
         return std::all_of(transaction->commands().begin(),
                            transaction->commands().end(),
@@ -78,7 +77,7 @@ namespace iroha {
 
       if (result) {
         block_store_.insert(std::make_pair(block.height, block));
-        block_index_->index(block);
+        block_index_->index(shared_model::proto::from_old(block));
 
         top_hash_ = block.hash;
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");

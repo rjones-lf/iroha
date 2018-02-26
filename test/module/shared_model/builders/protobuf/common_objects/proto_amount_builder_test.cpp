@@ -21,6 +21,12 @@
 
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 
+/**
+ * @given fields for Amount object
+ * @when AmountBuilder is invoked
+ * @then Amount object is successfully constructed and has the same fields as
+ * provided
+ */
 TEST(ProtoAmountBuilderTest, AllFieldsBuild) {
   shared_model::proto::AmountBuilder builder;
 
@@ -33,4 +39,24 @@ TEST(ProtoAmountBuilderTest, AllFieldsBuild) {
 
   EXPECT_EQ(amount.intValue(), expected_int_value);
   EXPECT_EQ(amount.precision(), expected_precision);
+}
+
+/**
+ * @given fields for Amount object
+ * @when AmountBuilder is invoked twice with the same configuration
+ * @then Two constructed Amount objects are identical
+ */
+TEST(ProtoAmountBuilderTest, SeveralObjectsFromOneBuilder) {
+  shared_model::proto::AmountBuilder builder;
+
+  boost::multiprecision::uint256_t expected_int_value = 100;
+  auto expected_precision = 2;
+
+  auto state =
+      builder.intValue(expected_int_value).precision(expected_precision);
+  auto amount = state.build();
+  auto amount2 = state.build();
+
+  EXPECT_EQ(amount.intValue(), amount2.intValue());
+  EXPECT_EQ(amount.precision(), amount2.precision());
 }

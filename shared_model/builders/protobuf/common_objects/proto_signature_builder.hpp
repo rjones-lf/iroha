@@ -19,32 +19,36 @@
 #define IROHA_PROTO_SIGNATURE_BUILDER_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "primitive.pb.h"
-#include "utils/polymorphic_wrapper.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "primitive.pb.h"
 
 namespace shared_model {
   namespace proto {
 
     /**
-     * SignatureBuilder is used to construct Signature proto objects with initialized
-     * protobuf implementation
+     * SignatureBuilder is used to construct Signature proto objects with
+     * initialized protobuf implementation
      */
     class SignatureBuilder {
      public:
       shared_model::proto::Signature build() {
-        return shared_model::proto::Signature(std::move(signature_));
+        return shared_model::proto::Signature(
+            iroha::protocol::Signature(signature_));
       }
 
-      SignatureBuilder &publicKey(const shared_model::interface::types::PubkeyType &key) {
-        signature_.set_pubkey(shared_model::crypto::toBinaryString(key));
-        return *this;
+      SignatureBuilder publicKey(
+          const shared_model::interface::types::PubkeyType &key) {
+        SignatureBuilder copy(*this);
+        copy.signature_.set_pubkey(shared_model::crypto::toBinaryString(key));
+        return copy;
       }
 
-      SignatureBuilder &signedData(
+      SignatureBuilder signedData(
           const interface::Signature::SignedType &signed_data) {
-        signature_.set_signature(shared_model::crypto::toBinaryString(signed_data));
-        return *this;
+        SignatureBuilder copy(*this);
+        copy.signature_.set_signature(
+            shared_model::crypto::toBinaryString(signed_data));
+        return copy;
       }
 
      private:

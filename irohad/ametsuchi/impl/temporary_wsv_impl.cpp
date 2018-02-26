@@ -34,40 +34,38 @@ namespace iroha {
           log_(logger::log("TemporaryWSV")) {
       auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<CommandExecutor>(
-          CommandExecutor(w, c));
-      command_validator_ = std::make_shared<CommandValidator>(
-          CommandValidator(w));
+      command_executor_ =
+          std::make_shared<CommandExecutor>(CommandExecutor(w, c));
+      command_validator_ =
+          std::make_shared<CommandValidator>(CommandValidator(w));
       transaction_->exec("BEGIN;");
     }
 
     bool TemporaryWsvImpl::apply(
-        const model::Transaction &transaction,
-        std::function<bool(const model::Transaction &, WsvQuery &)>
-            apply_function) {
-      const auto &tx_creator = transaction.creator_account_id;
+        const shared_model::interface::Transaction &tx,
+        std::function<bool(const shared_model::interface::Transaction &,
+                           WsvQuery &)> apply_function) {
+      const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto tx = shared_model::proto::from_old(transaction);
       auto execute_command = [this, &tx_creator](auto command) {
         auto account = wsv_->getAccount(tx_creator).value();
         if (not boost::apply_visitor(*command_validator_, command->get())) {
           return false;
         }
         auto result = boost::apply_visitor(*command_executor_, command->get());
-        return result.match(
-            [](expected::Value<void> &v) { return true; },
-            [this](expected::Error<ExecutionError> &e) {
-              log_->error(e.error.toString());
-              return false;
-            });
+        return result.match([](expected::Value<void> &v) { return true; },
+                            [this](expected::Error<ExecutionError> &e) {
+                              log_->error(e.error.toString());
+                              return false;
+                            });
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
       auto result =
-          apply_function(transaction, *wsv_)
-          && std::all_of(
-                 tx.commands().begin(), tx.commands().end(), execute_command);
+          apply_function(tx, *wsv_)
+          and std::all_of(
+                  tx.commands().begin(), tx.commands().end(), execute_command);
       if (result) {
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {

@@ -20,40 +20,44 @@
 
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "responses.pb.h"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
     /**
-     * AccountAssetBuilder is used to construct AccountAsset proto objects with initialized
-     * protobuf implementation
+     * AccountAssetBuilder is used to construct AccountAsset proto objects with
+     * initialized protobuf implementation
      */
     class AccountAssetBuilder {
      public:
       shared_model::proto::AccountAsset build() {
-        return shared_model::proto::AccountAsset(std::move(account_asset_));
+        return shared_model::proto::AccountAsset(
+            iroha::protocol::AccountAsset(account_asset_));
       }
 
-      AccountAssetBuilder &accountId(
+      AccountAssetBuilder accountId(
           const interface::types::AccountIdType &account_id) {
-        account_asset_.set_account_id(account_id);
-        return *this;
+        AccountAssetBuilder copy(*this);
+        copy.account_asset_.set_account_id(account_id);
+        return copy;
       }
 
-      AccountAssetBuilder &assetId(
+      AccountAssetBuilder assetId(
           const interface::types::AssetIdType &asset_id) {
-        account_asset_.set_asset_id(asset_id);
-        return *this;
+        AccountAssetBuilder copy(*this);
+        copy.account_asset_.set_asset_id(asset_id);
+        return copy;
       }
 
-      AccountAssetBuilder &balance(const interface::Amount &amount) {
+      AccountAssetBuilder balance(const interface::Amount &amount) {
         // TODO: 14.02.2018 nickaleks add proper amount initialization IR-972
+        AccountAssetBuilder copy(*this);
+
         auto *amount_proto = new iroha::protocol::Amount();
         amount_proto->mutable_value()->set_first(
             amount.intValue().template convert_to<uint64_t>());
         amount_proto->set_precision(amount.precision());
-        account_asset_.set_allocated_balance(amount_proto);
-        return *this;
+        copy.account_asset_.set_allocated_balance(amount_proto);
+        return copy;
       }
 
      private:

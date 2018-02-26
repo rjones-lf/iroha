@@ -23,6 +23,7 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "model/converters/json_common.hpp"
+#include "postgres_ordering_service_persistent_state.hpp"
 
 #include <boost/format.hpp>
 

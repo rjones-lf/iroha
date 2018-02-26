@@ -20,12 +20,18 @@
 #include "builders/common_objects/account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders_test_fixture.hpp"
 #include "validators/field_validator.hpp"
 
 // TODO: 14.02.2018 nickaleks mock builder implementation IR-970
 // TODO: 14.02.2018 nickaleks mock field validator IR-971
 
-TEST(AccountAsset, StatelessValidAllFields) {
+/**
+ * @given field values which pass stateless validation
+ * @when AccountAssetBuilder is invoked
+ * @then AccountAsset object is successfully constructed and has valid fields
+ */
+TEST(AccountAssetBuilderTest, StatelessValidAllFields) {
   shared_model::builder::AccountAssetBuilder<
       shared_model::proto::AccountAssetBuilder,
       shared_model::validation::FieldValidator>
@@ -52,4 +58,37 @@ TEST(AccountAsset, StatelessValidAllFields) {
           shared_model::interface::AccountAsset>::ErrorType &e) {
         FAIL() << *e.error;
       });
+}
+
+/**
+ * @given field values which pass stateless validation
+ * @when AccountAssetBuilder is invoked twice
+ * @then Two identical (==) AccountAsset objects are constructed
+ */
+TEST(AccountAssetBuilderTest, SeveralObjectsFromOneBuilder) {
+  shared_model::builder::AccountAssetBuilder<
+      shared_model::proto::AccountAssetBuilder,
+      shared_model::validation::FieldValidator>
+      builder;
+
+  auto valid_account_id = "account@name";
+  auto valid_asset_id = "asset#coin";
+  auto valid_balance =
+      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
+
+  auto state = builder.accountId(valid_account_id)
+                   .assetId(valid_asset_id)
+                   .balance(valid_balance);
+
+  auto account_asset = state.build();
+  auto account_asset2 = state.build();
+
+  testResultObjects(account_asset, account_asset2, [](auto &a, auto &b) {
+    // pointer points to different objects
+    ASSERT_TRUE(a != b);
+
+    EXPECT_EQ(a->accountId(), b->accountId());
+    EXPECT_EQ(a->assetId(), b->assetId());
+    EXPECT_EQ(a->balance(), b->balance());
+  });
 }

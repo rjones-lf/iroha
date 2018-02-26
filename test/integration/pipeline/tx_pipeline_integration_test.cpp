@@ -59,6 +59,9 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
     // insert genesis block
     irohad->storage->insertBlock(genesis_block);
 
+    // reset ordering storage state
+    irohad->resetOrderingService();
+
     // initialize irohad
     irohad->init();
 

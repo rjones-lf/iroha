@@ -20,6 +20,7 @@
 
 #include <boost/optional.hpp>
 #include <pqxx/nontransaction>
+#include <pqxx/result>
 #include "common/result.hpp"
 #include "logger/logger.hpp"
 

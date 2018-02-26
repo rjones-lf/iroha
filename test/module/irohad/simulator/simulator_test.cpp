@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -78,11 +79,14 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   block.height = proposal.height - 1;
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
-
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block)));
 
-  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
+  std::shared_ptr<shared_model::interface::Proposal> iprop =
+      std::make_shared<shared_model::proto::Proposal>(
+          shared_model::proto::from_old(proposal));
+
+  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(iprop));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));

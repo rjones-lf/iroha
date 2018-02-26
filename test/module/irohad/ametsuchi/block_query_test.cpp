@@ -19,6 +19,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -86,13 +87,14 @@ class BlockQueryTest : public AmetsuchiTest {
       file->add(b.height,
                 iroha::stringToBytes(converters::jsonToString(
                     converters::JsonBlockFactory().serialize(b))));
-      index->index(b);
+
+      index->index(shared_model::proto::from_old(b));
       blocks_total++;
     }
   }
 
-  std::unique_ptr<pqxx::nontransaction> transaction;
   std::unique_ptr<pqxx::lazyconnection> postgres_connection;
+  std::unique_ptr<pqxx::nontransaction> transaction;
   std::vector<iroha::hash256_t> tx_hashes;
   std::shared_ptr<BlockQuery> blocks;
   std::shared_ptr<BlockIndex> index;

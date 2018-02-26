@@ -48,7 +48,7 @@ jobs:
       - run:
           name: make
           command: |
-            cmake --build $IROHA_BUILD -- -j3
+            cmake --build $IROHA_BUILD -- -j2
       - run: ccache --show-stats
       - run:
           name: unit tests, generate xunit-*.xml
@@ -112,7 +112,7 @@ jobs:
       - run:
           name: make and package
           command: |
-            cmake --build $IROHA_BUILD --target package -- -j4
+            cmake --build $IROHA_BUILD --target package -- -j$(nproc --all)
       - run: ccache --show-stats
       - save_cache:
           key: build-linux-release-{{ arch }}-{{ .Branch }}-{{ epoch }}

@@ -25,25 +25,33 @@ set(URL https://git.postgresql.org/git/postgresql.git)
 set(VERSION 029386ccbddd0a33d481b94e511f5219b03e6636)
 set_target_description(pq "C postgres client library" ${URL} ${VERSION})
 
+iroha_get_lib_name(PQLIB pq STATIC)
 
 if (NOT pq_FOUND)
+  set(pqlib_path    ${EP_PREFIX}/src/postgres_postgres/src/interfaces/libpq/${PQLIB})
+  set(pqconfig_path ${EP_PREFIX}/src/postgres_postgres/src/bin/pq_config/pq_config)
+
   externalproject_add(postgres_postgres
       GIT_REPOSITORY  ${URL}
       GIT_TAG         ${VERSION}
-      CONFIGURE_COMMAND ./configure --without-readline
+      CONFIGURE_COMMAND
+          ./configure --without-readline
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND $(MAKE) -C ./src/bin/pg_config && $(MAKE) -C ./src/interfaces/libpq
-      BUILD_BYPRODUCTS ${EP_PREFIX}/src/postgres_postgres/src/interfaces/libpq/libpq.a
+      BUILD_COMMAND
+          $(MAKE) -C ./src/bin/pg_config && $(MAKE) -C ./src/interfaces/libpq
+      BUILD_BYPRODUCTS
+          ${pqlib_path}
+          ${pqconfig_path}
       INSTALL_COMMAND "" # remove install step
-      TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
+      TEST_COMMAND    "" # remove test step
+      UPDATE_COMMAND  "" # remove update step
       )
   externalproject_get_property(postgres_postgres source_dir)
   set(postgres_INCLUDE_DIR ${source_dir}/src/include)
-  set(pq_INCLUDE_DIR ${source_dir}/src/interfaces/libpq)
-  set(pq_LIBRARY ${source_dir}/src/interfaces/libpq/libpq.a)
-  set(pg_config_EXECUTABLE ${source_dir}/src/bin/pg_config/pg_config)
-  file(MAKE_DIRECTORY ${pq_INCLUDE_DIR} ${postgres_INCLUDE_DIR})
+  set(pq_INCLUDE_DIR       ${source_dir}/src/interfaces/libpq)
+  set(pq_LIBRARY           ${pqlib_path})
+  set(pg_config_EXECUTABLE ${pqconfig_path})
+  file(MAKE_DIRECTORY      ${pq_INCLUDE_DIR} ${postgres_INCLUDE_DIR})
 
   add_dependencies(pg_config postgres_postgres)
   add_dependencies(pq postgres_postgres pg_config)

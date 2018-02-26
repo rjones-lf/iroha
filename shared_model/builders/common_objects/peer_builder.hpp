@@ -21,7 +21,7 @@
 #include "builders/common_objects/common.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
-//TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
+// TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
 
 namespace shared_model {
   namespace builder {
@@ -35,19 +35,19 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class PeerBuilder: public CommonObjectBuilder<interface::Peer,
-                                                  BuilderImpl,
-                                                  Validator> {
+    class PeerBuilder
+        : public CommonObjectBuilder<interface::Peer, BuilderImpl, Validator> {
      public:
-
-      PeerBuilder &address(const interface::types::AddressType &address) {
-        this->builder_ = this->builder_.address(address);
-        return *this;
+      PeerBuilder address(const interface::types::AddressType &address) {
+        PeerBuilder copy(*this);
+        copy.builder_ = this->builder_.address(address);
+        return copy;
       }
 
-      PeerBuilder &pubkey(const interface::types::PubkeyType &key) {
-        this->builder_ = this->builder_.pubkey(key);
-        return *this;
+      PeerBuilder pubkey(const interface::types::PubkeyType &key) {
+        PeerBuilder copy(*this);
+        copy.builder_ = this->builder_.pubkey(key);
+        return copy;
       }
 
      protected:
@@ -55,9 +55,12 @@ namespace shared_model {
         return "Peer Builder";
       }
 
-      virtual void validate(validation::ReasonsGroupType &reasons,
-                            const interface::Peer &object) override {
+      virtual validation::ReasonsGroupType validate(
+          const interface::Peer &object) override {
+        validation::ReasonsGroupType reasons;
         this->validator_.validatePeer(reasons, object);
+
+        return reasons;
       }
     };
   }  // namespace builder

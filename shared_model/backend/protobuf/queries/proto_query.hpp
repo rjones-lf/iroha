@@ -98,7 +98,9 @@ namespace shared_model {
             payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {
               interface::SignatureSetType set;
-              set.emplace(new Signature(proto_->signature()));
+              if (proto_->has_signature()) {
+                set.emplace(new Signature(proto_->signature()));
+              }
               return set;
             }) {}
 
@@ -124,6 +126,13 @@ namespace shared_model {
 
       const Query::BlobType &payload() const override {
         return *payload_;
+      }
+
+      const HashType &hash() const override {
+        if (hash_ == boost::none) {
+          hash_.emplace(HashProviderType::makeHash(payload()));
+        }
+        return *hash_;
       }
 
       // ------------------------| Signable override  |-------------------------

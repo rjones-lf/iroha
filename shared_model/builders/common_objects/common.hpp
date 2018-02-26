@@ -31,14 +31,10 @@ namespace shared_model {
      * BuilderResult represents return value of a builder,
      * it either contains a value of ModelType, an error,
      * which indicates why construction of an object went wrong.
-     *
-     * Since ModelType is an abstract class, its value has to be wrapped
-     * in something which has polymorphic behaviour, such as PolymorphicWrapper
      */
     template <typename ModelType>
     using BuilderResult =
         iroha::expected::PolymorphicResult<ModelType, std::string>;
-
 
     /**
      * CommonObjectBuilder is a base class for all builders of common objects.
@@ -50,22 +46,20 @@ namespace shared_model {
     template <typename ModelType, typename BuilderImpl, typename Validator>
     class CommonObjectBuilder {
      public:
-
       /**
-       * build() constructs specified object and performs stateless validation on fields.
+       * build() constructs specified object and performs stateless validation
+       * on fields.
        * @return Result which contains either object, or error with explanation,
        * why object construction is unsuccessful.
        */
       BuilderResult<ModelType> build() {
         auto model_impl = std::shared_ptr<ModelType>(builder_.build().copy());
 
-        shared_model::validation::ReasonsGroupType reasons(
-            builderName(), shared_model::validation::GroupedReasons());
-
-        validate(reasons, *model_impl);
+        auto reasons = validate(*model_impl);
+        reasons.first = builderName();
 
         shared_model::validation::Answer answer;
-        if (!reasons.second.empty()) {
+        if (not reasons.second.empty()) {
           answer.addReason(std::move(reasons));
         }
 
@@ -78,6 +72,9 @@ namespace shared_model {
       }
 
      protected:
+      /**
+       * @return string name of the builder, used in result error message
+       */
       virtual std::string builderName() const = 0;
 
       /**
@@ -85,8 +82,8 @@ namespace shared_model {
        * @param reasons - list of reasons, which will be populated by validator
        * @param object to be validated
        */
-      virtual void validate(validation::ReasonsGroupType &reasons,
-                            const ModelType &object) = 0;
+      virtual shared_model::validation::ReasonsGroupType validate(
+          const ModelType &object) = 0;
 
       Validator validator_;
       BuilderImpl builder_;

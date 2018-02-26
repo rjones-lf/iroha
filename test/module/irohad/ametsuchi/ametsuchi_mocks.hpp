@@ -19,6 +19,7 @@
 #define IROHA_AMETSUCHI_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
@@ -30,10 +31,10 @@
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
+#include "model/block.hpp"
 #include "model/domain.hpp"
 #include "model/peer.hpp"
-
-#include <boost/optional.hpp>
+#include "model/transaction.hpp"
 
 #include "common/result.hpp"
 

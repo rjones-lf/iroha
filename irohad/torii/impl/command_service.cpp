@@ -34,13 +34,10 @@ using namespace std::chrono_literals;
 namespace torii {
 
   CommandService::CommandService(
-      std::shared_ptr<iroha::model::converters::PbTransactionFactory>
-          pb_factory,
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::chrono::milliseconds proposal_delay)
-      : pb_factory_(pb_factory),
-        tx_processor_(tx_processor),
+      : tx_processor_(tx_processor),
         storage_(storage),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),

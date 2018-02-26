@@ -18,10 +18,10 @@
 #ifndef IROHA_WSV_QUERY_HPP
 #define IROHA_WSV_QUERY_HPP
 
-#include <common/types.hpp>
 #include <nonstd/optional.hpp>
 #include <string>
 #include <vector>
+#include "common/types.hpp"
 
 namespace iroha {
 
@@ -31,7 +31,7 @@ namespace iroha {
     struct AccountAsset;
     struct Peer;
     struct Asset;
-  }
+  }  // namespace model
 
   namespace ametsuchi {
 
@@ -69,6 +69,7 @@ namespace iroha {
        */
       virtual nonstd::optional<std::vector<std::string>> getAccountRoles(
           const std::string &account_id) = 0;
+
       /**
        * Get all permissions of a role
        * @param role_name
@@ -81,6 +82,7 @@ namespace iroha {
        * @return All roles currently in the system
        */
       virtual nonstd::optional<std::vector<std::string>> getRoles() = 0;
+
       /**
        * Get account by user account_id
        * @param account_id

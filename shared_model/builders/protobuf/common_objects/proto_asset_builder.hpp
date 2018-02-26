@@ -20,7 +20,6 @@
 
 #include "backend/protobuf/common_objects/asset.hpp"
 #include "responses.pb.h"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -32,24 +31,25 @@ namespace shared_model {
     class AssetBuilder {
      public:
       shared_model::proto::Asset build() {
-        return shared_model::proto::Asset(std::move(asset_));
+        return shared_model::proto::Asset(iroha::protocol::Asset(asset_));
       }
 
-      AssetBuilder &assetId(
-          const interface::types::AssetIdType &asset_id) {
-        asset_.set_asset_id(asset_id);
-        return *this;
+      AssetBuilder assetId(const interface::types::AssetIdType &asset_id) {
+        AssetBuilder copy(*this);
+        copy.asset_.set_asset_id(asset_id);
+        return copy;
       }
 
-      AssetBuilder &domainId(
-          const interface::types::DomainIdType &domain_id) {
-        asset_.set_domain_id(domain_id);
-        return *this;
+      AssetBuilder domainId(const interface::types::DomainIdType &domain_id) {
+        AssetBuilder copy(*this);
+        copy.asset_.set_domain_id(domain_id);
+        return copy;
       }
 
-      AssetBuilder &precision(const interface::types::PrecisionType &precision) {
-        asset_.set_precision(precision);
-        return *this;
+      AssetBuilder precision(const interface::types::PrecisionType &precision) {
+        AssetBuilder copy(*this);
+        copy.asset_.set_precision(precision);
+        return copy;
       }
 
      private:

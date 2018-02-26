@@ -40,21 +40,24 @@ namespace shared_model {
                                      BuilderImpl,
                                      Validator> {
      public:
-      AccountAssetBuilder &accountId(
+      AccountAssetBuilder accountId(
           const interface::types::AccountIdType &account_id) {
-        this->builder_ = this->builder_.accountId(account_id);
-        return *this;
+        AccountAssetBuilder copy(*this);
+        copy.builder_ = this->builder_.accountId(account_id);
+        return copy;
       }
 
-      AccountAssetBuilder &assetId(
+      AccountAssetBuilder assetId(
           const interface::types::AssetIdType &asset_id) {
-        this->builder_ = this->builder_.assetId(asset_id);
-        return *this;
+        AccountAssetBuilder copy(*this);
+        copy.builder_ = this->builder_.assetId(asset_id);
+        return copy;
       }
 
-      AccountAssetBuilder &balance(const interface::Amount &amount) {
-        this->builder_ = this->builder_.balance(amount);
-        return *this;
+      AccountAssetBuilder balance(const interface::Amount &amount) {
+        AccountAssetBuilder copy(*this);
+        copy.builder_ = this->builder_.balance(amount);
+        return copy;
       }
 
      protected:
@@ -62,12 +65,15 @@ namespace shared_model {
         return "Account Asset Builder";
       }
 
-      virtual void validate(validation::ReasonsGroupType &reasons,
-                            const interface::AccountAsset &object) override {
+      virtual validation::ReasonsGroupType validate(
+          const interface::AccountAsset &object) override {
+        validation::ReasonsGroupType reasons;
         this->validator_.validateAccountId(reasons, object.accountId());
         this->validator_.validateAssetId(reasons, object.assetId());
         // Do not validate balance, since its amount can be 0, which is
         // forbidden by validation
+
+        return reasons;
       }
     };
   }  // namespace builder

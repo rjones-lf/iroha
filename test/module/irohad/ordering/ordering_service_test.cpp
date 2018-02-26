@@ -23,6 +23,8 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 
+#include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "mock_ordering_service_persistent_state.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
@@ -76,6 +78,8 @@ class OrderingServiceTest : public ::testing::Test {
   void SetUp() override {
     wsv = std::make_shared<MockPeerQuery>();
     fake_transport = std::make_shared<MockOrderingServiceTransport>();
+    fake_persistent_state =
+        std::make_shared<MockOrderingServicePersistentState>();
   }
 
   auto empty_tx() {
@@ -84,6 +88,7 @@ class OrderingServiceTest : public ::testing::Test {
   }
 
   std::shared_ptr<MockOrderingServiceTransport> fake_transport;
+  std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
   std::condition_variable cv;
   std::mutex m;
   std::string address{"0.0.0.0:50051"};
@@ -98,8 +103,12 @@ TEST_F(OrderingServiceTest, SimpleTest) {
   const size_t max_proposal = 5;
   const size_t commit_delay = 1000;
 
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(2)));
+
   auto ordering_service = std::make_shared<OrderingServiceImpl>(
-      wsv, max_proposal, commit_delay, fake_transport);
+      wsv, max_proposal, commit_delay, fake_transport, fake_persistent_state);
   fake_transport->subscribe(ordering_service);
 
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(1);
@@ -114,8 +123,14 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   const size_t max_proposal = 5;
   const size_t commit_delay = 1000;
 
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_)).Times(2);
+
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(2)));
+
   auto ordering_service = std::make_shared<OrderingServiceImpl>(
-      wsv, max_proposal, commit_delay, fake_transport);
+      wsv, max_proposal, commit_delay, fake_transport, fake_persistent_state);
   fake_transport->subscribe(ordering_service);
 
   // Init => proposal size 5 => 2 proposals after 10 transactions
@@ -141,14 +156,20 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
 TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   // Init => proposal timer 400 ms => 10 tx by 50 ms => 2 proposals in 1 second
 
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_)).Times(2);
+
   EXPECT_CALL(*wsv, getLedgerPeers())
       .WillRepeatedly(Return(std::vector<model::Peer>{peer}));
 
   const size_t max_proposal = 100;
   const size_t commit_delay = 400;
 
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(2)));
+
   auto ordering_service = std::make_shared<OrderingServiceImpl>(
-      wsv, max_proposal, commit_delay, fake_transport);
+      wsv, max_proposal, commit_delay, fake_transport, fake_persistent_state);
   fake_transport->subscribe(ordering_service);
 
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _))

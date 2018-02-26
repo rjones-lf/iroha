@@ -58,9 +58,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
 
     executor = std::make_shared<iroha::CommandExecutor>(
-            iroha::CommandExecutor(wsv_query, wsv_command));
+        iroha::CommandExecutor(wsv_query, wsv_command));
     validator = std::make_shared<iroha::CommandValidator>(
-            iroha::CommandValidator(wsv_query));
+        iroha::CommandValidator(wsv_query));
 
     creator.account_id = admin_id;
     creator.domain_id = domain_id;
@@ -74,7 +74,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
     default_domain.default_role = admin_role;
   }
 
-    iroha::ExecutionResult validateAndExecute() {
+  iroha::ExecutionResult validateAndExecute() {
     shared_model::proto::Command new_command =
         shared_model::proto::from_old(*command);
     validator->setCreatorAccountId(creator.account_id);
@@ -83,21 +83,17 @@ class CommandValidateExecuteTest : public ::testing::Test {
     if (boost::apply_visitor(*validator, new_command.get())) {
       return boost::apply_visitor(*executor, new_command.get());
     }
-    return expected::makeError(iroha::ExecutionError{
-        "Validate", "validation of a command failed"});
+    return expected::makeError(
+        iroha::ExecutionError{"Validate", "validation of a command failed"});
   }
 
-    iroha::ExecutionResult execute() {
+  iroha::ExecutionResult execute() {
     shared_model::proto::Command new_command =
         shared_model::proto::from_old(*command);
     executor->setCreatorAccountId(creator.account_id);
     return boost::apply_visitor(*executor, new_command.get());
   }
 
-  /// Throws exception if result does not contain value
-  void checkValueCase(const iroha::ExecutionResult &result) {
-    boost::get<iroha::ExecutionResult::ValueType>(result);
-  }
   /// return result with empty error message
   WsvCommandResult makeEmptyError() {
     return WsvCommandResult(iroha::expected::makeError(""));
