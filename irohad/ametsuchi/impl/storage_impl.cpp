@@ -129,7 +129,7 @@ namespace iroha {
               std::move(command_executors.value())));
     }
 
-    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
+    bool StorageImpl::insertBlock(std::shared_ptr<shared_model::interface::Block> block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
@@ -137,7 +137,7 @@ namespace iroha {
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(std::shared_ptr<shared_model::interface::Block>(block.copy()),
+                storage.value->apply(block,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });

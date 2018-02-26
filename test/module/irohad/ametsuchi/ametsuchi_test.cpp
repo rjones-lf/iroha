@@ -692,7 +692,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   }
 }
 
-shared_model::proto::Block getBlock() {
+std::shared_ptr<shared_model::interface::Block> getBlock() {
   auto txn = TestTransactionBuilder()
                  .creatorAccountId("admin1")
                  .addPeer("192.168.0.0",
@@ -706,7 +706,7 @@ shared_model::proto::Block getBlock() {
           .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
           .txNumber(1)
           .build();
-  return block;
+  return std::shared_ptr<shared_model::interface::Block>(block.copy());
 }
 
 TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {

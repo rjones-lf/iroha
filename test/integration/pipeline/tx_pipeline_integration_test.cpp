@@ -58,7 +58,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
     ASSERT_TRUE(irohad->storage);
 
     // insert genesis block
-    irohad->storage->insertBlock(shared_model::proto::from_old(genesis_block));
+    irohad->storage->insertBlock(std::shared_ptr<shared_model::interface::Block>(shared_model::proto::from_old(genesis_block).copy()));
 
     // initialize irohad
     irohad->init();

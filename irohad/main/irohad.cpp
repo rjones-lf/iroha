@@ -19,11 +19,11 @@
 #include <grpc++/grpc++.h>
 #include <fstream>
 #include <thread>
+#include "backend/protobuf/from_old_model.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 
 /**
  * Gflag validator.
@@ -144,7 +144,8 @@ int main(int argc, char *argv[]) {
     log->info("Block is parsed");
 
     // Applying transactions from genesis block to iroha storage
-    irohad.storage->insertBlock(shared_model::proto::from_old(block.value()));
+    irohad.storage->insertBlock(std::shared_ptr<shared_model::interface::Block>(
+        shared_model::proto::from_old(block.value()).copy()));
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());
   }
