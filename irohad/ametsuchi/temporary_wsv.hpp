@@ -22,8 +22,12 @@
 
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "model/block.hpp"
-#include "model/transaction.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace ametsuchi {
@@ -47,9 +51,10 @@ namespace iroha {
        * otherwise.
        * @return True if transaction was successfully applied, false otherwise
        */
-      virtual bool apply(const model::Transaction &transaction,
-                         std::function<bool(const model::Transaction &,
-                                            WsvQuery &)> function) = 0;
+      virtual bool apply(
+          const shared_model::interface::Transaction &,
+          std::function<bool(const shared_model::interface::Transaction &,
+                             WsvQuery &)> function) = 0;
 
       virtual ~TemporaryWsv() = default;
     };

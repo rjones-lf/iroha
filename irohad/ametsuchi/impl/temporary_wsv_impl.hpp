@@ -31,7 +31,6 @@ namespace iroha {
   }
 
   namespace ametsuchi {
-
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
       TemporaryWsvImpl(
@@ -39,9 +38,10 @@ namespace iroha {
           std::unique_ptr<pqxx::nontransaction> transaction,
           std::shared_ptr<model::CommandExecutorFactory> command_executors);
 
-      bool apply(const model::Transaction &transaction,
-                 std::function<bool(const model::Transaction &, WsvQuery &)>
-                     function) override;
+      bool apply(
+          const shared_model::interface::Transaction &,
+          std::function<bool(const shared_model::interface::Transaction &,
+                             WsvQuery &)> function) override;
 
       ~TemporaryWsvImpl() override;
 
