@@ -16,13 +16,14 @@
  */
 
 #include "wsv_restorer_impl.hpp"
-#include "ametsuchi/storage.hpp"
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/storage.hpp"
 #include "model/block.hpp"
 
 namespace iroha {
   namespace ametsuchi {
-    bool WsvRestorerImpl::restoreWsv(Storage &storage) {
+    expected::Result<void, std::string> WsvRestorerImpl::restoreWsv(
+        Storage &storage) {
       // get all blocks starting from the genesis
       std::vector<model::Block> blocks;
       storage.getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
@@ -30,7 +31,10 @@ namespace iroha {
 
       storage.dropStorage();
 
-      return storage.insertBlocks(blocks);
+      if (not storage.insertBlocks(blocks))
+        return expected::makeError("cannot insert blocks");
+
+      return expected::Value<void>();
     }
   }  // namespace ametsuchi
 }  // namespace iroha

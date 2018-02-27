@@ -17,6 +17,8 @@
 #ifndef IROHA_WSVRESTORER_HPP
 #define IROHA_WSVRESTORER_HPP
 
+#include "common/result.hpp"
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -31,9 +33,10 @@ namespace iroha {
 
       /**
        * Recover WSV (World State View).
-       * @return true on success, otherwise false
+       * @return void on success, otherwise error string
        */
-      virtual bool restoreWsv(Storage &storage) = 0;
+      virtual expected::Result<void, std::string> restoreWsv(
+          Storage &storage) = 0;
     };
 
   }  // namespace ametsuchi

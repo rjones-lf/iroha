@@ -22,6 +22,7 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -40,7 +41,6 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -981,7 +981,12 @@ DELETE FROM domain;
 
   // recover storage and check it is recovered
   WsvRestorerImpl wsvRestorer;
-  wsvRestorer.restoreWsv(*storage);
+  wsvRestorer.restoreWsv(*storage).match(
+      [](iroha::expected::Value<void>) {},
+      [&](iroha::expected::Error<std::string> &error) {
+        FAIL() << "Failed to recover WSV";
+      });
+
   res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
 }

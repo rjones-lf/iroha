@@ -19,11 +19,12 @@
 #include <grpc++/grpc++.h>
 #include <fstream>
 #include <thread>
+#include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
-#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 
 /**
  * Gflag validator.
@@ -153,10 +154,15 @@ int main(int argc, char *argv[]) {
   } else {
     // Recover VSW from the existing ledger to be sure it is consistent
     iroha::ametsuchi::WsvRestorerImpl wsvRestorer;
-    if (not wsvRestorer.restoreWsv(*irohad.storage)) {
-      log->error("Failed to recover WSV");
+    bool restored =
+        wsvRestorer.restoreWsv(*irohad.storage)
+            .match([](iroha::expected::Value<void> v) -> bool { return true; },
+                   [&](iroha::expected::Error<std::string> &error) -> bool {
+                     log->error(error.error);
+                     return false;
+                   });
+    if (not restored)
       return EXIT_FAILURE;
-    }
   }
 
   // init pipeline components
