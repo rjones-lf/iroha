@@ -45,26 +45,12 @@ do
         sleep 0.1;
     done
 
-    # wait for redis start
-    until [ "$(docker inspect -f {{.State.Running}} ${COMPOSE_PROJECT_NAME}_redis_1)" == "true" ]
-    do
-        sleep 0.1;
-    done
-
-    # wait for redis accepting connections
-    until docker exec ${COMPOSE_PROJECT_NAME}_redis_1 redis-cli ping
-    do
-        sleep 0.1;
-    done
-
     # generate config
     # TODO 22/08/17 Lebedev: replace with environment variables IR-502
     echo "{
       \"block_store_path\" : \"/tmp/block_store/\",
       \"torii_port\" : 50051,
-      \"pg_opt\" : \"host=${COMPOSE_PROJECT_NAME}_postgres_1 port=5432 user=iroha password=helloworld\",
-      \"redis_host\" : \"${COMPOSE_PROJECT_NAME}_redis_1\",
-      \"redis_port\" : 6379
+      \"pg_opt\" : \"host=${COMPOSE_PROJECT_NAME}_postgres_1 port=5432 user=iroha password=helloworld\"
     }" > ${IROHA_HOME}/iroha.conf
 
     # copy list of peers

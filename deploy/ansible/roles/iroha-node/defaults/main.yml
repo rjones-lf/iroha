@@ -2,7 +2,6 @@
   postgresName: iroha_postgres
   postgresUser: psql
   postgresPassword: psql
-  redisName: iroha_redis
   peers:
     - 209.250.248.121:10001
     - 209.250.248.225:10001

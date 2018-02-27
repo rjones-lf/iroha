@@ -27,16 +27,6 @@
       networks:
         - name: iroha_network
 
-  - name: Run redis in docker
-    docker_container:
-      name: "{{ redisName }}"
-      image: redis:3.2.8
-      state: started
-      recreate: yes
-      restart: yes
-      networks:
-        - name: iroha_network
-
   - name: Make conf dir
     file:
       path: '/opt/docker/iroha/conf'
@@ -81,6 +71,4 @@
         POSTGRES_PORT: 5432        
         POSTGRES_USER: "{{ postgresUser }}"
         POSTGRES_PASSWORD: "{{ postgresPassword }}"
-        REDIS_HOST: "{{ redisName }}"
-        REDIS_PORT: 6379
         KEY: node{{ key }}
