@@ -20,8 +20,10 @@
 
 #include <boost/optional.hpp>
 #include <pqxx/nontransaction>
+#include <pqxx/result>
 
 #include "builders/common_objects/default_builders.hpp"
+#include "common/result.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -88,14 +90,6 @@ namespace iroha {
       return values;
     }
 
-    using shared_model::builder::BuilderResult;
-    using shared_model::builder::DefaultAccountAssetBuilder;
-    using shared_model::builder::DefaultAccountBuilder;
-    using shared_model::builder::DefaultAmountBuilder;
-    using shared_model::builder::DefaultAssetBuilder;
-    using shared_model::builder::DefaultDomainBuilder;
-    using shared_model::builder::DefaultPeerBuilder;
-
     /**
      * Execute build function and return error in case it throws
      * @tparam T - result value type
@@ -111,10 +105,11 @@ namespace iroha {
       }
     };
 
-    static inline BuilderResult<shared_model::interface::Account> makeAccount(
-        const pqxx::row &row) noexcept {
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Account>
+    makeAccount(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
-        return DefaultAccountBuilder()
+        return shared_model::builder::DefaultAccountBuilder()
             .accountId(row.at("account_id").template as<std::string>())
             .domainId(row.at("domain_id").template as<std::string>())
             .quorum(
@@ -125,10 +120,11 @@ namespace iroha {
       });
     }
 
-    static inline BuilderResult<shared_model::interface::Asset> makeAsset(
-        const pqxx::row &row) noexcept {
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Asset>
+    makeAsset(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
-        return DefaultAssetBuilder()
+        return shared_model::builder::DefaultAssetBuilder()
             .assetId(row.at("asset_id").template as<std::string>())
             .domainId(row.at("domain_id").template as<std::string>())
             .precision(row.at("precision").template as<int32_t>())
@@ -136,13 +132,14 @@ namespace iroha {
       });
     }
 
-    static inline BuilderResult<shared_model::interface::AccountAsset>
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::AccountAsset>
     makeAccountAsset(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
-        auto balance = DefaultAmountBuilder::fromString(
+        auto balance = shared_model::builder::DefaultAmountBuilder::fromString(
             row.at("amount").template as<std::string>());
         return balance | [&](const auto &balance_ptr) {
-          return DefaultAccountAssetBuilder()
+          return shared_model::builder::DefaultAccountAssetBuilder()
               .accountId(row.at("account_id").template as<std::string>())
               .assetId(row.at("asset_id").template as<std::string>())
               .balance(*balance_ptr)
@@ -151,22 +148,24 @@ namespace iroha {
       });
     }
 
-    static inline BuilderResult<shared_model::interface::Peer> makePeer(
-        const pqxx::row &row) noexcept {
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Peer>
+    makePeer(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
         pqxx::binarystring public_key_str(row.at("public_key"));
         shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
-        return DefaultPeerBuilder()
+        return shared_model::builder::DefaultPeerBuilder()
             .pubkey(pubkey)
             .address(row.at("address").template as<std::string>())
             .build();
       });
     }
 
-    static inline BuilderResult<shared_model::interface::Domain> makeDomain(
-        const pqxx::row &row) noexcept {
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Domain>
+    makeDomain(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
-        return DefaultDomainBuilder()
+        return shared_model::builder::DefaultDomainBuilder()
             .domainId(row.at("domain_id").template as<std::string>())
             .defaultRole(row.at("default_role").template as<std::string>())
             .build();
@@ -183,7 +182,7 @@ namespace iroha {
      */
     template <typename T>
     static inline nonstd::optional<std::shared_ptr<T>> fromResult(
-        const BuilderResult<T> &result) {
+        const shared_model::builder::BuilderResult<T> &result) {
       return result.match(
           [](const expected::Value<std::shared_ptr<T>> &v) {
             return nonstd::make_optional(v.value);

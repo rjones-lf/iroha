@@ -42,7 +42,6 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-
     peer = std::shared_ptr<shared_model::interface::Peer>(shared_model::proto::PeerBuilder()
         .address(address)
         .pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))

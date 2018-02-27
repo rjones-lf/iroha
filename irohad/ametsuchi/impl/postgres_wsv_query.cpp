@@ -191,7 +191,7 @@ namespace iroha {
       return execute_("SELECT * FROM peer;") | [&](const auto &result)
                  -> nonstd::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
-        auto results = transform<BuilderResult<shared_model::interface::Peer>>(
+        auto results = transform<shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
             result, makePeer);
         std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
         for (auto &r : results) {
