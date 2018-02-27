@@ -29,6 +29,7 @@
 #include "client.hpp"
 
 #include "main/server_runner.hpp"
+#include "torii/command_service.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
@@ -36,6 +37,7 @@
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/json_transaction_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 #include "model/permissions.hpp"
 
 #include "builders/protobuf/queries.hpp"

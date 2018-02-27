@@ -18,18 +18,14 @@ limitations under the License.
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
-#include "module/irohad/validation/validation_mocks.hpp"
 
-#include <endpoint.pb.h>
+#include "endpoint.pb.h"
 #include "main/server_runner.hpp"
 
 #include "torii/command_client.hpp"
-#include "torii/processor/query_processor_impl.hpp"
 
 #include "torii/command_service.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
-#include "torii/query_client.hpp"
-#include "torii/query_service.hpp"
 
 #include "builders/protobuf/transaction.hpp"
 
@@ -43,7 +39,6 @@ using ::testing::AtLeast;
 using ::testing::Return;
 
 using namespace iroha::network;
-using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 
 using namespace std::chrono_literals;
@@ -91,13 +86,6 @@ class ToriiServiceTest : public testing::Test {
       auto pb_tx_factory =
           std::make_shared<iroha::model::converters::PbTransactionFactory>();
 
-      //----------- Query Service ----------
-      auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
-          wsv_query, block_query);
-
-      auto qpi =
-          std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
-
       EXPECT_CALL(*storageMock, getBlockQuery())
           .WillRepeatedly(Return(block_query));
       EXPECT_CALL(*block_query, getTxByHashSync(_))
@@ -105,8 +93,8 @@ class ToriiServiceTest : public testing::Test {
 
       //----------- Server run ----------------
       runner
-          ->append(std::make_unique<torii::CommandService>(tx_processor, storageMock, proposal_delay))
-          .append(std::make_unique<torii::QueryService>(qpi))
+          ->append(std::make_unique<torii::CommandService>(
+              tx_processor, storageMock, proposal_delay))
           .run();
     });
 

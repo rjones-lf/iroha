@@ -165,13 +165,13 @@ class Irohad {
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
   // transaction service
-  std::unique_ptr<torii::CommandService> command_service;
+  std::shared_ptr<torii::CommandService> command_service;
 
   // query service
-  std::unique_ptr<torii::QueryService> query_service;
+  std::shared_ptr<torii::QueryService> query_service;
 
   std::unique_ptr<ServerRunner> torii_server;
-  std::unique_ptr<grpc::Server> internal_server;
+  std::unique_ptr<ServerRunner> internal_server;
 
   // initialization objects
   iroha::network::OrderingInit ordering_init;
