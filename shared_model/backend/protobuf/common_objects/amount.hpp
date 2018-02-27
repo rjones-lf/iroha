@@ -30,8 +30,13 @@
 namespace shared_model {
   namespace proto {
 
+    /**
+     * converts protobuf amount to uint256_t, assuming big-endian order.
+     * @param amount - protobuf object which is assumed to have 4 values
+     * @return uint256_t representation of proto object
+     */
     template <typename AmountType>
-    uint256_t convertToUInt256(const AmountType &amount) {
+    uint256_t convertToUInt256(const AmountType &amount) noexcept {
       constexpr auto offset = 64u;
       uint256_t result;
       result |= uint256_t{amount.first()} << offset * 3;
@@ -41,8 +46,14 @@ namespace shared_model {
       return result;
     }
 
+    /**
+     * Sets protobuf value to specified uint256_t.
+     * @param value - protobuf value, which will be changed
+     * @param amount - integer value
+     */
     template <typename ValueType>
-    void convertToProtoAmount(ValueType &value, const uint256_t &amount) {
+    void convertToProtoAmount(ValueType &value,
+                              const uint256_t &amount) noexcept {
       constexpr auto offset = 64u;
       value.set_first((amount >> offset * 3).template convert_to<uint64_t>());
       value.set_second((amount >> offset * 2).template convert_to<uint64_t>());

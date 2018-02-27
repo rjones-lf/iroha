@@ -70,6 +70,5 @@ addtest(shared_proto_amount_test
 target_link_libraries(shared_proto_amount_test
     shared_model_proto_backend
     boost
-    optional
     )
 

@@ -48,9 +48,7 @@ namespace shared_model {
       }
 
       AccountAssetBuilder balance(const interface::Amount &amount) {
-        // TODO: 14.02.2018 nickaleks add proper amount initialization IR-972
         AccountAssetBuilder copy(*this);
-
         auto amount_proto = new iroha::protocol::Amount();
         convertToProtoAmount(*amount_proto->mutable_value(), amount.intValue());
         amount_proto->set_precision(amount.precision());

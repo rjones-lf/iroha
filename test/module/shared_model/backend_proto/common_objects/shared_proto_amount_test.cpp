@@ -23,7 +23,8 @@ using boost::multiprecision::uint256_t;
 
 const uint256_t kOne = 1;
 /// each 64 bit part starts with 1
-const uint256_t kExpectedValue = (kOne << (64 * 3)) | (kOne << (64 * 2)) | (kOne << 64) | kOne;
+const uint256_t kExpectedValue =
+    (kOne << (64 * 3)) | (kOne << (64 * 2)) | (kOne << 64) | kOne;
 
 /**
  * @given protobuf amount object
@@ -51,7 +52,8 @@ TEST(AmountTest, AmountIntValueInitialization) {
 TEST(AmountTest, ProtoValueFromIntConversion) {
   iroha::protocol::Amount amount;
 
-  shared_model::proto::convertToProtoAmount(*amount.mutable_value(), kExpectedValue);
+  shared_model::proto::convertToProtoAmount(*amount.mutable_value(),
+                                            kExpectedValue);
 
   ASSERT_EQ(amount.value().first(), kOne);
   ASSERT_EQ(amount.value().second(), kOne);
