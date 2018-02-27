@@ -26,6 +26,7 @@
 #include "model/generators/query_generator.hpp"
 #include "responses.pb.h"
 
+using namespace std::chrono_literals;
 using namespace iroha::model::generators;
 using namespace iroha::model::converters;
 

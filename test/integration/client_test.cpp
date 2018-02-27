@@ -44,16 +44,17 @@
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
-using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
 using ::testing::Return;
+using ::testing::_;
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
 using namespace iroha::validation;
 using namespace iroha::model::converters;
 using namespace iroha::model;
+using namespace shared_model::proto;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds proposal_delay = 10s;
@@ -90,12 +91,13 @@ class ClientServerTest : public testing::Test {
       auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
           wsv_query, block_query);
 
-      auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-          std::move(qpf));
+      auto qpi =
+          std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
 
       //----------- Server run ----------------
       runner
-          ->append(std::make_unique<torii::CommandService>( tx_processor, storageMock, proposal_delay))
+          ->append(std::make_unique<torii::CommandService>(
+              tx_processor, storageMock, proposal_delay))
           .append(std::make_unique<torii::QueryService>(qpi))
           .run();
     });

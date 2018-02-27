@@ -17,6 +17,9 @@
 
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 
+using namespace std::chrono_literals;
+using namespace iroha::model::generators;
+
 class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
  public:
   void SetUp() override {

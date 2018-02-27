@@ -15,6 +15,15 @@
 # limitations under the License.
 #
 
+add_library(tx_pipeline_integration_test_fixture
+    tx_pipeline_integration_test_fixture.cpp
+    )
+target_include_directories(tx_pipeline_integration_test_fixture PUBLIC ${PROJECT_SOURCE_DIR}/test)
+target_link_libraries(tx_pipeline_integration_test_fixture
+    application
+    gtest
+    )
+
 addtest(tx_pipeline_integration_test tx_pipeline_integration_test.cpp)
 target_link_libraries(tx_pipeline_integration_test
     application
@@ -23,11 +32,13 @@ target_link_libraries(tx_pipeline_integration_test
     integration_framework
     shared_model_ed25519_sha3
     shared_model_stateless_validation
+    tx_pipeline_integration_test_fixture
     )
 
 addtest(transfer_asset_inter_domain_test transfer_asset_inter_domain_test.cpp)
 target_link_libraries(transfer_asset_inter_domain_test
-  application
-  raw_block_insertion
-  model_generators
+    application
+    raw_block_insertion
+    model_generators
+    tx_pipeline_integration_test_fixture
   )

@@ -25,6 +25,7 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace shared_model;
+using namespace shared_model::proto;
 using namespace iroha::expected;
 
 class TransportBuilderTest : public ::testing::Test {
@@ -165,7 +166,10 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
                   orig_model.getTransport().SerializeAsString());
       },
-      [](const Error<std::string> &msg) { std::cout << msg.error << std::endl; FAIL(); });
+      [](const Error<std::string> &msg) {
+        std::cout << msg.error << std::endl;
+        FAIL();
+      });
 }
 
 /**

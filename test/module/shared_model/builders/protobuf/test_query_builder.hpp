@@ -21,21 +21,18 @@
 #include "builders/protobuf/builder_templates/query_template.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
-using namespace shared_model::proto;
-using namespace shared_model::validation;
-
 /**
  * Builder alias, to build shared model proto query object avoiding validation
  * and "required fields" check
  */
-using TestQueryBuilder =
-    TemplateQueryBuilder<(1 << TemplateQueryBuilder<>::total) - 1,
-                         QueryAlwaysValidValidator,
-                         Query>;
+using TestQueryBuilder = shared_model::proto::TemplateQueryBuilder<
+    (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
+    shared_model::validation::QueryAlwaysValidValidator,
+    shared_model::proto::Query>;
 
-using TestUnsignedQueryBuilder =
-    TemplateQueryBuilder<(1 << TemplateQueryBuilder<>::total) - 1,
-                         QueryAlwaysValidValidator,
-                         UnsignedWrapper<Query>>;
+using TestUnsignedQueryBuilder = shared_model::proto::TemplateQueryBuilder<
+    (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
+    shared_model::validation::QueryAlwaysValidValidator,
+    shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
 
 #endif  // IROHA_TEST_QUERY_BUILDER_HPP

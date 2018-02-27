@@ -37,6 +37,7 @@
 #include "model/commands/transfer_asset.hpp"
 
 using namespace rapidjson;
+using namespace boost::multiprecision;
 
 namespace iroha {
   namespace model {
