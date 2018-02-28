@@ -15,11 +15,29 @@ set(URL https://github.com/hyperledger/iroha-ed25519)
 set(VERSION e7188b8393dbe5ac54378610d53630bd4a180038)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
+# do not change shared -> static
+iroha_get_lib_name(EDLIB ed25519 SHARED)
+
 if (NOT ed25519_FOUND)
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
+      CMAKE_ARGS
+          -DEDIMPL=ref10
+          -DHASH=sha3_brainhub
+          -DRANDOM=dev_urandom
+
+          -DTESTING=OFF
+          -DBUILD_TESTING=OFF
+          -DBUILD=SHARED
+
+          -G${CMAKE_GENERATOR}
+          -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+          -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
+          -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+          -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
+      BUILD_BYPRODUCTS
+          ${EP_PREFIX}/src/hyperledger_ed25519-build${XCODE_EXT}/${EDLIB}
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step
@@ -27,9 +45,8 @@ if (NOT ed25519_FOUND)
   externalproject_get_property(hyperledger_ed25519 binary_dir)
   externalproject_get_property(hyperledger_ed25519 source_dir)
   set(ed25519_INCLUDE_DIR ${source_dir}/include)
-  set(ed25519_LIBRARY ${binary_dir}/${CMAKE_STATIC_LIBRARY_PREFIX}ed25519${CMAKE_STATIC_LIBRARY_SUFFIX})
+  set(ed25519_LIBRARY     ${binary_dir}${XCODE_EXT}/${EDLIB})
   file(MAKE_DIRECTORY ${ed25519_INCLUDE_DIR})
-  link_directories(${binary_dir})
 
   add_dependencies(ed25519 hyperledger_ed25519)
 endif ()
