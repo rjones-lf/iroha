@@ -47,6 +47,12 @@
 #include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
+namespace iroha {
+  namespace ametsuchi {
+    class WsvRestorer;
+  }
+}  // namespace iroha
+
 class Irohad {
  public:
   /**
@@ -83,6 +89,12 @@ class Irohad {
    * Reset oredering service storage state to default
    */
   void resetOrderingService();
+
+  /**
+   * Restore World State View
+   * @return true on success, false otherwise
+   */
+  bool restoreWsv();
 
   /**
    * Drop wsv and block store
@@ -123,6 +135,11 @@ class Irohad {
 
   virtual void initQueryService();
 
+  /**
+   * Initialize WSV restorer
+   */
+  virtual void initWsvRestorer();
+
   // constructor dependencies
   std::string block_store_dir_;
   std::string pg_conn_;
@@ -144,6 +161,9 @@ class Irohad {
 
   // peer query
   std::shared_ptr<iroha::ametsuchi::PeerQuery> wsv;
+
+  // WSV restorer
+  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
@@ -169,6 +189,10 @@ class Irohad {
   // query service
   std::unique_ptr<torii::QueryService> query_service;
 
+  // ordering service persistent state storage
+  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
+      ordering_service_storage_;
+
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<grpc::Server> internal_server;
 
@@ -183,8 +207,6 @@ class Irohad {
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
 
   iroha::keypair_t keypair;
 };

@@ -77,6 +77,10 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     irohad->resetOrderingService();
 
     irohad->init();
+
+    // restore World State View to make sure it is valid
+    irohad->restoreWsv();
+
     irohad->run();
   }
 

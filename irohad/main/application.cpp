@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
+#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -97,6 +98,8 @@ void Irohad::init() {
   // Torii
   initTransactionCommandService();
   initQueryService();
+
+  initWsvRestorer();
 }
 
 /**
@@ -129,6 +132,15 @@ void Irohad::initStorage() {
 void Irohad::resetOrderingService() {
   if (not ordering_service_storage_->resetState())
     log_->error("cannot reset ordering service storage");
+}
+
+bool Irohad::restoreWsv() {
+  return wsv_restorer_->restoreWsv(*storage)
+      .match([](iroha::expected::Value<void> v) -> bool { return true; },
+             [&](iroha::expected::Error<std::string> &error) -> bool {
+               log_->error(error.error);
+               return false;
+             });
 }
 
 /**
@@ -253,6 +265,10 @@ void Irohad::initQueryService() {
   query_service = std::make_unique<::torii::QueryService>(query_processor);
 
   log_->info("[Init] => query service");
+}
+
+void Irohad::initWsvRestorer() {
+  wsv_restorer_ = std::make_shared<iroha::ametsuchi::WsvRestorerImpl>();
 }
 
 /**

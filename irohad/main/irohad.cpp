@@ -19,7 +19,6 @@
 #include <grpc++/grpc++.h>
 #include <fstream>
 #include <thread>
-#include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -153,15 +152,7 @@ int main(int argc, char *argv[]) {
               block.value().transactions.size());
   } else {
     // Recover VSW from the existing ledger to be sure it is consistent
-    iroha::ametsuchi::WsvRestorerImpl wsvRestorer;
-    bool restored =
-        wsvRestorer.restoreWsv(*irohad.storage)
-            .match([](iroha::expected::Value<void> v) -> bool { return true; },
-                   [&](iroha::expected::Error<std::string> &error) -> bool {
-                     log->error(error.error);
-                     return false;
-                   });
-    if (not restored)
+    if (not irohad.restoreWsv())
       return EXIT_FAILURE;
   }
 
