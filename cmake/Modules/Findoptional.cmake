@@ -14,17 +14,17 @@ set_target_description(optional "Data structure for optional types" ${URL} ${VER
 
 if (NOT optional_FOUND)
   externalproject_add(martinmoene_optional
-      GIT_REPOSITORY    ${URL}
-      GIT_TAG           ${VERSION}
+      GIT_REPOSITORY ${URL}
+      GIT_TAG        ${VERSION}
       CONFIGURE_COMMAND "" # remove configure step
-      BUILD_COMMAND     "" # remove build step
-      INSTALL_COMMAND   "" # remove install step
-      TEST_COMMAND      "" # remove test step
-      UPDATE_COMMAND    "" # remove update step
+      BUILD_COMMAND "" # remove build step
+      INSTALL_COMMAND "" # remove install step
+      TEST_COMMAND "" # remove test step
+      UPDATE_COMMAND "" # remove update step
       )
   externalproject_get_property(martinmoene_optional source_dir)
   set(optional_INCLUDE_DIR ${source_dir}/include)
-  file(MAKE_DIRECTORY      ${optional_INCLUDE_DIR})
+  file(MAKE_DIRECTORY ${optional_INCLUDE_DIR})
 
   add_dependencies(optional martinmoene_optional)
 endif ()

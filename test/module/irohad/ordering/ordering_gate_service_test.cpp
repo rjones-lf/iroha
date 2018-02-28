@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/common_objects/peer.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "framework/test_subscriber.hpp"
 #include "mock_ordering_service_persistent_state.hpp"
 #include "model/asset.hpp"
@@ -31,6 +33,8 @@ using namespace framework::test_subscriber;
 using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 using ::testing::Return;
+
+using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 
 // TODO: refactor services to allow dynamic port binding IR-741
 class OrderingGateServiceTest : public ::testing::Test {
@@ -126,8 +130,17 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   // 8 transaction -> proposal -> 2 transaction -> proposal
 
   std::shared_ptr<MockPeerQuery> wsv = std::make_shared<MockPeerQuery>();
+
+  shared_model::proto::PeerBuilder builder;
+
+  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
+  auto tmp = builder.address(peer.address).pubkey(key).build();
+
+  wPeer w_peer(tmp.copy());
+
   EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<Peer>{peer}));
+      .WillRepeatedly(Return(std::vector<wPeer>{w_peer}));
+
   const size_t max_proposal = 100;
   const size_t commit_delay = 400;
 
@@ -187,8 +200,16 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   // 10 transaction -> proposal with 5 -> proposal with 5
 
   std::shared_ptr<MockPeerQuery> wsv = std::make_shared<MockPeerQuery>();
+
+  shared_model::proto::PeerBuilder builder;
+
+  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
+  auto tmp = builder.address(peer.address).pubkey(key).build();
+
+  wPeer w_peer(tmp.copy());
   EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<Peer>{peer}));
+      .WillRepeatedly(Return(std::vector<wPeer>{w_peer}));
+
   const size_t max_proposal = 5;
   const size_t commit_delay = 1000;
 

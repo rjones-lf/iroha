@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
+#include <numeric>
+
 #include "ametsuchi/impl/peer_query_wsv.hpp"
-
-#include <utility>
-
 #include "ametsuchi/wsv_query.hpp"
-#include "model/peer.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -28,8 +27,24 @@ namespace iroha {
     PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
         : wsv_(std::move(wsv)) {}
 
-    nonstd::optional<std::vector<model::Peer>> PeerQueryWsv::getLedgerPeers() {
-      return wsv_->getPeers();
+    boost::optional<std::vector<PeerQueryWsv::wPeer>>
+    PeerQueryWsv::getLedgerPeers() {
+      return wsv_->getPeers() | [](const auto &peers) {
+        return std::accumulate(
+            peers.begin(),
+            peers.end(),
+            std::vector<PeerQueryWsv::wPeer>{},
+            [](auto &vec, const auto &peer) {
+              shared_model::proto::PeerBuilder builder;
+
+              auto key =
+                  shared_model::crypto::PublicKey(peer.pubkey.to_string());
+              auto tmp = builder.address(peer.address).pubkey(key).build();
+
+              vec.emplace_back(tmp.copy());
+              return vec;
+            });
+      };
     }
 
   }  // namespace ametsuchi

@@ -29,6 +29,7 @@
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
@@ -190,7 +191,7 @@ namespace iroha {
       MockPeerQuery() = default;
 
       MOCK_METHOD0(getLedgerPeers,
-                   nonstd::optional<std::vector<model::Peer>>());
+                   boost::optional<std::vector<wPeer>>());
     };
 
     class MockStorage : public Storage {

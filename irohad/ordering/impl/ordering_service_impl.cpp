@@ -78,7 +78,7 @@ namespace iroha {
 
       auto lst = wsv_->getLedgerPeers().value();
       for (const auto &peer : lst) {
-        peers.push_back(peer.address);
+        peers.push_back(peer->address());
       }
       transport_->publishProposal(std::move(proposal), peers);
     }

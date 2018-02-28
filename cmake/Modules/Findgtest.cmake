@@ -33,44 +33,31 @@ set(VERSION ec44c6c1675c25b9827aacd08c02433cccde7780)
 set_target_description(gtest "Unit testing library" ${URL} ${VERSION})
 set_target_description(gmock "Mocking library" ${URL} ${VERSION})
 
-iroha_get_lib_name(GTESTMAINLIB gtest_main STATIC)
-iroha_get_lib_name(GTESTLIB     gtest      STATIC)
-iroha_get_lib_name(GMOCKMAINLIB gmock_main STATIC)
-iroha_get_lib_name(GMOCKLIB     gmock      STATIC)
-
 if (NOT gtest_FOUND)
   ExternalProject_Add(google_test
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
-      CMAKE_ARGS
-          -Dgtest_force_shared_crt=ON
-          -Dgtest_disable_pthreads=OFF
-          -G${CMAKE_GENERATOR}
-          -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-          -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}
-          -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-          -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}
-          -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_BINARY_DIR}
-          -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=${CMAKE_BINARY_DIR}
-          -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${CMAKE_BINARY_DIR}
-      BUILD_BYPRODUCTS
-          ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GTESTMAINLIB}
-          ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GTESTLIB}
-          ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GMOCKMAINLIB}
-          ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GMOCKLIB}
+      CMAKE_ARGS -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+      -Dgtest_force_shared_crt=ON
+      -Dgtest_disable_pthreads=OFF
+      BUILD_BYPRODUCTS ${EP_PREFIX}/src/google_test-build/googlemock/gtest/libgtest_main.a
+                       ${EP_PREFIX}/src/google_test-build/googlemock/gtest/libgtest.a
+                       ${EP_PREFIX}/src/google_test-build/googlemock/libgmock_main.a
+                       ${EP_PREFIX}/src/google_test-build/googlemock/libgmock.a
       INSTALL_COMMAND "" # remove install step
-      UPDATE_COMMAND  "" # remove update step
-      TEST_COMMAND    "" # remove test step
+      UPDATE_COMMAND "" # remove update step
+      TEST_COMMAND "" # remove test step
       )
   ExternalProject_Get_Property(google_test source_dir binary_dir)
   set(gtest_INCLUDE_DIR ${source_dir}/googletest/include)
   set(gmock_INCLUDE_DIR ${source_dir}/googlemock/include)
 
-  set(gtest_MAIN_LIBRARY ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GTESTMAINLIB})
-  set(gtest_LIBRARY      ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GTESTLIB})
+  set(gtest_MAIN_LIBRARY ${binary_dir}/googlemock/gtest/libgtest_main.a)
+  set(gtest_LIBRARY ${binary_dir}/googlemock/gtest/libgtest.a)
 
-  set(gmock_MAIN_LIBRARY ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GMOCKMAINLIB})
-  set(gmock_LIBRARY      ${CMAKE_BINARY_DIR}${XCODE_EXT}/${GMOCKLIB})
+  set(gmock_MAIN_LIBRARY ${binary_dir}/googlemock/libgmock_main.a)
+  set(gmock_LIBRARY ${binary_dir}/googlemock/libgmock.a)
 
   file(MAKE_DIRECTORY ${gtest_INCLUDE_DIR})
   file(MAKE_DIRECTORY ${gmock_INCLUDE_DIR})
