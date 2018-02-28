@@ -41,11 +41,16 @@ RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
     rm -rf /tmp/cmake
 
 # install boost 1.65.1
+#
+# dependencies:
+#   filesystem -> system
+#   thread -> chrono
 RUN git clone https://github.com/boostorg/boost /tmp/boost; \
     (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
-    (cd /tmp/boost ; git submodule init); \
-    (cd /tmp/boost ; git submodule update --recursive -j ${PARALLELISM}); \
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
+    (cd /tmp/boost ; git submodule update --init); \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh \
+        --with-libraries=system,filesystem,thread,program_options,chrono \
+    ); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install); \
     rm -rf /tmp/boost
@@ -193,6 +198,11 @@ RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
+
+RUN git clone https://github.com/vinniefalco/NuDB.git /tmp/nudb; \
+    (cd /tmp/nudb; git checkout 6b4779f737d72038c716d0ecbc0701411dff083e); \
+    cp -R /tmp/nudb/include/nudb /usr/local/include; \
+    rm -rf /tmp/nudb
 
 # non-interactive adduser
 #   -m = create home dir

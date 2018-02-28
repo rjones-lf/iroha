@@ -15,7 +15,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v2
       - image: postgres:9.5
     steps:
       - checkout
@@ -79,7 +79,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v2
     steps:
       - checkout
       - restore_cache:
@@ -149,7 +149,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v2
       - image: docker:17.05.0-ce-git
     steps:
       - checkout
@@ -187,7 +187,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v2
     steps:
       - checkout
       - restore_cache:
@@ -225,7 +225,7 @@ jobs:
     <<: *defaults
     <<: *version
     docker:
-      - image: hyperledger/iroha-docker-develop:v1
+      - image: hyperledger/iroha-docker-develop:v2
     steps:
       - checkout
       - restore_cache:

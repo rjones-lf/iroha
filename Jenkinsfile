@@ -24,7 +24,7 @@ pipeline {
         SONAR_TOKEN = credentials('SONAR_TOKEN')
         CODECOV_TOKEN = credentials('CODECOV_TOKEN')
         DOCKERHUB = credentials('DOCKERHUB')
-        DOCKER_IMAGE = 'hyperledger/iroha-docker-develop:v1'
+        DOCKER_IMAGE = 'hyperledger/iroha-docker-develop:v2'
 
         IROHA_NETWORK = "iroha-${GIT_COMMIT}-${BUILD_NUMBER}"
         IROHA_POSTGRES_HOST = "pg-${GIT_COMMIT}-${BUILD_NUMBER}"

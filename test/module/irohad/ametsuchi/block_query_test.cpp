@@ -306,51 +306,6 @@ TEST_F(BlockQueryTest, GetBlocksFrom1) {
  * @when read block #1
  * @then get no blocks
  */
-TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
-  namespace fs = boost::filesystem;
-  size_t block_n = 1;
-
-  // write something that is NOT JSON to block #1
-  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
-  fs::ofstream block_file(block_path);
-  std::string content = R"(this is definitely not json)";
-  block_file << content;
-  block_file.close();
-
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test AND 1 tx created by user2@test. Block #1 is filled with trash data
- * (NOT JSON).
- * @when read block #1
- * @then get no blocks
- */
-TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
-  namespace fs = boost::filesystem;
-  size_t block_n = 1;
-
-  // write bad block instead of block #1
-  auto block_path = fs::path{block_store_path} / FlatFile::id_to_name(block_n);
-  fs::ofstream block_file(block_path);
-  std::string content = R"({
-  "testcase": [],
-  "description": "make sure this is valid json, but definitely not a block"
-})";
-  block_file << content;
-  block_file.close();
-
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
-}
 
 /**
  * @given block store with 2 blocks totally containing 3 txs created by
