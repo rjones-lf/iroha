@@ -160,7 +160,6 @@ namespace iroha {
         }
 
         for (const auto &block_id : block_ids) {
-          // create key for querying redis
           execute_(
               "SELECT DISTINCT index FROM index_by_id_height_asset WHERE id = "
               + transaction_.quote(account_id)

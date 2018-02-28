@@ -37,7 +37,7 @@ namespace iroha {
     class FlatFile;
 
     /**
-     * Class which implements BlockQuery with a Redis backend.
+     * Class which implements BlockQuery with a Postgres backend.
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
@@ -81,7 +81,7 @@ namespace iroha {
           const std::string &hash);
 
       /**
-       * creates callback to lrange query to redis to supply result to
+       * creates callback to lrange query to Postgres to supply result to
        * subscriber s
        * @param s
        * @param block_id
