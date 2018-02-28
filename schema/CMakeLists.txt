@@ -21,10 +21,17 @@ compile_proto_to_cpp(primitive.proto)
 compile_proto_to_cpp(commands.proto)
 compile_proto_to_cpp(queries.proto)
 compile_proto_to_cpp(responses.proto)
-compile_proto_to_grpc_cpp(endpoint.proto)
-compile_proto_to_grpc_cpp(yac.proto)
-compile_proto_to_grpc_cpp(ordering.proto)
-compile_proto_to_grpc_cpp(loader.proto)
+
+if (IROHA_ROOT_PROJECT)
+    compile_proto_to_grpc_cpp(endpoint.proto)
+    compile_proto_to_grpc_cpp(yac.proto)
+    compile_proto_to_grpc_cpp(ordering.proto)
+    compile_proto_to_grpc_cpp(loader.proto)
+endif()
+
+if (IROHA_ROOT_PROJECT)
+    SET(endpoint_pb_cc endpoint.pb.cc)
+endif()
 
 add_library(schema
     block.pb.cc
@@ -32,9 +39,12 @@ add_library(schema
     primitive.pb.cc
     queries.pb.cc
     responses.pb.cc
-    endpoint.pb.cc
+    ${endpoint_pb_cc}
     proposal.pb.cc
     )
+
+
+
 target_link_libraries(schema
     protobuf
     )
@@ -42,39 +52,41 @@ target_include_directories(schema PUBLIC
     .
     )
 
-add_library(endpoint
-    endpoint.pb.cc
-    endpoint.grpc.pb.cc
-    )
-target_link_libraries(endpoint
-    protobuf
-    grpc++
-    schema
-    )
+if (IROHA_ROOT_PROJECT)
+    add_library(endpoint
+        endpoint.pb.cc
+        endpoint.grpc.pb.cc
+        )
+    target_link_libraries(endpoint
+        protobuf
+        grpc++
+        schema
+        )
 
-add_library(yac_grpc
-    yac.pb.cc
-    yac.grpc.pb.cc
-    )
-target_link_libraries(yac_grpc
-    protobuf
-    grpc++
-    )
+    add_library(yac_grpc
+        yac.pb.cc
+        yac.grpc.pb.cc
+        )
+    target_link_libraries(yac_grpc
+        protobuf
+        grpc++
+        )
 
-add_library(ordering_grpc
-    ordering.pb.cc
-    ordering.grpc.pb.cc
-    )
-target_link_libraries(ordering_grpc
-    schema
-    grpc++
-    )
+    add_library(ordering_grpc
+        ordering.pb.cc
+        ordering.grpc.pb.cc
+        )
+    target_link_libraries(ordering_grpc
+        schema
+        grpc++
+        )
 
-add_library(loader_grpc
-    loader.pb.cc
-    loader.grpc.pb.cc
+    add_library(loader_grpc
+        loader.pb.cc
+        loader.grpc.pb.cc
+        )
+    target_link_libraries(loader_grpc
+        schema
+        grpc++
     )
-target_link_libraries(loader_grpc
-    schema
-    grpc++
-    )
+endif()

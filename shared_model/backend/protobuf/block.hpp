@@ -26,7 +26,6 @@
 #include "backend/protobuf/util.hpp"
 #include "common_objects/trivial_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/block.hpp"
 
 #include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
