@@ -1,0 +1,4 @@
+# Ignore everything
+node_modules/
+pb/
+build*/

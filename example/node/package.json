@@ -1,0 +1,23 @@
+{
+  "name": "irohajs",
+  "version": "1.0.0",
+  "description": "Example of how to use iroha shared library with node.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "node-gyp": "node-gyp"
+  },
+  "repository": "git+https://github.com/hyperledger/iroha.git",
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hyperledger/iroha/issues"
+  },
+  "homepage": "https://github.com/hyperledger/iroha#readme",
+  "dependencies": {
+    "google-protobuf": "^3.5.0",
+    "grpc": "^1.8.4",
+    "grpc-tools": "^1.6.6",
+    "node-gyp": "^3.6.2"
+  },
+  "main": "index.js"
+}
