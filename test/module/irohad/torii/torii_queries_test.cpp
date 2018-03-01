@@ -20,6 +20,7 @@ limitations under the License.
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "generator/generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 // to compare pb amount and iroha amount
@@ -183,8 +184,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
 TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   auto creator = "a@domain";
 
-  auto creator = "accountA";
-
   auto accountB = std::shared_ptr<shared_model::interface::Account>(
       shared_model::proto::AccountBuilder()
           .accountId("b@domain")
@@ -229,10 +228,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 }
 
 TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
-  EXPECT_CALL(*statelessValidatorMock,
-              validate(A<const iroha::model::Query &>()))
-      .WillOnce(Return(true));
-
   auto account = std::shared_ptr<shared_model::interface::Account>(
       shared_model::proto::AccountBuilder()
           .accountId("accountA")
@@ -318,10 +313,6 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 }
 
 TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
-  EXPECT_CALL(*statelessValidatorMock,
-              validate(A<const iroha::model::Query &>()))
-      .WillOnce(Return(true));
-
   auto account =
       shared_model::proto::AccountBuilder().accountId("accountA").build();
 

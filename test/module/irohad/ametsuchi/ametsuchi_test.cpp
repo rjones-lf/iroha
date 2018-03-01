@@ -460,7 +460,6 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
-  shared_model::interface::types::PubkeyType pubkey1(std::string(32, '1')), pubkey2(std::string(32, '2'));
   shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
   shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
 

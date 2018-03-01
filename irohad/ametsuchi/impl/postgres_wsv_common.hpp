@@ -103,7 +103,7 @@ namespace iroha {
       } catch (std::exception &e) {
         return expected::makeError(std::make_shared<std::string>(e.what()));
       }
-    };
+    }
 
     static inline shared_model::builder::BuilderResult<
         shared_model::interface::Account>

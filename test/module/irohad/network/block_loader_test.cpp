@@ -84,9 +84,6 @@ class BlockLoaderTest : public testing::Test {
     ASSERT_NE(port, 0);
   }
 
-  std::shared_ptr<shared_model::interface::Peer> peer;
-  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
-
   auto getBaseBlockBuilder() const {
     constexpr auto kTotal = (1 << 5) - 1;
     return shared_model::proto::TemplateBlockBuilder<
@@ -103,7 +100,6 @@ class BlockLoaderTest : public testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
-  std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
   std::shared_ptr<MockCryptoProvider> provider;
@@ -136,7 +132,8 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(old_peer.pubkey), 0);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer->pubkey()
+      ), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());

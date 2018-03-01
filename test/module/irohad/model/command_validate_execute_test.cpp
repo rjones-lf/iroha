@@ -220,7 +220,7 @@ TEST_F(AddAssetQuantityTest, ValidWhenNewWallet) {
       .WillOnce(Return(account));
   EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
       .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_query, getAccountRoles(creator.account_id))
+  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
