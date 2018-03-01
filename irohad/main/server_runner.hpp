@@ -46,11 +46,6 @@ class ServerRunner {
   void run();
 
   /**
-   * Release the completion queues and shutdown the server.
-   */
-  void shutdown();
-
-  /**
    * Wait until the server is up.
    */
   void waitForServersReady();

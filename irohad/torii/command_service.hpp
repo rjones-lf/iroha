@@ -21,7 +21,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include "ametsuchi/storage.hpp"
+#include "ametsuchi/block_query.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
@@ -40,12 +40,12 @@ namespace torii {
      * Creates a new instance of CommandService
      * @param pb_factory - model->protobuf and vice versa converter
      * @param tx_processor - processor of received transactions
-     * @param storage - storage to request transactions outside the cache
+     * @param block_query - to query transactions outside the cache
      * @param proposal_delay - time of a one proposal propagation.
      */
     CommandService(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
-        std::shared_ptr<iroha::ametsuchi::Storage> storage,
+        std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
         std::chrono::milliseconds proposal_delay);
 
     /**
@@ -142,7 +142,7 @@ namespace torii {
 
     std::shared_ptr<iroha::model::converters::PbTransactionFactory> pb_factory_;
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
-    std::shared_ptr<iroha::ametsuchi::Storage> storage_;
+    std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query_;
     std::chrono::milliseconds proposal_delay_;
     std::chrono::milliseconds start_tx_processing_duration_;
     std::shared_ptr<CacheType> cache_;

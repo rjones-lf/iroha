@@ -17,6 +17,7 @@
 
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
+#include <csignal>
 #include <fstream>
 #include <thread>
 #include "crypto/keys_manager_impl.hpp"
@@ -70,6 +71,8 @@ DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
  * Registering validator for the keypair files location.
  */
 DEFINE_validator(keypair_name, &validate_keypair_name);
+
+std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
   auto log = logger::log("MAIN");
@@ -153,9 +156,19 @@ int main(int argc, char *argv[]) {
   // init pipeline components
   irohad.init();
 
+  auto handler = [](int s) { exit_requested.set_value(); };
+  std::signal(SIGINT, handler);
+  std::signal(SIGTERM, handler);
+  std::signal(SIGQUIT, handler);
+
   // runs iroha
   log->info("Running iroha");
   irohad.run();
+  exit_requested.get_future().wait();
+
+  // We do not care about shutting down grpc servers
+  // They do all necessary work in their destructors
+  log->info("shutting down...");
 
   return 0;
 }

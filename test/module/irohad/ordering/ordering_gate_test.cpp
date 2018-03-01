@@ -107,7 +107,7 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
       }));
 
   for (size_t i = 0; i < 5; ++i) {
-    gate_impl->propagate_transaction(std::make_shared<Transaction>());
+    gate_impl->propagateTransaction(std::make_shared<Transaction>());
   }
 
   std::unique_lock<std::mutex> lock(m);

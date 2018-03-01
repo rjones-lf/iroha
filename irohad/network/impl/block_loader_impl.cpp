@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-#include "network/impl/block_loader_impl.hpp"
-
-#include <algorithm>
-
 #include <grpc++/create_channel.h>
+#include <algorithm>
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/from_old_model.hpp"
+#include "interfaces/common_objects/peer.hpp"
+#include "network/impl/block_loader_impl.hpp"
 
 using iroha::Wrapper;
 using iroha::makeWrapper;
@@ -128,7 +127,7 @@ nonstd::optional<Wrapper<Block>> BlockLoaderImpl::retrieveBlock(
 nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
     const PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
-  if (not peers.has_value()) {
+  if (not peers) {
     log_->error(kPeerRetrieveFail);
     return nonstd::nullopt;
   }
@@ -136,18 +135,13 @@ nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
   auto &blob = pubkey.blob();
   auto it = std::find_if(
       peers.value().begin(), peers.value().end(), [&blob](const auto &peer) {
-        return peer.pubkey.size() == blob.size()
-            and std::equal(peer.pubkey.begin(),
-                           peer.pubkey.end(),
-                           blob.begin(),
-                           blob.end());
+        return peer->pubkey().blob() == blob;
       });
   if (it == peers.value().end()) {
     log_->error(kPeerFindFail);
     return nonstd::nullopt;
   }
-
-  return *it;
+  return *std::unique_ptr<iroha::model::Peer>((*it)->makeOldModel());
 }
 
 proto::Loader::Stub &BlockLoaderImpl::getPeerStub(

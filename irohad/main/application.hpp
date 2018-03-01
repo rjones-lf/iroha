@@ -95,7 +95,7 @@ class Irohad {
    */
   virtual void run();
 
-  virtual ~Irohad();
+  virtual ~Irohad() = default;
 
  protected:
   // -----------------------| component initialization |------------------------
@@ -178,8 +178,6 @@ class Irohad {
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
-  std::thread internal_thread, server_thread;
-
   logger::Logger log_;
 
  public:
@@ -188,6 +186,7 @@ class Irohad {
       ordering_service_storage_;
 
   iroha::keypair_t keypair;
+  grpc::ServerBuilder builder;
 };
 
 #endif  // IROHA_APPLICATION_HPP

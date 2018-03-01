@@ -55,56 +55,49 @@ class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
     runner = new ServerRunner(std::string(Ip) + ":" + std::to_string(Port));
-    th = std::thread([this] {
-      // ----------- Command Service --------------
-      pcsMock = std::make_shared<MockPeerCommunicationService>();
-      wsv_query = std::make_shared<MockWsvQuery>();
-      block_query = std::make_shared<MockBlockQuery>();
-      storageMock = std::make_shared<MockStorage>();
 
-      rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
-      rxcpp::subjects::subject<Commit> commit_notifier;
+    // ----------- Command Service --------------
+    pcsMock = std::make_shared<MockPeerCommunicationService>();
+    wsv_query = std::make_shared<MockWsvQuery>();
+    block_query = std::make_shared<MockBlockQuery>();
 
-      EXPECT_CALL(*pcsMock, on_proposal())
-          .WillRepeatedly(Return(prop_notifier.get_observable()));
+    rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
+    rxcpp::subjects::subject<Commit> commit_notifier;
 
-      EXPECT_CALL(*pcsMock, on_commit())
-          .WillRepeatedly(Return(commit_notifier.get_observable()));
+    EXPECT_CALL(*pcsMock, on_proposal())
+        .WillRepeatedly(Return(prop_notifier.get_observable()));
 
-      auto tx_processor =
-          std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
+    EXPECT_CALL(*pcsMock, on_commit())
+        .WillRepeatedly(Return(commit_notifier.get_observable()));
 
-      //----------- Query Service ----------
+    auto tx_processor =
+        std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
 
-      auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
-          wsv_query, block_query);
+    //----------- Query Service ----------
 
-      auto qpi =
-          std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
+    auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
+        wsv_query, block_query);
 
-      //----------- Server run ----------------
-      runner
-          ->append(std::make_unique<torii::CommandService>(
-              tx_processor, storageMock, proposal_delay))
-          .append(std::make_unique<torii::QueryService>(qpi))
-          .run();
-    });
+    auto qpi =
+        std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
+
+    //----------- Server run ----------------
+    runner
+        ->append(std::make_unique<torii::CommandService>(
+            tx_processor, block_query, proposal_delay))
+        .append(std::make_unique<torii::QueryService>(qpi))
+        .run();
 
     runner->waitForServersReady();
   }
 
   virtual void TearDown() {
-    runner->shutdown();
     delete runner;
-    th.join();
   }
 
   ServerRunner *runner;
-  std::thread th;
 
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
-  std::shared_ptr<MockStorage> storageMock;
-
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
 

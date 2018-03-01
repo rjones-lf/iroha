@@ -78,53 +78,46 @@ class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
     runner = new ServerRunner(std::string(Ip) + ":" + std::to_string(Port));
-    th = std::thread([this] {
-      // ----------- Command Service --------------
-      pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
-          prop_notifier_, commit_notifier_);
-      wsv_query = std::make_shared<MockWsvQuery>();
-      storageMock = std::make_shared<MockStorage>();
-      block_query = std::make_shared<MockBlockQuery>();
 
-      auto tx_processor =
-          std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
-      auto pb_tx_factory =
-          std::make_shared<iroha::model::converters::PbTransactionFactory>();
+    // ----------- Command Service --------------
+    pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
+        prop_notifier_, commit_notifier_);
+    wsv_query = std::make_shared<MockWsvQuery>();
+    block_query = std::make_shared<MockBlockQuery>();
 
-      //----------- Query Service ----------
-      auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
-          wsv_query, block_query);
+    auto tx_processor =
+        std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
+    auto pb_tx_factory =
+        std::make_shared<iroha::model::converters::PbTransactionFactory>();
 
-      auto qpi =
-          std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
+    //----------- Query Service ----------
+    auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
+        wsv_query, block_query);
 
-      EXPECT_CALL(*storageMock, getBlockQuery())
-          .WillRepeatedly(Return(block_query));
-      EXPECT_CALL(*block_query, getTxByHashSync(_))
-          .WillRepeatedly(Return(boost::none));
+    auto qpi =
+        std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf));
 
-      //----------- Server run ----------------
-      runner
-          ->append(std::make_unique<torii::CommandService>(tx_processor, storageMock, proposal_delay))
-          .append(std::make_unique<torii::QueryService>(qpi))
-          .run();
-    });
+    EXPECT_CALL(*block_query, getTxByHashSync(_))
+        .WillRepeatedly(Return(boost::none));
+
+    //----------- Server run ----------------
+    runner
+        ->append(std::make_unique<::torii::CommandService>(
+            tx_processor, block_query, proposal_delay))
+        .append(std::make_unique<::torii::QueryService>(qpi))
+        .run();
 
     runner->waitForServersReady();
   }
 
   virtual void TearDown() {
-    runner->shutdown();
     delete runner;
-    th.join();
   }
 
   ServerRunner *runner;
-  std::thread th;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
-  std::shared_ptr<MockStorage> storageMock;
 
   rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
@@ -344,7 +337,8 @@ TEST_F(ToriiServiceTest, CheckHash) {
  * @given torii service and one valid transaction
  * @when starting StatusStream and then sending transaction to Iroha
  * @then ensure that response will have at least 3 statuses
- * (it should contain STATELESS_VALIDATION_SUCCESS, STATEFUL_VALIDATION_SUCCESS
+ * (it should contain STATELESS_VALIDATION_SUCCESS,
+ STATEFUL_VALIDATION_SUCCESS
  * and COMMITTED) and the last status should be COMMITTED
  */
 TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {

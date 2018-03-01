@@ -67,6 +67,8 @@ namespace iroha {
 
       std::shared_ptr<BlockQuery> getBlockQuery() const override;
 
+      ~StorageImpl() override;
+
      protected:
       StorageImpl(std::string block_store_dir,
                   std::string postgres_options,

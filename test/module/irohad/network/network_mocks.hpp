@@ -49,7 +49,7 @@ namespace iroha {
 
     class MockOrderingGate : public OrderingGate {
      public:
-      MOCK_METHOD1(propagate_transaction,
+      MOCK_METHOD1(propagateTransaction,
                    void(std::shared_ptr<const model::Transaction> transaction));
 
       MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());

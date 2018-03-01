@@ -44,6 +44,8 @@ namespace iroha {
       Simulator(const Simulator &) = delete;
       Simulator &operator=(const Simulator &) = delete;
 
+      ~Simulator();
+
       void process_proposal(model::Proposal proposal) override;
 
       rxcpp::observable<model::Proposal> on_verified_proposal() override;
@@ -56,6 +58,9 @@ namespace iroha {
       // internal
       rxcpp::subjects::subject<model::Proposal> notifier_;
       rxcpp::subjects::subject<model::Block> block_notifier_;
+
+      rxcpp::composite_subscription proposal_subscription_;
+      rxcpp::composite_subscription verified_proposal_subscription_;
 
       std::shared_ptr<validation::StatefulValidator> validator_;
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;

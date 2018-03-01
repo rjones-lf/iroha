@@ -34,7 +34,7 @@ namespace iroha {
        * Propagate a signed transaction for further processing
        * @param transaction
        */
-      virtual void propagate_transaction(
+      virtual void propagateTransaction(
           std::shared_ptr<const model::Transaction> transaction) = 0;
 
       /**

@@ -32,7 +32,12 @@ namespace iroha {
           blockLoader_(std::move(blockLoader)) {
       log_ = logger::log("synchronizer");
       consensus_gate->on_commit().subscribe(
-          [this](auto block) { this->process_commit(block); });
+          subscription_,
+          [&](model::Block block) { this->process_commit(block); });
+    }
+
+    SynchronizerImpl::~SynchronizerImpl() {
+      subscription_.unsubscribe();
     }
 
     void SynchronizerImpl::process_commit(iroha::model::Block commit_message) {

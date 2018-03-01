@@ -29,7 +29,7 @@ namespace iroha {
     void PeerCommunicationServiceImpl::propagate_transaction(
         std::shared_ptr<const model::Transaction> transaction) {
       log_->info("propagate tx");
-      ordering_gate_->propagate_transaction(transaction);
+      ordering_gate_->propagateTransaction(transaction);
     }
 
     rxcpp::observable<model::Proposal>

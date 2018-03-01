@@ -19,7 +19,6 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>
-#include "logger/logger.hpp"
 
 ServerRunner::ServerRunner(const std::string &address)
     : serverAddress_(address) {}
@@ -39,10 +38,6 @@ void ServerRunner::run() {
 
   serverInstance_ = builder.BuildAndStart();
   serverInstanceCV_.notify_one();
-}
-
-void ServerRunner::shutdown() {
-  serverInstance_->Shutdown();
 }
 
 void ServerRunner::waitForServersReady() {

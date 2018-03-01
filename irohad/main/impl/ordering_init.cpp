@@ -17,6 +17,7 @@
 
 #include "main/impl/ordering_init.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "model/peer.hpp"
 
 namespace iroha {
@@ -54,7 +55,7 @@ namespace iroha {
         log_->error(
             "Ledger don't have peers. Do you set correct genesis block?");
       }
-      auto network_address = ledger_peers.value().front().address;
+      auto network_address = ledger_peers.value().front()->address();
       ordering_gate_transport =
           std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(
               network_address);

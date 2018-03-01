@@ -72,7 +72,6 @@ class TestIrohad : public Irohad {
     builder.RegisterService(loader_init.service.get());
     internal_server = builder.BuildAndStart();
     BOOST_ASSERT_MSG(port != 0, "grpc port is 0");
-    internal_thread = std::thread([this] { internal_server->Wait(); });
     log_->info("===> iroha initialized");
   }
 };

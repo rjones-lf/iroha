@@ -57,7 +57,7 @@ namespace iroha {
        * Propagates transaction over network
        * @param transaction : transaction to be propagated
        */
-      virtual void propagate_transaction(
+      virtual void propagateTransaction(
           std::shared_ptr<const model::Transaction> transaction) = 0;
 
       virtual ~OrderingGateTransport() = default;
