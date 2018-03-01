@@ -27,8 +27,13 @@ namespace iroha {
     PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
         : wsv_(std::move(wsv)) {}
 
-    nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>> PeerQueryWsv::getLedgerPeers() {
-      return wsv_->getPeers();
+    boost::optional<std::vector<PeerQuery::wPeer>> PeerQueryWsv::getLedgerPeers() {
+      auto peers = wsv_->getPeers();
+      if (peers) {
+        return boost::make_optional(peers.value());
+      } else {
+        return boost::none;
+      }
     }
 
   }  // namespace ametsuchi

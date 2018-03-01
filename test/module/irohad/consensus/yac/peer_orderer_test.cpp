@@ -92,7 +92,7 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeNormalCase) {
   auto order = orderer.getInitialOrdering();
   auto old_peers = [this] {
     std::vector<iroha::model::Peer> result;
-    for (auto &peer : peers) {
+    for (auto &peer : s_peers) {
       result.push_back(*std::unique_ptr<iroha::model::Peer>(peer->makeOldModel()));
     }
     return result;

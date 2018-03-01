@@ -122,12 +122,11 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   auto block = getBaseBlockBuilder().build();
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
-  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+  wPeer w_peer = std::shared_ptr<shared_model::interface::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
-          .build());
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build().copy());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{w_peer}));
@@ -157,11 +156,10 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -203,11 +201,10 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
       .WillRepeatedly(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -239,11 +236,10 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -267,11 +263,10 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   auto present = getBaseBlockBuilder().build();
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())

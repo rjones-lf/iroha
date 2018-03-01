@@ -16,6 +16,7 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include <exception>
 
 namespace iroha {
   namespace ametsuchi {
@@ -200,7 +201,9 @@ namespace iroha {
                   std::shared_ptr<shared_model::interface::Peer>> &v) {
                 peers.push_back(v.value);
               },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {});
+              [&](expected::Error<std::shared_ptr<std::string>> &e) {
+                throw std::invalid_argument(*e.error);
+              });
         }
         return peers;
       };
