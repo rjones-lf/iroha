@@ -113,13 +113,13 @@ namespace iroha {
             (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
 
             // Can grant set quorum
-            (protocol::RolePermission::can_grant_set_quorum,
+            (protocol::RolePermission::can_grant_can_set_quorum,
              can_grant + can_set_quorum)
             // Can grant add signatory
-            (protocol::RolePermission::can_grant_add_signatory,
+            (protocol::RolePermission::can_grant_can_add_signatory,
              can_grant + can_add_signatory)
             // Can grant remove signatory
-            (protocol::RolePermission::can_grant_remove_signatory,
+            (protocol::RolePermission::can_grant_can_remove_signatory,
              can_grant + can_remove_signatory)
             // Can grant can_transfer
             (protocol::RolePermission::can_grant_can_transfer,
