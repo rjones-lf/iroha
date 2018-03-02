@@ -16,11 +16,12 @@
  */
 
 #include "torii/processor/transaction_processor_impl.hpp"
-#include <endpoint.pb.h>
+#include "endpoint.pb.h"
 #include <iostream>
 #include <utility>
-#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "model/sha3_hash.hpp"
 #include "model/transaction_response.hpp"
 
@@ -29,7 +30,6 @@ namespace iroha {
 
     using model::TransactionResponse;
     using network::PeerCommunicationService;
-    using validation::StatelessValidator;
 
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs)
@@ -95,16 +95,15 @@ namespace iroha {
     }
 
     void TransactionProcessorImpl::transactionHandle(
-        std::shared_ptr<model::Transaction> transaction) {
+        std::shared_ptr<shared_model::interface::Transaction> transaction) {
       log_->info("handle transaction");
       model::TransactionResponse response;
-      response.tx_hash = hash(*transaction).to_string();
+      response.tx_hash =
+          shared_model::crypto::toBinaryString(transaction->hash());
       response.current_status =
           model::TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
 
-      pcs_->propagate_transaction(
-          std::make_shared<shared_model::proto::Transaction>(
-              shared_model::proto::from_old(*transaction)));
+      pcs_->propagate_transaction(transaction);
 
       log_->info("stateless validated");
       notifier_.get_subscriber().on_next(

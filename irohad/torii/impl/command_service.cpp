@@ -25,7 +25,6 @@
 #include "interfaces/base/hashable.hpp"
 #include "torii/command_service.hpp"
 #include "validators/default_validator.hpp"
-#include "validators/transaction_validator.hpp"
 
 using namespace std::chrono_literals;
 
@@ -88,8 +87,8 @@ namespace torii {
               cache_->addItem(tx_hash, response);
               // Send transaction to iroha
               tx_processor_->transactionHandle(
-                  std::shared_ptr<iroha::model::Transaction>(
-                      iroha_tx.value.makeOldModel()));
+                  std::make_shared<shared_model::proto::Transaction>(
+                      iroha_tx.value));
             },
             [this, &tx_hash, &request, &response](const auto &error) {
               // getting hash from invalid transaction

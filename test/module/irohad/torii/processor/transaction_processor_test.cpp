@@ -41,7 +41,8 @@ class TransactionProcessorTest : public ::testing::Test {
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
 
-    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>> prop_notifier;
+    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
+        prop_notifier;
     rxcpp::subjects::subject<Commit> commit_notifier;
 
     EXPECT_CALL(*pcs, on_proposal())
@@ -80,7 +81,7 @@ TEST_F(TransactionProcessorTest,
     ASSERT_EQ(resp.current_status,
               iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS);
   });
-  tp->transactionHandle(std::shared_ptr<model::Transaction>(tx.makeOldModel()));
+  tp->transactionHandle(std::make_shared<decltype(tx)>(std::move(tx)));
 
   ASSERT_TRUE(wrapper.validate());
 }
