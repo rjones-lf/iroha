@@ -113,7 +113,7 @@ nonstd::optional<Wrapper<Block>> BlockLoaderImpl::retrieveBlock(
   auto status =
       getPeerStub(peer.value()).retrieveBlock(&context, request, &block);
   if (not status.ok()) {
-    log_->error(status.error_message());
+    log_->warn(status.error_message());
     return nonstd::nullopt;
   }
 
