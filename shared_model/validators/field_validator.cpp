@@ -236,8 +236,20 @@ namespace shared_model {
         const interface::SignatureSetType &signatures,
         const crypto::Blob &source) const {
       for (const auto &signature : signatures) {
-        if (not shared_model::crypto::CryptoVerifier<>::verify(
-                signature->signedData(), source, signature->publicKey())) {
+        if (signature->signedData().blob().size() != 64) {
+          // TODO (@l4l) 03/02/18: IR-977 replace signature size with a const
+          reason.second.push_back((boost::format("Invalid signature: %s")
+                                   % signature->signedData().hex())
+                                      .str());
+        } else if (signature->publicKey().blob().size() != 32) {
+          // TODO (@l4l) 03/02/18: IR-977 replace public key size with a const
+          reason.second.push_back((boost::format("Invalid pubkey: %s")
+                                   % signature->publicKey().hex())
+                                      .str());
+        } else if (not shared_model::crypto::CryptoVerifier<>::verify(
+                       signature->signedData(),
+                       source,
+                       signature->publicKey())) {
           auto message = (boost::format("Wrong signature with %s")
                           % signature->publicKey().toString())
                              .str();
