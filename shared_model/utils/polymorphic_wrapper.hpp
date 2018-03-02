@@ -121,6 +121,20 @@ namespace shared_model {
         return ptr_.get();
       }
 
+      const WrappedType *get() const {
+        return ptr_.get();
+      }
+
+      /**
+       * @brief Allows implicit cast from wrapper<T> to T, needed in validators
+       * to make boost::apply_visitor work.
+       *
+       * @note don't make it explicit
+       */
+      operator const WrappedType &() const {
+        return *ptr_.get();
+      }
+
      private:
       /// pointer with wrapped value
       std::shared_ptr<WrappedType> ptr_;

@@ -88,8 +88,7 @@ namespace shared_model {
       }
 
      public:
-      TemplateQueryBuilder(const SV &validator = SV())
-          : stateless_validator_(validator) {}
+      TemplateQueryBuilder() = default;
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {

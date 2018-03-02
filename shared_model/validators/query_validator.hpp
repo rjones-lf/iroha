@@ -34,56 +34,46 @@ namespace shared_model {
     class QueryValidatorVisitor
         : public boost::static_visitor<ReasonsGroupType> {
      public:
-      QueryValidatorVisitor(const FieldValidator &validator = FieldValidator())
-          : validator_(validator) {}
-
-      ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetAccount> &qry) const {
+      ReasonsGroupType operator()(const interface::GetAccount &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccount";
 
-        validator_.validateAccountId(reason, qry->accountId());
+        validator_.validateAccountId(reason, qry.accountId());
 
         return reason;
       }
 
-      ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetSignatories> &qry)
-          const {
+      ReasonsGroupType operator()(const interface::GetSignatories &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetSignatories";
 
-        validator_.validateAccountId(reason, qry->accountId());
+        validator_.validateAccountId(reason, qry.accountId());
 
         return reason;
       }
 
       ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetAccountTransactions>
-              &qry) const {
+          const interface::GetAccountTransactions &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccountTransactions";
 
-        validator_.validateAccountId(reason, qry->accountId());
+        validator_.validateAccountId(reason, qry.accountId());
 
         return reason;
       }
 
       ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<
-              interface::GetAccountAssetTransactions> &qry) const {
+          const interface::GetAccountAssetTransactions &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccountAssetTransactions";
 
-        validator_.validateAccountId(reason, qry->accountId());
-        validator_.validateAssetId(reason, qry->assetId());
+        validator_.validateAccountId(reason, qry.accountId());
+        validator_.validateAssetId(reason, qry.assetId());
 
         return reason;
       }
 
-      ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetTransactions> &qry)
-          const {
+      ReasonsGroupType operator()(const interface::GetTransactions &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetTransactions";
 
@@ -91,31 +81,28 @@ namespace shared_model {
       }
 
       ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetAccountAssets> &qry)
-          const {
+          const interface::GetAccountAssets &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccountAssets";
 
-        validator_.validateAccountId(reason, qry->accountId());
-        validator_.validateAssetId(reason, qry->assetId());
+        validator_.validateAccountId(reason, qry.accountId());
+        validator_.validateAssetId(reason, qry.assetId());
 
         return reason;
       }
 
       ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetAccountDetail> &qry)
-          const {
+          const interface::GetAccountDetail &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAccountDetail";
 
-        validator_.validateAccountId(reason, qry->accountId());
-        validator_.validateAccountDetailKey(reason, qry->detail());
+        validator_.validateAccountId(reason, qry.accountId());
+        validator_.validateAccountDetailKey(reason, qry.detail());
 
         return reason;
       }
 
-      ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetRoles> &qry) const {
+      ReasonsGroupType operator()(const interface::GetRoles &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetRoles";
 
@@ -123,23 +110,20 @@ namespace shared_model {
       }
 
       ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetRolePermissions> &qry)
-          const {
+          const interface::GetRolePermissions &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetRolePermissions";
 
-        validator_.validateRoleId(reason, qry->roleId());
+        validator_.validateRoleId(reason, qry.roleId());
 
         return reason;
       }
 
-      ReasonsGroupType operator()(
-          const detail::PolymorphicWrapper<interface::GetAssetInfo> &qry)
-          const {
+      ReasonsGroupType operator()(const interface::GetAssetInfo &qry) const {
         ReasonsGroupType reason;
         reason.first = "GetAssetInfo";
 
-        validator_.validateAssetId(reason, qry->assetId());
+        validator_.validateAssetId(reason, qry.assetId());
 
         return reason;
       }
@@ -156,32 +140,26 @@ namespace shared_model {
     template <typename FieldValidator, typename QueryFieldValidator>
     class QueryValidator {
      public:
-      QueryValidator(const FieldValidator &field_validator = FieldValidator(),
-                     const QueryFieldValidator &query_field_validator =
-                         QueryFieldValidator())
-          : field_validator_(field_validator),
-            query_field_validator_(query_field_validator) {}
-
       /**
        * Applies validation to given query
        * @param qry - query to validate
        * @return Answer containing found error if any
        */
-      Answer validate(detail::PolymorphicWrapper<interface::Query> qry) const {
+      Answer validate(const interface::Query &qry) const {
         Answer answer;
         std::string qry_reason_name = "Query";
         ReasonsGroupType qry_reason(qry_reason_name, GroupedReasons());
 
         field_validator_.validateCreatorAccountId(qry_reason,
-                                                  qry->creatorAccountId());
-        field_validator_.validateCreatedTime(qry_reason, qry->createdTime());
-        field_validator_.validateCounter(qry_reason, qry->queryCounter());
+                                                  qry.creatorAccountId());
+        field_validator_.validateCreatedTime(qry_reason, qry.createdTime());
+        field_validator_.validateCounter(qry_reason, qry.queryCounter());
 
         if (not qry_reason.second.empty()) {
           answer.addReason(std::move(qry_reason));
         }
 
-        auto reason = boost::apply_visitor(query_field_validator_, qry->get());
+        auto reason = boost::apply_visitor(query_field_validator_, qry.get());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }
@@ -190,7 +168,6 @@ namespace shared_model {
       }
 
      private:
-      Answer answer_;
       FieldValidator field_validator_;
       QueryFieldValidator query_field_validator_;
     };

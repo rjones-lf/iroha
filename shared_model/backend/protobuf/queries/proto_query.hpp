@@ -90,6 +90,10 @@ namespace shared_model {
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
 
+      // TODO(warchant): IR-1020 this constructor is dangerous -- it can be instantiated
+      // with ANY type. Find a soluiton to not repeat constructor code in two
+      // {l,r}value constructors and get rid of general template.
+
       template <typename QueryType>
       explicit Query(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)) {}

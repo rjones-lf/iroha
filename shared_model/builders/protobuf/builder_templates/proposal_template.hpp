@@ -66,8 +66,7 @@ namespace shared_model {
       }
 
      public:
-      TemplateProposalBuilder(const SV &validator = SV())
-          : stateless_validator_(validator){};
+      TemplateProposalBuilder() = default;
 
       auto height(const interface::types::HeightType height) const {
         return transform<Height>(

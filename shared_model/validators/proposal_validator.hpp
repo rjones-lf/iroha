@@ -22,7 +22,6 @@
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-836
@@ -34,44 +33,15 @@ namespace shared_model {
      * Class that validates proposal
      */
     class ProposalValidator {
-     private:
-      void validateTransaction(
-          ReasonsGroupType &reason,
-          const detail::PolymorphicWrapper<interface::Transaction> &transaction)
-          const {
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-      }
-
-      void validateHeight(ReasonsGroupType &reason,
-                          const interface::types::HeightType &height) const {
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-      }
-
      public:
       /**
        * Applies validation on proposal
        * @param proposal
        * @return Answer containing found error if any
        */
-      Answer validate(
-          detail::PolymorphicWrapper<interface::Proposal> prop) const {
-        Answer answer;
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-        ReasonsGroupType reason;
-        reason.first = "Proposal";
-
-        validateHeight(reason, prop->height());
-        for (const auto &tx : prop->transactions()) {
-          validateTransaction(reason, tx);
-        }
-        if (not reason.second.empty()) {
-          answer.addReason(std::move(reason));
-        }
-
-        return answer;
+      Answer validate(const interface::Proposal &proposal) const {
+        return Answer();
       }
-
-      Answer answer_;
     };
 
   }  // namespace validation

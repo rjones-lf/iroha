@@ -84,8 +84,7 @@ namespace shared_model {
       }
 
      public:
-      TemplateBlockBuilder(const SV &validator = SV())
-          : stateless_validator_(validator){};
+      TemplateBlockBuilder() = default;
 
       template <class T>
       auto transactions(const T &transactions) const {

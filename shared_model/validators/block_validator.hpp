@@ -39,12 +39,9 @@ namespace shared_model {
        * @param block
        * @return Answer containing found error if any
        */
-      Answer validate(
-          detail::PolymorphicWrapper<interface::Block> block) const {
+      Answer validate(const interface::Block& block) const {
         return Answer();
       }
-
-      Answer answer_;
     };
 
   }  // namespace validation
