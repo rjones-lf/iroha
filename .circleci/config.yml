@@ -34,6 +34,8 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
+            # cleanup cache (not clear!) - removes old cache
+            ccache --cleanup
             # debug/coverage builds produce 2G cache
             ccache --max-size=2G
       - run:
@@ -95,6 +97,8 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
+            # cleanup cache (not clear!) - removes old cache
+            ccache --cleanup
             # release builds produce cache <100M
             ccache --max-size=500M
       - run:
@@ -112,7 +116,7 @@ jobs:
       - run:
           name: make and package
           command: |
-            cmake --build $IROHA_BUILD --target package -- -j$(nproc --all)
+            cmake --build $IROHA_BUILD --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
           key: build-linux-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
@@ -292,6 +296,8 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
+            # cleanup cache (not clear!) - removes old cache
+            ccache --cleanup
             # release build produces <20M cache per build
             ccache --max-size=100M
       - run:
@@ -306,7 +312,7 @@ jobs:
       - run:
           name: make
           command: |
-            cmake --build build --target package -- -j$(sysctl -n hw.ncpu)
+            cmake --build build --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
           key: build-mac-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
