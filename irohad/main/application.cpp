@@ -17,6 +17,7 @@
 
 #include "main/application.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -94,17 +95,13 @@ void Irohad::initStorage() {
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
       },
-      [&](expected::Error<std::string> &error) {
-        log_->error(error.error);
-      });
+      [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
   PostgresOrderingServicePersistentState::create(pg_conn_).match(
       [&](expected::Value<
           std::shared_ptr<ametsuchi::PostgresOrderingServicePersistentState>>
               &_storage) { ordering_service_storage_ = _storage.value; },
-      [&](expected::Error<std::string> &error) {
-        log_->error(error.error);
-      });
+      [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
   log_->info("[Init] => storage", logger::logBool(storage));
 }
@@ -137,7 +134,8 @@ void Irohad::initCryptoProvider() {
  */
 void Irohad::initValidators() {
   stateful_validator = std::make_shared<StatefulValidatorImpl>();
-  chain_validator = std::make_shared<ChainValidatorImpl>();
+  chain_validator = std::make_shared<ChainValidatorImpl>(
+      std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 
   log_->info("[Init] => validators");
 }

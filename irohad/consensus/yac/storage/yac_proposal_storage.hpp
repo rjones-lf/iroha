@@ -18,6 +18,7 @@
 #ifndef IROHA_YAC_PROPOSAL_STORAGE_HPP
 #define IROHA_YAC_PROPOSAL_STORAGE_HPP
 
+#include <memory>
 #include <nonstd/optional.hpp>
 #include <vector>
 
@@ -28,6 +29,9 @@
 
 namespace iroha {
   namespace consensus {
+
+    class SupermajorityChecker;
+
     namespace yac {
 
       struct VoteMessage;
@@ -133,6 +137,11 @@ namespace iroha {
          * Provide number of peers participated in current round
          */
         uint64_t peers_in_round_;
+
+        /**
+         * Provide functions to check supermajority
+         */
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
 
         /**
          * Storage logger

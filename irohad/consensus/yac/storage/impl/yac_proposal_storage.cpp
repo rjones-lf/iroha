@@ -16,11 +16,7 @@
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-
-#include <algorithm>
-#include <numeric>
-
-#include "consensus/yac/storage/yac_common.hpp"
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 using namespace logger;
 
@@ -56,7 +52,9 @@ namespace iroha {
                                              uint64_t peers_in_round)
           : current_state_(nonstd::nullopt),
             hash_(std::move(hash)),
-            peers_in_round_(peers_in_round) {
+            peers_in_round_(peers_in_round),
+            supermajority_checker_(
+                std::make_shared<SupermajorityCheckerImpl>()) {
         log_ = log("ProposalStorage");
       }
 
@@ -142,7 +140,8 @@ namespace iroha {
                               return acc + storage.getNumberOfVotes();
                             });
 
-        auto is_reject = hasReject(max_vote, all_votes, peers_in_round_);
+        auto is_reject = supermajority_checker_->hasReject(
+            max_vote, all_votes, peers_in_round_);
 
         if (is_reject) {
           std::vector<VoteMessage> result;

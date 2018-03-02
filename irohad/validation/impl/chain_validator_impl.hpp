@@ -17,15 +17,25 @@
 #ifndef IROHA_CHAIN_VALIDATOR_IMPL_HPP
 #define IROHA_CHAIN_VALIDATOR_IMPL_HPP
 
+#include <memory>
+
 #include "logger/logger.hpp"
 #include "model/model_crypto_provider.hpp"
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
+
+  namespace consensus {
+    namespace yac {
+      class SupermajorityChecker;
+    }
+  }  // namespace consensus
+
   namespace validation {
     class ChainValidatorImpl : public ChainValidator {
      public:
-      ChainValidatorImpl();
+      ChainValidatorImpl(std::shared_ptr<consensus::yac::SupermajorityChecker>
+                             supermajority_checker);
 
       bool validateChain(Commit blocks,
                          ametsuchi::MutableStorage &storage) override;
@@ -34,6 +44,12 @@ namespace iroha {
                          ametsuchi::MutableStorage &storage) override;
 
      private:
+      /**
+       * Provide functions to check supermajority
+       */
+      std::shared_ptr<consensus::yac::SupermajorityChecker>
+          supermajority_checker_;
+
       logger::Logger log_;
     };
   }  // namespace validation

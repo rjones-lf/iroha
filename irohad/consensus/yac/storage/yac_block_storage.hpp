@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 #ifndef IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 #define IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 
+#include <memory>
 #include <nonstd/optional.hpp>
 #include <vector>
 
@@ -29,6 +30,8 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
+
+      class SupermajorityChecker;
 
       /**
        * Class provide storage of votes for one block.
@@ -116,6 +119,11 @@ namespace iroha {
          * Number of peers in current round
          */
         uint64_t peers_in_round_;
+
+        /**
+         * Provide functions to check supermajority
+         */
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
 
         /**
          * Storage logger

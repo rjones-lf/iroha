@@ -95,3 +95,9 @@ target_link_libraries(yac_crypto_provider_test
     yac
     model
     )
+
+addtest(supermajority_checker_test supermajority_checker_test.cpp)
+target_link_libraries(supermajority_checker_test
+    yac
+    model
+    )

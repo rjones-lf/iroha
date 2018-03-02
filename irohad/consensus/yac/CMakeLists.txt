@@ -21,6 +21,7 @@ add_library(yac
     impl/timer_impl.cpp
     transport/impl/network_impl.cpp
     impl/peer_orderer_impl.cpp
+    impl/supermajority_checker_impl.cpp
     impl/yac_gate_impl.cpp
     impl/yac_hash_provider_impl.cpp
     impl/yac_crypto_provider_impl.cpp
