@@ -209,10 +209,10 @@ TEST(PipelineIntegrationTest, SendTx) {
             shared_model::interface::StatelessValidTxResponse>>(status.get()));
   };
   auto checkProposal = [](auto &proposal) {
-    ASSERT_EQ(proposal->transactions.size(), 1);
+    ASSERT_EQ(proposal->transactions().size(), 1);
   };
   auto checkBlock = [](auto &block) {
-    ASSERT_EQ(block->transactions.size(), 0);
+    ASSERT_EQ(block->transactions().size(), 0);
   };
   integration_framework::IntegrationTestFramework()
       .setInitialState(kAdminKeypair)

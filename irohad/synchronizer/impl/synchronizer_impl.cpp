@@ -98,7 +98,7 @@ namespace iroha {
       }
     }
 
-    rxcpp::observable<Commit> SynchronizerImpl::on_commit_chain() {
+    rxcpp::observable<OldCommit> SynchronizerImpl::on_commit_chain() {
       return notifier_.get_observable();
     }
   }  // namespace synchronizer

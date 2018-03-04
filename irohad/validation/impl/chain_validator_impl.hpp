@@ -37,7 +37,7 @@ namespace iroha {
       ChainValidatorImpl(std::shared_ptr<consensus::yac::SupermajorityChecker>
                              supermajority_checker);
 
-      bool validateChain(Commit blocks,
+      bool validateChain(OldCommit blocks,
                          ametsuchi::MutableStorage &storage) override;
 
       bool validateBlock(const model::Block &block,

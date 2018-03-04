@@ -47,14 +47,13 @@ class TxPipelineIntegrationTestFixture
   std::condition_variable cv;
   std::mutex m;
 
-  std::vector<iroha::model::Proposal> proposals;
-  std::vector<iroha::model::Block> blocks;
+  std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
+  std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
 
-  using Commit = rxcpp::observable<iroha::model::Block>;
-  std::unique_ptr<
-      framework::test_subscriber::TestSubscriber<iroha::model::Proposal>>
+  std::unique_ptr<framework::test_subscriber::TestSubscriber<
+      std::shared_ptr<shared_model::interface::Proposal>>>
       proposal_wrapper;
-  std::unique_ptr<framework::test_subscriber::TestSubscriber<Commit>>
+  std::unique_ptr<framework::test_subscriber::TestSubscriber<iroha::Commit>>
       commit_wrapper;
 
   iroha::model::Block genesis_block;

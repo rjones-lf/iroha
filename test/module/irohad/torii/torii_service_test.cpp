@@ -27,7 +27,12 @@ limitations under the License.
 #include "torii/command_service.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
+#include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/block.hpp"
 #include "builders/protobuf/transaction.hpp"
+
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
@@ -44,19 +49,22 @@ using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds proposal_delay = 10s;
 
-using Commit = rxcpp::observable<iroha::model::Block>;
+using iroha::Commit;
 
 class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  public:
   CustomPeerCommunicationServiceMock(
-      rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier,
+      rxcpp::subjects::subject<
+          std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
       rxcpp::subjects::subject<Commit> commit_notifier)
       : prop_notifier_(prop_notifier), commit_notifier_(commit_notifier){};
 
   void propagate_transaction(
-      std::shared_ptr<const iroha::model::Transaction> transaction) override {}
+      std::shared_ptr<const shared_model::interface::Transaction> transaction)
+      override {}
 
-  rxcpp::observable<iroha::model::Proposal> on_proposal() override {
+  rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+  on_proposal() override {
     return prop_notifier_.get_observable();
   }
   rxcpp::observable<Commit> on_commit() override {
@@ -64,7 +72,8 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   }
 
  private:
-  rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
+      prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
 };
 
@@ -94,6 +103,7 @@ class ToriiServiceTest : public testing::Test {
             tx_processor, block_query, proposal_delay))
         .run();
 
+
     runner->waitForServersReady();
   }
 
@@ -106,10 +116,14 @@ class ToriiServiceTest : public testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
 
-  rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
+      prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
+
+  shared_model::crypto::Keypair keypair =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
 /**
@@ -187,10 +201,8 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
            then STATEFUL_VALIDATION_FAILED
  */
 TEST_F(ToriiServiceTest, StatusWhenBlocking) {
-  std::vector<iroha::model::Transaction> txs;
+  std::vector<shared_model::proto::Transaction> txs;
   std::vector<std::string> tx_hashes;
-
-  iroha::model::converters::PbTransactionFactory tx_factory;
 
   auto client1 = torii::CommandSyncClient(Ip, Port);
 
@@ -209,17 +221,16 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     auto new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);
-
-    auto iroha_tx = tx_factory.deserialize(new_tx);
-    txs.push_back(*iroha_tx);
-    auto tx_hash = iroha::hash(*iroha_tx);
-    tx_hashes.push_back(tx_hash.to_string());
+    txs.push_back(shm_tx);
+    auto tx_hash = shared_model::crypto::toBinaryString(shm_tx.hash());
+    tx_hashes.push_back(tx_hash);
 
     ASSERT_TRUE(stat.ok());
   }
 
   // create proposal from these transactions
-  iroha::model::Proposal proposal(txs);
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(txs).build());
   prop_notifier_.get_subscriber().on_next(proposal);
 
   torii::CommandSyncClient client2(client1);
@@ -236,12 +247,19 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   }
 
   // create block from the all transactions but the last one
-  iroha::model::Block block;
-  block.transactions.insert(
-      block.transactions.begin(), txs.begin(), txs.end() - 1);
+  txs.pop_back();
+  auto block = std::make_shared<shared_model::proto::Block>(
+      TestBlockBuilder()
+          .transactions(txs)
+          .height(1)
+          .txNumber(txs.size())
+          .createdTime(0)
+          .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+          .build());
 
   // create commit from block notifier's observable
-  rxcpp::subjects::subject<iroha::model::Block> block_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      block_notifier_;
   Commit commit = block_notifier_.get_observable();
 
   // invoke on next of commit_notifier by sending new block to commit
@@ -328,6 +346,8 @@ TEST_F(ToriiServiceTest, CheckHash) {
  * and COMMITTED) and the last status should be COMMITTED
  */
 TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
+  using namespace shared_model;
+
   iroha::model::converters::PbTransactionFactory tx_factory;
   auto client = torii::CommandSyncClient(Ip, Port);
 
@@ -336,14 +356,21 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   payload->set_tx_counter(1);
   payload->set_creator_account_id("accountA");
 
-  auto iroha_tx = tx_factory.deserialize(new_tx);
-  std::string txhash = iroha::hash(*iroha_tx).to_string();
+  auto iroha_tx = proto::TransactionBuilder()
+                      .txCounter(1)
+                      .creatorAccountId("a@domain")
+                      .setAccountQuorum("a@domain", 2)
+                      .createdTime(iroha::time::now())
+                      .build()
+                      .signAndAddSignature(keypair);
+
+  std::string txhash = crypto::toBinaryString(iroha_tx.hash());
 
   std::vector<iroha::protocol::ToriiResponse> torii_response;
   // StatusStream is a blocking call and returns only when the last status
   // (Committed in this case) will be received. We start request before
   // transaction sending so we need in a separate thread for it.
-  std::thread t([&]() {
+  std::thread t([&] {
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(txhash);
     client.StatusStream(tx_request, torii_response);
@@ -351,16 +378,30 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
 
   client.Torii(new_tx);
 
-  std::vector<iroha::model::Transaction> txs;
-  txs.push_back(*iroha_tx);
-  iroha::model::Proposal proposal(txs);
+  std::vector<decltype(iroha_tx)> txs;
+  txs.push_back(iroha_tx);
+  auto proposal =
+      std::make_shared<proto::Proposal>(proto::ProposalBuilder()
+                                            .createdTime(iroha::time::now())
+                                            .transactions(txs)
+                                            .height(1)
+                                            .build());
   prop_notifier_.get_subscriber().on_next(proposal);
 
-  iroha::model::Block block;
-  block.transactions.push_back(*iroha_tx);
+  //  iroha::model::Block block;
+  auto block = std::make_shared<proto::Block>(
+      proto::BlockBuilder()
+          .height(1)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .txNumber(1)
+          .prevHash(crypto::Hash(std::string(32, '0')))
+          .build()
+          .signAndAddSignature(keypair));
 
   // create commit from block notifier's observable
-  rxcpp::subjects::subject<iroha::model::Block> block_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      block_notifier_;
   Commit commit = block_notifier_.get_observable();
 
   // invoke on next of commit_notifier by sending new block to commit

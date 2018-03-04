@@ -29,9 +29,9 @@ namespace iroha {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
       MOCK_METHOD1(propagate_transaction,
-                   void(std::shared_ptr<const model::Transaction>));
+                   void(std::shared_ptr<const shared_model::interface::Transaction>));
 
-      MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());
+      MOCK_METHOD0(on_proposal, rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>());
 
       MOCK_METHOD0(on_commit, rxcpp::observable<Commit>());
     };

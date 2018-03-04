@@ -18,6 +18,7 @@
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include <algorithm>
 #include <atomic>
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
@@ -51,8 +52,9 @@ void TxPipelineIntegrationTestFixture::sendTxsInOrderAndValidate(
   ASSERT_EQ(num_blocks, proposals.size());
   // Update proposal timestamp and compare it
   for (auto i = 0u; i < proposals.size(); ++i) {
-    expected_proposals[i].created_time = proposals[i].created_time;
-    ASSERT_EQ(expected_proposals[i], proposals[i]);
+    expected_proposals[i].created_time = proposals[i]->created_time();
+    auto expected = shared_model::proto::from_old(expected_proposals[i]);
+    ASSERT_EQ(expected, *proposals[i]);
   }
 
   ASSERT_TRUE(commit_wrapper->validate());
@@ -61,14 +63,15 @@ void TxPipelineIntegrationTestFixture::sendTxsInOrderAndValidate(
   // Update block timestamp and related fields and compare it
   for (auto i = 0u; i < blocks.size(); ++i) {
     auto &expected_block = expected_blocks[i];
-    expected_block.created_ts = blocks[i].created_ts;
+    expected_block.created_ts = blocks[i]->createdTime();
     if (i != 0) {
       expected_block.prev_hash = expected_blocks[i - 1].hash;
     }
     expected_block.hash = iroha::hash(expected_block);
     expected_block.sigs = {};
     irohad->getCryptoProvider()->sign(expected_block);
-    ASSERT_EQ(expected_block, blocks[i]);
+    // compare old and new model object by their hash
+    ASSERT_EQ(expected_block.hash.to_hexstring(), blocks[i]->hash().hex());
   }
 }
 
@@ -82,7 +85,8 @@ iroha::keypair_t TxPipelineIntegrationTestFixture::createNewAccountKeypair(
 
 void TxPipelineIntegrationTestFixture::setTestSubscribers(size_t num_blocks) {
   // verify proposal
-  proposal_wrapper = std::make_unique<TestSubscriber<iroha::model::Proposal>>(
+  proposal_wrapper = std::make_unique<
+      TestSubscriber<std::shared_ptr<shared_model::interface::Proposal>>>(
       make_test_subscriber<CallExact>(
           irohad->getPeerCommunicationService()->on_proposal(), num_blocks));
   proposal_wrapper->subscribe(
@@ -90,7 +94,7 @@ void TxPipelineIntegrationTestFixture::setTestSubscribers(size_t num_blocks) {
 
   // verify commit and block
   commit_wrapper =
-      std::make_unique<TestSubscriber<Commit>>(make_test_subscriber<CallExact>(
+      std::make_unique<TestSubscriber<iroha::Commit>>(make_test_subscriber<CallExact>(
           irohad->getPeerCommunicationService()->on_commit(), num_blocks));
   commit_wrapper->subscribe([this](auto commit) {
     commit.subscribe([this](auto block) { blocks.push_back(block); });

@@ -87,8 +87,7 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_proposal()
         .subscribe([this](auto proposal) {
-          proposal_queue_.push(
-              std::make_shared<iroha::model::Proposal>(proposal));
+          proposal_queue_.push(proposal);
           log_->info("proposal");
           queue_cond.notify_all();
         });
@@ -98,8 +97,7 @@ namespace integration_framework {
         ->on_commit()
         .subscribe([this](auto commit_observable) {
           commit_observable.subscribe([this](auto committed_block) {
-            block_queue_.push(
-                std::make_shared<iroha::model::Block>(committed_block));
+            block_queue_.push(committed_block);
             log_->info("block");
             queue_cond.notify_all();
           });
