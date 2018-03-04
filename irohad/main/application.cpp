@@ -85,6 +85,9 @@ Irohad::~Irohad() {
  * Initializing iroha daemon
  */
 void Irohad::init() {
+  // Recover VSW from the existing ledger to be sure it is consistent
+  restoreWsv();
+
   initPeerQuery();
   initCryptoProvider();
   initValidators();

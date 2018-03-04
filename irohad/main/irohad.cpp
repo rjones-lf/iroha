@@ -150,10 +150,6 @@ int main(int argc, char *argv[]) {
     irohad.storage->insertBlock(block.value());
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());
-  } else {
-    // Recover VSW from the existing ledger to be sure it is consistent
-    if (not irohad.restoreWsv())
-      return EXIT_FAILURE;
   }
 
   // init pipeline components
