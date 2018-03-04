@@ -33,9 +33,7 @@ namespace shared_model {
      public:
       template <typename QueryType>
       explicit GetAccountTransactions(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            account_transactions_(
-                proto_->payload().get_account_transactions()) {}
+          : CopyableProto(std::forward<QueryType>(query)) {}
 
       GetAccountTransactions(const GetAccountTransactions &o)
           : GetAccountTransactions(o.proto_) {}
@@ -50,7 +48,8 @@ namespace shared_model {
      private:
       // ------------------------------| fields |-------------------------------
 
-      const iroha::protocol::GetAccountTransactions &account_transactions_;
+      const iroha::protocol::GetAccountTransactions &account_transactions_{
+          proto_->payload().get_account_transactions()};
     };
 
   }  // namespace proto

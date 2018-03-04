@@ -35,9 +35,8 @@ namespace shared_model {
       }
 
       AmountBuilder intValue(const boost::multiprecision::uint256_t &value) {
-        // TODO: 14.02.2018 nickaleks add proper amount initialization IR-972
         AmountBuilder copy(*this);
-        copy.amount_.mutable_value()->set_fourth(value.template convert_to<uint64_t>());
+        convertToProtoAmount(*copy.amount_.mutable_value(), value);
         return copy;
       }
 

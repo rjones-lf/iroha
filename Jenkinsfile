@@ -30,9 +30,7 @@ pipeline {
         IROHA_POSTGRES_HOST = "pg-${GIT_COMMIT}-${BUILD_NUMBER}"
         IROHA_POSTGRES_USER = "pg-user-${GIT_COMMIT}"
         IROHA_POSTGRES_PASSWORD = "${GIT_COMMIT}"
-        IROHA_REDIS_HOST = "redis-${GIT_COMMIT}-${BUILD_NUMBER}"
         IROHA_POSTGRES_PORT = 5432
-        IROHA_REDIS_PORT = 6379
 
         CTEST_OUTPUT_ON_FAILURE = 1
     }
@@ -58,17 +56,11 @@ pipeline {
                                 + " --name ${env.IROHA_POSTGRES_HOST}"
                                 + " --network=${env.IROHA_NETWORK}")
 
-                            def r_c = docker.image('redis:3.2.8').run(""
-                                + " --name ${env.IROHA_REDIS_HOST}"
-                                + " --network=${env.IROHA_NETWORK}")
-
                             docker.image("${env.DOCKER_IMAGE}").inside(""
                                 + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
                                 + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}" 
                                 + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}" 
                                 + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
-                                + " -e IROHA_REDIS_HOST=${env.IROHA_REDIS_HOST}" 
-                                + " -e IROHA_REDIS_PORT=${env.IROHA_REDIS_PORT}" 
                                 + " --network=${env.IROHA_NETWORK}"
                                 + " -v /var/jenkins/ccache:${CCACHE_DIR}") {
 
@@ -218,8 +210,8 @@ pipeline {
         always {
             script {
                 sh """
-                  docker stop $IROHA_POSTGRES_HOST $IROHA_REDIS_HOST
-                  docker rm $IROHA_POSTGRES_HOST $IROHA_REDIS_HOST
+                  docker stop $IROHA_POSTGRES_HOST
+                  docker rm $IROHA_POSTGRES_HOST
                   docker network rm $IROHA_NETWORK
                 """
             }

@@ -43,7 +43,7 @@ namespace shared_model {
       /**
        * @return hash of a previous block
        */
-      virtual const HashType &prevHash() const = 0;
+      virtual const types::HashType &prevHash() const = 0;
 
       /// Type of a number of transactions in block
       using TransactionsNumberType = uint16_t;

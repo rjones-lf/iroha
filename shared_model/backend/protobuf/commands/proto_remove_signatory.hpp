@@ -30,12 +30,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit RemoveSignatory(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            remove_signatory_(proto_->remove_sign()),
-            pubkey_([this] {
-              return interface::types::PubkeyType(
-                  remove_signatory_.public_key());
-            }) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       RemoveSignatory(const RemoveSignatory &o) : RemoveSignatory(o.proto_) {}
 
@@ -55,9 +50,12 @@ namespace shared_model {
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::RemoveSignatory &remove_signatory_;
+      const iroha::protocol::RemoveSignatory &remove_signatory_{
+          proto_->remove_sign()};
 
-      const Lazy<interface::types::PubkeyType> pubkey_;
+      const Lazy<interface::types::PubkeyType> pubkey_{[this] {
+        return interface::types::PubkeyType(remove_signatory_.public_key());
+      }};
     };
 
   }  // namespace proto

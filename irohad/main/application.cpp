@@ -62,30 +62,12 @@ Irohad::Irohad(const std::string &block_store_dir,
   initStorage();
 }
 
-Irohad::~Irohad() {
-  // Shutting down services used by internal server
-  if (internal_server) {
-    internal_server->Shutdown();
-  }
-  // Shutting down torii server
-  if (torii_server) {
-    torii_server->shutdown();
-  }
-  // Waiting until internal server thread dies
-  if (internal_thread.joinable()) {
-    internal_thread.join();
-  }
-  // Waiting until torii server thread dies
-  if (server_thread.joinable()) {
-    server_thread.join();
-  }
-}
-
 /**
  * Initializing iroha daemon
  */
 void Irohad::init() {
   // Recover VSW from the existing ledger to be sure it is consistent
+  initWsvRestorer();
   restoreWsv();
 
   initPeerQuery();
@@ -101,8 +83,6 @@ void Irohad::init() {
   // Torii
   initTransactionCommandService();
   initQueryService();
-
-  initWsvRestorer();
 }
 
 /**
@@ -249,8 +229,8 @@ void Irohad::initPeerCommunicationService() {
 void Irohad::initTransactionCommandService() {
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(pcs);
 
-  command_service = std::make_unique<::torii::CommandService>(
-      tx_processor, storage, proposal_delay_);
+  command_service = std::make_shared<::torii::CommandService>(
+      tx_processor, storage->getBlockQuery(), proposal_delay_);
 
   log_->info("[Init] => command service");
 }
@@ -265,7 +245,7 @@ void Irohad::initQueryService() {
   auto query_processor =
       std::make_shared<QueryProcessorImpl>(std::move(query_processing_factory));
 
-  query_service = std::make_unique<::torii::QueryService>(query_processor);
+  query_service = std::make_shared<::torii::QueryService>(query_processor);
 
   log_->info("[Init] => query service");
 }
@@ -278,31 +258,32 @@ void Irohad::initWsvRestorer() {
  * Run iroha daemon
  */
 void Irohad::run() {
+  using iroha::expected::operator|;
+
   // Initializing torii server
   std::string ip = "0.0.0.0";
   torii_server =
       std::make_unique<ServerRunner>(ip + ":" + std::to_string(torii_port_));
 
   // Initializing internal server
-  grpc::ServerBuilder builder;
-  int port = 0;
-  builder.AddListeningPort(ip + ":" + std::to_string(internal_port_),
-                           grpc::InsecureServerCredentials(),
-                           &port);
-  builder.RegisterService(ordering_init.ordering_gate_transport.get());
-  builder.RegisterService(ordering_init.ordering_service_transport.get());
-  builder.RegisterService(yac_init.consensus_network.get());
-  builder.RegisterService(loader_init.service.get());
-  // Run internal server
-  internal_server = builder.BuildAndStart();
+  internal_server =
+      std::make_unique<ServerRunner>(ip + ":" + std::to_string(internal_port_));
+
   // Run torii server
-  server_thread = std::thread([this] {
-    torii_server->append(std::move(command_service))
-        .append(std::move(query_service))
-        .run();
-  });
-  log_->info("===> iroha initialized");
-  // Wait until servers shutdown
-  torii_server->waitForServersReady();
-  internal_server->Wait();
+  (torii_server->append(command_service).append(query_service).run() |
+   [&](const auto &port) {
+     log_->info("Torii server bound on port {}", port);
+     // Run internal server
+     return internal_server->append(ordering_init.ordering_gate_transport)
+         .append(ordering_init.ordering_service_transport)
+         .append(yac_init.consensus_network)
+         .append(loader_init.service)
+         .run();
+   })
+      .match(
+          [&](const auto &port) {
+            log_->info("Internal server bound on port {}", port.value);
+            log_->info("===> iroha initialized");
+          },
+          [&](const expected::Error<std::string> &e) { log_->error(e.error); });
 }

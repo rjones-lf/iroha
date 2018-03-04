@@ -35,7 +35,7 @@ jobs:
             ccache --show-stats
             ccache --zero-stats
             # debug/coverage builds produce 2G cache
-            ccache --max-size=5G
+            ccache --max-size=2G
       - run:
           name: cmake
           command: >
@@ -266,7 +266,7 @@ jobs:
             - ~/Library/Caches/Homebrew
       - run:
           name: install dev dependencies
-          command: brew install cmake boost postgres grpc autoconf automake libtool ccache
+          command: brew install cmake boost postgres grpc autoconf automake libtool ccache || true
       - save_cache:
           key: brew-{{ epoch }}
           paths:

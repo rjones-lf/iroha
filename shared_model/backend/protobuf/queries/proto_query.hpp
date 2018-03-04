@@ -52,9 +52,9 @@ shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
                   ->index_in_oneof();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::Query::QueryVariantType>(
-      std::forward<Archive>(ar), which);
+  return shared_model::detail::variant_impl<T...>::
+      template load<shared_model::interface::Query::QueryVariantType>(
+          std::forward<Archive>(ar), which);
 }
 
 namespace shared_model {
@@ -92,17 +92,7 @@ namespace shared_model {
 
       template <typename QueryType>
       explicit Query(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            variant_([this] { return loadQuery<ProtoQueryListType>(*proto_); }),
-            blob_([this] { return makeBlob(*proto_); }),
-            payload_([this] { return makeBlob(proto_->payload()); }),
-            signatures_([this] {
-              interface::SignatureSetType set;
-              if (proto_->has_signature()) {
-                set.emplace(new Signature(proto_->signature()));
-              }
-              return set;
-            }) {}
+          : CopyableProto(std::forward<QueryType>(query)) {}
 
       Query(const Query &o) : Query(o.proto_) {}
 
@@ -120,15 +110,15 @@ namespace shared_model {
         return proto_->payload().query_counter();
       }
 
-      const Query::BlobType &blob() const override {
+      const interface::types::BlobType &blob() const override {
         return *blob_;
       }
 
-      const Query::BlobType &payload() const override {
+      const interface::types::BlobType &payload() const override {
         return *payload_;
       }
 
-      const HashType &hash() const override {
+      const interface::types::HashType &hash() const override {
         if (hash_ == boost::none) {
           hash_.emplace(HashProviderType::makeHash(payload()));
         }
@@ -159,11 +149,22 @@ namespace shared_model {
      private:
       // ------------------------------| fields |-------------------------------
       // lazy
-      const LazyVariantType variant_;
+      const LazyVariantType variant_{
+          [this] { return loadQuery<ProtoQueryListType>(*proto_); }};
 
-      const Lazy<BlobType> blob_;
-      const Lazy<BlobType> payload_;
-      const Lazy<interface::SignatureSetType> signatures_;
+      const Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(*proto_); }};
+
+      const Lazy<interface::types::BlobType> payload_{
+          [this] { return makeBlob(proto_->payload()); }};
+
+      const Lazy<interface::SignatureSetType> signatures_{[this] {
+        interface::SignatureSetType set;
+        if (proto_->has_signature()) {
+          set.emplace(new Signature(proto_->signature()));
+        }
+        return set;
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

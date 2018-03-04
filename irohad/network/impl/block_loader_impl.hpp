@@ -42,7 +42,7 @@ namespace iroha {
 
       nonstd::optional<Wrapper<shared_model::interface::Block>> retrieveBlock(
           const shared_model::crypto::PublicKey &peer_pubkey,
-          const shared_model::interface::Block::HashType &block_hash) override;
+          const shared_model::interface::types::HashType &block_hash) override;
 
      private:
       /**

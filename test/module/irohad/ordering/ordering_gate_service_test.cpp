@@ -99,7 +99,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   void send_transaction(size_t i) {
     auto tx = std::make_shared<Transaction>();
     tx->tx_counter = i;
-    gate->propagate_transaction(tx);
+    gate->propagateTransaction(tx);
     // otherwise tx may come unordered
     std::this_thread::sleep_for(20ms);
   }

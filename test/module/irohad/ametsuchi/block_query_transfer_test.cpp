@@ -20,9 +20,9 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "backend/protobuf/from_old_model.hpp"
 #include "framework/test_subscriber.hpp"
-#include "model/commands/transfer_asset.hpp"
-#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace framework::test_subscriber;
 
@@ -52,16 +52,22 @@ namespace iroha {
         transaction->exec(init_);
       }
 
-      void insert(const model::Block &block) {
-        file->add(block.height,
-                  iroha::stringToBytes(model::converters::jsonToString(
-                      model::converters::JsonBlockFactory().serialize(block))));
-        index->index(shared_model::proto::from_old(block));
+      void insert(const shared_model::interface::Block &block) {
+        // TODO IR-975 victordrobny 12.02.2018 convert from
+        // shared_model::proto::Block after FlatFile will be reworked to new
+        // model
+        auto old_block =
+            *std::unique_ptr<iroha::model::Block>(block.makeOldModel());
+        file->add(
+            block.height(),
+            iroha::stringToBytes(model::converters::jsonToString(
+                model::converters::JsonBlockFactory().serialize(old_block))));
+        index->index(block);
       }
 
       std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::unique_ptr<pqxx::nontransaction> transaction;
-      std::vector<iroha::hash256_t> tx_hashes;
+      std::vector<shared_model::crypto::Hash> tx_hashes;
       std::shared_ptr<BlockQuery> blocks;
       std::shared_ptr<BlockIndex> index;
       std::unique_ptr<FlatFile> file;
@@ -71,6 +77,61 @@ namespace iroha {
       std::string asset = "coin#test";
     };
 
+    auto zero_string = std::string("0", 32);
+    auto fake_hash = shared_model::crypto::Hash(zero_string);
+
+    /**
+     * Make block with one transaction(transfer 0 asset) with specified sender,
+     * receiver, asset and creator of transaction
+     * @param creator1 - source account for transfer
+     * @param creator2 - dest account for transfer
+     * @param asset - asset for transfer
+     * @param tx_creator - creator of the transaction
+     * @return block with one transaction
+     */
+    shared_model::proto::Block makeBlockWithCreator(std::string creator1,
+                                                    std::string creator2,
+                                                    std::string asset,
+                                                    std::string tx_creator) {
+      return TestBlockBuilder()
+          .transactions(std::vector<shared_model::proto::Transaction>(
+              {TestTransactionBuilder()
+                   .creatorAccountId(tx_creator)
+                   .transferAsset(
+                       creator1, creator2, asset, "Transfer asset", "0.0")
+                   .build()}))
+          .height(1)
+          .prevHash(fake_hash)
+          .txNumber(1)
+          .build();
+    }
+
+    /**
+     * Make block with one transaction(transfer 0 asset) with specified sender,
+     * receiver and asset
+     * @param creator1 - source account for transfer
+     * @param creator2 - dest account for transfer
+     * @param asset - asset for transfer
+     * @return block with one transaction
+     */
+    shared_model::proto::Block makeBlock(
+        std::string creator1,
+        std::string creator2,
+        std::string asset,
+        int height = 1,
+        shared_model::crypto::Hash hash = fake_hash) {
+      return TestBlockBuilder()
+          .transactions(std::vector<shared_model::proto::Transaction>(
+              {TestTransactionBuilder()
+                   .transferAsset(
+                       creator1, creator2, asset, "Transfer asset", "0.0")
+                   .build()}))
+          .height(height)
+          .prevHash(hash)
+          .txNumber(1)
+          .build();
+    }
+
     /**
      * @given block store and index with block containing 1 transaction
      * with transfer from creator 1 to creator 2 sending asset
@@ -78,20 +139,14 @@ namespace iroha {
      * @then query returns the transaction
      */
     TEST_F(BlockQueryTransferTest, SenderAssetName) {
-      model::Block block;
-      block.transactions.emplace_back();
-
-      block.transactions.back().commands.push_back(
-          cmd_gen.generateTransferAsset(creator1, creator2, asset, {}));
-      tx_hashes.push_back(iroha::hash(block.transactions.back()));
-
-      block.height = 1;
+      auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
+      tx_hashes.push_back(block.transactions().back()->hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator1, asset), 1);
       wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
+          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
       ASSERT_TRUE(wrapper.validate());
     }
 
@@ -102,20 +157,14 @@ namespace iroha {
      * @then query returns the transaction
      */
     TEST_F(BlockQueryTransferTest, ReceiverAssetName) {
-      model::Block block;
-      block.transactions.emplace_back();
-
-      block.transactions.back().commands.push_back(
-          cmd_gen.generateTransferAsset(creator1, creator2, asset, {}));
-      tx_hashes.push_back(iroha::hash(block.transactions.back()));
-
-      block.height = 1;
+      auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
+      tx_hashes.push_back(block.transactions().back()->hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator2, asset), 1);
       wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
+          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
       ASSERT_TRUE(wrapper.validate());
     }
 
@@ -126,21 +175,14 @@ namespace iroha {
      * @then query returns the transaction
      */
     TEST_F(BlockQueryTransferTest, GrantedTransfer) {
-      model::Block block;
-      block.transactions.emplace_back();
-      block.transactions.back().creator_account_id = creator3;
-
-      block.transactions.back().commands.push_back(
-          cmd_gen.generateTransferAsset(creator1, creator2, asset, {}));
-      tx_hashes.push_back(iroha::hash(block.transactions.back()));
-
-      block.height = 1;
+      auto block = makeBlockWithCreator(creator1, creator2, asset, creator3);
+      tx_hashes.push_back(block.transactions().back()->hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator3, asset), 1);
       wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), iroha::hash(val)); });
+          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
       ASSERT_TRUE(wrapper.validate());
     }
 
@@ -151,30 +193,20 @@ namespace iroha {
      * @then query returns the transactions
      */
     TEST_F(BlockQueryTransferTest, TwoBlocks) {
-      model::Block block;
-      block.transactions.emplace_back();
+      auto block = makeBlock(creator1, creator2, asset);
 
-      block.transactions.back().commands.push_back(
-          cmd_gen.generateTransferAsset(creator1, creator2, asset, {}));
-      tx_hashes.push_back(iroha::hash(block.transactions.back()));
-
-      block.height = 1;
+      tx_hashes.push_back(block.transactions().back()->hash());
       insert(block);
 
-      block = model::Block();
-      block.transactions.emplace_back();
+      auto block2 = makeBlock(creator1, creator2, asset, 2, block.hash());
 
-      block.transactions.back().commands.push_back(
-          cmd_gen.generateTransferAsset(creator1, creator2, asset, {}));
-      tx_hashes.push_back(iroha::hash(block.transactions.back()));
-
-      block.height = 2;
-      insert(block);
+      tx_hashes.push_back(block.transactions().back()->hash());
+      insert(block2);
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([ i = 0, this ](auto val) mutable {
-        ASSERT_EQ(tx_hashes.at(i), iroha::hash(val));
+      wrapper.subscribe([i = 0, this](auto val) mutable {
+        ASSERT_EQ(tx_hashes.at(i), val->hash());
         ++i;
       });
       ASSERT_TRUE(wrapper.validate());

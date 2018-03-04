@@ -34,16 +34,7 @@ namespace shared_model {
      public:
       template <typename QueryResponseType>
       explicit TransactionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            transactionResponse_(proto_->transactions_response()),
-            transactions_([this] {
-              return boost::accumulate(transactionResponse_.transactions(),
-                                       TransactionsCollectionType{},
-                                       [](auto &&txs, const auto &tx) {
-                                         txs.emplace_back(new Transaction(tx));
-                                         return std::move(txs);
-                                       });
-            }) {}
+          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
 
       TransactionsResponse(const TransactionsResponse &o)
           : TransactionsResponse(o.proto_) {}
@@ -59,8 +50,17 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::TransactionsResponse &transactionResponse_;
-      const Lazy<TransactionsCollectionType> transactions_;
+      const iroha::protocol::TransactionsResponse &transactionResponse_{
+          proto_->transactions_response()};
+
+      const Lazy<TransactionsCollectionType> transactions_{[this] {
+        return boost::accumulate(transactionResponse_.transactions(),
+                                 TransactionsCollectionType{},
+                                 [](auto &&txs, const auto &tx) {
+                                   txs.emplace_back(new Transaction(tx));
+                                   return std::move(txs);
+                                 });
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

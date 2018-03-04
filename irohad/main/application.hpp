@@ -106,7 +106,7 @@ class Irohad {
    */
   virtual void run();
 
-  virtual ~Irohad();
+  virtual ~Irohad() = default;
 
  protected:
   // -----------------------| component initialization |------------------------
@@ -184,24 +184,22 @@ class Irohad {
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
   // transaction service
-  std::unique_ptr<torii::CommandService> command_service;
+  std::shared_ptr<torii::CommandService> command_service;
 
   // query service
-  std::unique_ptr<torii::QueryService> query_service;
+  std::shared_ptr<torii::QueryService> query_service;
 
   // ordering service persistent state storage
   std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
       ordering_service_storage_;
 
   std::unique_ptr<ServerRunner> torii_server;
-  std::unique_ptr<grpc::Server> internal_server;
+  std::unique_ptr<ServerRunner> internal_server;
 
   // initialization objects
   iroha::network::OrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
-
-  std::thread internal_thread, server_thread;
 
   logger::Logger log_;
 
@@ -209,6 +207,7 @@ class Irohad {
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
   iroha::keypair_t keypair;
+  grpc::ServerBuilder builder;
 };
 
 #endif  // IROHA_APPLICATION_HPP

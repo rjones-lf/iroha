@@ -30,7 +30,7 @@ namespace iroha {
   namespace ametsuchi {
 
     const char *kCommandExecutorError = "Cannot create CommandExecutorFactory";
-    const char *kPsqlBroken = "Connection to PostgreSQL broken: {}";
+    const char *kPsqlBroken = "Connection to PostgreSQL broken: %s";
     const char *kTmpWsv = "TemporaryWsv";
 
     ConnectionContext::ConnectionContext(
@@ -40,6 +40,12 @@ namespace iroha {
         : block_store(std::move(block_store)),
           pg_lazy(std::move(pg_lazy)),
           pg_nontx(std::move(pg_nontx)) {}
+
+    StorageImpl::~StorageImpl() {
+      wsv_transaction_->commit();
+      wsv_connection_->disconnect();
+      log_->info("PostgresQL connection closed");
+    }
 
     StorageImpl::StorageImpl(
         std::string block_store_dir,
@@ -110,7 +116,9 @@ namespace iroha {
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block.hash; });
+          .subscribe([&top_hash](auto block) {
+            top_hash = hash256_t::from_string(toBinaryString(block->hash()));
+          });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
@@ -211,7 +219,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto block_store = FlatFile::create(block_store_dir);
       if (not block_store) {
         return expected::makeError(
-            (boost::format("Cannot create block store in {}") % block_store_dir)
+            (boost::format("Cannot create block store in %s") % block_store_dir)
                 .str());
       }
       log_->info("block store created");

@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,6 @@
 #ifndef TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 #define TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 
-#include <algorithm>
-#include <atomic>
-
 #include "crypto/keys_manager_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "datetime/time.hpp"
@@ -31,81 +28,33 @@
 #include "model/generators/block_generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
-using namespace framework::test_subscriber;
-using namespace std::chrono_literals;
-using namespace iroha::model::generators;
-using iroha::model::Transaction;
-
 class TxPipelineIntegrationTestFixture
     : public iroha::ametsuchi::AmetsuchiTest {
  public:
-  TxPipelineIntegrationTestFixture() {
-    // spdlog::set_level(spdlog::level::off);
-  }
+  TxPipelineIntegrationTestFixture();
 
   /**
    * @param transactions in order
    */
   void sendTxsInOrderAndValidate(
-      const std::vector<iroha::model::Transaction> &transactions) {
-    // test subscribers can't solve duplicate func call.
-    ASSERT_FALSE(duplicate_sent.exchange(true));
-
-    const auto num_blocks =
-        transactions.size();  // Use one block per one transaction
-    setTestSubscribers(num_blocks);
-    std::for_each(
-        transactions.begin(), transactions.end(), [this](auto const &tx) {
-          // this-> is needed by gcc
-          this->sendTransaction(tx);
-          // wait for commit
-          std::unique_lock<std::mutex> lk(m);
-          cv.wait_for(lk, 20s);
-        });
-    ASSERT_TRUE(proposal_wrapper->validate());
-    ASSERT_EQ(num_blocks, proposals.size());
-    // Update proposal timestamp and compare it
-    for (auto i = 0u; i < proposals.size(); ++i) {
-      expected_proposals[i].created_time = proposals[i].created_time;
-      ASSERT_EQ(expected_proposals[i], proposals[i]);
-    }
-
-    ASSERT_TRUE(commit_wrapper->validate());
-    ASSERT_EQ(num_blocks, blocks.size());
-
-    // Update block timestamp and related fields and compare it
-    for (auto i = 0u; i < blocks.size(); ++i) {
-      auto &expected_block = expected_blocks[i];
-      expected_block.created_ts = blocks[i].created_ts;
-      if (i != 0) {
-        expected_block.prev_hash = expected_blocks[i - 1].hash;
-      }
-      expected_block.hash = iroha::hash(expected_block);
-      expected_block.sigs = {};
-      irohad->getCryptoProvider()->sign(expected_block);
-      ASSERT_EQ(expected_block, blocks[i]);
-    }
-  }
+      const std::vector<iroha::model::Transaction> &transactions);
 
   iroha::keypair_t createNewAccountKeypair(
-      const std::string &accountName) const {
-    auto manager = iroha::KeysManagerImpl(accountName);
-    EXPECT_TRUE(manager.createKeys());
-    EXPECT_TRUE(manager.loadKeys().has_value());
-    return *manager.loadKeys();
-  }
+      const std::string &accountName) const;
 
   std::shared_ptr<TestIrohad> irohad;
 
   std::condition_variable cv;
   std::mutex m;
 
-  std::vector<iroha::model::Proposal> proposals;
-  std::vector<iroha::model::Block> blocks;
+  std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
+  std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
 
-  using Commit = rxcpp::observable<iroha::model::Block>;
-  std::unique_ptr<TestSubscriber<iroha::model::Proposal>> proposal_wrapper;
-  std::unique_ptr<TestSubscriber<Commit>> commit_wrapper;
+  std::unique_ptr<framework::test_subscriber::TestSubscriber<
+      std::shared_ptr<shared_model::interface::Proposal>>>
+      proposal_wrapper;
+  std::unique_ptr<framework::test_subscriber::TestSubscriber<iroha::Commit>>
+      commit_wrapper;
 
   iroha::model::Block genesis_block;
   std::vector<iroha::model::Proposal> expected_proposals;
@@ -117,51 +66,9 @@ class TxPipelineIntegrationTestFixture
   size_t next_height_count = 2;
 
  private:
-  void setTestSubscribers(size_t num_blocks) {
-    // verify proposal
-    proposal_wrapper = std::make_unique<TestSubscriber<iroha::model::Proposal>>(
-        make_test_subscriber<CallExact>(
-            irohad->getPeerCommunicationService()->on_proposal(), num_blocks));
-    proposal_wrapper->subscribe(
-        [this](auto proposal) { proposals.push_back(proposal); });
+  void setTestSubscribers(size_t num_blocks);
 
-    // verify commit and block
-    commit_wrapper = std::make_unique<TestSubscriber<Commit>>(
-        make_test_subscriber<CallExact>(
-            irohad->getPeerCommunicationService()->on_commit(), num_blocks));
-    commit_wrapper->subscribe([this](auto commit) {
-      commit.subscribe([this](auto block) { blocks.push_back(block); });
-    });
-    irohad->getPeerCommunicationService()->on_commit().subscribe(
-        [this](auto) { cv.notify_one(); });
-  }
-
-  void sendTransaction(const iroha::model::Transaction &transaction) {
-    // generate expected proposal
-    iroha::model::Proposal expected_proposal{
-        std::vector<Transaction>{transaction}};
-    expected_proposal.height = next_height_count++;
-    expected_proposals.emplace_back(expected_proposal);
-
-    // generate expected block
-    iroha::model::Block expected_block = iroha::model::Block{};
-    expected_block.height = expected_proposal.height;
-    expected_block.prev_hash = next_height_count == 3
-        ? genesis_block.hash
-        : expected_blocks.back().hash;
-    expected_block.transactions = expected_proposal.transactions;
-    expected_block.txs_number = expected_proposal.transactions.size();
-    expected_block.created_ts = 0;
-    expected_block.hash = iroha::hash(expected_block);
-    irohad->getCryptoProvider()->sign(expected_block);
-    expected_blocks.emplace_back(expected_block);
-
-    // send transactions to torii
-    auto pb_tx =
-        iroha::model::converters::PbTransactionFactory().serialize(transaction);
-
-    irohad->getCommandService()->Torii(pb_tx);
-  }
+  void sendTransaction(const iroha::model::Transaction &transaction);
 };
 
 #endif

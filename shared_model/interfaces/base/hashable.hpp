@@ -19,9 +19,10 @@
 #define IROHA_HASHABLE_HPP
 
 #include <boost/optional.hpp>
-#include "cryptography/hash.hpp"
+
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/base/primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "utils/lazy_initializer.hpp"
 
 #ifdef DISABLE_BACKWARD
@@ -45,17 +46,12 @@ namespace shared_model {
 #endif
     {
      public:
-      /// Type of hash
-      using HashType = crypto::Hash;
-
-      using BlobType = crypto::Blob;
-
       using HashProviderType = HashProvider;
 
       /**
        * @return hash of object.
        */
-      virtual const HashType &hash() const {
+      virtual const types::HashType &hash() const {
         if (hash_ == boost::none) {
           hash_.emplace(HashProvider::makeHash(blob()));
         }
@@ -65,7 +61,7 @@ namespace shared_model {
       /**
        * @return blob representation of object
        */
-      virtual const BlobType &blob() const = 0;
+      virtual const types::BlobType &blob() const = 0;
 
       /**
        * Overriding operator== with equality hash semantics:
@@ -78,7 +74,7 @@ namespace shared_model {
       }
 
      protected:
-      mutable boost::optional<HashType> hash_;
+      mutable boost::optional<types::HashType> hash_;
     };
   }  // namespace interface
 }  // namespace shared_model

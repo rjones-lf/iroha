@@ -268,7 +268,9 @@ iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
                                                                query.asset_id);
   TransactionsResponse response;
   response.query_hash = iroha::hash(query);
-  response.transactions = acc_asset_tx;
+  response.transactions = acc_asset_tx.map([](const auto &tx) {
+    return *std::unique_ptr<iroha::model::Transaction>(tx->makeOldModel());
+  });
   return std::make_shared<TransactionsResponse>(response);
 }
 
@@ -278,18 +280,26 @@ QueryProcessingFactory::executeGetAccountTransactions(
   auto acc_tx = _blockQuery->getAccountTransactions(query.account_id);
   TransactionsResponse response;
   response.query_hash = iroha::hash(query);
-  response.transactions = acc_tx;
+  response.transactions = acc_tx.map([](const auto &tx) {
+    return *std::unique_ptr<iroha::model::Transaction>(tx->makeOldModel());
+  });
   return std::make_shared<TransactionsResponse>(response);
 }
 
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetTransactions(
     const model::GetTransactions &query) {
-  auto txs = _blockQuery->getTransactions(query.tx_hashes);
+  std::vector<shared_model::crypto::Hash> hashes;
+  std::transform(
+      query.tx_hashes.begin(),
+      query.tx_hashes.end(),
+      std::back_inserter(hashes),
+      [](const auto &h) { return shared_model::crypto::Hash(h.to_string()); });
+  auto txs = _blockQuery->getTransactions(hashes);
   std::vector<iroha::model::Transaction> transactions;
   txs.subscribe([&transactions](auto const &tx_opt) {
     if (tx_opt) {
-      transactions.push_back(*tx_opt);
+      transactions.push_back(*std::unique_ptr<iroha::model::Transaction>((*tx_opt)->makeOldModel()));
     }
   });
   iroha::model::TransactionsResponse response;

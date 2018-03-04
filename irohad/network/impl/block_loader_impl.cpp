@@ -54,7 +54,10 @@ rxcpp::observable<Wrapper<Block>> BlockLoaderImpl::retrieveBlocks(
     block_query_->getTopBlocks(1)
         .subscribe_on(rxcpp::observe_on_new_thread())
         .as_blocking()
-        .subscribe([&top_block](auto block) { top_block = block; });
+        .subscribe([&top_block](auto block) {
+          top_block =
+              *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
+        });
     if (not top_block.has_value()) {
       log_->error(kTopBlockRetrieveFail);
       subscriber.on_completed();
@@ -93,7 +96,7 @@ rxcpp::observable<Wrapper<Block>> BlockLoaderImpl::retrieveBlocks(
 }
 
 nonstd::optional<Wrapper<Block>> BlockLoaderImpl::retrieveBlock(
-    const PublicKey &peer_pubkey, const Block::HashType &block_hash) {
+    const PublicKey &peer_pubkey, const types::HashType &block_hash) {
   auto peer = findPeer(peer_pubkey);
   if (not peer.has_value()) {
     log_->error(kPeerNotFound);

@@ -16,22 +16,29 @@
  */
 
 #include "main/server_runner.hpp"
-#include <grpc++/server.h>
-#include <grpc++/server_builder.h>
-#include <grpc++/server_context.h>
-#include "logger/logger.hpp"
 
-ServerRunner::ServerRunner(const std::string &address)
-    : serverAddress_(address) {}
+#include <boost/format.hpp>
 
-ServerRunner &ServerRunner::append(std::unique_ptr<grpc::Service> service) {
-  services_.emplace_back(std::move(service));
+const auto kPortBindError = "Cannot bind server to address %s";
+
+ServerRunner::ServerRunner(const std::string &address, bool reuse)
+    : serverAddress_(address), reuse_(reuse) {}
+
+ServerRunner &ServerRunner::append(std::shared_ptr<grpc::Service> service) {
+  services_.push_back(service);
   return *this;
 }
 
-void ServerRunner::run() {
+iroha::expected::Result<int, std::string> ServerRunner::run() {
   grpc::ServerBuilder builder;
-  builder.AddListeningPort(serverAddress_, grpc::InsecureServerCredentials());
+  int selected_port = 0;
+
+  if (not reuse_) {
+    builder.AddChannelArgument(GRPC_ARG_ALLOW_REUSEPORT, 0);
+  }
+
+  builder.AddListeningPort(
+      serverAddress_, grpc::InsecureServerCredentials(), &selected_port);
 
   for (auto &service : services_) {
     builder.RegisterService(service.get());
@@ -39,10 +46,13 @@ void ServerRunner::run() {
 
   serverInstance_ = builder.BuildAndStart();
   serverInstanceCV_.notify_one();
-}
 
-void ServerRunner::shutdown() {
-  serverInstance_->Shutdown();
+  if (selected_port == 0) {
+    return iroha::expected::makeError(
+        (boost::format(kPortBindError) % serverAddress_).str());
+  }
+
+  return iroha::expected::makeValue(selected_port);
 }
 
 void ServerRunner::waitForServersReady() {

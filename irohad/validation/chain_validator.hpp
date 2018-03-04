@@ -46,7 +46,7 @@ namespace iroha {
        * @param storage - storage that may be modified during loading
        * @return true if commit is valid, false otherwise
        */
-      virtual bool validateChain(Commit commit,
+      virtual bool validateChain(OldCommit commit,
                                  ametsuchi::MutableStorage &storage) = 0;
 
       /**

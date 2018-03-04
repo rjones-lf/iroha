@@ -33,17 +33,7 @@ namespace shared_model {
      public:
       template <typename QueryResponseType>
       explicit RolePermissionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            rolePermissionsResponse_(proto_->role_permissions_response()),
-            rolePermissions_([this] {
-              return boost::accumulate(
-                  rolePermissionsResponse_.permissions(),
-                  PermissionNameCollectionType{},
-                  [](auto &&permissions, const auto &permission) {
-                    permissions.emplace_back(permission);
-                    return std::move(permissions);
-                  });
-            }) {}
+          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
 
       RolePermissionsResponse(const RolePermissionsResponse &o)
           : RolePermissionsResponse(o.proto_) {}
@@ -59,8 +49,18 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_;
-      const Lazy<PermissionNameCollectionType> rolePermissions_;
+      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_{
+          proto_->role_permissions_response()};
+
+      const Lazy<PermissionNameCollectionType> rolePermissions_{[this] {
+        return boost::accumulate(
+            rolePermissionsResponse_.permissions(),
+            PermissionNameCollectionType{},
+            [](auto &&permissions, const auto &permission) {
+              permissions.emplace_back(permission);
+              return std::move(permissions);
+            });
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

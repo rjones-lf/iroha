@@ -30,6 +30,7 @@ target_include_directories(test_block_generator PUBLIC ${PROJECT_SOURCE_DIR}/tes
 
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
+    integration_framework/iroha_instance.cpp
     )
 target_link_libraries(integration_framework
     application

@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-#include <grpc++/grpc++.h>
-#include <grpc++/server_builder.h>
-#include "torii/command_service.hpp"
-
 #ifndef MAIN_SERVER_RUNNER_HPP
 #define MAIN_SERVER_RUNNER_HPP
+
+#include <grpc++/grpc++.h>
+#include <grpc++/impl/codegen/service_type.h>
+
+#include "common/result.hpp"
 
 /**
  * Class runs Torii server for handling queries and commands.
@@ -30,25 +31,22 @@ class ServerRunner {
   /**
    * Constructor. Initialize a new instance of ServerRunner class.
    * @param address - the address the server will be bind to in URI form
+   * @param reuse - allow multiple sockets to bind to the same port
    */
-  explicit ServerRunner(const std::string &address);
+  explicit ServerRunner(const std::string &address, bool reuse = true);
 
   /**
    * Adds a new grpc service to be run.
    * @param service - service to append.
    * @return reference to this with service appended
    */
-  ServerRunner &append(std::unique_ptr<grpc::Service> service);
+  ServerRunner &append(std::shared_ptr<grpc::Service> service);
 
   /**
    * Initialize the server and run main loop.
+   * @return Result with used port number or error message
    */
-  void run();
-
-  /**
-   * Release the completion queues and shutdown the server.
-   */
-  void shutdown();
+  iroha::expected::Result<int, std::string> run();
 
   /**
    * Wait until the server is up.
@@ -61,7 +59,8 @@ class ServerRunner {
   std::condition_variable serverInstanceCV_;
 
   std::string serverAddress_;
-  std::vector<std::unique_ptr<grpc::Service>> services_;
+  bool reuse_;
+  std::vector<std::shared_ptr<grpc::Service>> services_;
 };
 
 #endif  // MAIN_SERVER_RUNNER_HPP

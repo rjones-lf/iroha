@@ -21,4 +21,5 @@ target_link_libraries(ametsuchi
     libs_common
     command_execution
     boost
+    model_interfaces
     )

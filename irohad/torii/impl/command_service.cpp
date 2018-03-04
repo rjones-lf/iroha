@@ -35,10 +35,10 @@ namespace torii {
 
   CommandService::CommandService(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
-      std::shared_ptr<iroha::ametsuchi::Storage> storage,
+      std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
       std::chrono::milliseconds proposal_delay)
       : tx_processor_(tx_processor),
-        storage_(storage),
+        block_query_(block_query),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
         cache_(std::make_shared<CacheType>()) {
@@ -127,7 +127,7 @@ namespace torii {
       response.CopyFrom(*resp);
     } else {
       response.set_tx_hash(request.tx_hash());
-      if (storage_->getBlockQuery()->getTxByHashSync(request.tx_hash())) {
+      if (block_query_->getTxByHashSync(shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);

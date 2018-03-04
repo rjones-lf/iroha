@@ -16,6 +16,9 @@
  */
 
 #include "wsv_restorer_impl.hpp"
+
+#include <vector>
+
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/storage.hpp"
 #include "model/block.hpp"
@@ -27,7 +30,14 @@ namespace iroha {
       // get all blocks starting from the genesis
       std::vector<model::Block> blocks;
       storage.getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
-          [&blocks](auto block) { blocks.push_back(std::move(block)); });
+          [&blocks](auto block) {
+            // TODO Alexey Chernyshov rework after relocation to
+            // shared_model. May be it would be better to use
+            // vector.push_back(std::move(block));
+            std::unique_ptr<iroha::model::Block> old_block(
+                block->makeOldModel());
+            blocks.emplace_back(*old_block);
+          });
 
       storage.dropStorage();
 

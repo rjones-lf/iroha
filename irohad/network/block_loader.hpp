@@ -22,6 +22,7 @@
 
 #include "common/wrapper.hpp"
 #include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -47,9 +48,8 @@ namespace iroha {
        * TODO 14/02/17 (@l4l) IR-960 rework method with returning result
        */
       virtual nonstd::optional<Wrapper<shared_model::interface::Block>>
-      retrieveBlock(
-          const shared_model::crypto::PublicKey &peer_pubkey,
-          const shared_model::interface::Block::HashType &block_hash) = 0;
+      retrieveBlock(const shared_model::crypto::PublicKey &peer_pubkey,
+                    const shared_model::interface::types::HashType &block_hash) = 0;
 
       virtual ~BlockLoader() = default;
     };

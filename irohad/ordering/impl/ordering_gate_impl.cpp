@@ -24,13 +24,13 @@ namespace iroha {
         std::shared_ptr<iroha::network::OrderingGateTransport> transport)
         : transport_(transport), log_(logger::log("OrderingGate")) {}
 
-    void OrderingGateImpl::propagate_transaction(
+    void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const model::Transaction> transaction) {
       log_->info("propagate tx, tx_counter: "
                  + std::to_string(transaction->tx_counter)
                  + " account_id: " + transaction->creator_account_id);
 
-      transport_->propagate_transaction(transaction);
+      transport_->propagateTransaction(transaction);
     }
 
     rxcpp::observable<model::Proposal> OrderingGateImpl::on_proposal() {

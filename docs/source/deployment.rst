@@ -9,19 +9,15 @@ Running single instance
 Generally, people want to run Iroha locally in order to try out the API and explore the capabilities. This can be done in local or container environment (Docker). We will explore both possible cases, but in order to simplify peer components deployment, *it is advised to have Docker installed on your machine*.
 
 Local environment
-----------------
+-----------------
 
-By local environment, it is meant to have daemon process and the components (Redis and Postgres) deployed without any containers. This might be helpful in cases when messing up with Docker is not preferred — generally a quick exploration of the features.
+By local environment, it is meant to have daemon process and Postgres deployed without any containers. This might be helpful in cases when messing up with Docker is not preferred — generally a quick exploration of the features.
 
 Run postgres server
 """""""""""""""""""
 
 In order to run postgres server locally, you should check postgres `website <https://www.postgresql.org/docs/current/static/server-start.html>`__ and follow their description. Generally, postgres server runs automatically when the system starts, but this should be checked in the configuration of the system. 
 
-Run redis server
-""""""""""""""""
-
-Redis is known for a simple run process. When it is installed in the system, it is enough to execute `redis-server` binary without arguments. Just in case, check their `website <https://redis.io/topics/quickstart>`__.
 
 Run iroha daemon (irohad)
 """""""""""""""""""""""""
@@ -29,10 +25,9 @@ Run iroha daemon (irohad)
 There is a list of preconditions which you should meet before proceeding:
 
  * Postgres server is up and running
- * Redis server is up and running
  * `irohad` Iroha daemon binary is built and accessible in your system
  * The genesis block and configuration files were created
- * Config file uses valid postgres and redis connection settings
+ * Config file uses valid postgres connection settings
  * A keypair for the peer is generated
  * This is the first time you run the Iroha on this peer and you want to create new chain
 
@@ -43,8 +38,8 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 +---------------+-----------------------------------------------------------------+
 | Parameter     | Meaning                                                         |
 +---------------+-----------------------------------------------------------------+
-| config        | configuration file, containing postgres, and redis connection,  |
-|               | and values to tune the system                                   |
+| config        | configuration file, containing postgres connection and values   |
+|               | to tune the system                                              |
 +---------------+-----------------------------------------------------------------+
 | genesis_block | initial block in the ledger                                     |
 +---------------+-----------------------------------------------------------------+
@@ -77,23 +72,11 @@ Then, you have to create an enviroment for the image to run without problems:
 Create docker network
 """""""""""""""""""""
 
-Containers for Redis, Postgres, and Iroha should run in the same virtual network, in order to be available to each other. Create a network, by typing following command (you can use any name for the network, but in the example, we use *iroha-network* name): 
+Containers for Postgres and Iroha should run in the same virtual network, in order to be available to each other. Create a network, by typing following command (you can use any name for the network, but in the example, we use *iroha-network* name):
 
 .. code-block:: shell
 
     docker network create iroha-network
-    
-Run Redis in a container
-""""""""""""""""""""""""
-
-Run redis server, attaching it to the network you have created before, and exposing ports for communication:
-
-.. code-block:: shell
-
-    docker run --name some-redis \
-    -p 6379:6379 \
-    --network=iroha-network \
-    -d redis:3.2.8
 
 Run Postgresql in a container
 """""""""""""""""""""""""""""
@@ -122,7 +105,7 @@ Running iroha daemon in docker container
 """"""""""""""""""""""""""""""""""""""""
 
 There is a list of assumptions which you should review before proceeding:
- * Postgres and redis servers are running on the same docker network
+ * Postgres server is running on the same docker network
  * There is a folder, containing config file and keypair for a single node
  * This is the first time you run the Iroha on this peer and you want to create new chain
 
@@ -142,9 +125,6 @@ If they are met, you can move forward with the following command:
     -e POSTGRES_PORT='5432' \
     -e POSTGRES_PASSWORD='mysecretpassword' \
     -e POSTGRES_USER='postgres' \
-    # Redis settings
-    -e REDIS_HOST='some-redis' \
-    -e REDIS_PORT='6379' \
     # Node keypair name
     -e KEY='node0' \
     # Docker network name
@@ -207,7 +187,7 @@ Step-by-step guide
 9. Wait until playbook finishes and then Iroha network is ready and up.
 
 Checking Iroha peer status
-""""""""""""""""""""
+""""""""""""""""""""""""""
 
 1. SSH into any of your machines
  

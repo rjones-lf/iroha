@@ -34,7 +34,7 @@ namespace iroha {
         postgres_connection->activate();
       } catch (const pqxx::broken_connection &e) {
         return expected::makeError(
-            (boost::format("Connection to PostgreSQL broken: {}") % e.what())
+            (boost::format("Connection to PostgreSQL broken: %s") % e.what())
                 .str());
       }
 

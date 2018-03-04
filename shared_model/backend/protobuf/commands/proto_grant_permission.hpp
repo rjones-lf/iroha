@@ -30,8 +30,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit GrantPermission(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            grant_permission_(proto_->grant_permission()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       GrantPermission(const GrantPermission &o) : GrantPermission(o.proto_) {}
 
@@ -49,7 +48,8 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::GrantPermission &grant_permission_;
+      const iroha::protocol::GrantPermission &grant_permission_{
+          proto_->grant_permission()};
     };
 
   }  // namespace proto

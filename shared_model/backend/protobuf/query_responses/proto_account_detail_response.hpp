@@ -34,8 +34,7 @@ namespace shared_model {
      public:
       template <typename QueryResponseType>
       explicit AccountDetailResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            account_detail_response_(proto_->account_detail_response()){}
+          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
 
       AccountDetailResponse(const AccountDetailResponse &o)
           : AccountDetailResponse(o.proto_) {}
@@ -48,7 +47,8 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::AccountDetailResponse &account_detail_response_;
+      const iroha::protocol::AccountDetailResponse &account_detail_response_{
+          proto_->account_detail_response()};
     };
   }  // namespace proto
 }  // namespace shared_model

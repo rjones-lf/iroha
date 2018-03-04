@@ -16,10 +16,12 @@
  */
 
 #include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 #include "framework/test_subscriber.hpp"
 #include "simulator/impl/simulator.hpp"
@@ -36,6 +38,8 @@ using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
+
+using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
 class SimulatorTest : public ::testing::Test {
  public:
@@ -61,10 +65,19 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<Simulator> simulator;
 };
 
+shared_model::proto::Block makeBlock(int height) {
+  return TestBlockBuilder()
+      .txNumber(0)
+      .transactions(std::vector<shared_model::proto::Transaction>())
+      .height(height)
+      .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
+      .build();
+}
+
 TEST_F(SimulatorTest, ValidWhenInitialized) {
   // simulator constructor => on_proposal subscription called
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
   init();
 }
@@ -75,12 +88,12 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal = model::Proposal(txs);
   proposal.height = 2;
 
-  model::Block block;
-  block.height = proposal.height - 1;
+  shared_model::proto::Block block = makeBlock(proposal.height - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
   EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block)));
+      .WillOnce(Return(rxcpp::observable<>::just(block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
 
   std::shared_ptr<shared_model::interface::Proposal> iprop =
       std::make_shared<shared_model::proto::Proposal>(
@@ -89,9 +102,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(iprop));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(1);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
 
   init();
 
@@ -124,14 +137,14 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
   EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::empty<model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
   init();
 
@@ -155,20 +168,20 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   auto proposal = model::Proposal(txs);
   proposal.height = 2;
 
-  model::Block block;
-  block.height = proposal.height;
+  auto block = makeBlock(proposal.height);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
   EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block)));
+      .WillOnce(Return(rxcpp::observable<>::just(block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
   init();
 

@@ -31,10 +31,7 @@ namespace shared_model {
      public:
       template <typename PeerType>
       explicit Peer(PeerType &&peer)
-          : CopyableProto(std::forward<PeerType>(peer)),
-            public_key_([this] {
-              return interface::types::PubkeyType(proto_->peer_key());
-            }) {}
+          : CopyableProto(std::forward<PeerType>(peer)) {}
 
       Peer(const Peer &o) : Peer(o.proto_) {}
 
@@ -53,7 +50,8 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<interface::types::PubkeyType> public_key_;
+      const Lazy<interface::types::PubkeyType> public_key_{
+          [this] { return interface::types::PubkeyType(proto_->peer_key()); }};
     };
 
   }  // namespace proto

@@ -28,40 +28,41 @@
 
 #include <boost/optional.hpp>
 
-#include "model/converters/json_block_factory.hpp"
-
-
 namespace iroha {
   namespace ametsuchi {
 
     class FlatFile;
 
     /**
-     * Class which implements BlockQuery with a Redis backend.
+     * Class which implements BlockQuery with a Postgres backend.
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
       PostgresBlockQuery(pqxx::nontransaction &transaction_,
                          FlatFile &file_store);
 
-      rxcpp::observable<model::Transaction> getAccountTransactions(
-          const std::string &account_id) override;
+      rxcpp::observable<wTransaction> getAccountTransactions(
+          const shared_model::interface::types::AccountIdType &account_id)
+          override;
 
-      rxcpp::observable<model::Transaction> getAccountAssetTransactions(
-          const std::string &account_id, const std::string &asset_id) override;
+      rxcpp::observable<wTransaction> getAccountAssetTransactions(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AssetIdType &asset_id) override;
 
-      rxcpp::observable<boost::optional<model::Transaction>> getTransactions(
-          const std::vector<iroha::hash256_t> &tx_hashes) override;
+      rxcpp::observable<boost::optional<wTransaction>> getTransactions(
+          const std::vector<shared_model::crypto::Hash> &tx_hashes) override;
 
-      boost::optional<model::Transaction> getTxByHashSync(
-          const std::string &hash) override;
+      boost::optional<wTransaction> getTxByHashSync(
+          const shared_model::crypto::Hash &hash) override;
 
-      rxcpp::observable<model::Block> getBlocks(uint32_t height,
-                                                uint32_t count) override;
+      rxcpp::observable<wBlock> getBlocks(
+          shared_model::interface::types::HeightType height,
+          uint32_t count) override;
 
-      rxcpp::observable<model::Block> getBlocksFrom(uint32_t height) override;
+      rxcpp::observable<wBlock> getBlocksFrom(
+          shared_model::interface::types::HeightType height) override;
 
-      rxcpp::observable<model::Block> getTopBlocks(uint32_t count) override;
+      rxcpp::observable<wBlock> getTopBlocks(uint32_t count) override;
 
      private:
       /**
@@ -69,26 +70,26 @@ namespace iroha {
        * @param account_id
        * @return vector of block ids
        */
-      std::vector<iroha::model::Block::BlockHeightType> getBlockIds(
-          const std::string &account_id);
+      std::vector<shared_model::interface::types::HeightType> getBlockIds(
+          const shared_model::interface::types::AccountIdType &account_id);
 
       /**
        * Returns block id which contains transaction with a given hash
        * @param hash - hash of transaction
        * @return block id or boost::none
        */
-      boost::optional<iroha::model::Block::BlockHeightType> getBlockId(
-          const std::string &hash);
+      boost::optional<shared_model::interface::types::HeightType> getBlockId(
+          const shared_model::crypto::Hash &hash);
 
       /**
-       * creates callback to lrange query to redis to supply result to
+       * creates callback to lrange query to Postgres to supply result to
        * subscriber s
        * @param s
        * @param block_id
        * @return
        */
       std::function<void(pqxx::result &result)> callback(
-          const rxcpp::subscriber<model::Transaction> &s, uint64_t block_id);
+          const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
 
       FlatFile &block_store_;
       pqxx::nontransaction &transaction_;

@@ -41,31 +41,7 @@ namespace shared_model {
      public:
       template <class BlockType>
       explicit Block(BlockType &&block)
-          : CopyableProto(std::forward<BlockType>(block)),
-            payload_(proto_->payload()),
-            transactions_([this] {
-              std::vector<w<interface::Transaction>> txs;
-              for (const auto &tx : payload_.transactions()) {
-                auto tmp = detail::makePolymorphic<proto::Transaction>(tx);
-                txs.emplace_back(tmp);
-              }
-              return txs;
-            }),
-            blob_([this] { return makeBlob(*proto_); }),
-            prev_hash_([this] {
-              return HashType(proto_->payload().prev_block_hash());
-            }),
-            signatures_([this] {
-              interface::SignatureSetType sigs;
-              for (const auto &sig : proto_->signatures()) {
-                auto curr = detail::makePolymorphic<proto::Signature>(sig);
-                sigs.insert(curr);
-              }
-              return sigs;
-            }),
-            payload_blob_([this] { return makeBlob(payload_); })
-
-      {}
+          : CopyableProto(std::forward<BlockType>(block)) {}
 
       Block(const Block &o) : Block(o.proto_) {}
 
@@ -79,11 +55,11 @@ namespace shared_model {
         return payload_.height();
       }
 
-      const HashType &prevHash() const override {
+      const interface::types::HashType &prevHash() const override {
         return *prev_hash_;
       }
 
-      const BlobType &blob() const override {
+      const interface::types::BlobType &blob() const override {
         return *blob_;
       }
 
@@ -112,8 +88,7 @@ namespace shared_model {
         return payload_.tx_number();
       }
 
-      const typename Hashable<Block, iroha::model::Block>::BlobType &payload()
-          const override {
+      const interface::types::BlobType &payload() const override {
         return *payload_blob_;
       }
 
@@ -121,12 +96,36 @@ namespace shared_model {
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
-      const iroha::protocol::Block::Payload &payload_;
-      const Lazy<std::vector<w<interface::Transaction>>> transactions_;
-      const Lazy<BlobType> blob_;
-      const Lazy<HashType> prev_hash_;
-      const Lazy<interface::SignatureSetType> signatures_;
-      const Lazy<BlobType> payload_blob_;
+
+      const iroha::protocol::Block::Payload &payload_{proto_->payload()};
+
+      const Lazy<std::vector<w<interface::Transaction>>> transactions_{[this] {
+        std::vector<w<interface::Transaction>> txs;
+        for (const auto &tx : payload_.transactions()) {
+          auto tmp = detail::makePolymorphic<proto::Transaction>(tx);
+          txs.emplace_back(tmp);
+        }
+        return txs;
+      }};
+
+      const Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(*proto_); }};
+
+      const Lazy<interface::types::HashType> prev_hash_{[this] {
+        return interface::types::HashType(proto_->payload().prev_block_hash());
+      }};
+
+      const Lazy<interface::SignatureSetType> signatures_{[this] {
+        interface::SignatureSetType sigs;
+        for (const auto &sig : proto_->signatures()) {
+          auto curr = detail::makePolymorphic<proto::Signature>(sig);
+          sigs.insert(curr);
+        }
+        return sigs;
+      }};
+
+      const Lazy<interface::types::BlobType> payload_blob_{
+          [this] { return makeBlob(payload_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

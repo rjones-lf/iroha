@@ -39,7 +39,7 @@ namespace iroha {
        * Emit committed blocks
        * Note: from one block received on consensus
        */
-      virtual rxcpp::observable<Commit> on_commit_chain() = 0;
+      virtual rxcpp::observable<OldCommit> on_commit_chain() = 0;
 
       virtual ~Synchronizer() = default;
     };

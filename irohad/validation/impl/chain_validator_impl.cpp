@@ -47,7 +47,7 @@ namespace iroha {
       return storage.apply(block, apply_block);
     }
 
-    bool ChainValidatorImpl::validateChain(Commit blocks,
+    bool ChainValidatorImpl::validateChain(OldCommit blocks,
                                            ametsuchi::MutableStorage &storage) {
       log_->info("validate chain...");
       return blocks

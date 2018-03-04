@@ -29,8 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit CreateDomain(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            create_domain_(proto_->create_domain()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       CreateDomain(const CreateDomain &o) : CreateDomain(o.proto_) {}
 
@@ -46,7 +45,8 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::CreateDomain &create_domain_;
+      const iroha::protocol::CreateDomain &create_domain_{
+          proto_->create_domain()};
     };
 
   }  // namespace proto

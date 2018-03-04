@@ -39,6 +39,8 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/proposal.hpp"
 
 namespace integration_framework {
 
@@ -46,8 +48,8 @@ namespace integration_framework {
 
   class IntegrationTestFramework {
    private:
-    using ProposalType = std::shared_ptr<iroha::model::Proposal>;
-    using BlockType = std::shared_ptr<iroha::model::Block>;
+    using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
+    using BlockType = std::shared_ptr<shared_model::interface::Block>;
 
    public:
     IntegrationTestFramework(size_t maximum_block_size = 10)

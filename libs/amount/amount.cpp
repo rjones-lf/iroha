@@ -21,6 +21,8 @@
 #include <regex>
 #include <utility>
 
+using namespace boost::multiprecision;
+
 namespace iroha {
 
   // to raise to power integer values

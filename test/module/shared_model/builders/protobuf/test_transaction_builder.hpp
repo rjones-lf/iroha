@@ -21,21 +21,19 @@
 #include "builders/protobuf/builder_templates/transaction_template.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
-using namespace shared_model::proto;
-using namespace shared_model::validation;
-
 /**
  * Builder alias, to build shared model proto transaction object avoiding
  * validation and "required fields" check
  */
-using TestTransactionBuilder =
-    TemplateTransactionBuilder<(1 << TemplateTransactionBuilder<>::total) - 1,
-                               TransactionAlwaysValidValidator,
-                               Transaction>;
+using TestTransactionBuilder = shared_model::proto::TemplateTransactionBuilder<
+    (1 << shared_model::proto::TemplateTransactionBuilder<>::total) - 1,
+    shared_model::validation::TransactionAlwaysValidValidator,
+    shared_model::proto::Transaction>;
 
 using TestUnsignedTransactionBuilder =
-    TemplateTransactionBuilder<(1 << TemplateTransactionBuilder<>::total) - 1,
-                               TransactionAlwaysValidValidator,
-                               UnsignedWrapper<Transaction>>;
+    shared_model::proto::TemplateTransactionBuilder<
+        (1 << shared_model::proto::TemplateTransactionBuilder<>::total) - 1,
+        shared_model::validation::TransactionAlwaysValidValidator,
+        shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>>;
 
 #endif  // IROHA_TEST_TRANSACTION_BUILDER_HPP

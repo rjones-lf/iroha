@@ -28,17 +28,20 @@
 namespace shared_model {
   namespace proto {
 
-  /**
+    /**
      * Template query builder for creating new types of query builders by
      * means of replacing template parameters
-     * @tparam S -- field counter for checking that all required fields are set
+     * @tparam S -- field counter for checking that all required fields are
+     * set
      * @tparam SV -- stateless validator called when build method is invoked
      * @tparam BT -- build type of built object returned by build method
      */
-    template <int S = 0, typename SV = validation::DefaultQueryValidator, typename BT = UnsignedWrapper<Query>>
+    template <int S = 0,
+              typename SV = validation::DefaultQueryValidator,
+              typename BT = UnsignedWrapper<Query>>
     class TemplateQueryBuilder {
      private:
-      template <int, typename, typename >
+      template <int, typename, typename>
       friend class TemplateQueryBuilder;
 
       enum RequiredFields {
@@ -190,8 +193,7 @@ namespace shared_model {
       }
 
       auto getTransactions(
-          std::initializer_list<interface::Transaction::HashType> hashes)
-          const {
+          std::initializer_list<interface::types::HashType> hashes) const {
         return getTransactions(hashes);
       }
 

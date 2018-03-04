@@ -41,7 +41,7 @@ class TransactionProcessorTest : public ::testing::Test {
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
 
-    rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
+    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>> prop_notifier;
     rxcpp::subjects::subject<Commit> commit_notifier;
 
     EXPECT_CALL(*pcs, on_proposal())

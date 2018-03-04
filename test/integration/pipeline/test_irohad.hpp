@@ -61,18 +61,17 @@ class TestIrohad : public Irohad {
   }
 
   void run() override {
-    grpc::ServerBuilder builder;
-    int port = 0;
-    builder.AddListeningPort("0.0.0.0:" + std::to_string(internal_port_),
-                             grpc::InsecureServerCredentials(),
-                             &port);
-    builder.RegisterService(ordering_init.ordering_gate_transport.get());
-    builder.RegisterService(ordering_init.ordering_service_transport.get());
-    builder.RegisterService(yac_init.consensus_network.get());
-    builder.RegisterService(loader_init.service.get());
-    internal_server = builder.BuildAndStart();
-    BOOST_ASSERT_MSG(port != 0, "grpc port is 0");
-    internal_thread = std::thread([this] { internal_server->Wait(); });
+    internal_server = std::make_unique<ServerRunner>(
+        "0.0.0.0:" + std::to_string(internal_port_));
+    internal_server->append(ordering_init.ordering_gate_transport)
+        .append(ordering_init.ordering_service_transport)
+        .append(yac_init.consensus_network)
+        .append(loader_init.service)
+        .run()
+        .match([](iroha::expected::Value<int>) {},
+               [](iroha::expected::Error<std::string> e) {
+                 BOOST_ASSERT_MSG(false, e.error.c_str());
+               });
     log_->info("===> iroha initialized");
   }
 };
