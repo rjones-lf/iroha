@@ -48,7 +48,7 @@ namespace iroha {
             YacHash hash,
             uint64_t peers_in_round,
             std::shared_ptr<SupermajorityChecker> supermajority_checker =
-                std::shared_ptr<SupermajorityCheckerImpl>());
+                std::make_shared<SupermajorityCheckerImpl>());
 
         /**
          * Try to insert vote to storage
