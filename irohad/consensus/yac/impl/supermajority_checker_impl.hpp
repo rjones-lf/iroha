@@ -23,16 +23,16 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-      /**
-       * Implementation of SupermajorityChecker interface.
-       * Checks supermajority.
-       */
       class SupermajorityCheckerImpl : public SupermajorityChecker {
        public:
         virtual ~SupermajorityCheckerImpl() = default;
 
         /**
-         * Check if supermajority is achieved
+         * Checks if size of sets allows to have supermajority,
+         * then checks subset of signatures
+         * @param signatures
+         * @param peers
+         * @return true or false
          */
         virtual bool hasSupermajority(
             const std::vector<model::Signature> &signatures,

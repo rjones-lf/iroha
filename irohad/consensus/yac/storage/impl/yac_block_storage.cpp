@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 #include "consensus/yac/storage/yac_block_storage.hpp"
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 using namespace logger;
 
@@ -25,11 +24,13 @@ namespace iroha {
 
       // --------| Public API |--------
 
-      YacBlockStorage::YacBlockStorage(YacHash hash, uint64_t peers_in_round)
+      YacBlockStorage::YacBlockStorage(
+          YacHash hash,
+          uint64_t peers_in_round,
+          std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : hash_(std::move(hash)),
             peers_in_round_(peers_in_round),
-            supermajority_checker_(
-                std::make_shared<SupermajorityCheckerImpl>()) {
+            supermajority_checker_(supermajority_checker) {
         log_ = log("YacBlockStorage");
       }
 

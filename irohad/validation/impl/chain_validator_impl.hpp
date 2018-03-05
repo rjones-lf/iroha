@@ -28,8 +28,8 @@ namespace iroha {
   namespace consensus {
     namespace yac {
       class SupermajorityChecker;
-    }
-  }  // namespace consensus
+    }  // namespace yac
+  }    // namespace consensus
 
   namespace validation {
     class ChainValidatorImpl : public ChainValidator {

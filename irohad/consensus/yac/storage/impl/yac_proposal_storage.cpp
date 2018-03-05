@@ -16,7 +16,6 @@
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 using namespace logger;
 
@@ -48,13 +47,14 @@ namespace iroha {
 
       // --------| public api |--------
 
-      YacProposalStorage::YacProposalStorage(ProposalHash hash,
-                                             uint64_t peers_in_round)
+      YacProposalStorage::YacProposalStorage(
+          ProposalHash hash,
+          uint64_t peers_in_round,
+          std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : current_state_(nonstd::nullopt),
             hash_(std::move(hash)),
             peers_in_round_(peers_in_round),
-            supermajority_checker_(
-                std::make_shared<SupermajorityCheckerImpl>()) {
+            supermajority_checker_(supermajority_checker) {
         log_ = log("ProposalStorage");
       }
 

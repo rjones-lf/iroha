@@ -22,6 +22,7 @@
 #include <nonstd/optional.hpp>
 #include <vector>
 
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
@@ -29,9 +30,6 @@
 
 namespace iroha {
   namespace consensus {
-
-    class SupermajorityChecker;
-
     namespace yac {
 
       struct VoteMessage;
@@ -56,7 +54,11 @@ namespace iroha {
        public:
         // --------| public api |--------
 
-        YacProposalStorage(ProposalHash hash, uint64_t peers_in_round);
+        YacProposalStorage(
+            ProposalHash hash,
+            uint64_t peers_in_round,
+            std::shared_ptr<SupermajorityChecker> supermajority_checker =
+                std::shared_ptr<SupermajorityCheckerImpl>());
 
         /**
          * Try to insert vote to storage

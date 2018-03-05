@@ -45,13 +45,28 @@ namespace iroha {
 
         /**
          * Check if supermajority is achieved
+         * @param signatures set of signatures to check
+         * @param peers set of peers with signatures
+         * @return true or false
          */
         virtual bool hasSupermajority(
             const std::vector<model::Signature> &signatures,
             const std::vector<model::Peer> &peers) const = 0;
 
+        /**
+         * Check if supermajority is possible
+         * @param current actual number of signatures
+         * @param all number of peers
+         * @return true or false
+         */
         virtual bool checkSize(uint64_t current, uint64_t all) const = 0;
 
+        /**
+         * Checks if signatures is a subset of signatures of peers
+         * @param signatures to check
+         * @param peers with signatures
+         * @return true or false
+         */
         virtual bool peersSubset(
             const std::vector<model::Signature> &signatures,
             const std::vector<model::Peer> &peers) const = 0;
