@@ -25,6 +25,7 @@
 #include "model/peer.hpp"
 #include "model/signature.hpp"
 
+// TODO: this file's naming and location are odd.
 namespace iroha {
   namespace consensus {
     /**

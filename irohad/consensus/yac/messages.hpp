@@ -34,17 +34,20 @@ namespace iroha {
         YacHash hash;
         model::Signature signature;
 
+          //TODO: I am not sure that rhs is a great variable name choice here. This is a comparison operator
+          // for VoteMessages, so &vote or &voteMessage might be more meaningful to humans.
         bool operator==(const VoteMessage &rhs) const {
           return hash == rhs.hash and signature == rhs.signature;
         }
 
+          //TODO: 同上
         bool operator!=(const VoteMessage &rhs) const {
           return not(*this == rhs);
         }
       };
 
       /**
-       * CommitMsg means consensus on cluster achieved.
+       * CommitMsg means consensus by validators was achieved.
        * All nodes deals on some solution
        */
       struct CommitMessage {
@@ -59,8 +62,9 @@ namespace iroha {
       };
 
       /**
-       * Reject means that there is impossible
-       * to collect supermajority for any block
+       * A RejectMessage means that it was impossible
+       * to collect a supermajority of votes for any block
+       * proposal in the current consensus round.
        */
       struct RejectMessage {
         explicit RejectMessage(std::vector<VoteMessage> votes)

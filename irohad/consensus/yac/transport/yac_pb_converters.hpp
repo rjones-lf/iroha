@@ -28,6 +28,12 @@ namespace iroha {
       class PbConverters {
        public:
         static proto::Vote serializeVote(const VoteMessage &vote) {
+
+            //TODO: Can you refactor this to be more readable by using something like:
+            // auto voteHash = vote.hash;
+            // hash->set_block(voteHash.block_hash);
+            // ... etc
+
           proto::Vote pb_vote;
 
           auto hash = pb_vote.mutable_hash();
@@ -35,10 +41,8 @@ namespace iroha {
           hash->set_proposal(vote.hash.proposal_hash);
 
           auto block_signature = hash->mutable_block_signature();
-          block_signature->set_signature(
-              vote.hash.block_signature.signature.to_string());
-          block_signature->set_pubkey(
-              vote.hash.block_signature.pubkey.to_string());
+          block_signature->set_signature(vote.hash.block_signature.signature.to_string());
+          block_signature->set_pubkey(vote.hash.block_signature.pubkey.to_string());
 
           auto signature = pb_vote.mutable_signature();
           signature->set_signature(vote.signature.signature.to_string());
@@ -47,19 +51,26 @@ namespace iroha {
           return pb_vote;
         }
 
-        static nonstd::optional<VoteMessage> deserializeVote(
-            const proto::Vote &pb_vote) {
+        static nonstd::optional<VoteMessage> deserializeVote(const proto::Vote &pb_vote) {
+
+            //TODO: Can you refactor this to be more readable by using something like:
+            // auto voteHash = pb_vote.hash();
+            // vote.hash.block_hash = voteHash.block();
+            // ... etc
+
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
-          vote.hash.block_signature.signature =
-              *stringToBlob<iroha::sig_t::size()>(
+
+          vote.hash.block_signature.signature = *stringToBlob<iroha::sig_t::size()>(
                   pb_vote.hash().block_signature().signature());
-          vote.hash.block_signature.pubkey =
-              *stringToBlob<iroha::pubkey_t::size()>(
+
+          vote.hash.block_signature.pubkey = *stringToBlob<iroha::pubkey_t::size()>(
                   pb_vote.hash().block_signature().pubkey());
+
           vote.signature.signature = *stringToBlob<iroha::sig_t::size()>(
               pb_vote.signature().signature());
+
           vote.signature.pubkey = *stringToBlob<iroha::pubkey_t::size()>(
               pb_vote.signature().pubkey());
 

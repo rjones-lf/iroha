@@ -107,7 +107,7 @@ namespace iroha {
                             subscriber.on_completed();
                           });
                     })
-                    // need only the first
+                    // only need the first
                     .first()
                     .subscribe(
                         // if load is successful from at least one node
