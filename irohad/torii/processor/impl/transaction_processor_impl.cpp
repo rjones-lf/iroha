@@ -97,17 +97,8 @@ namespace iroha {
     void TransactionProcessorImpl::transactionHandle(
         std::shared_ptr<shared_model::interface::Transaction> transaction) {
       log_->info("handle transaction");
-      model::TransactionResponse response;
-      response.tx_hash =
-          shared_model::crypto::toBinaryString(transaction->hash());
-      response.current_status =
-          model::TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
 
       pcs_->propagate_transaction(transaction);
-
-      log_->info("stateless validated");
-      notifier_.get_subscriber().on_next(
-          std::make_shared<model::TransactionResponse>(response));
     }
 
     rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
