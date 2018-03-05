@@ -83,8 +83,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          auto result = static_cast<std::shared_ptr<Block>>(
-              std::make_shared<shared_model::proto::Block>(block));
+          auto result = std::make_shared<shared_model::proto::Block>(block);
 
           // stateless validation of block
           auto answer = stateless_validator_->validate(result);
@@ -130,8 +129,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     return nonstd::nullopt;
   }
 
-  auto result = static_cast<std::shared_ptr<Block>>(
-      std::make_shared<shared_model::proto::Block>(block));
+  auto result = std::make_shared<shared_model::proto::Block>(block);
   std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
   if (not crypto_provider_->verify(*old_block)) {
     log_->error(kInvalidBlockSignatures);
