@@ -32,7 +32,7 @@ namespace iroha {
          * then checks subset of signatures
          * @param signatures set of votes
          * @param peers set of all peers
-         * @return true or false
+         * @return true on supermajority is achieved or false otherwise
          */
         virtual bool hasSupermajority(
             const std::vector<model::Signature> &signatures,
