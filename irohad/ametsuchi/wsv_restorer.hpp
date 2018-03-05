@@ -25,7 +25,7 @@ namespace iroha {
     class Storage;
 
     /**
-     * Interface for class that restores World State View from storage.
+     * Interface for World State View restoring from the storage
      */
     class WsvRestorer {
      public:
@@ -33,6 +33,7 @@ namespace iroha {
 
       /**
        * Recover WSV (World State View).
+       * @param storage storage of blocks in ledger
        * @return void on success, otherwise error string
        */
       virtual expected::Result<void, std::string> restoreWsv(

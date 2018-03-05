@@ -16,33 +16,21 @@
  */
 
 #include <gtest/gtest.h>
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/combine.hpp>
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
-#include "builders/protobuf/block.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "common/byteutils.hpp"
-#include "cryptography/hash_providers/sha3_256.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
-#include "model/asset.hpp"
-#include "model/commands/all.hpp"
-#include "model/converters/pb_block_factory.hpp"
 #include "model/domain.hpp"
-#include "model/generators/block_generator.hpp"
-#include "model/generators/transaction_generator.hpp"
-#include "model/peer.hpp"
 #include "model/permissions.hpp"
-#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -248,7 +236,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
   validateCalls(blocks->getBlocks(1, 2),
-                [i = 0, &hashes](auto eachBlock) mutable {
+                [ i = 0, &hashes ](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -393,7 +381,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
   validateCalls(blocks->getBlocks(1, 3),
-                [i = 0, &hashes](auto eachBlock) mutable {
+                [ i = 0, &hashes ](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -912,7 +900,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
                   generateKeypair());
 
   auto genesis_block =
-      shared_model::proto::BlockBuilder()
+      TestBlockBuilder()
           .transactions(
               std::vector<shared_model::proto::Transaction>{genesis_tx})
           .txNumber(1)
@@ -920,10 +908,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
           .prevHash(shared_model::crypto::Sha3_256::makeHash(
               shared_model::crypto::Blob("")))
           .createdTime(iroha::time::now())
-          .build()
-          .signAndAddSignature(
-              shared_model::crypto::DefaultCryptoAlgorithmType::
-                  generateKeypair());
+          .build();
 
   apply(storage, genesis_block);
 

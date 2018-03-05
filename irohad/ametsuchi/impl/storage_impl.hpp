@@ -58,14 +58,14 @@ namespace iroha {
       createMutableStorage() override;
 
       /**
-       * Raw insertion of block without validation
+       * Insert block without validation
        * @param blocks - block for insertion
-       * @return true if inserted
+       * @return true if all blocks are inserted
        */
       virtual bool insertBlock(model::Block block) override;
 
       /**
-       * Raw insertion of blocks without validation
+       * Insert blocks without validation
        * @param blocks - collection of blocks for insertion
        * @return true if inserted
        */

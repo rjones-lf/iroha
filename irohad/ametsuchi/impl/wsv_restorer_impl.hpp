@@ -34,6 +34,7 @@ namespace iroha {
       /**
        * Recover WSV (World State View).
        * Drop storage and apply blocks one by one.
+       * @param storage storage of blocks in ledger
        * @return void on success, otherwise error string
        */
       virtual expected::Result<void, std::string> restoreWsv(
