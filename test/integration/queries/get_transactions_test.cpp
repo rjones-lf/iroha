@@ -41,7 +41,7 @@ class GetTransactions : public ::testing::Test {
     auto new_perms = perms;
     new_perms.push_back(iroha::model::can_set_quorum);
     return framework::createUserWithPerms(
-               kUser, kUserId, kUserKeypair.publicKey(), kNewRole, new_perms)
+               kUser, kUserKeypair.publicKey(), kNewRole, new_perms)
         .build()
         .signAndAddSignature(kAdminKeypair);
   }

@@ -22,6 +22,12 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 
 namespace framework {
+  /**
+   * Creates a set of transactions for user creation
+   * @param user is username of new user
+   * @param key is a public key of new user
+   * @return pre-built transaction
+   */
   static inline auto createUser(const std::string &user,
                                 const shared_model::crypto::PublicKey &key) {
     return shared_model::proto::TransactionBuilder()
@@ -35,12 +41,21 @@ namespace framework {
         .createdTime(iroha::time::now());
   }
 
+  /**
+   * Creates a set of transactions for user creation with specified permissions
+   * @param user is username of new user
+   * @param key is a public key of new user
+   * @param role_id is new role of the user
+   * @param perms is a collections of permissions of the user
+   * @param pre-build transaction
+   */
   static inline auto createUserWithPerms(
       const std::string &user,
-      const std::string &user_id,
       const shared_model::crypto::PublicKey &key,
       const std::string role_id,
       std::vector<std::string> perms) {
+    const auto user_id = user + "@"
+        + integration_framework::IntegrationTestFramework::kDefaultDomain;
     return createUser(user, key)
         .detachRole(
             user_id,
