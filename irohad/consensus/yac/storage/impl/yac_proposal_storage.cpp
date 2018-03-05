@@ -40,9 +40,11 @@ namespace iroha {
           return iter;
         }
         // insert and return new
-        return block_storages_.emplace(block_storages_.end(),
-                                       YacHash(proposal_hash, block_hash),
-                                       peers_in_round_);
+        return block_storages_.emplace(
+            block_storages_.end(),
+            YacHash(proposal_hash, block_hash),
+            peers_in_round_,
+            std::make_shared<SupermajorityCheckerImpl>());
       }
 
       // --------| public api |--------

@@ -30,8 +30,8 @@ namespace iroha {
         /**
          * Checks if size of sets allows to have supermajority,
          * then checks subset of signatures
-         * @param signatures
-         * @param peers
+         * @param signatures set of votes
+         * @param peers set of all peers
          * @return true or false
          */
         virtual bool hasSupermajority(
