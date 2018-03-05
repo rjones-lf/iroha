@@ -29,7 +29,7 @@ using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
-class CreateAccount : public ::testing::Test {
+class InvalidField : public ::testing::Test {
  public:
   const std::string kUser = "user"s;
   const crypto::Keypair kAdminKeypair =
@@ -43,7 +43,7 @@ class CreateAccount : public ::testing::Test {
  * @when send it
  * @then Torii returns stateless fail
  */
-TEST_F(CreateAccount, InvalidSignature) {
+TEST_F(InvalidField, Signature) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
                 .txCounter(1)
@@ -52,12 +52,15 @@ TEST_F(CreateAccount, InvalidSignature) {
                 .build()
                 .signAndAddSignature(kAdminKeypair)
                 .getTransport();
-  tx.mutable_signature(0)->mutable_signature()->operator+=("asd");
+  // extend signature to invalid size
+  auto sig = tx.mutable_signature(0)->mutable_signature();
+  sig->resize(sig->size() + 1, 'a');
   auto check = [](auto &resp) {
     ASSERT_TRUE(boost::apply_visitor(
         interface::SpecifiedVisitor<interface::StatelessFailedTxResponse>(),
         resp.get()));
   };
+
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(proto::Transaction(tx), check)
@@ -69,7 +72,7 @@ TEST_F(CreateAccount, InvalidSignature) {
  * @when send it
  * @then Torii returns stateless fail
  */
-TEST_F(CreateAccount, InvalidPubkey) {
+TEST_F(InvalidField, Pubkey) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
                 .txCounter(1)
@@ -78,12 +81,15 @@ TEST_F(CreateAccount, InvalidPubkey) {
                 .build()
                 .signAndAddSignature(kAdminKeypair)
                 .getTransport();
-  tx.mutable_signature(0)->mutable_pubkey()->operator+=("asd");
+  // extend public key to invalid size
+  auto pkey = tx.mutable_signature(0)->mutable_pubkey();
+  pkey->resize(pkey->size() + 1, 'a');
   auto check = [](auto &resp) {
     ASSERT_TRUE(boost::apply_visitor(
         interface::SpecifiedVisitor<interface::StatelessFailedTxResponse>(),
         resp.get()));
   };
+
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(proto::Transaction(tx), check)

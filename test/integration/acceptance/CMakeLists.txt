@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-addtest(create_account_test create_account_test.cpp)
-target_link_libraries(create_account_test
+addtest(invalid_fields_test invalid_fields_test.cpp)
+target_link_libraries(invalid_fields_test
   application
   integration_framework
   shared_model_proto_builders
