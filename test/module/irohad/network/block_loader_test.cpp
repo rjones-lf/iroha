@@ -36,6 +36,7 @@
 #include "datetime/time.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/block_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
@@ -55,7 +56,11 @@ class BlockLoaderTest : public testing::Test {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
     provider = std::make_shared<MockCryptoProvider>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage, provider);
+    loader = std::make_shared<BlockLoaderImpl>(
+        peer_query,
+        storage,
+        provider,
+        std::make_shared<shared_model::validation::BlockValidator>());
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;

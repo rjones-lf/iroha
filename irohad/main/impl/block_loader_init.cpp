@@ -16,6 +16,7 @@
  */
 
 #include "main/impl/block_loader_init.hpp"
+#include "validators/block_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -30,7 +31,10 @@ auto BlockLoaderInit::createLoader(
     std::shared_ptr<BlockQuery> storage,
     std::shared_ptr<model::ModelCryptoProvider> crypto_provider) {
   return std::make_shared<BlockLoaderImpl>(
-      peer_query, storage, crypto_provider);
+      peer_query,
+      storage,
+      crypto_provider,
+      std::make_shared<shared_model::validation::BlockValidator>());
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
