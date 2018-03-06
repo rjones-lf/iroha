@@ -33,14 +33,15 @@ namespace iroha {
                  block.hash.to_hexstring());
       auto apply_block = [](
           const auto &block, auto &queries, const auto &top_hash) {
-        auto peers = queries.getPeers();
-        if (not peers.has_value()) {
+        auto shared_peers = queries.getPeers();
+        if (not shared_peers) {
           return false;
         }
+        auto peers = shared_model::interface::toOldVector(shared_peers.value());
         return block.prev_hash == top_hash
             and consensus::hasSupermajority(block.sigs.size(),
-                                            peers.value().size())
-            and consensus::peersSubset(block.sigs, peers.value());
+                                            peers.size())
+            and consensus::peersSubset(block.sigs, peers);
       };
 
       // Apply to temporary storage

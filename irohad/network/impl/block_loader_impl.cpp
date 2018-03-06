@@ -146,8 +146,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   return nonstd::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
-nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
-    const PublicKey &pubkey) {
+nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(const shared_model::crypto::PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers) {
     log_->error(kPeerRetrieveFail);
@@ -163,6 +162,7 @@ nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
     log_->error(kPeerFindFail);
     return nonstd::nullopt;
   }
+
   return *std::unique_ptr<iroha::model::Peer>((*it)->makeOldModel());
 }
 

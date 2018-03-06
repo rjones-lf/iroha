@@ -21,6 +21,8 @@
 #include <boost/optional.hpp>
 #include <pqxx/nontransaction>
 #include <pqxx/result>
+
+#include "builders/common_objects/default_builders.hpp"
 #include "common/result.hpp"
 #include "logger/logger.hpp"
 
@@ -86,6 +88,109 @@ namespace iroha {
                      transform_func);
 
       return values;
+    }
+
+    /**
+     * Execute build function and return error in case it throws
+     * @tparam T - result value type
+     * @param f - function which returns BuilderResult
+     * @return whatever f returns, or error in case exception has been thrown
+     */
+    template <typename BuildFunc>
+    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
+      try {
+        return f();
+      } catch (std::exception &e) {
+        return expected::makeError(std::make_shared<std::string>(e.what()));
+      }
+    }
+
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Account>
+    makeAccount(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        return shared_model::builder::DefaultAccountBuilder()
+            .accountId(row.at("account_id").template as<std::string>())
+            .domainId(row.at("domain_id").template as<std::string>())
+            .quorum(
+                row.at("quorum")
+                    .template as<shared_model::interface::types::QuorumType>())
+            .jsonData(row.at("data").template as<std::string>())
+            .build();
+      });
+    }
+
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Asset>
+    makeAsset(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        return shared_model::builder::DefaultAssetBuilder()
+            .assetId(row.at("asset_id").template as<std::string>())
+            .domainId(row.at("domain_id").template as<std::string>())
+            .precision(row.at("precision").template as<int32_t>())
+            .build();
+      });
+    }
+
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::AccountAsset>
+    makeAccountAsset(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        auto balance = shared_model::builder::DefaultAmountBuilder::fromString(
+            row.at("amount").template as<std::string>());
+        return balance | [&](const auto &balance_ptr) {
+          return shared_model::builder::DefaultAccountAssetBuilder()
+              .accountId(row.at("account_id").template as<std::string>())
+              .assetId(row.at("asset_id").template as<std::string>())
+              .balance(*balance_ptr)
+              .build();
+        };
+      });
+    }
+
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Peer>
+    makePeer(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        pqxx::binarystring public_key_str(row.at("public_key"));
+        shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
+        return shared_model::builder::DefaultPeerBuilder()
+            .pubkey(pubkey)
+            .address(row.at("address").template as<std::string>())
+            .build();
+      });
+    }
+
+    static inline shared_model::builder::BuilderResult<
+        shared_model::interface::Domain>
+    makeDomain(const pqxx::row &row) noexcept {
+      return tryBuild([&row] {
+        return shared_model::builder::DefaultDomainBuilder()
+            .domainId(row.at("domain_id").template as<std::string>())
+            .defaultRole(row.at("default_role").template as<std::string>())
+            .build();
+      });
+    }
+
+    /**
+     * Transforms result to optional
+     * value -> optional<value>
+     * error -> nullopt
+     * @tparam T type of object inside
+     * @param result BuilderResult
+     * @return optional<T>
+     */
+    template <typename T>
+    static inline nonstd::optional<std::shared_ptr<T>> fromResult(
+        const shared_model::builder::BuilderResult<T> &result) {
+      return result.match(
+          [](const expected::Value<std::shared_ptr<T>> &v) {
+            return nonstd::make_optional(v.value);
+          },
+          [](const expected::Error<std::shared_ptr<std::string>> &e)
+              -> nonstd::optional<std::shared_ptr<T>> {
+            return nonstd::nullopt;
+          });
     }
   }  // namespace ametsuchi
 }  // namespace iroha

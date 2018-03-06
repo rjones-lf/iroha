@@ -36,7 +36,7 @@ namespace iroha {
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-    PeerCommunicationServiceImpl::on_proposal() {
+    PeerCommunicationServiceImpl::on_proposal() const {
       return ordering_gate_->on_proposal().map(
           [](auto prop) -> std::shared_ptr<shared_model::interface::Proposal> {
             return std::make_shared<shared_model::proto::Proposal>(
@@ -44,7 +44,7 @@ namespace iroha {
           });
     }
 
-    rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() {
+    rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {
       return synchronizer_->on_commit_chain().map([](auto commit) -> Commit {
         return commit.map(
             [](auto block) -> std::shared_ptr<shared_model::interface::Block> {

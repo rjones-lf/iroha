@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <utility>
+
 #include "ordering/impl/ordering_gate_impl.hpp"
 
 namespace iroha {
@@ -22,7 +24,7 @@ namespace iroha {
 
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport)
-        : transport_(transport), log_(logger::log("OrderingGate")) {}
+        : transport_(std::move(transport)), log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const model::Transaction> transaction) {
@@ -37,9 +39,36 @@ namespace iroha {
       return proposals_.get_observable();
     }
 
+    void OrderingGateImpl::setPcs(
+        const iroha::network::PeerCommunicationService &pcs) {
+      pcs_subscriber_ = pcs.on_commit().subscribe([this](auto) {
+        // TODO: 05/03/2018 @muratovv rework behavior of queue with respect to
+        // block height IR-1042
+        unlock_next_.store(true);
+        this->tryNextRound();
+
+      });
+    }
+
     void OrderingGateImpl::onProposal(model::Proposal proposal) {
       log_->info("Received new proposal");
-      proposals_.get_subscriber().on_next(proposal);
+      proposal_queue_.push(
+          std::make_shared<model::Proposal>(std::move(proposal)));
+      tryNextRound();
+    }
+
+    void OrderingGateImpl::tryNextRound() {
+      if (not proposal_queue_.empty()
+          and unlock_next_.exchange(false)) {
+        std::shared_ptr<model::Proposal> next_proposal;
+        proposal_queue_.try_pop(next_proposal);
+        log_->info("Pass the proposal to pipeline");
+        proposals_.get_subscriber().on_next(*next_proposal);
+      }
+    }
+
+    OrderingGateImpl::~OrderingGateImpl() {
+      pcs_subscriber_.unsubscribe();
     }
 
   }  // namespace ordering

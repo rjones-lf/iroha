@@ -55,7 +55,7 @@ namespace iroha {
        */
       virtual rxcpp::observable<
           std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() = 0;
+      on_proposal() const = 0;
 
       /**
        * Event is triggered when commit block arrives.
@@ -64,7 +64,7 @@ namespace iroha {
        * But there are scenarios when consensus provide many blocks, e.g.
        * on peer startup - peer will get all actual blocks.
        */
-      virtual rxcpp::observable<Commit> on_commit() = 0;
+      virtual rxcpp::observable<Commit> on_commit() const = 0;
 
       virtual ~PeerCommunicationService() = default;
     };

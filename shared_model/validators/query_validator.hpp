@@ -167,21 +167,21 @@ namespace shared_model {
        * @param qry - query to validate
        * @return Answer containing found error if any
        */
-      Answer validate(detail::PolymorphicWrapper<interface::Query> qry) const {
+      Answer validate(const interface::Query &qry) const {
         Answer answer;
         std::string qry_reason_name = "Query";
         ReasonsGroupType qry_reason(qry_reason_name, GroupedReasons());
 
         field_validator_.validateCreatorAccountId(qry_reason,
-                                                  qry->creatorAccountId());
-        field_validator_.validateCreatedTime(qry_reason, qry->createdTime());
-        field_validator_.validateCounter(qry_reason, qry->queryCounter());
+                                                  qry.creatorAccountId());
+        field_validator_.validateCreatedTime(qry_reason, qry.createdTime());
+        field_validator_.validateCounter(qry_reason, qry.queryCounter());
 
         if (not qry_reason.second.empty()) {
           answer.addReason(std::move(qry_reason));
         }
 
-        auto reason = boost::apply_visitor(query_field_validator_, qry->get());
+        auto reason = boost::apply_visitor(query_field_validator_, qry.get());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }

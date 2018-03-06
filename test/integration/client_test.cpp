@@ -25,6 +25,7 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 
 #include "client.hpp"
 
@@ -218,8 +219,9 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   auto account_admin = iroha::model::Account();
   account_admin.account_id = "admin@test";
 
-  auto account_test = iroha::model::Account();
-  account_test.account_id = "test@test";
+  auto account_test = std::shared_ptr<shared_model::interface::Account>(
+      shared_model::proto::AccountBuilder().accountId("test@test").build().copy()
+  );
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(

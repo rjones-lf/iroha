@@ -37,9 +37,9 @@ namespace iroha {
               transaction) override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() override;
+      on_proposal() const override;
 
-      rxcpp::observable<Commit> on_commit() override;
+      rxcpp::observable<Commit> on_commit() const override;
 
      private:
       std::shared_ptr<OrderingGate> ordering_gate_;

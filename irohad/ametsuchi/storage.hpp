@@ -51,6 +51,13 @@ namespace iroha {
       virtual bool insertBlock(model::Block block) = 0;
 
       /**
+       * Raw insertion of blocks without validation
+       * @param blocks - collection of blocks for insertion
+       * @return true if inserted
+       */
+      virtual bool insertBlocks(const std::vector<model::Block> &blocks) = 0;
+
+      /**
        * Remove all information from ledger
        */
       virtual void dropStorage() = 0;

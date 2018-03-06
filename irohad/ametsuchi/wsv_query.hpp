@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,18 +23,21 @@
 #include <vector>
 #include "common/types.hpp"
 
+#include <nonstd/optional.hpp>
+
+#include "common/types.hpp"
+#include "interfaces/common_objects/account.hpp"
+#include "interfaces/common_objects/account_asset.hpp"
+#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/common_objects/domain.hpp"
+#include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/transaction.hpp"
+#include "interfaces/transaction_responses/tx_response.hpp"
+
 namespace iroha {
-
-  namespace model {
-    struct Domain;
-    struct Account;
-    struct AccountAsset;
-    struct Peer;
-    struct Asset;
-  }  // namespace model
-
   namespace ametsuchi {
-
     /**
      *  Public interface for world state view queries
      */
@@ -50,46 +53,56 @@ namespace iroha {
        * @return true if has permission, false otherwise
        */
       virtual bool hasAccountGrantablePermission(
-          const std::string &permitee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const shared_model::interface::types::AccountIdType
+              &permitee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) = 0;
 
       /**
        * Get iroha domain
        * @param domain_id - id in the system
        * @return Domain if exist, nullopt otherwise
        */
-      virtual nonstd::optional<model::Domain> getDomain(
-          const std::string &domain_id) = 0;
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+      getDomain(
+          const shared_model::interface::types::DomainIdType &domain_id) = 0;
 
       /**
        * Get account's roles
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<std::vector<std::string>> getAccountRoles(
-          const std::string &account_id) = 0;
-
+      virtual nonstd::optional<
+          std::vector<shared_model::interface::types::RoleIdType>>
+      getAccountRoles(
+          const shared_model::interface::types::AccountIdType &account_id) = 0;
       /**
        * Get all permissions of a role
        * @param role_name
        * @return
        */
-      virtual nonstd::optional<std::vector<std::string>> getRolePermissions(
-          const std::string &role_name) = 0;
+      virtual nonstd::optional<
+          std::vector<shared_model::interface::types::PermissionNameType>>
+      getRolePermissions(
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
 
       /**
        * @return All roles currently in the system
        */
-      virtual nonstd::optional<std::vector<std::string>> getRoles() = 0;
+      virtual nonstd::optional<
+          std::vector<shared_model::interface::types::RoleIdType>>
+      getRoles() = 0;
 
       /**
        * Get account by user account_id
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<model::Account> getAccount(
-          const std::string &account_id) = 0;
+      virtual nonstd::optional<
+          std::shared_ptr<shared_model::interface::Account>>
+      getAccount(
+          const shared_model::interface::types::AccountIdType &account_id) = 0;
 
       /**
        * Get accounts information from its key-value storage
@@ -98,26 +111,30 @@ namespace iroha {
        * @param detail
        * @return
        */
-      virtual nonstd::optional<std::string> getAccountDetail(
-          const std::string &account_id,
-          const std::string &creator_account_id,
-          const std::string &detail) = 0;
+      virtual nonstd::optional<shared_model::interface::types::DetailType>
+      getAccountDetail(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountIdType
+              &creator_account_id,
+          const shared_model::interface::types::DetailType &detail) = 0;
 
       /**
        * Get signatories of account by user account_id
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<std::vector<pubkey_t>> getSignatories(
-          const std::string &account_id) = 0;
+      virtual nonstd::optional<
+          std::vector<shared_model::interface::types::PubkeyType>>
+      getSignatories(
+          const shared_model::interface::types::AccountIdType &account_id) = 0;
 
       /**
        * Get asset by its name
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<model::Asset> getAsset(
-          const std::string &asset_id) = 0;
+      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>
+      getAsset(const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
       /**
        *
@@ -125,14 +142,19 @@ namespace iroha {
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<model::AccountAsset> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) = 0;
+      virtual nonstd::optional<
+          std::shared_ptr<shared_model::interface::AccountAsset>>
+      getAccountAsset(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
       /**
        *
        * @return
        */
-      virtual nonstd::optional<std::vector<model::Peer>> getPeers() = 0;
+      virtual nonstd::optional<
+          std::vector<std::shared_ptr<shared_model::interface::Peer>>>
+      getPeers() = 0;
     };
 
   }  // namespace ametsuchi

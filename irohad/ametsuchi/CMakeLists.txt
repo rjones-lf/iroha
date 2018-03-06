@@ -9,6 +9,7 @@ add_library(ametsuchi
     impl/postgres_block_query.cpp
     impl/postgres_block_index.cpp
     impl/postgres_ordering_service_persistent_state.cpp
+    impl/wsv_restorer_impl.cpp
     )
 
 target_link_libraries(ametsuchi
@@ -21,4 +22,7 @@ target_link_libraries(ametsuchi
     command_execution
     boost
     model_interfaces
+    shared_model_proto_backend
+    shared_model_proto_builders
+    shared_model_stateless_validation
     )

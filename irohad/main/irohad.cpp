@@ -20,6 +20,7 @@
 #include <csignal>
 #include <fstream>
 #include <thread>
+#include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_loader.hpp"
@@ -153,6 +154,7 @@ int main(int argc, char *argv[]) {
     log->info("Genesis block inserted, number of transactions: {}",
               block.value().transactions.size());
   }
+
   // init pipeline components
   irohad.init();
 

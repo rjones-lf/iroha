@@ -56,20 +56,20 @@ namespace iroha {
       MOCK_METHOD0(getRoles, nonstd::optional<std::vector<std::string>>());
       MOCK_METHOD1(
           getAccount,
-          nonstd::optional<model::Account>(const std::string &account_id));
+          nonstd::optional<std::shared_ptr<shared_model::interface::Account>>(const std::string &account_id));
       MOCK_METHOD1(getSignatories,
-                   nonstd::optional<std::vector<pubkey_t>>(
+                   nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>(
                        const std::string &account_id));
       MOCK_METHOD1(getAsset,
-                   nonstd::optional<model::Asset>(const std::string &asset_id));
+                   nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>(const std::string &asset_id));
       MOCK_METHOD2(
           getAccountAsset,
-          nonstd::optional<model::AccountAsset>(const std::string &account_id,
+          nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>>(const std::string &account_id,
                                                 const std::string &asset_id));
-      MOCK_METHOD0(getPeers, nonstd::optional<std::vector<model::Peer>>());
+      MOCK_METHOD0(getPeers, nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
       MOCK_METHOD1(
           getDomain,
-          nonstd::optional<model::Domain>(const std::string &domain_id));
+          nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>(const std::string &domain_id));
       MOCK_METHOD3(hasAccountGrantablePermission,
                    bool(const std::string &permitee_account_id,
                         const std::string &account_id,
@@ -207,6 +207,7 @@ namespace iroha {
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(model::Block block));
+      MOCK_METHOD1(insertBlocks, bool(const std::vector<model::Block> &blocks));
       MOCK_METHOD0(dropStorage, void(void));
 
       void commit(std::unique_ptr<MutableStorage> storage) override {
