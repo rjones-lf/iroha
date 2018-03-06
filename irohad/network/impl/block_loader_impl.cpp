@@ -22,7 +22,6 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/block_loader_impl.hpp"
-#include "validators/block_validator.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -33,7 +32,7 @@ BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
     std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
-    std::shared_ptr<shared_model::validation::BlockValidator>
+    std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),

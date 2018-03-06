@@ -37,7 +37,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
           std::shared_ptr<ametsuchi::BlockQuery> block_query,
           std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
-          std::shared_ptr<shared_model::validation::BlockValidator> =
+          std::shared_ptr<shared_model::validation::DefaultBlockValidator> =
               std::make_shared<shared_model::validation::DefaultBlockValidator>());
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
@@ -70,7 +70,7 @@ namespace iroha {
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
       std::shared_ptr<model::ModelCryptoProvider> crypto_provider_;
-      std::shared_ptr<shared_model::validation::BlockValidator>
+      std::shared_ptr<shared_model::validation::DefaultBlockValidator>
           stateless_validator_;
 
       logger::Logger log_;
