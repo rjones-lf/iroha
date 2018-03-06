@@ -47,9 +47,9 @@ class GetTransactions : public ::testing::Test {
   }
 
   /**
-   * Dummy transaction that user can execute.
-   * It should change affect the ledger minimally
+   * Valid transaction that user can execute.
    * @return built tx and a hash of its payload
+   * Note: It should affect the ledger minimally
    */
   auto dummyTx() {
     return shared_model::proto::TransactionBuilder()
@@ -63,6 +63,7 @@ class GetTransactions : public ::testing::Test {
 
   /**
    * Creates valid GetTransactions query of current user
+   * @param hash of the tx for querying
    * @return built query
    */
   auto makeQuery(const crypto::Hash &hash) {
@@ -85,8 +86,8 @@ class GetTransactions : public ::testing::Test {
 };
 
 /**
- * @given some user without can_get_{my,all}_txs
- * @when query GetTransactions of just sent tx
+ * @given some user without can_get_{my,all}_txs permissions
+ * @when query GetTransactions of existing transaction of the user
  * @then stateful validation fail returned
  */
 TEST_F(GetTransactions, HaveNoGetPerms) {
@@ -109,9 +110,9 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
 }
 
 /**
- * @given some user with only can_get_all_txs
- * @when query GetTransactions of just sent tx
- * @then TransactionsResponse with the tx returned
+ * @given some user with only can_get_all_txs permission
+ * @when query GetTransactions of existing transaction of the user
+ * @then receive TransactionsResponse with the transaction hash
  */
 TEST_F(GetTransactions, HaveGetAllTx) {
   auto dummy_tx = dummyTx();
@@ -135,9 +136,9 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 }
 
 /**
- * @given some user with can_get_my_txs
- * @when query GetTransactions of just sent tx
- * @then TransactionsResponse with the tx returned
+ * @given some user with only can_get_my_txs permission
+ * @when query GetTransactions of existing transaction of the user
+ * @then receive TransactionsResponse with the transaction hash
  */
 TEST_F(GetTransactions, HaveGetMyTx) {
   auto dummy_tx = dummyTx();
@@ -161,7 +162,7 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 }
 
 /**
- * @given some user with can_get_my_txs
+ * @given some user with only can_get_my_txs permission
  * @when query GetTransactions with inexistent hash
  * @then TransactionsResponse with no transactions
  */
@@ -185,7 +186,7 @@ TEST_F(GetTransactions, InexistentHash) {
 
 /**
  * @given some user with can_get_my_txs
- * @when query GetTransactions with hash of other user tx
+ * @when query GetTransactions of existing transaction of the other user
  * @then TransactionsResponse with no transactions
  * TODO(@l4l) 02/01/18 Should be enabled after resolving IR-1039
  */

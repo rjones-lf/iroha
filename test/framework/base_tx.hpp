@@ -47,7 +47,7 @@ namespace framework {
    * @param key is a public key of new user
    * @param role_id is new role of the user
    * @param perms is a collections of permissions of the user
-   * @param pre-build transaction
+   * @return pre-build transaction
    */
   static inline auto createUserWithPerms(
       const std::string &user,
