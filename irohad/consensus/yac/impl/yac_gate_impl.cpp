@@ -30,6 +30,12 @@
 #include "simulator/block_creator.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
+#include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/signature.hpp"
+#include "utils/polymorphic_wrapper.hpp"
+
 namespace iroha {
   namespace consensus {
     namespace yac {
