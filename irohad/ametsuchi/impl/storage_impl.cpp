@@ -23,6 +23,8 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
@@ -112,18 +114,16 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      nonstd::optional<hash256_t> top_hash;
+      nonstd::optional<shared_model::interface::types::HashType> top_hash;
 
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) {
-            top_hash = hash256_t::from_string(toBinaryString(block->hash()));
-          });
+          .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
-              top_hash.value_or(hash256_t{}),
+              top_hash.value_or(shared_model::interface::types::HashType("")),
               std::move(postgres_connection),
               std::move(wsv_transaction),
               std::move(command_executors.value())));
@@ -270,9 +270,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
+        auto bl = *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,
                           stringToBytes(model::converters::jsonToString(
-                              serializer_.serialize(block.second))));
+                              serializer_.serialize(bl))));
       }
 
       storage->transaction_->exec("COMMIT;");

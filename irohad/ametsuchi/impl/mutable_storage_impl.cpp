@@ -25,7 +25,7 @@
 namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
-        hash256_t top_hash,
+        shared_model::interface::types::HashType top_hash,
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction,
         std::shared_ptr<model::CommandExecutorFactory> command_executors)
@@ -45,7 +45,8 @@ namespace iroha {
         const shared_model::interface::Block &block,
         std::function<bool(const shared_model::interface::Block &,
                            WsvQuery &,
-                           const hash256_t &)> function) {
+                           const shared_model::interface::types::HashType &)>
+            function) {
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
           auto result =
@@ -71,10 +72,12 @@ namespace iroha {
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(block.height(), bl));
+        block_store_.insert(std::make_pair(
+            block.height(),
+            std::unique_ptr<shared_model::interface::Block>(block.copy())));
         block_index_->index(block);
 
-        top_hash_ = bl.hash;
+        top_hash_ = block.hash();
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
         transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");

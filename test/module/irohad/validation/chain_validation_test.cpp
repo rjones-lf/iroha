@@ -36,39 +36,25 @@ using ::testing::InvokeArgument;
 using ::testing::Return;
 using ::testing::_;
 
+auto zero_string = std::string(32, 0);
+auto fake_hash = shared_model::crypto::Hash(zero_string);
+
 class ChainValidationTest : public ::testing::Test {
  public:
   void SetUp() override {
     validator = std::make_shared<ChainValidatorImpl>(supermajority_checker_);
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockWsvQuery>();
-
-    block.prev_hash.fill(0);
-    hash = block.prev_hash;
-  }
-
-  /**
-   * Get block builder to build blocks for tests
-   * @return block builder
-   */
-  auto getBlockBuilder() const {
-    return TestBlockBuilder()
-        .transactions(std::vector<shared_model::proto::Transaction>{})
-        .txNumber(0)
-        .height(1)
-        .prevHash(new_hash)
-        .createdTime(iroha::time::now());
   }
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   Block block;
-  hash256_t hash;
+  shared_model::interface::types::HashType hash{fake_hash};
 
   std::shared_ptr<iroha::consensus::yac::MockSupermajorityChecker>
       supermajority_checker_ =
           std::make_shared<iroha::consensus::yac::MockSupermajorityChecker>();
-  shared_model::crypto::Hash new_hash =
-      shared_model::crypto::Hash("valid hash");
+
   std::shared_ptr<ChainValidatorImpl> validator;
   std::shared_ptr<MockMutableStorage> storage;
   std::shared_ptr<MockWsvQuery> query;
@@ -98,7 +84,8 @@ TEST_F(ChainValidationTest, ValidCase) {
  * @then block is not validated
  */
 TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
-  hash.fill(1);
+  hash = shared_model::interface::types::HashType(
+      std::string(1, block.prev_hash.size()));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 

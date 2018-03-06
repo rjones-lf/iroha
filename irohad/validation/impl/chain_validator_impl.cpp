@@ -42,7 +42,7 @@ namespace iroha {
               return false;
             }
             auto bl = *std::unique_ptr<model::Block>(block.makeOldModel());
-            return bl.prev_hash == top_hash
+            return block.prevHash() == top_hash
                 and supermajority_checker_->hasSupermajority(bl.sigs,
                                                              peers.value());
           };

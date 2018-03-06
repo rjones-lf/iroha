@@ -172,9 +172,10 @@ namespace iroha {
       MOCK_METHOD2(
           apply,
           bool(const shared_model::interface::Block &,
-               std::function<bool(const shared_model::interface::Block &,
-                                  WsvQuery &,
-                                  const hash256_t &)>));
+               std::function<
+                   bool(const shared_model::interface::Block &,
+                        WsvQuery &,
+                        const shared_model::interface::types::HashType &)>));
     };
 
     /**
