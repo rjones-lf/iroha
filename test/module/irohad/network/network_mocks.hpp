@@ -28,12 +28,16 @@ namespace iroha {
   namespace network {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
-      MOCK_METHOD1(propagate_transaction,
-                   void(std::shared_ptr<const shared_model::interface::Transaction>));
+      MOCK_METHOD1(
+          propagate_transaction,
+          void(std::shared_ptr<const shared_model::interface::Transaction>));
 
-      MOCK_METHOD0(on_proposal, rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>());
+      MOCK_CONST_METHOD0(
+          on_proposal,
+          rxcpp::observable<
+              std::shared_ptr<shared_model::interface::Proposal>>());
 
-      MOCK_METHOD0(on_commit, rxcpp::observable<Commit>());
+      MOCK_CONST_METHOD0(on_commit, rxcpp::observable<Commit>());
     };
 
     class MockBlockLoader : public BlockLoader {
@@ -53,6 +57,8 @@ namespace iroha {
                    void(std::shared_ptr<const model::Transaction> transaction));
 
       MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());
+
+      MOCK_METHOD1(setPcs, void(const PeerCommunicationService &));
     };
 
     class MockConsensusGate : public ConsensusGate {

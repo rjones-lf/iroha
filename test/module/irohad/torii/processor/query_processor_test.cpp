@@ -26,6 +26,7 @@
 #include "torii/processor/query_processor_impl.hpp"
 
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -79,11 +80,16 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto account = model::Account();
   account.account_id = account_id;
   qry_resp->account = account;
+  auto shared_account = std::shared_ptr<shared_model::interface::Account>(
+      shared_model::proto::AccountBuilder()
+          .accountId(account_id)
+          .build()
+          .copy());
   auto role = "admin";
   std::vector<std::string> roles = {role};
   std::vector<std::string> perms = {iroha::model::can_get_my_account};
 
-  EXPECT_CALL(*wsv_queries, getAccount(account_id)).WillOnce(Return(account));
+  EXPECT_CALL(*wsv_queries, getAccount(account_id)).WillOnce(Return(shared_account));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
       .Times(2)
       .WillRepeatedly(Return(roles));

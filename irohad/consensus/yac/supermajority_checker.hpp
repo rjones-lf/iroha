@@ -51,7 +51,8 @@ namespace iroha {
          */
         virtual bool hasSupermajority(
             const std::vector<model::Signature> &signatures,
-            const std::vector<model::Peer> &peers) const = 0;
+            const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+                &peers) const = 0;
 
         /**
          * Check if supermajority is possible
@@ -69,7 +70,8 @@ namespace iroha {
          */
         virtual bool peersSubset(
             const std::vector<model::Signature> &signatures,
-            const std::vector<model::Peer> &peers) const = 0;
+            const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+                &peers) const = 0;
 
         /**
          * Check if there is available reject proof.

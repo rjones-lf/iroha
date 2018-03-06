@@ -27,24 +27,13 @@ namespace iroha {
     PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
         : wsv_(std::move(wsv)) {}
 
-    boost::optional<std::vector<PeerQueryWsv::wPeer>>
-    PeerQueryWsv::getLedgerPeers() {
-      return wsv_->getPeers() | [](const auto &peers) {
-        return std::accumulate(
-            peers.begin(),
-            peers.end(),
-            std::vector<PeerQueryWsv::wPeer>{},
-            [](auto &vec, const auto &peer) {
-              shared_model::proto::PeerBuilder builder;
-
-              auto key =
-                  shared_model::crypto::PublicKey(peer.pubkey.to_string());
-              auto tmp = builder.address(peer.address).pubkey(key).build();
-
-              vec.emplace_back(tmp.copy());
-              return vec;
-            });
-      };
+    boost::optional<std::vector<PeerQuery::wPeer>> PeerQueryWsv::getLedgerPeers() {
+      auto peers = wsv_->getPeers();
+      if (peers) {
+        return boost::make_optional(peers.value());
+      } else {
+        return boost::none;
+      }
     }
 
   }  // namespace ametsuchi

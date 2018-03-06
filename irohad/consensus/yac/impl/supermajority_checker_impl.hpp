@@ -36,13 +36,15 @@ namespace iroha {
          */
         virtual bool hasSupermajority(
             const std::vector<model::Signature> &signatures,
-            const std::vector<model::Peer> &peers) const override;
+            const std::vector<std::shared_ptr<shared_model::interface::Peer>> &peers)
+            const override;
 
         virtual bool checkSize(uint64_t current, uint64_t all) const override;
 
         virtual bool peersSubset(
             const std::vector<model::Signature> &signatures,
-            const std::vector<model::Peer> &peers) const override;
+            const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+                &peers) const override;
 
         virtual bool hasReject(uint64_t frequent,
                                uint64_t voted,

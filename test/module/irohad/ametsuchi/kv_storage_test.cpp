@@ -56,7 +56,7 @@ class KVTest : public AmetsuchiTest {
 
     // First transaction in block1
     Transaction txn1_1;
-    txn1_1.creator_account_id = "user1@ru";
+    txn1_1.creator_account_id = "userone@ru";
 
     CreateRole createRole;
     createRole.role_name = "user";
@@ -119,8 +119,8 @@ class KVTest : public AmetsuchiTest {
   std::shared_ptr<WsvQuery> wsv_query;
 
   std::string domain_id = "ru";
-  std::string account_name1 = "user1";
-  std::string account_name2 = "user2";
+  std::string account_name1 = "userone";
+  std::string account_name2 = "usertwo";
 };
 
 /**
@@ -133,7 +133,7 @@ TEST_F(KVTest, GetNonexistingDetail) {
   auto account = wsv_query->getAccount(account_id1);
 
   auto age =
-      wsv_query->getAccountDetail(account_id1, "user1@ru", "nonexisting-field");
+      wsv_query->getAccountDetail(account_id1, "userone@ru", "nonexisting-field");
   ASSERT_FALSE(age);
 }
 
@@ -144,7 +144,7 @@ TEST_F(KVTest, GetNonexistingDetail) {
  */
 TEST_F(KVTest, SetAccountDetail) {
   auto account_id2 = account_name2 + "@" + domain_id;
-  auto age = wsv_query->getAccountDetail(account_id2, "user1@ru", "age");
+  auto age = wsv_query->getAccountDetail(account_id2, "userone@ru", "age");
 
   ASSERT_TRUE(age);
   ASSERT_EQ(age.value(), "24");

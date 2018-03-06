@@ -18,12 +18,11 @@
 #ifndef IROHA_AMETSUCHI_FIXTURE_HPP
 #define IROHA_AMETSUCHI_FIXTURE_HPP
 
-#include "common/files.hpp"
-#include "logger/logger.hpp"
-
 #include <gtest/gtest.h>
 #include <pqxx/pqxx>
-
+#include "ametsuchi/impl/storage_impl.hpp"
+#include "common/files.hpp"
+#include "logger/logger.hpp"
 #include "model/generators/command_generator.hpp"
 
 namespace iroha {
@@ -75,11 +74,18 @@ namespace iroha {
         } catch (const pqxx::broken_connection &e) {
           FAIL() << "Connection to PostgreSQL broken: " << e.what();
         }
+
+        StorageImpl::create(block_store_path, pgopt_)
+            .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
+                           &_storage) { storage = _storage.value; },
+                   [](iroha::expected::Error<std::string> &error) {
+                     FAIL() << "StorageImpl: " << error.error;
+                   });
       }
 
       void SetUp() override {
         connect();
-        clear();
+        storage->dropStorage();
       }
 
       void TearDown() override {
@@ -90,6 +96,8 @@ namespace iroha {
       std::shared_ptr<pqxx::lazyconnection> connection;
 
       model::generators::CommandGenerator cmd_gen;
+
+      std::shared_ptr<StorageImpl> storage;
 
       std::string pgopt_ =
           "host=localhost port=5432 user=postgres password=mysecretpassword";

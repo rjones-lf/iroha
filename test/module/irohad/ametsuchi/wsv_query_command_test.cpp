@@ -133,7 +133,7 @@ namespace iroha {
       ASSERT_NO_THROW(checkValueCase(command->insertAccount(account)));
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
-      ASSERT_EQ(account.json_data, acc.value().json_data);
+      ASSERT_EQ(account.json_data, acc.value()->jsonData());
     }
 
     /**
@@ -148,7 +148,7 @@ namespace iroha {
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
       ASSERT_EQ(R"({"id@domain": {"id": "val", "key": "value"}})",
-                acc.value().json_data);
+                acc.value()->jsonData());
     }
 
     /**
@@ -163,7 +163,7 @@ namespace iroha {
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
       ASSERT_EQ(R"({"admin": {"id": "val"}, "id@domain": {"key": "value"}})",
-                acc.value().json_data);
+                acc.value()->jsonData());
     }
 
     /**
@@ -178,7 +178,7 @@ namespace iroha {
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
       ASSERT_EQ(R"({"id@domain": {"id": "[val1, val2]", "key": "value"}})",
-                acc.value().json_data);
+                acc.value()->jsonData());
     }
 
     /**
@@ -192,7 +192,7 @@ namespace iroha {
           account.account_id, account.account_id, "key", "val2")));
       auto acc = query->getAccount(account.account_id);
       ASSERT_TRUE(acc.has_value());
-      ASSERT_EQ(R"({"id@domain": {"key": "val2"}})", acc.value().json_data);
+      ASSERT_EQ(R"({"id@domain": {"key": "val2"}})", acc.value()->jsonData());
     }
 
     /**

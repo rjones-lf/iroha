@@ -103,10 +103,10 @@ namespace integration_framework {
                         const std::string &error_reason);
 
    protected:
-    std::shared_ptr<IrohaInstance> iroha_instance_ =
-        std::make_shared<IrohaInstance>();
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
+    std::shared_ptr<IrohaInstance> iroha_instance_ =
+        std::make_shared<IrohaInstance>();
 
     // config area
 

@@ -25,7 +25,8 @@ namespace iroha {
 
       bool SupermajorityCheckerImpl::hasSupermajority(
           const std::vector<model::Signature> &signatures,
-          const std::vector<model::Peer> &peers) const {
+          const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+              &peers) const {
         return checkSize(signatures.size(), peers.size())
             and peersSubset(signatures, peers);
       }
@@ -41,14 +42,24 @@ namespace iroha {
 
       bool SupermajorityCheckerImpl::peersSubset(
           const std::vector<model::Signature> &signatures,
-          const std::vector<model::Peer> &peers) const {
+          const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+              &peers) const {
         return std::all_of(
             signatures.begin(), signatures.end(), [&peers](auto signature) {
-              return std::find_if(peers.begin(),
-                                  peers.end(),
-                                  [&signature](const model::Peer &peer) {
-                                    return signature.pubkey == peer.pubkey;
-                                  })
+              return std::find_if(
+                         peers.begin(),
+                         peers.end(),
+                         [&signature](const std::shared_ptr<
+                                      shared_model::interface::Peer> &peer) {
+
+                           // TODO 14-02-2018 Alexey Chernyshov
+                           // remove after relocationn to shared_model
+                           shared_model::crypto::PublicKey signature_pubkey(
+                               {signature.pubkey.begin(),
+                                signature.pubkey.end()});
+
+                           return signature_pubkey == peer->pubkey();
+                         })
                   != peers.end();
             });
       }

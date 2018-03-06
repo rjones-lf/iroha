@@ -57,7 +57,20 @@ namespace iroha {
       expected::Result<std::unique_ptr<MutableStorage>, std::string>
       createMutableStorage() override;
 
+      /**
+       * Insert block without validation
+       * @param blocks - block for insertion
+       * @return true if all blocks are inserted
+       */
       virtual bool insertBlock(model::Block block) override;
+
+      /**
+       * Insert blocks without validation
+       * @param blocks - collection of blocks for insertion
+       * @return true if inserted
+       */
+      virtual bool insertBlocks(
+          const std::vector<model::Block> &blocks) override;
 
       virtual void dropStorage() override;
 

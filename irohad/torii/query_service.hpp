@@ -23,11 +23,9 @@ limitations under the License.
 #include "responses.pb.h"
 
 #include "backend/protobuf/queries/proto_query.hpp"
-#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "cache/cache.hpp"
 #include "torii/processor/query_processor.hpp"
-#include "validators/default_validator.hpp"
 
 #include "logger/logger.hpp"
 
@@ -60,7 +58,7 @@ namespace torii {
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
 
     iroha::cache::Cache<shared_model::crypto::Hash,
-                        std::shared_ptr<shared_model::interface::QueryResponse>,
+                        iroha::protocol::QueryResponse,
                         shared_model::crypto::Hash::Hasher>
         cache_;
 

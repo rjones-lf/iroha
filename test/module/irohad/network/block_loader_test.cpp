@@ -20,22 +20,23 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
-#include "framework/test_subscriber.hpp"
-#include "model/sha3_hash.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/model/model_mocks.hpp"
-
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/from_old_model.hpp"
+#include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/builder_templates/block_template.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
+#include "framework/test_subscriber.hpp"
+#include "model/sha3_hash.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/model/model_mocks.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
@@ -65,10 +66,18 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    Peer peer;
-    peer.address = "0.0.0.0:" + std::to_string(port);
-    std::copy_n(
-        peer_key.blob().begin(), peer.pubkey.size(), peer.pubkey.begin());
+    shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>()
+        .address("0.0.0.0:" + std::to_string(port))
+        .pubkey(peer_key)
+        .build()
+        .match(
+            [&](iroha::expected::Value<
+                std::shared_ptr<shared_model::interface::Peer>> &v) {
+              peer = v.value;
+            },
+            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
     peers.push_back(peer);
 
     ASSERT_TRUE(server);
@@ -78,18 +87,19 @@ class BlockLoaderTest : public testing::Test {
   auto getBaseBlockBuilder() const {
     constexpr auto kTotal = (1 << 5) - 1;
     return shared_model::proto::TemplateBlockBuilder<
-               kTotal,
-               shared_model::validation::DefaultBlockValidator,
-               shared_model::proto::Block>()
+        kTotal,
+        shared_model::validation::DefaultBlockValidator,
+        shared_model::proto::Block>()
         .txNumber(0)
         .height(1)
         .prevHash(Hash(std::string(32, '0')))
         .createdTime(iroha::time::now());
   }
 
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
-  std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
   std::shared_ptr<MockCryptoProvider> provider;
@@ -108,12 +118,11 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   auto block = getBaseBlockBuilder().build();
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
-  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+  wPeer w_peer = std::shared_ptr<shared_model::interface::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
-          .build());
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build().copy());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{w_peer}));
@@ -123,7 +132,8 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 0);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer->pubkey()
+      ), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -143,11 +153,10 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -189,11 +198,10 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
       .WillRepeatedly(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -203,6 +211,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
           [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(next_height))
       .WillOnce(Return(rxcpp::observable<>::iterate(blocks)));
+  auto old_peer = *peer->makeOldModel();
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;
@@ -224,11 +233,10 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
@@ -252,11 +260,10 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   auto present = getBaseBlockBuilder().build();
 
   auto peer = peers.back();
-  auto key = shared_model::crypto::PublicKey(peer.pubkey.to_string());
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
-          .pubkey(key)
-          .address(peer.address)
+          .pubkey(peer->pubkey())
+          .address(peer->address())
           .build());
 
   EXPECT_CALL(*peer_query, getLedgerPeers())

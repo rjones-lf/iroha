@@ -16,7 +16,7 @@
  */
 
 #include "ametsuchi/impl/storage_impl.hpp"
-
+#include <boost/format.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"  // for FlatFile
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -25,8 +25,6 @@
 #include "model/converters/json_common.hpp"
 #include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
-
-#include <boost/format.hpp>
 
 namespace iroha {
   namespace ametsuchi {
@@ -149,6 +147,30 @@ namespace iroha {
             log_->error(error.error);
           });
 
+      return inserted;
+    }
+
+    bool StorageImpl::insertBlocks(const std::vector<model::Block> &blocks) {
+      log_->info("create mutable storage");
+      bool inserted = true;
+      auto storageResult = createMutableStorage();
+      storageResult.match(
+          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                  &mutableStorage) {
+            std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
+              inserted &= mutableStorage.value->apply(
+                  block, [](const auto &block, auto &query, const auto &hash) {
+                    return true;
+                  });
+            });
+            commit(std::move(mutableStorage.value));
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            log_->error(error.error);
+            inserted = false;
+          });
+
+      log_->info("insert blocks finished");
       return inserted;
     }
 

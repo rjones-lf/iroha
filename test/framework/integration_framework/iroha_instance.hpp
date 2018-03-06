@@ -20,7 +20,9 @@
 
 #include <chrono>
 #include <string>
+
 #include "common/types.hpp"
+#include "framework/config_helper.hpp"
 #include "integration/pipeline/test_irohad.hpp"
 
 namespace iroha {

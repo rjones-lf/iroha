@@ -30,7 +30,6 @@ namespace shared_model {
      */
     class PeerBuilder {
      public:
-
       shared_model::proto::Peer build() {
         return shared_model::proto::Peer(iroha::protocol::Peer(peer_));
       }

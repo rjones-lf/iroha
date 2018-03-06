@@ -64,10 +64,10 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-  on_proposal() override {
+  on_proposal() const override {
     return prop_notifier_.get_observable();
   }
-  rxcpp::observable<Commit> on_commit() override {
+  rxcpp::observable<Commit> on_commit() const override {
     return commit_notifier_.get_observable();
   }
 

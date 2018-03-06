@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
@@ -42,7 +45,7 @@ class ChainValidationTest : public ::testing::Test {
     hash = block.prev_hash;
   }
 
-  std::vector<Peer> peers;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   Block block;
   hash256_t hash;
 
