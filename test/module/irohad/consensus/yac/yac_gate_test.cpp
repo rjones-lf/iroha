@@ -200,7 +200,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(expected_block));
 
-  init();
+   init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
