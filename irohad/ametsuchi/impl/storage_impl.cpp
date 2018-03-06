@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
@@ -132,11 +133,12 @@ namespace iroha {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
+      auto bl = shared_model::proto::from_old(block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(block,
+                storage.value->apply(bl,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -158,8 +160,9 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
+              auto bl = shared_model::proto::from_old(block);
               inserted &= mutableStorage.value->apply(
-                  block, [](const auto &block, auto &query, const auto &hash) {
+                  bl, [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });
             });

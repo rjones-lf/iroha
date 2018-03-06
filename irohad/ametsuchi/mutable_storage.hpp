@@ -20,6 +20,12 @@
 
 #include "common/types.hpp"  // for hash256_t
 
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}  // namespace shared_model
+
 namespace iroha {
 
   namespace model {
@@ -50,10 +56,11 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(const model::Block &block,
-                         std::function<bool(const model::Block &,
-                                            WsvQuery &,
-                                            const hash256_t &)> function) = 0;
+      virtual bool apply(
+          const shared_model::interface::Block &block,
+          std::function<bool(const shared_model::interface::Block &,
+                             WsvQuery &,
+                             const hash256_t &)> function) = 0;
 
       virtual ~MutableStorage() = default;
     };

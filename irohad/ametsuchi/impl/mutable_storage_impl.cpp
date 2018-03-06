@@ -19,7 +19,6 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "model/execution/command_executor_factory.hpp"
-#include "model/sha3_hash.hpp"
 
 #include "backend/protobuf/from_old_model.hpp"
 
@@ -43,9 +42,10 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(
-        const model::Block &block,
-        std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
-            function) {
+        const shared_model::interface::Block &block,
+        std::function<bool(const shared_model::interface::Block &,
+                           WsvQuery &,
+                           const hash256_t &)> function) {
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
           auto result =
@@ -64,16 +64,17 @@ namespace iroha {
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
+      auto bl = *std::unique_ptr<model::Block>(block.makeOldModel());
       auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(block.transactions.begin(),
-                          block.transactions.end(),
+          and std::all_of(bl.transactions.begin(),
+                          bl.transactions.end(),
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(block.height, block));
-        block_index_->index(shared_model::proto::from_old(block));
+        block_store_.insert(std::make_pair(block.height(), bl));
+        block_index_->index(block);
 
-        top_hash_ = block.hash;
+        top_hash_ = bl.hash;
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
         transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");

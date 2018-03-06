@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validators/field_validator.hpp"
 
@@ -45,6 +47,19 @@ class ChainValidationTest : public ::testing::Test {
     hash = block.prev_hash;
   }
 
+  /**
+   * Get block builder to build blocks for tests
+   * @return block builder
+   */
+  auto getBlockBuilder() const {
+    return TestBlockBuilder()
+        .transactions(std::vector<shared_model::proto::Transaction>{})
+        .txNumber(0)
+        .height(1)
+        .prevHash(new_hash)
+        .createdTime(iroha::time::now());
+  }
+
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   Block block;
   hash256_t hash;
@@ -52,6 +67,8 @@ class ChainValidationTest : public ::testing::Test {
   std::shared_ptr<iroha::consensus::yac::MockSupermajorityChecker>
       supermajority_checker_ =
           std::make_shared<iroha::consensus::yac::MockSupermajorityChecker>();
+  shared_model::crypto::Hash new_hash =
+      shared_model::crypto::Hash("valid hash");
   std::shared_ptr<ChainValidatorImpl> validator;
   std::shared_ptr<MockMutableStorage> storage;
   std::shared_ptr<MockWsvQuery> query;
@@ -68,8 +85,9 @@ TEST_F(ChainValidationTest, ValidCase) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  auto bl = shared_model::proto::from_old(block);
+  EXPECT_CALL(*storage, apply(_, _))
+      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateBlock(block, *storage));
 }
@@ -84,8 +102,9 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  auto bl = shared_model::proto::from_old(block);
+  EXPECT_CALL(*storage, apply(_, _))
+      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -101,8 +120,9 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  auto bl = shared_model::proto::from_old(block);
+  EXPECT_CALL(*storage, apply(_, _))
+      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -120,8 +140,9 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
 
   auto block_observable = rxcpp::observable<>::just(block);
 
-  EXPECT_CALL(*storage, apply(block, _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+  auto bl = shared_model::proto::from_old(block);
+  EXPECT_CALL(*storage, apply(_, _))
+      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }

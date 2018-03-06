@@ -36,7 +36,7 @@ using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
 
-auto zero_string = std::string(32, '0'/*, 32*/);
+auto zero_string = std::string(32, '0' /*, 32*/);
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
@@ -119,7 +119,9 @@ void validateAccountAsset(W &&wsv,
   ASSERT_TRUE(account_asset);
   ASSERT_EQ((*account_asset)->accountId(), account);
   ASSERT_EQ((*account_asset)->assetId(), asset);
-  ASSERT_EQ(*std::unique_ptr<iroha::Amount>((*account_asset)->balance().makeOldModel()), amount);
+  ASSERT_EQ(*std::unique_ptr<iroha::Amount>(
+                (*account_asset)->balance().makeOldModel()),
+            amount);
 }
 
 /**
@@ -156,8 +158,7 @@ void apply(S &&storage, const shared_model::interface::Block &block) {
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(*std::unique_ptr<iroha::model::Block>(block.makeOldModel()),
-            [](const auto &, auto &, const auto &) { return true; });
+  ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
   storage->commit(std::move(ms));
 }
 
@@ -273,7 +274,7 @@ TEST_F(AmetsuchiTest, PeerTest) {
   ASSERT_EQ(peers->size(), 1);
   ASSERT_EQ(peers->at(0)->address(), "192.168.9.1:50051");
 
-//  auto pubkey = iroha::blob_t<32>::from_string(zero_string);
+  //  auto pubkey = iroha::blob_t<32>::from_string(zero_string);
   ASSERT_EQ(peers->at(0)->pubkey(), fake_pubkey);
 }
 
@@ -283,10 +284,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   auto blocks = storage->getBlockQuery();
 
   const auto admin = "admin", domain = "domain", user1name = "userone",
-             user2name = "usertwo", user3name = "userthree", user1id = "userone@domain",
-             user2id = "usertwo@domain", user3id = "userthree@domain",
-             asset1name = "assetone", asset2name = "assettwo",
-             asset1id = "assetone#domain", asset2id = "assettwo#domain";
+             user2name = "usertwo", user3name = "userthree",
+             user1id = "userone@domain", user2id = "usertwo@domain",
+             user3id = "userthree@domain", asset1name = "assetone",
+             asset2name = "assettwo", asset1id = "assetone#domain",
+             asset2id = "assettwo#domain";
 
   std::string account, src_account, dest_account, asset;
   iroha::Amount amount;
@@ -470,8 +472,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 2);
     ASSERT_EQ(signatories->at(0), pubkey1);
-    ASSERT_EQ(signatories->at(1), pubkey2
-    );
+    ASSERT_EQ(signatories->at(1), pubkey2);
   }
 
   // 3rd tx (create user2 with pubkey1 that is same as user1's key)
