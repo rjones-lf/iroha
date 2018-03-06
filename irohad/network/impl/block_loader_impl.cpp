@@ -22,7 +22,6 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/block_loader_impl.hpp"
-#include "validators/block_validator.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
