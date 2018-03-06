@@ -27,7 +27,7 @@
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 #include "model/model_crypto_provider.hpp"
-#include "validators/block_validator.hpp"
+#include "validators/default_validator.hpp"
 
 namespace iroha {
   namespace network {
@@ -38,7 +38,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::BlockQuery> block_query,
           std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
           std::shared_ptr<shared_model::validation::BlockValidator> =
-              std::make_shared<shared_model::validation::BlockValidator>());
+              std::make_shared<shared_model::validation::DefaultBlockValidator>());
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
