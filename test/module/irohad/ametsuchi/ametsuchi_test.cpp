@@ -627,8 +627,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
 
   log->info("Try insert block");
 
-  auto inserted = storage->insertBlock(
-      *std::unique_ptr<iroha::model::Block>(getBlock().makeOldModel()));
+auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");
@@ -669,8 +668,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
 
   log->info("Try insert block");
 
-  auto inserted = storage->insertBlock(
-      *std::unique_ptr<iroha::model::Block>(getBlock().makeOldModel()));
+auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");
