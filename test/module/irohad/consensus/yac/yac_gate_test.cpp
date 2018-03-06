@@ -26,6 +26,8 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "cryptography/hash.hpp"
 #include "framework/test_subscriber.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+#include "cryptography/hash.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;
@@ -51,6 +53,10 @@ class YacGateTest : public ::testing::Test {
     message.signature = expected_block.sigs.front();
     commit_message = CommitMessage({message});
     expected_commit = rxcpp::observable<>::just(commit_message);
+
+    auto bytes = shared_model::proto::from_old(expected_block).hash().blob();
+    std::copy(bytes.begin(), bytes.end(), expected_block.hash.begin());
+
 
     hash_gate = make_unique<MockHashGate>();
     peer_orderer = make_unique<MockYacPeerOrderer>();
@@ -117,8 +123,13 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(block, expected_block); });
+  gate_wrapper.subscribe([this](auto block) {
+    auto bl = *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
+    //std::cout<<block->toString()<<std::endl;
+    std::cout<<shared_model::proto::from_old(expected_block).hash().hex()<<std::endl;
+    std::cout<<expected_block.hash.to_hexstring()<<std::endl;
+    ASSERT_EQ(bl, expected_block);
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -197,13 +208,14 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
               std::make_shared<shared_model::proto::Block>(
                   shared_model::proto::from_old(expected_block)))));
 
-  init();
+   init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](auto block) {
-    block.hash = expected_block.hash;
-    ASSERT_EQ(block, expected_block);
+    auto bl = *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
+    bl.hash = expected_block.hash;
+    ASSERT_EQ(bl, expected_block);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
