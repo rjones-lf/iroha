@@ -36,7 +36,7 @@ using ::testing::InvokeArgument;
 using ::testing::Return;
 using ::testing::_;
 
-auto zero_string = std::string(32, 0);
+auto zero_string = std::string(32, '\0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 
 class ChainValidationTest : public ::testing::Test {
@@ -71,9 +71,9 @@ TEST_F(ChainValidationTest, ValidCase) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto bl = shared_model::proto::from_old(block);
+  auto old_block = shared_model::proto::from_old(block);
   EXPECT_CALL(*storage, apply(_, _))
-      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(old_block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateBlock(block, *storage));
 }
@@ -89,9 +89,9 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto bl = shared_model::proto::from_old(block);
+  auto old_block = shared_model::proto::from_old(block);
   EXPECT_CALL(*storage, apply(_, _))
-      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(old_block), ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -107,9 +107,9 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  auto bl = shared_model::proto::from_old(block);
+  auto old_block = shared_model::proto::from_old(block);
   EXPECT_CALL(*storage, apply(_, _))
-      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(old_block), ByRef(*query), ByRef(hash)));
 
   ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
@@ -127,9 +127,9 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
 
   auto block_observable = rxcpp::observable<>::just(block);
 
-  auto bl = shared_model::proto::from_old(block);
+  auto old_block = shared_model::proto::from_old(block);
   EXPECT_CALL(*storage, apply(_, _))
-      .WillOnce(InvokeArgument<1>(ByRef(bl), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(old_block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }

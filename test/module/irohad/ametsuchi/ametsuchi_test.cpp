@@ -36,7 +36,7 @@ using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
 
-auto zero_string = std::string(32, '0' /*, 32*/);
+auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
@@ -274,7 +274,6 @@ TEST_F(AmetsuchiTest, PeerTest) {
   ASSERT_EQ(peers->size(), 1);
   ASSERT_EQ(peers->at(0)->address(), "192.168.9.1:50051");
 
-  //  auto pubkey = iroha::blob_t<32>::from_string(zero_string);
   ASSERT_EQ(peers->at(0)->pubkey(), fake_pubkey);
 }
 

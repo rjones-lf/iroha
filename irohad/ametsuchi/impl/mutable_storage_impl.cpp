@@ -65,10 +65,10 @@ namespace iroha {
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto bl = *std::unique_ptr<model::Block>(block.makeOldModel());
+      auto old_block = *std::unique_ptr<model::Block>(block.makeOldModel());
       auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(bl.transactions.begin(),
-                          bl.transactions.end(),
+          and std::all_of(old_block.transactions.begin(),
+                          old_block.transactions.end(),
                           execute_transaction);
 
       if (result) {

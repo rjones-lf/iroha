@@ -108,8 +108,8 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
-      auto bl = shared_model::proto::from_old(block1);
-      ms->apply(bl, [](const auto &blk, auto &query, const auto &top_hash) {
+      auto old_block = shared_model::proto::from_old(block1);
+      ms->apply(old_block, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });
       storage->commit(std::move(ms));

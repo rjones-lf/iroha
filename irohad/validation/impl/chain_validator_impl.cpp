@@ -41,15 +41,15 @@ namespace iroha {
             if (not peers.has_value()) {
               return false;
             }
-            auto bl = *std::unique_ptr<model::Block>(block.makeOldModel());
+            auto old_block = *std::unique_ptr<model::Block>(block.makeOldModel());
             return block.prevHash() == top_hash
-                and supermajority_checker_->hasSupermajority(bl.sigs,
+                and supermajority_checker_->hasSupermajority(old_block.sigs,
                                                              peers.value());
           };
 
       // Apply to temporary storage
-      auto bl = shared_model::proto::from_old(block);
-      return storage.apply(bl, apply_block);
+      auto old_block = shared_model::proto::from_old(block);
+      return storage.apply(old_block, apply_block);
     }
 
     bool ChainValidatorImpl::validateChain(OldCommit blocks,

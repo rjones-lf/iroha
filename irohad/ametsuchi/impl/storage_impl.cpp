@@ -133,12 +133,12 @@ namespace iroha {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
-      auto bl = shared_model::proto::from_old(block);
+      auto old_block = shared_model::proto::from_old(block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(bl,
+                storage.value->apply(old_block,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -160,9 +160,10 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              auto bl = shared_model::proto::from_old(block);
+              auto old_block = shared_model::proto::from_old(block);
               inserted &= mutableStorage.value->apply(
-                  bl, [](const auto &block, auto &query, const auto &hash) {
+                  old_block,
+                  [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });
             });
@@ -270,10 +271,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        auto bl = *std::unique_ptr<model::Block>(block.second->makeOldModel());
+        auto old_block = *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,
                           stringToBytes(model::converters::jsonToString(
-                              serializer_.serialize(bl))));
+                              serializer_.serialize(old_block))));
       }
 
       storage->transaction_->exec("COMMIT;");
