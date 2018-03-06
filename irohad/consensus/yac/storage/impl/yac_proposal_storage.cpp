@@ -44,7 +44,7 @@ namespace iroha {
             block_storages_.end(),
             YacHash(proposal_hash, block_hash),
             peers_in_round_,
-            std::make_shared<SupermajorityCheckerImpl>());
+            supermajority_checker_);
       }
 
       // --------| public api |--------
