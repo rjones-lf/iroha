@@ -22,7 +22,6 @@
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-836
@@ -37,8 +36,7 @@ namespace shared_model {
      private:
       void validateTransaction(
           ReasonsGroupType &reason,
-          const detail::PolymorphicWrapper<interface::Transaction> &transaction)
-          const {
+          const interface::Transaction &transaction) const {
         // TODO 22/01/2018 x3medima17: add stateless validator IR-837
       }
 
@@ -53,16 +51,15 @@ namespace shared_model {
        * @param proposal
        * @return Answer containing found error if any
        */
-      Answer validate(
-          detail::PolymorphicWrapper<interface::Proposal> prop) const {
+      Answer validate(const interface::Proposal &prop) const {
         Answer answer;
         // TODO 22/01/2018 x3medima17: add stateless validator IR-837
         ReasonsGroupType reason;
         reason.first = "Proposal";
 
-        validateHeight(reason, prop->height());
-        for (const auto &tx : prop->transactions()) {
-          validateTransaction(reason, tx);
+        validateHeight(reason, prop.height());
+        for (const auto &tx : prop.transactions()) {
+          validateTransaction(reason, *tx);
         }
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));

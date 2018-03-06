@@ -20,9 +20,9 @@
 
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-837
 
@@ -39,8 +39,7 @@ namespace shared_model {
        * @param block
        * @return Answer containing found error if any
        */
-      Answer validate(
-          detail::PolymorphicWrapper<interface::Block> block) const {
+      Answer validate(const interface::Block &block) const {
         return Answer();
       }
 

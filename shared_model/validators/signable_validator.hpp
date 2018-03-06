@@ -33,7 +33,7 @@ namespace shared_model {
         std::string reason_name = "Signature";
         ReasonsGroupType reason(reason_name, GroupedReasons());
         FieldValidator().validateSignatures(
-            reason, model->signatures(), model->payload());
+            reason, model.signatures(), model.payload());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }

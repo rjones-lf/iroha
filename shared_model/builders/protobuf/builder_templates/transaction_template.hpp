@@ -65,7 +65,8 @@ namespace shared_model {
       using ProtoCommand = iroha::protocol::Command;
 
       template <int Sp>
-      TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp, SV, BT> &o)
+      TemplateTransactionBuilder(
+          const TemplateTransactionBuilder<Sp, SV, BT> &o)
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
@@ -312,13 +313,12 @@ namespace shared_model {
 
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-
-        auto answer = stateless_validator_.validate(
-            detail::makePolymorphic<Transaction>(transaction_));
+        auto result = Transaction(iroha::protocol::Transaction(transaction_));
+        auto answer = stateless_validator_.validate(result);
         if (answer.hasErrors()) {
           throw std::invalid_argument(answer.reason());
         }
-        return BT(Transaction(iroha::protocol::Transaction(transaction_)));
+        return BT(std::move(result));
       }
 
       static const int total = RequiredFields::TOTAL;
