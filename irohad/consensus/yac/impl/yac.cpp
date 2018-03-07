@@ -23,6 +23,7 @@
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/yac.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
+#include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -79,7 +80,7 @@ namespace iroha {
       void Yac::vote(YacHash hash, ClusterOrdering order) {
         log_->info("Order for voting: {}",
                    logger::to_string(order.getPeers(),
-                                     [](auto val) { return val.address; }));
+                                     [](auto val) { return val->address(); }));
 
         cluster_order_ = order;
         auto vote = crypto_->getVote(hash);
@@ -145,11 +146,13 @@ namespace iroha {
         timer_->deny();
       }
 
-      boost::optional<model::Peer> Yac::findPeer(const VoteMessage &vote) {
+      boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+      Yac::findPeer(const VoteMessage &vote) {
         auto peers = cluster_order_.getPeers();
         auto it =
             std::find_if(peers.begin(), peers.end(), [&](const auto &peer) {
-              return peer.pubkey == vote.signature.pubkey;
+              auto old_peer = *std::unique_ptr<model::Peer>(peer->makeOldModel());
+              return old_peer.pubkey == vote.signature.pubkey;
             });
         return it != peers.end() ? boost::make_optional(std::move(*it)) : boost::none;
       }
@@ -209,12 +212,12 @@ namespace iroha {
         };
       }
 
-      void Yac::applyVote(boost::optional<model::Peer> from,
+      void Yac::applyVote(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
                           VoteMessage vote) {
         if (from) {
           log_->info("Apply vote: {} from ledger peer {}",
                      vote.hash.block_hash,
-                     (*from).address);
+                     (*from)->address());
         } else {
           log_->info("Apply vote: {} from unknown peer {}",
                      vote.hash.block_hash,
@@ -250,12 +253,12 @@ namespace iroha {
                              [&](const CommitMessage &commit) {
                                log_->info("Propagate commit {} directly to {}",
                                           vote.hash.block_hash,
-                                          from.address);
-                               this->propagateCommitDirectly(from, commit);
+                                          from->address());
+                               this->propagateCommitDirectly(*from, commit);
                              },
                              [&](const RejectMessage &reject) {
                                log_->info(kRejectOnHashMsg, proposal_hash);
-                               this->propagateRejectDirectly(from, reject);
+                               this->propagateRejectDirectly(*from, reject);
                              });
             };
           }
@@ -266,21 +269,21 @@ namespace iroha {
 
       void Yac::propagateCommit(CommitMessage msg) {
         for (const auto &peer : cluster_order_.getPeers()) {
-          propagateCommitDirectly(peer, msg);
+          propagateCommitDirectly(*peer, msg);
         }
       }
 
-      void Yac::propagateCommitDirectly(model::Peer to, CommitMessage msg) {
+      void Yac::propagateCommitDirectly(shared_model::interface::Peer& to, CommitMessage msg) {
         network_->send_commit(std::move(to), std::move(msg));
       }
 
       void Yac::propagateReject(RejectMessage msg) {
         for (const auto &peer : cluster_order_.getPeers()) {
-          propagateRejectDirectly(peer, msg);
+          propagateRejectDirectly(*peer, msg);
         }
       }
 
-      void Yac::propagateRejectDirectly(model::Peer to, RejectMessage msg) {
+      void Yac::propagateRejectDirectly(shared_model::interface::Peer& to, RejectMessage msg) {
         network_->send_reject(std::move(to), std::move(msg));
       }
 

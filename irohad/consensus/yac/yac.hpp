@@ -96,7 +96,8 @@ namespace iroha {
          * @param vote message containing peer information
          * @return peer if it is present in the ledger, nullopt otherwise
          */
-        boost::optional<model::Peer> findPeer(const VoteMessage &vote);
+        boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+        findPeer(const VoteMessage &vote);
 
         // ------|Apply data|------
 
@@ -110,13 +111,17 @@ namespace iroha {
                          CommitMessage commit);
         void applyReject(boost::optional<model::Peer> from,
                          RejectMessage reject);
-        void applyVote(boost::optional<model::Peer> from, VoteMessage vote);
+        void applyVote(boost::optional<
+                           std::shared_ptr<shared_model::interface::Peer>> from,
+                       VoteMessage vote);
 
         // ------|Propagation|------
         void propagateCommit(CommitMessage msg);
-        void propagateCommitDirectly(model::Peer to, CommitMessage msg);
+        void propagateCommitDirectly(shared_model::interface::Peer &to,
+                                     CommitMessage msg);
         void propagateReject(RejectMessage msg);
-        void propagateRejectDirectly(model::Peer to, RejectMessage msg);
+        void propagateRejectDirectly(shared_model::interface::Peer &to,
+                                     RejectMessage msg);
 
         // ------|Fields|------
         YacVoteStorage vote_storage_;
