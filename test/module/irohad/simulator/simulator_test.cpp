@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
@@ -94,7 +93,6 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   // proposal with height 2 => height 1 block present => new block generated
   auto proposal =
       std::make_shared<shared_model::proto::Proposal>(makeProposal(2));
-  std::unique_ptr<model::Proposal> old_proposal(proposal->makeOldModel());
 
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
@@ -114,16 +112,16 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
-  proposal_wrapper.subscribe([&proposal, &old_proposal](auto verified_proposal) {
-    ASSERT_EQ(verified_proposal.height, proposal->height());
-    ASSERT_EQ(verified_proposal.transactions, old_proposal->transactions);
+  proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
+    ASSERT_EQ(verified_proposal->height(), proposal->height());
+    ASSERT_EQ(verified_proposal->transactions(), proposal->transactions());
   });
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal, &old_proposal](auto block) {
-    ASSERT_EQ(block.height, proposal->height());
-    ASSERT_EQ(block.transactions, old_proposal->transactions);
+  block_wrapper.subscribe([&proposal](auto block) {
+    ASSERT_EQ(block->height(), proposal->height());
+    ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
   simulator->process_proposal(*proposal);
