@@ -95,7 +95,8 @@ namespace iroha {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));
 
-            //TODO Alexey Chernyshov move to shared_model
+            // TODO: 07-03-2018 Alexey Chernyshov remove this after relocation to
+            // shared_model https://soramitsu.atlassian.net/browse/IR-903
             notifier_.get_subscriber().on_next(chain.map([](auto block) {
               std::unique_ptr<iroha::model::Block> old_block(
                   block->makeOldModel());
