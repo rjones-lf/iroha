@@ -21,7 +21,7 @@ if(NOT SWIG_EXECUTABLE)
       # We should install SWIG to properly access SWIG lib
       CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --without-pcre --prefix=${EP_PREFIX}/src/swig_swig
       BUILD_IN_SOURCE ON
-      BUILD_COMMAND $(MAKE) swig
+      BUILD_COMMAND ${MAKE} swig
       TEST_COMMAND "" # remove test step
       )
   ExternalProject_Get_Property(swig_swig source_dir)

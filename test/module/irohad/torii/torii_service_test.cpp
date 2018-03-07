@@ -97,11 +97,11 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
 
-      //----------- Server run ----------------
-      runner
-          ->append(std::make_unique<torii::CommandService>(tx_processor, block_query, proposal_delay))
-
-          .run();
+    //----------- Server run ----------------
+    runner
+        ->append(std::make_unique<torii::CommandService>(
+            tx_processor, block_query, proposal_delay))
+        .run();
 
 
     runner->waitForServersReady();

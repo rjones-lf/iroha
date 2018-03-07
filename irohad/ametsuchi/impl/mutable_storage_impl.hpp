@@ -41,22 +41,26 @@ namespace iroha {
       friend class StorageImpl;
 
      public:
-      MutableStorageImpl(hash256_t top_hash,
-                         std::unique_ptr<pqxx::lazyconnection> connection,
-                         std::unique_ptr<pqxx::nontransaction> transaction);
+      MutableStorageImpl(
+          shared_model::interface::types::HashType top_hash,
+          std::unique_ptr<pqxx::lazyconnection> connection,
+          std::unique_ptr<pqxx::nontransaction> transaction);
 
-      bool apply(const model::Block &block,
-                 std::function<bool(const model::Block &,
-                                    WsvQuery &,
-                                    const hash256_t &)> function) override;
+      bool apply(
+          const shared_model::interface::Block &block,
+          std::function<bool(const shared_model::interface::Block &,
+                             WsvQuery &,
+                             const shared_model::interface::types::HashType &)>
+              function) override;
 
       ~MutableStorageImpl() override;
 
      private:
-      hash256_t top_hash_;
+      shared_model::interface::types::HashType top_hash_;
       // ordered collection is used to enforce block insertion order in
       // StorageImpl::commit
-      std::map<uint32_t, model::Block> block_store_;
+      std::map<uint32_t, std::shared_ptr<shared_model::interface::Block>>
+          block_store_;
 
       std::unique_ptr<pqxx::lazyconnection> connection_;
       std::unique_ptr<pqxx::nontransaction> transaction_;

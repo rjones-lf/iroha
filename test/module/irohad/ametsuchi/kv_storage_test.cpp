@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include "backend/protobuf/from_old_model.hpp"
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
@@ -107,7 +108,8 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
-      ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
+      auto old_block = shared_model::proto::from_old(block1);
+      ms->apply(old_block, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });
       storage->commit(std::move(ms));
@@ -132,8 +134,8 @@ TEST_F(KVTest, GetNonexistingDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
   auto account = wsv_query->getAccount(account_id1);
 
-  auto age =
-      wsv_query->getAccountDetail(account_id1, "userone@ru", "nonexisting-field");
+  auto age = wsv_query->getAccountDetail(
+      account_id1, "userone@ru", "nonexisting-field");
   ASSERT_FALSE(age);
 }
 

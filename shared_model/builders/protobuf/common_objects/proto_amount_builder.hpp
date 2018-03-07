@@ -36,12 +36,11 @@ namespace shared_model {
 
       AmountBuilder intValue(const boost::multiprecision::uint256_t &value) {
         AmountBuilder copy(*this);
-        convertToProtoAmount(*copy.amount_.mutable_value(),value);
+        convertToProtoAmount(*copy.amount_.mutable_value(), value);
         return copy;
       }
 
-      AmountBuilder precision(
-          const interface::types::PrecisionType &precision) {
+      AmountBuilder precision(const interface::types::PrecisionType &precision) {
         AmountBuilder copy(*this);
         copy.amount_.set_precision(precision);
         return copy;

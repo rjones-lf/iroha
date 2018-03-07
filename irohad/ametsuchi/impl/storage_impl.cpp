@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,9 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "model/converters/json_common.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
@@ -98,30 +101,30 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      nonstd::optional<hash256_t> top_hash;
+      nonstd::optional<shared_model::interface::types::HashType> top_hash;
 
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) {
-            top_hash = hash256_t::from_string(toBinaryString(block->hash()));
-          });
+          .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
-          std::make_unique<MutableStorageImpl>(top_hash.value_or(hash256_t{}),
-                                               std::move(postgres_connection),
-                                               std::move(wsv_transaction)));
+          std::make_unique<MutableStorageImpl>(
+              top_hash.value_or(shared_model::interface::types::HashType("")),
+              std::move(postgres_connection),
+              std::move(wsv_transaction)));
     }
 
     bool StorageImpl::insertBlock(model::Block block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
+      auto old_block = shared_model::proto::from_old(block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(block,
+                storage.value->apply(old_block,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -143,8 +146,10 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
+              auto old_block = shared_model::proto::from_old(block);
               inserted &= mutableStorage.value->apply(
-                  block, [](const auto &block, auto &query, const auto &hash) {
+                  old_block,
+                  [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });
             });
@@ -252,9 +257,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
+        auto old_block = *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,
                           stringToBytes(model::converters::jsonToString(
-                              serializer_.serialize(block.second))));
+                              serializer_.serialize(old_block))));
       }
 
       storage->transaction_->exec("COMMIT;");

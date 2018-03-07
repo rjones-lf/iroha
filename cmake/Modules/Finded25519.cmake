@@ -20,6 +20,7 @@ if (NOT ed25519_FOUND)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
+      BUILD_BYPRODUCTS ${EP_PREFIX}/src/hyperledger_ed25519-build/libed25519.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
       UPDATE_COMMAND  "" # remove update step

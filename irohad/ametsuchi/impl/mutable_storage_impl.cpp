@@ -29,7 +29,7 @@
 namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
-        hash256_t top_hash,
+        shared_model::interface::types::HashType top_hash,
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction)
         : top_hash_(top_hash),
@@ -40,18 +40,19 @@ namespace iroha {
           block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
+      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
+      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
       command_executor_ =
-          std::make_shared<CommandExecutor>(CommandExecutor(w, c));
+          std::make_shared<CommandExecutor>(CommandExecutor(query, command));
       transaction_->exec("BEGIN;");
     }
 
     bool MutableStorageImpl::apply(
-        const model::Block &block,
-        std::function<bool(const model::Block &, WsvQuery &, const hash256_t &)>
+        const shared_model::interface::Block &block,
+        std::function<bool(const shared_model::interface::Block &,
+                           WsvQuery &,
+                           const shared_model::interface::types::HashType &)>
             function) {
-      auto shared_block = shared_model::proto::from_old(block);
       auto execute_transaction = [this](auto &transaction) {
         auto execute_command = [this, &transaction](auto command) {
           command_executor_->setCreatorAccountId(
@@ -71,15 +72,17 @@ namespace iroha {
 
       transaction_->exec("SAVEPOINT savepoint_;");
       auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(shared_block.transactions().begin(),
-                          shared_block.transactions().end(),
+          and std::all_of(block.transactions().begin(),
+                          block.transactions().end(),
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(block.height, block));
-        block_index_->index(shared_model::proto::from_old(block));
+        block_store_.insert(std::make_pair(
+            block.height(),
+            std::unique_ptr<shared_model::interface::Block>(block.copy())));
+        block_index_->index(block);
 
-        top_hash_ = block.hash;
+        top_hash_ = block.hash();
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
       } else {
         transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");

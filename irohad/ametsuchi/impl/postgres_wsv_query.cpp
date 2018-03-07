@@ -139,7 +139,6 @@ namespace iroha {
           [&](const auto &result) {
             return transform<PubkeyType>(result, [&](const auto &row) {
               pqxx::binarystring public_key_str(row.at(kPublicKey));
-
               return PubkeyType(public_key_str.str());
             });
           };

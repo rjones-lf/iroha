@@ -32,7 +32,7 @@ if (NOT pq_FOUND)
       GIT_TAG         ${VERSION}
       CONFIGURE_COMMAND ./configure --without-readline
       BUILD_IN_SOURCE 1
-      BUILD_COMMAND $(MAKE) -C ./src/bin/pg_config && $(MAKE) -C ./src/interfaces/libpq
+      BUILD_COMMAND ${MAKE} -C ./src/bin/pg_config && ${MAKE} -C ./src/interfaces/libpq
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/postgres_postgres/src/interfaces/libpq/libpq.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step

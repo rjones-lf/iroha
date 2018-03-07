@@ -16,15 +16,16 @@
  */
 
 #include "validation/impl/chain_validator_impl.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
-#include "model/peer.hpp"
 
 namespace iroha {
   namespace validation {
     ChainValidatorImpl::ChainValidatorImpl(
-        std::shared_ptr<consensus::yac::SupermajorityChecker> supermajority_checker)
+        std::shared_ptr<consensus::yac::SupermajorityChecker>
+            supermajority_checker)
         : supermajority_checker_(supermajority_checker) {
       log_ = logger::log("ChainValidator");
     }
@@ -40,13 +41,15 @@ namespace iroha {
             if (not peers.has_value()) {
               return false;
             }
-            return block.prev_hash == top_hash
-                and supermajority_checker_->hasSupermajority(block.sigs,
-                                                            peers.value());
+            auto old_block = *std::unique_ptr<model::Block>(block.makeOldModel());
+            return block.prevHash() == top_hash
+                and supermajority_checker_->hasSupermajority(old_block.sigs,
+                                                             peers.value());
           };
 
       // Apply to temporary storage
-      return storage.apply(block, apply_block);
+      auto old_block = shared_model::proto::from_old(block);
+      return storage.apply(old_block, apply_block);
     }
 
     bool ChainValidatorImpl::validateChain(OldCommit blocks,

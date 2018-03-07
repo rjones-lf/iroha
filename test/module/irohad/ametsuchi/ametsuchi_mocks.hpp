@@ -56,20 +56,29 @@ namespace iroha {
       MOCK_METHOD0(getRoles, nonstd::optional<std::vector<std::string>>());
       MOCK_METHOD1(
           getAccount,
-          nonstd::optional<std::shared_ptr<shared_model::interface::Account>>(const std::string &account_id));
+          nonstd::optional<std::shared_ptr<shared_model::interface::Account>>(
+              const std::string &account_id));
       MOCK_METHOD1(getSignatories,
-                   nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>(
+                   nonstd::optional<
+                       std::vector<shared_model::interface::types::PubkeyType>>(
                        const std::string &account_id));
-      MOCK_METHOD1(getAsset,
-                   nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>(const std::string &asset_id));
-      MOCK_METHOD2(
-          getAccountAsset,
-          nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>>(const std::string &account_id,
-                                                const std::string &asset_id));
-      MOCK_METHOD0(getPeers, nonstd::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
+      MOCK_METHOD1(
+          getAsset,
+          nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>(
+              const std::string &asset_id));
+      MOCK_METHOD2(getAccountAsset,
+                   nonstd::optional<
+                       std::shared_ptr<shared_model::interface::AccountAsset>>(
+                       const std::string &account_id,
+                       const std::string &asset_id));
+      MOCK_METHOD0(
+          getPeers,
+          nonstd::optional<
+              std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
       MOCK_METHOD1(
           getDomain,
-          nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>(const std::string &domain_id));
+          nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>(
+              const std::string &domain_id));
       MOCK_METHOD3(hasAccountGrantablePermission,
                    bool(const std::string &permitee_account_id,
                         const std::string &account_id,
@@ -96,12 +105,13 @@ namespace iroha {
 
       MOCK_METHOD3(deleteAccountGrantablePermission,
                    WsvCommandResult(const std::string &permittee_account_id,
-                        const std::string &account_id,
-                        const std::string &permission_id));
+                                    const std::string &account_id,
+                                    const std::string &permission_id));
       MOCK_METHOD1(insertAccount, WsvCommandResult(const shared_model::interface::Account &));
       MOCK_METHOD1(updateAccount, WsvCommandResult(const shared_model::interface::Account &));
       MOCK_METHOD1(insertAsset, WsvCommandResult(const shared_model::interface::Asset &));
-      MOCK_METHOD1(upsertAccountAsset, WsvCommandResult(const shared_model::interface::AccountAsset &));
+      MOCK_METHOD1(upsertAccountAsset,
+                   WsvCommandResult(const shared_model::interface::AccountAsset &));
       MOCK_METHOD1(insertSignatory, WsvCommandResult(const shared_model::crypto::PublicKey &));
       MOCK_METHOD1(deleteSignatory, WsvCommandResult(const shared_model::crypto::PublicKey &));
 
@@ -146,8 +156,12 @@ namespace iroha {
           getTransactions,
           rxcpp::observable<boost::optional<wTransaction>>(
               const std::vector<shared_model::crypto::Hash> &tx_hashes));
-      MOCK_METHOD2(getBlocks, rxcpp::observable<wBlock>(shared_model::interface::types::HeightType, uint32_t));
-      MOCK_METHOD1(getBlocksFrom, rxcpp::observable<wBlock>(shared_model::interface::types::HeightType));
+      MOCK_METHOD2(getBlocks,
+                   rxcpp::observable<wBlock>(
+                       shared_model::interface::types::HeightType, uint32_t));
+      MOCK_METHOD1(getBlocksFrom,
+                   rxcpp::observable<wBlock>(
+                       shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
     };
 
@@ -162,9 +176,11 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           apply,
-          bool(const model::Block &,
+          bool(const shared_model::interface::Block &,
                std::function<
-                   bool(const model::Block &, WsvQuery &, const hash256_t &)>));
+                   bool(const shared_model::interface::Block &,
+                        WsvQuery &,
+                        const shared_model::interface::types::HashType &)>));
     };
 
     /**
