@@ -30,9 +30,7 @@ namespace shared_model {
      public:
       template <typename SignatureType>
       explicit Signature(SignatureType &&signature)
-          : CopyableProto(std::forward<SignatureType>(signature)),
-            public_key_([this] { return PublicKeyType(proto_->pubkey()); }),
-            signed_([this] { return SignedType(proto_->signature()); }) {}
+          : CopyableProto(std::forward<SignatureType>(signature)) {}
 
       Signature(const Signature &o) : Signature(o.proto_) {}
 
@@ -51,9 +49,11 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<PublicKeyType> public_key_;
+      const Lazy<PublicKeyType> public_key_{
+          [this] { return PublicKeyType(proto_->pubkey()); }};
 
-      const Lazy<SignedType> signed_;
+      const Lazy<SignedType> signed_{
+          [this] { return SignedType(proto_->signature()); }};
     };
   }  // namespace proto
 }  // namespace shared_model

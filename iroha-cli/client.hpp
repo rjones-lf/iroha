@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CLIENT_HPP
-#define IROHA_CLIENT_HPP
+#ifndef IROHACLI_CLIENT_HPP
+#define IROHACLI_CLIENT_HPP
 
 #include <string>
 
@@ -69,4 +69,4 @@ namespace iroha_cli {
   };
 }  // namespace iroha_cli
 
-#endif  // IROHA_CLIENT_CPP_HPP
+#endif  // IROHACLI_CLIENT_CPP_HPP

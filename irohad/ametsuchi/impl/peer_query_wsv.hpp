@@ -21,15 +21,9 @@
 #include "ametsuchi/peer_query.hpp"
 
 #include <memory>
-#include <nonstd/optional.hpp>
 #include <vector>
 
 namespace iroha {
-
-  namespace model {
-    struct Peer;
-  }
-
   namespace ametsuchi {
 
     class WsvQuery;
@@ -45,7 +39,7 @@ namespace iroha {
        * Fetch peers stored in ledger
        * @return list of peers in insertion to ledger order
        */
-      nonstd::optional<std::vector<model::Peer>> getLedgerPeers() override;
+      boost::optional<std::vector<wPeer>> getLedgerPeers() override;
 
      private:
       std::shared_ptr<WsvQuery> wsv_;

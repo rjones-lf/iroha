@@ -27,6 +27,9 @@
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+
+using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::model;
 using namespace iroha::network;
@@ -35,6 +38,7 @@ using namespace std::chrono_literals;
 
 using ::testing::_;
 using ::testing::InvokeWithoutArgs;
+using ::testing::Return;
 
 class MockOrderingGateTransportGrpcService
     : public proto::OrderingServiceTransportGrpc::Service {
@@ -43,6 +47,12 @@ class MockOrderingGateTransportGrpcService
                ::grpc::Status(::grpc::ServerContext *,
                               const iroha::protocol::Transaction *,
                               ::google::protobuf::Empty *));
+};
+
+class MockOrderingGateTransport : public OrderingGateTransport {
+  MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
+  MOCK_METHOD1(propagateTransaction,
+               void(std::shared_ptr<const iroha::model::Transaction>));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -94,9 +104,12 @@ class OrderingGateTest : public ::testing::Test {
   std::mutex m;
 };
 
+/**
+ * @given Initialized OrderingGate
+ * @when  Send 5 transactions to Ordering Gate
+ * @then  Check that transactions are received
+ */
 TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
-  // Init => send 5 transactions => 5 transactions are processed by server
-
   size_t call_count = 0;
   EXPECT_CALL(*fake_service, onTransaction(_, _, _))
       .Times(5)
@@ -107,13 +120,18 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
       }));
 
   for (size_t i = 0; i < 5; ++i) {
-    gate_impl->propagate_transaction(std::make_shared<Transaction>());
+    gate_impl->propagateTransaction(std::make_shared<Transaction>());
   }
 
   std::unique_lock<std::mutex> lock(m);
   cv.wait_for(lock, 10s, [&] { return call_count == 5; });
 }
 
+/**
+ * @given Initialized OrderingGate
+ * @when  Emulation of receiving proposal from the network
+ * @then  Round starts <==> proposal is emitted to subscribers
+ */
 TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto wrapper = make_test_subscriber<CallExact>(gate_impl->on_proposal(), 1);
   wrapper.subscribe();
@@ -126,4 +144,44 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   transport->onProposal(&context, &proposal, &response);
 
   ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given Initialized OrderingGate
+ *        AND MockPeerCommunicationService
+ * @when  Send two proposals
+ *        AND one commit in node
+ * @then  Check that send round appears after commit
+ */
+TEST(OrderingGateQueueBehaviour, SendManyProposals) {
+  std::shared_ptr<OrderingGateTransport> transport =
+      std::make_shared<MockOrderingGateTransport>();
+
+  std::shared_ptr<MockPeerCommunicationService> pcs =
+      std::make_shared<MockPeerCommunicationService>();
+  rxcpp::subjects::subject<Commit> commit_subject;
+  EXPECT_CALL(*pcs, on_commit())
+      .WillOnce(Return(commit_subject.get_observable()));
+
+  OrderingGateImpl ordering_gate(transport);
+  ordering_gate.setPcs(*pcs);
+
+  auto wrapper_before =
+      make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 1);
+  wrapper_before.subscribe();
+  auto wrapper_after =
+      make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
+  wrapper_after.subscribe();
+
+  ordering_gate.onProposal(iroha::model::Proposal{{}});
+  ordering_gate.onProposal(iroha::model::Proposal{{}});
+
+  ASSERT_TRUE(wrapper_before.validate());
+
+  std::shared_ptr<shared_model::interface::Block> block =
+      std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
+
+  commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(block));
+
+  ASSERT_TRUE(wrapper_after.validate());
 }

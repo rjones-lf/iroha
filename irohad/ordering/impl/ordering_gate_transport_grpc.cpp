@@ -48,7 +48,7 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
           server_address, grpc::InsecureChannelCredentials()))),
       log_(logger::log("OrderingGate")) {}
 
-void OrderingGateTransportGrpc::propagate_transaction(
+void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const model::Transaction> transaction) {
   log_->info("Propagate tx (on transport)");
   auto call = new AsyncClientCall;

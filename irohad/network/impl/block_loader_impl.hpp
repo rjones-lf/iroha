@@ -27,6 +27,7 @@
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 #include "model/model_crypto_provider.hpp"
+#include "validators/default_validator.hpp"
 
 namespace iroha {
   namespace network {
@@ -35,14 +36,18 @@ namespace iroha {
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
           std::shared_ptr<ametsuchi::BlockQuery> block_query,
-          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
+          std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
+          std::shared_ptr<shared_model::validation::DefaultBlockValidator> =
+              std::make_shared<shared_model::validation::DefaultBlockValidator>());
 
-      rxcpp::observable<Wrapper<shared_model::interface::Block>> retrieveBlocks(
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      retrieveBlocks(
           const shared_model::crypto::PublicKey &peer_pubkey) override;
 
-      nonstd::optional<Wrapper<shared_model::interface::Block>> retrieveBlock(
+      nonstd::optional<std::shared_ptr<shared_model::interface::Block>>
+      retrieveBlock(
           const shared_model::crypto::PublicKey &peer_pubkey,
-          const shared_model::interface::Block::HashType &block_hash) override;
+          const shared_model::interface::types::HashType &block_hash) override;
 
      private:
       /**
@@ -65,6 +70,8 @@ namespace iroha {
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
       std::shared_ptr<model::ModelCryptoProvider> crypto_provider_;
+      std::shared_ptr<shared_model::validation::DefaultBlockValidator>
+          stateless_validator_;
 
       logger::Logger log_;
     };

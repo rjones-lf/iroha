@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,6 @@
  */
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
-#include <algorithm>
-#include <utility>
-
-#include "consensus/consensus_common.hpp"
-#include "consensus/yac/messages.hpp"
-
 using namespace logger;
 
 namespace iroha {
@@ -30,8 +24,13 @@ namespace iroha {
 
       // --------| Public API |--------
 
-      YacBlockStorage::YacBlockStorage(YacHash hash, uint64_t peers_in_round)
-          : hash_(std::move(hash)), peers_in_round_(peers_in_round) {
+      YacBlockStorage::YacBlockStorage(
+          YacHash hash,
+          uint64_t peers_in_round,
+          std::shared_ptr<SupermajorityChecker> supermajority_checker)
+          : hash_(std::move(hash)),
+            peers_in_round_(peers_in_round),
+            supermajority_checker_(supermajority_checker) {
         log_ = log("YacBlockStorage");
       }
 
@@ -65,7 +64,8 @@ namespace iroha {
       }
 
       nonstd::optional<Answer> YacBlockStorage::getState() {
-        auto supermajority = hasSupermajority(votes_.size(), peers_in_round_);
+        auto supermajority =
+            supermajority_checker_->checkSize(votes_.size(), peers_in_round_);
         if (supermajority) {
           return Answer(CommitMessage(votes_));
         }

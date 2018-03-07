@@ -20,20 +20,23 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/from_old_model.hpp"
+#include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/block.hpp"
+#include "builders/protobuf/builder_templates/block_template.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/hash.hpp"
+#include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
-
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/builder_templates/block_template.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/hash.hpp"
-#include "datetime/time.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
+#include "validators/default_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
@@ -44,13 +47,20 @@ using namespace shared_model::crypto;
 using testing::A;
 using testing::Return;
 
+using wPeer = std::shared_ptr<shared_model::interface::Peer>;
+using wBlock = std::shared_ptr<shared_model::interface::Block>;
+
 class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
     provider = std::make_shared<MockCryptoProvider>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage, provider);
+    loader = std::make_shared<BlockLoaderImpl>(
+        peer_query,
+        storage,
+        provider,
+        std::make_shared<shared_model::validation::DefaultBlockValidator>());
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -60,10 +70,18 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    Peer peer;
-    peer.address = "0.0.0.0:" + std::to_string(port);
-    std::copy_n(
-        peer_key.blob().begin(), peer.pubkey.size(), peer.pubkey.begin());
+    shared_model::builder::PeerBuilder<
+        shared_model::proto::PeerBuilder,
+        shared_model::validation::FieldValidator>()
+        .address("0.0.0.0:" + std::to_string(port))
+        .pubkey(peer_key)
+        .build()
+        .match(
+            [&](iroha::expected::Value<
+                std::shared_ptr<shared_model::interface::Peer>> &v) {
+              peer = v.value;
+            },
+            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
     peers.push_back(peer);
 
     ASSERT_TRUE(server);
@@ -82,9 +100,10 @@ class BlockLoaderTest : public testing::Test {
         .createdTime(iroha::time::now());
   }
 
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
-  std::vector<Peer> peers;
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
   std::shared_ptr<MockCryptoProvider> provider;
@@ -101,15 +120,24 @@ class BlockLoaderTest : public testing::Test {
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build();
-  std::unique_ptr<iroha::model::Block> old_block(block.makeOldModel());
 
-  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  auto peer = peers.back();
+  wPeer w_peer = std::shared_ptr<shared_model::interface::Peer>(
+      shared_model::proto::PeerBuilder()
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build()
+          .copy());
+
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{w_peer}));
   EXPECT_CALL(*storage, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_block)));
+      .WillOnce(Return(rxcpp::observable<>::just(block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
-      .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
-  auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 0);
+      .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
+  auto wrapper = make_test_subscriber<CallExact>(
+      loader->retrieveBlocks(peer->pubkey()), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -123,17 +151,26 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
 TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   // Current block height 1 => Other block height 2 => one block received
   auto block = getBaseBlockBuilder().build();
-  std::unique_ptr<iroha::model::Block> old_block(block.makeOldModel());
 
   auto top_block = getBaseBlockBuilder().height(block.height() + 1).build();
-  std::unique_ptr<iroha::model::Block> old_top_block(top_block.makeOldModel());
 
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
-  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+
+  auto peer = peers.back();
+  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+      shared_model::proto::PeerBuilder()
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build());
+
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{w_peer}));
   EXPECT_CALL(*storage, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_block)));
+      .WillOnce(Return(rxcpp::observable<>::just(block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_top_block)));
+      .WillOnce(Return(rxcpp::observable<>::just(top_block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   auto wrapper =
       make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 1);
   wrapper.subscribe(
@@ -150,26 +187,35 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
   // Current block height 1 => Other block height n => n-1 blocks received
   auto block = getBaseBlockBuilder().build();
-  std::unique_ptr<iroha::model::Block> old_block(block.makeOldModel());
 
   auto num_blocks = 2;
   auto next_height = block.height() + 1;
 
-  std::vector<iroha::model::Block> blocks;
+  std::vector<wBlock> blocks;
   for (auto i = next_height; i < next_height + num_blocks; ++i) {
     auto blk = getBaseBlockBuilder().height(i).build();
-    std::unique_ptr<iroha::model::Block> old(blk.makeOldModel());
-    blocks.push_back(*old);
+    blocks.emplace_back(blk.copy());
   }
 
   EXPECT_CALL(*provider, verify(A<const Block &>()))
       .Times(num_blocks)
       .WillRepeatedly(Return(true));
-  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+
+  auto peer = peers.back();
+  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+      shared_model::proto::PeerBuilder()
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build());
+
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{w_peer}));
   EXPECT_CALL(*storage, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_block)));
+      .WillOnce(Return(rxcpp::observable<>::just(block).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(next_height))
       .WillOnce(Return(rxcpp::observable<>::iterate(blocks)));
+  auto old_peer = *peer->makeOldModel();
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;
@@ -187,12 +233,21 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   auto requested = getBaseBlockBuilder().build();
-  std::unique_ptr<iroha::model::Block> old_requested(requested.makeOldModel());
 
   EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
-  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+
+  auto peer = peers.back();
+  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+      shared_model::proto::PeerBuilder()
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build());
+
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{w_peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_requested)));
+      .WillOnce(Return(rxcpp::observable<>::just(requested).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   auto block = loader->retrieveBlock(peer_key, requested.hash());
 
   ASSERT_TRUE(block.has_value());
@@ -207,11 +262,19 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
 TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
   auto present = getBaseBlockBuilder().build();
-  std::unique_ptr<iroha::model::Block> old_present(present.makeOldModel());
 
-  EXPECT_CALL(*peer_query, getLedgerPeers()).WillOnce(Return(peers));
+  auto peer = peers.back();
+  wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
+      shared_model::proto::PeerBuilder()
+          .pubkey(peer->pubkey())
+          .address(peer->address())
+          .build());
+
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{w_peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
-      .WillOnce(Return(rxcpp::observable<>::just(*old_present)));
+      .WillOnce(Return(rxcpp::observable<>::just(present).map(
+          [](auto &&x) { return wBlock(x.copy()); })));
   auto block = loader->retrieveBlock(peer_key, Hash(std::string(32, '0')));
 
   ASSERT_FALSE(block.has_value());

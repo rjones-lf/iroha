@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 #
-# This simple script starts redis and postgres docker containers,
-# and installs environment variables of the caller. Can be safely
+# This simple script starts postgres docker container and
+# installs environment variables of the caller. Can be safely
 # executed as many times as needed (it performs autocleaning).
 #
 # Usage:
@@ -22,27 +22,22 @@ dependency grep   || exit 1
 dependency sed    || exit 1
 
 pgname=postgrestestimage
-rdname=redistestimage
 
 # cleanup
-docker rm -f $pgname $rdname 2>/dev/null 1>&2
+docker rm -f $pgname 2>/dev/null 1>&2
 
 # vars
 user=postgres
 password=mysecretpassword
 pgport=5432
-rdport=6379
 
-# run postgres and redis
+# run postgres
 pghost=127.0.0.1
-rdhost=127.0.0.1
 
 pgid=$(docker run -p $pghost:$pgport:$pgport --rm --name $pgname -e POSTGRES_USER=$user -e POSTGRES_PASSSWORD=$password -d postgres:9.5)
-rdid=$(docker run -p $rdhost:$rdport:$rdport --rm --name $rdname -d redis:3.2.8)
 
 # stderr
 >&2 echo "postgres: 127.0.0.1:$pgport {login: $user, pwd: $password}"
->&2 echo "redis:    127.0.0.1:$rdport"
 
 # print variables (stdout)
 cat << EOF
@@ -51,8 +46,6 @@ export IROHA_POSTGRES_PORT=$pgport
 export IROHA_POSTGRES_USER=$user
 export IROHA_POSTGRES_DATABASE=$user
 export IROHA_POSTGRES_PASSWORD=$password
-export IROHA_REDIS_HOST=$rdhost
-export IROHA_REDIS_PORT=$rdport
 EOF
 
 # apply variables
@@ -61,5 +54,3 @@ export IROHA_POSTGRES_PORT=$pgport
 export IROHA_POSTGRES_USER=$user
 export IROHA_POSTGRES_DATABASE=$user
 export IROHA_POSTGRES_PASSWORD=$password
-export IROHA_REDIS_HOST=$rdhost
-export IROHA_REDIS_PORT=$rdport

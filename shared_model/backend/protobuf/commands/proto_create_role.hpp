@@ -29,18 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit CreateRole(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            create_role_(proto_->create_role()),
-            role_permissions_([this] {
-              return boost::accumulate(
-                  create_role_.permissions(),
-                  PermissionsType{},
-                  [](auto &&acc, const auto &perm) {
-                    acc.insert(iroha::protocol::RolePermission_Name(
-                        static_cast<iroha::protocol::RolePermission>(perm)));
-                    return std::forward<decltype(acc)>(acc);
-                  });
-            }) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       CreateRole(const CreateRole &o) : CreateRole(o.proto_) {}
 
@@ -58,8 +47,19 @@ namespace shared_model {
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
-      const iroha::protocol::CreateRole &create_role_;
-      const Lazy<PermissionsType> role_permissions_;
+
+      const iroha::protocol::CreateRole &create_role_{proto_->create_role()};
+
+      const Lazy<PermissionsType> role_permissions_{[this] {
+        return boost::accumulate(
+            create_role_.permissions(),
+            PermissionsType{},
+            [](auto &&acc, const auto &perm) {
+              acc.insert(iroha::protocol::RolePermission_Name(
+                  static_cast<iroha::protocol::RolePermission>(perm)));
+              return std::forward<decltype(acc)>(acc);
+            });
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

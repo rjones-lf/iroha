@@ -3,6 +3,7 @@ target_link_libraries(ametsuchi_test
     ametsuchi
     libs_common
     ametsuchi_fixture
+    shared_model_stateless_validation
     )
 
 addtest(wsv_query_command_test wsv_query_command_test.cpp)

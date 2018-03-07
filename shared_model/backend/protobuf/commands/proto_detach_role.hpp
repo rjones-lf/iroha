@@ -29,8 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit DetachRole(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            detach_role_(proto_->detach_role()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       DetachRole(const DetachRole &o) : DetachRole(o.proto_) {}
 
@@ -45,7 +44,7 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::DetachRole &detach_role_;
+      const iroha::protocol::DetachRole &detach_role_{proto_->detach_role()};
     };
 
   }  // namespace proto

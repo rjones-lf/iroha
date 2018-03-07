@@ -33,9 +33,10 @@ auto loadErrorResponse(Archive &&ar) {
                        ->enum_type()
                        ->FindValueByNumber(ar.reason())
                        ->index();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::ErrorQueryResponse::
-          QueryErrorResponseVariantType>(std::forward<Archive>(ar), which);
+  return shared_model::detail::variant_impl<T...>::
+      template load<shared_model::interface::ErrorQueryResponse::
+                        QueryErrorResponseVariantType>(
+          std::forward<Archive>(ar), which);
 }
 
 namespace shared_model {
@@ -74,11 +75,7 @@ namespace shared_model {
 
       template <typename QueryResponseType>
       explicit ErrorQueryResponse(QueryResponseType &&response)
-          : CopyableProto(std::forward<QueryResponseType>(response)),
-            variant_([this] {
-              return loadErrorResponse<ProtoQueryErrorResponseListType>(
-                  proto_->error_response());
-            }) {}
+          : CopyableProto(std::forward<QueryResponseType>(response)) {}
 
       ErrorQueryResponse(const ErrorQueryResponse &o)
           : ErrorQueryResponse(o.proto_) {}
@@ -91,7 +88,10 @@ namespace shared_model {
       }
 
      private:
-      const LazyVariantType variant_;
+      const LazyVariantType variant_{[this] {
+        return loadErrorResponse<ProtoQueryErrorResponseListType>(
+            proto_->error_response());
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

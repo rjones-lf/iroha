@@ -142,14 +142,13 @@ namespace iroha {
   ExecutionResult CommandExecutor::operator()(
       const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddAssetQuantity> &command) {
     std::string command_name = "AddAssetQuantity";
-    auto asset_old = queries->getAsset(command->assetId());  // Old model
-    if (not asset_old.has_value()) {
+    auto asset = queries->getAsset(command->assetId());
+    if (not asset.has_value()) {
       return makeExecutionError(
           (boost::format("asset %s is absent") % command->assetId()).str(),
           command_name);
     }
-    auto asset = shared_model::proto::from_old(asset_old.value());
-    auto precision = asset.precision();
+    auto precision = asset.value()->precision();
 
     if (command->amount().precision() != precision) {
       return makeExecutionError(
@@ -160,23 +159,21 @@ namespace iroha {
     }
 
     if (not queries->getAccount(command->accountId())
-                .has_value()) {  // Old model
+                .has_value()) {
       return makeExecutionError(
           (boost::format("account %s is absent") % command->accountId()).str(),
           command_name);
     }
-    auto account_asset_old = queries->getAccountAsset(
-        command->accountId(), command->assetId());  // Old model
+    auto account_asset = queries->getAccountAsset(
+        command->accountId(), command->assetId());
 
     shared_model::proto::Amount new_balance =
         amount_builder.precision(command->amount().precision())
             .intValue(command->amount().intValue())
             .build();
 
-    if (account_asset_old.has_value()) {
-      auto account_asset =
-          shared_model::proto::from_old(account_asset_old.value());
-      auto balance = new_balance + account_asset.balance();
+    if (account_asset.has_value()) {
+      auto balance = new_balance + account_asset.value()->balance();
       if (not balance) {
         return makeExecutionError("amount overflows balance", command_name);
       }
@@ -189,11 +186,11 @@ namespace iroha {
           commands->upsertAccountAsset(account_asset_new), command_name);
     }
 
-    auto account_asset = account_asset_builder.balance(new_balance)
+    auto account_asset_new = account_asset_builder.balance(new_balance)
                              .accountId(command->accountId())
                              .assetId(command->assetId())
                              .build();
-    return makeExecutionResult(commands->upsertAccountAsset(account_asset),
+    return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
                                command_name);
   }
 
@@ -230,14 +227,13 @@ namespace iroha {
             .quorum(1)
             .jsonData("{}")
             .build();
-    auto domain_old = queries->getDomain(command->domainId());  // Old model
-    if (not domain_old.has_value()) {
+    auto domain = queries->getDomain(command->domainId());
+    if (not domain.has_value()) {
       return makeExecutionError(
           (boost::format("Domain %s not found") % command->domainId()).str(),
           command_name);
     }
-    auto domain = shared_model::proto::from_old(domain_old.value());
-    std::string domain_default_role = domain.defaultRole();
+    std::string domain_default_role = domain.value()->defaultRole();
     // TODO: remove insert signatory from here ?
     auto result = commands->insertSignatory(command->pubkey()) | [&] {
       return commands->insertAccount(account);
@@ -335,32 +331,31 @@ namespace iroha {
       const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetQuorum> &command) {
     std::string command_name = "SetQuorum";
 
-    auto account_old = queries->getAccount(command->accountId());  // Old model
-    if (not account_old.has_value()) {
+    auto account = queries->getAccount(command->accountId());
+    if (not account.has_value()) {
       return makeExecutionError(
           (boost::format("absent account %s") % command->accountId()).str(),
           command_name);
     }
-    auto account = account_builder.domainId(account_old.value().domain_id)
-                       .accountId(account_old.value().account_id)
-                       .jsonData(account_old.value().json_data)
+    auto account_new = account_builder.domainId(account.value()->domainId())
+                       .accountId(account.value()->accountId())
+                       .jsonData(account.value()->jsonData())
                        .quorum(command->newQuorum())
                        .build();
-    return makeExecutionResult(commands->updateAccount(account), command_name);
+    return makeExecutionResult(commands->updateAccount(account_new), command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::detail::PolymorphicWrapper<shared_model::interface::SubtractAssetQuantity>
           &command) {
     std::string command_name = "SubtractAssetQuantity";
-    auto asset_old = queries->getAsset(command->assetId());  // Old model
-    if (not asset_old) {
+    auto asset = queries->getAsset(command->assetId());
+    if (not asset) {
       return makeExecutionError(
           (boost::format("asset %s is absent") % command->assetId()).str(),
           command_name);
     }
-    auto asset = shared_model::proto::from_old(asset_old.value());
-    auto precision = asset.precision();
+    auto precision = asset.value()->precision();
 
     if (command->amount().precision() != precision) {
       return makeExecutionError(
@@ -369,25 +364,23 @@ namespace iroha {
               .str(),
           command_name);
     }
-    auto account_asset_old = queries->getAccountAsset(
+    auto account_asset = queries->getAccountAsset(
         command->accountId(), command->assetId());  // Old model
-    if (not account_asset_old.has_value()) {
+    if (not account_asset.has_value()) {
       return makeExecutionError((boost::format("%s do not have %s")
                                  % command->accountId() % command->assetId())
                                     .str(),
                                 command_name);
     }
 
-    auto account_asset =
-        shared_model::proto::from_old(account_asset_old.value());
 
-    auto new_balance = account_asset.balance() - command->amount();
+    auto new_balance = account_asset.value()->balance() - command->amount();
     if (not new_balance) {
       return makeExecutionError("Not sufficient amount", command_name);
     }
     auto account_asset_new = account_asset_builder.balance(*new_balance)
-                                 .accountId(account_asset.accountId())
-                                 .assetId(account_asset.assetId())
+                                 .accountId(account_asset.value()->accountId())
+                                 .assetId(account_asset.value()->assetId())
                                  .build();
     return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
                                command_name);
@@ -397,49 +390,46 @@ namespace iroha {
       const shared_model::detail::PolymorphicWrapper<shared_model::interface::TransferAsset> &command) {
     std::string command_name = "TransferAsset";
 
-    auto src_account_asset_old =
+    auto src_account_asset =
         queries->getAccountAsset(command->srcAccountId(), command->assetId());
-    if (not src_account_asset_old.has_value()) {
+    if (not src_account_asset.has_value()) {
       return makeExecutionError((boost::format("asset %s is absent of %s")
                                  % command->assetId() % command->srcAccountId())
                                     .str(),
                                 command_name);
     }
-    auto src_account_asset =
-        shared_model::proto::from_old(src_account_asset_old.value());
     iroha::model::AccountAsset dest_AccountAsset;
-    auto dest_account_asset_old =
+    auto dest_account_asset =
         queries->getAccountAsset(command->destAccountId(), command->assetId());
-    auto asset_old = queries->getAsset(command->assetId());
-    if (not asset_old.has_value()) {
+    auto asset = queries->getAsset(command->assetId());
+    if (not asset.has_value()) {
       return makeExecutionError(
           (boost::format("asset %s is absent of %s") % command->assetId()
            % command->destAccountId())
               .str(),
           command_name);
     }
-    auto asset = shared_model::proto::from_old(asset_old.value());
     // Precision for both wallets
-    auto precision = asset.precision();
+    auto precision = asset.value()->precision();
     if (command->amount().precision() != precision) {
       return makeExecutionError(
           (boost::format("precision %d is wrong") % precision).str(),
           command_name);
     }
     // Get src balance
-    auto new_src_balance = src_account_asset.balance() - command->amount();
+    auto new_src_balance = src_account_asset.value()->balance() - command->amount();
     if (not new_src_balance) {
         return makeExecutionError("not enough assets on source account",
                                 command_name);
     }
     // Set new balance for source account
     auto src_account_asset_new =
-        account_asset_builder.assetId(src_account_asset.assetId())
-            .accountId(src_account_asset.accountId())
+        account_asset_builder.assetId(src_account_asset.value()->assetId())
+            .accountId(src_account_asset.value()->accountId())
             .balance(new_src_balance.get())
             .build();
 
-    if (not dest_account_asset_old.has_value()) {
+    if (not dest_account_asset.has_value()) {
       // This assert is new for this account - create new AccountAsset
 
       auto dest_account_asset_new =
@@ -451,9 +441,7 @@ namespace iroha {
           [&] { return commands->upsertAccountAsset(src_account_asset_new); };
       return makeExecutionResult(result, command_name);
     } else {
-      auto dest_account_asset =
-          shared_model::proto::from_old(dest_account_asset_old.value());
-      auto new_dest_balance = dest_account_asset.balance() + command->amount();
+      auto new_dest_balance = dest_account_asset.value()->balance() + command->amount();
       if (not new_dest_balance) {
         return makeExecutionError("operation overflows destination balance",
                                   command_name);
@@ -766,20 +754,18 @@ namespace iroha {
   bool CommandValidator::isValid(const shared_model::interface::RemoveSignatory &command,
                                  iroha::ametsuchi::WsvQuery &queries,
                                  const std::string &creator_account_id) {
-    auto account_old = queries.getAccount(command.accountId());  // Old model
+    auto account = queries.getAccount(command.accountId());
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
 
-    if (not(account_old.has_value() and signatories.has_value())) {
+    if (not(account.has_value() and signatories.has_value())) {
       // No account or signatories found
       return false;
     }
-    auto account = shared_model::proto::from_old(account_old.value());
-
     auto newSignatoriesSize = signatories.value().size() - 1;
 
     // You can't remove if size of rest signatories less than the quorum
-    return newSignatoriesSize >= account.quorum();
+    return newSignatoriesSize >= account.value()-> quorum();
   }
 
   bool CommandValidator::isValid(const shared_model::interface::RevokePermission &command,
@@ -824,26 +810,22 @@ namespace iroha {
       return false;
     }
 
-    auto asset_old = queries.getAsset(command.assetId());  // Old model
-    if (not asset_old.has_value()) {
+    auto asset = queries.getAsset(command.assetId());
+    if (not asset.has_value()) {
       return false;
     }
-    auto asset = shared_model::proto::from_old(asset_old.value());
     // Amount is formed wrong
-    if (command.amount().precision() != asset.precision()) {
+    if (command.amount().precision() != asset.value()->precision()) {
       return false;
     }
-    auto account_asset_old = queries.getAccountAsset(
-        command.srcAccountId(), command.assetId());  // Old model
-    if (not account_asset_old.has_value()) {
+    auto account_asset = queries.getAccountAsset(
+        command.srcAccountId(), command.assetId());
+    if (not account_asset.has_value()) {
       return false;
     }
-    auto account_asset =
-        shared_model::proto::from_old(account_asset_old.value());
-
     // Check if dest account exist
     return queries.getAccount(command.destAccountId()) and
         // Balance in your wallet should be at least amount of transfer
-        compareAmount(account_asset.balance(), command.amount()) >= 0;
+        compareAmount(account_asset.value()->balance(), command.amount()) >= 0;
   }
 }  // namespace shared_model

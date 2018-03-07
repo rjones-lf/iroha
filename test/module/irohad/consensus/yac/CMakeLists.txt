@@ -71,6 +71,8 @@ target_link_libraries(yac_network_test
 addtest(yac_peer_orderer_test peer_orderer_test.cpp)
 target_link_libraries(yac_peer_orderer_test
     yac
+    shared_model_stateless_validation
+    model
     )
 
 addtest(yac_gate_test yac_gate_test.cpp)
@@ -91,6 +93,12 @@ target_link_libraries(yac_common_test
 
 addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)
 target_link_libraries(yac_crypto_provider_test
+    yac
+    model
+    )
+
+addtest(supermajority_checker_test supermajority_checker_test.cpp)
+target_link_libraries(supermajority_checker_test
     yac
     model
     )

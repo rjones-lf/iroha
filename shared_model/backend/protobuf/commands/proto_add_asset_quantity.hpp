@@ -35,11 +35,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit AddAssetQuantity(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            add_asset_quantity_(proto_->add_asset_quantity()),
-            amount_([this] {
-              return proto::Amount(add_asset_quantity_.amount());
-            }) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       AddAssetQuantity(const AddAssetQuantity &o)
           : AddAssetQuantity(o.proto_) {}
@@ -64,9 +60,11 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AddAssetQuantity &add_asset_quantity_;
+      const iroha::protocol::AddAssetQuantity &add_asset_quantity_{
+          proto_->add_asset_quantity()};
 
-      const Lazy<proto::Amount> amount_;
+      const Lazy<proto::Amount> amount_{
+          [this] { return proto::Amount(add_asset_quantity_.amount()); }};
     };
 
   }  // namespace proto

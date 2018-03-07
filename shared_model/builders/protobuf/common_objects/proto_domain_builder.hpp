@@ -23,29 +23,30 @@
 #include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
-    namespace proto {
-        class DomainBuilder {
-        public:
-            shared_model::proto::Domain build() {
-                return shared_model::proto::Domain(domain_);
-            }
+  namespace proto {
+    class DomainBuilder {
+     public:
+      shared_model::proto::Domain build() {
+        return shared_model::proto::Domain(iroha::protocol::Domain(domain_));
+      }
 
-            DomainBuilder &defaultRole(
-                    const interface::types::RoleIdType &default_role) {
-                domain_.set_default_role(default_role);
-                return *this;
-            }
+      DomainBuilder defaultRole(
+          const interface::types::RoleIdType &default_role) {
+        DomainBuilder copy(*this);
+        copy.domain_.set_default_role(default_role);
+        return copy;
+      }
 
-            DomainBuilder &domainId(
-                    const interface::types::DomainIdType &domain_id) {
-                domain_.set_domain_id(domain_id);
-                return *this;
-            }
+      DomainBuilder domainId(const interface::types::DomainIdType &domain_id) {
+        DomainBuilder copy(*this);
+        copy.domain_.set_domain_id(domain_id);
+        return copy;
+      }
 
-        private:
-            iroha::protocol::Domain domain_;
-        };
-    }  // namespace proto
+     private:
+      iroha::protocol::Domain domain_;
+    };
+  }  // namespace proto
 }  // namespace shared_model
 
 #endif  // IROHA_PROTO_DOMAIN_BUILDER_HPP

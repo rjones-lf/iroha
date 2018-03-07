@@ -33,7 +33,7 @@ namespace shared_model {
     class GetTransactions : public PRIMITIVE(GetTransactions) {
      public:
       /// type of hashes collection
-      using TransactionHashesType = std::vector<Transaction::HashType>;
+      using TransactionHashesType = std::vector<interface::types::HashType>;
 
       /**
        * @return Hashes of transactions to fetch

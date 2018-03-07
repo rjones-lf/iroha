@@ -20,6 +20,7 @@
 
 #include "common/types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace crypto {

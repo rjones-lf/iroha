@@ -27,84 +27,103 @@ namespace iroha {
 
       PbCommandFactory::PbCommandFactory() {
         boost::assign::insert(pb_role_map_)
-            // Can Get My Account Detail
-            (protocol::RolePermission::can_get_my_acc_detail,
-             can_get_my_acc_detail)
-            // Can Get My Account Assets
-            (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
-            // Can Get My Signatories
-            (protocol::RolePermission::can_get_my_signatories,
-             can_get_my_signatories)
-            // Can set quorum
-            (protocol::RolePermission::can_set_quorum, can_set_quorum)
-            // Can get my account transactions
-            (protocol::RolePermission::can_get_my_acc_txs, can_get_my_acc_txs)
-            // Can get my account
-            (protocol::RolePermission::can_get_my_account, can_get_my_account)
-            // Can get all account assets
-            (protocol::RolePermission::can_get_all_acc_ast, can_get_all_acc_ast)
-            // Can get all account asset transactions
-            (protocol::RolePermission::can_get_all_acc_ast_txs,
-             can_get_all_acc_ast_txs)
-            // Can get my transactions
-            (protocol::RolePermission::can_get_my_txs, can_get_my_txs)
-            // Can get all transactions
-            (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
-            // Can Get all account transactions
-            (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
-            // Can get all account
-            (protocol::RolePermission::can_get_all_accounts,
-             can_get_all_accounts)
-            // Can remove signatory
-            (protocol::RolePermission::can_remove_signatory,
-             can_remove_signatory)
-            // Can add signatory
-            (protocol::RolePermission::can_add_signatory, can_add_signatory)
-            // Can create domain
-            (protocol::RolePermission::can_create_domain, can_create_domain)
-            // Can create account
-            (protocol::RolePermission::can_create_account, can_create_account)
-            // Can add peer
-            (protocol::RolePermission::can_add_peer, can_add_peer)
+            // Can append role
+            (protocol::RolePermission::can_append_role, can_append_role)
+            // Can create role
+            (protocol::RolePermission::can_create_role, can_create_role)
+            // Can append role
+            (protocol::RolePermission::can_detach_role, can_detach_role)
             // Can add asset quantity
             (protocol::RolePermission::can_add_asset_qty, can_add_asset_qty)
             // Can subtract asset quantity
             (protocol::RolePermission::can_subtract_asset_qty,
              can_subtract_asset_qty)
-            // Can append role
-            (protocol::RolePermission::can_append_role, can_append_role)
-            // Can append role
-            (protocol::RolePermission::can_detach_role, can_detach_role)
+            // Can add peer
+            (protocol::RolePermission::can_add_peer, can_add_peer)
+            // Can add signatory
+            (protocol::RolePermission::can_add_signatory, can_add_signatory)
+            // Can remove signatory
+            (protocol::RolePermission::can_remove_signatory,
+             can_remove_signatory)
+            // Can set quorum
+            (protocol::RolePermission::can_set_quorum, can_set_quorum)
+            // Can create account
+            (protocol::RolePermission::can_create_account, can_create_account)
+            // Can set detail
+            (protocol::RolePermission::can_set_detail, can_set_detail)
             // Can create asset
             (protocol::RolePermission::can_create_asset, can_create_asset)
-            // Can create role
-            (protocol::RolePermission::can_create_role, can_create_role)
-            // Can get all signatories
-            (protocol::RolePermission::can_get_all_signatories,
-             can_get_all_signatories)
-            // Can get my account assets transactions
-            (protocol::RolePermission::can_get_my_acc_ast_txs,
-             can_get_my_acc_ast_txs)
             // Can transfer
             (protocol::RolePermission::can_transfer, can_transfer)
             // Can receive
             (protocol::RolePermission::can_receive, can_receive)
+            // Can create domain
+            (protocol::RolePermission::can_create_domain, can_create_domain)
             // Can read assets
             (protocol::RolePermission::can_read_assets, can_read_assets)
-            // Can grant set quorum
-            (protocol::RolePermission::can_grant_set_quorum,
-             can_grant + can_set_quorum)
-            // Can grant remove signatory
-            (protocol::RolePermission::can_grant_remove_signatory,
-             can_grant + can_remove_signatory)
-            // Can grant add signatory
-            (protocol::RolePermission::can_grant_add_signatory,
-             can_grant + can_add_signatory)
-            // Can grant + can_transfer
-            (protocol::RolePermission::can_grant_can_transfer,
-             can_grant + can_transfer)
             // Can get roles
             (protocol::RolePermission::can_get_roles, can_get_roles)
+            // Can get my account
+            (protocol::RolePermission::can_get_my_account, can_get_my_account)
+            // Can get all accounts
+            (protocol::RolePermission::can_get_all_accounts,
+             can_get_all_accounts)
+            // Can get domain accounts
+            (protocol::RolePermission::can_get_domain_accounts,
+             can_get_domain_accounts)
+            // Can get my signatories
+            (protocol::RolePermission::can_get_my_signatories,
+             can_get_my_signatories)
+            // Can get all signatories
+            (protocol::RolePermission::can_get_all_signatories,
+             can_get_all_signatories)
+            // Can get domain signatories
+            (protocol::RolePermission::can_get_domain_signatories,
+             can_get_domain_signatories)
+            // Can get my account assets
+            (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
+            // Can get all account assets
+            (protocol::RolePermission::can_get_all_acc_ast, can_get_all_acc_ast)
+            // Can get domain account assets
+            (protocol::RolePermission::can_get_domain_acc_ast, can_get_domain_acc_ast)
+            // Can get my account detail
+            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
+            // Can get all account detail
+            (protocol::RolePermission::can_get_all_acc_detail, can_get_all_acc_detail)
+            // Can get domain account detail
+            (protocol::RolePermission::can_get_domain_acc_detail, can_get_domain_acc_detail)
+            // Can get my account transactions
+            (protocol::RolePermission::can_get_my_acc_txs, can_get_my_acc_txs)
+            // Can get all account transactions
+            (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
+            // Can get domain account transactions
+            (protocol::RolePermission::can_get_domain_acc_txs, can_get_domain_acc_txs)
+            // Can get my account assets transactions
+            (protocol::RolePermission::can_get_my_acc_ast_txs,
+             can_get_my_acc_ast_txs)
+            // Can get all account asset transactions
+            (protocol::RolePermission::can_get_all_acc_ast_txs,
+             can_get_all_acc_ast_txs)
+            // Can get domain account asset transactions
+            (protocol::RolePermission::can_get_domain_acc_ast_txs,
+             can_get_domain_acc_ast_txs)
+            // Can get my transactions
+            (protocol::RolePermission::can_get_my_txs, can_get_my_txs)
+            // Can get all transactions
+            (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
+
+            // Can grant set quorum
+            (protocol::RolePermission::can_grant_can_set_quorum,
+             can_grant + can_set_quorum)
+            // Can grant add signatory
+            (protocol::RolePermission::can_grant_can_add_signatory,
+             can_grant + can_add_signatory)
+            // Can grant remove signatory
+            (protocol::RolePermission::can_grant_can_remove_signatory,
+             can_grant + can_remove_signatory)
+            // Can grant can_transfer
+            (protocol::RolePermission::can_grant_can_transfer,
+             can_grant + can_transfer)
             // Can write details to other accounts
             (protocol::RolePermission::can_grant_can_set_detail,
              can_grant + can_set_detail);
@@ -121,6 +140,9 @@ namespace iroha {
             // Can write details to other accounts
             (protocol::GrantablePermission::can_set_my_account_detail,
              can_set_detail);
+            // Can transfer my assets
+            (protocol::GrantablePermission::can_transfer_my_assets,
+                can_transfer);
       }
 
       // asset quantity

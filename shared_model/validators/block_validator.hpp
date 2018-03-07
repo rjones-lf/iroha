@@ -20,9 +20,9 @@
 
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-837
 
@@ -34,13 +34,24 @@ namespace shared_model {
      */
     class BlockValidator {
      public:
+
+      //TODO 05-03-2018 Alexey Chernyshov: remove polymorphic wrapper in IR-872
+      /**
+       * Applies validation on block
+       * @param block
+       * @return Answer containing found error if any
+       */
+      Answer validate(const interface::Block &block) const {
+        return Answer();
+      }
+
       /**
        * Applies validation on block
        * @param block
        * @return Answer containing found error if any
        */
       Answer validate(
-          detail::PolymorphicWrapper<interface::Block> block) const {
+          std::shared_ptr<interface::Block> block) const {
         return Answer();
       }
 

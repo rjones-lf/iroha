@@ -35,7 +35,10 @@ grpc::Status BlockLoaderService::retrieveBlocks(
     const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
   storage_->getBlocksFrom(request->height())
-      .map([this](auto block) { return factory_.serialize(block); })
+      .map([this](auto block) {
+        return factory_.serialize(
+            *std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+      })
       .as_blocking()
       .subscribe([writer](auto block) { writer->Write(block); });
   return grpc::Status::OK;
@@ -55,8 +58,14 @@ grpc::Status BlockLoaderService::retrieveBlock(
 
   nonstd::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
-      .filter([hash](auto block) { return block.hash == hash.value(); })
-      .map([this](auto block) { return factory_.serialize(block); })
+      .filter([hash](auto block) {
+        return shared_model::crypto::toBinaryString(block->hash())
+            == hash->to_string();
+      })
+      .map([this](auto block) {
+        return factory_.serialize(
+            *std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+      })
       .as_blocking()
       .subscribe([&result](auto block) { result = block; });
   if (not result.has_value()) {

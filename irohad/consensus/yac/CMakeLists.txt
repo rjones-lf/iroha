@@ -15,6 +15,13 @@
 # limitations under the License.
 #
 
+add_library(supermajority_check
+    impl/supermajority_checker_impl.cpp
+    )
+target_link_libraries(supermajority_check
+    model
+    )
+
 add_library(yac
     impl/yac.cpp
     impl/cluster_order.cpp
@@ -31,6 +38,7 @@ add_library(yac
     storage/impl/yac_vote_storage.cpp
     )
 target_link_libraries(yac
+    supermajority_check
     rxcpp
     optional
     yac_grpc

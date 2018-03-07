@@ -16,7 +16,7 @@
  */
 
 #include "ametsuchi/impl/storage_impl.hpp"
-
+#include <boost/format.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"  // for FlatFile
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -25,13 +25,11 @@
 #include "model/converters/json_common.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
-#include <boost/format.hpp>
-
 namespace iroha {
   namespace ametsuchi {
 
     const char *kCommandExecutorError = "Cannot create CommandExecutorFactory";
-    const char *kPsqlBroken = "Connection to PostgreSQL broken: {}";
+    const char *kPsqlBroken = "Connection to PostgreSQL broken: %s";
     const char *kTmpWsv = "TemporaryWsv";
 
     ConnectionContext::ConnectionContext(
@@ -41,6 +39,12 @@ namespace iroha {
         : block_store(std::move(block_store)),
           pg_lazy(std::move(pg_lazy)),
           pg_nontx(std::move(pg_nontx)) {}
+
+    StorageImpl::~StorageImpl() {
+      wsv_transaction_->commit();
+      wsv_connection_->disconnect();
+      log_->info("PostgresQL connection closed");
+    }
 
     StorageImpl::StorageImpl(
         std::string block_store_dir,
@@ -99,7 +103,9 @@ namespace iroha {
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block.hash; });
+          .subscribe([&top_hash](auto block) {
+            top_hash = hash256_t::from_string(toBinaryString(block->hash()));
+          });
 
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(top_hash.value_or(hash256_t{}),
@@ -126,6 +132,30 @@ namespace iroha {
             log_->error(error.error);
           });
 
+      return inserted;
+    }
+
+    bool StorageImpl::insertBlocks(const std::vector<model::Block> &blocks) {
+      log_->info("create mutable storage");
+      bool inserted = true;
+      auto storageResult = createMutableStorage();
+      storageResult.match(
+          [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                  &mutableStorage) {
+            std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
+              inserted &= mutableStorage.value->apply(
+                  block, [](const auto &block, auto &query, const auto &hash) {
+                    return true;
+                  });
+            });
+            commit(std::move(mutableStorage.value));
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            log_->error(error.error);
+            inserted = false;
+          });
+
+      log_->info("insert blocks finished");
       return inserted;
     }
 
@@ -174,7 +204,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto block_store = FlatFile::create(block_store_dir);
       if (not block_store) {
         return expected::makeError(
-            (boost::format("Cannot create block store in {}") % block_store_dir)
+            (boost::format("Cannot create block store in %s") % block_store_dir)
                 .str());
       }
       log_->info("block store created");

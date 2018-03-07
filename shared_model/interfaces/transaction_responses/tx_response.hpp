@@ -60,7 +60,7 @@ namespace shared_model {
       /**
        * @return hash of corresponding transaction
        */
-      virtual const Transaction::HashType &transactionHash() const = 0;
+      virtual const interface::types::HashType &transactionHash() const = 0;
 
       /**
        * @return attached concrete tx response

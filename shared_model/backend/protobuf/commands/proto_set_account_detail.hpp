@@ -34,8 +34,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit SetAccountDetail(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            set_account_detail_(proto_->set_account_detail()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       SetAccountDetail(const SetAccountDetail &o)
           : SetAccountDetail(o.proto_) {}
@@ -56,7 +55,8 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::SetAccountDetail &set_account_detail_;
+      const iroha::protocol::SetAccountDetail &set_account_detail_{
+          proto_->set_account_detail()};
     };
 
   }  // namespace proto

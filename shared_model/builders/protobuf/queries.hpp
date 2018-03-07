@@ -24,6 +24,7 @@ namespace shared_model {
   namespace proto {
 
     using QueryBuilder = TemplateQueryBuilder<>;
+
   }  // namespace proto
 }  // namespace shared_model
 

@@ -23,7 +23,6 @@
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
 #include "backend/protobuf/from_old_model.hpp"
-#include "common/wrapper.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "cryptography/hash.hpp"
 #include "framework/test_subscriber.hpp"
@@ -180,9 +179,10 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
           shared_model::crypto::PublicKey({pubkey.begin(), pubkey.end()}),
           shared_model::crypto::Hash(
               {expected_block.hash.begin(), expected_block.hash.end()})))
-      .WillOnce(Return(iroha::makeWrapper<shared_model::interface::Block,
-                                          shared_model::proto::Block>(
-          shared_model::proto::from_old(expected_block))));
+      .WillOnce(
+          Return(static_cast<std::shared_ptr<shared_model::interface::Block>>(
+              std::make_shared<shared_model::proto::Block>(
+                  shared_model::proto::from_old(expected_block)))));
 
   init();
 

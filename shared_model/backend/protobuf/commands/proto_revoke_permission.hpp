@@ -29,8 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit RevokePermission(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            revoke_permission_(proto_->revoke_permission()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       RevokePermission(const RevokePermission &o)
           : RevokePermission(o.proto_) {}
@@ -49,7 +48,8 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::RevokePermission &revoke_permission_;
+      const iroha::protocol::RevokePermission &revoke_permission_{
+          proto_->revoke_permission()};
     };
 
   }  // namespace proto

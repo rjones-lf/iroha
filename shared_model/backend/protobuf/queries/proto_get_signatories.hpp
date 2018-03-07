@@ -32,8 +32,7 @@ namespace shared_model {
      public:
       template <typename QueryType>
       explicit GetSignatories(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            account_signatories_(proto_->payload().get_account_signatories()) {}
+          : CopyableProto(std::forward<QueryType>(query)) {}
 
       GetSignatories(const GetSignatories &o) : GetSignatories(o.proto_) {}
 
@@ -47,7 +46,8 @@ namespace shared_model {
      private:
       // ------------------------------| fields |-------------------------------
 
-      const iroha::protocol::GetSignatories &account_signatories_;
+      const iroha::protocol::GetSignatories &account_signatories_{
+          proto_->payload().get_account_signatories()};
     };
 
   }  // namespace proto

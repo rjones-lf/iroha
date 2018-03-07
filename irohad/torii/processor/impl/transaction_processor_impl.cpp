@@ -19,6 +19,8 @@
 #include <endpoint.pb.h>
 #include <iostream>
 #include <utility>
+#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "model/sha3_hash.hpp"
 #include "model/transaction_response.hpp"
 
@@ -35,8 +37,10 @@ namespace iroha {
       log_ = logger::log("TxProcessor");
 
       // insert all txs from proposal to proposal set
-      pcs_->on_proposal().subscribe([this](model::Proposal proposal) {
-        for (const auto &tx : proposal.transactions) {
+      pcs_->on_proposal().subscribe([this](auto model_proposal) {
+        auto proposal =
+            std::unique_ptr<model::Proposal>(model_proposal->makeOldModel());
+        for (const auto &tx : proposal->transactions) {
           proposal_set_.insert(hash(tx).to_string());
           TransactionResponse response;
           response.tx_hash = hash(tx).to_string();
@@ -48,12 +52,12 @@ namespace iroha {
       });
 
       // move commited txs from proposal to candidate map
-      pcs_->on_commit().subscribe([this](
-                                      rxcpp::observable<model::Block> blocks) {
+      pcs_->on_commit().subscribe([this](Commit blocks) {
         blocks.subscribe(
             // on next..
-            [this](model::Block block) {
-              for (const auto &tx : block.transactions) {
+            [this](auto model_block) {
+              std::unique_ptr<model::Block> block(model_block->makeOldModel());
+              for (const auto &tx : block->transactions) {
                 if (this->proposal_set_.count(hash(tx).to_string())) {
                   proposal_set_.erase(hash(tx).to_string());
                   candidate_set_.insert(hash(tx).to_string());
@@ -98,7 +102,9 @@ namespace iroha {
       response.current_status =
           model::TransactionResponse::Status::STATELESS_VALIDATION_SUCCESS;
 
-      pcs_->propagate_transaction(transaction);
+      pcs_->propagate_transaction(
+          std::make_shared<shared_model::proto::Transaction>(
+              shared_model::proto::from_old(*transaction)));
 
       log_->info("stateless validated");
       notifier_.get_subscriber().on_next(

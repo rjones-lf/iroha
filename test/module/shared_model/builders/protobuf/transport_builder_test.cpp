@@ -25,6 +25,7 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace shared_model;
+using namespace shared_model::proto;
 using namespace iroha::expected;
 
 class TransportBuilderTest : public ::testing::Test {

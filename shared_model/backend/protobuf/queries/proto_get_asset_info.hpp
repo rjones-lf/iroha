@@ -32,8 +32,7 @@ namespace shared_model {
      public:
       template <typename QueryType>
       explicit GetAssetInfo(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)),
-            asset_info_(proto_->payload().get_asset_info()) {}
+          : CopyableProto(std::forward<QueryType>(query)) {}
 
       GetAssetInfo(const GetAssetInfo &o) : GetAssetInfo(o.proto_) {}
 
@@ -46,7 +45,8 @@ namespace shared_model {
 
      private:
       // ------------------------------| fields |-------------------------------
-      const iroha::protocol::GetAssetInfo &asset_info_;
+      const iroha::protocol::GetAssetInfo &asset_info_{
+          proto_->payload().get_asset_info()};
     };
 
   }  // namespace proto

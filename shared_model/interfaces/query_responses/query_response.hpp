@@ -71,7 +71,7 @@ namespace shared_model {
       /**
        * @return hash of corresponding query
        */
-      virtual const Query::HashType &queryHash() const = 0;
+      virtual const interface::types::HashType &queryHash() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 

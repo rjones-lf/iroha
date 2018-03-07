@@ -22,7 +22,9 @@
 #include <memory>
 #include <rxcpp/rx.hpp>
 #include <unordered_map>
+
 #include "ametsuchi/peer_query.hpp"
+#include "logger/logger.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/proposal.hpp"
 #include "network/impl/async_grpc_client.hpp"
@@ -123,6 +125,8 @@ namespace iroha {
        * the ledger + 1.
        */
       size_t proposal_height;
+
+      logger::Logger log_;
     };
   }  // namespace ordering
 }  // namespace iroha

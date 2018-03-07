@@ -17,11 +17,6 @@
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
-#include <algorithm>
-#include <numeric>
-
-#include "consensus/yac/storage/yac_common.hpp"
-
 using namespace logger;
 
 namespace iroha {
@@ -45,18 +40,23 @@ namespace iroha {
           return iter;
         }
         // insert and return new
-        return block_storages_.emplace(block_storages_.end(),
-                                       YacHash(proposal_hash, block_hash),
-                                       peers_in_round_);
+        return block_storages_.emplace(
+            block_storages_.end(),
+            YacHash(proposal_hash, block_hash),
+            peers_in_round_,
+            supermajority_checker_);
       }
 
       // --------| public api |--------
 
-      YacProposalStorage::YacProposalStorage(ProposalHash hash,
-                                             uint64_t peers_in_round)
+      YacProposalStorage::YacProposalStorage(
+          ProposalHash hash,
+          uint64_t peers_in_round,
+          std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : current_state_(nonstd::nullopt),
             hash_(std::move(hash)),
-            peers_in_round_(peers_in_round) {
+            peers_in_round_(peers_in_round),
+            supermajority_checker_(supermajority_checker) {
         log_ = log("ProposalStorage");
       }
 
@@ -142,7 +142,8 @@ namespace iroha {
                               return acc + storage.getNumberOfVotes();
                             });
 
-        auto is_reject = hasReject(max_vote, all_votes, peers_in_round_);
+        auto is_reject = supermajority_checker_->hasReject(
+            max_vote, all_votes, peers_in_round_);
 
         if (is_reject) {
           std::vector<VoteMessage> result;

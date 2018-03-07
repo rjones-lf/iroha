@@ -29,12 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit CreateAccount(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            create_account_(proto_->create_account()),
-            pubkey_([this] {
-              return interface::types::PubkeyType(
-                  create_account_.main_pubkey());
-            }) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       CreateAccount(const CreateAccount &o) : CreateAccount(o.proto_) {}
 
@@ -58,8 +53,12 @@ namespace shared_model {
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::CreateAccount &create_account_;
-      const Lazy<interface::types::PubkeyType> pubkey_;
+      const iroha::protocol::CreateAccount &create_account_{
+          proto_->create_account()};
+
+      const Lazy<interface::types::PubkeyType> pubkey_{[this] {
+        return interface::types::PubkeyType(create_account_.main_pubkey());
+      }};
     };
 
   }  // namespace proto

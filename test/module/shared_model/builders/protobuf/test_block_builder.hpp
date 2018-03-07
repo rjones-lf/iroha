@@ -20,15 +20,12 @@
 
 #include "builders/protobuf/builder_templates/block_template.hpp"
 
-using namespace shared_model::proto;
-using namespace shared_model::validation;
-
 /**
  * Builder alias, to build shared model proto block object avoiding validation
  * and "required fields" check
  */
 using TestBlockBuilder =
-    TemplateBlockBuilder<(1 << TemplateBlockBuilder<>::total) - 1,
-                         DefaultBlockValidator,
-                         Block>;
+shared_model::proto::TemplateBlockBuilder<(1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+                                          shared_model::validation::DefaultBlockValidator,
+                                          shared_model::proto::Block>;
 #endif  // IROHA_TEST_BLOCK_BUILDER_HPP

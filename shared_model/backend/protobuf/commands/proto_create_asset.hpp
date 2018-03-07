@@ -29,14 +29,12 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit CreateAsset(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            create_asset_(proto_->create_asset()),
-            precision_([this] { return create_asset_.precision(); }) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       CreateAsset(const CreateAsset &o) : CreateAsset(o.proto_) {}
 
-      CreateAsset(CreateAsset &&o) noexcept
-          : CreateAsset(std::move(o.proto_)) {}
+      CreateAsset(CreateAsset &&o) noexcept : CreateAsset(std::move(o.proto_)) {
+      }
 
       const interface::types::AssetNameType &assetName() const override {
         return create_asset_.asset_name();
@@ -54,8 +52,11 @@ namespace shared_model {
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
-      const iroha::protocol::CreateAsset &create_asset_;
-      const Lazy<PrecisionType> precision_;
+
+      const iroha::protocol::CreateAsset &create_asset_{proto_->create_asset()};
+
+      const Lazy<PrecisionType> precision_{
+          [this] { return create_asset_.precision(); }};
     };
 
   }  // namespace proto

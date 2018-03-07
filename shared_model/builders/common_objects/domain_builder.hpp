@@ -23,47 +23,38 @@
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
-    namespace builder {
-        template <typename BuilderImpl, typename Validator>
-        class DomainBuilder {
-        public:
-            BuilderResult<shared_model::interface::Domain> build() {
-                auto asset = builder_.build();
-                shared_model::validation::ReasonsGroupType reasons(
-                        "Asset Builder", shared_model::validation::GroupedReasons());
-                shared_model::validation::Answer answer;
-                validator_.validateRoleId(reasons, domain.defaultRole());
-                validator_.validateDomainId(reasons, domain.domainId());
+  namespace builder {
+    template <typename BuilderImpl, typename Validator>
+    class DomainBuilder: public CommonObjectBuilder<interface::Domain, BuilderImpl, Validator> {
+     public:
+      DomainBuilder defaultRole(
+          const interface::types::RoleIdType &default_role) {
+        DomainBuilder copy(*this);
+        copy.builder_ = this->builder_.defaultRole(default_role);
+        return copy;
+      }
 
-                if (!reasons.second.empty()) {
-                    answer.addReason(std::move(reasons));
-                    return iroha::expected::makeError(
-                            std::make_shared<std::string>(answer.reason()));
-                }
-                std::shared_ptr<shared_model::interface::Asset> asset_ptr(
-                        asset.copy());
-                return iroha::expected::makeValue(
-                        shared_model::detail::PolymorphicWrapper<
-                                shared_model::interface::Asset>(asset_ptr));
-            }
+      DomainBuilder domainId(const interface::types::DomainIdType &domain_id) {
+        DomainBuilder copy(*this);
+        copy.builder_ = this->builder_.domainId(domain_id);
+        return copy;
+      }
 
-            DomainBuilder &defaultRole(
-                    const interface::types::RoleIdType &default_role) {
-                builder_ = builder_.defaaultRole(default_role);
-                return *this;
-            }
+     protected:
+      virtual std::string builderName() const override {
+        return "Domain Builder";
+      }
 
-            DomainBuilder &domainId(
-                    const interface::types::DomainIdType &domain_id) {
-                builder_ = builder_.domainId(domain_id);
-                return *this;
-            }
+      virtual validation::ReasonsGroupType validate(
+          const interface::Domain &object) override {
+        validation::ReasonsGroupType reasons;
+        this->validator_.validateDomainId(reasons, object.domainId());
+        this->validator_.validateRoleId(reasons, object.defaultRole());
 
-        private:
-            Validator validator_;
-            BuilderImpl builder_;
-        };
-    }  // namespace builder
+        return reasons;
+      }
+    };
+  }  // namespace builder
 }  // namespace shared_model
 
 #endif  // IROHA_DOMAIN_BUILDER_HPP

@@ -166,7 +166,10 @@ bool QueryProcessingFactory::validate(const model::GetTransactions &query) {
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAssetInfo(
     const model::GetAssetInfo &query) {
-  auto ast = _wsvQuery->getAsset(query.asset_id);
+  auto shared_ast = _wsvQuery->getAsset(query.asset_id);
+  auto ast = shared_ast | [&](auto &asset) {
+    return nonstd::make_optional(*std::unique_ptr<iroha::model::Asset>(asset->makeOldModel()));
+  };
   if (!ast.has_value()) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
@@ -212,7 +215,11 @@ QueryProcessingFactory::executeGetRolePermissions(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
     const model::GetAccount &query) {
-  auto acc = _wsvQuery->getAccount(query.account_id);
+  auto shared_acc = _wsvQuery->getAccount(query.account_id);
+  auto acc = shared_acc | [](auto &account) {
+    return nonstd::make_optional(*std::unique_ptr<iroha::model::Account>(account->makeOldModel()));
+  };
+
   auto roles = _wsvQuery->getAccountRoles(query.account_id);
   if (not acc.has_value() or not roles.has_value()) {
     ErrorResponse response;
@@ -230,8 +237,11 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccountAssets(
     const model::GetAccountAssets &query) {
-  auto acct_asset =
-      _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
+  auto shared_acct_asset =  _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
+  auto acct_asset = shared_acct_asset | [](auto &account_asset) {
+    return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(account_asset->makeOldModel()));
+  };
+
   if (!acct_asset.has_value()) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
@@ -268,7 +278,9 @@ iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
                                                                query.asset_id);
   TransactionsResponse response;
   response.query_hash = iroha::hash(query);
-  response.transactions = acc_asset_tx;
+  response.transactions = acc_asset_tx.map([](const auto &tx) {
+    return *std::unique_ptr<iroha::model::Transaction>(tx->makeOldModel());
+  });
   return std::make_shared<TransactionsResponse>(response);
 }
 
@@ -278,18 +290,26 @@ QueryProcessingFactory::executeGetAccountTransactions(
   auto acc_tx = _blockQuery->getAccountTransactions(query.account_id);
   TransactionsResponse response;
   response.query_hash = iroha::hash(query);
-  response.transactions = acc_tx;
+  response.transactions = acc_tx.map([](const auto &tx) {
+    return *std::unique_ptr<iroha::model::Transaction>(tx->makeOldModel());
+  });
   return std::make_shared<TransactionsResponse>(response);
 }
 
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetTransactions(
     const model::GetTransactions &query) {
-  auto txs = _blockQuery->getTransactions(query.tx_hashes);
+  std::vector<shared_model::crypto::Hash> hashes;
+  std::transform(
+      query.tx_hashes.begin(),
+      query.tx_hashes.end(),
+      std::back_inserter(hashes),
+      [](const auto &h) { return shared_model::crypto::Hash(h.to_string()); });
+  auto txs = _blockQuery->getTransactions(hashes);
   std::vector<iroha::model::Transaction> transactions;
   txs.subscribe([&transactions](auto const &tx_opt) {
     if (tx_opt) {
-      transactions.push_back(*tx_opt);
+      transactions.push_back(*std::unique_ptr<iroha::model::Transaction>((*tx_opt)->makeOldModel()));
     }
   });
   iroha::model::TransactionsResponse response;
@@ -309,7 +329,10 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetSignatories(
   }
   SignatoriesResponse response;
   response.query_hash = iroha::hash(query);
-  response.keys = signs.value();
+  std::for_each(signs.value().begin(), signs.value().end(), [&response](const auto &key) {
+    response.keys.emplace_back(
+        key.template makeOldModel<iroha::pubkey_t>());
+  });
   return std::make_shared<SignatoriesResponse>(response);
 }
 

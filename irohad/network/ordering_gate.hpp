@@ -21,6 +21,7 @@
 #include <rxcpp/rx-observable.hpp>
 #include "model/proposal.hpp"
 #include "model/transaction.hpp"
+#include "network/peer_communication_service.hpp"
 
 namespace iroha {
   namespace network {
@@ -34,7 +35,7 @@ namespace iroha {
        * Propagate a signed transaction for further processing
        * @param transaction
        */
-      virtual void propagate_transaction(
+      virtual void propagateTransaction(
           std::shared_ptr<const model::Transaction> transaction) = 0;
 
       /**
@@ -42,6 +43,15 @@ namespace iroha {
        * @return observable with notifications
        */
       virtual rxcpp::observable<model::Proposal> on_proposal() = 0;
+
+      /**
+       * Set peer communication service for commit notification
+       * @param pcs - const reference for PeerCommunicationService
+       * design notes: pcs passed by const reference because of cyclic linking
+       * between OG and PCS in the implementation. Same reasons to move the pcs
+       * dependency not in ctor but make the setter method.
+       */
+      virtual void setPcs(const PeerCommunicationService &pcs) = 0;
 
       virtual ~OrderingGate() = default;
     };

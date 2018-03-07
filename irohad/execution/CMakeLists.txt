@@ -17,6 +17,7 @@ add_library(common_execution
         )
 target_link_libraries(common_execution
         optional
+        rxcpp
         )
 
 add_library(command_execution

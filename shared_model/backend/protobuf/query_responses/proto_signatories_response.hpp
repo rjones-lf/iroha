@@ -33,17 +33,7 @@ namespace shared_model {
      public:
       template <typename QueryResponseType>
       explicit SignatoriesResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            signatoriesResponse_(proto_->signatories_response()),
-            keys_([this] {
-              return boost::accumulate(
-                  signatoriesResponse_.keys(),
-                  interface::types::PublicKeyCollectionType{},
-                  [](auto &&acc, const auto &key) {
-                    acc.emplace_back(new interface::types::PubkeyType(key));
-                    return std::move(acc);
-                  });
-            }) {}
+          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
 
       SignatoriesResponse(const SignatoriesResponse &o)
           : SignatoriesResponse(o.proto_) {}
@@ -59,8 +49,18 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::SignatoriesResponse &signatoriesResponse_;
-      const Lazy<interface::types::PublicKeyCollectionType> keys_;
+      const iroha::protocol::SignatoriesResponse &signatoriesResponse_{
+          proto_->signatories_response()};
+
+      const Lazy<interface::types::PublicKeyCollectionType> keys_{[this] {
+        return boost::accumulate(
+            signatoriesResponse_.keys(),
+            interface::types::PublicKeyCollectionType{},
+            [](auto &&acc, const auto &key) {
+              acc.emplace_back(new interface::types::PubkeyType(key));
+              return std::move(acc);
+            });
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

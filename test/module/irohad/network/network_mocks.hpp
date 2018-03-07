@@ -28,31 +28,37 @@ namespace iroha {
   namespace network {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
-      MOCK_METHOD1(propagate_transaction,
-                   void(std::shared_ptr<const model::Transaction>));
+      MOCK_METHOD1(
+          propagate_transaction,
+          void(std::shared_ptr<const shared_model::interface::Transaction>));
 
-      MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());
+      MOCK_CONST_METHOD0(
+          on_proposal,
+          rxcpp::observable<
+              std::shared_ptr<shared_model::interface::Proposal>>());
 
-      MOCK_METHOD0(on_commit, rxcpp::observable<Commit>());
+      MOCK_CONST_METHOD0(on_commit, rxcpp::observable<Commit>());
     };
 
     class MockBlockLoader : public BlockLoader {
      public:
       MOCK_METHOD1(retrieveBlocks,
-                   rxcpp::observable<Wrapper<shared_model::interface::Block>>(
+                   rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
                        const shared_model::crypto::PublicKey &));
       MOCK_METHOD2(retrieveBlock,
-                   nonstd::optional<Wrapper<shared_model::interface::Block>>(
+                   nonstd::optional<std::shared_ptr<shared_model::interface::Block>>(
                        const shared_model::crypto::PublicKey &,
-                       const shared_model::interface::Block::HashType &));
+                       const shared_model::interface::types::HashType &));
     };
 
     class MockOrderingGate : public OrderingGate {
      public:
-      MOCK_METHOD1(propagate_transaction,
+      MOCK_METHOD1(propagateTransaction,
                    void(std::shared_ptr<const model::Transaction> transaction));
 
       MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());
+
+      MOCK_METHOD1(setPcs, void(const PeerCommunicationService &));
     };
 
     class MockConsensusGate : public ConsensusGate {

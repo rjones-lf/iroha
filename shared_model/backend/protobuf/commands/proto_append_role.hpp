@@ -29,8 +29,7 @@ namespace shared_model {
      public:
       template <typename CommandType>
       explicit AppendRole(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)),
-            append_role_(proto_->append_role()) {}
+          : CopyableProto(std::forward<CommandType>(command)) {}
 
       AppendRole(const AppendRole &o) : AppendRole(o.proto_) {}
 
@@ -45,7 +44,7 @@ namespace shared_model {
       }
 
      private:
-      const iroha::protocol::AppendRole &append_role_;
+      const iroha::protocol::AppendRole &append_role_{proto_->append_role()};
     };
 
   }  // namespace proto

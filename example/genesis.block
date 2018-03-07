@@ -27,6 +27,8 @@
                         "can_add_signatory",
                         "can_create_account",
                         "can_create_domain",
+                        "can_get_my_acc_detail",
+                        "can_get_all_acc_detail",
                         "can_get_all_acc_ast",
                         "can_get_all_acc_ast_txs",
                         "can_get_all_acc_txs",
@@ -36,6 +38,7 @@
                         "can_get_roles",
                         "can_read_assets",
                         "can_remove_signatory",
+                        "can_set_detail",
                         "can_set_quorum"
                     ]
                 },
@@ -45,6 +48,8 @@
                     "permissions": [
                         "can_add_signatory",
                         "can_get_my_account",
+                        "can_get_my_acc_detail",
+                        "can_get_domain_acc_detail",
                         "can_get_my_acc_ast",
                         "can_get_my_acc_ast_txs",
                         "can_get_my_acc_txs",
@@ -58,6 +63,7 @@
                         "can_receive",
                         "can_remove_signatory",
                         "can_set_quorum",
+                        "can_set_detail",
                         "can_transfer"
                     ]
                 },

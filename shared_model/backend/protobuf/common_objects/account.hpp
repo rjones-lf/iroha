@@ -33,8 +33,7 @@ namespace shared_model {
      public:
       template <typename AccountType>
       explicit Account(AccountType &&account)
-          : CopyableProto(std::forward<AccountType>(account)),
-            blob_([this] { return makeBlob(*proto_); }) {}
+          : CopyableProto(std::forward<AccountType>(account)) {}
 
       Account(const Account &o) : Account(o.proto_) {}
 
@@ -56,7 +55,7 @@ namespace shared_model {
         return proto_->json_data();
       }
 
-      const BlobType &blob() const override {
+      const interface::types::BlobType &blob() const override {
         return *blob_;
       }
 
@@ -64,7 +63,8 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<BlobType> blob_;
+      const Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(*proto_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

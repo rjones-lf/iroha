@@ -30,7 +30,7 @@ namespace shared_model {
   namespace interface {
 
     /**
-     * Representation of valuable goods in the system
+     * Domain object represents administrative unit within the system
      */
     class Domain : public PRIMITIVE(Domain) {
      public:

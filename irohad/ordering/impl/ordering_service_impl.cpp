@@ -19,6 +19,8 @@
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "logger/logger.hpp"
+#include "proposal.pb.h"
 
 namespace iroha {
   namespace ordering {
@@ -35,6 +37,7 @@ namespace iroha {
           transport_(transport),
           persistent_state_(persistent_state) {
       updateTimer();
+      log_ = logger::log("OrderingServiceImpl");
 
       // restore state of ordering service from persistent storage
       proposal_height = persistent_state_->loadProposalHeight().value();
@@ -43,6 +46,7 @@ namespace iroha {
     void OrderingServiceImpl::onTransaction(
         std::shared_ptr<shared_model::interface::Transaction> transaction) {
       queue_.push(transaction);
+      log_->info("Queue size is {}", queue_.unsafe_size());
 
       if (queue_.unsafe_size() >= max_size_) {
         handle.unsubscribe();
@@ -51,19 +55,22 @@ namespace iroha {
     }
 
     void OrderingServiceImpl::generateProposal() {
-      std::vector<shared_model::proto::Transaction> fetched_txs;
+      // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
+      // factories with move semantics
+      iroha::protocol::Proposal proto_proposal;
+      proto_proposal.set_height(proposal_height++);
+      proto_proposal.set_created_time(iroha::time::now());
+      log_->info("Start proposal generation");
       for (std::shared_ptr<shared_model::interface::Transaction> tx;
-           fetched_txs.size() < max_size_ and queue_.try_pop(tx);) {
-        fetched_txs.emplace_back(
-            std::move(static_cast<shared_model::proto::Transaction &>(*tx)));
+           static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
+           and queue_.try_pop(tx);) {
+        *proto_proposal.add_transactions() = std::move(
+            std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+                ->getTransport());
       }
 
       auto proposal = std::make_unique<shared_model::proto::Proposal>(
-          shared_model::proto::ProposalBuilder()
-              .height(proposal_height++)
-              .createdTime(iroha::time::now())
-              .transactions(fetched_txs)
-              .build());
+          std::move(proto_proposal));
 
       // Save proposal height to the persistent storage.
       // In case of restart it reloads state.
@@ -78,7 +85,7 @@ namespace iroha {
 
       auto lst = wsv_->getLedgerPeers().value();
       for (const auto &peer : lst) {
-        peers.push_back(peer.address);
+        peers.push_back(peer->address());
       }
       transport_->publishProposal(std::move(proposal), peers);
     }

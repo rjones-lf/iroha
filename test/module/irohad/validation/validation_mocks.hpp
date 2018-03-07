@@ -42,7 +42,7 @@ namespace iroha {
 
     class MockChainValidator : public ChainValidator {
      public:
-      MOCK_METHOD2(validateChain, bool(Commit, ametsuchi::MutableStorage &));
+      MOCK_METHOD2(validateChain, bool(OldCommit, ametsuchi::MutableStorage &));
 
       MOCK_METHOD2(validateBlock,
                    bool(const model::Block &, ametsuchi::MutableStorage &));
