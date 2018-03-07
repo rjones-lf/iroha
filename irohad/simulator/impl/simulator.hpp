@@ -46,7 +46,7 @@ namespace iroha {
 
       ~Simulator();
 
-      void process_proposal(model::Proposal proposal) override;
+      void process_proposal(const shared_model::interface::Proposal &proposal) override;
 
       rxcpp::observable<model::Proposal> on_verified_proposal() override;
 

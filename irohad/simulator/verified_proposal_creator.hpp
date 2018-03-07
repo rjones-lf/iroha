@@ -21,6 +21,12 @@
 #include <rxcpp/rx-observable.hpp>
 #include "model/proposal.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Proposal;
+  }
+}
+
 namespace iroha {
   namespace simulator {
 
@@ -33,7 +39,7 @@ namespace iroha {
        * Processing proposal for making stateful validation
        * @param proposal - object for validation
        */
-      virtual void process_proposal(model::Proposal proposal) = 0;
+      virtual void process_proposal(const shared_model::interface::Proposal &proposal) = 0;
 
       /**
        * Emit proposals that was verified by validation
