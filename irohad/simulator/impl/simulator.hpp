@@ -29,12 +29,6 @@
 
 #include "logger/logger.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class Block;
-  }
-}
-
 namespace iroha {
   namespace simulator {
 
@@ -56,7 +50,7 @@ namespace iroha {
 
       rxcpp::observable<model::Proposal> on_verified_proposal() override;
 
-      void process_verified_proposal(model::Proposal proposal) override;
+      void process_verified_proposal(const shared_model::interface::Proposal &proposal) override;
 
       rxcpp::observable<model::Block> on_block() override;
 

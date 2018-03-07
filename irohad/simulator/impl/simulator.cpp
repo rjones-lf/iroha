@@ -17,9 +17,12 @@
 
 #include "simulator/impl/simulator.hpp"
 #include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "model/sha3_hash.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -45,7 +48,8 @@ namespace iroha {
       notifier_.get_observable().subscribe(
           verified_proposal_subscription_,
           [this](model::Proposal verified_proposal) {
-            this->process_verified_proposal(verified_proposal);
+            auto old_verified_proposal = shared_model::proto::from_old(verified_proposal);
+            this->process_verified_proposal(old_verified_proposal);
           });
     }
 
@@ -94,16 +98,26 @@ namespace iroha {
           });
     }
 
-    void Simulator::process_verified_proposal(model::Proposal proposal) {
+    void Simulator::process_verified_proposal(const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
+
       model::Block new_block;
-      new_block.height = proposal.height;
+      new_block.height = proposal.height();
       new_block.prev_hash =
           *iroha::hexstringToArray<iroha::model::Block::HashType::size()>(
-              last_block.value()->prevHash().hex());
-      new_block.transactions = proposal.transactions;
-      new_block.txs_number = proposal.transactions.size();
-      new_block.created_ts = proposal.created_time;
+              last_block.value()->hash().hex());
+      auto txs =
+          boost::accumulate(proposal.transactions(),
+                            std::vector<iroha::model::Transaction>{},
+                            [](auto &&vec, const auto &tx) {
+                              std::unique_ptr<iroha::model::Transaction> ptr(
+                                  tx->makeOldModel());
+                              vec.emplace_back(*ptr);
+                              return std::forward<decltype(vec)>(vec);
+                            });
+      new_block.transactions = txs;
+      new_block.txs_number = proposal.transactions().size();
+      new_block.created_ts = proposal.created_time();
       new_block.hash = hash(new_block);
       crypto_provider_->sign(new_block);
 
