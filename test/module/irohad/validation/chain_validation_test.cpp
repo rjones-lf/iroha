@@ -152,9 +152,12 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  // TODO: 14-02-2018 Alexey Chernyshov add argument to EXPECT_CALL after
-  // replacement with shared_model https://soramitsu.atlassian.net/browse/IR-903
-  EXPECT_CALL(*storage, apply(/* TODO block */ _, _))
+  EXPECT_CALL(
+      *storage,
+      apply(testing::Truly([&](const shared_model::interface::Block &rhs) {
+              return rhs == block;
+            }),
+            _))
       .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
