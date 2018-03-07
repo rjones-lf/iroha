@@ -1,5 +1,5 @@
 #
-# Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+# Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
 # http://soramitsu.co.jp
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,11 +15,10 @@
 # limitations under the License.
 #
 
-add_library(iroha_amount
-    amount.cpp
-    )
-
-target_link_libraries(iroha_amount
-    optional
-    boost
-    )
+addtest(invalid_fields_test invalid_fields_test.cpp)
+target_link_libraries(invalid_fields_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )

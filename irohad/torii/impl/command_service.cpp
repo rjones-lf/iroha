@@ -70,7 +70,7 @@ namespace torii {
 
     shared_model::proto::TransportBuilder<
         shared_model::proto::Transaction,
-        shared_model::validation::DefaultTransactionValidator>()
+        shared_model::validation::DefaultSignableTransactionValidator>()
         .build(request)
         .match(
             [this, &tx_hash, &response](
@@ -127,7 +127,8 @@ namespace torii {
       response.CopyFrom(*resp);
     } else {
       response.set_tx_hash(request.tx_hash());
-      if (block_query_->getTxByHashSync(shared_model::crypto::Hash(request.tx_hash()))) {
+      if (block_query_->getTxByHashSync(
+              shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
