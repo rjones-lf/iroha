@@ -29,6 +29,12 @@
 
 #include "logger/logger.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}
+
 namespace iroha {
   namespace simulator {
 
@@ -70,7 +76,7 @@ namespace iroha {
       logger::Logger log_;
 
       // last block
-      nonstd::optional<model::Block> last_block;
+      nonstd::optional<std::shared_ptr<shared_model::interface::Block>> last_block;
     };
   }  // namespace simulator
 }  // namespace iroha
