@@ -22,15 +22,13 @@
 /**
  * @given ModelCrypto module
  * @when Receive 32 byte hex string
- * @then assertion is not thrown
+ * @then assertion is not thrown on keypair generation
  */
 TEST(ModelCryptoTest, GenerateKeypair) {
-  ASSERT_NO_THROW(
-  shared_model::bindings::ModelCrypto().generateKeypair(std::string(64, 'a'));
-  );
-  ASSERT_NO_THROW(
-      shared_model::bindings::ModelCrypto().generateKeypair(std::string(64, 'A'));
-  );
+  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(64, 'a')););
+  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(64, 'A')););
 }
 /**
  * @given ModelCrypto module
@@ -38,16 +36,12 @@ TEST(ModelCryptoTest, GenerateKeypair) {
  * @then assertion is thrown
  */
 TEST(ModelCryptoTest, GenerateKeypairInvalidSeed) {
-  ASSERT_ANY_THROW(
-      shared_model::bindings::ModelCrypto().generateKeypair(std::string(64, 'g'));
-  );
-  ASSERT_ANY_THROW(
-      shared_model::bindings::ModelCrypto().generateKeypair(std::string(63, 'a'));
-  );
-  ASSERT_ANY_THROW(
-      shared_model::bindings::ModelCrypto().generateKeypair(std::string(65, 'a'));
-  );
-  ASSERT_ANY_THROW(
-      shared_model::bindings::ModelCrypto().generateKeypair(std::string(32, 'a'));
-  );
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(64, 'g'));, std::runtime_error);
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(63, 'a'));, std::runtime_error);
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(65, 'a'));, std::runtime_error);
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+      std::string(32, 'a'));, std::invalid_argument);
 }
