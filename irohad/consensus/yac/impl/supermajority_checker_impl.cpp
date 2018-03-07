@@ -17,14 +17,13 @@
 
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/common_objects/peer.hpp"
-#include "model/peer.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
       bool SupermajorityCheckerImpl::hasSupermajority(
-          const std::vector<model::Signature> &signatures,
+          const shared_model::interface::SignatureSetType &signatures,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
         return checkSize(signatures.size(), peers.size())
@@ -41,7 +40,7 @@ namespace iroha {
       }
 
       bool SupermajorityCheckerImpl::peersSubset(
-          const std::vector<model::Signature> &signatures,
+          const shared_model::interface::SignatureSetType &signatures,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
         return std::all_of(
@@ -51,14 +50,7 @@ namespace iroha {
                          peers.end(),
                          [&signature](const std::shared_ptr<
                                       shared_model::interface::Peer> &peer) {
-
-                           // TODO 14-02-2018 Alexey Chernyshov
-                           // remove after relocationn to shared_model
-                           shared_model::crypto::PublicKey signature_pubkey(
-                               {signature.pubkey.begin(),
-                                signature.pubkey.end()});
-
-                           return signature_pubkey == peer->pubkey();
+                           return signature->publicKey() == peer->pubkey();
                          })
                   != peers.end();
             });

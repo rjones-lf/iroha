@@ -18,12 +18,11 @@
 #define IROHA_SYNCHRONIZER_IMPL_HPP
 
 #include "ametsuchi/mutable_factory.hpp"
+#include "logger/logger.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "validation/chain_validator.hpp"
-
-#include "logger/logger.hpp"
 
 namespace iroha {
   namespace synchronizer {

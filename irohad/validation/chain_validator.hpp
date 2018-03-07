@@ -20,11 +20,17 @@
 
 #include <rxcpp/rx-observable.hpp>
 
-#include "ametsuchi/mutable_storage.hpp"
-#include "model/block.hpp"
-#include "model/commit.hpp"
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}  // namespace shared_model
 
 namespace iroha {
+  namespace ametsuchi {
+    class MutableStorage;
+  }
+
   namespace validation {
 
     /**
@@ -46,8 +52,10 @@ namespace iroha {
        * @param storage - storage that may be modified during loading
        * @return true if commit is valid, false otherwise
        */
-      virtual bool validateChain(OldCommit commit,
-                                 ametsuchi::MutableStorage &storage) = 0;
+      virtual bool validateChain(
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+              commit,
+          ametsuchi::MutableStorage &storage) = 0;
 
       /**
        * Block validation will check if all signatures and meta-data are valid.
@@ -55,7 +63,7 @@ namespace iroha {
        * @param storage -  storage that may be modified during block appliance
        * @return true if block is valid and can be applied, false otherwise
        */
-      virtual bool validateBlock(const model::Block &block,
+      virtual bool validateBlock(const shared_model::interface::Block &block,
                                  ametsuchi::MutableStorage &storage) = 0;
     };
   }  // namespace validation

@@ -22,12 +22,13 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "converters/protobuf/json_proto_converter.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
+
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -129,16 +130,16 @@ namespace iroha {
               std::move(command_executors.value())));
     }
 
-    bool StorageImpl::insertBlock(model::Block block) {
+    bool StorageImpl::insertBlock(model::Block old_block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
-      auto old_block = shared_model::proto::from_old(block);
+      auto block = shared_model::proto::from_old(old_block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(old_block,
+                storage.value->apply(block,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -159,10 +160,14 @@ namespace iroha {
       storageResult.match(
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
-            std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              auto old_block = shared_model::proto::from_old(block);
+            std::for_each(blocks.begin(), blocks.end(), [&](auto old_block) {
+
+              // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+              // shared_model https://soramitsu.atlassian.net/browse/IR-887
+              auto block = shared_model::proto::from_old(old_block);
+
               inserted &= mutableStorage.value->apply(
-                  old_block,
+                  block,
                   [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });

@@ -35,14 +35,14 @@ namespace iroha {
          * @return true on supermajority is achieved or false otherwise
          */
         virtual bool hasSupermajority(
-            const std::vector<model::Signature> &signatures,
+            const shared_model::interface::SignatureSetType &signatures,
             const std::vector<std::shared_ptr<shared_model::interface::Peer>> &peers)
             const override;
 
         virtual bool checkSize(uint64_t current, uint64_t all) const override;
 
         virtual bool peersSubset(
-            const std::vector<model::Signature> &signatures,
+            const shared_model::interface::SignatureSetType &signatures,
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const override;
 

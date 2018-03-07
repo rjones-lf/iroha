@@ -192,13 +192,13 @@ namespace iroha {
        public:
         MOCK_CONST_METHOD2(
             hasSupermajority,
-            bool(const std::vector<model::Signature> &signatures,
+            bool(const shared_model::interface::SignatureSetType &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD2(checkSize, bool(uint64_t current, uint64_t all));
         MOCK_CONST_METHOD2(
             peersSubset,
-            bool(const std::vector<model::Signature> &signatures,
+            bool(const shared_model::interface::SignatureSetType &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD3(

@@ -16,7 +16,6 @@
  */
 
 #include <gtest/gtest.h>
-#include "backend/protobuf/from_old_model.hpp"
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
@@ -30,6 +29,10 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -91,13 +94,13 @@ class KVTest : public AmetsuchiTest {
     txn1_1.commands.push_back(
         std::make_shared<SetAccountDetail>(setAccount2Age));
 
-    Block block1;
-    block1.height = 1;
-    block1.transactions.push_back(txn1_1);
-    block1.prev_hash.fill(0);
-    auto block1hash = iroha::hash(block1);
-    block1.hash = block1hash;
-    block1.txs_number = block1.transactions.size();
+    Block old_block1;
+    old_block1.height = 1;
+    old_block1.transactions.push_back(txn1_1);
+    old_block1.prev_hash.fill(0);
+    auto block1hash = iroha::hash(old_block1);
+    old_block1.hash = block1hash;
+    old_block1.txs_number = old_block1.transactions.size();
 
     {
       std::unique_ptr<MutableStorage> ms;
@@ -108,8 +111,10 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
-      auto old_block = shared_model::proto::from_old(block1);
-      ms->apply(old_block, [](const auto &blk, auto &query, const auto &top_hash) {
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-887
+      auto block1 = shared_model::proto::from_old(old_block1);
+      ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });
       storage->commit(std::move(ms));
