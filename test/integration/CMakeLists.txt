@@ -1,6 +1,7 @@
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
 
 add_subdirectory(consensus)
+add_subdirectory(acceptance)
 add_subdirectory(pipeline)
 
 addtest(client_test client_test.cpp)
