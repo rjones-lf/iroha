@@ -24,6 +24,7 @@
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
+#include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -47,6 +48,7 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
+        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendVote(&call->context, request, &cq_);
@@ -68,6 +70,7 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
+        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendCommit(&call->context, request, &cq_);
@@ -91,6 +94,7 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
+        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendReject(&call->context, request, &cq_);
