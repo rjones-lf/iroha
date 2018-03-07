@@ -32,12 +32,12 @@ namespace iroha {
           wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           log_(logger::log("TemporaryWSV")) {
-      auto w = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto c = std::make_shared<PostgresWsvCommand>(*transaction_);
+      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
+      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
       command_executor_ =
-          std::make_shared<CommandExecutor>(CommandExecutor(w, c));
+          std::make_shared<CommandExecutor>(CommandExecutor(query, command));
       command_validator_ =
-          std::make_shared<CommandValidator>(CommandValidator(w));
+          std::make_shared<CommandValidator>(CommandValidator(query));
       transaction_->exec("BEGIN;");
     }
 
