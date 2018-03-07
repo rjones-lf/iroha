@@ -37,7 +37,7 @@ namespace iroha {
                  block.height(),
                  block.hash().hex());
       auto apply_block =
-          [this](const auto &block, auto &queries, const auto &top_hash) {
+          [&](const auto &block, auto &queries, const auto &top_hash) {
             auto peers = queries.getPeers();
             if (not peers) {
               return false;
