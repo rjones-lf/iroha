@@ -27,6 +27,7 @@
 #include "model/peer.hpp"  // for model::Peer
 #include "network/impl/async_grpc_client.hpp"
 #include "yac.grpc.pb.h"
+#include "interfaces/common_objects/types.hpp"
 
 namespace iroha {
 
@@ -99,7 +100,7 @@ namespace iroha {
         /**
          * Mapping of peer objects to connections
          */
-        std::unordered_map<std::shared_ptr<shared_model::interface::Peer>,
+        std::unordered_map<shared_model::interface::types::AddressType,
                            std::unique_ptr<proto::Yac::Stub>>
             peers_;
 

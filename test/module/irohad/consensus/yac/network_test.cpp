@@ -19,9 +19,9 @@
 
 #include <grpc++/grpc++.h>
 
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
-#include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 using ::testing::_;
 using ::testing::InvokeWithoutArgs;
@@ -61,7 +61,7 @@ namespace iroha {
 
         std::shared_ptr<MockYacNetworkNotifications> notifications;
         std::shared_ptr<NetworkImpl> network;
-        model::Peer peer;
+        std::shared_ptr<shared_model::interface::Peer> peer;
         VoteMessage message;
         std::unique_ptr<grpc::Server> server;
         std::mutex mtx;
@@ -79,7 +79,7 @@ namespace iroha {
             .WillRepeatedly(
                 InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
-        network->send_vote(peer, message);
+        network->send_vote(*peer, message);
 
         // wait for response reader thread
         std::unique_lock<std::mutex> lock(mtx);

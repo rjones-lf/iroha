@@ -46,9 +46,8 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
-            peers_.at(shared_peer)->AsyncSendVote(&call->context, request, &cq_);
+            peers_.at(to.address())->AsyncSendVote(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -66,9 +65,8 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
-            peers_.at(shared_peer)->AsyncSendCommit(&call->context, request, &cq_);
+            peers_.at(to.address())->AsyncSendCommit(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -88,9 +86,8 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
-            peers_.at(shared_peer)->AsyncSendReject(&call->context, request, &cq_);
+            peers_.at(to.address())->AsyncSendReject(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -149,9 +146,8 @@ namespace iroha {
       }
 
       void NetworkImpl::createPeerConnection(const shared_model::interface::Peer &peer) {
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(peer.copy());
-        if (peers_.count(shared_peer) == 0) {
-          peers_[shared_peer] = proto::Yac::NewStub(grpc::CreateChannel(
+        if (peers_.count(peer.address()) == 0) {
+          peers_[peer.address()] = proto::Yac::NewStub(grpc::CreateChannel(
               peer.address(), grpc::InsecureChannelCredentials()));
         }
       }

@@ -32,10 +32,7 @@ namespace iroha {
       ClusterOrdering::ClusterOrdering(std::vector<std::shared_ptr<shared_model::interface::Peer>> order)
           : order_(std::move(order)) {}
 
-    const shared_model::interface::Peer& ClusterOrdering::currentLeader() {
-        if (index_ >= order_.size()) {
-          index_ = 0;
-        }
+    const shared_model::interface::Peer& ClusterOrdering::currentLeader() const {
         return *(order_.at(index_));
       }
 
@@ -44,7 +41,7 @@ namespace iroha {
       }
 
       ClusterOrdering &ClusterOrdering::switchToNext() {
-        ++index_;
+        index_ = (index_+1) % order_.size();
         return *this;
       }
 
