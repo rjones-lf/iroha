@@ -16,6 +16,7 @@
  */
 
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include "crypto_provider/impl/crypto_provider_impl.hpp"
 
 using namespace std::chrono_literals;
 using namespace iroha::model::generators;
@@ -53,7 +54,7 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
          CommandGenerator().generateCreateAccount(
              TEA_NAME, DOMAIN_KHM, teaKeypair_.pubkey)});
 
-    iroha::model::ModelCryptoProviderImpl(adminKeypair_).sign(genesis_tx2);
+    iroha::CryptoProviderImpl(adminKeypair_).sign(genesis_tx2);
 
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
@@ -147,7 +148,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            NBA_ID,  // MoneyCreator, who can AddAssetQuantity to my own wallet.
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("1000000.00")))});
-  iroha::model::ModelCryptoProviderImpl(nbaKeypair_).sign(tx1);
+  iroha::CryptoProviderImpl(nbaKeypair_).sign(tx1);
 
   // NBA transfers asset to ivan@ru and tea@khm
   auto tx2 = TransactionGenerator().generateTransaction(
@@ -163,7 +164,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            TEA_ID,
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("50.00")))});
-  iroha::model::ModelCryptoProviderImpl(nbaKeypair_).sign(tx2);
+  iroha::CryptoProviderImpl(nbaKeypair_).sign(tx2);
 
   // transfer asset from ivan@ru to tea@khm (between different domains)
   auto tx3 = TransactionGenerator().generateTransaction(
@@ -174,7 +175,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
           TEA_ID,
           ASSET_USD_ID,
           getVal(iroha::Amount().createFromString("5.50")))});
-  iroha::model::ModelCryptoProviderImpl(ivanKeypair_).sign(tx3);
+  iroha::CryptoProviderImpl(ivanKeypair_).sign(tx3);
 
   sendTxsInOrderAndValidate({tx1, tx2, tx3});
 }

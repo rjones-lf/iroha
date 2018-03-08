@@ -18,7 +18,7 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/model/model_mocks.hpp"
+#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -34,10 +34,10 @@ using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
-using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
+using ::testing::_;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 

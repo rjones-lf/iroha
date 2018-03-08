@@ -57,7 +57,7 @@ class TestIrohad : public Irohad {
   }
 
   auto &getCryptoProvider() {
-    return crypto_verifier;
+    return crypto_provider;
   }
 
   void run() override {

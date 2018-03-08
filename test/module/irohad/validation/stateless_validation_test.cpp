@@ -20,6 +20,7 @@
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "module/irohad/model/model_mocks.hpp"
+#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 
 
@@ -41,7 +42,7 @@ iroha::model::Transaction create_transaction() {
 TEST(stateless_validation, stateless_validation_when_valid) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
+  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
@@ -56,7 +57,7 @@ TEST(stateless_validation, stateless_validation_when_valid) {
 TEST(stateless_validation, stateless_validation_when_invalid_wrong_signature) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
+  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
@@ -72,7 +73,7 @@ TEST(stateless_validation,
      stateless_validation_when_invalid_due_to_big_time_delay) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
+  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 
@@ -91,7 +92,7 @@ TEST(stateless_validation,
      stateless_validation_when_invalid_due_to_tx_from_future) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
+  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
       crypto_provider);
 

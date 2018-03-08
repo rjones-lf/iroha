@@ -30,7 +30,7 @@
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
-#include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
+#include "crypto_provider/crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "parser/parser.hpp"  // for parser::ParseValue
@@ -178,7 +178,7 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t tx_counter,
-        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
+        const std::shared_ptr<iroha::CryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(creator_account),
           default_peer_ip_(default_peer_ip),

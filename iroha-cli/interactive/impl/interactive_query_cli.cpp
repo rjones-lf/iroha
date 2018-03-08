@@ -26,7 +26,7 @@
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_query_cli.hpp"
 #include "model/converters/json_query_factory.hpp"
-#include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
+#include "crypto_provider/crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/sha3_hash.hpp"
@@ -101,7 +101,7 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t query_counter,
-        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
+        const std::shared_ptr<iroha::CryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(account_name),
           default_peer_ip_(default_peer_ip),

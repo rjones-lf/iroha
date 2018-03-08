@@ -20,6 +20,7 @@
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/from_old_model.hpp"
+#include "crypto_provider/crypto_provider.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/block_loader_impl.hpp"
 
@@ -31,7 +32,7 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
+    std::shared_ptr<CryptoProvider> crypto_provider,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
@@ -145,7 +146,8 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   return nonstd::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
-nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(const shared_model::crypto::PublicKey &pubkey) {
+nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
+    const shared_model::crypto::PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers) {
     log_->error(kPeerRetrieveFail);

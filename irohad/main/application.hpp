@@ -27,7 +27,6 @@
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "model/converters/pb_query_factory.hpp"
-#include "model/model_crypto_provider_impl.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -153,7 +152,7 @@ class Irohad {
   // ------------------------| internal dependencies |-------------------------
 
   // crypto provider
-  std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_verifier;
+  std::shared_ptr<iroha::CryptoProvider> crypto_provider;
 
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;

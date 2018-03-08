@@ -17,8 +17,9 @@
 
 #include "main/application.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "crypto_provider/impl/crypto_provider_impl.cpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -117,12 +118,12 @@ void Irohad::resetOrderingService() {
 }
 
 bool Irohad::restoreWsv() {
-  return wsv_restorer_->restoreWsv(*storage)
-      .match([](iroha::expected::Value<void> v) -> bool { return true; },
-             [&](iroha::expected::Error<std::string> &error) -> bool {
-               log_->error(error.error);
-               return false;
-             });
+  return wsv_restorer_->restoreWsv(*storage).match(
+      [](iroha::expected::Value<void> v) -> bool { return true; },
+      [&](iroha::expected::Error<std::string> &error) -> bool {
+        log_->error(error.error);
+        return false;
+      });
 }
 
 /**
@@ -138,7 +139,7 @@ void Irohad::initPeerQuery() {
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  crypto_verifier = std::make_shared<ModelCryptoProviderImpl>(keypair);
+  crypto_provider = std::make_shared<CryptoProviderImpl>(keypair);
 
   log_->info("[Init] => crypto provider");
 }
@@ -172,7 +173,7 @@ void Irohad::initSimulator() {
                                           stateful_validator,
                                           storage,
                                           storage->getBlockQuery(),
-                                          crypto_verifier);
+                                          crypto_provider);
 
   log_->info("[Init] => init simulator");
 }
@@ -182,7 +183,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader = loader_init.initBlockLoader(
-      wsv, storage->getBlockQuery(), crypto_verifier);
+      wsv, storage->getBlockQuery(), crypto_provider);
 
   log_->info("[Init] => block loader");
 }

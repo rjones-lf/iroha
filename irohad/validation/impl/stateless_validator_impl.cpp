@@ -20,6 +20,7 @@
 #include <chrono>
 #include <utility>
 
+#include "crypto_provider/crypto_provider.hpp"
 #include "datetime/time.hpp"
 
 using namespace std::chrono_literals;
@@ -27,7 +28,7 @@ using namespace std::chrono_literals;
 namespace iroha {
   namespace validation {
     StatelessValidatorImpl::StatelessValidatorImpl(
-        std::shared_ptr<model::ModelCryptoProvider> crypto_provider)
+        std::shared_ptr<CryptoProvider> crypto_provider)
         : crypto_provider_(std::move(crypto_provider)) {
       log_ = logger::log("SLV");
     }

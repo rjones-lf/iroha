@@ -25,11 +25,12 @@
 #include "model/generators/transaction_generator.hpp"
 
 namespace iroha {
+  class CryptoProvider;
+
   namespace model {
     struct Command;
-    class ModelCryptoProvider;
   }
-}
+}  // namespace iroha
 
 namespace iroha_cli {
   namespace interactive {
@@ -48,7 +49,7 @@ namespace iroha_cli {
           const std::string &default_peer_ip,
           int default_port,
           uint64_t tx_counter,
-          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
+          const std::shared_ptr<iroha::CryptoProvider> &provider);
       /**
        * Run interactive query command line
        */
@@ -193,7 +194,7 @@ namespace iroha_cli {
       logger::Logger log_;
 
       // Crypto provider
-      std::shared_ptr<iroha::model::ModelCryptoProvider> provider_;
+      std::shared_ptr<iroha::CryptoProvider> provider_;
 
       // Transaction generator
       iroha::model::generators::TransactionGenerator tx_generator_;

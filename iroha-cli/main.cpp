@@ -28,7 +28,7 @@
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/generators/block_generator.hpp"
-#include "model/model_crypto_provider_impl.hpp"
+#include "crypto_provider/impl/crypto_provider_impl.hpp"
 #include "validators.hpp"
 
 // Account information
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
         FLAGS_torii_port,
         0,
         0,
-        std::make_shared<iroha::model::ModelCryptoProviderImpl>(
+        std::make_shared<iroha::CryptoProviderImpl>(
             keypair.value()));
     interactiveCli.run();
   } else {

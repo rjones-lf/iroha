@@ -33,6 +33,7 @@
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
@@ -55,7 +56,7 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    provider = std::make_shared<MockCryptoProvider>();
+    provider = std::make_shared<iroha::MockCryptoProvider>();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query,
         storage,
@@ -106,7 +107,7 @@ class BlockLoaderTest : public testing::Test {
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
-  std::shared_ptr<MockCryptoProvider> provider;
+  std::shared_ptr<iroha::MockCryptoProvider> provider;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;

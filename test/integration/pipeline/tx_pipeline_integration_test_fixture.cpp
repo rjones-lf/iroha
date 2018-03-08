@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <atomic>
 #include "backend/protobuf/from_old_model.hpp"
+#include "model/sha3_hash.hpp"
 
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;

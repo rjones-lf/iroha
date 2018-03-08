@@ -18,12 +18,14 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "crypto_provider/impl/crypto_provider_impl.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include "model/generators/query_generator.hpp"
+#include "model/sha3_hash.hpp"
 #include "responses.pb.h"
 
 using namespace std::chrono_literals;
@@ -97,7 +99,7 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
           "admin@test", 1, {cmd});
   iroha::KeysManagerImpl manager("admin@test");
   auto keypair = manager.loadKeys().value();
-  iroha::model::ModelCryptoProviderImpl provider(keypair);
+  iroha::CryptoProviderImpl provider(keypair);
   provider.sign(tx);
 
   sendTxsInOrderAndValidate({tx});
@@ -123,7 +125,7 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
           CREATOR_ACCOUNT_ID, 1, {cmd});
   iroha::KeysManagerImpl manager(CREATOR_ACCOUNT_ID);
   const auto keypair = manager.loadKeys().value();
-  iroha::model::ModelCryptoProviderImpl provider(keypair);
+  iroha::CryptoProviderImpl provider(keypair);
   provider.sign(given_tx);
 
   sendTxsInOrderAndValidate({given_tx});
