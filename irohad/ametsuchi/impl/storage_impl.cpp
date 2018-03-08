@@ -271,6 +271,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
+        // TODO: rework to shared model converters once they are available
+        // IR-1084 Nikita Alekseev
         auto old_block =
             *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,

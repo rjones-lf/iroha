@@ -31,10 +31,7 @@ namespace iroha {
       std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
       storage.getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
           [&blocks](auto block) {
-            // TODO Alexey Chernyshov rework after relocation to
-            // shared_model. May be it would be better to use
-            // vector.push_back(std::move(block));
-            blocks.emplace_back(block);
+            blocks.push_back(std::move(block));
           });
 
       storage.dropStorage();
