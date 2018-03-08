@@ -27,7 +27,6 @@ jobs:
             - build-linux-debug-
           paths:
             - ~/.ccache
-
       - run:
           name: ccache setup
           command: |
@@ -43,7 +42,7 @@ jobs:
               -DCOVERAGE=ON \
               -H$IROHA_HOME \
               -B$IROHA_BUILD \
-              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_BUILD_TYPE=Coverage \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
       - run:
           name: make
@@ -128,7 +127,7 @@ jobs:
             cp iroha-*.deb ./iroha.deb
             cp iroha-*.tar.gz ./iroha.tar.gz
             # if IROHA_VERSION is not set, then CIRCLE_SHA1
-            echo ${IROHA_VERSION:-$CIRCLE_SHA1} > version.txt
+            echo ${IROHA_VERSION:-0x$CIRCLE_SHA1} > version.txt
       - store_artifacts:
           path: build/iroha.deb
           destination: iroha-linux.deb
@@ -299,7 +298,7 @@ jobs:
           command: >
             cmake -H. -Bbuild \
               -DCOVERAGE=OFF \
-              -DTESTING=OFF \
+              -DTESTING=ON \
               -DPACKAGE_TGZ=ON \
               -DCMAKE_BUILD_TYPE=Release \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
@@ -325,7 +324,7 @@ jobs:
             # iroha-$IROHA_VERSION-Darwin.tar.gz, always matches 1 file
             cp build/iroha-*.tar.gz build/iroha-darwin.tar.gz
             # if IROHA_VERSION is not set, then CIRCLE_SHA1
-            echo ${IROHA_VERSION:-$CIRCLE_SHA1} > build/version.txt
+            echo ${IROHA_VERSION:-0x$CIRCLE_SHA1} > build/version.txt
       - store_artifacts:
           path: build/iroha-darwin.tar.gz
           destination: iroha-darwin.tar.gz

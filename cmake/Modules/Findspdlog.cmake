@@ -15,13 +15,13 @@ set_target_description(spdlog "Logging library" ${URL} ${VERSION})
 
 if (NOT SPDLOG_FOUND)
   externalproject_add(gabime_spdlog
-      GIT_REPOSITORY  ${URL}
-      GIT_TAG         ${VERSION}
+      GIT_REPOSITORY    ${URL}
+      GIT_TAG           ${VERSION}
       CONFIGURE_COMMAND "" # remove configure step
-      BUILD_COMMAND "" # remove build step
-      INSTALL_COMMAND "" # remove install step
-      TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
+      BUILD_COMMAND     "" # remove build step
+      INSTALL_COMMAND   "" # remove install step
+      TEST_COMMAND      "" # remove test step
+      UPDATE_COMMAND    "" # remove update step
       )
   externalproject_get_property(gabime_spdlog source_dir)
   set(spdlog_INCLUDE_DIR ${source_dir}/include)

@@ -1,4 +1,4 @@
-INCLUDE(InstallRequiredSystemLibraries)
+include(InstallRequiredSystemLibraries)
 
 if(PACKAGE_TGZ)
   list(APPEND CPACK_GENERATOR TGZ)
@@ -8,11 +8,10 @@ if(PACKAGE_ZIP)
 endif()
 
 set(CPACK_PACKAGE_NAME                "iroha")
-set(CPACK_PACKAGE_VENDOR              "Soramitsu LLC")
+set(CPACK_PACKAGE_VENDOR              "Soramitsu Ltd")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Iroha - simple decentralized blockchain")
-SET(CPACK_PACKAGE_VENDOR              "Soramitsu LLC")
-SET(CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_SOURCE_DIR}/LICENSE")
-SET(CPACK_PACKAGE_CONTACT             "Bogdan Vaneev <bogdan@soramitsu.co.jp>")
+set(CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_SOURCE_DIR}/LICENSE")
+set(CPACK_PACKAGE_CONTACT             "Bogdan Vaneev <bogdan@soramitsu.co.jp>")
 
 if(NOT IROHA_VERSION)
   message(WARNING  "IROHA_VERSION is not specified, using commit hash as version")
@@ -21,11 +20,11 @@ if(NOT IROHA_VERSION)
   set(IROHA_VERSION "0x${GIT_SHA1}")
 endif()
 
-SET(CPACK_PACKAGE_VERSION ${IROHA_VERSION})
+set(CPACK_PACKAGE_VERSION ${IROHA_VERSION})
 message(STATUS "[IROHA_VERSION] '${IROHA_VERSION}'")
 
 
-SET(CPACK_STRIP_FILES TRUE)
+set(CPACK_STRIP_FILES TRUE)
 
 set(CPACK_COMPONENTS_ALL binaries libraries)
 

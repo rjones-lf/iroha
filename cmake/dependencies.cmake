@@ -6,7 +6,16 @@ set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
     )
 
-# Project dependencies.
+if(CMAKE_GENERATOR MATCHES Xcode)
+  set(XCODE_EXT "/Debug")
+else()
+  set(XCODE_EXT "")
+endif()
+
+
+###################################################################
+##### START OF PROJECT DEPENDENCIES
+
 find_package(Threads REQUIRED)
 
 ##########################
