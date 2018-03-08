@@ -78,7 +78,6 @@ pipeline {
                             """
                             sh """
                                 cmake \
-                                  -DCOVERAGE=ON \
                                   -DTESTING=ON \
                                   -H. \
                                   -Bbuild \
@@ -155,7 +154,6 @@ pipeline {
                         """
                         sh """
                             cmake \
-                              -DCOVERAGE=OFF \
                               -DTESTING=OFF \
                               -H. \
                               -Bbuild \

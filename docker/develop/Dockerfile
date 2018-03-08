@@ -32,9 +32,9 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
         gcovr cppcheck doxygen graphviz graphviz-dev; \
     apt-get -y clean
 
-# install cmake 3.5.1
+# install cmake 3.7.2
 RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout 64130a7e793483e24c1d68bdd234f81d5edb2d51); \
+    (cd /tmp/cmake ; git checkout 35413bf2c1b33980afd418030af27f184872af6b); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \
