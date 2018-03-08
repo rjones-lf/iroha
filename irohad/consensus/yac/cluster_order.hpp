@@ -20,7 +20,7 @@
 
 #include <boost/optional.hpp>
 #include <vector>
-#include "model/peer.hpp"  // for Peer, because currentLeader() returns by value
+#include <memory>
 
 namespace shared_model {
   namespace interface {
