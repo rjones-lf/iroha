@@ -16,7 +16,6 @@
  */
 
 #include "simulator/impl/simulator.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -68,9 +67,7 @@ namespace iroha {
       log_->info("process proposal");
       // Get last block from local ledger
       block_queries_->getTopBlocks(1).as_blocking().subscribe(
-          [this](auto block) {
-            last_block = std::shared_ptr<shared_model::interface::Block>(block);
-          });
+          [this](auto block) { last_block = block; });
       if (not last_block.has_value()) {
         log_->warn("Could not fetch last block");
         return;
@@ -101,6 +98,23 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
+      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
+      // that this cast will not be needed
+      auto proto_txs =
+          proposal.transactions()
+          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
+              return static_cast<const shared_model::proto::Transaction &>(
+                  *polymorphic_tx.operator->());
+            });
+      auto tmp = shared_model::proto::BlockBuilder()
+                     .height(proposal.height())
+                     .prevHash(last_block.value()->hash())
+                     .transactions(proto_txs)
+                     .txNumber(proposal.transactions().size())
+                     .createdTime(proposal.created_time())
+                     .build();
+      // TODO sign
+
       model::Block new_block;
       new_block.height = proposal.height();
       new_block.prev_hash =
@@ -120,12 +134,13 @@ namespace iroha {
       new_block.hash = hash(new_block);
       crypto_provider_->sign(new_block);
 
-      auto block = std::make_shared<shared_model::proto::Block>(shared_model::proto::Block(
-          shared_model::proto::from_old(new_block)));
+      auto block = std::make_shared<shared_model::proto::Block>(
+          shared_model::proto::Block(shared_model::proto::from_old(new_block)));
       block_notifier_.get_subscriber().on_next(block);
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>> Simulator::on_block() {
+    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+    Simulator::on_block() {
       return block_notifier_.get_observable();
     }
 
