@@ -22,9 +22,9 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "interfaces/utils/query_error_response_visitor.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
 #include "model/permissions.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
