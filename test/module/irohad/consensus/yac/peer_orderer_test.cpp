@@ -76,8 +76,8 @@ class YacPeerOrdererTest : public ::testing::Test {
 
       shared_model::proto::PeerBuilder builder;
 
-      auto key = shared_model::crypto::PublicKey(tmp.pubkey.to_string());
-      auto peer = builder.address(tmp.address).pubkey(key).build();
+      auto key = tmp->pubkey();
+      auto peer = builder.address(tmp->address()).pubkey(key).build();
 
       result.emplace_back(clone(peer));
     }
@@ -93,15 +93,8 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeNormalCase) {
 
   EXPECT_CALL(*wsv, getLedgerPeers()).WillOnce(Return(s_peers));
   auto order = orderer.getInitialOrdering();
-  auto old_peers = [this] {
-    std::vector<iroha::model::Peer> result;
-    for (auto &peer : s_peers) {
-      result.push_back(
-          *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel()));
-    }
-    return result;
-  }();
-  ASSERT_EQ(order.value().getPeers(), old_peers);
+
+  ASSERT_EQ(order.value().getPeers(), s_peers);
 }
 
 TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeFailCase) {
@@ -154,7 +147,7 @@ TEST_F(YacPeerOrdererTest, FairnessTest) {
                                       peers.end(),
                                       std::string(),
                                       [](std::string res, const auto &peer) {
-                                        return res + " " + peer.address;
+                                        return res + " " + peer->address();
                                       });
     histogram[res]++;
   }

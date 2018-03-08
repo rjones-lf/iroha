@@ -22,18 +22,23 @@ namespace iroha {
     namespace yac {
 
       boost::optional<ClusterOrdering> ClusterOrdering::create(
-          const std::vector<std::shared_ptr<shared_model::interface::Peer>> &order) {
+          const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+              &order) {
         if (order.empty()) {
           return boost::none;
         }
         return ClusterOrdering(order);
       }
 
-      ClusterOrdering::ClusterOrdering(std::vector<std::shared_ptr<shared_model::interface::Peer>> order)
+      ClusterOrdering::ClusterOrdering(
+          std::vector<std::shared_ptr<shared_model::interface::Peer>> order)
           : order_(std::move(order)) {}
 
-    const shared_model::interface::Peer& ClusterOrdering::currentLeader() const {
-        return *(order_.at(index_));
+      const shared_model::interface::Peer &ClusterOrdering::currentLeader() {
+        if (index_ >= order_.size()) {
+          index_ = 0;
+        }
+        return *order_.at(index_);
       }
 
       bool ClusterOrdering::hasNext() const {
@@ -41,11 +46,12 @@ namespace iroha {
       }
 
       ClusterOrdering &ClusterOrdering::switchToNext() {
-        index_ = (index_+1) % order_.size();
+        ++index_;
         return *this;
       }
 
-      std::vector<std::shared_ptr<shared_model::interface::Peer>> ClusterOrdering::getPeers() const {
+      std::vector<std::shared_ptr<shared_model::interface::Peer>>
+      ClusterOrdering::getPeers() const {
         return order_;
       }
 

@@ -80,7 +80,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
       grpc::ServerBuilder builder;
       int port = 0;
       builder.AddListeningPort(
-          my_peer.address, grpc::InsecureServerCredentials(), &port);
+          my_peer->address(), grpc::InsecureServerCredentials(), &port);
       builder.RegisterService(network.get());
       server = builder.BuildAndStart();
       ASSERT_TRUE(server);
@@ -102,8 +102,8 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   }
 
   static uint64_t my_num, delay_before, delay_after;
-  static iroha::model::Peer my_peer;
-  static std::vector<iroha::model::Peer> default_peers;
+  static std::shared_ptr<shared_model::interface::Peer> my_peer;
+  static std::vector<std::shared_ptr<shared_model::interface::Peer>> default_peers;
 
   static void init(uint64_t num_peers, uint64_t num) {
     my_num = num;
@@ -124,8 +124,8 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 uint64_t ConsensusSunnyDayTest::my_num;
 uint64_t ConsensusSunnyDayTest::delay_before;
 uint64_t ConsensusSunnyDayTest::delay_after;
-iroha::model::Peer ConsensusSunnyDayTest::my_peer;
-std::vector<iroha::model::Peer> ConsensusSunnyDayTest::default_peers;
+std::shared_ptr<shared_model::interface::Peer> ConsensusSunnyDayTest::my_peer;
+std::vector<std::shared_ptr<shared_model::interface::Peer>> ConsensusSunnyDayTest::default_peers;
 
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
