@@ -31,11 +31,6 @@
 #include "logger/logger.hpp"
 
 namespace iroha {
-
-  namespace model {
-    struct Peer;
-  }
-
   namespace consensus {
     namespace yac {
 

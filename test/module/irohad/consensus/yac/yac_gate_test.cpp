@@ -27,8 +27,6 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "cryptography/hash.hpp"
 #include "framework/test_subscriber.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "cryptography/hash.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;
@@ -57,7 +55,6 @@ class YacGateTest : public ::testing::Test {
 
     auto bytes = shared_model::proto::from_old(expected_block).hash().blob();
     std::copy(bytes.begin(), bytes.end(), expected_block.hash.begin());
-
 
     hash_gate = make_unique<MockHashGate>();
     peer_orderer = make_unique<MockYacPeerOrderer>();
@@ -120,8 +117,9 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](auto block) {
+    ASSERT_EQ(*block, *expected_block);
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -185,7 +183,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(expected_block));
 
-   init();
+  init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);

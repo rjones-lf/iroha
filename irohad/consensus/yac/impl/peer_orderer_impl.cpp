@@ -31,9 +31,8 @@ namespace iroha {
           : query_(std::move(peer_query)) {}
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
-        return query_->getLedgerPeers() | [](const auto &peers) {
-          return ClusterOrdering::create(peers);
-        };
+        return query_->getLedgerPeers() |
+            [](const auto &peers) { return ClusterOrdering::create(peers); };
       }
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getOrdering(

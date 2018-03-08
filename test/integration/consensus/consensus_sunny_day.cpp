@@ -103,7 +103,8 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   static uint64_t my_num, delay_before, delay_after;
   static std::shared_ptr<shared_model::interface::Peer> my_peer;
-  static std::vector<std::shared_ptr<shared_model::interface::Peer>> default_peers;
+  static std::vector<std::shared_ptr<shared_model::interface::Peer>>
+      default_peers;
 
   static void init(uint64_t num_peers, uint64_t num) {
     my_num = num;
@@ -125,7 +126,8 @@ uint64_t ConsensusSunnyDayTest::my_num;
 uint64_t ConsensusSunnyDayTest::delay_before;
 uint64_t ConsensusSunnyDayTest::delay_after;
 std::shared_ptr<shared_model::interface::Peer> ConsensusSunnyDayTest::my_peer;
-std::vector<std::shared_ptr<shared_model::interface::Peer>> ConsensusSunnyDayTest::default_peers;
+std::vector<std::shared_ptr<shared_model::interface::Peer>>
+    ConsensusSunnyDayTest::default_peers;
 
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);

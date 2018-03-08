@@ -27,11 +27,6 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
-
-  namespace model {
-    struct Peer;
-  }
-
   namespace consensus {
     namespace yac {
 

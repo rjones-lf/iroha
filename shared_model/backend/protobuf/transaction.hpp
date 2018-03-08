@@ -39,8 +39,8 @@ namespace shared_model {
 
       Transaction(const Transaction &o) : Transaction(o.proto_) {}
 
-      Transaction(Transaction &&o) noexcept : Transaction(std::move(o.proto_)) {
-      }
+      Transaction(Transaction &&o) noexcept
+          : Transaction(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return payload_.creator_account_id();

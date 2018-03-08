@@ -50,8 +50,8 @@ namespace iroha {
                     std::shared_ptr<network::BlockLoader> block_loader,
                     uint64_t delay);
         void vote(const shared_model::interface::Block &) override;
-        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>> on_commit()
-            override;
+        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+        on_commit() override;
 
        private:
         /**

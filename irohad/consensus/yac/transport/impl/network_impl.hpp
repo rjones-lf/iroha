@@ -23,11 +23,11 @@
 #include <memory>
 #include <unordered_map>
 
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "model/peer.hpp"  // for model::Peer
 #include "network/impl/async_grpc_client.hpp"
 #include "yac.grpc.pb.h"
-#include "interfaces/common_objects/types.hpp"
 
 namespace iroha {
 
