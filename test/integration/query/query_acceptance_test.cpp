@@ -20,7 +20,11 @@
 #include "builders/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
-
+/**
+ * @given Admin sends some transaction and keep its hash
+ * @when GetTransactions query with the hash is sent
+ * @then get transaction information
+ */
 TEST(QueryAcceptanceTest, TransactionValidSignedBlob) {
   auto keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
