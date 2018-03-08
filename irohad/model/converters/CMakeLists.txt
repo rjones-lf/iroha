@@ -43,5 +43,4 @@ target_link_libraries(pb_model_converters
     schema
     cryptography
     logger
-    boost
     )

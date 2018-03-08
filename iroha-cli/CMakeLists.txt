@@ -61,7 +61,6 @@ target_link_libraries(iroha-cli
     client
     cli-flags_validators
     keys_manager
-    boost
     )
 
 add_install_step_for_bin(iroha-cli)

@@ -17,11 +17,13 @@ if(NOT SWIG_EXECUTABLE)
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       GIT_PROGRESS   ON
-      PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/add-nodejs8-support-to-swig.patch || true
+      PATCH_COMMAND
+          ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/add-nodejs8-support-to-swig.patch || true
       # We should install SWIG to properly access SWIG lib
-      CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --without-pcre --prefix=${EP_PREFIX}/src/swig_swig
+      CONFIGURE_COMMAND
+          ./autogen.sh COMMAND ./configure --without-pcre --prefix=${EP_PREFIX}/src/swig_swig
       BUILD_IN_SOURCE ON
-      BUILD_COMMAND ${MAKE} swig
+      BUILD_COMMAND   ${MAKE} swig
       TEST_COMMAND "" # remove test step
       )
   ExternalProject_Get_Property(swig_swig source_dir)
@@ -40,5 +42,3 @@ set(SWIG_USE_FILE ${CMAKE_ROOT}/Modules/UseSWIG.cmake)
 set_target_properties(swig PROPERTIES
     IMPORTED_LOCATION ${SWIG_EXECUTABLE}
     )
-
-mark_as_advanced(SWIG_DIR)

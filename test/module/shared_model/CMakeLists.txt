@@ -25,7 +25,6 @@ AddTest(lazy_test
     lazy_test.cpp
     )
 target_link_libraries(lazy_test
-    boost
     )
 
 AddTest(crypto_usage_test
@@ -40,7 +39,6 @@ AddTest(blob_test
     cryptography/blob_test.cpp
     )
 target_link_libraries(blob_test
-    boost
     optional
     )
 
@@ -48,5 +46,4 @@ AddTest(reference_holder_test
     reference_holder_test.cpp
     )
 target_link_libraries(reference_holder_test
-    boost
     )

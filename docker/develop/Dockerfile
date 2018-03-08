@@ -14,9 +14,9 @@ RUN apt-get update; \
 
 # add git repository
 RUN add-apt-repository -y ppa:git-core/ppa; \
-    apt-get update
-
-RUN apt-get -y --no-install-recommends install build-essential python-software-properties \
+    apt-get update; \
+    apt-get -y --no-install-recommends install \
+        build-essential python-software-properties \
         automake libtool \
         # dev dependencies
         libssl-dev zlib1g-dev libc6-dbg golang \
@@ -25,16 +25,23 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
         # code coverage
         lcov \
         # other
-        wget curl file unzip gdb iputils-ping vim ccache \
+        wget file unzip gdb iputils-ping vim ccache \
         gcovr cppcheck doxygen graphviz graphviz-dev; \
     apt-get -y clean
 
-RUN pip3 install --upgrade pip; \
-    pip3 install flask requests
 
-# install cmake 3.5.1
+# install curl with SSL, 7.58.0
+RUN (cd /tmp; wget  https://curl.haxx.se/download/curl-7.58.0.tar.gz; \
+    tar -xf curl-*.tar.gz; \
+    cd curl-7.58.0; \
+    ./configure --with-ssl; \
+    make -j${PARALLELISM} install); \
+    ldconfig; \
+    rm -rf /tmp/curl*
+
+# install cmake 3.10.2
 RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout 64130a7e793483e24c1d68bdd234f81d5edb2d51); \
+    (cd /tmp/cmake ; git checkout c1e087a9d3af74299d7681c9f9de59e5977a1539); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \
@@ -135,6 +142,7 @@ RUN git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     make -j${PARALLELISM} -C /tmp/libpqxx; \
     make -C /tmp/libpqxx install; \
     rm -rf /tmp/libpqxx
+
 
 # install tbb
 RUN git clone https://github.com/01org/tbb /tmp/tbb; \

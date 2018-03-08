@@ -7,6 +7,6 @@ else()
 
   message(STATUS "[package] linux-rpm standalone will be packaged.")
 
-  SET(CPACK_RPM_PACKAGE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
-  SET(CPACK_RPM_PACKAGE_REQUIRES "libstdc++5, libpq-dev, libtbb-dev, libboost-system-dev, libboost-filesystem-dev, libc-ares-dev")
+  set(CPACK_RPM_PACKAGE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+  set(CPACK_RPM_PACKAGE_REQUIRES "libstdc++5, libpq-dev, libtbb-dev, libboost-system-dev, libboost-filesystem-dev, libc-ares-dev")
 endif()
