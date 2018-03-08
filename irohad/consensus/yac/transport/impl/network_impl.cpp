@@ -48,7 +48,6 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendVote(&call->context, request, &cq_);
@@ -70,7 +69,6 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendCommit(&call->context, request, &cq_);
@@ -94,7 +92,6 @@ namespace iroha {
 
         auto call = new AsyncClientCall;
 
-        auto shared_peer = std::shared_ptr<shared_model::interface::Peer>(to.copy());
         call->response_reader =
             peers_.at(to.address())
                 ->AsyncSendReject(&call->context, request, &cq_);

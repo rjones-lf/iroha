@@ -26,6 +26,7 @@
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "yac.grpc.pb.h"
+#include "interfaces/common_objects/types.hpp"
 
 namespace iroha {
   namespace consensus {
