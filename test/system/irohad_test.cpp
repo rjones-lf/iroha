@@ -59,7 +59,7 @@ class IrohadTest : public testing::Test {
   }
 
   void TearDown() override {
-    iroha::remove_all(blockstore_path_);
+    iroha::remove_dir_contents(blockstore_path_);
     dropPostgres();
     boost::filesystem::remove(config_copy_);
   }

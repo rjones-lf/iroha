@@ -113,7 +113,7 @@ Identifier FlatFile::last_id() const {
 }
 
 void FlatFile::dropAll() {
-  remove_all(dump_dir_);
+  iroha::remove_dir_contents(dump_dir_);
   auto res = FlatFile::check_consistency(dump_dir_);
   current_id_.store(*res);
 }
