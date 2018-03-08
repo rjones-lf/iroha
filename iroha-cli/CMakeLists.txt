@@ -60,7 +60,6 @@ add_executable(iroha-cli
 target_link_libraries(iroha-cli
     client
     cli-flags_validators
-    crypto_provider
     keys_manager
     boost
     )

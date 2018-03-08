@@ -155,7 +155,8 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   auto top_block = getBaseBlockBuilder().height(block.height() + 1).build();
 
-  EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
+  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
+      .WillOnce(Return(true));
 
   auto peer = peers.back();
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(
@@ -198,7 +199,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
     blocks.emplace_back(blk.copy());
   }
 
-  EXPECT_CALL(*provider, verify(A<const Block &>()))
+  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
       .Times(num_blocks)
       .WillRepeatedly(Return(true));
 
@@ -235,7 +236,8 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   auto requested = getBaseBlockBuilder().build();
 
-  EXPECT_CALL(*provider, verify(A<const Block &>())).WillOnce(Return(true));
+  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
+      .WillOnce(Return(true));
 
   auto peer = peers.back();
   wPeer w_peer = std::make_shared<shared_model::proto::Peer>(

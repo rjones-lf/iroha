@@ -70,7 +70,11 @@ void TxPipelineIntegrationTestFixture::sendTxsInOrderAndValidate(
     }
     expected_block.hash = iroha::hash(expected_block);
     expected_block.sigs = {};
-    irohad->getCryptoProvider()->sign(expected_block);
+
+    auto expected = shared_model::proto::from_old(expected_block);
+    irohad->getCryptoProvider()->sign(expected);
+    expected_block = *std::unique_ptr<iroha::model::Block>(expected.makeOldModel());
+
     // compare old and new model object by their hash
     ASSERT_EQ(expected_block.hash.to_hexstring(), blocks[i]->hash().hex());
   }
@@ -121,7 +125,11 @@ void TxPipelineIntegrationTestFixture::sendTransaction(
   expected_block.txs_number = expected_proposal.transactions.size();
   expected_block.created_ts = 0;
   expected_block.hash = iroha::hash(expected_block);
-  irohad->getCryptoProvider()->sign(expected_block);
+
+  auto expected = shared_model::proto::from_old(expected_block);
+  irohad->getCryptoProvider()->sign(expected);
+  expected_block = *std::unique_ptr<iroha::model::Block>(expected.makeOldModel());
+
   expected_blocks.emplace_back(expected_block);
 
   // send transactions to torii

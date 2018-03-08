@@ -33,15 +33,6 @@ namespace iroha {
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Block &));
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Query &));
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Transaction &));
-
-    // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
-    // after relocation to shared_model
-    MOCK_CONST_METHOD1(verify, bool(const model::Transaction &));
-    MOCK_CONST_METHOD1(verify, bool(const model::Query &));
-    MOCK_CONST_METHOD1(verify, bool(const model::Block &));
-    MOCK_CONST_METHOD1(sign, void(model::Block &));
-    MOCK_CONST_METHOD1(sign, void(model::Transaction &));
-    MOCK_CONST_METHOD1(sign, void(model::Query &));
   };
 }  // namespace iroha
 

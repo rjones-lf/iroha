@@ -93,9 +93,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
             continue;
           }
 
-          std::unique_ptr<iroha::model::Block> old_block(
-              result->makeOldModel());
-          if (not crypto_provider_->verify(*old_block)) {
+          if (not crypto_provider_->verify(*result)) {
             log_->error(kInvalidBlockSignatures);
             context.TryCancel();
           } else {
@@ -130,8 +128,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   }
 
   auto result = std::make_shared<shared_model::proto::Block>(block);
-  std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
-  if (not crypto_provider_->verify(*old_block)) {
+  if (not crypto_provider_->verify(*result)) {
     log_->error(kInvalidBlockSignatures);
     return nonstd::nullopt;
   }

@@ -23,6 +23,8 @@
 #include "crypto_provider/crypto_provider.hpp"
 #include "datetime/time.hpp"
 
+#include "backend/protobuf/from_old_model.hpp"
+
 using namespace std::chrono_literals;
 
 namespace iroha {
@@ -39,8 +41,9 @@ namespace iroha {
     const char *kOldTimestamp = "Timestamp broken: too old {}. Now {}";
 
     bool StatelessValidatorImpl::validate(
-        const model::Transaction &transaction) const {
+        const model::Transaction &old_transaction) const {
       // signatures are correct
+      auto transaction = shared_model::proto::from_old(old_transaction);
       if (!crypto_provider_->verify(transaction)) {
         log_->warn(kCryptoVerificationFail);
         return false;
@@ -50,13 +53,13 @@ namespace iroha {
       ts64_t now = time::now();
 
       // tx is not sent from future
-      if (now < transaction.created_ts) {
-        log_->warn(kFutureTimestamp, transaction.created_ts, now);
+      if (now < old_transaction.created_ts) {
+        log_->warn(kFutureTimestamp, old_transaction.created_ts, now);
         return false;
       }
 
-      if (now - transaction.created_ts > MAX_DELAY) {
-        log_->warn(kOldTimestamp, transaction.created_ts, now);
+      if (now - old_transaction.created_ts > MAX_DELAY) {
+        log_->warn(kOldTimestamp, old_transaction.created_ts, now);
         return false;
       }
 
@@ -64,8 +67,9 @@ namespace iroha {
       return true;
     }
 
-    bool StatelessValidatorImpl::validate(const model::Query &query) const {
+    bool StatelessValidatorImpl::validate(const model::Query &old_query) const {
       // signatures are correct
+      auto query = shared_model::proto::from_old(std::make_shared<model::Query>(old_query));
       if (!crypto_provider_->verify(query)) {
         log_->warn(kCryptoVerificationFail);
         return false;
@@ -77,13 +81,13 @@ namespace iroha {
       // query is not sent from future
       // TODO 06/08/17 Muratov: make future gap for passing timestamp, like with
       // old timestamps IR-511 #goodfirstissue
-      if (now < query.created_ts) {
-        log_->warn(kFutureTimestamp, query.created_ts, now);
+      if (now < old_query.created_ts) {
+        log_->warn(kFutureTimestamp, old_query.created_ts, now);
         return false;
       }
 
-      if (now - query.created_ts > MAX_DELAY) {
-        log_->warn(kOldTimestamp, query.created_ts, now);
+      if (now - old_query.created_ts > MAX_DELAY) {
+        log_->warn(kOldTimestamp, old_query.created_ts, now);
         return false;
       }
 

@@ -93,6 +93,24 @@ namespace iroha {
     }
 
     void Simulator::process_verified_proposal(model::Proposal proposal) {
+
+//      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
+//      // that this cast will not be needed
+//      auto proto_txs =
+//          proposal.transactions()
+//          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
+//              return static_cast<const shared_model::proto::Transaction &>(
+//                  *polymorphic_tx.operator->());
+//            });
+//      auto tmp = shared_model::proto::BlockBuilder()
+//                     .height(proposal.height())
+//                     .prevHash(last_block.value()->hash())
+//                     .transactions(proto_txs)
+//                     .txNumber(proposal.transactions().size())
+//                     .createdTime(proposal.created_time())
+//                     .build();
+//      // TODO sign
+
       log_->info("process verified proposal");
       model::Block new_block;
       new_block.height = proposal.height;
@@ -101,7 +119,10 @@ namespace iroha {
       new_block.txs_number = proposal.transactions.size();
       new_block.created_ts = proposal.created_time;
       new_block.hash = hash(new_block);
-      crypto_provider_->sign(new_block);
+
+      auto block = shared_model::proto::from_old(new_block);
+      crypto_provider_->sign(block);
+      new_block = *std::unique_ptr<iroha::model::Block>(block.makeOldModel());
 
       block_notifier_.get_subscriber().on_next(new_block);
     }

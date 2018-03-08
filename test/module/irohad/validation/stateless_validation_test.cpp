@@ -48,7 +48,7 @@ TEST(stateless_validation, stateless_validation_when_valid) {
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const iroha::model::Transaction &>()))
+  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   ASSERT_TRUE(transaction_validator.validate(tx));
@@ -63,7 +63,7 @@ TEST(stateless_validation, stateless_validation_when_invalid_wrong_signature) {
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const iroha::model::Transaction &>()))
+  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(false));
 
   ASSERT_FALSE(transaction_validator.validate(tx));
@@ -79,7 +79,7 @@ TEST(stateless_validation,
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const iroha::model::Transaction &>()))
+  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   auto ts = iroha::time::now(-25h);
@@ -98,7 +98,7 @@ TEST(stateless_validation,
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const iroha::model::Transaction &>()))
+  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   auto ts = iroha::time::now(1h);

@@ -87,52 +87,52 @@ namespace iroha {
     virtual void sign(
         shared_model::interface::Transaction &transaction) const = 0;
 
-    // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
-    // after relocation to shared_model
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signature verification of a block.
-     * @param block - block for verification
-     * @return true if block signature is valid, otherwise false
-     */
-    virtual bool verify(const model::Block &block) const = 0;
-
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signature verification of a query.
-     * @param query - query for verification
-     * @return true if query signature is valid, otherwise false
-     */
-    virtual bool verify(const model::Query &query) const = 0;
-
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signature verification of a transaction.
-     * @param tx - transaction for verification
-     * @return true if transaction signature is valid, otherwise false
-     */
-    virtual bool verify(const model::Transaction &tx) const = 0;
-
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signing a block with stored keypair
-     * @param block - block for signing
-     */
-    virtual void sign(model::Block &block) const = 0;
-
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signing a query with stored keypair
-     * @param query - query to sign
-     */
-    virtual void sign(model::Query &query) const = 0;
-
-    /**
-     * \deprecated should be removed after relocation to the shared_model
-     * Method for signing a transaction with stored keypair
-     * @param transaction - transaction for signing
-     */
-    virtual void sign(model::Transaction &transaction) const = 0;
+//    // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
+//    // after relocation to shared_model
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signature verification of a block.
+//     * @param block - block for verification
+//     * @return true if block signature is valid, otherwise false
+//     */
+//    virtual bool verify(const model::Block &block) const = 0;
+//
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signature verification of a query.
+//     * @param query - query for verification
+//     * @return true if query signature is valid, otherwise false
+//     */
+//    virtual bool verify(const model::Query &query) const = 0;
+//
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signature verification of a transaction.
+//     * @param tx - transaction for verification
+//     * @return true if transaction signature is valid, otherwise false
+//     */
+//    virtual bool verify(const model::Transaction &tx) const = 0;
+//
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signing a block with stored keypair
+//     * @param block - block for signing
+//     */
+//    virtual void sign(model::Block &block) const = 0;
+//
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signing a query with stored keypair
+//     * @param query - query to sign
+//     */
+//    virtual void sign(model::Query &query) const = 0;
+//
+//    /**
+//     * \deprecated should be removed after relocation to the shared_model
+//     * Method for signing a transaction with stored keypair
+//     * @param transaction - transaction for signing
+//     */
+//    virtual void sign(model::Transaction &transaction) const = 0;
   };
 
 }  // namespace iroha

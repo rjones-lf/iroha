@@ -34,6 +34,7 @@
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "parser/parser.hpp"  // for parser::ParseValue
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha::model;
 
@@ -478,7 +479,9 @@ namespace iroha_cli {
       // clear commands so that we can start creating new tx
       commands_.clear();
 
-      provider_->sign(tx);
+      auto transaction = shared_model::proto::from_old(tx);
+      provider_->sign(transaction);
+      tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
 
       GrpcResponseHandler response_handler;
 
@@ -508,7 +511,9 @@ namespace iroha_cli {
       // clear commands so that we can start creating new tx
       commands_.clear();
 
-      provider_->sign(tx);
+      auto transaction = shared_model::proto::from_old(tx);
+      provider_->sign(transaction);
+      tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
 
       iroha::model::converters::JsonTransactionFactory json_factory;
       auto json_doc = json_factory.serialize(tx);

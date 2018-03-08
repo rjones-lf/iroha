@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
 #ifndef IROHA_CRYPTO_MODEL_SIGNER_HPP_
 #define IROHA_CRYPTO_MODEL_SIGNER_HPP_
 
+#include "backend/protobuf/common_objects/signature.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/signature.hpp"
@@ -25,26 +27,58 @@
 namespace shared_model {
   namespace crypto {
 
-    template <typename SignerT>
+    /**
+     * Wrapper for generalization signing for different model types.
+     * @tparam Algorithm - wrapper for generalization signing for different
+     * cryptographic algorithms
+     */
+    template <typename Algorithm = DefaultCryptoAlgorithmType>
     class CryptoModelSigner {
      public:
       CryptoModelSigner(crypto::Keypair kp);
 
-      void sign(interface::Signable &s) noexcept;
+      /**
+       * Generate and add signature for target data
+       * @param signable - data for signing
+       * @return signature's blob
+       */
+#ifndef DISABLE_BACKWARD
+      template <typename Model, typename OldModel>
+      void sign(interface::Signable<Model, OldModel> &signable) const noexcept;
+#else
+      template <typename Model>
+      void sign(interface::Signable<Model> &signable) const noexcept;
+#endif
 
      private:
-      crypto::Keypair keypair_;
+      Keypair keypair_;
     };
 
-    /// implementation
-    template <typename SignerT>
-    void CryptoModelSigner<SignerT>::sign(interface::Signable &s) noexcept {
-      auto sigblob = SignerT::sign(s.hash(), this->keypair_);
+    template <typename Algorithm>
+    CryptoModelSigner<Algorithm>::CryptoModelSigner(crypto::Keypair kp)
+        : keypair_(std::move(kp)) {}
+
+    template <typename Algorithm>
+#ifndef DISABLE_BACKWARD
+    template <typename Model, typename OldModel>
+    void CryptoModelSigner<Algorithm>::sign(
+        interface::Signable<Model, OldModel> &signable) const noexcept {
+#else
+    template <typename Model>
+    void CryptoModelSigner<Algorithm>::sign(
+        interface::Signable<Model> &signable) const noexcept {
+#endif
+      auto signedBlob = shared_model::crypto::CryptoSigner<Algorithm>::sign(
+          shared_model::crypto::Blob(signable.payload()), keypair_);
+      iroha::protocol::Signature protosig;
+      protosig.set_pubkey(
+          shared_model::crypto::toBinaryString(keypair_.publicKey()));
+      protosig.set_signature(shared_model::crypto::toBinaryString(signedBlob));
+      auto *signature = new shared_model::proto::Signature(protosig);
+      signable.addSignature(shared_model::detail::PolymorphicWrapper<
+                            shared_model::proto::Signature>(signature));
     }
 
-    template <typename SignerT>
-    CryptoModelSigner<SignerT>::CryptoModelSigner(crypto::Keypair kp)
-        : keypair_(std::move(kp)) {}
   }  // namespace crypto
 }  // namespace shared_model
 

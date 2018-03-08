@@ -104,7 +104,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
+  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(1);
 
   init();
 
@@ -144,7 +144,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(0);
 
   init();
 
@@ -181,7 +181,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
+  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(0);
 
   init();
 

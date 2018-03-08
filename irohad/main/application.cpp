@@ -139,7 +139,10 @@ void Irohad::initPeerQuery() {
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  crypto_provider = std::make_shared<CryptoProviderImpl>(keypair);
+  shared_model::crypto::Keypair keypair_(
+      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
+  crypto_provider = std::make_shared<CryptoProviderImpl<>>(keypair_);
 
   log_->info("[Init] => crypto provider");
 }

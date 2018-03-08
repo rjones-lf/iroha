@@ -18,52 +18,141 @@
 #include <gtest/gtest.h>
 
 #include "crypto_provider/impl/crypto_provider_impl.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
-#include "model/generators/query_generator.hpp"
-#include "model/generators/transaction_generator.hpp"
-#include "model/sha3_hash.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 
 namespace iroha {
   class CryptoProviderTest : public ::testing::Test {
    public:
-    CryptoProviderTest() : provider(create_keypair()) {}
+    virtual void SetUp() {
+      auto creator = "a@domain";
+      auto account_id = "b@domain";
 
-    CryptoProviderImpl provider;
+      // initialize block
+      block = std::make_unique<shared_model::proto::Block>(
+          TestBlockBuilder().build());
+
+      // initialize query
+      query = std::make_unique<shared_model::proto::Query>(
+          TestQueryBuilder()
+              .creatorAccountId(creator)
+              .queryCounter(1)
+              .getAccount(account_id)
+              .build());
+
+      // initialize transaction
+      transaction = std::make_unique<shared_model::proto::Transaction>(
+          TestTransactionBuilder()
+              .creatorAccountId(account_id)
+              .txCounter(1)
+              .setAccountQuorum(account_id, 2)
+              .build());
+    }
+
+    template <typename T>
+    void signIncorrect(T &signable) {
+      // initialize wrong signature
+      auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
+          shared_model::crypto::Blob("wrong payload"), keypair);
+      iroha::protocol::Signature wrong_signature;
+      wrong_signature.set_pubkey(
+          shared_model::crypto::toBinaryString(keypair.publicKey()));
+      wrong_signature.set_signature(
+          shared_model::crypto::toBinaryString(signedBlob));
+      signable.addSignature(shared_model::detail::PolymorphicWrapper<
+                            shared_model::proto::Signature>(
+          new shared_model::proto::Signature(wrong_signature)));
+    }
+
+    shared_model::crypto::Keypair keypair =
+        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+    CryptoProviderImpl<> provider = CryptoProviderImpl<>(keypair);
+
+    std::unique_ptr<shared_model::proto::Block> block;
+    std::unique_ptr<shared_model::proto::Query> query;
+    std::unique_ptr<shared_model::proto::Transaction> transaction;
   };
 
-  TEST_F(CryptoProviderTest, SignAndVerifyTransaction) {
-    auto model_tx =
-        model::generators::TransactionGenerator().generateTransaction(
-            "test", 0, {});
+  /**
+   * @given properly signed block
+   * @when verify block
+   * @then block is verified
+   */
+  TEST_F(CryptoProviderTest, SignAndVerifyBlock) {
+    provider.sign(*block);
 
-    provider.sign(model_tx);
-    ASSERT_TRUE(provider.verify(model_tx));
-
-    // now modify transaction's meta, so verify should fail
-    model_tx.creator_account_id = "test1";
-    ASSERT_FALSE(provider.verify(model_tx));
+    ASSERT_TRUE(provider.verify(*block));
   }
 
+  /**
+   * @given block with inctorrect sign
+   * @when verify block
+   * @then block is not verified
+   */
+  TEST_F(CryptoProviderTest, SignAndVerifyBlockWithWrongSignature) {
+    signIncorrect(*block);
+
+    ASSERT_FALSE(provider.verify(*block));
+  }
+
+  /**
+   * @given properly signed query
+   * @when verify query
+   * @then query is verified
+   */
   TEST_F(CryptoProviderTest, SignAndVerifyQuery) {
-    auto query = model::generators::QueryGenerator().generateGetAccount(
-        0, "test", 0, "test");
-
     provider.sign(*query);
-    ASSERT_TRUE(provider.verify(*query));
 
-    // modify account id, verification should fail
-    query->account_id = "kappa";
+    ASSERT_TRUE(provider.verify(*query));
+  }
+
+  /**
+   * @given query with incorrect sign
+   * @when verify query
+   * @then query is not verified
+   */
+  TEST_F(CryptoProviderTest, SignAndVerifyQuerykWithWrongSignature) {
+    signIncorrect(*query);
+
     ASSERT_FALSE(provider.verify(*query));
   }
 
+  /**
+   * @given query hash
+   * @when sign query
+   * @then query hash doesn't change
+   */
   TEST_F(CryptoProviderTest, SameQueryHashAfterSign) {
-    auto query = model::generators::QueryGenerator().generateGetAccount(
-        0, "test", 0, "test");
-
-    auto hash = iroha::hash(*query);
+    auto hash_before = query->hash();
     provider.sign(*query);
+    auto hash_signed = query->hash();
 
-    auto hash_signed = iroha::hash(*query);
-    ASSERT_EQ(hash_signed, hash);
+    ASSERT_EQ(hash_signed, hash_before);
   }
+
+  /**
+   * @given properly signed transaction
+   * @when verify transaction
+   * @then transaction is verified
+   */
+  TEST_F(CryptoProviderTest, SignAndVerifyTransaction) {
+    provider.sign(*transaction);
+
+    ASSERT_TRUE(provider.verify(*transaction));
+  }
+
+  /**
+   * @given transaction with incorrect sign
+   * @when verify transaction
+   * @then transaction is not verified
+   */
+  TEST_F(CryptoProviderTest, SignAndVerifyTransactionkWithWrongSignature) {
+    signIncorrect(*transaction);
+
+    ASSERT_FALSE(provider.verify(*transaction));
+  }
+
 }  // namespace iroha

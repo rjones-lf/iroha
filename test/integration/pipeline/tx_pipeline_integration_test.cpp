@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -99,8 +100,14 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
           "admin@test", 1, {cmd});
   iroha::KeysManagerImpl manager("admin@test");
   auto keypair = manager.loadKeys().value();
-  iroha::CryptoProviderImpl provider(keypair);
-  provider.sign(tx);
+
+  shared_model::crypto::Keypair keypair_(
+      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
+  iroha::CryptoProviderImpl<> provider(keypair_);
+  auto transaction = shared_model::proto::from_old(tx);
+  provider.sign(transaction);
+  tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
 
   sendTxsInOrderAndValidate({tx});
 }
@@ -125,8 +132,14 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
           CREATOR_ACCOUNT_ID, 1, {cmd});
   iroha::KeysManagerImpl manager(CREATOR_ACCOUNT_ID);
   const auto keypair = manager.loadKeys().value();
-  iroha::CryptoProviderImpl provider(keypair);
-  provider.sign(given_tx);
+
+  shared_model::crypto::Keypair keypair_(
+      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
+  iroha::CryptoProviderImpl<> provider(keypair_);
+  auto given_transaction = shared_model::proto::from_old(given_tx);
+  provider.sign(given_transaction);
+  given_tx = *std::unique_ptr<iroha::model::Transaction>(given_transaction.makeOldModel());
 
   sendTxsInOrderAndValidate({given_tx});
 
@@ -136,7 +149,8 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   auto query =
       iroha::model::generators::QueryGenerator().generateGetTransactions(
           iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
-  provider.sign(*query);
+  auto query_ = shared_model::proto::from_old(query);
+  provider.sign(query_);
 
   const auto pb_query = PbQueryFactory{}.serialize(query);
   ASSERT_TRUE(pb_query.has_value());
