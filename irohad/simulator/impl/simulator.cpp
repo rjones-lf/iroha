@@ -98,23 +98,6 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
-      // that this cast will not be needed
-      auto proto_txs =
-          proposal.transactions()
-          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
-              return static_cast<const shared_model::proto::Transaction &>(
-                  *polymorphic_tx.operator->());
-            });
-      auto tmp = shared_model::proto::BlockBuilder()
-                     .height(proposal.height())
-                     .prevHash(last_block.value()->hash())
-                     .transactions(proto_txs)
-                     .txNumber(proposal.transactions().size())
-                     .createdTime(proposal.created_time())
-                     .build();
-      // TODO sign
-
       model::Block new_block;
       new_block.height = proposal.height();
       new_block.prev_hash =
