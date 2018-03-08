@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,11 @@
 #ifndef IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 #define IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 
+#include <memory>
 #include <nonstd/optional.hpp>
 #include <vector>
 
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
@@ -29,7 +31,6 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-
       /**
        * Class provide storage of votes for one block.
        */
@@ -43,7 +44,11 @@ namespace iroha {
         std::vector<VoteMessage> votes_;
 
        public:
-        YacBlockStorage(YacHash hash, uint64_t peers_in_round);
+        YacBlockStorage(
+            YacHash hash,
+            uint64_t peers_in_round,
+            std::shared_ptr<SupermajorityChecker> supermajority_checker =
+                std::make_shared<SupermajorityCheckerImpl>());
 
         /**
          * Try to insert vote to storage
@@ -116,6 +121,11 @@ namespace iroha {
          * Number of peers in current round
          */
         uint64_t peers_in_round_;
+
+        /**
+         * Provide functions to check supermajority
+         */
+        std::shared_ptr<SupermajorityChecker> supermajority_checker_;
 
         /**
          * Storage logger

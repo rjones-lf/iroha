@@ -25,7 +25,7 @@
  * and "required fields" check
  */
 using TestBlockBuilder =
-shared_model::proto::TemplateBlockBuilder<(1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
-                                          shared_model::validation::DefaultBlockValidator,
-                                          shared_model::proto::Block>;
+    shared_model::proto::TemplateBlockBuilder<(1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+                         shared_model::validation::DefaultBlockValidator,
+                         shared_model::proto::Block>;
 #endif  // IROHA_TEST_BLOCK_BUILDER_HPP

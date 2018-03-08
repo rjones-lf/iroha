@@ -135,6 +135,16 @@ namespace shared_model {
           const std::vector<crypto::Hash> &hashes);
 
       /**
+       * Retrieves details for a given account
+       * @param account_id - account to retrieve details from
+       * @param detail - key to retrieve
+       * @return builder with getAccountDetail query inside
+       */
+      ModelQueryBuilder getAccountDetail(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::DetailType &detail);
+
+      /**
        * Builds result with all appended fields
        * @return wrapper on unsigned query
        */

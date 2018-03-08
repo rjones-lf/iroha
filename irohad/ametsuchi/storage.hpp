@@ -18,6 +18,7 @@
 #ifndef IROHA_AMETSUCHI_H
 #define IROHA_AMETSUCHI_H
 
+#include <vector>
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "common/result.hpp"
@@ -49,6 +50,13 @@ namespace iroha {
        * @return true if inserted
        */
       virtual bool insertBlock(model::Block block) = 0;
+
+      /**
+       * Raw insertion of blocks without validation
+       * @param blocks - collection of blocks for insertion
+       * @return true if inserted
+       */
+      virtual bool insertBlocks(const std::vector<model::Block> &blocks) = 0;
 
       /**
        * Remove all information from ledger

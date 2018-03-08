@@ -43,7 +43,10 @@ namespace iroha {
           return val;
         }
         return proposal_storages_.emplace(
-            proposal_storages_.end(), msg.hash.proposal_hash, peers_in_round);
+            proposal_storages_.end(),
+            msg.hash.proposal_hash,
+            peers_in_round,
+            std::make_shared<SupermajorityCheckerImpl>());
       }
 
       // --------| public api |--------

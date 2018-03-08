@@ -36,14 +36,14 @@ namespace shared_model {
 
     using DefaultBlockValidator = BlockValidator;
 
-    using DefaultSignableTransactionValidator = SignableModelValidator<
-        DefaultTransactionValidator,
-        detail::PolymorphicWrapper<interface::Transaction>,
-        FieldValidator>;
+    using DefaultSignableTransactionValidator =
+        SignableModelValidator<DefaultTransactionValidator,
+                               const interface::Transaction &,
+                               FieldValidator>;
 
     using DefaultSignableQueryValidator =
         SignableModelValidator<DefaultQueryValidator,
-                               detail::PolymorphicWrapper<interface::Query>,
+                               const interface::Query &,
                                FieldValidator>;
 
   }  // namespace validation

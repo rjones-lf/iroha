@@ -18,7 +18,9 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -28,25 +30,28 @@
 #include "model/model_crypto_provider_impl.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "torii/command_service.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
 #include "validation/chain_validator.hpp"
+#include "validation/impl/chain_validator_impl.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
-#include "ametsuchi/ordering_service_persistent_state.hpp"
-#include "network/impl/peer_communication_service_impl.hpp"
-#include "synchronizer/impl/synchronizer_impl.hpp"
-#include "validation/impl/chain_validator_impl.hpp"
-#include "validation/impl/stateful_validator_impl.hpp"
+namespace iroha {
+  namespace ametsuchi {
+    class WsvRestorer;
+  }
+}  // namespace iroha
 
 class Irohad {
  public:
@@ -84,6 +89,12 @@ class Irohad {
    * Reset oredering service storage state to default
    */
   void resetOrderingService();
+
+  /**
+   * Restore World State View
+   * @return true on success, false otherwise
+   */
+  bool restoreWsv();
 
   /**
    * Drop wsv and block store
@@ -124,6 +135,11 @@ class Irohad {
 
   virtual void initQueryService();
 
+  /**
+   * Initialize WSV restorer
+   */
+  virtual void initWsvRestorer();
+
   // constructor dependencies
   std::string block_store_dir_;
   std::string pg_conn_;
@@ -145,6 +161,9 @@ class Irohad {
 
   // peer query
   std::shared_ptr<iroha::ametsuchi::PeerQuery> wsv;
+
+  // WSV restorer
+  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
@@ -170,6 +189,10 @@ class Irohad {
   // query service
   std::shared_ptr<torii::QueryService> query_service;
 
+  // ordering service persistent state storage
+  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
+      ordering_service_storage_;
+
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;
 
@@ -182,8 +205,6 @@ class Irohad {
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
 
   iroha::keypair_t keypair;
   grpc::ServerBuilder builder;

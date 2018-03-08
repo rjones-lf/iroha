@@ -76,7 +76,7 @@ namespace shared_model {
 
       void validateAccountDetailKey(
           ReasonsGroupType &reason,
-          const interface::SetAccountDetail::AccountDetailKeyType &key) const;
+          const interface::types::AccountDetailKeyType &key) const;
       void validatePrecision(
           ReasonsGroupType &reason,
           const interface::types::PrecisionType &precision) const;

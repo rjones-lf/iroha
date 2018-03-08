@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 
-def BUILD_DIR = "./ build/shared_model/bindings"
+def BUILD_DIR = "./build/shared_model/bindings"
 def SCHEMA_DIR = "../../schema"
 
 buildscript {

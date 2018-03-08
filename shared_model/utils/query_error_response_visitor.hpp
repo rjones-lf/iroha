@@ -19,8 +19,8 @@
 #define IROHA_QUERY_ERROR_RESPONSE_VISITOR_HPP
 
 #include <boost/variant.hpp>
-#include "common/wrapper.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -28,9 +28,9 @@ namespace shared_model {
     class QueryErrorResponseChecker : public boost::static_visitor<bool> {
      public:
       bool operator()(
-          const iroha::Wrapper<shared_model::interface::ErrorQueryResponse>
-              &status) const {
-        using ExpectedError = iroha::Wrapper<Error>;
+          const shared_model::detail::PolymorphicWrapper<
+              shared_model::interface::ErrorQueryResponse> &status) const {
+        using ExpectedError = shared_model::detail::PolymorphicWrapper<Error>;
         try {
           auto _ = boost::get<ExpectedError>(status->get());
           return true;
@@ -40,7 +40,8 @@ namespace shared_model {
       }
 
       template <typename T>
-      bool operator()(const iroha::Wrapper<T> &) const {
+      bool operator()(
+          const shared_model::detail::PolymorphicWrapper<T> &) const {
         return false;
       }
     };

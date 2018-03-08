@@ -41,25 +41,15 @@ namespace iroha {
                 [&](const auto &account) {
                   // Check if tx creator has account and has quorum to execute
                   // transaction
-                  return tx.signatures().size() >= account.quorum
+                  return tx.signatures().size() >= account->quorum()
                       ? queries.getSignatories(tx.creatorAccountId())
                       : nonstd::nullopt;
                 }
                 |
                 [&](const auto &signatories) {
-                  auto model_signatories =
-                      signatories
-                      | boost::adaptors::transformed([](const auto &signatory) {
-                          return shared_model::crypto::PublicKey(
-                              signatory.to_string());
-                        });
                   // Check if signatures in transaction are account signatory
-                  return this->signaturesSubset(
-                             tx.signatures(),
-                             std::vector<shared_model::crypto::PublicKey>(
-                                 model_signatories.begin(),
-                                 model_signatories.end()))
-                      ? nonstd::make_optional(model_signatories)
+                  return this->signaturesSubset(tx.signatures(), signatories)
+                      ? nonstd::make_optional(signatories)
                       : nonstd::nullopt;
                 })
             .has_value();

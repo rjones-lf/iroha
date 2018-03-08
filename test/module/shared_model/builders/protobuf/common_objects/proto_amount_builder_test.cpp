@@ -49,7 +49,7 @@ TEST(ProtoAmountBuilderTest, AllFieldsBuild) {
 TEST(ProtoAmountBuilderTest, SeveralObjectsFromOneBuilder) {
   shared_model::proto::AmountBuilder builder;
 
-  boost::multiprecision::uint256_t expected_int_value = 100;
+  boost::multiprecision::uint256_t expected_int_value{"123456789012345678901234567890"};
   auto expected_precision = 2;
 
   auto state =

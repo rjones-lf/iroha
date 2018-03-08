@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/network/network_mocks.hpp"
-#include "module/irohad/validation/validation_mocks.hpp"
-
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/from_old_model.hpp"
 #include "framework/test_subscriber.hpp"
+#include "model/sha3_hash.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/validation/validation_mocks.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/chain_validator.hpp"
 
@@ -59,6 +59,16 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<SynchronizerImpl> synchronizer;
 };
 
+// TODO: 14-02-2018 Alexey Chernyshov remove after
+// relocation to shared_model https://soramitsu.atlassian.net/browse/IR-903
+// hash of block should be initialised
+MATCHER_P(NewBlockMatcher,
+          block,
+          "is shared_model Block is equal to the old model Block ") {
+  std::unique_ptr<iroha::model::Block> old_block(arg.makeOldModel());
+  return *old_block == block;
+}
+
 TEST_F(SynchronizerTest, ValidWhenInitialized) {
   // synchronizer constructor => on_commit subscription called
   EXPECT_CALL(*consensus_gate, on_commit())
@@ -71,6 +81,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   // commit from consensus => chain validation passed => commit successful
   Block test_block;
   test_block.height = 5;
+  test_block.hash = iroha::hash(test_block);
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
@@ -78,7 +89,10 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(test_block, _))
+  // TODO: 14-02-2018 Alexey Chernyshov uncomment expected argument after
+  // relocation to shared_model https://soramitsu.atlassian.net/browse/IR-903
+  //  EXPECT_CALL(*chain_validator, validateBlock(testing::Ref(new_test_block), _))
+  EXPECT_CALL(*chain_validator, validateBlock(NewBlockMatcher(test_block), _))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
@@ -108,13 +122,13 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   // commit from consensus => storage not created => no commit
   Block test_block;
 
-  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>,
-                                std::string>>::Clear();
+  DefaultValue<
+      expected::Result<std::unique_ptr<MutableStorage>, std::string>>::Clear();
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
 
-  EXPECT_CALL(*chain_validator, validateBlock(test_block, _)).Times(0);
+  EXPECT_CALL(*chain_validator, validateBlock(_, _)).Times(0);
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
@@ -137,6 +151,7 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
   Block test_block;
   test_block.height = 5;
   test_block.sigs.emplace_back();
+  test_block.hash = iroha::hash(test_block);
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
@@ -144,15 +159,19 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(test_block, _))
+  // TODO: 14-02-2018 Alexey Chernyshov replace with expected argument after
+  // relocation to shared_model https://soramitsu.atlassian.net/browse/IR-903
+//  EXPECT_CALL(*chain_validator, validateBlock(testing::Ref(new_test_block), _))
+  EXPECT_CALL(*chain_validator, validateBlock(NewBlockMatcher(test_block), _))
       .WillOnce(Return(false));
+
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
       .WillOnce(Return(rxcpp::observable<>::just(
-          iroha::makeWrapper<shared_model::interface::Block,
-                             shared_model::proto::Block>(
-              shared_model::proto::from_old(test_block)))));
+          static_cast<std::shared_ptr<shared_model::interface::Block>>(
+              std::make_shared<shared_model::proto::Block>(
+                  shared_model::proto::from_old(test_block))))));
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<Block>()));

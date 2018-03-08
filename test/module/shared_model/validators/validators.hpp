@@ -24,15 +24,15 @@
 namespace shared_model {
   namespace validation {
 
-  //TODO: kamilsa 01.02.2018 IR-873 Replace all these validators with mock classes
+    // TODO: kamilsa 01.02.2018 IR-873 Replace all these validators with mock
+    // classes
 
     /**
      * Tx validator which always returns answer with no errors.
      */
     class TransactionAlwaysValidValidator {
      public:
-      Answer validate(
-          detail::PolymorphicWrapper<interface::Transaction>) const {
+      Answer validate(const interface::Transaction &) const {
         return Answer();
       }
     };
@@ -42,7 +42,7 @@ namespace shared_model {
      */
     class QueryAlwaysValidValidator {
      public:
-      Answer validate(detail::PolymorphicWrapper<interface::Query>) const {
+      Answer validate(const interface::Query &) const {
         return Answer();
       }
     };

@@ -20,15 +20,16 @@
 
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
-#include "common/wrapper.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace interface {
     template <typename Type>
     class SpecifiedVisitor
-        : public boost::static_visitor<boost::optional<iroha::Wrapper<Type>>> {
+        : public boost::static_visitor<
+              boost::optional<shared_model::detail::PolymorphicWrapper<Type>>> {
      private:
-      using Y = iroha::Wrapper<Type>;
+      using Y = shared_model::detail::PolymorphicWrapper<Type>;
 
      public:
       boost::optional<Y> operator()(const Y &t) const {
@@ -36,7 +37,8 @@ namespace shared_model {
       }
 
       template <typename T>
-      boost::optional<Y> operator()(const iroha::Wrapper<T> &t) const {
+      boost::optional<Y> operator()(
+          const shared_model::detail::PolymorphicWrapper<T> &t) const {
         return boost::none;
       }
     };

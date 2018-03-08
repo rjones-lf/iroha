@@ -41,4 +41,5 @@ target_link_libraries(chain_validator
     rxcpp
     model
     logger
+    supermajority_check
     )

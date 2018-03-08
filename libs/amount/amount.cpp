@@ -17,7 +17,6 @@
 
 #include "amount/amount.hpp"
 
-#include <logger/logger.hpp>
 #include <regex>
 #include <utility>
 

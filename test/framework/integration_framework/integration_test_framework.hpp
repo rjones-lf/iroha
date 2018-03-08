@@ -111,10 +111,10 @@ namespace integration_framework {
     static const std::string kAssetName;
 
    protected:
-    std::shared_ptr<IrohaInstance> iroha_instance_ =
-        std::make_shared<IrohaInstance>();
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
+    std::shared_ptr<IrohaInstance> iroha_instance_ =
+        std::make_shared<IrohaInstance>();
 
     // config area
 

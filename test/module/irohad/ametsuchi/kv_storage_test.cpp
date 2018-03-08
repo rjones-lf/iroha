@@ -30,6 +30,10 @@
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
+
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 
@@ -56,7 +60,7 @@ class KVTest : public AmetsuchiTest {
 
     // First transaction in block1
     Transaction txn1_1;
-    txn1_1.creator_account_id = "user1@ru";
+    txn1_1.creator_account_id = "userone@ru";
 
     CreateRole createRole;
     createRole.role_name = "user";
@@ -90,13 +94,13 @@ class KVTest : public AmetsuchiTest {
     txn1_1.commands.push_back(
         std::make_shared<SetAccountDetail>(setAccount2Age));
 
-    Block block1;
-    block1.height = 1;
-    block1.transactions.push_back(txn1_1);
-    block1.prev_hash.fill(0);
-    auto block1hash = iroha::hash(block1);
-    block1.hash = block1hash;
-    block1.txs_number = block1.transactions.size();
+    Block old_block1;
+    old_block1.height = 1;
+    old_block1.transactions.push_back(txn1_1);
+    old_block1.prev_hash.fill(0);
+    auto block1hash = iroha::hash(old_block1);
+    old_block1.hash = block1hash;
+    old_block1.txs_number = old_block1.transactions.size();
 
     {
       std::unique_ptr<MutableStorage> ms;
@@ -107,6 +111,9 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
+      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+      // shared_model https://soramitsu.atlassian.net/browse/IR-887
+      auto block1 = shared_model::proto::from_old(old_block1);
       ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });
@@ -119,8 +126,8 @@ class KVTest : public AmetsuchiTest {
   std::shared_ptr<WsvQuery> wsv_query;
 
   std::string domain_id = "ru";
-  std::string account_name1 = "user1";
-  std::string account_name2 = "user2";
+  std::string account_name1 = "userone";
+  std::string account_name2 = "usertwo";
 };
 
 /**
@@ -132,8 +139,8 @@ TEST_F(KVTest, GetNonexistingDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
   auto account = wsv_query->getAccount(account_id1);
 
-  auto age =
-      wsv_query->getAccountDetail(account_id1, "user1@ru", "nonexisting-field");
+  auto age = wsv_query->getAccountDetail(
+      account_id1, "userone@ru", "nonexisting-field");
   ASSERT_FALSE(age);
 }
 
@@ -144,7 +151,7 @@ TEST_F(KVTest, GetNonexistingDetail) {
  */
 TEST_F(KVTest, SetAccountDetail) {
   auto account_id2 = account_name2 + "@" + domain_id;
-  auto age = wsv_query->getAccountDetail(account_id2, "user1@ru", "age");
+  auto age = wsv_query->getAccountDetail(account_id2, "userone@ru", "age");
 
   ASSERT_TRUE(age);
   ASSERT_EQ(age.value(), "24");

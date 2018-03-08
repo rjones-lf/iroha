@@ -27,32 +27,48 @@ namespace iroha {
     class PostgresWsvQuery : public WsvQuery {
      public:
       explicit PostgresWsvQuery(pqxx::nontransaction &transaction);
-      nonstd::optional<std::vector<std::string>> getAccountRoles(
-          const std::string &account_id) override;
+      nonstd::optional<std::vector<shared_model::interface::types::RoleIdType>>
+      getAccountRoles(const shared_model::interface::types::AccountIdType
+                          &account_id) override;
 
-      nonstd::optional<std::vector<std::string>> getRolePermissions(
-          const std::string &role_name) override;
+      nonstd::optional<
+          std::vector<shared_model::interface::types::PermissionNameType>>
+      getRolePermissions(
+          const shared_model::interface::types::RoleIdType &role_name) override;
 
-      nonstd::optional<model::Account> getAccount(
-          const std::string &account_id) override;
-      nonstd::optional<std::string> getAccountDetail(
-          const std::string &account_id,
-          const std::string &creator_account_id,
-          const std::string &detail) override;
-      nonstd::optional<std::vector<pubkey_t>> getSignatories(
-          const std::string &account_id) override;
-      nonstd::optional<model::Asset> getAsset(
-          const std::string &asset_id) override;
-      nonstd::optional<model::AccountAsset> getAccountAsset(
-          const std::string &account_id, const std::string &asset_id) override;
-      nonstd::optional<std::vector<model::Peer>> getPeers() override;
-      nonstd::optional<std::vector<std::string>> getRoles() override;
-      nonstd::optional<model::Domain> getDomain(
-          const std::string &domain_id) override;
+      nonstd::optional<std::shared_ptr<shared_model::interface::Account>>
+      getAccount(const shared_model::interface::types::AccountIdType
+                     &account_id) override;
+      nonstd::optional<shared_model::interface::types::DetailType>
+      getAccountDetail(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountIdType
+              &creator_account_id,
+          const shared_model::interface::types::DetailType &detail) override;
+      nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>
+      getSignatories(const shared_model::interface::types::AccountIdType
+                         &account_id) override;
+      nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>
+      getAsset(
+          const shared_model::interface::types::AssetIdType &asset_id) override;
+      nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
+      getAccountAsset(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AssetIdType &asset_id) override;
+      nonstd::optional<
+          std::vector<std::shared_ptr<shared_model::interface::Peer>>>
+      getPeers() override;
+      nonstd::optional<std::vector<shared_model::interface::types::RoleIdType>>
+      getRoles() override;
+      nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+      getDomain(const shared_model::interface::types::DomainIdType &domain_id)
+          override;
       bool hasAccountGrantablePermission(
-          const std::string &permitee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) override;
+          const shared_model::interface::types::AccountIdType
+              &permitee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) override;
 
      private:
       pqxx::nontransaction &transaction_;

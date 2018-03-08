@@ -5,6 +5,9 @@ import sys
 from google.protobuf.message import DecodeError
 import queries_pb2 as qry
 
+# TODO luckychess 8.08.2018 add test for number of methods
+# in interface and proto implementation IR-1080
+
 class BuilderTest(unittest.TestCase):
   def test_empty_query(self):
     with self.assertRaises(ValueError):
@@ -83,6 +86,10 @@ class BuilderTest(unittest.TestCase):
 
   def test_get_transactions(self):
     query = self.builder.getTransactions([iroha.Hash("1" * 32), iroha.Hash("2" * 32)]).build()
+    self.assertTrue(self.check_proto_query(self.proto(query)))
+
+  def test_get_account_detail(self):
+    query = self.builder.getAccountDetail("user@test", "hello").build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
 if __name__ == '__main__':

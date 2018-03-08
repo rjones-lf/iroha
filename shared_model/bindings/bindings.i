@@ -30,8 +30,6 @@
 #include "cryptography/hash.hpp"
 %}
 
-%std_nodefconst_type(shared_model::crypto::Hash);
-
 namespace std {
   %template(ByteVector) vector<uint8_t>;
   %template(StringVector) vector<string>;
@@ -51,6 +49,7 @@ namespace std {
 %rename(_interface) interface;
 %rename(b_equal) shared_model::crypto::Blob::operator==;
 %rename(kp_equal) shared_model::crypto::Keypair::operator==;
+%rename(hash_invoke) shared_model::crypto::Hash::Hasher::operator();
 
 %{
 #include "bindings/model_transaction_builder.hpp"
@@ -60,10 +59,10 @@ namespace std {
 #include "builders/protobuf/unsigned_proto.hpp"
 %}
 
+%include "cryptography/blob.hpp"
 %include "interfaces/common_objects/types.hpp"
 %include "interfaces/base/hashable.hpp"
 %include "interfaces/base/signable.hpp"
-%include "cryptography/blob.hpp"
 %include "cryptography/public_key.hpp"
 %include "cryptography/private_key.hpp"
 %include "cryptography/hash.hpp"

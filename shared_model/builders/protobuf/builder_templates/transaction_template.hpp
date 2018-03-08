@@ -65,7 +65,8 @@ namespace shared_model {
       using ProtoCommand = iroha::protocol::Command;
 
       template <int Sp>
-      TemplateTransactionBuilder(const TemplateTransactionBuilder<Sp, SV, BT> &o)
+      TemplateTransactionBuilder(
+          const TemplateTransactionBuilder<Sp, SV, BT> &o)
           : transaction_(o.transaction_),
             stateless_validator_(o.stateless_validator_) {}
 
@@ -262,9 +263,8 @@ namespace shared_model {
 
       auto setAccountDetail(
           const interface::types::AccountIdType &account_id,
-          const interface::SetAccountDetail::AccountDetailKeyType &key,
-          const interface::SetAccountDetail::AccountDetailValueType &value)
-          const {
+          const interface::types::AccountDetailKeyType &key,
+          const interface::types::AccountDetailValueType &value) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_set_account_detail();
           command->set_account_id(account_id);
@@ -312,13 +312,12 @@ namespace shared_model {
 
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-
-        auto answer = stateless_validator_.validate(
-            detail::makePolymorphic<Transaction>(transaction_));
+        auto result = Transaction(iroha::protocol::Transaction(transaction_));
+        auto answer = stateless_validator_.validate(result);
         if (answer.hasErrors()) {
           throw std::invalid_argument(answer.reason());
         }
-        return BT(Transaction(iroha::protocol::Transaction(transaction_)));
+        return BT(std::move(result));
       }
 
       static const int total = RequiredFields::TOTAL;

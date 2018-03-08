@@ -46,11 +46,11 @@ namespace shared_model {
         return set_account_detail_.account_id();
       }
 
-      const AccountDetailKeyType &key() const override {
+      const interface::types::AccountDetailKeyType &key() const override {
         return set_account_detail_.key();
       }
 
-      const AccountDetailValueType &value() const override {
+      const interface::types::AccountDetailValueType &value() const override {
         return set_account_detail_.value();
       }
 

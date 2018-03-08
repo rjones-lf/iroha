@@ -128,7 +128,7 @@ namespace shared_model {
       std::string hex_;
     };
 
-    static inline std::string toBinaryString(const Blob &b) {
+    static inline std::string   toBinaryString(const Blob &b) {
       return std::string(b.blob().begin(), b.blob().end());
     }
   }  // namespace crypto

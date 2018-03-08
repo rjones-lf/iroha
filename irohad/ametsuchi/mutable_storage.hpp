@@ -18,14 +18,16 @@
 #ifndef IROHA_MUTABLE_STORAGE_HPP
 #define IROHA_MUTABLE_STORAGE_HPP
 
-#include "common/types.hpp"  // for hash256_t
+#include <functional>
+#include "interfaces/common_objects/types.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}  // namespace shared_model
 
 namespace iroha {
-
-  namespace model {
-    struct Block;
-  }
-
   namespace ametsuchi {
 
     class WsvQuery;
@@ -50,10 +52,12 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(const model::Block &block,
-                         std::function<bool(const model::Block &,
-                                            WsvQuery &,
-                                            const hash256_t &)> function) = 0;
+      virtual bool apply(
+          const shared_model::interface::Block &block,
+          std::function<bool(const shared_model::interface::Block &,
+                             WsvQuery &,
+                             const shared_model::interface::types::HashType &)>
+              function) = 0;
 
       virtual ~MutableStorage() = default;
     };
