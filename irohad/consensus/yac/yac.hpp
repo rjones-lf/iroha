@@ -107,9 +107,9 @@ namespace iroha {
          * top block in ledger does not correspond to consensus round number
          */
 
-        void applyCommit(boost::optional<model::Peer> from,
+        void applyCommit(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
                          CommitMessage commit);
-        void applyReject(boost::optional<model::Peer> from,
+        void applyReject(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
                          RejectMessage reject);
         void applyVote(boost::optional<
                            std::shared_ptr<shared_model::interface::Peer>> from,

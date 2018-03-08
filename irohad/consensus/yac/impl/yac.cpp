@@ -162,7 +162,7 @@ namespace iroha {
       const char *kRejectMsg = "reject case";
       const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
 
-      void Yac::applyCommit(boost::optional<model::Peer> from,
+      void Yac::applyCommit(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
                             CommitMessage commit) {
         auto answer =
             vote_storage_.store(commit, cluster_order_.getNumberOfPeers());
@@ -186,7 +186,7 @@ namespace iroha {
         };
       }
 
-      void Yac::applyReject(boost::optional<model::Peer> from,
+      void Yac::applyReject(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
                             RejectMessage reject) {
         auto answer =
             vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
