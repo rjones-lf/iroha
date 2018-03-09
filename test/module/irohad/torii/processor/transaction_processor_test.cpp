@@ -18,7 +18,6 @@
 #include "module/irohad/network/network_mocks.hpp"
 
 #include "framework/test_subscriber.hpp"
-#include "model/transaction_response.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -27,13 +26,10 @@
 using namespace iroha;
 using namespace iroha::network;
 using namespace iroha::torii;
-using namespace iroha::model;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::Return;
-using ::testing::Invoke;
-using ::testing::Truly;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
@@ -41,17 +37,12 @@ class TransactionProcessorTest : public ::testing::Test {
     pcs = std::make_shared<MockPeerCommunicationService>();
 
     EXPECT_CALL(*pcs, on_proposal())
-        .WillOnce(Return(prop_notifier.get_observable()));
+        .WillRepeatedly(Return(prop_notifier.get_observable()));
 
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
 
     tp = std::make_shared<TransactionProcessorImpl>(pcs);
-  }
-
-  void TearDown() override {
-    pcs.reset();
-    tp.reset();
   }
 
  protected:

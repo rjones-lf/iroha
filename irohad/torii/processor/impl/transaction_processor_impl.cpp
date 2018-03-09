@@ -16,10 +16,7 @@
  */
 
 #include "torii/processor/transaction_processor_impl.hpp"
-#include <iostream>
-#include <utility>
 #include "backend/protobuf/transaction.hpp"
-#include "endpoint.pb.h"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 

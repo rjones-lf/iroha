@@ -18,8 +18,8 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 #define IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 
-#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "builders/transaction_responses/transaction_status_builder.hpp"
+#include "builders/default_builders.hpp"
+#include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
@@ -60,9 +60,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
-      shared_model::builder::TransactionStatusBuilder<
-          shared_model::proto::TransactionStatusBuilder>
-          status_builder_;
+      DefaultTransactionStatusBuilder status_builder_;
 
       logger::Logger log_;
     };

@@ -19,11 +19,11 @@
 #define IROHA_TRANSACTION_PROCESSOR_HPP
 
 #include <rxcpp/rx.hpp>
-#include "interfaces/transaction_responses/tx_response.hpp"
 
 namespace shared_model {
   namespace interface {
     class Transaction;
+    class TransactionResponse;
   }  // namespace interface
 }  // namespace shared_model
 
