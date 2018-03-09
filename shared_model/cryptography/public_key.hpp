@@ -19,7 +19,6 @@
 #define IROHA_SHARED_MODEL_PUBLIC_KEY_HPP
 
 #include "cryptography/blob.hpp"
-#include "utils/string_builder.hpp"
 
 #include "common/types.hpp"
 
@@ -30,21 +29,15 @@ namespace shared_model {
      */
     class PublicKey : public Blob {
      public:
-      explicit PublicKey(const std::string &public_key) : Blob(public_key) {}
+      explicit PublicKey(const std::string &public_key);
 
-      explicit PublicKey(const Blob &blob) : Blob(blob.blob()) {}
+      explicit PublicKey(const Blob &blob);
 
       using OldPublicKeyType = iroha::pubkey_t;
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("PublicKey")
-            .append(Blob::hex())
-            .finalize();
-      }
 
-      PublicKey *copy() const override {
-        return new PublicKey(crypto::toBinaryString(*this));
-      }
+      std::string toString() const override;
+
+      PublicKey *copy() const override;
     };
   }  // namespace crypto
 }  // namespace shared_model

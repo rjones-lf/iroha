@@ -21,7 +21,7 @@ add_library(bindings
 
 target_link_libraries(bindings
         shared_model_proto_backend
-        shared_model_ed25519_sha3
+        shared_model_cryptography
         generator
         shared_model_stateless_validation
         iroha_amount

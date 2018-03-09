@@ -21,17 +21,19 @@
 #include "cryptography/private_key.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/base/primitive.hpp"
-#include "utils/string_builder.hpp"
 
-#include "common/types.hpp"
+#include "common/types.hpp"  // for keypair_t
 
 namespace shared_model {
   namespace crypto {
+
+    using KeypairOldModelType = iroha::keypair_t;
+
     /**
      * Class for holding a keypair: public key and private key
      */
 #ifndef DISABLE_BACKWARD
-    class Keypair : public interface::Primitive<Keypair, iroha::keypair_t> {
+    class Keypair : public interface::Primitive<Keypair, KeypairOldModelType> {
 #else
     class Keypair : public interface::ModelPrimitive<Keypair> {
 #endif
@@ -43,49 +45,28 @@ namespace shared_model {
       using PrivateKeyType = PrivateKey;
 
       explicit Keypair(const PublicKeyType &public_key,
-                       const PrivateKeyType &private_key)
-          : public_key_(public_key), private_key_(private_key) {}
+                       const PrivateKeyType &private_key);
 
       /**
        * @return public key
        */
-      const PublicKeyType &publicKey() const {
-        return public_key_;
-      };
+      const PublicKeyType &publicKey() const;
 
       /**
        * @return private key
        */
-      const PrivateKeyType &privateKey() const {
-        return private_key_;
-      };
+      const PrivateKeyType &privateKey() const;
 
-      bool operator==(const Keypair &keypair) const override {
-        return publicKey() == keypair.publicKey()
-            and privateKey() == keypair.privateKey();
-      }
+      bool operator==(const Keypair &keypair) const override;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Keypair")
-            .append("publicKey", publicKey().toString())
-            .append("privateKey", privateKey().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
 #ifndef DISABLE_BACKWARD
-      interface::Primitive<Keypair, iroha::keypair_t>::OldModelType *
-      makeOldModel() const override {
-        return new iroha::keypair_t{
-            publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
-            privateKey().makeOldModel<PrivateKey::OldPrivateKeyType>()};
-      }
+      KeypairOldModelType *makeOldModel() const override;
 
 #endif
 
-      Keypair *copy() const override {
-        return new Keypair(publicKey(), privateKey());
-      };
+      Keypair *copy() const override;
 
      private:
       PublicKey public_key_;
