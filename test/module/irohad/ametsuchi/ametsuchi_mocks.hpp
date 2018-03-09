@@ -219,8 +219,8 @@ namespace iroha {
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
-      MOCK_METHOD1(insertBlock, bool(model::Block block));
-      MOCK_METHOD1(insertBlocks, bool(const std::vector<model::Block> &blocks));
+      MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block&));
+      MOCK_METHOD1(insertBlocks, bool(const std::vector<std::shared_ptr<shared_model::interface::Block>>&));
       MOCK_METHOD0(dropStorage, void(void));
 
       void commit(std::unique_ptr<MutableStorage> storage) override {

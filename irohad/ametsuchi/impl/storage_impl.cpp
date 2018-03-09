@@ -130,11 +130,10 @@ namespace iroha {
               std::move(command_executors.value())));
     }
 
-    bool StorageImpl::insertBlock(model::Block old_block) {
+    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
-      auto block = shared_model::proto::from_old(old_block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
@@ -153,22 +152,18 @@ namespace iroha {
       return inserted;
     }
 
-    bool StorageImpl::insertBlocks(const std::vector<model::Block> &blocks) {
+    bool StorageImpl::insertBlocks(
+        const std::vector<std::shared_ptr<shared_model::interface::Block>>
+            &blocks) {
       log_->info("create mutable storage");
       bool inserted = true;
       auto storageResult = createMutableStorage();
       storageResult.match(
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
-            std::for_each(blocks.begin(), blocks.end(), [&](auto old_block) {
-
-              // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
-              // shared_model https://soramitsu.atlassian.net/browse/IR-887
-              auto block = shared_model::proto::from_old(old_block);
-
+            std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
               inserted &= mutableStorage.value->apply(
-                  block,
-                  [](const auto &block, auto &query, const auto &hash) {
+                  *block, [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });
             });
@@ -276,7 +271,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        auto old_block = *std::unique_ptr<model::Block>(block.second->makeOldModel());
+        // TODO: rework to shared model converters once they are available
+        // IR-1084 Nikita Alekseev
+        auto old_block =
+            *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,
                           stringToBytes(model::converters::jsonToString(
                               serializer_.serialize(old_block))));
