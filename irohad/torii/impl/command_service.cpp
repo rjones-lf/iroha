@@ -77,7 +77,7 @@ namespace torii {
         .match(
             [this, &tx_hash, &response](
                 // success case
-                const iroha::expected::Value<shared_model::proto::Transaction>
+                iroha::expected::Value<shared_model::proto::Transaction>
                     &iroha_tx) {
               tx_hash = iroha_tx.value.hash();
               if (cache_->findItem(tx_hash)) {
@@ -93,7 +93,7 @@ namespace torii {
               // Send transaction to iroha
               tx_processor_->transactionHandle(
                   std::make_shared<shared_model::proto::Transaction>(
-                      iroha_tx.value));
+                      std::move(iroha_tx.value)));
             },
             [this, &tx_hash, &request, &response](const auto &error) {
               // getting hash from invalid transaction

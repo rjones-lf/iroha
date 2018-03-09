@@ -60,7 +60,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
-      DefaultTransactionStatusBuilder status_builder_;
+      shared_model::builder::DefaultTransactionStatusBuilder status_builder_;
 
       logger::Logger log_;
     };

@@ -23,6 +23,13 @@
 namespace shared_model {
   namespace builder {
 
+    // TODO: kamilsa 09.02.2018 IR-1087 Improve transaction status builder, so
+    // that it is not allowed to set more than one status and transaction hash
+    // is set before build method is invoked
+    /**
+     * Builder to construct transaction status object
+     * @tparam BuilderImpl
+     */
     template <typename BuilderImpl>
     class TransactionStatusBuilder {
      public:
