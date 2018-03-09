@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define BOOST_VARIANT_USE_RELAXED_GET_BY_DEFAULT
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include <gtest/gtest.h>
 /**
- * @given Admin sends some transaction and keep its hash
+ * @when Admin sends some transaction and keep its hash
  * @when GetTransactions query with the hash is sent
  * @then get transaction information
  */
-TEST(QueryAcceptanceTest, TransactionValidSignedBlob) {
+TEST(QueryAcceptanceTest, GetTranscations) {
   auto keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
   shared_model::proto::Transaction tx =
@@ -49,10 +48,12 @@ TEST(QueryAcceptanceTest, TransactionValidSignedBlob) {
       .sendTx(tx)
       .skipProposal()
       .skipBlock()
-      .sendQuery(q, [](shared_model::proto::QueryResponse response){
-        auto tr =  boost::get<shared_model::detail::PolymorphicWrapper<
-          shared_model::interface::TransactionsResponse>>(response.get());
-        ASSERT_EQ(tr->transactions().size(), 1);
-      })
+      .sendQuery(
+          q,
+          [](shared_model::proto::QueryResponse response) {
+            auto tr = boost::get<shared_model::detail::PolymorphicWrapper<
+                shared_model::interface::TransactionsResponse>>(response.get());
+            ASSERT_EQ(tr->transactions().size(), 1);
+          })
       .done();
 }
