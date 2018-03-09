@@ -48,6 +48,8 @@ jobs:
       - run:
           name: make
           command: |
+            # set limit for memory consumption, 3 GB
+            ulimit -d $((3*1024*1024*1024))
             cmake --build $IROHA_BUILD -- -j2
       - run: ccache --show-stats
       - run:
@@ -112,7 +114,9 @@ jobs:
       - run:
           name: make and package
           command: |
-            cmake --build $IROHA_BUILD --target package -- -j$(nproc --all)
+            # set limit for memory consumption, 3 GB
+            ulimit -d $((3*1024*1024*1024))
+            cmake --build $IROHA_BUILD --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
           key: build-linux-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
@@ -306,7 +310,9 @@ jobs:
       - run:
           name: make
           command: |
-            cmake --build build --target package -- -j$(sysctl -n hw.ncpu)
+            # set limit for memory consumption, 3 GB
+            ulimit -d $((3*1024*1024*1024))
+            cmake --build build --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
           key: build-mac-release-{{ arch }}-{{ .Branch }}-{{ epoch }}
