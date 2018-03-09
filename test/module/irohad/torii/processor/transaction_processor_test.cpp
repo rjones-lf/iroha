@@ -54,10 +54,10 @@ class TransactionProcessorTest : public ::testing::Test {
   }
 
  protected:
-  using StatusMapType =
-      std::unordered_map<shared_model::crypto::Hash,
-                         iroha::model::TransactionResponse::Status,
-                         shared_model::crypto::Hash::Hasher>;
+  using StatusMapType = std::unordered_map<
+      shared_model::crypto::Hash,
+      std::shared_ptr<shared_model::interface::TransactionResponse>,
+      shared_model::crypto::Hash::Hasher>;
 
   /// Compare operator between shared_model transactions to allow set operations
   /// (difference, includes)
@@ -244,12 +244,21 @@ class TransactionProcessorTest : public ::testing::Test {
    * @param transactions transactions to check status
    * @param status to be checked
    */
-  void validateStatuses(const TxSetType &transactions,
-                        iroha::model::TransactionResponse::Status status) {
+  template <typename Status>
+  void validateStatuses(const TxSetType &transactions) {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
-      ASSERT_EQ(tx_status->second, status);
+      boost::apply_visitor(
+          [this](auto val) {
+            if (std::is_same<decltype(val), Status>::value) {
+              SUCCEED();
+            } else {
+              FAIL() << "obtained: " << typeid(decltype(val)).name()
+                     << ", expected: " << typeid(Status).name() << std::endl;
+            }
+          },
+          tx_status->second->get());
     }
   }
 
@@ -257,6 +266,9 @@ class TransactionProcessorTest : public ::testing::Test {
   std::shared_ptr<TransactionProcessorImpl> tp;
 
   StatusMapType status_map;
+  shared_model::builder::TransactionStatusBuilder<
+      shared_model::proto::TransactionStatusBuilder>
+      status_builder;
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier;
@@ -278,22 +290,23 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   for (size_t i = 0; i < size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
     txs.insert(tx);
-    status_map[tx.hash()] = iroha::model::TransactionResponse::NOT_RECEIVED;
+    status_map[tx.hash()] =
+        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   auto wrapper =
       make_test_subscriber<CallExact>(tp->transactionNotifier(), size);
   wrapper.subscribe([this](auto response) {
-    auto resp = static_cast<TransactionResponse &>(*response);
-    auto hash = shared_model::crypto::Hash(resp.tx_hash);
-    status_map[hash] = resp.current_status;
+    //    auto resp = static_cast<TransactionResponse &>(*response);
+    //    auto hash = shared_model::crypto::Hash(resp.tx_hash);
+    status_map[response->transactionHash()] = response;
   });
 
   proposalTest(txs);
   ASSERT_TRUE(wrapper.validate());
 
-  validateStatuses(
-      txs, iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS);
+  validateStatuses<shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::StatelessValidTxResponse>>(txs);
 }
 
 /**
@@ -307,7 +320,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
     txs.insert(tx);
-    status_map[tx.hash()] = iroha::model::TransactionResponse::NOT_RECEIVED;
+    status_map[tx.hash()] =
+        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   auto wrapper = make_test_subscriber<CallExact>(
@@ -316,16 +330,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
                                                       // stateless valid and
                                                       // then stateful valid
   wrapper.subscribe([this](auto response) {
-    auto resp = static_cast<TransactionResponse &>(*response);
-    auto hash = shared_model::crypto::Hash(resp.tx_hash);
-    status_map[hash] = resp.current_status;
+    status_map[response->transactionHash()] = response;
   });
 
   blockTest(txs);
   ASSERT_TRUE(wrapper.validate());
 
-  validateStatuses(
-      txs, iroha::model::TransactionResponse::STATEFUL_VALIDATION_SUCCESS);
+  validateStatuses<shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::StatefulValidTxResponse>>(txs);
 }
 
 /**
@@ -340,7 +352,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
     txs.insert(tx);
-    status_map[tx.hash()] = iroha::model::TransactionResponse::NOT_RECEIVED;
+    status_map[tx.hash()] =
+        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   auto wrapper = make_test_subscriber<CallExact>(
@@ -349,15 +362,15 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
                            // stateless valid, then stateful valid and
                            // eventually committed
   wrapper.subscribe([this](auto response) {
-    auto resp = static_cast<TransactionResponse &>(*response);
-    auto hash = shared_model::crypto::Hash(resp.tx_hash);
-    status_map[hash] = resp.current_status;
+    status_map[response->transactionHash()] = response;
+    std::cout << response->toString() << std::endl;
   });
 
   commitTest(txs, txs);
   ASSERT_TRUE(wrapper.validate());
 
-  validateStatuses(txs, iroha::model::TransactionResponse::COMMITTED);
+  validateStatuses<shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::CommittedTxResponse>>(txs);
 }
 
 /**
@@ -373,7 +386,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
     proposal_txs.insert(tx);
-    status_map[tx.hash()] = iroha::model::TransactionResponse::NOT_RECEIVED;
+    status_map[tx.hash()] =
+        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   TxSetType block_txs(proposal_txs.begin(),
@@ -400,18 +414,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                           // be committed and corresponding status will be sent
 
   wrapper.subscribe([this](auto response) {
-    auto resp = static_cast<TransactionResponse &>(*response);
-    auto hash = shared_model::crypto::Hash(resp.tx_hash);
-    status_map[hash] = resp.current_status;
+    status_map[response->transactionHash()] = response;
   });
 
   commitTest(proposal_txs, block_txs);
   ASSERT_TRUE(wrapper.validate());
 
   // check that all invalid transactions will have stateful invalid status
-  validateStatuses(
-      invalid_txs,
-      iroha::model::TransactionResponse::STATEFUL_VALIDATION_FAILED);
+  validateStatuses<shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::StatefulFailedTxResponse>>(invalid_txs);
   // check that all transactions from block will be committed
-  validateStatuses(block_txs, iroha::model::TransactionResponse::COMMITTED);
+  validateStatuses<shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::CommittedTxResponse>>(block_txs);
 }

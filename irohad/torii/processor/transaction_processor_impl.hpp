@@ -18,8 +18,9 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 #define IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 
+#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "builders/transaction_responses/transaction_status_builder.hpp"
 #include "logger/logger.hpp"
-#include "model/transaction_response.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
 
@@ -38,7 +39,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Transaction> transaction)
           override;
 
-      rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
+      rxcpp::observable<
+          std::shared_ptr<shared_model::interface::TransactionResponse>>
       transactionNotifier() override;
 
      private:
@@ -46,12 +48,21 @@ namespace iroha {
       std::shared_ptr<network::PeerCommunicationService> pcs_;
 
       // processing
-      std::unordered_set<std::string> proposal_set_;
-      std::unordered_set<std::string> candidate_set_;
+      std::unordered_set<shared_model::crypto::Hash,
+                         shared_model::crypto::Hash::Hasher>
+          proposal_set_;
+      std::unordered_set<shared_model::crypto::Hash,
+                         shared_model::crypto::Hash::Hasher>
+          candidate_set_;
 
       // internal
-      rxcpp::subjects::subject<std::shared_ptr<model::TransactionResponse>>
+      rxcpp::subjects::subject<
+          std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
+
+      shared_model::builder::TransactionStatusBuilder<
+          shared_model::proto::TransactionStatusBuilder>
+          status_builder_;
 
       logger::Logger log_;
     };

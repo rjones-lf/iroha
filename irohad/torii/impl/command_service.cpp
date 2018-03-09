@@ -16,6 +16,7 @@
  */
 
 #include <thread>
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
 #include "ametsuchi/block_query.hpp"
 #include "backend/protobuf/transaction.hpp"
@@ -30,6 +31,9 @@ using namespace std::chrono_literals;
 
 namespace torii {
 
+  template <typename T>
+  class Type;
+
   CommandService::CommandService(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
@@ -41,10 +45,12 @@ namespace torii {
         cache_(std::make_shared<CacheType>()) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe(
-        [this](
-            std::shared_ptr<iroha::model::TransactionResponse> iroha_response) {
+        [this](std::shared_ptr<shared_model::interface::TransactionResponse>
+                   iroha_response) {
           // Find response in cache
-          shared_model::crypto::Hash tx_hash(iroha_response->tx_hash);
+          auto proto_response = std::static_pointer_cast<
+              shared_model::proto::TransactionResponse>(iroha_response);
+          auto tx_hash = proto_response->transactionHash();
           auto res = cache_->findItem(tx_hash);
           if (not res) {
             iroha::protocol::ToriiResponse response;
@@ -54,8 +60,7 @@ namespace torii {
             return;
           }
 
-          auto proto_status =
-              convertStatusToProto(iroha_response->current_status);
+          auto proto_status = proto_response->getTransport().tx_status();
           res->set_tx_status(proto_status);
           cache_->addItem(tx_hash, *res);
         });
@@ -150,7 +155,7 @@ namespace torii {
 
     bool finished = false;
     auto subscription = rxcpp::composite_subscription();
-    auto request_hash = request.tx_hash();
+    auto request_hash = shared_model::crypto::Hash(request.tx_hash());
 
     /// condition variable to ensure that current method will not return before
     /// transaction is processed or a timeout reached. It blocks current thread
@@ -159,27 +164,30 @@ namespace torii {
 
     tx_processor_->transactionNotifier()
         .filter([&request_hash](auto response) {
-          return response->tx_hash == request_hash;
+          return response->transactionHash() == request_hash;
         })
-        .subscribe(subscription,
-                   [&](std::shared_ptr<iroha::model::TransactionResponse>
-                           iroha_response) {
-                     iroha::protocol::ToriiResponse resp_sub;
-                     resp_sub.set_tx_hash(request_hash);
-                     auto proto_status =
-                         convertStatusToProto(iroha_response->current_status);
-                     resp_sub.set_tx_status(proto_status);
+        .subscribe(
+            subscription,
+            [&](std::shared_ptr<shared_model::interface::TransactionResponse>
+                    iroha_response) {
+              auto proto_response = std::static_pointer_cast<
+                  shared_model::proto::TransactionResponse>(iroha_response);
 
-                     if (isFinalStatus(proto_status)) {
-                       response_writer.WriteLast(resp_sub,
-                                                 grpc::WriteOptions());
-                       subscription.unsubscribe();
-                       finished = true;
-                       cv.notify_one();
-                     } else {
-                       response_writer.Write(resp_sub);
-                     }
-                   });
+              iroha::protocol::ToriiResponse resp_sub;
+              resp_sub.set_tx_hash(shared_model::crypto::toBinaryString(
+                  proto_response->transactionHash()));
+              auto proto_status = proto_response->getTransport().tx_status();
+              resp_sub.set_tx_status(proto_status);
+
+              if (isFinalStatus(proto_status)) {
+                response_writer.WriteLast(resp_sub, grpc::WriteOptions());
+                subscription.unsubscribe();
+                finished = true;
+                cv.notify_one();
+              } else {
+                response_writer.Write(resp_sub);
+              }
+            });
 
     std::mutex wait_subscription;
     std::unique_lock<std::mutex> lock(wait_subscription);
@@ -191,7 +199,8 @@ namespace torii {
       if (not resp) {
         subscription.unsubscribe();
         iroha::protocol::ToriiResponse resp_none;
-        resp_none.set_tx_hash(request_hash);
+        resp_none.set_tx_hash(
+            shared_model::crypto::toBinaryString(request_hash));
         resp_none.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
         response_writer.WriteLast(resp_none, grpc::WriteOptions());
       } else {
