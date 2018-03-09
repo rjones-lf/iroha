@@ -51,24 +51,14 @@ class TransactionProcessorTest : public ::testing::Test {
       std::shared_ptr<shared_model::interface::TransactionResponse>,
       shared_model::crypto::Hash::Hasher>;
 
-  /// Compare operator between shared_model transactions to allow set operations
-  /// (difference, includes)
-  struct TxCompare {
-    bool operator()(const shared_model::interface::Transaction &lhs,
-                    const shared_model::interface::Transaction &rhs) const {
-      return lhs.hash().hex() < rhs.hash().hex();
-    }
-  };
-
-  using TxSetType = std::set<const shared_model::proto::Transaction, TxCompare>;
-
   /**
    * Checks if all transactions have corresponding status
    * @param transactions transactions to check status
    * @param status to be checked
    */
   template <typename Status>
-  void validateStatuses(const TxSetType &transactions) {
+  void validateStatuses(
+      const std::vector<const shared_model::proto::Transaction> &transactions) {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
@@ -108,10 +98,10 @@ class TransactionProcessorTest : public ::testing::Test {
  * @then for every transaction STATELESS_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
-  TxSetType txs;
+  std::vector<const shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
-    txs.insert(tx);
+    txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
   }
@@ -149,10 +139,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
  * @then for every transaction STATEFUL_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
-  TxSetType txs;
+  std::vector<const shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
-    txs.insert(tx);
+    txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
   }
@@ -212,10 +202,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
  * @then for every transaction COMMIT status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
-  TxSetType txs;
+  std::vector<const shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
-    txs.insert(tx);
+    txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
   }
@@ -271,25 +261,21 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
  * every transaction not from block STATEFUL_INVALID_STATUS was returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
-  TxSetType proposal_txs;
+  std::vector<const shared_model::proto::Transaction> proposal_txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
-    proposal_txs.insert(tx);
+    proposal_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
   }
 
-  TxSetType block_txs(proposal_txs.begin(),
-                      std::next(proposal_txs.begin(), block_size));
+  std::vector<const shared_model::proto::Transaction> block_txs(
+      proposal_txs.begin(), std::next(proposal_txs.begin(), block_size));
 
-  TxSetType invalid_txs;  // transactions will be stateful invalid if appeared
-                          // in proposal but didn't appear in block
-  std::set_difference(proposal_txs.begin(),
-                      proposal_txs.end(),
-                      block_txs.begin(),
-                      block_txs.end(),
-                      std::inserter(invalid_txs, invalid_txs.begin()),
-                      TxCompare());
+  std::vector<const shared_model::proto::Transaction> invalid_txs(
+      std::next(proposal_txs.begin(), block_size),
+      proposal_txs.end());  // transactions will be stateful invalid if appeared
+                            // in proposal but didn't appear in block
 
   auto wrapper = make_test_subscriber<CallExact>(
       tp->transactionNotifier(),
