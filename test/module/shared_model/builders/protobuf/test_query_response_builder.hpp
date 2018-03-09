@@ -25,7 +25,8 @@
  * and "required fields" check
  */
 using TestQueryResponseBuilder =
-shared_model::proto::TemplateQueryResponseBuilder<(1 << shared_model::proto::TemplateQueryResponseBuilder<>::total) - 1,
-                                          shared_model::validation::DefaultQueryValidator ,
-                                          shared_model::proto::Block>;
+    shared_model::proto::TemplateQueryResponseBuilder<
+        (1 << shared_model::proto::TemplateQueryResponseBuilder<>::total) - 1,
+        shared_model::proto::QueryResponse>;
+
 #endif  // IROHA_TEST_QUERY_RESPONSE_BUILDER_HPP

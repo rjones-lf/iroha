@@ -15,190 +15,156 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
-#define IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
+#ifndef IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
+#define IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/transaction.hpp"
 #include "responses.pb.h"
-#include "validators/default_validator.hpp"
 
 namespace shared_model {
-namespace proto {
+  namespace proto {
 
-/**
- * Template query response builder for creating new types of query response
- * builders by means of replacing template parameters
- * @tparam S -- field counter for checking that all required fields are
- * set
- * @tparam SV -- stateless validator called when build method is invoked
- * @tparam BT -- build type of built object returned by build method
- */
-template <int S = 0,
-    typename SV = validation::DefaultQueryValidator,
-    typename BT = QueryResponse>
-class TemplateQueryResponseBuilder {
- private:
-  template <int, typename, typename>
-  friend class TemplateQueryResponseBuilder;
+    /**
+     * Template query response builder for creating new types of query response
+     * builders by means of replacing template parameters
+     * @tparam S -- field counter for checking that all required fields are
+     * set
+     * @tparam BT -- build type of built object returned by build method
+     */
+    template <int S = 0, typename BT = QueryResponse>
+    class TemplateQueryResponseBuilder {
+     private:
+      template <int, typename>
+      friend class TemplateQueryResponseBuilder;
 
-  enum RequiredFields {
-    QueryResponseField,
-    QueryHash,
-    TOTAL
-  };
+      enum RequiredFields { QueryResponseField, QueryHash, TOTAL };
 
-  template <int s>
-  using NextBuilder = TemplateQueryBuilder<S | (1 << s), SV, BT>;
+      template <int s>
+      using NextBuilder = TemplateQueryBuilder<S | (1 << s), BT>;
 
-  using ProtoQueryResponse = iroha::protocol::QueryResponse;
+      using ProtoQueryResponse = iroha::protocol::QueryResponse;
 
-  template <int Sp>
-  TemplateQueryBuilder(const TemplateQueryBuilder<Sp, SV, BT> &o)
-      : query_(o.query_), stateless_validator_(o.stateless_validator_) {}
+      template <int Sp>
+      TemplateQueryResponseBuilder(const TemplateQueryResponseBuilder<Sp, BT> &o)
+          : query_response_(o.query_response_) {}
 
-  /**
-   * Make transformation on copied content
-   * @tparam Transformation - callable type for changing the copy
-   * @param t - transform function for proto object
-   * @return new builder with updated state
-   */
-  template <int Fields, typename Transformation>
-  auto transform(Transformation t) const {
-    NextBuilder<Fields> copy = *this;
-    t(copy.query_);
-    return copy;
-  }
+      /**
+       * Make transformation on copied content
+       * @tparam Transformation - callable type for changing the copy
+       * @param t - transform function for proto object
+       * @return new builder with updated state
+       */
+      template <int Fields, typename Transformation>
+      auto transform(Transformation t) const {
+        NextBuilder<Fields> copy = *this;
+        t(copy.query_);
+        return copy;
+      }
 
-  /**
-   * Make query field transformation on copied object
-   * @tparam Transformation - callable type for changing query
-   * @param t - transform function for proto query
-   * @return new builder with set query
-   */
-  template <typename Transformation>
-  auto queryResponseField(Transformation t) const {
-    NextBuilder<QueryResponseField> copy = *this;
-    t(copy.query_.mutable_payload());
-    return copy;
-  }
+      /**
+       * Make query field transformation on copied object
+       * @tparam Transformation - callable type for changing query
+       * @param t - transform function for proto query
+       * @return new builder with set query
+       */
+      template <typename Transformation>
+      auto queryResponseField(Transformation t) const {
+        NextBuilder<QueryResponseField> copy = *this;
+        t(copy.query_.mutable_payload());
+        return copy;
+      }
 
- public:
-  TemplateQueryBuilder(const SV &validator = SV())
-      : stateless_validator_(validator) {}
+     public:
+      TemplateQueryResponseBuilder() = default;
 
+      auto accountAssetResponse(
+          const interface::AccountAsset &account_asset) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response =
+              proto_query_response->mutable_account_assets_response();
+          query_response->set_account_asset_response(account_asset);
+        });
+      }
 
-  auto accountAssetResponse(const interface::AccountAsset &account_asset) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query_response->mutable_account_asset_response();
-      query->set_account_asset_response(account_asset);
-    });
-  }
+      auto accountDetailResponse(
+          const interface::AccountDetailResponse &account_detail) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response =
+              proto_query_response->mutable_account_detail_response();
+          query_response->set_account_detail_response(account_detail);
+        });
+      }
 
-  auto getSignatories(
-      const interface::types::AccountIdType &account_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_account_signatories();
-      query->set_account_id(account_id);
-    });
-  }
+      auto errorQueryResponse(
+          const interface::ErrorQueryResponse &error) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response = proto_query_response->mutable_error_response();
+          query_response->set_error_response(error);
+        });
+      }
 
-  auto getAccountTransactions(
-      const interface::types::AccountIdType &account_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_account_transactions();
-      query->set_account_id(account_id);
-    });
-  }
+      auto signatoriesResponse(
+          const interface::SignatoriesResponse &signatories) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response =
+              proto_query_response->mutable_signatories_response();
+          query_response->set_signatories_response(signatories);
+        });
+      }
 
-  auto getAccountAssetTransactions(
-      const interface::types::AccountIdType &account_id,
-      const interface::types::AssetIdType &asset_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_account_asset_transactions();
-      query->set_account_id(account_id);
-      query->set_asset_id(asset_id);
-    });
-  }
+      auto transactionsResponse(
+          const interface::TransactionsResponse &transactions) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response =
+              proto_query_response->mutable_transactions_response();
+          query_response->set_transactions_response(transactions);
+        });
+      }
 
-  auto getAccountAssets(
-      const interface::types::AccountIdType &account_id,
-      const interface::types::AssetIdType &asset_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_account_assets();
-      query->set_account_id(account_id);
-      query->set_asset_id(asset_id);
-    });
-  }
+      auto assetResponse(const interface::AssetResponse &asset) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response = proto_query_response->mutable_asset_response();
+          query_response->set_asset_response(asset);
+        });
+      }
 
-  auto getAccountDetail(const interface::types::AccountIdType &account_id,
-                        const interface::types::DetailType &detail) {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_account_detail();
-      query->set_account_id(account_id);
-      query->set_detail(detail);
-    });
-  }
+      auto rolesResponse(const interface::RolesResponse &roles) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response = proto_query_response->mutable_roles_response();
+          query_response->set_roles_response(roles);
+        });
+      }
 
-  auto getRoles() const {
-    return queryField(
-        [&](auto proto_query) { proto_query->mutable_get_roles(); });
-  }
+      auto rolePermissionsResponse(
+          const interface::RolePermissionsResponse &role_permissions) const {
+        return queryResponseField([&](auto proto_query_response) {
+          auto query_response =
+              proto_query_response->mutable_role_permissions_response();
+          query_response->set_role_permissions_response(role_permissions);
+        });
+      }
 
-  auto getAssetInfo(const interface::types::AssetIdType &asset_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_asset_info();
-      query->set_asset_id(asset_id);
-    });
-  }
+      auto queryHash(const interface::types::HashType &query_hash) const {
+        return transform<QueryHash>([&](auto proto_query_response) {
+          auto query_response = proto_query_response->mutable_query_hash();
+          query_response->set_query_hash(query_hash);
+        });
+      }
 
-  auto getRolePermissions(
-      const interface::types::RoleIdType &role_id) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_role_permissions();
-      query->set_role_id(role_id);
-    });
-  }
+      auto build() const {
+        static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
+        auto result =
+            QueryResponse(iroha::protocol::QueryResponse(query_response_));
+        return BT(std::move(result));
+      }
 
-  template <typename Collection>
-  auto getTransactions(const Collection &hashes) const {
-    return queryField([&](auto proto_query) {
-      auto query = proto_query->mutable_get_transactions();
-      boost::for_each(hashes, [&query](const auto &hash) {
-        query->add_tx_hashes(toBinaryString(hash));
-      });
-    });
-  }
+      static const int total = RequiredFields::TOTAL;
 
-  auto getTransactions(
-      std::initializer_list<interface::types::HashType> hashes) const {
-    return getTransactions(hashes);
-  }
-
-  template <typename... Hash>
-  auto getTransactions(const Hash &... hashes) const {
-    return getTransactions({hashes...});
-  }
-
-  auto build() const {
-    static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-    auto result = Query(iroha::protocol::Query(query_));
-    auto answer = stateless_validator_.validate(result);
-    if (answer.hasErrors()) {
-      throw std::invalid_argument(answer.reason());
-    }
-    return BT(std::move(result));
-  }
-
-  static const int total = RequiredFields::TOTAL;
-
- private:
-  ProtoQuery query_;
-  SV stateless_validator_;
-};
-}  // namespace proto
+     private:
+      ProtoQueryResponse query_response_;
+    };
+  }  // namespace proto
 }  // namespace shared_model
 
-#endif  // IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
+#endif  // IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP

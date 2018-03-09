@@ -23,6 +23,7 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 
 using namespace shared_model;
 using namespace shared_model::proto;
@@ -79,6 +80,13 @@ class TransportBuilderTest : public ::testing::Test {
         .queryCounter(counter)
         .build()
         .signAndAddSignature(keypair);
+  }
+
+  auto createQueryResponse() {
+    return TestQueryResponseBuilder()
+        .accountDetailResponse()
+
+
   }
 
   auto createBlock() {
