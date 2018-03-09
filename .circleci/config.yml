@@ -49,7 +49,7 @@ jobs:
           name: make
           command: |
             # set limit for memory consumption, 3 GB
-            ulimit -d $((3*1024*1024*1024))
+            ulimit -v $((3*1024*1024)) -d $((3*1024*1024))
             cmake --build $IROHA_BUILD -- -j2
       - run: ccache --show-stats
       - run:
@@ -115,7 +115,7 @@ jobs:
           name: make and package
           command: |
             # set limit for memory consumption, 3 GB
-            ulimit -d $((3*1024*1024*1024))
+            ulimit -v $((3*1024*1024)) -d $((3*1024*1024))
             cmake --build $IROHA_BUILD --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
@@ -243,6 +243,7 @@ jobs:
             if [ ! -z "$SONAR_TOKEN" ] && \
               [ ! -z "$CIRCLE_BUILD_NUM" ] && \
               [ ! -z "$CIRCLE_BRANCH" ]; then
+              ulimit -v $((3*1024*1024)) -d $((3*1024*1024))
               sonar-scanner \
                 -Dsonar.login="${SONAR_TOKEN}" \
                 -Dsonar.projectVersion="${CIRCLE_BUILD_NUM}" \
@@ -311,7 +312,7 @@ jobs:
           name: make
           command: |
             # set limit for memory consumption, 3 GB
-            ulimit -d $((3*1024*1024*1024))
+            ulimit -v $((3*1024*1024)) -d $((3*1024*1024))
             cmake --build build --target package -- -j2
       - run: ccache --show-stats
       - save_cache:
