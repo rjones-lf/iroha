@@ -36,7 +36,7 @@ namespace iroha {
       AmetsuchiTest() {
         auto log = logger::testLog("AmetsuchiTest");
 
-        mkdir(block_store_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        boost::filesystem::create_directory(block_store_path);
         auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
         auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
         auto pg_user = std::getenv("IROHA_POSTGRES_USER");

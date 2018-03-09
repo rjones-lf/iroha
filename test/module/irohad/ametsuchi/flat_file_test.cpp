@@ -96,18 +96,15 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
   log_->info(
       "----------| Check that folder is absent => create => "
       "make storage => remove storage |----------");
-  auto target_path = fs::temp_directory_path() / fs::unique_path();
-  fs::remove(target_path.c_str());
-  {
-    auto store = FlatFile::create(block_store_path);
-    ASSERT_TRUE(store);
-    auto bl_store = std::move(*store);
-    auto id = 1u;
-    bl_store->add(id, block);
-    auto res = bl_store->last_id();
-    ASSERT_EQ(res, 1);
-  }
-  fs::remove(target_path.c_str());
+  fs::remove_all(block_store_path);
+  auto store = FlatFile::create(block_store_path);
+  ASSERT_TRUE(store);
+  auto bl_store = std::move(*store);
+  auto id = 1u;
+  bl_store->add(id, block);
+  auto res = bl_store->last_id();
+  ASSERT_EQ(res, 1);
+  fs::remove_all(block_store_path);
 }
 
 /**
