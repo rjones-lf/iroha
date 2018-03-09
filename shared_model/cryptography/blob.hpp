@@ -29,7 +29,8 @@ namespace shared_model {
   namespace crypto {
 
     class Blob;
-    inline std::string toBinaryString(const Blob &b);
+    std::string toBinaryString(const Blob &b);
+
     /**
      * Blob class present user-friendly blob for working with low-level
      * binary stuff. Its length is not fixed in compile time.
@@ -104,9 +105,7 @@ namespace shared_model {
       std::string hex_;
     };
 
-    inline std::string toBinaryString(const Blob &b) {
-      return std::string(b.blob().begin(), b.blob().end());
-    }
+
   }  // namespace crypto
 }  // namespace shared_model
 #endif  // IROHA_SHARED_MODEL_BLOB_HPP

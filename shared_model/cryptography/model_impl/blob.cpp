@@ -23,6 +23,10 @@
 namespace shared_model {
   namespace crypto {
 
+    std::string toBinaryString(const Blob &b) {
+      return std::string(b.blob().begin(), b.blob().end());
+    }
+
     Blob::Blob(const std::string &blob)
         : Blob(Bytes(blob.begin(), blob.end())) {}
 
