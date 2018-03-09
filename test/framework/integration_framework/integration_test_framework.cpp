@@ -48,6 +48,7 @@ namespace integration_framework {
                                          iroha::model::can_add_asset_qty,
                                          iroha::model::can_add_peer,
                                          iroha::model::can_receive,
+                                         iroha::model::can_get_all_txs,
                                          iroha::model::can_transfer})
             .createDomain(default_domain, default_role)
             .createAccount("admin", default_domain, key.publicKey())
