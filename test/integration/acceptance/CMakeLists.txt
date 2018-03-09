@@ -15,6 +15,14 @@
 # limitations under the License.
 #
 
+addtest(get_transactions_test get_transactions_test.cpp)
+target_link_libraries(get_transactions_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
 addtest(invalid_fields_test invalid_fields_test.cpp)
 target_link_libraries(invalid_fields_test
   application
