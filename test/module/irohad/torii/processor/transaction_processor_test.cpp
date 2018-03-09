@@ -33,6 +33,7 @@ using namespace framework::test_subscriber;
 using ::testing::_;
 using ::testing::Return;
 using ::testing::Invoke;
+using ::testing::Truly;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
@@ -69,175 +70,6 @@ class TransactionProcessorTest : public ::testing::Test {
   };
 
   using TxSetType = std::set<const shared_model::proto::Transaction, TxCompare>;
-
-  /**
-   * Sends transactions to peer communication service and creates proposal from
-   * them
-   * @param txs Transactions sent to transaction processor
-   */
-  void proposalTest(TxSetType &txs) {
-    /// Transactions to compose proposal
-    std::vector<const shared_model::proto::Transaction> proposal_txs;
-
-    auto size = txs.size();
-    EXPECT_CALL(*pcs, propagate_transaction(_))
-        .Times(txs.size())
-        .WillRepeatedly(Invoke([this, &proposal_txs, &size](auto tx) {
-          // saturate proposal_txs vector until it has all transactions from txs
-          // set
-          proposal_txs.push_back(
-              *std::static_pointer_cast<const shared_model::proto::Transaction>(
-                  tx));
-
-          // create proposal when proposal_txs has all transactions from txs and
-          // notify transaction processor about it
-          if (proposal_txs.size() == size) {
-            auto proposal = std::make_shared<shared_model::proto::Proposal>(
-                TestProposalBuilder().transactions(proposal_txs).build());
-
-            prop_notifier.get_subscriber().on_next(proposal);
-            prop_notifier.get_subscriber().on_completed();
-          }
-        }));
-
-    for (const auto &tx : txs) {
-      tp->transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
-    }
-  }
-
-  /**
-   * Sends transactions to peer communication service and creates proposal from
-   * them
-   * @param txs transactions sent to peer communication service
-   */
-  void blockTest(TxSetType &txs) {
-    /// Transactions to compose block
-    std::vector<const shared_model::proto::Transaction> block_txs;
-
-    auto size = txs.size();
-    EXPECT_CALL(*pcs, propagate_transaction(_))
-        .Times(txs.size())
-        .WillRepeatedly(Invoke(
-            [this, &block_txs, &size](
-                std::shared_ptr<const shared_model::interface::Transaction>
-                    tx) {
-              // saturate block_txs vector until it has all transactions from
-              // txs set
-              block_txs.push_back(*std::static_pointer_cast<
-                                  const shared_model::proto::Transaction>(tx));
-              if (block_txs.size() == size) {
-                // 1. Create proposal and notify transaction processor about it
-                auto proposal = std::make_shared<shared_model::proto::Proposal>(
-                    TestProposalBuilder().transactions(block_txs).build());
-
-                prop_notifier.get_subscriber().on_next(proposal);
-                prop_notifier.get_subscriber().on_completed();
-
-                auto block = TestBlockBuilder()
-                                 .height(1)
-                                 .txNumber(size)
-                                 .createdTime(iroha::time::now())
-                                 .transactions(block_txs)
-                                 .prevHash(shared_model::crypto::Hash(
-                                     std::string(32, '0')))
-                                 .build();
-
-                // 2. Create block and notify transaction processor about it
-                rxcpp::subjects::subject<
-                    std::shared_ptr<shared_model::interface::Block>>
-                    blocks_notifier;
-
-                commit_notifier.get_subscriber().on_next(
-                    blocks_notifier.get_observable());
-
-                blocks_notifier.get_subscriber().on_next(
-                    std::shared_ptr<shared_model::interface::Block>(
-                        block.copy()));
-                // Note blocks_notifier hasn't invoked on_completed, so
-                // transactions are not commited
-              }
-            }));
-
-    for (const auto &tx : txs) {
-      tp->transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
-    }
-  }
-
-  /**
-   * Sends transactions to peer communication service
-   * @param proposal_txs transactions used to compose proposal
-   * @param block_txs transactions used to compose block. Should be subset of
-   * proposal_txs.
-   */
-  void commitTest(TxSetType &proposal_txs, TxSetType &block_txs) {
-    // check if block_txs is subset of proposal_txs
-    ASSERT_TRUE(std::includes(proposal_txs.begin(),
-                              proposal_txs.end(),
-                              block_txs.begin(),
-                              block_txs.end(),
-                              TxCompare()));
-
-    /// transactions used to compose proposal (substitutes ordering service)
-    std::vector<const shared_model::proto::Transaction> prop_txs_vector;
-    /// transactions used to compose block (substitutes block creator)
-    std::vector<const shared_model::proto::Transaction> block_txs_vector;
-
-    EXPECT_CALL(*pcs, propagate_transaction(_))
-        .Times(proposal_txs.size())
-        .WillRepeatedly(Invoke([this,
-                                &prop_txs_vector,
-                                &block_txs_vector,
-                                &proposal_txs,
-                                &block_txs](auto tx) {
-          // cast to shared_model::proto::Transaction
-          auto proto_tx =
-              *std::static_pointer_cast<const shared_model::proto::Transaction>(
-                  tx);
-
-          // check if transaction should belong to proposal and add it to
-          // proposal transactions
-          if (proposal_txs.find(proto_tx) != proposal_txs.end()) {
-            prop_txs_vector.push_back(proto_tx);
-          }
-          // check if transaction should belong to block and add it to block
-          // transactions
-          if (block_txs.find(proto_tx) != block_txs.end()) {
-            block_txs_vector.push_back(proto_tx);
-          }
-
-          // if proposal tx list and block tx list if ready, compose proposal
-          // and block
-          if (block_txs_vector.size() == block_txs.size()
-              and prop_txs_vector.size() == proposal_txs.size()) {
-            auto proposal = std::make_shared<shared_model::proto::Proposal>(
-                TestProposalBuilder().transactions(prop_txs_vector).build());
-
-            prop_notifier.get_subscriber().on_next(proposal);
-            prop_notifier.get_subscriber().on_completed();
-
-            auto block =
-                TestBlockBuilder()
-                    .height(1)
-                    .txNumber(block_txs_vector.size())
-                    .createdTime(iroha::time::now())
-                    .transactions(block_txs_vector)
-                    .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
-                    .build();
-
-            Commit single_commit = rxcpp::observable<>::just(
-                std::shared_ptr<shared_model::interface::Block>(block.copy()));
-            commit_notifier.get_subscriber().on_next(single_commit);
-          }
-        }));
-
-    /// send all transactions to transaction processor
-    for (const auto &tx : proposal_txs) {
-      tp->transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
-    }
-  }
 
   /**
    * Checks if all transactions have corresponding status
@@ -286,8 +118,7 @@ class TransactionProcessorTest : public ::testing::Test {
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   TxSetType txs;
-  size_t size = 5;
-  for (size_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < proposal_size; i++) {
     auto tx = TestTransactionBuilder().txCounter(i).build();
     txs.insert(tx);
     status_map[tx.hash()] =
@@ -295,14 +126,25 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   }
 
   auto wrapper =
-      make_test_subscriber<CallExact>(tp->transactionNotifier(), size);
+      make_test_subscriber<CallExact>(tp->transactionNotifier(), proposal_size);
   wrapper.subscribe([this](auto response) {
-    //    auto resp = static_cast<TransactionResponse &>(*response);
-    //    auto hash = shared_model::crypto::Hash(resp.tx_hash);
     status_map[response->transactionHash()] = response;
   });
 
-  proposalTest(txs);
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+
+  for (const auto &tx : txs) {
+    tp->transactionHandle(
+        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+  }
+
+  // create proposal and notify about it
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(txs).build());
+
+  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_completed();
+
   ASSERT_TRUE(wrapper.validate());
 
   validateStatuses<shared_model::detail::PolymorphicWrapper<
@@ -325,15 +167,46 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   }
 
   auto wrapper = make_test_subscriber<CallExact>(
-      tp->transactionNotifier(), proposal_size * 2);  // every transaction is
-                                                      // notified that it is
-                                                      // stateless valid and
-                                                      // then stateful valid
+      tp->transactionNotifier(),
+      txs.size() * 2);  // every transaction is notified that it is stateless
+                        // valid and  then stateful valid
   wrapper.subscribe([this](auto response) {
     status_map[response->transactionHash()] = response;
   });
 
-  blockTest(txs);
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+
+  for (const auto &tx : txs) {
+    tp->transactionHandle(
+        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+  }
+
+  // 1. Create proposal and notify transaction processor about it
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(txs).build());
+
+  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_completed();
+
+  auto block = TestBlockBuilder()
+                   .height(1)
+                   .txNumber(proposal_size)
+                   .createdTime(iroha::time::now())
+                   .transactions(txs)
+                   .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+                   .build();
+
+  // 2. Create block and notify transaction processor about it
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      blocks_notifier;
+
+  commit_notifier.get_subscriber().on_next(blocks_notifier.get_observable());
+
+  blocks_notifier.get_subscriber().on_next(
+      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+  // Note blocks_notifier hasn't invoked on_completed, so
+  // transactions are not commited
+
   ASSERT_TRUE(wrapper.validate());
 
   validateStatuses<shared_model::detail::PolymorphicWrapper<
@@ -358,15 +231,40 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   auto wrapper = make_test_subscriber<CallExact>(
       tp->transactionNotifier(),
-      proposal_size * 3);  // evey transaction is notified that it is first
-                           // stateless valid, then stateful valid and
-                           // eventually committed
+      txs.size() * 3);  // evey transaction is notified that it is first
+                        // stateless valid, then stateful valid and
+                        // eventually committed
   wrapper.subscribe([this](auto response) {
     status_map[response->transactionHash()] = response;
-    std::cout << response->toString() << std::endl;
   });
 
-  commitTest(txs, txs);
+  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+
+  for (const auto &tx : txs) {
+    tp->transactionHandle(
+        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+  }
+
+  // 1. Create proposal and notify transaction processor about it
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(txs).build());
+
+  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_completed();
+
+  auto block = TestBlockBuilder()
+                   .height(1)
+                   .txNumber(proposal_size)
+                   .createdTime(iroha::time::now())
+                   .transactions(txs)
+                   .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+                   .build();
+
+  // 2. Create block and notify transaction processor about it
+  Commit single_commit = rxcpp::observable<>::just(
+      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+  commit_notifier.get_subscriber().on_next(single_commit);
+
   ASSERT_TRUE(wrapper.validate());
 
   validateStatuses<shared_model::detail::PolymorphicWrapper<
@@ -417,7 +315,23 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
     status_map[response->transactionHash()] = response;
   });
 
-  commitTest(proposal_txs, block_txs);
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(proposal_txs).build());
+
+  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_completed();
+
+  auto block = TestBlockBuilder()
+                   .height(1)
+                   .txNumber(block_txs.size())
+                   .createdTime(iroha::time::now())
+                   .transactions(block_txs)
+                   .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+                   .build();
+
+  Commit single_commit = rxcpp::observable<>::just(
+      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+  commit_notifier.get_subscriber().on_next(single_commit);
   ASSERT_TRUE(wrapper.validate());
 
   // check that all invalid transactions will have stateful invalid status
