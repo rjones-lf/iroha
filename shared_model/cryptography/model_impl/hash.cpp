@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,28 +15,34 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_SHARED_MODEL_SIGNED_HPP
-#define IROHA_SHARED_MODEL_SIGNED_HPP
+#include "cryptography/hash.hpp"
 
-#include "cryptography/blob.hpp"
+#include <boost/functional/hash.hpp>
 
-#include "common/types.hpp"  // for iroha::sig_t
+#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace crypto {
-    /**
-     * Class for storing signed data. It could be used not only for storing
-     * signed hashes but for other signed objects too.
-     */
-    class Signed : public Blob {
-     public:
-      using OldSignatureType = iroha::sig_t;
 
-      explicit Signed(const std::string &blob);
+    Hash::Hash() : Blob() {}
 
-      std::string toString() const override;
-    };
+    Hash::Hash(const std::string &hash) : Blob(hash) {}
+
+    std::string Hash::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("Hash")
+          .append(Blob::hex())
+          .finalize();
+    }
+
+    std::size_t Hash::Hasher::operator()(const Hash &h) const {
+      using boost::hash_combine;
+      using boost::hash_value;
+
+      std::size_t seed = 0;
+      hash_combine(seed, hash_value(h.blob()));
+
+      return seed;
+    }
   }  // namespace crypto
 }  // namespace shared_model
-
-#endif  // IROHA_SHARED_MODEL_SIGNED_HPP

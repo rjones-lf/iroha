@@ -14,12 +14,12 @@
 
 add_subdirectory(internal)
 
-add_library(shared_model_ed25519_sha3
+add_library(shared_model_cryptography
+    crypto_provider.cpp
     signer.cpp
     verifier.cpp
-    crypto_provider.cpp
     )
-
-target_link_libraries(shared_model_ed25519_sha3
-    cryptography
+target_link_libraries(shared_model_cryptography
+    ed25519_crypto
+    shared_model_cryptography_model
     )
