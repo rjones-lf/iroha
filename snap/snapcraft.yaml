@@ -123,7 +123,7 @@ parts:
       make -C src/bin/pg_config
       make -C src/interfaces/libpq
       make -C src/backend/utils fmgroids.h
-      ln -s $(pwd)/src/backend/utils/fmgroids.h src/include/utils/fmgroids.h
+      cp $(pwd)/src/backend/utils/fmgroids.h src/include/utils/fmgroids.h
     install: |
       make -C src/bin/pg_config install DESTDIR=$SNAPCRAFT_PART_INSTALL
       make -C src/interfaces/libpq install DESTDIR=$SNAPCRAFT_PART_INSTALL
