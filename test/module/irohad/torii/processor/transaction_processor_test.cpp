@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#include "module/irohad/network/network_mocks.hpp"
-
+#include <boost/range/join.hpp>
 #include "framework/test_subscriber.hpp"
+#include "module/irohad/network/network_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -58,7 +58,7 @@ class TransactionProcessorTest : public ::testing::Test {
    */
   template <typename Status>
   void validateStatuses(
-      const std::vector<const shared_model::proto::Transaction> &transactions) {
+      std::vector<shared_model::proto::Transaction> &transactions) {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
@@ -98,9 +98,9 @@ class TransactionProcessorTest : public ::testing::Test {
  * @then for every transaction STATELESS_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
-  std::vector<const shared_model::proto::Transaction> txs;
+  std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = TestTransactionBuilder().txCounter(i).build();
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -139,9 +139,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
  * @then for every transaction STATEFUL_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
-  std::vector<const shared_model::proto::Transaction> txs;
+  std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = TestTransactionBuilder().txCounter(i).build();
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -202,9 +202,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
  * @then for every transaction COMMIT status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
-  std::vector<const shared_model::proto::Transaction> txs;
+  std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = TestTransactionBuilder().txCounter(i).build();
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -261,21 +261,23 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
  * every transaction not from block STATEFUL_INVALID_STATUS was returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
-  std::vector<const shared_model::proto::Transaction> proposal_txs;
-  for (size_t i = 0; i < proposal_size; i++) {
-    auto tx = TestTransactionBuilder().txCounter(i).build();
-    proposal_txs.push_back(tx);
+  std::vector<shared_model::proto::Transaction> block_txs;
+  for (size_t i = 0; i < block_size; i++) {
+    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    block_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
   }
 
-  std::vector<const shared_model::proto::Transaction> block_txs(
-      proposal_txs.begin(), std::next(proposal_txs.begin(), block_size));
-
-  std::vector<const shared_model::proto::Transaction> invalid_txs(
-      std::next(proposal_txs.begin(), block_size),
-      proposal_txs.end());  // transactions will be stateful invalid if appeared
-                            // in proposal but didn't appear in block
+  std::vector<shared_model::proto::Transaction>
+      invalid_txs;  // transactions will be stateful invalid if appeared
+                    // in proposal but didn't appear in block
+  for (size_t i = block_size; i < proposal_size; i++) {
+    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    invalid_txs.push_back(tx);
+    status_map[tx.hash()] =
+        status_builder.notReceived().txHash(tx.hash()).build();
+  }
 
   auto wrapper = make_test_subscriber<CallExact>(
       tp->transactionNotifier(),
@@ -293,7 +295,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   });
 
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(proposal_txs).build());
+      TestProposalBuilder()
+          .transactions(boost::join(block_txs, invalid_txs))
+          .build());
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
