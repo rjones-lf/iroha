@@ -12,7 +12,7 @@ find_package_handle_standard_args(pqxx DEFAULT_MSG
     )
 
 set(URL https://github.com/jtv/libpqxx.git)
-set(VERSION c4d4f4b4e6ecaf85de770a030f3a1cdc1b3a79ae)
+set(VERSION c4d4f4b4e6ecaf85de770a030f3a1cdc1b3a79ae) # 6.1.0
 set_target_description(pqxx "C++ bindings for postgres client library" ${URL} ${VERSION})
 
 if (NOT pqxx_FOUND)
