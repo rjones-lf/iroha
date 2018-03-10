@@ -26,7 +26,6 @@ namespace iroha {
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::JsonType;
     using shared_model::interface::types::RoleIdType;
-    using shared_model::interface::types::DetailType;
     using shared_model::interface::types::PubkeyType;
 
     const std::string kRoleId = "role_id";
@@ -39,8 +38,7 @@ namespace iroha {
     PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
         : transaction_(transaction),
           log_(logger::log("PostgresWsvQuery")),
-          execute_{makeExecuteOptional
-                       (transaction_, log_)} {}
+          execute_{makeExecuteOptional(transaction_, log_)} {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const AccountIdType &permitee_account_id,
@@ -104,13 +102,9 @@ namespace iroha {
       };
     }
 
-    nonstd::optional<DetailType> PostgresWsvQuery::getAccountDetail(
-        const AccountIdType &account_id,
-        const AccountIdType &creator_account_id,
-        const DetailType &detail) {
-      return execute_("SELECT data#>>"
-                      + transaction_.quote("{" + creator_account_id + ", "
-                                           + detail + "}")
+    nonstd::optional<std::string> PostgresWsvQuery::getAccountDetail(
+        const std::string &account_id) {
+      return execute_("SELECT data#>>" + transaction_.quote("{}")
                       + " FROM account WHERE account_id = "
                       + transaction_.quote(account_id) + ";")
                  | [&](const auto &result) -> nonstd::optional<std::string> {

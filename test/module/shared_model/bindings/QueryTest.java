@@ -158,7 +158,7 @@ public class QueryTest {
 
     @Test
     void getAccountDetail() {
-        UnsignedQuery query = builder.getAccountDetail("user@test", "hello").build();
+        UnsignedQuery query = builder.getAccountDetail("user@test").build();
         assertTrue(checkProtoQuery(proto(query)));
     }
 }

@@ -139,7 +139,7 @@ namespace iroha {
             (protocol::GrantablePermission::can_set_my_quorum, can_set_quorum)
             // Can write details to other accounts
             (protocol::GrantablePermission::can_set_my_account_detail,
-             can_set_detail);
+             can_set_detail)
             // Can transfer my assets
             (protocol::GrantablePermission::can_transfer_my_assets,
                 can_transfer);

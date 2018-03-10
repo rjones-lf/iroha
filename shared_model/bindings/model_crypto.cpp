@@ -16,6 +16,7 @@
  */
 
 #include "bindings/model_crypto.hpp"
+#include "common/byteutils.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
 #include "generator/generator.hpp"
 
@@ -27,8 +28,7 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::generateKeypair(const std::string &seed) {
       auto byte_string = iroha::hexstringToBytestring(seed);
-      if (not byte_string.has_value())
-      {
+      if (not byte_string.has_value()) {
         throw std::runtime_error("invalid seed");
       }
       return crypto::CryptoProviderEd25519Sha3::generateKeypair(

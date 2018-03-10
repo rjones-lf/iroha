@@ -124,8 +124,7 @@ namespace iroha {
           const Value &obj_query) {
         auto des = makeFieldDeserializer(obj_query);
         return make_optional_ptr<GetAccountDetail>()
-            | des.String(&GetAccountDetail::account_id, "account_id")
-            | des.String(&GetAccountDetail::detail, "detail") | toQuery;
+            | des.String(&GetAccountDetail::account_id, "account_id") | toQuery;
       }
 
       optional_ptr<Query> JsonQueryFactory::deserializeGetTransactions(
@@ -210,7 +209,6 @@ namespace iroha {
         auto casted_query =
             std::static_pointer_cast<const GetAccountDetail>(query);
         json_doc.AddMember("account_id", casted_query->account_id, allocator);
-        json_doc.AddMember("detail", casted_query->detail, allocator);
       }
 
       void JsonQueryFactory::serializeGetSignatories(

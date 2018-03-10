@@ -123,15 +123,13 @@ TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
     "creator_account_id":"123",
     "query_counter":0,
     "query_type":"GetAccountDetail",
-    "account_id":"test@test",
-    "detail":"key"
+    "account_id":"test@test"
   })";
   auto res = querySerializer.deserialize(json_query);
   ASSERT_TRUE(res.has_value());
   auto casted =
       std::static_pointer_cast<iroha::model::GetAccountDetail>(res.value());
   ASSERT_EQ("test@test", casted->account_id);
-  ASSERT_EQ("key", casted->detail);
 }
 
 TEST(QuerySerializerTest, DeserializeWhenUnknownType) {

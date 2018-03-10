@@ -62,7 +62,7 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      virtual bool insertBlock(model::Block block) override;
+      virtual bool insertBlock(const shared_model::interface::Block &block) override;
 
       /**
        * Insert blocks without validation
@@ -70,7 +70,7 @@ namespace iroha {
        * @return true if inserted
        */
       virtual bool insertBlocks(
-          const std::vector<model::Block> &blocks) override;
+          const std::vector<std::shared_ptr<shared_model::interface::Block>> &blocks) override;
 
       virtual void dropStorage() override;
 
