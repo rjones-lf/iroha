@@ -38,18 +38,13 @@ parts:
       - gflags
       - c-ares
       - grpc
-      - gtest
       - spdlog
       - rxcpp
       - rapidjson
       - optional
       - libpq
       - pqxx
-      - cpp-redis
       - tbb
-      - sonar-scanner-cli
-      - sonar-build-wrapper
-      - valgrind
       - ed25519
   cmake:
     source: https://gitlab.kitware.com/cmake/cmake.git
@@ -95,11 +90,6 @@ parts:
      - -DgRPC_GFLAGS_PROVIDER=package
      - -DBUILD_SHARED_LIBS=ON
     after: [cmake, protobuf, c-ares]
-  gtest:
-    source: https://github.com/google/googletest.git
-    source-commit: ec44c6c1675c25b9827aacd08c02433cccde7780
-    plugin: cmake
-    after: [cmake]
   spdlog:
     source: https://github.com/gabime/spdlog.git
     source-commit: f85a08622e20b74bff34381cafcb8ef8167b29d0
@@ -117,10 +107,6 @@ parts:
     plugin: cmake
     configflags: [-DRAPIDJSON_BUILD_EXAMPLES=OFF]
     after: [cmake]
-    stage:
-      - -include/gtest/gtest.h
-      - -lib/libgtest.a
-      - -lib/libgtest_main.a
   optional:
     source: https://github.com/martinmoene/optional-lite.git
     source-commit: a0ddabb8b52e1eaaf0dd1515bb85698b747528e4
@@ -148,13 +134,6 @@ parts:
     plugin: autotools
     configflags: [--disable-documentation, --with-pic]
     after: [libpq]
-  cpp-redis:
-    source: https://github.com/Cylix/cpp_redis.git
-    source-commit: f390eef447a62dcb6da288fb1e91f25f8a9b838c
-    plugin: nil
-    build: cmake -H../src -B.
-    install: cmake --build . --target install
-    after: [cmake]
   tbb:
     source: https://github.com/01org/tbb.git
     source-commit: eb6336ad29450f2a64af5123ca1b9429ff6bc11d
@@ -168,25 +147,6 @@ parts:
       cp build/build_release/*.so* $SNAPCRAFT_PART_INSTALL/usr/local/lib
       mkdir -p $SNAPCRAFT_PART_INSTALL/usr/local
       mv $SNAPCRAFT_PART_INSTALL/include $SNAPCRAFT_PART_INSTALL/usr/local/include
-  sonar-scanner-cli:
-    source: https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip
-    plugin: nil
-    install: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/opt/sonar
-      mv sonar-scanner-3.0.3.778-linux $SNAPCRAFT_PART_INSTALL/opt/sonar/scanner
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/local/bin/
-      ln -s -f ../../../opt/sonar/scanner/bin/sonar-scanner $SNAPCRAFT_PART_INSTALL/usr/local/bin/sonar-scanner
-  sonar-build-wrapper:
-    source: https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
-    plugin: nil
-    install: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/opt/sonar
-      mv ../src/build-wrapper-linux-x86 $SNAPCRAFT_PART_INSTALL/opt/sonar/build-wrapper
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/local/bin/
-      ln -s -f ../../../opt/sonar/build-wrapper/build-wrapper-linux-x86-64 $SNAPCRAFT_PART_INSTALL/usr/local/bin/sonar-build-wrapper
-  valgrind:
-    source: git://sourceware.org/git/valgrind.git
-    plugin: autotools
   ed25519:
     source: https://github.com/hyperledger/iroha-ed25519.git
     source-commit: e7188b8393dbe5ac54378610d53630bd4a180038
