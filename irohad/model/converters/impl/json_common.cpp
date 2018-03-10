@@ -22,20 +22,20 @@ using namespace rapidjson;
 namespace iroha {
   namespace model {
     namespace converters {
-      Value serializeSignature(const Signature& signature,
-                               Document::AllocatorType& allocator) {
+      Value serializeSignature(const Signature &signature,
+                               Document::AllocatorType &allocator) {
         Value document;
         document.SetObject();
 
-        document.AddMember("pubkey", signature.pubkey.to_hexstring(),
-                           allocator);
-        document.AddMember("signature", signature.signature.to_hexstring(),
-                           allocator);
+        document.AddMember(
+            "pubkey", signature.pubkey.to_hexstring(), allocator);
+        document.AddMember(
+            "signature", signature.signature.to_hexstring(), allocator);
 
         return document;
       }
 
-      nonstd::optional<Document> stringToJson(const std::string& string) {
+      nonstd::optional<Document> stringToJson(const std::string &string) {
         Document document;
         document.Parse(string);
         if (document.HasParseError()) {
@@ -44,7 +44,7 @@ namespace iroha {
         return nonstd::make_optional(std::move(document));
       }
 
-      std::string jsonToString(const Document& document) {
+      std::string jsonToString(const Document &document) {
         StringBuffer sb;
         PrettyWriter<StringBuffer> writer(sb);
         document.Accept(writer);

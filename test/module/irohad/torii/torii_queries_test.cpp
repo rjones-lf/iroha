@@ -14,35 +14,45 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <generator/generator.hpp>
+#include "generator/generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
-
 // to compare pb amount and iroha amount
 #include "model/converters/pb_common.hpp"
+#include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_query_response_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 
 #include "main/server_runner.hpp"
 #include "model/permissions.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
-#include "torii_utils/query_client.hpp"
+#include "torii/query_client.hpp"
+#include "torii/query_service.hpp"
 
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
 constexpr size_t TimesFind = 1;
 
-using ::testing::Return;
 using ::testing::A;
-using ::testing::_;
 using ::testing::AtLeast;
+using ::testing::Return;
+using ::testing::_;
 
 using namespace iroha::network;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
+using namespace iroha::torii;
 
+using namespace std::chrono_literals;
+constexpr std::chrono::milliseconds proposal_delay = 10s;
+
+// TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
@@ -51,27 +61,31 @@ class ToriiQueriesTest : public testing::Test {
       // ----------- Command Service --------------
       pcsMock = std::make_shared<MockPeerCommunicationService>();
       statelessValidatorMock = std::make_shared<MockStatelessValidator>();
+      mst = std::make_shared<iroha::MockMstProcessor>();
       wsv_query = std::make_shared<MockWsvQuery>();
       block_query = std::make_shared<MockBlockQuery>();
       storageMock = std::make_shared<MockStorage>();
 
       rxcpp::subjects::subject<iroha::model::Proposal> prop_notifier;
       rxcpp::subjects::subject<Commit> commit_notifier;
+      rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+      rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
       EXPECT_CALL(*pcsMock, on_proposal())
           .WillRepeatedly(Return(prop_notifier.get_observable()));
-
       EXPECT_CALL(*pcsMock, on_commit())
           .WillRepeatedly(Return(commit_notifier.get_observable()));
 
+      EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+          .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
+      EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+          .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
+
       auto tx_processor =
           std::make_shared<iroha::torii::TransactionProcessorImpl>(
-              pcsMock, statelessValidatorMock);
+              pcsMock, statelessValidatorMock, mst);
       auto pb_tx_factory =
           std::make_shared<iroha::model::converters::PbTransactionFactory>();
-
-      auto command_service = std::make_unique<torii::CommandService>(
-          pb_tx_factory, tx_processor, storageMock);
 
       //----------- Query Service ----------
 
@@ -86,11 +100,13 @@ class ToriiQueriesTest : public testing::Test {
       auto pb_query_resp_factory =
           std::make_shared<iroha::model::converters::PbQueryResponseFactory>();
 
-      auto query_service = std::make_unique<torii::QueryService>(
-          pb_query_factory, pb_query_resp_factory, qpi);
-
       //----------- Server run ----------------
-      runner->run(std::move(command_service), std::move(query_service));
+      runner
+          ->append(std::make_unique<torii::CommandService>(
+              pb_tx_factory, tx_processor, storageMock, proposal_delay))
+          .append(std::make_unique<torii::QueryService>(
+              pb_query_factory, pb_query_resp_factory, qpi))
+          .run();
     });
 
     runner->waitForServersReady();
@@ -108,6 +124,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<MockStatelessValidator> statelessValidatorMock;
   std::shared_ptr<MockStorage> storageMock;
+  std::shared_ptr<iroha::MockMstProcessor> mst;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
@@ -117,6 +134,33 @@ class ToriiQueriesTest : public testing::Test {
   const std::string signature_test =
       generator::random_blob<32>(0).to_hexstring();
 };
+
+/**
+ * Given a Query Synchronous Client
+ * When copied, moved, copy and move assigned
+ * Then final object works as the first one
+ */
+TEST_F(ToriiQueriesTest, QueryClient) {
+  iroha::protocol::QueryResponse response;
+  auto query = iroha::protocol::Query();
+
+  query.mutable_payload()->set_creator_account_id("accountA");
+  query.mutable_payload()->mutable_get_account()->set_account_id("accountB");
+  query.mutable_signature()->set_pubkey(pubkey_test);
+  query.mutable_signature()->set_signature(signature_test);
+
+  auto client1 = torii_utils::QuerySyncClient(Ip, Port);
+  // Copy ctor
+  torii_utils::QuerySyncClient client2(client1);
+  // copy assignment
+  auto client3 = client2;
+  // move ctor
+  torii_utils::QuerySyncClient client4(std::move(client3));
+  // move assignment
+  auto client5 = std::move(client4);
+  auto stat = client5.Find(query, response);
+  ASSERT_TRUE(stat.ok());
+}
 
 /**
  * Test for error response
@@ -524,6 +568,8 @@ TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
               validate(A<const iroha::model::Query &>()))
       .WillOnce(Return(false));
 
+  auto client = torii_utils::QuerySyncClient(Ip, Port);
+
   for (size_t i = 0; i < TimesFind; ++i) {
     iroha::protocol::QueryResponse response;
     auto query = iroha::protocol::Query();
@@ -534,7 +580,7 @@ TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
     query.mutable_signature()->set_pubkey(pubkey_test);
     query.mutable_signature()->set_signature(signature_test);
 
-    auto stat = torii_utils::QuerySyncClient(Ip, Port).Find(query, response);
+    auto stat = client.Find(query, response);
     ASSERT_TRUE(stat.ok());
     // Must return Error Response
     ASSERT_EQ(response.error_response().reason(),

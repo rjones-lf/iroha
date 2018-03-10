@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/storage/yac_vote_storage.hpp"
+
 #include <algorithm>
 #include <utility>
 
-#include "consensus/yac/storage/yac_vote_storage.hpp"
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -40,9 +42,8 @@ namespace iroha {
         if (val != proposal_storages_.end()) {
           return val;
         }
-        return proposal_storages_
-            .emplace(proposal_storages_.end(),
-                     msg.hash.proposal_hash, peers_in_round);
+        return proposal_storages_.emplace(
+            proposal_storages_.end(), msg.hash.proposal_hash, peers_in_round);
       }
 
       // --------| public api |--------
@@ -80,9 +81,8 @@ namespace iroha {
 
       // --------| private api |--------
 
-      nonstd::optional<Answer>
-      YacVoteStorage::insert_votes(std::vector<VoteMessage> &votes,
-                                   uint64_t peers_in_round) {
+      nonstd::optional<Answer> YacVoteStorage::insert_votes(
+          std::vector<VoteMessage> &votes, uint64_t peers_in_round) {
         if (not sameProposals(votes)) {
           return nonstd::nullopt;
         }
@@ -91,6 +91,6 @@ namespace iroha {
         return storage->insert(votes);
       }
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha

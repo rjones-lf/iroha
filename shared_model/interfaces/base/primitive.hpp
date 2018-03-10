@@ -21,6 +21,13 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/swig_keyword_hider.hpp"
 
+#ifdef DISABLE_BACKWARD
+#define PRIMITIVE_WITH_OLD(Model, OldModel) ModelPrimitive<Model>
+#else
+#define PRIMITIVE_WITH_OLD(Model, OldModel) Primitive<Model, OldModel>
+#endif
+#define PRIMITIVE(Model) PRIMITIVE_WITH_OLD(Model, iroha::model::Model)
+
 namespace shared_model {
   namespace interface {
 

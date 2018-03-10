@@ -18,13 +18,16 @@
 #ifndef TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 #define TX_PIPELINE_INTEGRATION_TEST_FIXTURE_HPP
 
+#include <algorithm>
 #include <atomic>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+
 #include "crypto/keys_manager_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
+#include "integration/pipeline/test_irohad.hpp"
 #include "main/application.hpp"
-#include "main/raw_block_insertion.hpp"
+#include "main/raw_block_loader.hpp"
 #include "model/generators/block_generator.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
@@ -32,59 +35,6 @@ using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
 using namespace iroha::model::generators;
 using iroha::model::Transaction;
-
-class TestIrohad : public Irohad {
- public:
-  TestIrohad(const std::string &block_store_dir,
-             const std::string &redis_host,
-             size_t redis_port,
-             const std::string &pg_conn,
-             size_t torii_port,
-             size_t internal_port,
-             size_t max_proposal_size,
-             std::chrono::milliseconds proposal_delay,
-             std::chrono::milliseconds vote_delay,
-             std::chrono::milliseconds load_delay,
-             const iroha::keypair_t &keypair)
-      : Irohad(block_store_dir,
-               redis_host,
-               redis_port,
-               pg_conn,
-               torii_port,
-               internal_port,
-               max_proposal_size,
-               proposal_delay,
-               vote_delay,
-               load_delay,
-               keypair) {}
-
-  auto &getCommandService() {
-    return command_service;
-  }
-
-  auto &getPeerCommunicationService() {
-    return pcs;
-  }
-
-  auto &getCryptoProvider() {
-    return crypto_verifier;
-  }
-
-  void run() override {
-    grpc::ServerBuilder builder;
-    int port = 0;
-    builder.AddListeningPort("0.0.0.0:" + std::to_string(internal_port_),
-                             grpc::InsecureServerCredentials(),
-                             &port);
-    builder.RegisterService(ordering_init.ordering_gate_transport.get());
-    builder.RegisterService(ordering_init.ordering_service_transport.get());
-    builder.RegisterService(yac_init.consensus_network.get());
-    builder.RegisterService(loader_init.service.get());
-    internal_server = builder.BuildAndStart();
-    internal_thread = std::thread([this] { internal_server->Wait(); });
-    log_->info("===> iroha initialized");
-  }
-};
 
 class TxPipelineIntegrationTestFixture
     : public iroha::ametsuchi::AmetsuchiTest {
@@ -114,17 +64,33 @@ class TxPipelineIntegrationTestFixture
         });
     ASSERT_TRUE(proposal_wrapper->validate());
     ASSERT_EQ(num_blocks, proposals.size());
-    ASSERT_EQ(expected_proposals, proposals);
+    // Update proposal timestamp and compare it
+    for (auto i = 0u; i < proposals.size(); ++i) {
+      expected_proposals[i].created_time = proposals[i].created_time;
+      ASSERT_EQ(expected_proposals[i], proposals[i]);
+    }
 
     ASSERT_TRUE(commit_wrapper->validate());
     ASSERT_EQ(num_blocks, blocks.size());
-    ASSERT_EQ(expected_blocks, blocks);
+
+    // Update block timestamp and related fields and compare it
+    for (auto i = 0u; i < blocks.size(); ++i) {
+      auto &expected_block = expected_blocks[i];
+      expected_block.created_ts = blocks[i].created_ts;
+      if (i != 0) {
+        expected_block.prev_hash = expected_blocks[i - 1].hash;
+      }
+      expected_block.hash = iroha::hash(expected_block);
+      expected_block.sigs = {};
+      irohad->getCryptoProvider()->sign(expected_block);
+      ASSERT_EQ(expected_block, blocks[i]);
+    }
   }
 
   iroha::keypair_t createNewAccountKeypair(
       const std::string &accountName) const {
     auto manager = iroha::KeysManagerImpl(accountName);
-    EXPECT_TRUE(manager.createKeys(accountName));
+    EXPECT_TRUE(manager.createKeys());
     EXPECT_TRUE(manager.loadKeys().has_value());
     return *manager.loadKeys();
   }
@@ -147,7 +113,7 @@ class TxPipelineIntegrationTestFixture
 
   std::shared_ptr<iroha::KeysManager> manager;
 
-  std::atomic_bool duplicate_sent {false};
+  std::atomic_bool duplicate_sent{false};
   size_t next_height_count = 2;
 
  private:
@@ -194,8 +160,7 @@ class TxPipelineIntegrationTestFixture
     auto pb_tx =
         iroha::model::converters::PbTransactionFactory().serialize(transaction);
 
-    google::protobuf::Empty response;
-    irohad->getCommandService()->ToriiAsync(pb_tx, response);
+    irohad->getCommandService()->Torii(pb_tx);
   }
 };
 

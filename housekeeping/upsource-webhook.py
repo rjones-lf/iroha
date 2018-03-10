@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-import json
-import requests
-import os
 import argparse
-
+import json
+import os
+import requests
 from flask import Flask, request
+
 app = Flask(__name__)
 
 

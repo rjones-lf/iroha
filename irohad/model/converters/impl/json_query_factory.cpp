@@ -16,7 +16,6 @@
  */
 
 #include "model/converters/json_query_factory.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
@@ -58,7 +57,7 @@ namespace iroha {
             {typeid(GetAccountAssets),
              &JsonQueryFactory::serializeGetAccountAssets},
             {typeid(GetAccountDetail),
-              &JsonQueryFactory::serializeGetAccountDetail},
+             &JsonQueryFactory::serializeGetAccountDetail},
             {typeid(GetAccountTransactions),
              &JsonQueryFactory::serializeGetAccountTransactions},
             {typeid(GetAccountAssetTransactions),
@@ -121,14 +120,12 @@ namespace iroha {
             | toQuery;
       }
 
-      optional_ptr<Query>
-      JsonQueryFactory::deserializeGetAccountDetail(
-        const Value &obj_query) {
+      optional_ptr<Query> JsonQueryFactory::deserializeGetAccountDetail(
+          const Value &obj_query) {
         auto des = makeFieldDeserializer(obj_query);
         return make_optional_ptr<GetAccountDetail>()
-               | des.String(&GetAccountDetail::account_id, "account_id")
-               | des.String(&GetAccountDetail::detail, "detail")
-               | toQuery;
+            | des.String(&GetAccountDetail::account_id, "account_id")
+            | des.String(&GetAccountDetail::detail, "detail") | toQuery;
       }
 
       optional_ptr<Query> JsonQueryFactory::deserializeGetTransactions(
@@ -172,8 +169,8 @@ namespace iroha {
         Document doc;
         auto &allocator = doc.GetAllocator();
         doc.SetObject();
-        doc.AddMember("creator_account_id", model_query->creator_account_id,
-                      allocator);
+        doc.AddMember(
+            "creator_account_id", model_query->creator_account_id, allocator);
         doc.AddMember("query_counter", model_query->query_counter, allocator);
         doc.AddMember("created_ts", model_query->created_ts, allocator);
         Value signature;
@@ -183,8 +180,8 @@ namespace iroha {
 
         doc.AddMember("signature", signature, allocator);
 
-        makeMethodInvoke(*this, doc,
-                         model_query)(serializers_.at(typeid(*model_query)));
+        makeMethodInvoke(
+            *this, doc, model_query)(serializers_.at(typeid(*model_query)));
         return jsonToString(doc);
       }
 
@@ -207,11 +204,11 @@ namespace iroha {
       }
 
       void JsonQueryFactory::serializeGetAccountDetail(
-        Document &json_doc, std::shared_ptr<const Query> query) {
+          Document &json_doc, std::shared_ptr<const Query> query) {
         auto &allocator = json_doc.GetAllocator();
         json_doc.AddMember("query_type", "GetAccountDetail", allocator);
         auto casted_query =
-          std::static_pointer_cast<const GetAccountDetail>(query);
+            std::static_pointer_cast<const GetAccountDetail>(query);
         json_doc.AddMember("account_id", casted_query->account_id, allocator);
         json_doc.AddMember("detail", casted_query->detail, allocator);
       }
@@ -237,12 +234,12 @@ namespace iroha {
       void JsonQueryFactory::serializeGetAccountAssetTransactions(
           Document &json_doc, std::shared_ptr<const Query> query) {
         auto &allocator = json_doc.GetAllocator();
-        json_doc.AddMember("query_type", "GetAccountAssetTransactions",
-                           allocator);
+        json_doc.AddMember(
+            "query_type", "GetAccountAssetTransactions", allocator);
         auto get_account_asset =
             std::static_pointer_cast<const GetAccountAssetTransactions>(query);
-        json_doc.AddMember("account_id", get_account_asset->account_id,
-                           allocator);
+        json_doc.AddMember(
+            "account_id", get_account_asset->account_id, allocator);
         json_doc.AddMember("asset_id", get_account_asset->asset_id, allocator);
       }
 

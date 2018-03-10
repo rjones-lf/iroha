@@ -21,8 +21,11 @@
 #include "cryptography/hash.hpp"
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/account.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/account.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -30,7 +33,7 @@ namespace shared_model {
     /**
      * User identity information in the system
      */
-    class Account : public Hashable<Account, iroha::model::Account> {
+    class Account : public HASHABLE(Account) {
      public:
       /**
        * @return Identity of user, for fetching data
@@ -65,6 +68,7 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of account asset response.
@@ -76,6 +80,8 @@ namespace shared_model {
         oldModel->quorum = quorum();
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

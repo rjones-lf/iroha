@@ -18,8 +18,7 @@
 #ifndef IROHA_CREATE_ASSET_HPP
 #define IROHA_CREATE_ASSET_HPP
 
-#include <model/asset.hpp>
-#include <model/command.hpp>
+#include "model/command.hpp"
 #include <string>
 
 namespace iroha {
@@ -32,23 +31,24 @@ namespace iroha {
       /**
        * Asset to create in the system
        */
-      std::string asset_name{};
+      std::string asset_name;
 
       /**
        * Domain id (full name)
        */
-      std::string domain_id{};
+      std::string domain_id;
 
       /**
        * Asset precision
        */
-      uint8_t precision{};
+      uint8_t precision;
 
       bool operator==(const Command &command) const override;
 
       CreateAsset() {}
 
-      CreateAsset(const std::string &asset_name, const std::string &domain_id,
+      CreateAsset(const std::string &asset_name,
+                  const std::string &domain_id,
                   uint8_t precision)
           : asset_name(asset_name),
             domain_id(domain_id),

@@ -24,7 +24,6 @@ class QueryValidatorTest : public ValidatorsTest {
   shared_model::validation::DefaultQueryValidator query_validator;
 };
 
-using namespace iroha::protocol;
 using namespace shared_model;
 
 /**
@@ -34,9 +33,9 @@ using namespace shared_model;
  */
 TEST_F(QueryValidatorTest, StatelessValidTest) {
   iroha::protocol::Query qry;
-  qry.mutable_payload()->set_creator_account_id(valid_account_id);
-  qry.mutable_payload()->set_created_time(valid_created_time);
-  qry.mutable_payload()->set_query_counter(valid_counter);
+  qry.mutable_payload()->set_creator_account_id(account_id);
+  qry.mutable_payload()->set_created_time(created_time);
+  qry.mutable_payload()->set_query_counter(counter);
   auto payload = qry.mutable_payload();
 
   // Iterate through all query types, filling query fields with valid values

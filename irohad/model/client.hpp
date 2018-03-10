@@ -24,9 +24,7 @@ namespace iroha {
     /**
      * Client is representation of user in system
      */
-    struct Client {
-
-    };
-  }
-}
-#endif //IROHA_CLIENT_HPP
+    struct Client {};
+  }  // namespace model
+}  // namespace iroha
+#endif  // IROHA_CLIENT_HPP

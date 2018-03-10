@@ -19,8 +19,8 @@
 #define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
 #include "model/query_execution.hpp"
-#include "validation/stateless_validator.hpp"
 #include "torii/processor/query_processor.hpp"
+#include "validation/stateless_validator.hpp"
 
 namespace iroha {
   namespace torii {
@@ -52,7 +52,7 @@ namespace iroha {
       std::unique_ptr<model::QueryProcessingFactory> qpf_;
       std::shared_ptr<validation::StatelessValidator> validator_;
     };
-  }
-}
+  }  // namespace torii
+}  // namespace iroha
 
 #endif  // IROHA_QUERY_PROCESSOR_IMPL_HPP

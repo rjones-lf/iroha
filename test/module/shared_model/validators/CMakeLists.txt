@@ -20,6 +20,7 @@ addtest(transaction_validator_test
     )
 target_link_libraries(transaction_validator_test
     shared_model_proto_backend
+    shared_model_stateless_validation
     )
 
 addtest(query_validator_test
@@ -27,4 +28,13 @@ addtest(query_validator_test
     )
 target_link_libraries(query_validator_test
     shared_model_proto_backend
+    shared_model_stateless_validation
+    )
+
+addtest(field_validator_test
+    field_validator_test.cpp
+    )
+target_link_libraries(field_validator_test
+    shared_model_proto_backend
+    shared_model_stateless_validation
     )

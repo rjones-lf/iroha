@@ -108,7 +108,8 @@ TEST(Hash, sha3_512_JP_text_LOOP) {
 TEST(Hash, sha3_256_RU_text) {
   std::string res =
       "cf5987add8080bbf2e70e45d913acc1d4fc919ff4634428a71dabb3e0777a1a7";
-  std::string str_("Является ли Order распределённой программой финансового учёта?");
+  std::string str_(
+      "Является ли Order распределённой программой финансового учёта?");
   std::vector<uint8_t> str(str_.begin(), str_.end());
   ASSERT_STREQ(sha3_256(str.data(), str.size()).to_hexstring().c_str(),
                res.c_str());
@@ -118,7 +119,8 @@ TEST(Hash, sha3_512_RU_text) {
   std::string res =
       "920078690881a2fb4a2b59874ac318608534f173fa019065525f63b5efa3893269bbd20e"
       "339300760eace14edeb28415ade75118aaff810194901583e817878c";
-  std::string str_("Является ли Order распределённой программой финансового учёта?");
+  std::string str_(
+      "Является ли Order распределённой программой финансового учёта?");
   std::vector<uint8_t> str(str_.begin(), str_.end());
   ASSERT_STREQ(sha3_512(str.data(), str.size()).to_hexstring().c_str(),
                res.c_str());
@@ -127,7 +129,8 @@ TEST(Hash, sha3_512_RU_text) {
 TEST(Hash, sha3_256_RU_text_LOOP) {
   std::string res =
       "cf5987add8080bbf2e70e45d913acc1d4fc919ff4634428a71dabb3e0777a1a7";
-  std::string str_("Является ли Order распределённой программой финансового учёта?");
+  std::string str_(
+      "Является ли Order распределённой программой финансового учёта?");
   std::vector<uint8_t> str(str_.begin(), str_.end());
   for (int i = 0; i < LOOP_N; i++) {
     EXPECT_STREQ(sha3_256(str.data(), str.size()).to_hexstring().c_str(),
@@ -139,7 +142,8 @@ TEST(Hash, sha3_512_RU_text_LOOP) {
   std::string res =
       "920078690881a2fb4a2b59874ac318608534f173fa019065525f63b5efa3893269bbd20e"
       "339300760eace14edeb28415ade75118aaff810194901583e817878c";
-  std::string str_("Является ли Order распределённой программой финансового учёта?");
+  std::string str_(
+      "Является ли Order распределённой программой финансового учёта?");
   std::vector<uint8_t> str(str_.begin(), str_.end());
   for (int i = 0; i < LOOP_N; i++) {
     EXPECT_STREQ(sha3_512(str.data(), str.size()).to_hexstring().c_str(),

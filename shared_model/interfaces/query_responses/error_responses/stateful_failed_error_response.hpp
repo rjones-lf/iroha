@@ -34,9 +34,12 @@ namespace shared_model {
         return "StatefulFailedErrorResponse";
       }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::ErrorResponse::Reason oldModelReason() const override {
         return iroha::model::ErrorResponse::Reason::STATEFUL_INVALID;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

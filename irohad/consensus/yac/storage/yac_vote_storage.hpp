@@ -18,25 +18,24 @@
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
+#include <memory>
+#include <nonstd/optional.hpp>
 #include <unordered_set>
 #include <vector>
-#include <nonstd/optional.hpp>
-#include <memory>
 
-#include "consensus/yac/messages.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
-#include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "consensus/yac/storage/storage_result.hpp"
+#include "consensus/yac/messages.hpp"  // because messages passed by value
+#include "consensus/yac/storage/storage_result.hpp"  // for Answer
+#include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
 
 namespace iroha {
   namespace consensus {
     namespace yac {
+      class YacProposalStorage;
 
       /**
        * Class provide storage for votes and useful methods for it.
        */
       class YacVoteStorage {
-
        private:
         // --------| private api |--------
 
@@ -136,7 +135,7 @@ namespace iroha {
         std::unordered_set<ProposalHash> processing_state_;
       };
 
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_YAC_VOTE_STORAGE_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_YAC_VOTE_STORAGE_HPP

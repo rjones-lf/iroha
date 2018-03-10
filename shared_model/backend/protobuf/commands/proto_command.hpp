@@ -43,7 +43,7 @@
 #include "utils/variant_deserializer.hpp"
 
 template <typename... T, typename Archive>
-auto load(Archive &&ar) {
+auto loadCommand(Archive &&ar) {
   int which = ar.GetDescriptor()->FindFieldByNumber(ar.command_case())->index();
   return shared_model::detail::variant_impl<T...>::template load<
       shared_model::interface::Command::CommandVariantType>(
@@ -91,16 +91,21 @@ namespace shared_model {
       template <typename CommandType>
       explicit Command(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            variant_([this] { return load<ProtoCommandListType>(*proto_); }),
+            variant_(
+                [this] { return loadCommand<ProtoCommandListType>(*proto_); }),
             blob_([this] { return makeBlob(*proto_); }) {}
 
       Command(const Command &o) : Command(o.proto_) {}
 
       Command(Command &&o) noexcept : Command(std::move(o.proto_)) {}
 
-      const CommandVariantType &get() const override { return *variant_; }
+      const CommandVariantType &get() const override {
+        return *variant_;
+      }
 
-      const BlobType &blob() const override { return *blob_; }
+      const BlobType &blob() const override {
+        return *blob_;
+      }
 
      private:
       // lazy

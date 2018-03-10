@@ -18,14 +18,20 @@
 #ifndef IROHA_AMETSUCHI_H
 #define IROHA_AMETSUCHI_H
 
-#include "ametsuchi/block_query.hpp"
-#include "ametsuchi/wsv_query.hpp"
-#include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
+#include "ametsuchi/temporary_factory.hpp"
+#include "common/result.hpp"
 
 namespace iroha {
 
+  namespace model {
+    struct Block;
+  }
+
   namespace ametsuchi {
+
+    class BlockQuery;
+    class WsvQuery;
 
     /**
      * Storage interface, which allows queries on current committed state, and
@@ -33,7 +39,6 @@ namespace iroha {
      */
     class Storage : public TemporaryFactory, public MutableFactory {
      public:
-
       virtual std::shared_ptr<WsvQuery> getWsvQuery() const = 0;
 
       virtual std::shared_ptr<BlockQuery> getBlockQuery() const = 0;

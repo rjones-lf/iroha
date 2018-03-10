@@ -15,13 +15,17 @@
  * limitations under the License.
  */
 
-#include <algorithm>
 #include "consensus/yac/storage/yac_common.hpp"
+
+#include <algorithm>
+
 #include "consensus/consensus_common.hpp"
+#include "consensus/yac/messages.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
+
       bool hasReject(uint64_t frequent, uint64_t voted, uint64_t all) {
         auto not_voted = all - voted;
         return not hasSupermajority(frequent + not_voted, all);
@@ -33,14 +37,14 @@ namespace iroha {
         }
 
         auto first = votes.at(0);
-        return std::all_of(votes.begin(), votes.end(),
-                           [&first](auto current) {
-                             return first.hash == current.hash;
-                           });
+        return std::all_of(
+            votes.begin(), votes.end(), [&first](const auto &current) {
+              return first.hash.proposal_hash == current.hash.proposal_hash;
+            });
       }
 
-      nonstd::optional<ProposalHash>
-      getProposalHash(const std::vector<VoteMessage> &votes) {
+      nonstd::optional<ProposalHash> getProposalHash(
+          const std::vector<VoteMessage> &votes) {
         auto &&hash = getHash(votes);
         if (hash.has_value()) {
           return hash.value().proposal_hash;
@@ -55,6 +59,6 @@ namespace iroha {
 
         return votes.at(0).hash;
       }
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha

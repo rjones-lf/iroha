@@ -17,6 +17,8 @@
 
 add_subdirectory(backend_proto)
 add_subdirectory(bindings)
+add_subdirectory(converters)
+add_subdirectory(builders)
 add_subdirectory(validators)
 
 AddTest(lazy_test

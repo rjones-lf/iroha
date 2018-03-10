@@ -17,6 +17,7 @@ add_library(model_interfaces
     )
 
 target_link_libraries(model_interfaces
-    model
+    old_model
+    shared_model_ed25519_sha3
     ${Boost_LIBRARIES}
     )

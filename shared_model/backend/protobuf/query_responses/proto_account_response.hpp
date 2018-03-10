@@ -37,34 +37,37 @@ namespace shared_model {
       template <typename QueryResponseType>
       explicit AccountResponse(QueryResponseType &&queryResponse)
           : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-            accountResponse_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::QueryResponse::account_response)),
+            accountResponse_(proto_->account_response()),
             accountRoles_([this] {
               return boost::accumulate(
-                  accountResponse_->account_roles(),
-                  SetRoleIdType{},
+                  accountResponse_.account_roles(),
+                  AccountRolesIdType{},
                   [](auto &&roles, const auto &role) {
                     roles.push_back(interface::types::RoleIdType(role));
                     return std::move(roles);
                   });
             }),
-            account_([this] { return Account(accountResponse_->account()); }) {}
+            account_([this] { return Account(accountResponse_.account()); }) {}
 
       AccountResponse(const AccountResponse &o) : AccountResponse(o.proto_) {}
 
       AccountResponse(AccountResponse &&o)
           : AccountResponse(std::move(o.proto_)) {}
 
-      const interface::Account &account() const override { return *account_; }
+      const interface::Account &account() const override {
+        return *account_;
+      }
 
-      const SetRoleIdType &roles() const override { return *accountRoles_; }
+      const AccountRolesIdType &roles() const override {
+        return *accountRoles_;
+      }
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::AccountResponse &> accountResponse_;
-      const Lazy<SetRoleIdType> accountRoles_;
+      const iroha::protocol::AccountResponse &accountResponse_;
+      const Lazy<AccountRolesIdType> accountRoles_;
       const Lazy<shared_model::proto::Account> account_;
     };
   }  // namespace proto

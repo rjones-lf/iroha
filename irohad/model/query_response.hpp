@@ -18,9 +18,9 @@
 #ifndef IROHA_QUERY_RESPONSE_HPP
 #define IROHA_QUERY_RESPONSE_HPP
 
+#include <memory>
 #include <model/client.hpp>
 #include <model/query.hpp>
-#include <memory>
 
 namespace iroha {
   namespace model {

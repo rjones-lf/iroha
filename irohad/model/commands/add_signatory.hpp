@@ -18,9 +18,9 @@
 #ifndef IROHA_ADD_SIGNATURE_HPP
 #define IROHA_ADD_SIGNATURE_HPP
 
-#include <common/types.hpp>
-#include <model/command.hpp>
 #include <string>
+#include "common/types.hpp"
+#include "model/command.hpp"
 
 namespace iroha {
   namespace model {
@@ -32,12 +32,12 @@ namespace iroha {
       /**
        * Account to add new signatory
        */
-      std::string account_id{};
+      std::string account_id;
 
       /**
        * New signatory is identified with public key
        */
-      pubkey_t pubkey{};
+      pubkey_t pubkey;
 
       bool operator==(const Command &command) const override;
 

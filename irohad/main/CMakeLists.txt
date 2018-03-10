@@ -25,7 +25,7 @@ target_link_libraries(server_runner
     schema
     )
 
-add_library(raw_block_insertion impl/raw_block_insertion.cpp)
+add_library(raw_block_insertion impl/raw_block_loader.cpp)
 target_link_libraries(raw_block_insertion
     json_model_converters
     )
@@ -53,6 +53,7 @@ target_link_libraries(application
     simulator
     block_loader
     block_loader_service
+    mst_processor
     )
 
 add_executable(irohad irohad.cpp)

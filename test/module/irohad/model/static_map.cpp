@@ -47,5 +47,3 @@ TEST(HandlerTest, QueryResponseRegistration) {
 
   ASSERT_EQ(9, registry.query_response_handler.types().size());
 }
-
-

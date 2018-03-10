@@ -90,9 +90,13 @@ namespace shared_model {
       QueryResponse(QueryResponse &&o) noexcept
           : QueryResponse(std::move(o.proto_)) {}
 
-      const QueryResponseVariantType &get() const override { return *variant_; }
+      const QueryResponseVariantType &get() const override {
+        return *variant_;
+      }
 
-      const QueryHashType &queryHash() const override { return *hash_; }
+      const QueryHashType &queryHash() const override {
+        return *hash_;
+      }
 
      private:
       const LazyVariantType variant_;

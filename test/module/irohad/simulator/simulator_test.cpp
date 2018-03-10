@@ -20,8 +20,8 @@
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
-#include "simulator/impl/simulator.hpp"
 #include "framework/test_subscriber.hpp"
+#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -31,10 +31,10 @@ using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
+using ::testing::_;
+using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::A;
-using ::testing::_;
 
 class SimulatorTest : public ::testing::Test {
  public:
@@ -87,8 +87,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<Block &>()))
-      .Times(1);
+  EXPECT_CALL(*crypto_provider, sign(A<Block &>())).Times(1);
 
   init();
 

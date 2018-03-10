@@ -72,7 +72,6 @@ TEST_F(AmountTest, TestBasic) {
   ASSERT_EQ(g, h);
 }
 
-
 // test with different precisions and values
 TEST_F(AmountTest, TestStringConversion) {
   for (uint8_t precision = 0; precision < 255; precision++) {

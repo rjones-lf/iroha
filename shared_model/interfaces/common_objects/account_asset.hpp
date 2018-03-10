@@ -22,8 +22,11 @@
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/account_asset.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/account_asset.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,8 +34,7 @@ namespace shared_model {
     /**
      * Representation of wallet in system
      */
-    class AccountAsset
-        : public Hashable<AccountAsset, iroha::model::AccountAsset> {
+    class AccountAsset : public HASHABLE(AccountAsset) {
      public:
       /**
        * @return Identity of user, for fetching data
@@ -72,6 +74,7 @@ namespace shared_model {
             and balance() == rhs.balance();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of account asset.
@@ -87,6 +90,8 @@ namespace shared_model {
         new (&oldModel->balance) OldBalanceType(*p);
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

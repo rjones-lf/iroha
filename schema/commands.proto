@@ -9,8 +9,7 @@ message AddAssetQuantity {
 }
 
 message AddPeer {
-    string address = 1;
-    bytes peer_key = 2;
+    Peer peer = 1;
 }
 
 message AddSignatory {

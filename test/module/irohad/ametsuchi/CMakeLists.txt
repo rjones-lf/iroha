@@ -39,6 +39,5 @@ target_link_libraries(kv_storage_test
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     pqxx
-    cpp_redis
     model_generators
     )

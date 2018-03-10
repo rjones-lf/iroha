@@ -29,16 +29,15 @@ namespace shared_model {
       template <typename CommandType>
       explicit SetQuorum(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            set_quorum_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::set_quorum)),
-            new_quorum_([this] { return set_quorum_->quorum(); }) {}
+            set_quorum_(proto_->set_quorum()),
+            new_quorum_([this] { return set_quorum_.quorum(); }) {}
 
       SetQuorum(const SetQuorum &o) : SetQuorum(o.proto_) {}
 
       SetQuorum(SetQuorum &&o) noexcept : SetQuorum(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return set_quorum_->account_id();
+        return set_quorum_.account_id();
       }
 
       const interface::types::QuorumType &newQuorum() const override {
@@ -50,7 +49,7 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::SetAccountQuorum &> set_quorum_;
+      const iroha::protocol::SetAccountQuorum &set_quorum_;
       const Lazy<const interface::types::QuorumType> new_quorum_;
     };
 

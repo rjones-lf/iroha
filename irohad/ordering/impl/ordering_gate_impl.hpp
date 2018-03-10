@@ -48,7 +48,6 @@ namespace iroha {
       void onProposal(model::Proposal proposal) override;
 
      private:
-
       rxcpp::subjects::subject<model::Proposal> proposals_;
       std::shared_ptr<iroha::network::OrderingGateTransport> transport_;
       logger::Logger log_;

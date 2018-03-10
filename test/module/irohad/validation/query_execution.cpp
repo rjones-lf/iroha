@@ -28,10 +28,10 @@
 #include "model/queries/responses/transactions_response.hpp"
 #include "model/query_execution.hpp"
 
-using ::testing::Return;
-using ::testing::AtLeast;
 using ::testing::_;
 using ::testing::AllOf;
+using ::testing::AtLeast;
+using ::testing::Return;
 using ::testing::StrictMock;
 
 using namespace iroha::ametsuchi;
@@ -1096,7 +1096,6 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoPermissions) {
   auto cast_resp = std::static_pointer_cast<ErrorResponse>(response);
   ASSERT_EQ(cast_resp->reason, ErrorResponse::STATEFUL_INVALID);
 }
-
 
 /**
  * @given initialized storage,  permission to read all roles, no role exist

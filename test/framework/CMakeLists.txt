@@ -26,3 +26,18 @@ target_link_libraries(test_block_generator
     )
 
 target_include_directories(test_block_generator PUBLIC ${PROJECT_SOURCE_DIR}/test)
+
+
+add_library(integration_framework
+    integration_framework/integration_test_framework.cpp
+    )
+target_link_libraries(integration_framework
+    application
+    raw_block_insertion
+    keys_manager
+    model_generators
+    pb_model_converters
+    tbb
+    )
+
+target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)

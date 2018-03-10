@@ -18,14 +18,19 @@
 #ifndef IROHA_BLOCK_QUERY_HPP
 #define IROHA_BLOCK_QUERY_HPP
 
-#include <cmath>
-
 #include <boost/optional.hpp>
-#include <model/block.hpp>
-#include <model/transaction.hpp>
+#include <cmath>
 #include <rxcpp/rx-observable.hpp>
 
+#include "common/types.hpp"
+
 namespace iroha {
+
+  namespace model {
+    struct Transaction;
+    struct Block;
+  }
+
   namespace ametsuchi {
     /**
      * Public interface for queries on blocks and transactions

@@ -20,7 +20,7 @@ using namespace iroha::ordering;
 
 grpc::Status OrderingGateTransportGrpc::onProposal(
     ::grpc::ServerContext *context,
-    const proto::Proposal *request,
+    const iroha::protocol::Proposal *request,
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 
@@ -32,6 +32,7 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
   model::Proposal proposal(transactions);
   proposal.height = request->height();
+  proposal.created_time = request->created_time();
   if (not subscriber_.expired()) {
     subscriber_.lock()->onProposal(std::move(proposal));
   } else {

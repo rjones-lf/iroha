@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 #include "model/converters/pb_transaction_factory.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/converters/pb_command_factory.hpp"
 
@@ -24,17 +24,16 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      protocol::Transaction PbTransactionFactory::serialize (
+      protocol::Transaction PbTransactionFactory::serialize(
           const model::Transaction &tx) {
         model::converters::PbCommandFactory factory;
-        protocol::Transaction pb_tx;
-
         protocol::Transaction pbtx;
 
         auto pl = pbtx.mutable_payload();
         pl->set_created_time(tx.created_ts);
         pl->set_creator_account_id(tx.creator_account_id);
         pl->set_tx_counter(tx.tx_counter);
+        pl->set_quorum(tx.quorum);
 
         for (const auto &command : tx.commands) {
           auto cmd = pl->add_commands();
@@ -50,7 +49,7 @@ namespace iroha {
         return pbtx;
       }
 
-      std::shared_ptr<model::Transaction> PbTransactionFactory::deserialize (
+      std::shared_ptr<model::Transaction> PbTransactionFactory::deserialize(
           const protocol::Transaction &pb_tx) {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
@@ -59,11 +58,12 @@ namespace iroha {
         tx.tx_counter = pl.tx_counter();
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
+        tx.quorum = static_cast<uint8_t>(pl.quorum());
 
         for (const auto &pb_sig : pb_tx.signature()) {
           model::Signature sig{};
           sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
-          sig.signature =  sig_t::from_string(pb_sig.signature());
+          sig.signature = sig_t::from_string(pb_sig.signature());
           tx.signatures.push_back(sig);
         }
 
@@ -71,7 +71,7 @@ namespace iroha {
           tx.commands.push_back(
               commandFactory.deserializeAbstractCommand(pb_command));
         }
-
+        tx.tx_hash = iroha::sha3_256(pb_tx.payload().SerializeAsString());
         return std::make_shared<model::Transaction>(tx);
       }
 

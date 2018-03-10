@@ -18,45 +18,21 @@
 #ifndef IROHA_STORAGE_RESULT_HPP
 #define IROHA_STORAGE_RESULT_HPP
 
-#include <utility>
-
-#include "consensus/yac/storage/yac_common.hpp"
-#include "consensus/yac/messages.hpp"
-#include <nonstd/optional.hpp>
+#include <boost/variant.hpp>
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      struct CommitMessage;
+      struct RejectMessage;
+
       /**
        * Contains proof of supermajority for all purposes;
-       * Guarantee that at least one optional will be empty
        */
-      struct Answer {
-        explicit Answer(CommitMessage cmt){
-          commit = std::move(cmt);
-        }
+      using Answer = boost::variant<CommitMessage, RejectMessage>;
 
-        explicit Answer(RejectMessage rjt){
-          reject = std::move(rjt);
-        }
-
-        Answer() = delete;
-
-        /**
-         * Result contains commit if it available
-         */
-        nonstd::optional<CommitMessage> commit;
-
-        /**
-         * Result contains reject if it available
-         */
-        nonstd::optional<RejectMessage> reject;
-
-        bool operator==(const Answer &rhs) const;
-      };
-
-    } // namespace yac
-  } // namespace consensus
-} // namespace iroha
-#endif //IROHA_STORAGE_RESULT_HPP
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
+#endif  // IROHA_STORAGE_RESULT_HPP

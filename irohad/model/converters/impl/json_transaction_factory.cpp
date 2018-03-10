@@ -18,7 +18,6 @@
 #include "model/converters/json_transaction_factory.hpp"
 
 #include <algorithm>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/converters/json_common.hpp"
 
 using namespace rapidjson;
@@ -42,9 +41,10 @@ namespace iroha {
         document.AddMember("signatures", signatures, allocator);
 
         document.AddMember("created_ts", transaction.created_ts, allocator);
-        document.AddMember("creator_account_id", transaction.creator_account_id,
-                           allocator);
+        document.AddMember(
+            "creator_account_id", transaction.creator_account_id, allocator);
         document.AddMember("tx_counter", transaction.tx_counter, allocator);
+        document.AddMember("quorum", transaction.quorum, allocator);
 
         Value commands;
         commands.SetArray();
@@ -75,14 +75,17 @@ namespace iroha {
             };
           };
           return std::accumulate(
-              array.begin(), array.end(),
-              nonstd::make_optional<Transaction::CommandsType>(), acc_commands);
+              array.begin(),
+              array.end(),
+              nonstd::make_optional<Transaction::CommandsType>(),
+              acc_commands);
         };
         return nonstd::make_optional<Transaction>()
             | des.Uint64(&Transaction::created_ts, "created_ts")
             | des.String(&Transaction::creator_account_id, "creator_account_id")
             | des.Uint64(&Transaction::tx_counter, "tx_counter")
             | des.Array(&Transaction::signatures, "signatures")
+            | des.Uint(&Transaction::quorum, "quorum")
             | des.Array(&Transaction::commands, "commands", des_commands);
       }
 

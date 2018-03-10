@@ -14,21 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <endpoint.grpc.pb.h>
 #include <gtest/gtest.h>
-#include <api/command_service.hpp>
 #include <api/command_client.hpp>
+#include <api/command_service.hpp>
 #include <main/server_runner.hpp>
 #include <thread>
-#include <endpoint.grpc.pb.h>
 
 using iroha::protocol::Transaction;
 
+// TODO: allow dynamic port binding in ServerRunner IR-741
 class CommandConnectionTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    serverRunner_.reset(new ServerRunner("0.0.0.0", 50051, {
-      &service_
-    }));
+    serverRunner_.reset(new ServerRunner("0.0.0.0", 50051, {&service_}));
     running_ = false;
   }
 
@@ -60,7 +59,8 @@ TEST_F(CommandConnectionTest, FailConnectionWhenNotStandingServer) {
   Transaction tx;
   auto response = api::sendTransaction(tx, "0.0.0.0");
   ASSERT_EQ(response.code(), iroha::protocol::ResponseCode::FAIL);
-  ASSERT_STREQ(response.message().c_str(), "connection failed. cannot send transaction.");
+  ASSERT_STREQ(response.message().c_str(),
+               "connection failed. cannot send transaction.");
 }
 
 TEST_F(CommandConnectionTest, SuccessConnectionWhenStandingServer) {

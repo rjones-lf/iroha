@@ -21,7 +21,10 @@
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/commands/subtract_asset_quantity.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -29,9 +32,7 @@ namespace shared_model {
     /**
      * Subtract amount of asset from an account
      */
-    class SubtractAssetQuantity
-        : public Primitive<SubtractAssetQuantity,
-                           iroha::model::SubtractAssetQuantity> {
+    class SubtractAssetQuantity : public PRIMITIVE(SubtractAssetQuantity) {
      public:
       /**
        * @return Identity of user to subtract quantity from
@@ -55,6 +56,7 @@ namespace shared_model {
             .finalize();
       }
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::SubtractAssetQuantity;
         using OldAmountType = iroha::Amount;
@@ -66,6 +68,8 @@ namespace shared_model {
         oldModel->asset_id = assetId();
         return oldModel;
       }
+
+#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and assetId() == rhs.assetId()

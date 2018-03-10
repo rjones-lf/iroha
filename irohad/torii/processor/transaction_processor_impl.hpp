@@ -20,6 +20,8 @@
 
 #include "logger/logger.hpp"
 #include "model/transaction_response.hpp"
+#include "model/types.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
 #include "validation/stateless_validator.hpp"
@@ -30,17 +32,18 @@ namespace iroha {
      public:
       /**
        * @param pcs - provide information proposals and commits
+       * @param os - ordering service for sharing transactions
        * @param validator - perform stateless validation
+       * @param crypto_provider - sign income transactions
        */
       TransactionProcessorImpl(
           std::shared_ptr<network::PeerCommunicationService> pcs,
-          std::shared_ptr<validation::StatelessValidator> validator);
+          std::shared_ptr<validation::StatelessValidator> validator,
+          std::shared_ptr<MstProcessor> mst_processor);
 
-      void transactionHandle(
-          std::shared_ptr<model::Transaction> transaction) override;
+      void transactionHandle(ConstRefTransaction transaction) override;
 
-      rxcpp::observable<std::shared_ptr<model::TransactionResponse>>
-      transactionNotifier() override;
+      rxcpp::observable<TxResponse> transactionNotifier() override;
 
      private:
       // connections
@@ -49,14 +52,19 @@ namespace iroha {
       // processing
       std::shared_ptr<validation::StatelessValidator> validator_;
 
+      std::shared_ptr<MstProcessor> mst_processor_;
+
       std::unordered_set<std::string> proposal_set_;
       std::unordered_set<std::string> candidate_set_;
 
       // internal
-      rxcpp::subjects::subject<std::shared_ptr<model::TransactionResponse>>
-          notifier_;
+      rxcpp::subjects::subject<TxResponse> notifier_;
 
       logger::Logger log_;
+
+      /// Wrapper on notifying on some hash
+      void notify(const std::string &hash,
+                  model::TransactionResponse::Status s);
     };
   }  // namespace torii
 }  // namespace iroha

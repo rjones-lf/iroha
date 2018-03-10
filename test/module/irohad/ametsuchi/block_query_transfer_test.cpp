@@ -16,11 +16,11 @@
  */
 
 #include <boost/optional.hpp>
-#include "ametsuchi/impl/redis_block_index.hpp"
-#include "ametsuchi/impl/redis_block_query.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "ametsuchi/impl/postgres_block_index.hpp"
+#include "ametsuchi/impl/postgres_block_query.hpp"
 #include "framework/test_subscriber.hpp"
 #include "model/commands/transfer_asset.hpp"
+#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 
 using namespace framework::test_subscriber;
@@ -32,10 +32,23 @@ namespace iroha {
       void SetUp() override {
         AmetsuchiTest::SetUp();
 
-        file = FlatFile::create(block_store_path);
-        ASSERT_TRUE(file);
-        index = std::make_shared<RedisBlockIndex>(client);
-        blocks = std::make_shared<RedisBlockQuery>(client, *file);
+        auto tmp = FlatFile::create(block_store_path);
+        ASSERT_TRUE(tmp);
+        file = std::move(*tmp);
+
+        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
+        try {
+          postgres_connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
+        transaction = std::make_unique<pqxx::nontransaction>(
+            *postgres_connection, "Postgres block indexes");
+
+        index = std::make_shared<PostgresBlockIndex>(*transaction);
+        blocks = std::make_shared<PostgresBlockQuery>(*transaction, *file);
+
+        transaction->exec(init_);
       }
 
       void insert(const model::Block &block) {
@@ -45,6 +58,8 @@ namespace iroha {
         index->index(block);
       }
 
+      std::unique_ptr<pqxx::nontransaction> transaction;
+      std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::vector<iroha::hash256_t> tx_hashes;
       std::shared_ptr<BlockQuery> blocks;
       std::shared_ptr<BlockIndex> index;
@@ -157,7 +172,7 @@ namespace iroha {
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([ i = 0, this ](auto val) mutable {
+      wrapper.subscribe([i = 0, this](auto val) mutable {
         ASSERT_EQ(tx_hashes.at(i), iroha::hash(val));
         ++i;
       });

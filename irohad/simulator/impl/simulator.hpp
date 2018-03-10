@@ -41,8 +41,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
           std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
 
-      Simulator(const Simulator&) = delete;
-      Simulator& operator=(const Simulator&) = delete;
+      Simulator(const Simulator &) = delete;
+      Simulator &operator=(const Simulator &) = delete;
 
       void process_proposal(model::Proposal proposal) override;
 

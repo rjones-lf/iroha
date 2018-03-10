@@ -40,7 +40,7 @@
 #include "backend/protobuf/util.hpp"
 
 template <typename... T, typename Archive>
-shared_model::interface::Query::QueryVariantType load_query(Archive &&ar) {
+shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
   if (not ar.has_payload()) {
     throw std::invalid_argument("Query missing payload");
   }
@@ -93,12 +93,11 @@ namespace shared_model {
       template <typename QueryType>
       explicit Query(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-            variant_(
-                [this] { return load_query<ProtoQueryListType>(*proto_); }),
+            variant_([this] { return loadQuery<ProtoQueryListType>(*proto_); }),
             blob_([this] { return makeBlob(*proto_); }),
             payload_([this] { return makeBlob(proto_->payload()); }),
             signatures_([this] {
-              SignatureSetType set;
+              interface::SignatureSetType set;
               set.emplace(new Signature(proto_->signature()));
               return set;
             }) {}
@@ -128,7 +127,7 @@ namespace shared_model {
       }
 
       // ------------------------| Signable override  |-------------------------
-      const Query::SignatureSetType &signatures() const override {
+      const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
@@ -155,7 +154,7 @@ namespace shared_model {
 
       const Lazy<BlobType> blob_;
       const Lazy<BlobType> payload_;
-      const Lazy<SignatureSetType> signatures_;
+      const Lazy<interface::SignatureSetType> signatures_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -26,7 +26,6 @@ add_library(yac
     impl/yac_crypto_provider_impl.cpp
 
     storage/impl/yac_common.cpp
-    storage/impl/storage_result.cpp
     storage/impl/yac_block_storage.cpp
     storage/impl/yac_proposal_storage.cpp
     storage/impl/yac_vote_storage.cpp

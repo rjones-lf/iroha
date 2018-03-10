@@ -35,8 +35,8 @@ namespace iroha {
       AsyncGrpcClient() : thread_(&AsyncGrpcClient::asyncCompleteRpc, this) {}
 
       /**
-      * Listen to gRPC server responses
-      */
+       * Listen to gRPC server responses
+       */
       void asyncCompleteRpc() {
         void *got_tag;
         auto ok = false;

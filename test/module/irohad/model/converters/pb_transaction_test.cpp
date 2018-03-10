@@ -40,6 +40,7 @@ TEST(TransactionTest, tx_test) {
 
   orig_tx.created_ts = 2;
   orig_tx.tx_counter = 1;
+  orig_tx.quorum = 3;
 
   auto c1 = iroha::model::CreateDomain();
   c1.domain_id = "keker";
@@ -48,10 +49,8 @@ TEST(TransactionTest, tx_test) {
   c2.precision = 2;
   c2.asset_name = "fedor-coin";
 
-
-  orig_tx.commands = {
-      std::make_shared<iroha::model::CreateDomain>(c1),
-      std::make_shared<iroha::model::CreateAsset>(c2)};
+  orig_tx.commands = {std::make_shared<iroha::model::CreateDomain>(c1),
+                      std::make_shared<iroha::model::CreateAsset>(c2)};
 
   auto factory = iroha::model::converters::PbTransactionFactory();
   auto proto_tx = factory.serialize(orig_tx);

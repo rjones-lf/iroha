@@ -36,11 +36,10 @@ namespace shared_model {
       template <typename TransactionType>
       explicit Transaction(TransactionType &&transaction)
           : CopyableProto(std::forward<TransactionType>(transaction)),
-            payload_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Transaction::payload)),
+            payload_(proto_->payload()),
             commands_([this] {
               return boost::accumulate(
-                  payload_->commands(),
+                  payload_.commands(),
                   CommandsType{},
                   [](auto &&acc, const auto &cmd) {
                     acc.emplace_back(new Command(cmd));
@@ -48,11 +47,11 @@ namespace shared_model {
                   });
             }),
             blob_([this] { return makeBlob(*proto_); }),
-            blobTypePayload_([this] { return makeBlob(*payload_); }),
+            blobTypePayload_([this] { return makeBlob(payload_); }),
             signatures_([this] {
               return boost::accumulate(
                   proto_->signature(),
-                  SignatureSetType{},
+                  interface::SignatureSetType{},
                   [](auto &&acc, const auto &sig) {
                     acc.emplace(new Signature(sig));
                     return std::forward<decltype(acc)>(acc);
@@ -66,11 +65,11 @@ namespace shared_model {
           : Transaction(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &creatorAccountId() const override {
-        return payload_->creator_account_id();
+        return payload_.creator_account_id();
       }
 
       interface::types::CounterType transactionCounter() const override {
-        return payload_->tx_counter();
+        return payload_.tx_counter();
       }
 
       const Transaction::CommandsType &commands() const override {
@@ -89,7 +88,7 @@ namespace shared_model {
         return *txhash_;
       }
 
-      const Transaction::SignatureSetType &signatures() const override {
+      const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
 
@@ -106,7 +105,11 @@ namespace shared_model {
       }
 
       interface::types::TimestampType createdTime() const override {
-        return payload_->created_time();
+        return payload_.created_time();
+      }
+
+      Transaction::QuorumType quorum() const override {
+        return payload_.quorum();
       }
 
      private:
@@ -114,7 +117,7 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<const iroha::protocol::Transaction::Payload &> payload_;
+      const iroha::protocol::Transaction::Payload &payload_;
 
       const Lazy<CommandsType> commands_;
 
@@ -122,7 +125,7 @@ namespace shared_model {
 
       const Lazy<BlobType> blobTypePayload_;
 
-      const Lazy<SignatureSetType> signatures_;
+      const Lazy<interface::SignatureSetType> signatures_;
 
       const Lazy<HashType> txhash_;
     };

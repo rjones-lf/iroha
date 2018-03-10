@@ -16,7 +16,9 @@
  */
 
 #include "model/converters/pb_command_factory.hpp"
+
 #include <boost/assign/list_inserter.hpp>
+
 #include "model/converters/pb_common.hpp"
 
 namespace iroha {
@@ -26,7 +28,8 @@ namespace iroha {
       PbCommandFactory::PbCommandFactory() {
         boost::assign::insert(pb_role_map_)
             // Can Get My Account Detail
-            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
+            (protocol::RolePermission::can_get_my_acc_detail,
+             can_get_my_acc_detail)
             // Can Get My Account Assets
             (protocol::RolePermission::can_get_my_acc_ast, can_get_my_acc_ast)
             // Can Get My Signatories
@@ -43,6 +46,10 @@ namespace iroha {
             // Can get all account asset transactions
             (protocol::RolePermission::can_get_all_acc_ast_txs,
              can_get_all_acc_ast_txs)
+            // Can get my transactions
+            (protocol::RolePermission::can_get_my_txs, can_get_my_txs)
+            // Can get all transactions
+            (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
             // Can Get all account transactions
             (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
             // Can get all account
@@ -62,7 +69,8 @@ namespace iroha {
             // Can add asset quantity
             (protocol::RolePermission::can_add_asset_qty, can_add_asset_qty)
             // Can subtract asset quantity
-            (protocol::RolePermission::can_subtract_asset_qty, can_subtract_asset_qty)
+            (protocol::RolePermission::can_subtract_asset_qty,
+             can_subtract_asset_qty)
             // Can append role
             (protocol::RolePermission::can_append_role, can_append_role)
             // Can append role
@@ -138,23 +146,29 @@ namespace iroha {
       }
 
       // subtract asset quantity
-      protocol::SubtractAssetQuantity PbCommandFactory::serializeSubtractAssetQuantity(
-        const model::SubtractAssetQuantity &subtract_asset_quantity) {
+      protocol::SubtractAssetQuantity
+      PbCommandFactory::serializeSubtractAssetQuantity(
+          const model::SubtractAssetQuantity &subtract_asset_quantity) {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
-        pb_subtract_asset_quantity.set_account_id(subtract_asset_quantity.account_id);
-        pb_subtract_asset_quantity.set_asset_id(subtract_asset_quantity.asset_id);
+        pb_subtract_asset_quantity.set_account_id(
+            subtract_asset_quantity.account_id);
+        pb_subtract_asset_quantity.set_asset_id(
+            subtract_asset_quantity.asset_id);
         auto amount = pb_subtract_asset_quantity.mutable_amount();
         amount->CopyFrom(serializeAmount(subtract_asset_quantity.amount));
         return pb_subtract_asset_quantity;
       }
 
-      model::SubtractAssetQuantity PbCommandFactory::deserializeSubtractAssetQuantity(
-        const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
+      model::SubtractAssetQuantity
+      PbCommandFactory::deserializeSubtractAssetQuantity(
+          const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
         model::SubtractAssetQuantity subtract_asset_quantity;
-        subtract_asset_quantity.account_id = pb_subtract_asset_quantity.account_id();
-        subtract_asset_quantity.asset_id = pb_subtract_asset_quantity.asset_id();
+        subtract_asset_quantity.account_id =
+            pb_subtract_asset_quantity.account_id();
+        subtract_asset_quantity.asset_id =
+            pb_subtract_asset_quantity.asset_id();
         subtract_asset_quantity.amount =
-          deserializeAmount(pb_subtract_asset_quantity.amount());
+            deserializeAmount(pb_subtract_asset_quantity.amount());
 
         return subtract_asset_quantity;
       }
@@ -163,18 +177,16 @@ namespace iroha {
       protocol::AddPeer PbCommandFactory::serializeAddPeer(
           const model::AddPeer &add_peer) {
         protocol::AddPeer pb_add_peer;
-        pb_add_peer.set_address(add_peer.address);
-        pb_add_peer.set_peer_key(add_peer.peer_key.data(),
-                                 add_peer.peer_key.size());
+        auto peer = pb_add_peer.mutable_peer();
+        peer->CopyFrom(serializePeer(add_peer.peer));
         return pb_add_peer;
       }
+
       model::AddPeer PbCommandFactory::deserializeAddPeer(
           const protocol::AddPeer &pb_add_peer) {
         model::AddPeer add_peer;
-        add_peer.address = pb_add_peer.address();
-        std::copy(pb_add_peer.peer_key().begin(),
-                  pb_add_peer.peer_key().end(),
-                  add_peer.peer_key.begin());
+        add_peer.peer = deserializePeer(pb_add_peer.peer());
+
         return add_peer;
       }
 
@@ -485,9 +497,9 @@ namespace iroha {
         // -----|SubtractAssetQuantity|-----
         if (instanceof <model::SubtractAssetQuantity>(command)) {
           auto serialized = commandFactory.serializeSubtractAssetQuantity(
-            static_cast<const model::SubtractAssetQuantity &>(command));
+              static_cast<const model::SubtractAssetQuantity &>(command));
           cmd.set_allocated_subtract_asset_quantity(
-            new protocol::SubtractAssetQuantity(serialized));
+              new protocol::SubtractAssetQuantity(serialized));
         }
 
         // -----|AddPeer|-----
@@ -614,7 +626,8 @@ namespace iroha {
         // -----|SubtractAssetQuantity|-----
         if (command.has_subtract_asset_quantity()) {
           auto pb_command = command.subtract_asset_quantity();
-          auto cmd = commandFactory.deserializeSubtractAssetQuantity(pb_command);
+          auto cmd =
+              commandFactory.deserializeSubtractAssetQuantity(pb_command);
           val = std::make_shared<model::SubtractAssetQuantity>(cmd);
         }
 

@@ -33,8 +33,8 @@ namespace iroha {
          * @return model Block
          */
         iroha::model::Block generateGenesisBlock(
-          ts64_t created_ts,
-          const std::vector<iroha::model::Transaction>& transactions);
+            ts64_t created_ts,
+            const std::vector<iroha::model::Transaction> &transactions);
       };
 
     }  // namespace generators

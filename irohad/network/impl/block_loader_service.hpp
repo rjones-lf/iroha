@@ -20,8 +20,8 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "loader.grpc.pb.h"
-#include "model/converters/pb_block_factory.hpp"
 #include "logger/logger.hpp"
+#include "model/converters/pb_block_factory.hpp"
 
 namespace iroha {
   namespace network {
@@ -31,19 +31,20 @@ namespace iroha {
           std::shared_ptr<ametsuchi::BlockQuery> storage);
 
       grpc::Status retrieveBlocks(
-          ::grpc::ServerContext *context, const proto::BlocksRequest *request,
+          ::grpc::ServerContext *context,
+          const proto::BlocksRequest *request,
           ::grpc::ServerWriter<protocol::Block> *writer) override;
 
-      grpc::Status retrieveBlock(
-          ::grpc::ServerContext *context, const proto::BlockRequest *request,
-          protocol::Block *response) override;
+      grpc::Status retrieveBlock(::grpc::ServerContext *context,
+                                 const proto::BlockRequest *request,
+                                 protocol::Block *response) override;
 
      private:
       model::converters::PbBlockFactory factory_;
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
       logger::Logger log_;
     };
-  } // namespace network
-} // namespace iroha
+  }  // namespace network
+}  // namespace iroha
 
-#endif //IROHA_BLOCK_LOADER_SERVICE_HPP
+#endif  // IROHA_BLOCK_LOADER_SERVICE_HPP

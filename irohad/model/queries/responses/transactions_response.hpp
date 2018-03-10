@@ -28,12 +28,11 @@ namespace iroha {
      * Provide responded transactions
      */
     struct TransactionsResponse : public QueryResponse {
-
       /**
        * Observable contains transactions
        */
-      rxcpp::observable <Transaction> transactions{};
+      rxcpp::observable<Transaction> transactions{};
     };
   }  // namespace model
 }  // namespace iroha
-#endif //IROHA_TRANSACTIONS_RESPONSE_HPP
+#endif  // IROHA_TRANSACTIONS_RESPONSE_HPP

@@ -141,7 +141,9 @@ namespace framework {
        * Validate invariant
        * @return true if invariant correct
        */
-      bool validate() { return strategy_->validate(); }
+      bool validate() {
+        return strategy_->validate();
+      }
 
      private:
       rxcpp::observable<T> unwrapped_;
@@ -165,8 +167,10 @@ namespace framework {
      *   auto sub = make_test_subscriber<CallExact>(o, 1);
      */
     template <template <typename K> class S,
-              template <typename V, typename SO> class O, typename T,
-              typename SourceOperator, typename... Args>
+              template <typename V, typename SO> class O,
+              typename T,
+              typename SourceOperator,
+              typename... Args>
     TestSubscriber<T> make_test_subscriber(
         O<T, SourceOperator> unwrapped_observable, Args &&... args) {
       return TestSubscriber<T>(
@@ -175,7 +179,7 @@ namespace framework {
     }
 
     /**
-     * CallExact check invariant that subscriber called exact number of timers
+     * CallExact check invariant that subscriber called exact number of times
      * @tparam T - observable parameter
      */
     template <typename T>
@@ -213,15 +217,17 @@ namespace framework {
        */
       CallExact(const CallExact<T> &rhs) = delete;
 
-      void on_next_after(T next) override { ++number_of_calls_; }
+      void on_next_after(T next) override {
+        ++number_of_calls_;
+      }
 
      protected:
       bool validate() override {
         auto val = number_of_calls_ == expected_number_of_calls_;
         if (!val) {
           this->invalidate_reason_ =
-              "Expected calls: " + std::to_string(expected_number_of_calls_) +
-              ", but called " + std::to_string(number_of_calls_);
+              "Expected calls: " + std::to_string(expected_number_of_calls_)
+              + ", but called " + std::to_string(number_of_calls_);
         }
         return val;
       }
@@ -245,7 +251,7 @@ namespace framework {
         rhs.on_complete_called = false;
       }
 
-      IsCompleted& operator=(IsCompleted<T> &&rhs) {
+      IsCompleted &operator=(IsCompleted<T> &&rhs) {
         on_complete_called = rhs.on_complete_called;
         rhs.on_complete_called = false;
         return *this;
@@ -253,7 +259,7 @@ namespace framework {
 
       IsCompleted(const IsCompleted &) = delete;
 
-      IsCompleted& operator=(const IsCompleted &) = delete;
+      IsCompleted &operator=(const IsCompleted &) = delete;
 
       void on_completed() override {
         on_complete_called = true;

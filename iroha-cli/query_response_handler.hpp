@@ -17,12 +17,17 @@
 
 #ifndef IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
 #define IROHA_CLI_QUERY_RESPONSE_HANDLER_HPP
+
 #include <map>
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
-#include "logger/logger.hpp"
+
 #include "responses.pb.h"
+
+namespace spdlog {
+  class logger;
+}
 
 namespace iroha_cli {
   /*
@@ -46,23 +51,24 @@ namespace iroha_cli {
      * Handle query response
      * @param response - iroha protocol object
      */
-    void handle(const iroha::protocol::QueryResponse& response);
+    void handle(const iroha::protocol::QueryResponse &response);
 
    private:
-    void handleErrorResponse(const iroha::protocol::QueryResponse& response);
-    void handleAccountResponse(const iroha::protocol::QueryResponse& response);
+    void handleErrorResponse(const iroha::protocol::QueryResponse &response);
+    void handleAccountResponse(const iroha::protocol::QueryResponse &response);
     void handleAccountAssetsResponse(
-        const iroha::protocol::QueryResponse& response);
+        const iroha::protocol::QueryResponse &response);
     void handleTransactionsResponse(
-        const iroha::protocol::QueryResponse& response);
+        const iroha::protocol::QueryResponse &response);
     void handleSignatoriesResponse(
-        const iroha::protocol::QueryResponse& response);
-    void handleRolesResponse(const iroha::protocol::QueryResponse& response);
-    void handleRolePermissionsResponse(const iroha::protocol::QueryResponse& response);
-    void handleAssetResponse(const iroha::protocol::QueryResponse& response);
+        const iroha::protocol::QueryResponse &response);
+    void handleRolesResponse(const iroha::protocol::QueryResponse &response);
+    void handleRolePermissionsResponse(
+        const iroha::protocol::QueryResponse &response);
+    void handleAssetResponse(const iroha::protocol::QueryResponse &response);
     // -- --
     using Handler =
-        void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse&);
+        void (QueryResponseHandler::*)(const iroha::protocol::QueryResponse &);
     using QueryResponseCode = iroha::protocol::QueryResponse::ResponseCase;
     using ErrorResponseCode = iroha::protocol::ErrorResponse::Reason;
 

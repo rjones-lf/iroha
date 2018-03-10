@@ -24,7 +24,9 @@ using namespace std::literals::string_literals;
 
 class BlobMock : public ::testing::Test {
  public:
-  void SetUp() override { blob = std::make_shared<Blob>(data); }
+  void SetUp() override {
+    blob = std::make_shared<Blob>(data);
+  }
   std::shared_ptr<Blob> blob;
   std::string data = "Hello \0World"s;
 };

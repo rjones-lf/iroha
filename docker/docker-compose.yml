@@ -2,7 +2,7 @@ version: '3'
 
 services:
   node:
-    image: hyperledger/iroha-docker-develop
+    image: hyperledger/iroha-docker-develop:v1
     ports:
       - "50051:50051"
       - "20000:20000"
@@ -14,6 +14,9 @@ services:
       - IROHA_REDIS_HOST=${COMPOSE_PROJECT_NAME}_redis_1
       - IROHA_REDIS_PORT=6379
       - CCACHE_DIR=/tmp/ccache
+    # export G_ID=$(id -g $(whoami))
+    # export U_ID=$(id -g $(whoami))
+    user: ${U_ID:-0}:${G_ID:-0}
     depends_on:
       - redis
       - postgres

@@ -14,6 +14,7 @@ message Header {
     string creator_account_id = 2;
     uint64 tx_counter  = 3;
     uint64 created_time = 4;
+    uint32 quorum = 5;
    }
 
   Payload payload = 1;

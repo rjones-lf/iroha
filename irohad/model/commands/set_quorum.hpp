@@ -19,7 +19,6 @@
 #define IROHA_SET_QUORUM_HPP
 
 #include <string>
-
 #include "model/command.hpp"
 
 namespace iroha {
@@ -31,12 +30,12 @@ namespace iroha {
       /**
        * Account in which change the quorum
        */
-      std::string account_id{};
+      std::string account_id;
 
       /**
        * New value of quorum
        */
-      uint32_t new_quorum{};
+      uint32_t new_quorum;
 
       bool operator==(const Command &command) const override;
 

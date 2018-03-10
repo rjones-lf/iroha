@@ -19,8 +19,11 @@
 #define IROHA_STATEFUL_FAILED_TX_RESPONSE_HPP
 
 #include "interfaces/base/primitive.hpp"
-#include "model/transaction_response.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/transaction_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -35,11 +38,14 @@ namespace shared_model {
         return "StatefulFailedTxResponse";
       }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::TransactionResponse::Status oldModelStatus()
           const override {
         return iroha::model::TransactionResponse::Status::
             STATEFUL_VALIDATION_FAILED;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -23,7 +23,6 @@
 namespace iroha {
   namespace model {
 
-
     /**
      * Response with all permissions related to role
      */
@@ -33,7 +32,6 @@ namespace iroha {
        */
       std::vector<std::string> role_permissions{};
     };
-
 
     /**
      * Provide response with all roles of the current system

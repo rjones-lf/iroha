@@ -24,7 +24,11 @@ if (SWIG_PYTHON OR SWIG_JAVA)
 endif()
 
 if (SWIG_PYTHON)
-  find_package(PythonInterp 2.7 REQUIRED)
+  if(SUPPORT_PYTHON2)
+    find_package(PythonInterp 2.7 REQUIRED)
+  else()
+    find_package(PythonInterp 3.6 REQUIRED)
+  endif()
   add_test(NAME python_transaction_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})

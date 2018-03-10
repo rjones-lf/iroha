@@ -19,12 +19,19 @@
 #define IROHA_YAC_NETWORK_INTERFACE_HPP
 
 #include <memory>
-#include "consensus/yac/messages.hpp"
-#include "model/peer.hpp"
 
 namespace iroha {
+
+  namespace model {
+    struct Peer;
+  }
+
   namespace consensus {
     namespace yac {
+
+      struct CommitMessage;
+      struct RejectMessage;
+      struct VoteMessage;
 
       class YacNetworkNotifications {
        public:

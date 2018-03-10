@@ -32,11 +32,16 @@ namespace iroha {
       log_ = logger::log("SLV");
     }
 
+    const char *kCryptoVerificationFail = "Invalid signature";
+    const char *kFutureTimestamp =
+        "Timestamp is broken: sent from future {}. Now {}";
+    const char *kOldTimestamp = "Timestamp broken: too old {}. Now {}";
+
     bool StatelessValidatorImpl::validate(
         const model::Transaction &transaction) const {
       // signatures are correct
       if (!crypto_provider_->verify(transaction)) {
-        log_->warn("crypto verification broken");
+        log_->warn(kCryptoVerificationFail);
         return false;
       }
 
@@ -45,16 +50,12 @@ namespace iroha {
 
       // tx is not sent from future
       if (now < transaction.created_ts) {
-        log_->warn("timestamp broken: send from future ({}, now {})",
-                   transaction.created_ts,
-                   now);
+        log_->warn(kFutureTimestamp, transaction.created_ts, now);
         return false;
       }
 
       if (now - transaction.created_ts > MAX_DELAY) {
-        log_->warn("timestamp broken: too old ({}, now {})",
-                   transaction.created_ts,
-                   now);
+        log_->warn(kOldTimestamp, transaction.created_ts, now);
         return false;
       }
 
@@ -65,7 +66,7 @@ namespace iroha {
     bool StatelessValidatorImpl::validate(const model::Query &query) const {
       // signatures are correct
       if (!crypto_provider_->verify(query)) {
-        log_->warn("crypto verification broken");
+        log_->warn(kCryptoVerificationFail);
         return false;
       }
 
@@ -73,22 +74,20 @@ namespace iroha {
       ts64_t now = time::now();
 
       // query is not sent from future
-      // TODO 06/08/17 Muratov: make future gap for passing timestamp, like with old timestamps IR-511 #goodfirstissue
+      // TODO 06/08/17 Muratov: make future gap for passing timestamp, like with
+      // old timestamps IR-511 #goodfirstissue
       if (now < query.created_ts) {
-        log_->warn("timestamp broken: send from future: {}. Now {}",
-                   query.created_ts,
-                   now);
+        log_->warn(kFutureTimestamp, query.created_ts, now);
         return false;
       }
 
       if (now - query.created_ts > MAX_DELAY) {
-        log_->warn(
-            "timestamp broken: too old: {}. Now {}", query.created_ts, now);
+        log_->warn(kOldTimestamp, query.created_ts, now);
         return false;
       }
 
       log_->info("query validated");
       return true;
     }
-  }
-}
+  }  // namespace validation
+}  // namespace iroha

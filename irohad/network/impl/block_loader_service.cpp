@@ -31,7 +31,8 @@ BlockLoaderService::BlockLoaderService(std::shared_ptr<BlockQuery> storage)
 }
 
 grpc::Status BlockLoaderService::retrieveBlocks(
-    ::grpc::ServerContext *context, const proto::BlocksRequest *request,
+    ::grpc::ServerContext *context,
+    const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
   storage_->getBlocksFrom(request->height())
       .map([this](auto block) { return factory_.serialize(block); })
@@ -41,7 +42,8 @@ grpc::Status BlockLoaderService::retrieveBlocks(
 }
 
 grpc::Status BlockLoaderService::retrieveBlock(
-    ::grpc::ServerContext *context, const proto::BlockRequest *request,
+    ::grpc::ServerContext *context,
+    const proto::BlockRequest *request,
     protocol::Block *response) {
   const auto hash = stringToBlob<Block::HashType::size()>(request->hash());
   if (not hash.has_value()) {
@@ -53,9 +55,7 @@ grpc::Status BlockLoaderService::retrieveBlock(
 
   nonstd::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
-      .filter([hash](auto block) {
-        return block.hash == hash.value();
-      })
+      .filter([hash](auto block) { return block.hash == hash.value(); })
       .map([this](auto block) { return factory_.serialize(block); })
       .as_blocking()
       .subscribe([&result](auto block) { result = block; });

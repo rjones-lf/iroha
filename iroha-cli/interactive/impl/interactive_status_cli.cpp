@@ -16,6 +16,9 @@
  */
 
 #include "interactive/interactive_status_cli.hpp"
+
+#include <boost/assert.hpp>
+
 #include "client.hpp"
 #include "common/byteutils.hpp"
 
@@ -38,7 +41,9 @@ namespace iroha_cli {
             {iroha::protocol::TxStatus::NOT_RECEIVED,
              "Transaction was not found in the system."}};
 
-    InteractiveStatusCli::InteractiveStatusCli() {
+    InteractiveStatusCli::InteractiveStatusCli(
+        const std::string &default_peer_ip, int default_port)
+        : default_peer_ip_(default_peer_ip), default_port_(default_port) {
       createActionsMenu();
       createResultMenu();
     }
@@ -58,7 +63,8 @@ namespace iroha_cli {
     void InteractiveStatusCli::createResultMenu() {
       resultHandlers_ = {{SEND_CODE, &InteractiveStatusCli::parseSendToIroha},
                          {SAVE_CODE, &InteractiveStatusCli::parseSaveFile}};
-      resultParamsDescriptions_ = getCommonParamsMap();
+      resultParamsDescriptions_ =
+          getCommonParamsMap(default_peer_ip_, default_port_);
 
       resultPoints_ = formMenu(resultHandlers_,
                                resultParamsDescriptions_,
@@ -71,13 +77,22 @@ namespace iroha_cli {
       currentContext_ = MAIN;
       printMenu("Choose action: ", menuPoints_);
       while (isParsing) {
-        auto line = promtString("> ");
+        auto line = promptString("> ");
+        if (not line){
+          // line has terminating symbol
+          isParsing = false;
+          break;
+        }
         switch (currentContext_) {
           case MAIN:
-            isParsing = parseAction(line);
+            isParsing = parseAction(line.value());
             break;
           case RESULT:
-            isParsing = parseResult(line);
+            isParsing = parseResult(line.value());
+            break;
+          default:
+            // shouldn't get here
+            BOOST_ASSERT_MSG(false, "not implemented");
             break;
         }
       }
@@ -119,7 +134,8 @@ namespace iroha_cli {
     }
 
     bool InteractiveStatusCli::parseSendToIroha(ActionParams line) {
-      auto address = parseIrohaPeerParams(line);
+      auto address =
+          parseIrohaPeerParams(line, default_peer_ip_, default_port_);
       if (not address.has_value()) {
         return true;
       }

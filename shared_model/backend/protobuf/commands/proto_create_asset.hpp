@@ -30,9 +30,8 @@ namespace shared_model {
       template <typename CommandType>
       explicit CreateAsset(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            create_asset_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::create_asset)),
-            precision_([this] { return create_asset_->precision(); }) {}
+            create_asset_(proto_->create_asset()),
+            precision_([this] { return create_asset_.precision(); }) {}
 
       CreateAsset(const CreateAsset &o) : CreateAsset(o.proto_) {}
 
@@ -40,20 +39,22 @@ namespace shared_model {
           : CreateAsset(std::move(o.proto_)) {}
 
       const interface::types::AssetNameType &assetName() const override {
-        return create_asset_->asset_name();
+        return create_asset_.asset_name();
       }
 
       const interface::types::DomainIdType &domainId() const override {
-        return create_asset_->domain_id();
+        return create_asset_.domain_id();
       }
 
-      const PrecisionType &precision() const override { return *precision_; }
+      const PrecisionType &precision() const override {
+        return *precision_;
+      }
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
-      const Lazy<const iroha::protocol::CreateAsset &> create_asset_;
+      const iroha::protocol::CreateAsset &create_asset_;
       const Lazy<PrecisionType> precision_;
     };
 

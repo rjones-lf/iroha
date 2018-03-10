@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "framework/test_subscriber.hpp"
 #include "yac_mocks.hpp"
 
-using ::testing::Return;
 using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
+using ::testing::Return;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
@@ -68,13 +69,15 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
-  ClusterOrdering my_order(my_peers);
+  auto my_order = ClusterOrdering::create(my_peers);
+  ASSERT_TRUE(my_order.has_value());
 
   // delay preference
   uint64_t wait_seconds = 10;
   delay = wait_seconds * 1000;
 
-  yac = Yac::create(YacVoteStorage(), network, crypto, timer, my_order, delay);
+  yac = Yac::create(
+      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);

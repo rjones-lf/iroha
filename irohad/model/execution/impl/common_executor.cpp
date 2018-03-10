@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #include "model/execution/common_executor.hpp"
+#include <algorithm>
 #include "common/types.hpp"
 
 using namespace iroha::ametsuchi;

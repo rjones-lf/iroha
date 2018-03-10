@@ -24,7 +24,13 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "model/converters/pb_query_factory.hpp"
 #include "model/model_crypto_provider_impl.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy.hpp"
+#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_time_provider_impl.hpp"
+#include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
@@ -35,6 +41,7 @@
 #include "torii/command_service.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "torii/query_service.hpp"
 #include "validation/chain_validator.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
@@ -50,8 +57,6 @@ class Irohad {
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
-   * @param redis_host - host of redis connection
-   * @param redis_port - port of redis connection
    * @param pg_conn - initialization string for postgre
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
@@ -65,8 +70,6 @@ class Irohad {
    * @param keypair - public and private keys for crypto provider
    */
   Irohad(const std::string &block_store_dir,
-         const std::string &redis_host,
-         size_t redis_port,
          const std::string &pg_conn,
          size_t torii_port,
          size_t internal_port,
@@ -118,14 +121,14 @@ class Irohad {
 
   virtual void initPeerCommunicationService();
 
+  virtual void initMstProcessor();
+
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
 
   // constructor dependencies
   std::string block_store_dir_;
-  std::string redis_host_;
-  size_t redis_port_;
   std::string pg_conn_;
   size_t torii_port_;
   size_t internal_port_;
@@ -170,6 +173,9 @@ class Irohad {
 
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
+
+  // mst
+  std::shared_ptr<iroha::MstProcessor> mst_processor;
 
   // transaction service
   std::unique_ptr<torii::CommandService> command_service;

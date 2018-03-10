@@ -27,12 +27,17 @@ namespace shared_model {
      */
     class UnknownTxResponse : public AbstractTxResponse<UnknownTxResponse> {
      private:
-      std::string className() const override { return "UnknownTxResponse"; }
+      std::string className() const override {
+        return "UnknownTxResponse";
+      }
 
+#ifndef DISABLE_BACKWARD
       iroha::model::TransactionResponse::Status oldModelStatus()
           const override {
         return iroha::model::TransactionResponse::Status::NOT_RECEIVED;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

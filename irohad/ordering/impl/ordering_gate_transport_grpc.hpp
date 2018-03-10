@@ -23,6 +23,7 @@
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
 #include "ordering.grpc.pb.h"
+#include "proposal.pb.h"
 
 namespace iroha {
   namespace ordering {
@@ -34,7 +35,7 @@ namespace iroha {
       explicit OrderingGateTransportGrpc(const std::string &server_address);
 
       grpc::Status onProposal(::grpc::ServerContext *context,
-                              const proto::Proposal *request,
+                              const protocol::Proposal *request,
                               ::google::protobuf::Empty *response) override;
 
       void propagate_transaction(

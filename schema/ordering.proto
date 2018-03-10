@@ -2,15 +2,11 @@ syntax = "proto3";
 package iroha.ordering.proto;
 
 import "block.proto";
+import "proposal.proto";
 import "google/protobuf/empty.proto";
 
-message Proposal {
-  uint64 height = 1;
-  repeated iroha.protocol.Transaction transactions = 2;
-}
-
 service OrderingGateTransportGrpc {
-  rpc onProposal (Proposal) returns (google.protobuf.Empty);
+  rpc onProposal (protocol.Proposal) returns (google.protobuf.Empty);
 }
 
 service OrderingServiceTransportGrpc {

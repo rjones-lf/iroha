@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/storage/yac_common.hpp"
 #include <gtest/gtest.h>
 #include "consensus/consensus_common.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
 using namespace iroha::consensus;
 using namespace iroha::consensus::yac;
@@ -54,7 +55,6 @@ TEST(YacCommonTest, RejectProofSuccessfulCase) {
   ASSERT_TRUE(hasReject(1, 6, 7));
   ASSERT_TRUE(hasReject(2, 6, 7));
   ASSERT_TRUE(hasReject(3, 6, 7));
-
 }
 
 TEST(YacCommonTest, RejectProofNegativeCase) {
@@ -92,4 +92,3 @@ TEST(YacCommonTest, getProposalHashTest) {
   votes.push_back(create_vote(YacHash("not-proposal", "commit"), "five"));
   ASSERT_EQ(nonstd::nullopt, getProposalHash(votes));
 }
-

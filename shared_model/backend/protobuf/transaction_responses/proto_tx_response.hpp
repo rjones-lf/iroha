@@ -24,7 +24,7 @@
 #include "utils/variant_deserializer.hpp"
 
 template <typename... T, typename Archive>
-auto load(Archive &&ar) {
+auto loadTxResponse(Archive &&ar) {
   unsigned which = ar.GetDescriptor()
                        ->FindFieldByName("tx_status")
                        ->enum_type()
@@ -32,10 +32,9 @@ auto load(Archive &&ar) {
                        ->index();
   constexpr unsigned last = boost::mpl::size<T...>::type::value - 1;
 
-  return shared_model::detail::variant_impl<T...>::
-      template load<shared_model::interface::TransactionResponse::
-                        ResponseVariantType>(std::forward<Archive>(ar),
-                                             which > last ? last : which);
+  return shared_model::detail::variant_impl<T...>::template load<
+      shared_model::interface::TransactionResponse::ResponseVariantType>(
+      std::forward<Archive>(ar), which > last ? last : which);
 }
 
 namespace shared_model {
@@ -67,8 +66,9 @@ namespace shared_model {
       template <typename TxResponse>
       explicit TransactionResponse(TxResponse &&ref)
           : CopyableProto(std::forward<TxResponse>(ref)),
-            variant_(detail::makeLazyInitializer(
-                [this] { return load<ProtoResponseListType>(*proto_); })),
+            variant_(detail::makeLazyInitializer([this] {
+              return loadTxResponse<ProtoResponseListType>(*proto_);
+            })),
             hash_([this] { return crypto::Hash(this->proto_->tx_hash()); }) {}
 
       TransactionResponse(const TransactionResponse &r)
@@ -87,7 +87,9 @@ namespace shared_model {
       /**
        * @return attached concrete tx response
        */
-      const ResponseVariantType &get() const override { return *variant_; }
+      const ResponseVariantType &get() const override {
+        return *variant_;
+      }
 
      private:
       template <typename T>

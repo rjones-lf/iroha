@@ -24,25 +24,32 @@
 namespace iroha {
   namespace model {
     /**
-      * Account has Asset model representation
-      */
+     * Account has Asset model representation
+     */
     struct AccountAsset {
+      AccountAsset() = default;
+
+      AccountAsset(const std::string &asset_id,
+                   const std::string &account_id,
+                   const Amount &balance)
+          : asset_id(asset_id), account_id(account_id), balance(balance) {}
+
       /**
        * Asset identifier
        */
-      std::string asset_id{};
+      std::string asset_id;
 
       /**
        * Account identifier
        */
-      std::string account_id{};
+      std::string account_id;
 
       /**
        * Current balance
        */
-      Amount balance{};
+      Amount balance;
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 #endif  // IROHA_ACCOUNT_ASSET_HPP

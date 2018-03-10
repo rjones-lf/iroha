@@ -19,21 +19,22 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_ASSET_RESPONSE_HPP
 
 #include <new>
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/base/primitive.hpp"
-#include "model/queries/responses/account_assets_response.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/queries/responses/account_assets_response.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with account asset
      */
-    class AccountAssetResponse
-        : public Primitive<AccountAssetResponse,
-                           iroha::model::AccountAssetResponse> {
+    class AccountAssetResponse : public PRIMITIVE(AccountAssetResponse) {
      public:
       /**
        * @return Account has Asset model
@@ -60,6 +61,7 @@ namespace shared_model {
         return accountAsset() == rhs.accountAsset();
       }
 
+#ifndef DISABLE_BACKWARD
       /**
        * Makes old model.
        * @return An allocated old model of account asset response.
@@ -74,6 +76,8 @@ namespace shared_model {
         new (&oldModel->acct_asset) OldAccountAssetType(*p);
         return oldModel;
       }
+
+#endif
     };
   }  // namespace interface
 }  // namespace shared_model

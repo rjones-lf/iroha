@@ -16,6 +16,7 @@
  */
 
 #include "query_response_handler.hpp"
+#include "logger/logger.hpp"
 #include "model/converters/pb_common.hpp"
 
 using namespace iroha::protocol;
@@ -65,6 +66,31 @@ namespace iroha_cli {
     }
   }
 
+  enum PrefixId {
+    kAccountId,
+    kAssetId,
+    kAmount,
+    kDomainId,
+    kSignatories,
+    kPrecision,
+    kRoles,
+    kJsonData,
+    kCreatorId,
+    kDefault,
+  };
+
+  const std::map<PrefixId, const char *> prefix{
+      {kAccountId, "-Account Id:- {}"},
+      {kAssetId, "-Asset Id- {}"},
+      {kAmount, "-Balance- {}"},
+      {kDomainId, "-Domain- {}"},
+      {kSignatories, "-Signatory- {}"},
+      {kPrecision, "-Precision- {}"},
+      {kRoles, "-Roles-: "},
+      {kJsonData, "-Data-: {}"},
+      {kCreatorId, "-Creator Id- {}"},
+      {kDefault, " {} "}};
+
   void QueryResponseHandler::handleErrorResponse(
       const iroha::protocol::QueryResponse &response) {
     auto it = error_handler_map_.find((response.error_response().reason()));
@@ -81,29 +107,30 @@ namespace iroha_cli {
       const iroha::protocol::QueryResponse &response) {
     auto account = response.account_response().account();
     log_->info("[Account]:");
-    log_->info("-Id:- {}", account.account_id());
-    log_->info("-Domain- {}", account.domain_id());
+    log_->info(prefix.at(kAccountId), account.account_id());
+    log_->info(prefix.at(kDomainId), account.domain_id());
 
-    log_->info("-Roles-: ");
+    log_->info(prefix.at(kRoles));
     auto roles = response.account_response().account_roles();
-    std::for_each(roles.begin(), roles.end(), [](auto role){
-      std::cout << " " << role;
+    std::for_each(roles.begin(), roles.end(), [this](auto role) {
+      log_->info(prefix.at(kDefault), role);
     });
-    log_->info("-Data-: {}", account.json_data());
+    log_->info(prefix.at(kJsonData), account.json_data());
   }
 
   void QueryResponseHandler::handleRolesResponse(
       const iroha::protocol::QueryResponse &response) {
     auto roles = response.roles_response().roles();
     std::for_each(roles.begin(), roles.end(), [this](auto role) {
-      log_->info(" {} ", role);
+      log_->info(prefix.at(kDefault), role);
     });
   }
 
-  void QueryResponseHandler::handleRolePermissionsResponse(const iroha::protocol::QueryResponse &response) {
+  void QueryResponseHandler::handleRolePermissionsResponse(
+      const iroha::protocol::QueryResponse &response) {
     auto perms = response.role_permissions_response().permissions();
     std::for_each(perms.begin(), perms.end(), [this](auto perm) {
-      log_->info(" {} ", perm);
+      log_->info(prefix.at(kDefault), perm);
     });
   }
 
@@ -111,11 +138,11 @@ namespace iroha_cli {
       const iroha::protocol::QueryResponse &response) {
     auto acc_assets = response.account_assets_response().account_asset();
     log_->info("[Account Assets]");
-    log_->info("-Account Id- {}", acc_assets.account_id());
-    log_->info("-Asset Id- {}", acc_assets.asset_id());
+    log_->info(prefix.at(kAccountId), acc_assets.account_id());
+    log_->info(prefix.at(kAssetId), acc_assets.asset_id());
     auto balance =
         iroha::model::converters::deserializeAmount(acc_assets.balance());
-    log_->info("-Balance- {}", balance.to_string());
+    log_->info(prefix.at(kAmount), balance.to_string());
   }
 
   void QueryResponseHandler::handleSignatoriesResponse(
@@ -124,25 +151,25 @@ namespace iroha_cli {
     log_->info("[Signatories]");
     std::for_each(
         signatories.begin(), signatories.end(), [this](auto signatory) {
-          log_->info("-Signatory- {}", signatory);
+          log_->info(prefix.at(kSignatories), signatory);
         });
   }
 
-  void QueryResponseHandler::handleAssetResponse(const iroha::protocol::QueryResponse &response) {
+  void QueryResponseHandler::handleAssetResponse(
+      const iroha::protocol::QueryResponse &response) {
     auto asset = response.asset_response().asset();
     log_->info("[Asset]");
-    log_->info("-Asset Id- {}", asset.asset_id());
-    log_->info("-Domain Id- {}", asset.domain_id());
-    log_->info("-Precision- {}", asset.precision());
+    log_->info(prefix.at(kAssetId), asset.asset_id());
+    log_->info(prefix.at(kDomainId), asset.domain_id());
+    log_->info(prefix.at(kPrecision), asset.precision());
   }
 
   void QueryResponseHandler::handleTransactionsResponse(
       const iroha::protocol::QueryResponse &response) {
     auto txs = response.transactions_response().transactions();
-    log_->info("[Transactions]");
     std::for_each(txs.begin(), txs.end(), [this](auto tx) {
-      log_->info("-[tx]-");
-      log_->info("--[Creator Id] -- {}", tx.payload().creator_account_id());
+      log_->info("[Transaction]");
+      log_->info(prefix.at(kCreatorId), tx.payload().creator_account_id());
       // TODO 13/09/17 grimadas: add other fields: tx head, tx body IR-507
     });
   }

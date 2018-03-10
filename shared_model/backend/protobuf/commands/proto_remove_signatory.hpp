@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 #ifndef IROHA_PROTO_REMOVE_SIGNATORY_HPP
 #define IROHA_PROTO_REMOVE_SIGNATORY_HPP
 
@@ -24,28 +23,27 @@
 namespace shared_model {
   namespace proto {
 
-    class RemoveSignatory final : public CopyableProto<interface::RemoveSignatory,
-                                                       iroha::protocol::Command,
-                                                       RemoveSignatory> {
+    class RemoveSignatory final
+        : public CopyableProto<interface::RemoveSignatory,
+                               iroha::protocol::Command,
+                               RemoveSignatory> {
      public:
       template <typename CommandType>
       explicit RemoveSignatory(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            remove_signatory_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::remove_sign)),
+            remove_signatory_(proto_->remove_sign()),
             pubkey_([this] {
               return interface::types::PubkeyType(
-                  remove_signatory_->public_key());
+                  remove_signatory_.public_key());
             }) {}
 
-      RemoveSignatory(const RemoveSignatory &o)
-          : RemoveSignatory(o.proto_) {}
+      RemoveSignatory(const RemoveSignatory &o) : RemoveSignatory(o.proto_) {}
 
       RemoveSignatory(RemoveSignatory &&o) noexcept
           : RemoveSignatory(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return remove_signatory_->account_id();
+        return remove_signatory_.account_id();
       }
 
       const interface::types::PubkeyType &pubkey() const override {
@@ -57,7 +55,7 @@ namespace shared_model {
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const Lazy<const iroha::protocol::RemoveSignatory &> remove_signatory_;
+      const iroha::protocol::RemoveSignatory &remove_signatory_;
 
       const Lazy<interface::types::PubkeyType> pubkey_;
     };

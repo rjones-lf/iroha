@@ -17,12 +17,10 @@
 #include <memory>
 
 #include "model/generators/query_generator.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
 namespace iroha {
   namespace model {
     namespace generators {
-
 
       void QueryGenerator::setQueryMetaData(std::shared_ptr<Query> query,
                                             ts64_t timestamp,
@@ -33,10 +31,11 @@ namespace iroha {
         query->created_ts = timestamp;
       }
 
-      std::shared_ptr<GetAccount> QueryGenerator::generateGetAccount(ts64_t timestamp,
-                                                    std::string creator,
-                                                    uint64_t query_counter,
-                                                    std::string account_id) {
+      std::shared_ptr<GetAccount> QueryGenerator::generateGetAccount(
+          ts64_t timestamp,
+          std::string creator,
+          uint64_t query_counter,
+          std::string account_id) {
         auto query = std::make_shared<GetAccount>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -45,9 +44,12 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetAccountAssets> QueryGenerator::generateGetAccountAssets(
-          ts64_t timestamp, std::string creator, uint64_t query_counter,
-          std::string account_id, std::string asset_id) {
+      std::shared_ptr<GetAccountAssets>
+      QueryGenerator::generateGetAccountAssets(ts64_t timestamp,
+                                               std::string creator,
+                                               uint64_t query_counter,
+                                               std::string account_id,
+                                               std::string asset_id) {
         auto query = std::make_shared<GetAccountAssets>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -57,10 +59,13 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetAccountDetail> QueryGenerator::generateGetAccountDetail(
-          ts64_t timestamp, std::string creator, uint64_t query_counter,
-          std::string account_id, std::string creator_account_id,
-          std::string detail){
+      std::shared_ptr<GetAccountDetail>
+      QueryGenerator::generateGetAccountDetail(ts64_t timestamp,
+                                               std::string creator,
+                                               uint64_t query_counter,
+                                               std::string account_id,
+                                               std::string creator_account_id,
+                                               std::string detail) {
         auto query = std::make_shared<GetAccountDetail>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -71,9 +76,10 @@ namespace iroha {
         return query;
       }
 
-
-        std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
-          ts64_t timestamp, std::string creator, uint64_t query_counter,
+      std::shared_ptr<GetSignatories> QueryGenerator::generateGetSignatories(
+          ts64_t timestamp,
+          std::string creator,
+          uint64_t query_counter,
           std::string account_id) {
         auto query = std::make_shared<GetSignatories>();
         query->created_ts = timestamp;
@@ -83,9 +89,11 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetAccountTransactions> QueryGenerator::generateGetAccountTransactions(
-          ts64_t timestamp, std::string creator, uint64_t query_counter,
-          std::string account_id) {
+      std::shared_ptr<GetAccountTransactions>
+      QueryGenerator::generateGetAccountTransactions(ts64_t timestamp,
+                                                     std::string creator,
+                                                     uint64_t query_counter,
+                                                     std::string account_id) {
         auto query = std::make_shared<GetAccountTransactions>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -94,9 +102,13 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetAccountAssetTransactions> QueryGenerator::generateGetAccountAssetTransactions(
-          ts64_t timestamp, std::string creator, uint64_t query_counter,
-          std::string account_id, std::string asset_id) {
+      std::shared_ptr<GetAccountAssetTransactions>
+      QueryGenerator::generateGetAccountAssetTransactions(
+          ts64_t timestamp,
+          std::string creator,
+          uint64_t query_counter,
+          std::string account_id,
+          std::string asset_id) {
         auto query = std::make_shared<GetAccountAssetTransactions>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -107,8 +119,10 @@ namespace iroha {
       }
 
       std::shared_ptr<GetTransactions> QueryGenerator::generateGetTransactions(
-          ts64_t timestamp, const std::string& creator, uint64_t query_counter,
-          const std::vector<iroha::hash256_t>& tx_hashes) {
+          ts64_t timestamp,
+          const std::string &creator,
+          uint64_t query_counter,
+          const std::vector<iroha::hash256_t> &tx_hashes) {
         auto query = std::make_shared<GetTransactions>();
         query->created_ts = timestamp;
         query->creator_account_id = creator;
@@ -133,7 +147,8 @@ namespace iroha {
         return query;
       }
 
-      std::shared_ptr<GetRolePermissions> QueryGenerator::generateGetRolePermissions() {
+      std::shared_ptr<GetRolePermissions>
+      QueryGenerator::generateGetRolePermissions() {
         auto query = std::make_shared<GetRolePermissions>("admin");
         query->created_ts = 0;
         query->creator_account_id = "admin@test";

@@ -42,11 +42,13 @@ namespace iroha {
 
       using SignaturesType = decltype(signatures);
 
+      using TimeType = ts64_t;
+
       /**
        * Creation timestamp
        * HEADER field
        */
-      ts64_t created_ts{};
+       TimeType created_ts{};
 
       /**
        * Account id of transaction creator.
@@ -66,6 +68,21 @@ namespace iroha {
       uint64_t tx_counter{};
 
       /**
+       * Quorum means number of signatures required for processing transaction
+       * in system.
+       * This field should be > 0.
+       */
+      uint8_t quorum = 1;
+
+      using HashType = hash256_t;
+
+      /**
+       * Hash will be used in iroha for transaction identification
+       */
+      HashType tx_hash;
+
+
+      /**
        * Bunch of commands attached to transaction
        * shared_ptr is used since Proposal has to be copied
        * BODY field
@@ -74,9 +91,9 @@ namespace iroha {
 
       using CommandsType = decltype(commands);
 
-      bool operator==(const Transaction& rhs) const;
-      bool operator!=(const Transaction& rhs) const;
+      bool operator==(const Transaction &rhs) const;
+      bool operator!=(const Transaction &rhs) const;
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 #endif  // IROHA_TRANSACTION_HPP

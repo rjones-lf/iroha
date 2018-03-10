@@ -21,7 +21,10 @@
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/queries/get_roles.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -29,20 +32,21 @@ namespace shared_model {
     /**
      * Get all permissions related to specific role
      */
-    class GetRolePermissions
-        : public Primitive<GetRolePermissions,
-                           iroha::model::GetRolePermissions> {
+    class GetRolePermissions : public PRIMITIVE(GetRolePermissions) {
      public:
       /**
        * @return role identifier containing requested permissions
        */
       virtual const types::RoleIdType &roleId() const = 0;
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::GetRolePermissions;
         oldModel->role_id = roleId();
         return oldModel;
       }
+
+#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

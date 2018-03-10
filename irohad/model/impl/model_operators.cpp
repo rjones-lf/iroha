@@ -104,11 +104,13 @@ namespace iroha {
 
     /* SubtractAssetQuantity */
     bool SubtractAssetQuantity::operator==(const Command &command) const {
-      if (! instanceof <SubtractAssetQuantity>(command)) return false;
-      auto subtract_asset_quantity = static_cast<const SubtractAssetQuantity &>(command);
+      if (! instanceof <SubtractAssetQuantity>(command))
+        return false;
+      auto subtract_asset_quantity =
+          static_cast<const SubtractAssetQuantity &>(command);
       return subtract_asset_quantity.account_id == account_id
-             && subtract_asset_quantity.asset_id == asset_id
-             && subtract_asset_quantity.amount == amount;
+          && subtract_asset_quantity.asset_id == asset_id
+          && subtract_asset_quantity.amount == amount;
     }
 
     /* AddPeer */
@@ -116,7 +118,7 @@ namespace iroha {
       if (! instanceof <AddPeer>(command))
         return false;
       auto add_peer = static_cast<const AddPeer &>(command);
-      return add_peer.peer_key == peer_key && add_peer.address == address;
+      return add_peer.peer == peer;
     }
 
     /* AddSignatory */
@@ -209,13 +211,15 @@ namespace iroha {
                         rhs.commands.begin(),
                         rhs.commands.end(),
                         [](const auto &i, const auto &j) { return *i == *j; })
-          && rhs.tx_counter == tx_counter && rhs.signatures == signatures
+          && rhs.tx_counter == tx_counter
+          && rhs.quorum == quorum
           && rhs.created_ts == created_ts;
     }
 
     /* Proposal */
     bool Proposal::operator==(const Proposal &rhs) const {
-      return rhs.height == height and rhs.transactions == transactions;
+      return rhs.height == height and rhs.created_time == created_time
+          and rhs.transactions == transactions;
     }
 
     /* Block */

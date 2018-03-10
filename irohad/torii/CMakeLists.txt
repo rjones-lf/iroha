@@ -14,6 +14,8 @@
 
 add_subdirectory(processor)
 
+add_library(query_client STATIC query_client.cpp)
+
 add_library(command_client command_client.cpp)
 target_link_libraries(command_client
     torii_service
@@ -21,8 +23,12 @@ target_link_libraries(command_client
     model
     )
 
+target_link_libraries(query_client
+        torii_service
+        endpoint
+        )
+
 add_library(torii_service
-    torii_service_handler.cpp
     impl/query_service.cpp
     impl/command_service.cpp
     )
@@ -32,4 +38,5 @@ target_link_libraries(torii_service
     stateless_validator
     model
     logger
+    shared_model_stateless_validation
     )

@@ -9,11 +9,11 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+
+SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall -fPIC")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-SET(CMAKE_INSTALL_RPATH "../lib")
 
 if(COVERAGE)
   set(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
@@ -40,7 +40,10 @@ option(PACKAGE_DEB  "Create DEB package"             OFF)
 option(ENABLE_LIBS_PACKAGING "Enable libs packaging" ON)
 option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
 option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
+option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
+option(SHARED_MODEL_DISABLE_COMPATIBILITY "Disable backward compatibility in shared model" OFF)
+
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
@@ -68,7 +71,9 @@ message(STATUS "-DPACKAGE_DEB=${PACKAGE_DEB}")
 message(STATUS "-DENABLE_LIBS_PACKAGING=${ENABLE_LIBS_PACKAGING}")
 message(STATUS "-DSWIG_PYTHON=${SWIG_PYTHON}")
 message(STATUS "-DSWIG_JAVA=${SWIG_JAVA}")
+message(STATUS "-DSUPPORT_PYTHON2=${SUPPORT_PYTHON2}")
 message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
+message(STATUS "-DSHARED_MODEL_DISABLE_COMPATIBILITY=${SHARED_MODEL_DISABLE_COMPATIBILITY}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
 include_directories(
@@ -81,9 +86,14 @@ include_directories(
 include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
+include(cmake/clang-cxx-dev-tools.cmake)
 
 if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
+endif()
+
+if(SHARED_MODEL_DISABLE_COMPATIBILITY)
+    add_definitions(-DDISABLE_BACKWARD)
 endif()
 
 add_subdirectory(schema)

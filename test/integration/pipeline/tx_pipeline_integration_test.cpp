@@ -15,8 +15,21 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/queries.hpp"
+#include "builders/protobuf/transaction.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "datetime/time.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include "model/generators/query_generator.hpp"
+#include "responses.pb.h"
 
+using namespace iroha::model::generators;
+using namespace iroha::model::converters;
+
+// TODO: refactor services to allow dynamic port binding IR-741
 class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
  public:
   void SetUp() override {
@@ -24,6 +37,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
 
     auto genesis_tx =
         TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+    genesis_tx.quorum = 1;
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
             0, {genesis_tx});
@@ -31,24 +45,21 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
     manager = std::make_shared<iroha::KeysManagerImpl>("node0");
     auto keypair = manager->loadKeys().value();
 
-    irohad = std::make_shared<TestIrohad>(block_store_path,
-                                          redishost_,
-                                          redisport_,
-                                          pgopt_,
-                                          0,
-                                          10001,
-                                          10,
-                                          5000ms,
-                                          5000ms,
-                                          5000ms,
-                                          keypair);
+    irohad = std::make_shared<TestIrohad>(
+        block_store_path,
+        pgopt_,
+        0,
+        10001,
+        10,
+        5000ms,
+        5000ms,
+        5000ms,
+        keypair);
 
     ASSERT_TRUE(irohad->storage);
 
     // insert genesis block
-    iroha::main::BlockInserter inserter(irohad->storage);
-
-    inserter.applyToLedger({genesis_block});
+    irohad->storage->insertBlock(genesis_block);
 
     // initialize irohad
     irohad->init();
@@ -69,6 +80,8 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
 };
 
 TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
+  // TODO 19/12/17 motxx - Rework integration test using shared model (IR-715
+  // comment)
   // generate test command
   auto cmd =
       iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
@@ -86,4 +99,123 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   provider.sign(tx);
 
   sendTxsInOrderAndValidate({tx});
+}
+
+/**
+ * @given Admin sends some transaction and keep its hash
+ * @when GetTransactions query with the hash is sent
+ * @then Validate the transaction
+ */
+TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
+  // TODO 19/12/17 motxx - Rework integration test using shared model (IR-715
+  // comment)
+  const auto CREATOR_ACCOUNT_ID = "admin@test";
+  // send some transaction
+  const auto cmd =
+      iroha::model::generators::CommandGenerator().generateAddAssetQuantity(
+          CREATOR_ACCOUNT_ID,
+          "coin#test",
+          iroha::Amount().createFromString("20.00").value());
+  auto given_tx =
+      iroha::model::generators::TransactionGenerator().generateTransaction(
+          CREATOR_ACCOUNT_ID, 1, {cmd});
+  iroha::KeysManagerImpl manager(CREATOR_ACCOUNT_ID);
+  const auto keypair = manager.loadKeys().value();
+  iroha::model::ModelCryptoProviderImpl provider(keypair);
+  provider.sign(given_tx);
+
+  sendTxsInOrderAndValidate({given_tx});
+
+  // keep sent tx's hash
+  const auto given_tx_hash = iroha::hash(given_tx);
+
+  auto query =
+      iroha::model::generators::QueryGenerator().generateGetTransactions(
+          iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
+  provider.sign(*query);
+
+  const auto pb_query = PbQueryFactory{}.serialize(query);
+  ASSERT_TRUE(pb_query.has_value());
+
+  iroha::protocol::QueryResponse response;
+  irohad->getQueryService()->Find(pb_query.value(), response);
+  ASSERT_EQ(1, response.transactions_response().transactions().size());
+  const auto got_pb_tx = response.transactions_response().transactions()[0];
+  ASSERT_EQ(given_tx, *PbTransactionFactory{}.deserialize(got_pb_tx));
+}
+
+constexpr auto kUser = "user@test";
+constexpr auto kAsset = "asset#domain";
+
+const auto kAdminOldKeypair = iroha::create_keypair();
+const shared_model::crypto::Keypair kAdminKeypair(
+    shared_model::crypto::PublicKey(kAdminOldKeypair.pubkey.to_string()),
+    shared_model::crypto::PrivateKey(kAdminOldKeypair.privkey.to_string()));
+
+/**
+ * @given GetAccount query
+ * AND default-initialized IntegrationTestFramework
+ * @when query is sent to the framework
+ * @then query response is ErrorResponse with STATEFUL_INVALID reason
+ */
+TEST(PipelineIntegrationTest, SendQuery) {
+  auto query = shared_model::proto::QueryBuilder()
+                   .createdTime(iroha::time::now())
+                   .creatorAccountId(kUser)
+                   .queryCounter(1)
+                   .getAccount(kUser)
+                   .build()
+                   .signAndAddSignature(
+                       shared_model::crypto::DefaultCryptoAlgorithmType::
+                           generateKeypair());
+
+  auto check = [](auto &status) {
+    using ExpectedResponseType = shared_model::detail::PolymorphicWrapper<
+        shared_model::interface::ErrorQueryResponse>;
+    using ExpectedReasonType = shared_model::detail::PolymorphicWrapper<
+        shared_model::interface::StatefulFailedErrorResponse>;
+    ASSERT_NO_THROW(boost::get<ExpectedResponseType>(status.get()));
+    ASSERT_NO_THROW(boost::get<ExpectedReasonType>(
+        boost::get<ExpectedResponseType>(status.get())->get()));
+  };
+  integration_framework::IntegrationTestFramework()
+      .setInitialState(kAdminKeypair)
+      .sendQuery(query, check)
+      .done();
+}
+
+/**
+ * @given some user
+ * @when sending sample AddAssetQuantity transaction to the ledger
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that tx
+ * @and wait for proposal and block
+ */
+TEST(PipelineIntegrationTest, SendTx) {
+  auto tx = shared_model::proto::TransactionBuilder()
+                .createdTime(iroha::time::now())
+                .creatorAccountId(kUser)
+                .txCounter(1)
+                .addAssetQuantity(kUser, kAsset, "1.0")
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair());
+
+  auto checkStatelessValid = [](auto &status) {
+    ASSERT_NO_THROW(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::StatelessValidTxResponse>>(status.get()));
+  };
+  auto checkProposal = [](auto &proposal) {
+    ASSERT_EQ(proposal->transactions.size(), 1);
+  };
+  auto checkBlock = [](auto &block) {
+    ASSERT_EQ(block->transactions.size(), 0);
+  };
+  integration_framework::IntegrationTestFramework()
+      .setInitialState(kAdminKeypair)
+      .sendTx(tx, checkStatelessValid)
+      .checkProposal(checkProposal)
+      .checkBlock(checkBlock)
+      .done();
 }

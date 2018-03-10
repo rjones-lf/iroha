@@ -18,11 +18,15 @@
 #ifndef IROHA_YAC_CRYPTO_PROVIDER_HPP
 #define IROHA_YAC_CRYPTO_PROVIDER_HPP
 
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/yac_hash_provider.hpp" // for YacHash (passed by copy)
 
 namespace iroha {
   namespace consensus {
     namespace yac {
+
+      struct CommitMessage;
+      struct RejectMessage;
+      struct VoteMessage;
 
       class YacCryptoProvider {
        public:

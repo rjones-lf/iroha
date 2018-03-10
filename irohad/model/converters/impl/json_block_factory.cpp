@@ -43,8 +43,8 @@ namespace iroha {
 
         document.AddMember("created_ts", block.created_ts, allocator);
         document.AddMember("hash", block.hash.to_hexstring(), allocator);
-        document.AddMember("prev_hash", block.prev_hash.to_hexstring(),
-                           allocator);
+        document.AddMember(
+            "prev_hash", block.prev_hash.to_hexstring(), allocator);
         document.AddMember("height", block.height, allocator);
         document.AddMember("txs_number", block.txs_number, allocator);
 
@@ -75,7 +75,8 @@ namespace iroha {
             };
           };
           return std::accumulate(
-              array.begin(), array.end(),
+              array.begin(),
+              array.end(),
               nonstd::make_optional<Block::TransactionsType>(),
               acc_transactions);
         };

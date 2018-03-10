@@ -31,12 +31,12 @@ namespace iroha {
       /**
        * Account from which grant permission
        */
-      std::string account_id{};
+      std::string account_id;
 
       /**
        * Permission to revoke
        */
-      std::string permission_name{};
+      std::string permission_name;
 
       bool operator==(const Command &command) const override;
 

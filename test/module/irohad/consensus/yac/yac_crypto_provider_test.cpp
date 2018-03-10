@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
-
 #include <gtest/gtest.h>
-
+#include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
+#include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "consensus/yac/messages.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
 namespace iroha {

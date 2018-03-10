@@ -40,9 +40,9 @@ namespace iroha {
 
         // SubtractAssetQuantity
         rapidjson::Document serializeSubtractAssetQuantity(
-          std::shared_ptr<Command> command);
+            std::shared_ptr<Command> command);
         optional_ptr<Command> deserializeSubtractAssetQuantity(
-          const rapidjson::Value &document);
+            const rapidjson::Value &document);
 
         // AddPeer
         rapidjson::Document serializeAddPeer(std::shared_ptr<Command> command);

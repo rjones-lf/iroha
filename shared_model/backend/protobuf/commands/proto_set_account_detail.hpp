@@ -35,8 +35,7 @@ namespace shared_model {
       template <typename CommandType>
       explicit SetAccountDetail(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            set_account_detail_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::set_account_detail)) {}
+            set_account_detail_(proto_->set_account_detail()) {}
 
       SetAccountDetail(const SetAccountDetail &o)
           : SetAccountDetail(o.proto_) {}
@@ -45,23 +44,19 @@ namespace shared_model {
           : SetAccountDetail(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return set_account_detail_->account_id();
+        return set_account_detail_.account_id();
       }
 
       const AccountDetailKeyType &key() const override {
-        return set_account_detail_->key();
+        return set_account_detail_.key();
       }
 
       const AccountDetailValueType &value() const override {
-        return set_account_detail_->value();
+        return set_account_detail_.value();
       }
 
      private:
-      // lazy
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<const iroha::protocol::SetAccountDetail &> set_account_detail_;
+      const iroha::protocol::SetAccountDetail &set_account_detail_;
     };
 
   }  // namespace proto

@@ -42,11 +42,13 @@ CommandExecutorFactory::create() {
   executors[typeid(TransferAsset)] = std::make_shared<TransferAssetExecutor>();
   executors[typeid(AppendRole)] = std::make_shared<AppendRoleExecutor>();
   executors[typeid(CreateRole)] = std::make_shared<CreateRoleExecutor>();
-  executors[typeid(GrantPermission)] = std::make_shared<GrantPermissionExecutor>();
-  executors[typeid(RevokePermission)] = std::make_shared<RevokePermissionExecutor>();
-  executors[typeid(SetAccountDetail)] = std::make_shared<SetAccountDetailExecutor>();
+  executors[typeid(GrantPermission)] =
+      std::make_shared<GrantPermissionExecutor>();
+  executors[typeid(RevokePermission)] =
+      std::make_shared<RevokePermissionExecutor>();
+  executors[typeid(SetAccountDetail)] =
+      std::make_shared<SetAccountDetailExecutor>();
   executors[typeid(DetachRole)] = std::make_shared<DetachRoleExecutor>();
-
 
   auto result =
       std::all_of(registry_.command_handler.types().begin(),

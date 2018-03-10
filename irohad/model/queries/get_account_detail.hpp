@@ -18,18 +18,18 @@
 #ifndef IROHA_GET_ACCOUNT_DETAIL_HPP
 #define IROHA_GET_ACCOUNT_DETAIL_HPP
 
-#include "model/query.hpp"
 #include <string>
+#include "model/query.hpp"
 
 namespace iroha {
-    namespace model {
-        /**
-         * Query for get all account's detail
-         */
-        struct GetAccountDetail : Query {
-            std::string account_id{};
-            std::string detail{};
-        };
-    }  // namespace model
+  namespace model {
+    /**
+     * Query for get all account's detail
+     */
+    struct GetAccountDetail : Query {
+      std::string account_id{};
+      std::string detail{};
+    };
+  }  // namespace model
 }  // namespace iroha
-#endif //IROHA_GET_ACCOUNT_DETAIL_HPP
+#endif  // IROHA_GET_ACCOUNT_DETAIL_HPP

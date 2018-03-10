@@ -37,7 +37,7 @@ namespace iroha {
        */
       std::string default_role;
     };
-  }
-}
+  }  // namespace model
+}  // namespace iroha
 
 #endif  // IROHA_DOMAIN_HPP

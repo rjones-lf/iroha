@@ -83,8 +83,7 @@ TEST(AddressValidatorTest, InvalidHostnameTest) {
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256",
       "",
       ":6565",
-      "::6565:"
-  };
+      "::6565:"};
   for (std::string invalid_address : invalid_addresses) {
     ASSERT_FALSE(iroha::validator::isValidHostname(invalid_address));
   }

@@ -18,9 +18,11 @@
 #ifndef IROHA_BLOCK_INDEX_HPP
 #define IROHA_BLOCK_INDEX_HPP
 
-#include "model/block.hpp"
-
 namespace iroha {
+  namespace model {
+    struct Block;
+  }
+
   namespace ametsuchi {
     /**
      * Internal interface for modifying index on blocks and transactions
@@ -35,7 +37,7 @@ namespace iroha {
        */
       virtual void index(const model::Block &block) = 0;
     };
-  } // namespace ametsuchi
-} // namespace iroha
+  }  // namespace ametsuchi
+}  // namespace iroha
 
-#endif //IROHA_BLOCK_INDEX_HPP
+#endif  // IROHA_BLOCK_INDEX_HPP

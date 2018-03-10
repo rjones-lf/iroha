@@ -40,8 +40,8 @@ namespace iroha {
     };
 
     /**
-      * Query for getting transactions of account
-      */
+     * Query for getting transactions of account
+     */
     struct GetAccountTransactions : Query {
       /**
        * Account identifier

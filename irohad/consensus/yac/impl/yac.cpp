@@ -17,14 +17,19 @@
 
 #include <utility>
 
+#include "common/visitor.hpp"
+#include "consensus/yac/cluster_order.hpp"
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/timer.hpp"
 #include "consensus/yac/yac.hpp"
+#include "consensus/yac/yac_crypto_provider.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
       template <typename T>
-      std::string cryptoError(const T &votes) {
+      static std::string cryptoError(const T &votes) {
         std::string result =
             "Crypto verification failed for message.\n Votes: ";
         result += logger::to_string(votes, [](const auto &vote) {
@@ -39,7 +44,7 @@ namespace iroha {
       }
 
       template <typename T>
-      std::string cryptoError(const std::initializer_list<T> &votes) {
+      static std::string cryptoError(const std::initializer_list<T> &votes) {
         return cryptoError<std::initializer_list<T>>(votes);
       }
 
@@ -136,7 +141,9 @@ namespace iroha {
         }
       }
 
-      void Yac::closeRound() { timer_->deny(); }
+      void Yac::closeRound() {
+        timer_->deny();
+      }
 
       nonstd::optional<model::Peer> Yac::findPeer(const VoteMessage &vote) {
         auto peers = cluster_order_.getPeers();
@@ -149,6 +156,9 @@ namespace iroha {
 
       // ------|Apply data|------
 
+      const char *kRejectMsg = "reject case";
+      const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
+
       void Yac::applyCommit(nonstd::optional<model::Peer> from,
                             CommitMessage commit) {
         auto answer =
@@ -157,16 +167,17 @@ namespace iroha {
           auto proposal_hash = getProposalHash(commit.votes).value();
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
-
           if (not already_processed) {
-            answer.commit | [&](const auto &commit) {
-              notifier_.get_subscriber().on_next(commit);
-            };
-            answer.reject | [&](const auto &reject) {
-              log_->warn("reject case");
-              // TODO 14/08/17 Muratov: work on reject case IR-497
-            };
             vote_storage_.markAsProcessedState(proposal_hash);
+            visit_in_place(answer,
+                           [&](const CommitMessage &commit) {
+                             notifier_.get_subscriber().on_next(commit);
+                           },
+                           [&](const RejectMessage &reject) {
+                             log_->warn(kRejectMsg);
+                             // TODO 14/08/17 Muratov: work on reject case
+                             // IR-497
+                           });
           }
           this->closeRound();
         };
@@ -174,8 +185,28 @@ namespace iroha {
 
       void Yac::applyReject(nonstd::optional<model::Peer> from,
                             RejectMessage reject) {
-        // TODO 01/08/17 Muratov: apply to vote storage IR-497
-        closeRound();
+        auto answer =
+            vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
+        answer | [&](const auto &answer) {
+          auto proposal_hash = getProposalHash(reject.votes).value();
+          auto already_processed =
+              vote_storage_.getProcessingState(proposal_hash);
+
+          if (not already_processed) {
+            vote_storage_.markAsProcessedState(proposal_hash);
+            visit_in_place(answer,
+                           [&](const RejectMessage &reject) {
+                             log_->warn(kRejectMsg);
+                             // TODO 14/08/17 Muratov: work on reject case
+                             // IR-497
+                           },
+                           [&](const CommitMessage &commit) {
+                             notifier_.get_subscriber().on_next(commit);
+                             this->propagateCommit(commit);
+                           });
+          }
+          this->closeRound();
+        };
       }
 
       void Yac::applyVote(nonstd::optional<model::Peer> from,
@@ -199,37 +230,33 @@ namespace iroha {
               vote_storage_.getProcessingState(proposal_hash);
 
           if (not already_processed) {
-            answer.commit | [&](const auto &commit) {
-              // propagate for all
-
-              log_->info("Propagate commit {} to whole network",
-                         vote.hash.block_hash);
-
-              this->propagateCommit(commit);
-            };
-            answer.reject | [&](const auto &reject) {
-              log_->info("Reject case on hash {} achieved", proposal_hash);
-
-              // propagate reject for all
-              this->propagateReject(reject);
-            };
+            vote_storage_.markAsProcessedState(proposal_hash);
+            visit_in_place(answer,
+                           [&](const CommitMessage &commit) {
+                             // propagate for all
+                             log_->info("Propagate commit {} to whole network",
+                                        vote.hash.block_hash);
+                             notifier_.get_subscriber().on_next(commit);
+                             this->propagateCommit(commit);
+                           },
+                           [&](const RejectMessage &reject) {
+                             // propagate reject for all
+                             log_->info(kRejectOnHashMsg, proposal_hash);
+                             this->propagateReject(reject);
+                           });
           } else {
             from | [&](const auto &from) {
-              answer.commit | [&](const auto &commit) {
-                // propagate directly
-
-                log_->info("Propagate commit {} directly to {}",
-                           vote.hash.block_hash,
-                           from.address);
-
-                this->propagateCommitDirectly(from, commit);
-              };
-              answer.reject | [&](const auto &reject) {
-                log_->info("Reject case on hash {} achieved", proposal_hash);
-
-                // propagate directly
-                this->propagateRejectDirectly(from, reject);
-              };
+              visit_in_place(answer,
+                             [&](const CommitMessage &commit) {
+                               log_->info("Propagate commit {} directly to {}",
+                                          vote.hash.block_hash,
+                                          from.address);
+                               this->propagateCommitDirectly(from, commit);
+                             },
+                             [&](const RejectMessage &reject) {
+                               log_->info(kRejectOnHashMsg, proposal_hash);
+                               this->propagateRejectDirectly(from, reject);
+                             });
             };
           }
         };

@@ -16,6 +16,7 @@
  */
 
 #include "cryptography/ed25519_sha3_impl/signer.hpp"
+#include "common/types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 
@@ -25,9 +26,9 @@ namespace shared_model {
       return Signed(
           iroha::sign(
               iroha::sha3_256(crypto::toBinaryString(blob)).to_string(),
-              keypair.publicKey().makeOldModel<PublicKey::OldPublicKeyType>(),
-              keypair.privateKey()
-                  .makeOldModel<PrivateKey::OldPrivateKeyType>())
+              iroha::pubkey_t::from_string(toBinaryString(keypair.publicKey())),
+              iroha::privkey_t::from_string(
+                  toBinaryString(keypair.privateKey())))
               .to_string());
     }
   }  // namespace crypto

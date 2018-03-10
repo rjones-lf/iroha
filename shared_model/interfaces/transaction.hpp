@@ -23,9 +23,12 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
+
+#ifndef DISABLE_BACKWARD
+#include "model/transaction.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
@@ -34,8 +37,7 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    class Transaction
-        : public Signable<Transaction, iroha::model::Transaction> {
+    class Transaction : public SIGNABLE(Transaction) {
      public:
       /**
        * @return creator of transaction
@@ -46,6 +48,14 @@ namespace shared_model {
        * @return actual number of transaction of this user
        */
       virtual types::CounterType transactionCounter() const = 0;
+
+      /// Type of quorum
+      using QuorumType = uint8_t;
+
+      /**
+       * @return quorum of transaction
+       */
+      virtual QuorumType quorum() const = 0;
 
       /// Type of command
       using CommandType = detail::PolymorphicWrapper<Command>;
@@ -58,12 +68,14 @@ namespace shared_model {
        */
       virtual const CommandsType &commands() const = 0;
 
+#ifndef DISABLE_BACKWARD
       iroha::model::Transaction *makeOldModel() const override {
         iroha::model::Transaction *oldStyleTransaction =
             new iroha::model::Transaction();
         oldStyleTransaction->created_ts = createdTime();
         oldStyleTransaction->creator_account_id = creatorAccountId();
         oldStyleTransaction->tx_counter = transactionCounter();
+        oldStyleTransaction->quorum = quorum();
 
         std::for_each(commands().begin(),
                       commands().end(),
@@ -83,6 +95,7 @@ namespace shared_model {
         return oldStyleTransaction;
       }
 
+#endif
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Transaction")
@@ -90,6 +103,7 @@ namespace shared_model {
             .append("txCounter", std::to_string(transactionCounter()))
             .append("creatorAccountId", creatorAccountId())
             .append("createdTime", std::to_string(createdTime()))
+            .append("quorum", std::to_string(quorum()))
             .append("commands")
             .appendAll(commands(),
                        [](auto &command) { return command->toString(); })

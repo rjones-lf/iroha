@@ -116,7 +116,7 @@ namespace shared_model {
       const std::string initSeparator = ":";
       const std::string spaceSeparator = " ";
     };
-  }
-}
+  }  // namespace detail
+}  // namespace shared_model
 
 #endif  // IROHA_SHARED_MODEL_STRING_BUILDER_HPP

@@ -16,10 +16,11 @@
  */
 
 #include <gtest/gtest.h>
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "commands.pb.h"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/block.hpp"
 #include "model/converters/pb_block_factory.hpp"
+#include "model/sha3_hash.hpp"
 
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -49,9 +50,8 @@ TEST(BlockTest, bl_test) {
   c2.precision = 2;
   c2.asset_name = "fedor-coin";
 
-  orig_tx.commands = {
-      std::make_shared<iroha::model::CreateDomain>(c1),
-      std::make_shared<iroha::model::CreateAsset>(c2)};
+  orig_tx.commands = {std::make_shared<iroha::model::CreateDomain>(c1),
+                      std::make_shared<iroha::model::CreateAsset>(c2)};
 
   auto orig_block = iroha::model::Block();
   orig_block.created_ts = 1;

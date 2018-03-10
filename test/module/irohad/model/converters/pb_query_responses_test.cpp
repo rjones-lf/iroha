@@ -105,15 +105,16 @@ TEST(QueryResponseTest, AccountDetailResponse) {
   model::AccountDetailResponse account_detail_response;
   account_detail_response.detail = detail;
 
-  auto shrd_acc_detail_res = std::make_shared<decltype(account_detail_response)>(
-    account_detail_response);
+  auto shrd_acc_detail_res =
+      std::make_shared<decltype(account_detail_response)>(
+          account_detail_response);
   auto query_response = *pb_factory.serialize(shrd_acc_detail_res);
 
-  auto des_account_detail_response = pb_factory.deserializeAccountDetailResponse(
-    query_response.account_detail_response());
+  auto des_account_detail_response =
+      pb_factory.deserializeAccountDetailResponse(
+          query_response.account_detail_response());
 
-  ASSERT_EQ(des_account_detail_response.detail,
-            account_detail_response.detail);
+  ASSERT_EQ(des_account_detail_response.detail, account_detail_response.detail);
 }
 
 TEST(QueryResponseTest, SignatoriesTest) {
@@ -213,5 +214,4 @@ TEST(QueryResponseTest, asset_response) {
             query_response.asset_response().asset().domain_id());
   ASSERT_EQ(response.asset.precision,
             query_response.asset_response().asset().precision());
-
 }

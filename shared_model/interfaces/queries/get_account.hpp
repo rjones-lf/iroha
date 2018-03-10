@@ -20,22 +20,28 @@
 
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+
+#ifndef DISABLE_BACKWARD
 #include "model/queries/get_account.hpp"
+#endif
 
 namespace shared_model {
   namespace interface {
-    class GetAccount : public Primitive<GetAccount, iroha::model::GetAccount> {
+    class GetAccount : public PRIMITIVE(GetAccount) {
      public:
       /**
        * @return Identity of user, for fetching data
        */
       virtual const types::AccountIdType &accountId() const = 0;
 
+#ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::GetAccount;
         oldModel->account_id = accountId();
         return oldModel;
       }
+
+#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

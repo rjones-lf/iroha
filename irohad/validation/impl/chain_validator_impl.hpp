@@ -17,9 +17,9 @@
 #ifndef IROHA_CHAIN_VALIDATOR_IMPL_HPP
 #define IROHA_CHAIN_VALIDATOR_IMPL_HPP
 
+#include "logger/logger.hpp"
 #include "model/model_crypto_provider.hpp"
 #include "validation/chain_validator.hpp"
-#include "logger/logger.hpp"
 
 namespace iroha {
   namespace validation {
@@ -34,11 +34,9 @@ namespace iroha {
                          ametsuchi::MutableStorage &storage) override;
 
      private:
-
       logger::Logger log_;
-
     };
-  }
-}
+  }  // namespace validation
+}  // namespace iroha
 
 #endif  // IROHA_CHAIN_VALIDATOR_IMPL_HPP

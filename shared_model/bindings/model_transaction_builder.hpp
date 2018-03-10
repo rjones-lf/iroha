@@ -18,7 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_MODEL_TRANSACTION_BUILDER_HPP
 #define IROHA_SHARED_MODEL_MODEL_TRANSACTION_BUILDER_HPP
 
-#include "builders/protobuf/transaction.hpp"
+#include "builders/protobuf/builder_templates/transaction_template.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "cryptography/public_key.hpp"
 

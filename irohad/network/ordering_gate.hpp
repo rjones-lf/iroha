@@ -18,9 +18,9 @@
 #ifndef IROHA_ORDERING_SERVICE_HPP
 #define IROHA_ORDERING_SERVICE_HPP
 
+#include <rxcpp/rx-observable.hpp>
 #include "model/proposal.hpp"
 #include "model/transaction.hpp"
-#include <rxcpp/rx-observable.hpp>
 
 namespace iroha {
   namespace network {

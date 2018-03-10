@@ -18,11 +18,12 @@
 #ifndef IROHA_TEMPORARYWSV_HPP
 #define IROHA_TEMPORARYWSV_HPP
 
-#include <ametsuchi/wsv_command.hpp>
-#include <ametsuchi/wsv_query.hpp>
 #include <functional>
-#include <model/block.hpp>
-#include <model/transaction.hpp>
+
+#include "ametsuchi/wsv_command.hpp"
+#include "ametsuchi/wsv_query.hpp"
+#include "model/block.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -33,7 +34,6 @@ namespace iroha {
      */
     class TemporaryWsv {
      public:
-
       /**
        * Applies a transaction to current state
        * using logic specified in function
@@ -47,10 +47,9 @@ namespace iroha {
        * otherwise.
        * @return True if transaction was successfully applied, false otherwise
        */
-      virtual bool apply(
-          const model::Transaction &transaction,
-          std::function<bool(const model::Transaction &, WsvQuery &)>
-              function) = 0;
+      virtual bool apply(const model::Transaction &transaction,
+                         std::function<bool(const model::Transaction &,
+                                            WsvQuery &)> function) = 0;
 
       virtual ~TemporaryWsv() = default;
     };

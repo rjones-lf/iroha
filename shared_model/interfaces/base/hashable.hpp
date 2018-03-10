@@ -18,17 +18,32 @@
 #ifndef IROHA_HASHABLE_HPP
 #define IROHA_HASHABLE_HPP
 
+#include <boost/optional.hpp>
 #include "cryptography/hash.hpp"
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "utils/lazy_initializer.hpp"
 
+#ifdef DISABLE_BACKWARD
+#define HASHABLE_WITH_OLD(Model, OldModel) Hashable<Model>
+#else
+#define HASHABLE_WITH_OLD(Model, OldModel) Hashable<Model, OldModel>
+#endif
+#define HASHABLE(Model) HASHABLE_WITH_OLD(Model, iroha::model::Model)
+
 namespace shared_model {
   namespace interface {
+#ifdef DISABLE_BACKWARD
+    template <typename ModelType,
+              typename HashProvider = shared_model::crypto::Sha3_256>
+    class Hashable : public ModelPrimitive<ModelType>
+#else
     template <typename ModelType,
               typename OldModel,
               typename HashProvider = shared_model::crypto::Sha3_256>
-    class Hashable : public Primitive<ModelType, OldModel> {
+    class Hashable : public Primitive<ModelType, OldModel>
+#endif
+    {
      public:
       /// Type of hash
       using HashType = crypto::Hash;
@@ -40,7 +55,12 @@ namespace shared_model {
       /**
        * @return hash of object.
        */
-      virtual const HashType &hash() const { return *hash_; }
+      virtual const HashType &hash() const {
+        if (hash_ == boost::none) {
+          hash_.emplace(HashProvider::makeHash(blob()));
+        }
+        return *hash_;
+      }
 
       /**
        * @return blob representation of object
@@ -58,8 +78,7 @@ namespace shared_model {
       }
 
      protected:
-      detail::LazyInitializer<HashType> hash_ = detail::makeLazyInitializer(
-          [this] { return HashProvider::makeHash(blob()); });
+      mutable boost::optional<HashType> hash_;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -16,9 +16,11 @@
  */
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
-
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "model/execution/command_executor_factory.hpp"
+#include "model/account.hpp"
+#include "amount/amount.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -30,7 +32,8 @@ namespace iroha {
           transaction_(std::move(transaction)),
           wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
-          command_executors_(std::move(command_executors)) {
+          command_executors_(std::move(command_executors)),
+          log_(logger::log("TemporaryWSV")) {
       transaction_->exec("BEGIN;");
     }
 
@@ -42,8 +45,17 @@ namespace iroha {
       auto execute_command = [this, &tx_creator](auto command) {
         auto executor = command_executors_->getCommandExecutor(command);
         auto account = wsv_->getAccount(tx_creator).value();
-        return executor->validate(*command, *wsv_, tx_creator)
-            && executor->execute(*command, *wsv_, *executor_, tx_creator);
+        if (not executor->validate(*command, *wsv_, tx_creator)) {
+          return false;
+        }
+        auto result =
+            executor->execute(*command, *wsv_, *executor_, tx_creator);
+        return result.match(
+            [](expected::Value<void> &v) { return true; },
+            [this](expected::Error<iroha::model::ExecutionError> &e) {
+              log_->error(e.error.toString());
+              return false;
+            });
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");

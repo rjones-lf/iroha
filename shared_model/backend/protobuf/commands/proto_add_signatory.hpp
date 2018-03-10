@@ -24,15 +24,14 @@ namespace shared_model {
   namespace proto {
     class AddSignatory final : public CopyableProto<interface::AddSignatory,
                                                     iroha::protocol::Command,
-                                                    AddSignatory>  {
+                                                    AddSignatory> {
      public:
       template <typename CommandType>
       explicit AddSignatory(CommandType &&command)
           : CopyableProto(std::forward<CommandType>(command)),
-            add_signatory_(detail::makeReferenceGenerator(
-                proto_, &iroha::protocol::Command::add_signatory)),
+            add_signatory_(proto_->add_signatory()),
             pubkey_([this] {
-              return interface::types::PubkeyType(add_signatory_->public_key());
+              return interface::types::PubkeyType(add_signatory_.public_key());
             }) {}
 
       AddSignatory(const AddSignatory &o) : AddSignatory(o.proto_) {}
@@ -41,7 +40,7 @@ namespace shared_model {
           : AddSignatory(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return add_signatory_->account_id();
+        return add_signatory_.account_id();
       }
 
       const interface::types::PubkeyType &pubkey() const override {
@@ -53,7 +52,7 @@ namespace shared_model {
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const Lazy<const iroha::protocol::AddSignatory &> add_signatory_;
+      const iroha::protocol::AddSignatory &add_signatory_;
 
       const Lazy<interface::types::PubkeyType> pubkey_;
     };

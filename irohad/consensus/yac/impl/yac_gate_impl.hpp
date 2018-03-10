@@ -18,16 +18,28 @@
 #ifndef IROHA_YAC_GATE_IMPL_HPP
 #define IROHA_YAC_GATE_IMPL_HPP
 
+#include <memory>
+#include <rxcpp/rx-observable.hpp>
 #include "consensus/yac/yac_gate.hpp"
-#include "consensus/yac/yac_peer_orderer.hpp"
-#include "network/block_loader.hpp"
-#include "simulator/block_creator.hpp"
-
+#include "consensus/yac/yac_hash_provider.hpp"
 #include "logger/logger.hpp"
+#include "model/block.hpp"
 
 namespace iroha {
+
+  namespace simulator {
+    class BlockCreator;
+  }
+
+  namespace network {
+    class BlockLoader;
+  }
+
   namespace consensus {
     namespace yac {
+
+      struct CommitMessage;
+      class YacPeerOrderer;
 
       class YacGateImpl : public YacGate {
        public:
@@ -41,7 +53,6 @@ namespace iroha {
         rxcpp::observable<model::Block> on_commit() override;
 
        private:
-
         /**
          * Update current block with signatures from commit message
          * @param commit - commit message to get signatures from

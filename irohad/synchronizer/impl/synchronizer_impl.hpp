@@ -49,7 +49,7 @@ namespace iroha {
 
       logger::Logger log_;
     };
-  }
-}
+  }  // namespace synchronizer
+}  // namespace iroha
 
 #endif  // IROHA_SYNCHRONIZER_IMPL_HPP

@@ -16,12 +16,11 @@
  */
 
 #include "model/generators/transaction_generator.hpp"
-
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "crypto/keys_manager_impl.hpp"
+#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "datetime/time.hpp"
-
 #include "model/commands/append_role.hpp"
+#include "model/peer.hpp"
 
 namespace iroha {
   namespace model {
@@ -36,10 +35,10 @@ namespace iroha {
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
           KeysManagerImpl manager("node" + std::to_string(i));
-          manager.createKeys("node" + std::to_string(i));
+          manager.createKeys();
           auto keypair = *manager.loadKeys();
           tx.commands.push_back(command_generator.generateAddPeer(
-              peers_address[i], keypair.pubkey));
+              Peer(peers_address[i], keypair.pubkey)));
         }
         // Create admin role
         tx.commands.push_back(
@@ -57,12 +56,12 @@ namespace iroha {
             command_generator.generateCreateAsset("coin", "test", precision));
         // Create accounts
         KeysManagerImpl manager("admin@test");
-        manager.createKeys("admin@test");
+        manager.createKeys();
         auto keypair = *manager.loadKeys();
         tx.commands.push_back(command_generator.generateCreateAccount(
             "admin", "test", keypair.pubkey));
         manager = KeysManagerImpl("test@test");
-        manager.createKeys("test@test");
+        manager.createKeys();
         keypair = *manager.loadKeys();
         tx.commands.push_back(command_generator.generateCreateAccount(
             "test", "test", keypair.pubkey));

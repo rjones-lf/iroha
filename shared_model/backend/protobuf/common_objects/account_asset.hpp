@@ -52,9 +52,13 @@ namespace shared_model {
         return proto_->asset_id();
       }
 
-      const interface::Amount &balance() const override { return *balance_; }
+      const interface::Amount &balance() const override {
+        return *balance_;
+      }
 
-      const BlobType &blob() const override { return *blob_; }
+      const BlobType &blob() const override {
+        return *blob_;
+      }
 
      private:
       template <typename T>

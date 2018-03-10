@@ -34,9 +34,8 @@ namespace shared_model {
       template <typename QueryType>
       explicit GetAccountTransactions(QueryType &&query)
           : CopyableProto(std::forward<QueryType>(query)),
-            account_transactions_(detail::makeReferenceGenerator(
-                &proto_->payload(),
-                &iroha::protocol::Query::Payload::get_account_transactions)) {}
+            account_transactions_(
+                proto_->payload().get_account_transactions()) {}
 
       GetAccountTransactions(const GetAccountTransactions &o)
           : GetAccountTransactions(o.proto_) {}
@@ -45,17 +44,13 @@ namespace shared_model {
           : GetAccountTransactions(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &accountId() const override {
-        return account_transactions_->account_id();
+        return account_transactions_.account_id();
       }
 
      private:
       // ------------------------------| fields |-------------------------------
 
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<const iroha::protocol::GetAccountTransactions &>
-          account_transactions_;
+      const iroha::protocol::GetAccountTransactions &account_transactions_;
     };
 
   }  // namespace proto

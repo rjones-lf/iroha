@@ -26,13 +26,12 @@ using namespace iroha::ametsuchi;
 
 using ::testing::_;
 using ::testing::A;
-using ::testing::Return;
-using ::testing::InvokeArgument;
 using ::testing::ByRef;
+using ::testing::InvokeArgument;
+using ::testing::Return;
 
 class ChainValidationTest : public ::testing::Test {
  public:
-
   void SetUp() override {
     validator = std::make_shared<ChainValidatorImpl>();
     storage = std::make_shared<MockMutableStorage>();
@@ -60,8 +59,7 @@ class ChainValidationTest : public ::testing::Test {
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
-  EXPECT_CALL(*query, getPeers())
-      .WillOnce(Return(peers));
+  EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(block, _))
       .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
@@ -74,8 +72,7 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   hash.fill(1);
 
-  EXPECT_CALL(*query, getPeers())
-      .WillOnce(Return(peers));
+  EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(block, _))
       .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
@@ -88,8 +85,7 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
 
   block.sigs.clear();
 
-  EXPECT_CALL(*query, getPeers())
-      .WillOnce(Return(peers));
+  EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(block, _))
       .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
@@ -102,8 +98,7 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
 
   block.sigs.back().pubkey.fill(1);
 
-  EXPECT_CALL(*query, getPeers())
-      .WillOnce(Return(peers));
+  EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   EXPECT_CALL(*storage, apply(block, _))
       .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
@@ -114,8 +109,7 @@ TEST_F(ChainValidationTest, FailWhenBadPeer) {
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
 
-  EXPECT_CALL(*query, getPeers())
-      .WillOnce(Return(peers));
+  EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
   auto block_observable = rxcpp::observable<>::just(block);
 

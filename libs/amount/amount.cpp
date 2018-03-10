@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 
-#include <utility>
+#include "amount/amount.hpp"
 
 #include <logger/logger.hpp>
 #include <regex>
-#include "amount/amount.hpp"
+#include <utility>
 
 namespace iroha {
 
   // to raise to power integer values
-  int ipow(int base, int exp) {
+  static int ipow(int base, int exp) {
     int result = 1;
     while (exp != 0) {
       if (exp & 1) {
@@ -37,10 +37,10 @@ namespace iroha {
     return result;
   }
 
-  uint256_t getJointUint256(uint64_t first,
-                            uint64_t second,
-                            uint64_t third,
-                            uint64_t fourth) {
+  static uint256_t getJointUint256(uint64_t first,
+                                   uint64_t second,
+                                   uint64_t third,
+                                   uint64_t fourth) {
     // join 4 uint64_t into single uint256_t by means of logic or operator
     uint256_t res(0);
     res |= first;
@@ -80,7 +80,8 @@ namespace iroha {
 
   Amount &Amount::operator=(const Amount &other) {
     // check for self-assignment
-    if (&other == this) return *this;
+    if (&other == this)
+      return *this;
     value_ = other.value_;
     precision_ = other.precision_;
     return *this;
@@ -123,9 +124,13 @@ namespace iroha {
     return Amount(value, precision);
   }
 
-  uint256_t Amount::getIntValue() { return value_; }
+  uint256_t Amount::getIntValue() {
+    return value_;
+  }
 
-  uint8_t Amount::getPrecision() { return precision_; }
+  uint8_t Amount::getPrecision() {
+    return precision_;
+  }
 
   std::vector<uint64_t> Amount::to_uint64s() {
     std::vector<uint64_t> array(4);
