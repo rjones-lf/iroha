@@ -37,7 +37,7 @@ namespace shared_model {
 #endif
 
 /**
- * Interface provides signatures and adding them to model object
+ * Interface provides signatures and adds them to model object
  * @tparam Model - your new style model
  * Architecture note: we inherit Signable from Hashable with following
  * assumption - all Signable objects are signed by hash value.
