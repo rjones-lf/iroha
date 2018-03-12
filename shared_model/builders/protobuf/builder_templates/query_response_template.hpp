@@ -19,6 +19,7 @@
 #define IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "builders/protobuf/helpers.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "responses.pb.h"
 
@@ -41,12 +42,13 @@ namespace shared_model {
       enum RequiredFields { QueryResponseField, QueryHash, TOTAL };
 
       template <int s>
-      using NextBuilder = TemplateQueryBuilder<S | (1 << s), BT>;
+      using NextBuilder = TemplateQueryResponseBuilder<S | (1 << s), BT>;
 
       using ProtoQueryResponse = iroha::protocol::QueryResponse;
 
       template <int Sp>
-      TemplateQueryResponseBuilder(const TemplateQueryResponseBuilder<Sp, BT> &o)
+      TemplateQueryResponseBuilder(
+          const TemplateQueryResponseBuilder<Sp, BT> &o)
           : query_response_(o.query_response_) {}
 
       /**
@@ -58,7 +60,7 @@ namespace shared_model {
       template <int Fields, typename Transformation>
       auto transform(Transformation t) const {
         NextBuilder<Fields> copy = *this;
-        t(copy.query_);
+        t(copy.query_response_);
         return copy;
       }
 
@@ -71,7 +73,7 @@ namespace shared_model {
       template <typename Transformation>
       auto queryResponseField(Transformation t) const {
         NextBuilder<QueryResponseField> copy = *this;
-        t(copy.query_.mutable_payload());
+        t(copy.query_response_);
         return copy;
       }
 
@@ -79,76 +81,87 @@ namespace shared_model {
       TemplateQueryResponseBuilder() = default;
 
       auto accountAssetResponse(
-          const interface::AccountAsset &account_asset) const {
+          const interface::types::AssetIdType &asset_id,
+          const interface::types::AccountIdType &account_id,
+          const std::string &amount) const {
         return queryResponseField([&](auto proto_query_response) {
-          auto query_response =
-              proto_query_response->mutable_account_assets_response();
-          query_response->set_account_asset_response(account_asset);
+          iroha::protocol::AccountAssetResponse *query_response =
+              proto_query_response.mutable_account_assets_response();
+
+          query_response->mutable_account_asset()->set_account_id(account_id);
+          query_response->mutable_account_asset()->set_asset_id(asset_id);
+          initializeProtobufAmount(
+              query_response->mutable_account_asset()->mutable_balance(),
+              amount);
         });
       }
 
-      auto accountDetailResponse(
-          const interface::AccountDetailResponse &account_detail) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response =
-              proto_query_response->mutable_account_detail_response();
-          query_response->set_account_detail_response(account_detail);
-        });
-      }
-
-      auto errorQueryResponse(
-          const interface::ErrorQueryResponse &error) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response = proto_query_response->mutable_error_response();
-          query_response->set_error_response(error);
-        });
-      }
-
-      auto signatoriesResponse(
-          const interface::SignatoriesResponse &signatories) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response =
-              proto_query_response->mutable_signatories_response();
-          query_response->set_signatories_response(signatories);
-        });
-      }
-
-      auto transactionsResponse(
-          const interface::TransactionsResponse &transactions) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response =
-              proto_query_response->mutable_transactions_response();
-          query_response->set_transactions_response(transactions);
-        });
-      }
-
-      auto assetResponse(const interface::AssetResponse &asset) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response = proto_query_response->mutable_asset_response();
-          query_response->set_asset_response(asset);
-        });
-      }
-
-      auto rolesResponse(const interface::RolesResponse &roles) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response = proto_query_response->mutable_roles_response();
-          query_response->set_roles_response(roles);
-        });
-      }
-
-      auto rolePermissionsResponse(
-          const interface::RolePermissionsResponse &role_permissions) const {
-        return queryResponseField([&](auto proto_query_response) {
-          auto query_response =
-              proto_query_response->mutable_role_permissions_response();
-          query_response->set_role_permissions_response(role_permissions);
-        });
-      }
-
+      //      auto accountDetailResponse(
+      //          const interface::AccountDetailResponse &account_detail) const
+      //          {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //              proto_query_response->mutable_account_detail_response();
+      //          query_response->set_account_detail_response(account_detail);
+      //        });
+      //      }
+      //
+      //      auto errorQueryResponse(
+      //          const interface::ErrorQueryResponse &error) const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //          proto_query_response->mutable_error_response();
+      //          query_response->set_error_response(error);
+      //        });
+      //      }
+      //
+      //      auto signatoriesResponse(
+      //          const interface::SignatoriesResponse &signatories) const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //              proto_query_response->mutable_signatories_response();
+      //          query_response->set_signatories_response(signatories);
+      //        });
+      //      }
+      //
+      //      auto transactionsResponse(
+      //          const interface::TransactionsResponse &transactions) const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //              proto_query_response->mutable_transactions_response();
+      //          query_response->set_transactions_response(transactions);
+      //        });
+      //      }
+      //
+      //      auto assetResponse(const interface::AssetResponse &asset) const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //          proto_query_response->mutable_asset_response();
+      //          query_response->set_asset_response(asset);
+      //        });
+      //      }
+      //
+      //      auto rolesResponse(const interface::RolesResponse &roles) const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //          proto_query_response->mutable_roles_response();
+      //          query_response->set_roles_response(roles);
+      //        });
+      //      }
+      //
+      //      auto rolePermissionsResponse(
+      //          const interface::RolePermissionsResponse &role_permissions)
+      //          const {
+      //        return queryResponseField([&](auto proto_query_response) {
+      //          auto query_response =
+      //              proto_query_response->mutable_role_permissions_response();
+      //          query_response->set_role_permissions_response(role_permissions);
+      //        });
+      //      }
+      //
       auto queryHash(const interface::types::HashType &query_hash) const {
         return transform<QueryHash>([&](auto proto_query_response) {
-          auto query_response = proto_query_response->mutable_query_hash();
-          query_response->set_query_hash(query_hash);
+          proto_query_response.set_query_hash(query_hash.hex());
         });
       }
 
