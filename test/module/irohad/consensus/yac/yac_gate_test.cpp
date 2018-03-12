@@ -91,8 +91,7 @@ class YacGateTest : public ::testing::Test {
   shared_ptr<YacGateImpl> gate;
 
  protected:
-  YacGateTest() : commit_message(std::vect
-                                     or<VoteMessage>{}) {}
+  YacGateTest() : commit_message(std::vector<VoteMessage>{}) {}
 };
 
 TEST_F(YacGateTest, YacGateSubscriptionTest) {
