@@ -62,7 +62,7 @@ namespace iroha {
             },
             // on complete
             [this]() {
-              for (auto tx_hash : proposal_set_) {
+              for (auto& tx_hash : proposal_set_) {
                 notifier_.get_subscriber().on_next(
                     status_builder_.statefulValidationFailed()
                         .txHash(tx_hash)

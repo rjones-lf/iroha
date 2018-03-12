@@ -24,7 +24,9 @@ namespace shared_model {
   namespace proto {
     class TransactionStatusBuilder {
      public:
-      std::shared_ptr<shared_model::proto::TransactionResponse> build();
+      shared_model::proto::TransactionResponse build() &&;
+
+      shared_model::proto::TransactionResponse build() &;
 
       TransactionStatusBuilder statelessValidationSuccess();
 
@@ -38,7 +40,7 @@ namespace shared_model {
 
       TransactionStatusBuilder notReceived();
 
-      TransactionStatusBuilder txHash(const crypto::Hash hash);
+      TransactionStatusBuilder txHash(const crypto::Hash& hash);
 
      private:
       iroha::protocol::ToriiResponse tx_response_;

@@ -31,9 +31,6 @@ using namespace std::chrono_literals;
 
 namespace torii {
 
-  template <typename T>
-  class Type;
-
   CommandService::CommandService(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
@@ -173,13 +170,10 @@ namespace torii {
               auto proto_response = std::static_pointer_cast<
                   shared_model::proto::TransactionResponse>(iroha_response);
 
-              iroha::protocol::ToriiResponse resp_sub;
-              resp_sub.set_tx_hash(shared_model::crypto::toBinaryString(
-                  proto_response->transactionHash()));
-              auto proto_status = proto_response->getTransport().tx_status();
-              resp_sub.set_tx_status(proto_status);
+              iroha::protocol::ToriiResponse resp_sub =
+                  proto_response->getTransport();
 
-              if (isFinalStatus(proto_status)) {
+              if (isFinalStatus(resp_sub.tx_status())) {
                 response_writer.WriteLast(resp_sub, grpc::WriteOptions());
                 subscription.unsubscribe();
                 finished = true;
@@ -230,36 +224,6 @@ namespace torii {
       }
       response_writer.Write(*resp);
     }
-  }
-
-  iroha::protocol::TxStatus CommandService::convertStatusToProto(
-      const iroha::model::TransactionResponse::Status &status) {
-    iroha::protocol::TxStatus proto_status;
-    switch (status) {
-      case iroha::model::TransactionResponse::STATELESS_VALIDATION_FAILED:
-        proto_status = iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED;
-        break;
-      case iroha::model::TransactionResponse::STATELESS_VALIDATION_SUCCESS:
-        proto_status = iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS;
-        break;
-      case iroha::model::TransactionResponse::STATEFUL_VALIDATION_FAILED:
-        proto_status = iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED;
-        break;
-      case iroha::model::TransactionResponse::STATEFUL_VALIDATION_SUCCESS:
-        proto_status = iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS;
-        break;
-      case iroha::model::TransactionResponse::IN_PROGRESS:
-        proto_status = iroha::protocol::TxStatus::IN_PROGRESS;
-        break;
-      case iroha::model::TransactionResponse::COMMITTED:
-        proto_status = iroha::protocol::TxStatus::COMMITTED;
-        break;
-      case iroha::model::TransactionResponse::NOT_RECEIVED:
-      default:
-        proto_status = iroha::protocol::TxStatus::NOT_RECEIVED;
-        break;
-    }
-    return proto_status;
   }
 
   bool CommandService::isFinalStatus(
