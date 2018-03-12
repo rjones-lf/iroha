@@ -59,8 +59,8 @@ namespace iroha {
               transaction->creatorAccountId());
           auto result =
               boost::apply_visitor(*command_executor_, command->get());
-          return result.match([](expected::Value<void> v) { return true; },
-                              [&](expected::Error<ExecutionError> e) {
+          return result.match([](expected::Value<void> &v) { return true; },
+                              [&](expected::Error<ExecutionError> &e) {
                                 log_->error(e.error.toString());
                                 return false;
                               });

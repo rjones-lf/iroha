@@ -33,7 +33,7 @@ namespace iroha {
           execute_{makeExecuteResult(transaction_)} {}
 
     WsvCommandResult PostgresWsvCommand::insertRole(
-        const std::string &role_name) {
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result = execute_("INSERT INTO role(role_id) VALUES ("
                              + transaction_.quote(role_name) + ");");
 
@@ -45,7 +45,8 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountRole(
-        const std::string &account_id, const std::string &role_name) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result =
           execute_("INSERT INTO account_has_roles(account_id, role_id) VALUES ("
                    + transaction_.quote(account_id) + ", "
@@ -62,7 +63,8 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountRole(
-        const std::string &account_id, const std::string &role_name) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result = execute_("DELETE FROM account_has_roles WHERE account_id="
                              + transaction_.quote(account_id) + "AND role_id="
                              + transaction_.quote(role_name) + ";");
@@ -78,7 +80,9 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
-        const std::string &role_id, const std::set<std::string> &permissions) {
+        const shared_model::interface::types::RoleIdType &role_id,
+        const std::set<shared_model::interface::types::PermissionNameType>
+            &permissions) {
       auto entry = [this, &role_id](auto permission) {
         return "(" + transaction_.quote(role_id) + ", "
             + transaction_.quote(permission) + ")";
@@ -110,9 +114,11 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountGrantablePermission(
-        const std::string &permittee_account_id,
-        const std::string &account_id,
-        const std::string &permission_id) {
+        const shared_model::interface::types::AccountIdType
+            &permittee_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PermissionNameType
+            &permission_id) {
       auto result = execute_(
           "INSERT INTO "
           "account_has_grantable_permissions(permittee_account_id, "
@@ -134,9 +140,11 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountGrantablePermission(
-        const std::string &permittee_account_id,
-        const std::string &account_id,
-        const std::string &permission_id) {
+        const shared_model::interface::types::AccountIdType
+            &permittee_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PermissionNameType
+            &permission_id) {
       auto result = execute_(
           "DELETE FROM public.account_has_grantable_permissions WHERE "
           "permittee_account_id="
@@ -212,7 +220,7 @@ namespace iroha {
             "VALUES ("
             + transaction_.quote(asset.accountId()) + ", "
             + transaction_.quote(asset.assetId()) + ", "
-            + transaction_.quote(iroha::Amount(asset.balance().intValue(), asset.balance().precision()).to_string())
+            + transaction_.quote(asset.balance().toStringRepr())
             + ") ON CONFLICT (account_id, asset_id) DO UPDATE SET "
             "amount = EXCLUDED.amount;");
 
@@ -244,7 +252,7 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountSignatory(
-        const std::string &account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
         const shared_model::crypto::PublicKey &signatory) {
       auto result = execute_(
           "INSERT INTO account_has_signatory(account_id, public_key) VALUES ("
@@ -263,7 +271,7 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountSignatory(
-        const std::string &account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
         const shared_model::crypto::PublicKey &signatory) {
       auto result =
           execute_("DELETE FROM account_has_signatory WHERE account_id = "
@@ -373,8 +381,8 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::setAccountKV(
-        const std::string &account_id,
-        const std::string &creator_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::AccountIdType &creator_account_id,
         const std::string &key,
         const std::string &val) {
       auto result = execute_(

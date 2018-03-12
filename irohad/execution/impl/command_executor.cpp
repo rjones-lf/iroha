@@ -55,7 +55,7 @@ namespace iroha {
       std::shared_ptr<iroha::ametsuchi::WsvCommand> commands)
       : queries(queries), commands(commands) {}
 
-  void CommandExecutor::setCreatorAccountId(std::string creator_account_id) {
+  void CommandExecutor::setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
@@ -463,14 +463,14 @@ namespace iroha {
       std::shared_ptr<iroha::ametsuchi::WsvQuery> queries)
       : queries(queries) {}
 
-  void CommandValidator::setCreatorAccountId(std::string creator_account_id) {
+  void CommandValidator::setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::AddAssetQuantity &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     // Check if creator has MoneyCreator permission.
     // One can only add to his/her account
     // TODO: In future: Separate money creation for distinct assets
@@ -481,14 +481,14 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(const shared_model::interface::AddPeer &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_add_peer);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::AddSignatory &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. When command creator wants to add signatory to their
         // account and he has permission CanAddSignatory
@@ -505,42 +505,42 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(const shared_model::interface::AppendRole &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_append_role);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::CreateAccount &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_account);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::CreateAsset &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_asset);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::CreateDomain &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_domain);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::CreateRole &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_role);
   }
 
   bool CommandValidator::hasPermissions(const shared_model::interface::DetachRole &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_detach_role);
   }
@@ -548,7 +548,7 @@ namespace iroha {
   bool CommandValidator::hasPermissions(
       const shared_model::interface::GrantPermission &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id,
         queries,
@@ -558,7 +558,7 @@ namespace iroha {
   bool CommandValidator::hasPermissions(
       const shared_model::interface::RemoveSignatory &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // 1. Creator removes signatory from their account, and he must have
         // permission on it
@@ -576,7 +576,7 @@ namespace iroha {
   bool CommandValidator::hasPermissions(
       const shared_model::interface::RevokePermission &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return queries.hasAccountGrantablePermission(
         command.accountId(), creator_account_id, command.permissionName());
   }
@@ -584,7 +584,7 @@ namespace iroha {
   bool CommandValidator::hasPermissions(
       const shared_model::interface::SetAccountDetail &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. Creator set details for his account
         creator_account_id == command.accountId() or
@@ -596,7 +596,7 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(const shared_model::interface::SetQuorum &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // 1. Creator set quorum for his account -> must have permission
         (creator_account_id == command.accountId()
@@ -612,7 +612,7 @@ namespace iroha {
   bool CommandValidator::hasPermissions(
       const shared_model::interface::SubtractAssetQuantity &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return creator_account_id == command.accountId()
         and checkAccountRolePermission(creator_account_id,
                                        queries,
@@ -621,7 +621,7 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(const shared_model::interface::TransferAsset &command,
                                         iroha::ametsuchi::WsvQuery &queries,
-                                        const std::string &creator_account_id) {
+                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
 
         (
@@ -643,25 +643,25 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::AddAssetQuantity &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::AddPeer &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::AddSignatory &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::AppendRole &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_permissions = queries.getRolePermissions(command.roleName());
     auto account_roles = queries.getAccountRoles(creator_account_id);
 
@@ -688,7 +688,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::CreateAccount &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.accountName().empty()
@@ -698,7 +698,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::CreateAsset &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.assetName().empty() && command.assetName().size() < 10 &&
@@ -710,7 +710,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::CreateDomain &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.domainId().empty() and command.domainId().size() < 10 and
@@ -722,7 +722,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::CreateRole &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_is_a_subset = std::all_of(
         command.rolePermissions().begin(),
         command.rolePermissions().end(),
@@ -740,20 +740,20 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::DetachRole &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::GrantPermission &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     // TODO: no additional checks ?
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::RemoveSignatory &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto account = queries.getAccount(command.accountId());
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
@@ -770,20 +770,20 @@ namespace iroha {
 
   bool CommandValidator::isValid(const shared_model::interface::RevokePermission &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     // TODO: no checks needed ?
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::SetAccountDetail &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::SetQuorum &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
 
@@ -799,13 +799,13 @@ namespace iroha {
   bool CommandValidator::isValid(
       const shared_model::interface::SubtractAssetQuantity &command,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(const shared_model::interface::TransferAsset &command,
                                  iroha::ametsuchi::WsvQuery &queries,
-                                 const std::string &creator_account_id) {
+                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
     if (command.amount().intValue() == 0) {
       return false;
     }

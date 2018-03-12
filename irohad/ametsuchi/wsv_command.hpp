@@ -24,22 +24,24 @@
 #include "common/types.hpp"
 
 #include "common/types.hpp"  // for pubkey_t
-#include "interfaces/common_objects/account.hpp"
-#include "interfaces/common_objects/account_asset.hpp"
-#include "interfaces/common_objects/asset.hpp"
-#include "interfaces/common_objects/domain.hpp"
-#include "interfaces/common_objects/peer.hpp"
+//#include "interfaces/common_objects/account.hpp"
+//#include "interfaces/common_objects/account_asset.hpp"
+//#include "interfaces/common_objects/asset.hpp"
+//#include "interfaces/common_objects/domain.hpp"
+//#include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/types.hpp"
+
+namespace shared_model {
+    namespace interface {
+        class Asset;
+        class Account;
+        class Domain;
+        class Peer;
+        class AccountAsset;
+    }
+}
 
 namespace iroha {
-
-  namespace model {
-    struct Asset;
-    struct Account;
-    struct Domain;
-    struct Peer;
-    struct AccountAsset;
-  }  // namespace model
-
   namespace ametsuchi {
 
     /**
@@ -70,7 +72,8 @@ namespace iroha {
        * @param role_name
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertRole(const std::string &role_name) = 0;
+      virtual WsvCommandResult insertRole(
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
 
       /**
        * Bind account and role
@@ -79,7 +82,8 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountRole(
-          const std::string &account_id, const std::string &role_name) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
       /**
        * Unbind account and role
        * @param account_id
@@ -87,7 +91,8 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountRole(
-          const std::string &account_id, const std::string &role_name) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
 
       /**
        * Bind role and permissions
@@ -96,8 +101,9 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertRolePermissions(
-          const std::string &role_id,
-          const std::set<std::string> &permissions) = 0;
+          const shared_model::interface::types::RoleIdType &role_id,
+          const std::set<shared_model::interface::types::PermissionNameType>
+              &permissions) = 0;
 
       /**
        * Insert grantable permission
@@ -107,9 +113,11 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountGrantablePermission(
-          const std::string &permittee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const shared_model::interface::types::AccountIdType
+              &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) = 0;
 
       /**
        * Delete grantable permission
@@ -120,9 +128,11 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountGrantablePermission(
-          const std::string &permittee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const shared_model::interface::types::AccountIdType
+              &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) = 0;
 
       /**
        *git
@@ -149,8 +159,9 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult setAccountKV(
-          const std::string &account_id,
-          const std::string &creator_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountIdType
+              &creator_account_id,
           const std::string &key,
           const std::string &val) = 0;
 
@@ -185,7 +196,7 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountSignatory(
-          const std::string &account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
@@ -195,7 +206,7 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountSignatory(
-          const std::string &account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::crypto::PublicKey &signatory) = 0;
 
       /**
