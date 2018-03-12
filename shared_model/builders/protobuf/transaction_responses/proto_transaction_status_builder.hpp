@@ -24,64 +24,21 @@ namespace shared_model {
   namespace proto {
     class TransactionStatusBuilder {
      public:
-      std::shared_ptr<shared_model::proto::TransactionResponse> build() {
-        return std::make_shared<shared_model::proto::TransactionResponse>(
-            std::move(tx_response_));
-      }
+      std::shared_ptr<shared_model::proto::TransactionResponse> build();
 
-      TransactionStatusBuilder statelessValidationSuccess() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(
-            iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
-        return copy;
-      }
+      TransactionStatusBuilder statelessValidationSuccess();
 
-      TransactionStatusBuilder statelessValidationFailed() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(
-            iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-        return copy;
-      }
+      TransactionStatusBuilder statelessValidationFailed();
 
-      TransactionStatusBuilder statefulValidationSuccess() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(
-            iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
-        return copy;
-      }
+      TransactionStatusBuilder statefulValidationSuccess();
 
-      TransactionStatusBuilder statefulValidationFailed() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(
-            iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-        return copy;
-      }
+      TransactionStatusBuilder statefulValidationFailed();
 
-      TransactionStatusBuilder committed() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
-        return copy;
-      }
+      TransactionStatusBuilder committed();
 
-      TransactionStatusBuilder notReceived() {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_status(
-            iroha::protocol::TxStatus::NOT_RECEIVED);
-        return copy;
-      }
+      TransactionStatusBuilder notReceived();
 
-      TransactionStatusBuilder txHash(const crypto::Hash hash) {
-        TransactionStatusBuilder copy(*this);
-        copy.tx_response_ = tx_response_;
-        copy.tx_response_.set_tx_hash(crypto::toBinaryString(hash));
-        return copy;
-      }
+      TransactionStatusBuilder txHash(const crypto::Hash hash);
 
      private:
       iroha::protocol::ToriiResponse tx_response_;
