@@ -6,39 +6,29 @@ function(strictmode target)
       CXX_STANDARD_REQUIRED ON
       CXX_EXTENSIONS OFF
       )
-  # Enable more warnings and turn them into compile errors.
-  if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-    target_compile_options(${target} PRIVATE -Wall -Wpedantic -Werror -Wno-potentially-evaluated-expression)
-  elseif ((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Intel"))
-    target_compile_options(${target} PRIVATE /W3 /WX)
-  else ()
-    message(AUTHOR_WARNING "Unknown compiler: building target ${target} with default options")
-  endif ()
+  target_compile_options(${target} PRIVATE
+      -Wall
+      -Wpedantic
+      -Werror
+      )
 endfunction()
 
-# Creates test "test_name", with "SOURCES" (use string as second argument)
-function(addtest test_name SOURCES)
-  if (COVERAGE)
+# Creates test "test_name"
+function(addtest test_name)
+  if (${CMAKE_BUILD_TYPE} MATCHES "Coverage")
     set(test_xml_output --gtest_output=xml:${REPORT_DIR}/xunit-${test_name}.xml)
   endif ()
-  add_executable(${test_name} ${SOURCES})
-  target_link_libraries(${test_name} gtest gmock)
+  add_executable(${test_name} ${ARGN})
+  target_link_libraries(${test_name}
+      gtest
+      gmock
+      )
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
   add_test(
       NAME ${test_name}
       COMMAND $<TARGET_FILE:${test_name}> ${test_xml_output}
   )
   strictmode(${test_name})
-  if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-    target_compile_options(${test_name} PRIVATE -Wno-inconsistent-missing-override)
-  else ()
-    message(AUTHOR_WARNING "Unknown compiler: building target ${target} with default options")
-  endif ()
 endfunction()
 
 # Creates benchmark "bench_name", with "SOURCES" (use string as second argument)
@@ -130,3 +120,21 @@ macro(get_git_revision commit)
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
   )
 endmacro()
+
+
+function(iroha_get_lib_name out lib type)
+  if(type STREQUAL "STATIC")
+    set(${out} ${CMAKE_STATIC_LIBRARY_PREFIX}${lib}${CMAKE_STATIC_LIBRARY_SUFFIX} PARENT_SCOPE)
+  elseif(type STREQUAL "SHARED")
+    set(${out} ${CMAKE_SHARED_LIBRARY_PREFIX}${lib}${CMAKE_SHARED_LIBRARY_SUFFIX} PARENT_SCOPE)
+  else()
+    message(FATAL_ERROR "type can be either STATIC or SHARED")
+  endif()
+endfunction()
+
+
+function(join VALUES GLUE OUTPUT)
+  string (REGEX REPLACE "([^\\]|^);" "\\1${GLUE}" _TMP_STR "${VALUES}")
+  string (REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
+  set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
+endfunction()

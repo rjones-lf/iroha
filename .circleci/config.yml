@@ -40,10 +40,9 @@ jobs:
           name: cmake
           command: >
             cmake \
-              -DCOVERAGE=ON \
               -H$IROHA_HOME \
               -B$IROHA_BUILD \
-              -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_BUILD_TYPE=Coverage \
               -DIROHA_VERSION=$(eval echo "$IROHA_VERSION")
       - run:
           name: make
@@ -101,7 +100,6 @@ jobs:
           name: cmake
           command: >
             cmake \
-              -DCOVERAGE=OFF \
               -DTESTING=OFF \
               -H$IROHA_HOME \
               -B$IROHA_BUILD \
@@ -298,7 +296,6 @@ jobs:
           name: cmake
           command: >
             cmake -H. -Bbuild \
-              -DCOVERAGE=OFF \
               -DTESTING=OFF \
               -DPACKAGE_TGZ=ON \
               -DCMAKE_BUILD_TYPE=Release \

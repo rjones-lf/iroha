@@ -6,7 +6,10 @@ set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
     )
 
-# Project dependencies.
+
+###################################################################
+##### START OF PROJECT DEPENDENCIES
+
 find_package(Threads REQUIRED)
 
 ##########################
