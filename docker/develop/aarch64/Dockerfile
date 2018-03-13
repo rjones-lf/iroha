@@ -210,7 +210,7 @@ RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
     rm -rf /tmp/ed25519
 
 # fetch lcov reports converter
-RUN curl -L -o /tmp/lcov_cobertura.py https://raw.github.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
+RUN curl -L -o /tmp/lcov_cobertura.py https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/8c55cd11f80a21e7e46f20f8c81fcde0bf11f5e5/lcov_cobertura/lcov_cobertura.py
 
 # install lcov
 RUN curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
