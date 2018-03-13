@@ -6,17 +6,11 @@ function(strictmode target)
       CXX_STANDARD_REQUIRED ON
       CXX_EXTENSIONS OFF
       )
-  # Enable more warnings and turn them into compile errors.
-  if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-    target_compile_options(${target} PRIVATE -Wall -Wpedantic -Werror)
-  elseif ((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Intel"))
-    target_compile_options(${target} PRIVATE /W3 /WX)
-  else ()
-    message(AUTHOR_WARNING "Unknown compiler: building target ${target} with default options")
-  endif ()
+  target_compile_options(${target} PRIVATE
+      -Wall
+      -Wpedantic
+      -Werror
+      )
 endfunction()
 
 # Creates test "test_name"
@@ -35,13 +29,6 @@ function(addtest test_name)
       COMMAND $<TARGET_FILE:${test_name}> ${test_xml_output}
   )
   strictmode(${test_name})
-  if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR
-  (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-    target_compile_options(${test_name} PRIVATE -Wno-inconsistent-missing-override)
-  else ()
-    message(AUTHOR_WARNING "Unknown compiler: building target ${target} with default options")
-  endif ()
 endfunction()
 
 # Creates benchmark "bench_name", with "SOURCES" (use string as second argument)
