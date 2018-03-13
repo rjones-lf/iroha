@@ -19,6 +19,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include "backend/protobuf/from_old_model.hpp"
+
 namespace iroha {
   namespace ametsuchi {
 

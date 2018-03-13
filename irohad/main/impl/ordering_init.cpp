@@ -18,7 +18,6 @@
 #include "main/impl/ordering_init.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "interfaces/common_objects/peer.hpp"
-#include "model/peer.hpp"
 
 namespace iroha {
   namespace network {

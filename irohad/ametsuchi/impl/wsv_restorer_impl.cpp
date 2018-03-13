@@ -21,7 +21,7 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/storage.hpp"
-#include "model/block.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace ametsuchi {

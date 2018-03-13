@@ -25,8 +25,6 @@
 
 #include "ametsuchi/peer_query.hpp"
 #include "logger/logger.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
-#include "model/proposal.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service.hpp"
 #include "network/ordering_service_transport.hpp"
