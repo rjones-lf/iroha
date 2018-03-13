@@ -24,7 +24,6 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/files.hpp"
 #include "logger/logger.hpp"
-#include "model/generators/command_generator.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -95,8 +94,6 @@ namespace iroha {
       }
 
       std::shared_ptr<pqxx::lazyconnection> connection;
-
-      model::generators::CommandGenerator cmd_gen;
 
       std::shared_ptr<StorageImpl> storage;
 
