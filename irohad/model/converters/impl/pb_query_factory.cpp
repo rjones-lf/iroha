@@ -79,11 +79,10 @@ namespace iroha {
               break;
             }
             case Query_Payload::QueryCase::kGetAccountDetail: {
-              // Convert to get Account Asset
+              // Convert to get Account Detail
               const auto &pb_cast = pl.get_account_detail();
               auto query = GetAccountDetail();
               query.account_id = pb_cast.account_id();
-              query.detail = pb_cast.detail();
               val = std::make_shared<model::GetAccountDetail>(query);
               break;
             }
@@ -213,7 +212,6 @@ namespace iroha {
         auto pb_query_mut =
             pb_query.mutable_payload()->mutable_get_account_detail();
         pb_query_mut->set_account_id(tmp->account_id);
-        pb_query_mut->set_detail(tmp->detail);
         return pb_query;
       }
 

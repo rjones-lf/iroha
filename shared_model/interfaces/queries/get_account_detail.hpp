@@ -36,16 +36,11 @@ namespace shared_model {
        * @return account identifier
        */
       virtual const types::AccountIdType &accountId() const = 0;
-      /**
-       * @return asset identifier
-       */
-      virtual const types::DetailType &detail() const = 0;
 
 #ifndef DISABLE_BACKWARD
       OldModelType *makeOldModel() const override {
         auto oldModel = new iroha::model::GetAccountDetail;
         oldModel->account_id = accountId();
-        oldModel->detail = detail();
         return oldModel;
       }
 
@@ -53,14 +48,13 @@ namespace shared_model {
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
-            .init("GetAccountAssets")
+            .init("GetAccountDetail")
             .append("account_id", accountId())
-            .append("detail", detail())
             .finalize();
       }
 
       bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and detail() == rhs.detail();
+        return accountId() == rhs.accountId();
       }
     };
   }  // namespace interface

@@ -19,6 +19,7 @@
 #define IROHA_AMETSUCHI_FIXTURE_HPP
 
 #include <gtest/gtest.h>
+#include <boost/filesystem.hpp>
 #include <pqxx/pqxx>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/files.hpp"
@@ -35,7 +36,7 @@ namespace iroha {
       AmetsuchiTest() {
         auto log = logger::testLog("AmetsuchiTest");
 
-        mkdir(block_store_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        boost::filesystem::create_directory(block_store_path);
         auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
         auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
         auto pg_user = std::getenv("IROHA_POSTGRES_USER");
@@ -60,7 +61,7 @@ namespace iroha {
         txn.exec(drop_);
         txn.commit();
 
-        iroha::remove_all(block_store_path);
+        iroha::remove_dir_contents(block_store_path);
       }
 
       virtual void disconnect() {
@@ -102,7 +103,8 @@ namespace iroha {
       std::string pgopt_ =
           "host=localhost port=5432 user=postgres password=mysecretpassword";
 
-      std::string block_store_path = "/tmp/block_store";
+      std::string block_store_path =
+          (boost::filesystem::temp_directory_path() / "block_store").string();
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
       const std::string drop_ = R"(

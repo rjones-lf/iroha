@@ -26,7 +26,7 @@ target_link_libraries(json_model_converters
     model
     rapidjson
     schema
-    cryptography
+    ed25519_crypto
     logger
     )
 
@@ -41,7 +41,7 @@ add_library(pb_model_converters
 target_link_libraries(pb_model_converters
     model
     schema
-    cryptography
+    ed25519_crypto
     logger
     boost
     )

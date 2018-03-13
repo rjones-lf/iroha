@@ -85,6 +85,11 @@ namespace shared_model {
       return ModelQueryBuilder(builder_.getTransactions(hashes));
     }
 
+    ModelQueryBuilder ModelQueryBuilder::getAccountDetail(
+        const interface::types::AccountIdType &account_id) {
+      return ModelQueryBuilder(builder_.getAccountDetail(account_id));
+    }
+
     proto::UnsignedWrapper<proto::Query> ModelQueryBuilder::build() {
       return builder_.build();
     }

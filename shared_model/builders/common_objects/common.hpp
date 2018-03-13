@@ -64,7 +64,8 @@ namespace shared_model {
         }
 
         if (answer) {
-          return iroha::expected::makeError(std::make_shared<std::string>(answer.reason()));
+          return iroha::expected::makeError(
+              std::make_shared<std::string>(answer.reason()));
         }
 
         return iroha::expected::makeValue(std::move(model_impl));

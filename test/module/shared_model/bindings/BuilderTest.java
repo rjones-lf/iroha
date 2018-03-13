@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+// TODO luckychess 8.08.2018 add test for number of methods
+// in interface and proto implementation IR-1080
+
 public class BuilderTest {
     static {
         try {
@@ -156,6 +159,12 @@ public class BuilderTest {
     @Test
     void transferAsset() {
         UnsignedTx tx = builder.transferAsset("from@test", "to@test", "asset#test", "description", "123.456").build();
+        assertTrue(checkProtoTx(proto(tx)));
+    }
+
+    @Test
+    void setAccountDetail() {
+        UnsignedTx tx = builder.setAccountDetail("admin@test", "fyodor", "kek").build();
         assertTrue(checkProtoTx(proto(tx)));
     }
 }

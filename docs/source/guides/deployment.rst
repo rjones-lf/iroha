@@ -1,22 +1,29 @@
 Deploying Iroha
 ===============
 
-Hyperledger Iroha can be deployed in different ways, depending on the perspective and the purpose. There can be either a single node deployed, or multiple nodes running in several containers on a local machine or spread across the network — so pick any case you need. This page describes different scenarios and is intended to act as a how-to guide for users, primarily trying out Iroha for the first time.
+Hyperledger Iroha can be deployed in different ways, depending on the perspective and the purpose.
+There can be either a single node deployed, or multiple nodes running in several containers on a local machine or spread across the network — so pick any case you need.
+This page describes different scenarios and is intended to act as a how-to guide for users, primarily trying out Iroha for the first time.
 
 Running single instance  
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Generally, people want to run Iroha locally in order to try out the API and explore the capabilities. This can be done in local or container environment (Docker). We will explore both possible cases, but in order to simplify peer components deployment, *it is advised to have Docker installed on your machine*.
+Generally, people want to run Iroha locally in order to try out the API and explore the capabilities.
+This can be done in local or container environment (Docker).
+We will explore both possible cases,
+but in order to simplify peer components deployment, *it is advised to have Docker installed on your machine*.
 
 Local environment
 -----------------
 
-By local environment, it is meant to have daemon process and Postgres deployed without any containers. This might be helpful in cases when messing up with Docker is not preferred — generally a quick exploration of the features.
+By local environment, it is meant to have daemon process and Postgres deployed without any containers.
+This might be helpful in cases when messing up with Docker is not preferred — generally a quick exploration of the features.
 
 Run postgres server
 """""""""""""""""""
 
-In order to run postgres server locally, you should check postgres `website <https://www.postgresql.org/docs/current/static/server-start.html>`__ and follow their description. Generally, postgres server runs automatically when the system starts, but this should be checked in the configuration of the system. 
+In order to run postgres server locally, you should check postgres `website <https://www.postgresql.org/docs/current/static/server-start.html>`__ and follow their description.
+Generally, postgres server runs automatically when the system starts, but this should be checked in the configuration of the system.
 
 
 Run iroha daemon (irohad)
@@ -72,7 +79,8 @@ Then, you have to create an enviroment for the image to run without problems:
 Create docker network
 """""""""""""""""""""
 
-Containers for Postgres and Iroha should run in the same virtual network, in order to be available to each other. Create a network, by typing following command (you can use any name for the network, but in the example, we use *iroha-network* name):
+Containers for Postgres and Iroha should run in the same virtual network, in order to be available to each other.
+Create a network, by typing following command (you can use any name for the network, but in the example, we use *iroha-network* name):
 
 .. code-block:: shell
 
@@ -95,7 +103,8 @@ Similarly, run postgres server, attaching it to the network you have created bef
 Create volume for block storage
 """""""""""""""""""""""""""""""
 
-Before we run iroha daemon in the container, we should create persistent volume to store files, storing blocks for the chain. It is done via the following command:
+Before we run iroha daemon in the container, we should create persistent volume to store files, storing blocks for the chain.
+It is done via the following command:
 
 .. code-block:: shell
 
@@ -134,17 +143,23 @@ If they are met, you can move forward with the following command:
 Running multiple instances (peer network)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to set up a peer network, one should follow routines, described in this section. In this version, we support manual deployment and automated by Ansible Playbook. Choose an option, that meets your security criteria and other needs.
+In order to set up a peer network, one should follow routines, described in this section.
+In this version, we support manual deployment and automated by Ansible Playbook.
+Choose an option, that meets your security criteria and other needs.
 
 Manually
 --------
 
-By manual deployment, we mean that Iroha peer network is set up without automated assistance. It is similar to the process of running a single local instance, although the difference is the genesis block includes more than a single peer. In order to form a block, which includes more than a single peer, or requires customization for your needs, please take a look at `Dealing with troubles`_ section.
+By manual deployment, we mean that Iroha peer network is set up without automated assistance.
+It is similar to the process of running a single local instance, although the difference is the genesis block includes more than a single peer.
+In order to form a block, which includes more than a single peer, or requires customization for your needs, please take a look at `Dealing with troubles`_ section.
 
 Automated
 ---------
 
-Anyone can reuse existing Ansible Playbook in order to create a network of peers running Iroha. Currently, this is a solution for development and testing, in other words, a proof of concept, and cannot be used in production environment, due to some security flaws. For production network, a manual composing of genesis block is required.
+Anyone can reuse existing Ansible Playbook in order to create a network of peers running Iroha.
+Currently, this is a solution for development and testing, in other words, a proof of concept, and cannot be used in production environment, due to some security flaws.
+For production network, a manual composing of genesis block is required.
 
 Prerequisites
 """""""""""""

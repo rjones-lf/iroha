@@ -49,8 +49,7 @@ namespace iroha {
             std::string creator,
             uint64_t query_counter,
             std::string account_id,
-            std::string creator_account_id,
-            std::string detail);
+            std::string creator_account_id);
 
         std::shared_ptr<GetSignatories> generateGetSignatories(
             ts64_t timestamp,

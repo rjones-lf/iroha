@@ -38,21 +38,15 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &accountId() const = 0;
 
-      /// Type of detail key
-      using AccountDetailKeyType = std::string;
-
       /**
        * @return key of data to store in the account
        */
-      virtual const AccountDetailKeyType &key() const = 0;
-
-      /// Type of detail value
-      using AccountDetailValueType = std::string;
+      virtual const types::AccountDetailKeyType &key() const = 0;
 
       /**
        * @return detail value to store by given key
        */
-      virtual const AccountDetailValueType &value() const = 0;
+      virtual const types::AccountDetailValueType &value() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

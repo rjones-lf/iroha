@@ -18,20 +18,19 @@
 #ifndef IROHA_SHARED_MODEL_BLOB_HPP
 #define IROHA_SHARED_MODEL_BLOB_HPP
 
-#include <iomanip>
-#include <sstream>
+#include <string>
 #include <vector>
-#include "common/byteutils.hpp"
+
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/lazy_initializer.hpp"
-#include "utils/string_builder.hpp"
 #include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
   namespace crypto {
 
     class Blob;
-    static inline std::string toBinaryString(const Blob &b);
+    std::string toBinaryString(const Blob &b);
+
     /**
      * Blob class present user-friendly blob for working with low-level
      * binary stuff. Its length is not fixed in compile time.
@@ -40,22 +39,20 @@ namespace shared_model {
      public:
       using Bytes = std::vector<uint8_t>;
 
-      Blob() : blob_() {}
+      Blob() = default;
       /**
        * Create blob from a string
        * @param blob - string to create blob from
        */
-      explicit Blob(const std::string &blob)
-          : Blob(Bytes(blob.begin(), blob.end())) {}
+      explicit Blob(const std::string &blob);
 
       /**
        * Create blob from a vector
        * @param blob - vector to create blob from
        */
-      explicit Blob(const Bytes &blob) : Blob(Bytes(blob)) {}
-      explicit Blob(Bytes &&blob) : blob_(std::move(blob)) {
-        hex_ = iroha::bytestringToHexstring(toBinaryString(*this));
-      }
+      explicit Blob(const Bytes &blob);
+
+      explicit Blob(Bytes &&blob) noexcept;
 
       /**
        * Creates new Blob object from provided hex string
@@ -63,49 +60,29 @@ namespace shared_model {
        * @return Blob from provided hex string if it was correct or
        * Blob from empty string if provided string was not a correct hex string
        */
-      static Blob fromHexString(const std::string &hex) {
-        using iroha::operator|;
-        Blob b("");
-        iroha::hexstringToBytestring(hex) | [&](auto &&s) { b = Blob(s); };
-        return b;
-      }
+      static Blob fromHexString(const std::string &hex);
 
       /**
        * @return provides raw representation of blob
        */
-      virtual const Bytes &blob() const {
-        return blob_;
-      }
+      virtual const Bytes &blob() const;
 
       /**
        * @return provides human-readable representation of blob without leading
        * 0x
        */
-      virtual const std::string &hex() const {
-        return hex_;
-      }
+      virtual const std::string &hex() const;
 
       /**
        * @return size of raw representation of blob
        */
-      virtual size_t size() const {
-        return blob_.size();
-      }
+      virtual size_t size() const;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Blob")
-            .append(hex())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const Blob &rhs) const override {
-        return blob() == rhs.blob();
-      }
+      bool operator==(const Blob &rhs) const override;
 
-      Blob *copy() const override {
-        return new Blob(blob());
-      };
+      Blob *copy() const override;
 
 #ifndef DISABLE_BACKWARD
       /**
@@ -128,9 +105,7 @@ namespace shared_model {
       std::string hex_;
     };
 
-    static inline std::string   toBinaryString(const Blob &b) {
-      return std::string(b.blob().begin(), b.blob().end());
-    }
+
   }  // namespace crypto
 }  // namespace shared_model
 #endif  // IROHA_SHARED_MODEL_BLOB_HPP

@@ -37,6 +37,7 @@ namespace shared_model {
 
       /**
        * Generates new keypair (ed25519) based on user-provided seed
+       * the seed should be 32 byte hex-encoded string
        * @return generated keypair
        */
       crypto::Keypair generateKeypair(const std::string &seed);

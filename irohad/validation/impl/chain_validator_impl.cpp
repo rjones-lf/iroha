@@ -16,9 +16,9 @@
  */
 
 #include "validation/impl/chain_validator_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/mutable_storage.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
 
 namespace iroha {
@@ -30,40 +30,42 @@ namespace iroha {
       log_ = logger::log("ChainValidator");
     }
 
-    bool ChainValidatorImpl::validateBlock(const model::Block &block,
-                                           ametsuchi::MutableStorage &storage) {
+    bool ChainValidatorImpl::validateBlock(
+        const shared_model::interface::Block &block,
+        ametsuchi::MutableStorage &storage) {
       log_->info("validate block: height {}, hash {}",
-                 block.height,
-                 block.hash.to_hexstring());
+                 block.height(),
+                 block.hash().hex());
       auto apply_block =
           [this](const auto &block, auto &queries, const auto &top_hash) {
             auto peers = queries.getPeers();
             if (not peers.has_value()) {
               return false;
             }
-            auto old_block = *std::unique_ptr<model::Block>(block.makeOldModel());
             return block.prevHash() == top_hash
-                and supermajority_checker_->hasSupermajority(old_block.sigs,
+                and supermajority_checker_->hasSupermajority(block.signatures(),
                                                              peers.value());
           };
 
       // Apply to temporary storage
-      auto old_block = shared_model::proto::from_old(block);
-      return storage.apply(old_block, apply_block);
+      return storage.apply(block, apply_block);
     }
 
-    bool ChainValidatorImpl::validateChain(OldCommit blocks,
-                                           ametsuchi::MutableStorage &storage) {
+    bool ChainValidatorImpl::validateChain(
+        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+            blocks,
+        ametsuchi::MutableStorage &storage) {
       log_->info("validate chain...");
       return blocks
           .all([this, &storage](auto block) {
             log_->info("Validating block: height {}, hash {}",
-                       block.height,
-                       block.hash.to_hexstring());
-            return this->validateBlock(block, storage);
+                       block->height(),
+                       block->hash().hex());
+            return this->validateBlock(*block, storage);
           })
           .as_blocking()
           .first();
     }
+
   }  // namespace validation
 }  // namespace iroha

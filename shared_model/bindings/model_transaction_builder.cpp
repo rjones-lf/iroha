@@ -126,8 +126,8 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::setAccountDetail(
         const interface::types::AccountIdType &account_id,
-        const interface::SetAccountDetail::AccountDetailKeyType &key,
-        const interface::SetAccountDetail::AccountDetailValueType &value) {
+        const interface::types::AccountDetailKeyType &key,
+        const interface::types::AccountDetailValueType &value) {
       return ModelTransactionBuilder(
           builder_.setAccountDetail(account_id, key, value));
     }

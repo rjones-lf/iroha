@@ -18,9 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_HASH_HPP
 #define IROHA_SHARED_MODEL_HASH_HPP
 
-#include <boost/functional/hash.hpp>
 #include "cryptography/blob.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -35,26 +33,14 @@ namespace shared_model {
        * To calculate hash used by some standard containers
        */
       struct Hasher {
-        std::size_t operator()(const Hash &h) const {
-          using boost::hash_value;
-          using boost::hash_combine;
-
-          std::size_t seed = 0;
-          hash_combine(seed, hash_value(h.blob()));
-
-          return seed;
-        }
+        std::size_t operator()(const Hash &h) const;
       };
 
-      Hash() : Blob() {}
-      explicit Hash(const std::string &hash) : Blob(hash) {}
+      Hash();
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Hash")
-            .append(Blob::hex())
-            .finalize();
-      }
+      explicit Hash(const std::string &hash);
+
+      std::string toString() const override;
     };
   }  // namespace crypto
 }  // namespace shared_model

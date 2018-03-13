@@ -54,6 +54,7 @@ namespace integration_framework {
    public:
     IntegrationTestFramework(size_t maximum_block_size = 10)
         : maximum_block_size_(maximum_block_size) {}
+    ~IntegrationTestFramework();
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
     IntegrationTestFramework &setInitialState(
@@ -102,6 +103,13 @@ namespace integration_framework {
                         const WaitTime &wait,
                         const std::string &error_reason);
 
+    static const std::string kDefaultDomain;
+    static const std::string kDefaultRole;
+
+    static const std::string kAdminName;
+    static const std::string kAdminId;
+    static const std::string kAssetName;
+
    protected:
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
@@ -116,9 +124,6 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next committed block
     const milliseconds block_waiting = milliseconds(20000);
-
-    const std::string default_domain = "test";
-    const std::string default_role = "user";
 
     size_t maximum_block_size_;
 

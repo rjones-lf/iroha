@@ -21,7 +21,7 @@
 
 #include "logger/logger.hpp"
 
-void iroha::remove_all(const std::string &dump_dir) {
+void iroha::remove_dir_contents(const std::string &dump_dir) {
   auto log = logger::log("common::remove_all");
   boost::system::error_code error_code;
 

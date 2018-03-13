@@ -32,10 +32,12 @@ class KeyManager : public ::testing::Test {
  public:
   bool create_file(const path &ph, const std::string &contents) {
     std::ofstream f(ph.c_str());
-    if (not f)
+    if (not f) {
       return false;
-    if (not contents.empty())
+    }
+    if (not contents.empty()) {
       f.write(contents.c_str(), contents.size());
+    }
     return f.good();
   }
 
@@ -44,20 +46,23 @@ class KeyManager : public ::testing::Test {
   }
 
   void TearDown() {
-    remove_all(test_dir);
+    boost::filesystem::remove_all(test_dir);
   }
 
-  const path test_dir = "/tmp/iroha";
+  const path test_dir = boost::filesystem::temp_directory_path()
+      / boost::filesystem::unique_path();
   const std::string filepath = (test_dir / "keymanager_test_file").string();
-  const path pub_key_path = filepath + ".pub";
-  const path pri_key_path = filepath + ".priv";
+  const path pub_key_path = filepath + KeysManagerImpl::kPubExt;
+  const path pri_key_path = filepath + KeysManagerImpl::kPrivExt;
   const std::string pubkey =
       "00576e02f23c8c694c322796cb3ef494829fdf484f4b42312fb7d776fbd5123b"s;
   const std::string prikey =
       "36f028580bb02cc8272a9a020f4200e346e276ae664e45ee80745574e2f5ab80"s;
   KeysManagerImpl manager = KeysManagerImpl(filepath);
   const std::string passphrase = "test";
-  const std::string nonexistent = "/tmp/path/that/does/not/exist/100/percent";
+  const std::string nonexistent = (boost::filesystem::temp_directory_path()
+                                   / "path" / "that" / "doesnt" / "exist")
+                                      .string();
 };
 
 TEST_F(KeyManager, LoadNonExistentKeyFile) {

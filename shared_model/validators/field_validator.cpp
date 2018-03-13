@@ -147,7 +147,7 @@ namespace shared_model {
 
     void FieldValidator::validateAccountDetailKey(
         ReasonsGroupType &reason,
-        const interface::SetAccountDetail::AccountDetailKeyType &key) const {
+        const interface::types::AccountDetailKeyType &key) const {
       if (not std::regex_match(key, detail_key_pattern_)) {
         auto message =
             (boost::format("Wrongly formed key, passed value: '%s'") % key)

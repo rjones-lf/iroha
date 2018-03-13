@@ -18,7 +18,7 @@
 #ifndef IROHA_MUTABLE_STORAGE_HPP
 #define IROHA_MUTABLE_STORAGE_HPP
 
-#include "common/types.hpp"  // for hash256_t
+#include <functional>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -28,11 +28,6 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
-
-  namespace model {
-    struct Block;
-  }
-
   namespace ametsuchi {
 
     class WsvQuery;
