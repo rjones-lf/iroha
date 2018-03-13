@@ -110,10 +110,8 @@ RUN set -e; \
         -B/tmp/grpc/.build; \
     cd /tmp/grpc/.build; \
     make -j${PARALLELISM} gpr grpc grpc++ grpc_cpp_plugin; \
-    cp libgpr.so /usr/local/lib; \
-    cp libgrpc.so /usr/local/lib; \
-    cp libgrpc++.so /usr/local/lib; \
-    cp libgrpc_plugin_support.so /usr/local/lib; \
+    # copy libs to /usr/local/lib
+    cp libgpr.so libgrpc.so libgrpc++.so libgrpc_plugin_support.so /usr/local/lib; \
     cp grpc_cpp_plugin /usr/local/bin; \
     cp -R ../include /usr/local; \
     ldconfig; \
