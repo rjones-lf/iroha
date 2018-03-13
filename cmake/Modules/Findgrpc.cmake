@@ -40,7 +40,8 @@ if (NOT grpc_FOUND)
         -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf
         -DgRPC_ZLIB_PROVIDER=package
         -DBUILD_SHARED_LIBS=ON
-      PATCH_COMMAND ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch || true
+      PATCH_COMMAND
+        ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch || true
       BUILD_BYPRODUCTS
         ${EP_PREFIX}/src/grpc_grpc-build/grpc_cpp_plugin
         ${EP_PREFIX}/src/grpc_grpc-build/${CMAKE_SHARED_LIBRARY_PREFIX}gpr${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -52,6 +53,7 @@ if (NOT grpc_FOUND)
       )
   externalproject_get_property(grpc_grpc source_dir binary_dir)
   set(grpc_INCLUDE_DIR ${source_dir}/include)
+  set(gpr_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}gpr${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_grpc++_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_CPP_PLUGIN ${binary_dir}/grpc_cpp_plugin)

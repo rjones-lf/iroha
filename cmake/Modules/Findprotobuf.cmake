@@ -26,9 +26,15 @@ if (NOT protobuf_FOUND)
   externalproject_add(google_protobuf
       GIT_REPOSITORY  ${URL}
       GIT_TAG         ${VERSION}
-      CONFIGURE_COMMAND ${CMAKE_COMMAND} -G${CMAKE_GENERATOR} -H${EP_PREFIX}/src/google_protobuf/cmake -B${EP_PREFIX}/src/google_protobuf-build -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=ON
-      BUILD_BYPRODUCTS ${EP_PREFIX}/src/google_protobuf-build/protoc
-                       ${EP_PREFIX}/src/google_protobuf-build/${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${CMAKE_SHARED_LIBRARY_SUFFIX}
+      CMAKE_ARGS
+        -G${CMAKE_GENERATOR}
+        -H${EP_PREFIX}/src/google_protobuf/cmake
+        -B${EP_PREFIX}/src/google_protobuf-build
+        -Dprotobuf_BUILD_TESTS=OFF
+        -Dprotobuf_BUILD_SHARED_LIBS=ON
+      BUILD_BYPRODUCTS
+        ${EP_PREFIX}/src/google_protobuf-build/protoc
+        ${EP_PREFIX}/src/google_protobuf-build/${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${CMAKE_SHARED_LIBRARY_SUFFIX}
       INSTALL_COMMAND ""
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step
