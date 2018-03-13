@@ -40,7 +40,7 @@ genhtml_no_source = 0
 
 # Replace tabs with number of spaces in source view (same as --num-spaces
 # option of genhtml)
-genhtml_num_spaces = 8
+genhtml_num_spaces = 4
 
 # Highlight lines with converted-only data if non-zero (same as --highlight
 # option of genhtml)

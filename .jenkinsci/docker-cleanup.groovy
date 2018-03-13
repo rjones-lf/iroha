@@ -10,9 +10,9 @@ def doDockerCleanup() {
       docker rmi \$(docker images --no-trunc --format '{{.Repository}}:{{.Tag}}\\t{{.ID}}' | grep \$(docker images --no-trunc --format '{{.ID}}' ${iC.id}) | head -n -1 | cut -f 1) || true
       sleep 5
       docker network rm $IROHA_NETWORK || true
-	  #remove folder with iroha.deb package and Dockerfiles
-	  rm -rf /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER}
-	  rm -rf /tmp/${env.GIT_COMMIT}
+      #remove folder with iroha.deb package and Dockerfiles
+      rm -rf /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER}
+      rm -rf /tmp/${env.GIT_COMMIT}
     """
 }
 
