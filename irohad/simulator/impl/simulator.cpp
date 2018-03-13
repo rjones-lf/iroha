@@ -39,9 +39,8 @@ namespace iroha {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_, [this](model::Proposal old_proposal) {
-            auto proposal = shared_model::proto::Proposal(
-                shared_model::proto::from_old(old_proposal));
-            this->process_proposal(proposal);
+            this->process_proposal(shared_model::proto::Proposal(
+                shared_model::proto::from_old(old_proposal)));
           });
 
       notifier_.get_observable().subscribe(
