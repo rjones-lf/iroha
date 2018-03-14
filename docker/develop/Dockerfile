@@ -19,7 +19,8 @@ RUN add-apt-repository -y ppa:git-core/ppa; \
     apt-get update
 
 
-RUN apt-get -y --no-install-recommends install build-essential python-software-properties \
+RUN set -e; \
+    apt-get -y --no-install-recommends install build-essential python-software-properties \
         automake libtool \
         # dev dependencies
         libssl-dev zlib1g-dev libc6-dbg golang \
@@ -33,24 +34,29 @@ RUN apt-get -y --no-install-recommends install build-essential python-software-p
     apt-get -y clean
 
 # install cmake 3.5.1
-RUN git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
+RUN set -e; \
+    git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
     (cd /tmp/cmake ; git checkout 64130a7e793483e24c1d68bdd234f81d5edb2d51); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \
+    ldconfig; \
     rm -rf /tmp/cmake
 
 # install boost 1.65.1
-RUN git clone https://github.com/boostorg/boost /tmp/boost; \
+RUN set -e; \
+    git clone https://github.com/boostorg/boost /tmp/boost; \
     (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
     (cd /tmp/boost ; git submodule update --init --recursive); \
     (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install); \
+    ldconfig; \
     rm -rf /tmp/boost
 
 # install protobuf
-RUN git clone https://github.com/google/protobuf /tmp/protobuf; \
+RUN set -e; \
+    git clone https://github.com/google/protobuf /tmp/protobuf; \
     (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
@@ -58,30 +64,37 @@ RUN git clone https://github.com/google/protobuf /tmp/protobuf; \
         -Dprotobuf_BUILD_SHARED_LIBS=ON \
         -H/tmp/protobuf/cmake \
         -B/tmp/protobuf/.build; \
-    cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}
+    cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
+    rm -rf /tmp/protobuf
 
 # install gflags
-RUN git clone https://github.com/gflags/gflags /tmp/gflags; \
+RUN set -e; \
+    git clone https://github.com/gflags/gflags /tmp/gflags; \
     (cd /tmp/gflags ; git checkout f8a0efe03aa69b3336d8e228b37d4ccb17324b88); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/gflags \
         -B/tmp/gflags/build; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
     rm -rf /tmp/gflags
 
 # install c-ares
-RUN git clone https://github.com/c-ares/c-ares /tmp/c-ares; \
+RUN set -e; \
+    git clone https://github.com/c-ares/c-ares /tmp/c-ares; \
     (cd /tmp/c-ares ; git checkout 3be1924221e1326df520f8498d704a5c4c8d0cce); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/c-ares \
         -B/tmp/c-ares/build; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
     rm -rf /tmp/c-ares
 
 # install grpc
-RUN git clone https://github.com/grpc/grpc /tmp/grpc; \
+RUN set -e; \
+    git clone https://github.com/grpc/grpc /tmp/grpc; \
     cd /tmp/grpc; \
     git checkout bfcbad3b86c7912968dc8e64f2121c920dad4dfb; \
     cmake \
@@ -97,22 +110,28 @@ RUN git clone https://github.com/grpc/grpc /tmp/grpc; \
         -B/tmp/grpc/.build; \
     cd /tmp/grpc/.build; \
     make -j${PARALLELISM} gpr grpc grpc++ grpc_cpp_plugin; \
-    cp lib{gpr,grpc,grpc++,grpc_plugin_support}.so /usr/local/lib; \
+    # copy libs to /usr/local/lib
+    cp libgpr.so libgrpc.so libgrpc++.so libgrpc_plugin_support.so /usr/local/lib; \
     cp grpc_cpp_plugin /usr/local/bin; \
+    cp -R ../include /usr/local; \
+    ldconfig; \
     rm -rf /tmp/grpc
 
 # install gtest
-RUN git clone https://github.com/google/googletest /tmp/googletest; \
+RUN set -e; \
+    git clone https://github.com/google/googletest /tmp/googletest; \
     (cd /tmp/googletest ; git checkout ec44c6c1675c25b9827aacd08c02433cccde7780); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/googletest \
         -B/tmp/googletest/build; \
     cmake --build /tmp/googletest/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
     rm -rf /tmp/googletest
 
 # install spdlog v0.16.3
-RUN git clone https://github.com/gabime/spdlog /tmp/spdlog; \
+RUN set -e; \
+    git clone https://github.com/gabime/spdlog /tmp/spdlog; \
     (cd /tmp/spdlog ; git checkout ccd675a286f457068ee8c823f8207f13c2325b26); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
@@ -121,7 +140,8 @@ RUN git clone https://github.com/gabime/spdlog /tmp/spdlog; \
     rm -rf /tmp/spdlog
 
 # install rxcpp
-RUN git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
+RUN set -e; \
+    git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
     (cd /tmp/RxCpp ; git checkout 1b2e0589f19cb34d8cd58803677701dcf2161876); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
@@ -131,7 +151,8 @@ RUN git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
     rm -rf /tmp/RxCpp
 
 # install rapidjson
-RUN git clone https://github.com/miloyip/rapidjson /tmp/rapidjson; \
+RUN set -e; \
+    git clone https://github.com/miloyip/rapidjson /tmp/rapidjson; \
     (cd /tmp/rapidjson ; git checkout f54b0e47a08782a6131cc3d60f94d038fa6e0a51); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
@@ -139,16 +160,19 @@ RUN git clone https://github.com/miloyip/rapidjson /tmp/rapidjson; \
         -H/tmp/rapidjson \
         -B/tmp/rapidjson/build; \
     cmake --build /tmp/rapidjson/build --target install; \
+    ldconfig; \
     rm -rf /tmp/rapidjson
 
 # install optional
-RUN git clone https://github.com/martinmoene/optional-lite /tmp/optional-lite; \
+RUN set -e; \
+    git clone https://github.com/martinmoene/optional-lite /tmp/optional-lite; \
     (cd /tmp/optional-lite ; git checkout a0ddabb8b52e1eaaf0dd1515bb85698b747528e4); \
     cp -r /tmp/optional-lite/include/nonstd /usr/local/include; \
     rm -rf /tmp/optional-lite
 
 # install libpq
-RUN git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/postgresql; \
+RUN set -e; \
+    git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/postgresql; \
     cd /tmp/postgresql; \
     git checkout 029386ccbddd0a33d481b94e511f5219b03e6636; \
     ./configure --without-readline --prefix=/usr/local; \
@@ -161,29 +185,35 @@ RUN git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/post
     make -C src/bin/pg_config install; \
     make -C src/interfaces/libpq install; \
     make -C src/include install; \
+    ldconfig; \
     # remove
     rm -rf /tmp/postgresql
 
 # install pqxx
-RUN git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
+RUN set -e; \
+    git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
     (cd /tmp/libpqxx ; /tmp/libpqxx/configure --disable-documentation --with-pic); \
     make -j${PARALLELISM} -C /tmp/libpqxx; \
     make -C /tmp/libpqxx install; \
+    ldconfig; \
     rm -rf /tmp/libpqxx
 
 # install tbb
-RUN git clone https://github.com/01org/tbb /tmp/tbb; \
+RUN set -e; \
+    git clone https://github.com/01org/tbb /tmp/tbb; \
     (cd /tmp/tbb ; git checkout eb6336ad29450f2a64af5123ca1b9429ff6bc11d); \
     make -j${PARALLELISM} -C /tmp/tbb tbb_build_prefix=build; \
     cp /tmp/tbb/build/build_debug/*.so* /usr/local/lib; \
     cp /tmp/tbb/build/build_release/*.so* /usr/local/lib; \
     cp -r /tmp/tbb/include/* /usr/local/include; \
+    ldconfig; \
     rm -rf /tmp/tbb
 
 # install docker
 ENV DOCKER_VERSION=17.06.0-ce
-RUN curl -L -o /tmp/docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz; \
+RUN set -e; \
+    curl -L -o /tmp/docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz; \
     tar -xz -C /tmp -f /tmp/docker-${DOCKER_VERSION}.tgz; \
     mv /tmp/docker/* /usr/bin; \
     rm /tmp/docker-${DOCKER_VERSION}.tgz; \
@@ -191,7 +221,8 @@ RUN curl -L -o /tmp/docker-${DOCKER_VERSION}.tgz https://download.docker.com/lin
 
 # install sonar cli
 ENV SONAR_CLI_VERSION=3.0.3.778
-RUN mkdir -p /opt/sonar; \
+RUN set -e; \
+    mkdir -p /opt/sonar; \
     curl -L -o /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
     unzip -o -d /tmp/sonar-scanner /tmp/sonar.zip; \
     mv /tmp/sonar-scanner/sonar-scanner-${SONAR_CLI_VERSION}-linux /opt/sonar/scanner; \
@@ -199,7 +230,8 @@ RUN mkdir -p /opt/sonar; \
     rm -rf /tmp/sonar*
 
 # install ed25519
-RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
+RUN set -e; \
+    git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
     (cd /tmp/ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
@@ -207,6 +239,7 @@ RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
         -H/tmp/ed25519 \
         -B/tmp/ed25519/build; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
+    ldconfig; \
     rm -rf /tmp/ed25519
 
 # non-interactive adduser
@@ -219,9 +252,9 @@ RUN git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
 RUN useradd -ms /bin/bash iroha-ci -u 1000 -U
 
 WORKDIR /opt/iroha
-RUN chmod -R 777 /opt/iroha; \
+RUN set -e; \
+    chmod -R 777 /opt/iroha; \
     mkdir -p /tmp/ccache -m 777; \
-    ldconfig; \
     ccache --clear
 
 
