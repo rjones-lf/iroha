@@ -169,6 +169,18 @@ namespace shared_model {
         });
       }
 
+      auto accountResponse(const Account &account,
+                           const std::vector<std::string> &roles) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::AccountResponse *query_response =
+              proto_query_response.mutable_account_response();
+          query_response->mutable_account()->CopyFrom((account.getTransport()));
+          for (const auto &role : roles) {
+            query_response->add_account_roles(role);
+          }
+        });
+      }
+
       template <class T>
       auto errorQueryResponse() const {
         return queryResponseField([&](auto &proto_query_response) {
@@ -182,7 +194,7 @@ namespace shared_model {
           const std::vector<interface::types::BlobType> &signatories) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::SignatoriesResponse *query_response =
-              proto_query_response->mutable_signatories_response();
+              proto_query_response.mutable_signatories_response();
           for (const auto &key : signatories) {
             const auto &blob = key.blob();
             query_response->add_keys(blob.data(), blob.size());
@@ -194,7 +206,7 @@ namespace shared_model {
           const std::vector<proto::Transaction> &transactions) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::TransactionsResponse *query_response =
-              proto_query_response->mutable_transactions_response();
+              proto_query_response.mutable_transactions_response();
           for (const auto &tx : transactions) {
             query_response->add_transactions()->CopyFrom(tx.getTransport());
           }
@@ -206,7 +218,7 @@ namespace shared_model {
                          const uint32_t precision) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::AssetResponse *query_response =
-              proto_query_response->mutable_asset_response();
+              proto_query_response.mutable_asset_response();
           auto asset = query_response->mutable_asset();
           asset->set_asset_id(asset_id);
           asset->set_domain_id(domain_id);
@@ -214,22 +226,24 @@ namespace shared_model {
         });
       }
 
-      auto rolesResponse(const interface::RolesResponse &roles) const {
+      auto rolesResponse(
+          const std::vector<interface::types::RoleIdType> &roles) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::RolesResponse *query_response =
-              proto_query_response->mutable_roles_response();
-          for (const auto &role : roles.roles()) {
+              proto_query_response.mutable_roles_response();
+          for (const auto &role : roles) {
             query_response->add_roles(role);
           }
         });
       }
 
       auto rolePermissionsResponse(
-          const interface::RolePermissionsResponse &role_permissions) const {
+          const std::vector<interface::types::PermissionNameType>
+              &role_permissions) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::RolePermissionsResponse *query_response =
-              proto_query_response->mutable_role_permissions_response();
-          for (const auto &perm : role_permissions.rolePermissions()) {
+              proto_query_response.mutable_role_permissions_response();
+          for (const auto &perm : role_permissions) {
             query_response->add_permissions(perm);
           }
         });
