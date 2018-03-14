@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(protobuf)
-add_subdirectory(common_objects)
-add_subdirectory(transaction_responses)
+addtest(transaction_response_builder_test
+    transaction_response_builder_test.cpp
+    )
+
+target_link_libraries(transaction_response_builder_test
+    shared_model_proto_builders
+    )

@@ -25,8 +25,8 @@ namespace shared_model {
   namespace proto {
 
     /**
-     * AccountBuilder is used to construct Account proto objects with initialized
-     * protobuf implementation
+     * AccountBuilder is used to construct Account proto objects with
+     * initialized protobuf implementation
      */
     class AccountBuilder {
      public:
@@ -34,7 +34,8 @@ namespace shared_model {
         return shared_model::proto::Account(iroha::protocol::Account(account_));
       }
 
-      AccountBuilder accountId(const interface::types::AccountIdType &account_id) {
+      AccountBuilder accountId(
+          const interface::types::AccountIdType &account_id) {
         AccountBuilder copy(*this);
         copy.account_.set_account_id(account_id);
         return copy;

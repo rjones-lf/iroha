@@ -17,25 +17,9 @@
 
 #include <gtest/gtest.h>
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
 
 using shared_model::proto::TransactionStatusBuilder;
-
-/**
- * Prepares lambda that checks if val's type is the same with T type
- * @tparam T expected type
- * @return lambda checking val's type
- */
-template <typename T>
-auto verifyType() {
-  return [](auto val) {
-    if (std::is_same<decltype(val), T>::value) {
-      SUCCEED();
-    } else {
-      FAIL() << "obtained: " << typeid(decltype(val)).name() << std::endl
-             << "expected: " << typeid(T).name() << std::endl;
-    }
-  };
-}
 
 /**
  * @given expected transaction stateless invalid status and hash

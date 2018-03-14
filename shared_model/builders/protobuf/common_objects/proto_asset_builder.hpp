@@ -34,15 +34,13 @@ namespace shared_model {
         return shared_model::proto::Asset(iroha::protocol::Asset(asset_));
       }
 
-      AssetBuilder assetId(
-          const interface::types::AssetIdType &asset_id) {
+      AssetBuilder assetId(const interface::types::AssetIdType &asset_id) {
         AssetBuilder copy(*this);
         copy.asset_.set_asset_id(asset_id);
         return copy;
       }
 
-      AssetBuilder domainId(
-          const interface::types::DomainIdType &domain_id) {
+      AssetBuilder domainId(const interface::types::DomainIdType &domain_id) {
         AssetBuilder copy(*this);
         copy.asset_.set_domain_id(domain_id);
         return copy;
