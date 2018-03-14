@@ -89,12 +89,11 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    constexpr auto kTotal = (1 << 5) - 1;
+    constexpr auto kTotal = (1 << 4) - 1;
     return shared_model::proto::TemplateBlockBuilder<
                kTotal,
                shared_model::validation::DefaultBlockValidator,
                shared_model::proto::Block>()
-        .txNumber(0)
         .height(1)
         .prevHash(Hash(std::string(32, '0')))
         .createdTime(iroha::time::now());
