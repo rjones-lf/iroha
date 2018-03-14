@@ -20,11 +20,72 @@
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/helpers.hpp"
+#include "common/visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "responses.pb.h"
 
 namespace shared_model {
   namespace proto {
+
+    class ReasonSetter {
+     public:
+      template <class T>
+      static void setReason(iroha::protocol::ErrorResponse &err){};
+    };
+
+    template <>
+    void ReasonSetter::setReason<interface::StatelessFailedErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::StatefulFailedErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_STATEFUL_INVALID);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoAccountErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoAccountAssetsErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_ASSETS);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoAccountDetailErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_DETAIL);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoSignatoriesErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_SIGNATORIES);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NotSupportedErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NOT_SUPPORTED);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoAssetErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ASSET);
+    }
+
+    template <>
+    void ReasonSetter::setReason<interface::NoRolesErrorResponse>(
+        iroha::protocol::ErrorResponse &err) {
+      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ROLES);
+    }
 
     /**
      * Template query response builder for creating new types of query response
@@ -45,6 +106,9 @@ namespace shared_model {
       using NextBuilder = TemplateQueryResponseBuilder<S | (1 << s), BT>;
 
       using ProtoQueryResponse = iroha::protocol::QueryResponse;
+
+      template <class T>
+      using w = shared_model::detail::PolymorphicWrapper<T>;
 
       template <int Sp>
       TemplateQueryResponseBuilder(
@@ -84,7 +148,7 @@ namespace shared_model {
           const interface::types::AssetIdType &asset_id,
           const interface::types::AccountIdType &account_id,
           const std::string &amount) const {
-        return queryResponseField([&](auto proto_query_response) {
+        return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::AccountAssetResponse *query_response =
               proto_query_response.mutable_account_assets_response();
 
@@ -96,76 +160,89 @@ namespace shared_model {
         });
       }
 
-      //      auto accountDetailResponse(
-      //          const interface::AccountDetailResponse &account_detail) const
-      //          {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //              proto_query_response->mutable_account_detail_response();
-      //          query_response->set_account_detail_response(account_detail);
-      //        });
-      //      }
-      //
-      //      auto errorQueryResponse(
-      //          const interface::ErrorQueryResponse &error) const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //          proto_query_response->mutable_error_response();
-      //          query_response->set_error_response(error);
-      //        });
-      //      }
-      //
-      //      auto signatoriesResponse(
-      //          const interface::SignatoriesResponse &signatories) const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //              proto_query_response->mutable_signatories_response();
-      //          query_response->set_signatories_response(signatories);
-      //        });
-      //      }
-      //
-      //      auto transactionsResponse(
-      //          const interface::TransactionsResponse &transactions) const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //              proto_query_response->mutable_transactions_response();
-      //          query_response->set_transactions_response(transactions);
-      //        });
-      //      }
-      //
-      //      auto assetResponse(const interface::AssetResponse &asset) const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //          proto_query_response->mutable_asset_response();
-      //          query_response->set_asset_response(asset);
-      //        });
-      //      }
-      //
-      //      auto rolesResponse(const interface::RolesResponse &roles) const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //          proto_query_response->mutable_roles_response();
-      //          query_response->set_roles_response(roles);
-      //        });
-      //      }
-      //
-      //      auto rolePermissionsResponse(
-      //          const interface::RolePermissionsResponse &role_permissions)
-      //          const {
-      //        return queryResponseField([&](auto proto_query_response) {
-      //          auto query_response =
-      //              proto_query_response->mutable_role_permissions_response();
-      //          query_response->set_role_permissions_response(role_permissions);
-      //        });
-      //      }
-      //
-      auto queryHash(const interface::types::HashType &query_hash) const {
-        return transform<QueryHash>([&](auto proto_query_response) {
-          proto_query_response.set_query_hash(query_hash.hex());
+      auto accountDetailResponse(
+          const interface::types::DetailType &account_detail) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::AccountDetailResponse *query_response =
+              proto_query_response.mutable_account_detail_response();
+          query_response->set_detail(account_detail);
         });
       }
 
-      auto build() const {
+      template <class T>
+      auto errorQueryResponse() const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::ErrorResponse *query_response =
+              proto_query_response.mutable_error_response();
+          ReasonSetter::setReason<T>(*query_response);
+        });
+      }
+
+      auto signatoriesResponse(
+          const std::vector<interface::types::BlobType> &signatories) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::SignatoriesResponse *query_response =
+              proto_query_response->mutable_signatories_response();
+          for (const auto &key : signatories) {
+            const auto &blob = key.blob();
+            query_response->add_keys(blob.data(), blob.size());
+          }
+        });
+      }
+
+      auto transactionsResponse(
+          const std::vector<proto::Transaction> &transactions) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::TransactionsResponse *query_response =
+              proto_query_response->mutable_transactions_response();
+          for (const auto &tx : transactions) {
+            query_response->add_transactions()->CopyFrom(tx.getTransport());
+          }
+        });
+      }
+
+      auto assetResponse(const std::string &asset_id,
+                         const std::string &domain_id,
+                         const uint32_t precision) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::AssetResponse *query_response =
+              proto_query_response->mutable_asset_response();
+          auto asset = query_response->mutable_asset();
+          asset->set_asset_id(asset_id);
+          asset->set_domain_id(domain_id);
+          asset->set_precision(precision);
+        });
+      }
+
+      auto rolesResponse(const interface::RolesResponse &roles) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::RolesResponse *query_response =
+              proto_query_response->mutable_roles_response();
+          for (const auto &role : roles.roles()) {
+            query_response->add_roles(role);
+          }
+        });
+      }
+
+      auto rolePermissionsResponse(
+          const interface::RolePermissionsResponse &role_permissions) const {
+        return queryResponseField([&](auto &proto_query_response) {
+          iroha::protocol::RolePermissionsResponse *query_response =
+              proto_query_response->mutable_role_permissions_response();
+          for (const auto &perm : role_permissions.rolePermissions()) {
+            query_response->add_permissions(perm);
+          }
+        });
+      }
+
+      auto queryHash(const interface::types::HashType &query_hash) const {
+        return transform<QueryHash>([&](auto &proto_query_response) {
+          proto_query_response.set_query_hash(
+              crypto::toBinaryString(query_hash));
+        });
+      }
+
+      QueryResponse build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
         auto result =
             QueryResponse(iroha::protocol::QueryResponse(query_response_));
