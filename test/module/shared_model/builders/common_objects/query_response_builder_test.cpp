@@ -43,6 +43,7 @@ const shared_model::interface::types::DetailType account_detail =
     "account-detail";
 const auto query_hash = shared_model::interface::types::HashType("hashhash");
 decltype(iroha::time::now()) created_time = iroha::time::now();
+
 template <class T>
 using w = shared_model::detail::PolymorphicWrapper<T>;
 
@@ -125,7 +126,6 @@ TEST(QueryResponseBuilderTest, ErrorQueryResponse) {
       boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
           error_response->get()));
   ASSERT_EQ(query_response.queryHash(), query_hash);
-
 }
 
 TEST(QueryResponseBuilderTest, SignatoriesResponse) {
