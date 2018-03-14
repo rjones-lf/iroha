@@ -30,7 +30,7 @@ target_link_libraries(tx_pipeline_integration_test
     raw_block_insertion
     model_generators
     integration_framework
-    shared_model_ed25519_sha3
+    shared_model_cryptography
     shared_model_stateless_validation
     integration_framework_config_helper
     tx_pipeline_integration_test_fixture

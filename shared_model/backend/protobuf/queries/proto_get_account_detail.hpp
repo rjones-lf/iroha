@@ -45,10 +45,6 @@ namespace shared_model {
         return account_detail_.account_id();
       }
 
-      const interface::types::DetailType &detail() const override {
-        return account_detail_.detail();
-      }
-
      private:
       // ------------------------------| fields |-------------------------------
 

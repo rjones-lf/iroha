@@ -90,8 +90,8 @@ TEST(PbQueryFactoryTest, SerializeGetAccountAssets) {
 TEST(PbQueryFactoryTest, SerializeGetAccountDetail) {
   PbQueryFactory query_factory;
   QueryGenerator query_generator;
-  auto query = query_generator.generateGetAccountDetail(
-      0, "123", 0, "test", "test2", "key");
+  auto query =
+      query_generator.generateGetAccountDetail(0, "123", 0, "test", "test2");
   auto pb_query = query_factory.serialize(query);
   ASSERT_TRUE(pb_query.has_value());
   auto res_query = query_factory.deserialize(pb_query.value());

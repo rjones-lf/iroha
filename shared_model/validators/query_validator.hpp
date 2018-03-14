@@ -109,7 +109,6 @@ namespace shared_model {
         reason.first = "GetAccountDetail";
 
         validator_.validateAccountId(reason, qry->accountId());
-        validator_.validateAccountDetailKey(reason, qry->detail());
 
         return reason;
       }

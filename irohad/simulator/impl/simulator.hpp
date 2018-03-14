@@ -46,18 +46,25 @@ namespace iroha {
 
       ~Simulator();
 
-      void process_proposal(model::Proposal proposal) override;
+      void process_proposal(
+          const shared_model::interface::Proposal &proposal) override;
 
-      rxcpp::observable<model::Proposal> on_verified_proposal() override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+      on_verified_proposal() override;
 
-      void process_verified_proposal(model::Proposal proposal) override;
+      void process_verified_proposal(
+          const shared_model::interface::Proposal &proposal) override;
 
-      rxcpp::observable<model::Block> on_block() override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      on_block() override;
 
      private:
       // internal
-      rxcpp::subjects::subject<model::Proposal> notifier_;
-      rxcpp::subjects::subject<model::Block> block_notifier_;
+      rxcpp::subjects::subject<
+          std::shared_ptr<shared_model::interface::Proposal>>
+          notifier_;
+      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+          block_notifier_;
 
       rxcpp::composite_subscription proposal_subscription_;
       rxcpp::composite_subscription verified_proposal_subscription_;
@@ -70,7 +77,8 @@ namespace iroha {
       logger::Logger log_;
 
       // last block
-      nonstd::optional<model::Block> last_block;
+      nonstd::optional<std::shared_ptr<shared_model::interface::Block>>
+          last_block;
     };
   }  // namespace simulator
 }  // namespace iroha

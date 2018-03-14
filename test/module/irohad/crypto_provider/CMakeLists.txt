@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-addtest(model_crypto_provider_test ../crypto_provider/crypto_provider_test.cpp)
-target_link_libraries(model_crypto_provider_test
+addtest(crypto_provider_test ../crypto_provider/crypto_provider_test.cpp)
+target_link_libraries(crypto_provider_test
     model
     model_generators
     )

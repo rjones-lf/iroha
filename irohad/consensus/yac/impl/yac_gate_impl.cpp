@@ -42,8 +42,9 @@ namespace iroha {
             block_loader_(std::move(block_loader)),
             delay_(delay) {
         log_ = logger::log("YacGate");
-        block_creator_->on_block().subscribe(
-            [this](auto block) { this->vote(block); });
+        block_creator_->on_block().subscribe([this](auto block) {
+          this->vote(*std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+        });
       }
 
       void YacGateImpl::vote(model::Block block) {

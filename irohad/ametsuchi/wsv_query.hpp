@@ -23,9 +23,6 @@
 #include <vector>
 #include "common/types.hpp"
 
-#include <nonstd/optional.hpp>
-
-#include "common/types.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/asset.hpp"
@@ -106,17 +103,11 @@ namespace iroha {
 
       /**
        * Get accounts information from its key-value storage
-       * @param account_id
-       * @param creator_account_id
-       * @param detail
-       * @return
+       * @param account_id - account to get details about
+       * @return optional of account details
        */
-      virtual nonstd::optional<shared_model::interface::types::DetailType>
-      getAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AccountIdType
-              &creator_account_id,
-          const shared_model::interface::types::DetailType &detail) = 0;
+      virtual nonstd::optional<std::string> getAccountDetail(
+          const std::string &account_id) = 0;
 
       /**
        * Get signatories of account by user account_id

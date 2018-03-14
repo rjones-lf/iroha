@@ -18,6 +18,7 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "crypto_provider/impl/crypto_provider_impl.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 using namespace std::chrono_literals;
 using namespace iroha::model::generators;
@@ -82,7 +83,7 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
                                           keypair);
     ASSERT_TRUE(irohad->storage);
 
-    irohad->storage->insertBlock(genesis_block);
+    irohad->storage->insertBlock(shared_model::proto::from_old(genesis_block));
 
     // reset ordering storage state
     irohad->resetOrderingService();

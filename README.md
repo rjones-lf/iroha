@@ -5,6 +5,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/4d8edb74d4954c76a4656a9e109dbc4e)](https://www.codacy.com/app/neewy/iroha?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hyperledger/iroha&amp;utm_campaign=Badge_Grade)
 [![CircleCI](https://circleci.com/gh/hyperledger/iroha/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/iroha/tree/master)
 [![codecov](https://codecov.io/gh/hyperledger/iroha/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/iroha)
+[![Snap Status](https://build.snapcraft.io/badge/hyperledger/iroha.svg)](https://build.snapcraft.io/user/hyperledger/iroha)
 
 [![Throughput Graph](https://graphs.waffle.io/hyperledger/iroha/throughput.svg)](https://waffle.io/hyperledger/iroha/metrics/throughput)
 

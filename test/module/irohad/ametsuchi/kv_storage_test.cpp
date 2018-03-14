@@ -16,16 +16,14 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "model/account.hpp"
-#include "model/commands/create_account.hpp"
-#include "model/commands/create_domain.hpp"
-#include "model/commands/create_role.hpp"
-#include "model/commands/set_account_detail.hpp"
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -131,17 +129,18 @@ class KVTest : public AmetsuchiTest {
 };
 
 /**
- * @given empty in account1
- * @when non existing detail is queried using GetAccountDetail
+ * @given no details is set in account1
+ * @when detail of account1 is queried using GetAccountDetail
  * @then nullopt is returned
  */
-TEST_F(KVTest, GetNonexistingDetail) {
+TEST_F(KVTest, GetNonexistingUserDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
-  auto account = wsv_query->getAccount(account_id1);
+  auto ss =
+      std::istringstream(wsv_query->getAccountDetail(account_id1).value());
 
-  auto age = wsv_query->getAccountDetail(
-      account_id1, "userone@ru", "nonexisting-field");
-  ASSERT_FALSE(age);
+  boost::property_tree::ptree root;
+  boost::property_tree::read_json(ss, root);
+  ASSERT_TRUE(root.empty());
 }
 
 /**
@@ -150,9 +149,16 @@ TEST_F(KVTest, GetNonexistingDetail) {
  * @then correct age of user2 is returned
  */
 TEST_F(KVTest, SetAccountDetail) {
+  auto account_id1 = account_name1 + "@" + domain_id;
   auto account_id2 = account_name2 + "@" + domain_id;
-  auto age = wsv_query->getAccountDetail(account_id2, "userone@ru", "age");
+  auto ss =
+      std::istringstream(wsv_query->getAccountDetail(account_id2).value());
 
-  ASSERT_TRUE(age);
-  ASSERT_EQ(age.value(), "24");
+  boost::property_tree::ptree root;
+  boost::property_tree::read_json(ss, root);
+
+  auto record = root.get_child(account_id1);
+  ASSERT_EQ(record.size(), 1);
+  ASSERT_EQ(record.front().first, "age");
+  ASSERT_EQ(record.front().second.data(), "24");
 }

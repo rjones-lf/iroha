@@ -86,9 +86,8 @@ namespace shared_model {
     }
 
     ModelQueryBuilder ModelQueryBuilder::getAccountDetail(
-        const interface::types::AccountIdType &account_id,
-        const interface::types::DetailType &detail) {
-      return ModelQueryBuilder(builder_.getAccountDetail(account_id, detail));
+        const interface::types::AccountIdType &account_id) {
+      return ModelQueryBuilder(builder_.getAccountDetail(account_id));
     }
 
     proto::UnsignedWrapper<proto::Query> ModelQueryBuilder::build() {

@@ -141,8 +141,7 @@ namespace shared_model {
        * @return builder with getAccountDetail query inside
        */
       ModelQueryBuilder getAccountDetail(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::DetailType &detail);
+          const interface::types::AccountIdType &account_id);
 
       /**
        * Builds result with all appended fields

@@ -39,12 +39,9 @@ namespace iroha {
       nonstd::optional<std::shared_ptr<shared_model::interface::Account>>
       getAccount(const shared_model::interface::types::AccountIdType
                      &account_id) override;
-      nonstd::optional<shared_model::interface::types::DetailType>
-      getAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AccountIdType
-              &creator_account_id,
-          const shared_model::interface::types::DetailType &detail) override;
+      nonstd::optional<std::string> getAccountDetail(
+          const shared_model::interface::types::AccountIdType &account_id)
+          override;
       nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
                          &account_id) override;

@@ -19,7 +19,12 @@
 #define IROHA_VERIFIED_PROPOSAL_CREATOR_HPP
 
 #include <rxcpp/rx-observable.hpp>
-#include "model/proposal.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Proposal;
+  }
+}  // namespace shared_model
 
 namespace iroha {
   namespace simulator {
@@ -33,13 +38,16 @@ namespace iroha {
        * Processing proposal for making stateful validation
        * @param proposal - object for validation
        */
-      virtual void process_proposal(model::Proposal proposal) = 0;
+      virtual void process_proposal(
+          const shared_model::interface::Proposal &proposal) = 0;
 
       /**
        * Emit proposals that was verified by validation
        * @return
        */
-      virtual rxcpp::observable<model::Proposal> on_verified_proposal() = 0;
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::Proposal>>
+      on_verified_proposal() = 0;
 
       virtual ~VerifiedProposalCreator() = default;
     };

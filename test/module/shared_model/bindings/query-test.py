@@ -89,7 +89,7 @@ class BuilderTest(unittest.TestCase):
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
   def test_get_account_detail(self):
-    query = self.builder.getAccountDetail("user@test", "hello").build()
+    query = self.builder.getAccountDetail("user@test").build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
 if __name__ == '__main__':
