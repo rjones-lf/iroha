@@ -22,7 +22,6 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace shared_model;
@@ -80,19 +79,6 @@ class TransportBuilderTest : public ::testing::Test {
         .queryCounter(counter)
         .build()
         .signAndAddSignature(keypair);
-  }
-
-  auto createQueryResponse() {
-    shared_model::proto::TemplateQueryResponseBuilder<> builder;
-    builder
-        .accountAssetResponse("as_id", account_id, "1.0")
-        .queryHash(shared_model::interface::types::HashType(""))
-        .build();
-
-    return TestQueryResponseBuilder()
-        .accountAssetResponse("as_id", account_id, "1.0")
-        .queryHash(shared_model::interface::types::HashType(""))
-        .build();
   }
 
   auto createBlock() {
@@ -172,8 +158,6 @@ class TransportBuilderTest : public ::testing::Test {
  * @then original and built objects are equal
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
-  createQueryResponse();
-
   auto orig_model = createTransaction();
   testTransport<decltype(orig_model),
                 validation::DefaultSignableTransactionValidator>(
