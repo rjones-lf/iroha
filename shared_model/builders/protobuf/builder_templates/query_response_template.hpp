@@ -30,7 +30,7 @@ namespace shared_model {
     class ReasonSetter {
      public:
       template <class T>
-      static void setReason(iroha::protocol::ErrorResponse &err){};
+      static void setReason(iroha::protocol::ErrorResponse &err){}
     };
 
     template <>
