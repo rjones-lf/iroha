@@ -21,10 +21,9 @@
 #include <memory>
 
 #include "crypto_provider/crypto_provider.hpp"
-#include "cryptography/keypair.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
-
+#include "cryptography/keypair.hpp"
 
 #include <algorithm>
 
@@ -41,17 +40,11 @@
 
 namespace iroha {
 
-  template <typename Algorithm = shared_model::crypto::DefaultCryptoAlgorithmType>
+  template <typename Algorithm =
+                shared_model::crypto::DefaultCryptoAlgorithmType>
   class CryptoProviderImpl : public CryptoProvider {
    public:
-    explicit CryptoProviderImpl(
-        const shared_model::crypto::Keypair &keypair);
-
-    bool verify(const shared_model::interface::Block &block) const override;
-
-    bool verify(const shared_model::interface::Query &query) const override;
-
-    bool verify(const shared_model::interface::Transaction &tx) const override;
+    explicit CryptoProviderImpl(const shared_model::crypto::Keypair &keypair);
 
     void sign(shared_model::interface::Block &block) const override;
 
@@ -67,56 +60,7 @@ namespace iroha {
   template <typename Algorithm>
   CryptoProviderImpl<Algorithm>::CryptoProviderImpl(
       const shared_model::crypto::Keypair &keypair)
-      : keypair_(keypair), signer_(keypair_) {
-  }
-
-  template <typename Algorithm>
-  bool CryptoProviderImpl<Algorithm>::verify(
-      const shared_model::interface::Block &block) const {
-    return block.signatures().size() > 0
-        and std::all_of(
-            block.signatures().begin(),
-            block.signatures().end(),
-            [this, &block](const shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Signature> &signature) {
-              return shared_model::crypto::CryptoVerifier<>::verify(
-                  signature->signedData(),
-                  block.payload(),
-                  signature->publicKey());
-            });
-  }
-
-  template <typename Algorithm>
-  bool CryptoProviderImpl<Algorithm>::verify(
-      const shared_model::interface::Query &query) const {
-    return query.signatures().size() > 0
-        and std::all_of(
-            query.signatures().begin(),
-            query.signatures().end(),
-            [this, &query](const shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Signature> &signature) {
-              return shared_model::crypto::CryptoVerifier<>::verify(
-                  signature->signedData(),
-                  query.payload(),
-                  signature->publicKey());
-            });
-  }
-
-  template <typename Algorithm>
-  bool CryptoProviderImpl<Algorithm>::verify(
-      const shared_model::interface::Transaction &tx) const {
-    return tx.signatures().size() > 0
-        and std::all_of(
-            tx.signatures().begin(),
-            tx.signatures().end(),
-            [this, &tx](const shared_model::detail::PolymorphicWrapper<
-                shared_model::interface::Signature> &signature) {
-              return shared_model::crypto::CryptoVerifier<>::verify(
-                  signature->signedData(),
-                  tx.payload(),
-                  signature->publicKey());
-            });
-  }
+      : keypair_(keypair), signer_(keypair_) {}
 
   template <typename Algorithm>
   void CryptoProviderImpl<Algorithm>::sign(

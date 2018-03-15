@@ -20,7 +20,7 @@
 #include <chrono>
 #include <utility>
 
-#include "crypto_provider/crypto_provider.hpp"
+#include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "datetime/time.hpp"
 
 #include "backend/protobuf/from_old_model.hpp"
@@ -30,8 +30,8 @@ using namespace std::chrono_literals;
 namespace iroha {
   namespace validation {
     StatelessValidatorImpl::StatelessValidatorImpl(
-        std::shared_ptr<CryptoProvider> crypto_provider)
-        : crypto_provider_(std::move(crypto_provider)) {
+        std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier)
+        : crypto_verifier_(std::move(crypto_verifier)) {
       log_ = logger::log("SLV");
     }
 
@@ -44,7 +44,7 @@ namespace iroha {
         const model::Transaction &old_transaction) const {
       // signatures are correct
       auto transaction = shared_model::proto::from_old(old_transaction);
-      if (!crypto_provider_->verify(transaction)) {
+      if (!crypto_verifier_->verify(transaction)) {
         log_->warn(kCryptoVerificationFail);
         return false;
       }
@@ -70,7 +70,7 @@ namespace iroha {
     bool StatelessValidatorImpl::validate(const model::Query &old_query) const {
       // signatures are correct
       auto query = shared_model::proto::from_old(std::make_shared<model::Query>(old_query));
-      if (!crypto_provider_->verify(query)) {
+      if (!crypto_verifier_->verify(query)) {
         log_->warn(kCryptoVerificationFail);
         return false;
       }

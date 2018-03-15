@@ -42,6 +42,6 @@ class CryptoInitialization : public ::testing::Test {
 TEST_F(CryptoInitialization, RawSignAndVerifyTest) {
   auto signed_blob = CryptoSigner<>::sign(*data, *keypair);
   auto verified =
-      CryptoVerifier<>::verify(signed_blob, *data, keypair->publicKey());
+      DefaultCryptoAlgorithmType::verify(signed_blob, *data, keypair->publicKey());
   ASSERT_TRUE(verified);
 }

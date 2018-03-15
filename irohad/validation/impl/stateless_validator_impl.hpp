@@ -22,16 +22,20 @@
 
 #include "logger/logger.hpp"
 
-namespace iroha {
+namespace shared_model {
+  namespace crypto {
+    class CryptoVerifier;
+  }
+}
 
-  class CryptoProvider;
+namespace iroha {
 
   namespace validation {
 
     class StatelessValidatorImpl : public StatelessValidator {
      public:
       explicit StatelessValidatorImpl(
-          std::shared_ptr<CryptoProvider> crypto_provider);
+          std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_provider);
       bool validate(const model::Transaction &transaction) const override;
       bool validate(const model::Query &query) const override;
 
@@ -40,7 +44,7 @@ namespace iroha {
           std::chrono::hours(24)
           / std::chrono::milliseconds(
                 1);  // max-delay between tx creation and validation
-      std::shared_ptr<CryptoProvider> crypto_provider_;
+      std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier_;
 
       logger::Logger log_;
     };

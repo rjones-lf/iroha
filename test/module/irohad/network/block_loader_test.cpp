@@ -19,6 +19,7 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
+#include <module/irohad/crypto_provider/crypto_provider_mocks.hpp>
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
@@ -33,8 +34,8 @@
 #include "framework/test_subscriber.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
+#include "module/shared_model/cryptography/crypto_verifier_mocks.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 #include "validators/default_validator.hpp"
@@ -56,11 +57,12 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    provider = std::make_shared<iroha::MockCryptoProvider>();
+    crypto_verifier =
+        std::make_shared<shared_model::crypto::MockCryptoVerifier>();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query,
         storage,
-        provider,
+        crypto_verifier,
         std::make_shared<shared_model::validation::DefaultBlockValidator>());
     service = std::make_shared<BlockLoaderService>(storage);
 
@@ -107,7 +109,7 @@ class BlockLoaderTest : public testing::Test {
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
-  std::shared_ptr<iroha::MockCryptoProvider> provider;
+  std::shared_ptr<shared_model::crypto::MockCryptoVerifier> crypto_verifier;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
@@ -155,7 +157,7 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   auto top_block = getBaseBlockBuilder().height(block.height() + 1).build();
 
-  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
       .WillOnce(Return(true));
 
   auto peer = peers.back();
@@ -199,7 +201,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
     blocks.emplace_back(blk.copy());
   }
 
-  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
       .Times(num_blocks)
       .WillRepeatedly(Return(true));
 
@@ -236,7 +238,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   auto requested = getBaseBlockBuilder().build();
 
-  EXPECT_CALL(*provider, verify(A<const shared_model::interface::Block &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
       .WillOnce(Return(true));
 
   auto peer = peers.back();

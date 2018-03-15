@@ -22,6 +22,12 @@
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 
+namespace shared_model {
+  namespace crypto {
+    class CryptoVerifier;
+  }
+}
+
 namespace iroha {
 
   class CryptoProvider;
@@ -46,7 +52,7 @@ namespace iroha {
       auto createLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
           std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<CryptoProvider> crypto_provider);
+          std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier);
 
      public:
       /**
@@ -56,7 +62,7 @@ namespace iroha {
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
           std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<CryptoProvider> crypto_provider);
+          std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

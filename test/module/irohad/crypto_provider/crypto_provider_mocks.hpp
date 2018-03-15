@@ -26,10 +26,10 @@ namespace iroha {
 
   class MockCryptoProvider : public CryptoProvider {
    public:
-    MOCK_CONST_METHOD1(verify, bool(const shared_model::interface::Block &));
-    MOCK_CONST_METHOD1(verify, bool(const shared_model::interface::Query &));
-    MOCK_CONST_METHOD1(verify,
-                       bool(const shared_model::interface::Transaction &));
+//    MOCK_CONST_METHOD1(verify, bool(const shared_model::interface::Block &));
+//    MOCK_CONST_METHOD1(verify, bool(const shared_model::interface::Query &));
+//    MOCK_CONST_METHOD1(verify,
+//                       bool(const shared_model::interface::Transaction &));
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Block &));
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Query &));
     MOCK_CONST_METHOD1(sign, void(shared_model::interface::Transaction &));

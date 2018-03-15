@@ -20,9 +20,8 @@
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "module/irohad/model/model_mocks.hpp"
-#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
+#include "module/shared_model/cryptography/crypto_verifier_mocks.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
-
 
 using namespace std::chrono_literals;
 using ::testing::A;
@@ -42,13 +41,13 @@ iroha::model::Transaction create_transaction() {
 TEST(stateless_validation, stateless_validation_when_valid) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
+  auto crypto_verifier = std::make_shared<shared_model::crypto::MockCryptoVerifier>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
-      crypto_provider);
+      crypto_verifier);
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   ASSERT_TRUE(transaction_validator.validate(tx));
@@ -57,13 +56,13 @@ TEST(stateless_validation, stateless_validation_when_valid) {
 TEST(stateless_validation, stateless_validation_when_invalid_wrong_signature) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
+  auto crypto_verifier = std::make_shared<shared_model::crypto::MockCryptoVerifier>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
-      crypto_provider);
+      crypto_verifier);
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(false));
 
   ASSERT_FALSE(transaction_validator.validate(tx));
@@ -73,13 +72,13 @@ TEST(stateless_validation,
      stateless_validation_when_invalid_due_to_big_time_delay) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
+  auto crypto_verifier = std::make_shared<shared_model::crypto::MockCryptoVerifier>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
-      crypto_provider);
+      crypto_verifier);
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   auto ts = iroha::time::now(-25h);
@@ -92,13 +91,13 @@ TEST(stateless_validation,
      stateless_validation_when_invalid_due_to_tx_from_future) {
   spdlog::set_level(spdlog::level::off);
 
-  auto crypto_provider = std::make_shared<iroha::MockCryptoProvider>();
+  auto crypto_verifier = std::make_shared<shared_model::crypto::MockCryptoVerifier>();
   iroha::validation::StatelessValidatorImpl transaction_validator(
-      crypto_provider);
+      crypto_verifier);
 
   auto tx = create_transaction();
 
-  EXPECT_CALL(*crypto_provider, verify(A<const shared_model::interface::Transaction &>()))
+  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Transaction &>()))
       .WillRepeatedly(Return(true));
 
   auto ts = iroha::time::now(1h);

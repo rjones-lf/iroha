@@ -47,28 +47,6 @@ namespace iroha {
     virtual ~CryptoProvider() = default;
 
     /**
-     * Method for signature verification of a block.
-     * @param block - block for verification
-     * @return true if block signature is valid, otherwise false
-     */
-    virtual bool verify(const shared_model::interface::Block &block) const = 0;
-
-    /**
-     * Method for signature verification of a query.
-     * @param query - query for verification
-     * @return true if query signature is valid, otherwise false
-     */
-    virtual bool verify(const shared_model::interface::Query &query) const = 0;
-
-    /**
-     * Method for signature verification of a transaction.
-     * @param tx - transaction for verification
-     * @return true if transaction signature is valid, otherwise false
-     */
-    virtual bool verify(
-        const shared_model::interface::Transaction &tx) const = 0;
-
-    /**
      * Method for signing a block with stored keypair
      * @param block - block for signing
      */

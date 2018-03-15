@@ -17,7 +17,7 @@
 
 #include "validators/field_validator.hpp"
 #include <boost/format.hpp>
-#include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -235,10 +235,10 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::SignatureSetType &signatures,
         const crypto::Blob &source) const {
+      bool is_valid = true;
       for (const auto &signature : signatures) {
         const auto &sign = signature->signedData();
         const auto &pkey = signature->publicKey();
-        bool is_valid = true;
 
         if (sign.blob().size() != 64) {
           // TODO (@l4l) 03/02/18: IR-977 replace signature size with a const
@@ -255,7 +255,7 @@ namespace shared_model {
         }
 
         if (is_valid
-            && not shared_model::crypto::CryptoVerifier<>::verify(
+            && not shared_model::crypto::DefaultCryptoAlgorithmType::verify(
                    sign, source, pkey)) {
           reason.second.push_back((boost::format("Wrong signature [%s;%s]")
                                    % sign.hex() % pkey.hex())

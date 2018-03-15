@@ -20,7 +20,7 @@
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/from_old_model.hpp"
-#include "crypto_provider/crypto_provider.hpp"
+#include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/block_loader_impl.hpp"
 
@@ -32,12 +32,12 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<CryptoProvider> crypto_provider,
+    std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
-      crypto_provider_(crypto_provider),
+      crypto_verifier_(crypto_verifier),
       stateless_validator_(stateless_validator) {
   log_ = logger::log("BlockLoaderImpl");
 }
@@ -94,7 +94,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
             continue;
           }
 
-          if (not crypto_provider_->verify(*result)) {
+          if (not crypto_verifier_->verify(*result)) {
             log_->error(kInvalidBlockSignatures);
             context.TryCancel();
           } else {
@@ -129,7 +129,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   }
 
   auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
-  if (not crypto_provider_->verify(*result)) {
+  if (not crypto_verifier_->verify(*result)) {
     log_->error(kInvalidBlockSignatures);
     return nonstd::nullopt;
   }
