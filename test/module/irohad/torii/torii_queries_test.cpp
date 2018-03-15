@@ -233,7 +233,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
           .accountId("accountA")
           .build()
           .copy());
-  ;
 
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query, getAccount(creator)).WillOnce(Return(account));

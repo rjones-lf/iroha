@@ -61,23 +61,6 @@ namespace iroha {
 
    private:
     shared_model::crypto::Keypair keypair_;
-
-//    //---------------------------------------------------------------------
-//    // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
-//    // after relocation to shared_model
-//   public:
-//    explicit CryptoProviderImpl(const keypair_t &keypair);
-//
-//    virtual bool verify(const model::Block &block) const override;
-//    virtual bool verify(const model::Query &query) const override;
-//    virtual bool verify(const model::Transaction &tx) const override;
-//    virtual void sign(model::Block &block) const override;
-//    virtual void sign(model::Query &query) const override;
-//    virtual void sign(model::Transaction &transaction) const override;
-
-   private:
-    keypair_t old_keypair_;
-
     shared_model::crypto::CryptoModelSigner<Algorithm> signer_;
   };
 
@@ -85,10 +68,6 @@ namespace iroha {
   CryptoProviderImpl<Algorithm>::CryptoProviderImpl(
       const shared_model::crypto::Keypair &keypair)
       : keypair_(keypair), signer_(keypair_) {
-    // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
-    // after relocation to shared_model
-    std::unique_ptr<iroha::keypair_t> old_key(keypair.makeOldModel());
-    old_keypair_ = *old_key;
   }
 
   template <typename Algorithm>
@@ -156,74 +135,6 @@ namespace iroha {
       shared_model::interface::Transaction &transaction) const {
     signer_.sign(transaction);
   }
-
-//  //-----------------------------------------------------------------------
-//  // TODO Alexey Chernyshov 2018-03-08 IR-968 - old model should be removed
-//  // after relocation to shared_model
-//  template <typename Algorithm>
-//  CryptoProviderImpl<Algorithm>::CryptoProviderImpl(const keypair_t &keypair)
-//      : keypair_(shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
-//                 shared_model::crypto::PrivateKey(keypair.privkey.to_string())),
-//        old_keypair_(keypair),
-//        signer_(keypair_) {}
-//
-//  template <typename Algorithm>
-//  bool CryptoProviderImpl<Algorithm>::verify(
-//      const model::Transaction &tx) const {
-//    return std::all_of(tx.signatures.begin(),
-//                       tx.signatures.end(),
-//                       [tx](const model::Signature &sig) {
-//                         return iroha::verify(iroha::hash(tx).to_string(),
-//                                              sig.pubkey,
-//                                              sig.signature);
-//                       });
-//  }
-//
-//  template <typename Algorithm>
-//  bool CryptoProviderImpl<Algorithm>::verify(const model::Query &query) const {
-//    return iroha::verify(iroha::hash(query).to_string(),
-//                         query.signature.pubkey,
-//                         query.signature.signature);
-//  }
-//
-//  template <typename Algorithm>
-//  bool CryptoProviderImpl<Algorithm>::verify(const model::Block &block) const {
-//    return std::all_of(block.sigs.begin(),
-//                       block.sigs.end(),
-//                       [block](const model::Signature &sig) {
-//                         return iroha::verify(iroha::hash(block).to_string(),
-//                                              sig.pubkey,
-//                                              sig.signature);
-//                       });
-//  }
-//
-//  template <typename Algorithm>
-//  void CryptoProviderImpl<Algorithm>::sign(model::Block &block) const {
-//    auto signature = iroha::sign(iroha::hash(block).to_string(),
-//                                 old_keypair_.pubkey,
-//                                 old_keypair_.privkey);
-//
-//    block.sigs.emplace_back(signature, old_keypair_.pubkey);
-//  }
-//
-//  template <typename Algorithm>
-//  void CryptoProviderImpl<Algorithm>::sign(
-//      model::Transaction &transaction) const {
-//    auto signature = iroha::sign(iroha::hash(transaction).to_string(),
-//                                 old_keypair_.pubkey,
-//                                 old_keypair_.privkey);
-//
-//    transaction.signatures.emplace_back(signature, old_keypair_.pubkey);
-//  }
-//
-//  template <typename Algorithm>
-//  void CryptoProviderImpl<Algorithm>::sign(model::Query &query) const {
-//    auto signature = iroha::sign(iroha::hash(query).to_string(),
-//                                 old_keypair_.pubkey,
-//                                 old_keypair_.privkey);
-//
-//    query.signature = model::Signature{signature, old_keypair_.pubkey};
-//  }
 
 }  // namespace iroha
 

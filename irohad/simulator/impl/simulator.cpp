@@ -95,45 +95,28 @@ namespace iroha {
 
     void Simulator::process_verified_proposal(
         const shared_model::interface::Proposal &proposal) {
-
-//      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
-//      // that this cast will not be needed
-//      auto proto_txs =
-//          proposal.transactions()
-//          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
-//              return static_cast<const shared_model::proto::Transaction &>(
-//                  *polymorphic_tx.operator->());
-//            });
-//      auto tmp = shared_model::proto::BlockBuilder()
-//                     .height(proposal.height())
-//                     .prevHash(last_block.value()->hash())
-//                     .transactions(proto_txs)
-//                     .txNumber(proposal.transactions().size())
-//                     .createdTime(proposal.created_time())
-//                     .build();
-//      // TODO sign
       log_->info("process verified proposal");
 
-      model::Block new_block;
-      new_block.height = proposal.height();
-      new_block.prev_hash =
-          *iroha::hexstringToArray<iroha::model::Block::HashType::size()>(
-              last_block.value()->hash().hex());
-      auto txs = boost::accumulate(
-          proposal.transactions(),
-          std::vector<iroha::model::Transaction>{},
-          [](auto &&vec, const auto &tx) {
-            std::unique_ptr<iroha::model::Transaction> ptr(tx->makeOldModel());
-            vec.emplace_back(*ptr);
-            return std::forward<decltype(vec)>(vec);
-          });
-      new_block.transactions = txs;
-      new_block.txs_number = proposal.transactions().size();
-      new_block.created_ts = proposal.created_time();
-      new_block.hash = hash(new_block);
-
+      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
+      // that this cast will not be needed
+      auto proto_txs =
+          proposal.transactions()
+          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
+              return static_cast<const shared_model::proto::Transaction &>(
+                  *polymorphic_tx.operator->());
+            });
       auto block = std::make_shared<shared_model::proto::Block>(
-          shared_model::proto::Block(shared_model::proto::from_old(new_block)));
+          shared_model::proto::TemplateBlockBuilder<
+              (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+              shared_model::validation::DefaultBlockValidator,
+              shared_model::proto::Block>()
+              .height(proposal.height())
+              .prevHash(last_block.value()->hash())
+              .transactions(proto_txs)
+              .txNumber(proposal.transactions().size())
+              .createdTime(proposal.created_time())
+              .build());
+
       crypto_provider_->sign(*block);
 
       block_notifier_.get_subscriber().on_next(block);

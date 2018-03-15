@@ -26,17 +26,17 @@
 #include "model/generators/query_generator.hpp"
 
 namespace iroha {
-  class CryptoProvider;
-
   namespace model {
+    class ModelCryptoProvider;
     struct Query;
   }
-}  // namespace iroha
+}
 
 namespace iroha_cli {
   namespace interactive {
     class InteractiveQueryCli {
      public:
+
       /**
        * Class to form and send Iroha queries  in interactive mode
        * @param creator_account creator's account identification
@@ -50,7 +50,7 @@ namespace iroha_cli {
           const std::string &default_peer_ip,
           int default_port,
           uint64_t query_counter,
-          const std::shared_ptr<iroha::CryptoProvider> &provider);
+          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
       /**
        * Run interactive query command line
        */
@@ -163,7 +163,7 @@ namespace iroha_cli {
       logger::Logger log_;
 
       // Crypto provider
-      std::shared_ptr<iroha::CryptoProvider> provider_;
+      std::shared_ptr<iroha::model::ModelCryptoProvider> provider_;
     };
   }  // namespace interactive
 }  // namespace iroha_cli

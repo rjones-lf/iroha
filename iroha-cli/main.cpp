@@ -23,18 +23,19 @@
 #include "client.hpp"
 #include "common/assert_config.hpp"
 #include "crypto/keys_manager_impl.hpp"
-#include "crypto_provider/impl/crypto_provider_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_cli.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/generators/block_generator.hpp"
+#include "model/model_crypto_provider_impl.hpp"
 #include "validators.hpp"
 
 // Account information
-DEFINE_bool(new_account,
-            false,
-            "Generate and save locally new public/private keys");
+DEFINE_bool(
+    new_account,
+    false,
+    "Generate and save locally new public/private keys");
 DEFINE_string(account_name,
               "",
               "Name of the account. Must be unique in iroha network");
@@ -60,6 +61,7 @@ DEFINE_string(peers_address,
 
 // Run iroha-cli in interactive mode
 DEFINE_bool(interactive, true, "Run iroha-cli in interactive mode");
+
 
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
@@ -165,25 +167,23 @@ int main(int argc, char *argv[]) {
     if (not keypair.has_value()) {
       logger->error(
           "Cannot load specified keypair, or keypair is invalid. Path: {}, "
-          "keypair name: {}. Use --key_path to path to your keypair. \nMaybe "
-          "wrong pass phrase (\"{}\")?",
+          "keypair name: {}. Use --key_path to path to your keypair. \nMaybe wrong pass phrase (\"{}\")?",
           path.string(),
           FLAGS_account_name,
-          FLAGS_pass_phrase);
+          FLAGS_pass_phrase
+      );
       return EXIT_FAILURE;
     }
     // TODO 13/09/17 grimadas: Init counters from Iroha, or read from disk?
     // IR-334
-    shared_model::crypto::Keypair keypair_(
-        shared_model::crypto::PublicKey(keypair.value().pubkey.to_string()),
-        shared_model::crypto::PrivateKey(keypair.value().privkey.to_string()));
     InteractiveCli interactiveCli(
         FLAGS_account_name,
         FLAGS_peer_ip,
         FLAGS_torii_port,
         0,
         0,
-        std::make_shared<iroha::CryptoProviderImpl<>>(keypair_));
+        std::make_shared<iroha::model::ModelCryptoProviderImpl>(
+            keypair.value()));
     interactiveCli.run();
   } else {
     logger->error("Invalid flags");

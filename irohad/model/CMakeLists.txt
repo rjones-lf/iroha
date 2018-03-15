@@ -46,6 +46,7 @@ target_link_libraries(sha3_hash
     )
 
 add_library(model
+    model_crypto_provider_impl.cpp
     impl/model_operators.cpp
     impl/query_execution.cpp
     )

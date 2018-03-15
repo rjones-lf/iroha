@@ -18,16 +18,15 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 
-#include "backend/protobuf/from_old_model.hpp"
 #include "client.hpp"
 #include "common/byteutils.hpp"
 #include "crypto/keys_manager_impl.hpp"
-#include "crypto_provider/crypto_provider.hpp"  // for ModelCryptoProvider
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_query_cli.hpp"
 #include "model/converters/json_query_factory.hpp"
+#include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
 #include "model/sha3_hash.hpp"
@@ -102,7 +101,7 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t query_counter,
-        const std::shared_ptr<iroha::CryptoProvider> &provider)
+        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(account_name),
           default_peer_ip_(default_peer_ip),
@@ -195,8 +194,9 @@ namespace iroha_cli {
       GetTransactions::TxHashCollectionType tx_hashes;
       std::for_each(
           params.begin(), params.end(), [&tx_hashes](auto const &hex_hash) {
-            if (auto opt = iroha::hexstringToArray<
-                    GetTransactions::TxHashType::size()>(hex_hash)) {
+            if (auto opt = iroha::
+                    hexstringToArray<GetTransactions::TxHashType::size()>(
+                        hex_hash)) {
               tx_hashes.push_back(*opt);
             }
           });
@@ -259,9 +259,7 @@ namespace iroha_cli {
         return true;
       }
 
-      auto query = shared_model::proto::from_old(query_);
-      provider_->sign(query);
-      *query_ = *std::unique_ptr<iroha::model::Query>(query.makeOldModel());
+      provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
       GrpcResponseHandler{}.handle(client.sendQuery(query_));
@@ -271,9 +269,7 @@ namespace iroha_cli {
     }
 
     bool InteractiveQueryCli::parseSaveFile(QueryParams params) {
-      auto query = shared_model::proto::from_old(query_);
-      provider_->sign(query);
-      *query_ = *std::unique_ptr<iroha::model::Query>(query.makeOldModel());
+      provider_->sign(*query_);
 
       auto path = params[0];
       iroha::model::converters::JsonQueryFactory json_factory;

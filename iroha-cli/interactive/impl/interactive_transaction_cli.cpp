@@ -30,11 +30,10 @@
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
-#include "crypto_provider/crypto_provider.hpp"  // for ModelCryptoProvider
+#include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "parser/parser.hpp"  // for parser::ParseValue
-#include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha::model;
 
@@ -179,7 +178,7 @@ namespace iroha_cli {
         const std::string &default_peer_ip,
         int default_port,
         uint64_t tx_counter,
-        const std::shared_ptr<iroha::CryptoProvider> &provider)
+        const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(creator_account),
           default_peer_ip_(default_peer_ip),
@@ -479,9 +478,7 @@ namespace iroha_cli {
       // clear commands so that we can start creating new tx
       commands_.clear();
 
-      auto transaction = shared_model::proto::from_old(tx);
-      provider_->sign(transaction);
-      tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
+      provider_->sign(tx);
 
       GrpcResponseHandler response_handler;
 
@@ -511,9 +508,7 @@ namespace iroha_cli {
       // clear commands so that we can start creating new tx
       commands_.clear();
 
-      auto transaction = shared_model::proto::from_old(tx);
-      provider_->sign(transaction);
-      tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
+      provider_->sign(tx);
 
       iroha::model::converters::JsonTransactionFactory json_factory;
       auto json_doc = json_factory.serialize(tx);

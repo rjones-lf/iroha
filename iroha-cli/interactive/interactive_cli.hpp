@@ -22,10 +22,6 @@
 #include "interactive/interactive_status_cli.hpp"
 #include "interactive/interactive_transaction_cli.hpp"
 
-namespace iroha {
-  class CryptoProvider;
-}
-
 namespace iroha_cli {
   namespace interactive {
 
@@ -46,7 +42,7 @@ namespace iroha_cli {
           int default_port,
           uint64_t tx_counter,
           uint64_t qry_counter,
-          const std::shared_ptr<iroha::CryptoProvider> &provider);
+          const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
       /**
        * Run interactive cli. Print menu and parse commands
        */
