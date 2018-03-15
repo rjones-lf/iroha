@@ -18,7 +18,7 @@
 #ifndef IROHA_WSV_QUERY_HPP
 #define IROHA_WSV_QUERY_HPP
 
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 #include "common/types.hpp"
