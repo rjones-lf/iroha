@@ -71,10 +71,14 @@ namespace shared_model {
       using AccountNameType = std::string;
       /// Type of asset name
       using AssetNameType = std::string;
-      /// Type of asset name
+      /// Type of detail
       using DetailType = std::string;
       /// Type of JSON data
       using JsonType = std::string;
+      /// Type of account detail key
+      using AccountDetailKeyType = std::string;
+      /// Type of account detail value
+      using AccountDetailValueType = std::string;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

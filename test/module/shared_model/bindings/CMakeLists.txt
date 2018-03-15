@@ -15,7 +15,16 @@
 addtest(model_query_builder_test
     model_query_builder_test.cpp
     )
+
 target_link_libraries(model_query_builder_test
+    bindings
+    )
+
+addtest(model_crypto_test
+    model_crypto_test.cpp
+    )
+
+target_link_libraries(model_crypto_test
     bindings
     )
 

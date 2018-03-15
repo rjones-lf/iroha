@@ -17,8 +17,8 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "framework/result_fixture.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 #include "model/account.hpp"
 #include "model/asset.hpp"
 #include "model/domain.hpp"
@@ -215,8 +215,7 @@ namespace iroha {
      * @then getAccountDetail will return nullopt
      */
     TEST_F(AccountTest, GetAccountDetailInvalidWhenNotFound) {
-      EXPECT_FALSE(query->getAccountDetail(
-          "invalid account id", "invalid_creator", "invalid_detail"));
+      EXPECT_FALSE(query->getAccountDetail("invalid account id"));
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {

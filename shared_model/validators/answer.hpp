@@ -20,6 +20,7 @@
 
 #include <boost/range/numeric.hpp>
 #include <map>
+#include <vector>
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

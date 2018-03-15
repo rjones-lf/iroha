@@ -45,11 +45,9 @@ namespace iroha {
       MOCK_METHOD1(getAccountRoles,
                    nonstd::optional<std::vector<std::string>>(
                        const std::string &account_id));
-      MOCK_METHOD3(
+      MOCK_METHOD1(
           getAccountDetail,
-          nonstd::optional<std::string>(const std::string &account_id,
-                                        const std::string &creator_account_id,
-                                        const std::string &detail));
+          nonstd::optional<std::string>(const std::string &account_id));
       MOCK_METHOD1(getRolePermissions,
                    nonstd::optional<std::vector<std::string>>(
                        const std::string &role_name));
@@ -226,8 +224,8 @@ namespace iroha {
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
-      MOCK_METHOD1(insertBlock, bool(model::Block block));
-      MOCK_METHOD1(insertBlocks, bool(const std::vector<model::Block> &blocks));
+      MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block&));
+      MOCK_METHOD1(insertBlocks, bool(const std::vector<std::shared_ptr<shared_model::interface::Block>>&));
       MOCK_METHOD0(dropStorage, void(void));
 
       void commit(std::unique_ptr<MutableStorage> storage) override {

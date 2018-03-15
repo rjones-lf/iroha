@@ -20,7 +20,6 @@
 #include <memory>
 
 #include "logger/logger.hpp"
-#include "model/model_crypto_provider.hpp"
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
@@ -37,10 +36,12 @@ namespace iroha {
       ChainValidatorImpl(std::shared_ptr<consensus::yac::SupermajorityChecker>
                              supermajority_checker);
 
-      bool validateChain(OldCommit blocks,
-                         ametsuchi::MutableStorage &storage) override;
+      bool validateChain(
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+              blocks,
+          ametsuchi::MutableStorage &storage) override;
 
-      bool validateBlock(const model::Block &block,
+      bool validateBlock(const shared_model::interface::Block &block,
                          ametsuchi::MutableStorage &storage) override;
 
      private:

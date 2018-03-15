@@ -26,8 +26,8 @@ namespace shared_model {
   namespace interface {
     template <typename Type>
     class SpecifiedVisitor
-        : public boost::static_visitor<boost::optional<
-              shared_model::detail::PolymorphicWrapper<Type>>> {
+        : public boost::static_visitor<
+              boost::optional<shared_model::detail::PolymorphicWrapper<Type>>> {
      private:
       using Y = shared_model::detail::PolymorphicWrapper<Type>;
 

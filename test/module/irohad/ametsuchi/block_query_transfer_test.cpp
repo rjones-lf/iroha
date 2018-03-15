@@ -102,7 +102,6 @@ namespace iroha {
                    .build()}))
           .height(1)
           .prevHash(fake_hash)
-          .txNumber(1)
           .build();
     }
 
@@ -128,7 +127,6 @@ namespace iroha {
                    .build()}))
           .height(height)
           .prevHash(hash)
-          .txNumber(1)
           .build();
     }
 

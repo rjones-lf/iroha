@@ -257,8 +257,7 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccountAssets(
 std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountDetail(
     const model::GetAccountDetail &query) {
-  auto acct_detail = _wsvQuery->getAccountDetail(
-      query.account_id, query.creator_account_id, query.detail);
+  auto acct_detail = _wsvQuery->getAccountDetail(query.account_id);
   if (!acct_detail.has_value()) {
     iroha::model::ErrorResponse response;
     response.query_hash = iroha::hash(query);
@@ -309,7 +308,8 @@ iroha::model::QueryProcessingFactory::executeGetTransactions(
   std::vector<iroha::model::Transaction> transactions;
   txs.subscribe([&transactions](auto const &tx_opt) {
     if (tx_opt) {
-      transactions.push_back(*std::unique_ptr<iroha::model::Transaction>((*tx_opt)->makeOldModel()));
+      transactions.push_back(*std::unique_ptr<iroha::model::Transaction>(
+          (*tx_opt)->makeOldModel()));
     }
   });
   iroha::model::TransactionsResponse response;

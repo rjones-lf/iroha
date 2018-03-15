@@ -20,7 +20,6 @@
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
-#include "logger/logger.hpp"
 
 using namespace shared_model::crypto;
 

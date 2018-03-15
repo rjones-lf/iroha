@@ -66,7 +66,6 @@ class BlockQueryTest : public AmetsuchiTest {
             .transactions(
                 std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
             .prevHash(shared_model::crypto::Hash(zero_string))
-            .txNumber(2)
             .build();
 
     // First tx in block 1
@@ -83,7 +82,6 @@ class BlockQueryTest : public AmetsuchiTest {
             .transactions(
                 std::vector<shared_model::proto::Transaction>({txn2_1, txn2_2}))
             .prevHash(block1.hash())
-            .txNumber(2)
             .build();
 
     for (const auto &b : {block1, block2}) {

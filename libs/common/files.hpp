@@ -30,6 +30,6 @@ namespace iroha {
    * Keeps the target folder.
    * @param dump_dir - target folder
    */
-  void remove_all(const std::string &dump_dir);
+  void remove_dir_contents(const std::string &dump_dir);
 }  // namespace iroha
 #endif  // IROHA_FILES_HPP

@@ -15,18 +15,17 @@
  * limitations under the License.
  */
 
+#include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-
-#include "ametsuchi/impl/flat_file/flat_file.hpp"
-
-#include <gtest/gtest.h>
 #include "common/files.hpp"
 #include "common/types.hpp"
 
 #include "logger/logger.hpp"
 
 using namespace iroha::ametsuchi;
+namespace fs = boost::filesystem;
 using Identifier = FlatFile::Identifier;
 
 static logger::Logger log_ = logger::testLog("BlockStore");
@@ -34,14 +33,14 @@ static logger::Logger log_ = logger::testLog("BlockStore");
 class BlStore_Test : public ::testing::Test {
  protected:
   void SetUp() override {
-    mkdir(block_store_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    fs::create_directory(block_store_path);
     block = std::vector<uint8_t>(100000, 5);
   }
   void TearDown() override {
-    iroha::remove_all(block_store_path);
-    rmdir(block_store_path.c_str());
+    fs::remove_all(block_store_path);
   }
-  std::string block_store_path = "/tmp/dump";
+  std::string block_store_path =
+      (fs::temp_directory_path() / fs::unique_path()).string();
   std::vector<uint8_t> block;
 };
 
@@ -85,7 +84,7 @@ TEST_F(BlStore_Test, BlockStoreWhenRemoveBlock) {
   }
 
   log_->info("----------| remove second and init new storage |----------");
-  std::remove((block_store_path + "/0000000000000002").c_str());
+  fs::remove(fs::path(block_store_path) / "0000000000000002");
   auto store = FlatFile::create(block_store_path);
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
@@ -97,18 +96,15 @@ TEST_F(BlStore_Test, BlockStoreWhenAbsentFolder) {
   log_->info(
       "----------| Check that folder is absent => create => "
       "make storage => remove storage |----------");
-  std::string target_path = "/tmp/bump";
-  rmdir(target_path.c_str());
-  {
-    auto store = FlatFile::create(block_store_path);
-    ASSERT_TRUE(store);
-    auto bl_store = std::move(*store);
-    auto id = 1u;
-    bl_store->add(id, block);
-    auto res = bl_store->last_id();
-    ASSERT_EQ(res, 1);
-  }
-  rmdir(target_path.c_str());
+  fs::remove_all(block_store_path);
+  auto store = FlatFile::create(block_store_path);
+  ASSERT_TRUE(store);
+  auto bl_store = std::move(*store);
+  auto id = 1u;
+  bl_store->add(id, block);
+  auto res = bl_store->last_id();
+  ASSERT_EQ(res, 1);
+  fs::remove_all(block_store_path);
 }
 
 /**
@@ -181,10 +177,9 @@ TEST_F(BlStore_Test, GetDeniedBlock) {
   auto id = 1u;
   bl_store->add(id, block);
 
-  auto filename =
-      boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
+  auto filename = fs::path(block_store_path) / FlatFile::id_to_name(id);
 
-  boost::filesystem::remove(filename);
+  fs::remove(filename);
   auto res = bl_store->get(id);
   ASSERT_FALSE(res);
 }
@@ -199,8 +194,7 @@ TEST_F(BlStore_Test, AddExistingId) {
   ASSERT_TRUE(store);
   auto bl_store = std::move(*store);
   auto id = 1u;
-  const auto file_name =
-      boost::filesystem::path{block_store_path} / FlatFile::id_to_name(id);
+  const auto file_name = fs::path(block_store_path) / FlatFile::id_to_name(id);
   std::ofstream fout(file_name.string());
   fout.close();
 
@@ -229,9 +223,7 @@ TEST_F(BlStore_Test, WriteDeniedFolder) {
   auto bl_store = std::move(*store);
   auto id = 1u;
 
-  auto path = boost::filesystem::path(block_store_path);
-
-  boost::filesystem::remove(path);
+  fs::remove(fs::path(block_store_path));
   auto res = bl_store->add(id, block);
   ASSERT_FALSE(res);
 }

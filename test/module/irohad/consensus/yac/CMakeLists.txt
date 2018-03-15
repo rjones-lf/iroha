@@ -79,6 +79,7 @@ addtest(yac_gate_test yac_gate_test.cpp)
 target_link_libraries(yac_gate_test
     yac
     model
+    shared_model_cryptography_model
     )
 
 addtest(yac_hash_provider_test yac_hash_provider_test.cpp)

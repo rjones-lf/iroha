@@ -22,11 +22,12 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "converters/protobuf/json_proto_converter.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "model/converters/json_common.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
+
+// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
+// shared_model https://soramitsu.atlassian.net/browse/IR-887
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -115,16 +116,15 @@ namespace iroha {
               std::move(wsv_transaction)));
     }
 
-    bool StorageImpl::insertBlock(model::Block block) {
+    bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();
       bool inserted = false;
-      auto old_block = shared_model::proto::from_old(block);
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
             inserted =
-                storage.value->apply(old_block,
+                storage.value->apply(block,
                                      [](const auto &current_block,
                                         auto &query,
                                         const auto &top_hash) { return true; });
@@ -138,7 +138,9 @@ namespace iroha {
       return inserted;
     }
 
-    bool StorageImpl::insertBlocks(const std::vector<model::Block> &blocks) {
+    bool StorageImpl::insertBlocks(
+        const std::vector<std::shared_ptr<shared_model::interface::Block>>
+            &blocks) {
       log_->info("create mutable storage");
       bool inserted = true;
       auto storageResult = createMutableStorage();
@@ -146,10 +148,8 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              auto old_block = shared_model::proto::from_old(block);
               inserted &= mutableStorage.value->apply(
-                  old_block,
-                  [](const auto &block, auto &query, const auto &hash) {
+                  *block, [](const auto &block, auto &query, const auto &hash) {
                     return true;
                   });
             });
@@ -257,7 +257,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        auto old_block = *std::unique_ptr<model::Block>(block.second->makeOldModel());
+        // TODO: rework to shared model converters once they are available
+        // IR-1084 Nikita Alekseev
+        auto old_block =
+            *std::unique_ptr<model::Block>(block.second->makeOldModel());
         block_store_->add(block.first,
                           stringToBytes(model::converters::jsonToString(
                               serializer_.serialize(old_block))));
