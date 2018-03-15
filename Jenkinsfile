@@ -14,7 +14,7 @@ properties([parameters([
   choice(choices: 'Debug\nRelease', description: '', name: 'BUILD_TYPE'),
   booleanParam(defaultValue: true, description: '', name: 'Linux'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv7'),
-  booleanParam(defaultValue: true, description: '', name: 'ARMv8'),
+  booleanParam(defaultValue: false, description: '', name: 'ARMv8'),
   booleanParam(defaultValue: true, description: '', name: 'MacOS'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
