@@ -82,7 +82,8 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          auto result = std::make_shared<shared_model::proto::Block>(block);
+          auto result =
+              std::make_shared<shared_model::proto::Block>(std::move(block));
 
           // stateless validation of block
           auto answer = stateless_validator_->validate(result);
@@ -128,7 +129,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     return nonstd::nullopt;
   }
 
-  auto result = std::make_shared<shared_model::proto::Block>(block);
+  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
   std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
   if (not crypto_provider_->verify(*old_block)) {
     log_->error(kInvalidBlockSignatures);
@@ -145,7 +146,8 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   return nonstd::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
-nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(const shared_model::crypto::PublicKey &pubkey) {
+nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
+    const shared_model::crypto::PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers) {
     log_->error(kPeerRetrieveFail);
