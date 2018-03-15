@@ -79,7 +79,6 @@ namespace iroha {
               boost::make_optional(Block::TransactionsType()),
               acc_transactions);
         };
-        model::Block bl;
         return boost::make_optional(model::Block())
             | des.Uint64(&Block::created_ts, "created_ts")
             | des.Uint64(&Block::height, "height")

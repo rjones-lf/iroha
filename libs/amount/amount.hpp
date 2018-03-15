@@ -30,8 +30,6 @@ namespace iroha {
    * operations on them
    */
   class Amount {
-    using uint256_t = boost::multiprecision::uint256_t;
-
    public:
     /**
      * Creates Amount with integer = 0 and scale = 0
