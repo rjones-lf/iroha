@@ -113,9 +113,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(old_expected_block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
-      })));
+      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
   init();
 
@@ -144,9 +142,7 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(old_expected_block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
-      })));
+      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
   init();
 }
@@ -156,9 +152,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(old_expected_block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
-      })));
+      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));

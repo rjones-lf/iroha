@@ -50,7 +50,7 @@ namespace iroha {
             delay_(delay) {
         log_ = logger::log("YacGate");
         block_creator_->on_block().subscribe([this](auto block) {
-          this->vote(*std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+          this->vote(*block);
         });
       }
 
