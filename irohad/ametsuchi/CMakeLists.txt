@@ -16,7 +16,6 @@ target_link_libraries(ametsuchi
     json_model_converters
     logger
     rxcpp
-    optional
     pqxx
     libs_common
     command_execution

@@ -23,67 +23,67 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      nonstd::optional<protocol::QueryResponse>
+      boost::optional<protocol::QueryResponse>
       PbQueryResponseFactory::serialize(
           const std::shared_ptr<QueryResponse> query_response) const {
-        nonstd::optional<protocol::QueryResponse> response = nonstd::nullopt;
+        boost::optional<protocol::QueryResponse> response = boost::none;
         // TODO 26/09/17 grimadas: refactor #VARIANT
         if (instanceof <model::ErrorResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           auto er = static_cast<model::ErrorResponse &>(*query_response);
           auto pb_er = serializeErrorResponse(er);
           response->mutable_error_response()->CopyFrom(pb_er);
         }
         if (instanceof <model::AccountAssetResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_account_assets_response()->CopyFrom(
               serializeAccountAssetResponse(
                   static_cast<model::AccountAssetResponse &>(*query_response)));
         }
         if (instanceof <model::AccountDetailResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_account_detail_response()->CopyFrom(
               serializeAccountDetailResponse(
                   static_cast<model::AccountDetailResponse &>(
                       *query_response)));
         }
         if (instanceof <model::AccountResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_account_response()->CopyFrom(
               serializeAccountResponse(
                   static_cast<model::AccountResponse &>(*query_response)));
         }
         if (instanceof <model::SignatoriesResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_signatories_response()->CopyFrom(
               serializeSignatoriesResponse(
                   static_cast<model::SignatoriesResponse &>(*query_response)));
         }
         if (instanceof <model::TransactionsResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_transactions_response()->CopyFrom(
               serializeTransactionsResponse(
                   static_cast<model::TransactionsResponse &>(*query_response)));
         }
         if (instanceof <model::AssetResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_asset_response()->CopyFrom(serializeAssetResponse(
               static_cast<model::AssetResponse &>(*query_response)));
         }
         if (instanceof <model::RolesResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_roles_response()->CopyFrom(serializeRolesResponse(
               static_cast<model::RolesResponse &>(*query_response)));
         }
         if (instanceof <model::RolePermissionsResponse>(*query_response)) {
-          response = nonstd::make_optional<protocol::QueryResponse>();
+          response = boost::make_optional(protocol::QueryResponse());
           response->mutable_role_permissions_response()->CopyFrom(
               serializeRolePermissionsResponse(
                   static_cast<model::RolePermissionsResponse &>(
                       *query_response)));
         }
 
-        if (response.has_value()) {
+        if (response) {
           response->set_query_hash(query_response->query_hash.to_string());
         }
         return response;
@@ -120,7 +120,7 @@ namespace iroha {
             return p(deserializeRolePermissionsResponse(
                 response.role_permissions_response()));
           default:
-            return nonstd::nullopt;
+            return boost::none;
         }
       }
 

@@ -19,7 +19,7 @@
 #define IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <vector>
 
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
@@ -56,7 +56,7 @@ namespace iroha {
          * @return actual state of storage,
          * nullopt when storage doesn't has supermajority
          */
-        nonstd::optional<Answer> insert(VoteMessage msg);
+        boost::optional<Answer> insert(VoteMessage msg);
 
         /**
          * Insert vector of votes to current storage
@@ -64,7 +64,7 @@ namespace iroha {
          * @return state of storage after insertion last vote,
          * nullopt when storage doesn't has supermajority
          */
-        nonstd::optional<Answer> insert(std::vector<VoteMessage> votes);
+        boost::optional<Answer> insert(std::vector<VoteMessage> votes);
 
         /**
          * @return votes attached to storage
@@ -79,7 +79,7 @@ namespace iroha {
         /**
          * @return current block store state
          */
-        nonstd::optional<Answer> getState();
+        boost::optional<Answer> getState();
 
         /**
          * Verify that passed vote contains in storage

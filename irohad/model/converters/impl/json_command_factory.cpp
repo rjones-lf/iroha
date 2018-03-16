@@ -45,18 +45,18 @@ namespace iroha {
       template <>
       struct Convert<Amount> {
         template <typename T>
-        nonstd::optional<Amount> operator()(T &&x) {
+        boost::optional<Amount> operator()(T &&x) {
           auto des = makeFieldDeserializer(x);
           auto str_int_value = des.String("value");
 
-          if (not str_int_value.has_value()) {
-            return nonstd::nullopt;
+          if (not str_int_value) {
+            return boost::none;
           }
 
           // check if value is actually number
           std::regex e("\\d+");
           if (not std::regex_match(str_int_value.value(), e)) {
-            return nonstd::nullopt;
+            return boost::none;
           }
 
           uint256_t value(str_int_value.value());
@@ -64,27 +64,25 @@ namespace iroha {
           rapidjson::Document dd;
           precision = des.document["precision"].GetUint();
 
-          return nonstd::make_optional<Amount>(
-              {value, static_cast<uint8_t>(precision)});
+          return boost::make_optional(Amount(value, static_cast<uint8_t>(precision)));
         }
       };
 
       template <>
       struct Convert<Peer> {
         template <typename T>
-        nonstd::optional<Peer> operator()(T &&x) {
+        boost::optional<Peer> operator()(T &&x) {
           auto des = makeFieldDeserializer(x);
           auto address = des.String("address");
           auto pubkey = des.String("peer_key");
 
-          if (not address.has_value() or not pubkey.has_value()) {
-            return nonstd::nullopt;
+          if (not address or not pubkey) {
+            return boost::none;
           }
 
-          return nonstd::make_optional<Peer>(
-              {address.value(),
+          return boost::make_optional(Peer(address.value(),
                iroha::hexstringToArray<iroha::pubkey_t::size()>(pubkey.value())
-                   .value()});
+                   .value()));
         }
       };
 
@@ -500,14 +498,14 @@ namespace iroha {
           std::set<std::string> perms;
           for (auto &v : document["permissions"].GetArray()) {
             if (not v.IsString()) {
-              return nonstd::nullopt;
+              return boost::none;
             }
             perms.insert(v.GetString());
           }
           auto role_name = document["role_name"].GetString();
           return make_optional_ptr<CreateRole>(role_name, perms) | toCommand;
         }
-        return nonstd::nullopt;
+        return boost::none;
       }
 
       rapidjson::Document JsonCommandFactory::serializeGrantPermission(

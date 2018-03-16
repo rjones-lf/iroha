@@ -21,7 +21,7 @@
 #include "ametsuchi/storage.hpp"
 
 #include <cmath>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <pqxx/pqxx>
 #include <shared_mutex>
 #include "logger/logger.hpp"

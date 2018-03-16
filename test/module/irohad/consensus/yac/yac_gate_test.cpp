@@ -133,7 +133,7 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   EXPECT_CALL(*hash_gate, on_commit()).Times(0);
 
   // generate order of peers
-  EXPECT_CALL(*peer_orderer, getOrdering(_)).WillOnce(Return(nonstd::nullopt));
+  EXPECT_CALL(*peer_orderer, getOrdering(_)).WillOnce(Return(boost::none));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));

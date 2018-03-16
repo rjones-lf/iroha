@@ -26,10 +26,10 @@ namespace parser {
         == s.end();
   }
 
-  nonstd::optional<std::string> parseFirstCommand(std::string line) {
+  boost::optional<std::string> parseFirstCommand(std::string line) {
     auto vec = split(line);
     if (vec.size() == 0) {
-      return nonstd::nullopt;
+      return boost::none;
     }
     return vec[0];
   }

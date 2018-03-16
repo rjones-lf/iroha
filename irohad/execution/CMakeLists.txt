@@ -16,7 +16,6 @@ add_library(common_execution
         impl/common_executor.cpp
         )
 target_link_libraries(common_execution
-        optional
         rxcpp
         )
 
@@ -25,7 +24,6 @@ add_library(command_execution
         )
 target_link_libraries(command_execution
         ${Boost_LIBRARIES}
-        optional
         logger
         common_execution
         validator

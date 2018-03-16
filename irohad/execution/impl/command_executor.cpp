@@ -143,7 +143,7 @@ namespace iroha {
       const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddAssetQuantity> &command) {
     std::string command_name = "AddAssetQuantity";
     auto asset = queries->getAsset(command->assetId());
-    if (not asset.has_value()) {
+    if (not asset) {
       return makeExecutionError(
           (boost::format("asset %s is absent") % command->assetId()).str(),
           command_name);
@@ -159,7 +159,7 @@ namespace iroha {
     }
 
     if (not queries->getAccount(command->accountId())
-                .has_value()) {
+                ) {
       return makeExecutionError(
           (boost::format("account %s is absent") % command->accountId()).str(),
           command_name);
@@ -172,7 +172,7 @@ namespace iroha {
             .intValue(command->amount().intValue())
             .build();
 
-    if (account_asset.has_value()) {
+    if (account_asset) {
       auto balance = new_balance + account_asset.value()->balance();
       if (not balance) {
         return makeExecutionError("amount overflows balance", command_name);
@@ -228,7 +228,7 @@ namespace iroha {
             .jsonData("{}")
             .build();
     auto domain = queries->getDomain(command->domainId());
-    if (not domain.has_value()) {
+    if (not domain) {
       return makeExecutionError(
           (boost::format("Domain %s not found") % command->domainId()).str(),
           command_name);
@@ -332,7 +332,7 @@ namespace iroha {
     std::string command_name = "SetQuorum";
 
     auto account = queries->getAccount(command->accountId());
-    if (not account.has_value()) {
+    if (not account) {
       return makeExecutionError(
           (boost::format("absent account %s") % command->accountId()).str(),
           command_name);
@@ -366,7 +366,7 @@ namespace iroha {
     }
     auto account_asset = queries->getAccountAsset(
         command->accountId(), command->assetId());  // Old model
-    if (not account_asset.has_value()) {
+    if (not account_asset) {
       return makeExecutionError((boost::format("%s do not have %s")
                                  % command->accountId() % command->assetId())
                                     .str(),
@@ -392,7 +392,7 @@ namespace iroha {
 
     auto src_account_asset =
         queries->getAccountAsset(command->srcAccountId(), command->assetId());
-    if (not src_account_asset.has_value()) {
+    if (not src_account_asset) {
       return makeExecutionError((boost::format("asset %s is absent of %s")
                                  % command->assetId() % command->srcAccountId())
                                     .str(),
@@ -402,7 +402,7 @@ namespace iroha {
     auto dest_account_asset =
         queries->getAccountAsset(command->destAccountId(), command->assetId());
     auto asset = queries->getAsset(command->assetId());
-    if (not asset.has_value()) {
+    if (not asset) {
       return makeExecutionError(
           (boost::format("asset %s is absent of %s") % command->assetId()
            % command->destAccountId())
@@ -429,7 +429,7 @@ namespace iroha {
             .balance(new_src_balance.get())
             .build();
 
-    if (not dest_account_asset.has_value()) {
+    if (not dest_account_asset) {
       // This assert is new for this account - create new AccountAsset
 
       auto dest_account_asset_new =
@@ -665,14 +665,14 @@ namespace iroha {
     auto role_permissions = queries.getRolePermissions(command.roleName());
     auto account_roles = queries.getAccountRoles(creator_account_id);
 
-    if (not role_permissions.has_value() or not account_roles.has_value()) {
+    if (not role_permissions or not account_roles) {
       return false;
     }
 
     std::set<std::string> account_permissions;
     for (const auto &role : *account_roles) {
       auto permissions = queries.getRolePermissions(role);
-      if (not permissions.has_value())
+      if (not permissions)
         continue;
       for (const auto &permission : *permissions)
         account_permissions.insert(permission);
@@ -758,7 +758,7 @@ namespace iroha {
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
 
-    if (not(account.has_value() and signatories.has_value())) {
+    if (not(account and signatories)) {
       // No account or signatories found
       return false;
     }
@@ -787,7 +787,7 @@ namespace iroha {
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
 
-    if (not(signatories.has_value())) {
+    if (not(signatories)) {
       // No  signatories of an account found
       return false;
     }
@@ -811,7 +811,7 @@ namespace iroha {
     }
 
     auto asset = queries.getAsset(command.assetId());
-    if (not asset.has_value()) {
+    if (not asset) {
       return false;
     }
     // Amount is formed wrong
@@ -820,7 +820,7 @@ namespace iroha {
     }
     auto account_asset = queries.getAccountAsset(
         command.srcAccountId(), command.assetId());
-    if (not account_asset.has_value()) {
+    if (not account_asset) {
       return false;
     }
     // Check if dest account exist

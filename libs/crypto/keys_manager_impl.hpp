@@ -20,7 +20,7 @@
 
 #include "crypto/keys_manager.hpp"
 
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 
 #include "common/types.hpp"  // for keypair_t, pubkey_t, privkey_t
 #include "logger/logger.hpp"
@@ -31,8 +31,8 @@ namespace iroha {
    public:
     explicit KeysManagerImpl(const std::string &account_name);
 
-    nonstd::optional<iroha::keypair_t> loadKeys() override;
-    nonstd::optional<iroha::keypair_t> loadKeys(
+    boost::optional<iroha::keypair_t> loadKeys() override;
+    boost::optional<iroha::keypair_t> loadKeys(
         const std::string &pass_phrase) override;
 
     bool createKeys() override;

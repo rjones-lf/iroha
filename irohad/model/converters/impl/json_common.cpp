@@ -35,13 +35,13 @@ namespace iroha {
         return document;
       }
 
-      nonstd::optional<Document> stringToJson(const std::string &string) {
+      boost::optional<Document> stringToJson(const std::string &string) {
         Document document;
         document.Parse(string);
         if (document.HasParseError()) {
-          return nonstd::nullopt;
+          return boost::none;
         }
-        return nonstd::make_optional(std::move(document));
+        return document;
       }
 
       std::string jsonToString(const Document &document) {

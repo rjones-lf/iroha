@@ -154,7 +154,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
       .WillOnce(Return(false));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
-      .WillRepeatedly(Return(nonstd::nullopt));
+      .WillRepeatedly(Return(boost::none));
 
   iroha::protocol::QueryResponse response;
 
@@ -284,7 +284,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
       hasAccountGrantablePermission(creator, accountb_id, can_get_my_acc_ast))
       .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
 
   EXPECT_CALL(*wsv_query, getAccountAsset(_, _))
       .Times(0);  // won't be called due to failed stateful validation
@@ -395,7 +395,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
                   creator, "b@domain", can_get_my_signatories))
       .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
   EXPECT_CALL(*wsv_query, getSignatories(_)).Times(0);
 
   iroha::protocol::QueryResponse response;

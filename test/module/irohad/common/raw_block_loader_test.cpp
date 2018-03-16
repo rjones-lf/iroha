@@ -41,6 +41,6 @@ TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   auto doc = JsonBlockFactory().serialize(block);
   auto str = jsonToString(doc);
   auto new_block = loader.parseBlock(str);
-  ASSERT_TRUE(new_block.has_value());
-  ASSERT_EQ(block, new_block.value());
+  ASSERT_TRUE(new_block);
+  ASSERT_EQ(block, *new_block);
 }

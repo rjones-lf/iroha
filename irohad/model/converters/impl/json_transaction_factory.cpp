@@ -60,7 +60,7 @@ namespace iroha {
         return document;
       }
 
-      nonstd::optional<Transaction> JsonTransactionFactory::deserialize(
+      boost::optional<Transaction> JsonTransactionFactory::deserialize(
           const Value &document) {
         auto des = makeFieldDeserializer(document);
         auto des_commands = [this](auto array) {
@@ -69,17 +69,17 @@ namespace iroha {
               return factory_.deserializeAbstractCommand(x) |
                   [&commands](auto command) {
                     commands.push_back(command);
-                    return nonstd::make_optional(commands);
+                    return boost::make_optional(std::move(commands));
                   };
             };
           };
           return std::accumulate(
               array.begin(),
               array.end(),
-              nonstd::make_optional<Transaction::CommandsType>(),
+              boost::make_optional(Transaction::CommandsType()),
               acc_commands);
         };
-        return nonstd::make_optional<Transaction>()
+        return boost::make_optional(Transaction())
             | des.Uint64(&Transaction::created_ts, "created_ts")
             | des.String(&Transaction::creator_account_id, "creator_account_id")
             | des.Uint64(&Transaction::tx_counter, "tx_counter")

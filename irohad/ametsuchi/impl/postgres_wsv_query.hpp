@@ -27,37 +27,37 @@ namespace iroha {
     class PostgresWsvQuery : public WsvQuery {
      public:
       explicit PostgresWsvQuery(pqxx::nontransaction &transaction);
-      nonstd::optional<std::vector<shared_model::interface::types::RoleIdType>>
+      boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
 
-      nonstd::optional<
+      boost::optional<
           std::vector<shared_model::interface::types::PermissionNameType>>
       getRolePermissions(
           const shared_model::interface::types::RoleIdType &role_name) override;
 
-      nonstd::optional<std::shared_ptr<shared_model::interface::Account>>
+      boost::optional<std::shared_ptr<shared_model::interface::Account>>
       getAccount(const shared_model::interface::types::AccountIdType
                      &account_id) override;
-      nonstd::optional<std::string> getAccountDetail(
+      boost::optional<std::string> getAccountDetail(
           const shared_model::interface::types::AccountIdType &account_id)
           override;
-      nonstd::optional<std::vector<shared_model::interface::types::PubkeyType>>
+      boost::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
                          &account_id) override;
-      nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>
+      boost::optional<std::shared_ptr<shared_model::interface::Asset>>
       getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
-      nonstd::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
+      boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) override;
-      nonstd::optional<
+      boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::Peer>>>
       getPeers() override;
-      nonstd::optional<std::vector<shared_model::interface::types::RoleIdType>>
+      boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getRoles() override;
-      nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+      boost::optional<std::shared_ptr<shared_model::interface::Domain>>
       getDomain(const shared_model::interface::types::DomainIdType &domain_id)
           override;
       bool hasAccountGrantablePermission(

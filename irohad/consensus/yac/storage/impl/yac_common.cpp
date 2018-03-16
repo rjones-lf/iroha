@@ -37,18 +37,18 @@ namespace iroha {
             });
       }
 
-      nonstd::optional<ProposalHash> getProposalHash(
+      boost::optional<ProposalHash> getProposalHash(
           const std::vector<VoteMessage> &votes) {
         auto &&hash = getHash(votes);
-        if (hash.has_value()) {
-          return hash.value().proposal_hash;
+        if (hash) {
+          return (*hash).proposal_hash;
         }
-        return nonstd::nullopt;
+        return boost::none;
       }
 
-      nonstd::optional<YacHash> getHash(const std::vector<VoteMessage> &votes) {
+      boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes) {
         if (not sameProposals(votes)) {
-          return nonstd::nullopt;
+          return boost::none;
         }
 
         return votes.at(0).hash;

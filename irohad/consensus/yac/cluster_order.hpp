@@ -18,7 +18,7 @@
 #ifndef IROHA_CLUSTER_ORDER_HPP
 #define IROHA_CLUSTER_ORDER_HPP
 
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <vector>
 #include "model/peer.hpp"  // for Peer, because currentLeader() returns by value
 
@@ -36,7 +36,7 @@ namespace iroha {
          * @param order vector of peers
          * @return false if vector is empty, true otherwise
          */
-        static nonstd::optional<ClusterOrdering> create(
+        static boost::optional<ClusterOrdering> create(
             const std::vector<model::Peer> &order);
 
         /**

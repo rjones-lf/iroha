@@ -45,5 +45,5 @@ TEST_F(JsonBlockTest, InvalidWhenFieldsMissing) {
 
   auto serial_block = factory.deserialize(json_block);
 
-  ASSERT_FALSE(serial_block.has_value());
+  ASSERT_FALSE(serial_block);
 }

@@ -105,7 +105,7 @@ namespace iroha_cli {
 
       auto res = handleParse<std::string>(
           this, line, actionHandlers_, requestParamsDescriptions_);
-      if (not res.has_value()) {
+      if (not res) {
         // Continue parsing
         return true;
       }
@@ -130,18 +130,18 @@ namespace iroha_cli {
       auto res = handleParse<bool>(
           this, line, resultHandlers_, resultParamsDescriptions_);
 
-      return not res.has_value() ? true : res.value();
+      return res.value_or(true);
     }
 
     bool InteractiveStatusCli::parseSendToIroha(ActionParams line) {
       auto address =
           parseIrohaPeerParams(line, default_peer_ip_, default_port_);
-      if (not address.has_value()) {
+      if (not address) {
         return true;
       }
 
       auto status = iroha::protocol::TxStatus::NOT_RECEIVED;
-      if (iroha::hexstringToBytestring(txHash_).has_value()) {
+      if (iroha::hexstringToBytestring(txHash_)) {
         status = CliClient(address.value().first, address.value().second)
                      .getTxStatus(*iroha::hexstringToBytestring(txHash_))
                      .answer.tx_status();
