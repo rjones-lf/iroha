@@ -18,8 +18,6 @@
 #ifndef IROHA_PB_QUERY_RESPONSE_FACTORY_HPP
 #define IROHA_PB_QUERY_RESPONSE_FACTORY_HPP
 
-#include <nonstd/optional.hpp>
-
 #include "model/account_asset.hpp"
 #include "model/common.hpp"
 #include "model/queries/responses/account_assets_response.hpp"
@@ -41,7 +39,7 @@ namespace iroha {
        */
       class PbQueryResponseFactory {
        public:
-        nonstd::optional<protocol::QueryResponse> serialize(
+        boost::optional<protocol::QueryResponse> serialize(
             const std::shared_ptr<QueryResponse> query_response) const;
         optional_ptr<QueryResponse> deserialize(
             const protocol::QueryResponse &query_response) const;

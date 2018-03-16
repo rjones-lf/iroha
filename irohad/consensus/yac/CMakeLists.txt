@@ -40,7 +40,6 @@ add_library(yac
 target_link_libraries(yac
     supermajority_check
     rxcpp
-    optional
     yac_grpc
     logger
     hash

@@ -228,7 +228,7 @@ namespace iroha_cli {
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
           this, line, command_handlers_, command_params_descriptions_);
 
-      if (not res.has_value()) {
+      if (not res) {
         // Continue parsing
         return true;
       }
@@ -334,7 +334,7 @@ namespace iroha_cli {
       auto val_int =
           parser::parseValue<boost::multiprecision::uint256_t>(params[2]);
       auto precision = parser::parseValue<uint32_t>(params[3]);
-      if (not val_int.has_value() || not precision.has_value()) {
+      if (not val_int or not precision) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
       }
@@ -391,7 +391,7 @@ namespace iroha_cli {
       auto asset_name = params[0];
       auto domain_id = params[1];
       auto val = parser::parseValue<uint32_t>(params[2]);
-      if (not val.has_value()) {
+      if (not val) {
         std::cout << "Wrong format for precision" << std::endl;
         return nullptr;
       }
@@ -412,7 +412,7 @@ namespace iroha_cli {
     InteractiveTransactionCli::parseSetQuorum(std::vector<std::string> params) {
       auto account_id = params[0];
       auto quorum = parser::parseValue<uint64_t>(params[1]);
-      if (not quorum.has_value()) {
+      if (not quorum) {
         std::cout << "Wrong format for quorum" << std::endl;
         return nullptr;
       }
@@ -436,7 +436,7 @@ namespace iroha_cli {
       auto val_int =
           parser::parseValue<boost::multiprecision::uint256_t>(params[3]);
       auto precision = parser::parseValue<uint32_t>(params[4]);
-      if (not val_int.has_value() || not precision.has_value()) {
+      if (not val_int or not precision) {
         std::cout << "Wrong format for amount" << std::endl;
         return nullptr;
       }
@@ -460,14 +460,14 @@ namespace iroha_cli {
       // Find in result handler map
       auto res = handleParse<bool>(
           this, line, result_handlers_, result_params_descriptions);
-      return not res.has_value() ? true : res.value();
+      return res.get_value_or(true);
     }
 
     bool InteractiveTransactionCli::parseSendToIroha(
         std::vector<std::string> params) {
       auto address = parseIrohaPeerParams(
           std::move(params), default_peer_ip_, default_port_);
-      if (not address.has_value()) {
+      if (not address) {
         return true;
       }
 

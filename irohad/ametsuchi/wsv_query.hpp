@@ -18,7 +18,7 @@
 #ifndef IROHA_WSV_QUERY_HPP
 #define IROHA_WSV_QUERY_HPP
 
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 #include "common/types.hpp"
@@ -61,7 +61,7 @@ namespace iroha {
        * @param domain_id - id in the system
        * @return Domain if exist, nullopt otherwise
        */
-      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Domain>>
+      virtual boost::optional<std::shared_ptr<shared_model::interface::Domain>>
       getDomain(
           const shared_model::interface::types::DomainIdType &domain_id) = 0;
 
@@ -70,7 +70,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
@@ -79,7 +79,7 @@ namespace iroha {
        * @param role_name
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::vector<shared_model::interface::types::PermissionNameType>>
       getRolePermissions(
           const shared_model::interface::types::RoleIdType &role_name) = 0;
@@ -87,7 +87,7 @@ namespace iroha {
       /**
        * @return All roles currently in the system
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::vector<shared_model::interface::types::RoleIdType>>
       getRoles() = 0;
 
@@ -96,7 +96,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::shared_ptr<shared_model::interface::Account>>
       getAccount(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
@@ -106,7 +106,7 @@ namespace iroha {
        * @param account_id - account to get details about
        * @return optional of account details
        */
-      virtual nonstd::optional<std::string> getAccountDetail(
+      virtual boost::optional<std::string> getAccountDetail(
           const std::string &account_id) = 0;
 
       /**
@@ -114,7 +114,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
@@ -124,7 +124,7 @@ namespace iroha {
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Asset>>
+      virtual boost::optional<std::shared_ptr<shared_model::interface::Asset>>
       getAsset(const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
       /**
@@ -133,7 +133,7 @@ namespace iroha {
        * @param asset_id
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
@@ -143,7 +143,7 @@ namespace iroha {
        *
        * @return
        */
-      virtual nonstd::optional<
+      virtual boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::Peer>>>
       getPeers() = 0;
     };

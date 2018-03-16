@@ -75,7 +75,7 @@ namespace iroha {
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
       auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors.has_value()) {
+      if (not command_executors) {
         return expected::makeError(kCommandExecutorError);
       }
 
@@ -100,7 +100,7 @@ namespace iroha {
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
       auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors.has_value()) {
+      if (not command_executors) {
         return expected::makeError(kCommandExecutorError);
       }
 
@@ -115,7 +115,7 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      nonstd::optional<shared_model::interface::types::HashType> top_hash;
+      boost::optional<shared_model::interface::types::HashType> top_hash;
 
       blocks_->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())

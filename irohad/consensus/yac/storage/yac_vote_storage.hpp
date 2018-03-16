@@ -19,7 +19,7 @@
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <unordered_set>
 #include <vector>
 
@@ -66,7 +66,7 @@ namespace iroha {
          * @param peers_in_round - number of peers participated in round
          * @return structure with result of inserting. Nullopt if mgs not valid.
          */
-        nonstd::optional<Answer> store(VoteMessage msg,
+        boost::optional<Answer> store(VoteMessage msg,
                                        uint64_t peers_in_round);
 
         /**
@@ -76,7 +76,7 @@ namespace iroha {
          * @return structure with result of inserting.
          * Nullopt if commit not valid.
          */
-        nonstd::optional<Answer> store(CommitMessage commit,
+        boost::optional<Answer> store(CommitMessage commit,
                                        uint64_t peers_in_round);
 
         /**
@@ -86,7 +86,7 @@ namespace iroha {
          * @return structure with result of inserting.
          * Nullopt if reject not valid.
          */
-        nonstd::optional<Answer> store(RejectMessage reject,
+        boost::optional<Answer> store(RejectMessage reject,
                                        uint64_t peers_in_round);
 
         /**
@@ -118,7 +118,7 @@ namespace iroha {
          * @param peers_in_round - number of peers in current round
          * @return answer after insertion collection
          */
-        nonstd::optional<Answer> insert_votes(std::vector<VoteMessage> &votes,
+        boost::optional<Answer> insert_votes(std::vector<VoteMessage> &votes,
                                               uint64_t peers_in_round);
 
         // --------| fields |--------

@@ -46,7 +46,7 @@ namespace iroha {
                    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
                        const shared_model::crypto::PublicKey &));
       MOCK_METHOD2(retrieveBlock,
-                   nonstd::optional<std::shared_ptr<shared_model::interface::Block>>(
+                   boost::optional<std::shared_ptr<shared_model::interface::Block>>(
                        const shared_model::crypto::PublicKey &,
                        const shared_model::interface::types::HashType &));
     };

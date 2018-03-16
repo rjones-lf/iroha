@@ -48,10 +48,9 @@ namespace shared_model {
     }
 
     inline static shared_model::proto::Query from_old(
-        const iroha::model::Query &qry) {
+        std::shared_ptr<const iroha::model::Query> qry) {
       return shared_model::proto::Query(
-          *iroha::model::converters::PbQueryFactory().serialize(
-              std::make_shared<iroha::model::Query>(qry)));
+          *iroha::model::converters::PbQueryFactory().serialize(qry));
     }
 
     inline static shared_model::proto::Proposal from_old(

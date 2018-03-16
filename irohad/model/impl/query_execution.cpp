@@ -60,7 +60,7 @@ bool hasQueryPermission(const std::string &creator,
        and wsv_query.hasAccountGrantablePermission(
                creator, target_account, indiv_permission_id))
       or  // ----- Creator has role permission ---------
-      (perms_set.has_value()
+      (perms_set
        and (
                // 2. Creator want to query his account, must have role
                // permission
@@ -168,9 +168,9 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAssetInfo(
     const model::GetAssetInfo &query) {
   auto shared_ast = _wsvQuery->getAsset(query.asset_id);
   auto ast = shared_ast | [&](auto &asset) {
-    return nonstd::make_optional(*std::unique_ptr<iroha::model::Asset>(asset->makeOldModel()));
+    return boost::make_optional(*std::unique_ptr<iroha::model::Asset>(asset->makeOldModel()));
   };
-  if (!ast.has_value()) {
+  if (not ast) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = ErrorResponse::NO_ASSET;
@@ -185,7 +185,7 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAssetInfo(
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetRoles(
     const model::GetRoles &query) {
   auto roles = _wsvQuery->getRoles();
-  if (not roles.has_value()) {
+  if (not roles) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = ErrorResponse::NO_ROLES;
@@ -201,7 +201,7 @@ std::shared_ptr<QueryResponse>
 QueryProcessingFactory::executeGetRolePermissions(
     const model::GetRolePermissions &query) {
   auto perm = _wsvQuery->getRolePermissions(query.role_id);
-  if (not perm.has_value()) {
+  if (not perm) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = ErrorResponse::NO_ROLES;
@@ -217,11 +217,11 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
     const model::GetAccount &query) {
   auto shared_acc = _wsvQuery->getAccount(query.account_id);
   auto acc = shared_acc | [](auto &account) {
-    return nonstd::make_optional(*std::unique_ptr<iroha::model::Account>(account->makeOldModel()));
+    return boost::make_optional(*std::unique_ptr<iroha::model::Account>(account->makeOldModel()));
   };
 
   auto roles = _wsvQuery->getAccountRoles(query.account_id);
-  if (not acc.has_value() or not roles.has_value()) {
+  if (not acc or not roles) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = ErrorResponse::NO_ACCOUNT;
@@ -239,10 +239,10 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccountAssets(
     const model::GetAccountAssets &query) {
   auto shared_acct_asset =  _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
   auto acct_asset = shared_acct_asset | [](auto &account_asset) {
-    return nonstd::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(account_asset->makeOldModel()));
+    return boost::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(account_asset->makeOldModel()));
   };
 
-  if (!acct_asset.has_value()) {
+  if (!acct_asset) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = ErrorResponse::NO_ACCOUNT_ASSETS;
@@ -258,7 +258,7 @@ std::shared_ptr<iroha::model::QueryResponse>
 iroha::model::QueryProcessingFactory::executeGetAccountDetail(
     const model::GetAccountDetail &query) {
   auto acct_detail = _wsvQuery->getAccountDetail(query.account_id);
-  if (!acct_detail.has_value()) {
+  if (!acct_detail) {
     iroha::model::ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = iroha::model::ErrorResponse::NO_ACCOUNT_DETAIL;
@@ -321,7 +321,7 @@ iroha::model::QueryProcessingFactory::executeGetTransactions(
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetSignatories(
     const model::GetSignatories &query) {
   auto signs = _wsvQuery->getSignatories(query.account_id);
-  if (!signs.has_value()) {
+  if (!signs) {
     ErrorResponse response;
     response.query_hash = iroha::hash(query);
     response.reason = model::ErrorResponse::NO_SIGNATORIES;

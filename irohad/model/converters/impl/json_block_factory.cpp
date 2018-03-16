@@ -16,7 +16,6 @@
  */
 
 #include "model/converters/json_block_factory.hpp"
-#include "model/converters/json_common.hpp"
 
 using namespace rapidjson;
 
@@ -61,7 +60,7 @@ namespace iroha {
         return document;
       }
 
-      nonstd::optional<Block> JsonBlockFactory::deserialize(
+      boost::optional<Block> JsonBlockFactory::deserialize(
           const Document &document) {
         auto des = makeFieldDeserializer(document);
         auto des_transactions = [this](auto array) {
@@ -70,17 +69,17 @@ namespace iroha {
               return factory_.deserialize(x) |
                   [&transactions](auto transaction) {
                     transactions.push_back(transaction);
-                    return nonstd::make_optional(transactions);
+                    return boost::make_optional(std::move(transactions));
                   };
             };
           };
           return std::accumulate(
               array.begin(),
               array.end(),
-              nonstd::make_optional<Block::TransactionsType>(),
+              boost::make_optional(Block::TransactionsType()),
               acc_transactions);
         };
-        return nonstd::make_optional<model::Block>()
+        return boost::make_optional(model::Block())
             | des.Uint64(&Block::created_ts, "created_ts")
             | des.Uint64(&Block::height, "height")
             | des.Uint(&Block::txs_number, "txs_number")

@@ -20,7 +20,7 @@
 
 #include <memory>
 #include <mutex>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 #include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
@@ -96,7 +96,7 @@ namespace iroha {
          * @param vote message containing peer information
          * @return peer if it is present in the ledger, nullopt otherwise
          */
-        nonstd::optional<model::Peer> findPeer(const VoteMessage &vote);
+        boost::optional<model::Peer> findPeer(const VoteMessage &vote);
 
         // ------|Apply data|------
 
@@ -106,11 +106,11 @@ namespace iroha {
          * top block in ledger does not correspond to consensus round number
          */
 
-        void applyCommit(nonstd::optional<model::Peer> from,
+        void applyCommit(boost::optional<model::Peer> from,
                          CommitMessage commit);
-        void applyReject(nonstd::optional<model::Peer> from,
+        void applyReject(boost::optional<model::Peer> from,
                          RejectMessage reject);
-        void applyVote(nonstd::optional<model::Peer> from, VoteMessage vote);
+        void applyVote(boost::optional<model::Peer> from, VoteMessage vote);
 
         // ------|Propagation|------
         void propagateCommit(CommitMessage msg);

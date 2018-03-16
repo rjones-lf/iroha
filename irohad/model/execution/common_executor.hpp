@@ -41,7 +41,7 @@ namespace iroha {
      * @param queries - WSVqueries
      * @return set of account's role permissions
      */
-    nonstd::optional<std::set<std::string>> getAccountPermissions(
+    boost::optional<std::set<std::string>> getAccountPermissions(
         const std::string &account_id, iroha::ametsuchi::WsvQuery &queries);
 
     /**

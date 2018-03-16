@@ -19,7 +19,7 @@
 #define IROHA_CLI_KEYS_MANAGER_HPP
 
 #include <string>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 
 namespace iroha {
   struct keypair_t;
@@ -40,7 +40,7 @@ namespace iroha {
      * @return nullopt if no keypair found locally, or verification failure;
      *         related keypair otherwise
      */
-    virtual nonstd::optional<iroha::keypair_t> loadKeys() = 0;
+    virtual boost::optional<iroha::keypair_t> loadKeys() = 0;
 
     /**
      * Create keys a new keypair and store it encrypted on disk
@@ -56,7 +56,7 @@ namespace iroha {
      * @return nullopt if no keypair found locally, or verification failure;
      *         related keypair otherwise
      */
-    virtual nonstd::optional<iroha::keypair_t> loadKeys(
+    virtual boost::optional<iroha::keypair_t> loadKeys(
         const std::string &pass_phrase) = 0;
   };
 

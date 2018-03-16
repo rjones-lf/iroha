@@ -86,7 +86,7 @@ namespace iroha {
     return [=](auto keypair) mutable {
       return hexstringToBytestring(s) |
           [&](auto binstr) {
-            return nonstd::make_optional(decrypt(binstr, pass_phrase));
+            return boost::make_optional(decrypt(binstr, pass_phrase));
           }
       | stringToBlob<size> | assignObjectField(keypair, &keypair_t::privkey);
     };
@@ -118,37 +118,37 @@ namespace iroha {
     return true;
   }
 
-  nonstd::optional<keypair_t> KeysManagerImpl::loadKeys() {
+  boost::optional<keypair_t> KeysManagerImpl::loadKeys() {
     std::string pub_key;
     std::string priv_key;
 
-    if (!loadFile(account_name_ + kPubExt, pub_key)
-        || !loadFile(account_name_ + kPrivExt, priv_key))
-      return nonstd::nullopt;
+    if (not loadFile(account_name_ + kPubExt, pub_key)
+        or not loadFile(account_name_ + kPrivExt, priv_key))
+      return boost::none;
 
-    return nonstd::make_optional<keypair_t>()
+    return boost::make_optional(keypair_t())
         | deserializeKeypairField(&keypair_t::pubkey, pub_key)
         | deserializeKeypairField(&keypair_t::privkey, priv_key) |
         [this](auto keypair) {
-          return this->validate(keypair) ? nonstd::make_optional(keypair)
-                                         : nonstd::nullopt;
+          return this->validate(keypair) ? boost::make_optional(keypair)
+                                         : boost::none;
         };
   }
 
-  nonstd::optional<keypair_t> KeysManagerImpl::loadKeys(
+  boost::optional<keypair_t> KeysManagerImpl::loadKeys(
       const std::string &pass_phrase) {
     std::string pub_key;
     std::string priv_key;
 
-    if (!loadFile(account_name_ + kPubExt, pub_key)
-        || !loadFile(account_name_ + kPrivExt, priv_key))
-      return nonstd::nullopt;
+    if (not loadFile(account_name_ + kPubExt, pub_key)
+        or not loadFile(account_name_ + kPrivExt, priv_key))
+      return boost::none;
 
-    return nonstd::make_optional<keypair_t>()
+    return boost::make_optional(keypair_t())
         | deserializeKeypairField(&keypair_t::pubkey, pub_key)
         | deserializedEncrypted(priv_key, pass_phrase) | [this](auto keypair) {
-            return this->validate(keypair) ? nonstd::make_optional(keypair)
-                                           : nonstd::nullopt;
+            return this->validate(keypair) ? boost::make_optional(keypair)
+                                           : boost::none;
           };
   }
 

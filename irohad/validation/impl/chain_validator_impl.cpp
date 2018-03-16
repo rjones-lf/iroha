@@ -39,7 +39,7 @@ namespace iroha {
       auto apply_block =
           [this](const auto &block, auto &queries, const auto &top_hash) {
             auto peers = queries.getPeers();
-            if (not peers.has_value()) {
+            if (not peers) {
               return false;
             }
             return block.prevHash() == top_hash

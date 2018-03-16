@@ -23,7 +23,6 @@ add_library(ordering_service
 target_link_libraries(ordering_service
     pb_model_converters
     rxcpp
-    optional
     tbb
     model
     ordering_grpc

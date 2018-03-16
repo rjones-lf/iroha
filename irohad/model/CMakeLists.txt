@@ -53,7 +53,6 @@ add_library(model
 target_link_libraries(model
     hash
     sha3_hash
-    optional
     rxcpp
     logger
     iroha_amount

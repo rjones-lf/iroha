@@ -47,7 +47,7 @@ namespace iroha {
           return pb_vote;
         }
 
-        static nonstd::optional<VoteMessage> deserializeVote(
+        static boost::optional<VoteMessage> deserializeVote(
             const proto::Vote &pb_vote) {
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();

@@ -86,12 +86,11 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    constexpr auto kTotal = (1 << 5) - 1;
+    constexpr auto kTotal = (1 << 4) - 1;
     return shared_model::proto::TemplateBlockBuilder<
                kTotal,
                shared_model::validation::DefaultBlockValidator,
                shared_model::proto::Block>()
-        .txNumber(0)
         .height(1)
         .prevHash(Hash(std::string(32, '0')))
         .createdTime(iroha::time::now());
@@ -246,8 +245,8 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
           [](auto &&x) { return wBlock(x.copy()); })));
   auto block = loader->retrieveBlock(peer_key, requested.hash());
 
-  ASSERT_TRUE(block.has_value());
-  ASSERT_EQ(*block.value().operator->(), requested);
+  ASSERT_TRUE(block);
+  ASSERT_EQ(*(*block).operator->(), requested);
 }
 
 /**
@@ -273,5 +272,5 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
           [](auto &&x) { return wBlock(x.copy()); })));
   auto block = loader->retrieveBlock(peer_key, Hash(std::string(32, '0')));
 
-  ASSERT_FALSE(block.has_value());
+  ASSERT_FALSE(block);
 }

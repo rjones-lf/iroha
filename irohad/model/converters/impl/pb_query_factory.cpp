@@ -140,7 +140,7 @@ namespace iroha {
             }
             default: {
               // Query not implemented
-              return nonstd::nullopt;
+              return boost::none;
             }
           }
         }
@@ -170,14 +170,14 @@ namespace iroha {
         sig->set_pubkey(query->signature.pubkey.to_string());
       }
 
-      nonstd::optional<protocol::Query> PbQueryFactory::serialize(
+      boost::optional<protocol::Query> PbQueryFactory::serialize(
           std::shared_ptr<const Query> query) const {
         auto it = serializers_.find(typeid(*query));
         if (it != serializers_.end()) {
           return (this->*it->second)(query);
         }
         log_->error("Query type not found");
-        return nonstd::nullopt;
+        return boost::none;
       }
 
       protocol::Query PbQueryFactory::serializeGetAccount(

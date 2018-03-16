@@ -57,8 +57,8 @@ namespace iroha_cli {
 
     bool isBackOption(std::string line) {
       auto command = parser::parseFirstCommand(std::move(line));
-      return command.has_value()
-          and (command.value() == "0" or command.value() == BACK_CODE);
+      return command
+          and (*command == "0" or *command == BACK_CODE);
     }
 
     void printCommandParameters(std::string &command,
@@ -77,12 +77,12 @@ namespace iroha_cli {
       });
     }
 
-    nonstd::optional<std::string> promptString(const std::string &message) {
+    boost::optional<std::string> promptString(const std::string &message) {
       std::string line;
       std::cout << message << ": ";
       if (not std::getline(std::cin, line)) {
         // Input is a terminating symbol
-        return nonstd::nullopt;
+        return boost::none;
       }
       return line;
     }
@@ -91,30 +91,30 @@ namespace iroha_cli {
       std::cout << "--------------------" << std::endl;
     }
 
-    nonstd::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
+    boost::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
         ParamsDescription params,
         const std::string &default_ip,
         int default_port) {
       const auto &address = params[0].empty() ? default_ip : params[0];
       auto port = params[1].empty() ? default_port
                                     : parser::parseValue<uint16_t>(params[1]);
-      if (not params.empty() and not port.has_value()) {
+      if (not params.empty() and not port) {
         std::cout << "Port has wrong format" << std::endl;
         // Continue parsing
-        return nonstd::nullopt;
+        return boost::none;
       }
-      return std::make_pair(address, port.value());
+      return std::make_pair(address, *port);
     }
 
-    nonstd::optional<std::vector<std::string>> parseParams(
+    boost::optional<std::vector<std::string>> parseParams(
         std::string line, std::string command_name, ParamsMap params_map) {
       auto params_description =
           findInHandlerMap(command_name, std::move(params_map));
-      if (not params_description.has_value()) {
+      if (not params_description) {
         // Report no params where found for this command
         std::cout << "Command params not found" << std::endl;
         // Stop parsing, something is not implemented
-        return nonstd::nullopt;
+        return boost::none;
       }
       auto words = parser::split(std::move(line));
       if (words.size() == 1) {
@@ -130,13 +130,13 @@ namespace iroha_cli {
                       });
         if (params.size() != params_description.value().size()) {
           // Wrong params passed
-          return nonstd::nullopt;
+          return boost::none;
         }
         return params;
       } else if (words.size() != params_description.value().size() + 1) {
         // Not enough parameters passed
         printCommandParameters(command_name, params_description.value());
-        return nonstd::nullopt;
+        return boost::none;
       } else {
         // Remove command name, return parameters
         words.erase(words.begin());

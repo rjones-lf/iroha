@@ -19,7 +19,7 @@
 #define IROHA_COMMAND_EXECUTOR_FACTORY_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <typeindex>
 #include <unordered_map>
 
@@ -38,7 +38,7 @@ namespace iroha {
        * @return CommandExecutorFactory object, if initialization is
        * successful
        */
-      static nonstd::optional<std::shared_ptr<CommandExecutorFactory>> create();
+      static boost::optional<std::shared_ptr<CommandExecutorFactory>> create();
 
       /**
        * Retrieve command executor for a given command from the map

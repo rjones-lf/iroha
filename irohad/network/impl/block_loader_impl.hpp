@@ -44,7 +44,7 @@ namespace iroha {
       retrieveBlocks(
           const shared_model::crypto::PublicKey &peer_pubkey) override;
 
-      nonstd::optional<std::shared_ptr<shared_model::interface::Block>>
+      boost::optional<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlock(
           const shared_model::crypto::PublicKey &peer_pubkey,
           const shared_model::interface::types::HashType &block_hash) override;
@@ -56,7 +56,7 @@ namespace iroha {
        * @return peer, if it was found, otherwise nullopt
        * TODO 14/02/17 (@l4l) IR-960 rework method with returning result
        */
-      nonstd::optional<model::Peer> findPeer(
+      boost::optional<model::Peer> findPeer(
           const shared_model::crypto::PublicKey &pubkey);
       /**
        * Get or create a RPC stub for connecting to peer

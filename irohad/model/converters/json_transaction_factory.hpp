@@ -29,7 +29,7 @@ namespace iroha {
        public:
         rapidjson::Document serialize(const Transaction &transaction);
 
-        nonstd::optional<Transaction> deserialize(
+        boost::optional<Transaction> deserialize(
             const rapidjson::Value &document);
 
        private:

@@ -17,7 +17,6 @@
 #ifndef IROHA_QUERY_EXECUTION_HPP
 #define IROHA_QUERY_EXECUTION_HPP
 
-#include <nonstd/optional.hpp>
 #include "model/query.hpp"
 #include "model/query_response.hpp"
 

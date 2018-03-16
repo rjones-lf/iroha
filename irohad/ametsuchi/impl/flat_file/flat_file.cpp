@@ -35,7 +35,7 @@ std::string FlatFile::id_to_name(Identifier id) {
   return os.str();
 }
 
-nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(
+boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
     const std::string &path) {
   auto log_ = logger::log("FlatFile::create()");
 
@@ -43,7 +43,7 @@ nonstd::optional<std::unique_ptr<FlatFile>> FlatFile::create(
   if (not boost::filesystem::is_directory(path, err)
       and not boost::filesystem::create_directory(path, err)) {
     log_->error("Cannot create storage dir: {}\n{}", path, err.message());
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   auto res = FlatFile::check_consistency(path);
@@ -85,12 +85,12 @@ bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   return true;
 }
 
-nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
+boost::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
   const auto filename =
       boost::filesystem::path{dump_dir_} / FlatFile::id_to_name(id);
   if (not boost::filesystem::exists(filename)) {
     log_->info("get({}) file not found", id);
-    return nonstd::nullopt;
+    return boost::none;
   }
   const auto fileSize = boost::filesystem::file_size(filename);
   std::vector<uint8_t> buf;
@@ -98,7 +98,7 @@ nonstd::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
   boost::filesystem::ifstream file(filename, std::ifstream::binary);
   if (not file.is_open()) {
     log_->info("get({}) problem with opening file", id);
-    return nonstd::nullopt;
+    return boost::none;
   }
   file.read(reinterpret_cast<char *>(buf.data()), fileSize);
   return buf;
@@ -128,13 +128,13 @@ FlatFile::FlatFile(Identifier current_id,
   current_id_.store(current_id);
 }
 
-nonstd::optional<Identifier> FlatFile::check_consistency(
+boost::optional<Identifier> FlatFile::check_consistency(
     const std::string &dump_dir) {
   auto log = logger::log("FLAT_FILE");
 
   if (dump_dir.empty()) {
     log->error("check_consistency({}), not directory", dump_dir);
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   auto const files = [&dump_dir] {

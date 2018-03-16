@@ -19,13 +19,13 @@
 #define IROHA_COMMON_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 
 namespace iroha {
   namespace model {
     // Optional over shared pointer
     template <typename T>
-    using optional_ptr = nonstd::optional<std::shared_ptr<T>>;
+    using optional_ptr = boost::optional<std::shared_ptr<T>>;
 
     template <typename T, typename... Args>
     optional_ptr<T> make_optional_ptr(Args &&... args) {
