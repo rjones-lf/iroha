@@ -19,7 +19,7 @@
 #define IROHA_RAW_BLOCK_INSERTION_HPP
 
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 #include "ametsuchi/storage.hpp"
@@ -44,7 +44,7 @@ namespace iroha {
        * @param data - raw presenetation of block
        * @return object if operation done successfully, nullopt otherwise
        */
-      nonstd::optional<model::Block> parseBlock(std::string data);
+      boost::optional<model::Block> parseBlock(std::string data);
 
       /**
        * Additional method
@@ -52,7 +52,7 @@ namespace iroha {
        * @param path - target file
        * @return string with content or nullopt
        */
-      nonstd::optional<std::string> loadFile(std::string path);
+      boost::optional<std::string> loadFile(std::string path);
 
      private:
       model::converters::JsonBlockFactory block_factory_;

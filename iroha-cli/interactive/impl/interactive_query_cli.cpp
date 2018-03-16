@@ -154,7 +154,7 @@ namespace iroha_cli {
 
       auto res = handleParse<std::shared_ptr<iroha::model::Query>>(
           this, line, query_handlers_, query_params_descriptions_);
-      if (not res.has_value()) {
+      if (not res) {
         // Continue parsing
         return true;
       }
@@ -249,13 +249,13 @@ namespace iroha_cli {
       auto res = handleParse<bool>(
           this, line, result_handlers_, result_params_descriptions_);
 
-      return not res.has_value() ? true : res.value();
+      return res.get_value_or(true);
     }
 
     bool InteractiveQueryCli::parseSendToIroha(QueryParams params) {
       auto address =
           parseIrohaPeerParams(params, default_peer_ip_, default_port_);
-      if (not address.has_value()) {
+      if (not address) {
         return true;
       }
 

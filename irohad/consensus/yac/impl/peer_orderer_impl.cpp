@@ -30,14 +30,14 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQuery> peer_query)
           : query_(std::move(peer_query)) {}
 
-      nonstd::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
+      boost::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
         return query_->getLedgerPeers() | [](const auto &peers) {
           auto prs = shared_model::interface::toOldVector(peers);
           return ClusterOrdering::create(prs);
         };
       }
 
-      nonstd::optional<ClusterOrdering> PeerOrdererImpl::getOrdering(
+      boost::optional<ClusterOrdering> PeerOrdererImpl::getOrdering(
           const YacHash &hash) {
         return query_->getLedgerPeers() | [&hash](auto peers) {
           auto prs = shared_model::interface::toOldVector(peers);

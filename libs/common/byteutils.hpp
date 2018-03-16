@@ -19,7 +19,7 @@
 #define IROHA_BYTEUTILS_H
 
 #include <algorithm>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 
 #include "common/types.hpp"
@@ -33,9 +33,9 @@ namespace iroha {
    * @return blob, if conversion was successful, otherwise nullopt
    */
   template <size_t size>
-  nonstd::optional<blob_t<size>> stringToBlob(const std::string &string) {
+  boost::optional<blob_t<size>> stringToBlob(const std::string &string) {
     if (size != string.size()) {
-      return nonstd::nullopt;
+      return boost::none;
     }
     blob_t<size> array;
     std::copy(string.begin(), string.end(), array.begin());
@@ -59,13 +59,13 @@ namespace iroha {
   /**
    * Convert printable hex string to string of raw bytes
    * @param str - hex string to convert
-   * @return - raw bytes converted string or nonstd::nullopt if provided string
+   * @return - raw bytes converted string or boost::noneif provided string
    * was not a correct hex string
    */
-  inline nonstd::optional<std::string> hexstringToBytestring(
+  inline boost::optional<std::string> hexstringToBytestring(
       const std::string &str) {
     if (str.empty() or str.size() % 2 != 0) {
-      return nonstd::nullopt;
+      return boost::none;
     }
     std::string result(str.size() / 2, 0);
     for (size_t i = 0; i < result.length(); ++i) {
@@ -73,9 +73,9 @@ namespace iroha {
       try {
         result.at(i) = std::stoul(byte, nullptr, 16);
       } catch (const std::invalid_argument &e) {
-        return nonstd::nullopt;
+        return boost::none;
       } catch (const std::out_of_range &e) {
-        return nonstd::nullopt;
+        return boost::none;
       }
     }
     return result;
@@ -88,7 +88,7 @@ namespace iroha {
    * @return array of given size if size matches, nullopt otherwise
    */
   template <size_t size>
-  nonstd::optional<blob_t<size>> hexstringToArray(const std::string &string) {
+  boost::optional<blob_t<size>> hexstringToArray(const std::string &string) {
     return hexstringToBytestring(string) | stringToBlob<size>;
   }
 

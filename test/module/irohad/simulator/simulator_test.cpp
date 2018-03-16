@@ -67,7 +67,6 @@ class SimulatorTest : public ::testing::Test {
 
 shared_model::proto::Block makeBlock(int height) {
   return TestBlockBuilder()
-      .txNumber(0)
       .transactions(std::vector<shared_model::proto::Transaction>())
       .height(height)
       .prevHash(shared_model::crypto::Hash(std::string("0", 32)))

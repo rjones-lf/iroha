@@ -90,7 +90,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
         shared_model::proto::BlockBuilder()
             .transactions(
                 std::vector<shared_model::proto::Transaction>{genesis_tx})
-            .txNumber(1)
             .height(1)
             .prevHash(Sha3_256::makeHash(Blob("")))
             .createdTime(iroha::time::now())

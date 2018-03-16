@@ -68,7 +68,7 @@ namespace iroha {
       // Get last block from local ledger
       block_queries_->getTopBlocks(1).as_blocking().subscribe(
           [this](auto block) { last_block = block; });
-      if (not last_block.has_value()) {
+      if (not last_block) {
         log_->warn("Could not fetch last block");
         return;
       }
@@ -114,7 +114,6 @@ namespace iroha {
               .height(proposal.height())
               .prevHash(last_block.value()->hash())
               .transactions(proto_txs)
-              .txNumber(proposal.transactions().size())
               .createdTime(proposal.created_time())
               .build());
 

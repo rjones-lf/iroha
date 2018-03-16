@@ -84,7 +84,6 @@ class TransportBuilderTest : public ::testing::Test {
   auto createBlock() {
     return TestBlockBuilder()
         .transactions(std::vector<Transaction>({createTransaction()}))
-        .txNumber(1)
         .height(1)
         .prevHash(crypto::Hash("asd"))
         .createdTime(created_time)
@@ -94,7 +93,6 @@ class TransportBuilderTest : public ::testing::Test {
   auto createInvalidBlock() {
     return TestBlockBuilder()
         .transactions(std::vector<Transaction>({createTransaction()}))
-        .txNumber(1)
         .height(1)
         .prevHash(crypto::Hash("asd"))
         .createdTime(123)  // invalid time

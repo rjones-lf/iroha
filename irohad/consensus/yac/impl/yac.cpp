@@ -105,7 +105,7 @@ namespace iroha {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(commit)) {
           // Commit does not contain data about peer which sent the message
-          applyCommit(nonstd::nullopt, commit);
+          applyCommit(boost::none, commit);
         } else {
           log_->warn(cryptoError(commit.votes));
         }
@@ -115,7 +115,7 @@ namespace iroha {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(reject)) {
           // Reject does not contain data about peer which sent the message
-          applyReject(nonstd::nullopt, reject);
+          applyReject(boost::none, reject);
         } else {
           log_->warn(cryptoError(reject.votes));
         }
@@ -145,13 +145,13 @@ namespace iroha {
         timer_->deny();
       }
 
-      nonstd::optional<model::Peer> Yac::findPeer(const VoteMessage &vote) {
+      boost::optional<model::Peer> Yac::findPeer(const VoteMessage &vote) {
         auto peers = cluster_order_.getPeers();
         auto it =
             std::find_if(peers.begin(), peers.end(), [&](const auto &peer) {
               return peer.pubkey == vote.signature.pubkey;
             });
-        return it != peers.end() ? nonstd::make_optional(*it) : nonstd::nullopt;
+        return it != peers.end() ? boost::make_optional(std::move(*it)) : boost::none;
       }
 
       // ------|Apply data|------
@@ -159,7 +159,7 @@ namespace iroha {
       const char *kRejectMsg = "reject case";
       const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
 
-      void Yac::applyCommit(nonstd::optional<model::Peer> from,
+      void Yac::applyCommit(boost::optional<model::Peer> from,
                             CommitMessage commit) {
         auto answer =
             vote_storage_.store(commit, cluster_order_.getNumberOfPeers());
@@ -183,7 +183,7 @@ namespace iroha {
         };
       }
 
-      void Yac::applyReject(nonstd::optional<model::Peer> from,
+      void Yac::applyReject(boost::optional<model::Peer> from,
                             RejectMessage reject) {
         auto answer =
             vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
@@ -209,12 +209,12 @@ namespace iroha {
         };
       }
 
-      void Yac::applyVote(nonstd::optional<model::Peer> from,
+      void Yac::applyVote(boost::optional<model::Peer> from,
                           VoteMessage vote) {
-        if (from.has_value()) {
+        if (from) {
           log_->info("Apply vote: {} from ledger peer {}",
                      vote.hash.block_hash,
-                     from.value().address);
+                     (*from).address);
         } else {
           log_->info("Apply vote: {} from unknown peer {}",
                      vote.hash.block_hash,

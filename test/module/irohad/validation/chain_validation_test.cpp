@@ -54,7 +54,6 @@ class ChainValidationTest : public ::testing::Test {
   auto getBlockBuilder() const {
     return TestBlockBuilder()
         .transactions(std::vector<shared_model::proto::Transaction>{})
-        .txNumber(0)
         .height(1)
         .prevHash(hash);
   }

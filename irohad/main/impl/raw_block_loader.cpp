@@ -26,20 +26,20 @@ namespace iroha {
 
     BlockLoader::BlockLoader() : log_(logger::log("BlockLoader")) {}
 
-    nonstd::optional<model::Block> BlockLoader::parseBlock(std::string data) {
+    boost::optional<model::Block> BlockLoader::parseBlock(std::string data) {
       auto document = model::converters::stringToJson(data);
-      if (not document.has_value()) {
+      if (not document) {
         log_->error("Blob parsing failed");
-        return nonstd::nullopt;
+        return boost::none;
       }
       return block_factory_.deserialize(document.value());
     }
 
-    nonstd::optional<std::string> BlockLoader::loadFile(std::string path) {
+    boost::optional<std::string> BlockLoader::loadFile(std::string path) {
       std::ifstream file(path);
       if (not file) {
         log_->error("Cannot read '" + path + "'");
-        return nonstd::nullopt;
+        return boost::none;
       }
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());

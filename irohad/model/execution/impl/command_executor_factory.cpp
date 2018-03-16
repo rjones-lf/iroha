@@ -22,7 +22,7 @@
 
 using namespace iroha::model;
 
-nonstd::optional<std::shared_ptr<CommandExecutorFactory>>
+boost::optional<std::shared_ptr<CommandExecutorFactory>>
 CommandExecutorFactory::create() {
   CommandRegistry registry_;
   decltype(std::declval<CommandExecutorFactory>().executors_) executors;
@@ -55,7 +55,7 @@ CommandExecutorFactory::create() {
                   registry_.command_handler.types().end(),
                   [executors](auto type) { return executors.count(type) > 0; });
   if (not result) {
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   return std::shared_ptr<CommandExecutorFactory>(

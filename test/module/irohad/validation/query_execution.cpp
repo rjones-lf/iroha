@@ -280,9 +280,9 @@ TEST_F(GetAccountTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*wsv_query, getAccount(get_account->account_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
   EXPECT_CALL(*wsv_query, getAccountRoles(get_account->account_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<ErrorResponse>(response);
@@ -521,7 +521,7 @@ TEST_F(GetAccountAssetsTest, NoAccountExist) {
 
   EXPECT_CALL(*wsv_query,
               getAccountAsset(get_account_assets->account_id, asset_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<ErrorResponse>(response);
@@ -663,7 +663,7 @@ TEST_F(GetSignatoriesTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*wsv_query, getSignatories(get_signatories->account_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
 
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<::ErrorResponse>(response);
@@ -1085,7 +1085,7 @@ TEST_F(GetAssetInfoTest, AssetInvalidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
   EXPECT_CALL(*wsv_query, getAsset(qry->asset_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<ErrorResponse>(response);
   ASSERT_EQ(cast_resp->reason, ErrorResponse::NO_ASSET);
@@ -1219,7 +1219,7 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoRole) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
   EXPECT_CALL(*wsv_query, getRolePermissions(qry->role_id))
-      .WillOnce(Return(nonstd::nullopt));
+      .WillOnce(Return(boost::none));
   auto response = validateAndExecute();
   auto cast_resp = std::static_pointer_cast<ErrorResponse>(response);
   ASSERT_EQ(cast_resp->reason, ErrorResponse::NO_ROLES);

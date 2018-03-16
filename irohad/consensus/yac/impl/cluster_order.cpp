@@ -21,10 +21,10 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      nonstd::optional<ClusterOrdering> ClusterOrdering::create(
+      boost::optional<ClusterOrdering> ClusterOrdering::create(
           const std::vector<model::Peer> &order) {
         if (order.empty()) {
-          return nonstd::nullopt;
+          return boost::none;
         }
         return ClusterOrdering(order);
       }

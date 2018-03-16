@@ -80,7 +80,6 @@ TEST(JsonProtoConverterTest, JsonToProtoBlockTest) {
   auto orig_block =
       block_builder.transactions(std::vector<Transaction>({tx_builder.build()}))
           .createdTime(123)
-          .txNumber(1)
           .build();
 
   auto json = modelToJson(orig_block);

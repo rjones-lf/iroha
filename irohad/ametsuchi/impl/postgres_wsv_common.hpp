@@ -52,7 +52,7 @@ namespace iroha {
      * will be refactored to return result
      * @param transaction on which to apply statement.
      * @param logger is used to report an error.
-     * @return nonstd::optional with pqxx::result in successful case, or nullopt
+     * @return boost::optional with pqxx::result in successful case, or nullopt
      * if exception was caught
      */
     inline auto makeExecuteOptional(pqxx::nontransaction &transaction,
@@ -181,15 +181,15 @@ namespace iroha {
      * @return optional<T>
      */
     template <typename T>
-    static inline nonstd::optional<std::shared_ptr<T>> fromResult(
+    static inline boost::optional<std::shared_ptr<T>> fromResult(
         const shared_model::builder::BuilderResult<T> &result) {
       return result.match(
           [](const expected::Value<std::shared_ptr<T>> &v) {
-            return nonstd::make_optional(v.value);
+            return boost::make_optional(v.value);
           },
           [](const expected::Error<std::shared_ptr<std::string>> &e)
-              -> nonstd::optional<std::shared_ptr<T>> {
-            return nonstd::nullopt;
+              -> boost::optional<std::shared_ptr<T>> {
+            return boost::none;
           });
     }
   }  // namespace ametsuchi

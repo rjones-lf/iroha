@@ -20,7 +20,7 @@
 
 #include <atomic>
 #include <memory>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 
@@ -68,7 +68,7 @@ namespace iroha {
        * @param path - target path for creating
        * @return created storage
        */
-      static nonstd::optional<std::unique_ptr<FlatFile>> create(
+      static boost::optional<std::unique_ptr<FlatFile>> create(
           const std::string &path);
 
       /**
@@ -83,7 +83,7 @@ namespace iroha {
        * @param id - reference key
        * @return - blob, if exists
        */
-      nonstd::optional<std::vector<uint8_t>> get(Identifier id) const;
+      boost::optional<std::vector<uint8_t>> get(Identifier id) const;
 
       /**
        * @return folder of storage
@@ -102,7 +102,7 @@ namespace iroha {
        * @param dump_dir - folder of storage
        * @return - last available identifier
        */
-      static nonstd::optional<Identifier> check_consistency(
+      static boost::optional<Identifier> check_consistency(
           const std::string &dump_dir);
 
       void dropAll();

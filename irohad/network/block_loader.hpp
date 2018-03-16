@@ -47,7 +47,7 @@ namespace iroha {
        * @return block on success, nullopt on failure
        * TODO 14/02/17 (@l4l) IR-960 rework method with returning result
        */
-      virtual nonstd::optional<std::shared_ptr<shared_model::interface::Block>>
+      virtual boost::optional<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlock(
           const shared_model::crypto::PublicKey &peer_pubkey,
           const shared_model::interface::types::HashType &block_hash) = 0;

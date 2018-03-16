@@ -252,7 +252,6 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
       TestBlockBuilder()
           .transactions(txs)
           .height(1)
-          .txNumber(txs.size())
           .createdTime(0)
           .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
           .build());
@@ -394,7 +393,6 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
           .height(1)
           .createdTime(iroha::time::now())
           .transactions(txs)
-          .txNumber(1)
           .prevHash(crypto::Hash(std::string(32, '0')))
           .build()
           .signAndAddSignature(keypair));

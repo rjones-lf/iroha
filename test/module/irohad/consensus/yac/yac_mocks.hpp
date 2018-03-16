@@ -147,10 +147,10 @@ namespace iroha {
 
       class MockYacPeerOrderer : public YacPeerOrderer {
        public:
-        MOCK_METHOD0(getInitialOrdering, nonstd::optional<ClusterOrdering>());
+        MOCK_METHOD0(getInitialOrdering, boost::optional<ClusterOrdering>());
 
         MOCK_METHOD1(getOrdering,
-                     nonstd::optional<ClusterOrdering>(const YacHash &));
+                     boost::optional<ClusterOrdering>(const YacHash &));
 
         MockYacPeerOrderer() = default;
 
@@ -228,7 +228,7 @@ namespace iroha {
           crypto = std::make_shared<MockYacCryptoProvider>();
           timer = std::make_shared<MockTimer>();
           auto ordering = ClusterOrdering::create(default_peers);
-          ASSERT_TRUE(ordering.has_value());
+          ASSERT_TRUE(ordering);
           yac = Yac::create(YacVoteStorage(),
                             network,
                             crypto,

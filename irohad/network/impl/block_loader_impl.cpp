@@ -54,7 +54,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const PublicKey &peer_pubkey) {
   return rxcpp::observable<>::create<std::shared_ptr<Block>>(
       [this, peer_pubkey](auto subscriber) {
-        nonstd::optional<iroha::model::Block> top_block;
+        boost::optional<iroha::model::Block> top_block;
         block_query_->getTopBlocks(1)
             .subscribe_on(rxcpp::observe_on_new_thread())
             .as_blocking()
@@ -62,14 +62,14 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
               top_block =
                   *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
             });
-        if (not top_block.has_value()) {
+        if (not top_block) {
           log_->error(kTopBlockRetrieveFail);
           subscriber.on_completed();
           return;
         }
 
         auto peer = this->findPeer(peer_pubkey);
-        if (not peer.has_value()) {
+        if (not peer) {
           log_->error(kPeerNotFound);
           subscriber.on_completed();
           return;
@@ -108,12 +108,12 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
       });
 }
 
-nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
+boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     const PublicKey &peer_pubkey, const types::HashType &block_hash) {
   auto peer = findPeer(peer_pubkey);
-  if (not peer.has_value()) {
+  if (not peer) {
     log_->error(kPeerNotFound);
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   proto::BlockRequest request;
@@ -127,31 +127,31 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
       getPeerStub(peer.value()).retrieveBlock(&context, request, &block);
   if (not status.ok()) {
     log_->warn(status.error_message());
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
   if (not crypto_verifier_->verify(*result)) {
     log_->error(kInvalidBlockSignatures);
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   // stateless validation of block
   auto answer = stateless_validator_->validate(result);
   if (answer.hasErrors()) {
     log_->error(answer.reason());
-    return nonstd::nullopt;
+    return boost::none;
   }
 
-  return nonstd::optional<std::shared_ptr<Block>>(std::move(result));
+  return boost::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
-nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
+boost::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
     const shared_model::crypto::PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers) {
     log_->error(kPeerRetrieveFail);
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   auto &blob = pubkey.blob();
@@ -161,7 +161,7 @@ nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
       });
   if (it == peers.value().end()) {
     log_->error(kPeerFindFail);
-    return nonstd::nullopt;
+    return boost::none;
   }
 
   return *std::unique_ptr<iroha::model::Peer>((*it)->makeOldModel());

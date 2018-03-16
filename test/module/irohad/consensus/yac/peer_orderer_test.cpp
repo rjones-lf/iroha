@@ -105,7 +105,7 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeFailCase) {
 
   EXPECT_CALL(*wsv, getLedgerPeers()).WillOnce(Return(boost::none));
   auto order = orderer.getInitialOrdering();
-  ASSERT_EQ(order, nonstd::nullopt);
+  ASSERT_EQ(order, boost::none);
 }
 
 TEST_F(YacPeerOrdererTest, PeerOrdererOrderingWhenInvokeNormalCase) {
@@ -121,7 +121,7 @@ TEST_F(YacPeerOrdererTest, PeerOrdererOrderingWhenInvokeFaillCase) {
 
   EXPECT_CALL(*wsv, getLedgerPeers()).WillOnce(Return(boost::none));
   auto order = orderer.getOrdering(YacHash());
-  ASSERT_EQ(order, nonstd::nullopt);
+  ASSERT_EQ(order, boost::none);
 }
 
 /**

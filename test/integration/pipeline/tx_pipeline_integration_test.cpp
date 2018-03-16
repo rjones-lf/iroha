@@ -153,10 +153,10 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   signer.sign(query_);
 
   const auto pb_query = PbQueryFactory{}.serialize(query);
-  ASSERT_TRUE(pb_query.has_value());
+  ASSERT_TRUE(pb_query);
 
   iroha::protocol::QueryResponse response;
-  irohad->getQueryService()->Find(pb_query.value(), response);
+  irohad->getQueryService()->Find(*pb_query, response);
   ASSERT_EQ(1, response.transactions_response().transactions().size());
   const auto got_pb_tx = response.transactions_response().transactions()[0];
   ASSERT_EQ(given_tx, *PbTransactionFactory{}.deserialize(got_pb_tx));

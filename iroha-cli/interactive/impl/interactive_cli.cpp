@@ -58,14 +58,14 @@ namespace iroha_cli {
 
     void InteractiveCli::parseMain(std::string line) {
       auto raw_command = parser::parseFirstCommand(std::move(line));
-      if (not raw_command.has_value()) {
+      if (not raw_command) {
         handleEmptyCommand();
         return;
       }
-      auto command_name = raw_command.value();
+      auto command_name = *raw_command;
 
       auto val = findInHandlerMap(command_name, main_handler_map_);
-      if (val.has_value()) {
+      if (val) {
         (this->*val.value())();
       }
     }

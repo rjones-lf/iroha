@@ -16,7 +16,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <nonstd/optional.hpp>
+#include <boost/optional.hpp>
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
@@ -50,17 +50,17 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNormalDataInput) {
   log_->info("-----------| Sequentially insertion of votes |-----------");
 
   auto insert_1 = storage.insert(valid_votes.at(0));
-  ASSERT_EQ(nonstd::nullopt, insert_1);
+  ASSERT_EQ(boost::none, insert_1);
 
   auto insert_2 = storage.insert(valid_votes.at(1));
-  ASSERT_EQ(nonstd::nullopt, insert_2);
+  ASSERT_EQ(boost::none, insert_2);
 
   auto insert_3 = storage.insert(valid_votes.at(2));
-  ASSERT_NE(nonstd::nullopt, insert_3);
+  ASSERT_NE(boost::none, insert_3);
   ASSERT_EQ(3, boost::get<CommitMessage>(*insert_3).votes.size());
 
   auto insert_4 = storage.insert(valid_votes.at(3));
-  ASSERT_NE(nonstd::nullopt, insert_4);
+  ASSERT_NE(boost::none, insert_4);
   ASSERT_EQ(4, boost::get<CommitMessage>(*insert_4).votes.size());
 }
 
@@ -68,7 +68,7 @@ TEST_F(YacBlockStorageTest, YacBlockStorageWhenNotCommittedAndCommitAcheive) {
   log_->info("-----------| Insert vote => insert commit |-----------");
 
   auto insert_1 = storage.insert(valid_votes.at(0));
-  ASSERT_EQ(nonstd::nullopt, insert_1);
+  ASSERT_EQ(boost::none, insert_1);
 
   decltype(YacBlockStorageTest::valid_votes) for_insert(valid_votes.begin() + 1,
                                                         valid_votes.end());

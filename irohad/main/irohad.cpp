@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     auto block = loader.parseBlock(file.value());
 
     // Check that provided genesis block file was correct
-    if (not block.has_value()) {
+    if (not block) {
       // Abort execution if not
       log->error("Failed to parse genesis block");
       return EXIT_FAILURE;

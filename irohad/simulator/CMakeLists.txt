@@ -5,6 +5,5 @@ add_library(simulator
 target_link_libraries(simulator
     model
     rxcpp
-    optional
     logger
     )

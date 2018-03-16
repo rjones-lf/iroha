@@ -113,9 +113,9 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
   }
 
   template <typename T>
-  T getVal(nonstd::optional<T> const &t) {
-    EXPECT_TRUE(t.has_value());
-    return t.value();
+  T getVal(boost::optional<T> const &t) {
+    EXPECT_TRUE(t);
+    return *t;
   }
 
   const std::string DOMAIN_USABANK = "usabnk";

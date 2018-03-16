@@ -4,3 +4,8 @@
     roles:
       - { role: docker, tags: docker }
       - { role: iroha-node, tags: iroha-node }
+
+  - hosts: arm
+    gather_facts: true
+    roles:
+      - { role: docker, tags: docker }
