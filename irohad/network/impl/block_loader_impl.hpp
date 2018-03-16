@@ -35,7 +35,6 @@ namespace shared_model {
 }
 
 namespace iroha {
-
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:

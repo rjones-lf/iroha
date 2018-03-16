@@ -16,8 +16,6 @@
  */
 
 #include "main/impl/block_loader_init.hpp"
-
-#include "crypto_provider/crypto_provider.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace iroha;

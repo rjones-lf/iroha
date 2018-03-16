@@ -17,11 +17,11 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/crypto_provider/crypto_provider_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
+#include "module/shared_model/cryptography/crypto_signer_mock.hpp"
 
 #include "framework/test_subscriber.hpp"
 #include "simulator/impl/simulator.hpp"
@@ -48,19 +48,19 @@ class SimulatorTest : public ::testing::Test {
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
-    crypto_provider = std::make_shared<MockCryptoProvider>();
+    crypto_signer = std::make_shared<shared_model::crypto::MockCryptoSigner>();
   }
 
   void init() {
     simulator = std::make_shared<Simulator>(
-        ordering_gate, validator, factory, query, crypto_provider);
+        ordering_gate, validator, factory, query, crypto_signer);
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
-  std::shared_ptr<MockCryptoProvider> crypto_provider;
+  std::shared_ptr<shared_model::crypto::MockCryptoSigner> crypto_signer;
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -106,7 +106,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(1);
+  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+      .Times(1);
 
   init();
 
@@ -144,7 +145,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(0);
+  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+      .Times(0);
 
   init();
 
@@ -179,7 +181,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
 
-  EXPECT_CALL(*crypto_provider, sign(A<shared_model::interface::Block &>())).Times(0);
+  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+      .Times(0);
 
   init();
 

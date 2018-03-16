@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
-#include <grpc++/create_channel.h>
+#include "network/impl/block_loader_impl.hpp"
+
 #include <algorithm>
+
+#include <grpc++/create_channel.h>
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/from_old_model.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/common_objects/peer.hpp"
-#include "network/impl/block_loader_impl.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -141,7 +143,7 @@ nonstd::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     return nonstd::nullopt;
   }
 
-  return nonstd::optional<std::shared_ptr<Block>>(result);
+  return nonstd::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
 nonstd::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(

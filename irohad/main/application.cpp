@@ -19,7 +19,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "crypto_provider/impl/crypto_provider_impl.cpp"
+#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 #include "cryptography/crypto_provider/crypto_verifier_impl.hpp"
 
 using namespace iroha;
@@ -72,7 +72,7 @@ void Irohad::init() {
   restoreWsv();
 
   initPeerQuery();
-  initCryptoProvider();
+  initCrypto();
   initValidators();
   initOrderingGate();
   initSimulator();
@@ -139,12 +139,14 @@ void Irohad::initPeerQuery() {
 /**
  * Initializing crypto provider
  */
-void Irohad::initCryptoProvider() {
+void Irohad::initCrypto() {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  crypto_provider = std::make_shared<CryptoProviderImpl<>>(keypair_);
-  crypto_verifier_ = std::make_shared<shared_model::crypto::CryptoVerifierImpl<>>();
+  crypto_verifier_ =
+      std::make_shared<shared_model::crypto::CryptoVerifierImpl<>>();
+  crypto_signer_ =
+      std::make_shared<shared_model::crypto::CryptoSignerImpl<>>(keypair_);
 
   log_->info("[Init] => crypto provider");
 }
@@ -178,7 +180,7 @@ void Irohad::initSimulator() {
                                           stateful_validator,
                                           storage,
                                           storage->getBlockQuery(),
-                                          crypto_provider);
+                                          crypto_signer_);
 
   log_->info("[Init] => init simulator");
 }

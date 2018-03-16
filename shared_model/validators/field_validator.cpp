@@ -235,10 +235,10 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::SignatureSetType &signatures,
         const crypto::Blob &source) const {
-      bool is_valid = true;
       for (const auto &signature : signatures) {
         const auto &sign = signature->signedData();
         const auto &pkey = signature->publicKey();
+        bool is_valid = true;
 
         if (sign.blob().size() != 64) {
           // TODO (@l4l) 03/02/18: IR-977 replace signature size with a const

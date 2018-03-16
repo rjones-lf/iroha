@@ -25,8 +25,8 @@ namespace iroha {
   namespace model {
 
     /** @deprecated Use irohad/crypto_provider with shared_model instead this
-       * class. It is for compatibility with cli.
-       */
+     * class. It is for compatibility with cli.
+     */
     class ModelCryptoProviderImpl : public ModelCryptoProvider {
      public:
       /**

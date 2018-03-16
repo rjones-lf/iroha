@@ -16,7 +16,7 @@
  */
 
 #include "backend/protobuf/from_old_model.hpp"
-#include "crypto_provider/impl/crypto_provider_impl.hpp"
+#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include "backend/protobuf/from_old_model.hpp"
 
@@ -61,7 +61,7 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
              TEA_NAME, DOMAIN_KHM, teaKeypair_.pubkey)});
 
     auto genesis_transaction = shared_model::proto::from_old(genesis_tx2);
-    iroha::CryptoProviderImpl<>(adminKeypair).sign(genesis_transaction);
+    shared_model::crypto::CryptoSignerImpl<>(adminKeypair).sign(genesis_transaction);
     genesis_tx2 = *std::unique_ptr<iroha::model::Transaction>(genesis_transaction.makeOldModel());
 
     genesis_block =
@@ -164,7 +164,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("1000000.00")))});
   auto transaction1 = shared_model::proto::from_old(tx1);
-  iroha::CryptoProviderImpl<>(nbaKeypair).sign(transaction1);
+  shared_model::crypto::CryptoSignerImpl<>(nbaKeypair).sign(transaction1);
   tx1 = *std::unique_ptr<iroha::model::Transaction>(transaction1.makeOldModel());
 
   // NBA transfers asset to ivan@ru and tea@khm
@@ -182,7 +182,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("50.00")))});
   auto transaction2 = shared_model::proto::from_old(tx2);
-  iroha::CryptoProviderImpl<>(nbaKeypair).sign(transaction2);
+  shared_model::crypto::CryptoSignerImpl<>(nbaKeypair).sign(transaction2);
   tx2 = *std::unique_ptr<iroha::model::Transaction>(transaction2.makeOldModel());
 
   // transfer asset from ivan@ru to tea@khm (between different domains)
@@ -195,7 +195,7 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
           ASSET_USD_ID,
           getVal(iroha::Amount().createFromString("5.50")))});
   auto transaction3 = shared_model::proto::from_old(tx3);
-  iroha::CryptoProviderImpl<>(ivanKeypair).sign(transaction3);
+  shared_model::crypto::CryptoSignerImpl<>(ivanKeypair).sign(transaction3);
   tx3 = *std::unique_ptr<iroha::model::Transaction>(transaction3.makeOldModel());
 
   sendTxsInOrderAndValidate({tx1, tx2, tx3});

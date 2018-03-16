@@ -29,9 +29,6 @@ namespace shared_model {
 }
 
 namespace iroha {
-
-  class CryptoProvider;
-
   namespace network {
     /**
      * Initialization context of Block loader: loader itself and service

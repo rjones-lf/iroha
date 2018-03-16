@@ -29,7 +29,6 @@ namespace shared_model {
 }
 
 namespace iroha {
-
   namespace validation {
 
     class StatelessValidatorImpl : public StatelessValidator {

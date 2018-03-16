@@ -17,6 +17,7 @@
 
 #include "simulator/impl/simulator.hpp"
 #include "builders/protobuf/block.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "model/sha3_hash.hpp"
@@ -31,11 +32,11 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
-        std::shared_ptr<CryptoProvider> crypto_provider)
+        std::shared_ptr<shared_model::crypto::CryptoSigner> crypto_signer)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
-          crypto_provider_(std::move(crypto_provider)) {
+          crypto_signer_(std::move(crypto_signer)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_, [this](model::Proposal old_proposal) {
@@ -117,7 +118,7 @@ namespace iroha {
               .createdTime(proposal.created_time())
               .build());
 
-      crypto_provider_->sign(*block);
+      crypto_signer_->sign(*block);
 
       block_notifier_.get_subscriber().on_next(block);
     }

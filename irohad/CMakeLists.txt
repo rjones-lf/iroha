@@ -14,7 +14,6 @@
 
 add_subdirectory(ametsuchi)
 add_subdirectory(consensus)
-add_subdirectory(crypto_provider)
 add_subdirectory(main)
 add_subdirectory(ordering)
 add_subdirectory(validation)

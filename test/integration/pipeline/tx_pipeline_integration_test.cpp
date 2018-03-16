@@ -19,7 +19,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "crypto_provider/impl/crypto_provider_impl.hpp"
+#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
@@ -104,9 +104,9 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  iroha::CryptoProviderImpl<> provider(keypair_);
+  shared_model::crypto::CryptoSignerImpl<> signer(keypair_);
   auto transaction = shared_model::proto::from_old(tx);
-  provider.sign(transaction);
+  signer.sign(transaction);
   tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
 
   sendTxsInOrderAndValidate({tx});
@@ -136,9 +136,9 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  iroha::CryptoProviderImpl<> provider(keypair_);
+  shared_model::crypto::CryptoSignerImpl<> signer(keypair_);
   auto given_transaction = shared_model::proto::from_old(given_tx);
-  provider.sign(given_transaction);
+  signer.sign(given_transaction);
   given_tx = *std::unique_ptr<iroha::model::Transaction>(given_transaction.makeOldModel());
 
   sendTxsInOrderAndValidate({given_tx});
@@ -150,7 +150,7 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
       iroha::model::generators::QueryGenerator().generateGetTransactions(
           iroha::time::now(), CREATOR_ACCOUNT_ID, 1, {given_tx_hash});
   auto query_ = shared_model::proto::from_old(query);
-  provider.sign(query_);
+  signer.sign(query_);
 
   const auto pb_query = PbQueryFactory{}.serialize(query);
   ASSERT_TRUE(pb_query.has_value());

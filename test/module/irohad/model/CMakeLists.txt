@@ -15,6 +15,14 @@
 # limitations under the License.
 #
 
+addtest(model_crypto_provider_test model_crypto_provider_test.cpp)
+target_link_libraries(model_crypto_provider_test
+    model
+    hash
+    ed25519_crypto
+    model_generators
+    )
+
 addtest(command_converter_test converters/pb_commands_test.cpp)
 target_link_libraries(command_converter_test
     pb_model_converters

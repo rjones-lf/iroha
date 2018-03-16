@@ -20,7 +20,7 @@
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "module/irohad/model/model_mocks.hpp"
-#include "module/shared_model/cryptography/crypto_verifier_mocks.hpp"
+#include "module/shared_model/cryptography/crypto_verifier_mock.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 
 using namespace std::chrono_literals;

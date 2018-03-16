@@ -17,7 +17,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "cryptography/crypto_provider/crypto_signer.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
@@ -89,7 +89,7 @@ TEST(ProtoTransaction, Builder) {
 
   auto keypair =
       shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
-  auto signedProto = shared_model::crypto::CryptoSigner<>::sign(
+  auto signedProto = shared_model::crypto::DefaultCryptoAlgorithmType::sign(
       shared_model::crypto::Blob(proto_tx.payload().SerializeAsString()),
       keypair);
 

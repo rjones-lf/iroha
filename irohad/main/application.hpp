@@ -54,9 +54,10 @@ namespace iroha {
 
 namespace shared_model {
   namespace crypto {
-      class CryptoVerifier;
-  };
-}
+    class CryptoSigner;
+    class CryptoVerifier;
+  }  // namespace crypto
+}  // namespace shared_model
 
 class Irohad {
  public:
@@ -73,7 +74,7 @@ class Irohad {
    * @param vote_delay - waiting time before sending vote to next peer
    * @param load_delay - waiting time before loading committed block from next
    * peer
-   * @param keypair - public and private keys for crypto signer and verifier
+   * @param keypair - public and private keys for crypto signer
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -120,7 +121,7 @@ class Irohad {
 
   virtual void initPeerQuery();
 
-  virtual void initCryptoProvider();
+  virtual void initCrypto();
 
   virtual void initValidators();
 
@@ -158,8 +159,8 @@ class Irohad {
   // ------------------------| internal dependencies |-------------------------
 
   // crypto provider
-  std::shared_ptr<iroha::CryptoProvider> crypto_provider;
   std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier_;
+  std::shared_ptr<shared_model::crypto::CryptoSigner> crypto_signer_;
 
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;

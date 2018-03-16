@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,6 @@
 #ifndef IROHA_CRYPTO_VERIFIER_HPP
 #define IROHA_CRYPTO_VERIFIER_HPP
 
-#include "cryptography/blob.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
-
 namespace shared_model {
   namespace interface {
     class Block;
@@ -32,7 +29,7 @@ namespace shared_model {
 namespace shared_model {
   namespace crypto {
     /**
-     * CryptoVerifier - wrapper for generalization verification of cryptographic
+     * CryptoVerifier - interface for generalization verification of cryptographic
      * signatures
      */
     class CryptoVerifier {

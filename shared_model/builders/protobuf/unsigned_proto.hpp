@@ -19,7 +19,7 @@
 #define IROHA_UNSIGNED_PROTO_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "cryptography/crypto_provider/crypto_signer.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/polymorphic_wrapper.hpp"
@@ -49,7 +49,7 @@ namespace shared_model {
        * @return signed object
        */
       T signAndAddSignature(const crypto::Keypair &keypair) {
-        auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
+        auto signedBlob = shared_model::crypto::DefaultCryptoAlgorithmType::sign(
             shared_model::crypto::Blob(unsigned_.payload()), keypair);
         iroha::protocol::Signature protosig;
         protosig.set_pubkey(crypto::toBinaryString(keypair.publicKey()));

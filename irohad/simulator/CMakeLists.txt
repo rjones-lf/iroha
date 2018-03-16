@@ -3,7 +3,6 @@ add_library(simulator
     )
 
 target_link_libraries(simulator
-    crypto_provider
     model
     rxcpp
     optional

@@ -19,7 +19,6 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
-#include <module/irohad/crypto_provider/crypto_provider_mocks.hpp>
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
@@ -35,7 +34,7 @@
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
-#include "module/shared_model/cryptography/crypto_verifier_mocks.hpp"
+#include "module/shared_model/cryptography/crypto_verifier_mock.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 #include "validators/default_validator.hpp"
