@@ -34,7 +34,6 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
-            # cleanup cache (not clear!) - removes old cache
             ccache --cleanup
             # debug/coverage builds produce 2G cache
             ccache --max-size=2G
@@ -97,7 +96,6 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
-            # cleanup cache (not clear!) - removes old cache
             ccache --cleanup
             # release builds produce cache <100M
             ccache --max-size=500M
@@ -296,7 +294,6 @@ jobs:
             ccache --version
             ccache --show-stats
             ccache --zero-stats
-            # cleanup cache (not clear!) - removes old cache
             ccache --cleanup
             # release build produces <20M cache per build
             ccache --max-size=100M
