@@ -23,6 +23,14 @@ target_link_libraries(get_transactions_test
   shared_model_stateless_validation
   )
 
+addtest(create_role_test create_role_test.cpp)
+target_link_libraries(create_role_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
 addtest(invalid_fields_test invalid_fields_test.cpp)
 target_link_libraries(invalid_fields_test
   application
