@@ -115,7 +115,7 @@ TEST(QueryResponseBuilderTest, ErrorQueryResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
           .errorQueryResponse<
-              shared_model::interface::StatelessFailedErrorResponse>()
+              shared_model::interface::StatefulFailedErrorResponse>()
           .build();
 
   const auto error_response =
@@ -123,8 +123,14 @@ TEST(QueryResponseBuilderTest, ErrorQueryResponse) {
           query_response.get());
 
   ASSERT_NO_THROW(
+      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+          error_response->get()));
+
+  ASSERT_ANY_THROW(
       boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
           error_response->get()));
+
+
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
