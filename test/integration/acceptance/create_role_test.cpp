@@ -159,7 +159,7 @@ TEST_F(CreateRole, EmptyPerms) {
  * @then the tx hasn't passed stateless validation
  *       (aka skipProposal throws)
  */
-TEST_F(CreateRole, DISABLED_LongRoleName) {
+TEST_F(CreateRole, LongRoleName) {
   ASSERT_ANY_THROW(
       IntegrationTestFramework()
           .setInitialState(kAdminKeypair)
