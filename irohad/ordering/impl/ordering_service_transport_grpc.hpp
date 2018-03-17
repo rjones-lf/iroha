@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@
 #define IROHA_ORDERING_SERVICE_TRANSPORT_GRPC_HPP
 
 #include <google/protobuf/empty.pb.h>
+
 #include "block.pb.h"
 #include "logger/logger.hpp"
-#include "ordering.grpc.pb.h"
-
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
+#include "ordering.grpc.pb.h"
 
 namespace iroha {
   namespace ordering {

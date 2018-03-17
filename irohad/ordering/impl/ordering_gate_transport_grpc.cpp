@@ -16,6 +16,8 @@
  */
 #include "ordering_gate_transport_grpc.hpp"
 
+#include "backend/protobuf/transaction.hpp"
+
 using namespace iroha::ordering;
 
 grpc::Status OrderingGateTransportGrpc::onProposal(
@@ -49,12 +51,15 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
       log_(logger::log("OrderingGate")) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
-    std::shared_ptr<const model::Transaction> transaction) {
+    std::shared_ptr<const shared_model::interface::Transaction> transaction) {
   log_->info("Propagate tx (on transport)");
   auto call = new AsyncClientCall;
 
-  call->response_reader = client_->AsynconTransaction(
-      &call->context, factory_.serialize(*transaction), &cq_);
+  auto transaction_transport =
+      static_cast<const shared_model::proto::Transaction &>(*transaction)
+          .getTransport();
+  call->response_reader =
+      client_->AsynconTransaction(&call->context, transaction_transport, &cq_);
 
   call->response_reader->Finish(&call->reply, &call->status, call);
 }

@@ -20,8 +20,13 @@
 
 #include <rxcpp/rx-observable.hpp>
 #include "model/proposal.hpp"
-#include "model/transaction.hpp"
 #include "network/peer_communication_service.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+  }
+}
 
 namespace iroha {
   namespace network {
@@ -36,7 +41,7 @@ namespace iroha {
        * @param transaction
        */
       virtual void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) = 0;
+          std::shared_ptr<const shared_model::interface::Transaction> transaction) = 0;
 
       /**
        * Return observable of all proposals in the consensus

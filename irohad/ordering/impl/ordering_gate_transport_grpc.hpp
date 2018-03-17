@@ -18,12 +18,18 @@
 #define IROHA_ORDERING_GATE_TRANSPORT_GRPC_H
 
 #include <google/protobuf/empty.pb.h>
+
 #include "logger/logger.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
 #include "ordering.grpc.pb.h"
-#include "proposal.pb.h"
+
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+  }
+}
 
 namespace iroha {
   namespace ordering {
@@ -39,7 +45,7 @@ namespace iroha {
                               ::google::protobuf::Empty *response) override;
 
       void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) override;
+          std::shared_ptr<const shared_model::interface::Transaction> transaction) override;
 
       void subscribe(std::shared_ptr<iroha::network::OrderingGateNotification>
                          subscriber) override;

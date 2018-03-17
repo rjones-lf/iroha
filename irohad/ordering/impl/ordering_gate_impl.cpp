@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "ordering/impl/ordering_gate_impl.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -27,10 +28,10 @@ namespace iroha {
         : transport_(std::move(transport)), log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const model::Transaction> transaction) {
+        std::shared_ptr<const shared_model::interface::Transaction> transaction) {
       log_->info("propagate tx, tx_counter: "
-                 + std::to_string(transaction->tx_counter)
-                 + " account_id: " + transaction->creator_account_id);
+                 + std::to_string(transaction->transactionCounter())
+                 + " account_id: " + transaction->creatorAccountId());
 
       transport_->propagateTransaction(transaction);
     }

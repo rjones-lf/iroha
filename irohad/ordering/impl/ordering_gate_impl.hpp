@@ -46,7 +46,7 @@ namespace iroha {
           std::shared_ptr<iroha::network::OrderingGateTransport> transport);
 
       void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) override;
+          std::shared_ptr<const shared_model::interface::Transaction> transaction) override;
 
       rxcpp::observable<model::Proposal> on_proposal() override;
 

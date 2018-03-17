@@ -30,7 +30,7 @@
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 #include "validators/field_validator.hpp"
-
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha;
@@ -128,8 +128,8 @@ class OrderingGateServiceTest : public ::testing::Test {
    * @param i - number of transaction
    */
   void send_transaction(size_t i) {
-    auto tx = std::make_shared<Transaction>();
-    tx->tx_counter = i;
+    auto tx = std::make_shared<shared_model::proto::Transaction>(
+        TestTransactionBuilder().txCounter(i).build());
     gate->propagateTransaction(tx);
     // otherwise tx may come unordered
     std::this_thread::sleep_for(20ms);

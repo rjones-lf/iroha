@@ -20,6 +20,12 @@
 #include <memory>
 #include "model/proposal.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+  }
+}
+
 namespace iroha {
   namespace network {
 
@@ -58,7 +64,7 @@ namespace iroha {
        * @param transaction : transaction to be propagated
        */
       virtual void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) = 0;
+          std::shared_ptr<const shared_model::interface::Transaction> transaction) = 0;
 
       virtual ~OrderingGateTransport() = default;
     };

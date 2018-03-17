@@ -31,8 +31,7 @@ namespace iroha {
         std::shared_ptr<const shared_model::interface::Transaction>
             transaction) {
       log_->info("propagate tx");
-      ordering_gate_->propagateTransaction(
-          std::shared_ptr<model::Transaction>(transaction->makeOldModel()));
+      ordering_gate_->propagateTransaction(transaction);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
