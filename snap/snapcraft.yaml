@@ -41,7 +41,6 @@ parts:
       - spdlog
       - rxcpp
       - rapidjson
-      - optional
       - libpq
       - pqxx
       - tbb
