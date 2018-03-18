@@ -28,3 +28,11 @@ set_target_properties(boost PROPERTIES
 #          ed25519/sha3           #
 ###################################
 find_package(ed25519)
+
+##########################
+#         gtest          #
+##########################
+# testing is an option. Look at the main CMakeLists.txt for details.
+if (TESTING)
+  find_package(gtest)
+endif ()

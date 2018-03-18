@@ -20,7 +20,6 @@ add_library(hash
         )
 
 target_link_libraries(hash
-        common
         ed25519
         )
 

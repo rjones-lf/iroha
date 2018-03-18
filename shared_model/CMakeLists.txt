@@ -14,40 +14,50 @@
 
 cmake_minimum_required(VERSION 3.5.1)
 
-PROJECT(shared_model CXX)
+project(shared_model C CXX)
 
-SET(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../schema")
+set(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../schema")
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/../libs
-        ${IROHA_SCHEMA_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libs
+    ${IROHA_SCHEMA_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 if (NOT IROHA_ROOT_PROJECT)
-    SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-    SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
-    SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
-    SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+  set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+  set(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 
-    SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
+  option(TESTING "Build tests" ON)
 
-    add_definitions(-DDISABLE_BACKWARD)
+  set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
-    include(FeatureSummary)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/functions.cmake)
-    include(cmake/dependencies.cmake)
+  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
 
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../schema schema)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs libs)
-endif()
+  set(SHARED_MODEL_DISABLE_COMPATIBILITY ON)
+  add_definitions(-DDISABLE_BACKWARD)
+
+  include(FeatureSummary)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/functions.cmake)
+  include(cmake/dependencies.cmake)
+
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../schema schema)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
+
+  if(TESTING)
+    enable_testing()
+    add_subdirectory(test)
+  endif()
+endif ()
 add_library(old_model INTERFACE)
 
 if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
-    target_link_libraries(old_model INTERFACE
-        model
-        )
-endif()
+  target_link_libraries(old_model INTERFACE
+      model
+      )
+endif ()
 
 add_subdirectory(backend)
 add_subdirectory(bindings)
