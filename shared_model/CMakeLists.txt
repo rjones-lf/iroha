@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.5.1)
 
-PROJECT(shared_model C CXX)
+PROJECT(shared_model CXX)
 
 SET(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../schema")
 include_directories(
@@ -36,8 +36,8 @@ if (NOT IROHA_ROOT_PROJECT)
 
     include(FeatureSummary)
     include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/functions.cmake)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/dependencies.cmake)
-        
+    include(cmake/dependencies.cmake)
+
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../schema schema)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs libs)
 endif()
@@ -48,8 +48,6 @@ if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
         model
         )
 endif()
-
-
 
 add_subdirectory(backend)
 add_subdirectory(bindings)

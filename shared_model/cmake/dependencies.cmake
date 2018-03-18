@@ -15,11 +15,6 @@ find_package(Threads REQUIRED)
 option(FIND_PROTOBUF "Try to find protobuf in system" ON)
 find_package(protobuf)
 
-#############################
-#         optional          #
-#############################
-find_package(optional)
-
 ##########################
 #         boost          #
 ##########################
