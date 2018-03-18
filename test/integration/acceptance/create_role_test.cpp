@@ -124,15 +124,14 @@ TEST_F(CreateRole, HaveNoPerms) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateRole, EmptyRole) {
-  ASSERT_ANY_THROW(
-      IntegrationTestFramework()
-          .setInitialState(kAdminKeypair)
-          .sendTx(makeUserWithPerms(
-              {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
-          .skipProposal()
-          .skipBlock()
-          .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, "")))
-          .skipProposal());
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(
+          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, "")));
+  ASSERT_ANY_THROW(itf.skipProposal());
 }
 
 /**
@@ -142,15 +141,14 @@ TEST_F(CreateRole, EmptyRole) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateRole, EmptyPerms) {
-  ASSERT_ANY_THROW(
-      IntegrationTestFramework()
-          .setInitialState(kAdminKeypair)
-          .sendTx(makeUserWithPerms(
-              {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
-          .skipProposal()
-          .skipBlock()
-          .sendTx(completeTx(baseTx({}, kRole)))
-          .skipProposal());
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(
+          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(baseTx({}, kRole)));
+  ASSERT_ANY_THROW(itf.skipProposal());
 }
 
 /**
@@ -160,16 +158,15 @@ TEST_F(CreateRole, EmptyPerms) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateRole, LongRoleName) {
-  ASSERT_ANY_THROW(
-      IntegrationTestFramework()
-          .setInitialState(kAdminKeypair)
-          .sendTx(makeUserWithPerms(
-              {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
-          .skipProposal()
-          .skipBlock()
-          .sendTx(completeTx(
-              baseTx({iroha::model::can_get_my_txs}, std::string(8, 'a'))))
-          .skipProposal());
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(
+          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(
+          baseTx({iroha::model::can_get_my_txs}, std::string(8, 'a'))));
+  ASSERT_ANY_THROW(itf.skipProposal());
 }
 
 /**
@@ -199,15 +196,14 @@ TEST_F(CreateRole, MaxLenRoleName) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateRole, DISABLED_InexistentPerm) {
-  ASSERT_ANY_THROW(
-      IntegrationTestFramework()
-          .setInitialState(kAdminKeypair)
-          .sendTx(makeUserWithPerms(
-              {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
-          .skipProposal()
-          .skipBlock()
-          .sendTx(completeTx(baseTx({"this_permission_doesnt_exist"}, kRole)))
-          .skipProposal());
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(
+          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(baseTx({"this_permission_doesnt_exist"}, kRole)));
+  ASSERT_ANY_THROW(itf.skipProposal());
 }
 
 /**
@@ -216,13 +212,12 @@ TEST_F(CreateRole, DISABLED_InexistentPerm) {
  * @then there is an empty verified proposal
  */
 TEST_F(CreateRole, DISABLED_ExistingRole) {
-  ASSERT_ANY_THROW(
-      IntegrationTestFramework()
-          .setInitialState(kAdminKeypair)
-          .sendTx(makeUserWithPerms(
-              {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
-          .skipProposal()
-          .skipBlock()
-          .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, kRole)))
-          .skipProposal());
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(
+          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, kRole)));
+  ASSERT_ANY_THROW(itf.skipProposal());
 }
