@@ -9,17 +9,15 @@
       - docker-engine
       - docker.io
 
-  - name: Update APT cache
-    apt:
-      update_cache: yes
-
   - name: Install packages
-    apt: pkg={{ item }} state=installed
+    apt: pkg={{ item }} state=installed update_cache=yes
     with_items:
       - apt-transport-https
       - ca-certificates
       - curl
       - software-properties-common
+      - python-setuptools
+      - python-pip
 
   - name: Add GPG key
     shell: 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
@@ -32,4 +30,28 @@
       name: docker-ce={{ dockerVersion }}
       state: present
       update_cache: yes
-  
+
+# purge if anything installed to resolve conflicts
+  - name: remove existing python modules
+    pip:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+      - docker
+      - docker-py
+      - docker-compose
+
+  - name: install docker python modules
+    pip:
+      name: "{{ item }}"
+      state: latest
+    with_items:
+      - docker
+
+  - name: download docker-compose bin
+    raw: curl -L https://github.com/docker/compose/releases/download/{{ dockerComposeVersion }}/docker-compose-`uname -s`-`uname -m` -o {{ execPath }}/docker-compose
+
+  - name: make docker-compose executable
+    file:
+      path: "{{ execPath }}/docker-compose"
+      mode: "a+x"

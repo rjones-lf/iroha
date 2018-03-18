@@ -1,0 +1,32 @@
+- module: nginx
+  # Access logs
+  access:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    var.paths: [ {{ nginx_access_log_paths|join(', ') }} ]
+    exclude_files: ['\.gz$']
+    prospector:
+      fields:
+        project: {{ shipper_name }}
+        app: nginx
+        operator: {{ operator }}
+        log_type: access
+      fields_under_root: true
+
+  # Error logs
+  error:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    var.paths: [ {{ nginx_error_log_paths|join(', ') }} ]
+    exclude_files: ['\.gz$']
+    prospector:
+      fields:
+        project: {{ shipper_name }}
+        app: nginx
+        operator: {{ operator }}
+        log_type: error
+      fields_under_root: true

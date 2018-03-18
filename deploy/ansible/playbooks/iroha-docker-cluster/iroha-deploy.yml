@@ -1,0 +1,16 @@
+  - hosts: locals
+    roles:
+      - { role: iroha-cluster-config-gen }
+
+  - hosts:
+    - iroha-east
+    - iroha-west
+    gather_facts: False
+    pre_tasks:
+    - name: install python 2
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python)
+      changed_when: False
+    roles:
+      - { role: docker, tags: docker }
+      - { role: filebeat }
+      - { role: iroha-cluster-deploy-node, tags: ["deliver", "deploy"] }

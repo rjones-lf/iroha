@@ -1,0 +1,14 @@
+[iroha-east]
+iroha-bench1 ansible_host=45.76.152.117 ansible_user=root key=0
+
+[iroha-west]
+iroha-bench2 ansible_host=198.13.61.246 ansible_user=root key=4
+
+[iroha-south]
+iroha-bench3 ansible_host=104.207.152.219 ansible_user=root key=8
+
+[iroha-north]
+iroha-bench4 ansible_host=45.76.212.185 ansible_user=root key=12
+
+[locals]
+localhost           ansible_connection=local

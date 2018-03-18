@@ -1,0 +1,7 @@
+[iroha-nodes]
+iroha-ansible-test1 ansible_host=207.148.74.67 ansible_user=root key=0
+iroha-ansible-test2 ansible_host=45.77.175.222 ansible_user=root key=1
+iroha-ansible-test3 ansible_host=45.32.105.9 ansible_user=root key=2
+
+[locals]
+localhost           ansible_connection=local

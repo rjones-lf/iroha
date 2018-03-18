@@ -1,0 +1,25 @@
+---
+  - name: Install filebeat.deb
+    apt:
+      deb: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.2.2-amd64.deb
+
+  - name: Enable filebeat modules
+    command: filebeat modules enable {{ item }}
+    with_items:
+      - nginx
+
+  - name: Copy filebeat configs
+    template:
+      src: filebeat.yml.j2
+      dest: /etc/filebeat/filebeat.yml
+
+  - name: Copy nginx module configs
+    template:
+      src: nginx.yml.j2
+      dest: /etc/filebeat/modules.d/nginx.yml
+
+  - name: Enable filebeat service
+    service:
+      name: filebeat
+      state: restarted
+      enabled: yes

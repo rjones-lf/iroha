@@ -1,0 +1,7 @@
+---
+  # docker container postgres settings
+  postgresName: tmp_postgres
+  postgresUser: psql
+  postgresPassword: psql
+  iroha_net: iroha_network  # name of docker network
+  containerConfPath: /opt/iroha_data

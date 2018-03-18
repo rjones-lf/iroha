@@ -1,0 +1,8 @@
+[iroha-east]
+iroha-node-show1 ansible_host=207.148.124.204 ansible_user=root key=0
+
+[iroha-west]
+iroha-node-show2 ansible_host=199.247.25.56 ansible_user=root key=8
+
+[locals]
+localhost           ansible_connection=local
