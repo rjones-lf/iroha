@@ -68,9 +68,8 @@ def doDebugBuild(coverageEnabled=false) {
     if (testExitCode != 0) {
       currentBuild.result = "UNSTABLE"
     }
-    sh "cmake --build build --target cppcheck"
-
     if ( coverageEnabled ) {
+      sh "cmake --build build --target cppcheck"
       // Sonar
       if (env.CHANGE_ID != null) {
         sh """
