@@ -5,7 +5,7 @@ def doDebugBuild(coverageEnabled=false) {
   if ("arm7" in env.NODE_NAME) {
     parallelism = 1
   }
-  sh "docker network create ${env.IROHA_NETWORK}"
+  sh "docker network create ${env.IROHA_NETWORK} || true"
 
   docker.image('postgres:9.5').run(""
     + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
