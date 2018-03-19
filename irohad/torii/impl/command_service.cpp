@@ -20,6 +20,7 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/types.hpp"
 #include "endpoint.pb.h"
@@ -41,26 +42,28 @@ namespace torii {
         start_tx_processing_duration_(1s),
         cache_(std::make_shared<CacheType>()) {
     // Notifier for all clients
-    tx_processor_->transactionNotifier().subscribe(
-        [this](std::shared_ptr<shared_model::interface::TransactionResponse>
-                   iroha_response) {
-          // Find response in cache
-          auto proto_response = std::static_pointer_cast<
-              shared_model::proto::TransactionResponse>(iroha_response);
-          auto tx_hash = proto_response->transactionHash();
-          auto res = cache_->findItem(tx_hash);
-          if (not res) {
-            iroha::protocol::ToriiResponse response;
-            response.set_tx_hash(shared_model::crypto::toBinaryString(tx_hash));
-            response.set_tx_status(iroha::protocol::NOT_RECEIVED);
-            cache_->addItem(tx_hash, response);
-            return;
-          }
+    tx_processor_->transactionNotifier().subscribe([this](auto iroha_response) {
+      // Find response in cache
+      auto proto_response =
+          std::static_pointer_cast<shared_model::proto::TransactionResponse>(
+              iroha_response);
+      auto tx_hash = proto_response->transactionHash();
+      auto res = cache_->findItem(tx_hash);
+      if (not res) {
+        // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
+        // factories with move semantics
+        auto response = shared_model::proto::TransactionStatusBuilder()
+                            .txHash(tx_hash)
+                            .notReceived()
+                            .build();
+        cache_->addItem(tx_hash, response.getTransport());
+        return;
+      }
 
-          auto proto_status = proto_response->getTransport().tx_status();
-          res->set_tx_status(proto_status);
-          cache_->addItem(tx_hash, *res);
-        });
+      auto proto_status = proto_response->getTransport().tx_status();
+      res->set_tx_status(proto_status);
+      cache_->addItem(tx_hash, *res);
+    });
   }
 
   void CommandService::Torii(const iroha::protocol::Transaction &request) {
@@ -192,11 +195,14 @@ namespace torii {
     if (not finished) {
       if (not resp) {
         subscription.unsubscribe();
-        iroha::protocol::ToriiResponse resp_none;
-        resp_none.set_tx_hash(
-            shared_model::crypto::toBinaryString(request_hash));
-        resp_none.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
-        response_writer.WriteLast(resp_none, grpc::WriteOptions());
+        // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
+        // factories with move semantics
+        auto resp_none = shared_model::proto::TransactionStatusBuilder()
+                             .txHash(request_hash)
+                             .notReceived()
+                             .build();
+        response_writer.WriteLast(resp_none.getTransport(),
+                                  grpc::WriteOptions());
       } else {
         /// Tx processing was started but still unfinished. We give it
         /// 2*proposal_delay time until timeout.

@@ -128,6 +128,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
 
   ASSERT_TRUE(wrapper.validate());
 
+  SCOPED_TRACE("Stateless valid status verification");
   validateStatuses<shared_model::detail::PolymorphicWrapper<
       shared_model::interface::StatelessValidTxResponse>>(txs);
 }
@@ -190,6 +191,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   ASSERT_TRUE(wrapper.validate());
 
+  SCOPED_TRACE("Stateful valid status verification");
   validateStatuses<shared_model::detail::PolymorphicWrapper<
       shared_model::interface::StatefulValidTxResponse>>(txs);
 }
@@ -248,6 +250,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   ASSERT_TRUE(wrapper.validate());
 
+  SCOPED_TRACE("Committed status verification");
   validateStatuses<shared_model::detail::PolymorphicWrapper<
       shared_model::interface::CommittedTxResponse>>(txs);
 }
@@ -315,10 +318,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   commit_notifier.get_subscriber().on_next(single_commit);
   ASSERT_TRUE(wrapper.validate());
 
-  // check that all invalid transactions will have stateful invalid status
-  validateStatuses<shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulFailedTxResponse>>(invalid_txs);
-  // check that all transactions from block will be committed
-  validateStatuses<shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::CommittedTxResponse>>(block_txs);
+  {
+    SCOPED_TRACE("Stateful invalid status verification");
+    // check that all invalid transactions will have stateful invalid status
+    validateStatuses<shared_model::detail::PolymorphicWrapper<
+        shared_model::interface::StatefulFailedTxResponse>>(invalid_txs);
+  }
+  {
+    SCOPED_TRACE("Committed status verification");
+    // check that all transactions from block will be committed
+    validateStatuses<shared_model::detail::PolymorphicWrapper<
+        shared_model::interface::CommittedTxResponse>>(block_txs);
+  }
 }
