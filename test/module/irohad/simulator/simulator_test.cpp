@@ -28,7 +28,6 @@
 using namespace iroha;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
@@ -47,7 +46,7 @@ class SimulatorTest : public ::testing::Test {
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
-    crypto_provider = std::make_shared<MockCryptoProvider>();
+    crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
 
     empty_proposal = std::make_shared<shared_model::proto::Proposal>(
         TestProposalBuilder().build());
@@ -62,7 +61,7 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
-  std::shared_ptr<MockCryptoProvider> crypto_provider;
+  std::shared_ptr<iroha::model::MockCryptoProvider> crypto_provider;
 
   std::shared_ptr<shared_model::interface::Proposal> empty_proposal;
 
@@ -89,7 +88,6 @@ TEST_F(SimulatorTest, ValidWhenInitialized) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
-  // just(empty_proposal)));
 
   init();
 }
@@ -111,7 +109,6 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
-  //      .WillOnce(Return(rxcpp::observable<>::just(empty_proposal)));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
 
@@ -151,7 +148,6 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
-  //  .WillOnce(Return(rxcpp::observable<>::just(empty_proposal)));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
@@ -188,7 +184,6 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
-  //  .WillOnce(Return(rxcpp::observable<>::just(empty_proposal)));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 

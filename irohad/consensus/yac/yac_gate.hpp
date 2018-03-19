@@ -21,7 +21,6 @@
 #include "network/consensus_gate.hpp"
 #include <rxcpp/rx-observable.hpp>
 
-
 namespace iroha {
   namespace consensus {
     namespace yac {

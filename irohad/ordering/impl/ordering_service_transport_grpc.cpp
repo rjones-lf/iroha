@@ -17,7 +17,7 @@
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 #include "backend/protobuf/transaction.hpp"
-#include "backend/protobuf/proposal.hpp"
+#include "builders/protobuf/proposal.hpp"
 
 using namespace iroha::ordering;
 

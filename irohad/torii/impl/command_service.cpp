@@ -23,8 +23,6 @@
 #include "common/types.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/base/hashable.hpp"
-#include "model/converters/pb_common.hpp"
-#include "model/sha3_hash.hpp"
 #include "torii/command_service.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/transaction_validator.hpp"

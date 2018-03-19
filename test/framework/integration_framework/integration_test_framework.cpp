@@ -74,7 +74,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             .creatorAccountId(kAdminId)
             .txCounter(1)
             .createdTime(iroha::time::now())
-            .addPeer("0.0.0.0:10001", key.publicKey())
+            .addPeer("0.0.0.0:50541", key.publicKey())
             .createRole(
                 kDefaultRole,
                 // TODO (@l4l) IR-874 create more confort way for
