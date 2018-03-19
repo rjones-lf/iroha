@@ -20,6 +20,7 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -42,7 +43,8 @@ namespace shared_model {
       TransactionsResponse(TransactionsResponse &&o)
           : TransactionsResponse(std::move(o.proto_)) {}
 
-      TransactionsCollectionType transactions() const override {
+      interface::types::TransactionsCollectionType transactions()
+          const override {
         return *transactions_;
       }
 
@@ -53,14 +55,16 @@ namespace shared_model {
       const iroha::protocol::TransactionsResponse &transactionResponse_{
           proto_->transactions_response()};
 
-      const Lazy<TransactionsCollectionType> transactions_{[this] {
-        return boost::accumulate(transactionResponse_.transactions(),
-                                 TransactionsCollectionType{},
-                                 [](auto &&txs, const auto &tx) {
-                                   txs.emplace_back(new Transaction(tx));
-                                   return std::move(txs);
-                                 });
-      }};
+      const Lazy<interface::types::TransactionsCollectionType> transactions_{
+          [this] {
+            return boost::accumulate(
+                transactionResponse_.transactions(),
+                interface::types::TransactionsCollectionType{},
+                [](auto &&txs, const auto &tx) {
+                  txs.emplace_back(new Transaction(tx));
+                  return std::move(txs);
+                });
+          }};
     };
   }  // namespace proto
 }  // namespace shared_model
