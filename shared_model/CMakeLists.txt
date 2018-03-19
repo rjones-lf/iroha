@@ -25,13 +25,11 @@ include_directories(
 
 if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-  set(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+  set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 
   option(TESTING "Build tests" ON)
-
-  set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 
   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
 
@@ -45,11 +43,6 @@ if (NOT IROHA_ROOT_PROJECT)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../schema schema)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
-
-  if(TESTING)
-    enable_testing()
-    add_subdirectory(test)
-  endif()
 endif ()
 add_library(old_model INTERFACE)
 
@@ -66,3 +59,10 @@ add_subdirectory(converters)
 add_subdirectory(cryptography)
 add_subdirectory(interfaces)
 add_subdirectory(validators)
+
+if (NOT IROHA_ROOT_PROJECT)
+  if (TESTING)
+    enable_testing()
+    add_subdirectory(test)
+  endif ()
+endif ()
