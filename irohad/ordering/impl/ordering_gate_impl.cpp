@@ -55,19 +55,18 @@ namespace iroha {
       });
     }
 
-    void OrderingGateImpl::onProposal(model::Proposal old_proposal) {
+    void OrderingGateImpl::onProposal(
+        std::shared_ptr<shared_model::interface::Proposal> proposal) {
       log_->info("Received new proposal");
 
-      auto proposal = shared_model::proto::from_old(old_proposal);
-      proposal_queue_.push(std::make_shared<shared_model::proto::Proposal>(
-          std::move(proposal)));
+      proposal_queue_.push(std::move(proposal));
 
       tryNextRound();
     }
 
     void OrderingGateImpl::tryNextRound() {
       if (not proposal_queue_.empty() and unlock_next_.exchange(false)) {
-        std::shared_ptr<shared_model::proto::Proposal> next_proposal;
+        std::shared_ptr<shared_model::interface::Proposal> next_proposal;
         proposal_queue_.try_pop(next_proposal);
         log_->info("Pass the proposal to pipeline");
 

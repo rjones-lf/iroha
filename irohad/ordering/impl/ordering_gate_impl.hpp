@@ -20,19 +20,18 @@
 
 #include "network/ordering_gate.hpp"
 
-#include <atomic>
 #include <tbb/concurrent_queue.h>
+#include <atomic>
 
+#include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
-#include "interfaces/iroha_internal/proposal.hpp"
-#include "logger/logger.hpp"
 
 namespace shared_model {
-  namespace proto {
+  namespace interaface {
     class Proposal;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace ordering {
@@ -50,13 +49,15 @@ namespace iroha {
           std::shared_ptr<iroha::network::OrderingGateTransport> transport);
 
       void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction> transaction) override;
+          std::shared_ptr<const shared_model::interface::Transaction>
+              transaction) override;
 
       rxcpp::observable<model::Proposal> on_proposal() override;
 
       void setPcs(const iroha::network::PeerCommunicationService &pcs) override;
 
-      void onProposal(model::Proposal proposal) override;
+      void onProposal(
+          std::shared_ptr<shared_model::interface::Proposal> proposal) override;
 
       ~OrderingGateImpl() override;
 
@@ -73,7 +74,8 @@ namespace iroha {
       std::atomic_bool unlock_next_{true};
 
       /// queue with all proposals received from ordering service
-      tbb::concurrent_queue<std::shared_ptr<shared_model::proto::Proposal>> proposal_queue_;
+      tbb::concurrent_queue<std::shared_ptr<shared_model::interface::Proposal>>
+          proposal_queue_;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;

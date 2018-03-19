@@ -34,15 +34,15 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
   }
   log_->info("transactions in proposal: {}", transactions.size());
 
-  auto proposal = shared_model::proto::ProposalBuilder()
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
                       .transactions(transactions)
                       .height(request->height())
                       .createdTime(request->created_time())
-                      .build();
+                      .build());
 
   if (not subscriber_.expired()) {
-    subscriber_.lock()->onProposal(std::move(
-        *std::unique_ptr<iroha::model::Proposal>(proposal.makeOldModel())));
+    subscriber_.lock()->onProposal(proposal);
   } else {
     log_->error("(onProposal) No subscriber");
   }

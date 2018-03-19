@@ -18,12 +18,11 @@
 #include <gtest/gtest.h>
 
 #include "framework/test_subscriber.hpp"
-
 #include "module/irohad/network/network_mocks.hpp"
-#include "network/ordering_service.hpp"
-
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "network/ordering_service.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
@@ -176,8 +175,11 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
   wrapper_after.subscribe();
 
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().build());
+
+  ordering_gate.onProposal(proposal);
+  ordering_gate.onProposal(proposal);
 
   ASSERT_TRUE(wrapper_before.validate());
 
