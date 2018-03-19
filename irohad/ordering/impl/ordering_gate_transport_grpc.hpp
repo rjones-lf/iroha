@@ -20,7 +20,6 @@
 #include <google/protobuf/empty.pb.h>
 
 #include "logger/logger.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
 #include "ordering.grpc.pb.h"
@@ -53,7 +52,6 @@ namespace iroha {
      private:
       std::weak_ptr<iroha::network::OrderingGateNotification> subscriber_;
       std::unique_ptr<proto::OrderingServiceTransportGrpc::Stub> client_;
-      model::converters::PbTransactionFactory factory_;
       logger::Logger log_;
     };
 

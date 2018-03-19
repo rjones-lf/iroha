@@ -17,6 +17,8 @@
 #include "ordering_gate_transport_grpc.hpp"
 
 #include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/proposal.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 using namespace iroha::ordering;
 
@@ -26,17 +28,21 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 
-  auto transactions = decltype(std::declval<model::Proposal>().transactions)();
+  std::vector<shared_model::proto::Transaction> transactions;
   for (const auto &tx : request->transactions()) {
-    transactions.push_back(*factory_.deserialize(tx));
+    transactions.push_back(shared_model::proto::Transaction(tx));
   }
   log_->info("transactions in proposal: {}", transactions.size());
 
-  model::Proposal proposal(transactions);
-  proposal.height = request->height();
-  proposal.created_time = request->created_time();
+  auto proposal = shared_model::proto::ProposalBuilder()
+                      .transactions(transactions)
+                      .height(request->height())
+                      .createdTime(request->created_time())
+                      .build();
+
   if (not subscriber_.expired()) {
-    subscriber_.lock()->onProposal(std::move(proposal));
+    subscriber_.lock()->onProposal(std::move(
+        *std::unique_ptr<iroha::model::Proposal>(proposal.makeOldModel())));
   } else {
     log_->error("(onProposal) No subscriber");
   }
