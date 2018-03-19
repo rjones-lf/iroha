@@ -29,8 +29,8 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     iroha::ametsuchi::AmetsuchiTest::SetUp();
 
     // creates node and admin keys and generate default genesis transaction
-    auto genesis_tx1 =
-        TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+    auto genesis_tx1 = TransactionGenerator().generateGenesisTransaction(
+        0, {"0.0.0.0:" + std::to_string(TxPipelineIntegrationTestFixture::default_port)});
     // load admin key pair note: generateGenesisTransaction() creates admin key
     // pair
     adminKeypair_ = getVal(iroha::KeysManagerImpl(ADMIN_ID).loadKeys());
@@ -75,7 +75,7 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     irohad = std::make_shared<TestIrohad>(block_store_path,
                                           pgopt_,
                                           0,
-                                          10001,
+                                          default_port,
                                           10,
                                           5000ms,
                                           5000ms,

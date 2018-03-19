@@ -39,8 +39,8 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
   void SetUp() override {
     iroha::ametsuchi::AmetsuchiTest::SetUp();
 
-    auto genesis_tx =
-        TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+    auto genesis_tx = TransactionGenerator().generateGenesisTransaction(
+        0, {"0.0.0.0:" + std::to_string(default_port)});
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
             0, {genesis_tx});
@@ -51,7 +51,7 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
     irohad = std::make_shared<TestIrohad>(block_store_path,
                                           pgopt_,
                                           0,
-                                          10001,
+                                          default_port,
                                           10,
                                           5000ms,
                                           5000ms,

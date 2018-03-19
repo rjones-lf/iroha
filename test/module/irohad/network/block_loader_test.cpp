@@ -22,7 +22,6 @@
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/builder_templates/block_template.hpp"
@@ -31,7 +30,6 @@
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
-#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/shared_model/cryptography/crypto_verifier_mock.hpp"
@@ -41,7 +39,6 @@
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace framework::test_subscriber;
 using namespace shared_model::crypto;
 
@@ -217,7 +214,6 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
           [](auto &&x) { return wBlock(x.copy()); })));
   EXPECT_CALL(*storage, getBlocksFrom(next_height))
       .WillOnce(Return(rxcpp::observable<>::iterate(blocks)));
-  auto old_peer = *peer->makeOldModel();
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;

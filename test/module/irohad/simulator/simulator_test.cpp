@@ -29,7 +29,6 @@
 using namespace iroha;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;

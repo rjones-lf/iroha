@@ -29,7 +29,7 @@ namespace integration_framework {
                 .string()),
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
-        internal_port_(10001),
+        internal_port_(50541),
         proposal_delay_(5000ms),
         vote_delay_(5000ms),
         load_delay_(5000ms) {}

@@ -22,7 +22,6 @@
 #include "builders/common_objects/peer_builder.hpp"
 #include "framework/test_subscriber.hpp"
 #include "mock_ordering_service_persistent_state.hpp"
-#include "model/asset.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
@@ -35,7 +34,6 @@
 
 using namespace iroha;
 using namespace iroha::ordering;
-using namespace iroha::model;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 using namespace iroha::ametsuchi;
@@ -128,7 +126,7 @@ class OrderingGateServiceTest : public ::testing::Test {
    * @param i - number of transaction
    */
   void send_transaction(size_t i) {
-    auto tx = std::make_shared<Transaction>();
+    auto tx = std::make_shared<iroha::model::Transaction>();
     tx->tx_counter = i;
     gate->propagateTransaction(tx);
     // otherwise tx may come unordered
@@ -144,7 +142,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;
 
-  std::vector<Proposal> proposals;
+  std::vector<iroha::model::Proposal> proposals;
   std::atomic<size_t> counter;
   std::condition_variable cv;
   std::mutex m;

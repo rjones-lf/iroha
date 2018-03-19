@@ -19,6 +19,9 @@
 #define IROHA_SHARED_MODEL_SIGNABLE_HASH_HPP
 
 #include <boost/functional/hash.hpp>
+#include <unordered_set>
+
+#include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
