@@ -29,8 +29,9 @@
 
 namespace shared_model {
   namespace interaface {
+    class Transaction;
     class Proposal;
-  }
+  }  // namespace interaface
 }  // namespace shared_model
 
 namespace iroha {
@@ -52,7 +53,8 @@ namespace iroha {
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) override;
 
-      rxcpp::observable<model::Proposal> on_proposal() override;
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+      on_proposal() override;
 
       void setPcs(const iroha::network::PeerCommunicationService &pcs) override;
 
@@ -67,7 +69,9 @@ namespace iroha {
        */
       void tryNextRound();
 
-      rxcpp::subjects::subject<model::Proposal> proposals_;
+      rxcpp::subjects::subject<
+          std::shared_ptr<shared_model::interface::Proposal>>
+          proposals_;
       std::shared_ptr<iroha::network::OrderingGateTransport> transport_;
 
       /// invariant: true if proposal can be pushed to subscribers

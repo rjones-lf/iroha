@@ -21,8 +21,6 @@
 #include "interfaces/transaction.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 
-#include "backend/protobuf/from_old_model.hpp"
-
 namespace iroha {
   namespace ordering {
 
@@ -40,7 +38,8 @@ namespace iroha {
       transport_->propagateTransaction(transaction);
     }
 
-    rxcpp::observable<model::Proposal> OrderingGateImpl::on_proposal() {
+    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    OrderingGateImpl::on_proposal() {
       return proposals_.get_observable();
     }
 
@@ -69,10 +68,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::Proposal> next_proposal;
         proposal_queue_.try_pop(next_proposal);
         log_->info("Pass the proposal to pipeline");
-
-        auto old_proposal = std::unique_ptr<iroha::model::Proposal>(
-            next_proposal->makeOldModel());
-        proposals_.get_subscriber().on_next(*old_proposal);
+        proposals_.get_subscriber().on_next(next_proposal);
       }
     }
 

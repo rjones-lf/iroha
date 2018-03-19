@@ -28,7 +28,7 @@ namespace shared_model {
   namespace interface {
     class Transaction;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace network {
@@ -66,7 +66,9 @@ namespace iroha {
           void(std::shared_ptr<const shared_model::interface::Transaction>
                    transaction));
 
-      MOCK_METHOD0(on_proposal, rxcpp::observable<model::Proposal>());
+      MOCK_METHOD0(on_proposal,
+                   rxcpp::observable<
+                       std::shared_ptr<shared_model::interface::Proposal>>());
 
       MOCK_METHOD1(setPcs, void(const PeerCommunicationService &));
     };
