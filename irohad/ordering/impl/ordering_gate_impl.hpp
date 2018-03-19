@@ -21,14 +21,18 @@
 #include "network/ordering_gate.hpp"
 
 #include <atomic>
-
 #include <tbb/concurrent_queue.h>
 
-#include "model/converters/pb_transaction_factory.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
-
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "logger/logger.hpp"
+
+namespace shared_model {
+  namespace proto {
+    class Proposal;
+  }
+}
 
 namespace iroha {
   namespace ordering {
@@ -69,7 +73,7 @@ namespace iroha {
       std::atomic_bool unlock_next_{true};
 
       /// queue with all proposals received from ordering service
-      tbb::concurrent_queue<std::shared_ptr<model::Proposal>> proposal_queue_;
+      tbb::concurrent_queue<std::shared_ptr<shared_model::proto::Proposal>> proposal_queue_;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;

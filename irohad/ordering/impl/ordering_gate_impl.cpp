@@ -17,8 +17,11 @@
 
 #include <utility>
 
-#include "ordering/impl/ordering_gate_impl.hpp"
+#include "backend/protobuf/proposal.hpp"
 #include "interfaces/transaction.hpp"
+#include "ordering/impl/ordering_gate_impl.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -28,7 +31,8 @@ namespace iroha {
         : transport_(std::move(transport)), log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const shared_model::interface::Transaction> transaction) {
+        std::shared_ptr<const shared_model::interface::Transaction>
+            transaction) {
       log_->info("propagate tx, tx_counter: "
                  + std::to_string(transaction->transactionCounter())
                  + " account_id: " + transaction->creatorAccountId());
@@ -51,20 +55,25 @@ namespace iroha {
       });
     }
 
-    void OrderingGateImpl::onProposal(model::Proposal proposal) {
+    void OrderingGateImpl::onProposal(model::Proposal old_proposal) {
       log_->info("Received new proposal");
-      proposal_queue_.push(
-          std::make_shared<model::Proposal>(std::move(proposal)));
+
+      auto proposal = shared_model::proto::from_old(old_proposal);
+      proposal_queue_.push(std::make_shared<shared_model::proto::Proposal>(
+          std::move(proposal)));
+
       tryNextRound();
     }
 
     void OrderingGateImpl::tryNextRound() {
-      if (not proposal_queue_.empty()
-          and unlock_next_.exchange(false)) {
-        std::shared_ptr<model::Proposal> next_proposal;
+      if (not proposal_queue_.empty() and unlock_next_.exchange(false)) {
+        std::shared_ptr<shared_model::proto::Proposal> next_proposal;
         proposal_queue_.try_pop(next_proposal);
         log_->info("Pass the proposal to pipeline");
-        proposals_.get_subscriber().on_next(*next_proposal);
+
+        auto old_proposal = std::unique_ptr<iroha::model::Proposal>(
+            next_proposal->makeOldModel());
+        proposals_.get_subscriber().on_next(*old_proposal);
       }
     }
 
