@@ -200,3 +200,20 @@ TEST_F(CreateDomain, EmptyName) {
       .sendTx(completeTx(baseTx().createDomain(empty_name, kRole)));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
+
+/**
+ * @given some user with can_create_domain permission
+ * @when execute tx with CreateDomain command with empty role name
+ * @then the tx hasn't passed stateless validation
+ *       (aka skipProposal throws)
+ */
+TEST_F(CreateDomain, DISABLED_EmptyRole) {
+  const std::string &empty_name = "";
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(baseTx().createDomain(kNewDomain, empty_name)));
+  ASSERT_ANY_THROW(itf.skipProposal());
+}
