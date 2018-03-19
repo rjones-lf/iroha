@@ -57,9 +57,7 @@ namespace iroha {
     void OrderingGateImpl::onProposal(
         std::shared_ptr<shared_model::interface::Proposal> proposal) {
       log_->info("Received new proposal");
-
       proposal_queue_.push(std::move(proposal));
-
       tryNextRound();
     }
 
