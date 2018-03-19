@@ -172,7 +172,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   auto block = TestBlockBuilder()
                    .height(1)
-                   .txNumber(proposal_size)
                    .createdTime(iroha::time::now())
                    .transactions(txs)
                    .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
@@ -237,7 +236,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   auto block = TestBlockBuilder()
                    .height(1)
-                   .txNumber(proposal_size)
                    .createdTime(iroha::time::now())
                    .transactions(txs)
                    .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
@@ -307,7 +305,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 
   auto block = TestBlockBuilder()
                    .height(1)
-                   .txNumber(block_txs.size())
                    .createdTime(iroha::time::now())
                    .transactions(block_txs)
                    .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
