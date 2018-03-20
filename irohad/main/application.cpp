@@ -118,8 +118,8 @@ void Irohad::resetOrderingService() {
 
 bool Irohad::restoreWsv() {
   return wsv_restorer_->restoreWsv(*storage).match(
-      [](iroha::expected::Value<void> v) -> bool { return true; },
-      [&](iroha::expected::Error<std::string> &error) -> bool {
+      [](iroha::expected::Value<void> v) { return true; },
+      [&](iroha::expected::Error<std::string> &error) {
         log_->error(error.error);
         return false;
       });

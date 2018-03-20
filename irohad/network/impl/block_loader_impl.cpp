@@ -22,7 +22,7 @@
 #include <grpc++/create_channel.h>
 
 #include "backend/protobuf/block.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/transport_builder.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
@@ -85,23 +85,30 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          auto result =
-              std::make_shared<shared_model::proto::Block>(std::move(block));
-
-          // stateless validation of block
-          auto answer = stateless_validator_->validate(result);
-          if (answer.hasErrors()) {
-            log_->error(answer.reason());
-            context.TryCancel();
-            continue;
-          }
-
-          if (not crypto_verifier_->verify(*result)) {
-            log_->error(kInvalidBlockSignatures);
-            context.TryCancel();
-          } else {
-            subscriber.on_next(std::move(result));
-          }
+          shared_model::proto::TransportBuilder<
+              shared_model::proto::Block,
+              shared_model::validation::DefaultBlockValidator>()
+              .build(block)
+              .match(
+                  // success case
+                  [this, &context, &subscriber](
+                      const iroha::expected::Value<shared_model::proto::Block>
+                          &result) {
+                    if (not crypto_verifier_->verify(result.value)) {
+                      log_->error(kInvalidBlockSignatures);
+                      context.TryCancel();
+                    } else {
+                      subscriber.on_next(std::move(
+                          std::make_shared<shared_model::proto::Block>(
+                              result.value)));
+                    }
+                  },
+                  // fail case
+                  [this,
+                   &context](const iroha::expected::Error<std::string> &error) {
+                    log_->error(error.error);
+                    context.TryCancel();
+                  });
         }
         reader->Finish();
         subscriber.on_completed();

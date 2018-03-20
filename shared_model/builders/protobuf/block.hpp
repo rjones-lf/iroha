@@ -24,6 +24,11 @@ namespace shared_model {
   namespace proto {
 
     using BlockBuilder = TemplateBlockBuilder<>;
+
+    using UnsignedBlockBuilder =
+        TemplateBlockBuilder<0,
+                             shared_model::validation::DefaultBlockValidator,
+                             shared_model::proto::Block>;
   }  // namespace proto
 }  // namespace shared_model
 

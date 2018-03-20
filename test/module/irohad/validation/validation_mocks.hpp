@@ -23,16 +23,9 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "validation/chain_validator.hpp"
 #include "validation/stateful_validator.hpp"
-#include "validation/stateless_validator.hpp"
 
 namespace iroha {
   namespace validation {
-    class MockStatelessValidator : public StatelessValidator {
-     public:
-      MOCK_CONST_METHOD1(validate, bool(const model::Transaction &));
-      MOCK_CONST_METHOD1(validate, bool(const model::Query &));
-    };
-
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
       MOCK_METHOD2(validate,

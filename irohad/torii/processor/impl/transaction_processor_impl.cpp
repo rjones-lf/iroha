@@ -29,7 +29,6 @@ namespace iroha {
 
     using model::TransactionResponse;
     using network::PeerCommunicationService;
-    using validation::StatelessValidator;
 
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs)

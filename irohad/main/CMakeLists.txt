@@ -45,7 +45,6 @@ target_link_libraries(application
     ordering_service
     chain_validator
     hash
-    stateless_validator
     stateful_validator
     processors
     ed25519_crypto

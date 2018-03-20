@@ -35,7 +35,6 @@ add_library(torii_service
 target_link_libraries(torii_service
     pb_model_converters
     endpoint
-    stateless_validator
     model
     logger
     shared_model_stateless_validation

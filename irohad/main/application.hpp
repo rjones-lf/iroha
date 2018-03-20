@@ -43,7 +43,6 @@
 #include "validation/chain_validator.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
-#include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
 namespace iroha {

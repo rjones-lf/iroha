@@ -22,7 +22,6 @@
 #include "model/transaction_response.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
-#include "validation/stateless_validator.hpp"
 
 namespace iroha {
   namespace torii {
