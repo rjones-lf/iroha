@@ -21,16 +21,8 @@
 #include <chrono>
 #include <string>
 
-#include "common/types.hpp"
-#include "framework/config_helper.hpp"
 #include "integration/pipeline/test_irohad.hpp"
 #include "cryptography/keypair.hpp"
-
-namespace iroha {
-  namespace model {
-    struct Block;
-  }
-}  // namespace iroha
 
 namespace integration_framework {
 

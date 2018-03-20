@@ -43,7 +43,7 @@ class TestIrohad : public Irohad {
                proposal_delay,
                vote_delay,
                load_delay,
-               *std::shared_ptr<iroha::keypair_t>(keypair.makeOldModel())) {}
+               *std::unique_ptr<iroha::keypair_t>(keypair.makeOldModel())) {}
 
   auto &getCommandService() {
     return command_service;

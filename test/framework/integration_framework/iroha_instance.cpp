@@ -17,7 +17,6 @@
 
 #include "framework/integration_framework/iroha_instance.hpp"
 #include <boost/filesystem.hpp>
-#include "backend/protobuf/from_old_model.hpp"
 
 using namespace std::chrono_literals;
 
