@@ -28,10 +28,9 @@ using ::testing::Return;
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
 
-iroha::model::Peer mk_local_peer(uint64_t num) {
-  iroha::model::Peer peer;
-  peer.address = "0.0.0.0:" + std::to_string(num);
-  return peer;
+auto mk_local_peer(uint64_t num) {
+  auto address = "0.0.0.0:" + std::to_string(num);
+  return iroha::consensus::yac::mk_peer(address);
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {

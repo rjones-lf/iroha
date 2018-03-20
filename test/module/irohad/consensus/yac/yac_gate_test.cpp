@@ -33,7 +33,6 @@ using namespace iroha::network;
 using namespace iroha::simulator;
 using namespace framework::test_subscriber;
 
-#include <iostream>
 using namespace std;
 
 using ::testing::An;
@@ -53,8 +52,10 @@ class YacGateTest : public ::testing::Test {
     commit_message = CommitMessage({message});
     expected_commit = rxcpp::observable<>::just(commit_message);
 
-    auto bytes = shared_model::proto::from_old(expected_block).hash().blob();
-    std::copy(bytes.begin(), bytes.end(), expected_block.hash.begin());
+    expected_block = std::unique_ptr<shared_model::interface::Block>(
+        shared_model::proto::from_old(old_expected_block).copy());
+    auto bytes = expected_block->hash().blob();
+    std::copy(bytes.begin(), bytes.end(), old_expected_block.hash.begin());
 
     hash_gate = make_unique<MockHashGate>();
     peer_orderer = make_unique<MockYacPeerOrderer>();
