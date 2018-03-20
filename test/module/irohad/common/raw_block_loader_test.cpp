@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "framework/test_block_generator.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/pb_command_factory.hpp"
@@ -37,10 +38,21 @@ using namespace iroha;
  */
 TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   BlockLoader loader;
-  auto block = framework::generator::generateBlock();
-  auto doc = JsonBlockFactory().serialize(block);
-  auto str = jsonToString(doc);
-  auto new_block = loader.parseBlock(str);
-  ASSERT_TRUE(new_block);
-  ASSERT_EQ(block, *new_block);
+  auto str =
+      R"({
+"payload": {
+  "transactions": [],
+  "height": 1,
+  "prev_block_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "created_time": 0
+  },
+"signatures": []
+})";
+
+  auto block = loader.parseBlock(str);
+
+  ASSERT_TRUE(block);
+  auto b = block.value();
+
+  ASSERT_EQ(b->transactions().size(), 4);
 }
