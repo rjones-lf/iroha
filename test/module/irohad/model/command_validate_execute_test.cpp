@@ -94,8 +94,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
         shared_model::proto::DomainBuilder()
             .domainId(domain_id)
             .defaultRole(admin_role)
-            .build()
-            .copy());
+            .build());
   }
 
   ExecutionResult validateAndExecute() {
@@ -1162,31 +1161,27 @@ class TransferAssetTest : public CommandValidateExecuteTest {
             .assetId(asset_id)
             .domainId(domain_id)
             .precision(2)
-            .build()
-            .copy());
+            .build());
 
     balance = std::shared_ptr<shared_model::interface::Amount>(
         shared_model::proto::AmountBuilder()
             .intValue(150)
             .precision(2)
-            .build()
-            .copy());
+            .build());
 
     src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
         shared_model::proto::AccountAssetBuilder()
             .assetId(asset_id)
             .accountId(admin_id)
             .balance(*balance)
-            .build()
-            .copy());
+            .build());
 
     dst_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
         shared_model::proto::AccountAssetBuilder()
             .assetId(asset_id)
             .accountId(account_id)
             .balance(*balance)
-            .build()
-            .copy());
+            .build());
 
     transfer_asset = std::make_shared<TransferAsset>();
     transfer_asset->src_account_id = admin_id;
@@ -1492,16 +1487,14 @@ TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
           .intValue(
               std::numeric_limits<boost::multiprecision::uint256_t>::max())
           .precision(2)
-          .build()
-          .copy());
+          .build());
 
   src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
       shared_model::proto::AccountAssetBuilder()
           .assetId(src_wallet->assetId())
           .accountId(src_wallet->accountId())
           .balance(*max_balance)
-          .build()
-          .copy());
+          .build());
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
       .WillOnce(Return(asset));

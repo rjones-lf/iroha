@@ -186,8 +186,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   auto accountB = std::shared_ptr<shared_model::interface::Account>(
       shared_model::proto::AccountBuilder()
           .accountId("b@domain")
-          .build()
-          .copy());
+          .build());
 
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(
@@ -231,8 +230,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
   auto account = std::shared_ptr<shared_model::interface::Account>(
       shared_model::proto::AccountBuilder()
           .accountId("accountA")
-          .build()
-          .copy());
+          .build());
   ;
 
   auto creator = "a@domain";
@@ -324,8 +322,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
           .accountId("accountA")
           .assetId("usd")
           .balance(amount)
-          .build()
-          .copy());
+          .build());
 
   auto asset = shared_model::proto::AssetBuilder()
                    .assetId("usd")
@@ -477,8 +474,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
       auto current = wTransaction(TestTransactionBuilder()
                                       .creatorAccountId(account.account_id)
                                       .txCounter(i)
-                                      .build()
-                                      .copy());
+                                      .build());
       result.push_back(current);
     }
     return result;

@@ -43,7 +43,7 @@ namespace shared_model {
           .finalize();
     }
 
-    Keypair *Keypair::copy() const {
+    Keypair *Keypair::clone() const {
       return new Keypair(publicKey(), privateKey());
     }
 
