@@ -23,6 +23,7 @@
 #include <string>
 
 #include "common/types.hpp"
+
 namespace iroha {
 
   /**
