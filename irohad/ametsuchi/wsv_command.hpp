@@ -20,26 +20,20 @@
 
 #include <set>
 #include <string>
+
 #include "common/result.hpp"
 #include "common/types.hpp"
-
-#include "common/types.hpp"  // for pubkey_t
-//#include "interfaces/common_objects/account.hpp"
-//#include "interfaces/common_objects/account_asset.hpp"
-//#include "interfaces/common_objects/asset.hpp"
-//#include "interfaces/common_objects/domain.hpp"
-//#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
-    namespace interface {
-        class Asset;
-        class Account;
-        class Domain;
-        class Peer;
-        class AccountAsset;
-    }
-}
+  namespace interface {
+    class Asset;
+    class Account;
+    class Domain;
+    class Peer;
+    class AccountAsset;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace ametsuchi {

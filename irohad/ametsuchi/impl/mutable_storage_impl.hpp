@@ -28,10 +28,6 @@
 
 namespace iroha {
 
-  namespace model {
-    class CommandExecutorFactory;
-  }
-
   namespace ametsuchi {
 
     class BlockIndex;

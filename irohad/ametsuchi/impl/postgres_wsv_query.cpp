@@ -21,12 +21,12 @@ namespace iroha {
   namespace ametsuchi {
 
     using shared_model::interface::types::AccountIdType;
-    using shared_model::interface::types::PermissionNameType;
-    using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::AssetIdType;
+    using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::JsonType;
-    using shared_model::interface::types::RoleIdType;
+    using shared_model::interface::types::PermissionNameType;
     using shared_model::interface::types::PubkeyType;
+    using shared_model::interface::types::RoleIdType;
 
     const std::string kRoleId = "role_id";
     const char *kAccountNotFound = "Account {} not found";
@@ -129,14 +129,13 @@ namespace iroha {
       return execute_(
                  "SELECT public_key FROM account_has_signatory WHERE "
                  "account_id = "
-                 + transaction_.quote(account_id)+ ";")
-                 |
-          [&](const auto &result) {
-            return transform<PubkeyType>(result, [&](const auto &row) {
-              pqxx::binarystring public_key_str(row.at(kPublicKey));
-              return PubkeyType(public_key_str.str());
-            });
-          };
+                 + transaction_.quote(account_id) + ";")
+          | [&](const auto &result) {
+              return transform<PubkeyType>(result, [&](const auto &row) {
+                pqxx::binarystring public_key_str(row.at(kPublicKey));
+                return PubkeyType(public_key_str.str());
+              });
+            };
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Asset>>
@@ -188,15 +187,14 @@ namespace iroha {
       };
     }
 
-    boost::optional<
-        std::vector<std::shared_ptr<shared_model::interface::Peer>>>
+    boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
       pqxx::result result;
       return execute_("SELECT * FROM peer;") | [&](const auto &result)
                  -> boost::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
-        auto results = transform<shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
-            result, makePeer);
+        auto results = transform<shared_model::builder::BuilderResult<
+            shared_model::interface::Peer>>(result, makePeer);
         std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
         for (auto &r : results) {
           r.match(

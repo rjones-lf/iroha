@@ -20,7 +20,6 @@
 
 #include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/proposal.hpp"
-
 #include "datetime/time.hpp"
 #include "model/account.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
@@ -40,21 +39,22 @@ namespace iroha {
                  proposal.transactions().size());
       auto checking_transaction = [this](const auto &tx, auto &queries) {
         return bool(queries.getAccount(tx.creatorAccountId()) |
-                [&](const auto &account) {
-                  // Check if tx creator has account and has quorum to execute
-                  // transaction
-                  return tx.signatures().size() >= account->quorum()
-                      ? queries.getSignatories(tx.creatorAccountId())
-                      : boost::none;
-                }
-                |
-                [&](const auto &signatories) {
-                  // Check if signatures in transaction are account signatory
-                  return this->signaturesSubset(tx.signatures(), signatories)
-                      ? boost::make_optional(signatories)
-                      : boost::none;
-                })
-            ;
+                    [&](const auto &account) {
+                      // Check if tx creator has account and has quorum to
+                      // execute transaction
+                      return tx.signatures().size() >= account->quorum()
+                          ? queries.getSignatories(tx.creatorAccountId())
+                          : boost::none;
+                    }
+                    |
+                    [&](const auto &signatories) {
+                      // Check if signatures in transaction are account
+                      // signatory
+                      return this->signaturesSubset(tx.signatures(),
+                                                    signatories)
+                          ? boost::make_optional(signatories)
+                          : boost::none;
+                    });
       };
 
       // Filter only valid transactions

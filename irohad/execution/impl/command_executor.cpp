@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
-#include "execution/command_executor.hpp"
-#include "execution/common_executor.hpp"
 #include <boost/mpl/contains.hpp>
+
+#include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "execution/command_executor.hpp"
+#include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
 #include "model/permissions.hpp"
+#include "utils/amount_utils.hpp"
 #include "validator/domain_name_validator.hpp"
 
 namespace iroha {
@@ -55,92 +57,14 @@ namespace iroha {
       std::shared_ptr<iroha::ametsuchi::WsvCommand> commands)
       : queries(queries), commands(commands) {}
 
-  void CommandExecutor::setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id) {
+  void CommandExecutor::setCreatorAccountId(
+      shared_model::interface::types::AccountIdType creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
-  /**
-   * Sums up two amounts.
-   * Requires to have the same scale.
-   * Otherwise nullopt is returned
-   * @param a left term
-   * @param b right term
-   * @param optional result
-   */
-  boost::optional<shared_model::proto::Amount> operator+(
-      const shared_model::interface::Amount &a,
-      const shared_model::interface::Amount &b) {
-    // check precisions
-    if (a.precision() != b.precision()) {
-      return boost::none;
-    }
-    shared_model::proto::AmountBuilder amount_builder;
-    auto res = amount_builder.precision(a.precision())
-                   .intValue(a.intValue() + b.intValue())
-                   .build();
-    // check overflow
-    if (res.intValue() < a.intValue() or res.intValue() < b.intValue()) {
-      return boost::none;
-    }
-    return boost::optional<shared_model::proto::Amount>(res);
-  }
-
-  /**
-   * Subtracts two amounts.
-   * Requires to have the same scale.
-   * Otherwise nullopt is returned
-   * @param a left term
-   * @param b right term
-   * @param optional result
-   */
-  boost::optional<shared_model::proto::Amount> operator-(
-      const shared_model::interface::Amount &a,
-      const shared_model::interface::Amount &b) {
-    // check precisions
-    if (a.precision() != b.precision()) {
-      return boost::none;
-    }
-    // check if a greater than b
-    if (a.intValue() < b.intValue()) {
-      return boost::none;
-    }
-    shared_model::proto::AmountBuilder amount_builder;
-    auto res = amount_builder.precision(a.precision())
-                   .intValue(a.intValue() - b.intValue())
-                   .build();
-    return boost::optional<shared_model::proto::Amount>(res);
-  }
-
-  // to raise to power integer values
-  int ipow(int base, int exp) {
-    int result = 1;
-    while (exp != 0) {
-      if (exp & 1) {
-        result *= base;
-      }
-      exp >>= 1;
-      base *= base;
-    }
-
-    return result;
-  }
-
-  int compareAmount(const shared_model::interface::Amount &a,
-                    const shared_model::interface::Amount &b) {
-    if (a.precision() == b.precision()) {
-      return (a.intValue() < b.intValue())
-          ? -1
-          : (a.intValue() > b.intValue()) ? 1 : 0;
-    }
-    // when different precisions transform to have the same scale
-    auto max_precision = std::max(a.precision(), b.precision());
-    auto val1 = a.intValue() * ipow(10, max_precision - a.precision());
-    auto val2 = b.intValue() * ipow(10, max_precision - b.precision());
-    return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
-  }
-
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddAssetQuantity> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::AddAssetQuantity> &command) {
     std::string command_name = "AddAssetQuantity";
     auto asset = queries->getAsset(command->assetId());
     if (not asset) {
@@ -158,14 +82,13 @@ namespace iroha {
           command_name);
     }
 
-    if (not queries->getAccount(command->accountId())
-                ) {
+    if (not queries->getAccount(command->accountId())) {
       return makeExecutionError(
           (boost::format("account %s is absent") % command->accountId()).str(),
           command_name);
     }
-    auto account_asset = queries->getAccountAsset(
-        command->accountId(), command->assetId());
+    auto account_asset =
+        queries->getAccountAsset(command->accountId(), command->assetId());
 
     shared_model::proto::Amount new_balance =
         amount_builder.precision(command->amount().precision())
@@ -187,21 +110,23 @@ namespace iroha {
     }
 
     auto account_asset_new = account_asset_builder.balance(new_balance)
-                             .accountId(command->accountId())
-                             .assetId(command->assetId())
-                             .build();
+                                 .accountId(command->accountId())
+                                 .assetId(command->assetId())
+                                 .build();
     return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
                                command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddPeer> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::AddPeer> &command) {
     return makeExecutionResult(commands->insertPeer(command->peer()),
                                "AddPeer");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddSignatory> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::AddSignatory> &command) {
     std::string command_name = "AddSignatory";
     auto result = commands->insertSignatory(command->pubkey()) | [&] {
       return commands->insertAccountSignatory(command->accountId(),
@@ -211,14 +136,16 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::AppendRole> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::AppendRole> &command) {
     return makeExecutionResult(
         commands->insertAccountRole(command->accountId(), command->roleName()),
         "AppendRole");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAccount> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::CreateAccount> &command) {
     std::string command_name = "CreateAccount";
     auto account =
         account_builder
@@ -248,7 +175,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAsset> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::CreateAsset> &command) {
     auto new_asset =
         asset_builder.assetId(command->assetName() + "#" + command->domainId())
             .domainId(command->domainId())
@@ -259,7 +187,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateDomain> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::CreateDomain> &command) {
     auto new_domain = domain_builder.domainId(command->domainId())
                           .defaultRole(command->userDefaultRole())
                           .build();
@@ -269,7 +198,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateRole> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::CreateRole> &command) {
     std::string command_name = "CreateRole";
     auto result = commands->insertRole(command->roleName()) | [&] {
       return commands->insertRolePermissions(command->roleName(),
@@ -279,14 +209,16 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::DetachRole> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::DetachRole> &command) {
     return makeExecutionResult(
         commands->deleteAccountRole(command->accountId(), command->roleName()),
         "DetachRole");
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::GrantPermission> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::GrantPermission> &command) {
     return makeExecutionResult(
         commands->insertAccountGrantablePermission(command->accountId(),
                                                    creator_account_id,
@@ -295,7 +227,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::RemoveSignatory> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::RemoveSignatory> &command) {
     std::string command_name = "RemoveSignatory";
 
     // Delete will fail if account signatory doesn't exist
@@ -306,7 +239,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::RevokePermission> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::RevokePermission> &command) {
     return makeExecutionResult(
         commands->deleteAccountGrantablePermission(command->accountId(),
                                                    creator_account_id,
@@ -315,7 +249,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetAccountDetail> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::SetAccountDetail> &command) {
     auto creator = creator_account_id;
     if (creator_account_id.empty()) {
       // When creator is not known, it is genesis block
@@ -328,7 +263,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetQuorum> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::SetQuorum> &command) {
     std::string command_name = "SetQuorum";
 
     auto account = queries->getAccount(command->accountId());
@@ -338,16 +274,17 @@ namespace iroha {
           command_name);
     }
     auto account_new = account_builder.domainId(account.value()->domainId())
-                       .accountId(account.value()->accountId())
-                       .jsonData(account.value()->jsonData())
-                       .quorum(command->newQuorum())
-                       .build();
-    return makeExecutionResult(commands->updateAccount(account_new), command_name);
+                           .accountId(account.value()->accountId())
+                           .jsonData(account.value()->jsonData())
+                           .quorum(command->newQuorum())
+                           .build();
+    return makeExecutionResult(commands->updateAccount(account_new),
+                               command_name);
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::SubtractAssetQuantity>
-          &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::SubtractAssetQuantity> &command) {
     std::string command_name = "SubtractAssetQuantity";
     auto asset = queries->getAsset(command->assetId());
     if (not asset) {
@@ -373,7 +310,6 @@ namespace iroha {
                                 command_name);
     }
 
-
     auto new_balance = account_asset.value()->balance() - command->amount();
     if (not new_balance) {
       return makeExecutionError("Not sufficient amount", command_name);
@@ -387,7 +323,8 @@ namespace iroha {
   }
 
   ExecutionResult CommandExecutor::operator()(
-      const shared_model::detail::PolymorphicWrapper<shared_model::interface::TransferAsset> &command) {
+      const shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::TransferAsset> &command) {
     std::string command_name = "TransferAsset";
 
     auto src_account_asset =
@@ -417,9 +354,10 @@ namespace iroha {
           command_name);
     }
     // Get src balance
-    auto new_src_balance = src_account_asset.value()->balance() - command->amount();
+    auto new_src_balance =
+        src_account_asset.value()->balance() - command->amount();
     if (not new_src_balance) {
-        return makeExecutionError("not enough assets on source account",
+      return makeExecutionError("not enough assets on source account",
                                 command_name);
     }
     // Set new balance for source account
@@ -441,7 +379,8 @@ namespace iroha {
           [&] { return commands->upsertAccountAsset(src_account_asset_new); };
       return makeExecutionResult(result, command_name);
     } else {
-      auto new_dest_balance = dest_account_asset.value()->balance() + command->amount();
+      auto new_dest_balance =
+          dest_account_asset.value()->balance() + command->amount();
       if (not new_dest_balance) {
         return makeExecutionError("operation overflows destination balance",
                                   command_name);
@@ -463,7 +402,8 @@ namespace iroha {
       std::shared_ptr<iroha::ametsuchi::WsvQuery> queries)
       : queries(queries) {}
 
-  void CommandValidator::setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id) {
+  void CommandValidator::setCreatorAccountId(
+      shared_model::interface::types::AccountIdType creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
@@ -479,16 +419,18 @@ namespace iroha {
                 creator_account_id, queries, iroha::model::can_add_asset_qty);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::AddPeer &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::AddPeer &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_add_peer);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::AddSignatory &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::AddSignatory &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. When command creator wants to add signatory to their
         // account and he has permission CanAddSignatory
@@ -503,44 +445,50 @@ namespace iroha {
             iroha::model::can_add_signatory));
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::AppendRole &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::AppendRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_append_role);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::CreateAccount &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::CreateAccount &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_account);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::CreateAsset &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::CreateAsset &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_asset);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::CreateDomain &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::CreateDomain &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_domain);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::CreateRole &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::CreateRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_create_role);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::DetachRole &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::DetachRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id, queries, iroha::model::can_detach_role);
   }
@@ -594,9 +542,10 @@ namespace iroha {
                                               iroha::model::can_set_detail);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::SetQuorum &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::SetQuorum &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // 1. Creator set quorum for his account -> must have permission
         (creator_account_id == command.accountId()
@@ -619,9 +568,10 @@ namespace iroha {
                                        iroha::model::can_subtract_asset_qty);
   }
 
-  bool CommandValidator::hasPermissions(const shared_model::interface::TransferAsset &command,
-                                        iroha::ametsuchi::WsvQuery &queries,
-                                        const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::hasPermissions(
+      const shared_model::interface::TransferAsset &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
 
         (
@@ -641,27 +591,31 @@ namespace iroha {
                 command.destAccountId(), queries, iroha::model::can_receive);
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::AddAssetQuantity &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::AddAssetQuantity &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::AddPeer &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::AddPeer &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::AddSignatory &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::AddSignatory &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::AppendRole &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::AppendRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_permissions = queries.getRolePermissions(command.roleName());
     auto account_roles = queries.getAccountRoles(creator_account_id);
 
@@ -686,9 +640,10 @@ namespace iroha {
                         });
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::CreateAccount &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::CreateAccount &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.accountName().empty()
@@ -696,9 +651,10 @@ namespace iroha {
         and ::validator::isValidDomainName(command.accountName());
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::CreateAsset &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::CreateAsset &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.assetName().empty() && command.assetName().size() < 10 &&
@@ -708,9 +664,10 @@ namespace iroha {
                     [](char c) { return std::isalnum(c); });
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::CreateDomain &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::CreateDomain &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
         not command.domainId().empty() and command.domainId().size() < 10 and
@@ -720,9 +677,10 @@ namespace iroha {
                     [](char c) { return std::isalnum(c); });
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::CreateRole &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::CreateRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_is_a_subset = std::all_of(
         command.rolePermissions().begin(),
         command.rolePermissions().end(),
@@ -738,22 +696,25 @@ namespace iroha {
                     [](char c) { return std::isalnum(c) and islower(c); });
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::DetachRole &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::DetachRole &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::GrantPermission &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::GrantPermission &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     // TODO: no additional checks ?
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::RemoveSignatory &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::RemoveSignatory &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto account = queries.getAccount(command.accountId());
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
@@ -765,25 +726,28 @@ namespace iroha {
     auto newSignatoriesSize = signatories.value().size() - 1;
 
     // You can't remove if size of rest signatories less than the quorum
-    return newSignatoriesSize >= account.value()-> quorum();
+    return newSignatoriesSize >= account.value()->quorum();
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::RevokePermission &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::RevokePermission &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     // TODO: no checks needed ?
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::SetAccountDetail &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::SetAccountDetail &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::SetQuorum &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::SetQuorum &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
 
@@ -803,9 +767,10 @@ namespace iroha {
     return true;
   }
 
-  bool CommandValidator::isValid(const shared_model::interface::TransferAsset &command,
-                                 iroha::ametsuchi::WsvQuery &queries,
-                                 const shared_model::interface::types::AccountIdType &creator_account_id) {
+  bool CommandValidator::isValid(
+      const shared_model::interface::TransferAsset &command,
+      iroha::ametsuchi::WsvQuery &queries,
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     if (command.amount().intValue() == 0) {
       return false;
     }
@@ -818,8 +783,8 @@ namespace iroha {
     if (command.amount().precision() != asset.value()->precision()) {
       return false;
     }
-    auto account_asset = queries.getAccountAsset(
-        command.srcAccountId(), command.assetId());
+    auto account_asset =
+        queries.getAccountAsset(command.srcAccountId(), command.assetId());
     if (not account_asset) {
       return false;
     }
@@ -828,4 +793,4 @@ namespace iroha {
         // Balance in your wallet should be at least amount of transfer
         compareAmount(account_asset.value()->balance(), command.amount()) >= 0;
   }
-}  // namespace shared_model
+}  // namespace iroha

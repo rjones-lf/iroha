@@ -158,8 +158,7 @@ void apply(S &&storage, const shared_model::interface::Block &block) {
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(block,
-            [](const auto &, auto &, const auto &) { return true; });
+  ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
   storage->commit(std::move(ms));
 }
 
@@ -236,7 +235,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
   validateCalls(blocks->getBlocks(1, 2),
-                [ i = 0, &hashes ](auto eachBlock) mutable {
+                [i = 0, &hashes](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -377,7 +376,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
   validateCalls(blocks->getBlocks(1, 3),
-                [ i = 0, &hashes ](auto eachBlock) mutable {
+                [i = 0, &hashes](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -464,8 +463,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
     ASSERT_TRUE(signatories);
     ASSERT_EQ(signatories->size(), 2);
     ASSERT_EQ(signatories->at(0), pubkey1);
-    ASSERT_EQ(signatories->at(1), pubkey2
-    );
+    ASSERT_EQ(signatories->at(1), pubkey2);
   }
 
   // 3rd tx (create user2 with pubkey1 that is same as user1's key)
@@ -616,7 +614,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
 
   log->info("Try insert block");
 
-auto inserted = storage->insertBlock(getBlock());
+  auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");
@@ -657,7 +655,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
 
   log->info("Try insert block");
 
-auto inserted = storage->insertBlock(getBlock());
+  auto inserted = storage->insertBlock(getBlock());
   ASSERT_TRUE(inserted);
 
   log->info("Request ledger information");

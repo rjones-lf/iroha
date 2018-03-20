@@ -23,7 +23,12 @@
 
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
-
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
+#include "common/result.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -40,14 +45,6 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
-
-#include "common/result.hpp"
 
 namespace iroha {
 
@@ -71,7 +68,7 @@ namespace iroha {
    * If execution is not successful, ExecutionResult will contain Execution
    * error with explanation
    *
-   * Result is used because it allows for clear distinction between two states
+   * Result is used because it allows to clear distinction between two states
    * - value and error. If we just returned error, it would be confusing, what
    * value of an error to consider as a successful state of execution
    */
@@ -83,55 +80,63 @@ namespace iroha {
                     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddAssetQuantity> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::AddAssetQuantity> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::AddPeer> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::AddSignatory> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::AppendRole> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddPeer> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::CreateAccount> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::CreateAsset> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::CreateDomain> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::CreateRole> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::DetachRole> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AddSignatory> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::GrantPermission> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::AppendRole> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::RemoveSignatory> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAccount> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::RevokePermission> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateAsset> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::SetAccountDetail> &command);
+
+    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
+                               shared_model::interface::SetQuorum> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateDomain> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::SubtractAssetQuantity> &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::CreateRole> &command);
+        const shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::TransferAsset> &command);
 
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::DetachRole> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::GrantPermission> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::RemoveSignatory> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::RevokePermission> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetAccountDetail> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SetQuorum> &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::SubtractAssetQuantity>
-            &command);
-
-    ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<shared_model::interface::TransferAsset> &command);
-
-    void setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id);
+    void setCreatorAccountId(
+        shared_model::interface::types::AccountIdType creator_account_id);
 
    private:
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
@@ -150,141 +155,179 @@ namespace iroha {
     CommandValidator(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries);
 
     template <typename CommandType>
-    bool operator()(const shared_model::detail::PolymorphicWrapper<CommandType> &command) {
+    bool operator()(
+        const shared_model::detail::PolymorphicWrapper<CommandType> &command) {
       return hasPermissions(*command.operator->(), *queries, creator_account_id)
           and isValid(*command.operator->(), *queries, creator_account_id);
     }
 
-    void setCreatorAccountId(shared_model::interface::types::AccountIdType creator_account_id);
+    void setCreatorAccountId(
+        shared_model::interface::types::AccountIdType creator_account_id);
 
    private:
-    bool hasPermissions(const shared_model::interface::AddAssetQuantity &command,
-                        iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+    bool hasPermissions(
+        const shared_model::interface::AddAssetQuantity &command,
+        iroha::ametsuchi::WsvQuery &queries,
+        const shared_model::interface::types::AccountIdType
+            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::AddPeer &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::AddSignatory &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::AppendRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::CreateAccount &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::CreateAsset &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::CreateDomain &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::CreateRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::DetachRole &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::GrantPermission &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::RemoveSignatory &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
-    bool hasPermissions(const shared_model::interface::RevokePermission &command,
-                        iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+    bool hasPermissions(
+        const shared_model::interface::RevokePermission &command,
+        iroha::ametsuchi::WsvQuery &queries,
+        const shared_model::interface::types::AccountIdType
+            &creator_account_id);
 
-    bool hasPermissions(const shared_model::interface::SetAccountDetail &command,
-                        iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+    bool hasPermissions(
+        const shared_model::interface::SetAccountDetail &command,
+        iroha::ametsuchi::WsvQuery &queries,
+        const shared_model::interface::types::AccountIdType
+            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::SetQuorum &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
-    bool hasPermissions(const shared_model::interface::SubtractAssetQuantity &command,
-                        iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+    bool hasPermissions(
+        const shared_model::interface::SubtractAssetQuantity &command,
+        iroha::ametsuchi::WsvQuery &queries,
+        const shared_model::interface::types::AccountIdType
+            &creator_account_id);
 
     bool hasPermissions(const shared_model::interface::TransferAsset &command,
                         iroha::ametsuchi::WsvQuery &queries,
-                        const shared_model::interface::types::AccountIdType &creator_account_id);
+                        const shared_model::interface::types::AccountIdType
+                            &creator_account_id);
 
     bool isValid(const shared_model::interface::AddAssetQuantity &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::AddPeer &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::AddSignatory &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::AppendRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::CreateAccount &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::CreateAsset &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::CreateDomain &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::CreateRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::DetachRole &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::GrantPermission &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::RemoveSignatory &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::RevokePermission &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::SetAccountDetail &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::SetQuorum &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::SubtractAssetQuantity &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     bool isValid(const shared_model::interface::TransferAsset &command,
                  iroha::ametsuchi::WsvQuery &queries,
-                 const shared_model::interface::types::AccountIdType &creator_account_id);
+                 const shared_model::interface::types::AccountIdType
+                     &creator_account_id);
 
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
     shared_model::interface::types::AccountIdType creator_account_id;

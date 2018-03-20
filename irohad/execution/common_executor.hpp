@@ -30,9 +30,10 @@ namespace iroha {
    * @param permission_id  = permission to check
    * @return  True if account has permission, false otherwise
    */
-  bool checkAccountRolePermission(const std::string &account_id,
-                                  iroha::ametsuchi::WsvQuery &queries,
-                                  const std::string &permission_id);
+  bool checkAccountRolePermission(
+      const shared_model::interface::types::AccountIdType &account_id,
+      iroha::ametsuchi::WsvQuery &queries,
+      const std::string &permission_id);
 
   /**
    * Accumulate all account's role permissions
@@ -41,7 +42,8 @@ namespace iroha {
    * @return set of account's role permissions
    */
   boost::optional<std::set<std::string>> getAccountPermissions(
-      const std::string &account_id, iroha::ametsuchi::WsvQuery &queries);
+      const shared_model::interface::types::AccountIdType &account_id,
+      iroha::ametsuchi::WsvQuery &queries);
 
   /**
    * Check if account has specific permission
