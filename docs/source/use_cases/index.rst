@@ -65,7 +65,7 @@ To incentivize users to share personal information, various companies can come u
 Supply Chain
 ------------
 
-Governance of a decentralized system and representing legal rules as a system's code is an essential combination of any supply chain system. Certification system used in Hyperledger Iroha allows tokenization of physical items and embedding them into the system. Each item can be combined with the information about “what, when, where and why”. 
+Governance of a decentralized system and representing legal rules as a system's code is an essential combination of any supply chain system. Certification system used in Hyperledger Iroha allows tokenization of physical items and embedding them into the system. Each item comes with the information about “what, when, where and why”. 
 
 Permission systems and restricted set of secure core commands narrows the attack vector and provides effortlessly a basic level of privacy. Each transaction is traceable within a system with a hash value, by the credentials or certificates of the creator. 
 
