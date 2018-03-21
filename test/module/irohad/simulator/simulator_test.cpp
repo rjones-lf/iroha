@@ -47,9 +47,6 @@ class SimulatorTest : public ::testing::Test {
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
-
-    empty_proposal = std::make_shared<shared_model::proto::Proposal>(
-        TestProposalBuilder().build());
   }
 
   void init() {
@@ -62,8 +59,6 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<iroha::model::MockCryptoProvider> crypto_provider;
-
-  std::shared_ptr<shared_model::interface::Proposal> empty_proposal;
 
   std::shared_ptr<Simulator> simulator;
 };

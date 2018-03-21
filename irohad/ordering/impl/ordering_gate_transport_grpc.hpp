@@ -28,7 +28,7 @@ namespace shared_model {
   namespace interface {
     class Transaction;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace ordering {
@@ -44,7 +44,8 @@ namespace iroha {
                               ::google::protobuf::Empty *response) override;
 
       void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction> transaction) override;
+          const std::shared_ptr<const shared_model::interface::Transaction>
+              &transaction) override;
 
       void subscribe(std::shared_ptr<iroha::network::OrderingGateNotification>
                          subscriber) override;

@@ -20,8 +20,8 @@
 
 #include "network/ordering_gate.hpp"
 
-#include <tbb/concurrent_queue.h>
 #include <atomic>
+#include <tbb/concurrent_queue.h>
 
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"

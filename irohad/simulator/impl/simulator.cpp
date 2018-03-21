@@ -38,7 +38,8 @@ namespace iroha {
           crypto_provider_(std::move(crypto_provider)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
-          proposal_subscription_, [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
+          proposal_subscription_,
+          [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
             this->process_proposal(*proposal);
           });
 

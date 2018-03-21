@@ -17,7 +17,6 @@
 
 #include <utility>
 
-#include "backend/protobuf/proposal.hpp"
 #include "interfaces/transaction.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 

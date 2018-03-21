@@ -30,19 +30,19 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
   std::vector<shared_model::proto::Transaction> transactions;
   for (const auto &tx : request->transactions()) {
-    transactions.push_back(shared_model::proto::Transaction(tx));
+    transactions.emplace_back(tx);
   }
   log_->info("transactions in proposal: {}", transactions.size());
 
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
-                      .transactions(transactions)
-                      .height(request->height())
-                      .createdTime(request->created_time())
-                      .build());
+          .transactions(transactions)
+          .height(request->height())
+          .createdTime(request->created_time())
+          .build());
 
   if (not subscriber_.expired()) {
-    subscriber_.lock()->onProposal(proposal);
+    subscriber_.lock()->onProposal(std::move(proposal));
   } else {
     log_->error("(onProposal) No subscriber");
   }
@@ -57,7 +57,8 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
       log_(logger::log("OrderingGate")) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
-    std::shared_ptr<const shared_model::interface::Transaction> transaction) {
+    const std::shared_ptr<const shared_model::interface::Transaction>
+        &transaction) {
   log_->info("Propagate tx (on transport)");
   auto call = new AsyncClientCall;
 

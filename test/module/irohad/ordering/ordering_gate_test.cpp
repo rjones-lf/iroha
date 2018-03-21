@@ -49,7 +49,8 @@ class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
   MOCK_METHOD1(
       propagateTransaction,
-      void(std::shared_ptr<const shared_model::interface::Transaction>));
+      void(
+          const std::shared_ptr<const shared_model::interface::Transaction> &));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -172,11 +173,13 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
   wrapper_after.subscribe();
 
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+  auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().build());
+  auto proposal2 = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().build());
 
-  ordering_gate.onProposal(proposal);
-  ordering_gate.onProposal(proposal);
+  ordering_gate.onProposal(proposal1);
+  ordering_gate.onProposal(proposal2);
 
   ASSERT_TRUE(wrapper_before.validate());
 
