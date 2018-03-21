@@ -90,11 +90,10 @@ class CommandValidateExecuteTest : public ::testing::Test {
               FAIL() << *e.error;
             });
 
-    default_domain = std::shared_ptr<shared_model::interface::Domain>(
-        clone(shared_model::proto::DomainBuilder()
-                  .domainId(domain_id)
-                  .defaultRole(admin_role)
-                  .build()));
+    default_domain = clone(shared_model::proto::DomainBuilder()
+                            .domainId(domain_id)
+                            .defaultRole(admin_role)
+                            .build());
   }
 
   ExecutionResult validateAndExecute() {
@@ -1155,32 +1154,28 @@ class TransferAssetTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    asset = std::shared_ptr<shared_model::interface::Asset>(
-        clone(shared_model::proto::AssetBuilder()
-            .assetId(asset_id)
-            .domainId(domain_id)
-            .precision(2)
-            .build()));
+    asset = clone(shared_model::proto::AssetBuilder()
+                  .assetId(asset_id)
+                  .domainId(domain_id)
+                  .precision(2)
+                  .build());
 
-    balance = std::shared_ptr<shared_model::interface::Amount>(
-        clone(shared_model::proto::AmountBuilder()
-            .intValue(150)
-            .precision(2)
-            .build()));
+    balance = clone(shared_model::proto::AmountBuilder()
+                  .intValue(150)
+                  .precision(2)
+                  .build());
 
-    src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-        clone(shared_model::proto::AccountAssetBuilder()
-            .assetId(asset_id)
-            .accountId(admin_id)
-            .balance(*balance)
-            .build()));
+    src_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                  .assetId(asset_id)
+                  .accountId(admin_id)
+                  .balance(*balance)
+                  .build());
 
-    dst_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-        clone(shared_model::proto::AccountAssetBuilder()
-            .assetId(asset_id)
-            .accountId(account_id)
-            .balance(*balance)
-            .build()));
+    dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                  .assetId(asset_id)
+                  .accountId(account_id)
+                  .balance(*balance)
+                  .build());
 
     transfer_asset = std::make_shared<TransferAsset>();
     transfer_asset->src_account_id = admin_id;
@@ -1481,19 +1476,18 @@ TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
  * @then execute fails and returns false
  */
 TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
-  auto max_balance = std::shared_ptr<shared_model::interface::Amount>(
-      clone(shared_model::proto::AmountBuilder()
+  std::shared_ptr<shared_model::interface::Amount> max_balance = clone(
+      shared_model::proto::AmountBuilder()
           .intValue(
               std::numeric_limits<boost::multiprecision::uint256_t>::max())
           .precision(2)
-          .build()));
+          .build());
 
-  src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-      clone(shared_model::proto::AccountAssetBuilder()
-          .assetId(src_wallet->assetId())
-          .accountId(src_wallet->accountId())
-          .balance(*max_balance)
-          .build()));
+  src_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                .assetId(src_wallet->assetId())
+                .accountId(src_wallet->accountId())
+                .balance(*max_balance)
+                .build());
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
       .WillOnce(Return(asset));
@@ -1506,7 +1500,7 @@ TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
                               transfer_asset->asset_id))
       .WillOnce(Return(dst_wallet));
 
-  // More than account balance)
+  // More than account balance
   transfer_asset->amount = (max_amount - Amount(100, 2)).value();
 
   ASSERT_NO_THROW(checkErrorCase(execute()));

@@ -58,12 +58,12 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto peer = std::shared_ptr<shared_model::interface::Peer>(
+      std::shared_ptr<shared_model::interface::Peer> peer =
           clone(shared_model::proto::PeerBuilder()
                     .address(std::to_string(i))
                     .pubkey(shared_model::interface::types::PubkeyType(
                         std::string(32, '0')))
-                    .build()));
+                    .build());
       result.push_back(peer);
     }
     return result;

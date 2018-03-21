@@ -76,12 +76,11 @@ class MockOrderingServiceTransport : public network::OrderingServiceTransport {
 class OrderingServiceTest : public ::testing::Test {
  public:
   OrderingServiceTest() {
-    peer = std::shared_ptr<shared_model::interface::Peer>(
-        clone(shared_model::proto::PeerBuilder()
+    peer = clone(shared_model::proto::PeerBuilder()
             .address(address)
             .pubkey(shared_model::interface::types::PubkeyType(
                 std::string(32, '0')))
-            .build()));
+            .build());
   }
 
   void SetUp() override {
