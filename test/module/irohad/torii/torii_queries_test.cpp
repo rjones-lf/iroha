@@ -183,8 +183,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
 TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   auto creator = "a@domain";
 
-  auto accountB = std::shared_ptr<shared_model::interface::Account>(
-      shared_model::proto::AccountBuilder()
+  std::shared_ptr<shared_model::interface::Account> accountB =
+      clone(shared_model::proto::AccountBuilder()
           .accountId("b@domain")
           .build());
 
@@ -227,11 +227,10 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 }
 
 TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
-  auto account = std::shared_ptr<shared_model::interface::Account>(
-      shared_model::proto::AccountBuilder()
+  std::shared_ptr<shared_model::interface::Account> account =
+      clone(shared_model::proto::AccountBuilder()
           .accountId("accountA")
           .build());
-  ;
 
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query, getAccount(creator)).WillOnce(Return(account));
@@ -317,8 +316,8 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   auto amount =
       shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
 
-  auto account_asset = std::shared_ptr<shared_model::interface::AccountAsset>(
-      shared_model::proto::AccountAssetBuilder()
+  std::shared_ptr<shared_model::interface::AccountAsset> account_asset =
+      clone(shared_model::proto::AccountAssetBuilder()
           .accountId("accountA")
           .assetId("usd")
           .balance(amount)
@@ -471,10 +470,11 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto txs_observable = rxcpp::observable<>::iterate([account] {
     std::vector<wTransaction> result;
     for (size_t i = 0; i < 3; ++i) {
-      auto current = wTransaction(TestTransactionBuilder()
-                                      .creatorAccountId(account.account_id)
-                                      .txCounter(i)
-                                      .build());
+      std::shared_ptr<shared_model::interface::Transaction> current =
+          clone(TestTransactionBuilder()
+                    .creatorAccountId(account.account_id)
+                    .txCounter(i)
+                    .build());
       result.push_back(current);
     }
     return result;

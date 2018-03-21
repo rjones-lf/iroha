@@ -81,9 +81,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   account.account_id = account_id;
   qry_resp->account = account;
   auto shared_account = std::shared_ptr<shared_model::interface::Account>(
-      shared_model::proto::AccountBuilder()
+      clone(shared_model::proto::AccountBuilder()
           .accountId(account_id)
-          .build());
+          .build()));
   auto role = "admin";
   std::vector<std::string> roles = {role};
   std::vector<std::string> perms = {iroha::model::can_get_my_account};
