@@ -71,7 +71,7 @@ MATCHER_P(NewBlockMatcher,
 TEST_F(SynchronizerTest, ValidWhenInitialized) {
   // synchronizer constructor => on_commit subscription called
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 }
@@ -97,7 +97,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 
@@ -132,7 +132,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 
@@ -173,7 +173,7 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
                   shared_model::proto::from_old(test_block))))));
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 

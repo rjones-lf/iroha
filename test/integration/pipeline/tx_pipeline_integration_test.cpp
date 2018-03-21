@@ -44,7 +44,10 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
             0, {genesis_tx});
 
     manager = std::make_shared<iroha::KeysManagerImpl>("node0");
-    auto keypair = manager->loadKeys().value();
+    auto old_keypair = manager->loadKeys().value();
+    shared_model::crypto::Keypair keypair(
+        shared_model::crypto::PublicKey(old_keypair.pubkey.to_string()),
+        shared_model::crypto::PrivateKey(old_keypair.privkey.to_string()));
 
     irohad = std::make_shared<TestIrohad>(block_store_path,
                                           pgopt_,

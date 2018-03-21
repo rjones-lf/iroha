@@ -46,8 +46,7 @@ namespace shared_model {
         return copy;
       }
 
-      AccountBuilder domainId(
-          const interface::types::DomainIdType &domain_id) {
+      AccountBuilder domainId(const interface::types::DomainIdType &domain_id) {
         AccountBuilder copy(*this);
         copy.builder_ = this->builder_.domainId(domain_id);
         return copy;

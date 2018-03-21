@@ -24,13 +24,14 @@
 namespace shared_model {
   namespace proto {
     /**
-     * AccountAssetBuilder is used to construct AccountAsset proto objects with initialized
-     * protobuf implementation
+     * AccountAssetBuilder is used to construct AccountAsset proto objects with
+     * initialized protobuf implementation
      */
     class AccountAssetBuilder {
      public:
       shared_model::proto::AccountAsset build() {
-        return shared_model::proto::AccountAsset(iroha::protocol::AccountAsset(account_asset_));
+        return shared_model::proto::AccountAsset(
+            iroha::protocol::AccountAsset(account_asset_));
       }
 
       AccountAssetBuilder accountId(

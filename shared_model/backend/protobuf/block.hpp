@@ -26,7 +26,6 @@
 #include "backend/protobuf/util.hpp"
 #include "common_objects/trivial_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "model/block.hpp"
 
 #include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -80,6 +79,11 @@ namespace shared_model {
         sig->set_signature(crypto::toBinaryString(signature->signedData()));
         signatures_.invalidate();
         return true;
+      }
+
+      bool clearSignatures() override {
+        signatures_->clear();
+        return (signatures_->size() == 0);
       }
 
       interface::types::TimestampType createdTime() const override {

@@ -51,8 +51,7 @@ namespace shared_model {
         return copy;
       }
 
-      AssetBuilder precision(
-          const interface::types::PrecisionType &precision) {
+      AssetBuilder precision(const interface::types::PrecisionType &precision) {
         AssetBuilder copy(*this);
         copy.builder_ = this->builder_.precision(precision);
         return copy;
@@ -63,7 +62,8 @@ namespace shared_model {
         return "Asset Builder";
       }
 
-      virtual validation::ReasonsGroupType validate(const interface::Asset &object) override {
+      virtual validation::ReasonsGroupType validate(
+          const interface::Asset &object) override {
         validation::ReasonsGroupType reasons;
         this->validator_.validateAssetId(reasons, object.assetId());
         this->validator_.validateDomainId(reasons, object.domainId());
