@@ -101,7 +101,7 @@ namespace iroha {
         return makeExecutionError("amount overflows balance", command_name);
       }
 
-      auto account_asset_new = account_asset_builder.balance(balance.value())
+      auto account_asset_new = account_asset_builder.balance(*balance.value())
                                    .accountId(command->accountId())
                                    .assetId(command->assetId())
                                    .build();
@@ -314,7 +314,7 @@ namespace iroha {
     if (not new_balance) {
       return makeExecutionError("Not sufficient amount", command_name);
     }
-    auto account_asset_new = account_asset_builder.balance(*new_balance)
+    auto account_asset_new = account_asset_builder.balance(**new_balance)
                                  .accountId(account_asset.value()->accountId())
                                  .assetId(account_asset.value()->assetId())
                                  .build();
@@ -364,7 +364,7 @@ namespace iroha {
     auto src_account_asset_new =
         account_asset_builder.assetId(src_account_asset.value()->assetId())
             .accountId(src_account_asset.value()->accountId())
-            .balance(new_src_balance.get())
+            .balance(*new_src_balance.get())
             .build();
 
     if (not dest_account_asset) {
@@ -388,7 +388,7 @@ namespace iroha {
       auto dest_account_asset_new =
           account_asset_builder.assetId(command->assetId())
               .accountId(command->destAccountId())
-              .balance(new_dest_balance.get())
+              .balance(*new_dest_balance.get())
               .build();
       auto result = commands->upsertAccountAsset(dest_account_asset_new) |
           [&] { return commands->upsertAccountAsset(src_account_asset_new); };

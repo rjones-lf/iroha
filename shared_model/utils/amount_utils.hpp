@@ -28,7 +28,7 @@
  * @param b right term
  * @param optional result
  */
-boost::optional<shared_model::proto::Amount> operator+(
+boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator+(
     const shared_model::interface::Amount &a,
     const shared_model::interface::Amount &b) {
   // check precisions
@@ -43,7 +43,8 @@ boost::optional<shared_model::proto::Amount> operator+(
   if (res.intValue() < a.intValue() or res.intValue() < b.intValue()) {
     return boost::none;
   }
-  return boost::optional<shared_model::proto::Amount>(res);
+  return boost::optional<std::shared_ptr<shared_model::interface::Amount>>(
+      std::shared_ptr<shared_model::interface::Amount>(res.copy()));
 }
 
 /**
@@ -54,7 +55,7 @@ boost::optional<shared_model::proto::Amount> operator+(
  * @param b right term
  * @param optional result
  */
-boost::optional<shared_model::proto::Amount> operator-(
+boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator-(
     const shared_model::interface::Amount &a,
     const shared_model::interface::Amount &b) {
   // check precisions
@@ -69,7 +70,8 @@ boost::optional<shared_model::proto::Amount> operator-(
   auto res = amount_builder.precision(a.precision())
                  .intValue(a.intValue() - b.intValue())
                  .build();
-  return boost::optional<shared_model::proto::Amount>(res);
+  return boost::optional<std::shared_ptr<shared_model::interface::Amount>>(
+      std::shared_ptr<shared_model::interface::Amount>(res.copy()));
 }
 
 // to raise to power integer values
@@ -95,8 +97,8 @@ int compareAmount(const shared_model::interface::Amount &a,
   }
   // when different precisions transform to have the same scale
   auto max_precision = std::max(a.precision(), b.precision());
-  auto val1 = a.intValue() * ipow(10, max_precision - a.precision());
-  auto val2 = b.intValue() * ipow(10, max_precision - b.precision());
+  auto val1 = a.intValue() * (int)std::pow(10, max_precision - a.precision());
+  auto val2 = b.intValue() * (int)std::pow(10, max_precision - b.precision());
   return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
 }
 
