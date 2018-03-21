@@ -1,4 +1,4 @@
-Getting started
+Getting Started
 ===============
 
 In this guide, we will create a very basic Iroha network, launch it, create a couple of transactions, and check the data written in the ledger. To keep things simple, we will use Docker.
@@ -11,10 +11,10 @@ For this guide, you need a computer running Unix-like system with ``docker`` ins
 
 .. note:: Please note that you can use Iroha without ``docker`` as well. You can read about it in other parts of documentation.
 
-Starting Iroha node
+Starting Iroha Node
 -------------------
 
-Creating a Docker network
+Creating a Docker Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 To operate, Iroha requires a ``PostgreSQL`` database. Let's start with creating Docker network, so containers for Postgres and Iroha can run in the same virtual network and successfully communicate. In this guide we will call it ``iroha-network``, but you can use any name. In your terminal write following command:
 
@@ -22,7 +22,7 @@ To operate, Iroha requires a ``PostgreSQL`` database. Let's start with creating 
 
   docker network create iroha-network
 
-Starting PostgreSQL container
+Starting PostgreSQL Container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Now we need to run ``PostgreSQL`` in a container, attach it to the network you have created before, and expose ports for communication:
@@ -36,7 +36,7 @@ Now we need to run ``PostgreSQL`` in a container, attach it to the network you h
   --network=iroha-network \
   -d postgres:9.5
 
-Creating blockstore
+Creating Blockstore
 ^^^^^^^^^^^^^^^^^^^
 Before we run Iroha container, we should create persistent volume to store files, storing blocks for the chain. It is done via the following command:
 
@@ -44,7 +44,7 @@ Before we run Iroha container, we should create persistent volume to store files
 
   docker volume create blockstore
 
-Configuring Iroha network
+Configuring Iroha Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note:: To keep things simple, in this guide we will create a network containing only one node. To understand how to run several peers, follow this guide
@@ -55,7 +55,7 @@ Now we need to configure our Iroha network. This includes creating a configurati
 
   git clone -b develop https://github.com/hyperledger/iroha
 
-Starting Iroha container
+Starting Iroha Container
 ^^^^^^^^^^^^^^^^^^^^^^^^
 We are ready to launch our Iroha container. Let's do it with the following command
 
@@ -92,7 +92,7 @@ Congratulations! You have an Iroha node up and running! In the next section we w
 
 .. hint:: You can get more information about ``irohad`` and its launch options in this section
 
-Interacting with Iroha network
+Interacting with Iroha Network
 ------------------------------
 You can interact with Iroha using various ways. You can use our client libraries to write code in various programming languages (e.g. Java, Python, Javascript, Swift) which communicates with Iroha. Alternatively, you can use ``iroha-cli`` – our command-line tool for interacting with Iroha. As a part of this guide, let's get familiar with ``iroha-cli``
 
@@ -112,7 +112,7 @@ Now you are in the interactive shell of Iroha's container again. Now we need to 
 
 .. note:: Full account name has a ``@`` symbol between name and domain.
 
-Creating a first transaction
+Creating a First Transaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can see the interface of ``iroha-cli`` now. Let's create a new asset, add some asset to the admin account and transfer it to other account. To achieve this, please choose option ``1. New transaction (tx)`` by writing ``tx`` or ``1`` to a console.
@@ -133,7 +133,7 @@ Go back to a terminal where ``irohad`` is running. You can see logs of your tran
 
 Congratulations! You have submitted your first transaction to Iroha.
 
-Creating a first query
+Creating a First Query
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Now let's check if ``coolcoins`` were successfully transferred from ``admin@test`` to ``test@test``. Go back (``b``) and choose ``2. New query (qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with commands you did with commands and ``1. Send to Iroha peer (send)``. Now you can see information about how many ``coolcoin`` does ``test@test`` have. It will look similar to this
@@ -149,7 +149,7 @@ Congratulations! You have submitted your first query to Iroha and got a response
 
 .. hint:: To get information about all available commands and queries please check our API section.
 
-Being badass
+Being Badass
 ^^^^^^^^^^^^
 
 Let's try being badass and cheat Iroha. For example, let's transfer more ``coolcoins`` than ``admin@test`` has. Try to transfer 100000.00 ``coolcoins`` from ``admin@test`` to ``test@test``. Again, proceed to ``1. New transaction (tx)``, ``5. Transfer Assets (tran_ast)``, enter Source Account and Destination Account, in our case ``admin@test`` and ``test@test``, Asset ID (``coolcoin#test``), integer part and precision (``10000000`` and ``2`` accordingly). Send transaction to Iroha peer as you did before. Well, it says
