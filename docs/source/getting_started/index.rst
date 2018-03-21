@@ -7,7 +7,7 @@ In this guide, we will create a very basic Iroha network, launch it, create a co
 
 Prerequisites
 -------------
-For this guide, you need a computer running  Unix-like system with ``docker`` installed. You can read how to install it on a `Docker's website <https://www.docker.com/community-edition/>`_
+For this guide, you need a computer running Unix-like system with ``docker`` installed. You can read how to install it on a `Docker's website <https://www.docker.com/community-edition/>`_
 
 .. note:: Please note that you can use Iroha without ``docker`` as well. You can read about it in other parts of documentation.
 
@@ -76,7 +76,7 @@ Let's look in detail what this command does:
 - ``-v blockstore:/tmp/block_store \`` adds a persistent block storage wich we created before to a container, so our blocks won't be lost after we stop the container
 - ``--network=iroha-network \`` adds our container to previously created ``iroha-network``, so Iroha and Postgres could see each other.
 - ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha-docker`` has custom script which runs after starting the container, we want to override it so we can start Iroha Daemon manualy.
-- ``hyperledger/iroha-docker:develop`` is the image which contains the ``develop`` brach.
+- ``hyperledger/iroha-docker:develop`` is the image which has the ``develop`` branch.
 
 Launching Iroha Daemon
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -86,7 +86,7 @@ Now you are in the interactive shell of Iroha's container. To actually run Iroha
 
   irohad --config config.docker --genesis_block genesis.block --keypair_name node0
 
-.. Attention:: In usual situation, you need to provide config file, generate genesis block and keypair. However, as a part of this guide we provide an example configuration for you. Please do not use this settings in a production. You can read more about configuration here.
+.. Attention:: In usual situation, you need to provide a config file, generate genesis block and keypair. However, as a part of this guide we provide an example configuration for you. Please do not use this settings in a production. You can read more about configuration here.
 
 Congratulations! You have an Iroha node up and running! In the next section we will test it by sending some transactions.
 
@@ -96,7 +96,7 @@ Interacting with Iroha network
 ------------------------------
 You can interact with Iroha using various ways. You can use our client libraries to write code in various programming languages (e.g. Java, Python, Javascript, Swift) which communicates with Iroha. Alternatively, you can use ``iroha-cli`` – our command-line tool for interacting with Iroha. As a part of this guide, let's get familiar with ``iroha-cli``
 
-.. Attention:: Despite the fact that ``iroha-cli`` is arguably the simplest way to start working with Iroha, ``iroha-cli`` was engineered very fast and lacks tests, so user experience might not be the best. In the future we will deliver a better version and appreciate contributions.
+.. Attention:: Despite that ``iroha-cli`` is arguably the simplest way to start working with Iroha, ``iroha-cli`` was engineered very fast and lacks tests, so user experience might not be the best. In the future we will deliver a better version and appreciate contributions.
 
 Open a new terminal (note that Iroha container and ``irohad`` should be up and running) and attach to an ``iroha`` docker container:
 
@@ -121,7 +121,7 @@ Now you can see a list of available commands. Let's try creating a new asset. Se
 
 Congratulations, you have created your first command and added it to a transaction! You can either send it to Iroha or add some more commands ``1. Add one more command to the transaction (add)``. Let's add more commands, so we can do everything in one shot. Type ``add``.
 
-Now proceed to adding some ``coolcoins`` to our account. Select ``16. Add Asset Quantity (add_ast_qty)``, enter Account ID – ``admin@test``, asset ID – ``coolcoin#test``, integer part  and precision. For example, to add 200.50 ``coolcoins``, we need to enter integer part as ``20050`` and precision as ``2``, so it becomes ``200.50``.
+Now try adding some ``coolcoins`` to our account. Select ``16. Add Asset Quantity (add_ast_qty)``, enter Account ID – ``admin@test``, asset ID – ``coolcoin#test``, integer part and precision. For example, to add 200.50 ``coolcoins``, we need to enter integer part as ``20050`` and precision as ``2``, so it becomes ``200.50``.
 
 .. note:: Full asset name has a ``#`` symbol between name and domain.
 
@@ -136,7 +136,7 @@ Congratulations! You have submitted your first transaction to Iroha.
 Creating a first query
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Now let's check if ``coolcoins`` were succesfully transferred from ``admin@test`` to ``test@test``. Go back (``b``) and choose ``2. New query (qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with commands you did with commands and ``1. Send to Iroha peer (send)``. Now you can see information about how many ``coolcoin`` does ``test@test`` have. It will look similar to this
+Now let's check if ``coolcoins`` were successfully transferred from ``admin@test`` to ``test@test``. Go back (``b``) and choose ``2. New query (qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with commands you did with commands and ``1. Send to Iroha peer (send)``. Now you can see information about how many ``coolcoin`` does ``test@test`` have. It will look similar to this
 
 .. code::
 
@@ -160,10 +160,10 @@ Let's try being badass and cheat Iroha. For example, let's transfer more ``coolc
   Congratulation, your transaction was accepted for processing.
   Its hash is fc1c23f2de1b6fccbfe1166805e31697118b57d7bb5b1f583f2d96e78f60c241
 
-`Your transaction was accepted for processing`. Does it mean that we succesfully cheated Iroha? Let's try to see transaction's status. Choose ``3. New transaction status request (st)`` and enter transaction's hash which you can got in console after previous command. Let's send it to Iroha. It replies with:
+`Your transaction was accepted for processing`. Does it mean that we successfully cheated Iroha? Let's try to see transaction's status. Choose ``3. New transaction status request (st)`` and enter transaction's hash which you can got in console after previous command. Let's send it to Iroha. It replies with:
 
 .. code:: 
 
   Transaction has not passed stateful validation.
 
-Apparently no. Our transaction was not accepted because it did not pass stateful validation and ``coolcoins`` were not transferred. You can check status of ``admin@test`` and ``test@test`` to be sure (like we did in previous part).
+Apparently no. Our transaction was not accepted because it did not pass stateful validation and ``coolcoins`` were not transferred. You can check status of ``admin@test`` and ``test@test`` to be sure (like we did earlier).
