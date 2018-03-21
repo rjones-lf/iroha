@@ -97,7 +97,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
@@ -170,7 +170,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 

@@ -109,7 +109,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
           shared_model::proto::from_old(expected_block));
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
+        return std::shared_ptr<shared_model::interface::Block>(clone(x));
       })));
   expected_block = *std::unique_ptr<iroha::model::Block>(block.makeOldModel());
 
@@ -143,7 +143,7 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
           shared_model::proto::from_old(expected_block));
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
+        return std::shared_ptr<shared_model::interface::Block>(clone(x));
       })));
 
   init();
@@ -157,7 +157,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
       shared_model::proto::from_old(expected_block));
   EXPECT_CALL(*block_creator, on_block())
       .WillOnce(Return(rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
+        return std::shared_ptr<shared_model::interface::Block>(clone(x));
       })));
 
   // make hash from block

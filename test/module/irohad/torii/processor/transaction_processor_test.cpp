@@ -28,8 +28,8 @@ using namespace iroha::network;
 using namespace iroha::torii;
 using namespace framework::test_subscriber;
 
-using ::testing::_;
 using ::testing::Return;
+using ::testing::_;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
@@ -224,7 +224,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(clone(tx));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // 1. Create proposal and notify transaction processor about it
