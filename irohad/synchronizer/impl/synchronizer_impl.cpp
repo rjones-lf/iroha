@@ -37,8 +37,10 @@ namespace iroha {
           blockLoader_(std::move(blockLoader)) {
       log_ = logger::log("synchronizer");
       consensus_gate->on_commit().subscribe(
-          subscription_,
-          [&](model::Block block) { this->process_commit(block); });
+          subscription_, [&](std::shared_ptr<shared_model::interface::Block> block) {
+            std::unique_ptr<model::Block> bl(block->makeOldModel());
+            this->process_commit(*bl);
+          });
     }
 
     SynchronizerImpl::~SynchronizerImpl() {
