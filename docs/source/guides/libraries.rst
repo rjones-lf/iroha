@@ -68,17 +68,19 @@ Where to get
 ^^^^^^^^^^^^
 
 Prerequirements:
+""""""""""""""""
 
-- cmake(3.11 or higher)
+- CMake(3.11 or higher)
 - git
 - g++
 - boost(1.65 or higher, only system and filesystem)
 - swig(3.0.12 can be built --without-pcre)
 - protobuf
 
-Install iroha python libraries:
+Install Iroha python libraries:
+"""""""""""""""""""""""""""""""
 
-- Through pip
+- Via PIP
 
     .. code:: sh
 
@@ -97,37 +99,50 @@ Install iroha python libraries:
       git clone https://github.com/hyperledger/iroha.git
       cd iroha
 
-    For the latest version checkout to develop branch
-
-    .. code:: sh
-
-      git checkout develop
+    For the latest version checkout to develop branch by adding *-b develop* parameter.
 
     .. code:: sh
 
       cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
       cmake --build build -- -j4
 
-    After this you can find iroha python library in **iroha/build/shared_model/bindings** folder.
+    - SWIG_PYTHON=ON forces to build bindings for Python.
+    - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
+    - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
 
-Install iroha protobuf files:
+    After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
 
-  First of all you need to clone iroha repository
+Compile protobuf mudules of Iroha from schema files:
+""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+  Iroha communicates with users through protobuf messages. In order to send transactions and queries to Iroha node you need to get python module for generating protobuf messages.
+  First of all you need to clone schema folder of Iroha repository. If you have already cloned Iroha repository in the previous step, just use schema folder from there.
+
+
+Prerequirements:
+''''''''''''''''
+
+  - protobuf
 
   .. code:: sh
 
       pip install grpcio_tools
-      git clone https://github.com/hyperledger/iroha.git
-      cd iroha
-      protoc --proto_path=schema --python_out=build block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
-      python -m grpc_tools.protoc --proto_path=schema --python_out=build --grpc_python_out=build endpoint.proto yac.proto ordering.proto loader.proto
+      mkdir iroha-schema
+      git -C iroha-schema init
+      git -C iroha-schema remote add -f schema https://github.com/hyperledger/iroha.git
+      git -C iroha-schema config core.sparseCheckout true
+      echo "schema" >> iroha-schema/.git/info/sparse-checkout
+      git -C iroha-schema pull schema develop
+      cd iroha-schema
+      protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+      python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
 
-  Protobuf files can be found in **iroha/build** folder ('\*_pb2\*.py' files)
+  Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
 
 How to use/import
 ^^^^^^^^^^^^^^^^^
 
-In order to specify iroha libraries location:
+In order to specify Iroha libraries location:
 
 .. code:: sh
 
@@ -135,7 +150,7 @@ In order to specify iroha libraries location:
   sys.path.insert(0, 'path/to/iroha/libs')
 
 
-Import iroha and all of the protobuf modules that you need:
+Import Iroha and all of the protobuf modules that you need:
 
 .. code:: sh
 
@@ -148,9 +163,11 @@ Import iroha and all of the protobuf modules that you need:
 Example code
 ^^^^^^^^^^^^
 
-Note: work with raw data can be different in Python 2 and Python 3.
+.. Note::
 
-Import iroha and irohas protobuf:
+    Work with raw data can be different in Python 2 and Python 3.
+
+Import Iroha and schema classes, generated from Iroha protobuf:
 
 .. code:: python
 
@@ -162,7 +179,7 @@ Import iroha and irohas protobuf:
  import queries_pb2
  import grpc
 
-Get iroha objects:
+Get Iroha objects:
 
 .. code:: python
 
@@ -201,7 +218,7 @@ Get status of transaction:
     request.tx_hash = tx_hash
 
     # Create connection to Iroha
-    channel = grpc.insecure_channel(IP+':50051')
+    channel = grpc.insecure_channel(IP+port)
     stub = endpoint_pb2_grpc.CommandServiceStub(channel)
 
     # Send request
@@ -213,7 +230,7 @@ Get status of transaction:
         print("Your transaction wasn't committed")
         exit(1)
 
-Send transactions to iroha:
+Send transactions to Iroha:
 
 .. code:: python
 

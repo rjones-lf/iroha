@@ -2,9 +2,9 @@
 Installing some packages on Ubuntu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If your repository provides outdated versions of tools install them from source code.
+If your repository provides outdated versions of tools - install them from source code.
 
-- Cmake
+- CMake
    Before installation make sure to get all dependencies:
 
    - make
@@ -32,7 +32,7 @@ If your repository provides outdated versions of tools install them from source 
     ldconfig;
     rm -rf /tmp/boost
 
-- Swig
+- SWIG
 
   .. code:: sh
 
