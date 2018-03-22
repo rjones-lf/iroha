@@ -57,8 +57,7 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
       log_(logger::log("OrderingGate")) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
-    const std::shared_ptr<const shared_model::interface::Transaction>
-        &transaction) {
+    std::shared_ptr<const shared_model::interface::Transaction> transaction) {
   log_->info("Propagate tx (on transport)");
   auto call = new AsyncClientCall;
 
