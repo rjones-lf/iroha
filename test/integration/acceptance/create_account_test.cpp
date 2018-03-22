@@ -37,17 +37,15 @@ class CreateAccount : public ::testing::Test {
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
                              iroha::model::can_create_account}) {
-    auto new_perms = perms;
-    new_perms.push_back(iroha::model::can_set_quorum);
     return framework::createUserWithPerms(
-               kUser, kUserKeypair.publicKey(), "role"s, new_perms)
+               kUser, kUserKeypair.publicKey(), "role"s, perms)
         .build()
         .signAndAddSignature(kAdminKeypair);
   }
 
   /**
-   * Create valid base pre-build transaction
-   * @return pre-build tx
+   * Create valid base pre-built transaction
+   * @return pre-built tx
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
@@ -57,7 +55,7 @@ class CreateAccount : public ::testing::Test {
   }
 
   /**
-   * Completes pre-build transaction
+   * Completes pre-built transaction
    * @param builder is a pre-built tx
    * @return built tx
    */
@@ -66,7 +64,6 @@ class CreateAccount : public ::testing::Test {
     return builder.build().signAndAddSignature(kUserKeypair);
   }
 
-  const std::string kRole = "role"s;
   const std::string kUser = "user"s;
   const std::string kNewUser = "userone"s;
   const std::string kDomain = IntegrationTestFramework::kDefaultDomain;
@@ -160,7 +157,7 @@ TEST_F(CreateAccount, ExistentName) {
 /**
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with maximum available length
- * @then there is no tx in proposal
+ * @then there is the tx in proposal
  */
 TEST_F(CreateAccount, MaxLenName) {
   IntegrationTestFramework()
