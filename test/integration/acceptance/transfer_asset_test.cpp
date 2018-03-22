@@ -137,11 +137,12 @@ TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(
           kUser1, kUser1Keypair, {iroha::model::can_transfer}, kRole1))
+      .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
       .skipBlock()
       .sendTx(baseTx()
-                  .transferAsset(kUser1Id, kUser1Id, kAsset, kDesc, kAmount)
+                  .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)
                   .build()
                   .signAndAddSignature(kUser1Keypair))
       .checkBlock(
@@ -159,11 +160,12 @@ TEST_F(TransferAsset, WithOnlyCanReceivePerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(
           kUser1, kUser1Keypair, {iroha::model::can_receive}, kRole1))
+      .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
       .skipBlock()
       .sendTx(baseTx()
-                  .transferAsset(kUser1Id, kUser1Id, kAsset, kDesc, kAmount)
+                  .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)
                   .build()
                   .signAndAddSignature(kUser1Keypair))
       .checkBlock(
