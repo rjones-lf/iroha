@@ -46,16 +46,16 @@ namespace iroha {
           return shared_model::converters::protobuf::jsonToModel<
               shared_model::proto::Block>(bytesToString(bytes));
         };
+        if (not block) {
+          log_->error("error while converting from JSON");
+          // TODO load corrupted block from ledger
+        }
 
         return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>([block{
             std::move(block)}](auto s) {
-          if (block) {
+          if (block)
             s.on_next(
                 std::make_shared<shared_model::proto::Block>(block.value()));
-          } else {
-            log_->error("error while converting from JSON");
-            // TODO load corrupted block from ledger
-          }
 
           s.on_completed();
         });
