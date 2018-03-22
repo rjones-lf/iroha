@@ -36,7 +36,7 @@ Environment-specific parameters
 -------------------------------
 
 - ``max_proposal_size`` is the maximum  amount of transactions that can be in
-  in one proposal. For a starter you can stick to ``10``. However, we recommend
+  one proposal. For a starter you can stick to ``10``. However, we recommend
   to increase this number if you have a lot of transactions per second.
 - ``proposal_delay`` is a maximum waiting time in milliseconds before emitting
   a new proposal. Proposal is emitted if the ``max_proposal_size`` is reached 
