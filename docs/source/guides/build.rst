@@ -11,7 +11,7 @@ Preparing the environment
 In order to successfully build Iroha, we need to configure the environment. 
 There are several ways to do it and we will describe all of them.
 
-Currently we support Unix-like systems (we are basically targeting at popular 
+Currently we support Unix-like systems (we are basically targeting popular 
 Linux distros and macOS). If you happen to have Windows or you don't want to 
 spend time installing all dependencies, you might want to consider using Docker
 environment.
