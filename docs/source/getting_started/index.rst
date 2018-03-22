@@ -14,6 +14,10 @@ For this guide, you need a computer running Unix-like system with ``docker`` ins
 Starting Iroha Node
 -------------------
 
+.. raw:: html
+
+  <script src="https://asciinema.org/a/z7VkEd0hAfVnwwKcfJCbiRfJT.js" id="asciicast-z7VkEd0hAfVnwwKcfJCbiRfJT" async></script>
+
 Creating a Docker Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 To operate, Iroha requires a ``PostgreSQL`` database. Let's start with creating Docker network, so containers for Postgres and Iroha can run in the same virtual network and successfully communicate. In this guide we will call it ``iroha-network``, but you can use any name. In your terminal write following command:
@@ -97,6 +101,10 @@ Interacting with Iroha Network
 You can interact with Iroha using various ways. You can use our client libraries to write code in various programming languages (e.g. Java, Python, Javascript, Swift) which communicates with Iroha. Alternatively, you can use ``iroha-cli`` – our command-line tool for interacting with Iroha. As a part of this guide, let's get familiar with ``iroha-cli``
 
 .. Attention:: Despite that ``iroha-cli`` is arguably the simplest way to start working with Iroha, ``iroha-cli`` was engineered very fast and lacks tests, so user experience might not be the best. In the future we will deliver a better version and appreciate contributions.
+
+.. raw:: html
+
+  <script src="https://asciinema.org/a/6dFA3CWHQOgaYbKfQXtzApDob.js" id="asciicast-6dFA3CWHQOgaYbKfQXtzApDob" async></script>
 
 Open a new terminal (note that Iroha container and ``irohad`` should be up and running) and attach to an ``iroha`` docker container:
 
