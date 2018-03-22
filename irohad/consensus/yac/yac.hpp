@@ -112,10 +112,10 @@ namespace iroha {
 
         // ------|Propagation|------
         void propagateCommit(CommitMessage msg);
-        void propagateCommitDirectly(shared_model::interface::Peer &to,
+        void propagateCommitDirectly(const shared_model::interface::Peer &to,
                                      CommitMessage msg);
         void propagateReject(RejectMessage msg);
-        void propagateRejectDirectly(shared_model::interface::Peer &to,
+        void propagateRejectDirectly(const shared_model::interface::Peer &to,
                                      RejectMessage msg);
 
         // ------|Fields|------

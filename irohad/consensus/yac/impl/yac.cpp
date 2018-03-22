@@ -273,7 +273,7 @@ namespace iroha {
         }
       }
 
-      void Yac::propagateCommitDirectly(shared_model::interface::Peer& to, CommitMessage msg) {
+      void Yac::propagateCommitDirectly(const shared_model::interface::Peer& to, CommitMessage msg) {
         network_->send_commit(std::move(to), std::move(msg));
       }
 
@@ -283,7 +283,7 @@ namespace iroha {
         }
       }
 
-      void Yac::propagateRejectDirectly(shared_model::interface::Peer& to, RejectMessage msg) {
+      void Yac::propagateRejectDirectly(const shared_model::interface::Peer& to, RejectMessage msg) {
         network_->send_reject(std::move(to), std::move(msg));
       }
 
