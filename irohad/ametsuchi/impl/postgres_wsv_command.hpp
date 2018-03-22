@@ -70,15 +70,15 @@ namespace iroha {
       WsvCommandResult upsertAccountAsset(
           const shared_model::interface::AccountAsset &asset) override;
       WsvCommandResult insertSignatory(
-          const shared_model::crypto::PublicKey &signatory) override;
+          const shared_model::interface::types::PubkeyType &signatory) override;
       WsvCommandResult insertAccountSignatory(
-          const std::string &account_id,
-          const shared_model::crypto::PublicKey &signatory) override;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &signatory) override;
       WsvCommandResult deleteAccountSignatory(
-          const std::string &account_id,
-          const shared_model::crypto::PublicKey &signatory) override;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &signatory) override;
       WsvCommandResult deleteSignatory(
-          const shared_model::crypto::PublicKey &signatory) override;
+          const shared_model::interface::types::PubkeyType &signatory) override;
       WsvCommandResult insertPeer(
           const shared_model::interface::Peer &peer) override;
       WsvCommandResult deletePeer(

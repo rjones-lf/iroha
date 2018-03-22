@@ -34,10 +34,8 @@ namespace iroha {
           log_(logger::log("TemporaryWSV")) {
       auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ =
-          std::make_shared<CommandExecutor>(CommandExecutor(query, command));
-      command_validator_ =
-          std::make_shared<CommandValidator>(CommandValidator(query));
+      command_executor_ = std::make_shared<CommandExecutor>(query, command);
+      command_validator_ = std::make_shared<CommandValidator>(query);
       transaction_->exec("BEGIN;");
     }
 

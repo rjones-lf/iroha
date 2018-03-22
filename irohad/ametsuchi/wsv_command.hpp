@@ -181,7 +181,7 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertSignatory(
-          const shared_model::crypto::PublicKey &signatory) = 0;
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Insert account signatory relationship
@@ -191,7 +191,7 @@ namespace iroha {
        */
       virtual WsvCommandResult insertAccountSignatory(
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::crypto::PublicKey &signatory) = 0;
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Delete account signatory relationship
@@ -201,7 +201,7 @@ namespace iroha {
        */
       virtual WsvCommandResult deleteAccountSignatory(
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::crypto::PublicKey &signatory) = 0;
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Delete signatory
@@ -209,7 +209,7 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteSignatory(
-          const shared_model::crypto::PublicKey &signatory) = 0;
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        *

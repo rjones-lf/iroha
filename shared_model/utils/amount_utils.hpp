@@ -74,20 +74,6 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator-(
       std::shared_ptr<shared_model::interface::Amount>(res.copy()));
 }
 
-// to raise to power integer values
-int ipow(int base, int exp) {
-  int result = 1;
-  while (exp != 0) {
-    if (exp & 1) {
-      result *= base;
-    }
-    exp >>= 1;
-    base *= base;
-  }
-
-  return result;
-}
-
 int compareAmount(const shared_model::interface::Amount &a,
                   const shared_model::interface::Amount &b) {
   if (a.precision() == b.precision()) {

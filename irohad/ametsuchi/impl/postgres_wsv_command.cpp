@@ -236,7 +236,7 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertSignatory(
-        const shared_model::crypto::PublicKey &signatory) {
+        const shared_model::interface::types::PubkeyType &signatory) {
       auto result =
           execute_("INSERT INTO signatory(public_key) VALUES ("
                    + transaction_.quote(pqxx::binarystring(
@@ -253,7 +253,7 @@ namespace iroha {
 
     WsvCommandResult PostgresWsvCommand::insertAccountSignatory(
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::crypto::PublicKey &signatory) {
+        const shared_model::interface::types::PubkeyType &signatory) {
       auto result = execute_(
           "INSERT INTO account_has_signatory(account_id, public_key) VALUES ("
           + transaction_.quote(account_id) + ", "
@@ -272,7 +272,7 @@ namespace iroha {
 
     WsvCommandResult PostgresWsvCommand::deleteAccountSignatory(
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::crypto::PublicKey &signatory) {
+        const shared_model::interface::types::PubkeyType &signatory) {
       auto result =
           execute_("DELETE FROM account_has_signatory WHERE account_id = "
                    + transaction_.quote(account_id) + " AND public_key = "
@@ -290,7 +290,7 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteSignatory(
-        const shared_model::crypto::PublicKey &signatory) {
+        const shared_model::interface::types::PubkeyType &signatory) {
       pqxx::binarystring public_key(signatory.blob().data(),
                                     signatory.blob().size());
       auto result = execute_("DELETE FROM signatory WHERE public_key = "
