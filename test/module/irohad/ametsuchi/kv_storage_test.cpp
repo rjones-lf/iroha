@@ -23,7 +23,7 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
-#include "model/account.hpp"
+#include "model/block.hpp"
 #include "model/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -33,7 +33,6 @@
 #include "backend/protobuf/from_old_model.hpp"
 
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 
 /**
  * Fixture for kv storage test. Creates two accounts: one has predefined json
@@ -57,42 +56,47 @@ class KVTest : public AmetsuchiTest {
     wsv_query = storage->getWsvQuery();
 
     // First transaction in block1
-    Transaction txn1_1;
+    iroha::model::Transaction txn1_1;
     txn1_1.creator_account_id = "userone@ru";
 
-    CreateRole createRole;
+    iroha::model::CreateRole createRole;
     createRole.role_name = "user";
-    createRole.permissions = {
-        can_add_peer, can_create_asset, can_get_my_account};
+    createRole.permissions = {iroha::model::can_add_peer,
+                              iroha::model::can_create_asset,
+                              iroha::model::can_get_my_account};
 
     // Create domain ru
-    txn1_1.commands.push_back(std::make_shared<CreateRole>(createRole));
-    CreateDomain createDomain;
+    txn1_1.commands.push_back(
+        std::make_shared<iroha::model::CreateRole>(createRole));
+    iroha::model::CreateDomain createDomain;
     createDomain.domain_id = "ru";
     createDomain.user_default_role = "user";
-    txn1_1.commands.push_back(std::make_shared<CreateDomain>(createDomain));
+    txn1_1.commands.push_back(
+        std::make_shared<iroha::model::CreateDomain>(createDomain));
 
     // Create account user1
-    CreateAccount createAccount1;
+    iroha::model::CreateAccount createAccount1;
     createAccount1.account_name = account_name1;
     createAccount1.domain_id = domain_id;
-    txn1_1.commands.push_back(std::make_shared<CreateAccount>(createAccount1));
+    txn1_1.commands.push_back(
+        std::make_shared<iroha::model::CreateAccount>(createAccount1));
 
     // Create account user2
-    CreateAccount createAccount2;
+    iroha::model::CreateAccount createAccount2;
     createAccount2.account_name = account_name2;
     createAccount2.domain_id = domain_id;
-    txn1_1.commands.push_back(std::make_shared<CreateAccount>(createAccount2));
+    txn1_1.commands.push_back(
+        std::make_shared<iroha::model::CreateAccount>(createAccount2));
 
     // Set age for user2
-    SetAccountDetail setAccount2Age;
+    iroha::model::SetAccountDetail setAccount2Age;
     setAccount2Age.account_id = account_name2 + "@" + domain_id;
     setAccount2Age.key = "age";
     setAccount2Age.value = "24";
     txn1_1.commands.push_back(
-        std::make_shared<SetAccountDetail>(setAccount2Age));
+        std::make_shared<iroha::model::SetAccountDetail>(setAccount2Age));
 
-    Block old_block1;
+    iroha::model::Block old_block1;
     old_block1.height = 1;
     old_block1.transactions.push_back(txn1_1);
     old_block1.prev_hash.fill(0);

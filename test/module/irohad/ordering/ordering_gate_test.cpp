@@ -31,7 +31,6 @@
 
 using namespace iroha;
 using namespace iroha::ordering;
-using namespace iroha::model;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
@@ -120,7 +119,7 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
       }));
 
   for (size_t i = 0; i < 5; ++i) {
-    gate_impl->propagateTransaction(std::make_shared<Transaction>());
+    gate_impl->propagateTransaction(std::make_shared<iroha::model::Transaction>());
   }
 
   std::unique_lock<std::mutex> lock(m);

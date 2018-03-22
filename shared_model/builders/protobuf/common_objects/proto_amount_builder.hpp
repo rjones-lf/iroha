@@ -40,7 +40,8 @@ namespace shared_model {
         return copy;
       }
 
-      AmountBuilder precision(const interface::types::PrecisionType &precision) {
+      AmountBuilder precision(
+          const interface::types::PrecisionType &precision) {
         AmountBuilder copy(*this);
         copy.amount_.set_precision(precision);
         return copy;

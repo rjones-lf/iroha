@@ -9,4 +9,5 @@ target_link_libraries(processors PUBLIC
     stateless_validator
     logger
     endpoint
+    shared_model_proto_builders
     )

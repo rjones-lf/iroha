@@ -32,6 +32,8 @@
 #include "builders/protobuf/common_objects/proto_domain_builder.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "builders/transaction_responses/transaction_status_builder.hpp"
 #include "validators/field_validator.hpp"
 
 namespace shared_model {
@@ -60,6 +62,10 @@ namespace shared_model {
     using DefaultDomainBuilder = shared_model::builder::DomainBuilder<
         shared_model::proto::DomainBuilder,
         shared_model::validation::FieldValidator>;
+
+    using DefaultTransactionStatusBuilder =
+        shared_model::builder::TransactionStatusBuilder<
+            shared_model::proto::TransactionStatusBuilder>;
   }  // namespace builder
 }  // namespace shared_model
 

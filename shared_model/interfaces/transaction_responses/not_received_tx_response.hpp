@@ -25,10 +25,11 @@ namespace shared_model {
     /**
      * Transaction not found
      */
-    class UnknownTxResponse : public AbstractTxResponse<UnknownTxResponse> {
+    class NotReceivedTxResponse
+        : public AbstractTxResponse<NotReceivedTxResponse> {
      private:
       std::string className() const override {
-        return "UnknownTxResponse";
+        return "NotReceivedTxResponse";
       }
 
 #ifndef DISABLE_BACKWARD
