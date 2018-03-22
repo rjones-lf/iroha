@@ -1,7 +1,7 @@
 #!/bin/bash
 CURDIR="$(cd "$(dirname "$0")"; pwd)"
 IROHA_HOME="$(dirname "${CURDIR}")"
-PROJECT=iroha${USERID}
+PROJECT=iroha${UID}
 COMPOSE=${IROHA_HOME}/docker/docker-compose.yml
 
 export G_ID=$(id -g)
