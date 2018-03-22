@@ -17,14 +17,12 @@
 
 #include <gtest/gtest.h>
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "model/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "utils/query_error_response_visitor.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -37,23 +35,23 @@ class CreateRole : public ::testing::Test {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeUserWithPerms(const std::vector<std::string> &perms) {
-    auto new_perms = perms;
-    new_perms.push_back(iroha::model::can_set_quorum);
+  auto makeUserWithPerms(const std::vector<std::string> &perms = {
+                             iroha::model::can_get_my_txs,
+                             iroha::model::can_create_role}) {
     return framework::createUserWithPerms(
-               kUser, kUserKeypair.publicKey(), kNewRole, new_perms)
+               kUser, kUserKeypair.publicKey(), kNewRole, perms)
         .build()
         .signAndAddSignature(kAdminKeypair);
   }
 
   /**
-   * Create valid base pre-build transaction with CreateRole command
+   * Create valid base pre-built transaction with CreateRole command
    * @param perms is a permission list
    * @param role_name is a name of the role
-   * @return pre-build tx
+   * @return pre-built tx
    */
   auto baseTx(const std::vector<std::string> &perms,
-              const std::string role_name) {
+              const std::string &role_name) {
     return TestUnsignedTransactionBuilder()
         .createRole(role_name, perms)
         .txCounter(1)
@@ -61,8 +59,13 @@ class CreateRole : public ::testing::Test {
         .createdTime(iroha::time::now());
   }
 
+  auto baseTx(const std::vector<std::string> &perms = {
+                  iroha::model::can_get_my_txs}) {
+    return baseTx(perms, kRole);
+  }
+
   /**
-   * Completes pre-build transaction
+   * Completes pre-built transaction
    * @param builder is a pre-built tx
    * @return built tx
    */
@@ -89,11 +92,10 @@ class CreateRole : public ::testing::Test {
 TEST_F(CreateRole, Basic) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, kRole)))
+      .sendTx(completeTx(baseTx()))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -111,7 +113,7 @@ TEST_F(CreateRole, HaveNoPerms) {
       .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, kRole)))
+      .sendTx(completeTx(baseTx()))
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
@@ -126,8 +128,7 @@ TEST_F(CreateRole, HaveNoPerms) {
 TEST_F(CreateRole, EmptyRole) {
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, "")));
@@ -143,11 +144,10 @@ TEST_F(CreateRole, EmptyRole) {
 TEST_F(CreateRole, EmptyPerms) {
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({}, kRole)));
+      .sendTx(completeTx(baseTx({})));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 
@@ -160,8 +160,7 @@ TEST_F(CreateRole, EmptyPerms) {
 TEST_F(CreateRole, LongRoleName) {
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(
@@ -177,8 +176,7 @@ TEST_F(CreateRole, LongRoleName) {
 TEST_F(CreateRole, MaxLenRoleName) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(
@@ -198,11 +196,10 @@ TEST_F(CreateRole, MaxLenRoleName) {
 TEST_F(CreateRole, DISABLED_InexistentPerm) {
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({"this_permission_doesnt_exist"}, kRole)));
+      .sendTx(completeTx(baseTx({"this_permission_doesnt_exist"})));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 
@@ -214,10 +211,9 @@ TEST_F(CreateRole, DISABLED_InexistentPerm) {
 TEST_F(CreateRole, DISABLED_ExistingRole) {
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {iroha::model::can_get_my_txs, iroha::model::can_create_role}))
+      .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, kRole)));
+      .sendTx(completeTx(baseTx()));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
