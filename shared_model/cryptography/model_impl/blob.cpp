@@ -59,6 +59,10 @@ namespace shared_model {
       return hex_;
     }
 
+//    virtual const std::string Blob::toBinaryString() const {
+//      return std::string{blob_.begin(), blob_.end()};
+//    }
+
     size_t Blob::size() const {
       return blob_.size();
     }

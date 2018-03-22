@@ -67,7 +67,7 @@ class YacGateTest : public ::testing::Test {
     const auto old_signature =
         *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
 
-    expected_hash.block_signature = old_signature;
+    expected_hash.block_signature = decltype(expected_hash.block_signature)(signature.copy());
     message.hash = expected_hash;
     message.signature = old_signature;
     commit_message = CommitMessage({message});
@@ -190,11 +190,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
 
   // convert yac hash to model hash
-  auto old_hash =
-      (*std::unique_ptr<iroha::model::Block>(expected_block->makeOldModel()))
-          .hash;
   EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
-      .WillOnce(Return(old_hash));
+      .WillOnce(Return(expected_block->hash()));
 
   // load block
   auto sig = expected_block->signatures().begin();

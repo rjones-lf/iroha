@@ -18,8 +18,10 @@
 #ifndef IROHA_YAC_PB_CONVERTERS_HPP
 #define IROHA_YAC_PB_CONVERTERS_HPP
 
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/messages.hpp"
+#include "interfaces/common_objects/signature.hpp"
 #include "yac.pb.h"
 
 namespace iroha {
@@ -35,10 +37,11 @@ namespace iroha {
           hash->set_proposal(vote.hash.proposal_hash);
 
           auto block_signature = hash->mutable_block_signature();
-          block_signature->set_signature(
-              vote.hash.block_signature.signature.to_string());
-          block_signature->set_pubkey(
-              vote.hash.block_signature.pubkey.to_string());
+          block_signature->set_signature(shared_model::crypto::toBinaryString(
+              vote.hash.block_signature->signedData()));
+
+          block_signature->set_pubkey(shared_model::crypto::toBinaryString(
+              vote.hash.block_signature->publicKey()));
 
           auto signature = pb_vote.mutable_signature();
           signature->set_signature(vote.signature.signature.to_string());
@@ -52,12 +55,16 @@ namespace iroha {
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
-          vote.hash.block_signature.signature =
-              *stringToBlob<iroha::sig_t::size()>(
-                  pb_vote.hash().block_signature().signature());
-          vote.hash.block_signature.pubkey =
-              *stringToBlob<iroha::pubkey_t::size()>(
-                  pb_vote.hash().block_signature().pubkey());
+          auto sig = shared_model::proto::SignatureBuilder()
+                         .publicKey(shared_model::crypto::PublicKey(
+                             pb_vote.hash().block_signature().pubkey()))
+                         .signedData(shared_model::crypto::Signed(
+                             pb_vote.hash().block_signature().signature()))
+                         .build();
+
+          vote.hash.block_signature =
+              decltype(vote.hash.block_signature)(sig.copy());
+
           vote.signature.signature = *stringToBlob<iroha::sig_t::size()>(
               pb_vote.signature().signature());
           vote.signature.pubkey = *stringToBlob<iroha::pubkey_t::size()>(
