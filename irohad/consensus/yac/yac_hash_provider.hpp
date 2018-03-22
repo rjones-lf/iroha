@@ -18,8 +18,8 @@
 #ifndef IROHA_YAC_HASH_PROVIDER_HPP
 #define IROHA_YAC_HASH_PROVIDER_HPP
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include "interfaces/common_objects/types.hpp"  // for model::Signature
 
@@ -77,7 +77,8 @@ namespace iroha {
          * @param block - for hashing
          * @return hashed value of block
          */
-        virtual YacHash makeHash(const shared_model::interface::Block &block) const = 0;
+        virtual YacHash makeHash(
+            const shared_model::interface::Block &block) const = 0;
 
         /**
          * Convert YacHash to model hash

@@ -74,10 +74,6 @@ namespace shared_model {
       virtual const std::string &hex() const;
 
       /**
-       * @return binary string
-       */
-//      virtual const std::string toBinaryString() const;
-      /**
        * @return size of raw representation of blob
        */
       virtual size_t size() const;
@@ -109,7 +105,6 @@ namespace shared_model {
       Bytes blob_;
       std::string hex_;
     };
-
 
   }  // namespace crypto
 }  // namespace shared_model

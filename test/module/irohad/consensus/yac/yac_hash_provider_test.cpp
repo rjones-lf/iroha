@@ -27,11 +27,13 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   shared_model::proto::Block block = TestBlockBuilder().build();
   auto sig = shared_model::proto::SignatureBuilder()
-      .publicKey(shared_model::crypto::PublicKey("key"))
-      .signedData(shared_model::crypto::Signed("data"))
-      .build();
+                 .publicKey(shared_model::crypto::PublicKey("key"))
+                 .signedData(shared_model::crypto::Signed("data"))
+                 .build();
 
-  block.addSignature(shared_model::detail::makePolymorphic<shared_model::proto::Signature>(sig.getTransport()));
+  block.addSignature(
+      shared_model::detail::makePolymorphic<shared_model::proto::Signature>(
+          sig.getTransport()));
 
   auto hex_test_hash = block.hash().hex();
 
@@ -45,11 +47,13 @@ TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
   shared_model::proto::Block block = TestBlockBuilder().build();
   auto sig = shared_model::proto::SignatureBuilder()
-      .publicKey(shared_model::crypto::PublicKey("key"))
-      .signedData(shared_model::crypto::Signed("data"))
-      .build();
+                 .publicKey(shared_model::crypto::PublicKey("key"))
+                 .signedData(shared_model::crypto::Signed("data"))
+                 .build();
 
-  block.addSignature(shared_model::detail::makePolymorphic<shared_model::proto::Signature>(sig.getTransport()));
+  block.addSignature(
+      shared_model::detail::makePolymorphic<shared_model::proto::Signature>(
+          sig.getTransport()));
 
   auto yac_hash = hash_provider.makeHash(block);
 

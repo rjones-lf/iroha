@@ -37,6 +37,17 @@ namespace iroha {
           hash->set_proposal(vote.hash.proposal_hash);
 
           auto block_signature = hash->mutable_block_signature();
+
+          //Will fix it in the next PR, very soon, don't worry
+          if (vote.hash.block_signature == nullptr) {
+            auto sig = shared_model::proto::SignatureBuilder()
+                           .publicKey(shared_model::crypto::PublicKey(""))
+                           .signedData(shared_model::crypto::Signed(""))
+                           .build();
+            const_cast<VoteMessage &>(vote).hash.block_signature =
+                decltype(vote.hash.block_signature)(sig.copy());
+          }
+
           block_signature->set_signature(shared_model::crypto::toBinaryString(
               vote.hash.block_signature->signedData()));
 

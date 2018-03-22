@@ -67,7 +67,8 @@ class YacGateTest : public ::testing::Test {
     const auto old_signature =
         *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
 
-    expected_hash.block_signature = decltype(expected_hash.block_signature)(signature.copy());
+    expected_hash.block_signature =
+        decltype(expected_hash.block_signature)(signature.copy());
     message.hash = expected_hash;
     message.signature = old_signature;
     commit_message = CommitMessage({message});

@@ -23,7 +23,8 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      YacHash YacHashProviderImpl::makeHash(const shared_model::interface::Block &block) const {
+      YacHash YacHashProviderImpl::makeHash(
+          const shared_model::interface::Block &block) const {
         YacHash result;
         // TODO 01/08/17 Muratov: add proposal hash to block,
         // block.proposal_hash IR-505
