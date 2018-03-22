@@ -99,7 +99,6 @@ int main(int argc, char *argv[]) {
     output_file << shared_model::converters::protobuf::modelToJson(
         shared_model::proto::from_old(block)
       );
-    // output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network
