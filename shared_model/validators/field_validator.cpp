@@ -16,6 +16,7 @@
  */
 
 #include "validators/field_validator.hpp"
+#include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 
@@ -25,17 +26,19 @@ namespace shared_model {
   namespace validation {
 
     FieldValidator::FieldValidator(time_t future_gap)
-        : account_id_pattern_(R"([a-z]{1,9}\@[a-z]{1,9})"),
-          asset_id_pattern_(R"([a-z]{1,9}\#[a-z]{1,9})"),
-          name_pattern_(R"([a-z]{1,9})"),
-          detail_key_pattern_(R"([A-Za-z0-9_]{1,})"),
-          role_id_pattern_(R"([A-Za-z0-9_]{1,7})"),
+        : account_name_regex_(account_name_pattern_),
+          asset_name_regex_(asset_name_pattern_),
+          domain_regex_(domain_pattern_),
+          account_id_regex_(account_id_pattern_),
+          asset_id_regex_(asset_id_pattern_),
+          detail_key_regex_(detail_key_pattern_),
+          role_id_regex_(role_id_pattern_)
           future_gap_(future_gap) {}
 
     void FieldValidator::validateAccountId(
         ReasonsGroupType &reason,
         const interface::types::AccountIdType &account_id) const {
-      if (not std::regex_match(account_id, account_id_pattern_)) {
+      if (not std::regex_match(account_id, account_id_regex_)) {
         auto message =
             (boost::format("Wrongly formed account_id, passed value: '%s'")
              % account_id)
@@ -47,7 +50,7 @@ namespace shared_model {
     void FieldValidator::validateAssetId(
         ReasonsGroupType &reason,
         const interface::types::AssetIdType &asset_id) const {
-      if (not std::regex_match(asset_id, asset_id_pattern_)) {
+      if (not std::regex_match(asset_id, asset_id_regex_)) {
         auto message =
             (boost::format("Wrongly formed asset_id, passed value: '%s'")
              % asset_id)
@@ -101,7 +104,7 @@ namespace shared_model {
     void FieldValidator::validateRoleId(
         ReasonsGroupType &reason,
         const interface::types::RoleIdType &role_id) const {
-      if (not std::regex_match(role_id, role_id_pattern_)) {
+      if (not std::regex_match(role_id, role_id_regex_)) {
         auto message =
             (boost::format("Wrongly formed role_id, passed value: '%s'")
              % role_id)
@@ -113,7 +116,7 @@ namespace shared_model {
     void FieldValidator::validateAccountName(
         ReasonsGroupType &reason,
         const interface::types::AccountNameType &account_name) const {
-      if (not std::regex_match(account_name, name_pattern_)) {
+      if (not std::regex_match(account_name, account_name_regex_)) {
         auto message =
             (boost::format("Wrongly formed account_name, passed value: '%s'")
              % account_name)
@@ -125,7 +128,7 @@ namespace shared_model {
     void FieldValidator::validateDomainId(
         ReasonsGroupType &reason,
         const interface::types::DomainIdType &domain_id) const {
-      if (not std::regex_match(domain_id, name_pattern_)) {
+      if (not std::regex_match(domain_id, domain_regex_)) {
         auto message =
             (boost::format("Wrongly formed domain_id, passed value: '%s'")
              % domain_id)
@@ -137,7 +140,7 @@ namespace shared_model {
     void FieldValidator::validateAssetName(
         ReasonsGroupType &reason,
         const interface::types::AssetNameType &asset_name) const {
-      if (not std::regex_match(asset_name, name_pattern_)) {
+      if (not std::regex_match(asset_name, asset_name_regex_)) {
         auto message =
             (boost::format("Wrongly formed asset_name, passed value: '%s'")
              % asset_name)
@@ -149,7 +152,7 @@ namespace shared_model {
     void FieldValidator::validateAccountDetailKey(
         ReasonsGroupType &reason,
         const interface::types::AccountDetailKeyType &key) const {
-      if (not std::regex_match(key, detail_key_pattern_)) {
+      if (not std::regex_match(key, detail_key_regex_)) {
         auto message =
             (boost::format("Wrongly formed key, passed value: '%s'") % key)
                 .str();
@@ -187,7 +190,7 @@ namespace shared_model {
     void FieldValidator::validateCreatorAccountId(
         ReasonsGroupType &reason,
         const interface::types::AccountIdType &account_id) const {
-      if (not std::regex_match(account_id, account_id_pattern_)) {
+      if (not std::regex_match(account_id, account_id_regex_)) {
         auto message =
             (boost::format(
                  "Wrongly formed creator_account_id, passed value: '%s'")

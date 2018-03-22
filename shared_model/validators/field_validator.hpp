@@ -108,11 +108,24 @@ namespace shared_model {
                               const crypto::Blob &source) const;
 
      private:
-      std::regex account_id_pattern_;
-      std::regex asset_id_pattern_;
-      std::regex name_pattern_;
-      std::regex detail_key_pattern_;
-      std::regex role_id_pattern_;
+      const std::string account_name_pattern_ = R"([a-z_0-9]{1,32})";
+      const std::string asset_name_pattern_ = R"([a-z_0-9]{1,32})";
+      const std::string domain_pattern_ =
+          R"(([a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)";
+      const std::string account_id_pattern_ =
+          account_name_pattern_ + R"(\@)" + domain_pattern_;
+      const std::string asset_id_pattern_ =
+          asset_name_pattern_ + R"(\#)" + domain_pattern_;
+      const std::string detail_key_pattern_ = R"([A-Za-z0-9_]{1,64})";
+      const std::string role_id_pattern_ = R"([a-z_0-9]{1,32})";
+
+      std::regex account_name_regex_;
+      std::regex asset_name_regex_;
+      std::regex domain_regex_;
+      std::regex account_id_regex_;
+      std::regex asset_id_regex_;
+      std::regex detail_key_regex_;
+      std::regex role_id_regex_;
       // gap for future transactions
       time_t future_gap_;
       // max-delay between tx creation and validation

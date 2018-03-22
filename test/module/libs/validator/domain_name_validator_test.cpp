@@ -16,33 +16,34 @@
  */
 
 #include "validator/domain_name_validator.hpp"
+#include <regex>
 #include <gtest/gtest.h>
 
 using namespace validator;
 
 TEST(DomainNameValidatorTest, HandleValidDomainName) {
-  ASSERT_TRUE(isValidDomainName("a"));
-  ASSERT_TRUE(isValidDomainName("ab"));
-  ASSERT_TRUE(isValidDomainName("abc"));
-  ASSERT_TRUE(isValidDomainName("abc.efg"));
-  ASSERT_TRUE(isValidDomainName("abc.efg.hij"));
-  ASSERT_TRUE(isValidDomainName("u9EEA432F"));
-  ASSERT_TRUE(isValidDomainName("a-hyphen"));
-  ASSERT_TRUE(isValidDomainName("altplus.com"));
-  ASSERT_TRUE(isValidDomainName("altplus.com.jp"));
-  ASSERT_TRUE(isValidDomainName(
+  EXPECT_TRUE(isValidDomainName("a"));
+  EXPECT_TRUE(isValidDomainName("ab"));
+  EXPECT_TRUE(isValidDomainName("abc"));
+  EXPECT_TRUE(isValidDomainName("abc.efg"));
+  EXPECT_TRUE(isValidDomainName("abc.efg.hij"));
+  EXPECT_TRUE(isValidDomainName("u9EEA432F"));
+  EXPECT_TRUE(isValidDomainName("a-hyphen"));
+  EXPECT_TRUE(isValidDomainName("altplus.com"));
+  EXPECT_TRUE(isValidDomainName("altplus.com.jp"));
+  EXPECT_TRUE(isValidDomainName(
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"));
-  ASSERT_TRUE(isValidDomainName("endWith0"));
+  EXPECT_TRUE(isValidDomainName("endWith0"));
 }
 
 TEST(DomainNameValidatorTest, HandleInvalidDomainName) {
-  ASSERT_FALSE(isValidDomainName(" "));
-  ASSERT_FALSE(isValidDomainName("9start.with.non.letter"));
-  ASSERT_FALSE(isValidDomainName("-startWithDash"));
-  ASSERT_FALSE(isValidDomainName("@.is.not.allowed"));
-  ASSERT_FALSE(isValidDomainName("no space is allowed"));
-  ASSERT_FALSE(isValidDomainName("endWith-"));
-  ASSERT_FALSE(isValidDomainName("label.endedWith-.is.not.allowed"));
-  ASSERT_FALSE(isValidDomainName(
+  EXPECT_FALSE(isValidDomainName(" "));
+  EXPECT_FALSE(isValidDomainName("9start.with.non.letter"));
+  EXPECT_FALSE(isValidDomainName("-startWithDash"));
+  EXPECT_FALSE(isValidDomainName("@.is.not.allowed"));
+  EXPECT_FALSE(isValidDomainName("no space is allowed"));
+  EXPECT_FALSE(isValidDomainName("endWith-"));
+  EXPECT_FALSE(isValidDomainName("label.endedWith-.is.not.allowed"));
+  EXPECT_FALSE(isValidDomainName(
       "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters"));
 }

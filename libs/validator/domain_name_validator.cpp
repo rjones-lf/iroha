@@ -16,25 +16,15 @@
  */
 
 #include <boost/spirit/include/qi.hpp>
+#include <regex>
 
 #include "validator/domain_name_validator.hpp"
 
 namespace validator {
   bool isValidDomainName(const std::string &str) {
-    namespace qi = boost::spirit::qi;
-
-    qi::rule<decltype(str.begin())> letter, let_dig, end_with_let_dig,
-        let_dig_hyp, label, domain;
-    domain = label % '.';
-    // I could not express the grammer [ [ <ldh-str> ] <let-dig> ] with
-    // <ldh-str> directly.
-    label = letter >> qi::repeat(0, 62)[let_dig_hyp - ('-' >> ('.' | qi::eoi))];
-    let_dig_hyp = '-' | let_dig;
-    let_dig = letter | qi::digit;
-    letter = qi::lower | qi::upper;
-
-    auto f = str.begin();
-    auto const result = qi::parse(f, str.end(), domain);
-    return result && (f == str.end());
+    return std::regex_match(
+        str,
+        std::regex(
+            R"#(^([a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$)#"));
   }
 }  // namespace validator

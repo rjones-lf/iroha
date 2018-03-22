@@ -242,7 +242,6 @@ class FieldValidatorTest : public ValidatorsTest {
     };
 
     return {makeValidCase(field, f("name%cdomain")),
-            c("start_with_digit", f("1abs%cdomain")),
             c("domain_start_with_digit", f("abs%c3domain")),
             c("empty_string", ""),
             c("illegal_char", f("ab--s%cdo--main")),
@@ -351,7 +350,7 @@ class FieldValidatorTest : public ValidatorsTest {
         makeTestCase("valid_name", field, "admin", true, ""),
         makeInvalidCase("empty_string", field_name, field, ""),
         makeInvalidCase("illegal_characters", field_name, field, "-math-"),
-        makeInvalidCase("name_too_long", field_name, field, "somelongname")};
+        makeInvalidCase("name_too_long", field_name, field, "long_long_long_long_long_long_name")};
   }
 
   std::vector<FieldTestCase> role_name_test_cases =
