@@ -24,7 +24,7 @@ line-by-line and understand what every parameter means.
 Deployment-specific parameters
 ------------------------------
 
-- ``block_store_path`` sets path to the folder where blocks will be stored
+- ``block_store_path`` sets path to the folder where blocks are stored.
 - ``torii_port`` sets the port for external communications. Queries and
   transactions are sent here.
 - ``internal_port`` sets the port for internal communications: ordering
@@ -36,12 +36,17 @@ Environment-specific parameters
 -------------------------------
 
 - ``max_proposal_size`` is the maximum  amount of transactions that can be in
-  one proposal. For a starter you can stick to ``10``. However, we recommend
-  to increase this number if you have a lot of transactions per second.
+  one proposal, and as a result in a single block as well. So, by changing this 
+  value you define the size of potential block. For a starter you can stick to 
+  ``10``. However, we recommend to increase this number if you have a lot of 
+  transactions per second.
 - ``proposal_delay`` is a maximum waiting time in milliseconds before emitting
   a new proposal. Proposal is emitted if the ``max_proposal_size`` is reached 
   or ``proposal_delay`` milliseconds had passed. You can start with ``5000``
-  and increase this number if you have a lot of transactions per second.
+  and increase this number if you have a lot of transactions per second since
+  it is likely that with an intense load (over 100 transactions per second)
+  and low value of ``proposal_delay`` there will be many proposals of small
+  size.
 - ``vote_delay`` is a waiting time in milliseconds before sending vote to the
   next peer. Optimal value depends heavily on the amount of Iroha peers in the
   network (higher amount of nodes requires longer ``vote_delay``). We recommend
