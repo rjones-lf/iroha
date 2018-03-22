@@ -17,8 +17,8 @@ spend time installing all dependencies, you might want to consider using Docker
 environment.
 
 .. hint:: Having troubles? Check FAQ section or communicate to us directly, in
-case you were stuck on something. We don't expect this to happen, but some
-issues with an environment are possible.
+  case you were stuck on something. We don't expect this to happen, but some
+  issues with an environment are possible.
 
 Docker
 ^^^^^^
@@ -27,8 +27,8 @@ read how to install it on a
 `Docker's website <https://www.docker.com/community-edition/>`_
 
 .. note:: Please, use the latest available docker daemon and docker-compose. 
-If you have troubles launching the Docker container — it is likely that those 
-problems are caused by an outdated version.
+  If you have troubles launching the Docker container — it is likely that those 
+  problems are caused by an outdated version.
  
 After it clone the `Iroha repository <https://github.com/hyperledger/iroha>`_ 
 to the directory of your choice.
@@ -59,8 +59,10 @@ and running Iroha.
 testing with ``iroha`` folder mounted from the host machine. Iroha folder 
 is mounted to ``/opt/iroha`` in Docker container.
 
+Now your are ready to build Iroha! Please go to `Building Iroha` section.
+
 .. note::  Docker environment will be removed when you detach from the
-container.
+  container.
 
 Linux
 ^^^^^
@@ -98,7 +100,7 @@ Use this code to install dependencies on Debian-based Linux distro.
   python cmake
 
 .. note::  If you are willing to actively develop Iroha, please consider installing 
-the `latest release <https://cmake.org/download/>`_ of CMake.
+  the `latest release <https://cmake.org/download/>`_ of CMake.
 
 macOS
 ^^^^^
@@ -129,7 +131,7 @@ directory of your choice.
   cd iroha
 
 .. hint:: If you have installed the prerequisites with Docker, you don't need
-to clone Iroha again
+  to clone Iroha again
 
 
 Building Iroha
@@ -149,8 +151,8 @@ though)
   cmake --build build -- -j$(nproc)
 
 .. note::  On macOS ``$(nproc)`` variable does not work. Check number of 
-logical cores with ``sysctl -n hw.ncpu`` and put it explicitly in the command 
-above, e.g. ``cmake --build build -- -j4``
+  logical cores with ``sysctl -n hw.ncpu`` and put it explicitly in the command 
+  above, e.g. ``cmake --build build -- -j4``
 
 CMake Parameters
 ^^^^^^^^^^^^^^^^
@@ -162,7 +164,7 @@ deprecated (or just not complete) you can browse custom flags via
 ``cmake -L``, ``cmake-gui``, or ``ccmake``.
 
 .. hint::  You can specify parameters at the cmake configuring stage
-(e.g cmake -DTESTING=ON).
+  (e.g cmake -DTESTING=ON).
 
 Main Parameters
 """""""""""""""
