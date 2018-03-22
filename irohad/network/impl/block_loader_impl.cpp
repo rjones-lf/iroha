@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include <grpc++/create_channel.h>
+#include <algorithm>
 
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
@@ -33,10 +34,12 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
+    std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
+      crypto_provider_(crypto_provider),
       stateless_validator_(stateless_validator) {
   log_ = logger::log("BlockLoaderImpl");
 }
@@ -51,14 +54,11 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const PublicKey &peer_pubkey) {
   return rxcpp::observable<>::create<std::shared_ptr<Block>>(
       [this, peer_pubkey](auto subscriber) {
-        boost::optional<iroha::model::Block> top_block;
+        boost::optional<std::shared_ptr<Block>> top_block;
         block_query_->getTopBlocks(1)
             .subscribe_on(rxcpp::observe_on_new_thread())
             .as_blocking()
-            .subscribe([&top_block](auto block) {
-              top_block =
-                  *std::unique_ptr<iroha::model::Block>(block->makeOldModel());
-            });
+            .subscribe([&top_block](auto block) { top_block = block; });
         if (not top_block) {
           log_->error(kTopBlockRetrieveFail);
           subscriber.on_completed();
@@ -77,10 +77,10 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         protocol::Block block;
 
         // request next block to our top
-        request.set_height(top_block->height + 1);
+        request.set_height((*top_block)->height() + 1);
 
         auto reader =
-            this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
+            this->getPeerStub(**peer).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
           shared_model::proto::TransportBuilder<
               shared_model::proto::Block,
@@ -88,7 +88,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
               .build(block)
               .match(
                   // success case
-                  [&subscriber](
+                  [this, &context, &subscriber](
                       const iroha::expected::Value<shared_model::proto::Block>
                           &result) {
                     subscriber.on_next(
@@ -122,8 +122,7 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   // request block with specified hash
   request.set_hash(toBinaryString(block_hash));
 
-  auto status =
-      getPeerStub(peer.value()).retrieveBlock(&context, request, &block);
+  auto status = getPeerStub(**peer).retrieveBlock(&context, request, &block);
   if (not status.ok()) {
     log_->warn(status.error_message());
     return boost::none;
@@ -140,8 +139,8 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   return boost::optional<std::shared_ptr<Block>>(std::move(result));
 }
 
-boost::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
-    const shared_model::crypto::PublicKey &pubkey) {
+boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+BlockLoaderImpl::findPeer(const shared_model::crypto::PublicKey &pubkey) {
   auto peers = peer_query_->getLedgerPeers();
   if (not peers) {
     log_->error(kPeerRetrieveFail);
@@ -157,19 +156,18 @@ boost::optional<iroha::model::Peer> BlockLoaderImpl::findPeer(
     log_->error(kPeerFindFail);
     return boost::none;
   }
-
-  return *std::unique_ptr<iroha::model::Peer>((*it)->makeOldModel());
+  return *it;
 }
 
 proto::Loader::Stub &BlockLoaderImpl::getPeerStub(
-    const iroha::model::Peer &peer) {
-  auto it = peer_connections_.find(peer);
+    const shared_model::interface::Peer &peer) {
+  auto it = peer_connections_.find(peer.address());
   if (it == peer_connections_.end()) {
     it = peer_connections_
              .insert(std::make_pair(
-                 peer,
+                 peer.address(),
                  proto::Loader::NewStub(grpc::CreateChannel(
-                     peer.address, grpc::InsecureChannelCredentials()))))
+                     peer.address(), grpc::InsecureChannelCredentials()))))
              .first;
   }
   return *it->second;
