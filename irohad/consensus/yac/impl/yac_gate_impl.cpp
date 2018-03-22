@@ -30,12 +30,6 @@
 #include "simulator/block_creator.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
-#include "backend/protobuf/from_old_model.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
-#include "cryptography/public_key.hpp"
-#include "interfaces/common_objects/signature.hpp"
-#include "utils/polymorphic_wrapper.hpp"
-
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -61,8 +55,9 @@ namespace iroha {
       void YacGateImpl::vote(const shared_model::interface::Block &block) {
         std::unique_ptr<model::Block> bl(block.makeOldModel());
         auto hash = hash_provider_->makeHash(*bl);
-        log_->info(
-            "vote for block ({}, {})", hash.proposal_hash, block.hash().toString());
+        log_->info("vote for block ({}, {})",
+                   hash.proposal_hash,
+                   block.hash().toString());
         auto order = orderer_->getOrdering(hash);
         if (not order) {
           log_->error("ordering doesn't provide peers => pass round");
