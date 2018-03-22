@@ -37,17 +37,15 @@ class CreateDomain : public ::testing::Test {
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
                              iroha::model::can_create_domain}) {
-    auto new_perms = perms;
-    new_perms.push_back(iroha::model::can_set_quorum);
     return framework::createUserWithPerms(
-               kUser, kUserKeypair.publicKey(), kRole, new_perms)
+               kUser, kUserKeypair.publicKey(), kRole, perms)
         .build()
         .signAndAddSignature(kAdminKeypair);
   }
 
   /**
-   * Create valid base pre-build transaction
-   * @return pre-build tx
+   * Create valid base pre-built transaction
+   * @return pre-built tx
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
@@ -57,7 +55,7 @@ class CreateDomain : public ::testing::Test {
   }
 
   /**
-   * Completes pre-build transaction
+   * Completes pre-built transaction
    * @param builder is a pre-built tx
    * @return built tx
    */
@@ -114,7 +112,7 @@ TEST_F(CreateDomain, NoPermissions) {
 
 /**
  * @given some user with can_create_domain permission
- * @when execute tx with CreateDomain command with inexistent domain
+ * @when execute tx with CreateDomain command with inexistent role
  * @then there is no tx in proposal
  */
 TEST_F(CreateDomain, NoRole) {
@@ -153,7 +151,7 @@ TEST_F(CreateDomain, ExistentName) {
 /**
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with maximum available length
- * @then there is no tx in proposal
+ * @then there is the tx in proposal
  */
 TEST_F(CreateDomain, MaxLenName) {
   IntegrationTestFramework()
