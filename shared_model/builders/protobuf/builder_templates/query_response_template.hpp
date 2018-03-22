@@ -35,18 +35,17 @@ namespace shared_model {
      * builders by means of replacing template parameters
      * @tparam S -- field counter for checking that all required fields are
      * set
-     * @tparam BT -- build type of built object returned by build method
      */
-    template <int S = 0, typename BT = QueryResponse>
+    template <int S = 0>
     class TemplateQueryResponseBuilder {
      private:
-      template <int, typename>
+      template <int>
       friend class TemplateQueryResponseBuilder;
 
       enum RequiredFields { QueryResponseField, QueryHash, TOTAL };
 
       template <int s>
-      using NextBuilder = TemplateQueryResponseBuilder<S | (1 << s), BT>;
+      using NextBuilder = TemplateQueryResponseBuilder<S | (1 << s)>;
 
       using ProtoQueryResponse = iroha::protocol::QueryResponse;
 
@@ -55,7 +54,7 @@ namespace shared_model {
 
       template <int Sp>
       TemplateQueryResponseBuilder(
-          const TemplateQueryResponseBuilder<Sp, BT> &o)
+          const TemplateQueryResponseBuilder<Sp> &o)
           : query_response_(o.query_response_) {}
 
       /**
@@ -203,7 +202,7 @@ namespace shared_model {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
         auto result =
             QueryResponse(iroha::protocol::QueryResponse(query_response_));
-        return BT(std::move(result));
+        return QueryResponse(std::move(result));
       }
 
       static const int total = RequiredFields::TOTAL;
