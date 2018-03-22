@@ -107,7 +107,7 @@ class TransferAsset : public ::testing::Test {
 };
 
 /**
- * @given some user with can_create_role permission
+ * @given some user with all required permission
  * @when execute tx with TransferAsset command
  * @then there is the tx in proposal
  */
@@ -128,7 +128,7 @@ TEST_F(TransferAsset, Basic) {
 }
 
 /**
- * @given some user with only can_transfer permissionr
+ * @given some user with only can_transfer permission
  * @when execute tx with TransferAsset command
  * @then there is an empty proposal
  */
@@ -150,7 +150,7 @@ TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
 }
 
 /**
- * @given some user with only can_receive permissionr
+ * @given some user with only can_receive permission
  * @when execute tx with TransferAsset command
  * @then there is an empty proposal
  */
@@ -322,14 +322,16 @@ TEST_F(TransferAsset, MoreThanHas) {
 }
 
 /**
- * @given pair of users with all required permissions
- * @when execute tx with TransferAsset command with amount more, than user has
+ * @given pair of users with all required permissions, and tx sender's balance
+ * is replenished if required
+ * @when execute two txes with TransferAsset command with amount more than a
+ * uint256 max half
  * @then there is an empty proposal
  */
 TEST_F(TransferAsset, Uint256DestOverflow) {
   const std::string &uint256_halfmax =
       "723700557733226221397318656304299424082937404160253525246609900049457060"
-      "2495.0";
+      "2495.0";  // 2**252 - 1
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
