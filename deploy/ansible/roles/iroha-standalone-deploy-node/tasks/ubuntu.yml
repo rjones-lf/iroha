@@ -1,12 +1,23 @@
 ---
+  - setup:
+
   - name: Setup docker network
     docker_network:
       name: "{{ iroha_net }}"
 
+  - name: Stop and remove previous running docker containers
+    docker_container:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ postgresName }}"
+    - iroha
+    ignore_errors: yes
+
   - name: Run postgres in docker
     docker_container:
       name: "{{ postgresName }}"
-      image: postgres:9.5
+      image: "{{ dbDockerImage }}:{{ dbDockerImageTag }}"
       state: started
       recreate: yes
       restart: yes
@@ -42,7 +53,7 @@
   - name: Run iroha in docker
     docker_container:
       name: iroha
-      image: hyperledger/iroha-docker:develop_latest
+      image: "{{ irohaDockerImage }}:{{ irohaDockerImageTag }}"
       state: started
       restart: yes
       recreate: yes
@@ -56,7 +67,7 @@
         - "{{ confPath }}:{{ containerConfPath }}"
       env:
         POSTGRES_HOST: "{{ postgresName }}"
-        POSTGRES_PORT: 5432
+        POSTGRES_PORT: "{{ postgresPort }}"
         POSTGRES_USER: "{{ postgresUser }}"
         POSTGRES_PASSWORD: "{{ postgresPassword }}"
         KEY: "node{{ key }}"

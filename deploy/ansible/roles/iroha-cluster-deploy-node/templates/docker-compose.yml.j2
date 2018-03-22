@@ -3,7 +3,7 @@ version: '3'
 services:
 {% for i in range(nodes_in_region | int) %}
   node_{{ key + i }}:
-    image: hyperledger/iroha-docker:develop_latest
+    image: "{{ irohaDockerImage }}:{{ irohaDockerImageTag }}"
     ports:
       - "{{ torii_port + i }}:{{ torii_port + i }}"
       - "{{ internal_port + i }}:{{ internal_port + i }}"
@@ -19,7 +19,7 @@ services:
       - "{{ iroha_net }}_{{ i }}"
 
   postgres_{{ key + i }}:
-    image: postgres:9.5
+    image: "{{ dbDockerImage }}:{{ dbDockerImageTag }}"
     environment:
       - POSTGRES_USER={{ postgresUser }}
       - POSTGRES_PASSWORD={{ postgresPassword }}

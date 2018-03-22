@@ -1,7 +1,16 @@
-[iroha-nodes]
-iroha-ansible-test1 ansible_host=207.148.74.67 ansible_user=root key=0
-iroha-ansible-test2 ansible_host=45.77.175.222 ansible_user=root key=1
-iroha-ansible-test3 ansible_host=45.32.105.9 ansible_user=root key=2
+# This is sample inventory file for deployment using docker-compose (multiple nodes of iroha on target hosts)
+# To start with:
+# 1) set group name (not mandatory, you can use already predefined): e.g. [iroha-nodes].
+# 2) change inventory hostname (not mandatory, you can use already predefined): e.g. iroha-1.
+# 3) set IP address to the address of your server ("ansible_host" variable)
+# 4) set "ansible_user", or leave "root"
+# 5) set "key" variable in the following way:
+# key=0 for the first host of the first node in the inventory
+# for next host set key=key[prev_host] + 1
+# NOTE: 1) you can create more than one group
+# NOTE: 2) you can set unique value of "nodes_in_group" for each host by setting it in
 
-[locals]
-localhost           ansible_connection=local
+[iroha-nodes]
+iroha-1 ansible_host=0.0.0.0 ansible_user=root key=0
+iroha-2 ansible_host=0.0.0.0 ansible_user=root key=1
+iroha-3 ansible_host=0.0.0.0 ansible_user=root key=2

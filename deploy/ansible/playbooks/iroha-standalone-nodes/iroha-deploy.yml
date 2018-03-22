@@ -1,18 +1,15 @@
 ---
-  - hosts: iroha-nodes
-    gather_facts: False
-    tasks:
-    - name: install python 2
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python)
-      changed_when: False
-
-  - hosts: locals
+  - hosts: localhost
+    connection: local
     roles:
       - { role: iroha-standalone-config-gen }
 
-  - hosts: iroha-nodes
-    gather_facts: true
+  - hosts: all
+    gather_facts: False
+    pre_tasks:
+    - name: install python 2  # python installation (ansible hosts gather_facts requirement)
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python)
+      changed_when: False
     roles:
       - { role: docker, tags: docker }
-      - { role: filebeat }
       - { role: iroha-standalone-deploy-node }

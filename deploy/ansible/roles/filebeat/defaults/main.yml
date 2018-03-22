@@ -1,8 +1,0 @@
-shipper_name: default
-env: test
-project_name: iroha-bench
-app_name: iroha-la
-logstash_url: elk.soramitsu.co.jp:5055
-operator: ""
-nginx_access_log_paths: [ "/var/log/nginx/access.log" ]
-nginx_error_log_paths: [ "/var/log/nginx/access.log" ]

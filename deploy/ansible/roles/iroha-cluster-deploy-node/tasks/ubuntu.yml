@@ -1,5 +1,11 @@
 ---
   - setup:
+  - name: stop and remove all docker-compose containers before operations
+    command: docker-compose down
+    args:
+      chdir: "{{ composeDir }}"
+    ignore_errors: yes
+    tag: deliver
 
   - name: Make conf dir
     file:
@@ -43,6 +49,18 @@
       src: docker-compose.yml.j2
       dest: "{{ composeDir }}/docker-compose.yml"
     tag: deliver
+
+  - name: pull fresh docker image of postgres
+    docker_image:
+      name: "{{ dbDockerImage }}"
+      tag: "{{ dbDockerImageTag }}"
+    tag: deploy
+
+  - name: pull fresh docker image of iroha
+    docker_image:
+      name: "{{ irohaDockerImage }}"
+      tag: "{{ irohaDockerImageTag }}"
+    tag: deploy
 
   - name: run docker compose
     command: docker-compose up -d

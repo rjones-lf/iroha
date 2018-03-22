@@ -1,17 +1,3 @@
 ---
-# tasks file for iroha-standalone-config-gen
-- name: create dir for temporary files
-  file:
-    path: "{{ filesDir }}"
-    state: directory
-    mode: 0755
-
-- name: generate peers list
-  template:
-    src: peers.list.j2
-    dest: "{{ filesDir }}/peers.list"
-
-- name: generate keys and genesis block
-  command: "iroha-cli --genesis_block --peers_address peers.list"
-  args:
-    chdir: "{{ filesDir }}"
+  - include_tasks: ubuntu.yml
+    when: ansible_distribution == 'Ubuntu'
