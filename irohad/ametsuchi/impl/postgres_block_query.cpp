@@ -42,7 +42,7 @@ namespace iroha {
         return rxcpp::observable<>::empty<wBlock>();
       }
       return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
-        auto block = block_store_.get(i) | [this](const auto &bytes) {
+        auto block = block_store_.get(i) | [](const auto &bytes) {
           return shared_model::converters::protobuf::jsonToModel<
               shared_model::proto::Block>(bytesToString(bytes));
         };
@@ -51,14 +51,13 @@ namespace iroha {
           // TODO load corrupted block from ledger
         }
 
-        return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-            [this, &block](auto s) {
-              if (block) {
-                s.on_next(std::make_shared<shared_model::proto::Block>(
-                    std::move(block.value())));
-              }
-              s.on_completed();
-            });
+        return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>([block{
+            std::move(block)}](auto s) {
+          if (block)
+            s.on_next(
+                std::make_shared<shared_model::proto::Block>(block.value()));
+          s.on_completed();
+        });
       });
     }
 
