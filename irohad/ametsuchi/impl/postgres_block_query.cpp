@@ -16,9 +16,12 @@
  */
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
+
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+
 #include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -39,21 +42,20 @@ namespace iroha {
         return rxcpp::observable<>::empty<wBlock>();
       }
       return rxcpp::observable<>::range(height, to).flat_map([this](auto i) {
-        // TODO IR-975 victordrobny 12.02.2018 convert directly to
-        // shared_model::proto::Block after FlatFile will be reworked to new
-        // model
-        auto block = block_store_.get(i) | [](const auto &bytes) {
-          return model::converters::stringToJson(bytesToString(bytes));
-        } | [this](const auto &d) {
-          return serializer_.deserialize(d);
-        } | [](const auto &block_old) {
-          return std::make_shared<shared_model::proto::Block>(
-              shared_model::proto::from_old(block_old));
+        auto block = block_store_.get(i) | [this](const auto &bytes) {
+          return shared_model::converters::protobuf::jsonToModel<
+              shared_model::proto::Block>(bytesToString(bytes));
         };
+        if (not block) {
+          log_->error("error while converting from JSON");
+          // TODO load corrupted block from ledger
+        }
+
         return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-            [this, block{std::move(block)}](auto s) {
+            [this, &block](auto s) {
               if (block) {
-                s.on_next(block);
+                s.on_next(std::make_shared<shared_model::proto::Block>(
+                    std::move(block.value())));
               }
               s.on_completed();
             });
@@ -112,13 +114,15 @@ namespace iroha {
         const rxcpp::subscriber<wTransaction> &subscriber, uint64_t block_id) {
       return [this, &subscriber, block_id](pqxx::result &result) {
         auto block = block_store_.get(block_id) | [this](auto bytes) {
-          // TODO IR-975 victordrobny 12.02.2018 convert directly to
-          // shared_model::proto::Block after FlatFile will be reworked to new
-          // model
-          return boost::optional<shared_model::proto::Block>(
-              shared_model::proto::from_old(*serializer_.deserialize(
-                  *model::converters::stringToJson(bytesToString(bytes)))));
+          return shared_model::converters::protobuf::jsonToModel<
+              shared_model::proto::Block>(bytesToString(bytes));
         };
+        if (not block) {
+          log_->error("error while converting from JSON");
+          // TODO load corrupted block from ledger
+          return;
+        }
+
         boost::for_each(
             result | boost::adaptors::transformed([&block](const auto &x) {
               return x.at("index").template as<size_t>();
@@ -186,7 +190,7 @@ namespace iroha {
           [this, tx_hashes](auto subscriber) {
             std::for_each(tx_hashes.begin(),
                           tx_hashes.end(),
-                          [that = this, &subscriber](auto tx_hash) {
+                          [ that = this, &subscriber ](auto tx_hash) {
                             subscriber.on_next(that->getTxByHashSync(tx_hash));
                           });
             subscriber.on_completed();
@@ -196,31 +200,27 @@ namespace iroha {
     boost::optional<BlockQuery::wTransaction>
     PostgresBlockQuery::getTxByHashSync(
         const shared_model::crypto::Hash &hash) {
-      return getBlockId(hash) |
-          [this](auto blockId) { return block_store_.get(blockId); } |
-          [this](auto bytes) {
-            // TODO IR-975 victordrobny 12.02.2018 convert directly to
-            // shared_model::proto::Block after FlatFile will be reworked to new
-            // model
-            return model::converters::stringToJson(bytesToString(bytes));
-          }
-      | [&](const auto &json) { return serializer_.deserialize(json); } |
-          [](const auto &block) {
-            return boost::optional<shared_model::proto::Block>(
-                shared_model::proto::from_old(block));
-          }
-      | [&](const auto &block) {
-          boost::optional<PostgresBlockQuery::wTransaction> result;
-          auto it =
-              std::find_if(block.transactions().begin(),
-                           block.transactions().end(),
-                           [&hash](auto tx) { return tx->hash() == hash; });
-          if (it != block.transactions().end()) {
-            result = boost::optional<PostgresBlockQuery::wTransaction>(
-                PostgresBlockQuery::wTransaction((*it)->copy()));
-          }
-          return result;
-        };
+      auto block = getBlockId(hash) | [this](auto block_id) {
+        return block_store_.get(block_id);
+      } | [this](auto bytes) {
+        return shared_model::converters::protobuf::jsonToModel<
+            shared_model::proto::Block>(bytesToString(bytes));
+      };
+      if (not block) {
+        log_->error("error while converting from JSON");
+        // TODO load corrupted block from ledger
+        return boost::none;
+      }
+
+      boost::optional<PostgresBlockQuery::wTransaction> result;
+      auto it = std::find_if(block->transactions().begin(),
+                             block->transactions().end(),
+                             [&hash](auto tx) { return tx->hash() == hash; });
+      if (it != block->transactions().end()) {
+        result = boost::optional<PostgresBlockQuery::wTransaction>(
+            PostgresBlockQuery::wTransaction((*it)->copy()));
+      }
+      return result;
     }
 
   }  // namespace ametsuchi
