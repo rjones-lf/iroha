@@ -203,7 +203,9 @@ namespace iroha {
                   std::shared_ptr<shared_model::interface::Peer>> &v) {
                 peers.push_back(v.value);
               },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {});
+              [&](expected::Error<std::shared_ptr<std::string>> &e) {
+                log_->info(*e.error);
+              });
         }
         return peers;
       };
