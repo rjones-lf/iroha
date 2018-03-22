@@ -35,7 +35,7 @@ Deployment-specific parameters
 Environment-specific parameters
 -------------------------------
 
-- ``max_proposal_size`` is the maximum  amount of transactions that can be in
+- ``max_proposal_size`` is the maximum amount of transactions that can be in
   one proposal, and as a result in a single block as well. So, by changing this 
   value you define the size of potential block. For a starter you can stick to 
   ``10``. However, we recommend to increase this number if you have a lot of 
