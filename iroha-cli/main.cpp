@@ -30,6 +30,8 @@
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
 #include "validators.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 
 // Account information
 DEFINE_bool(
@@ -94,7 +96,10 @@ int main(int argc, char *argv[]) {
     JsonBlockFactory json_factory;
     auto doc = json_factory.serialize(block);
     std::ofstream output_file("genesis.block");
-    output_file << jsonToString(doc);
+    output_file << shared_model::converters::protobuf::modelToJson(
+        shared_model::proto::from_old(block)
+      );
+    // output_file << jsonToString(doc);
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network
