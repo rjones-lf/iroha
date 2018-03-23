@@ -23,6 +23,7 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
 #include "model/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
@@ -284,9 +285,10 @@ TEST_F(TransferAsset, EmptyDesc) {
 /**
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with very long description
- * @then it passed to the proposal
+ * @then it passed to the proposal and commited description matches
  */
 TEST_F(TransferAsset, LongDesc) {
+  std::string long_desc(100000, 'a');
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
@@ -295,10 +297,16 @@ TEST_F(TransferAsset, LongDesc) {
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx().transferAsset(
-          kUser1Id, kUser2Id, kAsset, std::string(100000, 'a'), kAmount)))
+          kUser1Id, kUser2Id, kAsset, long_desc, kAmount)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .checkBlock([&long_desc](auto &block) {
+        auto txes = block->transactions();
+        ASSERT_EQ(txes.size(), 1);
+        auto transfer = *boost::apply_visitor(
+            interface::SpecifiedVisitor<interface::TransferAsset>(),
+            txes[0]->commands()[0]->get());
+        ASSERT_EQ(transfer->message(), long_desc);
+      })
       .done();
 }
 
