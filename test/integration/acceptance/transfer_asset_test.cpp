@@ -328,7 +328,8 @@ TEST_F(TransferAsset, MoreThanHas) {
  * is replenished if required
  * @when execute two txes with TransferAsset command with amount more than a
  * uint256 max half
- * @then there is an empty proposal
+ * @then first transaction is commited and there is an empty proposal for the
+ * second
  */
 TEST_F(TransferAsset, Uint256DestOverflow) {
   const std::string &uint256_halfmax =
