@@ -53,6 +53,10 @@ have created before, and expose ports for communication:
   --network=iroha-network \
   -d postgres:9.5
 
+ .. note:: -If you already have Postgres running on a host system on default port
+  (5432), then you should pick another free port  that will be occupied. For
+  example, 5433: ``-p 5433:5432 \``
+
 Creating Blockstore
 ^^^^^^^^^^^^^^^^^^^
 Before we run Iroha container, we should create persistent volume to store
@@ -146,7 +150,8 @@ let's get familiar with ``iroha-cli``
 
 .. Attention:: Despite that ``iroha-cli`` is arguably the simplest way to start
   working with Iroha, ``iroha-cli`` was engineered very fast and lacks tests,
-  so user experience might not be the best. In the future we will deliver a
+  so user experience might not be the best. For example, order of menu items
+  can differ from that you see in this guide. In the future we will deliver a
   better version and appreciate contributions.
 
 .. raw:: html
