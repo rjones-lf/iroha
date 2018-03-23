@@ -320,8 +320,9 @@ namespace iroha {
       auto cmd_value = static_cast<const AddAssetQuantity &>(command);
       // Check if creator has MoneyCreator permission.
       // One can only add to his/her account
-      // TODO: 03.02.2018 grimadas IR-935, Separate asset creation for distinct asset types, now: anyone having
-      // permission "can_add_asset_qty" can add any asset
+      // TODO: 03.02.2018 grimadas IR-935, Separate asset creation for distinct
+      // asset types, now: anyone having permission "can_add_asset_qty" can add
+      // any asset
       return creator_account_id == cmd_value.account_id
           and checkAccountRolePermission(
                   creator_account_id, queries, can_add_asset_qty);
@@ -363,11 +364,14 @@ namespace iroha {
              % subtract_asset_quantity.amount.getPrecision())
                 .str());
       }
-      auto account_asset = queries.getAccountAsset(
-          subtract_asset_quantity.account_id, subtract_asset_quantity.asset_id) | [&](auto &a) {
-        return boost::make_optional(
-            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
-      };
+      auto account_asset =
+          queries.getAccountAsset(subtract_asset_quantity.account_id,
+                                  subtract_asset_quantity.asset_id)
+          | [&](auto &a) {
+              return boost::make_optional(
+                  *std::unique_ptr<iroha::model::AccountAsset>(
+                      a->makeOldModel()));
+            };
       if (not account_asset) {
         return makeExecutionResult((boost::format("account %s does not have %s")
                                     % subtract_asset_quantity.account_id
@@ -792,11 +796,14 @@ namespace iroha {
         const std::string &creator_account_id) {
       auto transfer_asset = static_cast<const TransferAsset &>(command);
 
-      auto src_account_asset = queries.getAccountAsset(
-          transfer_asset.src_account_id, transfer_asset.asset_id) | [](auto &a) {
-        return boost::make_optional(
-            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
-      };
+      auto src_account_asset =
+          queries.getAccountAsset(transfer_asset.src_account_id,
+                                  transfer_asset.asset_id)
+          | [](auto &a) {
+              return boost::make_optional(
+                  *std::unique_ptr<iroha::model::AccountAsset>(
+                      a->makeOldModel()));
+            };
       if (not src_account_asset) {
         return makeExecutionResult((boost::format("asset %s is absent of %s")
                                     % transfer_asset.asset_id
@@ -805,11 +812,14 @@ namespace iroha {
       }
 
       AccountAsset dest_AccountAsset;
-      auto dest_account_asset = queries.getAccountAsset(
-          transfer_asset.dest_account_id, transfer_asset.asset_id) | [](auto &a) {
-        return boost::make_optional(
-            *std::unique_ptr<iroha::model::AccountAsset>(a->makeOldModel()));
-      };
+      auto dest_account_asset =
+          queries.getAccountAsset(transfer_asset.dest_account_id,
+                                  transfer_asset.asset_id)
+          | [](auto &a) {
+              return boost::make_optional(
+                  *std::unique_ptr<iroha::model::AccountAsset>(
+                      a->makeOldModel()));
+            };
       auto asset = queries.getAsset(transfer_asset.asset_id);
       if (not asset) {
         return makeExecutionResult((boost::format("asset %s is absent of %s")
