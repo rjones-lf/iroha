@@ -22,7 +22,7 @@ then
 
     docker-compose -f ${COMPOSE} up -d
 else
-    IROHA_DBG_PORTS="$(docker port ${PROJECT}_node_1 | sed 's/\(.*\)://' | sort -r | sed -e :a -e N -e 's/\n/:/' -e ta)"
+    IROHA_DBG_PORTS="$(docker port ${PROJECT}_node_1 | sed 's/\(.*\)://' | sort -r | sed -e :a -e N -e 's/\n/:/p' -e ta)"
     export IROHA_PORT="$(echo ${IROHA_DBG_PORTS} | sed 's/:.*//')"
     export DEBUGGER_PORT="$(echo ${IROHA_DBG_PORTS} | sed 's/.*://')"
 fi
