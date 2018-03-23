@@ -53,7 +53,7 @@ have created before, and expose ports for communication:
   --network=iroha-network \
   -d postgres:9.5
 
- .. note:: -If you already have Postgres running on a host system on default port
+.. note:: If you already have Postgres running on a host system on default port
   (5432), then you should pick another free port that will be occupied. For
   example, 5433: ``-p 5433:5432 \``
 
@@ -71,7 +71,7 @@ Configuring Iroha Network
 
 .. note:: To keep things simple, in this guide we will create a network
   containing only one node. To understand how to run several peers, follow
-  this guide
+  this guide.
 
 Now we need to configure our Iroha network. This includes creating a
 configuration file, generating keypairs for a users, writing a list of peers 
