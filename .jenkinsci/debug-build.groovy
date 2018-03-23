@@ -1,7 +1,14 @@
 #!/usr/bin/env groovy
 
 def doDebugBuild(coverageEnabled=false) {
-  def parallelism = env.PARALLELISM
+  def parallelism = params.PARALLELISM
+  // params are always null unless job is started
+  // this is the case for the FIRST build only.
+  // So just set this to same value as default. 
+  // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
+  if (parallelism == null) {
+    parallelism = 4
+  }
   if ("arm7" in env.NODE_NAME) {
     parallelism = 1
   }
@@ -16,7 +23,7 @@ def doDebugBuild(coverageEnabled=false) {
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile"
   // pull docker image in case we don't have one
-  // speeds up consequent image builds as we simply tag them 
+  // speeds up consequent image builds as we simply tag them
   sh "docker pull ${DOCKER_BASE_IMAGE_DEVELOP}"
   if (env.BRANCH_NAME == 'develop') {
     iC = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
@@ -36,6 +43,10 @@ def doDebugBuild(coverageEnabled=false) {
     + " -v /var/jenkins/ccache:${CCACHE_DIR}") {
 
     def scmVars = checkout scm
+    def cmakeOptions = ""
+    if ( coverageEnabled ) {
+      cmakeOptions = " -DCOVERAGE=ON "
+    }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
     env.IROHA_BUILD = "${env.IROHA_HOME}/build"
@@ -48,19 +59,24 @@ def doDebugBuild(coverageEnabled=false) {
     """  
     sh """
       cmake \
-        -DCOVERAGE=ON \
         -DTESTING=ON \
         -H. \
         -Bbuild \
         -DCMAKE_BUILD_TYPE=Debug \
-        -DIROHA_VERSION=${env.IROHA_VERSION}
+        -DIROHA_VERSION=${env.IROHA_VERSION} \
+        ${cmakeOptions}
     """
     sh "cmake --build build -- -j${parallelism}"
     sh "ccache --show-stats"
-    sh "cmake --build build --target test"
-    sh "cmake --build build --target cppcheck"
-
     if ( coverageEnabled ) {
+      sh "lcov -i --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.init.info"
+    }
+    def testExitCode = sh(script: 'cmake --build build --target test', returnStatus: true)
+    if (testExitCode != 0) {
+      currentBuild.result = "UNSTABLE"
+    }
+    if ( coverageEnabled ) {
+      sh "cmake --build build --target cppcheck"
       // Sonar
       if (env.CHANGE_ID != null) {
         sh """
@@ -75,9 +91,10 @@ def doDebugBuild(coverageEnabled=false) {
         """
       }
 
-      sh "lcov --capture --directory build --config-file .lcovrc --output-file build/reports/coverage_full.info"
-      sh "lcov --remove build/reports/coverage_full.info '/usr/*' 'schema/*' --config-file .lcovrc -o build/reports/coverage_full_filtered.info"
-      sh "python /tmp/lcov_cobertura.py build/reports/coverage_full_filtered.info -o build/reports/coverage.xml"                
+      sh "lcov --capture --directory build --config-file .lcovrc --output-file build/reports/coverage.info"
+      sh "lcov -a build/reports/coverage.init.info -a build/reports/coverage.info --config-file .lcovrc -o build/reports/coverage.info"
+      sh "lcov --remove build/reports/coverage.info 'external/*' '/usr/*' 'schema/*' --config-file .lcovrc -o build/reports/coverage.info"
+      sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
     }
 

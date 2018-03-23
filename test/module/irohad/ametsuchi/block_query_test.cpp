@@ -21,13 +21,11 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "backend/protobuf/from_old_model.hpp"
 #include "framework/test_subscriber.hpp"
-#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace framework::test_subscriber;
 
 class BlockQueryTest : public AmetsuchiTest {
@@ -90,8 +88,8 @@ class BlockQueryTest : public AmetsuchiTest {
       // model
       auto old_block = *std::unique_ptr<iroha::model::Block>(b.makeOldModel());
       file->add(b.height(),
-                iroha::stringToBytes(converters::jsonToString(
-                    converters::JsonBlockFactory().serialize(old_block))));
+                iroha::stringToBytes(iroha::model::converters::jsonToString(
+                    iroha::model::converters::JsonBlockFactory().serialize(old_block))));
       index->index(b);
       blocks_total++;
     }

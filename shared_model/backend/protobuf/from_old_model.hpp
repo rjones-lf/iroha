@@ -66,7 +66,6 @@ namespace shared_model {
 
     inline static shared_model::proto::QueryResponse from_old(
         std::shared_ptr<iroha::model::QueryResponse> queryResponse) {
-      auto sshash = queryResponse->query_hash.to_hexstring();
       auto proto_resp =
           *iroha::model::converters::PbQueryResponseFactory().serialize(
               queryResponse);

@@ -21,10 +21,14 @@ compile_proto_to_cpp(primitive.proto)
 compile_proto_to_cpp(commands.proto)
 compile_proto_to_cpp(queries.proto)
 compile_proto_to_cpp(responses.proto)
-compile_proto_to_grpc_cpp(endpoint.proto)
-compile_proto_to_grpc_cpp(yac.proto)
-compile_proto_to_grpc_cpp(ordering.proto)
-compile_proto_to_grpc_cpp(loader.proto)
+compile_proto_to_cpp(endpoint.proto)
+
+if (IROHA_ROOT_PROJECT)
+  compile_proto_to_grpc_cpp(endpoint.proto)
+  compile_proto_to_grpc_cpp(yac.proto)
+  compile_proto_to_grpc_cpp(ordering.proto)
+  compile_proto_to_grpc_cpp(loader.proto)
+endif ()
 
 add_library(schema
     block.pb.cc
@@ -35,46 +39,49 @@ add_library(schema
     endpoint.pb.cc
     proposal.pb.cc
     )
+
 target_link_libraries(schema
     protobuf
     )
 target_include_directories(schema PUBLIC
-    .
+    ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
-add_library(endpoint
-    endpoint.pb.cc
-    endpoint.grpc.pb.cc
-    )
-target_link_libraries(endpoint
-    protobuf
-    grpc++
-    schema
-    )
+if (IROHA_ROOT_PROJECT)
+  add_library(endpoint
+      endpoint.pb.cc
+      endpoint.grpc.pb.cc
+      )
+  target_link_libraries(endpoint
+      protobuf
+      grpc++
+      schema
+      )
 
-add_library(yac_grpc
-    yac.pb.cc
-    yac.grpc.pb.cc
-    )
-target_link_libraries(yac_grpc
-    protobuf
-    grpc++
-    )
+  add_library(yac_grpc
+      yac.pb.cc
+      yac.grpc.pb.cc
+      )
+  target_link_libraries(yac_grpc
+      protobuf
+      grpc++
+      )
 
-add_library(ordering_grpc
-    ordering.pb.cc
-    ordering.grpc.pb.cc
-    )
-target_link_libraries(ordering_grpc
-    schema
-    grpc++
-    )
+  add_library(ordering_grpc
+      ordering.pb.cc
+      ordering.grpc.pb.cc
+      )
+  target_link_libraries(ordering_grpc
+      schema
+      grpc++
+      )
 
-add_library(loader_grpc
-    loader.pb.cc
-    loader.grpc.pb.cc
-    )
-target_link_libraries(loader_grpc
-    schema
-    grpc++
-    )
+  add_library(loader_grpc
+      loader.pb.cc
+      loader.grpc.pb.cc
+      )
+  target_link_libraries(loader_grpc
+      schema
+      grpc++
+      )
+endif ()

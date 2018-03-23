@@ -25,7 +25,9 @@
 namespace shared_model {
   namespace builder {
     template <typename BuilderImpl, typename Validator>
-    class DomainBuilder: public CommonObjectBuilder<interface::Domain, BuilderImpl, Validator> {
+    class DomainBuilder : public CommonObjectBuilder<interface::Domain,
+                                                     BuilderImpl,
+                                                     Validator> {
      public:
       DomainBuilder defaultRole(
           const interface::types::RoleIdType &default_role) {

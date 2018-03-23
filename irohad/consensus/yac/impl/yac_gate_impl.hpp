@@ -49,8 +49,9 @@ namespace iroha {
                     std::shared_ptr<simulator::BlockCreator> block_creator,
                     std::shared_ptr<network::BlockLoader> block_loader,
                     uint64_t delay);
-        void vote(model::Block block) override;
-        rxcpp::observable<model::Block> on_commit() override;
+        void vote(const shared_model::interface::Block &) override;
+        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>> on_commit()
+            override;
 
        private:
         /**
@@ -69,7 +70,8 @@ namespace iroha {
 
         logger::Logger log_;
 
-        std::pair<YacHash, model::Block> current_block_;
+        std::pair<YacHash, std::shared_ptr<shared_model::interface::Block>>
+            current_block_;
       };
 
     }  // namespace yac

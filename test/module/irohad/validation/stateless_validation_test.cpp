@@ -22,7 +22,6 @@
 #include "module/irohad/model/model_mocks.hpp"
 #include "validation/impl/stateless_validator_impl.hpp"
 
-
 using namespace std::chrono_literals;
 using ::testing::A;
 using ::testing::Return;

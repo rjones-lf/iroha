@@ -41,7 +41,6 @@ parts:
       - spdlog
       - rxcpp
       - rapidjson
-      - optional
       - libpq
       - pqxx
       - tbb
@@ -107,13 +106,6 @@ parts:
     plugin: cmake
     configflags: [-DRAPIDJSON_BUILD_EXAMPLES=OFF]
     after: [cmake]
-  optional:
-    source: https://github.com/martinmoene/optional-lite.git
-    source-commit: a0ddabb8b52e1eaaf0dd1515bb85698b747528e4
-    plugin: nil
-    install: |
-      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/local/include
-      cp -r include/nonstd $SNAPCRAFT_PART_INSTALL/usr/local/include
   libpq:
     source: https://git.postgresql.org/git/postgresql.git
     source-commit: 029386ccbddd0a33d481b94e511f5219b03e6636

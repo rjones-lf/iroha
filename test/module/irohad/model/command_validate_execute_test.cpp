@@ -17,7 +17,7 @@
 
 #include <limits>
 
-#include "builders/common_objects/default_builders.hpp"
+#include "builders/default_builders.hpp"
 #include "framework/result_fixture.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"

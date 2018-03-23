@@ -25,10 +25,8 @@ using namespace iroha::ametsuchi;
 using namespace iroha::simulator;
 using namespace iroha::validation;
 using namespace iroha::network;
-using namespace iroha::model;
 using namespace iroha::synchronizer;
 using namespace iroha::torii;
-using namespace iroha::model::converters;
 using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
@@ -138,7 +136,7 @@ void Irohad::initPeerQuery() {
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  crypto_verifier = std::make_shared<ModelCryptoProviderImpl>(keypair);
+  crypto_verifier = std::make_shared<iroha::model::ModelCryptoProviderImpl>(keypair);
 
   log_->info("[Init] => crypto provider");
 }
@@ -242,7 +240,7 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto query_processing_factory = std::make_unique<QueryProcessingFactory>(
+  auto query_processing_factory = std::make_unique<iroha::model::QueryProcessingFactory>(
       storage->getWsvQuery(), storage->getBlockQuery());
 
   auto query_processor =

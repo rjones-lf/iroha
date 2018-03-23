@@ -24,7 +24,7 @@
 #include "common/files.hpp"
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "datetime/time.hpp"
-// TODO (@l4l) IR-874 create more confort way for permssion-dependent proto
+// TODO (@l4l) IR-874 create more comfort way for permssion-dependent proto
 // building
 #include "model/permissions.hpp"
 
@@ -74,7 +74,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             .creatorAccountId(kAdminId)
             .txCounter(1)
             .createdTime(iroha::time::now())
-            .addPeer("0.0.0.0:10001", key.publicKey())
+            .addPeer("0.0.0.0:50541", key.publicKey())
             .createRole(
                 kDefaultRole,
                 // TODO (@l4l) IR-874 create more confort way for
@@ -102,14 +102,12 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       const Keypair &keypair, const shared_model::interface::Block &block) {
     log_->info("init state");
     // peer initialization
-    std::shared_ptr<iroha::keypair_t> old_key(keypair.makeOldModel());
-    iroha_instance_->initPipeline(*old_key, maximum_block_size_);
+    iroha_instance_->initPipeline(keypair, maximum_block_size_);
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
     iroha_instance_->instance_->resetOrderingService();
-    std::shared_ptr<iroha::model::Block> old_block(block.makeOldModel());
-    iroha_instance_->makeGenesis(*old_block);
+    iroha_instance_->makeGenesis(block);
     log_->info("added genesis block");
 
     // subscribing for components

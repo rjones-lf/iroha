@@ -161,13 +161,6 @@ RUN set -e; \
     ldconfig; \
     rm -rf /tmp/rapidjson
 
-# install optional
-RUN set -e; \
-    git clone https://github.com/martinmoene/optional-lite /tmp/optional-lite; \
-    (cd /tmp/optional-lite ; git checkout a0ddabb8b52e1eaaf0dd1515bb85698b747528e4); \
-    cp -r /tmp/optional-lite/include/nonstd /usr/local/include; \
-    rm -rf /tmp/optional-lite
-
 # install libpq
 RUN set -e; \
     git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/postgresql; \

@@ -36,16 +36,16 @@ namespace shared_model {
       crypto::Keypair generateKeypair();
 
       /**
-       * Generates new keypair (ed25519) based on user-provided seed
-       * the seed should be 32 byte hex-encoded string
-       * @return generated keypair
+       * Creates keypair (ed25519) from provided private key
+       * @param private_key - ed25519 hex-encoded private key
+       * @return created keypair
        */
-      crypto::Keypair generateKeypair(const std::string &seed);
+      crypto::Keypair fromPrivateKey(const std::string &private_key);
 
       /**
        * Retrieves Keypair object (ed25519) from existing keypair.
-       * @param publicKey - ed25519 hex-encoded public key
-       * @param privateKey - ed25519 hex-encoded private key
+       * @param public_key - ed25519 hex-encoded public key
+       * @param private_key - ed25519 hex-encoded private key
        * @return keypair from provided keys
        */
       crypto::Keypair convertFromExisting(const std::string &public_key,

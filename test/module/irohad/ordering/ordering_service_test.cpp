@@ -40,7 +40,6 @@
 
 using namespace iroha;
 using namespace iroha::ordering;
-using namespace iroha::model;
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
