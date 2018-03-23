@@ -38,7 +38,8 @@ namespace iroha {
           max_size_(max_size),
           delay_milliseconds_(delay_milliseconds),
           transport_(transport),
-          persistent_state_(persistent_state) {
+          persistent_state_(persistent_state),
+          is_finished(false) {
       updateTimer();
       log_ = logger::log("OrderingServiceImpl");
 
@@ -103,6 +104,10 @@ namespace iroha {
     }
 
     void OrderingServiceImpl::updateTimer() {
+      std::lock_guard<std::mutex> lock(m);
+      if (is_finished) {
+        return;
+      }
       if (not queue_.empty()) {
         this->generateProposal();
       }
@@ -113,6 +118,8 @@ namespace iroha {
     }
 
     OrderingServiceImpl::~OrderingServiceImpl() {
+      std::lock_guard<std::mutex> lock(m);
+      is_finished = true;
       handle.unsubscribe();
     }
   }  // namespace ordering

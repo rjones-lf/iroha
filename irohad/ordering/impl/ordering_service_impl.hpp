@@ -20,6 +20,7 @@
 
 #include <tbb/concurrent_queue.h>
 #include <memory>
+#include <mutex>
 #include <rxcpp/rx.hpp>
 
 #include "logger/logger.hpp"
@@ -122,6 +123,16 @@ namespace iroha {
        * the ledger + 1.
        */
       size_t proposal_height;
+
+      /**
+       * Mutex for proper quit handling
+       */
+      std::mutex m;
+
+      /**
+       * Set after destruction
+       */
+      bool is_finished;
 
       logger::Logger log_;
     };
