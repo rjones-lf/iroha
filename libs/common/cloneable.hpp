@@ -21,21 +21,18 @@
 #include <memory>
 
 /**
- * Functions and interface to create cloneable classes with
+ * Functions and interface for creation cloneable classes with
  * smart pointers.
  *
  * Usage:
- * struct Base : object::cloneable<Base>
- * {
+ * struct Base : object::cloneable<Base> {
  *   // ... other methods
  * };
  *
- * struct Derived : Base
- * {
+ * struct Derived : Base {
  *   // ... other methods
  * protected:
- *   Derived* clone() const override
- *   {
+ *   Derived* clone() const override {
  *     return new Derived(*this);
  *   }
  * };
@@ -45,7 +42,7 @@
  */
 
 /**
- * Function to clone Cloneable.
+ * Function to clone from Cloneable.
  * @tparam T - derived from Cloneable
  * @param object - object to clone
  * @return clone of object
@@ -85,7 +82,7 @@ class Cloneable {
   /**
    * Polymorphic clone constructor.
    * Method guarantees deep-copy.
-   * @return pointer to clone object
+   * @return pointer to cloned object
    */
   virtual T *clone() const = 0;
 
