@@ -61,10 +61,6 @@ namespace shared_model {
         return proto_->height();
       }
 
-      const interface::types::BlobType &blob() const override {
-        return *blob_;
-      }
-
      private:
       // lazy
       template <typename T>
@@ -78,9 +74,6 @@ namespace shared_model {
                                    return std::forward<decltype(vec)>(vec);
                                  });
       }};
-
-      const Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(*proto_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -54,18 +54,11 @@ namespace shared_model {
         return *balance_;
       }
 
-      const interface::types::BlobType &blob() const override {
-        return *blob_;
-      }
-
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
       const Lazy<Amount> balance_{[this] { return Amount(proto_->balance()); }};
-
-      const Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(*proto_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

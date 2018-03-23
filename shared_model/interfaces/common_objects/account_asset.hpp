@@ -19,7 +19,7 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_ASSET_HPP
 
 #include <new>
-#include "interfaces/base/hashable.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
@@ -34,7 +34,7 @@ namespace shared_model {
     /**
      * Representation of wallet in system
      */
-    class AccountAsset : public HASHABLE(AccountAsset) {
+    class AccountAsset : public PRIMITIVE(AccountAsset) {
      public:
       /**
        * @return Identity of user, for fetching data

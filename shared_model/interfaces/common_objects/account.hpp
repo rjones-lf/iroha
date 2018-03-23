@@ -19,7 +19,7 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_HPP
 
 #include "cryptography/hash.hpp"
-#include "interfaces/base/hashable.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 
@@ -33,7 +33,7 @@ namespace shared_model {
     /**
      * User identity information in the system
      */
-    class Account : public HASHABLE(Account) {
+    class Account : public PRIMITIVE(Account) {
      public:
       /**
        * @return Identity of user, for fetching data
@@ -66,6 +66,16 @@ namespace shared_model {
             .append("domainId", domainId())
             .append("quorum", std::to_string(quorum()))
             .finalize();
+      }
+
+      /**
+       * Checks equality of objects inside
+       * @param rhs - other wrapped value
+       * @return true, if wrapped objects are same
+       */
+      bool operator==(const Account &rhs) const override {
+        return accountId() == rhs.accountId() and domainId() == rhs.domainId()
+            and quorum() == rhs.quorum() and jsonData() == rhs.jsonData();
       }
 
 #ifndef DISABLE_BACKWARD

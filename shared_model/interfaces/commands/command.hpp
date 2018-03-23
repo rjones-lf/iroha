@@ -20,7 +20,8 @@
 
 #include <boost/variant.hpp>
 #include <utility>
-#include "interfaces/base/hashable.hpp"
+
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -51,7 +52,7 @@ namespace shared_model {
      * Class provides commands container for all commands in system.
      * General note: this class is container for commands, not a base class.
      */
-    class Command : public HASHABLE(Command) {
+    class Command : public PRIMITIVE(Command) {
      private:
       /// PolymorphicWrapper shortcut type
       template <typename... Value>
