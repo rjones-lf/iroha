@@ -187,15 +187,14 @@ namespace iroha {
       };
     }
 
-    boost::optional<
-        std::vector<std::shared_ptr<shared_model::interface::Peer>>>
+    boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
       pqxx::result result;
       return execute_("SELECT * FROM peer;") | [&](const auto &result)
                  -> boost::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
-        auto results = transform<shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
-            result, makePeer);
+        auto results = transform<shared_model::builder::BuilderResult<
+            shared_model::interface::Peer>>(result, makePeer);
         std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
         for (auto &r : results) {
           r.match(
