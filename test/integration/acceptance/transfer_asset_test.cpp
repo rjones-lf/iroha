@@ -107,7 +107,7 @@ class TransferAsset : public ::testing::Test {
 };
 
 /**
- * @given some user with all required permission
+ * @given some user with all required permissions
  * @when execute tx with TransferAsset command
  * @then there is the tx in proposal
  */
