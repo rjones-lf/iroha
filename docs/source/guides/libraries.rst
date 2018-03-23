@@ -104,7 +104,7 @@ Install Iroha python libraries:
     .. code:: sh
 
       cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
-      cmake --build build -- -j4
+      cmake --build build --target irohapy -- -j4
 
     - SWIG_PYTHON=ON forces to build bindings for Python.
     - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
@@ -165,7 +165,7 @@ Example code
 
 .. Note::
 
-    Work with raw data can be different in Python 2 and Python 3.
+    Work with raw data(byte arrays) can be different in Python 2 and Python 3. Due to this fact, the work with transaction hashes is different in the examples.
 
 Import Iroha and schema classes, generated from Iroha protobuf:
 
@@ -218,7 +218,7 @@ Get status of transaction:
     request.tx_hash = tx_hash
 
     # Create connection to Iroha
-    channel = grpc.insecure_channel(IP+port)
+    channel = grpc.insecure_channel(IP+':'+port)
     stub = endpoint_pb2_grpc.CommandServiceStub(channel)
 
     # Send request
@@ -245,7 +245,7 @@ Send transactions to Iroha:
 
     proto_tx.ParseFromString(tmp)
 
-    channel = grpc.insecure_channel(IP+':50051')
+    channel = grpc.insecure_channel(IP+':'+port)
     stub = endpoint_pb2_grpc.CommandServiceStub(channel)
 
     stub.Torii(proto_tx)
