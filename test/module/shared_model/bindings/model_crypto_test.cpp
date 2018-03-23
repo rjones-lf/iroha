@@ -25,9 +25,9 @@
  * @then assertion is not thrown on keypair generation
  */
 TEST(ModelCryptoTest, GenerateKeypair) {
-  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(64, 'a')););
-  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_NO_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(64, 'A')););
 }
 /**
@@ -36,12 +36,12 @@ TEST(ModelCryptoTest, GenerateKeypair) {
  * @then assertion is thrown
  */
 TEST(ModelCryptoTest, GenerateKeypairInvalidSeed) {
-  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(64, 'g'));, std::runtime_error);
-  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(63, 'a'));, std::runtime_error);
-  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(65, 'a'));, std::runtime_error);
-  ASSERT_THROW(shared_model::bindings::ModelCrypto().generateKeypair(
+  ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(32, 'a'));, std::invalid_argument);
 }
