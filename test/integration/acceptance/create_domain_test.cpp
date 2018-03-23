@@ -205,7 +205,7 @@ TEST_F(CreateDomain, EmptyName) {
  * @then the tx hasn't passed stateless validation
  *       (aka skipProposal throws)
  */
-TEST_F(CreateDomain, DISABLED_EmptyRole) {
+TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
   const std::string &empty_name = "";
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
