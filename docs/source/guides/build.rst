@@ -5,16 +5,17 @@ Building Iroha
 In this guide we will learn how to install all dependencies, required to build 
 Iroha and how to build it.
 
-Preparing the environment
+Preparing the Environment
 -------------------------
 
 In order to successfully build Iroha, we need to configure the environment. 
 There are several ways to do it and we will describe all of them.
 
-Currently we support Unix-like systems (we are basically targeting popular 
+Currently, we support Unix-like systems (we are basically targeting popular 
 Linux distros and macOS). If you happen to have Windows or you don't want to 
-spend time installing all dependencies, you might want to consider using Docker
-environment.
+spend time installing all dependencies you might want to consider using Docker
+environment. Also, Windows users might consider using 
+`WSL <https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux>`_
 
 .. hint:: Having troubles? Check FAQ section or communicate to us directly, in
   case you were stuck on something. We don't expect this to happen, but some
@@ -22,34 +23,41 @@ environment.
 
 Docker
 ^^^^^^
+.. hint:: You don't need Docker to run Iroha, it is just one of the possible
+  choices.
+
 First of all, you need to install ``docker`` and ``docker-compose``. You can 
 read how to install it on a 
 `Docker's website <https://www.docker.com/community-edition/>`_
 
-.. note:: Please, use the latest available docker daemon and docker-compose. 
-  If you have troubles launching the Docker container — it is likely that those 
-  problems are caused by an outdated version.
+.. note:: Please, use the latest available docker daemon and docker-compose.
  
-After it clone the `Iroha repository <https://github.com/hyperledger/iroha>`_ 
+Then you should clone the `Iroha repository <https://github.com/hyperledger/iroha>`_ 
 to the directory of your choice.
 
 .. code-block:: shell
 
-  git clone -b develop https://github.com/hyperledger/iroha
+  git clone -b develop https://github.com/hyperledger/iroha --depth=1
 
-After it, you need to run the development environment. Run the script 
-``run-iroha-dev.sh``, contained in the folder ``scripts``: 
+.. hint:: ``--depth-1`` option allows us to download only latest commit and
+  save some time and bandwidth. If you want to get a full commit history, you
+  can omit this option.
+
+After it, you need to run the development environment. Run the 
+``scripts/run-iroha-dev.sh`` script:
 
 .. code-block:: shell
 
-  sh ./iroha/scripts/run-iroha-dev.sh
+  bash scripts/run-iroha-dev.sh
 
-.. hint:: Please make sure that Docker is running before executing the script
+.. hint:: Please make sure that Docker is running before executing the script.
+  macOS users could find a Docker icon in system tray, Linux user could use
+  ``systemctl start docker``
 
 After you execute this script, following things happen:
 
 1. The script checks if you don't have containers with Iroha already running.
-It ends up with reattaching you to interactive shell upon successful completion.
+Successful completion finishes with the new container shell.  
 2. The script will download ``iroha-docker-develop`` and ``postgres`` images. 
 ``iroha-docker-develop`` image contains all development dependencies, and is 
 based on top of ``ubuntu:16.04``. ``postgres`` image is required for starting 
@@ -60,9 +68,6 @@ testing with ``iroha`` folder mounted from the host machine. Iroha folder
 is mounted to ``/opt/iroha`` in Docker container.
 
 Now your are ready to build Iroha! Please go to `Building Iroha` section.
-
-.. note::  Docker environment will be removed when you detach from the
-  container.
 
 Linux
 ^^^^^
@@ -77,13 +82,13 @@ dependencies are system and filesystem, so use
 ``./bootstrap.sh --with-libraries=system,filesystem`` when you are building 
 the project.
 
-Other dependencies
+Other Dependencies
 """"""""""""""""""
 
 To build Iroha, you need following packages:
 
 ``build-essential`` ``automake`` ``libtool`` ``libssl-dev`` ``zlib1g-dev`` 
-``libc6-dbg`` ``golang`` ``git`` ``ssh`` ``tar`` ``gzip`` ``ca-certificates``
+``libc6-dbg`` ``golang`` ``git`` ``tar`` ``gzip`` ``ca-certificates``
 ``wget`` ``curl`` ``file`` ``unzip`` ``python`` ``cmake``
 
 Use this code to install dependencies on Debian-based Linux distro.
@@ -95,12 +100,13 @@ Use this code to install dependencies on Debian-based Linux distro.
   build-essential automake libtool \
   libssl-dev zlib1g-dev \
   libc6-dbg golang \
-  git ssh tar gzip ca-certificates \
+  git tar gzip ca-certificates \
   wget curl file unzip \
   python cmake
 
-.. note::  If you are willing to actively develop Iroha, please consider installing 
-  the `latest release <https://cmake.org/download/>`_ of CMake.
+.. note::  If you are willing to actively develop Iroha and to build shared
+  libraries, please consider installing the 
+  `latest release <https://cmake.org/download/>`_ of CMake. 
 
 macOS
 ^^^^^
@@ -131,7 +137,9 @@ directory of your choice.
   cd iroha
 
 .. hint:: If you have installed the prerequisites with Docker, you don't need
-  to clone Iroha again
+  to clone Iroha again, because when you run ``run-iroha-dev.sh`` it attaches
+  to Iroha source code folder. Feel free to edit source code files with your
+  host environment and build it within docker container.
 
 
 Building Iroha
@@ -150,7 +158,7 @@ though)
   cmake -H. -Bbuild;
   cmake --build build -- -j$(nproc)
 
-.. note::  On macOS ``$(nproc)`` variable does not work. Check number of 
+.. note::  On macOS ``$(nproc)`` variable does not work. Check the number of 
   logical cores with ``sysctl -n hw.ncpu`` and put it explicitly in the command 
   above, e.g. ``cmake --build build -- -j4``
 
@@ -174,13 +182,13 @@ Main Parameters
 +==============+=================+=========+========================================================================+
 | TESTING      |      ON/OFF     | ON      | Enables or disables build of the tests                                 |
 +--------------+                 +---------+------------------------------------------------------------------------+
-| BENCHMARKING |                 | OFF     | Enables or disables build of the benchmarks                            |
+| BENCHMARKING |                 | OFF     | Enables or disables build of the Google Benchmarks library             |
 +--------------+                 +---------+------------------------------------------------------------------------+
-| COVERAGE     |                 | OFF     | Enables or disables coverage                                           |
+| COVERAGE     |                 | OFF     | Enables or disables lcov setting for code coverage generation          |
 +--------------+                 +---------+------------------------------------------------------------------------+
-| SWIG_PYTHON  |                 | OFF     | Enables or disables libraries and native interface bindings for python |
+| SWIG_PYTHON  |                 | OFF     | Enables of disables the library building and Python bindings           |
 +--------------+                 +---------+------------------------------------------------------------------------+
-| SWIG_JAVA    |                 | OFF     | Enables or disables libraries and native interface bindings for java   |
+| SWIG_JAVA    |                 | OFF     | Enables of disables the library building and Java bindings             |
 +--------------+-----------------+---------+------------------------------------------------------------------------+
 
 Packaging Specific Parameters
@@ -200,7 +208,7 @@ Packaging Specific Parameters
 | PACKAGE_DEB           |                 | OFF     | Enables or disables deb packaging          |
 +-----------------------+-----------------+---------+--------------------------------------------+
 
-Running tests (optional)
+Running Tests (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 After building Iroha, it is a good idea to run tests to check the operability
@@ -215,4 +223,16 @@ Alternatively, you can run following command in the ``build`` folder
 .. code-block:: shell
 
   cd build
-  ctest .
+  ctest . --output-on-failure
+
+.. note:: Some of the tests will fail without running PostgreSQL storage running,
+  so if you are not using ``scripts/run-iroha-dev.sh`` script please run Docker 
+  container or create local connection with following parameters:
+
+  .. code-block:: shell
+
+    docker run --name some-postgres \
+    -e POSTGRES_USER=postgres \
+    -e POSTGRES_PASSWORD=mysecretpassword \
+    -p 5432:5432 \
+    -d postgres:9.5
