@@ -81,7 +81,7 @@ those files, you need to clone the
   git clone -b develop https://github.com/hyperledger/iroha --depth=1
 
 .. hint:: ``--depth-1`` option allows us to download only latest commit and
-  save some time and bandwith. If you want to get a full commit hitory, you
+  save some time and bandwith. If you want to get a full commit history, you
   can omit this option.
 
 Starting Iroha Container
@@ -105,14 +105,14 @@ Let's look in detail what this command does:
   ``iroha``
 - with ``$(pwd)/iroha/example:/opt/iroha_data \`` we add a folder containing
   our prepared configuration to a docker container into ``/opt/iroha_data``.
-- ``-v blockstore:/tmp/block_store \`` adds a persistent block storage wich
+- ``-v blockstore:/tmp/block_store \`` adds a persistent block storage which
   we created before to a container, so our blocks won't be lost after we stop
   the container
 - ``--network=iroha-network \`` adds our container to previously created
   ``iroha-network``, so Iroha and Postgres could see each other.
 - ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha-docker`` has
   custom script which runs after starting the container, we want to override
-  it so we can start Iroha Daemon manualy.
+  it so we can start Iroha Daemon manually.
 - ``hyperledger/iroha-docker:develop`` is the image which has the ``develop``
   branch.
 
@@ -160,8 +160,8 @@ running) and attach to an ``iroha`` docker container:
 
   docker exec -it iroha /bin/bash
 
-Now you are in the interactive shell of Iroha's container again. Now we need to
-launch ``iroha-cli`` and pass a account name of desired user. In our example
+Now you are in the interactive shell of Iroha's container again. We need to
+launch ``iroha-cli`` and pass an account name of desired user. In our example
 the account ``admin`` is already created in a ``test`` domain. Let's use this
 account to work with Iroha.
 
@@ -183,7 +183,7 @@ this, please choose option ``1. New transaction (tx)`` by writing ``tx`` or
 Now you can see a list of available commands. Let's try creating a new asset.
 Select ``14. Create Asset (crt_ast)``. Now enter a name for your asset, for
 example ``coolcoin``. Next, enter a Domain ID. In our example we already have a
-domain ``test``, so let's use it. After it we need to enter an asset precision
+domain ``test``, so let's use it. Then we need to enter an asset precision
 – amount of numbers in a fractional part. Let's set precision to ``2``.
 
 Congratulations, you have created your first command and added it to a
@@ -259,7 +259,7 @@ accordingly). Send transaction to Iroha peer as you did before. Well, it says
 `Your transaction was accepted for processing`. Does it mean that we
 had successfully cheated Iroha? Let's try to see transaction's status. Choose
 ``3. New transaction status request (st)`` and enter transaction's hash which
-you can got in console after previous command. Let's send it to Iroha. It
+you can get in console after previous command. Let's send it to Iroha. It
 replies with:
 
 .. code:: 
