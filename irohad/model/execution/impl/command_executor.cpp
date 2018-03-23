@@ -320,7 +320,7 @@ namespace iroha {
       auto cmd_value = static_cast<const AddAssetQuantity &>(command);
       // Check if creator has MoneyCreator permission.
       // One can only add to his/her account
-      // TODO: 03.02.2018 grimadas IR-935, Separate money creation for distinct assets, now: anyone having
+      // TODO: 03.02.2018 grimadas IR-935, Separate asset creation for distinct asset types, now: anyone having
       // permission "can_add_asset_qty" can add any asset
       return creator_account_id == cmd_value.account_id
           and checkAccountRolePermission(
