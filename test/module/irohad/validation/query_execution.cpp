@@ -42,11 +42,11 @@
 #include "model/query_execution.hpp"
 #include "validators/field_validator.hpp"
 
-using ::testing::_;
 using ::testing::AllOf;
 using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::StrictMock;
+using ::testing::_;
 
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
@@ -66,23 +66,19 @@ class QueryValidateExecuteTest : public ::testing::Test {
     EXPECT_CALL(*wsv_query, hasAccountGrantablePermission(_, _, _))
         .WillRepeatedly(Return(false));
 
-    creator = std::shared_ptr<shared_model::interface::Account>(
-        shared_model::proto::AccountBuilder()
-            .accountId(admin_id)
-            .domainId(domain_id)
-            .jsonData("{}")
-            .quorum(1)
-            .build()
-            .copy());
+    creator = clone(shared_model::proto::AccountBuilder()
+                        .accountId(admin_id)
+                        .domainId(domain_id)
+                        .jsonData("{}")
+                        .quorum(1)
+                        .build());
 
-    account = std::shared_ptr<shared_model::interface::Account>(
-        shared_model::proto::AccountBuilder()
-            .accountId(account_id)
-            .domainId(domain_id)
-            .jsonData("{}")
-            .quorum(1)
-            .build()
-            .copy());
+    account = clone(shared_model::proto::AccountBuilder()
+                        .accountId(account_id)
+                        .domainId(domain_id)
+                        .jsonData("{}")
+                        .quorum(1)
+                        .build());
   }
 
   std::shared_ptr<QueryResponse> validateAndExecute() {
@@ -96,11 +92,10 @@ class QueryValidateExecuteTest : public ::testing::Test {
    * @return wrapper with created transaction
    */
   wTransaction makeTransaction(int counter, std::string creator) {
-    return wTransaction(TestTransactionBuilder()
-                            .creatorAccountId(creator)
-                            .txCounter(counter)
-                            .build()
-                            .copy());
+    return clone(TestTransactionBuilder()
+                     .creatorAccountId(creator)
+                     .txCounter(counter)
+                     .build());
   }
 
   /**
@@ -427,13 +422,11 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
  */
 TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
   get_account_assets->account_id = account_id;
-  accountAsset = std::shared_ptr<shared_model::interface::AccountAsset>(
-      shared_model::proto::AccountAssetBuilder()
-          .assetId(accountAsset->assetId())
-          .accountId(account_id)
-          .balance(accountAsset->balance())
-          .build()
-          .copy());
+  accountAsset = clone(shared_model::proto::AccountAssetBuilder()
+                           .assetId(accountAsset->assetId())
+                           .accountId(account_id)
+                           .balance(accountAsset->balance())
+                           .build());
   role_permissions = {};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
@@ -1029,12 +1022,11 @@ class GetAssetInfoTest : public QueryValidateExecuteTest {
     qry->creator_account_id = admin_id;
     query = qry;
     role_permissions = {can_read_assets};
-    asset = std::shared_ptr<shared_model::interface::Asset>(
-        shared_model::proto::AssetBuilder()
-            .assetId(asset_id)
-            .domainId("test")
-            .precision(2)
-            .build().copy());
+    asset = clone(shared_model::proto::AssetBuilder()
+                      .assetId(asset_id)
+                      .domainId("test")
+                      .precision(2)
+                      .build());
   }
   std::shared_ptr<shared_model::interface::Asset> asset;
   std::shared_ptr<GetAssetInfo> qry;

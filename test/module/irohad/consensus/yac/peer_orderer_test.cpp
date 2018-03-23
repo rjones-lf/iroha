@@ -58,9 +58,12 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto peer = std::shared_ptr<shared_model::interface::Peer>(shared_model::proto::PeerBuilder()
-                      .address(std::to_string(i)).pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
-                      .build().copy());
+      std::shared_ptr<shared_model::interface::Peer> peer =
+          clone(shared_model::proto::PeerBuilder()
+                    .address(std::to_string(i))
+                    .pubkey(shared_model::interface::types::PubkeyType(
+                        std::string(32, '0')))
+                    .build());
       result.push_back(peer);
     }
     return result;
@@ -76,7 +79,7 @@ class YacPeerOrdererTest : public ::testing::Test {
       auto key = shared_model::crypto::PublicKey(tmp.pubkey.to_string());
       auto peer = builder.address(tmp.address).pubkey(key).build();
 
-      result.emplace_back(peer.copy());
+      result.emplace_back(clone(peer));
     }
     return result;
   }();
@@ -93,7 +96,8 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeNormalCase) {
   auto old_peers = [this] {
     std::vector<iroha::model::Peer> result;
     for (auto &peer : s_peers) {
-      result.push_back(*std::unique_ptr<iroha::model::Peer>(peer->makeOldModel()));
+      result.push_back(
+          *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel()));
     }
     return result;
   }();
