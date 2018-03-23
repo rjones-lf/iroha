@@ -731,7 +731,7 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_TRUE(tx1);
 
   auto tx2 = blocks->getTxByHashSync(tx2hash);
-  ASSERT_TRUE(tx1);
+  ASSERT_TRUE(tx2);
 
   ASSERT_EQ(**tx1, txn1);
   ASSERT_EQ(**tx2, txn2);

@@ -48,7 +48,6 @@ namespace iroha {
         };
         if (not block) {
           log_->error("error while converting from JSON");
-          // TODO load corrupted block from ledger
         }
 
         return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>([block{
@@ -119,7 +118,6 @@ namespace iroha {
         };
         if (not block) {
           log_->error("error while converting from JSON");
-          // TODO load corrupted block from ledger
           return;
         }
 
@@ -208,7 +206,6 @@ namespace iroha {
       };
       if (not block) {
         log_->error("error while converting from JSON");
-        // TODO load corrupted block from ledger
         return boost::none;
       }
 
