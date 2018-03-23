@@ -35,7 +35,7 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP)
 
     set(CMAKE_SWIG_FLAGS "")
     if (SHARED_MODEL_DISABLE_COMPATIBILITY)
-        set(CMAKE_SWIG_FLAGS "-DDISABLE_BACKWARD")
+        set(CMAKE_SWIG_FLAGS "-DDISABLE_BACKWARD" -package bindings)
     endif()
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
