@@ -224,7 +224,7 @@ Creating a First Query
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Now let's check if ``coolcoins`` were successfully transferred from 
-``admin@test`` to ``test@test``. Go back (``b``) and choose ``2. New query
+``admin@test`` to ``test@test``. Choose ``2. New query
 (qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if
 ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with
 commands you did with commands and ``1. Send to Iroha peer (send)``. Now you
