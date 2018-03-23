@@ -29,7 +29,7 @@ Starting Iroha Node
 Creating a Docker Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 To operate, Iroha requires a ``PostgreSQL`` database. Let's start with creating
-a Docker network, so containers for Postgres and Iroha can run in the same
+a Docker network, so containers for Postgres and Iroha can run on the same
 virtual network and successfully communicate. In this guide we will call it
 ``iroha-network``, but you can use any name. In your terminal write following
 command:
@@ -54,7 +54,7 @@ have created before, and expose ports for communication:
   -d postgres:9.5
 
  .. note:: -If you already have Postgres running on a host system on default port
-  (5432), then you should pick another free port  that will be occupied. For
+  (5432), then you should pick another free port that will be occupied. For
   example, 5433: ``-p 5433:5432 \``
 
 Creating Blockstore
@@ -74,10 +74,10 @@ Configuring Iroha Network
   this guide
 
 Now we need to configure our Iroha network. This includes creating a
-configuration file, generating keypairs for a users, writing list of peers and
-creating a genesis block. However, we have prepared an example configuration
-for this guide, so you can start playing with Iroha faster. In order to get
-those files, you need to clone the 
+configuration file, generating keypairs for a users, writing a list of peers 
+and creating a genesis block. However, we have prepared an example
+configuration for this guide, so you can start playing with Iroha faster. 
+In order to get those files, you need to clone the 
 `Iroha repository <github.com/hyperledger/iroha>`_ from Github.
 
 .. code-block:: shell
@@ -85,7 +85,7 @@ those files, you need to clone the
   git clone -b develop https://github.com/hyperledger/iroha --depth=1
 
 .. hint:: ``--depth-1`` option allows us to download only latest commit and
-  save some time and bandwith. If you want to get a full commit history, you
+  save some time and bandwidth. If you want to get a full commit history, you
   can omit this option.
 
 Starting Iroha Container
@@ -115,8 +115,8 @@ Let's look in detail what this command does:
 - ``--network=iroha-network \`` adds our container to previously created
   ``iroha-network``, so Iroha and Postgres could see each other.
 - ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha-docker`` has
-  custom script which runs after starting the container, we want to override
-  it so we can start Iroha Daemon manually.
+  the custom script which runs after starting the container, we want to
+  override it so we can start Iroha Daemon manually.
 - ``hyperledger/iroha-docker:develop`` is the image which has the ``develop``
   branch.
 
@@ -129,12 +129,12 @@ Iroha, we need to launch Iroha daemon – ``irohad``.
 
   irohad --config config.docker --genesis_block genesis.block --keypair_name node0
 
-.. Attention:: In usual situation, you need to provide a config file, generate
-  genesis block and keypair. However, as a part of this guide we provide an
+.. Attention:: In the usual situation, you need to provide a config file, generate
+  genesis block and keypair. However, as a part of this guide, we provide an
   example configuration for you. Please do not use these settings in a
   production. You can read more about configuration here.
 
-Congratulations! You have an Iroha node up and running! In the next section we
+Congratulations! You have an Iroha node up and running! In the next section, we
 will test it by sending some transactions.
 
 .. hint:: You can get more information about ``irohad`` and its launch options
@@ -150,8 +150,8 @@ let's get familiar with ``iroha-cli``
 
 .. Attention:: Despite that ``iroha-cli`` is arguably the simplest way to start
   working with Iroha, ``iroha-cli`` was engineered very fast and lacks tests,
-  so user experience might not be the best. For example, order of menu items
-  can differ from that you see in this guide. In the future we will deliver a
+  so user experience might not be the best. For example, the order of menu items
+  can differ from that you see in this guide. In the future, we will deliver a
   better version and appreciate contributions.
 
 .. raw:: html
@@ -166,7 +166,7 @@ running) and attach to an ``iroha`` docker container:
   docker exec -it iroha /bin/bash
 
 Now you are in the interactive shell of Iroha's container again. We need to
-launch ``iroha-cli`` and pass an account name of desired user. In our example
+launch ``iroha-cli`` and pass an account name of the desired user. In our example,
 the account ``admin`` is already created in a ``test`` domain. Let's use this
 account to work with Iroha.
 
@@ -177,8 +177,8 @@ account to work with Iroha.
 .. note:: Full account name has a ``@`` symbol between name and domain. Note
   that the keypair has the same name.
  
-Creating a First Transaction
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Creating the First Transaction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can see the interface of ``iroha-cli`` now. Let's create a new asset, add
 some asset to the admin account and transfer it to other account. To achieve
@@ -189,7 +189,7 @@ Now you can see a list of available commands. Let's try creating a new asset.
 Select ``14. Create Asset (crt_ast)``. Now enter a name for your asset, for
 example ``coolcoin``. Next, enter a Domain ID. In our example we already have a
 domain ``test``, so let's use it. Then we need to enter an asset precision
-– amount of numbers in a fractional part. Let's set precision to ``2``.
+– the amount of numbers in a fractional part. Let's set precision to ``2``.
 
 Congratulations, you have created your first command and added it to a
 transaction! You can either send it to Iroha or add some more commands
@@ -220,8 +220,8 @@ transaction.
 
 Congratulations! You have submitted your first transaction to Iroha.
 
-Creating a First Query
-^^^^^^^^^^^^^^^^^^^^^^
+Creating the First Query
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Now let's check if ``coolcoins`` were successfully transferred from 
 ``admin@test`` to ``test@test``. Choose ``2. New query
@@ -253,7 +253,7 @@ from ``admin@test`` to ``test@test``. Again, proceed to ``1. New transaction
 (tx)``, ``5. Transfer Assets (tran_ast)``, enter Source Account and Destination
 Account, in our case ``admin@test`` and ``test@test``, Asset ID
 (``coolcoin#test``), integer part and precision (``10000000`` and ``2``
-accordingly). Send transaction to Iroha peer as you did before. Well, it says
+accordingly). Send a transaction to Iroha peer as you did before. Well, it says
 
 .. code:: 
 
@@ -264,8 +264,8 @@ accordingly). Send transaction to Iroha peer as you did before. Well, it says
 `Your transaction was accepted for processing`. Does it mean that we
 had successfully cheated Iroha? Let's try to see transaction's status. Choose
 ``3. New transaction status request (st)`` and enter transaction's hash which
-you can get in console after previous command. Let's send it to Iroha. It
-replies with:
+you can get in the console after the previous command. Let's send it to Iroha.
+It replies with:
 
 .. code:: 
 
@@ -273,5 +273,5 @@ replies with:
 
 Apparently no. Our transaction was not accepted because it did not pass
 stateful validation and ``coolcoins`` were not transferred. You can check
-status of ``admin@test`` and ``test@test`` with queries to be sure (like we did
-earlier).
+the status of ``admin@test`` and ``test@test`` with queries to be sure 
+(like we did earlier).
