@@ -272,17 +272,14 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
         std::string ss = shared_model::converters::protobuf::modelToJson(
-            *std::static_pointer_cast<shared_model::proto::Block>(
-                block.second)
-        );
+            *std::dynamic_pointer_cast<shared_model::proto::Block>(
+                block.second));
 
-        block_store_->add(block.first,
-                          stringToBytes(
-                          shared_model::converters::protobuf::modelToJson(
-                              *std::static_pointer_cast<shared_model::proto::Block>(
-                              block.second)
-                          )
-                          ));
+        block_store_->add(
+            block.first,
+            stringToBytes(shared_model::converters::protobuf::modelToJson(
+                *std::static_pointer_cast<shared_model::proto::Block>(
+                    block.second))));
       }
 
       storage->transaction_->exec("COMMIT;");

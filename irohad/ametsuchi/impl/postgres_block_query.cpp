@@ -53,10 +53,10 @@ namespace iroha {
 
         return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>([block{
             std::move(block)}](auto s) {
-          if (block)
+          if (block) {
             s.on_next(
                 std::make_shared<shared_model::proto::Block>(block.value()));
-
+          }
           s.on_completed();
         });
       });
