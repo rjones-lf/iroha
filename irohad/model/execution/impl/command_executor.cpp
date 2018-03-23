@@ -215,12 +215,10 @@ namespace iroha {
         const Command &command,
         ametsuchi::WsvQuery &queries,
         const std::string &creator_account_id) {
-      // TODO: no additional checks ?
       return true;
     }
 
-    // --------------------------|Revoke
-    // Permission|-----------------------------
+    // -----------|Revoke Permission|-----------
     std::string RevokePermissionExecutor::commandName() const noexcept {
       return "RevokePermission";
     }
@@ -250,7 +248,6 @@ namespace iroha {
         const Command &command,
         ametsuchi::WsvQuery &queries,
         const std::string &creator_account_id) {
-      // TODO: no checks needed ?
       return true;
     }
 
@@ -277,7 +274,8 @@ namespace iroha {
       if (add_asset_quantity.amount.getPrecision() != precision) {
         return makeExecutionResult(
             (boost::format("precision mismatch: expected %d, but got %d")
-             % precision % add_asset_quantity.amount.getPrecision())
+             % precision
+             % add_asset_quantity.amount.getPrecision())
                 .str());
       }
 
@@ -322,7 +320,8 @@ namespace iroha {
       auto cmd_value = static_cast<const AddAssetQuantity &>(command);
       // Check if creator has MoneyCreator permission.
       // One can only add to his/her account
-      // TODO: In future: Separate money creation for distinct assets
+      // TODO: 03.02.2018 grimadas IR-935, Separate money creation for distinct assets, now: anyone having
+      // permission "can_add_asset_qty" can add any asset
       return creator_account_id == cmd_value.account_id
           and checkAccountRolePermission(
                   creator_account_id, queries, can_add_asset_qty);
@@ -360,7 +359,8 @@ namespace iroha {
       if (subtract_asset_quantity.amount.getPrecision() != precision) {
         return makeExecutionResult(
             (boost::format("precision mismatch: expected %d, but got %d")
-             % precision % subtract_asset_quantity.amount.getPrecision())
+             % precision
+             % subtract_asset_quantity.amount.getPrecision())
                 .str());
       }
       auto account_asset = queries.getAccountAsset(
@@ -502,7 +502,7 @@ namespace iroha {
             (boost::format("Domain %s not found") % create_account.domain_id)
                 .str());
       }
-      // TODO: remove insert signatory from here ?
+      // Account must have unique initial pubkey
       auto result = commands.insertSignatory(create_account.pubkey) | [&] {
         return commands.insertAccount(account);
       } | [&] {
