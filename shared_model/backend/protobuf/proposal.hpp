@@ -23,7 +23,6 @@
 
 #include <boost/range/numeric.hpp>
 #include "common_objects/trivial_proto.hpp"
-#include "model/proposal.hpp"
 
 #include "block.pb.h"
 #include "interfaces/common_objects/types.hpp"

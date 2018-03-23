@@ -17,7 +17,6 @@
 
 #include "framework/integration_framework/iroha_instance.hpp"
 #include <boost/filesystem.hpp>
-#include "backend/protobuf/from_old_model.hpp"
 
 using namespace std::chrono_literals;
 
@@ -29,24 +28,24 @@ namespace integration_framework {
                 .string()),
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
-        internal_port_(10001),
+        internal_port_(50541),
         proposal_delay_(5000ms),
         vote_delay_(5000ms),
         load_delay_(5000ms) {}
 
-  void IrohaInstance::makeGenesis(const iroha::model::Block &block) {
+  void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->dropStorage();
     rawInsertBlock(block);
     instance_->init();
   }
 
-  void IrohaInstance::rawInsertBlock(const iroha::model::Block &block) {
-    instance_->storage->insertBlock(shared_model::proto::from_old(block));
+  void IrohaInstance::rawInsertBlock(
+      const shared_model::interface::Block &block) {
+    instance_->storage->insertBlock(block);
   }
 
-  void IrohaInstance::initPipeline(const iroha::keypair_t &key_pair,
-                                   size_t max_proposal_size) {
-    keypair_ = key_pair;
+  void IrohaInstance::initPipeline(
+      const shared_model::crypto::Keypair &key_pair, size_t max_proposal_size) {
     instance_ = std::make_shared<TestIrohad>(block_store_dir_,
                                              pg_conn_,
                                              torii_port_,
@@ -55,7 +54,7 @@ namespace integration_framework {
                                              proposal_delay_,
                                              vote_delay_,
                                              load_delay_,
-                                             keypair_);
+                                             key_pair);
   }
 
   void IrohaInstance::run() {

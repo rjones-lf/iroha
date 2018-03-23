@@ -18,6 +18,7 @@
 #ifndef IROHA_CONF_LOADER_HPP
 #define IROHA_CONF_LOADER_HPP
 
+#include <rapidjson/error/en.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/rapidjson.h>
 #include <fstream>
@@ -50,7 +51,10 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   const std::string kStrType = "string";
   const std::string kUintType = "uint";
   doc.ParseStream(isw);
-  ac::assert_fatal(not doc.HasParseError(), "JSON parse error: " + conf_path);
+  ac::assert_fatal(
+      not doc.HasParseError(),
+      "JSON parse error [" + conf_path + "]: "
+          + std::string(rapidjson::GetParseError_En(doc.GetParseError())));
 
   ac::assert_fatal(doc.HasMember(mbr::BlockStorePath),
                    ac::no_member_error(mbr::BlockStorePath));

@@ -20,17 +20,19 @@
 
 #include <cstdint>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
-#include "interfaces/common_objects/signature.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
 
   namespace interface {
+
+    class Signature;
+    class Transaction;
+
     namespace types {
       /// Type of hash
       using HashType = crypto::Hash;
@@ -79,6 +81,12 @@ namespace shared_model {
       using AccountDetailKeyType = std::string;
       /// Type of account detail value
       using AccountDetailValueType = std::string;
+      /// Type of a number of transactions in block
+      using TransactionsNumberType = uint16_t;
+      /// Type of a single Transaction
+      using TransactionType = detail::PolymorphicWrapper<Transaction>;
+      /// Type of transactions' collection
+      using TransactionsCollectionType = std::vector<TransactionType>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

@@ -26,7 +26,6 @@
 #include "validation/chain_validator.hpp"
 
 using namespace iroha;
-using namespace iroha::model;
 using namespace iroha::ametsuchi;
 using namespace iroha::synchronizer;
 using namespace iroha::validation;
@@ -72,14 +71,14 @@ MATCHER_P(NewBlockMatcher,
 TEST_F(SynchronizerTest, ValidWhenInitialized) {
   // synchronizer constructor => on_commit subscription called
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 }
 
 TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   // commit from consensus => chain validation passed => commit successful
-  Block test_block;
+  iroha::model::Block test_block;
   test_block.height = 5;
   test_block.hash = iroha::hash(test_block);
 
@@ -98,7 +97,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 
@@ -120,7 +119,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
 TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   // commit from consensus => storage not created => no commit
-  Block test_block;
+  iroha::model::Block test_block;
 
   DefaultValue<
       expected::Result<std::unique_ptr<MutableStorage>, std::string>>::Clear();
@@ -133,7 +132,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 
@@ -148,7 +147,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
 
 TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
   // commit from consensus => chain validation failed => commit successful
-  Block test_block;
+  iroha::model::Block test_block;
   test_block.height = 5;
   test_block.sigs.emplace_back();
   test_block.hash = iroha::hash(test_block);
@@ -174,7 +173,7 @@ TEST_F(SynchronizerTest, ValidWhenBlockValidationFailure) {
                   shared_model::proto::from_old(test_block))))));
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<Block>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 

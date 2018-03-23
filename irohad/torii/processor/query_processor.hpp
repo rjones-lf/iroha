@@ -20,10 +20,6 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "model/client.hpp"
-#include "model/query.hpp"
-#include "model/query_response.hpp"
-
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 

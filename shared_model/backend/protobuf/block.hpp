@@ -25,7 +25,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
 #include "common_objects/trivial_proto.hpp"
-#include "model/block.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 #include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -47,7 +47,8 @@ namespace shared_model {
 
       Block(Block &&o) noexcept : Block(std::move(o.proto_)) {}
 
-      const TransactionsCollectionType &transactions() const override {
+      const interface::types::TransactionsCollectionType &transactions()
+          const override {
         return *transactions_;
       }
 
@@ -80,11 +81,16 @@ namespace shared_model {
         return true;
       }
 
+      bool clearSignatures() override {
+        signatures_->clear();
+        return (signatures_->size() == 0);
+      }
+
       interface::types::TimestampType createdTime() const override {
         return payload_.created_time();
       }
 
-      TransactionsNumberType txsNumber() const override {
+      interface::types::TransactionsNumberType txsNumber() const override {
         return payload_.tx_number();
       }
 

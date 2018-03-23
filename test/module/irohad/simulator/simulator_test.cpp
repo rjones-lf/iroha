@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
+#include "simulator/impl/simulator.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -23,13 +25,9 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 
-#include "framework/test_subscriber.hpp"
-#include "simulator/impl/simulator.hpp"
-
 using namespace iroha;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
@@ -48,7 +46,7 @@ class SimulatorTest : public ::testing::Test {
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
-    crypto_provider = std::make_shared<MockCryptoProvider>();
+    crypto_provider = std::make_shared<iroha::model::MockCryptoProvider>();
   }
 
   void init() {
@@ -60,7 +58,7 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
-  std::shared_ptr<MockCryptoProvider> crypto_provider;
+  std::shared_ptr<iroha::model::MockCryptoProvider> crypto_provider;
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -83,7 +81,8 @@ shared_model::proto::Proposal makeProposal(int height) {
 TEST_F(SimulatorTest, ValidWhenInitialized) {
   // simulator constructor => on_proposal subscription called
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   init();
 }
@@ -98,12 +97,13 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
 
@@ -141,7 +141,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
@@ -171,12 +172,13 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 

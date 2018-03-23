@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,22 +21,19 @@
 #include <tbb/concurrent_queue.h>
 #include <memory>
 #include <rxcpp/rx.hpp>
-#include <unordered_map>
 
-#include "ametsuchi/peer_query.hpp"
 #include "logger/logger.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
-#include "model/proposal.hpp"
-#include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service.hpp"
-#include "network/ordering_service_transport.hpp"
 #include "ordering.grpc.pb.h"
 
 namespace iroha {
 
   namespace ametsuchi {
     class OrderingServicePersistentState;
-  }
+    class OrderingServiceTransport;
+    class PeerQuery;
+  }  // namespace ametsuchi
+
   namespace ordering {
 
     /**

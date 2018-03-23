@@ -19,13 +19,11 @@
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/irohad/model/model_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
-using namespace iroha::model;
 using namespace iroha::validation;
 using namespace iroha::ametsuchi;
 
@@ -59,7 +57,6 @@ class ChainValidationTest : public ::testing::Test {
   }
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
-  Block block;
 
   std::shared_ptr<iroha::consensus::yac::MockSupermajorityChecker>
       supermajority_checker =
@@ -143,7 +140,7 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   auto block = getBlockBuilder().build();
   rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       block_observable = rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
+        return std::shared_ptr<shared_model::interface::Block>(clone(x));
       });
 
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))

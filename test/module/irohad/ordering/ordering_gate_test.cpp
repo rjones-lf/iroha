@@ -20,25 +20,21 @@
 #include "framework/test_subscriber.hpp"
 
 #include "module/irohad/network/network_mocks.hpp"
-#include "network/ordering_service.hpp"
-
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
-#include "ordering/impl/ordering_service_transport_grpc.hpp"
-
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
-using namespace iroha::model;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
 
-using ::testing::_;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
+using ::testing::_;
 
 class MockOrderingGateTransportGrpcService
     : public proto::OrderingServiceTransportGrpc::Service {
@@ -51,8 +47,9 @@ class MockOrderingGateTransportGrpcService
 
 class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
-  MOCK_METHOD1(propagateTransaction,
-               void(std::shared_ptr<const iroha::model::Transaction>));
+  MOCK_METHOD1(
+      propagateTransaction,
+      void(std::shared_ptr<const shared_model::interface::Transaction>));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -120,7 +117,9 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
       }));
 
   for (size_t i = 0; i < 5; ++i) {
-    gate_impl->propagateTransaction(std::make_shared<Transaction>());
+    auto tx = std::make_shared<shared_model::proto::Transaction>(
+        TestTransactionBuilder().build());
+    gate_impl->propagateTransaction(tx);
   }
 
   std::unique_lock<std::mutex> lock(m);
@@ -173,8 +172,13 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
   wrapper_after.subscribe();
 
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
+  auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().build());
+  auto proposal2 = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().build());
+
+  ordering_gate.onProposal(proposal1);
+  ordering_gate.onProposal(proposal2);
 
   ASSERT_TRUE(wrapper_before.validate());
 

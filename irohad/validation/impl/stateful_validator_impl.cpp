@@ -18,9 +18,9 @@
 #include <numeric>
 #include <set>
 
-#include "backend/protobuf/from_old_model.hpp"
+#include <boost/range/adaptor/transformed.hpp>
+
 #include "builders/protobuf/proposal.hpp"
-#include "model/account.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
 
 namespace iroha {
@@ -58,7 +58,6 @@ namespace iroha {
       // Filter only valid transactions
       auto filter = [&temporaryWsv, checking_transaction](auto &acc,
                                                           const auto &tx) {
-        std::unique_ptr<model::Transaction> old_tx(tx->makeOldModel());
         auto answer =
             temporaryWsv.apply(*(tx.operator->()), checking_transaction);
         if (answer) {

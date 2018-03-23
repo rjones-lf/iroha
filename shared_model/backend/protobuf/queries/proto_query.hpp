@@ -142,6 +142,11 @@ namespace shared_model {
         return true;
       }
 
+      bool clearSignatures() override {
+        signatures_->clear();
+        return (signatures_->size() == 0);
+      }
+
       interface::types::TimestampType createdTime() const override {
         return proto_->payload().created_time();
       }

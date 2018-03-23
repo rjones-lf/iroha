@@ -37,19 +37,22 @@ class TxPipelineIntegrationTest : public TxPipelineIntegrationTestFixture {
   void SetUp() override {
     iroha::ametsuchi::AmetsuchiTest::SetUp();
 
-    auto genesis_tx =
-        TransactionGenerator().generateGenesisTransaction(0, {"0.0.0.0:10001"});
+    auto genesis_tx = TransactionGenerator().generateGenesisTransaction(
+        0, {"0.0.0.0:" + std::to_string(default_port)});
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
             0, {genesis_tx});
 
     manager = std::make_shared<iroha::KeysManagerImpl>("node0");
-    auto keypair = manager->loadKeys().value();
+    auto old_keypair = manager->loadKeys().value();
+    shared_model::crypto::Keypair keypair(
+        shared_model::crypto::PublicKey(old_keypair.pubkey.to_string()),
+        shared_model::crypto::PrivateKey(old_keypair.privkey.to_string()));
 
     irohad = std::make_shared<TestIrohad>(block_store_path,
                                           pgopt_,
                                           0,
-                                          10001,
+                                          default_port,
                                           10,
                                           5000ms,
                                           5000ms,

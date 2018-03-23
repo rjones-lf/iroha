@@ -36,16 +36,10 @@ namespace shared_model {
      */
     class TransactionsResponse : public PRIMITIVE(TransactionsResponse) {
      public:
-      /// Type of a single Transaction
-      using TransactionType = detail::PolymorphicWrapper<Transaction>;
-
-      /// Type of transactions' collection
-      using TransactionsCollectionType = std::vector<TransactionType>;
-
       /**
        * @return Attached transactions
        */
-      virtual TransactionsCollectionType transactions() const = 0;
+      virtual types::TransactionsCollectionType transactions() const = 0;
 
       /**
        * Stringify the data.

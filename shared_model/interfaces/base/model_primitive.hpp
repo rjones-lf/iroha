@@ -19,6 +19,7 @@
 #define IROHA_MODEL_PRIMITIVE_HPP
 
 #include "utils/string_builder.hpp"
+#include "common/cloneable.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -29,7 +30,7 @@ namespace shared_model {
      * @tparam Model - your new style model
      */
     template <typename Model>
-    class ModelPrimitive {
+    class ModelPrimitive : public Cloneable<ModelPrimitive<Model>> {
      public:
       /**
        * Reference for model type.
@@ -52,16 +53,6 @@ namespace shared_model {
       virtual bool operator!=(const ModelType &rhs) const {
         return not(*this == rhs);
       }
-
-      /**
-       * Polymorphic copy constructor.
-       * Method guarantees deep-copy.
-       * @return pointer to copied object
-       * discussion note: this method possible to rework with in-place pointer
-       * as parameter. such as: copy(T* ptr=nullptr), on nullptr allocate object
-       * on heap, otherwise in passed pointer
-       */
-      virtual ModelType *copy() const = 0;
 
       virtual ~ModelPrimitive() = default;
     };

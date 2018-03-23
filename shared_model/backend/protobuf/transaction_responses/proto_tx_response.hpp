@@ -32,10 +32,9 @@ auto loadTxResponse(Archive &&ar) {
                        ->index();
   constexpr unsigned last = boost::mpl::size<T...>::type::value - 1;
 
-  return shared_model::detail::variant_impl<T...>::
-      template load<shared_model::interface::TransactionResponse::
-                        ResponseVariantType>(std::forward<Archive>(ar),
-                                             which > last ? last : which);
+  return shared_model::detail::variant_impl<T...>::template load<
+      shared_model::interface::TransactionResponse::ResponseVariantType>(
+      std::forward<Archive>(ar), which > last ? last : which);
 }
 
 namespace shared_model {
@@ -59,7 +58,7 @@ namespace shared_model {
                                             StatefulFailedTxResponse,
                                             StatefulValidTxResponse,
                                             CommittedTxResponse,
-                                            UnknownTxResponse>;
+                                            NotReceivedTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;

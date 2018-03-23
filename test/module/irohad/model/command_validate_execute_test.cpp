@@ -17,7 +17,7 @@
 
 #include <limits>
 
-#include "builders/common_objects/default_builders.hpp"
+#include "builders/default_builders.hpp"
 #include "framework/result_fixture.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -39,11 +39,11 @@
 #include "model/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
-using ::testing::_;
 using ::testing::AllOf;
 using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::StrictMock;
+using ::testing::_;
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -90,12 +90,10 @@ class CommandValidateExecuteTest : public ::testing::Test {
               FAIL() << *e.error;
             });
 
-    default_domain = std::shared_ptr<shared_model::interface::Domain>(
-        shared_model::proto::DomainBuilder()
-            .domainId(domain_id)
-            .defaultRole(admin_role)
-            .build()
-            .copy());
+    default_domain = clone(shared_model::proto::DomainBuilder()
+                            .domainId(domain_id)
+                            .defaultRole(admin_role)
+                            .build());
   }
 
   ExecutionResult validateAndExecute() {
@@ -709,8 +707,7 @@ TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getDomain(domain_id))
-      .WillOnce(Return(boost::none));
+  EXPECT_CALL(*wsv_query, getDomain(domain_id)).WillOnce(Return(boost::none));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -1157,36 +1154,28 @@ class TransferAssetTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    asset = std::shared_ptr<shared_model::interface::Asset>(
-        shared_model::proto::AssetBuilder()
-            .assetId(asset_id)
-            .domainId(domain_id)
-            .precision(2)
-            .build()
-            .copy());
+    asset = clone(shared_model::proto::AssetBuilder()
+                  .assetId(asset_id)
+                  .domainId(domain_id)
+                  .precision(2)
+                  .build());
 
-    balance = std::shared_ptr<shared_model::interface::Amount>(
-        shared_model::proto::AmountBuilder()
-            .intValue(150)
-            .precision(2)
-            .build()
-            .copy());
+    balance = clone(shared_model::proto::AmountBuilder()
+                  .intValue(150)
+                  .precision(2)
+                  .build());
 
-    src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-        shared_model::proto::AccountAssetBuilder()
-            .assetId(asset_id)
-            .accountId(admin_id)
-            .balance(*balance)
-            .build()
-            .copy());
+    src_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                  .assetId(asset_id)
+                  .accountId(admin_id)
+                  .balance(*balance)
+                  .build());
 
-    dst_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-        shared_model::proto::AccountAssetBuilder()
-            .assetId(asset_id)
-            .accountId(account_id)
-            .balance(*balance)
-            .build()
-            .copy());
+    dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                  .assetId(asset_id)
+                  .accountId(account_id)
+                  .balance(*balance)
+                  .build());
 
     transfer_asset = std::make_shared<TransferAsset>();
     transfer_asset->src_account_id = admin_id;
@@ -1487,21 +1476,18 @@ TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
  * @then execute fails and returns false
  */
 TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
-  auto max_balance = std::shared_ptr<shared_model::interface::Amount>(
+  std::shared_ptr<shared_model::interface::Amount> max_balance = clone(
       shared_model::proto::AmountBuilder()
           .intValue(
               std::numeric_limits<boost::multiprecision::uint256_t>::max())
           .precision(2)
-          .build()
-          .copy());
+          .build());
 
-  src_wallet = std::shared_ptr<shared_model::interface::AccountAsset>(
-      shared_model::proto::AccountAssetBuilder()
-          .assetId(src_wallet->assetId())
-          .accountId(src_wallet->accountId())
-          .balance(*max_balance)
-          .build()
-          .copy());
+  src_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                .assetId(src_wallet->assetId())
+                .accountId(src_wallet->accountId())
+                .balance(*max_balance)
+                .build());
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
       .WillOnce(Return(asset));

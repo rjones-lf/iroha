@@ -22,11 +22,11 @@
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/transaction.hpp"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
+#include "interfaces/transaction_responses/not_received_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/unknown_tx_response.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
@@ -52,7 +52,7 @@ namespace shared_model {
                                        StatefulFailedTxResponse,
                                        StatefulValidTxResponse,
                                        CommittedTxResponse,
-                                       UnknownTxResponse>;
+                                       NotReceivedTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ResponseListType = ResponseVariantType::types;

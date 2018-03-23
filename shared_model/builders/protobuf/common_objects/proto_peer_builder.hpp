@@ -49,6 +49,6 @@ namespace shared_model {
      private:
       iroha::protocol::Peer peer_;
     };
-  }
-}
-#endif //IROHA_PROTO_PEER_BUILDER_HPP
+  }  // namespace proto
+}  // namespace shared_model
+#endif  // IROHA_PROTO_PEER_BUILDER_HPP

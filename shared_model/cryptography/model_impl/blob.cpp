@@ -36,7 +36,7 @@ namespace shared_model {
       hex_ = iroha::bytestringToHexstring(toBinaryString(*this));
     }
 
-    Blob *Blob::copy() const {
+    Blob *Blob::clone() const {
       return new Blob(blob());
     }
 

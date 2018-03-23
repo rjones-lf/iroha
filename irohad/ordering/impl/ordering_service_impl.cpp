@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,13 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "ametsuchi/peer_query.hpp"
+#include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/proposal.hpp"
-#include "logger/logger.hpp"
-#include "proposal.pb.h"
+#include "datetime/time.hpp"
+#include "network/ordering_service_transport.hpp"
 
 namespace iroha {
   namespace ordering {

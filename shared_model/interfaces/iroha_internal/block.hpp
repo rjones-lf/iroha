@@ -21,6 +21,7 @@
 #include <memory>
 #include "common/byteutils.hpp"
 #include "interfaces/base/signable.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
@@ -45,24 +46,15 @@ namespace shared_model {
        */
       virtual const types::HashType &prevHash() const = 0;
 
-      /// Type of a number of transactions in block
-      using TransactionsNumberType = uint16_t;
-
       /**
        * @return amount of transactions in block
        */
-      virtual TransactionsNumberType txsNumber() const = 0;
-
-      /// Type of a single Transaction
-      using TransactionType = detail::PolymorphicWrapper<Transaction>;
-
-      /// Type of transactions' collection
-      using TransactionsCollectionType = std::vector<TransactionType>;
+      virtual types::TransactionsNumberType txsNumber() const = 0;
 
       /**
        * @return collection of transactions
        */
-      virtual const TransactionsCollectionType &transactions() const = 0;
+      virtual const types::TransactionsCollectionType &transactions() const = 0;
 
 #ifndef DISABLE_BACKWARD
       iroha::model::Block *makeOldModel() const override {

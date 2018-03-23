@@ -33,10 +33,8 @@
 #include "model/account.hpp"
 #include "model/account_asset.hpp"
 #include "model/asset.hpp"
-#include "model/block.hpp"
 #include "model/domain.hpp"
 #include "model/peer.hpp"
-#include "model/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
