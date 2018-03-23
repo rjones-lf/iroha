@@ -66,7 +66,8 @@ namespace shared_model {
 
 #endif
 
-      Keypair *copy() const override;
+     private:
+      Keypair *clone() const override;
 
      private:
       PublicKey public_key_;

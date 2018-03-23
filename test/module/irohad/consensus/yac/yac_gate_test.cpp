@@ -53,8 +53,7 @@ class YacGateTest : public ::testing::Test {
     commit_message = CommitMessage({message});
     expected_commit = rxcpp::observable<>::just(commit_message);
 
-    expected_block = std::unique_ptr<shared_model::interface::Block>(
-        shared_model::proto::from_old(old_expected_block).copy());
+    expected_block = clone(shared_model::proto::from_old(old_expected_block));
     auto bytes = expected_block->hash().blob();
     std::copy(bytes.begin(), bytes.end(), old_expected_block.hash.begin());
 
