@@ -1,7 +1,14 @@
 #!/usr/bin/env groovy
 
 def doReleaseBuild() {
-  def parallelism = env.PARALLELISM
+  def parallelism = params.PARALLELISM
+  // params are always null unless job is started
+  // this is the case for the FIRST build only.
+  // So just set this to same value as default. 
+  // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
+  if (parallelism == null) {
+    parallelism = 4
+  }
   if ("arm7" in env.NODE_NAME) {
     parallelism = 1
   }

@@ -23,8 +23,32 @@ target_link_libraries(get_transactions_test
   shared_model_stateless_validation
   )
 
+addtest(create_role_test create_role_test.cpp)
+target_link_libraries(create_role_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
 addtest(invalid_fields_test invalid_fields_test.cpp)
 target_link_libraries(invalid_fields_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
+addtest(create_domain_test create_domain_test.cpp)
+target_link_libraries(create_domain_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
+addtest(create_account_test create_account_test.cpp)
+target_link_libraries(create_account_test
   application
   integration_framework
   shared_model_proto_builders

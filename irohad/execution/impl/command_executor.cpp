@@ -196,7 +196,7 @@ namespace iroha {
                 command_name);
           }
           std::string domain_default_role = domain.value()->defaultRole();
-          // TODO: remove insert signatory from here ?
+          // Account must have unique initial pubkey
           auto result = commands->insertSignatory(command->pubkey()) | [&] {
             return commands->insertAccount(*account_val.value);
           } | [&] {
@@ -526,7 +526,9 @@ namespace iroha {
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     // Check if creator has MoneyCreator permission.
     // One can only add to his/her account
-    // TODO: In future: Separate money creation for distinct assets
+    // TODO: 03.02.2018 grimadas IR-935, Separate asset creation for distinct
+    // asset types, now: anyone having permission "can_add_asset_qty" can add
+    // any asset
     return creator_account_id == command.accountId()
         and checkAccountRolePermission(
                 creator_account_id, queries, iroha::model::can_add_asset_qty);
@@ -819,7 +821,6 @@ namespace iroha {
       const shared_model::interface::GrantPermission &command,
       iroha::ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    // TODO: no additional checks ?
     return true;
   }
 
@@ -845,7 +846,6 @@ namespace iroha {
       const shared_model::interface::RevokePermission &command,
       iroha::ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    // TODO: no checks needed ?
     return true;
   }
 

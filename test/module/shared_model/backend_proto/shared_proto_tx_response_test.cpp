@@ -40,12 +40,8 @@ TEST(ProtoTxResponse, TxResponseLoad) {
   boost::for_each(boost::irange(0, tx_status_enum->value_count()), [&](auto i) {
     response.GetReflection()->SetEnumValue(
         &response, tx_status, tx_status_enum->value(i)->number());
-    // proto::UnknownTxResponse is replacement for
-    // protocol::ON_PROCESS and protocol::NOT_RECEIVED
-    // thus last index is lesser by 1 than protobuf's
     auto model_response = shared_model::proto::TransactionResponse(response);
-    ASSERT_EQ(std::min(i, tx_status_enum->value_count() - 2),
-              model_response.get().which());
+    ASSERT_EQ(i, model_response.get().which());
     ASSERT_EQ(model_response.transactionHash(),
               shared_model::crypto::Hash(hash));
   });

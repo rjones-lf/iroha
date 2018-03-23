@@ -131,8 +131,8 @@ namespace iroha {
         const shared_model::detail::PolymorphicWrapper<
             shared_model::interface::TransferAsset> &command);
 
-    void setCreatorAccountId(
-        const shared_model::interface::types::AccountIdType &creator_account_id);
+    void setCreatorAccountId(const shared_model::interface::types::AccountIdType
+                                 &creator_account_id);
 
    private:
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
@@ -157,8 +157,8 @@ namespace iroha {
           and isValid(*command.operator->(), *queries, creator_account_id);
     }
 
-    void setCreatorAccountId(
-        const shared_model::interface::types::AccountIdType &creator_account_id);
+    void setCreatorAccountId(const shared_model::interface::types::AccountIdType
+                                 &creator_account_id);
 
    private:
     bool hasPermissions(

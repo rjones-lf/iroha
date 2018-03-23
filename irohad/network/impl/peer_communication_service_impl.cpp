@@ -1,5 +1,5 @@
 /*
-Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
+Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,17 +31,12 @@ namespace iroha {
         std::shared_ptr<const shared_model::interface::Transaction>
             transaction) {
       log_->info("propagate tx");
-      ordering_gate_->propagateTransaction(
-          std::shared_ptr<model::Transaction>(transaction->makeOldModel()));
+      ordering_gate_->propagateTransaction(transaction);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
     PeerCommunicationServiceImpl::on_proposal() const {
-      return ordering_gate_->on_proposal().map(
-          [](auto prop) -> std::shared_ptr<shared_model::interface::Proposal> {
-            return std::make_shared<shared_model::proto::Proposal>(
-                shared_model::proto::from_old(prop));
-          });
+      return ordering_gate_->on_proposal();
     }
 
     rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {

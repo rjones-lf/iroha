@@ -37,7 +37,8 @@ namespace shared_model {
 
       std::string toString() const override;
 
-      PublicKey *copy() const override;
+     protected:
+      PublicKey *clone() const override;
     };
   }  // namespace crypto
 }  // namespace shared_model

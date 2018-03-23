@@ -77,25 +77,25 @@ bool hasQueryPermission(const std::string &creator,
 }
 
 bool QueryProcessingFactory::validate(const model::GetAssetInfo &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return checkAccountRolePermission(
       query.creator_account_id, *_wsvQuery, can_read_assets);
 }
 
 bool QueryProcessingFactory::validate(const model::GetRoles &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return checkAccountRolePermission(
       query.creator_account_id, *_wsvQuery, can_get_roles);
 }
 
 bool QueryProcessingFactory::validate(const model::GetRolePermissions &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return checkAccountRolePermission(
       query.creator_account_id, *_wsvQuery, can_get_roles);
 }
 
 bool QueryProcessingFactory::validate(const model::GetAccount &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -105,7 +105,7 @@ bool QueryProcessingFactory::validate(const model::GetAccount &query) {
 }
 
 bool QueryProcessingFactory::validate(const model::GetSignatories &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -115,7 +115,7 @@ bool QueryProcessingFactory::validate(const model::GetSignatories &query) {
 }
 
 bool QueryProcessingFactory::validate(const model::GetAccountAssets &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -125,7 +125,7 @@ bool QueryProcessingFactory::validate(const model::GetAccountAssets &query) {
 }
 
 bool QueryProcessingFactory::validate(const model::GetAccountDetail &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -136,7 +136,7 @@ bool QueryProcessingFactory::validate(const model::GetAccountDetail &query) {
 
 bool QueryProcessingFactory::validate(
     const model::GetAccountTransactions &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -147,7 +147,7 @@ bool QueryProcessingFactory::validate(
 
 bool QueryProcessingFactory::validate(
     const model::GetAccountAssetTransactions &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return hasQueryPermission(query.creator_account_id,
                             query.account_id,
                             *_wsvQuery,
@@ -157,7 +157,7 @@ bool QueryProcessingFactory::validate(
 }
 
 bool QueryProcessingFactory::validate(const model::GetTransactions &query) {
-  // TODO: check signatures
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return checkAccountRolePermission(
              query.creator_account_id, *_wsvQuery, can_get_my_txs)
       or checkAccountRolePermission(
@@ -338,7 +338,7 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetSignatories(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::execute(
     std::shared_ptr<const model::Query> query) {
-  // TODO 26/09/17 Nasrulin: change to handler map or/with templates #VARIANT
+  // TODO: 03.02.2018 grimadas IR-936 change to handler map or/with templates #VARIANT
   if (instanceof <GetAccount>(query.get())) {
     auto qry = std::static_pointer_cast<const GetAccount>(query);
 

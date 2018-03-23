@@ -82,8 +82,6 @@ namespace shared_model {
 
       bool operator==(const Blob &rhs) const override;
 
-      Blob *copy() const override;
-
 #ifndef DISABLE_BACKWARD
       /**
        * Method perform transforming object to old-fashion blob_t format
@@ -98,6 +96,9 @@ namespace shared_model {
         return BlobType::from_string(toBinaryString(*this));
       }
 #endif
+
+     protected:
+      Blob *clone() const override;
 
      private:
       // TODO: 17/11/2017 luckychess use improved Lazy with references support
