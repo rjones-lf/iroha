@@ -28,8 +28,8 @@ using namespace iroha::network;
 using namespace iroha::torii;
 using namespace framework::test_subscriber;
 
-using ::testing::_;
 using ::testing::Return;
+using ::testing::_;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
@@ -116,7 +116,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // create proposal and notify about it
@@ -160,7 +160,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // 1. Create proposal and notify transaction processor about it
@@ -184,7 +184,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   commit_notifier.get_subscriber().on_next(blocks_notifier.get_observable());
 
   blocks_notifier.get_subscriber().on_next(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   // Note blocks_notifier hasn't invoked on_completed, so
   // transactions are not commited
 
@@ -224,7 +224,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // 1. Create proposal and notify transaction processor about it
@@ -243,7 +243,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   // 2. Create block and notify transaction processor about it
   Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   commit_notifier.get_subscriber().on_next(single_commit);
 
   ASSERT_TRUE(wrapper.validate());
@@ -311,7 +311,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                    .build();
 
   Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   commit_notifier.get_subscriber().on_next(single_commit);
   ASSERT_TRUE(wrapper.validate());
 

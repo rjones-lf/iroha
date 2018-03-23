@@ -73,7 +73,7 @@ namespace iroha {
       if (result) {
         block_store_.insert(std::make_pair(
             block.height(),
-            std::unique_ptr<shared_model::interface::Block>(block.copy())));
+            clone(block)));
         block_index_->index(block);
 
         top_hash_ = block.hash();

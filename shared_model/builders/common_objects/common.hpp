@@ -53,7 +53,8 @@ namespace shared_model {
        * why object construction is unsuccessful.
        */
       BuilderResult<ModelType> build() {
-        auto model_impl = std::shared_ptr<ModelType>(builder_.build().copy());
+        std::shared_ptr<ModelType> model_impl =
+            std::move(clone(builder_.build()));
 
         auto reasons = validate(*model_impl);
         reasons.first = builderName();

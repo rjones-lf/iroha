@@ -127,7 +127,7 @@ namespace iroha {
             }),
             [&](auto x) {
               subscriber.on_next(PostgresBlockQuery::wTransaction(
-                  block->transactions().at(x)->copy()));
+                  clone(*block->transactions().at(x))));
             });
       };
     }
@@ -198,26 +198,28 @@ namespace iroha {
     boost::optional<BlockQuery::wTransaction>
     PostgresBlockQuery::getTxByHashSync(
         const shared_model::crypto::Hash &hash) {
-      auto block = getBlockId(hash) | [this](auto block_id) {
-        return block_store_.get(block_id);
-      } | [this](auto bytes) {
-        return shared_model::converters::protobuf::jsonToModel<
-            shared_model::proto::Block>(bytesToString(bytes));
-      };
-      if (not block) {
-        log_->error("error while converting from JSON");
-        return boost::none;
-      }
+      auto block = getBlockId(hash) |
+          [this](auto block_id) { return block_store_.get(block_id);
+         } | [this](auto bytes) {
+            return shared_model::converters::protobuf::jsonToModel<
+             shared_model::proto::Block >(bytesToString(bytes));
+          };
+      if (not block) {log_->error("error while converting from JSON");
+            return boost::none;
+                }
 
-      boost::optional<PostgresBlockQuery::wTransaction> result;
-      auto it = std::find_if(block->transactions().begin(),
-                             block->transactions().end(),
-                             [&hash](auto tx) { return tx->hash() == hash; });
-      if (it != block->transactions().end()) {
-        result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction((*it)->copy()));
-      }
-      return result;
+
+          boost::optional<PostgresBlockQuery::wTransaction> result;
+          auto it =
+              std::find_if(block->transactions().begin(),
+                           block->transactions().end(),
+                           [&hash](auto tx) { return tx->hash() == hash; });
+          if (it != block->transactions().end()) {
+            result = boost::optional<PostgresBlockQuery::wTransaction>(
+                PostgresBlockQuery::wTransaction(clone(**it)));
+          }
+          return result;
+
     }
 
   }  // namespace ametsuchi

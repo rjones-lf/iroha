@@ -46,7 +46,7 @@ namespace shared_model {
        * @param rhs - another wrapped value
        */
       PolymorphicWrapper(const PolymorphicWrapper &rhs)
-          : ptr_(rhs.ptr_->copy()) {}
+          : ptr_(std::move(clone(*rhs.ptr_))) {}
 
       /**
        * Move constructor
@@ -67,7 +67,7 @@ namespace shared_model {
       template <typename Y,
                 typename = std::enable_if_t<std::is_base_of<T, Y>::value>>
       PolymorphicWrapper(const PolymorphicWrapper<Y> &rhs)
-          : ptr_(rhs.ptr_->copy()) {}
+          : ptr_(std::move(clone(*rhs.ptr_))) {}
 
       template <typename Y,
                 typename = std::enable_if_t<std::is_base_of<T, Y>::value>>
@@ -82,7 +82,7 @@ namespace shared_model {
        * @return *this
        */
       PolymorphicWrapper &operator=(const PolymorphicWrapper &rhs) {
-        ptr_ = rhs.ptr_->copy();
+        ptr_ = std::move(clone(*rhs.ptr_));
         return *this;
       }
 

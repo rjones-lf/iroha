@@ -29,6 +29,12 @@ if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 
+  if(CMAKE_GENERATOR MATCHES "Make")
+    set(MAKE "$(MAKE)")
+  else()
+    set(MAKE make)
+  endif()
+
   option(TESTING "Build tests" ON)
 
   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)

@@ -29,6 +29,7 @@ namespace shared_model {
           asset_id_pattern_(R"([a-z]{1,9}\#[a-z]{1,9})"),
           name_pattern_(R"([a-z]{1,9})"),
           detail_key_pattern_(R"([A-Za-z0-9_]{1,})"),
+          role_id_pattern_(R"([A-Za-z0-9_]{1,7})"),
           future_gap_(future_gap) {}
 
     void FieldValidator::validateAccountId(
@@ -100,7 +101,7 @@ namespace shared_model {
     void FieldValidator::validateRoleId(
         ReasonsGroupType &reason,
         const interface::types::RoleIdType &role_id) const {
-      if (not std::regex_match(role_id, name_pattern_)) {
+      if (not std::regex_match(role_id, role_id_pattern_)) {
         auto message =
             (boost::format("Wrongly formed role_id, passed value: '%s'")
              % role_id)
