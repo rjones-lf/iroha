@@ -20,4 +20,5 @@
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 

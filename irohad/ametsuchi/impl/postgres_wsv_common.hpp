@@ -22,7 +22,7 @@
 #include <pqxx/nontransaction>
 #include <pqxx/result>
 
-#include "builders/common_objects/default_builders.hpp"
+#include "builders/default_builders.hpp"
 #include "common/result.hpp"
 #include "logger/logger.hpp"
 

@@ -60,12 +60,14 @@ namespace shared_model {
        * where there are exactly precision numbers after dot
        * @return Amount constructed from string
        */
-      static BuilderResult<shared_model::interface::Amount> fromString(std::string str_amount) {
+      static BuilderResult<shared_model::interface::Amount> fromString(
+          std::string str_amount) {
         // taken from iroha::model::Amount
         // check if valid number
         std::regex e("([0-9]*\\.[0-9]+|[0-9]+)");
         if (!std::regex_match(str_amount, e)) {
-          return iroha::expected::makeError(std::make_shared<std::string>("number string is invalid"));
+          return iroha::expected::makeError(
+              std::make_shared<std::string>("number string is invalid"));
         }
 
         // get precision
@@ -76,8 +78,9 @@ namespace shared_model {
         } else {
           precision = str_amount.size() - dot_place - 1;
           // erase dot from the string
-          str_amount.erase(std::remove(str_amount.begin(), str_amount.end(), '.'),
-                           str_amount.end());
+          str_amount.erase(
+              std::remove(str_amount.begin(), str_amount.end(), '.'),
+              str_amount.end());
         }
 
         auto begin = str_amount.find_first_not_of('0');
@@ -90,7 +93,6 @@ namespace shared_model {
 
         AmountBuilder<BuilderImpl, Validator> builder;
         return builder.intValue(value).precision(precision).build();
-
       }
 
      protected:

@@ -18,12 +18,12 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
+#include "interfaces/transaction_responses/not_received_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
-#include "interfaces/transaction_responses/unknown_tx_response.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -41,7 +41,7 @@ namespace shared_model {
                      iroha::protocol::ToriiResponse>;
     using CommittedTxResponse = TrivialProto<interface::CommittedTxResponse,
                                              iroha::protocol::ToriiResponse>;
-    using UnknownTxResponse = TrivialProto<interface::UnknownTxResponse,
-                                           iroha::protocol::ToriiResponse>;
+    using NotReceivedTxResponse = TrivialProto<interface::NotReceivedTxResponse,
+                                               iroha::protocol::ToriiResponse>;
   }  // namespace proto
 }  // namespace shared_model

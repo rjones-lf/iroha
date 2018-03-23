@@ -51,8 +51,6 @@ using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 
-using wPeer = std::shared_ptr<shared_model::interface::Peer>;
-
 static logger::Logger log_ = logger::testLog("OrderingService");
 
 class MockOrderingServiceTransport : public network::OrderingServiceTransport {
@@ -78,13 +76,11 @@ class MockOrderingServiceTransport : public network::OrderingServiceTransport {
 class OrderingServiceTest : public ::testing::Test {
  public:
   OrderingServiceTest() {
-    peer = std::shared_ptr<shared_model::interface::Peer>(
-        shared_model::proto::PeerBuilder()
+    peer = clone(shared_model::proto::PeerBuilder()
             .address(address)
             .pubkey(shared_model::interface::types::PubkeyType(
                 std::string(32, '0')))
-            .build()
-            .copy());
+            .build());
   }
 
   void SetUp() override {
@@ -159,7 +155,6 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   auto key = shared_model::crypto::PublicKey(peer->pubkey().toString());
   auto tmp = builder.address(peer->address()).pubkey(key).build();
 
-  wPeer w_peer(tmp.copy());
   EXPECT_CALL(*wsv, getLedgerPeers())
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
 
@@ -181,7 +176,6 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   auto key = shared_model::crypto::PublicKey(peer->pubkey().toString());
   auto tmp = builder.address(peer->address()).pubkey(key).build();
 
-  wPeer w_peer(tmp.copy());
   EXPECT_CALL(*wsv, getLedgerPeers())
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
 

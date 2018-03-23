@@ -59,6 +59,16 @@ protobuf {
     }
 }
 
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+}
+
 project.buildDir = BUILD_DIR
 
 mainClassName = 'TransactionExample'

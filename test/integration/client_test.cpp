@@ -19,13 +19,13 @@
 
 #include <endpoint.pb.h>
 
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 
 #include "client.hpp"
 
@@ -218,9 +218,8 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   auto account_admin = iroha::model::Account();
   account_admin.account_id = "admin@test";
 
-  auto account_test = std::shared_ptr<shared_model::interface::Account>(
-      shared_model::proto::AccountBuilder().accountId("test@test").build().copy()
-  );
+  std::shared_ptr<shared_model::interface::Account> account_test = clone(
+      shared_model::proto::AccountBuilder().accountId("test@test").build());
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(

@@ -18,6 +18,7 @@
 #ifndef IROHA_TESTIROHAD_HPP
 #define IROHA_TESTIROHAD_HPP
 
+#include "cryptography/keypair.hpp"
 #include "main/application.hpp"
 
 /**
@@ -33,7 +34,7 @@ class TestIrohad : public Irohad {
              std::chrono::milliseconds proposal_delay,
              std::chrono::milliseconds vote_delay,
              std::chrono::milliseconds load_delay,
-             const iroha::keypair_t &keypair)
+             const shared_model::crypto::Keypair &keypair)
       : Irohad(block_store_dir,
                pg_conn,
                torii_port,
@@ -42,7 +43,7 @@ class TestIrohad : public Irohad {
                proposal_delay,
                vote_delay,
                load_delay,
-               keypair) {}
+               *std::unique_ptr<iroha::keypair_t>(keypair.makeOldModel())) {}
 
   auto &getCommandService() {
     return command_service;
