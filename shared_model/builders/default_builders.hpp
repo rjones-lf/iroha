@@ -34,6 +34,7 @@
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/transaction_responses/transaction_status_builder.hpp"
+#include "validators/amount_true_validator.hpp"
 #include "validators/field_validator.hpp"
 
 namespace shared_model {
@@ -66,6 +67,10 @@ namespace shared_model {
     using DefaultTransactionStatusBuilder =
         shared_model::builder::TransactionStatusBuilder<
             shared_model::proto::TransactionStatusBuilder>;
+
+    using AmountBuilderWithoutValidator = shared_model::builder::AmountBuilder<
+        shared_model::proto::AmountBuilder,
+        shared_model::validation::AmountTrueValidator>;
   }  // namespace builder
 }  // namespace shared_model
 

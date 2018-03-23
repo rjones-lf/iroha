@@ -51,13 +51,12 @@ namespace iroha {
     auto accountRoles = queries.getAccountRoles(account_id);
     if (not accountRoles)
       return false;
-    for (auto it = accountRoles->begin(); it != accountRoles->end(); ++it) {
-      auto rolePerms = queries.getRolePermissions(*it);
+    for (auto accountRole : *accountRoles) {
+      auto rolePerms = queries.getRolePermissions(accountRole);
       if (not rolePerms)
         continue;
-      for (auto it = rolePerms->begin(); it != rolePerms->end(); ++it) {
-        std::string pp = *it;
-        if (pp == permission_id)
+      for (auto rolePerm : *rolePerms) {
+        if (rolePerm == permission_id)
           return true;
       }
     }

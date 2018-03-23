@@ -35,16 +35,28 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator+(
   if (a.precision() != b.precision()) {
     return boost::none;
   }
-  shared_model::proto::AmountBuilder amount_builder;
-  auto res = amount_builder.precision(a.precision())
+  auto res = shared_model::builder::AmountBuilderWithoutValidator()
+                 .precision(a.precision())
                  .intValue(a.intValue() + b.intValue())
                  .build();
-  // check overflow
-  if (res.intValue() < a.intValue() or res.intValue() < b.intValue()) {
-    return boost::none;
-  }
-  return boost::optional<std::shared_ptr<shared_model::interface::Amount>>(
-      std::shared_ptr<shared_model::interface::Amount>(res.copy()));
+  return res.match(
+      [&a, &b](const iroha::expected::Value<
+               std::shared_ptr<shared_model::interface::Amount>> &result) {
+        // check overflow
+        if (result.value->intValue() < a.intValue()
+            or result.value->intValue() < b.intValue()) {
+          return boost::optional<
+              std::shared_ptr<shared_model::interface::Amount>>(boost::none);
+        }
+        return boost::optional<
+            std::shared_ptr<shared_model::interface::Amount>>(
+            std::shared_ptr<shared_model::interface::Amount>(
+                result.value->copy()));
+      },
+      [](const auto &err) {
+        return boost::optional<
+            std::shared_ptr<shared_model::interface::Amount>>(boost::none);
+      });
 }
 
 /**
@@ -66,12 +78,26 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator-(
   if (a.intValue() < b.intValue()) {
     return boost::none;
   }
-  shared_model::proto::AmountBuilder amount_builder;
-  auto res = amount_builder.precision(a.precision())
+  auto res = shared_model::builder::AmountBuilderWithoutValidator()
+                 .precision(a.precision())
                  .intValue(a.intValue() - b.intValue())
                  .build();
-  return boost::optional<std::shared_ptr<shared_model::interface::Amount>>(
-      std::shared_ptr<shared_model::interface::Amount>(res.copy()));
+  return res.match(
+      [&a, &b](const iroha::expected::Value<
+               std::shared_ptr<shared_model::interface::Amount>> &result) {
+        return boost::optional<
+            std::shared_ptr<shared_model::interface::Amount>>(
+            std::shared_ptr<shared_model::interface::Amount>(
+                result.value->copy()));
+      },
+      [&](const auto &err) {
+        auto res = shared_model::builder::DefaultAmountBuilder()
+            .precision(a.precision())
+            .intValue(a.intValue() - b.intValue())
+            .build();
+        return boost::optional<
+            std::shared_ptr<shared_model::interface::Amount>>(boost::none);
+      });
 }
 
 int compareAmount(const shared_model::interface::Amount &a,

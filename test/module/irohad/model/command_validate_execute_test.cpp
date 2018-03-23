@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#include "execution/command_executor.hpp"
 #include <limits>
-
+#include "backend/protobuf/from_old_model.hpp"
 #include "builders/default_builders.hpp"
+#include "execution/command_executor.hpp"
 #include "framework/result_fixture.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -38,8 +38,6 @@
 #include "model/commands/transfer_asset.hpp"
 #include "model/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-
-#include "backend/protobuf/from_old_model.hpp"
 
 using ::testing::_;
 using ::testing::AllOf;
@@ -742,8 +740,7 @@ TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getDomain(domain_id))
-      .WillOnce(Return(boost::none));
+  EXPECT_CALL(*wsv_query, getDomain(domain_id)).WillOnce(Return(boost::none));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -754,7 +751,7 @@ class CreateAssetTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     create_asset = std::make_shared<CreateAsset>();
-    create_asset->asset_name = "FCoin";
+    create_asset->asset_name = "fcoin";
     create_asset->domain_id = domain_id;
     create_asset->precision = 2;
 
@@ -805,7 +802,8 @@ class CreateDomainTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     create_domain = std::make_shared<CreateDomain>();
-    create_domain->domain_id = "CN";
+    create_domain->domain_id = "cn";
+    create_domain->user_default_role = "default";
 
     command = create_domain;
     role_permissions = {can_create_domain};
@@ -1908,10 +1906,10 @@ TEST_F(GrantPermissionTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(
-      *wsv_command,
-      insertAccountGrantablePermission(
-          exact_command->account_id, creator->accountId(), new_model_permission))
+  EXPECT_CALL(*wsv_command,
+              insertAccountGrantablePermission(exact_command->account_id,
+                                               creator->accountId(),
+                                               new_model_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -1930,10 +1928,10 @@ TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
  * @then execute() fails
  */
 TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
-  EXPECT_CALL(
-      *wsv_command,
-      insertAccountGrantablePermission(
-          exact_command->account_id, creator->accountId(), new_model_permission))
+  EXPECT_CALL(*wsv_command,
+              insertAccountGrantablePermission(exact_command->account_id,
+                                               creator->accountId(),
+                                               new_model_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }
@@ -1956,10 +1954,10 @@ TEST_F(RevokePermissionTest, ValidCase) {
               hasAccountGrantablePermission(
                   exact_command->account_id, admin_id, new_model_permission))
       .WillOnce(Return(true));
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountGrantablePermission(
-          exact_command->account_id, creator->accountId(), new_model_permission))
+  EXPECT_CALL(*wsv_command,
+              deleteAccountGrantablePermission(exact_command->account_id,
+                                               creator->accountId(),
+                                               new_model_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -1978,10 +1976,10 @@ TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
  * @then execute fails
  */
 TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountGrantablePermission(
-          exact_command->account_id, creator->accountId(), new_model_permission))
+  EXPECT_CALL(*wsv_command,
+              deleteAccountGrantablePermission(exact_command->account_id,
+                                               creator->accountId(),
+                                               new_model_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }

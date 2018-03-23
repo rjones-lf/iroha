@@ -23,11 +23,7 @@
 
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
+#include "builders/default_builders.hpp"
 #include "common/result.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
@@ -136,18 +132,18 @@ namespace iroha {
             shared_model::interface::TransferAsset> &command);
 
     void setCreatorAccountId(
-        shared_model::interface::types::AccountIdType creator_account_id);
+        const shared_model::interface::types::AccountIdType &creator_account_id);
 
    private:
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
     shared_model::interface::types::AccountIdType creator_account_id;
 
-    shared_model::proto::AmountBuilder amount_builder;
-    shared_model::proto::AccountAssetBuilder account_asset_builder;
-    shared_model::proto::AccountBuilder account_builder;
-    shared_model::proto::AssetBuilder asset_builder;
-    shared_model::proto::DomainBuilder domain_builder;
+    shared_model::builder::DefaultAmountBuilder amount_builder;
+    shared_model::builder::DefaultAccountAssetBuilder account_asset_builder;
+    shared_model::builder::DefaultAccountBuilder account_builder;
+    shared_model::builder::DefaultAssetBuilder asset_builder;
+    shared_model::builder::DefaultDomainBuilder domain_builder;
   };
 
   class CommandValidator : public boost::static_visitor<bool> {
@@ -162,7 +158,7 @@ namespace iroha {
     }
 
     void setCreatorAccountId(
-        shared_model::interface::types::AccountIdType creator_account_id);
+        const shared_model::interface::types::AccountIdType &creator_account_id);
 
    private:
     bool hasPermissions(

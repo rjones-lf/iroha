@@ -17,11 +17,9 @@
 
 #include <boost/mpl/contains.hpp>
 
-#include "backend/protobuf/from_old_model.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "execution/command_executor.hpp"
+
+#include "backend/protobuf/from_old_model.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
 #include "model/permissions.hpp"
@@ -58,7 +56,7 @@ namespace iroha {
       : queries(queries), commands(commands) {}
 
   void CommandExecutor::setCreatorAccountId(
-      shared_model::interface::types::AccountIdType creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
@@ -90,31 +88,63 @@ namespace iroha {
     auto account_asset =
         queries->getAccountAsset(command->accountId(), command->assetId());
 
-    shared_model::proto::Amount new_balance =
-        amount_builder.precision(command->amount().precision())
-            .intValue(command->amount().intValue())
-            .build();
+    auto new_balance = amount_builder.precision(command->amount().precision())
+                           .intValue(command->amount().intValue())
+                           .build();
 
-    if (account_asset) {
-      auto balance = new_balance + account_asset.value()->balance();
-      if (not balance) {
-        return makeExecutionError("amount overflows balance", command_name);
-      }
+    return new_balance.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::Amount>> &new_balance_val)
+            -> ExecutionResult {
+          if (account_asset) {
+            auto balance =
+                *new_balance_val.value + account_asset.value()->balance();
+            if (not balance) {
+              return makeExecutionError("amount overflows balance",
+                                        command_name);
+            }
 
-      auto account_asset_new = account_asset_builder.balance(*balance.value())
-                                   .accountId(command->accountId())
-                                   .assetId(command->assetId())
-                                   .build();
-      return makeExecutionResult(
-          commands->upsertAccountAsset(account_asset_new), command_name);
-    }
+            auto account_asset_new =
+                account_asset_builder.balance(*balance.value())
+                    .accountId(command->accountId())
+                    .assetId(command->assetId())
+                    .build();
 
-    auto account_asset_new = account_asset_builder.balance(new_balance)
-                                 .accountId(command->accountId())
-                                 .assetId(command->assetId())
-                                 .build();
-    return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
-                               command_name);
+            return account_asset_new.match(
+                [&](const expected::Value<
+                    std::shared_ptr<shared_model::interface::AccountAsset>>
+                        &account_asset_new_val) -> ExecutionResult {
+                  return makeExecutionResult(commands->upsertAccountAsset(
+                                                 *account_asset_new_val.value),
+                                             command_name);
+                },
+                [&command_name](const auto &err) -> ExecutionResult {
+                  return makeExecutionError("account asset builder failed",
+                                            command_name);
+                });
+          }
+
+          auto account_asset_new =
+              account_asset_builder.balance(*new_balance_val.value)
+                  .accountId(command->accountId())
+                  .assetId(command->assetId())
+                  .build();
+          return account_asset_new.match(
+              [&](const expected::Value<
+                  std::shared_ptr<shared_model::interface::AccountAsset>>
+                      &account_asset_new_val) -> ExecutionResult {
+                return makeExecutionResult(
+                    commands->upsertAccountAsset(*account_asset_new_val.value),
+                    command_name);
+              },
+              [&command_name](const auto &err) -> ExecutionResult {
+                return makeExecutionError("account asset builder failed",
+                                          command_name);
+              });
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("amount builder failed", command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -154,47 +184,75 @@ namespace iroha {
             .quorum(1)
             .jsonData("{}")
             .build();
-    auto domain = queries->getDomain(command->domainId());
-    if (not domain) {
-      return makeExecutionError(
-          (boost::format("Domain %s not found") % command->domainId()).str(),
-          command_name);
-    }
-    std::string domain_default_role = domain.value()->defaultRole();
-    // TODO: remove insert signatory from here ?
-    auto result = commands->insertSignatory(command->pubkey()) | [&] {
-      return commands->insertAccount(account);
-    } | [&] {
-      return commands->insertAccountSignatory(account.accountId(),
-                                              command->pubkey());
-    } | [&] {
-      return commands->insertAccountRole(account.accountId(),
-                                         domain_default_role);
-    };
-    return makeExecutionResult(result, "CreateAccount");
+    return account.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::Account>> &account_val)
+            -> ExecutionResult {
+          auto domain = queries->getDomain(command->domainId());
+          if (not domain) {
+            return makeExecutionError(
+                (boost::format("Domain %s not found") % command->domainId())
+                    .str(),
+                command_name);
+          }
+          std::string domain_default_role = domain.value()->defaultRole();
+          // TODO: remove insert signatory from here ?
+          auto result = commands->insertSignatory(command->pubkey()) | [&] {
+            return commands->insertAccount(*account_val.value);
+          } | [&] {
+            return commands->insertAccountSignatory(
+                (*account_val.value).accountId(), command->pubkey());
+          } | [&] {
+            return commands->insertAccountRole((*account_val.value).accountId(),
+                                               domain_default_role);
+          };
+          return makeExecutionResult(result, "CreateAccount");
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("account builder failed", command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::detail::PolymorphicWrapper<
           shared_model::interface::CreateAsset> &command) {
+    std::string command_name = "CreateAsset";
     auto new_asset =
         asset_builder.assetId(command->assetName() + "#" + command->domainId())
             .domainId(command->domainId())
             .precision(command->precision())
             .build();
-    // The insert will fail if asset already exists
-    return makeExecutionResult(commands->insertAsset(new_asset), "CreateAsset");
+    return new_asset.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::Asset>> &new_asset_val)
+            -> ExecutionResult {
+          // The insert will fail if asset already exists
+          return makeExecutionResult(
+              commands->insertAsset(*new_asset_val.value), command_name);
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("asset builder failed", command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::detail::PolymorphicWrapper<
           shared_model::interface::CreateDomain> &command) {
+    std::string command_name = "CreateDomain";
     auto new_domain = domain_builder.domainId(command->domainId())
                           .defaultRole(command->userDefaultRole())
                           .build();
-    // The insert will fail if domain already exist
-    return makeExecutionResult(commands->insertDomain(new_domain),
-                               "CreateDomain");
+    return new_domain.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::Domain>> &new_domain_val)
+            -> ExecutionResult {
+          // The insert will fail if domain already exist
+          return makeExecutionResult(
+              commands->insertDomain(*new_domain_val.value), command_name);
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("domain builder failed", command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -278,8 +336,17 @@ namespace iroha {
                            .jsonData(account.value()->jsonData())
                            .quorum(command->newQuorum())
                            .build();
-    return makeExecutionResult(commands->updateAccount(account_new),
-                               command_name);
+
+    return account_new.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::Account>> &account_new_val)
+            -> ExecutionResult {
+          return makeExecutionResult(
+              commands->updateAccount(*account_new_val.value), command_name);
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("account builder failed", command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -318,8 +385,19 @@ namespace iroha {
                                  .accountId(account_asset.value()->accountId())
                                  .assetId(account_asset.value()->assetId())
                                  .build();
-    return makeExecutionResult(commands->upsertAccountAsset(account_asset_new),
-                               command_name);
+
+    return account_asset_new.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::AccountAsset>>
+                &account_asset_new_val) -> ExecutionResult {
+          return makeExecutionResult(
+              commands->upsertAccountAsset(*account_asset_new_val.value),
+              command_name);
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("account asset builder failed",
+                                    command_name);
+        });
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -335,7 +413,6 @@ namespace iroha {
                                     .str(),
                                 command_name);
     }
-    iroha::model::AccountAsset dest_AccountAsset;
     auto dest_account_asset =
         queries->getAccountAsset(command->destAccountId(), command->assetId());
     auto asset = queries->getAsset(command->assetId());
@@ -367,33 +444,69 @@ namespace iroha {
             .balance(*new_src_balance.get())
             .build();
 
-    if (not dest_account_asset) {
-      // This assert is new for this account - create new AccountAsset
+    return src_account_asset_new.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::AccountAsset>>
+                &src_account_asset_new_val) -> ExecutionResult {
+          if (not dest_account_asset) {
+            // This assert is new for this account - create new AccountAsset
 
-      auto dest_account_asset_new =
-          account_asset_builder.assetId(command->assetId())
-              .accountId(command->destAccountId())
-              .balance(command->amount())
-              .build();
-      auto result = commands->upsertAccountAsset(dest_account_asset_new) |
-          [&] { return commands->upsertAccountAsset(src_account_asset_new); };
-      return makeExecutionResult(result, command_name);
-    } else {
-      auto new_dest_balance =
-          dest_account_asset.value()->balance() + command->amount();
-      if (not new_dest_balance) {
-        return makeExecutionError("operation overflows destination balance",
-                                  command_name);
-      }
-      auto dest_account_asset_new =
-          account_asset_builder.assetId(command->assetId())
-              .accountId(command->destAccountId())
-              .balance(*new_dest_balance.get())
-              .build();
-      auto result = commands->upsertAccountAsset(dest_account_asset_new) |
-          [&] { return commands->upsertAccountAsset(src_account_asset_new); };
-      return makeExecutionResult(result, command_name);
-    }
+            auto dest_account_asset_new =
+                account_asset_builder.assetId(command->assetId())
+                    .accountId(command->destAccountId())
+                    .balance(command->amount())
+                    .build();
+            return dest_account_asset_new.match(
+                [&](const expected::Value<
+                    std::shared_ptr<shared_model::interface::AccountAsset>>
+                        &dest_account_asset_new_val) -> ExecutionResult {
+                  auto result = commands->upsertAccountAsset(
+                                    *dest_account_asset_new_val.value)
+                      | [&] {
+                          return commands->upsertAccountAsset(
+                              *src_account_asset_new_val.value);
+                        };
+                  return makeExecutionResult(result, command_name);
+                },
+                [&command_name](const auto &err) -> ExecutionResult {
+                  return makeExecutionError("account asset builder failed",
+                                            command_name);
+                });
+
+          } else {
+            auto new_dest_balance =
+                dest_account_asset.value()->balance() + command->amount();
+            if (not new_dest_balance) {
+              return makeExecutionError(
+                  "operation overflows destination balance", command_name);
+            }
+            auto dest_account_asset_new =
+                account_asset_builder.assetId(command->assetId())
+                    .accountId(command->destAccountId())
+                    .balance(*new_dest_balance.get())
+                    .build();
+            return dest_account_asset_new.match(
+                [&](const expected::Value<
+                    std::shared_ptr<shared_model::interface::AccountAsset>>
+                        &dest_account_asset_new_val) -> ExecutionResult {
+                  auto result = commands->upsertAccountAsset(
+                                    *dest_account_asset_new_val.value)
+                      | [&] {
+                          return commands->upsertAccountAsset(
+                              *src_account_asset_new_val.value);
+                        };
+                  return makeExecutionResult(result, command_name);
+                },
+                [&command_name](const auto &err) -> ExecutionResult {
+                  return makeExecutionError("account asset builder failed",
+                                            command_name);
+                });
+          }
+        },
+        [&command_name](const auto &err) -> ExecutionResult {
+          return makeExecutionError("account asset builder failed",
+                                    command_name);
+        });
   }
 
   // ----------------------| Validator |----------------------
@@ -403,7 +516,7 @@ namespace iroha {
       : queries(queries) {}
 
   void CommandValidator::setCreatorAccountId(
-      shared_model::interface::types::AccountIdType creator_account_id) {
+      const shared_model::interface::types::AccountIdType &creator_account_id) {
     this->creator_account_id = creator_account_id;
   }
 
@@ -572,20 +685,19 @@ namespace iroha {
       const shared_model::interface::TransferAsset &command,
       iroha::ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return
-
-        (
-            // 1. Creator has granted permission on src_account_id
-            (creator_account_id != command.srcAccountId()
-             and queries.hasAccountGrantablePermission(
-                     creator_account_id,
-                     command.srcAccountId(),
-                     iroha::model::can_transfer))
-            or
-            // 2. Creator transfer from their account
-            (creator_account_id == command.srcAccountId()
-             and checkAccountRolePermission(
-                     creator_account_id, queries, iroha::model::can_transfer)))
+    return (
+               // 1. Creator has granted permission on src_account_id
+               (creator_account_id != command.srcAccountId()
+                and queries.hasAccountGrantablePermission(
+                        creator_account_id,
+                        command.srcAccountId(),
+                        iroha::model::can_transfer))
+               or
+               // 2. Creator transfer from their account
+               (creator_account_id == command.srcAccountId()
+                and checkAccountRolePermission(creator_account_id,
+                                               queries,
+                                               iroha::model::can_transfer)))
         // For both cases, dest_account must have can_receive
         and checkAccountRolePermission(
                 command.destAccountId(), queries, iroha::model::can_receive);

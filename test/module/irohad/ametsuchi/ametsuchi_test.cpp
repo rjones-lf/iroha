@@ -699,17 +699,17 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
                                             iroha::model::can_create_asset,
                                             iroha::model::can_get_my_account})
           .createDomain("domain", "user")
-          .createAccount("user1", "domain", pubkey1)
+          .createAccount("userone", "domain", pubkey1)
           .build();
 
   auto txn2 =
       TestTransactionBuilder()
           .creatorAccountId("admin1")
-          .createRole("user2",
+          .createRole("usertwo",
                       std::set<std::string>{iroha::model::can_add_peer,
                                             iroha::model::can_create_asset,
                                             iroha::model::can_get_my_account})
-          .createDomain("domain2", "user")
+          .createDomain("domaintwo", "user")
           .build();
 
   auto block = TestBlockBuilder()
