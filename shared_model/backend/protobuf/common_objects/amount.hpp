@@ -72,8 +72,7 @@ namespace shared_model {
       explicit Amount(AmountType &&amount)
           : CopyableProto(std::forward<AmountType>(amount)),
             multiprecision_repr_(
-                [this] { return convertToUInt256(proto_->value()); }),
-            blob_([this] { return makeBlob(*proto_); }) {}
+                [this] { return convertToUInt256(proto_->value()); }) {}
 
       Amount(const Amount &o) : Amount(o.proto_) {}
 
@@ -87,19 +86,12 @@ namespace shared_model {
         return proto_->precision();
       }
 
-      const interface::types::BlobType &blob() const override {
-        return *blob_;
-      }
-
      private:
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
       const Lazy<boost::multiprecision::uint256_t> multiprecision_repr_;
-
-      const Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(*proto_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

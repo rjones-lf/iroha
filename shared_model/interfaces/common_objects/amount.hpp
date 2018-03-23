@@ -32,7 +32,7 @@ namespace shared_model {
     /**
      * Representation of fixed point number
      */
-    class Amount : public HASHABLE_WITH_OLD(Amount, iroha::Amount) {
+    class Amount : public PRIMITIVE_WITH_OLD(Amount, iroha::Amount) {
      public:
       /**
        * Gets integer representation value, which ignores precision
