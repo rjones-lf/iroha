@@ -63,8 +63,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 
   for (auto i = 0; i < 3; ++i) {
     auto peer = my_peers.at(i);
-    auto old_peer = *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel());
-    yac->on_vote(create_vote(my_hash, old_peer.pubkey.to_string()));
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    yac->on_vote(create_vote(my_hash, pubkey));
   };
 }
 
