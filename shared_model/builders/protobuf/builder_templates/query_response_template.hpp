@@ -212,47 +212,47 @@ namespace shared_model {
     };
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::StatelessFailedErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::StatefulFailedErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_STATEFUL_INVALID;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoAccountErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoAccountAssetsErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_ASSETS;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoAccountDetailErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_DETAIL;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoSignatoriesErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_SIGNATORIES;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NotSupportedErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NOT_SUPPORTED;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoAssetErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_ASSET;
 
     template <>
-    iroha::protocol::ErrorResponse_Reason
+    constexpr iroha::protocol::ErrorResponse_Reason
         reason<interface::NoRolesErrorResponse> =
             iroha::protocol::ErrorResponse_Reason_NO_ROLES;
 
