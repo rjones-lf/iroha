@@ -63,7 +63,7 @@ class TransactionProcessorTest : public ::testing::Test {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
       boost::apply_visitor(
-          [this](auto val) {
+          [](auto val) {
             if (std::is_same<decltype(val), Status>::value) {
               SUCCEED();
             } else {
