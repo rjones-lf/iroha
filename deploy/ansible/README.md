@@ -133,7 +133,7 @@ This is required because keys and genesis.block are generated on your local host
 ### 2.1 Main ideas
 
 This playbook allows to run iroha cluster by delivering previously generated `genesis.block`, 
-keypair for each node, and `config.sample` to target hosts (1 `iroha` node for each host). 
+keypair for each node, and `config.sample` to target hosts (single `iroha` node for each host). 
 It runs `iroha` and `postgres:9.5` in docker containers.
 
 It works in the following way:
