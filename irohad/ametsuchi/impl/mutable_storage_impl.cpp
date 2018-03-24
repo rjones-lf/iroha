@@ -76,9 +76,7 @@ namespace iroha {
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(
-            block.height(),
-            clone(block)));
+        block_store_.insert(std::make_pair(block.height(), clone(block)));
         block_index_->index(block);
 
         top_hash_ = block.hash();
