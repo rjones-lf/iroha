@@ -40,7 +40,8 @@ namespace torii {
         block_query_(block_query),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
-        cache_(std::make_shared<CacheType>()) {
+        cache_(std::make_shared<CacheType>()),
+        log_(logger::log("CommandService")) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe([this](auto iroha_response) {
       // Find response in cache
@@ -97,6 +98,7 @@ namespace torii {
             },
             [this, &tx_hash, &request, &response](const auto &error) {
               // getting hash from invalid transaction
+              log_->warn("Stateless invalid tx: {}", error.error);
               auto blobPayload =
                   shared_model::proto::makeBlob(request.payload());
               tx_hash =
@@ -133,6 +135,7 @@ namespace torii {
               shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {
+        log_->warn("Asked non-existing tx: {}", request.tx_hash());
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
       cache_->addItem(tx_hash, response);
@@ -204,10 +207,12 @@ namespace torii {
         response_writer.WriteLast(resp_none.getTransport(),
                                   grpc::WriteOptions());
       } else {
-        /// Tx processing was started but still unfinished. We give it
-        /// 2*proposal_delay time until timeout.
+        log_->info("Tx processing was started but unfinished, awaiting more");
+        /// We give it 2*proposal_delay time until timeout.
         cv.wait_for(lock, 2 * proposal_delay_);
       }
+    } else {
+      log_->warn("Command processing timeout");
     }
   }
 
@@ -229,6 +234,8 @@ namespace torii {
         return;
       }
       response_writer.Write(*resp);
+    } else {
+      log_->debug("Transaction not found in service cache");
     }
   }
 
