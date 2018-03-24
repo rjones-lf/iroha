@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 

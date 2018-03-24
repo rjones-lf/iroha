@@ -39,7 +39,6 @@ namespace iroha {
         STATEFUL_VALIDATION_FAILED,    // stateful validation failed
         STATEFUL_VALIDATION_SUCCESS,   // stateful validation passed
         COMMITTED,                     // tx pipeline succeeded, tx is committed
-        IN_PROGRESS,  // transaction is received, but not validated
         NOT_RECEIVED  // transaction is not in handler map
       };
 

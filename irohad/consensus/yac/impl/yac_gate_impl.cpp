@@ -64,7 +64,7 @@ namespace iroha {
         }
         current_block_ = std::make_pair(
             hash,
-            std::unique_ptr<shared_model::interface::Block>(block.copy()));
+            clone(block));
         hash_gate_->vote(hash, *order);
       }
 

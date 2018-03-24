@@ -38,9 +38,9 @@ namespace iroha {
           crypto_provider_(std::move(crypto_provider)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
-          proposal_subscription_, [this](model::Proposal old_proposal) {
-            this->process_proposal(shared_model::proto::Proposal(
-                shared_model::proto::from_old(old_proposal)));
+          proposal_subscription_,
+          [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
+            this->process_proposal(*proposal);
           });
 
       notifier_.get_observable().subscribe(
