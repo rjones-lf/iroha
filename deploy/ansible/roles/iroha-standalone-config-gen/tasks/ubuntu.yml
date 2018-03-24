@@ -3,8 +3,11 @@
 - name: create dir for temporary files
   file:
     path: "{{ filesDir }}"
-    state: directory
+    state: "{{ item }}"
     mode: 0755
+  with_items:
+    - absent
+    - directory
 
 - name: generate peers list
   template:

@@ -1,11 +1,11 @@
 # Using ansible for iroha deployment
-There are 2 deployment scenario supported implemented as separated playbooks.
+There are 2 deployment scenarios supported which are implemented as separated playbooks.
 
 1. `iroha-docker-cluster`
 2. `iroha-standalone-nodes`
 
 These playbooks use different roles and inventories. Each role and inventory file is well-documented, sometimes they 
-will be referred from the readme file. 
+are referred in the role's README file. 
 ## 1. Iroha-docker-cluster 
 ### 1.1 Main ideas
 This playbook allows to deploy multiple iroha peers on one node. For example, you want to run 21 nodes of iroha, 
@@ -30,7 +30,13 @@ set to ` /opt/docker/iroha/conf$KEY` by default. Files from the `generation phas
 Then, `docker-compose.yml` file is generated and stored at `{{ composeDir }}`(see section 1.4 of this file) 
 location for each host (nodes amount for each host is set by variable `nodes_in_region` in 
 `playbooks/iroha/group_vars/<group_name>.yml` - see `inventory/hosts_docker_cluster.list` file for more instructions). 
-- [deploy phase] `iroha` is started using `docker-compose` command.
+- [deploy phase] all previously launched `iroha` and `postgres` containers are stopped and removed using 
+`docker-compose down` command. After all operations `iroha` and `postgres` nodes are started using `docker-compose up -d` 
+command.
+
+> NOTE: During the [deploy phase] one can see the error messages during execution of task 
+`stop and remove all docker-compose containers before operations`. That means that you don't have launched `iroha` 
+and `postgres` containers. This error is handled and will not affect playbook execution.   
 
 Let's discuss how it works in details.
 
@@ -51,18 +57,21 @@ iroha-bench4 ansible_host=0.0.0.0 ansible_user=root key=17
 
 As you can see, basic host field in group contains `hostname`, `ansible_host <ip>`, `ansible_user`, and `key` field. 
 
-`key` is a node ID in a iroha network. In this particular playbook this value means the start of the count. 
+`key` is a node ID in a iroha network. This value is used for passing only node-specific keypair to the `iroha` node to start. 
+In this particular playbook this value is used to the start of the count. 
 `nodes_in_region` is an amount of `iroha` nodes running on each host. 
 Values `key` and `nodes_in_region` are used in the following manner:
 - for host iroha-bench1 we have 8 iroha peers. First peer ID will be `key=0`, for second `key=1`, and so on up to `key=7`
 - for host iroha-bench2 we have another 5 iroha peers. Their IDs will start from 8 to 12.
+- for host iroha-bench3 we want to run 4 iroha peers. Their IDs will start from 13 to 16.
+- for host iroha-bench4 we want to run 4 iroha peers. Their IDs will start from 17 to 20.
 
 > `nodes_in_region` variable could be set at `playbooks/iroha-docker-cluster/group_vars/<group_name>.yml`, or default value from 
 `playbooks/iroha-docker-cluster/group_vars/all.yml` will be used. 
 
 ### 1.3 Peer configs
 
-There is no need to describe them as they are generated automaitally. Port management is also automated. 
+There is no need to describe them as they are generated automatically. Port management is also automated. 
 If you want to see how it works --> you can see `roles/iroha-cluster-deploy-node/tasks/ubuntu.yml` and templates `roles/iroha-cluster-deploy-node/templates/`
 
 ### 1.4 Variables to be set
@@ -117,7 +126,8 @@ with only
 there is no need to use it. 
  
 ### 1.6 Requirements
-1) **iroha-cli** must be installed and could be accessed using PATH variable (e.g. /usr/bin). This is due to keys and genesis.block is generated on your local host and stored on /tmp/iroha-bench
+1) **iroha-cli** must be installed and could be accessed using PATH variable (e.g. /usr/bin). 
+This is required because keys and genesis.block are generated on your local host and stored in `{{ filesDir }}` folder.
 
 ## 2. Iroha-standalone-nodes 
 ### 2.1 Main ideas
@@ -135,7 +145,13 @@ It works in the following way:
 where `$KEY` is a iroha node ID in the P2P network
 - [deliver phase] - `config.sample` file is generated from the template and delivered to the `{{ confPath }}` which is 
 set to ` /opt/docker/iroha/conf` by default. Files from the `generation phase` are also delivered to these endpoints.
-- [deploy phase] `iroha` is started using `docker run` command.
+- [deploy phase] all previously launched `iroha` and `postgres` containers are stopped and removed, then images are updated
+using `docker pull` command and after that `iroha` and `postgres` are started using `docker run` command.
+
+> NOTE: During the [deploy phase] one can see the error messages during execution of task 
+`Stop and remove previous running docker containers`. That means that you have neither launched `iroha` 
+and `postgres` containers nor existing `docker-compose.yml` file. This error is handled and will not affect playbook 
+execution.   
 
 Let's discuss how it works in details.
 
@@ -193,7 +209,7 @@ If you want everything to work from scratch, these variables should not be chang
 After `hosts_standalone_nodes.list` inventory file is configured one could launch the playbook.
 
 ```
-ansible-playbook -i inventory/hosts_standalone_nodes.list playbooks/iroha-standaone-nodes/iroha-deploy.yml --private-key=~/.ssh/<key>
+ansible-playbook -i inventory/hosts_standalone_nodes.list playbooks/iroha-standalone-nodes/iroha-deploy.yml --private-key=~/.ssh/<key>
 ```
 , where you should specify your SSH key.
 

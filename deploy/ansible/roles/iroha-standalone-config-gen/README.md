@@ -1,7 +1,7 @@
 iroha-standalone-config-gen
 =========
 
-a role to generate `genesis.block` and keypair for each node in listed in inventory. 
+A role to generate `genesis.block` and keypair for each node in listed in inventory. 
 
 Requirements
 ------------

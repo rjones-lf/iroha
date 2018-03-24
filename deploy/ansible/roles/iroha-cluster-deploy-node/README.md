@@ -1,7 +1,7 @@
 iroha-cluster-deploy-node
 =========
 
-a role to run iroha cluster by delivering previously generated `genesis.block`, 
+A role to run iroha cluster by delivering previously generated `genesis.block`, 
 keypair for each node, and newly generated `config.sample` to target hosts. It creates `docker-compose.yml` file
 with iroha docker and `postgres:9.5` configured in separated docker networks, but in one P2P network.
 
