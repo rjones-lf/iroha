@@ -61,7 +61,8 @@ class YacGateTest : public ::testing::Test {
 
     expected_block =
         std::unique_ptr<shared_model::interface::Block>(tmp.copy());
-    const auto &signature = **expected_block->signatures().begin();
+    const auto &signature = **(expected_block->signatures().begin());
+    // TODO: 24/04/2018 x3medima17 remove makeOldModel in next PR
     const auto old_signature =
         *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
 

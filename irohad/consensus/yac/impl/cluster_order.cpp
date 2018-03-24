@@ -34,6 +34,7 @@ namespace iroha {
           std::vector<std::shared_ptr<shared_model::interface::Peer>> order)
           : order_(std::move(order)) {}
 
+      // TODO :  24/03/2018 x3medima17: make it const, R-1164
       const shared_model::interface::Peer &ClusterOrdering::currentLeader() {
         if (index_ >= order_.size()) {
           index_ = 0;

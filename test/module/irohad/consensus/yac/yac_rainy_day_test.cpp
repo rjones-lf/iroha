@@ -154,13 +154,13 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {
     auto peer = my_order->getPeers().at(i);
-    auto old_peer = *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel());
-    votes.push_back(create_vote(hash1, old_peer.pubkey.to_string()));
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    votes.push_back(create_vote(hash1, pubkey));
   };
   for (size_t i = peers_number / 2; i < peers_number - 1; ++i) {
     auto peer = my_order->getPeers().at(i);
-    auto old_peer = *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel());
-    votes.push_back(create_vote(hash2, old_peer.pubkey.to_string()));
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    votes.push_back(create_vote(hash2, pubkey));
   };
 
   for (const auto &vote : votes) {
@@ -169,6 +169,6 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   yac->on_reject(RejectMessage(votes));
   auto peer = my_order->getPeers().back();
-  auto old_peer = *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel());
-  yac->on_vote(create_vote(hash1, old_peer.pubkey.to_string()));
+  auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+  yac->on_vote(create_vote(hash1, pubkey));
 }

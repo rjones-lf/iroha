@@ -109,7 +109,7 @@ namespace iroha {
 
         MOCK_METHOD2(send_commit,
                      void(const shared_model::interface::Peer &,
-                          CommitMessage));
+                          const CommitMessage &));
         MOCK_METHOD2(send_reject,
                      void(const shared_model::interface::Peer &,
                           RejectMessage));

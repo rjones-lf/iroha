@@ -18,9 +18,9 @@
 #ifndef IROHA_YAC_HPP
 #define IROHA_YAC_HPP
 
+#include <boost/optional.hpp>
 #include <memory>
 #include <mutex>
-#include <boost/optional.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 #include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
@@ -102,10 +102,14 @@ namespace iroha {
          * top block in ledger does not correspond to consensus round number
          */
 
-        void applyCommit(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-                         CommitMessage commit);
-        void applyReject(boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-                         RejectMessage reject);
+        void applyCommit(
+            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+                from,
+            CommitMessage commit);
+        void applyReject(
+            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+                from,
+            RejectMessage reject);
         void applyVote(boost::optional<
                            std::shared_ptr<shared_model::interface::Peer>> from,
                        VoteMessage vote);
@@ -113,10 +117,10 @@ namespace iroha {
         // ------|Propagation|------
         void propagateCommit(CommitMessage msg);
         void propagateCommitDirectly(const shared_model::interface::Peer &to,
-                                     CommitMessage msg);
-        void propagateReject(RejectMessage msg);
+                                     const CommitMessage &msg);
+        void propagateReject(const RejectMessage &msg);
         void propagateRejectDirectly(const shared_model::interface::Peer &to,
-                                     RejectMessage msg);
+                                     const RejectMessage &msg);
 
         // ------|Fields|------
         YacVoteStorage vote_storage_;

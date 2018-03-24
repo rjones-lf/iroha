@@ -57,7 +57,7 @@ namespace iroha {
       }
 
       void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
-                                    CommitMessage commit) {
+                                    const CommitMessage &commit) {
         createPeerConnection(to);
 
         proto::Commit request;
