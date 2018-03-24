@@ -7,8 +7,7 @@
 # 5) set "key" variable in the following way:
 # key=0 for the first host of the first node in the inventory
 # for next host set key=key[prev_host] + 1
-# NOTE: 1) you can create more than one group
-# NOTE: 2) you can set unique value of "nodes_in_group" for each host by setting it in
+# NOTE: 1) you can create more than one group, but you still have to increment it throughout the inventory file.
 
 [iroha-nodes]
 iroha-1 ansible_host=0.0.0.0 ansible_user=root key=0

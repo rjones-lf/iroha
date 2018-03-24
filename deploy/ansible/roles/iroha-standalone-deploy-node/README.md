@@ -1,7 +1,7 @@
 iroha-standalone-deploy-node
 =========
 
-A role to run iroha cluster by delivering previously generated `genesis.block`, 
+A role that runs iroha cluster by delivering previously generated `genesis.block`, 
 keypair for each node, and newly generated `config.sample` to target hosts. 
 It runs `iroha` and `postgres:9.5` in docker containers.
 

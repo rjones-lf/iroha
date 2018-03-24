@@ -1,7 +1,7 @@
 iroha-cluster-config-gen
 =========
 
-A role to generate `genesis.block` and keypair for each node in deployable iroha cluster based on inventory. 
+A role that generates `genesis.block` and keypair for each node in deployable iroha cluster based on inventory. 
 
 Requirements
 ------------

@@ -1,7 +1,7 @@
 docker
 =========
 
-A role install docker engine and docker-compose including python modules.
+A role that installs docker engine and docker-compose including python modules.
 
 Requirements
 ------------
