@@ -53,8 +53,7 @@ class ChainValidationTest : public ::testing::Test {
     return TestBlockBuilder()
         .transactions(std::vector<shared_model::proto::Transaction>{})
         .height(1)
-        .prevHash(hash)
-        .createdTime(iroha::time::now());
+        .prevHash(hash);
   }
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
