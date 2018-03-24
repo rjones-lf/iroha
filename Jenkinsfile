@@ -93,7 +93,13 @@ pipeline {
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
-              debugBuild.doDebugBuild(true)
+              // run coverage if branch is either develop or master, or if it is a PR
+              if (env.BRANCH_NAME in ['develop', 'master'] || env.CHANGE_ID != null) {
+                debugBuild.doDebugBuild(true)
+              }
+              else {
+                debugBuild.doDebugBuild()
+              }
               if (BRANCH_NAME ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
@@ -118,7 +124,7 @@ pipeline {
           steps {
             script {
               def debugBuild = load ".jenkinsci/debug-build.groovy"
-              if (!params.Linux && !params.ARMv8 && !params.MacOS) {
+              if (!params.Linux && !params.ARMv8 && !params.MacOS && (env.BRANCH_NAME in ['develop', 'master'] || env.CHANGE_ID != null)) {
                 debugBuild.doDebugBuild(true)
               }              
               else {
@@ -148,7 +154,7 @@ pipeline {
           steps {
             script {
               def debugBuild = load ".jenkinsci/debug-build.groovy"
-              if (!params.Linux && !params.MacOS) {
+              if (!params.Linux && !params.MacOS && (env.BRANCH_NAME in ['develop', 'master'] || env.CHANGE_ID != null)) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -179,7 +185,7 @@ pipeline {
             script {
               def coverageEnabled = false
               def cmakeOptions = ""
-              if (!params.Linux) {
+              if (!params.Linux && (env.BRANCH_NAME in ['develop', 'master'] || env.CHANGE_ID != null)) {
                 coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
