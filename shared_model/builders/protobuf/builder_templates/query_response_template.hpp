@@ -28,7 +28,7 @@ namespace shared_model {
   namespace proto {
 
     template <class T>
-    static void setReason(iroha::protocol::ErrorResponse &err);
+    constexpr iroha::protocol::ErrorResponse_Reason getReason();
 
     /**
      * Template query response builder for creating new types of query response
@@ -53,8 +53,7 @@ namespace shared_model {
       using w = shared_model::detail::PolymorphicWrapper<T>;
 
       template <int Sp>
-      TemplateQueryResponseBuilder(
-          const TemplateQueryResponseBuilder<Sp> &o)
+      TemplateQueryResponseBuilder(const TemplateQueryResponseBuilder<Sp> &o)
           : query_response_(o.query_response_) {}
 
       /**
@@ -128,7 +127,7 @@ namespace shared_model {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::ErrorResponse *query_response =
               proto_query_response.mutable_error_response();
-          setReason<T>(*query_response);
+          query_response->set_reason(getReason<T>());
         });
       }
 
@@ -212,57 +211,57 @@ namespace shared_model {
     };
 
     template <>
-    void setReason<interface::StatelessFailedErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::StatelessFailedErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID;
     }
 
     template <>
-    void setReason<interface::StatefulFailedErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_STATEFUL_INVALID);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::StatefulFailedErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_STATEFUL_INVALID;
     }
 
     template <>
-    void setReason<interface::NoAccountErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoAccountErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT;
     }
 
     template <>
-    void setReason<interface::NoAccountAssetsErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_ASSETS);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoAccountAssetsErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_ASSETS;
     }
 
     template <>
-    void setReason<interface::NoAccountDetailErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_DETAIL);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoAccountDetailErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_DETAIL;
     }
 
     template <>
-    void setReason<interface::NoSignatoriesErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_SIGNATORIES);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoSignatoriesErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_SIGNATORIES;
     }
 
     template <>
-    void setReason<interface::NotSupportedErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NOT_SUPPORTED);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NotSupportedErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NOT_SUPPORTED;
     }
 
     template <>
-    void setReason<interface::NoAssetErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ASSET);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoAssetErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_ASSET;
     }
 
     template <>
-    void setReason<interface::NoRolesErrorResponse>(
-        iroha::protocol::ErrorResponse &err) {
-      err.set_reason(iroha::protocol::ErrorResponse_Reason_NO_ROLES);
+    iroha::protocol::ErrorResponse_Reason
+    getReason<interface::NoRolesErrorResponse>() {
+      return iroha::protocol::ErrorResponse_Reason_NO_ROLES;
     }
   }  // namespace proto
 }  // namespace shared_model
