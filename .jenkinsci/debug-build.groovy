@@ -40,7 +40,8 @@ def doDebugBuild(coverageEnabled=false) {
     + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
     + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --network=${env.IROHA_NETWORK}"
-    + " -v /var/jenkins/ccache:${CCACHE_DIR}") {
+    + " -v /var/jenkins/ccache:${CCACHE_DIR}"
+    + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
 
     def scmVars = checkout scm
     def cmakeOptions = ""
@@ -95,12 +96,8 @@ def doDebugBuild(coverageEnabled=false) {
       sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
     }
-
-    // TODO: replace with upload to artifactory server
-    // develop branch only
-    if ( env.BRANCH_NAME == "develop" ) {
-      //archive(includes: 'build/bin/,compile_commands.json')
-    }
+    // copy built binaries to the volume
+    sh "cp ./build/bin/* /tmp/${GIT_COMMIT}/"
   }
 }
 return this
