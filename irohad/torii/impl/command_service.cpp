@@ -207,12 +207,14 @@ namespace torii {
         response_writer.WriteLast(resp_none.getTransport(),
                                   grpc::WriteOptions());
       } else {
-        log_->info("Tx processing was started but unfinished, awaiting more");
+        log_->info(
+            "Tx processing was started but unfinished, awaiting more, hash: {}",
+            request.tx_hash());
         /// We give it 2*proposal_delay time until timeout.
         cv.wait_for(lock, 2 * proposal_delay_);
       }
     } else {
-      log_->warn("Command processing timeout");
+      log_->warn("Command processing timeout, hash: {}", request.tx_hash());
     }
   }
 
@@ -235,7 +237,8 @@ namespace torii {
       }
       response_writer.Write(*resp);
     } else {
-      log_->debug("Transaction not found in service cache");
+      log_->debug("Transaction not found in service cache, hash: {}",
+                  resp->tx_hash());
     }
   }
 
