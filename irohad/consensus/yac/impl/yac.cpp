@@ -168,7 +168,7 @@ namespace iroha {
 
       void Yac::applyCommit(
           boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          CommitMessage commit) {
+          const CommitMessage &commit) {
         auto answer =
             vote_storage_.store(commit, cluster_order_.getNumberOfPeers());
         answer | [&](const auto &answer) {
@@ -193,7 +193,7 @@ namespace iroha {
 
       void Yac::applyReject(
           boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          RejectMessage reject) {
+          const RejectMessage &reject) {
         auto answer =
             vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
         answer | [&](const auto &answer) {
@@ -220,7 +220,7 @@ namespace iroha {
 
       void Yac::applyVote(
           boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          VoteMessage vote) {
+          const VoteMessage &vote) {
         if (from) {
           log_->info("Apply vote: {} from ledger peer {}",
                      vote.hash.block_hash,
@@ -274,7 +274,7 @@ namespace iroha {
 
       // ------|Propagation|------
 
-      void Yac::propagateCommit(CommitMessage msg) {
+      void Yac::propagateCommit(const CommitMessage &msg) {
         for (const auto &peer : cluster_order_.getPeers()) {
           propagateCommitDirectly(*peer, msg);
         }

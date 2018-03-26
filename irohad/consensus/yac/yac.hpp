@@ -105,17 +105,17 @@ namespace iroha {
         void applyCommit(
             boost::optional<std::shared_ptr<shared_model::interface::Peer>>
                 from,
-            CommitMessage commit);
+            const CommitMessage &commit);
         void applyReject(
             boost::optional<std::shared_ptr<shared_model::interface::Peer>>
                 from,
-            RejectMessage reject);
+            const RejectMessage &reject);
         void applyVote(boost::optional<
                            std::shared_ptr<shared_model::interface::Peer>> from,
-                       VoteMessage vote);
+                       const VoteMessage &vote);
 
         // ------|Propagation|------
-        void propagateCommit(CommitMessage msg);
+        void propagateCommit(const CommitMessage &msg);
         void propagateCommitDirectly(const shared_model::interface::Peer &to,
                                      const CommitMessage &msg);
         void propagateReject(const RejectMessage &msg);
