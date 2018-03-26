@@ -53,12 +53,9 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    crypto_verifier =
-        std::make_shared<shared_model::crypto::MockCryptoVerifier>();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query,
         storage,
-        crypto_verifier,
         std::make_shared<shared_model::validation::DefaultBlockValidator>());
     service = std::make_shared<BlockLoaderService>(storage);
 
@@ -102,7 +99,6 @@ class BlockLoaderTest : public testing::Test {
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
-  std::shared_ptr<shared_model::crypto::MockCryptoVerifier> crypto_verifier;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
@@ -142,9 +138,6 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   auto top_block = getBaseBlockBuilder().height(block.height() + 1).build();
 
-  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
-      .WillOnce(Return(true));
-
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getTopBlocks(1))
@@ -179,10 +172,6 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
     blocks.emplace_back(clone(blk));
   }
 
-  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
-      .Times(num_blocks)
-      .WillRepeatedly(Return(true));
-
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getTopBlocks(1))
@@ -207,9 +196,6 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   auto requested = getBaseBlockBuilder().build();
-
-  EXPECT_CALL(*crypto_verifier, verify(A<const shared_model::interface::Block &>()))
-      .WillOnce(Return(true));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));

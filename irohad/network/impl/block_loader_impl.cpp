@@ -23,7 +23,6 @@
 
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
 using namespace iroha::ametsuchi;
@@ -34,12 +33,10 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
-      crypto_verifier_(crypto_verifier),
       stateless_validator_(stateless_validator) {
   log_ = logger::log("BlockLoaderImpl");
 }
@@ -94,14 +91,9 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
                   [this, &context, &subscriber](
                       const iroha::expected::Value<shared_model::proto::Block>
                           &result) {
-                    if (not crypto_verifier_->verify(result.value)) {
-                      log_->error(kInvalidBlockSignatures);
-                      context.TryCancel();
-                    } else {
-                      subscriber.on_next(std::move(
-                          std::make_shared<shared_model::proto::Block>(
-                              result.value)));
-                    }
+                    subscriber.on_next(
+                        std::move(std::make_shared<shared_model::proto::Block>(
+                            result.value)));
                   },
                   // fail case
                   [this,
@@ -137,13 +129,8 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     return boost::none;
   }
 
-  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
-  if (not crypto_verifier_->verify(*result)) {
-    log_->error(kInvalidBlockSignatures);
-    return boost::none;
-  }
-
   // stateless validation of block
+  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
   auto answer = stateless_validator_->validate(result);
   if (answer.hasErrors()) {
     log_->error(answer.reason());

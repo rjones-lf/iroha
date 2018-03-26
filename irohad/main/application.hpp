@@ -54,7 +54,6 @@ namespace iroha {
 namespace shared_model {
   namespace crypto {
     class CryptoSigner;
-    class CryptoVerifier;
   }  // namespace crypto
 }  // namespace shared_model
 
@@ -158,7 +157,6 @@ class Irohad {
   // ------------------------| internal dependencies |-------------------------
 
   // crypto provider
-  std::shared_ptr<shared_model::crypto::CryptoVerifier> crypto_verifier_;
   std::shared_ptr<shared_model::crypto::CryptoSigner> crypto_signer_;
 
   // validators

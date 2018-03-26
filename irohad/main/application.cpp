@@ -20,7 +20,6 @@
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "cryptography/crypto_provider/crypto_signer_impl.hpp"
-#include "cryptography/crypto_provider/crypto_verifier_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -141,8 +140,6 @@ void Irohad::initCrypto() {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  crypto_verifier_ =
-      std::make_shared<shared_model::crypto::CryptoVerifierImpl<>>();
   crypto_signer_ =
       std::make_shared<shared_model::crypto::CryptoSignerImpl<>>(keypair_);
 
@@ -188,7 +185,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader = loader_init.initBlockLoader(
-      wsv, storage->getBlockQuery(), crypto_verifier_);
+      wsv, storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
