@@ -22,6 +22,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "common/byteutils.hpp"
 #include "common/types.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/base/hashable.hpp"
@@ -98,12 +99,14 @@ namespace torii {
             },
             [this, &tx_hash, &request, &response](const auto &error) {
               // getting hash from invalid transaction
-              log_->warn("Stateless invalid tx: {}", error.error);
               auto blobPayload =
                   shared_model::proto::makeBlob(request.payload());
               tx_hash =
                   shared_model::proto::Transaction::HashProviderType::makeHash(
                       blobPayload);
+              log_->warn("Stateless invalid tx: {}, hash: {}",
+                         error.error,
+                         tx_hash.hex());
 
               // setting response
               response.set_tx_hash(
@@ -135,7 +138,8 @@ namespace torii {
               shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {
-        log_->warn("Asked non-existing tx: {}", request.tx_hash());
+        log_->warn("Asked non-existing tx: {}",
+                   iroha::bytestringToHexstring(request.tx_hash()));
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
       cache_->addItem(tx_hash, response);
@@ -209,12 +213,12 @@ namespace torii {
       } else {
         log_->info(
             "Tx processing was started but unfinished, awaiting more, hash: {}",
-            request.tx_hash());
+            request_hash.hex());
         /// We give it 2*proposal_delay time until timeout.
         cv.wait_for(lock, 2 * proposal_delay_);
       }
     } else {
-      log_->warn("Command processing timeout, hash: {}", request.tx_hash());
+      log_->warn("Command processing timeout, hash: {}", request_hash.hex());
     }
   }
 
@@ -237,8 +241,7 @@ namespace torii {
       }
       response_writer.Write(*resp);
     } else {
-      log_->debug("Transaction not found in service cache, hash: {}",
-                  resp->tx_hash());
+      log_->debug("Transaction miss service cache");
     }
   }
 
