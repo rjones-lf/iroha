@@ -16,13 +16,13 @@
  */
 
 #include "simulator/impl/simulator.hpp"
+
+#include <boost/range/adaptor/transformed.hpp>
+
 #include "builders/protobuf/block.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "model/sha3_hash.hpp"
-
-#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -104,7 +104,7 @@ namespace iroha {
           proposal.transactions()
           | boost::adaptors::transformed([](const auto &polymorphic_tx) {
               return static_cast<const shared_model::proto::Transaction &>(
-                  *polymorphic_tx.operator->());
+                  *polymorphic_tx);
             });
       auto block = std::make_shared<shared_model::proto::Block>(
           shared_model::proto::UnsignedBlockBuilder()
