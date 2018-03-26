@@ -248,7 +248,8 @@ void Irohad::initQueryService() {
       storage->getWsvQuery(), storage->getBlockQuery());
 
   auto query_processor =
-      std::make_shared<QueryProcessorImpl>(std::move(query_processing_factory));
+      std::make_shared<QueryProcessorImpl>(std::move(query_processing_factory),
+      storage);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

@@ -63,10 +63,11 @@ class QueryProcessorTest : public ::testing::Test {
 TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wsv_queries = std::make_shared<MockWsvQuery>();
   auto block_queries = std::make_shared<MockBlockQuery>();
+  auto storage = std::make_shared<MockStorage>();
   auto qpf = std::make_unique<model::QueryProcessingFactory>(wsv_queries,
                                                              block_queries);
 
-  iroha::torii::QueryProcessorImpl qpi(std::move(qpf));
+  iroha::torii::QueryProcessorImpl qpi(std::move(qpf), storage);
 
   auto query = TestUnsignedQueryBuilder()
                    .createdTime(created_time)

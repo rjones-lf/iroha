@@ -74,6 +74,7 @@ class ClientServerTest : public testing::Test {
     pcsMock = std::make_shared<MockPeerCommunicationService>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
+    auto storage = std::make_shared<MockStorage>();
 
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
         prop_notifier;
@@ -95,8 +96,8 @@ class ClientServerTest : public testing::Test {
     auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
         wsv_query, block_query);
 
-      auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-          std::move(qpf));
+    auto qpi =
+        std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf), storage);
 
     //----------- Server run ----------------
     runner

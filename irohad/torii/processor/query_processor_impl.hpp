@@ -18,6 +18,7 @@
 #ifndef IROHA_QUERY_PROCESSOR_IMPL_HPP
 #define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
+#include "ametsuchi/storage.hpp"
 #include "model/query_execution.hpp"
 #include "torii/processor/query_processor.hpp"
 
@@ -30,7 +31,8 @@ namespace iroha {
     class QueryProcessorImpl : public QueryProcessor {
      public:
       explicit QueryProcessorImpl(
-          std::unique_ptr<model::QueryProcessingFactory> qpf);
+          std::unique_ptr<model::QueryProcessingFactory> qpf,
+          std::shared_ptr<ametsuchi::Storage> storage);
 
       /**
        * Register client query
@@ -51,6 +53,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponse>>
           subject_;
       std::unique_ptr<model::QueryProcessingFactory> qpf_;
+      std::shared_ptr<ametsuchi::Storage> storage_;
     };
   }  // namespace torii
 }  // namespace iroha

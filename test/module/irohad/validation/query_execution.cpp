@@ -82,7 +82,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
   }
 
   std::shared_ptr<QueryResponse> validateAndExecute() {
-    return factory->execute(query);
+    return factory->execute(query, wsv_query);
   }
 
   /**

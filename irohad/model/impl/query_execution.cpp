@@ -168,7 +168,8 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAssetInfo(
     const model::GetAssetInfo &query) {
   auto shared_ast = _wsvQuery->getAsset(query.asset_id);
   auto ast = shared_ast | [&](auto &asset) {
-    return boost::make_optional(*std::unique_ptr<iroha::model::Asset>(asset->makeOldModel()));
+    return boost::make_optional(
+        *std::unique_ptr<iroha::model::Asset>(asset->makeOldModel()));
   };
   if (not ast) {
     ErrorResponse response;
@@ -217,7 +218,8 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
     const model::GetAccount &query) {
   auto shared_acc = _wsvQuery->getAccount(query.account_id);
   auto acc = shared_acc | [](auto &account) {
-    return boost::make_optional(*std::unique_ptr<iroha::model::Account>(account->makeOldModel()));
+    return boost::make_optional(
+        *std::unique_ptr<iroha::model::Account>(account->makeOldModel()));
   };
 
   auto roles = _wsvQuery->getAccountRoles(query.account_id);
@@ -237,9 +239,11 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccount(
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetAccountAssets(
     const model::GetAccountAssets &query) {
-  auto shared_acct_asset =  _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
+  auto shared_acct_asset =
+      _wsvQuery->getAccountAsset(query.account_id, query.asset_id);
   auto acct_asset = shared_acct_asset | [](auto &account_asset) {
-    return boost::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(account_asset->makeOldModel()));
+    return boost::make_optional(*std::unique_ptr<iroha::model::AccountAsset>(
+        account_asset->makeOldModel()));
   };
 
   if (!acct_asset) {
@@ -329,16 +333,20 @@ std::shared_ptr<QueryResponse> QueryProcessingFactory::executeGetSignatories(
   }
   SignatoriesResponse response;
   response.query_hash = iroha::hash(query);
-  std::for_each(signs.value().begin(), signs.value().end(), [&response](const auto &key) {
-    response.keys.emplace_back(
-        key.template makeOldModel<iroha::pubkey_t>());
-  });
+  std::for_each(
+      signs.value().begin(), signs.value().end(), [&response](const auto &key) {
+        response.keys.emplace_back(
+            key.template makeOldModel<iroha::pubkey_t>());
+      });
   return std::make_shared<SignatoriesResponse>(response);
 }
 
 std::shared_ptr<QueryResponse> QueryProcessingFactory::execute(
-    std::shared_ptr<const model::Query> query) {
-  // TODO: 03.02.2018 grimadas IR-936 change to handler map or/with templates #VARIANT
+    std::shared_ptr<const model::Query> query,
+    std::shared_ptr<ametsuchi::WsvQuery> wsvQuery) {
+  _wsvQuery = wsvQuery;
+  // TODO: 03.02.2018 grimadas IR-936 change to handler map or/with templates
+  // #VARIANT
   if (instanceof <GetAccount>(query.get())) {
     auto qry = std::static_pointer_cast<const GetAccount>(query);
 
