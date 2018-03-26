@@ -18,7 +18,6 @@
 #ifndef IROHA_CRYPTO_SIGNER_IMPL_HPP
 #define IROHA_CRYPTO_SIGNER_IMPL_HPP
 
-#include "backend/protobuf/common_objects/signature.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
@@ -51,17 +50,7 @@ namespace shared_model {
       void CryptoModelSigner<Algorithm>::sign(
           interface::Signable<Model> &signable) const noexcept {
 #endif
-        auto signedBlob =
-            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-                shared_model::crypto::Blob(signable.payload()), keypair_);
-        iroha::protocol::Signature protosig;
-        protosig.set_pubkey(
-            shared_model::crypto::toBinaryString(keypair_.publicKey()));
-        protosig.set_signature(
-            shared_model::crypto::toBinaryString(signedBlob));
-        auto *signature = new shared_model::proto::Signature(protosig);
-        signable.addSignature(shared_model::detail::PolymorphicWrapper<
-                              shared_model::proto::Signature>(signature));
+        signable.signAndAddSignature(keypair_);
       }
 
       shared_model::crypto::Keypair keypair_;

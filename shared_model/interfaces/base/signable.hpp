@@ -20,6 +20,9 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "backend/protobuf/common_objects/signature.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/keypair.hpp"
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
@@ -36,12 +39,12 @@ namespace shared_model {
 #define SIGNABLE(Model) Signable<Model, iroha::model::Model>
 #endif
 
-/**
- * Interface provides signatures and adds them to model object
- * @tparam Model - your new style model
- * Architecture note: we inherit Signable from Hashable with following
- * assumption - all Signable objects are signed by hash value.
- */
+  /**
+   * Interface provides signatures and adds them to model object
+   * @tparam Model - your new style model
+   * Architecture note: we inherit Signable from Hashable with following
+   * assumption - all Signable objects are signed by hash value.
+   */
 
 #ifndef DISABLE_BACKWARD
     template <typename Model, typename OldModel>
@@ -57,7 +60,27 @@ namespace shared_model {
       virtual const SignatureSetType &signatures() const = 0;
 
       /**
+       * Generate and attach signature to object
+       * @param keypair - keypair used to sign
+       * @return true, if signature was added
+       */
+      bool signAndAddSignature(const crypto::Keypair &keypair) {
+        auto signedBlob =
+            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
+                payload(), keypair);
+        iroha::protocol::Signature protosig;
+        protosig.set_pubkey(
+            shared_model::crypto::toBinaryString(keypair.publicKey()));
+        protosig.set_signature(
+            shared_model::crypto::toBinaryString(signedBlob));
+        auto *signature = new shared_model::proto::Signature(protosig);
+        return addSignature(shared_model::detail::PolymorphicWrapper<
+            shared_model::proto::Signature>(signature));
+      }
+
+      /**
        * Attach signature to object
+       * This function is used mostly for tests.
        * @param signature - signature object for insertion
        * @return true, if signature was added
        */

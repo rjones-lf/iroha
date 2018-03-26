@@ -45,18 +45,12 @@ namespace shared_model {
 
       /**
        * Add signature and retrieve signed result
-       * @param signature - signature to add
+       * @param keypair - keypair used to signed
        * @return signed object
        */
       T signAndAddSignature(const crypto::Keypair &keypair) {
-        auto signedBlob = shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-            shared_model::crypto::Blob(unsigned_.payload()), keypair);
-        iroha::protocol::Signature protosig;
-        protosig.set_pubkey(crypto::toBinaryString(keypair.publicKey()));
-        protosig.set_signature(crypto::toBinaryString(signedBlob));
-        auto *s1 = new Signature(protosig);
-        unsigned_.addSignature(detail::PolymorphicWrapper<Signature>(
-            s1));  // TODO: 05.12.2017 luckychess think about false case
+        unsigned_.signAndAddSignature(keypair);
+        // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;
       }
 
