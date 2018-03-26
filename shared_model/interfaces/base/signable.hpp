@@ -18,12 +18,13 @@
 #ifndef IROHA_SIGNABLE_HPP
 #define IROHA_SIGNABLE_HPP
 
-#include <boost/functional/hash.hpp>
+#include <boost/optional.hpp>
 
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
