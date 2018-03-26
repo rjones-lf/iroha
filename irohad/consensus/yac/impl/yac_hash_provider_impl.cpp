@@ -32,7 +32,7 @@ namespace iroha {
         result.proposal_hash = hex_hash;
         result.block_hash = hex_hash;
         const auto &sig = *block.signatures().begin();
-        result.block_signature = decltype(result.block_signature)(sig->copy());
+        result.block_signature = clone(*sig);
         return result;
       }
 

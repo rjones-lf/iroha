@@ -46,7 +46,7 @@ namespace iroha {
                        .signedData(shared_model::crypto::Signed(signed_data))
                        .build();
 
-        hash.block_signature = decltype(hash.block_signature)(sig.copy());
+        hash.block_signature = clone(sig);
 
         auto vote = crypto_provider->getVote(hash);
 
@@ -60,7 +60,7 @@ namespace iroha {
                        .signedData(shared_model::crypto::Signed(signed_data))
                        .build();
 
-        hash.block_signature = decltype(hash.block_signature)(sig.copy());
+        hash.block_signature = clone(sig);
 
         auto vote = crypto_provider->getVote(hash);
 

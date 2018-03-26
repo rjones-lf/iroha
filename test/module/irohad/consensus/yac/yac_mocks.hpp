@@ -32,6 +32,7 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace consensus {

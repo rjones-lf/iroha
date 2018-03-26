@@ -46,8 +46,7 @@ namespace iroha {
                          .signedData(shared_model::crypto::Signed("data"))
                          .build();
 
-          message.hash.block_signature =
-              decltype(message.hash.block_signature)(sig.copy());
+          message.hash.block_signature = clone(sig);
           network->subscribe(notifications);
 
           grpc::ServerBuilder builder;

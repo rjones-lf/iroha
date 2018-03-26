@@ -44,8 +44,7 @@ namespace iroha {
                            .publicKey(shared_model::crypto::PublicKey(""))
                            .signedData(shared_model::crypto::Signed(""))
                            .build();
-            const_cast<VoteMessage &>(vote).hash.block_signature =
-                decltype(vote.hash.block_signature)(sig.copy());
+            const_cast<VoteMessage &>(vote).hash.block_signature = clone(sig);
           }
 
           block_signature->set_signature(shared_model::crypto::toBinaryString(
@@ -73,9 +72,7 @@ namespace iroha {
                              pb_vote.hash().block_signature().signature()))
                          .build();
 
-          vote.hash.block_signature =
-              decltype(vote.hash.block_signature)(sig.copy());
-
+          vote.hash.block_signature = clone(sig);
           vote.signature.signature = *stringToBlob<iroha::sig_t::size()>(
               pb_vote.signature().signature());
           vote.signature.pubkey = *stringToBlob<iroha::pubkey_t::size()>(
