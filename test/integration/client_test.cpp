@@ -108,6 +108,11 @@ class ClientServerTest : public testing::Test {
 
     runner->waitForServersReady();
   }
+  decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
+      pair =
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  std::vector<shared_model::interface::types::PubkeyType> signatories = {
+      pair.publicKey()};
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
@@ -216,12 +221,16 @@ TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
 }
 
 TEST_F(ClientServerTest, SendQueryWhenValid) {
+  // TODO: 30/04/2018 x3medima17, fix Uninteresting mock function call, IR-1187
   iroha_cli::CliClient client(Ip, Port);
   auto account_admin = iroha::model::Account();
   account_admin.account_id = "admin@test";
 
   std::shared_ptr<shared_model::interface::Account> account_test = clone(
       shared_model::proto::AccountBuilder().accountId("test@test").build());
+
+  EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
+      .WillRepeatedly(Return(signatories));
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -237,9 +246,7 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
                    .queryCounter(1)
                    .getAccountDetail("test@test")
                    .build()
-                   .signAndAddSignature(
-                       shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                   .signAndAddSignature(pair);
 
   auto res = client.sendQuery(
       std::shared_ptr<iroha::model::Query>(query.makeOldModel()));
@@ -254,6 +261,9 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   auto account_test = iroha::model::Account();
   account_test.account_id = "test@test";
 
+  EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
+      .WillRepeatedly(Return(signatories));
+
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   "admin@test", "test@test", can_get_my_acc_detail))
@@ -265,9 +275,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                    .queryCounter(1)
                    .getAccountDetail("test@test")
                    .build()
-                   .signAndAddSignature(
-                       shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                   .signAndAddSignature(pair);
 
   auto res = client.sendQuery(
       std::shared_ptr<iroha::model::Query>(query.makeOldModel()));
