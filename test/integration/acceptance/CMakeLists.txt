@@ -39,6 +39,14 @@ target_link_libraries(invalid_fields_test
   shared_model_stateless_validation
   )
 
+addtest(transfer_asset_test transfer_asset_test.cpp)
+target_link_libraries(transfer_asset_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
 addtest(create_domain_test create_domain_test.cpp)
 target_link_libraries(create_domain_test
   application

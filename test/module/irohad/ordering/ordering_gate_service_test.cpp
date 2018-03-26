@@ -17,20 +17,17 @@
 
 #include <gtest/gtest.h>
 
-#include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/common_objects/peer_builder.hpp"
 #include "framework/test_subscriber.hpp"
 #include "mock_ordering_service_persistent_state.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
-#include "validators/field_validator.hpp"
-
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -102,7 +99,8 @@ class OrderingGateServiceTest : public ::testing::Test {
     }
   }
 
-  TestSubscriber<iroha::model::Proposal> init(size_t times) {
+  TestSubscriber<std::shared_ptr<shared_model::interface::Proposal>> init(
+      size_t times) {
     auto wrapper = make_test_subscriber<CallExact>(gate->on_proposal(), times);
     gate->on_proposal().subscribe([this](auto) {
       counter--;
@@ -128,8 +126,8 @@ class OrderingGateServiceTest : public ::testing::Test {
    * @param i - number of transaction
    */
   void send_transaction(size_t i) {
-    auto tx = std::make_shared<iroha::model::Transaction>();
-    tx->tx_counter = i;
+    auto tx = std::make_shared<shared_model::proto::Transaction>(
+        TestTransactionBuilder().txCounter(i).build());
     gate->propagateTransaction(tx);
     // otherwise tx may come unordered
     std::this_thread::sleep_for(20ms);
@@ -144,7 +142,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;
 
-  std::vector<iroha::model::Proposal> proposals;
+  std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
   std::atomic<size_t> counter;
   std::condition_variable cv;
   std::mutex m;
@@ -206,15 +204,15 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
 
   std::this_thread::sleep_for(1s);
   ASSERT_EQ(proposals.size(), 2);
-  ASSERT_EQ(proposals.at(0).transactions.size(), 8);
-  ASSERT_EQ(proposals.at(1).transactions.size(), 2);
+  ASSERT_EQ(proposals.at(0)->transactions().size(), 8);
+  ASSERT_EQ(proposals.at(1)->transactions().size(), 2);
   ASSERT_EQ(counter, 0);
   ASSERT_TRUE(wrapper.validate());
 
   size_t i = 0;
   for (auto &&proposal : proposals) {
-    for (auto &&tx : proposal.transactions) {
-      ASSERT_EQ(tx.tx_counter, i++);
+    for (auto &&tx : proposal->transactions()) {
+      ASSERT_EQ(tx->transactionCounter(), i++);
     }
   }
 }
@@ -268,9 +266,9 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
 
   size_t i = 0;
   for (auto &&proposal : proposals) {
-    ASSERT_EQ(proposal.transactions.size(), 5);
-    for (auto &&tx : proposal.transactions) {
-      ASSERT_EQ(tx.tx_counter, i++);
+    ASSERT_EQ(proposal->transactions().size(), 5);
+    for (auto &&tx : proposal->transactions()) {
+      ASSERT_EQ(tx->transactionCounter(), i++);
     }
   }
 }

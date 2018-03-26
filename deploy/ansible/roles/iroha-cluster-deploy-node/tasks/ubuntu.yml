@@ -1,0 +1,69 @@
+---
+  - setup:
+  - name: stop and remove all docker-compose containers before operations
+    command: docker-compose down
+    args:
+      chdir: "{{ composeDir }}"
+    ignore_errors: yes
+    tag: deliver
+
+  - name: Make conf dir
+    file:
+      path: "{{ confPath }}{{ item }}"
+      state: directory
+      mode: 0755
+      owner: root
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    tag: deliver
+
+  - name: generate configs
+    template:
+      src: config.j2
+      dest: "{{ confPath }}{{ item }}/config.sample"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    tag: deliver
+
+  - name: copy genesis block
+    copy:
+      src: "{{ filesDir }}/genesis.block"
+      dest: "{{ confPath }}{{ item }}/genesis.block"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    tag: deliver
+
+  - name: copy public keys
+    copy:
+      src: "{{ filesDir }}/node{{ key + item | int}}.pub"
+      dest: "{{ confPath }}{{ item }}/"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    tag: deliver
+
+  - name: copy private keys
+    copy:
+      src: "{{ filesDir }}/node{{ key + item | int}}.priv"
+      dest: "{{ confPath }}{{ item }}/"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    tag: deliver
+
+  - name: generate compose
+    template:
+      src: docker-compose.yml.j2
+      dest: "{{ composeDir }}/docker-compose.yml"
+    tag: deliver
+
+  - name: pull fresh docker image of postgres
+    docker_image:
+      name: "{{ dbDockerImage }}"
+      tag: "{{ dbDockerImageTag }}"
+    tag: deploy
+
+  - name: pull fresh docker image of iroha
+    docker_image:
+      name: "{{ irohaDockerImage }}"
+      tag: "{{ irohaDockerImageTag }}"
+    tag: deploy
+
+  - name: run docker compose
+    command: docker-compose up -d
+    args:
+      chdir: "{{ composeDir }}"
+    tag: deploy

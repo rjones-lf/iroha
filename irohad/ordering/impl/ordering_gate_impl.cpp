@@ -17,6 +17,7 @@
 
 #include <utility>
 
+#include "interfaces/transaction.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 
 namespace iroha {
@@ -27,15 +28,17 @@ namespace iroha {
         : transport_(std::move(transport)), log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const model::Transaction> transaction) {
-      log_->info("propagate tx, tx_counter: "
-                 + std::to_string(transaction->tx_counter)
-                 + " account_id: " + transaction->creator_account_id);
+        std::shared_ptr<const shared_model::interface::Transaction>
+            transaction) {
+      log_->info("propagate tx, tx_counter: {} account_id: {}",
+                 std::to_string(transaction->transactionCounter()),
+                 " account_id: " + transaction->creatorAccountId());
 
       transport_->propagateTransaction(transaction);
     }
 
-    rxcpp::observable<model::Proposal> OrderingGateImpl::on_proposal() {
+    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    OrderingGateImpl::on_proposal() {
       return proposals_.get_observable();
     }
 
@@ -50,20 +53,19 @@ namespace iroha {
       });
     }
 
-    void OrderingGateImpl::onProposal(model::Proposal proposal) {
+    void OrderingGateImpl::onProposal(
+        std::shared_ptr<shared_model::interface::Proposal> proposal) {
       log_->info("Received new proposal");
-      proposal_queue_.push(
-          std::make_shared<model::Proposal>(std::move(proposal)));
+      proposal_queue_.push(std::move(proposal));
       tryNextRound();
     }
 
     void OrderingGateImpl::tryNextRound() {
-      if (not proposal_queue_.empty()
-          and unlock_next_.exchange(false)) {
-        std::shared_ptr<model::Proposal> next_proposal;
+      if (not proposal_queue_.empty() and unlock_next_.exchange(false)) {
+        std::shared_ptr<shared_model::interface::Proposal> next_proposal;
         proposal_queue_.try_pop(next_proposal);
         log_->info("Pass the proposal to pipeline");
-        proposals_.get_subscriber().on_next(*next_proposal);
+        proposals_.get_subscriber().on_next(next_proposal);
       }
     }
 

@@ -7,6 +7,7 @@ The purpose of this documentation is to convey design and architecture aspects o
  * modify only the contents of `image_assets` and `source` folders
  * if new section/file is added — it should be placed in the list of contents
  * if any new principle is added — it should be discussed in GitHub issues first, as an improvement proposal
+ * reference images or assets using GitHub download link or an external service, since our localized docs can't use relative path to image assets or other resources
 
 ## Setup
 

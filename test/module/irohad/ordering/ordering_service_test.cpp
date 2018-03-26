@@ -17,26 +17,16 @@
 
 #include <grpc++/grpc++.h>
 
+#include "backend/protobuf/common_objects/peer.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "logger/logger.hpp"
-#include "network/ordering_service.hpp"
-
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
-
-#include "ametsuchi/ordering_service_persistent_state.hpp"
-#include "backend/protobuf/common_objects/peer.hpp"
-#include "mock_ordering_service_persistent_state.hpp"
-#include "builders/common_objects/peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "ordering/impl/ordering_gate_impl.hpp"
-#include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
-#include "ordering/impl/ordering_service_transport_grpc.hpp"
-#include "validators/field_validator.hpp"
-
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "module/irohad/ordering/mock_ordering_service_persistent_state.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "ordering/impl/ordering_service_impl.hpp"
+#include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -44,12 +34,12 @@ using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
 
-using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::DoAll;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
+using ::testing::_;
 
 static logger::Logger log_ = logger::testLog("OrderingService");
 

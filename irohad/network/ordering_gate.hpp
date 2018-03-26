@@ -19,9 +19,14 @@
 #define IROHA_ORDERING_SERVICE_HPP
 
 #include <rxcpp/rx-observable.hpp>
-#include "model/proposal.hpp"
-#include "model/transaction.hpp"
 #include "network/peer_communication_service.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+    class Proposal;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace network {
@@ -36,13 +41,16 @@ namespace iroha {
        * @param transaction
        */
       virtual void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) = 0;
+          std::shared_ptr<const shared_model::interface::Transaction>
+              transaction) = 0;
 
       /**
        * Return observable of all proposals in the consensus
        * @return observable with notifications
        */
-      virtual rxcpp::observable<model::Proposal> on_proposal() = 0;
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::Proposal>>
+      on_proposal() = 0;
 
       /**
        * Set peer communication service for commit notification

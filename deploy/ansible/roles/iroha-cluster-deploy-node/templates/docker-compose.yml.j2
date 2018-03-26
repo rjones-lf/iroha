@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+{% for i in range(nodes_in_region | int) %}
+  node_{{ key + i }}:
+    image: "{{ irohaDockerImage }}:{{ irohaDockerImageTag }}"
+    ports:
+      - "{{ torii_port + i }}:{{ torii_port + i }}"
+      - "{{ internal_port + i }}:{{ internal_port + i }}"
+    environment:
+      - KEY=node{{ key + i }}
+    depends_on:
+      - postgres_{{ key + i }}
+    tty: true
+    restart: always
+    volumes:
+      - "{{ confPath }}{{ i }}:{{ containerConfPath }}"
+    networks:
+      - "{{ iroha_net }}_{{ i }}"
+
+  postgres_{{ key + i }}:
+    image: "{{ dbDockerImage }}:{{ dbDockerImageTag }}"
+    environment:
+      - POSTGRES_USER={{ postgresUser }}
+      - POSTGRES_PASSWORD={{ postgresPassword }}
+    networks:
+      - "{{ iroha_net }}_{{ i }}"
+
+{% endfor %}
+
+networks:
+{% for i in range(nodes_in_region | int) %}
+  {{ iroha_net }}_{{ i }}:
+{% endfor %}
