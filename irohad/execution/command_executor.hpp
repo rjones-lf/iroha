@@ -139,11 +139,11 @@ namespace iroha {
     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
     shared_model::interface::types::AccountIdType creator_account_id;
 
-    shared_model::builder::DefaultAmountBuilder amount_builder;
-    shared_model::builder::DefaultAccountAssetBuilder account_asset_builder;
-    shared_model::builder::DefaultAccountBuilder account_builder;
-    shared_model::builder::DefaultAssetBuilder asset_builder;
-    shared_model::builder::DefaultDomainBuilder domain_builder;
+    shared_model::builder::DefaultAmountBuilder amount_builder_;
+    shared_model::builder::DefaultAccountAssetBuilder account_asset_builder_;
+    shared_model::builder::DefaultAccountBuilder account_builder_;
+    shared_model::builder::DefaultAssetBuilder asset_builder_;
+    shared_model::builder::DefaultDomainBuilder domain_builder_;
   };
 
   class CommandValidator : public boost::static_visitor<bool> {
