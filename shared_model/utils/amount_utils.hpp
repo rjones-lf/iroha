@@ -49,9 +49,7 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator+(
               std::shared_ptr<shared_model::interface::Amount>>(boost::none);
         }
         return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(
-            std::shared_ptr<shared_model::interface::Amount>(
-                result.value->copy()));
+            std::shared_ptr<shared_model::interface::Amount>>(result.value);
       },
       [](const auto &err) {
         return boost::optional<
@@ -86,15 +84,9 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator-(
       [&a, &b](const iroha::expected::Value<
                std::shared_ptr<shared_model::interface::Amount>> &result) {
         return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(
-            std::shared_ptr<shared_model::interface::Amount>(
-                result.value->copy()));
+            std::shared_ptr<shared_model::interface::Amount>>(result.value);
       },
       [&](const auto &err) {
-        auto res = shared_model::builder::DefaultAmountBuilder()
-            .precision(a.precision())
-            .intValue(a.intValue() - b.intValue())
-            .build();
         return boost::optional<
             std::shared_ptr<shared_model::interface::Amount>>(boost::none);
       });

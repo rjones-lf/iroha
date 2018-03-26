@@ -28,31 +28,25 @@
 
 namespace iroha {
 
-  iroha::expected::Error<ExecutionError> makeExecutionError(
+  expected::Error<ExecutionError> makeExecutionError(
       const std::string &error_message,
       const std::string command_name) noexcept {
-    return iroha::expected::makeError(
-        ExecutionError{command_name, error_message});
+    return expected::makeError(ExecutionError{command_name, error_message});
   }
 
-  ExecutionResult makeExecutionResult(
-      const iroha::ametsuchi::WsvCommandResult &result,
-      std::string command_name) noexcept {
+  ExecutionResult makeExecutionResult(const ametsuchi::WsvCommandResult &result,
+                                      std::string command_name) noexcept {
     return result.match(
-        [](const iroha::expected::Value<void> &v) -> ExecutionResult {
-          return {};
-        },
+        [](const expected::Value<void> &v) -> ExecutionResult { return {}; },
         [&command_name](
-            const iroha::expected::Error<iroha::ametsuchi::WsvError> &e)
-            -> ExecutionResult {
-          return iroha::expected::makeError(
-              ExecutionError{command_name, e.error});
+            const expected::Error<ametsuchi::WsvError> &e) -> ExecutionResult {
+          return expected::makeError(ExecutionError{command_name, e.error});
         });
   }
 
   CommandExecutor::CommandExecutor(
-      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
-      std::shared_ptr<iroha::ametsuchi::WsvCommand> commands)
+      std::shared_ptr<ametsuchi::WsvQuery> queries,
+      std::shared_ptr<ametsuchi::WsvCommand> commands)
       : queries(queries), commands(commands) {}
 
   void CommandExecutor::setCreatorAccountId(
@@ -91,11 +85,17 @@ namespace iroha {
     auto new_balance = amount_builder.precision(command->amount().precision())
                            .intValue(command->amount().intValue())
                            .build();
-
-    return new_balance.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::Amount>> &new_balance_val)
-            -> ExecutionResult {
+    using AccountAssetResult =
+        expected::Result<std::shared_ptr<shared_model::interface::AccountAsset>,
+                         iroha::expected::Error<iroha::ExecutionError>>;
+    auto account_asset_new = new_balance.match(
+        [this, &account_asset, &command_name, &command](
+            const expected::Value<
+                std::shared_ptr<shared_model::interface::Amount>>
+                &new_balance_val) -> AccountAssetResult {
+          expected::PolymorphicResult<shared_model::interface::AccountAsset,
+                                      std::string>
+              result;
           if (account_asset) {
             auto balance =
                 *new_balance_val.value + account_asset.value()->balance();
@@ -103,47 +103,42 @@ namespace iroha {
               return makeExecutionError("amount overflows balance",
                                         command_name);
             }
-
-            auto account_asset_new =
-                account_asset_builder.balance(*balance.value())
-                    .accountId(command->accountId())
-                    .assetId(command->assetId())
-                    .build();
-
-            return account_asset_new.match(
-                [&](const expected::Value<
-                    std::shared_ptr<shared_model::interface::AccountAsset>>
-                        &account_asset_new_val) -> ExecutionResult {
-                  return makeExecutionResult(commands->upsertAccountAsset(
-                                                 *account_asset_new_val.value),
-                                             command_name);
-                },
-                [&command_name](const auto &err) -> ExecutionResult {
-                  return makeExecutionError("account asset builder failed",
-                                            command_name);
-                });
+            result = account_asset_builder.balance(*balance.value())
+                         .accountId(command->accountId())
+                         .assetId(command->assetId())
+                         .build();
+          } else {
+            result = account_asset_builder.balance(*new_balance_val.value)
+                         .accountId(command->accountId())
+                         .assetId(command->assetId())
+                         .build();
           }
-
-          auto account_asset_new =
-              account_asset_builder.balance(*new_balance_val.value)
-                  .accountId(command->accountId())
-                  .assetId(command->assetId())
-                  .build();
-          return account_asset_new.match(
-              [&](const expected::Value<
+          return result.match(
+              [](expected::Value<
                   std::shared_ptr<shared_model::interface::AccountAsset>>
-                      &account_asset_new_val) -> ExecutionResult {
-                return makeExecutionResult(
-                    commands->upsertAccountAsset(*account_asset_new_val.value),
-                    command_name);
+                     &new_account_asset_val) -> AccountAssetResult {
+                return expected::makeValue(new_account_asset_val.value);
               },
-              [&command_name](const auto &err) -> ExecutionResult {
-                return makeExecutionError("account asset builder failed",
-                                          command_name);
+              [&command_name](const auto &error) -> AccountAssetResult {
+                return makeExecutionError(*error.error, command_name);
               });
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("amount builder failed", command_name);
+        [&command_name](const auto &error) -> AccountAssetResult {
+          return makeExecutionError("amount builder failed. reason ",
+                                    command_name);
+        });
+
+    return account_asset_new.match(
+        [&](const expected::Value<
+            std::shared_ptr<shared_model::interface::AccountAsset>>
+                &account_asset_new_val) -> ExecutionResult {
+          return makeExecutionResult(
+              commands->upsertAccountAsset(*account_asset_new_val.value),
+              command_name);
+        },
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError("account asset builder failed. reason ",
+                                    command_name);
         });
   }
 
@@ -208,8 +203,9 @@ namespace iroha {
           };
           return makeExecutionResult(result, "CreateAccount");
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("account builder failed", command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "account builder failed. reason " + *error.error, command_name);
         });
   }
 
@@ -230,8 +226,9 @@ namespace iroha {
           return makeExecutionResult(
               commands->insertAsset(*new_asset_val.value), command_name);
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("asset builder failed", command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "asset builder failed. reason " + *error.error, command_name);
         });
   }
 
@@ -250,8 +247,9 @@ namespace iroha {
           return makeExecutionResult(
               commands->insertDomain(*new_domain_val.value), command_name);
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("domain builder failed", command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "domain builder failed. reason " + *error.error, command_name);
         });
   }
 
@@ -344,8 +342,9 @@ namespace iroha {
           return makeExecutionResult(
               commands->updateAccount(*account_new_val.value), command_name);
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("account builder failed", command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "account builder failed. reason " + *error.error, command_name);
         });
   }
 
@@ -394,9 +393,10 @@ namespace iroha {
               commands->upsertAccountAsset(*account_asset_new_val.value),
               command_name);
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("account asset builder failed",
-                                    command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "account asset builder failed. reason " + *error.error,
+              command_name);
         });
   }
 
@@ -448,30 +448,16 @@ namespace iroha {
         [&](const expected::Value<
             std::shared_ptr<shared_model::interface::AccountAsset>>
                 &src_account_asset_new_val) -> ExecutionResult {
+          expected::PolymorphicResult<shared_model::interface::AccountAsset,
+                                      std::string>
+              dest_account_asset_new;
           if (not dest_account_asset) {
             // This assert is new for this account - create new AccountAsset
-
-            auto dest_account_asset_new =
+            dest_account_asset_new =
                 account_asset_builder.assetId(command->assetId())
                     .accountId(command->destAccountId())
                     .balance(command->amount())
                     .build();
-            return dest_account_asset_new.match(
-                [&](const expected::Value<
-                    std::shared_ptr<shared_model::interface::AccountAsset>>
-                        &dest_account_asset_new_val) -> ExecutionResult {
-                  auto result = commands->upsertAccountAsset(
-                                    *dest_account_asset_new_val.value)
-                      | [&] {
-                          return commands->upsertAccountAsset(
-                              *src_account_asset_new_val.value);
-                        };
-                  return makeExecutionResult(result, command_name);
-                },
-                [&command_name](const auto &err) -> ExecutionResult {
-                  return makeExecutionError("account asset builder failed",
-                                            command_name);
-                });
 
           } else {
             auto new_dest_balance =
@@ -480,39 +466,41 @@ namespace iroha {
               return makeExecutionError(
                   "operation overflows destination balance", command_name);
             }
-            auto dest_account_asset_new =
+            dest_account_asset_new =
                 account_asset_builder.assetId(command->assetId())
                     .accountId(command->destAccountId())
                     .balance(*new_dest_balance.get())
                     .build();
-            return dest_account_asset_new.match(
-                [&](const expected::Value<
-                    std::shared_ptr<shared_model::interface::AccountAsset>>
-                        &dest_account_asset_new_val) -> ExecutionResult {
-                  auto result = commands->upsertAccountAsset(
-                                    *dest_account_asset_new_val.value)
-                      | [&] {
-                          return commands->upsertAccountAsset(
-                              *src_account_asset_new_val.value);
-                        };
-                  return makeExecutionResult(result, command_name);
-                },
-                [&command_name](const auto &err) -> ExecutionResult {
-                  return makeExecutionError("account asset builder failed",
-                                            command_name);
-                });
           }
+          return dest_account_asset_new.match(
+              [&](const expected::Value<
+                  std::shared_ptr<shared_model::interface::AccountAsset>>
+                      &dest_account_asset_new_val) -> ExecutionResult {
+                auto result = commands->upsertAccountAsset(
+                                  *dest_account_asset_new_val.value)
+                    | [&] {
+                        return commands->upsertAccountAsset(
+                            *src_account_asset_new_val.value);
+                      };
+                return makeExecutionResult(result, command_name);
+              },
+              [&command_name](const auto &error) -> ExecutionResult {
+                return makeExecutionError(
+                    "account asset builder failed. reason " + *error.error,
+                    command_name);
+              });
         },
-        [&command_name](const auto &err) -> ExecutionResult {
-          return makeExecutionError("account asset builder failed",
-                                    command_name);
+        [&command_name](const auto &error) -> ExecutionResult {
+          return makeExecutionError(
+              "account asset builder failed. reason " + *error.error,
+              command_name);
         });
   }
 
   // ----------------------| Validator |----------------------
 
   CommandValidator::CommandValidator(
-      std::shared_ptr<iroha::ametsuchi::WsvQuery> queries)
+      std::shared_ptr<ametsuchi::WsvQuery> queries)
       : queries(queries) {}
 
   void CommandValidator::setCreatorAccountId(
@@ -522,7 +510,7 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::AddAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     // Check if creator has MoneyCreator permission.
     // One can only add to his/her account
@@ -531,114 +519,110 @@ namespace iroha {
     // any asset
     return creator_account_id == command.accountId()
         and checkAccountRolePermission(
-                creator_account_id, queries, iroha::model::can_add_asset_qty);
+                creator_account_id, queries, model::can_add_asset_qty);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::AddPeer &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_add_peer);
+        creator_account_id, queries, model::can_add_peer);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::AddSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. When command creator wants to add signatory to their
         // account and he has permission CanAddSignatory
         (command.accountId() == creator_account_id
          and checkAccountRolePermission(
-                 creator_account_id, queries, iroha::model::can_add_signatory))
+                 creator_account_id, queries, model::can_add_signatory))
         or
         // Case 2. Creator has granted permission for it
         (queries.hasAccountGrantablePermission(
-            creator_account_id,
-            command.accountId(),
-            iroha::model::can_add_signatory));
+            creator_account_id, command.accountId(), model::can_add_signatory));
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::AppendRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_append_role);
+        creator_account_id, queries, model::can_append_role);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::CreateAccount &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_create_account);
+        creator_account_id, queries, model::can_create_account);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::CreateAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_create_asset);
+        creator_account_id, queries, model::can_create_asset);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::CreateDomain &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_create_domain);
+        creator_account_id, queries, model::can_create_domain);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::CreateRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_create_role);
+        creator_account_id, queries, model::can_create_role);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::DetachRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, iroha::model::can_detach_role);
+        creator_account_id, queries, model::can_detach_role);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::GrantPermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
         creator_account_id,
         queries,
-        iroha::model::can_grant + command.permissionName());
+        model::can_grant + command.permissionName());
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::RemoveSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // 1. Creator removes signatory from their account, and he must have
         // permission on it
         (creator_account_id == command.accountId()
-         and checkAccountRolePermission(creator_account_id,
-                                        queries,
-                                        iroha::model::can_remove_signatory))
+         and checkAccountRolePermission(
+                 creator_account_id, queries, model::can_remove_signatory))
         // 2. Creator has granted permission on removal
-        or (queries.hasAccountGrantablePermission(
-               creator_account_id,
-               command.accountId(),
-               iroha::model::can_remove_signatory));
+        or (queries.hasAccountGrantablePermission(creator_account_id,
+                                                  command.accountId(),
+                                                  model::can_remove_signatory));
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::RevokePermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return queries.hasAccountGrantablePermission(
         command.accountId(), creator_account_id, command.permissionName());
@@ -646,46 +630,42 @@ namespace iroha {
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::SetAccountDetail &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. Creator set details for his account
         creator_account_id == command.accountId() or
         // Case 2. Creator has grantable permission to set account key/value
-        queries.hasAccountGrantablePermission(creator_account_id,
-                                              command.accountId(),
-                                              iroha::model::can_set_detail);
+        queries.hasAccountGrantablePermission(
+            creator_account_id, command.accountId(), model::can_set_detail);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::SetQuorum &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // 1. Creator set quorum for his account -> must have permission
         (creator_account_id == command.accountId()
          and checkAccountRolePermission(
-                 creator_account_id, queries, iroha::model::can_set_quorum))
+                 creator_account_id, queries, model::can_set_quorum))
         // 2. Creator has granted permission on it
         or (queries.hasAccountGrantablePermission(
-               creator_account_id,
-               command.accountId(),
-               iroha::model::can_set_quorum));
+               creator_account_id, command.accountId(), model::can_set_quorum));
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::SubtractAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return creator_account_id == command.accountId()
-        and checkAccountRolePermission(creator_account_id,
-                                       queries,
-                                       iroha::model::can_subtract_asset_qty);
+        and checkAccountRolePermission(
+                creator_account_id, queries, model::can_subtract_asset_qty);
   }
 
   bool CommandValidator::hasPermissions(
       const shared_model::interface::TransferAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return (
                // 1. Creator has granted permission on src_account_id
@@ -693,42 +673,41 @@ namespace iroha {
                 and queries.hasAccountGrantablePermission(
                         creator_account_id,
                         command.srcAccountId(),
-                        iroha::model::can_transfer))
+                        model::can_transfer))
                or
                // 2. Creator transfer from their account
                (creator_account_id == command.srcAccountId()
-                and checkAccountRolePermission(creator_account_id,
-                                               queries,
-                                               iroha::model::can_transfer)))
+                and checkAccountRolePermission(
+                        creator_account_id, queries, model::can_transfer)))
         // For both cases, dest_account must have can_receive
         and checkAccountRolePermission(
-                command.destAccountId(), queries, iroha::model::can_receive);
+                command.destAccountId(), queries, model::can_receive);
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::AddAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::AddPeer &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::AddSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::AppendRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_permissions = queries.getRolePermissions(command.roleName());
     auto account_roles = queries.getAccountRoles(creator_account_id);
@@ -756,7 +735,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateAccount &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
@@ -767,7 +746,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
@@ -780,7 +759,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateDomain &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Name is within some range
@@ -793,7 +772,7 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto role_is_a_subset = std::all_of(
         command.rolePermissions().begin(),
@@ -812,21 +791,21 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::DetachRole &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::GrantPermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::RemoveSignatory &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto account = queries.getAccount(command.accountId());
     auto signatories =
@@ -844,21 +823,21 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::RevokePermission &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::SetAccountDetail &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::SetQuorum &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto signatories =
         queries.getSignatories(command.accountId());  // Old model
@@ -874,14 +853,14 @@ namespace iroha {
 
   bool CommandValidator::isValid(
       const shared_model::interface::SubtractAssetQuantity &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::TransferAsset &command,
-      iroha::ametsuchi::WsvQuery &queries,
+      ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     if (command.amount().intValue() == 0) {
       return false;

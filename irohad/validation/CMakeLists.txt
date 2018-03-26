@@ -40,5 +40,4 @@ target_link_libraries(chain_validator
     model
     logger
     supermajority_check
-    pqxx
     )
