@@ -20,8 +20,10 @@
 #include <fstream>
 #include <iostream>
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "client.hpp"
 #include "common/assert_config.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_cli.hpp"
@@ -30,8 +32,6 @@
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
 #include "validators.hpp"
-#include "converters/protobuf/json_proto_converter.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 
 // Account information
 DEFINE_bool(
