@@ -43,9 +43,9 @@ namespace iroha {
         auto ptr = shared_model::proto::PeerBuilder()
                        .address(address)
                        .pubkey(shared_model::interface::types::PubkeyType(key))
-                       .build()
-                       .copy();
-        return std::shared_ptr<shared_model::interface::Peer>(ptr);
+                       .build();
+
+        return clone(ptr);
       }
 
       VoteMessage create_vote(YacHash hash, std::string pub_key) {
