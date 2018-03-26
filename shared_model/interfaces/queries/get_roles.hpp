@@ -18,7 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_GET_ROLES_HPP
 #define IROHA_SHARED_MODEL_GET_ROLES_HPP
 
-#include "interfaces/base/hashable.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 

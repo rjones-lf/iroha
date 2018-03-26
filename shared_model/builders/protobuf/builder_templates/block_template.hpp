@@ -23,7 +23,6 @@
 #include "block.pb.h"
 
 #include "builders/protobuf/unsigned_proto.hpp"
-#include "interfaces/base/hashable.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"

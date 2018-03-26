@@ -22,7 +22,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
 #include "amount/amount.hpp"
-#include "interfaces/base/hashable.hpp"
+#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 

@@ -24,7 +24,6 @@
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/types.hpp"
 #include "endpoint.pb.h"
-#include "interfaces/base/hashable.hpp"
 #include "torii/command_service.hpp"
 #include "validators/default_validator.hpp"
 

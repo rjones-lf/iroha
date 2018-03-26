@@ -20,12 +20,10 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "interfaces/base/hashable.hpp"
+#include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/polymorphic_wrapper.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -36,21 +34,25 @@ namespace shared_model {
 #define SIGNABLE(Model) Signable<Model, iroha::model::Model>
 #endif
 
-/**
- * Interface provides signatures and adds them to model object
- * @tparam Model - your new style model
- * Architecture note: we inherit Signable from Hashable with following
- * assumption - all Signable objects are signed by hash value.
- */
-
+  /**
+   * Interface provides signatures and adds them to model object
+   * @tparam Model - your new style model
+   * Architecture note: we inherit Signable from Hashable with following
+   * assumption - all Signable objects are signed by hash value.
+   */
 #ifndef DISABLE_BACKWARD
-    template <typename Model, typename OldModel>
-    class Signable : public Hashable<Model, OldModel> {
+    template <typename Model,
+              typename OldModel,
+              typename HashProvider = shared_model::crypto::Sha3_256>
+    class Signable : public Primitive<Model, OldModel> {
 #else
-    template <typename Model>
-    class Signable : public Hashable<Model> {
+    template <typename Model,
+              typename HashProvider = shared_model::crypto::Sha3_256>
+    class Signable : public ModelPrimitive<Model> {
 #endif
      public:
+      using HashProviderType = HashProvider;
+
       /**
        * @return attached signatures
        */
@@ -80,32 +82,27 @@ namespace shared_model {
       virtual const types::BlobType &payload() const = 0;
 
       /**
+       * @return blob representation of object include signatures
+       */
+      virtual const types::BlobType &blob() const = 0;
+
+      /**
        * Provides comparison based on equality of objects and signatures.
        * @param rhs - another model object
        * @return true, if objects totally equal
        */
-      virtual bool equals(const Model &rhs) const {
-        return *this == rhs and this->signatures() == rhs.signatures()
+      bool operator==(const Model &rhs) const override {
+        return this->hash() == rhs.hash()
+            and this->signatures() == rhs.signatures()
             and this->createdTime() == rhs.createdTime();
       }
 
-#ifndef DISABLE_BACKWARD
-      const typename types::HashType &hash() const override {
-        if (Hashable<Model, OldModel>::hash_ == boost::none) {
-          Hashable<Model, OldModel>::hash_.emplace(
-              Hashable<Model, OldModel>::HashProviderType::makeHash(payload()));
+      virtual const types::HashType &hash() const {
+        if (hash_ == boost::none) {
+          hash_.emplace(HashProviderType::makeHash(payload()));
         }
-        return *Hashable<Model, OldModel>::hash_;
+        return *hash_;
       }
-#else
-      const typename types::HashType &hash() const override {
-        if (Hashable<Model>::hash_ == boost::none) {
-          Hashable<Model>::hash_.emplace(
-              Hashable<Model>::HashProviderType::makeHash(payload()));
-        }
-        return *Hashable<Model>::hash_;
-      }
-#endif
 
       // ------------------------| Primitive override |-------------------------
 
@@ -117,6 +114,9 @@ namespace shared_model {
                        [](auto &signature) { return signature->toString(); })
             .finalize();
       }
+
+     protected:
+      mutable boost::optional<types::HashType> hash_;
     };
 
   }  // namespace interface

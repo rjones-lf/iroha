@@ -19,7 +19,6 @@
 #define IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 
 #include <boost/variant.hpp>
-#include "interfaces/base/hashable.hpp"
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
