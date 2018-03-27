@@ -13,6 +13,7 @@ In essence, this section is a collection of how-tos for different scenarios:
     :maxdepth: 2
     :caption: Table of contents
 
+    build.rst
     configuration.rst
     deployment.rst
     libraries.rst
