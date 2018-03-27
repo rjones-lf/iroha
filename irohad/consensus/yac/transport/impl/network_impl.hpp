@@ -45,9 +45,12 @@ namespace iroha {
         NetworkImpl();
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
-        void send_commit(const shared_model::interface::Peer &to,const CommitMessage &commit) override;
-        void send_reject(const shared_model::interface::Peer &to, RejectMessage reject) override;
-        void send_vote(const shared_model::interface::Peer &to, VoteMessage vote) override;
+        void send_commit(const shared_model::interface::Peer &to,
+                         const CommitMessage &commit) override;
+        void send_reject(const shared_model::interface::Peer &to,
+                         RejectMessage reject) override;
+        void send_vote(const shared_model::interface::Peer &to,
+                       VoteMessage vote) override;
 
         /**
          * Receive vote from another peer;

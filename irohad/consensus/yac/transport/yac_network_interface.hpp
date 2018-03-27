@@ -67,7 +67,8 @@ namespace iroha {
          * @param to - peer recipient
          * @param commit - message for sending
          */
-        virtual void send_commit(const shared_model::interface::Peer &to,const CommitMessage &commit) = 0;
+        virtual void send_commit(const shared_model::interface::Peer &to,
+                                 const CommitMessage &commit) = 0;
 
         /**
          * Directly share reject message

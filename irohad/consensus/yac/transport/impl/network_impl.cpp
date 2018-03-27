@@ -24,7 +24,6 @@
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
-#include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -57,7 +56,8 @@ namespace iroha {
         log_->info("Send vote {} to {}", vote.hash.block_hash, to.address());
       }
 
-      void NetworkImpl::send_commit(const shared_model::interface::Peer &to,const CommitMessage &commit) {
+      void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
+                                    const CommitMessage &commit) {
         createPeerConnection(to);
 
         proto::Commit request;

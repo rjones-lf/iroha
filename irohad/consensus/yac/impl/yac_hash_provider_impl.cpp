@@ -16,7 +16,7 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
-#include "common/byteutils.hpp"
+
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
