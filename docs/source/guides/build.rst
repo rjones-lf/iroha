@@ -22,7 +22,7 @@ environment. Also, Windows users might consider using
 
 Docker
 ^^^^^^
-.. hint:: You don't need Docker to run Iroha, it is just one of the possible
+.. note:: You don't need Docker to run Iroha, it is just one of the possible
   choices.
 
 First of all, you need to install ``docker`` and ``docker-compose``. You can 
@@ -58,7 +58,7 @@ After you execute this script, following things happen:
 1. The script checks if you don't have containers with Iroha already running.
 Successful completion finishes with the new container shell.  
 2. The script will download ``iroha-docker-develop`` and ``postgres`` images. 
-``iroha-docker-develop`` image contains all development dependencies, and is 
+``iroha-docker-develop`` image contains all development dependencies and is 
 based on top of ``ubuntu:16.04``. ``postgres`` image is required for starting 
 and running Iroha.
 3. Two containers are created and launched.
@@ -224,9 +224,9 @@ Alternatively, you can run following command in the ``build`` folder
   cd build
   ctest . --output-on-failure
 
-.. note:: Some of the tests will fail without running PostgreSQL storage running,
+.. note:: Some of the tests will fail without PostgreSQL storage running,
   so if you are not using ``scripts/run-iroha-dev.sh`` script please run Docker 
-  container or create local connection with following parameters:
+  container or create a local connection with following parameters:
 
   .. code-block:: shell
 
