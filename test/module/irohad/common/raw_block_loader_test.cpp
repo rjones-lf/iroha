@@ -23,26 +23,26 @@
 using iroha::main::BlockLoader;
 
 /**
- * @given json of a block
- *
- * @when convert json to block using raw block loader
- *
- * @then check that block is correct
+ * @given block in json format
+ * @when converting json to block using raw block loader
+ * @then check that the block is correct
  */
-TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
+TEST(BlockLoaderTest, BlockLoaderJsonParsing) {
   BlockLoader loader;
   auto str =
       R"({
 "payload": {
   "transactions": [],
   "height": 1,
-  "prev_block_hash": "000000000000000000000000000000000000000000000000000000000000000",
+  "prev_block_hash": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
   "created_time": 0
   },
 "signatures": []
 })";
 
   auto block = loader.parseBlock(str);
+
+
 
   ASSERT_TRUE(block);
   auto b = block.value();
@@ -51,4 +51,5 @@ TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   ASSERT_EQ(b->height(), 1);
   ASSERT_EQ(b->createdTime(), 0);
   ASSERT_TRUE(b->signatures().empty());
+  ASSERT_EQ(b->prevHash().hex(), "0101010101010101010101010101010101010101010101010101010101010101");
 }
