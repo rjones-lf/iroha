@@ -19,14 +19,126 @@ Troubleshooting
 Java Library
 ------------
 
-Where to Get
-^^^^^^^^^^^^
+Building Native Library
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Prerequisites
+"""""""""""""
+- Java 6
+- Gradle
+
+Build Process
+"""""""""""""
+
+Clone Iroha repository
+
+.. code-block:: shell
+
+  git clone https://github.com/hyperledger/iroha.git --depth=1
+  cd iroha
+
+.. note:: For the latest version checkout a ``develop`` branch by adding 
+  ``-b develop`` parameter.
+
+After it, run ``example/java/build_library.sh``
+
+.. code-block:: shell
+
+  cd example/java
+  ./build_library.sh
+
+.. note:: ``build_library.sh`` script creates a ``dist`` folder will be created with all
+  files, needed in `How to Use/Import` section.
 
 How to Use/Import
 ^^^^^^^^^^^^^^^^^
 
-Example Code
+There are two ways how to import Java library:
+
+1. Install Java bindings through Maven
+2. Compile Java bindings manually
+
+Both options are described in the following sections.
+
+Installing Java Bindings from Maven
+"""""""""""""""""""""""""""""""""""
+
+First of all, you need to copy ``example/java/dist/libirohajava.jnilib`` to 
+the root folder of your project.
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project
+
+If you use **Gradle**, add the following line to your ``build.gradle`` file:
+
+.. code-block:: groovy
+
+  compile group: 'jp.co.soramitsu', name: 'iroha', version: ‘0.0.7’
+
+If you use **Maven**, add this to your ``pom.xml``:
+
+.. code-block:: xml
+
+  <!-- https://mvnrepository.com/artifact/jp.co.soramitsu/iroha -->
+  <dependency>
+      <groupId>jp.co.soramitsu</groupId>
+      <artifactId>iroha</artifactId>
+      <version>0.0.7</version>
+  </dependency>
+
+.. note:: Set the latest version number from our 
+  `Maven repository <https://mvnrepository.com/artifact/jp.co.soramitsu/iroha>`_
+
+Compiling Java bindings Manually
+""""""""""""""""""""""""""""""""
+
+Java bindings were compiled with ``example/java/build_library.sh`` in 
+`Build Process` section. You need to copy ``example/java/dist/libirohajava.jnilib``
+to the root folder of your project:
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project
+
+If you use **Gradle**, you need to copy ``example/java/dist/iroha_lib.jar`` to the
+``libs`` folder of your project
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project/libs
+
+Then please add following to your ``build.gradle`` file:
+
+.. code-block:: groovy
+
+  dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+  }
+
+If you use **Maven**, you need to copy ``example/java/dist/iroha_lib.jar`` to the
+``src/main/resources/`` folder of your project
+
+.. code-block:: shell
+  
+  cp dist/iroha_lib.jar /path_to_your_project/src/main/resources
+
+After it please add this to your ``pom.xml``:
+
+.. code-block:: xml
+
+  <dependency>
+      <groupId>jp.co.soramitsu</groupId>
+      <artifactId>iroha</artifactId>
+      <version>0.0.7</version>
+      <systemPath>${project.basedir}/src/main/resources/iroha_lib.jar</systemPath>
+  </dependency>
+
+Example code
 ^^^^^^^^^^^^
+
+Explore ``example/java/TransactionExample.java`` file to get an idea of how to
+work with a library.
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
