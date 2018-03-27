@@ -26,8 +26,9 @@ namespace shared_model {
       return crypto::CryptoProviderEd25519Sha3::generateKeypair();
     }
 
-    crypto::Keypair ModelCrypto::generateKeypair(const std::string &seed) {
-      auto byte_string = iroha::hexstringToBytestring(seed);
+    crypto::Keypair ModelCrypto::fromPrivateKey(
+        const std::string &private_key) {
+      auto byte_string = iroha::hexstringToBytestring(private_key);
       if (not byte_string) {
         throw std::runtime_error("invalid seed");
       }

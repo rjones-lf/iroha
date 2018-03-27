@@ -82,8 +82,6 @@ namespace shared_model {
 
       bool operator==(const Blob &rhs) const override;
 
-      Blob *copy() const override;
-
 #ifndef DISABLE_BACKWARD
       /**
        * Method perform transforming object to old-fashion blob_t format
@@ -99,12 +97,14 @@ namespace shared_model {
       }
 #endif
 
+     protected:
+      Blob *clone() const override;
+
      private:
       // TODO: 17/11/2017 luckychess use improved Lazy with references support
       Bytes blob_;
       std::string hex_;
     };
-
 
   }  // namespace crypto
 }  // namespace shared_model

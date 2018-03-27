@@ -37,7 +37,8 @@ namespace iroha {
           blockLoader_(std::move(blockLoader)) {
       log_ = logger::log("synchronizer");
       consensus_gate->on_commit().subscribe(
-          subscription_, [&](std::shared_ptr<shared_model::interface::Block> block) {
+          subscription_,
+          [&](std::shared_ptr<shared_model::interface::Block> block) {
             std::unique_ptr<model::Block> bl(block->makeOldModel());
             this->process_commit(*bl);
           });
@@ -97,8 +98,8 @@ namespace iroha {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));
 
-            // TODO: 07-03-2018 Alexey Chernyshov remove this after relocation to
-            // shared_model https://soramitsu.atlassian.net/browse/IR-903
+            // TODO: 07-03-2018 Alexey Chernyshov remove this after relocation
+            // to shared_model https://soramitsu.atlassian.net/browse/IR-903
             notifier_.get_subscriber().on_next(chain.map([](auto block) {
               std::unique_ptr<iroha::model::Block> old_block(
                   block->makeOldModel());

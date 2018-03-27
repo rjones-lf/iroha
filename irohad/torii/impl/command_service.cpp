@@ -22,6 +22,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "common/byteutils.hpp"
 #include "common/types.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/base/hashable.hpp"
@@ -40,7 +41,8 @@ namespace torii {
         block_query_(block_query),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
-        cache_(std::make_shared<CacheType>()) {
+        cache_(std::make_shared<CacheType>()),
+        log_(logger::log("CommandService")) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe([this](auto iroha_response) {
       // Find response in cache
@@ -102,6 +104,9 @@ namespace torii {
               tx_hash =
                   shared_model::proto::Transaction::HashProviderType::makeHash(
                       blobPayload);
+              log_->warn("Stateless invalid tx: {}, hash: {}",
+                         error.error,
+                         tx_hash.hex());
 
               // setting response
               response.set_tx_hash(
@@ -133,6 +138,8 @@ namespace torii {
               shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {
+        log_->warn("Asked non-existing tx: {}",
+                   iroha::bytestringToHexstring(request.tx_hash()));
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
       cache_->addItem(tx_hash, response);
@@ -204,10 +211,14 @@ namespace torii {
         response_writer.WriteLast(resp_none.getTransport(),
                                   grpc::WriteOptions());
       } else {
-        /// Tx processing was started but still unfinished. We give it
-        /// 2*proposal_delay time until timeout.
+        log_->info(
+            "Tx processing was started but unfinished, awaiting more, hash: {}",
+            request_hash.hex());
+        /// We give it 2*proposal_delay time until timeout.
         cv.wait_for(lock, 2 * proposal_delay_);
       }
+    } else {
+      log_->warn("Command processing timeout, hash: {}", request_hash.hex());
     }
   }
 
@@ -229,6 +240,8 @@ namespace torii {
         return;
       }
       response_writer.Write(*resp);
+    } else {
+      log_->debug("Transaction miss service cache");
     }
   }
 

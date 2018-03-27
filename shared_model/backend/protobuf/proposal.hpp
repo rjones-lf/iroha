@@ -53,7 +53,7 @@ namespace shared_model {
         return *transactions_;
       }
 
-      interface::types::TimestampType created_time() const override {
+      interface::types::TimestampType createdTime() const override {
         return proto_->created_time();
       }
 

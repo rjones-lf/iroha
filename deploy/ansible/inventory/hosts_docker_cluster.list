@@ -1,0 +1,28 @@
+# This is sample inventory file for deployment using docker-compose (multiple nodes of iroha on target hosts)
+# To start with:
+# 1) set group name (not mandatory, you can use already predefined): e.g. [iroha-east].
+# 2) change inventory hostname (not mandatory, you can use already predefined): e.g. iroha-bench1.
+# 3) set IP address to the address of your server ("ansible_host" variable)
+# 4) set "ansible_user", or leave "root"
+# 5) set "key" variable in the following way:
+# key=0 for the first host of the first node in the inventory
+# in playbook/<playbook name>/group_vars/all.yml or playbook/<playbook name>/group_vars/<group name>.yml
+# you can find parameter "nodes_in_group"
+# NOTE: that <group name>.yml values have higher priority than in all.yml
+# for next host set key=key[prev_host] + nodes_in_group
+# repeat this procedure for all other hosts
+# NOTE: 1) you can add more than one host to each group
+# NOTE: 2) you can set unique value of "nodes_in_group" for each host by setting it in
+# playbook/<playbook name>/host_vars/<host name>/all.yml
+
+[iroha-east]
+iroha-bench1 ansible_host=0.0.0.0 ansible_user=root key=0
+
+[iroha-west]
+iroha-bench2 ansible_host=0.0.0.0 ansible_user=root key=8
+
+[iroha-south]
+iroha-bench3 ansible_host=0.0.0.0 ansible_user=root key=13
+
+[iroha-north]
+iroha-bench4 ansible_host=0.0.0.0 ansible_user=root key=17

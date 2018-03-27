@@ -19,15 +19,14 @@
 
 #include "framework/test_subscriber.hpp"
 
+#include "builders/protobuf/proposal.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "module/irohad/network/network_mocks.hpp"
-#include "network/ordering_service.hpp"
-
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
-#include "ordering/impl/ordering_service_transport_grpc.hpp"
-
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -50,8 +49,9 @@ class MockOrderingGateTransportGrpcService
 
 class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
-  MOCK_METHOD1(propagateTransaction,
-               void(std::shared_ptr<const iroha::model::Transaction>));
+  MOCK_METHOD1(
+      propagateTransaction,
+      void(std::shared_ptr<const shared_model::interface::Transaction>));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -119,7 +119,9 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
       }));
 
   for (size_t i = 0; i < 5; ++i) {
-    gate_impl->propagateTransaction(std::make_shared<iroha::model::Transaction>());
+    auto tx = std::make_shared<shared_model::proto::Transaction>(
+        TestTransactionBuilder().build());
+    gate_impl->propagateTransaction(tx);
   }
 
   std::unique_lock<std::mutex> lock(m);
@@ -136,7 +138,22 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   wrapper.subscribe();
 
   grpc::ServerContext context;
-  iroha::protocol::Proposal proposal;
+  auto tx = shared_model::proto::TransactionBuilder()
+                .txCounter(2)
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair());
+  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  iroha::protocol::Proposal proposal = shared_model::proto::ProposalBuilder()
+                                           .height(2)
+                                           .createdTime(iroha::time::now())
+                                           .transactions(txs)
+                                           .build()
+                                           .getTransport();
 
   google::protobuf::Empty response;
 
@@ -172,8 +189,31 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
   wrapper_after.subscribe();
 
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
-  ordering_gate.onProposal(iroha::model::Proposal{{}});
+  auto tx = shared_model::proto::TransactionBuilder()
+                .txCounter(2)
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair());
+  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
+  auto proposal2 = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
+
+  ordering_gate.onProposal(proposal1);
+  ordering_gate.onProposal(proposal2);
 
   ASSERT_TRUE(wrapper_before.validate());
 

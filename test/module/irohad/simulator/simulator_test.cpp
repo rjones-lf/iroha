@@ -15,16 +15,18 @@
  * limitations under the License.
  */
 
+#include "simulator/impl/simulator.hpp"
+#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "builders/protobuf/proposal.hpp"
+#include "builders/protobuf/transaction.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/model/model_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
-
-#include "framework/test_subscriber.hpp"
-#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -33,10 +35,10 @@ using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::_;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -73,36 +75,63 @@ shared_model::proto::Block makeBlock(int height) {
 }
 
 shared_model::proto::Proposal makeProposal(int height) {
-  return TestProposalBuilder()
-      .transactions(std::vector<shared_model::proto::Transaction>())
-      .height(height)
-      .build();
+  auto tx = shared_model::proto::TransactionBuilder()
+                .txCounter(2)
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair());
+  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  auto proposal = shared_model::proto::ProposalBuilder()
+                      .height(height)
+                      .createdTime(iroha::time::now())
+                      .transactions(txs)
+                      .build();
+  return proposal;
 }
 
 TEST_F(SimulatorTest, ValidWhenInitialized) {
   // simulator constructor => on_proposal subscription called
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   init();
 }
 
 TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   // proposal with height 2 => height 1 block present => new block generated
-  auto proposal =
-      std::make_shared<shared_model::proto::Proposal>(makeProposal(2));
-
+  auto tx = shared_model::proto::TransactionBuilder()
+                .txCounter(2)
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair());
+  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(1);
 
@@ -140,7 +169,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 
@@ -170,12 +200,13 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*query, getTopBlocks(1))
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(x.copy()); })));
+          [](auto &&x) { return wBlock(clone(x)); })));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<iroha::model::Proposal>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*crypto_provider, sign(A<model::Block &>())).Times(0);
 

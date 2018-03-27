@@ -34,8 +34,7 @@ namespace shared_model {
     class TransactionStatusBuilder {
      public:
       std::shared_ptr<shared_model::interface::TransactionResponse> build() {
-        return std::shared_ptr<shared_model::interface::TransactionResponse>(
-            builder_.build().copy());
+        return clone(builder_.build());
       }
 
       TransactionStatusBuilder statelessValidationSuccess() {

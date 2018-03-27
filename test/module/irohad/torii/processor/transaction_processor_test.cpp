@@ -16,6 +16,8 @@
  */
 
 #include <boost/range/join.hpp>
+#include "builders/protobuf/transaction.hpp"
+#include "builders/protobuf/proposal.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -63,7 +65,7 @@ class TransactionProcessorTest : public ::testing::Test {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
       boost::apply_visitor(
-          [this](auto val) {
+          [](auto val) {
             if (std::is_same<decltype(val), Status>::value) {
               SUCCEED();
             } else {
@@ -100,7 +102,15 @@ class TransactionProcessorTest : public ::testing::Test {
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = shared_model::proto::TransactionBuilder()
+                    .txCounter(i + 1)
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -116,12 +126,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // create proposal and notify about it
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
@@ -142,7 +156,15 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = shared_model::proto::TransactionBuilder()
+                    .txCounter(i + 1)
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -160,12 +182,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // 1. Create proposal and notify transaction processor about it
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
@@ -184,7 +210,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   commit_notifier.get_subscriber().on_next(blocks_notifier.get_observable());
 
   blocks_notifier.get_subscriber().on_next(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   // Note blocks_notifier hasn't invoked on_completed, so
   // transactions are not commited
 
@@ -205,7 +231,15 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = shared_model::proto::TransactionBuilder()
+        .txCounter(i + 1)
+        .createdTime(iroha::time::now())
+        .creatorAccountId("admin@ru")
+        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+        .build()
+        .signAndAddSignature(
+            shared_model::crypto::DefaultCryptoAlgorithmType::
+            generateKeypair());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -224,12 +258,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   for (const auto &tx : txs) {
     tp->transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction>(tx.copy()));
+        std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
   }
 
   // 1. Create proposal and notify transaction processor about it
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
@@ -243,7 +281,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   // 2. Create block and notify transaction processor about it
   Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   commit_notifier.get_subscriber().on_next(single_commit);
 
   ASSERT_TRUE(wrapper.validate());
@@ -264,7 +302,15 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   std::vector<shared_model::proto::Transaction> block_txs;
   for (size_t i = 0; i < block_size; i++) {
-    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = shared_model::proto::TransactionBuilder()
+        .txCounter(i + 1)
+        .createdTime(iroha::time::now())
+        .creatorAccountId("admin@ru")
+        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+        .build()
+        .signAndAddSignature(
+            shared_model::crypto::DefaultCryptoAlgorithmType::
+            generateKeypair());
     block_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -274,7 +320,15 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
       invalid_txs;  // transactions will be stateful invalid if appeared
                     // in proposal but didn't appear in block
   for (size_t i = block_size; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().txCounter(i).build();
+    auto &&tx = shared_model::proto::TransactionBuilder()
+        .txCounter(i + 1)
+        .createdTime(iroha::time::now())
+        .creatorAccountId("admin@ru")
+        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+        .build()
+        .signAndAddSignature(
+            shared_model::crypto::DefaultCryptoAlgorithmType::
+            generateKeypair());
     invalid_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -296,7 +350,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   });
 
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder()
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
           .transactions(boost::join(block_txs, invalid_txs))
           .build());
 
@@ -311,7 +367,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                    .build();
 
   Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(block.copy()));
+      std::shared_ptr<shared_model::interface::Block>(clone(block)));
   commit_notifier.get_subscriber().on_next(single_commit);
   ASSERT_TRUE(wrapper.validate());
 

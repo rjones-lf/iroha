@@ -203,7 +203,7 @@ namespace iroha {
 
       auto wrapper = make_test_subscriber<CallExact>(
           blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([i = 0, this](auto val) mutable {
+      wrapper.subscribe([ i = 0, this ](auto val) mutable {
         ASSERT_EQ(tx_hashes.at(i), val->hash());
         ++i;
       });

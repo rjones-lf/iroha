@@ -20,12 +20,13 @@
 
 #include <memory>
 
-namespace iroha {
-
-  namespace model {
-    struct Peer;
+namespace shared_model {
+  namespace interface {
+    class Peer;
   }
+}  // namespace shared_model
 
+namespace iroha {
   namespace consensus {
     namespace yac {
 
@@ -66,21 +67,24 @@ namespace iroha {
          * @param to - peer recipient
          * @param commit - message for sending
          */
-        virtual void send_commit(model::Peer to, CommitMessage commit) = 0;
+        virtual void send_commit(const shared_model::interface::Peer &to,
+                                 const CommitMessage &commit) = 0;
 
         /**
          * Directly share reject message
          * @param to - peer recipient
          * @param reject - message for sending
          */
-        virtual void send_reject(model::Peer to, RejectMessage reject) = 0;
+        virtual void send_reject(const shared_model::interface::Peer &to,
+                                 RejectMessage reject) = 0;
 
         /**
          * Directly share vote message
          * @param to - peer recipient
          * @param vote - message for sending
          */
-        virtual void send_vote(model::Peer to, VoteMessage vote) = 0;
+        virtual void send_vote(const shared_model::interface::Peer &to,
+                               VoteMessage vote) = 0;
 
         /**
          * Virtual destructor required for inheritance

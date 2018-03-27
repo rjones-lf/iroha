@@ -22,6 +22,7 @@
 
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -38,7 +39,8 @@ namespace iroha {
         handler_ = handler;
       }
 
-      void NetworkImpl::send_vote(model::Peer to, VoteMessage vote) {
+      void NetworkImpl::send_vote(const shared_model::interface::Peer &to,
+                                  VoteMessage vote) {
         createPeerConnection(to);
 
         auto request = PbConverters::serializeVote(vote);
@@ -46,14 +48,16 @@ namespace iroha {
         auto call = new AsyncClientCall;
 
         call->response_reader =
-            peers_.at(to)->AsyncSendVote(&call->context, request, &cq_);
+            peers_.at(to.address())
+                ->AsyncSendVote(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
-        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address);
+        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address());
       }
 
-      void NetworkImpl::send_commit(model::Peer to, CommitMessage commit) {
+      void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
+                                    const CommitMessage &commit) {
         createPeerConnection(to);
 
         proto::Commit request;
@@ -65,16 +69,18 @@ namespace iroha {
         auto call = new AsyncClientCall;
 
         call->response_reader =
-            peers_.at(to)->AsyncSendCommit(&call->context, request, &cq_);
+            peers_.at(to.address())
+                ->AsyncSendCommit(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
         log_->info("Send votes bundle[size={}] commit to {}",
                    commit.votes.size(),
-                   to.address);
+                   to.address());
       }
 
-      void NetworkImpl::send_reject(model::Peer to, RejectMessage reject) {
+      void NetworkImpl::send_reject(const shared_model::interface::Peer &to,
+                                    RejectMessage reject) {
         createPeerConnection(to);
 
         proto::Reject request;
@@ -86,13 +92,14 @@ namespace iroha {
         auto call = new AsyncClientCall;
 
         call->response_reader =
-            peers_.at(to)->AsyncSendReject(&call->context, request, &cq_);
+            peers_.at(to.address())
+                ->AsyncSendReject(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
         log_->info("Send votes bundle[size={}] reject to {}",
                    reject.votes.size(),
-                   to.address);
+                   to.address());
       }
 
       grpc::Status NetworkImpl::SendVote(
@@ -144,10 +151,11 @@ namespace iroha {
         return grpc::Status::OK;
       }
 
-      void NetworkImpl::createPeerConnection(const model::Peer &peer) {
-        if (peers_.count(peer) == 0) {
-          peers_[peer] = proto::Yac::NewStub(grpc::CreateChannel(
-              peer.address, grpc::InsecureChannelCredentials()));
+      void NetworkImpl::createPeerConnection(
+          const shared_model::interface::Peer &peer) {
+        if (peers_.count(peer.address()) == 0) {
+          peers_[peer.address()] = proto::Yac::NewStub(grpc::CreateChannel(
+              peer.address(), grpc::InsecureChannelCredentials()));
         }
       }
 

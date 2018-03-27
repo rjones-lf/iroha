@@ -32,9 +32,11 @@ namespace shared_model {
                              CommandValidatorVisitor<FieldValidator>>;
     using DefaultQueryValidator =
         QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
-    using DefaultProposalValidator = ProposalValidator;
+    using DefaultProposalValidator =
+        ProposalValidator<FieldValidator, DefaultTransactionValidator>;
 
-    using DefaultBlockValidator = BlockValidator;
+    using DefaultBlockValidator =
+        BlockValidator<FieldValidator, DefaultTransactionValidator>;
 
     using DefaultSignableTransactionValidator =
         SignableModelValidator<DefaultTransactionValidator,
@@ -46,6 +48,15 @@ namespace shared_model {
                                const interface::Query &,
                                FieldValidator>;
 
+    using DefaultSignableProposalValidator =
+        SignableModelValidator<DefaultProposalValidator,
+                               const interface::Proposal &,
+                               FieldValidator>;
+
+    using DefaultSignableBlockValidator =
+        SignableModelValidator<DefaultBlockValidator,
+                               const interface::Block &,
+                               FieldValidator>;
   }  // namespace validation
 }  // namespace shared_model
 

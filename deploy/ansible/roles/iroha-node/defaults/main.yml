@@ -1,8 +1,0 @@
----
-  postgresName: iroha_postgres
-  postgresUser: psql
-  postgresPassword: psql
-  peers:
-    - 209.250.248.121:10001
-    - 209.250.248.225:10001
-    - 209.250.248.185:10001

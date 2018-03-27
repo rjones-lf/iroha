@@ -20,6 +20,7 @@
 
 #include <gmock/gmock.h>
 
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -31,16 +32,21 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
-      model::Peer mk_peer(std::string address) {
-        model::Peer peer;
-        peer.address = address;
-        // TODO: 19.01.2019 kamil substitute with function, IR-813
-        std::copy(address.begin(), address.end(), peer.pubkey.begin());
-        return peer;
+      std::shared_ptr<shared_model::interface::Peer> mk_peer(
+          const std::string &address) {
+        auto key = std::string(32, '0');
+        std::copy(address.begin(), address.end(), key.begin());
+        auto ptr = shared_model::proto::PeerBuilder()
+                       .address(address)
+                       .pubkey(shared_model::interface::types::PubkeyType(key))
+                       .build();
+
+        return clone(ptr);
       }
 
       VoteMessage create_vote(YacHash hash, std::string pub_key) {
@@ -102,9 +108,14 @@ namespace iroha {
           notification.reset();
         }
 
-        MOCK_METHOD2(send_commit, void(model::Peer, CommitMessage));
-        MOCK_METHOD2(send_reject, void(model::Peer, RejectMessage));
-        MOCK_METHOD2(send_vote, void(model::Peer, VoteMessage));
+        MOCK_METHOD2(send_commit,
+                     void(const shared_model::interface::Peer &,
+                          const CommitMessage &));
+        MOCK_METHOD2(send_reject,
+                     void(const shared_model::interface::Peer &,
+                          RejectMessage));
+        MOCK_METHOD2(send_vote,
+                     void(const shared_model::interface::Peer &, VoteMessage));
 
         MockYacNetwork() = default;
 
@@ -165,10 +176,12 @@ namespace iroha {
 
       class MockYacHashProvider : public YacHashProvider {
        public:
-        MOCK_CONST_METHOD1(makeHash, YacHash(const model::Block &));
+        MOCK_CONST_METHOD1(makeHash,
+                           YacHash(const shared_model::interface::Block &));
 
-        MOCK_CONST_METHOD1(toModelHash,
-                           model::Block::HashType(const YacHash &));
+        MOCK_CONST_METHOD1(
+            toModelHash,
+            shared_model::interface::types::HashType(const YacHash &));
 
         MockYacHashProvider() = default;
 
@@ -215,13 +228,15 @@ namespace iroha {
         std::shared_ptr<Yac> yac;
 
         // ------|Round|------
-        std::vector<model::Peer> default_peers = [] {
-          std::vector<model::Peer> result;
-          for (size_t i = 1; i <= 7; ++i) {
-            result.push_back(mk_peer(std::to_string(i)));
-          }
-          return result;
-        }();
+        std::vector<std::shared_ptr<shared_model::interface::Peer>>
+            default_peers = [] {
+              std::vector<std::shared_ptr<shared_model::interface::Peer>>
+                  result;
+              for (size_t i = 1; i <= 7; ++i) {
+                result.push_back(mk_peer(std::to_string(i)));
+              }
+              return result;
+            }();
 
         void SetUp() override {
           network = std::make_shared<MockYacNetwork>();
