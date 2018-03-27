@@ -301,8 +301,8 @@ Python Library
 Where to Get
 ^^^^^^^^^^^^
 
-Prerequirements:
-""""""""""""""""
+Prerequisites
+"""""""""""""
 
 - CMake(3.11 or higher)
 - git
@@ -317,48 +317,48 @@ Install Iroha python libraries:
 
 - Via PIP
 
-    .. code:: sh
+  .. code:: sh
 
       pip install iroha
 
-    For the latest version
+  For the latest version
 
-    .. code:: sh
+  .. code:: sh
 
       pip install -i https://testpypi.python.org/pypi iroha
 
 - Source code
 
-    .. code:: sh
+  .. code:: sh
 
       git clone https://github.com/hyperledger/iroha.git
       cd iroha
 
-    For the latest version checkout to develop branch by adding *-b develop* parameter.
+  For the latest version checkout to develop branch by adding *-b develop* parameter.
 
-    .. code:: sh
+  .. code:: sh
 
       cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
       cmake --build build --target irohapy -- -j4
 
-    - SWIG_PYTHON=ON forces to build bindings for Python.
-    - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
-    - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
+      - SWIG_PYTHON=ON forces to build bindings for Python.
+      - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
+      - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
 
-    After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
+  After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
 
 Compile protobuf mudules of Iroha from schema files:
 """"""""""""""""""""""""""""""""""""""""""""""""""""
 
-  Iroha communicates with users through protobuf messages. In order to send transactions and queries to Iroha node you need to get python module for generating protobuf messages.
-  First of all you need to clone schema folder of Iroha repository. If you have already cloned Iroha repository in the previous step, just use schema folder from there.
+Iroha communicates with users through protobuf messages. In order to send transactions and queries to Iroha node you need to get python module for generating protobuf messages.
+First of all you need to clone schema folder of Iroha repository. If you have already cloned Iroha repository in the previous step, just use schema folder from there.
 
 
-Prerequirements:
-''''''''''''''''
+Prerequisites
+"""""""""""""
 
-  - protobuf
-  - pip
+- protobuf
+- pip
 
   .. code:: sh
 
