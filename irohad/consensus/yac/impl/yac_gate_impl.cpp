@@ -53,8 +53,7 @@ namespace iroha {
       }
 
       void YacGateImpl::vote(const shared_model::interface::Block &block) {
-        std::unique_ptr<model::Block> bl(block.makeOldModel());
-        auto hash = hash_provider_->makeHash(*bl);
+        auto hash = hash_provider_->makeHash(block);
         log_->info("vote for block ({}, {})",
                    hash.proposal_hash,
                    block.hash().toString());
@@ -63,9 +62,7 @@ namespace iroha {
           log_->error("ordering doesn't provide peers => pass round");
           return;
         }
-        current_block_ = std::make_pair(
-            hash,
-            clone(block));
+        current_block_ = std::make_pair(hash, clone(block));
         hash_gate_->vote(hash, *order);
       }
 
@@ -109,8 +106,7 @@ namespace iroha {
                                 shared_model::crypto::PublicKey(
                                     {vote.signature.pubkey.begin(),
                                      vote.signature.pubkey.end()}),
-                                shared_model::crypto::Hash(
-                                    {model_hash.begin(), model_hash.end()}));
+                                shared_model::crypto::Hash(model_hash));
                             // if load is successful
                             if (block) {
                               subscriber.on_next(block.value());
@@ -139,15 +135,8 @@ namespace iroha {
         current_block_.second->clearSignatures();
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          auto tmp =
-              shared_model::proto::SignatureBuilder()
-                  .signedData(shared_model::interface::Signature::SignedType(
-                      sig.signature.to_string()))
-                  .publicKey(
-                      shared_model::crypto::PublicKey(sig.pubkey.to_string()))
-                  .build();
-          auto wrap = shared_model::detail::makePolymorphic<
-              shared_model::proto::Signature>(tmp.getTransport());
+          auto wrap = shared_model::detail::PolymorphicWrapper<
+              shared_model::interface::Signature>(sig);
           current_block_.second->addSignature(wrap);
         }
       }

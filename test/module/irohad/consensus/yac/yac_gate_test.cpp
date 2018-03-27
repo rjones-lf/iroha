@@ -30,6 +30,7 @@
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
+#include "cryptography/hash.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;
@@ -66,7 +67,7 @@ class YacGateTest : public ::testing::Test {
     const auto old_signature =
         *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
 
-    expected_hash.block_signature = old_signature;
+    expected_hash.block_signature = clone(signature);
     message.hash = expected_hash;
     message.signature = old_signature;
     commit_message = CommitMessage({message});
@@ -132,8 +133,9 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](auto block) {
+    ASSERT_EQ(*block, *expected_block);
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -188,11 +190,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
 
   // convert yac hash to model hash
-  auto old_hash =
-      (*std::unique_ptr<iroha::model::Block>(expected_block->makeOldModel()))
-          .hash;
   EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
-      .WillOnce(Return(old_hash));
+      .WillOnce(Return(expected_block->hash()));
 
   // load block
   auto sig = expected_block->signatures().begin();

@@ -32,6 +32,7 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -175,10 +176,12 @@ namespace iroha {
 
       class MockYacHashProvider : public YacHashProvider {
        public:
-        MOCK_CONST_METHOD1(makeHash, YacHash(const model::Block &));
+        MOCK_CONST_METHOD1(makeHash,
+                           YacHash(const shared_model::interface::Block &));
 
-        MOCK_CONST_METHOD1(toModelHash,
-                           model::Block::HashType(const YacHash &));
+        MOCK_CONST_METHOD1(
+            toModelHash,
+            shared_model::interface::types::HashType(const YacHash &));
 
         MockYacHashProvider() = default;
 

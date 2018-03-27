@@ -41,6 +41,12 @@ namespace iroha {
           message.hash.proposal_hash = "proposal";
           message.hash.block_hash = "block";
 
+          auto sig = shared_model::proto::SignatureBuilder()
+                         .publicKey(shared_model::crypto::PublicKey("key"))
+                         .signedData(shared_model::crypto::Signed("data"))
+                         .build();
+
+          message.hash.block_signature = clone(sig);
           network->subscribe(notifications);
 
           grpc::ServerBuilder builder;

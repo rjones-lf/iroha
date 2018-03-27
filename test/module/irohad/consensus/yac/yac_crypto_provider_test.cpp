@@ -16,11 +16,14 @@
  */
 
 #include <gtest/gtest.h>
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include "consensus/yac/messages.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
+const auto pubkey = std::string('0', 32);
+const auto signed_data = std::string('1', 32);
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -38,8 +41,12 @@ namespace iroha {
 
       TEST_F(YacCryptoProviderTest, ValidWhenSameMessage) {
         YacHash hash("1", "1");
-        hash.block_signature.pubkey.fill('0');
-        hash.block_signature.signature.fill('1');
+        auto sig = shared_model::proto::SignatureBuilder()
+                       .publicKey(shared_model::crypto::PublicKey(pubkey))
+                       .signedData(shared_model::crypto::Signed(signed_data))
+                       .build();
+
+        hash.block_signature = clone(sig);
 
         auto vote = crypto_provider->getVote(hash);
 
@@ -48,8 +55,12 @@ namespace iroha {
 
       TEST_F(YacCryptoProviderTest, InvalidWhenMessageChanged) {
         YacHash hash("1", "1");
-        hash.block_signature.pubkey.fill('0');
-        hash.block_signature.signature.fill('1');
+        auto sig = shared_model::proto::SignatureBuilder()
+                       .publicKey(shared_model::crypto::PublicKey(pubkey))
+                       .signedData(shared_model::crypto::Signed(signed_data))
+                       .build();
+
+        hash.block_signature = clone(sig);
 
         auto vote = crypto_provider->getVote(hash);
 
