@@ -165,7 +165,7 @@ Example code
 
 .. Note::
 
-    Work with raw data(byte arrays) can be different in Python 2 and Python 3. Due to this fact, the work with transaction hashes is different in the examples.
+    Work with byte arrays is different in Python 2 and Python 3. Due to this fact, the work with hashes and blobs is different in the examples.
 
 Import Iroha and schema classes, generated from Iroha protobuf:
 
@@ -197,7 +197,7 @@ Read public and private keys:
  admin_pub = open("admin@test.pub", "r").read()
  key_pair = crypto.convertFromExisting(admin_pub, admin_priv)
 
-Get status of transaction:
+Print transaction status with synchronous simple call:
 
 .. code:: python
 
@@ -229,6 +229,18 @@ Get status of transaction:
     if status != "COMMITTED":
         print("Your transaction wasn't committed")
         exit(1)
+
+Or streaming call:
+
+.. code:: python
+
+    ...
+    # Send request
+    response = stub.StatusStream(request)
+
+    for status in response:
+        print("Status of transaction:")
+        print(status)
 
 Send transactions to Iroha:
 
@@ -284,7 +296,7 @@ Create account:
   tx = tx_builder.creatorAccountId(creator) \
         .txCounter(tx_counter) \
         .createdTime(current_time) \
-        .createAccount("user1", "domain", user1_kp.publicKey()).build()
+        .createAccount("userone", "domain", user1_kp.publicKey()).build()
 
   send_tx(tx, key_pair)
   print_status(tx)
@@ -296,7 +308,7 @@ Send asset:
   tx = tx_builder.creatorAccountId(creator) \
         .txCounter(tx_counter) \
         .createdTime(current_time) \
-        .transferAsset("admin@test", "user1@domain", "coin#domain", "Some message", "2.0").build()
+        .transferAsset("admin@test", "userone@domain", "coin#domain", "Some message", "2.0").build()
 
   send_tx(tx, key_pair)
   print_status(tx)
