@@ -47,14 +47,16 @@ Now we need to build our Java native library. Run
   ./build_library.sh
 
 .. note:: ``build_library.sh`` script creates a ``dist`` folder with
-  files, needed in `How to Use/Import` section.
+  files, needed in :ref:`java-how-to-use` section.
 
-How to Use/Import
-^^^^^^^^^^^^^^^^^
+.. _java-how-to-use:
 
-There are two ways how to import Java library:
+How to Use
+^^^^^^^^^^
 
-1. Install Java bindings through Maven
+There are two ways of adding the Java library to your project:
+
+1. Import Java bindings through Maven Central
 2. Compile Java bindings manually
 
 Both options are described in the following sections.
@@ -72,12 +74,14 @@ the root folder of your project.
 If you use **Gradle**, add the following line to your ``build.gradle`` file:
 
 .. code-block:: groovy
+  :caption: build.gradle
 
   compile group: 'jp.co.soramitsu', name: 'iroha', version: ‘0.0.7’
 
 If you use **Maven**, add this to your ``pom.xml``:
 
 .. code-block:: xml
+  :caption: pom.xml
 
   <!-- https://mvnrepository.com/artifact/jp.co.soramitsu/iroha -->
   <dependency>
@@ -110,6 +114,7 @@ If you use **Gradle**, you need to copy ``example/java/dist/iroha_lib.jar`` to t
 Then please add the following to your ``build.gradle`` file:
 
 .. code-block:: groovy
+  :caption: build.gradle
 
   dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -125,6 +130,7 @@ If you use **Maven**, you need to copy ``example/java/dist/iroha_lib.jar`` to th
 After it please add this to your ``pom.xml``:
 
 .. code-block:: xml
+  :caption: pom.xml
 
   <dependency>
       <groupId>jp.co.soramitsu</groupId>
