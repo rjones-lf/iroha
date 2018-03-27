@@ -20,9 +20,6 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "backend/protobuf/common_objects/signature.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/keypair.hpp"
 #include "interfaces/base/hashable.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
@@ -31,6 +28,12 @@
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
+
+  namespace crypto {
+    class Signed;
+    class PublicKey;
+  }  // namespace crypto
+
   namespace interface {
 
 #ifdef DISABLE_BACKWARD
@@ -60,27 +63,12 @@ namespace shared_model {
       virtual const SignatureSetType &signatures() const = 0;
 
       /**
-       * Generate and attach signature to object
-       * @param keypair - keypair used to sign
-       * @return true, if signature was added
-       */
-      bool addSignedBlob(const crypto::Signed &signed_blob,
-                         const crypto::PublicKey &public_key) {
-        iroha::protocol::Signature protosig;
-        protosig.set_pubkey(shared_model::crypto::toBinaryString(public_key));
-        protosig.set_signature(
-            shared_model::crypto::toBinaryString(signed_blob));
-        return addSignature(shared_model::detail::makePolymorphic<
-                            shared_model::proto::Signature>(protosig));
-      }
-
-      /**
        * Attach signature to object
-       * This function is used mostly for tests.
        * @param signature - signature object for insertion
        * @return true, if signature was added
        */
-      virtual bool addSignature(const types::SignatureType &signature) = 0;
+      virtual bool addSignature(const crypto::Signed &signed_blob,
+                                const crypto::PublicKey &public_key) = 0;
 
       /**
        * Clear object's signatures

@@ -53,7 +53,7 @@ namespace shared_model {
         auto signedBlob =
             shared_model::crypto::DefaultCryptoAlgorithmType::sign(
                 signable.payload(), keypair_);
-        signable.addSignedBlob(signedBlob, keypair_.publicKey());
+        signable.addSignature(signedBlob, keypair_.publicKey());
       }
 
       shared_model::crypto::Keypair keypair_;

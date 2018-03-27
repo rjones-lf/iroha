@@ -130,15 +130,15 @@ namespace shared_model {
         return *signatures_;
       }
 
-      bool addSignature(
-          const interface::types::SignatureType &signature) override {
+      bool addSignature(const crypto::Signed &signed_blob,
+                        const crypto::PublicKey &public_key) override {
         if (proto_->has_signature()) {
           return false;
         }
 
         auto sig = proto_->mutable_signature();
-        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
-        sig->set_signature(crypto::toBinaryString(signature->signedData()));
+        sig->set_signature(crypto::toBinaryString(signed_blob));
+        sig->set_pubkey(crypto::toBinaryString(public_key));
         return true;
       }
 

@@ -26,6 +26,7 @@
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
+#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -39,8 +40,8 @@ namespace shared_model {
 
       Transaction(const Transaction &o) : Transaction(o.proto_) {}
 
-      Transaction(Transaction &&o) noexcept : Transaction(std::move(o.proto_)) {
-      }
+      Transaction(Transaction &&o) noexcept
+          : Transaction(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return payload_.creator_account_id();
@@ -70,13 +71,24 @@ namespace shared_model {
         return *signatures_;
       }
 
-      bool addSignature(
-          const interface::types::SignatureType &signature) override {
-        if (signatures_->count(signature) > 0) {
+      bool addSignature(const crypto::Signed &signed_blob,
+                        const crypto::PublicKey &public_key) override {
+        // if signatures_ already contain signature with signed_blob and
+        // public_key
+        if (std::find_if(signatures_->begin(),
+                         signatures_->end(),
+                         [&signed_blob, &public_key](auto signature) {
+                           return signature->signedData() == signed_blob
+                               and signature->publicKey() == public_key;
+                         })
+            != signatures_->end()) {
           return false;
         }
-        addProtoSignature(crypto::toBinaryString(signature->signedData()),
-                          crypto::toBinaryString(signature->publicKey()));
+
+        auto sig = proto_->add_signature();
+        sig->set_signature(crypto::toBinaryString(signed_blob));
+        sig->set_pubkey(crypto::toBinaryString(public_key));
+
         signatures_.invalidate();
         return true;
       }

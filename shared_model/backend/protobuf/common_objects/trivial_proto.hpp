@@ -71,14 +71,6 @@ namespace shared_model {
       }
 
      protected:
-      void addProtoSignature(
-          const std::string &signed_blob,
-          const std::string &public_key) {
-        auto sig = proto_->add_signature();
-        sig->set_signature(signed_blob);
-        sig->set_pubkey(public_key);
-      }
-
       typename Iface::ModelType *clone() const override final {
         return new Impl(Proto(*proto_));
       }

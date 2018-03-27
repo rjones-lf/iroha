@@ -61,14 +61,7 @@ class CryptoUsageTest : public ::testing::Test {
     // initialize wrong signature
     auto signedBlob = shared_model::crypto::DefaultCryptoAlgorithmType::sign(
         shared_model::crypto::Blob("wrong payload"), keypair);
-    iroha::protocol::Signature wrong_signature;
-    wrong_signature.set_pubkey(
-        shared_model::crypto::toBinaryString(keypair.publicKey()));
-    wrong_signature.set_signature(
-        shared_model::crypto::toBinaryString(signedBlob));
-    signable.addSignature(shared_model::detail::PolymorphicWrapper<
-        shared_model::proto::Signature>(
-        new shared_model::proto::Signature(wrong_signature)));
+    signable.addSignature(signedBlob, keypair.publicKey());
   }
 
   Blob data;

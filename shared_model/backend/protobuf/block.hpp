@@ -68,15 +68,23 @@ namespace shared_model {
         return *signatures_;
       }
 
-      bool addSignature(
-          const interface::types::SignatureType &signature) override {
-        if (signatures_->count(signature) > 0) {
+      bool addSignature(const crypto::Signed &signed_blob,
+                        const crypto::PublicKey &public_key) override {
+        // if signatures_ already contain signature with signed_blob and
+        // public_key
+        if (std::find_if(signatures_->begin(),
+                     signatures_->end(),
+                     [&signed_blob, &public_key](auto signature) {
+                       return signature->signedData() == signed_blob
+                           and signature->publicKey() == public_key;
+                     }) != signatures_->end()) {
           return false;
         }
 
         auto sig = proto_->add_signatures();
-        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
-        sig->set_signature(crypto::toBinaryString(signature->signedData()));
+        sig->set_signature(crypto::toBinaryString(signed_blob));
+        sig->set_pubkey(crypto::toBinaryString(public_key));
+
         signatures_.invalidate();
         return true;
       }

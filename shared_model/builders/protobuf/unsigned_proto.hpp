@@ -52,7 +52,7 @@ namespace shared_model {
         auto signedBlob =
             shared_model::crypto::DefaultCryptoAlgorithmType::sign(
                 shared_model::crypto::Blob(unsigned_.payload()), keypair);
-        unsigned_.addSignedBlob(signedBlob, keypair.publicKey());
+        unsigned_.addSignature(signedBlob, keypair.publicKey());
         // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;
       }
