@@ -19,16 +19,14 @@ Troubleshooting
 Java Library
 ------------
 
-Building Native Library
-^^^^^^^^^^^^^^^^^^^^^^^
-
 Prerequisites
-"""""""""""""
+^^^^^^^^^^^^^
+
 - Java 6
 - Gradle
 
 Build Process
-"""""""""""""
+^^^^^^^^^^^^^
 
 Clone Iroha repository
 
@@ -40,14 +38,15 @@ Clone Iroha repository
 .. note:: For the latest version checkout a ``develop`` branch by adding 
   ``-b develop`` parameter.
 
-After it, run ``example/java/build_library.sh``
+Now we need to build our Java native library. Run 
+``example/java/build_library.sh``, which will take care of it.
 
 .. code-block:: shell
 
   cd example/java
   ./build_library.sh
 
-.. note:: ``build_library.sh`` script creates a ``dist`` folder will be created with all
+.. note:: ``build_library.sh`` script creates a ``dist`` folder with
   files, needed in `How to Use/Import` section.
 
 How to Use/Import
@@ -60,8 +59,8 @@ There are two ways how to import Java library:
 
 Both options are described in the following sections.
 
-Installing Java Bindings from Maven
-"""""""""""""""""""""""""""""""""""
+Import Java Bindings from Maven Central
+"""""""""""""""""""""""""""""""""""""""
 
 First of all, you need to copy ``example/java/dist/libirohajava.jnilib`` to 
 the root folder of your project.
@@ -108,7 +107,7 @@ If you use **Gradle**, you need to copy ``example/java/dist/iroha_lib.jar`` to t
 
   cp dist/libirohajava.jnilib /path_to_your_project/libs
 
-Then please add following to your ``build.gradle`` file:
+Then please add the following to your ``build.gradle`` file:
 
 .. code-block:: groovy
 
@@ -136,12 +135,28 @@ After it please add this to your ``pom.xml``:
 
 Example code
 ^^^^^^^^^^^^
-
 Explore ``example/java/TransactionExample.java`` file to get an idea of how to
 work with a library.
 
-Troubleshooting
-^^^^^^^^^^^^^^^
+Prerequisites
+"""""""""""""
+To run this example, you need an Iroha node up and running. Please check out
+:ref:`getting-started` if you want to learn how to start it.
+
+Running the Example
+"""""""""""""""""""
+To start the example, you need to build the example:
+
+.. code-block:: shell
+
+  ./prepare.sh
+  gradle build
+
+Now, to run this example please write:
+
+.. code-block:: shell
+
+  gradle run
 
 Android Library
 ---------------
