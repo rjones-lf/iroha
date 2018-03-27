@@ -8,8 +8,8 @@ If your repository provides outdated versions of tools - install them from sourc
    Before installation make sure to get all dependencies:
 
    - make
-   - curl
-   - zlib
+   - curl (libcurl3-dev)
+   - zlib (zlib1g)
 
   .. code:: sh
 
@@ -26,13 +26,18 @@ If your repository provides outdated versions of tools - install them from sourc
 
     git clone https://github.com/boostorg/boost /tmp/boost;
     (cd /tmp/boost ; git submodule update --init --recursive);
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem);
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh);
     (cd /tmp/boost ; /tmp/boost/b2 headers);
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j4 install);
     ldconfig;
     rm -rf /tmp/boost
 
 - SWIG
+
+  Before installation make sure to get all dependencies:
+
+  - libpcre3-dev
+
 
   .. code:: sh
 

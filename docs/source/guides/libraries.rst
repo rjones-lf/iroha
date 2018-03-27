@@ -73,9 +73,10 @@ Prerequirements:
 - CMake(3.11 or higher)
 - git
 - g++
-- boost(1.65 or higher, only system and filesystem)
+- boost(1.65 or higher)
 - swig(3.0.12 can be built --without-pcre)
 - protobuf
+- python (python-dev)
 
 Install Iroha python libraries:
 """""""""""""""""""""""""""""""
@@ -123,6 +124,7 @@ Prerequirements:
 ''''''''''''''''
 
   - protobuf
+  - pip
 
   .. code:: sh
 
@@ -313,14 +315,14 @@ Send asset:
   send_tx(tx, key_pair)
   print_status(tx)
 
-Get asset amount:
+Get asset info:
 
 .. code:: python
 
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .queryCounter(start_query_counter) \
-        .getAssetInfo("user1#domain") \
+        .queryCounter(query_counter) \
+        .getAssetInfo("coin#domain") \
         .build()
     query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
 
@@ -333,6 +335,7 @@ Get asset amount:
 
     proto_query.ParseFromString(tmp)
 
+    channel = grpc.insecure_channel('127.0.0.1:50051')
     query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
     query_response = query_stub.Find(proto_query)
 
@@ -345,6 +348,33 @@ Get asset amount:
     asset_info = query_response.asset_response.asset
     print("Asset Id =", asset_info.asset_id)
     print("Precision =", asset_info.precision)
+
+Get account asset:
+
+.. code:: python
+
+    query = query_builder.creatorAccountId(creator) \
+        .createdTime(current_time) \
+        .queryCounter(query_counter) \
+        .getAccountAssets("userone@domain", "coin#domain") \
+        .build()
+    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+
+    proto_query = queries_pb2.Query()
+
+    if sys.version_info[0] == 2:
+        tmp = ''.join(map(chr, query_blob))
+    else:
+        tmp = bytes(query_blob)
+
+    proto_query.ParseFromString(tmp)
+
+    channel = grpc.insecure_channel(IP+':'+port)
+    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
+    query_response = query_stub.Find(proto_query)
+
+    print(query_response)
+
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
