@@ -244,12 +244,7 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto query_processing_factory = std::make_unique<iroha::model::QueryProcessingFactory>(
-      storage->getWsvQuery(), storage->getBlockQuery());
-
-  auto query_processor =
-      std::make_shared<QueryProcessorImpl>(std::move(query_processing_factory),
-      storage);
+  auto query_processor = std::make_shared<QueryProcessorImpl>(storage);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

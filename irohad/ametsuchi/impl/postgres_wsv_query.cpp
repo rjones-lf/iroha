@@ -209,5 +209,13 @@ namespace iroha {
         return peers;
       };
     }
+    PostgresWsvQuery::PostgresWsvQuery(
+        std::unique_ptr<pqxx::lazyconnection> connection,
+        std::unique_ptr<pqxx::nontransaction> transaction)
+        : connection_ptr_(std::move(connection)),
+          transaction_ptr_(std::move(transaction)),
+          transaction_(*transaction_ptr_),
+          log_(logger::log("PostgresWsvQuery")),
+          execute_{makeExecuteOptional(transaction_, log_)} {}
   }  // namespace ametsuchi
 }  // namespace iroha

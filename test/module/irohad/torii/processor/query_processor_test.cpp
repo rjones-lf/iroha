@@ -67,7 +67,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto qpf = std::make_unique<model::QueryProcessingFactory>(wsv_queries,
                                                              block_queries);
 
-  iroha::torii::QueryProcessorImpl qpi(std::move(qpf), storage);
+  iroha::torii::QueryProcessorImpl qpi(storage);
 
   auto query = TestUnsignedQueryBuilder()
                    .createdTime(created_time)

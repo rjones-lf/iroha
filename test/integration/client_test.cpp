@@ -93,11 +93,8 @@ class ClientServerTest : public testing::Test {
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
 
     //----------- Query Service ----------
-    auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
-        wsv_query, block_query);
 
-    auto qpi =
-        std::make_shared<iroha::torii::QueryProcessorImpl>(std::move(qpf), storage);
+    auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(storage);
 
     //----------- Server run ----------------
     runner

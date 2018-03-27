@@ -61,11 +61,7 @@ class ToriiQueriesTest : public testing::Test {
 
     //----------- Query Service ----------
 
-    auto qpf = std::make_unique<iroha::model::QueryProcessingFactory>(
-        wsv_query, block_query);
-
-    auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        std::move(qpf), storage);
+    auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(storage);
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi)).run();

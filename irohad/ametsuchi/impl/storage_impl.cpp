@@ -280,9 +280,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
         return wsv_;
       }
       auto wsv_transaction =
-          std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
+          std::make_unique<pqxx::nontransaction>(*postgres_connection);
 
-      return std::make_shared<PostgresWsvQuery>(*wsv_transaction);
+      return std::make_shared<PostgresWsvQuery>(std::move(postgres_connection),
+                                                std::move(wsv_transaction));
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {

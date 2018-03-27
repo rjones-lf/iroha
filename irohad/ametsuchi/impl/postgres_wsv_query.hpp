@@ -20,6 +20,8 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
+#include <pqxx/connection>
+
 #include "postgres_wsv_common.hpp"
 
 namespace iroha {
@@ -27,6 +29,8 @@ namespace iroha {
     class PostgresWsvQuery : public WsvQuery {
      public:
       explicit PostgresWsvQuery(pqxx::nontransaction &transaction);
+      PostgresWsvQuery(std::unique_ptr<pqxx::lazyconnection> connection,
+                       std::unique_ptr<pqxx::nontransaction> transaction);
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
@@ -45,8 +49,7 @@ namespace iroha {
       boost::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
                          &account_id) override;
-      boost::optional<std::shared_ptr<shared_model::interface::Asset>>
-      getAsset(
+      boost::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
       boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
@@ -68,6 +71,9 @@ namespace iroha {
               &permission_id) override;
 
      private:
+      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
+      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
+
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
 
