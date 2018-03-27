@@ -41,9 +41,7 @@ Where to Get
 
 There are two ways to get Iroha library for Android:
 
-#. Include into a project prebuilt library from jcenter repository https://bintray.com/bulatmukhutdinov/maven/iroha-android-bindings.
-   *Despite the lib is not hosted under hyperledger account, this is an official build that is temporarily hosted in a private repository.*
-
+#. Include into a project prebuilt library from jcenter repository - add implementation of ``jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0`` as project dependency.
 #. Compile the library on your own.
 
 Both options are described in the following sections.
@@ -60,13 +58,15 @@ Android NDK
     Please `download <https://developer.android.com/ndk/downloads/index.html>`__ and unpack NDK to any suitable folder.
 
 automake
-    .. parsed-literal::
+    .. code-block:: shell
+
         sudo apt install automake
         automake --version
         # automake (GNU automake) 1.15
 
 bison
-    .. parsed-literal::
+    .. code-block:: shell
+
         sudo apt install bison
         bison --version
         # bison (GNU Bison) 3.0.4
@@ -77,7 +77,8 @@ cmake
     Since Ubuntu repositories contain unsuitable version of cmake, you need to install the new one manually.
     Here is how to build and install cmake from sources.
 
-    .. parsed-literal::
+    .. code-block:: shell
+
         wget https://cmake.org/files/v3.10/cmake-3.10.3.tar.gz
         tar -xvzf cmake-3.10.3.tar.gz
         cd cmake-3.10.3/
@@ -121,11 +122,12 @@ Launch parameters are listed in the table below.
 
 Please use the same root part of Java package name for library build as you use for your Android project.
 For example, your project is located in a package called ``com.mycompany.androidapp``, so please consider to build the library in a
-package, which name starts with ``com.mycompany`` (e.g. ``com.mycompany.iroha``).
+package, which name starts with ``com.mycompany.androidapp`` (e.g. ``com.mycompany.androidapp.iroha``).
 
 A couple of launch commands examples:
 
-.. parsed-literal::
+.. code-block:: shell
+
     # build Java bindings and binary library for arm64-v8a in Release mode
     ./android-build.sh arm64-v8a 27 /home/user/lib/android-ndk-r16b com.mycompany.iroha
 
@@ -148,7 +150,8 @@ All you need to do is a simple set of four steps:
 
 1. Add to your ``build.gradle`` file the following line:
 
-   .. parsed-literal::
+   .. code-block:: groovy
+
        compile 'jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0'
 
 2. Copy the latest version of ``*.proto`` files from ``develop`` branch of Iroha `repository <https://github.com/hyperledger/iroha/tree/develop/schema>`__ into 
@@ -156,7 +159,8 @@ All you need to do is a simple set of four steps:
 
    The resulting directory structure should look like as follows:
 
-   .. parsed-literal::
+   .. code-block:: shell
+
         app
         └── src
             └── main
@@ -178,7 +182,8 @@ All you need to do is a simple set of four steps:
 
 3. Create additional directories ``app/src/main/proto/google/protobuf/`` and place there a file called ``empty.proto`` with the following contents:
 
-   .. parsed-literal::
+   .. code-block:: proto
+
        syntax = "proto3";
 
        package google.protobuf;
@@ -192,7 +197,8 @@ All you need to do is a simple set of four steps:
 
 4. Add ``protobuf`` and ``grpc`` dependecies and protobuf configuration block into your ``buld.gradle`` file.
 
-   .. parsed-literal::
+   .. code-block:: groovy
+
         apply plugin: 'com.google.protobuf' 
 
         dependencies {
