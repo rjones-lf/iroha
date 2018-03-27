@@ -41,7 +41,11 @@ Where to Get
 
 There are two ways to get Iroha library for Android:
 
-#. Include into a project prebuilt library from jcenter repository - add implementation of ``jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0`` as project dependency.
+#. Grab via Gradle (see details in a section `Importing the Library from jcenter`_)
+   .. code-block:: groovy
+
+   implementation jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0
+
 #. Compile the library on your own.
 
 Both options are described in the following sections.
@@ -152,7 +156,7 @@ All you need to do is a simple set of four steps:
 
    .. code-block:: groovy
 
-       compile 'jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0'
+       implementation 'jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0'
 
 2. Copy the latest version of ``*.proto`` files from ``develop`` branch of Iroha `repository <https://github.com/hyperledger/iroha/tree/develop/schema>`__ into 
    ``app/src/main/proto/`` folder inside your project in Android Studio.
