@@ -41,10 +41,11 @@ Where to Get
 
 There are two ways to get Iroha library for Android:
 
-#. Grab via Gradle (see details in a section `Importing the Library from jcenter`_)
+#. Grab via Gradle (see details in the section `Importing the Library from jcenter`_)
+
    .. code-block:: groovy
 
-   implementation jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0
+       implementation 'jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0'
 
 #. Compile the library on your own.
 
@@ -261,7 +262,7 @@ How to Use Manually Built Library
 Example Code
 ^^^^^^^^^^^^
 
-Explore ``bindings`` branch of `iroha-android <https://github.com/hyperledger/iroha-android/tree/bindings>`__ repository to get code examples.
+Explore ``bindings`` branch of `iroha-android <https://github.com/hyperledger/iroha-android/tree/bindings>`__ repository to get source code and view sample application.
 
 
 Objective-C Library
