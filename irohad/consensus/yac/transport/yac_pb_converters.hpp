@@ -18,7 +18,7 @@
 #ifndef IROHA_YAC_PB_CONVERTERS_HPP
 #define IROHA_YAC_PB_CONVERTERS_HPP
 
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/default_builders.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/messages.hpp"
 #include "interfaces/common_objects/signature.hpp"
@@ -38,13 +38,20 @@ namespace iroha {
 
           auto block_signature = hash->mutable_block_signature();
 
-          //Will fix it in the next PR, very soon, don't worry
+          // Will fix it in the next PR, very soon, don't worry
           if (vote.hash.block_signature == nullptr) {
-            auto sig = shared_model::proto::SignatureBuilder()
-                           .publicKey(shared_model::crypto::PublicKey(""))
-                           .signedData(shared_model::crypto::Signed(""))
-                           .build();
-            const_cast<VoteMessage &>(vote).hash.block_signature = clone(sig);
+            shared_model::builder::DefaultSignatureBuilder()
+                .publicKey(shared_model::crypto::PublicKey(""))
+                .signedData(shared_model::crypto::Signed(""))
+                .build()
+                .match(
+                    [&](iroha::expected::Value<std::shared_ptr<
+                            shared_model::interface::Signature>> &sig) {
+                      const_cast<VoteMessage &>(vote).hash.block_signature =
+                          sig.value;
+                    },
+                    [](iroha::expected::Error<std::shared_ptr<std::string>>) {
+                    });
           }
 
           block_signature->set_signature(shared_model::crypto::toBinaryString(
@@ -65,14 +72,19 @@ namespace iroha {
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
-          auto sig = shared_model::proto::SignatureBuilder()
-                         .publicKey(shared_model::crypto::PublicKey(
-                             pb_vote.hash().block_signature().pubkey()))
-                         .signedData(shared_model::crypto::Signed(
-                             pb_vote.hash().block_signature().signature()))
-                         .build();
 
-          vote.hash.block_signature = clone(sig);
+          shared_model::builder::DefaultSignatureBuilder()
+              .publicKey(shared_model::crypto::PublicKey(
+                  pb_vote.hash().block_signature().pubkey()))
+              .signedData(shared_model::crypto::Signed(
+                  pb_vote.hash().block_signature().signature()))
+              .build()
+              .match(
+                  [&](iroha::expected::Value<
+                      std::shared_ptr<shared_model::interface::Signature>>
+                          &sig) { vote.hash.block_signature = sig.value; },
+                  [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
+
           vote.signature.signature = *stringToBlob<iroha::sig_t::size()>(
               pb_vote.signature().signature());
           vote.signature.pubkey = *stringToBlob<iroha::pubkey_t::size()>(

@@ -26,8 +26,6 @@ namespace iroha {
       YacHash YacHashProviderImpl::makeHash(
           const shared_model::interface::Block &block) const {
         YacHash result;
-        // TODO 01/08/17 Muratov: add proposal hash to block,
-        // block.proposal_hash IR-505
         auto hex_hash = block.hash().hex();
         result.proposal_hash = hex_hash;
         result.block_hash = hex_hash;
