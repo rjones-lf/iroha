@@ -21,6 +21,7 @@
 #include "builders/default_builders.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/messages.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "yac.pb.h"
 
@@ -40,8 +41,11 @@ namespace iroha {
 
           // Will fix it in the next PR, very soon, don't worry
           if (vote.hash.block_signature == nullptr) {
+            auto peer_key = shared_model::crypto::DefaultCryptoAlgorithmType::
+                                generateKeypair()
+                                    .publicKey();
             shared_model::builder::DefaultSignatureBuilder()
-                .publicKey(shared_model::crypto::PublicKey(""))
+                .publicKey(peer_key)
                 .signedData(shared_model::crypto::Signed(""))
                 .build()
                 .match(
