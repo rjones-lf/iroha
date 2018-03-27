@@ -20,13 +20,17 @@
 
 #include <gmock/gmock.h>
 
-#include "cryptography/crypto_provider/crypto_signer.hpp"
+#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 
 namespace shared_model {
   namespace crypto {
 
-    class MockCryptoSigner : public CryptoSigner {
+    class MockCryptoSigner : public CryptoSignerImpl<> {
      public:
+      MockCryptoSigner()
+          : CryptoSignerImpl(shared_model::crypto::DefaultCryptoAlgorithmType::
+                                 generateKeypair()) {}
+
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Block &));
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Query &));
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Transaction &));
@@ -35,4 +39,4 @@ namespace shared_model {
   }  // namespace crypto
 }  // namespace shared_model
 
-#endif //IROHA_CRYPTO_SIGNER_MOCK_HPP
+#endif  // IROHA_CRYPTO_SIGNER_MOCK_HPP

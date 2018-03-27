@@ -26,19 +26,19 @@
 
 namespace shared_model {
   namespace crypto {
-    template <typename Algorithm = DefaultCryptoAlgorithmType>
-    class CryptoSignerImpl : public CryptoSigner {
+    template <typename Algorithm = CryptoSigner<>>
+    class CryptoSignerImpl {
      public:
       explicit CryptoSignerImpl(const shared_model::crypto::Keypair &keypair);
 
       virtual ~CryptoSignerImpl() = default;
 
-      void sign(shared_model::interface::Block &block) const override;
+      virtual void sign(shared_model::interface::Block &block) const;
 
-      void sign(shared_model::interface::Query &query) const override;
+      virtual void sign(shared_model::interface::Query &query) const;
 
-      void sign(
-          shared_model::interface::Transaction &transaction) const override;
+      virtual void sign(
+          shared_model::interface::Transaction &transaction) const;
 
      private:
 #ifndef DISABLE_BACKWARD
@@ -47,8 +47,7 @@ namespace shared_model {
           noexcept {
 #else
       template <typename Model>
-      void CryptoModelSigner<Algorithm>::sign(
-          interface::Signable<Model> &signable) const noexcept {
+      void internal_sign(interface::Signable<Model> &signable) const noexcept {
 #endif
         auto signedBlob =
             shared_model::crypto::DefaultCryptoAlgorithmType::sign(

@@ -18,7 +18,6 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 
 using namespace std::chrono_literals;
 using namespace iroha::model::generators;

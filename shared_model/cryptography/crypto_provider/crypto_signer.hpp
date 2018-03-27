@@ -18,41 +18,33 @@
 #ifndef IROHA_CRYPTO_SIGNER_HPP
 #define IROHA_CRYPTO_SIGNER_HPP
 
-namespace shared_model {
-  namespace interface {
-    class Block;
-    class Query;
-    class Transaction;
-  }  // namespace interface
-}  // namespace shared_model
+#include "cryptography/blob.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/keypair.hpp"
+#include "cryptography/signed.hpp"
 
 namespace shared_model {
   namespace crypto {
     /**
-     * CryptoSigner - interface for generalization signing for model primitives
+     * CryptoSigner - wrapper for generalization signing for different
+     * cryptographic algorithms
+     * @tparam Algorithm - cryptographic algorithm for singing
      */
+    template <typename Algorithm = DefaultCryptoAlgorithmType>
     class CryptoSigner {
      public:
-      virtual ~CryptoSigner() = default;
-
       /**
-       * Method for signing a block with stored keypair
-       * @param block - block for signing
+       * Generate signature for target data
+       * @param blob - data for signing
+       * @param keypair - (public, private) keys for signing
+       * @return signature's blob
        */
-      virtual void sign(shared_model::interface::Block &block) const = 0;
+      static Signed sign(const Blob &blob, const Keypair &keypair) {
+        return Algorithm::sign(blob, keypair);
+      }
 
-      /**
-       * Method for signing a query with stored keypair
-       * @param query - query to sign
-       */
-      virtual void sign(shared_model::interface::Query &query) const = 0;
-
-      /**
-       * Method for signing a transaction with stored keypair
-       * @param transaction - transaction for signing
-       */
-      virtual void sign(
-          shared_model::interface::Transaction &transaction) const = 0;
+      /// close constructor for forbidding instantiation
+      CryptoSigner() = delete;
     };
   }  // namespace crypto
 }  // namespace shared_model

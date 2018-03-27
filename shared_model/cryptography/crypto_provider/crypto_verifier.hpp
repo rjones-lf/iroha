@@ -18,13 +18,15 @@
 #ifndef IROHA_CRYPTO_VERIFIER_HPP
 #define IROHA_CRYPTO_VERIFIER_HPP
 
-#include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/keypair.hpp"
-#include "cryptography/signed.hpp"
 
 namespace shared_model {
   namespace crypto {
+
+    class Signed;
+    class Blob;
+    class PublicKey;
+
     /**
      * CryptoVerifier - adapter for generalization verification of cryptographic
      * signatures

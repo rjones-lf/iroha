@@ -19,7 +19,6 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;

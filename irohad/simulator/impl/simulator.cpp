@@ -20,7 +20,6 @@
 #include <boost/range/adaptor/transformed.hpp>
 
 #include "builders/protobuf/block.hpp"
-#include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 
@@ -32,7 +31,7 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
-        std::shared_ptr<shared_model::crypto::CryptoSigner> crypto_signer)
+        std::shared_ptr<shared_model::crypto::CryptoSignerImpl<>> crypto_signer)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),

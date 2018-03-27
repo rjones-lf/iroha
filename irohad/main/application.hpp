@@ -21,6 +21,7 @@
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -50,12 +51,6 @@ namespace iroha {
     class WsvRestorer;
   }
 }  // namespace iroha
-
-namespace shared_model {
-  namespace crypto {
-    class CryptoSigner;
-  }  // namespace crypto
-}  // namespace shared_model
 
 class Irohad {
  public:
@@ -157,7 +152,7 @@ class Irohad {
   // ------------------------| internal dependencies |-------------------------
 
   // crypto provider
-  std::shared_ptr<shared_model::crypto::CryptoSigner> crypto_signer_;
+  std::shared_ptr<shared_model::crypto::CryptoSignerImpl<>> crypto_signer_;
 
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
