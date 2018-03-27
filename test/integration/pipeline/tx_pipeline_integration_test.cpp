@@ -25,6 +25,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include "model/generators/query_generator.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "responses.pb.h"
 
 using namespace std::chrono_literals;
@@ -223,5 +224,30 @@ TEST(PipelineIntegrationTest, SendTx) {
       .sendTx(tx, checkStatelessValid)
       .checkProposal(checkProposal)
       .checkBlock(checkBlock)
+      .done();
+}
+
+/**
+ * @given some user
+ * @when sending sample CreateRole with empty permissions
+ * @then receive STATELESS_VALIDATION_FAIL status on that tx
+ */
+TEST(PipelineIntegrationTest, CreateEmptyRole) {
+  auto tx = TestTransactionBuilder()
+                .createdTime(iroha::time::now())
+                .creatorAccountId(kUser)
+                .txCounter(1)
+                .createRole("empty", std::set<std::string>{})
+                .build();
+
+  auto checkStatelessValid = [](auto &status) {
+    ASSERT_NO_THROW(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::StatelessFailedTxResponse>>(status.get()));
+  };
+
+  integration_framework::IntegrationTestFramework()
+      .setInitialState(kAdminKeypair)
+      .sendTx(tx, checkStatelessValid)
       .done();
 }
