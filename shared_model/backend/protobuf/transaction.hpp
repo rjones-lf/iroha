@@ -75,9 +75,8 @@ namespace shared_model {
         if (signatures_->count(signature) > 0) {
           return false;
         }
-        auto sig = proto_->add_signature();
-        sig->set_pubkey(crypto::toBinaryString(signature->publicKey()));
-        sig->set_signature(crypto::toBinaryString(signature->signedData()));
+        addProtoSignature(crypto::toBinaryString(signature->signedData()),
+                          crypto::toBinaryString(signature->publicKey()));
         signatures_.invalidate();
         return true;
       }

@@ -45,11 +45,14 @@ namespace shared_model {
 
       /**
        * Add signature and retrieve signed result
-       * @param keypair - keypair used to signed
+       * @param signature - signature to add
        * @return signed object
        */
       T signAndAddSignature(const crypto::Keypair &keypair) {
-        unsigned_.signAndAddSignature(keypair);
+        auto signedBlob =
+            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
+                shared_model::crypto::Blob(unsigned_.payload()), keypair);
+        unsigned_.addSignedBlob(signedBlob, keypair.publicKey());
         // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;
       }

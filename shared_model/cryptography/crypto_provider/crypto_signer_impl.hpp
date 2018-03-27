@@ -50,7 +50,10 @@ namespace shared_model {
       void CryptoModelSigner<Algorithm>::sign(
           interface::Signable<Model> &signable) const noexcept {
 #endif
-        signable.signAndAddSignature(keypair_);
+        auto signedBlob =
+            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
+                signable.payload(), keypair_);
+        signable.addSignedBlob(signedBlob, keypair_.publicKey());
       }
 
       shared_model::crypto::Keypair keypair_;

@@ -64,18 +64,14 @@ namespace shared_model {
        * @param keypair - keypair used to sign
        * @return true, if signature was added
        */
-      bool signAndAddSignature(const crypto::Keypair &keypair) {
-        auto signedBlob =
-            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-                payload(), keypair);
+      bool addSignedBlob(const crypto::Signed &signed_blob,
+                         const crypto::PublicKey &public_key) {
         iroha::protocol::Signature protosig;
-        protosig.set_pubkey(
-            shared_model::crypto::toBinaryString(keypair.publicKey()));
+        protosig.set_pubkey(shared_model::crypto::toBinaryString(public_key));
         protosig.set_signature(
-            shared_model::crypto::toBinaryString(signedBlob));
-        auto *signature = new shared_model::proto::Signature(protosig);
-        return addSignature(shared_model::detail::PolymorphicWrapper<
-            shared_model::proto::Signature>(signature));
+            shared_model::crypto::toBinaryString(signed_blob));
+        return addSignature(shared_model::detail::makePolymorphic<
+                            shared_model::proto::Signature>(protosig));
       }
 
       /**

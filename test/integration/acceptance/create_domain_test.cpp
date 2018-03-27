@@ -48,7 +48,7 @@ class CreateDomain : public ::testing::Test {
    * @return pre-built tx
    */
   auto baseTx() {
-    return TestTransactionBuilder()
+    return TestUnsignedTransactionBuilder()
         .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
