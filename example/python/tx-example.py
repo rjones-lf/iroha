@@ -95,6 +95,25 @@ def send_tx(tx, key_pair):
     stub.Torii(proto_tx)
 
 
+def send_query(query, key_pair):
+    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+
+    proto_query = queries_pb2.Query()
+
+    if sys.version_info[0] == 2:
+        tmp = ''.join(map(chr, query_blob))
+    else:
+        tmp = bytes(query_blob)
+
+    proto_query.ParseFromString(tmp)
+
+    channel = grpc.insecure_channel('127.0.0.1:50051')
+    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
+    query_response = query_stub.Find(proto_query)
+
+    return query_response
+
+
 def tx1():
     tx = tx_builder.creatorAccountId(creator) \
             .txCounter(1) \
@@ -144,20 +163,8 @@ def get_asset():
         .queryCounter(1) \
         .getAssetInfo("coin#domain") \
         .build()
-    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
 
-    proto_query = queries_pb2.Query()
-
-    if sys.version_info[0] == 2:
-        tmp = ''.join(map(chr, query_blob))
-    else:
-        tmp = bytes(query_blob)
-
-    proto_query.ParseFromString(tmp)
-
-    channel = grpc.insecure_channel('127.0.0.1:50051')
-    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
-    query_response = query_stub.Find(proto_query)
+    query_response = send_query(query, key_pair)
 
     if not query_response.HasField("asset_response"):
         print("Query response error")
@@ -176,20 +183,8 @@ def get_account_asset():
         .queryCounter(11) \
         .getAccountAssets("userone@domain", "coin#domain") \
         .build()
-    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
 
-    proto_query = queries_pb2.Query()
-
-    if sys.version_info[0] == 2:
-        tmp = ''.join(map(chr, query_blob))
-    else:
-        tmp = bytes(query_blob)
-
-    proto_query.ParseFromString(tmp)
-
-    channel = grpc.insecure_channel('127.0.0.1:50051')
-    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
-    query_response = query_stub.Find(proto_query)
+    query_response = send_query(query, key_pair)
 
     print(query_response)
 
