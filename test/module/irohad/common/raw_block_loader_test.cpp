@@ -15,26 +15,19 @@
  * limitations under the License.
  */
 
-#include "main/raw_block_loader.hpp"
 #include <gtest/gtest.h>
 
-#include "framework/test_block_generator.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "model/converters/json_block_factory.hpp"
-#include "model/converters/json_common.hpp"
-#include "model/converters/pb_command_factory.hpp"
+#include "main/raw_block_loader.hpp"
 
-using namespace iroha::main;
-using namespace iroha::model::converters;
-using namespace iroha;
+using iroha::main::BlockLoader;
 
 /**
- * @given generated block
+ * @given json of a block
  *
- * @when convert block to JSON
- * AND parseBlock() with BlockLoader API
+ * @when convert json to block using raw block loader
  *
- * @then check that blocks are equal
+ * @then check that block is correct
  */
 TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   BlockLoader loader;
@@ -43,7 +36,7 @@ TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
 "payload": {
   "transactions": [],
   "height": 1,
-  "prev_block_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "prev_block_hash": "000000000000000000000000000000000000000000000000000000000000000",
   "created_time": 0
   },
 "signatures": []
@@ -54,5 +47,8 @@ TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   ASSERT_TRUE(block);
   auto b = block.value();
 
-  ASSERT_EQ(b->transactions().size(), 4);
+  ASSERT_EQ(b->transactions().size(), 0);
+  ASSERT_EQ(b->height(), 1);
+  ASSERT_EQ(b->createdTime(), 0);
+  ASSERT_TRUE(b->signatures().empty());
 }
