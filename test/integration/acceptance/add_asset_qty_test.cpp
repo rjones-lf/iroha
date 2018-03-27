@@ -231,3 +231,43 @@ TEST_F(AddAssetQuantity, OtherUser) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
+
+/**
+ * @given pair of user in different domains with all required permission
+ * @when first one execute a tx with AddAssetQuantity command to the second one
+ * @then the tx hasn't passed stateless validation
+ *       (aka skipProposal throws)
+ */
+TEST_F(AddAssetQuantity, OtherDomain) {
+  const auto kNewRole = "newrl";
+  const auto kNewDomain = "newdom";
+  const auto kNewUser = "newusr";
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      // Generate new domain, new user and an asset
+      .sendTx(
+          shared_model::proto::TransactionBuilder()
+              .txCounter(1)
+              .creatorAccountId(
+                  integration_framework::IntegrationTestFramework::kAdminId)
+              .createdTime(iroha::time::now())
+              .createRole(
+                  kNewRole,
+                  std::vector<std::string>{iroha::model::can_get_my_txs})
+              .createDomain(kNewDomain, kNewRole)
+              .createAccount(
+                  kNewUser,
+                  kNewDomain,
+                  crypto::DefaultCryptoAlgorithmType::generateKeypair()
+                      .publicKey())
+              .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+              .build()
+              .signAndAddSignature(kAdminKeypair))
+      .skipProposal()
+      // Make sure everything is committed
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
+      .sendTx(completeTx(baseTx().addAssetQuantity(kNewUser, kAsset, kAmount)));
+  ASSERT_ANY_THROW(itf.skipProposal());
+}
