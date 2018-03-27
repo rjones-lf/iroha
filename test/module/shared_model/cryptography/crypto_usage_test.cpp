@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 
 #include "cryptography/crypto_provider/crypto_signer_impl.hpp"
-#include "cryptography/crypto_provider/crypto_verifier_impl.hpp"
+#include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -64,12 +64,28 @@ class CryptoUsageTest : public ::testing::Test {
     signable.addSignature(signedBlob, keypair.publicKey());
   }
 
+  template <typename T>
+  bool verify(const T &signable) const {
+    return signable.signatures().size() > 0
+        and std::all_of(
+                signable.signatures().begin(),
+                signable.signatures().end(),
+                [this,
+                 &signable](const shared_model::detail::PolymorphicWrapper<
+                            shared_model::interface::Signature> &signature) {
+                  return shared_model::crypto::CryptoVerifier<>::verify(
+                      signature->signedData(),
+                      signable.payload(),
+                      signature->publicKey());
+                });
+  }
+
   Blob data;
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-  shared_model::crypto::CryptoSignerImpl<> signer = shared_model::crypto::CryptoSignerImpl<>(keypair);
-  shared_model::crypto::CryptoVerifierImpl<> verifier = shared_model::crypto::CryptoVerifierImpl<>();
+  shared_model::crypto::CryptoSignerImpl<> signer =
+      shared_model::crypto::CryptoSignerImpl<>(keypair);
 
   std::unique_ptr<shared_model::proto::Block> block;
   std::unique_ptr<shared_model::proto::Query> query;
@@ -82,9 +98,10 @@ class CryptoUsageTest : public ::testing::Test {
  * @then check that siganture valid without clarification of algorithm
  */
 TEST_F(CryptoUsageTest, RawSignAndVerifyTest) {
-  auto signed_blob = shared_model::crypto::DefaultCryptoAlgorithmType::sign(data, keypair);
-  auto verified =
-      DefaultCryptoAlgorithmType::verify(signed_blob, data, keypair.publicKey());
+  auto signed_blob =
+      shared_model::crypto::DefaultCryptoAlgorithmType::sign(data, keypair);
+  auto verified = DefaultCryptoAlgorithmType::verify(
+      signed_blob, data, keypair.publicKey());
   ASSERT_TRUE(verified);
 }
 
@@ -94,18 +111,18 @@ TEST_F(CryptoUsageTest, RawSignAndVerifyTest) {
  * @then block is not verified
  */
 TEST_F(CryptoUsageTest, UnsignedBlock) {
-  ASSERT_FALSE(verifier.verify(*block));
+  ASSERT_FALSE(verify(*block));
 }
 
 /**
-   * @given properly signed block
-   * @when verify block
-   * @then block is verified
-   */
+ * @given properly signed block
+ * @when verify block
+ * @then block is verified
+ */
 TEST_F(CryptoUsageTest, SignAndVerifyBlock) {
   signer.sign(*block);
 
-  ASSERT_TRUE(verifier.verify(*block));
+  ASSERT_TRUE(verify(*block));
 }
 
 /**
@@ -116,7 +133,7 @@ TEST_F(CryptoUsageTest, SignAndVerifyBlock) {
 TEST_F(CryptoUsageTest, SignAndVerifyBlockWithWrongSignature) {
   signIncorrect(*block);
 
-  ASSERT_FALSE(verifier.verify(*block));
+  ASSERT_FALSE(verify(*block));
 }
 
 /**
@@ -125,7 +142,7 @@ TEST_F(CryptoUsageTest, SignAndVerifyBlockWithWrongSignature) {
  * @then query is not verified
  */
 TEST_F(CryptoUsageTest, UnsignedQuery) {
-  ASSERT_FALSE(verifier.verify(*query));
+  ASSERT_FALSE(verify(*query));
 }
 
 /**
@@ -136,7 +153,7 @@ TEST_F(CryptoUsageTest, UnsignedQuery) {
 TEST_F(CryptoUsageTest, SignAndVerifyQuery) {
   signer.sign(*query);
 
-  ASSERT_TRUE(verifier.verify(*query));
+  ASSERT_TRUE(verify(*query));
 }
 
 /**
@@ -147,7 +164,7 @@ TEST_F(CryptoUsageTest, SignAndVerifyQuery) {
 TEST_F(CryptoUsageTest, SignAndVerifyQuerykWithWrongSignature) {
   signIncorrect(*query);
 
-  ASSERT_FALSE(verifier.verify(*query));
+  ASSERT_FALSE(verify(*query));
 }
 
 /**
@@ -169,7 +186,7 @@ TEST_F(CryptoUsageTest, SameQueryHashAfterSign) {
  * @then transaction is not verified
  */
 TEST_F(CryptoUsageTest, UnsignedTransaction) {
-  ASSERT_FALSE(verifier.verify(*transaction));
+  ASSERT_FALSE(verify(*transaction));
 }
 
 /**
@@ -180,7 +197,7 @@ TEST_F(CryptoUsageTest, UnsignedTransaction) {
 TEST_F(CryptoUsageTest, SignAndVerifyTransaction) {
   signer.sign(*transaction);
 
-  ASSERT_TRUE(verifier.verify(*transaction));
+  ASSERT_TRUE(verify(*transaction));
 }
 
 /**
@@ -191,5 +208,5 @@ TEST_F(CryptoUsageTest, SignAndVerifyTransaction) {
 TEST_F(CryptoUsageTest, SignAndVerifyTransactionkWithWrongSignature) {
   signIncorrect(*transaction);
 
-  ASSERT_FALSE(verifier.verify(*transaction));
+  ASSERT_FALSE(verify(*transaction));
 }

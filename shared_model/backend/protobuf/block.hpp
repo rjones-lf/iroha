@@ -70,8 +70,7 @@ namespace shared_model {
 
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override {
-        // if signatures_ already contain signature with signed_blob and
-        // public_key
+        // if already has such signature
         if (std::find_if(signatures_->begin(),
                      signatures_->end(),
                      [&signed_blob, &public_key](auto signature) {

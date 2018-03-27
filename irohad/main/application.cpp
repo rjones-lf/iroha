@@ -69,7 +69,7 @@ void Irohad::init() {
   restoreWsv();
 
   initPeerQuery();
-  initCrypto();
+  initCryptoProvider();
   initValidators();
   initOrderingGate();
   initSimulator();
@@ -136,7 +136,7 @@ void Irohad::initPeerQuery() {
 /**
  * Initializing crypto provider
  */
-void Irohad::initCrypto() {
+void Irohad::initCryptoProvider() {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));

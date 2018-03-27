@@ -17,7 +17,7 @@
 
 #include "validators/field_validator.hpp"
 #include <boost/format.hpp>
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/crypto_provider/crypto_verifier.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -256,7 +256,7 @@ namespace shared_model {
         }
 
         if (is_valid
-            && not shared_model::crypto::DefaultCryptoAlgorithmType::verify(
+            && not shared_model::crypto::CryptoVerifier<>::verify(
                    sign, source, pkey)) {
           reason.second.push_back((boost::format("Wrong signature [%s;%s]")
                                    % sign.hex() % pkey.hex())

@@ -33,17 +33,17 @@ namespace shared_model {
      * signatures with specific cryptographic algorithm
      * @tparam Algorithm - cryptographic algorithm for verification
      */
-    template <typename Algorithm = DefaultCryptoAlgorithmType>
-    class CryptoVerifierImpl : public CryptoVerifier {
+    template <typename Algorithm = CryptoVerifier<>>
+    class CryptoVerifierImpl {
      public:
       virtual ~CryptoVerifierImpl() = default;
 
-      bool verify(const shared_model::interface::Block &block) const override;
+      bool verify(const shared_model::interface::Block &block) const;
 
-      bool verify(const shared_model::interface::Query &query) const override;
+      bool verify(const shared_model::interface::Query &query) const;
 
       bool verify(
-          const shared_model::interface::Transaction &tx) const override;
+          const shared_model::interface::Transaction &tx) const;
 
      private:
       template <typename T>

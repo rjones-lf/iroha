@@ -119,7 +119,7 @@ class Irohad {
 
   virtual void initPeerQuery();
 
-  virtual void initCrypto();
+  virtual void initCryptoProvider();
 
   virtual void initValidators();
 

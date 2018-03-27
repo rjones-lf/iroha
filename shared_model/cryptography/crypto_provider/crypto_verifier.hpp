@@ -18,49 +18,37 @@
 #ifndef IROHA_CRYPTO_VERIFIER_HPP
 #define IROHA_CRYPTO_VERIFIER_HPP
 
-namespace shared_model {
-  namespace interface {
-    class Block;
-    class Query;
-    class Transaction;
-  }  // namespace interface
-}  // namespace shared_model
+#include "cryptography/blob.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/keypair.hpp"
+#include "cryptography/signed.hpp"
 
 namespace shared_model {
   namespace crypto {
     /**
-     * CryptoVerifier - interface for generalization verification of cryptographic
+     * CryptoVerifier - adapter for generalization verification of cryptographic
      * signatures
+     * @tparam Algorithm - cryptographic algorithm for verification
      */
+    template <typename Algorithm = DefaultCryptoAlgorithmType>
     class CryptoVerifier {
      public:
-      virtual ~CryptoVerifier() = default;
-
       /**
-       * Method for signature verification of a block.
-       * @param block - block for verification
-       * @return true if block signature is valid, otherwise false
+       * Verify signature attached to source data
+       * @param signedData - cryptographic signature
+       * @param source - data that was signed
+       * @param pubKey - public key of signatory
+       * @return true if signature correct
        */
-      virtual bool verify(
-          const shared_model::interface::Block &block) const = 0;
+      static bool verify(const Signed &signedData,
+                         const Blob &source,
+                         const PublicKey &pubKey) {
+        return Algorithm::verify(signedData, source, pubKey);
+      }
 
-      /**
-       * Method for signature verification of a query.
-       * @param query - query for verification
-       * @return true if query signature is valid, otherwise false
-       */
-      virtual bool verify(
-          const shared_model::interface::Query &query) const = 0;
-
-      /**
-       * Method for signature verification of a transaction.
-       * @param tx - transaction for verification
-       * @return true if transaction signature is valid, otherwise false
-       */
-      virtual bool verify(
-          const shared_model::interface::Transaction &tx) const = 0;
+      /// close constructor for forbidding instantiation
+      CryptoVerifier() = delete;
     };
-
   }  // namespace crypto
 }  // namespace shared_model
 
