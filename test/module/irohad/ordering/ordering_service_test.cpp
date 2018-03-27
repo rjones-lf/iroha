@@ -27,6 +27,7 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "builders/protobuf/transaction.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -80,9 +81,17 @@ class OrderingServiceTest : public ::testing::Test {
         std::make_shared<MockOrderingServicePersistentState>();
   }
 
-  auto empty_tx() {
+  auto get_tx() {
     return std::make_shared<shared_model::proto::Transaction>(
-        TestTransactionBuilder().build());
+        shared_model::proto::TransactionBuilder()
+        .txCounter(2)
+        .createdTime(iroha::time::now())
+        .creatorAccountId("admin@ru")
+        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+        .build()
+        .signAndAddSignature(
+            shared_model::crypto::DefaultCryptoAlgorithmType::
+            generateKeypair()));
   }
 
   std::shared_ptr<MockOrderingServiceTransport> fake_transport;
@@ -113,7 +122,7 @@ TEST_F(OrderingServiceTest, SimpleTest) {
 
   fake_transport->publishProposal(
       std::make_unique<shared_model::proto::Proposal>(
-          TestProposalBuilder().build()),
+          TestProposalBuilder().height(1).createdTime(iroha::time::now()).build()),
       {});
 }
 
@@ -149,7 +158,7 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
 
   for (size_t i = 0; i < 10; ++i) {
-    ordering_service->onTransaction(empty_tx());
+    ordering_service->onTransaction(get_tx());
   }
 
   std::unique_lock<std::mutex> lock(m);
@@ -188,13 +197,13 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
       }));
 
   for (size_t i = 0; i < 8; ++i) {
-    ordering_service->onTransaction(empty_tx());
+    ordering_service->onTransaction(get_tx());
   }
 
   std::unique_lock<std::mutex> lk(m);
   cv.wait_for(lk, 10s);
 
-  ordering_service->onTransaction(empty_tx());
-  ordering_service->onTransaction(empty_tx());
+  ordering_service->onTransaction(get_tx());
+  ordering_service->onTransaction(get_tx());
   cv.wait_for(lk, 10s);
 }

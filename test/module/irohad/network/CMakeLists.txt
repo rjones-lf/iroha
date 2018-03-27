@@ -19,5 +19,6 @@ addtest(block_loader_test block_loader_test.cpp)
 target_link_libraries(block_loader_test
     block_loader
     block_loader_service
-        shared_model_cryptography
+    shared_model_stateless_validation
+    shared_model_cryptography
     )

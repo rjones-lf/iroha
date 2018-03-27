@@ -112,7 +112,7 @@ namespace iroha {
           });
       new_block.transactions = txs;
       new_block.txs_number = proposal.transactions().size();
-      new_block.created_ts = proposal.created_time();
+      new_block.created_ts = proposal.createdTime();
       new_block.hash = hash(new_block);
       crypto_provider_->sign(new_block);
 

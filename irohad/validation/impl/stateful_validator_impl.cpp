@@ -81,10 +81,10 @@ namespace iroha {
                   *polymorphic_tx.operator->());
             });
       auto validated_proposal = shared_model::proto::ProposalBuilder()
-                                    .createdTime(proposal.created_time())
+                                    .createdTime(proposal.createdTime())
                                     .height(proposal.height())
                                     .transactions(valid_proto_txs)
-                                    .createdTime(proposal.created_time())
+                                    .createdTime(proposal.createdTime())
                                     .build();
 
       log_->info("transactions in verified proposal: {}",
