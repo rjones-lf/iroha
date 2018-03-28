@@ -140,7 +140,7 @@ void Irohad::initCryptoProvider() {
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
   crypto_signer_ =
-      std::make_shared<shared_model::crypto::CryptoSignerImpl<>>(keypair_);
+      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair_);
 
   log_->info("[Init] => crypto provider");
 }

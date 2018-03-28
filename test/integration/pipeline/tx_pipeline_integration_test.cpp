@@ -19,7 +19,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
@@ -107,7 +107,7 @@ TEST_F(TxPipelineIntegrationTest, TxPipelineTest) {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  shared_model::crypto::CryptoSignerImpl<> signer(keypair_);
+  shared_model::crypto::CryptoModelSigner<> signer(keypair_);
   auto transaction = shared_model::proto::from_old(tx);
   signer.sign(transaction);
   tx = *std::unique_ptr<iroha::model::Transaction>(transaction.makeOldModel());
@@ -139,7 +139,7 @@ TEST_F(TxPipelineIntegrationTest, GetTransactionsTest) {
   shared_model::crypto::Keypair keypair_(
       shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
       shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
-  shared_model::crypto::CryptoSignerImpl<> signer(keypair_);
+  shared_model::crypto::CryptoModelSigner<> signer(keypair_);
   auto given_transaction = shared_model::proto::from_old(given_tx);
   signer.sign(given_transaction);
   given_tx = *std::unique_ptr<iroha::model::Transaction>(given_transaction.makeOldModel());

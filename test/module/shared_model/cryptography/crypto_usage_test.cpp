@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -84,8 +84,8 @@ class CryptoUsageTest : public ::testing::Test {
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-  shared_model::crypto::CryptoSignerImpl<> signer =
-      shared_model::crypto::CryptoSignerImpl<>(keypair);
+  shared_model::crypto::CryptoModelSigner<> signer =
+      shared_model::crypto::CryptoModelSigner<>(keypair);
 
   std::unique_ptr<shared_model::proto::Block> block;
   std::unique_ptr<shared_model::proto::Query> query;

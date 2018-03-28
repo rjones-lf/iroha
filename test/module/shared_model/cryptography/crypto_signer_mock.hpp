@@ -20,15 +20,15 @@
 
 #include <gmock/gmock.h>
 
-#include "cryptography/crypto_provider/crypto_signer_impl.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 
 namespace shared_model {
   namespace crypto {
 
-    class MockCryptoSigner : public CryptoSignerImpl<> {
+    class MockCryptoModelSigner : public CryptoModelSigner<> {
      public:
-      MockCryptoSigner()
-          : CryptoSignerImpl(shared_model::crypto::DefaultCryptoAlgorithmType::
+      MockCryptoModelSigner()
+          : CryptoModelSigner(shared_model::crypto::DefaultCryptoAlgorithmType::
                                  generateKeypair()) {}
 
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Block &));

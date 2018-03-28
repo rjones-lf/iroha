@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CRYPTO_SIGNER_IMPL_HPP
-#define IROHA_CRYPTO_SIGNER_IMPL_HPP
+#ifndef IROHA_CRYPTO_MODEL_SIGNER_HPP_
+#define IROHA_CRYPTO_MODEL_SIGNER_HPP_
 
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
@@ -31,11 +31,11 @@ namespace shared_model {
 
   namespace crypto {
     template <typename Algorithm = CryptoSigner<>>
-    class CryptoSignerImpl {
+    class CryptoModelSigner {
      public:
-      explicit CryptoSignerImpl(const shared_model::crypto::Keypair &keypair);
+      explicit CryptoModelSigner(const shared_model::crypto::Keypair &keypair);
 
-      virtual ~CryptoSignerImpl() = default;
+      virtual ~CryptoModelSigner() = default;
 
       virtual void sign(shared_model::interface::Block &block) const;
 
@@ -55,24 +55,24 @@ namespace shared_model {
     };
 
     template <typename Algorithm>
-    CryptoSignerImpl<Algorithm>::CryptoSignerImpl(
+    CryptoModelSigner<Algorithm>::CryptoModelSigner(
         const shared_model::crypto::Keypair &keypair)
         : keypair_(keypair) {}
 
     template <typename Algorithm>
-    void CryptoSignerImpl<Algorithm>::sign(
+    void CryptoModelSigner<Algorithm>::sign(
         shared_model::interface::Block &block) const {
       internal_sign(block);
     }
 
     template <typename Algorithm>
-    void CryptoSignerImpl<Algorithm>::sign(
+    void CryptoModelSigner<Algorithm>::sign(
         shared_model::interface::Query &query) const {
       internal_sign(query);
     }
 
     template <typename Algorithm>
-    void CryptoSignerImpl<Algorithm>::sign(
+    void CryptoModelSigner<Algorithm>::sign(
         shared_model::interface::Transaction &transaction) const {
       internal_sign(transaction);
     }
@@ -80,4 +80,4 @@ namespace shared_model {
   }  // namespace crypto
 }  // namespace shared_model
 
-#endif  // IROHA_CRYPTO_SIGNER_IMPL_HPP
+#endif  //  IROHA_CRYPTO_MODEL_SIGNER_HPP_
