@@ -17,17 +17,19 @@
 
 #include <gtest/gtest.h>
 #include <string>
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha::consensus::yac;
 
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
-  iroha::model::Block block;
-  block.sigs.emplace_back();
-  std::string test_hash = std::string(block.hash.size(), 'f');
-  std::copy(test_hash.begin(), test_hash.end(), block.hash.begin());
-  auto hex_test_hash = block.hash.to_hexstring();
+  shared_model::proto::Block block = TestBlockBuilder().build();
+  block.addSignature(shared_model::crypto::Signed("data"),
+                     shared_model::crypto::PublicKey("key"));
+
+  auto hex_test_hash = block.hash().hex();
 
   auto yac_hash = hash_provider.makeHash(block);
 
@@ -37,13 +39,13 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
-  iroha::model::Block block;
-  block.sigs.emplace_back();
-  block.hash.fill('f');
+  shared_model::proto::Block block = TestBlockBuilder().build();
+  block.addSignature(shared_model::crypto::Signed("data"),
+                     shared_model::crypto::PublicKey("key"));
 
   auto yac_hash = hash_provider.makeHash(block);
 
   auto model_hash = hash_provider.toModelHash(yac_hash);
 
-  ASSERT_EQ(model_hash, block.hash);
+  ASSERT_EQ(model_hash, block.hash());
 }

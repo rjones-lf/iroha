@@ -34,6 +34,8 @@ namespace shared_model {
 
       explicit Signed(const std::string &blob);
 
+      explicit Signed(const Bytes &blob);
+
       std::string toString() const override;
     };
   }  // namespace crypto

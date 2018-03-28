@@ -17,20 +17,21 @@
 
 #include "consensus/yac/cluster_order.hpp"
 #include <gtest/gtest.h>
+#include "module/irohad/consensus/yac/yac_mocks.hpp"
 
 class ClusterOrderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    p1.address = "1";
-    p2.address = "2";
+    p1 = iroha::consensus::yac::mk_peer("1");
+    p2 = iroha::consensus::yac::mk_peer("2");
     peers_list = {p1, p2};
   }
 
-  iroha::model::Peer p1;
-  iroha::model::Peer p2;
+  std::shared_ptr<shared_model::interface::Peer> p1;
+  std::shared_ptr<shared_model::interface::Peer> p2;
 
-  std::vector<iroha::model::Peer> peers_list;
-  std::vector<iroha::model::Peer> empty_peers_list;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers_list;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> empty_peers_list;
 };
 
 /**
@@ -57,7 +58,7 @@ TEST_F(ClusterOrderTest, BadClusterOrderCreation) {
 TEST_F(ClusterOrderTest, ClusterOrderOnNext) {
   auto order = iroha::consensus::yac::ClusterOrdering::create(peers_list);
   ASSERT_TRUE(order);
-  ASSERT_EQ("1", order->currentLeader().address);
-  ASSERT_EQ("2", order->switchToNext().currentLeader().address);
-  ASSERT_EQ("1", order->switchToNext().currentLeader().address);
+  ASSERT_EQ("1", order->currentLeader().address());
+  ASSERT_EQ("2", order->switchToNext().currentLeader().address());
+  ASSERT_EQ("1", order->switchToNext().currentLeader().address());
 }

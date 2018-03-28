@@ -34,7 +34,7 @@ using namespace framework::test_subscriber;
 using namespace std;
 
 TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
@@ -62,12 +62,14 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   yac->vote(my_hash, my_order.value());
 
   for (auto i = 0; i < 3; ++i) {
-    yac->on_vote(create_vote(my_hash, std::to_string(i)));
+    auto peer = my_peers.at(i);
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    yac->on_vote(create_vote(my_hash, pubkey));
   };
 }
 
 TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
@@ -109,7 +111,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
 }
 
 TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
@@ -158,7 +160,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 }
 
 TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
-  auto my_peers = std::vector<iroha::model::Peer>({default_peers.at(0)});
+  auto my_peers = decltype(default_peers)({default_peers.at(0)});
   ASSERT_EQ(1, my_peers.size());
 
   auto my_order = ClusterOrdering::create(my_peers);
@@ -205,7 +207,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 }
 
 TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 

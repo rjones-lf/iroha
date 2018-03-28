@@ -51,7 +51,7 @@ namespace shared_model {
       /**
        * @return created time
        */
-      virtual types::TimestampType created_time() const = 0;
+      virtual types::TimestampType createdTime() const = 0;
 
 #ifndef DISABLE_BACKWARD
       iroha::model::Proposal *makeOldModel() const override {
@@ -67,6 +67,7 @@ namespace shared_model {
 
         auto oldModel = new iroha::model::Proposal(txs);
         oldModel->height = height();
+        oldModel->created_time = createdTime();
         return oldModel;
       }
 #endif

@@ -18,9 +18,9 @@
 #ifndef IROHA_YAC_HPP
 #define IROHA_YAC_HPP
 
+#include <boost/optional.hpp>
 #include <memory>
 #include <mutex>
-#include <boost/optional.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 #include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
@@ -31,11 +31,6 @@
 #include "logger/logger.hpp"
 
 namespace iroha {
-
-  namespace model {
-    struct Peer;
-  }
-
   namespace consensus {
     namespace yac {
 
@@ -96,7 +91,8 @@ namespace iroha {
          * @param vote message containing peer information
          * @return peer if it is present in the ledger, nullopt otherwise
          */
-        boost::optional<model::Peer> findPeer(const VoteMessage &vote);
+        boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+        findPeer(const VoteMessage &vote);
 
         // ------|Apply data|------
 
@@ -106,17 +102,25 @@ namespace iroha {
          * top block in ledger does not correspond to consensus round number
          */
 
-        void applyCommit(boost::optional<model::Peer> from,
-                         CommitMessage commit);
-        void applyReject(boost::optional<model::Peer> from,
-                         RejectMessage reject);
-        void applyVote(boost::optional<model::Peer> from, VoteMessage vote);
+        void applyCommit(
+            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+                from,
+            const CommitMessage &commit);
+        void applyReject(
+            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
+                from,
+            const RejectMessage &reject);
+        void applyVote(boost::optional<
+                           std::shared_ptr<shared_model::interface::Peer>> from,
+                       const VoteMessage &vote);
 
         // ------|Propagation|------
-        void propagateCommit(CommitMessage msg);
-        void propagateCommitDirectly(model::Peer to, CommitMessage msg);
-        void propagateReject(RejectMessage msg);
-        void propagateRejectDirectly(model::Peer to, RejectMessage msg);
+        void propagateCommit(const CommitMessage &msg);
+        void propagateCommitDirectly(const shared_model::interface::Peer &to,
+                                     const CommitMessage &msg);
+        void propagateReject(const RejectMessage &msg);
+        void propagateRejectDirectly(const shared_model::interface::Peer &to,
+                                     const RejectMessage &msg);
 
         // ------|Fields|------
         YacVoteStorage vote_storage_;

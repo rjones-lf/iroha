@@ -84,7 +84,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         while (reader->Read(&block)) {
           shared_model::proto::TransportBuilder<
               shared_model::proto::Block,
-              shared_model::validation::DefaultBlockValidator>()
+              shared_model::validation::DefaultSignableBlockValidator>()
               .build(block)
               .match(
                   // success case
@@ -131,7 +131,7 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
 
   // stateless validation of block
   auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
-  auto answer = stateless_validator_->validate(result);
+  auto answer = stateless_validator_->validate(*result);
   if (answer.hasErrors()) {
     log_->error(answer.reason());
     return boost::none;

@@ -94,11 +94,11 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   EXPECT_CALL(*wsv_queries, getRolePermissions(role)).WillOnce(Return(perms));
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
-  wrapper.subscribe([this](auto response) {
+  wrapper.subscribe([](auto response) {
     auto resp = response->get();
     /// check if obtained response is error response
     boost::apply_visitor(
-        [this](auto val) {
+        [](auto val) {
           if (std::is_same<
                   decltype(val),
                   shared_model::detail::PolymorphicWrapper<

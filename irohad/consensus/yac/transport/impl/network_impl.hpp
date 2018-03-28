@@ -18,22 +18,16 @@
 #ifndef IROHA_NETWORK_IMPL_HPP
 #define IROHA_NETWORK_IMPL_HPP
 
-#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
-
 #include <memory>
 #include <unordered_map>
 
+#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
-#include "model/peer.hpp"  // for model::Peer
 #include "network/impl/async_grpc_client.hpp"
 #include "yac.grpc.pb.h"
 
 namespace iroha {
-
-  namespace model {
-    struct Peer;
-  }
-
   namespace consensus {
     namespace yac {
 
@@ -51,9 +45,12 @@ namespace iroha {
         NetworkImpl();
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
-        void send_commit(model::Peer to, CommitMessage commit) override;
-        void send_reject(model::Peer to, RejectMessage reject) override;
-        void send_vote(model::Peer to, VoteMessage vote) override;
+        void send_commit(const shared_model::interface::Peer &to,
+                         const CommitMessage &commit) override;
+        void send_reject(const shared_model::interface::Peer &to,
+                         RejectMessage reject) override;
+        void send_vote(const shared_model::interface::Peer &to,
+                       VoteMessage vote) override;
 
         /**
          * Receive vote from another peer;
@@ -91,12 +88,13 @@ namespace iroha {
          * peers map
          * @param peer to instantiate connection with
          */
-        void createPeerConnection(const model::Peer &peer);
+        void createPeerConnection(const shared_model::interface::Peer &peer);
 
         /**
          * Mapping of peer objects to connections
          */
-        std::unordered_map<model::Peer, std::unique_ptr<proto::Yac::Stub>>
+        std::unordered_map<shared_model::interface::types::AddressType,
+                           std::unique_ptr<proto::Yac::Stub>>
             peers_;
 
         /**

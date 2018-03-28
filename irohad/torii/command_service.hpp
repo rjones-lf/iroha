@@ -26,6 +26,7 @@
 #include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
+#include "logger/logger.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/transaction_response.hpp"
 #include "torii/processor/transaction_processor.hpp"
@@ -146,6 +147,7 @@ namespace torii {
     std::chrono::milliseconds proposal_delay_;
     std::chrono::milliseconds start_tx_processing_duration_;
     std::shared_ptr<CacheType> cache_;
+    logger::Logger log_;
   };
 
 }  // namespace torii

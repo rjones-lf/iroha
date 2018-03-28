@@ -22,6 +22,7 @@ addtest(block_query_test block_query_test.cpp)
 target_link_libraries(block_query_test
     ametsuchi
     libs_common
+    shared_model_stateless_validation
     )
 
 addtest(block_query_transfer_test block_query_transfer_test.cpp)
@@ -29,6 +30,7 @@ target_link_libraries(block_query_transfer_test
     ametsuchi
     libs_common
     ametsuchi_fixture
+    shared_model_stateless_validation
     )
 
 addtest(kv_storage_test kv_storage_test.cpp)

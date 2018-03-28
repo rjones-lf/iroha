@@ -18,6 +18,8 @@
 #ifndef IROHA_BLOCK_VALIDATOR_HPP
 #define IROHA_BLOCK_VALIDATOR_HPP
 
+#include <boost/format.hpp>
+#include "validators/container_validator.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
@@ -32,30 +34,22 @@ namespace shared_model {
     /**
      * Class that validates block
      */
-    class BlockValidator {
+    template <typename FieldValidator, typename TransactionValidator>
+    class BlockValidator : public ContainerValidator<interface::Block,
+                                                     FieldValidator,
+                                                     TransactionValidator> {
      public:
-
-      //TODO 05-03-2018 Alexey Chernyshov: remove polymorphic wrapper in IR-872
       /**
        * Applies validation on block
        * @param block
        * @return Answer containing found error if any
        */
       Answer validate(const interface::Block &block) const {
-        return Answer();
+        return ContainerValidator<interface::Block,
+                                  FieldValidator,
+                                  TransactionValidator>::validate(block,
+                                                                  "Block");
       }
-
-      /**
-       * Applies validation on block
-       * @param block
-       * @return Answer containing found error if any
-       */
-      Answer validate(
-          std::shared_ptr<interface::Block> block) const {
-        return Answer();
-      }
-
-      Answer answer_;
     };
 
   }  // namespace validation

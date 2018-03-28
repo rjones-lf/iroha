@@ -18,22 +18,25 @@
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
 
+#include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/block.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/hash.hpp"
+#include "cryptography/hash_providers/sha3_256.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
-
-#include "backend/protobuf/from_old_model.hpp"
-#include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "cryptography/hash.hpp"
-#include "framework/test_subscriber.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;
 using namespace iroha::simulator;
 using namespace framework::test_subscriber;
-
-#include <iostream>
+using namespace shared_model::crypto;
 using namespace std;
 
 using ::testing::An;
@@ -44,18 +47,31 @@ using ::testing::_;
 class YacGateTest : public ::testing::Test {
  public:
   void SetUp() override {
+    auto keypair =
+        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+
     expected_hash = YacHash("proposal", "block");
-    old_expected_block.sigs.emplace_back();
-    old_expected_block.sigs.back().pubkey.fill(1);
-    expected_hash.block_signature = old_expected_block.sigs.front();
+    shared_model::proto::Block tmp =
+        shared_model::proto::BlockBuilder()
+            .height(1)
+            .createdTime(iroha::time::now())
+            .transactions(std::vector<shared_model::proto::Transaction>{})
+            .prevHash(Sha3_256::makeHash(Blob("block")))
+            .build()
+            .signAndAddSignature(keypair);
+
+    expected_block = clone(tmp);
+    const auto &wrapped_sig = *(expected_block->signatures().begin());
+    const auto &signature = *wrapped_sig;
+    // TODO: 24/04/2018 x3medima17 remove makeOldModel in next PR
+    const auto old_signature =
+        *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
+
+    expected_hash.block_signature = clone(signature);
     message.hash = expected_hash;
-    message.signature = old_expected_block.sigs.front();
+    message.signature = old_signature;
     commit_message = CommitMessage({message});
     expected_commit = rxcpp::observable<>::just(commit_message);
-
-    expected_block = clone(shared_model::proto::from_old(old_expected_block));
-    auto bytes = expected_block->hash().blob();
-    std::copy(bytes.begin(), bytes.end(), old_expected_block.hash.begin());
 
     hash_gate = make_unique<MockHashGate>();
     peer_orderer = make_unique<MockYacPeerOrderer>();
@@ -74,7 +90,6 @@ class YacGateTest : public ::testing::Test {
   }
 
   YacHash expected_hash;
-  iroha::model::Block old_expected_block;
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
   CommitMessage commit_message;
@@ -118,8 +133,9 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](auto block) {
+    ASSERT_EQ(*block, *expected_block);
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -175,7 +191,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // convert yac hash to model hash
   EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
-      .WillOnce(Return(old_expected_block.hash));
+      .WillOnce(Return(expected_block->hash()));
 
   // load block
   auto sig = expected_block->signatures().begin();

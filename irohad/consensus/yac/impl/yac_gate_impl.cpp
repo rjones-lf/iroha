@@ -53,8 +53,7 @@ namespace iroha {
       }
 
       void YacGateImpl::vote(const shared_model::interface::Block &block) {
-        std::unique_ptr<model::Block> bl(block.makeOldModel());
-        auto hash = hash_provider_->makeHash(*bl);
+        auto hash = hash_provider_->makeHash(block);
         log_->info("vote for block ({}, {})",
                    hash.proposal_hash,
                    block.hash().toString());
@@ -107,8 +106,7 @@ namespace iroha {
                                 shared_model::crypto::PublicKey(
                                     {vote.signature.pubkey.begin(),
                                      vote.signature.pubkey.end()}),
-                                shared_model::crypto::Hash(
-                                    {model_hash.begin(), model_hash.end()}));
+                                shared_model::crypto::Hash(model_hash));
                             // if load is successful
                             if (block) {
                               subscriber.on_next(block.value());
@@ -137,10 +135,8 @@ namespace iroha {
         current_block_.second->clearSignatures();
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          current_block_.second->addSignature(
-              shared_model::interface::Signature::SignedType(
-                  sig.signature.to_string()),
-              shared_model::crypto::PublicKey(sig.pubkey.to_string()));
+          current_block_.second->addSignature(sig->signedData(),
+                                              sig->publicKey());
         }
       }
     }  // namespace yac

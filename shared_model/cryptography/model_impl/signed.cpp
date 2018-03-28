@@ -30,5 +30,7 @@ namespace shared_model {
     }
 
     Signed::Signed(const std::string &blob) : Blob(blob) {}
+
+    Signed::Signed(const Bytes &blob) : Blob(blob) {}
   }  // namespace crypto
 }  // namespace shared_model

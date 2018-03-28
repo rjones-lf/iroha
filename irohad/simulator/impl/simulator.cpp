@@ -110,7 +110,7 @@ namespace iroha {
               .height(proposal.height())
               .prevHash(last_block.value()->hash())
               .transactions(proto_txs)
-              .createdTime(proposal.created_time())
+              .createdTime(proposal.createdTime())
               .build());
 
       crypto_signer_->sign(*block);

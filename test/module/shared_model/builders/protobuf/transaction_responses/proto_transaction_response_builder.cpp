@@ -39,9 +39,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatelessFailedStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<StatelessFailedStatusType>(),
-      stateless_invalid_response.get());
+  boost::apply_visitor(verifyType<StatelessFailedStatusType>(),
+                       stateless_invalid_response.get());
 
   auto proto_status = stateless_invalid_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -66,9 +65,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatelessValidStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<StatelessValidStatusType>(),
-      stateless_invalid_response.get());
+  boost::apply_visitor(verifyType<StatelessValidStatusType>(),
+                       stateless_invalid_response.get());
 
   auto proto_status = stateless_invalid_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -93,9 +91,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatefulFailedStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<StatefulFailedStatusType>(),
-      stateful_invalid_response.get());
+  boost::apply_visitor(verifyType<StatefulFailedStatusType>(),
+                       stateful_invalid_response.get());
 
   auto proto_status = stateful_invalid_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -120,9 +117,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatefulValidStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<StatefulValidStatusType>(),
-      stateful_invalid_response.get());
+  boost::apply_visitor(verifyType<StatefulValidStatusType>(),
+                       stateful_invalid_response.get());
 
   auto proto_status = stateful_invalid_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -147,9 +143,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestCommittedStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<CommittedStatusType>(),
-      committed_response.get());
+  boost::apply_visitor(verifyType<CommittedStatusType>(),
+                       committed_response.get());
 
   auto proto_status = committed_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
@@ -174,9 +169,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestNotReceivedStatus) {
           .txHash(shared_model::crypto::Hash(expected_hash))
           .build();
 
-  boost::apply_visitor(
-      verifyType<NotReceivedStatusType>(),
-      not_received_response.get());
+  boost::apply_visitor(verifyType<NotReceivedStatusType>(),
+                       not_received_response.get());
 
   auto proto_status = not_received_response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);

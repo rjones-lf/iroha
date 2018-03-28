@@ -25,5 +25,6 @@ target_link_libraries(ordering_gate_test
 
 addtest(ordering_gate_service_test ordering_gate_service_test.cpp)
 target_link_libraries(ordering_gate_service_test
-    ordering_service
+        ordering_service
+        shared_model_stateless_validation
     )

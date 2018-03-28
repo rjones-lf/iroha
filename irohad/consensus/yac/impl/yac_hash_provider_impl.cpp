@@ -16,27 +16,29 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
-#include "common/byteutils.hpp"
+
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
-      YacHash YacHashProviderImpl::makeHash(const model::Block &block) const {
+      YacHash YacHashProviderImpl::makeHash(
+          const shared_model::interface::Block &block) const {
         YacHash result;
-        // TODO 01/08/17 Muratov: add proposal hash to block,
-        // block.proposal_hash IR-505
-        auto hex_hash = block.hash.to_hexstring();
+        auto hex_hash = block.hash().hex();
         result.proposal_hash = hex_hash;
         result.block_hash = hex_hash;
-        result.block_signature = block.sigs.front();
+        const auto &sig = *block.signatures().begin();
+        result.block_signature = clone(*sig);
         return result;
       }
 
-      model::Block::HashType YacHashProviderImpl::toModelHash(
+      shared_model::interface::types::HashType YacHashProviderImpl::toModelHash(
           const YacHash &hash) const {
-        return hexstringToArray<model::Block::HashType::size()>(hash.block_hash)
-            .value();
+        auto blob = shared_model::crypto::Blob::fromHexString(hash.block_hash);
+        auto string_blob = shared_model::crypto::toBinaryString(blob);
+        return shared_model::interface::types::HashType(string_blob);
       }
     }  // namespace yac
   }    // namespace consensus
