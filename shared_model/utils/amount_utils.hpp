@@ -26,35 +26,25 @@
  * Otherwise nullopt is returned
  * @param a left term
  * @param b right term
- * @param optional result
  */
-boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator+(
-    const shared_model::interface::Amount &a,
-    const shared_model::interface::Amount &b) {
+iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
+                        std::shared_ptr<std::string>>
+operator+(const shared_model::interface::Amount &a,
+          const shared_model::interface::Amount &b) {
   // check precisions
   if (a.precision() != b.precision()) {
-    return boost::none;
+    return iroha::expected::makeError(
+        std::make_shared<std::string>("precision mismatch"));
   }
-  auto res = shared_model::builder::AmountBuilderWithoutValidator()
-                 .precision(a.precision())
-                 .intValue(a.intValue() + b.intValue())
-                 .build();
-  return res.match(
-      [&a, &b](const iroha::expected::Value<
-               std::shared_ptr<shared_model::interface::Amount>> &result) {
-        // check overflow
-        if (result.value->intValue() < a.intValue()
-            or result.value->intValue() < b.intValue()) {
-          return boost::optional<
-              std::shared_ptr<shared_model::interface::Amount>>(boost::none);
-        }
-        return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(result.value);
-      },
-      [](const auto &err) {
-        return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(boost::none);
-      });
+  if (a.intValue() + b.intValue() < a.intValue()
+      || a.intValue() + b.intValue() < b.intValue()) {
+    return iroha::expected::makeError(
+        std::make_shared<std::string>("addition overflows"));
+  }
+  return shared_model::builder::AmountBuilderWithoutValidator()
+      .precision(a.precision())
+      .intValue(a.intValue() + b.intValue())
+      .build();
 }
 
 /**
@@ -63,33 +53,25 @@ boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator+(
  * Otherwise nullopt is returned
  * @param a left term
  * @param b right term
- * @param optional result
  */
-boost::optional<std::shared_ptr<shared_model::interface::Amount>> operator-(
-    const shared_model::interface::Amount &a,
-    const shared_model::interface::Amount &b) {
+iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
+                        std::shared_ptr<std::string>>
+operator-(const shared_model::interface::Amount &a,
+          const shared_model::interface::Amount &b) {
   // check precisions
   if (a.precision() != b.precision()) {
-    return boost::none;
+    return iroha::expected::makeError(
+        std::make_shared<std::string>("precision mismatch"));
   }
   // check if a greater than b
   if (a.intValue() < b.intValue()) {
-    return boost::none;
+    return iroha::expected::makeError(
+        std::make_shared<std::string>("minuend is smaller than subtrahend"));
   }
-  auto res = shared_model::builder::AmountBuilderWithoutValidator()
-                 .precision(a.precision())
-                 .intValue(a.intValue() - b.intValue())
-                 .build();
-  return res.match(
-      [&a, &b](const iroha::expected::Value<
-               std::shared_ptr<shared_model::interface::Amount>> &result) {
-        return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(result.value);
-      },
-      [&](const auto &err) {
-        return boost::optional<
-            std::shared_ptr<shared_model::interface::Amount>>(boost::none);
-      });
+  return shared_model::builder::AmountBuilderWithoutValidator()
+      .precision(a.precision())
+      .intValue(a.intValue() - b.intValue())
+      .build();
 }
 
 int compareAmount(const shared_model::interface::Amount &a,

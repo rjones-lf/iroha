@@ -87,7 +87,7 @@ namespace iroha {
                            .build();
     using AccountAssetResult =
         expected::Result<std::shared_ptr<shared_model::interface::AccountAsset>,
-                         iroha::expected::Error<iroha::ExecutionError>>;
+                         iroha::ExecutionError>;
     auto account_asset_new = new_balance.match(
         [this, &account_asset, &command_name, &command](
             const expected::Value<
@@ -97,16 +97,13 @@ namespace iroha {
                                       std::string>
               result;
           if (account_asset) {
-            auto balance =
-                *new_balance_val.value + account_asset.value()->balance();
-            if (not balance) {
-              return makeExecutionError("amount overflows balance",
-                                        command_name);
-            }
-            result = account_asset_builder_.balance(*balance.value())
-                         .accountId(command->accountId())
-                         .assetId(command->assetId())
-                         .build();
+            result = (*new_balance_val.value + account_asset.value()->balance())
+                | [this, &command](const auto &balance) {
+                    return account_asset_builder_.balance(*balance)
+                        .accountId(command->accountId())
+                        .assetId(command->assetId())
+                        .build();
+                  };
           } else {
             result = account_asset_builder_.balance(*new_balance_val.value)
                          .accountId(command->accountId())
@@ -137,10 +134,9 @@ namespace iroha {
               command_name);
         },
         [&command_name](const auto &account_asset_error) -> ExecutionResult {
-          return makeExecutionError(
-              "account asset builder failed. reason "
-                  + account_asset_error.error.error.toString(),
-              command_name);
+          return makeExecutionError("account asset builder failed. reason "
+                                        + account_asset_error.error.toString(),
+                                    command_name);
         });
   }
 
@@ -154,12 +150,11 @@ namespace iroha {
   ExecutionResult CommandExecutor::operator()(
       const shared_model::detail::PolymorphicWrapper<
           shared_model::interface::AddSignatory> &command) {
-    std::string command_name = "AddSignatory";
     auto result = commands->insertSignatory(command->pubkey()) | [&] {
       return commands->insertAccountSignatory(command->accountId(),
                                               command->pubkey());
     };
-    return makeExecutionResult(result, command_name);
+    return makeExecutionResult(result, "AddSignatory");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -203,7 +198,7 @@ namespace iroha {
             return commands->insertAccountRole((*account_val.value).accountId(),
                                                domain_default_role);
           };
-          return makeExecutionResult(result, "CreateAccount");
+          return makeExecutionResult(result, command_name);
         },
         [&command_name](const auto &error) -> ExecutionResult {
           return makeExecutionError(
@@ -377,15 +372,14 @@ namespace iroha {
                                     .str(),
                                 command_name);
     }
-
-    auto new_balance = account_asset.value()->balance() - command->amount();
-    if (not new_balance) {
-      return makeExecutionError("Not sufficient amount", command_name);
-    }
-    auto account_asset_new = account_asset_builder_.balance(**new_balance)
-                                 .accountId(account_asset.value()->accountId())
-                                 .assetId(account_asset.value()->assetId())
-                                 .build();
+    auto account_asset_new =
+        (account_asset.value()->balance() - command->amount()) |
+        [this, &account_asset](const auto &new_balance) {
+          return account_asset_builder_.balance(*new_balance)
+              .accountId(account_asset.value()->accountId())
+              .assetId(account_asset.value()->assetId())
+              .build();
+        };
 
     return account_asset_new.match(
         [&](const expected::Value<
@@ -432,20 +426,16 @@ namespace iroha {
           (boost::format("precision %d is wrong") % precision).str(),
           command_name);
     }
-    // Get src balance
-    auto new_src_balance =
-        src_account_asset.value()->balance() - command->amount();
-    if (not new_src_balance) {
-      return makeExecutionError("not enough assets on source account",
-                                command_name);
-    }
     // Set new balance for source account
     auto src_account_asset_new =
-        account_asset_builder_.assetId(src_account_asset.value()->assetId())
-            .accountId(src_account_asset.value()->accountId())
-            .balance(*new_src_balance.get())
-            .build();
-
+        (src_account_asset.value()->balance() - command->amount()) |
+        [this, &src_account_asset](const auto &new_src_balance) {
+          return account_asset_builder_
+              .assetId(src_account_asset.value()->assetId())
+              .accountId(src_account_asset.value()->accountId())
+              .balance(*new_src_balance)
+              .build();
+        };
     return src_account_asset_new.match(
         [&](const expected::Value<
             std::shared_ptr<shared_model::interface::AccountAsset>>
@@ -462,17 +452,14 @@ namespace iroha {
                     .build();
 
           } else {
-            auto new_dest_balance =
-                dest_account_asset.value()->balance() + command->amount();
-            if (not new_dest_balance) {
-              return makeExecutionError(
-                  "operation overflows destination balance", command_name);
-            }
             dest_account_asset_new =
-                account_asset_builder_.assetId(command->assetId())
-                    .accountId(command->destAccountId())
-                    .balance(*new_dest_balance.get())
-                    .build();
+                (dest_account_asset.value()->balance() + command->amount()) |
+                [this, &command](const auto &new_dest_balance) {
+                  return account_asset_builder_.assetId(command->assetId())
+                      .accountId(command->destAccountId())
+                      .balance(*new_dest_balance)
+                      .build();
+                };
           }
           return dest_account_asset_new.match(
               [&](const expected::Value<
