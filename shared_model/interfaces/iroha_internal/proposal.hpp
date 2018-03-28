@@ -74,7 +74,7 @@ namespace shared_model {
 
       bool operator==(const Proposal &rhs) const override {
         return transactions() == rhs.transactions() and height() == rhs.height()
-            and created_time() == rhs.created_time();
+            and createdTime() == rhs.createdTime();
       }
 
       std::string toString() const override {

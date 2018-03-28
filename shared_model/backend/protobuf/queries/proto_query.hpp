@@ -118,13 +118,6 @@ namespace shared_model {
         return *payload_;
       }
 
-      const interface::types::HashType &hash() const override {
-        if (hash_ == boost::none) {
-          hash_.emplace(HashProviderType::makeHash(payload()));
-        }
-        return *hash_;
-      }
-
       // ------------------------| Signable override  |-------------------------
       const interface::SignatureSetType &signatures() const override {
         return *signatures_;

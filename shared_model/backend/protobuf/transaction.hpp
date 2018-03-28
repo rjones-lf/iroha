@@ -62,10 +62,6 @@ namespace shared_model {
         return *blobTypePayload_;
       }
 
-      const interface::types::HashType &hash() const override {
-        return *txhash_;
-      }
-
       const interface::SignatureSetType &signatures() const override {
         return *signatures_;
       }
@@ -121,9 +117,6 @@ namespace shared_model {
                                    return std::forward<decltype(acc)>(acc);
                                  });
       }};
-
-      const Lazy<interface::types::HashType> txhash_{
-          [this] { return HashProviderType::makeHash(payload()); }};
     };
   }  // namespace proto
 }  // namespace shared_model
