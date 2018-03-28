@@ -52,9 +52,9 @@ shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
                   .GetDescriptor()
                   ->FindFieldByNumber(ar.payload().query_case())
                   ->index_in_oneof();
-  return shared_model::detail::variant_impl<T...>::
-      template load<shared_model::interface::Query::QueryVariantType>(
-          std::forward<Archive>(ar), which);
+  return shared_model::detail::variant_impl<T...>::template load<
+      shared_model::interface::Query::QueryVariantType>(
+      std::forward<Archive>(ar), which);
 }
 
 namespace shared_model {

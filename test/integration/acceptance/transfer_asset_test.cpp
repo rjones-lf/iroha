@@ -366,3 +366,22 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
+
+/**
+ * @given some user with all required permissions
+ * @when execute tx with TransferAsset command where the source and destination
+ * accounts are the same
+ * @then the tx hasn't passed stateless validation
+ *       (aka skipProposal throws)
+ */
+TEST_F(TransferAsset, SourceIsDest) {
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .sendTx(addAssets(kUser1, kUser1Keypair))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(completeTx(
+          baseTx().transferAsset(kUser1Id, kUser1Id, kAsset, kDesc, kAmount)));
+  ASSERT_ANY_THROW(itf.skipProposal());
+}
