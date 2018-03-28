@@ -97,7 +97,7 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      // TODO: Alexey Chernyshov IR-897 2018-03-08 rework BlockBuilder logic, so
+      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic, so
       // that this cast will not be needed
       auto proto_txs =
           proposal.transactions()
