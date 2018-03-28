@@ -112,6 +112,7 @@ namespace shared_model {
       std::regex asset_id_pattern_;
       std::regex name_pattern_;
       std::regex detail_key_pattern_;
+      std::regex role_id_pattern_;
       // gap for future transactions
       time_t future_gap_;
       // max-delay between tx creation and validation

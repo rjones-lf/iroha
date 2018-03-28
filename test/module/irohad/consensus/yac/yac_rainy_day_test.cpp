@@ -34,7 +34,7 @@ using namespace framework::test_subscriber;
  * @then commit does not happen, instead send_reject is triggered on transport
  */
 TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
@@ -77,7 +77,7 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
  * @then reject is not propagated
  */
 TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
   ASSERT_EQ(4, my_peers.size());
 
@@ -121,7 +121,7 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
  */
 TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   size_t peers_number = 6;
-  auto my_peers = std::vector<iroha::model::Peer>(
+  auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + peers_number});
   ASSERT_EQ(peers_number, my_peers.size());
 
@@ -153,12 +153,14 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {
-    votes.push_back(
-        create_vote(hash1, my_order->getPeers().at(i).pubkey.to_string()));
+    auto peer = my_order->getPeers().at(i);
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    votes.push_back(create_vote(hash1, pubkey));
   };
   for (size_t i = peers_number / 2; i < peers_number - 1; ++i) {
-    votes.push_back(
-        create_vote(hash2, my_order->getPeers().at(i).pubkey.to_string()));
+    auto peer = my_order->getPeers().at(i);
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    votes.push_back(create_vote(hash2, pubkey));
   };
 
   for (const auto &vote : votes) {
@@ -166,6 +168,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   }
 
   yac->on_reject(RejectMessage(votes));
-  yac->on_vote(
-      create_vote(hash1, my_order->getPeers().back().pubkey.to_string()));
+  auto peer = my_order->getPeers().back();
+  auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+  yac->on_vote(create_vote(hash1, pubkey));
 }

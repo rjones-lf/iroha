@@ -27,6 +27,7 @@
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 #include "model/model_crypto_provider.hpp"
+#include "validators/block_validator.hpp"
 #include "validators/default_validator.hpp"
 
 namespace iroha {

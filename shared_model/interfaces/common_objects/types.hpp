@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_TYPES_HPP
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -59,6 +60,8 @@ namespace shared_model {
       using AssetIdType = std::string;
       /// Permission type used in permission commands
       using PermissionNameType = std::string;
+      /// Permission set
+      using PermissionSetType = std::set<PermissionNameType>;
       /// Type of Quorum used in transaction and set quorum
       using QuorumType = uint32_t;
       /// Type of transaction signature

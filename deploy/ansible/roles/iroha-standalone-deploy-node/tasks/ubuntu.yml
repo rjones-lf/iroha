@@ -1,0 +1,73 @@
+---
+  - setup:
+
+  - name: Setup docker network
+    docker_network:
+      name: "{{ iroha_net }}"
+
+  - name: Stop and remove previous running docker containers
+    docker_container:
+      name: "{{ item }}"
+      state: absent
+    with_items:
+    - "{{ postgresName }}"
+    - iroha
+    ignore_errors: yes
+
+  - name: Run postgres in docker
+    docker_container:
+      name: "{{ postgresName }}"
+      image: "{{ dbDockerImage }}:{{ dbDockerImageTag }}"
+      state: started
+      recreate: yes
+      restart: yes
+      env:
+        POSTGRES_USER: '{{ postgresUser }}'
+        POSTGRES_PASSWORD: '{{ postgresPassword }}'
+      networks:
+        - name: "{{ iroha_net }}"
+
+  - name: Make conf dir
+    file:
+      path: "{{ confPath }}"
+      state: directory
+      mode: 0755
+      owner: root
+
+  - name: Copy config
+    template:
+      src: config.j2
+      dest: "{{ confPath }}/config.sample"
+      mode: 0600
+
+  - name: Copy keys and genesis block
+    copy:
+      src: "{{ item }}"
+      dest: "{{ confPath }}"
+      mode: 0644
+    with_items:
+      - "{{ filesDir }}/node{{ key }}.pub"
+      - "{{ filesDir }}/node{{ key }}.priv"
+      - "{{ filesDir }}/genesis.block"
+
+  - name: Run iroha in docker
+    docker_container:
+      name: iroha
+      image: "{{ irohaDockerImage }}:{{ irohaDockerImageTag }}"
+      state: started
+      restart: yes
+      recreate: yes
+      pull: yes
+      ports:
+        - "{{ torii_port }}:{{ torii_port }}"
+        - "{{ internal_port }}:{{ internal_port }}"
+      networks:
+        - name: "{{ iroha_net }}"
+      volumes:
+        - "{{ confPath }}:{{ containerConfPath }}"
+      env:
+        POSTGRES_HOST: "{{ postgresName }}"
+        POSTGRES_PORT: "{{ postgresPort }}"
+        POSTGRES_USER: "{{ postgresUser }}"
+        POSTGRES_PASSWORD: "{{ postgresPassword }}"
+        KEY: "node{{ key }}"

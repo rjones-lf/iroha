@@ -18,7 +18,13 @@
 #define IROHA_ORDERING_GATE_TRANSPORT_H
 
 #include <memory>
-#include "model/proposal.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+    class Proposal;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace network {
@@ -33,7 +39,8 @@ namespace iroha {
        * Callback on receiving proposal
        * @param proposal - proposal object itself
        */
-      virtual void onProposal(model::Proposal) = 0;
+      virtual void onProposal(
+          std::shared_ptr<shared_model::interface::Proposal>) = 0;
 
       virtual ~OrderingGateNotification() = default;
     };
@@ -58,7 +65,8 @@ namespace iroha {
        * @param transaction : transaction to be propagated
        */
       virtual void propagateTransaction(
-          std::shared_ptr<const model::Transaction> transaction) = 0;
+          std::shared_ptr<const shared_model::interface::Transaction>
+              transaction) = 0;
 
       virtual ~OrderingGateTransport() = default;
     };

@@ -140,7 +140,7 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   auto block = getBlockBuilder().build();
   rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       block_observable = rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(x.copy());
+        return std::shared_ptr<shared_model::interface::Block>(clone(x));
       });
 
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))

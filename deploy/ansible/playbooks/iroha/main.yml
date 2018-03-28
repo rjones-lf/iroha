@@ -1,5 +1,0 @@
----
-  - hosts: all
-    gather_facts: true
-    roles:
-      - { role: ansible-users, tags: ansible-users }

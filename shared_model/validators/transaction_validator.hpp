@@ -216,6 +216,11 @@ namespace shared_model {
         ReasonsGroupType reason;
         addInvalidCommand(reason, "TransferAsset");
 
+        if (ta->srcAccountId() == ta->destAccountId()) {
+          reason.second.push_back(
+              "Source and destination accounts cannot be the same");
+        }
+
         validator_.validateAccountId(reason, ta->srcAccountId());
         validator_.validateAccountId(reason, ta->destAccountId());
         validator_.validateAssetId(reason, ta->assetId());

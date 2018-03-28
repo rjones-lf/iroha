@@ -36,8 +36,6 @@ namespace iroha_cli {
              "Transaction has successfully passed stateful validation."},
             {iroha::protocol::TxStatus::COMMITTED,
              "Transaction was successfully committed."},
-            {iroha::protocol::TxStatus::IN_PROGRESS,
-             "Transaction is being processed at the moment."},
             {iroha::protocol::TxStatus::NOT_RECEIVED,
              "Transaction was not found in the system."}};
 

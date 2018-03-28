@@ -224,7 +224,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
 
   // create proposal from these transactions
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+      TestProposalBuilder().height(1).createdTime(iroha::time::now()).transactions(txs).build());
   prop_notifier_.get_subscriber().on_next(proposal);
 
   torii::CommandSyncClient client2(client1);

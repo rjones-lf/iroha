@@ -1,0 +1,20 @@
+{
+  "name": "iroha-example",
+  "version": "1.0.0",
+  "description": "Example of how to use Iroha Library with Node.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "node-gyp": "node-gyp"
+  },
+  "repository": "git+https://github.com/hyperledger/iroha.git",
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/hyperledger/iroha/issues"
+  },
+  "homepage": "https://github.com/hyperledger/iroha#readme",
+  "dependencies": {
+    "iroha-lib": "^0.0.1"
+  },
+  "main": "index.js"
+}
