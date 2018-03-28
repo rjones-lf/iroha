@@ -17,7 +17,7 @@
 
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/queries.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
 
 #include <gtest/gtest.h>
 
@@ -66,7 +66,7 @@ TEST(ProtoQueryBuilder, Builder) {
 
   auto keypair =
       shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
-  auto signedProto = shared_model::crypto::DefaultCryptoAlgorithmType::sign(
+  auto signedProto = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(proto_query.payload().SerializeAsString()),
       keypair);
 
