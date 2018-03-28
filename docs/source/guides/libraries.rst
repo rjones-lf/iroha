@@ -331,6 +331,9 @@ Prerequisites
 protobuf, pip
     Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
+Building protobuf files
+"""""""""""""""""""""""
+
   .. code:: sh
 
       pip install grpcio_tools

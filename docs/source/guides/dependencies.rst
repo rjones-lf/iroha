@@ -53,7 +53,7 @@ Here is how to build and install CMake from sources.
     cmake --version
     # cmake version 3.10.3
 
-Installation on Mac OS
+Installation on macOS
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
@@ -97,7 +97,7 @@ For Python 3:
     python3 --version
     # Python 3.5.2
 
-Installation on Mac OS
+Installation on macOS
 ^^^^^^^^^^^^^^^^^^^^^^
 
 For Python 2:
@@ -113,7 +113,7 @@ For Python 3:
 
 .. code-block:: shell
 
-    brew install python3-dev
+    brew install python3
     python3 --version
     # Python 3.5.2
 
@@ -140,25 +140,26 @@ For Python 3:
     pip3 --version
     # pip 8.1.1 from /usr/lib/python3/dist-packages (python 3.5)
 
-Installation on Mac OS
+Installation on macOS
 ^^^^^^^^^^^^^^^^^^^^^^
 
 For Python 2:
 
 .. code-block:: shell
 
-    brew install python
-    python --version
-    # Python 2.7.12
+    sudo easy_install pip
+    pip --version
+    # pip 9.0.3 from /usr/local/lib/python2.7/site-packages (python 2.7)
 
 
 For Python 3:
 
 .. code-block:: shell
 
-    brew install python3-dev
-    python3 --version
-    # Python 3.5.2
+    wget https://bootstrap.pypa.io/get-pip.py
+    sudo python3 get-pip.py
+    python3 -m pip --version
+    # pip 9.0.3 from /usr/local/Cellar/python/3.6.4_4/Frameworks/Python.framework/Versions/3.6/lib/python3.6/site-packages (python 3.6)
 
 Boost
 -----
@@ -176,7 +177,7 @@ Installation on Ubuntu
     ldconfig;
     rm -rf /tmp/boost
 
-Installation on Mac OS
+Installation on macOS
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
@@ -200,7 +201,7 @@ Installation on Ubuntu
     make install
     (cd ../; rm -rf swig-3.0.12);
 
-Installation on Mac OS
+Installation on macOS
 ^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
