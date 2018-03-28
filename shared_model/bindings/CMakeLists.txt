@@ -29,7 +29,7 @@ target_link_libraries(bindings
 
 
 
-if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP)
+if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
@@ -79,4 +79,35 @@ if (SWIG_CSHARP)
     swig_add_library(libirohacs LANGUAGE csharp SOURCES bindings.i)
     swig_link_libraries(libirohacs bindings)
     add_custom_target(irohacs DEPENDS ${SWIG_MODULE_libirohacs_REAL_NAME})
+endif()
+
+if (SWIG_NODE)
+    find_package (nodejs REQUIRED)
+    include_directories (
+            ${NODEJS_INCLUDE_DIRS}
+            ${CMAKE_CURRENT_SOURCE_DIR}/..
+            )
+
+    set (V8_VERSION_HEX 0x0${V8_VERSION_MAJOR}${V8_VERSION_MINOR}${V8_VERSION_PATCH})
+    string (LENGTH "${V8_VERSION_HEX}" V8_VERSION_HEX_length)
+    while (V8_VERSION_HEX_length LESS 8)
+        set (V8_VERSION_HEX "${V8_VERSION_HEX}0")
+        message (STATUS "INFO - Padded V8 version to match SWIG format")
+        string (LENGTH "${V8_VERSION_HEX}" V8_VERSION_HEX_length)
+    endwhile ()
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+        set(MAC_OPTS "-flat_namespace -undefined suppress")
+    endif()
+
+    set_property(SOURCE bindings.i PROPERTY SWIG_FLAGS "-node" "-DV8_VERSION=${V8_VERSION_HEX}")
+
+    # Build SWIG library always statically for the subsequent assembly by GYP
+    swig_add_library(irohanode 
+        TYPE STATIC 
+        LANGUAGE javascript 
+        SOURCES bindings.i
+        )
+    set_target_properties(irohanode PROPERTIES PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
+    target_link_libraries(irohanode bindings ${MAC_OPTS})
 endif()

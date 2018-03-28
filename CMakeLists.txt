@@ -60,6 +60,7 @@ option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
 option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
 option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
+option(SWIG_NODE    "Generate Swig NodeJS"           OFF)
 option(SHARED_MODEL_DISABLE_COMPATIBILITY "Disable backward compatibility in shared model" OFF)
 
 
@@ -81,6 +82,7 @@ if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   set(FUZZING OFF)
   set(SWIG_PYTHON OFF)
   set(SWIG_JAVA OFF)
+  set(SWIG_NODE OFF)
 endif()
 
 message(STATUS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
@@ -97,6 +99,7 @@ message(STATUS "-DSWIG_PYTHON=${SWIG_PYTHON}")
 message(STATUS "-DSWIG_JAVA=${SWIG_JAVA}")
 message(STATUS "-DSUPPORT_PYTHON2=${SUPPORT_PYTHON2}")
 message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
+message(STATUS "-DSWIG_NODE=${SWIG_NODE}")
 message(STATUS "-DSHARED_MODEL_DISABLE_COMPATIBILITY=${SHARED_MODEL_DISABLE_COMPATIBILITY}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")

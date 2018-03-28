@@ -71,6 +71,14 @@ target_link_libraries(create_domain_test
   shared_model_stateless_validation
   )
 
+addtest(subtract_asset_qty_test subtract_asset_qty_test.cpp)
+target_link_libraries(subtract_asset_qty_test
+  application
+  integration_framework
+  shared_model_proto_builders
+  shared_model_stateless_validation
+  )
+
 addtest(create_account_test create_account_test.cpp)
 target_link_libraries(create_account_test
   application

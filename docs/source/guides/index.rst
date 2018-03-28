@@ -17,3 +17,4 @@ In essence, this section is a collection of how-tos for different scenarios:
     configuration.rst
     deployment.rst
     libraries.rst
+    dependencies.rst

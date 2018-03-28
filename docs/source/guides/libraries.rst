@@ -62,37 +62,8 @@ Prerequisites
 Android NDK
     Please `download <https://developer.android.com/ndk/downloads/index.html>`__ and unpack NDK to any suitable folder.
 
-automake
-    .. code-block:: shell
-
-        sudo apt install automake
-        automake --version
-        # automake (GNU automake) 1.15
-
-bison
-    .. code-block:: shell
-
-        sudo apt install bison
-        bison --version
-        # bison (GNU Bison) 3.0.4
-
-cmake
-    Minimum required version is 3.8, but we recommend to install the latest available version (3.10.3 at the moment).
-
-    Since Ubuntu repositories contain unsuitable version of cmake, you need to install the new one manually.
-    Here is how to build and install cmake from sources.
-
-    .. code-block:: shell
-
-        wget https://cmake.org/files/v3.10/cmake-3.10.3.tar.gz
-        tar -xvzf cmake-3.10.3.tar.gz
-        cd cmake-3.10.3/
-        ./configure
-        make
-        sudo make install
-        cmake --version
-        # cmake version 3.10.3
-
+Automake, Bison, Cmake
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
 Building the Library
 """"""""""""""""""""

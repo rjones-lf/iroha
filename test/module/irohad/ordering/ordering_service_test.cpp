@@ -81,7 +81,7 @@ class OrderingServiceTest : public ::testing::Test {
         std::make_shared<MockOrderingServicePersistentState>();
   }
 
-  auto get_tx() {
+  auto getTx() {
     return std::make_shared<shared_model::proto::Transaction>(
         shared_model::proto::TransactionBuilder()
         .txCounter(2)
@@ -159,7 +159,7 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
 
   for (size_t i = 0; i < 10; ++i) {
-    ordering_service->onTransaction(get_tx());
+    ordering_service->onTransaction(getTx());
   }
 
   std::unique_lock<std::mutex> lock(m);
@@ -199,14 +199,14 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
       }));
 
   for (size_t i = 0; i < 8; ++i) {
-    ordering_service->onTransaction(get_tx());
+    ordering_service->onTransaction(getTx());
   }
 
   std::unique_lock<std::mutex> lk(m);
   cv.wait_for(lk, 10s);
 
-  ordering_service->onTransaction(get_tx());
-  ordering_service->onTransaction(get_tx());
+  ordering_service->onTransaction(getTx());
+  ordering_service->onTransaction(getTx());
   cv.wait_for(lk, 10s);
 }
 
@@ -227,7 +227,7 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
 
   auto ordering_service = std::make_shared<OrderingServiceImpl>(
       wsv, max_proposal, commit_delay, fake_transport, fake_persistent_state);
-  ordering_service->onTransaction(empty_tx());
+  ordering_service->onTransaction(getTx());
 
   std::unique_lock<std::mutex> lk(m);
   cv.wait_for(lk, 2s);
