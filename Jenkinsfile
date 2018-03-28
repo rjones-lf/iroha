@@ -69,11 +69,6 @@ pipeline {
               builds.cancelSameJobBuilds()
             }
           }
-          else {
-            // Stop same job running builds if it is not a nightly build for develop
-            def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
-            builds.cancelSameJobBuilds()
-          }
         }
       }
     }
