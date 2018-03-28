@@ -17,8 +17,8 @@
 
 #include "validation/impl/chain_validator_impl.hpp"
 
-#include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "ametsuchi/wsv_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
 
 namespace iroha {
