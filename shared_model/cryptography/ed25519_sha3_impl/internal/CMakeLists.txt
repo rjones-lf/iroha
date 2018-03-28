@@ -21,7 +21,7 @@ add_library(hash
 
 target_link_libraries(hash
         ed25519
-        boost
+        Boost::boost
         )
 
 add_library(ed25519_crypto

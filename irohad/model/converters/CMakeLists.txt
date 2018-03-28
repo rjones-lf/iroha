@@ -43,5 +43,5 @@ target_link_libraries(pb_model_converters
     schema
     ed25519_crypto
     logger
-    boost
+    Boost::system
     )

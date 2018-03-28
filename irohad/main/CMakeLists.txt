@@ -21,7 +21,7 @@ add_library(server_runner server_runner.cpp)
 target_link_libraries(server_runner
     logger
     grpc++
-    boost # iroha::expected::Result
+    Boost::boost
     )
 
 add_library(raw_block_insertion impl/raw_block_loader.cpp)

@@ -1,6 +1,6 @@
 addtest(irohad_test irohad_test.cpp)
 target_link_libraries(irohad_test
-        boost
+        Boost::boost
         pqxx
         json_model_converters
         integration_framework_config_helper

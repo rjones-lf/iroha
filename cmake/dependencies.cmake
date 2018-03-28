@@ -6,7 +6,11 @@ set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
     )
 
-# Project dependencies.
+
+#########################################
+##### START OF PROJECT DEPENDENCIES #####
+#########################################
+
 find_package(Threads REQUIRED)
 
 ##########################
@@ -67,15 +71,16 @@ find_package(tbb)
 ##########################
 #         boost          #
 ##########################
-find_package(Boost 1.65.0 REQUIRED
-    COMPONENTS
+set(BOOST_COMPONENTS
     filesystem
     system
     )
-add_library(boost INTERFACE IMPORTED)
-set_target_properties(boost PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
-    INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
+hunter_add_package(Boost COMPONENTS
+    ${BOOST_COMPONENTS}
+    )
+find_package(Boost 1.65.1 REQUIRED
+    COMPONENTS 
+    ${BOOST_COMPONENTS}
     )
 
 if(ENABLE_LIBS_PACKAGING)

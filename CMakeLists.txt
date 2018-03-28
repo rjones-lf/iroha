@@ -6,14 +6,36 @@ if(CCACHE_PROGRAM)
   message(STATUS "ccache enabled (${CCACHE_PROGRAM})")
 endif()
 
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
+
+##################################
+## setup Hunter and its modules ##
+##################################
+option(HUNTER_ENABLED "Enable Hunter package manager" OFF)
+
+set(HUNTER_ROOT "${CMAKE_SOURCE_DIR}/external" CACHE PATH "Hunter root directory")
+set(HUNTER_STATUS_PRINT ON  CACHE BOOL "Verbose info")
+set(HUNTER_STATUS_DEBUG OFF CACHE BOOL "Debug info"  )
+set(HUNTER_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "")
+
+include(HunterGate)
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.20.28.tar.gz"
+    SHA1 "8fee57e4232e35e28a88f0beafb5f2a739a3fa3c"
+)
+
+######################
+## project settings ##
+######################
+
 PROJECT(iroha C CXX)
 
-SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
-SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
-SET(CMAKE_INSTALL_RPATH "../lib")
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+set(CMAKE_INSTALL_RPATH "../lib")
 
 if(COVERAGE)
   find_program(LCOV_PROGRAM lcov)
@@ -45,7 +67,6 @@ if(COVERAGE)
   include(cmake/analysis.cmake)
 endif()
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks"               OFF)
 option(TESTING      "Build tests"                    ON )

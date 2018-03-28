@@ -26,12 +26,12 @@ AddTest(lazy_test
     lazy_test.cpp
     )
 target_link_libraries(lazy_test
-    boost
+    Boost::boost
     )
 
 AddTest(reference_holder_test
     reference_holder_test.cpp
     )
 target_link_libraries(reference_holder_test
-    boost
+    Boost::boost
     )
