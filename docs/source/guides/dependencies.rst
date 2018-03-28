@@ -53,6 +53,15 @@ Here is how to build and install CMake from sources.
     cmake --version
     # cmake version 3.10.3
 
+Installation on Mac OS
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    brew install cmake
+    cmake --version
+    # cmake version 3.10.2
+
 Git
 ---
 
@@ -64,3 +73,161 @@ Installation on Ubuntu
     sudo apt install git
     git --version
     # git version 2.7.4
+
+Python
+------
+
+Installation on Ubuntu
+^^^^^^^^^^^^^^^^^^^^^^
+
+For Python 2:
+
+.. code-block:: shell
+
+    sudo apt install python-dev
+    python --version
+    # Python 2.7.12
+
+
+For Python 3:
+
+.. code-block:: shell
+
+    sudo apt install python3-dev
+    python3 --version
+    # Python 3.5.2
+
+Installation on Mac OS
+^^^^^^^^^^^^^^^^^^^^^^
+
+For Python 2:
+
+.. code-block:: shell
+
+    brew install python
+    python --version
+    # Python 2.7.12
+
+
+For Python 3:
+
+.. code-block:: shell
+
+    brew install python3-dev
+    python3 --version
+    # Python 3.5.2
+
+PIP
+---
+
+Installation on Ubuntu
+^^^^^^^^^^^^^^^^^^^^^^
+
+For Python 2:
+
+.. code-block:: shell
+
+    sudo apt install python-pip
+    pip --version
+    # pip 8.1.1 from /usr/lib/python2.7/dist-packages (python 2.7)
+
+
+For Python 3:
+
+.. code-block:: shell
+
+    sudo apt install python3-pip
+    pip3 --version
+    # pip 8.1.1 from /usr/lib/python3/dist-packages (python 3.5)
+
+Installation on Mac OS
+^^^^^^^^^^^^^^^^^^^^^^
+
+For Python 2:
+
+.. code-block:: shell
+
+    brew install python
+    python --version
+    # Python 2.7.12
+
+
+For Python 3:
+
+.. code-block:: shell
+
+    brew install python3-dev
+    python3 --version
+    # Python 3.5.2
+
+Boost
+-----
+
+Installation on Ubuntu
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    git clone https://github.com/boostorg/boost /tmp/boost;
+    (cd /tmp/boost ; git submodule update --init --recursive);
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh);
+    (cd /tmp/boost ; /tmp/boost/b2 headers);
+    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" install);
+    ldconfig;
+    rm -rf /tmp/boost
+
+Installation on Mac OS
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    brew install boost
+
+SWIG
+----
+
+Installation on Ubuntu
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    sudo apt install libpcre3-dev
+    wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+    tar -xvf swig-3.0.12.tar.gz
+    cd swig-3.0.12
+    ./configure
+    make
+    make install
+    (cd ../; rm -rf swig-3.0.12);
+
+Installation on Mac OS
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: shell
+
+    brew install pcre
+    wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz
+    tar -xvf swig-3.0.12.tar.gz
+    cd swig-3.0.12
+    ./configure
+    make
+    make install
+    (cd ../; rm -rf swig-3.0.12);
+
+
+Protobuf
+--------
+
+.. code-block:: shell
+
+    git clone https://github.com/google/protobuf /tmp/protobuf;
+    (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95);
+    cmake \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -Dprotobuf_BUILD_TESTS=OFF \
+        -Dprotobuf_BUILD_SHARED_LIBS=ON \
+        -H/tmp/protobuf/cmake \
+        -B/tmp/protobuf/.build;
+    cmake --build /tmp/protobuf/.build --target install;
+    ldconfig;
+    rm -rf /tmp/protobuf

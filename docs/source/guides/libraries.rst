@@ -272,19 +272,16 @@ Python Library
 Where to Get
 ^^^^^^^^^^^^
 
+There are two ways to get Iroha library for Python: via pip and manual compilation from source code. The installation via pip do the same steps as manual compilation so for both of them you need to install all of the prerequisites.
+
 Prerequisites
 """""""""""""
 
-- CMake(3.11 or higher)
-- git
-- g++
-- boost(1.65 or higher)
-- swig(3.0.12 can be built --without-pcre)
-- protobuf
-- python (python-dev)
+CMake, git, g++, boost, swig, protobuf, python
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
-Install Iroha python libraries:
-"""""""""""""""""""""""""""""""
+Install Iroha Python Libraries
+""""""""""""""""""""""""""""""
 
 - Via PIP
 
@@ -310,7 +307,7 @@ Install Iroha python libraries:
   .. code:: sh
 
       cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
-      cmake --build build --target irohapy -- -j4
+      cmake --build build --target irohapy
 
       - SWIG_PYTHON=ON forces to build bindings for Python.
       - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
@@ -318,8 +315,11 @@ Install Iroha python libraries:
 
   After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
 
-Compile protobuf mudules of Iroha from schema files:
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+How to Use/Import
+^^^^^^^^^^^^^^^^^
+
+Compile Protobuf Modules of Iroha from Schema Files
+"""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Iroha communicates with users through protobuf messages. In order to send transactions and queries to Iroha node you need to get python module for generating protobuf messages.
 First of all you need to clone schema folder of Iroha repository. If you have already cloned Iroha repository in the previous step, just use schema folder from there.
@@ -328,8 +328,8 @@ First of all you need to clone schema folder of Iroha repository. If you have al
 Prerequisites
 """""""""""""
 
-- protobuf
-- pip
+protobuf, pip
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
   .. code:: sh
 
@@ -345,9 +345,6 @@ Prerequisites
       python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
 
   Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
-
-How to Use/Import
-^^^^^^^^^^^^^^^^^
 
 In order to specify Iroha libraries location:
 
@@ -372,7 +369,7 @@ Example Code
 
 .. Note::
 
-    Work with byte arrays is different in Python 2 and Python 3. Due to this fact, the work with hashes and blobs is different in the examples.
+    Work with byte arrays is different in Python 2 and Python 3. Due to this fact, the work with hashes and blobs is different in the examples. Given examples work fine with both versions of Python.
 
 Import Iroha and schema classes, generated from Iroha protobuf:
 
@@ -414,10 +411,13 @@ Print transaction status with synchronous simple call:
     print("Hash of the transaction: ", tx.hash().hex())
     tx_hash = tx.hash().blob()
 
+    # The work with byte arrays is different in Python 2 and 3
     # Check python version
     if sys.version_info[0] == 2:
+        # Python 2 version
         tx_hash = ''.join(map(chr, tx_hash))
     else:
+        # Python 3 version
         tx_hash = bytes(tx_hash)
 
     # Create request
@@ -577,10 +577,6 @@ Get account asset:
     query_response = send_query(query, key_pair)
 
     print(query_response)
-
-
-Troubleshooting
-^^^^^^^^^^^^^^^
 
 NodeJS Library
 --------------
