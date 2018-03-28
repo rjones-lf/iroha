@@ -43,6 +43,7 @@ Iroha has a novel, Byzantine fault tolerant consensus algorithm (called YAC [#f1
 Other frameworks either focus more on probabilistic consensus algorithms, such as Nakamoto Consensus, or sacrifice Byzantine fault tolerance.
 
 Also, Iroha's built-in commands are a major benefit compared to other platforms, since it is very simple to do common tasks such as create digital assets, register accounts, and transfer assets between accounts.
+Moreover, it narrows the attack vector, improving overall security of the system, as there are less things to fail.
 
 Finally, Iroha is the only ledger that has a robust permission system, allowing permissions to be set for all commands, queries, and joining of the network.
 
