@@ -44,6 +44,16 @@ using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
 class SimulatorTest : public ::testing::Test {
  public:
+  SimulatorTest() {
+    shared_model::crypto::crypto_signer_expecter =
+        std::make_shared<shared_model::crypto::CryptoModelSignerExpecter>();
+  }
+
+  ~SimulatorTest()
+  {
+    shared_model::crypto::crypto_signer_expecter.reset();
+  }
+
   void SetUp() override {
     validator = std::make_shared<MockStatefulValidator>();
     factory = std::make_shared<MockTemporaryFactory>();
@@ -134,7 +144,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+  EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
       .Times(1);
 
@@ -175,7 +185,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+  EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
@@ -213,7 +223,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+  EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
