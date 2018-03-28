@@ -65,6 +65,8 @@ namespace shared_model {
         }
 
         if (answer) {
+          // TODO 15.04.2018 x3medima17 IR-1240: rework with std::string instead
+          // of pointer to string
           return iroha::expected::makeError(
               std::make_shared<std::string>(answer.reason()));
         }
