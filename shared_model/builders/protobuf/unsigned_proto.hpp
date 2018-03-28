@@ -19,10 +19,9 @@
 #define IROHA_UNSIGNED_PROTO_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -49,9 +48,8 @@ namespace shared_model {
        * @return signed object
        */
       T signAndAddSignature(const crypto::Keypair &keypair) {
-        auto signedBlob =
-            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-                shared_model::crypto::Blob(unsigned_.payload()), keypair);
+        auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
+            shared_model::crypto::Blob(unsigned_.payload()), keypair);
         unsigned_.addSignature(signedBlob, keypair.publicKey());
         // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;

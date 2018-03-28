@@ -26,7 +26,6 @@
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {

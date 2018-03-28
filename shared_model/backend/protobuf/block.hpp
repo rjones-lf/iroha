@@ -68,6 +68,9 @@ namespace shared_model {
         return *signatures_;
       }
 
+      // TODO Alexey Chernyshov - 2018-03-28 -
+      // rework code duplication after fix protobuf
+      // https://soramitsu.atlassian.net/browse/IR-1175
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
