@@ -9,11 +9,12 @@ find_package_handle_standard_args(SWIG DEFAULT_MSG
 if(NOT SWIG_EXECUTABLE)
   find_package(Git REQUIRED)
 
-  set(URL https://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz)
+  set(URL http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz)
   set_target_description(swig "Simplified Wrapper and Interface Generator (SWIG)" ${URL} 3.0.12)
 
   ExternalProject_Add(swig_swig
       URL ${URL}
+      URL_HASH SHA256=7cf9f447ae7ed1c51722efc45e7f14418d15d7a1e143ac9f09a668999f4fc94d
       PATCH_COMMAND patch -p1 < ${PROJECT_SOURCE_DIR}/../patch/add-nodejs8-support-to-swig.patch || true
       # We should install SWIG to properly access SWIG lib
       CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --without-pcre --prefix=${EP_PREFIX}/src/swig_swig
