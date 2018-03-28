@@ -20,11 +20,15 @@
 
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
-#include "interfaces/iroha_internal/block.hpp"
-#include "interfaces/queries/query.hpp"
-#include "interfaces/transaction.hpp"
 
 namespace shared_model {
+
+  namespace interface {
+    class Block;
+    class Query;
+    class Transaction;
+  }
+
   namespace crypto {
     template <typename Algorithm = CryptoSigner<>>
     class CryptoSignerImpl {
@@ -41,17 +45,9 @@ namespace shared_model {
           shared_model::interface::Transaction &transaction) const;
 
      private:
-#ifndef DISABLE_BACKWARD
-      template <typename Model, typename OldModel>
-      void internal_sign(interface::Signable<Model, OldModel> &signable) const
-          noexcept {
-#else
-      template <typename Model>
-      void internal_sign(interface::Signable<Model> &signable) const noexcept {
-#endif
-        auto signedBlob =
-            shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-                signable.payload(), keypair_);
+      template <typename T>
+      void internal_sign(T &signable) const noexcept {
+        auto signedBlob = Algorithm::sign(signable.payload(), keypair_);
         signable.addSignature(signedBlob, keypair_.publicKey());
       }
 
