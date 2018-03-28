@@ -35,10 +35,10 @@ using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
-using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
+using ::testing::_;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -49,7 +49,8 @@ class SimulatorTest : public ::testing::Test {
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
-    crypto_signer = std::make_shared<shared_model::crypto::MockCryptoModelSigner>();
+    crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
+        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
   }
 
   void init() {
@@ -61,7 +62,7 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
-  std::shared_ptr<shared_model::crypto::MockCryptoModelSigner> crypto_signer;
+  std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -133,7 +134,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+              sign(A<shared_model::interface::Block &>()))
       .Times(1);
 
   init();
@@ -173,7 +175,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();
@@ -210,7 +213,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       .WillOnce(Return(rxcpp::observable<>::empty<
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
-  EXPECT_CALL(*crypto_signer, sign(A<shared_model::interface::Block &>()))
+  EXPECT_CALL(shared_model::crypto::crypto_signer_expecter,
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();

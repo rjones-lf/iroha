@@ -18,7 +18,6 @@
 #ifndef IROHA_CRYPTO_MODEL_SIGNER_HPP_
 #define IROHA_CRYPTO_MODEL_SIGNER_HPP_
 
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 
 namespace shared_model {
@@ -37,20 +36,13 @@ namespace shared_model {
 
       virtual ~CryptoModelSigner() = default;
 
-      virtual void sign(shared_model::interface::Block &block) const;
-
-      virtual void sign(shared_model::interface::Query &query) const;
-
-      virtual void sign(
-          shared_model::interface::Transaction &transaction) const;
-
-     private:
       template <typename T>
-      void internal_sign(T &signable) const noexcept {
+      void sign(T &signable) const noexcept {
         auto signedBlob = Algorithm::sign(signable.payload(), keypair_);
         signable.addSignature(signedBlob, keypair_.publicKey());
       }
 
+     private:
       shared_model::crypto::Keypair keypair_;
     };
 
@@ -58,24 +50,6 @@ namespace shared_model {
     CryptoModelSigner<Algorithm>::CryptoModelSigner(
         const shared_model::crypto::Keypair &keypair)
         : keypair_(keypair) {}
-
-    template <typename Algorithm>
-    void CryptoModelSigner<Algorithm>::sign(
-        shared_model::interface::Block &block) const {
-      internal_sign(block);
-    }
-
-    template <typename Algorithm>
-    void CryptoModelSigner<Algorithm>::sign(
-        shared_model::interface::Query &query) const {
-      internal_sign(query);
-    }
-
-    template <typename Algorithm>
-    void CryptoModelSigner<Algorithm>::sign(
-        shared_model::interface::Transaction &transaction) const {
-      internal_sign(transaction);
-    }
 
   }  // namespace crypto
 }  // namespace shared_model
