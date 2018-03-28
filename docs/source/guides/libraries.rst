@@ -331,23 +331,23 @@ Prerequisites
 protobuf, pip
     Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
-Building protobuf files
+Building Protobuf Files
 """""""""""""""""""""""
 
-  .. code:: sh
+.. code:: sh
 
-      pip install grpcio_tools
-      mkdir iroha-schema
-      git -C iroha-schema init
-      git -C iroha-schema remote add -f schema https://github.com/hyperledger/iroha.git
-      git -C iroha-schema config core.sparseCheckout true
-      echo "schema" >> iroha-schema/.git/info/sparse-checkout
-      git -C iroha-schema pull schema develop
-      cd iroha-schema
-      protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
-      python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
+    pip install grpcio_tools
+    mkdir iroha-schema
+    git -C iroha-schema init
+    git -C iroha-schema remote add -f schema https://github.com/hyperledger/iroha.git
+    git -C iroha-schema config core.sparseCheckout true
+    echo "schema" >> iroha-schema/.git/info/sparse-checkout
+    git -C iroha-schema pull schema develop
+    cd iroha-schema
+    protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+    python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
 
-  Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
+Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
 
 In order to specify Iroha libraries location:
 

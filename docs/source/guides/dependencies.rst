@@ -54,7 +54,7 @@ Here is how to build and install CMake from sources.
     # cmake version 3.10.3
 
 Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -98,7 +98,7 @@ For Python 3:
     # Python 3.5.2
 
 Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 For Python 2:
 
@@ -141,7 +141,7 @@ For Python 3:
     # pip 8.1.1 from /usr/lib/python3/dist-packages (python 3.5)
 
 Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 For Python 2:
 
@@ -178,7 +178,7 @@ Installation on Ubuntu
     rm -rf /tmp/boost
 
 Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -202,7 +202,7 @@ Installation on Ubuntu
     (cd ../; rm -rf swig-3.0.12);
 
 Installation on macOS
-^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: shell
 
@@ -219,8 +219,12 @@ Installation on macOS
 Protobuf
 --------
 
+Installation on macOS
+^^^^^^^^^^^^^^^^^^^^^
+
 .. code-block:: shell
 
+    CMAKE_BUILD_TYPE="Release"
     git clone https://github.com/google/protobuf /tmp/protobuf;
     (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95);
     cmake \
