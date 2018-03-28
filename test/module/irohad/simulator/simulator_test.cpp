@@ -44,23 +44,20 @@ using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
 class SimulatorTest : public ::testing::Test {
  public:
-  SimulatorTest() {
+  void SetUp() override {
     shared_model::crypto::crypto_signer_expecter =
         std::make_shared<shared_model::crypto::CryptoModelSignerExpecter>();
-  }
 
-  ~SimulatorTest()
-  {
-    shared_model::crypto::crypto_signer_expecter.reset();
-  }
-
-  void SetUp() override {
     validator = std::make_shared<MockStatefulValidator>();
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+  }
+
+  void TearDown() override {
+    shared_model::crypto::crypto_signer_expecter.reset();
   }
 
   void init() {
