@@ -75,6 +75,8 @@ namespace iroha {
     CommandExecutor(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
                     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
 
+    // TODO: 28.03.2018 vdrobny IR-1011 Rework PolymorphicWrapper with
+    // std::reference_wrapper with const semantic
     ExecutionResult operator()(
         const shared_model::detail::PolymorphicWrapper<
             shared_model::interface::AddAssetQuantity> &command);

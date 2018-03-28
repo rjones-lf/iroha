@@ -52,7 +52,7 @@ void TxPipelineIntegrationTestFixture::sendTxsInOrderAndValidate(
   ASSERT_EQ(num_blocks, proposals.size());
   // Update proposal timestamp and compare it
   for (auto i = 0u; i < proposals.size(); ++i) {
-    expected_proposals[i].created_time = proposals[i]->created_time();
+    expected_proposals[i].created_time = proposals[i]->createdTime();
     auto expected = shared_model::proto::from_old(expected_proposals[i]);
     ASSERT_EQ(expected, *proposals[i]);
   }

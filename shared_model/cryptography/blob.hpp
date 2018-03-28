@@ -106,7 +106,6 @@ namespace shared_model {
       std::string hex_;
     };
 
-
   }  // namespace crypto
 }  // namespace shared_model
 #endif  // IROHA_SHARED_MODEL_BLOB_HPP

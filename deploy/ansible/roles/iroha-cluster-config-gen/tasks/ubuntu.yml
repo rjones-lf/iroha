@@ -1,0 +1,20 @@
+---
+# tasks file for iroha-standalone-config-gen
+- name: create dir for temporary files
+  file:
+    path: "{{ filesDir }}"
+    state: "{{ item }}"
+    mode: 0755
+  with_items:
+    - absent
+    - directory
+
+- name: generate peers list
+  template:
+    src: peers.list.j2
+    dest: "{{ filesDir }}/peers.list"
+
+- name: generate keys and genesis block
+  command: "iroha-cli --genesis_block --peers_address peers.list"
+  args:
+    chdir: "{{ filesDir }}"

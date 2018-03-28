@@ -18,6 +18,7 @@
 #ifndef IROHA_PROPOSAL_VALIDATOR_HPP
 #define IROHA_PROPOSAL_VALIDATOR_HPP
 
+#include <boost/format.hpp>
 #include <regex>
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -32,19 +33,10 @@ namespace shared_model {
     /**
      * Class that validates proposal
      */
-    class ProposalValidator {
-     private:
-      void validateTransaction(
-          ReasonsGroupType &reason,
-          const interface::Transaction &transaction) const {
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-      }
-
-      void validateHeight(ReasonsGroupType &reason,
-                          const interface::types::HeightType &height) const {
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-      }
-
+    template <typename FieldValidator, typename TransactionValidator>
+    class ProposalValidator : public ContainerValidator<interface::Proposal,
+                                                        FieldValidator,
+                                                        TransactionValidator> {
      public:
       /**
        * Applies validation on proposal
@@ -52,23 +44,11 @@ namespace shared_model {
        * @return Answer containing found error if any
        */
       Answer validate(const interface::Proposal &prop) const {
-        Answer answer;
-        // TODO 22/01/2018 x3medima17: add stateless validator IR-837
-        ReasonsGroupType reason;
-        reason.first = "Proposal";
-
-        validateHeight(reason, prop.height());
-        for (const auto &tx : prop.transactions()) {
-          validateTransaction(reason, *tx);
-        }
-        if (not reason.second.empty()) {
-          answer.addReason(std::move(reason));
-        }
-
-        return answer;
+        return ContainerValidator<interface::Proposal,
+                                  FieldValidator,
+                                  TransactionValidator>::validate(prop,
+                                                                  "Proposal");
       }
-
-      Answer answer_;
     };
 
   }  // namespace validation

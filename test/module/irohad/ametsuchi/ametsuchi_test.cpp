@@ -186,21 +186,24 @@ TEST_F(AmetsuchiTest, SampleTest) {
   iroha::Amount amount;
 
   // Block 1
-  auto block1 = TestBlockBuilder()
-                    .transactions(std::vector<shared_model::proto::Transaction>(
-                        {TestTransactionBuilder()
-                             .creatorAccountId("admin1")
-                             .createRole("user",
-                                         std::set<std::string>{
-                                             iroha::model::can_add_peer,
-                                             iroha::model::can_create_asset,
-                                             iroha::model::can_get_my_account})
-                             .createDomain(domain, "user")
-                             .createAccount(user1name, domain, fake_pubkey)
-                             .build()}))
-                    .height(1)
-                    .prevHash(fake_hash)
-                    .build();
+  // TODO: 26/04/2018 x3medima17 replace string permissions IR-999
+  auto block1 =
+      TestBlockBuilder()
+          .transactions(std::vector<shared_model::proto::Transaction>(
+              {TestTransactionBuilder()
+                   .creatorAccountId("admin1")
+                   .createRole(
+                       "user",
+                       shared_model::interface::types::PermissionSetType{
+                           iroha::model::can_add_peer,
+                           iroha::model::can_create_asset,
+                           iroha::model::can_get_my_account})
+                   .createDomain(domain, "user")
+                   .createAccount(user1name, domain, fake_pubkey)
+                   .build()}))
+          .height(1)
+          .prevHash(fake_hash)
+          .build();
 
   apply(storage, block1);
 

@@ -27,10 +27,6 @@
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
-#include "model/account.hpp"
-#include "model/account_asset.hpp"
-#include "model/asset.hpp"
-#include "model/domain.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "validators/field_validator.hpp"
@@ -58,12 +54,10 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      std::shared_ptr<shared_model::interface::Peer> peer =
+       std::shared_ptr<shared_model::interface::Peer>peer =
           clone(shared_model::proto::PeerBuilder()
-                    .address(std::to_string(i))
-                    .pubkey(shared_model::interface::types::PubkeyType(
-                        std::string(32, '0')))
-                    .build());
+                      .address(std::to_string(i)).pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
+                      .build());
       result.push_back(peer);
     }
     return result;
@@ -76,8 +70,8 @@ class YacPeerOrdererTest : public ::testing::Test {
 
       shared_model::proto::PeerBuilder builder;
 
-      auto key = shared_model::crypto::PublicKey(tmp.pubkey.to_string());
-      auto peer = builder.address(tmp.address).pubkey(key).build();
+      auto key = tmp->pubkey();
+      auto peer = builder.address(tmp->address()).pubkey(key).build();
 
       result.emplace_back(clone(peer));
     }
@@ -93,15 +87,8 @@ TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeNormalCase) {
 
   EXPECT_CALL(*wsv, getLedgerPeers()).WillOnce(Return(s_peers));
   auto order = orderer.getInitialOrdering();
-  auto old_peers = [this] {
-    std::vector<iroha::model::Peer> result;
-    for (auto &peer : s_peers) {
-      result.push_back(
-          *std::unique_ptr<iroha::model::Peer>(peer->makeOldModel()));
-    }
-    return result;
-  }();
-  ASSERT_EQ(order.value().getPeers(), old_peers);
+
+  ASSERT_EQ(order.value().getPeers(), s_peers);
 }
 
 TEST_F(YacPeerOrdererTest, PeerOrdererInitialOrderWhenInvokeFailCase) {
@@ -154,7 +141,7 @@ TEST_F(YacPeerOrdererTest, FairnessTest) {
                                       peers.end(),
                                       std::string(),
                                       [](std::string res, const auto &peer) {
-                                        return res + " " + peer.address;
+                                        return res + " " + peer->address();
                                       });
     histogram[res]++;
   }

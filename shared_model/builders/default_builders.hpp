@@ -68,6 +68,10 @@ namespace shared_model {
         shared_model::builder::TransactionStatusBuilder<
             shared_model::proto::TransactionStatusBuilder>;
 
+    using DefaultSignatureBuilder = shared_model::builder::SignatureBuilder<
+        shared_model::proto::SignatureBuilder,
+        shared_model::validation::FieldValidator>;
+
     using AmountBuilderWithoutValidator = shared_model::builder::AmountBuilder<
         shared_model::proto::AmountBuilder,
         shared_model::validation::AmountTrueValidator>;
