@@ -65,6 +65,8 @@ namespace shared_model {
       /// Type of Quorum used in transaction and set quorum
       using QuorumType = uint32_t;
       /// Type of transaction signature
+      // TODO Alexey Chernyshov 2018-03-28 - remove PolymorphicWrapper here
+      // https://soramitsu.atlassian.net/browse/IR-1175
       using SignatureType = detail::PolymorphicWrapper<Signature>;
       /// Type of timestamp
       using TimestampType = uint64_t;
