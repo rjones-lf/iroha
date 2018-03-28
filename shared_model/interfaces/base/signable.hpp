@@ -96,7 +96,7 @@ namespace shared_model {
             and this->createdTime() == rhs.createdTime();
       }
 
-      virtual const types::HashType &hash() const {
+      const types::HashType &hash() const {
         if (hash_ == boost::none) {
           hash_.emplace(HashProviderType::makeHash(payload()));
         }
@@ -114,7 +114,7 @@ namespace shared_model {
             .finalize();
       }
 
-     protected:
+     private:
       mutable boost::optional<types::HashType> hash_;
     };
 
