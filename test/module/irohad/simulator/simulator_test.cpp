@@ -26,7 +26,7 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
-#include "module/shared_model/cryptography/crypto_signer_mock.hpp"
+#include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -49,7 +49,7 @@ class SimulatorTest : public ::testing::Test {
     factory = std::make_shared<MockTemporaryFactory>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
-    crypto_signer = std::make_shared<shared_model::crypto::MockCryptoSigner>();
+    crypto_signer = std::make_shared<shared_model::crypto::MockCryptoModelSigner>();
   }
 
   void init() {
@@ -61,7 +61,7 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
-  std::shared_ptr<shared_model::crypto::MockCryptoSigner> crypto_signer;
+  std::shared_ptr<shared_model::crypto::MockCryptoModelSigner> crypto_signer;
 
   std::shared_ptr<Simulator> simulator;
 };

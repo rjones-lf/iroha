@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CRYPTO_SIGNER_MOCK_HPP
-#define IROHA_CRYPTO_SIGNER_MOCK_HPP
+#ifndef IROHA_CRYPTO_MODEL_SIGNER_MOCK_HPP
+#define IROHA_CRYPTO_MODEL_SIGNER_MOCK_HPP
 
 #include <gmock/gmock.h>
 
@@ -39,4 +39,4 @@ namespace shared_model {
   }  // namespace crypto
 }  // namespace shared_model
 
-#endif  // IROHA_CRYPTO_SIGNER_MOCK_HPP
+#endif  // IROHA_CRYPTO_MODEL_SIGNER_MOCK_HPP
