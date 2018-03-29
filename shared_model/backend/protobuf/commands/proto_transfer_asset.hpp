@@ -52,7 +52,7 @@ namespace shared_model {
         return transfer_asset_.dest_account_id();
       }
 
-      const MessageType &message() const override {
+      const interface::types::DescriptionType &description() const override {
         return transfer_asset_.description();
       }
 

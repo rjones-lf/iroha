@@ -92,6 +92,8 @@ namespace shared_model {
       using TransactionType = detail::PolymorphicWrapper<Transaction>;
       /// Type of transactions' collection
       using TransactionsCollectionType = std::vector<TransactionType>;
+      /// Type of the transfer message
+      using DescriptionType = std::string;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

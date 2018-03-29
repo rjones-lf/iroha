@@ -182,6 +182,7 @@ namespace shared_model {
 
         validator_.validateAccountId(reason, sad->accountId());
         validator_.validateAccountDetailKey(reason, sad->key());
+        validator_.validateAccountDetailValue(reason, sad->value());
 
         return reason;
       }
@@ -225,6 +226,7 @@ namespace shared_model {
         validator_.validateAccountId(reason, ta->destAccountId());
         validator_.validateAssetId(reason, ta->assetId());
         validator_.validateAmount(reason, ta->amount());
+        validator_.validateDescription(reason, ta->description());
 
         return reason;
       }

@@ -725,56 +725,33 @@ namespace iroha {
       const shared_model::interface::CreateAccount &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return
-        // Name is within some range
-        not command.accountName().empty()
-        // Account must be well-formed (no system symbols)
-        and ::validator::isValidDomainName(command.accountName());
+    return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateAsset &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return
-        // Name is within some range
-        not command.assetName().empty() && command.assetName().size() < 10 &&
-        // Account must be well-formed (no system symbols)
-        std::all_of(std::begin(command.assetName()),
-                    std::end(command.assetName()),
-                    [](char c) { return std::isalnum(c); });
+    return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateDomain &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return
-        // Name is within some range
-        not command.domainId().empty() and command.domainId().size() < 10 and
-        // Account must be well-formed (no system symbols)
-        std::all_of(std::begin(command.domainId()),
-                    std::end(command.domainId()),
-                    [](char c) { return std::isalnum(c); });
+    return true;
   }
 
   bool CommandValidator::isValid(
       const shared_model::interface::CreateRole &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    auto role_is_a_subset = std::all_of(
+    return std::all_of(
         command.rolePermissions().begin(),
         command.rolePermissions().end(),
         [&queries, &creator_account_id](auto perm) {
           return checkAccountRolePermission(creator_account_id, queries, perm);
         });
-
-    return role_is_a_subset and not command.roleName().empty()
-        and command.roleName().size() < 8 and
-        // Role must be well-formed (no system symbols)
-        std::all_of(std::begin(command.roleName()),
-                    std::end(command.roleName()),
-                    [](char c) { return std::isalnum(c) and islower(c); });
   }
 
   bool CommandValidator::isValid(
@@ -850,10 +827,6 @@ namespace iroha {
       const shared_model::interface::TransferAsset &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    if (command.amount().intValue() == 0) {
-      return false;
-    }
-
     auto asset = queries.getAsset(command.assetId());
     if (not asset) {
       return false;

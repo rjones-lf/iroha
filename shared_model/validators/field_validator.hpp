@@ -77,6 +77,11 @@ namespace shared_model {
       void validateAccountDetailKey(
           ReasonsGroupType &reason,
           const interface::types::AccountDetailKeyType &key) const;
+
+      void validateAccountDetailValue(
+          ReasonsGroupType &reason,
+          const interface::types::AccountDetailValueType &value) const;
+
       void validatePrecision(
           ReasonsGroupType &reason,
           const interface::types::PrecisionType &precision) const;
@@ -107,17 +112,18 @@ namespace shared_model {
                               const interface::SignatureSetType &signatures,
                               const crypto::Blob &source) const;
 
+      void validateDescription(
+          ReasonsGroupType &reason,
+          const interface::types::DescriptionType &description) const;
+
      private:
-      const std::string account_name_pattern_ = R"([a-z_0-9]{1,32})";
-      const std::string asset_name_pattern_ = R"([a-z_0-9]{1,32})";
-      const std::string domain_pattern_ =
-          R"(([a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)";
-      const std::string account_id_pattern_ =
-          account_name_pattern_ + R"(\@)" + domain_pattern_;
-      const std::string asset_id_pattern_ =
-          asset_name_pattern_ + R"(\#)" + domain_pattern_;
-      const std::string detail_key_pattern_ = R"([A-Za-z0-9_]{1,64})";
-      const std::string role_id_pattern_ = R"([a-z_0-9]{1,32})";
+      const static std::string account_name_pattern_;
+      const static std::string asset_name_pattern_;
+      const static std::string domain_pattern_;
+      const static std::string account_id_pattern_;
+      const static std::string asset_id_pattern_;
+      const static std::string detail_key_pattern_;
+      const static std::string role_id_pattern_;
 
       std::regex account_name_regex_;
       std::regex asset_name_regex_;
@@ -136,7 +142,9 @@ namespace shared_model {
           std::chrono::minutes(5) / std::chrono::milliseconds(1);
 
       // size of key
-      static constexpr auto key_size = 32;
+      static constexpr auto key_size = 32u;
+      static constexpr auto value_size = 4096u;
+      static constexpr auto description_size = 64u;
     };
   }  // namespace validation
 }  // namespace shared_model

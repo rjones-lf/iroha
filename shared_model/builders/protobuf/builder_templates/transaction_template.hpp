@@ -294,12 +294,11 @@ namespace shared_model {
         });
       }
 
-      auto transferAsset(
-          const interface::types::AccountIdType &src_account_id,
-          const interface::types::AccountIdType &dest_account_id,
-          const interface::types::AssetIdType &asset_id,
-          const interface::TransferAsset::MessageType &description,
-          const std::string &amount) const {
+      auto transferAsset(const interface::types::AccountIdType &src_account_id,
+                         const interface::types::AccountIdType &dest_account_id,
+                         const interface::types::AssetIdType &asset_id,
+                         const interface::types::DescriptionType &description,
+                         const std::string &amount) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_transfer_asset();
           command->set_src_account_id(src_account_id);
