@@ -11,11 +11,11 @@ Validation
 The validation for all queries includes:
 
 - timestamp — shouldn't be from the past (24 hours prior to the peer time) or from the future
-(range of 5 minutes added to the peer time)
+    (range of 5 minutes added to the peer time)
 - signature of query creator — used for checking the identity of query creator
 - query counter — checked to be incremented with every subsequent query from query creator
-- roles — depending on the query creator's role: the range of state avaiable to query can realte to to the same account,
-account in the domain, to the whole chain or not allowed at all
+- roles — depending on the query creator's role: the range of state available to query can relate to to the same account,
+    account in the domain, to the whole chain, or not allowed at all
 
 Get account
 -----------
@@ -71,7 +71,7 @@ Response Structure
     "Account ID", "account id", "account_name@domain", "alex@morgan"
     "Domain ID", "domain where the account was created", "`[A-Za-z0-9]{1,9}`", "morgan"
     "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum < 10", "5"
-    "JSON data", "key-value account information", "JSON", "{ "genesis": {"name": "alex"} }"
+    "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
 Get signatories
 ---------------
