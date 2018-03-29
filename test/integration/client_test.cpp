@@ -96,6 +96,9 @@ class ClientServerTest : public testing::Test {
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(storage);
 
+    EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+    EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
+
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
@@ -220,8 +223,6 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   std::shared_ptr<shared_model::interface::Account> account_test = clone(
       shared_model::proto::AccountBuilder().accountId("test@test").build());
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   "admin@test", "test@test", can_get_my_acc_detail))
@@ -253,8 +254,6 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   auto account_test = iroha::model::Account();
   account_test.account_id = "test@test";
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   "admin@test", "test@test", can_get_my_acc_detail))

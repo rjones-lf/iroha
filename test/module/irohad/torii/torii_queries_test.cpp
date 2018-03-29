@@ -63,6 +63,9 @@ class ToriiQueriesTest : public testing::Test {
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(storage);
 
+    EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+    EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
+
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi)).run();
 
@@ -143,8 +146,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
   account.account_id = "b@domain";
   auto creator = "a@domain";
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(
       *wsv_query,
@@ -186,8 +187,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   std::shared_ptr<shared_model::interface::Account> accountB = clone(
       shared_model::proto::AccountBuilder().accountId("b@domain").build());
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(
       *wsv_query,
@@ -231,8 +230,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
       shared_model::proto::AccountBuilder().accountId("accountA").build());
 
   auto creator = "a@domain";
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query, getAccount(creator)).WillOnce(Return(account));
   // TODO: refactor this to use stateful validation mocks
   std::vector<std::string> roles = {"test"};
@@ -275,8 +272,6 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
   auto creator = "a@domain";
   auto accountb_id = "b@domain";
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -331,8 +326,6 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                    .precision(2)
                    .build();
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";
   std::vector<std::string> roles = {"test"};
@@ -388,8 +381,6 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
   keys.push_back(
       shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query,
@@ -431,8 +422,6 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   keys.push_back(
       shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles("a@domain")).WillOnce(Return(roles));
   std::vector<std::string> perm = {iroha::model::can_get_my_signatories};
@@ -488,8 +477,6 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
     return result;
   }());
 
-  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
-  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles("a@domain")).WillOnce(Return(roles));
