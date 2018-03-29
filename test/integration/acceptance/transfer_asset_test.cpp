@@ -305,7 +305,7 @@ TEST_F(TransferAsset, LongDesc) {
         auto transfer = *boost::apply_visitor(
             interface::SpecifiedVisitor<interface::TransferAsset>(),
             txes[0]->commands()[0]->get());
-        ASSERT_EQ(transfer->message(), long_desc);
+        ASSERT_EQ(transfer->description(), long_desc);
       })
       .done();
 }
