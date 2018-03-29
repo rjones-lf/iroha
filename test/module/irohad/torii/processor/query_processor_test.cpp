@@ -87,6 +87,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   std::vector<std::string> roles = {role};
   std::vector<std::string> perms = {iroha::model::can_get_my_account};
 
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
   EXPECT_CALL(*wsv_queries, getAccount(account_id))
       .WillOnce(Return(shared_account));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))

@@ -144,6 +144,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
   auto creator = "a@domain";
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(
       *wsv_query,
@@ -186,6 +187,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
       shared_model::proto::AccountBuilder().accountId("b@domain").build());
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(
       *wsv_query,
@@ -230,6 +232,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
 
   auto creator = "a@domain";
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query, getAccount(creator)).WillOnce(Return(account));
   // TODO: refactor this to use stateful validation mocks
   std::vector<std::string> roles = {"test"};
@@ -273,6 +276,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
   auto accountb_id = "b@domain";
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -328,6 +332,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                    .build();
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";
   std::vector<std::string> roles = {"test"};
@@ -384,6 +389,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
       shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query,
@@ -426,6 +432,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
       shared_model::interface::types::PubkeyType(pubkey.to_string()));
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles("a@domain")).WillOnce(Return(roles));
   std::vector<std::string> perm = {iroha::model::can_get_my_signatories};
@@ -482,6 +489,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   }());
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   // TODO: refactor this to use stateful validation mocks
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles("a@domain")).WillOnce(Return(roles));

@@ -74,7 +74,7 @@ class ClientServerTest : public testing::Test {
     pcsMock = std::make_shared<MockPeerCommunicationService>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
-    auto storage = std::make_shared<MockStorage>();
+    storage = std::make_shared<MockStorage>();
 
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
         prop_notifier;
@@ -111,6 +111,7 @@ class ClientServerTest : public testing::Test {
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
+  std::shared_ptr<MockStorage> storage;
 };
 
 TEST_F(ClientServerTest, SendTxWhenValid) {
@@ -219,6 +220,8 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   std::shared_ptr<shared_model::interface::Account> account_test = clone(
       shared_model::proto::AccountBuilder().accountId("test@test").build());
 
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   "admin@test", "test@test", can_get_my_acc_detail))
@@ -250,6 +253,8 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   auto account_test = iroha::model::Account();
   account_test.account_id = "test@test";
 
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   "admin@test", "test@test", can_get_my_acc_detail))
