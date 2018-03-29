@@ -15,16 +15,16 @@ The validation for all queries includes:
 - query counter — checked to be incremented with every subsequent query from query creator
 - roles — depending on the query creator's role: the range of state available to query can relate to to the same account, account in the domain, to the whole chain, or not allowed at all
 
-Get account
------------
+Get Account
+^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 Purpose of get account query is to get the state of an account.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -33,7 +33,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -42,7 +42,7 @@ Request Structure
     "Account ID", "account id to request its state", "<account_name>@<domain_id>", "alex@morgan"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -60,7 +60,7 @@ Response Schema
 
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -71,16 +71,16 @@ Response Structure
     "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum ≤ 128", "5"
     "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
-Get signatories
----------------
+Get Signatories
+^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 Purpose of get signatories query is to get signatories, which act as an identity of the account.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -89,7 +89,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -98,7 +98,7 @@ Request Structure
     "Account ID", "account id to request signatories", "<account_name>@<domain_id>", "alex@morgan"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -107,7 +107,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -115,16 +115,16 @@ Response Structure
 
     "Keys", "an array of public keys", "`ed25519 <https://ed25519.cr.yp.to>`_", "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
 
-Get transactions
-----------------
+Get Transactions
+^^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 GetTransactions is used for retrieving information about transactions, based on their hashes.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -133,7 +133,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -142,7 +142,7 @@ Request Structure
     "Transactions hashes", "an array of hashes", "array with 32 byte hashes", "{hash1, hash2…}"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -151,7 +151,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -159,16 +159,16 @@ Response Structure
 
     "Transactions", "an array of transactions", "Committed transactions", "{tx1, tx2…}"
 
-Get account transactions
-------------------------
+Get Account Transactions
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 In a case when a list of transactions per account is needed, `GetAccountTransactions` query can be formed.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -177,7 +177,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -186,7 +186,7 @@ Request Structure
     "Account ID", "account id to request transactions from", "<account_name>@<domain_id>", "makoto@soramitsu"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -195,7 +195,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -203,16 +203,16 @@ Response Structure
 
     "Transactions", "an array of transactions for given account", "Committed transactions", "{tx1, tx2…}"
 
-Get account asset transactions
-------------------------------
+Get Account Asset Transactions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 `GetAccountAssetTransactions` query returns all transactions associated with given account and asset.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -222,7 +222,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -232,7 +232,7 @@ Request Structure
     "Asset ID", "asset id in order to filter transactions containing this asset", "<asset_name>#<domain_id>", "jpy#japan"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -241,7 +241,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -249,16 +249,16 @@ Response Structure
 
     "Transactions", "an array of transactions for given account and asset", "Committed transactions", "{tx1, tx2…}"
 
-Get account assets
-------------------
+Get Account Assets
+^^^^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 To get the state of an asset in an account (a balance), `GetAccountAssets` query can be used.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -268,7 +268,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -278,7 +278,7 @@ Request Structure
     "Asset ID", "asset id to know its balance", "<asset_name>#<domain_id>", "jpy#japan"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -289,7 +289,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -299,16 +299,16 @@ Response Structure
     "Account ID", "account which has this balance", "<account_name>@<domain_id>", "makoto@soramitsu"
     "Balance", "balance of the asset", "Not less than 0", "200.20"
 
-Get asset info
+Get Asset Info
 --------------
 
 Purpose
-^^^^^^^
+-------
 
 In order to know precision for given asset, and other related info in the future, such as a description of the asset, etc. user can send `GetAssetInfo` query.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -317,7 +317,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -327,7 +327,7 @@ Request Structure
 
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -348,16 +348,16 @@ Response Structure
     "Domain ID", "domain related to this asset", "RFC1035, RFC1123", "japan"
     "Precision", "number of digits after comma", "0 < precision < 256", "2"
 
-Get roles
----------
+Get Roles
+^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 To get existing roles in the system, a user can send `GetRoles` query to Iroha network.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -365,7 +365,7 @@ Request Schema
     }
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -374,7 +374,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -382,16 +382,16 @@ Response Structure
 
     "Roles", "array of created roles in the network", "set of roles in the system", "{MoneyCreator, User, Admin, …}"
 
-Get role permissions
---------------------
+Get Role Permissions
+^^^^^^^^^^^^^^^^^^^^
 
 Purpose
-^^^^^^^
+-------
 
 To get available permissions per role in the system, a user can send `GetRolePermissions` query to Iroha network.
 
 Request Schema
-^^^^^^^^^^^^^^
+--------------
 
 .. code-block:: proto
 
@@ -400,7 +400,7 @@ Request Schema
     }
 
 Request Structure
-^^^^^^^^^^^^^^^^^
+-----------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
@@ -409,7 +409,7 @@ Request Structure
     "Role ID", "role to get permissions for", "existing role in the system", "MoneyCreator"
 
 Response Schema
-^^^^^^^^^^^^^^^
+---------------
 
 .. code-block:: proto
 
@@ -418,7 +418,7 @@ Response Schema
     }
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
