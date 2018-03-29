@@ -26,15 +26,6 @@
 #include "ametsuchi/impl/postgres_wsv_common.hpp"
 
 namespace iroha {
-
-  namespace model {
-    struct Asset;
-    struct Account;
-    struct Domain;
-    struct Peer;
-    struct AccountAsset;
-  }  // namespace model
-
   namespace ametsuchi {
 
     class PostgresWsvCommand : public WsvCommand {

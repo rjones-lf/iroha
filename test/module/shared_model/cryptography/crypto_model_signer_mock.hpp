@@ -20,6 +20,9 @@
 
 #include <gmock/gmock.h>
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 
 namespace shared_model {

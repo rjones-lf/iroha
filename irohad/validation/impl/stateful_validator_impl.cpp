@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "validation/impl/stateful_validator_impl.hpp"
+
 #include <numeric>
 #include <set>
 
@@ -22,8 +24,6 @@
 
 #include "builders/protobuf/proposal.hpp"
 #include "datetime/time.hpp"
-#include "model/account.hpp"
-#include "validation/impl/stateful_validator_impl.hpp"
 
 namespace iroha {
   namespace validation {

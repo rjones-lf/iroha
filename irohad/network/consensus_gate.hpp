@@ -18,7 +18,6 @@
 #ifndef IROHA_CONSENSUS_GATE_HPP
 #define IROHA_CONSENSUS_GATE_HPP
 
-#include <model/block.hpp>
 #include <rxcpp/rx.hpp>
 
 namespace shared_model {

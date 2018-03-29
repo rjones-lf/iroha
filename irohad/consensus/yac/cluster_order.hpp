@@ -28,12 +28,6 @@ namespace shared_model {
   }
 }  // namespace shared_model
 
-namespace shared_model {
-  namespace interface {
-    class Peer;
-  }
-}  // namespace shared_model
-
 namespace iroha {
   namespace consensus {
     namespace yac {

@@ -19,12 +19,6 @@
 
 #include <boost/format.hpp>
 
-#include "model/account.hpp"
-#include "model/account_asset.hpp"
-#include "model/asset.hpp"
-#include "model/domain.hpp"
-#include "model/peer.hpp"
-
 namespace iroha {
   namespace ametsuchi {
 

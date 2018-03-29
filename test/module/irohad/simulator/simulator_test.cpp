@@ -16,7 +16,6 @@
  */
 
 #include "simulator/impl/simulator.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"

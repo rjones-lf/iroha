@@ -16,8 +16,8 @@
  */
 
 #include "consensus/yac/impl/yac_gate_impl.hpp"
+
 #include "backend/protobuf/block.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"

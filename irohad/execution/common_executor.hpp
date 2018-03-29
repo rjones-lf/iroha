@@ -19,6 +19,7 @@
 #define IROHA_COMMON_EXECUTOR_HPP
 
 #include <set>
+
 #include "ametsuchi/wsv_query.hpp"
 
 namespace iroha {

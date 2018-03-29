@@ -19,7 +19,6 @@
 
 #include "execution/command_executor.hpp"
 
-#include "backend/protobuf/from_old_model.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
 #include "model/permissions.hpp"
@@ -365,7 +364,7 @@ namespace iroha {
           command_name);
     }
     auto account_asset = queries->getAccountAsset(
-        command->accountId(), command->assetId());  // Old model
+        command->accountId(), command->assetId());
     if (not account_asset) {
       return makeExecutionError((boost::format("%s do not have %s")
                                  % command->accountId() % command->assetId())
@@ -798,7 +797,7 @@ namespace iroha {
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto account = queries.getAccount(command.accountId());
     auto signatories =
-        queries.getSignatories(command.accountId());  // Old model
+        queries.getSignatories(command.accountId());
 
     if (not(account and signatories)) {
       // No account or signatories found
@@ -829,7 +828,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto signatories =
-        queries.getSignatories(command.accountId());  // Old model
+        queries.getSignatories(command.accountId());
 
     if (not(signatories)) {
       // No  signatories of an account found

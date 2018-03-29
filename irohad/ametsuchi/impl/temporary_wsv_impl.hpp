@@ -27,10 +27,6 @@
 
 namespace iroha {
 
-  namespace model {
-    class CommandExecutorFactory;
-  }
-
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:

@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 
-#include "interfaces/common_objects/types.hpp"  // for model::Signature
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {

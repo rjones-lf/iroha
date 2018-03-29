@@ -23,7 +23,6 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "logger/logger.hpp"
-#include "model/block.hpp"
 
 namespace iroha {
 
