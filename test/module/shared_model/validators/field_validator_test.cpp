@@ -167,7 +167,7 @@ class FieldValidatorTest : public ValidatorsTest {
       if (!testcase.value_is_valid) {
         ASSERT_TRUE(!reason.second.empty())
             << testFailMessage(field_name, testcase.name);
-        // TODO add returned message check
+        // TODO IR-1183 add returned message check 29.03.2018
       } else {
         EXPECT_TRUE(reason.second.empty())
             << testFailMessage(field_name, testcase.name)
