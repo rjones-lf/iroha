@@ -142,6 +142,7 @@ namespace shared_model {
       const static std::string asset_name_pattern_;
       const static std::string domain_pattern_;
       const static std::string ip_v4_pattern_;
+      const static std::string peer_address_pattern_;
       const static std::string account_id_pattern_;
       const static std::string asset_id_pattern_;
       const static std::string detail_key_pattern_;
@@ -151,6 +152,7 @@ namespace shared_model {
       std::regex asset_name_regex_;
       std::regex domain_regex_;
       std::regex ip_v4_regex_;
+      std::regex peer_address_regex_;
       std::regex account_id_regex_;
       std::regex asset_id_regex_;
       std::regex detail_key_regex_;
