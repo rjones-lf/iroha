@@ -15,7 +15,7 @@ properties([parameters([
   booleanParam(defaultValue: true, description: '', name: 'Linux'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv7'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv8'),
-  booleanParam(defaultValue: false, description: '', name: 'MacOS'),
+  booleanParam(defaultValue: true, description: '', name: 'MacOS'),
   booleanParam(defaultValue: false, description: 'Whether it is a triggered build', name: 'Nightly'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
