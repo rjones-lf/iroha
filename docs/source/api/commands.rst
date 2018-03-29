@@ -39,15 +39,13 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+-------------------------------------+---------------------+
-| Field      | Description                         | Constraint          |
-+============+=====================================+=====================+
-| Account ID | account id in which to add asset    | account_name@domain |
-+------------+-------------------------------------+---------------------+
-| Asset ID   | id of the asset                     | asset#account       |
-+------------+-------------------------------------+---------------------+
-| Amount     | positive amount of the asset to add | > 0                 |
-+------------+-------------------------------------+---------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "account id in which to add asset", "account_name@domain", "alex@morgan"
+    "Asset ID", "id of the asset", "asset#domain", "usd#morgan"
+    "Amount", "positive amount of the asset to add", "> 0", "200.02"
 
 Validation
 ^^^^^^^^^^
@@ -57,7 +55,6 @@ Validation
 3. Creator of a transaction should have a role which has permissions for issuing assets
 4. Creator of a transaction adds account quantity to his/her account only
 
-
 Add peer
 --------
 
@@ -65,7 +62,7 @@ Purpose
 ^^^^^^^
 
 The purpose of add peer command is to write into ledger the fact of peer addition into the peer network.
-After the peer was added, consensus and synchronization components will start using it.
+After a transaction with AddPeer has been committed, consensus and synchronization components will start using it.
 
 Schema
 ^^^^^^
@@ -84,19 +81,18 @@ Schema
 Structure
 ^^^^^^^^^
 
-+----------+------------------------------------------------------------------------------------------------------+----------------------+
-| Field    | Description                                                                                          | Constraint           |
-+==========+======================================================================================================+======================+
-| Address  | resolvable address in network (IPv4, IPv6, domain name, etc.)                                        | should be resolvable |
-+----------+------------------------------------------------------------------------------------------------------+----------------------+
-| Peer key | peer public key, which will be used in consensus algorithm to sign-off vote, commit, reject messages | ed25519 public key   |
-+----------+------------------------------------------------------------------------------------------------------+----------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 10, 30
+
+    "Address", "resolvable address in network (IPv4, IPv6, domain name, etc.)", "should be resolvable", "192.168.1.1:50541"
+    "Peer key", "peer public key, which is used in consensus algorithm to sign-off vote, commit, reject messages", "ed25519 public key", "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
 
 Validation
 ^^^^^^^^^^
 
-1. Creator of the transaction has a role which has CanAddPeer permission.
-2. Such network address has not been already added.
+1. Creator of the transaction has a role which has CanAddPeer permission
+2. Such network address has not been already added
 
 Add signatory
 -------------
@@ -120,20 +116,21 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+-----------------------------------+---------------------+
-| Field      | Description                       | Constraint          |
-+============+===================================+=====================+
-| Account ID | Account to which to add signatory | account_name@domain |
-+------------+-----------------------------------+---------------------+
-| Public key | Signatory to add to account       | ed25519 public key  |
-+------------+-----------------------------------+---------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "Account to which to add signatory", "account_name@domain", "makoto@soramitsu"
+    "Public key", "Signatory to add to account", "ed25519 public key", "359f925e4eeecfdd6aa1abc0b79a6a121a5dd63bb612b603247ea4f8ad160156"
 
 Validation
 ^^^^^^^^^^
 
 Two cases:
-Case 1. Transaction creator wants to add a signatory to his or her account, having permission CanAddSignatory
-Case 2. CanAddSignatory was granted to transaction creator
+
+    Case 1. Transaction creator wants to add a signatory to his or her account, having permission CanAddSignatory
+
+    Case 2. CanAddSignatory was granted to transaction creator
 
 Append role
 -----------
@@ -156,20 +153,19 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+---------------------------------+---------------------------------------+
-| Field      | Description                     | Constraint                            |
-+============+=================================+=======================================+
-| Account ID | id or account to append role to | already existent, account_name@domain |
-+------------+---------------------------------+---------------------------------------+
-| Role name  | name of already created role    | already existent, `[A-Za-z0-9_]{1,7}` |
-+------------+---------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "id or account to append role to", "already existent", "makoto@soramitsu"
+    "Role name", "name of already created role", "already existent", "MoneyCreator"
 
 Validation
 ^^^^^^^^^^
 
 1. The role should exist in the system
 2. Transaction creator should have permissions to append role (CanAppendRole)
-3. Account, which appends role, has set of permissions in his roles that is a superset of appended role (in other words no-one can append role that is more powerful than what transaction creator is).
+3. Account, which appends role, has set of permissions in his roles that is a superset of appended role (in other words no-one can append role that is more powerful than what transaction creator is)
 
 Create account
 --------------
@@ -193,15 +189,13 @@ Schema
 Structure
 ^^^^^^^^^
 
-+--------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Field        | Description                            | Constraint                                                                                                                                                                                                                |
-+==============+========================================+===========================================================================================================================================================================================================================+
-| Account name | domain-unique name for account         | A string in domain-name syntax defined in RFC1035. An account name is a list of labels separated by a period `.`. A label is a sequence of characters in `[a-zA-Z-]`. The length of a label must not exceed 63 characters |
-+--------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain ID    | target domain to make relation with    | should be created before the account, `[0-9A-Za-z]{1,9}`                                                                                                                                                                  |
-+--------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Main pubkey  | first public key to add to the account | ed25519 public key                                                                                                                                                                                                        |
-+--------------+----------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account name", "domain-unique name for account", "A string in domain-name syntax defined in RFC1035 [#f1]_ ", "morgan.stanley"
+    "Domain ID", "target domain to make relation with", "should be created before the account", "america"
+    "Main pubkey", "first public key to add to the account", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
 Validation
 ^^^^^^^^^^
@@ -209,6 +203,8 @@ Validation
 1. Transaction creator has permission to create an account
 2. Domain, passed as domain_id, has already been created in the system
 3. Such public key has not been added before as first public key of account or added to a multi-signature account
+
+.. [#f1] https://www.ietf.org/rfc/rfc1035.txt
 
 Create asset
 ------------
@@ -233,21 +229,19 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+-------------------------------------+--------------------------------------------------------+
-| Field      | Description                         | Constraint                                             |
-+============+=====================================+========================================================+
-| Asset name | domain-unique name for asset        | `[A-Za-z0-9]{1,9}`                                     |
-+------------+-------------------------------------+--------------------------------------------------------+
-| Domain ID  | target domain to make relation with | should be created before the asset, `[A-Za-z0-9]{1,9}` |
-+------------+-------------------------------------+--------------------------------------------------------+
-| Precision  | number of digits after comma/dot    | 0 <= precision <= uint32 max                           |
-+------------+-------------------------------------+--------------------------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Asset name", "domain-unique name for asset", "`[A-Za-z0-9]{1,9}`", "soracoin"
+    "Domain ID", "target domain to make relation with", "already existent", "japan"
+    "Precision", "number of digits after comma/dot", "0 <= precision <= uint32 max", "2"
 
 Validation
 ^^^^^^^^^^
 
 1. Transaction creator has permission to create assets
-2. Asset name is unique per domain
+2. Asset name is unique in domain
 
 Create domain
 -------------
@@ -270,13 +264,12 @@ Schema
 Structure
 ^^^^^^^^^
 
-+--------------+-----------------------------------------+----------------------------+
-| Field        | Description                             | Constraint                 |
-+--------------+-----------------------------------------+----------------------------+
-| Domain ID    | ID for created domain                   | unique, `[0-9A-Za-z]{1,9}` |
-+--------------+-----------------------------------------+----------------------------+
-| Default role | role for any created user in the domain | one of the existing roles  |
-+--------------+-----------------------------------------+----------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Domain ID", "ID for created domain", "unique, `[0-9A-Za-z]{1,9}`", "japan05"
+    "Default role", "role for any created user in the domain", "one of the existing roles", "User"
 
 Validation
 ^^^^^^^^^^
@@ -307,13 +300,12 @@ Schema
 Structure
 ^^^^^^^^^
 
-+-------------+---------------------------------------+------------------------------------------------------------------------------+
-| Field       | Description                           | Constraint                                                                   |
-+=============+=======================================+==============================================================================+
-| Role name   | name of role to create                | `[A-Za-z0-9_]{1,7}`                                                          |
-+-------------+---------------------------------------+------------------------------------------------------------------------------+
-| Permissions | array of already existent permissions | set of passed permissions is fully included into set of existing permissions |
-+-------------+---------------------------------------+------------------------------------------------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Role name", "name of role to create", "`[A-Za-z0-9_]{1,7}`", "User"
+    "Permissions", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
 
 Validation
 ^^^^^^^^^^
@@ -343,13 +335,12 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+------------------------------------------+---------------------------------------+
-| Field      | Description                              | Constraint                            |
-+============+==========================================+=======================================+
-| Account ID | ID of account where role will be deleted | already existent, account_name@domain |
-+------------+------------------------------------------+---------------------------------------+
-| Role name  | detached role                            | existing role                         |
-+------------+------------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "ID of account where role will be deleted", "already existent", "makoto@soramitsu"
+    "Role name", "a detached role name", "existing role", "User"
 
 Validation
 ^^^^^^^^^^
@@ -378,13 +369,13 @@ Schema
 Structure
 ^^^^^^^^^
 
-+-----------------+---------------------------------------+---------------------------------------+
-| Field           | Description                           | Constraint                            |
-+=================+=======================================+=======================================+
-| Account ID      | id of account whom rights are granted | already existent, account_name@domain |
-+-----------------+---------------------------------------+---------------------------------------+
-| Permission name | name of granted permission            | permission is defined                 |
-+-----------------+---------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
+    "Permission name", "name of granted permission", "permission is defined", "CanTransferAssets"
+
 
 Validation
 ^^^^^^^^^^
@@ -412,23 +403,25 @@ Schema
 
 Structure
 ^^^^^^^^^
-+------------+----------------------------------------+---------------------------------------+
-| Field      | Description                            | Constraint                            |
-+============+========================================+=======================================+
-| Account ID | ID of account to delete signatory from | already existent, account_name@domain |
-+------------+----------------------------------------+---------------------------------------+
-| Public key | Signatory to delete                    | ed25519 public key                    |
-+------------+----------------------------------------+---------------------------------------+
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
+    "Public key", "Signatory to delete", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
 Validation
 ^^^^^^^^^^
 
-When signatory is deleted, we should check if invariant of **size(signatories) >= quorum** holds.
-Signatory should have been previously added to the account
+1. When signatory is deleted, we should check if invariant of **size(signatories) >= quorum** holds
+2. Signatory should have been previously added to the account
 
 Two cases:
-Case 1. When transaction creator wants to remove signatory from their account and he or she has permission CanRemoveSignatory
-Case 2. CanRemoveSignatory was granted to transaction creator
+
+    Case 1. When transaction creator wants to remove signatory from their account and he or she has permission CanRemoveSignatory
+
+    Case 2. CanRemoveSignatory was granted to transaction creator
 
 Revoke permission
 -----------------
@@ -451,13 +444,12 @@ Schema
 Structure
 ^^^^^^^^^
 
-+-----------------+----------------------------------------+---------------------------------------+
-| Field           | Description                            | Constraint                            |
-+=================+========================================+=======================================+
-| Account ID      | id of account whom rights were granted | already existent, account_name@domain |
-+-----------------+----------------------------------------+---------------------------------------+
-| Permission name | name of revoked permission             | permission is defined                 |
-+-----------------+----------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+        "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
+        "Permission name", "name of granted permission", "permission was granted", "CanTransferAssets"
 
 Validation
 ^^^^^^^^^^
@@ -486,15 +478,13 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+--------------------------------------------------+---------------------------------------+
-| Field      | Description                                      | Constraint                            |
-+============+==================================================+=======================================+
-| Account ID | id of account whom key-value information was set | already existent, account_name@domain |
-+------------+--------------------------------------------------+---------------------------------------+
-| Key        | key of information being set                     | `[A-Za-z0-9_]{1,}`                    |
-+------------+--------------------------------------------------+---------------------------------------+
-| Value      | value of corresponding key                       | None                                  |
-+------------+--------------------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "id of account whom key-value information was set", "already existent", "makoto@soramitsu"
+    "Key", "key of information being set", "`[A-Za-z0-9_]{1,}`", "Name"
+    "Value", "value of corresponding key", "None", "Makoto"
 
 Validation
 ^^^^^^^^^^
@@ -525,13 +515,12 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+----------------------------------------------------------------------------------+---------------------------------------+
-| Field      | Description                                                                      | Constraint                            |
-+============+==================================================================================+=======================================+
-| Account ID | ID of account to set quorum                                                      | already existent, account_name@domain |
-+------------+----------------------------------------------------------------------------------+---------------------------------------+
-| Quorum     | number of signatories needed to be included with a transaction from this account | 0 < quorum < 10                       |
-+------------+----------------------------------------------------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "ID of account to set quorum", "already existent", "makoto@soramitsu"
+    "Quorum", "number of signatories needed to be included with a transaction from this account", "0 < quorum < 10", "5"
 
 Validation
 ^^^^^^^^^^
@@ -539,8 +528,10 @@ Validation
 When quorum is set, it is checked if invariant of **size(signatories) >= quorum** holds.
 
 Two cases:
-Case 1. When transaction creator wants to set quorum for his/her account and he or she has permission CanRemoveSignatory
-Case 2. CanRemoveSignatory was granted to transaction creator
+
+    Case 1. When transaction creator wants to set quorum for his/her account and he or she has permission CanRemoveSignatory
+
+    Case 2. CanRemoveSignatory was granted to transaction creator
 
 Subtract asset quantity
 -----------------------
@@ -576,15 +567,13 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------+-----------------------------------------+---------------------+
-| Field      | Description                             | Constraint          |
-+============+=========================================+=====================+
-| Account ID | account id from which to subtract asset | account_name@domain |
-+------------+-----------------------------------------+---------------------+
-| Asset ID   | id of the asset                         | asset#account       |
-+------------+-----------------------------------------+---------------------+
-| Amount     | positive amount of the asset to add     | > 0                 |
-+------------+-----------------------------------------+---------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Account ID", "account id from which to subtract asset", "already existent", "makoto@soramitsu"
+    "Asset ID", "id of the asset", "asset#domain", "usd#morgan"
+    "Amount", "positive amount of the asset to subtract", "> 0", "200"
 
 Validation
 ^^^^^^^^^^
@@ -618,19 +607,15 @@ Schema
 Structure
 ^^^^^^^^^
 
-+------------------------+--------------------------------------+---------------------------------------+
-| Field                  | Description                          | Constraint                            |
-+========================+======================================+=======================================+
-| Source account ID      | ID of account to withdraw asset from | already existent, account_name@domain |
-+------------------------+--------------------------------------+---------------------------------------+
-| Destination account ID | ID of account to send asset at       | already existent, account_name@domain |
-+------------------------+--------------------------------------+---------------------------------------+
-| Asset ID               | ID of asset to use                   | already existent, asset_name#domain   |
-+------------------------+--------------------------------------+---------------------------------------+
-| Description            | Message to attach to transfer        | No constraints                        |
-+------------------------+--------------------------------------+---------------------------------------+
-| Amount                 | amount of asset to transfer          | 0 < amount < max_uint256              |
-+------------------------+--------------------------------------+---------------------------------------+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+    "Source account ID", "ID of account to withdraw asset from", "already existent", "makoto@soramitsu"
+    "Destination account ID", "ID of account to send asset at", "already existent", "alex@california"
+    "Asset ID", "ID of asset to transfer", "already existent", "usd#usa"
+    "Description", "Message to attach to transfer", "No constraints", "here's my money take it"
+    "Amount", "amount of the asset to transfer", "0 < amount < max_uint256", "200.20"
 
 Validation
 ^^^^^^^^^^
