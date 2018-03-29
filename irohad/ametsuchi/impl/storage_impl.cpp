@@ -276,8 +276,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       try {
         postgres_connection->activate();
       } catch (const pqxx::broken_connection &e) {
-        // TODO 29.03.2018 vdrobny Handle this exception
-        throw e;
+        // TODO 29.03.2018 vdrobny IR-1184 Handle this exception
+        throw pqxx::broken_connection(e);
       }
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection);
