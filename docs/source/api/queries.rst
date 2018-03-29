@@ -346,7 +346,7 @@ Response Structure
 
     "Asset ID", "identifier of asset used for checking the balance", "`[A-Za-z0-9]{1,9}`", "jpy"
     "Domain ID", "domain related to this asset", "`[A-Za-z0-9]{1,9}`", "japan"
-    "Precision", "number of digits after comma", "uint32", "2"
+    "Precision", "number of digits after comma", "0 < precision < 128", "2"
 
 Get roles
 ---------
