@@ -22,7 +22,6 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "responses.pb.h"
 
 constexpr auto kUser = "user@test";
 constexpr auto kAsset = "asset#domain";

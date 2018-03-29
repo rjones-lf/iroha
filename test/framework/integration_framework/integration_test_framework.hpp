@@ -31,6 +31,7 @@
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "cryptography/keypair.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
+#include "framework/integration_framework/test_irohad.hpp"
 #include "logger/logger.hpp"
 
 #include "backend/protobuf/block.hpp"
@@ -39,8 +40,6 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/proposal.hpp"
 
 namespace integration_framework {
 

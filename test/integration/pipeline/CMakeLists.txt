@@ -17,9 +17,7 @@
 
 addtest(pipeline_test pipeline_test.cpp)
 target_link_libraries(pipeline_test
-    application
-    raw_block_insertion
-    model_generators
     integration_framework
     shared_model_stateless_validation
+    shared_model_proto_builders
     )
