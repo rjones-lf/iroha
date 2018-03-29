@@ -28,4 +28,5 @@ target_link_libraries(command_execution
         common_execution
         validator
         rxcpp
+        schema
         )
