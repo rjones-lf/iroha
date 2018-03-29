@@ -42,8 +42,6 @@ TEST(BlockLoaderTest, BlockLoaderJsonParsing) {
 
   auto block = loader.parseBlock(str);
 
-
-
   ASSERT_TRUE(block);
   auto b = block.value();
 

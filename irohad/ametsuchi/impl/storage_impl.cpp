@@ -23,12 +23,7 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
-#include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
-
-// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
-// shared_model https://soramitsu.atlassian.net/browse/IR-887
-#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {

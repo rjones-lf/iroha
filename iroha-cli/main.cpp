@@ -93,8 +93,6 @@ int main(int argc, char *argv[]) {
         0, std::move(peers_address));
     auto block = generator.generateGenesisBlock(0, {transaction});
     // Convert to json
-    JsonBlockFactory json_factory;
-    auto doc = json_factory.serialize(block);
     std::ofstream output_file("genesis.block");
     output_file << shared_model::converters::protobuf::modelToJson(
         shared_model::proto::from_old(block)

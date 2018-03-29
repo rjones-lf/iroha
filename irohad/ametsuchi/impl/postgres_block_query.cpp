@@ -113,7 +113,7 @@ namespace iroha {
     std::function<void(pqxx::result &result)> PostgresBlockQuery::callback(
         const rxcpp::subscriber<wTransaction> &subscriber, uint64_t block_id) {
       return [this, &subscriber, block_id](pqxx::result &result) {
-        auto block = block_store_.get(block_id) | [this](const auto &bytes) {
+        auto block = block_store_.get(block_id) | [](const auto &bytes) {
           return shared_model::converters::protobuf::jsonToModel<
               shared_model::proto::Block>(bytesToString(bytes));
         };
