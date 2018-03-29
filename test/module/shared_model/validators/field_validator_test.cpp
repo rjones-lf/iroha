@@ -23,10 +23,13 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
 #include <boost/format.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/range/join.hpp>
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "model/permissions.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
@@ -122,14 +125,18 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidatorTest::quorum,
                                           quorum_test_cases));
 
+    field_validators.insert(makeValidator("permission",
+                                          &FieldValidator::validatePermission,
+                                          &FieldValidatorTest::permission,
+                                          permission_test_cases));
+
     // TODO: add validation to all fields
     for (const auto &field : {"value",
                               "signature",
                               "commands",
                               "quorum",
                               "tx_hashes",
-                              "precision",
-                              "permission"}) {
+                              "precision"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
@@ -491,6 +498,29 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::quorum, 128),
       makeTestCase(
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
+
+  std::vector<FieldTestCase> permissionTestCases() {
+    auto valid_cases = iroha::model::all_perm_group
+        | boost::adaptors::transformed([&](const auto &permission) {
+                         return makeTestCase(permission,
+                                             &FieldValidatorTest::permission,
+                                             permission,
+                                             true,
+                                             "");
+                       });
+    std::vector<FieldTestCase> invalid_cases = {
+        makeInvalidCase("non existing permission",
+                        "permission",
+                        &FieldValidatorTest::permission,
+                        "non_existing_permission")};
+    // merge valid and invalid cases
+    std::vector<FieldTestCase> all_cases;
+    all_cases.insert(all_cases.begin(), valid_cases.begin(), valid_cases.end());
+    all_cases.insert(
+        all_cases.begin(), invalid_cases.begin(), invalid_cases.end());
+    return all_cases;
+  }
+  std::vector<FieldTestCase> permission_test_cases = permissionTestCases();
 
   /**************************************************************************/
 

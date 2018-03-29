@@ -164,6 +164,7 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
+  std::string permission;
   iroha::protocol::RolePermission role_permission;
   iroha::protocol::GrantablePermission grantable_permission;
   uint8_t quorum;

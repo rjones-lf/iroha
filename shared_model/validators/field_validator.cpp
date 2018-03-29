@@ -214,7 +214,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::PermissionNameType &permission_name) const {
       if (iroha::model::all_perm_group.find(permission_name)
-          != iroha::model::all_perm_group.end()) {
+          == iroha::model::all_perm_group.end()) {
         reason.second.push_back("Provided permission does not exist");
       }
     }
