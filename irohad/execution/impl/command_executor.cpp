@@ -23,7 +23,6 @@
 #include "interfaces/commands/command.hpp"
 #include "model/permissions.hpp"
 #include "utils/amount_utils.hpp"
-#include "validator/domain_name_validator.hpp"
 
 namespace iroha {
 

@@ -25,7 +25,6 @@
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/transaction.hpp"
-#include "validator/address_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -66,6 +65,28 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::AccountNameType &account_name) const;
 
+      // clang-format off
+      /**
+       * Check if the given string `domain_id` is in valid domain syntax defined in
+       * the RFC 1035 and 1123. Return the result of the validation.
+       *
+       * The domain syntax in RFC 1035 is given below:
+       *
+       *   <domain>      ::= <subdomain> | ” ”
+       *   <subdomain>   ::= <label> | <subdomain> “.” <label>
+       *   <label>       ::= <letter> [ [ <ldh-str> ] <let-dig> ]
+       *   <ldh-str>     ::= <let-dig-hyp> | <let-dig-hyp> <ldh-str>
+       *   <let-dig-hyp> ::= <let-dig> | “-”
+       *   <let-dig>     ::= <letter> | <digit>
+       *   <letter>      ::= any one of the 52 alphabetic characters A through Z in
+       *                     upper case and a through z in lower case
+       *   <digit>       ::= any one of the ten digits 0 through 9
+       *
+       * And the subsequent RFC 1123 disallows the root white space.
+       *
+       * If the validation is not successful reason is updated with corresponding message
+       */
+      // clang-format on
       void validateDomainId(
           ReasonsGroupType &reason,
           const interface::types::DomainIdType &domain_id) const;
@@ -120,6 +141,7 @@ namespace shared_model {
       const static std::string account_name_pattern_;
       const static std::string asset_name_pattern_;
       const static std::string domain_pattern_;
+      const static std::string ip_v4_pattern_;
       const static std::string account_id_pattern_;
       const static std::string asset_id_pattern_;
       const static std::string detail_key_pattern_;
@@ -128,10 +150,12 @@ namespace shared_model {
       std::regex account_name_regex_;
       std::regex asset_name_regex_;
       std::regex domain_regex_;
+      std::regex ip_v4_regex_;
       std::regex account_id_regex_;
       std::regex asset_id_regex_;
       std::regex detail_key_regex_;
       std::regex role_id_regex_;
+
       // gap for future transactions
       time_t future_gap_;
       // max-delay between tx creation and validation

@@ -27,23 +27,28 @@ namespace shared_model {
   namespace validation {
 
     const std::string FieldValidator::account_name_pattern_ =
-        R"([a-z_0-9]{1,32})";
+        R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::asset_name_pattern_ =
-        R"([a-z_0-9]{1,32})";
+        R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::domain_pattern_ =
-        R"(([a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)";
+        R"#(([a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)#";
     const std::string FieldValidator::account_id_pattern_ =
-        account_name_pattern_ + R"(\@)" + domain_pattern_;
+        account_name_pattern_ + R"#(\@)#" + domain_pattern_;
     const std::string FieldValidator::asset_id_pattern_ =
-        asset_name_pattern_ + R"(\#)" + domain_pattern_;
+        asset_name_pattern_ + R"#(\#)#" + domain_pattern_;
     const std::string FieldValidator::detail_key_pattern_ =
         R"([A-Za-z0-9_]{1,64})";
-    const std::string FieldValidator::role_id_pattern_ = R"([a-z_0-9]{1,32})";
+    const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
+    const std::string FieldValidator::ip_v4_pattern_ =
+        R"#((^((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3})#"
+        R"#(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])):)#"
+        R"#((6553[0-5]|655[0-2]\d|65[0-4]\d\d|6[0-4]\d{3}|[1-5]\d{4}|[1-9]\d{0,3}|0)$))#";
 
     FieldValidator::FieldValidator(time_t future_gap)
         : account_name_regex_(account_name_pattern_),
           asset_name_regex_(asset_name_pattern_),
           domain_regex_(domain_pattern_),
+          ip_v4_regex_(ip_v4_pattern_),
           account_id_regex_(account_id_pattern_),
           asset_id_regex_(asset_id_pattern_),
           detail_key_regex_(detail_key_pattern_),
@@ -107,8 +112,8 @@ namespace shared_model {
     void FieldValidator::validatePeerAddress(
         ReasonsGroupType &reason,
         const interface::types::AddressType &address) const {
-      if (not(iroha::validator::isValidIpV4(address)
-              or iroha::validator::isValidHostname(address))) {
+      if (not(std::regex_match(address, ip_v4_regex_)
+              or std::regex_match(address, domain_regex_))) {
         auto message =
             (boost::format("Wrongly formed peer address, passed value: '%s'. "
                            "Field should have valid IPv4 format or be a valid "
