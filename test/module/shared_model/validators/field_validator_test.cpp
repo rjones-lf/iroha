@@ -167,9 +167,7 @@ class FieldValidatorTest : public ValidatorsTest {
       if (!testcase.value_is_valid) {
         ASSERT_TRUE(!reason.second.empty())
             << testFailMessage(field_name, testcase.name);
-        //        ASSERT_THAT(reason.second.at(0),
-        //                    testing::MatchesRegex(testcase.expected_message))
-        //            << testFailMessage(field_name, testcase.name);
+        // TODO add returned message check
       } else {
         EXPECT_TRUE(reason.second.empty())
             << testFailMessage(field_name, testcase.name)

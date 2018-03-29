@@ -168,9 +168,9 @@ namespace shared_model {
           std::chrono::minutes(5) / std::chrono::milliseconds(1);
 
       // size of key
-      static constexpr auto key_size = 32u;
-      static constexpr auto value_size = 4096u;
-      static constexpr auto description_size = 64u;
+      static const size_t public_key_size;
+      static const size_t value_size;
+      static const size_t description_size;
     };
   }  // namespace validation
 }  // namespace shared_model

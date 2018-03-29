@@ -46,6 +46,10 @@ namespace shared_model {
         R"([A-Za-z0-9_]{1,64})";
     const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
 
+    const size_t FieldValidator::public_key_size = 32;
+    const size_t FieldValidator::value_size = 4096;
+    const size_t FieldValidator::description_size = 64;
+
     FieldValidator::FieldValidator(time_t future_gap)
         : account_name_regex_(account_name_pattern_),
           asset_name_regex_(asset_name_pattern_),
@@ -103,10 +107,10 @@ namespace shared_model {
     void FieldValidator::validatePubkey(
         ReasonsGroupType &reason,
         const interface::types::PubkeyType &pubkey) const {
-      if (pubkey.blob().size() != key_size) {
+      if (pubkey.blob().size() != public_key_size) {
         auto message = (boost::format("Public key has wrong size, passed size: "
                                       "%d. Expected size: %d")
-                        % pubkey.blob().size() % (size_t)key_size)
+                        % pubkey.blob().size() % public_key_size)
                            .str();
         reason.second.push_back(std::move(message));
       }
@@ -194,7 +198,7 @@ namespace shared_model {
       if (value.size() > value_size) {
         auto message =
             (boost::format("Detail value size should be less or equal '%d'")
-             % (size_t)value_size)
+             % value_size)
                 .str();
         reason.second.push_back(std::move(message));
       }
@@ -325,7 +329,7 @@ namespace shared_model {
       if (description.size() > description_size) {
         reason.second.push_back(
             (boost::format("Description size should be less or equal '%d'")
-             % (size_t)description_size)
+             % description_size)
                 .str());
       }
     }
