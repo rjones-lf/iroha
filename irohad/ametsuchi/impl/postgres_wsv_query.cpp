@@ -21,12 +21,12 @@ namespace iroha {
   namespace ametsuchi {
 
     using shared_model::interface::types::AccountIdType;
-    using shared_model::interface::types::PermissionNameType;
-    using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::AssetIdType;
+    using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::JsonType;
-    using shared_model::interface::types::RoleIdType;
+    using shared_model::interface::types::PermissionNameType;
     using shared_model::interface::types::PubkeyType;
+    using shared_model::interface::types::RoleIdType;
 
     const std::string kRoleId = "role_id";
     const char *kAccountNotFound = "Account {} not found";

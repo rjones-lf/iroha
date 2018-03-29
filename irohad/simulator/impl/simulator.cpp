@@ -16,12 +16,12 @@
  */
 
 #include "simulator/impl/simulator.hpp"
+
+#include <boost/range/adaptor/transformed.hpp>
+
 #include "builders/protobuf/block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "model/sha3_hash.hpp"
-
-#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -31,11 +31,11 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
-        std::shared_ptr<model::ModelCryptoProvider> crypto_provider)
+        std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
-          crypto_provider_(std::move(crypto_provider)) {
+          crypto_signer_(std::move(crypto_signer)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,
@@ -97,27 +97,24 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      model::Block new_block;
-      new_block.height = proposal.height();
-      new_block.prev_hash =
-          *iroha::hexstringToArray<iroha::model::Block::HashType::size()>(
-              last_block.value()->hash().hex());
-      auto txs = boost::accumulate(
-          proposal.transactions(),
-          std::vector<iroha::model::Transaction>{},
-          [](auto &&vec, const auto &tx) {
-            std::unique_ptr<iroha::model::Transaction> ptr(tx->makeOldModel());
-            vec.emplace_back(*ptr);
-            return std::forward<decltype(vec)>(vec);
-          });
-      new_block.transactions = txs;
-      new_block.txs_number = proposal.transactions().size();
-      new_block.created_ts = proposal.createdTime();
-      new_block.hash = hash(new_block);
-      crypto_provider_->sign(new_block);
-
+      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic, so
+      // that this cast will not be needed
+      auto proto_txs =
+          proposal.transactions()
+          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
+              return static_cast<const shared_model::proto::Transaction &>(
+                  *polymorphic_tx);
+            });
       auto block = std::make_shared<shared_model::proto::Block>(
-          shared_model::proto::Block(shared_model::proto::from_old(new_block)));
+          shared_model::proto::UnsignedBlockBuilder()
+              .height(proposal.height())
+              .prevHash(last_block.value()->hash())
+              .transactions(proto_txs)
+              .createdTime(proposal.createdTime())
+              .build());
+
+      crypto_signer_->sign(*block);
+
       block_notifier_.get_subscriber().on_next(block);
     }
 

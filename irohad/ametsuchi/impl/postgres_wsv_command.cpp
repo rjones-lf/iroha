@@ -33,7 +33,7 @@ namespace iroha {
           execute_{makeExecuteResult(transaction_)} {}
 
     WsvCommandResult PostgresWsvCommand::insertRole(
-        const std::string &role_name) {
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result = execute_("INSERT INTO role(role_id) VALUES ("
                              + transaction_.quote(role_name) + ");");
 
@@ -45,7 +45,8 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountRole(
-        const std::string &account_id, const std::string &role_name) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result =
           execute_("INSERT INTO account_has_roles(account_id, role_id) VALUES ("
                    + transaction_.quote(account_id) + ", "
@@ -62,7 +63,8 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountRole(
-        const std::string &account_id, const std::string &role_name) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::RoleIdType &role_name) {
       auto result = execute_("DELETE FROM account_has_roles WHERE account_id="
                              + transaction_.quote(account_id) + "AND role_id="
                              + transaction_.quote(role_name) + ";");
@@ -78,7 +80,9 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
-        const std::string &role_id, const std::set<std::string> &permissions) {
+        const shared_model::interface::types::RoleIdType &role_id,
+        const std::set<shared_model::interface::types::PermissionNameType>
+            &permissions) {
       auto entry = [this, &role_id](auto permission) {
         return "(" + transaction_.quote(role_id) + ", "
             + transaction_.quote(permission) + ")";
@@ -110,9 +114,11 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountGrantablePermission(
-        const std::string &permittee_account_id,
-        const std::string &account_id,
-        const std::string &permission_id) {
+        const shared_model::interface::types::AccountIdType
+            &permittee_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PermissionNameType
+            &permission_id) {
       auto result = execute_(
           "INSERT INTO "
           "account_has_grantable_permissions(permittee_account_id, "
@@ -134,9 +140,11 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountGrantablePermission(
-        const std::string &permittee_account_id,
-        const std::string &account_id,
-        const std::string &permission_id) {
+        const shared_model::interface::types::AccountIdType
+            &permittee_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PermissionNameType
+            &permission_id) {
       auto result = execute_(
           "DELETE FROM public.account_has_grantable_permissions WHERE "
           "permittee_account_id="
@@ -157,17 +165,17 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccount(
-        const model::Account &account) {
+        const shared_model::interface::Account &account) {
       auto result = execute_(
           "INSERT INTO account(account_id, domain_id, quorum, "
           "transaction_count, data) VALUES ("
-          + transaction_.quote(account.account_id) + ", "
-          + transaction_.quote(account.domain_id) + ", "
-          + transaction_.quote(account.quorum)
+          + transaction_.quote(account.accountId()) + ", "
+          + transaction_.quote(account.domainId()) + ", "
+          + transaction_.quote(account.quorum())
           + ", "
           // Transaction counter
           + transaction_.quote(default_tx_counter) + ", "
-          + transaction_.quote(account.json_data) + ");");
+          + transaction_.quote(account.jsonData()) + ");");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert account, "
@@ -176,8 +184,8 @@ namespace iroha {
                               "quorum: '%d', "
                               "transaction counter: '%d', "
                               "json_data: %s")
-                % account.account_id % account.domain_id % account.quorum
-                % default_tx_counter % account.json_data)
+                % account.accountId() % account.domainId() % account.quorum()
+                % default_tx_counter % account.jsonData())
             .str();
       };
 
@@ -185,20 +193,20 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertAsset(
-        const model::Asset &asset) {
-      uint32_t precision = asset.precision;
+        const shared_model::interface::Asset &asset) {
+      uint32_t precision = asset.precision();
       auto result = execute_(
           "INSERT INTO asset(asset_id, domain_id, \"precision\", data) "
           "VALUES ("
-          + transaction_.quote(asset.asset_id) + ", "
-          + transaction_.quote(asset.domain_id) + ", "
+          + transaction_.quote(asset.assetId()) + ", "
+          + transaction_.quote(asset.domainId()) + ", "
           + transaction_.quote(precision) + ", " + /*asset.data*/ "NULL"
           + ");");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert asset, asset id: '%s', "
                               "domain id: '%s', precision: %d")
-                % asset.asset_id % asset.domain_id % precision)
+                % asset.assetId() % asset.domainId() % precision)
             .str();
       };
 
@@ -206,20 +214,21 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::upsertAccountAsset(
-        const model::AccountAsset &asset) {
+        const shared_model::interface::AccountAsset &asset) {
       auto result = execute_(
             "INSERT INTO account_has_asset(account_id, asset_id, amount) "
             "VALUES ("
-            + transaction_.quote(asset.account_id) + ", "
-            + transaction_.quote(asset.asset_id) + ", "
-            + transaction_.quote(asset.balance.to_string())
+            + transaction_.quote(asset.accountId()) + ", "
+            + transaction_.quote(asset.assetId()) + ", "
+            + transaction_.quote(asset.balance().toStringRepr())
             + ") ON CONFLICT (account_id, asset_id) DO UPDATE SET "
             "amount = EXCLUDED.amount;");
 
       auto message_gen = [&] {
         return (boost::format("failed to upsert account, account id: '%s', "
                               "asset id: '%s', balance: %s")
-                % asset.account_id % asset.asset_id % asset.balance.to_string())
+                % asset.accountId() % asset.assetId()
+                % asset.balance().toString())
             .str();
       };
 
@@ -227,59 +236,63 @@ namespace iroha {
     }
 
     WsvCommandResult PostgresWsvCommand::insertSignatory(
-        const pubkey_t &signatory) {
-      auto result = execute_("INSERT INTO signatory(public_key) VALUES ("
-                             + transaction_.quote(pqxx::binarystring(
-                                   signatory.data(), signatory.size()))
-                             + ") ON CONFLICT DO NOTHING;");
-
+        const shared_model::interface::types::PubkeyType &signatory) {
+      auto result =
+          execute_("INSERT INTO signatory(public_key) VALUES ("
+                   + transaction_.quote(pqxx::binarystring(
+                         signatory.blob().data(), signatory.blob().size()))
+                   + ") ON CONFLICT DO NOTHING;");
       auto message_gen = [&] {
-        return (boost::format("failed to insert signatory, signatory hex string: '%s'")
-                % signatory.to_hexstring())
+        return (boost::format(
+                    "failed to insert signatory, signatory hex string: '%s'")
+                % signatory.hex())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::insertAccountSignatory(
-        const std::string &account_id, const pubkey_t &signatory) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PubkeyType &signatory) {
       auto result = execute_(
           "INSERT INTO account_has_signatory(account_id, public_key) VALUES ("
           + transaction_.quote(account_id) + ", "
-          + transaction_.quote(
-                pqxx::binarystring(signatory.data(), signatory.size()))
+          + transaction_.quote(pqxx::binarystring(signatory.blob().data(),
+                                                  signatory.blob().size()))
           + ");");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert account signatory, account id: "
                               "'%s', signatory hex string: '%s")
-                % account_id % signatory.to_hexstring())
+                % account_id % signatory.hex())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::deleteAccountSignatory(
-        const std::string &account_id, const pubkey_t &signatory) {
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::PubkeyType &signatory) {
       auto result =
           execute_("DELETE FROM account_has_signatory WHERE account_id = "
                    + transaction_.quote(account_id) + " AND public_key = "
-                   + transaction_.quote(
-                         pqxx::binarystring(signatory.data(), signatory.size()))
+                   + transaction_.quote(pqxx::binarystring(
+                         signatory.blob().data(), signatory.blob().size()))
                    + ";");
 
       auto message_gen = [&] {
         return (boost::format("failed to delete account signatory, account id: "
                               "'%s', signatory hex string: '%s'")
-                % account_id % signatory.to_hexstring())
+                % account_id % signatory.hex())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::deleteSignatory(
-        const pubkey_t &signatory) {
-      pqxx::binarystring public_key(signatory.data(), signatory.size());
+        const shared_model::interface::types::PubkeyType &signatory) {
+      pqxx::binarystring public_key(signatory.blob().data(),
+                                    signatory.blob().size());
       auto result = execute_("DELETE FROM signatory WHERE public_key = "
                     + transaction_.quote(public_key)
                     + " AND NOT EXISTS (SELECT 1 FROM account_has_signatory "
@@ -289,84 +302,87 @@ namespace iroha {
                     + transaction_.quote(public_key) + ");");
 
       auto message_gen = [&] {
-        return (boost::format("failed to delete signatory, signatory hex string: '%s'")
-                % signatory.to_hexstring())
+        return (boost::format(
+                    "failed to delete signatory, signatory hex string: '%s'")
+                % signatory.hex())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresWsvCommand::insertPeer(const model::Peer &peer) {
-      auto result = execute_("INSERT INTO peer(public_key, address) VALUES ("
-                             + transaction_.quote(pqxx::binarystring(
-                                   peer.pubkey.data(), peer.pubkey.size()))
-                             + ", " + transaction_.quote(peer.address) + ");");
+    WsvCommandResult PostgresWsvCommand::insertPeer(
+        const shared_model::interface::Peer &peer) {
+      auto result =
+          execute_("INSERT INTO peer(public_key, address) VALUES ("
+                   + transaction_.quote(pqxx::binarystring(
+                         peer.pubkey().blob().data(), peer.pubkey().size()))
+                   + ", " + transaction_.quote(peer.address()) + ");");
 
       auto message_gen = [&] {
         return (boost::format(
                     "failed to insert peer, public key: '%s', address: '%s'")
-                % peer.pubkey.to_hexstring() % peer.address)
+                % peer.pubkey().hex() % peer.address())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresWsvCommand::deletePeer(const model::Peer &peer) {
-      auto result = execute_("DELETE FROM peer WHERE public_key = "
-                             + transaction_.quote(pqxx::binarystring(
-                                   peer.pubkey.data(), peer.pubkey.size()))
-                             + " AND address = "
-                             + transaction_.quote(peer.address) + ";");
-
+    WsvCommandResult PostgresWsvCommand::deletePeer(
+        const shared_model::interface::Peer &peer) {
+      auto result = execute_(
+          "DELETE FROM peer WHERE public_key = "
+          + transaction_.quote(pqxx::binarystring(peer.pubkey().blob().data(),
+                                                  peer.pubkey().size()))
+          + " AND address = " + transaction_.quote(peer.address()) + ";");
       auto message_gen = [&] {
         return (boost::format(
                     "failed to delete peer, public key: '%s', address: '%s'")
-                % peer.pubkey.to_hexstring() % peer.address)
+                % peer.pubkey().hex() % peer.address())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::insertDomain(
-        const model::Domain &domain) {
+        const shared_model::interface::Domain &domain) {
       auto result =
           execute_("INSERT INTO domain(domain_id, default_role) VALUES ("
-                   + transaction_.quote(domain.domain_id) + ", "
-                   + transaction_.quote(domain.default_role) + ");");
+                   + transaction_.quote(domain.domainId()) + ", "
+                   + transaction_.quote(domain.defaultRole()) + ");");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert domain, domain id: '%s', "
                               "default role: '%s'")
-                % domain.domain_id % domain.default_role)
+                % domain.domainId() % domain.defaultRole())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::updateAccount(
-        const model::Account &account) {
+        const shared_model::interface::Account &account) {
       auto result = execute_(
             "UPDATE account\n"
             "   SET quorum=" +
-            transaction_.quote(account.quorum) +
+            transaction_.quote(account.quorum()) +
             ", transaction_count=" +
             /*account.transaction_count*/ transaction_.quote(default_tx_counter) +
             "\n"
             " WHERE account_id=" +
-            transaction_.quote(account.account_id) + ";");
+            transaction_.quote(account.accountId()) + ";");
 
       auto message_gen = [&] {
         return (boost::format(
                     "failed to update account, account id: '%s', quorum: '%s'")
-                % account.account_id % account.quorum)
+                % account.accountId() % account.quorum())
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
     WsvCommandResult PostgresWsvCommand::setAccountKV(
-        const std::string &account_id,
-        const std::string &creator_account_id,
+        const shared_model::interface::types::AccountIdType &account_id,
+        const shared_model::interface::types::AccountIdType &creator_account_id,
         const std::string &key,
         const std::string &val) {
       auto result = execute_(

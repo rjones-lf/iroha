@@ -21,13 +21,12 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/temporary_factory.hpp"
-#include "model/model_crypto_provider.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "logger/logger.hpp"
 #include "network/ordering_gate.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/verified_proposal_creator.hpp"
 #include "validation/stateful_validator.hpp"
-
-#include "logger/logger.hpp"
 
 namespace iroha {
   namespace simulator {
@@ -39,7 +38,8 @@ namespace iroha {
           std::shared_ptr<validation::StatefulValidator> statefulValidator,
           std::shared_ptr<ametsuchi::TemporaryFactory> factory,
           std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
-          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
+          std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
+              crypto_signer);
 
       Simulator(const Simulator &) = delete;
       Simulator &operator=(const Simulator &) = delete;
@@ -72,7 +72,7 @@ namespace iroha {
       std::shared_ptr<validation::StatefulValidator> validator_;
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;
       std::shared_ptr<ametsuchi::BlockQuery> block_queries_;
-      std::shared_ptr<model::ModelCryptoProvider> crypto_provider_;
+      std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
 
       logger::Logger log_;
 

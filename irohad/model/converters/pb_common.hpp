@@ -22,8 +22,13 @@
 #include "commands.pb.h"
 #include "common/types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "model/account.hpp"
+#include "model/account_asset.hpp"
+#include "model/asset.hpp"
+#include "model/domain.hpp"
 #include "model/peer.hpp"
 #include "model/signature.hpp"
+#include "responses.pb.h"
 
 namespace iroha {
   namespace model {
@@ -35,6 +40,14 @@ namespace iroha {
       // peer
       protocol::Peer serializePeer(iroha::model::Peer iroha_peer);
       iroha::model::Peer deserializePeer(protocol::Peer pb_peer);
+
+      iroha::protocol::Account serializeAccount(
+          const iroha::model::Account &account);
+      iroha::protocol::Asset serializeAsset(const iroha::model::Asset &asset);
+      iroha::protocol::AccountAsset serializeAccountAsset(
+          const iroha::model::AccountAsset &account_asset);
+      iroha::protocol::Domain serializeDomain(
+          const iroha::model::Domain &domain);
     }  // namespace converters
   }    // namespace model
 

@@ -26,14 +26,8 @@ using namespace iroha::consensus::yac;
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
   shared_model::proto::Block block = TestBlockBuilder().build();
-  auto sig = shared_model::proto::SignatureBuilder()
-                 .publicKey(shared_model::crypto::PublicKey("key"))
-                 .signedData(shared_model::crypto::Signed("data"))
-                 .build();
-
-  block.addSignature(
-      shared_model::detail::makePolymorphic<shared_model::proto::Signature>(
-          sig.getTransport()));
+  block.addSignature(shared_model::crypto::Signed("data"),
+                     shared_model::crypto::PublicKey("key"));
 
   auto hex_test_hash = block.hash().hex();
 
@@ -46,14 +40,8 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
   shared_model::proto::Block block = TestBlockBuilder().build();
-  auto sig = shared_model::proto::SignatureBuilder()
-                 .publicKey(shared_model::crypto::PublicKey("key"))
-                 .signedData(shared_model::crypto::Signed("data"))
-                 .build();
-
-  block.addSignature(
-      shared_model::detail::makePolymorphic<shared_model::proto::Signature>(
-          sig.getTransport()));
+  block.addSignature(shared_model::crypto::Signed("data"),
+                     shared_model::crypto::PublicKey("key"));
 
   auto yac_hash = hash_provider.makeHash(block);
 

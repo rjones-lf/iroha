@@ -16,6 +16,7 @@
  */
 
 #include "backend/protobuf/from_old_model.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 
 using namespace std::chrono_literals;
@@ -40,6 +41,10 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
     ivanKeypair_ = createNewAccountKeypair(IVAN_ID);
     teaKeypair_ = createNewAccountKeypair(TEA_ID);
 
+    shared_model::crypto::Keypair adminKeypair(
+        shared_model::crypto::PublicKey(adminKeypair_.pubkey.to_string()),
+        shared_model::crypto::PrivateKey(adminKeypair_.privkey.to_string()));
+
     // Admin creates domains: [usabnk, khm, ru]
     auto genesis_tx2 = TransactionGenerator().generateTransaction(
         ADMIN_ID,
@@ -56,7 +61,9 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
          CommandGenerator().generateCreateAccount(
              TEA_NAME, DOMAIN_KHM, teaKeypair_.pubkey)});
 
-    iroha::model::ModelCryptoProviderImpl(adminKeypair_).sign(genesis_tx2);
+    auto genesis_transaction = shared_model::proto::from_old(genesis_tx2);
+    shared_model::crypto::CryptoModelSigner<>(adminKeypair).sign(genesis_transaction);
+    genesis_tx2 = *std::unique_ptr<iroha::model::Transaction>(genesis_transaction.makeOldModel());
 
     genesis_block =
         iroha::model::generators::BlockGenerator().generateGenesisBlock(
@@ -145,6 +152,13 @@ class TransferAssetInterDomainTest : public TxPipelineIntegrationTestFixture {
  * @then Validate transactions processed.
  */
 TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
+  shared_model::crypto::Keypair nbaKeypair(
+      shared_model::crypto::PublicKey(nbaKeypair_.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(nbaKeypair_.privkey.to_string()));
+  shared_model::crypto::Keypair ivanKeypair(
+      shared_model::crypto::PublicKey(ivanKeypair_.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(ivanKeypair_.privkey.to_string()));
+
   // NBA creates usd asset and add own asset quantity.
   auto tx1 = TransactionGenerator().generateTransaction(
       NBA_ID,
@@ -155,7 +169,9 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            NBA_ID,  // MoneyCreator, who can AddAssetQuantity to my own wallet.
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("1000000.00")))});
-  iroha::model::ModelCryptoProviderImpl(nbaKeypair_).sign(tx1);
+  auto transaction1 = shared_model::proto::from_old(tx1);
+  shared_model::crypto::CryptoModelSigner<>(nbaKeypair).sign(transaction1);
+  tx1 = *std::unique_ptr<iroha::model::Transaction>(transaction1.makeOldModel());
 
   // NBA transfers asset to ivan@ru and tea@khm
   auto tx2 = TransactionGenerator().generateTransaction(
@@ -171,7 +187,9 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
            TEA_ID,
            ASSET_USD_ID,
            getVal(iroha::Amount().createFromString("50.00")))});
-  iroha::model::ModelCryptoProviderImpl(nbaKeypair_).sign(tx2);
+  auto transaction2 = shared_model::proto::from_old(tx2);
+  shared_model::crypto::CryptoModelSigner<>(nbaKeypair).sign(transaction2);
+  tx2 = *std::unique_ptr<iroha::model::Transaction>(transaction2.makeOldModel());
 
   // transfer asset from ivan@ru to tea@khm (between different domains)
   auto tx3 = TransactionGenerator().generateTransaction(
@@ -182,7 +200,9 @@ TEST_F(TransferAssetInterDomainTest, TransferAssetInterDomainTest) {
           TEA_ID,
           ASSET_USD_ID,
           getVal(iroha::Amount().createFromString("5.50")))});
-  iroha::model::ModelCryptoProviderImpl(ivanKeypair_).sign(tx3);
+  auto transaction3 = shared_model::proto::from_old(tx3);
+  shared_model::crypto::CryptoModelSigner<>(ivanKeypair).sign(transaction3);
+  tx3 = *std::unique_ptr<iroha::model::Transaction>(transaction3.makeOldModel());
 
   sendTxsInOrderAndValidate({tx1, tx2, tx3});
 }

@@ -22,7 +22,6 @@
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -51,12 +50,8 @@ namespace shared_model {
       T signAndAddSignature(const crypto::Keypair &keypair) {
         auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
             shared_model::crypto::Blob(unsigned_.payload()), keypair);
-        iroha::protocol::Signature protosig;
-        protosig.set_pubkey(crypto::toBinaryString(keypair.publicKey()));
-        protosig.set_signature(crypto::toBinaryString(signedBlob));
-        auto *s1 = new Signature(protosig);
-        unsigned_.addSignature(detail::PolymorphicWrapper<Signature>(
-            s1));  // TODO: 05.12.2017 luckychess think about false case
+        unsigned_.addSignature(signedBlob, keypair.publicKey());
+        // TODO: 05.12.2017 luckychess think about false case
         return unsigned_;
       }
 

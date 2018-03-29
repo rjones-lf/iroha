@@ -205,8 +205,7 @@ namespace shared_model {
       if (now + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
                                       "timestamp: %llu, now: %llu")
-                        % timestamp
-                        % now)
+                        % timestamp % now)
                            .str();
         reason.second.push_back(std::move(message));
       }
@@ -214,8 +213,7 @@ namespace shared_model {
       if (now > max_delay + timestamp) {
         auto message =
             (boost::format("bad timestamp: too old, timestamp: %llu, now: %llu")
-             % timestamp
-             % now)
+             % timestamp % now)
                 .str();
         reason.second.push_back(std::move(message));
       }

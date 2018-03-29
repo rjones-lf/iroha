@@ -17,7 +17,7 @@
 
 #include "model/query_execution.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "model/execution/common_executor.hpp"
+#include "execution/common_executor.hpp"
 #include "model/permissions.hpp"
 #include "model/queries/responses/account_assets_response.hpp"
 #include "model/queries/responses/account_detail_response.hpp"
@@ -53,7 +53,7 @@ bool hasQueryPermission(const std::string &creator,
                         const std::string &indiv_permission_id,
                         const std::string &all_permission_id,
                         const std::string &domain_permission_id) {
-  auto perms_set = getAccountPermissions(creator, wsv_query);
+  auto perms_set = iroha::getAccountPermissions(creator, wsv_query);
   return
       // 1. Creator has grant permission from other user
       (creator != target_account
@@ -65,14 +65,14 @@ bool hasQueryPermission(const std::string &creator,
                // 2. Creator want to query his account, must have role
                // permission
                (creator == target_account
-                and accountHasPermission(perms_set.value(),
+                and iroha::accountHasPermission(perms_set.value(),
                                          indiv_permission_id))
                or  // 3. Creator has global permission to get any account
-               (accountHasPermission(perms_set.value(),
+               (iroha::accountHasPermission(perms_set.value(),
                                      all_permission_id))
                or  // 4. Creator has domain permission
                (getDomainFromName(creator) == getDomainFromName(target_account)
-                and accountHasPermission(perms_set.value(),
+                and iroha::accountHasPermission(perms_set.value(),
                                          domain_permission_id))));
 }
 

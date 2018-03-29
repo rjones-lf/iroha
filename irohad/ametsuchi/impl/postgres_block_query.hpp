@@ -18,15 +18,14 @@
 #ifndef IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
+#include <boost/optional.hpp>
 #include <pqxx/nontransaction>
+
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "logger/logger.hpp"
-#include "postgres_wsv_common.hpp"
-
 #include "model/converters/json_block_factory.hpp"
-
-#include <boost/optional.hpp>
+#include "postgres_wsv_common.hpp"
 
 namespace iroha {
   namespace ametsuchi {

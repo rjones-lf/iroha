@@ -70,8 +70,7 @@ TEST(SignatureBuilderTest, SeveralObjectsFromOneBuilder) {
   shared_model::interface::Signature::SignedType expected_signed(
       "signed object");
 
-  auto state = builder.publicKey(expected_key)
-                   .signedData(expected_signed);
+  auto state = builder.publicKey(expected_key).signedData(expected_signed);
   auto signature = state.build();
   auto signature2 = state.build();
 

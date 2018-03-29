@@ -16,9 +16,13 @@
  */
 
 #include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
+
 #include <algorithm>
 #include <atomic>
+
 #include "backend/protobuf/from_old_model.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
+#include "model/sha3_hash.hpp"
 
 using namespace framework::test_subscriber;
 using namespace std::chrono_literals;
@@ -69,7 +73,12 @@ void TxPipelineIntegrationTestFixture::sendTxsInOrderAndValidate(
     }
     expected_block.hash = iroha::hash(expected_block);
     expected_block.sigs = {};
-    irohad->getCryptoProvider()->sign(expected_block);
+
+    auto expected = shared_model::proto::from_old(expected_block);
+    irohad->getCryptoSigner()->sign(expected);
+    expected_block =
+        *std::unique_ptr<iroha::model::Block>(expected.makeOldModel());
+
     // compare old and new model object by their hash
     ASSERT_EQ(expected_block.hash.to_hexstring(), blocks[i]->hash().hex());
   }
@@ -93,8 +102,8 @@ void TxPipelineIntegrationTestFixture::setTestSubscribers(size_t num_blocks) {
       [this](auto proposal) { proposals.push_back(proposal); });
 
   // verify commit and block
-  commit_wrapper =
-      std::make_unique<TestSubscriber<iroha::Commit>>(make_test_subscriber<CallExact>(
+  commit_wrapper = std::make_unique<TestSubscriber<iroha::Commit>>(
+      make_test_subscriber<CallExact>(
           irohad->getPeerCommunicationService()->on_commit(), num_blocks));
   commit_wrapper->subscribe([this](auto commit) {
     commit.subscribe([this](auto block) { blocks.push_back(block); });
@@ -120,7 +129,12 @@ void TxPipelineIntegrationTestFixture::sendTransaction(
   expected_block.txs_number = expected_proposal.transactions.size();
   expected_block.created_ts = 0;
   expected_block.hash = iroha::hash(expected_block);
-  irohad->getCryptoProvider()->sign(expected_block);
+
+  auto expected = shared_model::proto::from_old(expected_block);
+  irohad->getCryptoSigner()->sign(expected);
+  expected_block =
+      *std::unique_ptr<iroha::model::Block>(expected.makeOldModel());
+
   expected_blocks.emplace_back(expected_block);
 
   // send transactions to torii

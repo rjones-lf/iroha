@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,25 +15,23 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_STATELESS_VALIDATOR_HPP
-#define IROHA_STATELESS_VALIDATOR_HPP
+#ifndef IROHA_SHARED_MODEL_AMOUNT_TRUE_VALIDATOR_HPP
+#define IROHA_SHARED_MODEL_AMOUNT_TRUE_VALIDATOR_HPP
 
-#include <memory>
-
-#include "model/query.hpp"
-#include "model/transaction.hpp"
-
-namespace iroha {
+namespace shared_model {
   namespace validation {
 
-    class StatelessValidator {
+    /**
+     * Class that validates fields of commands, concrete queries, transaction,
+     * and query
+     */
+    class AmountTrueValidator {
      public:
-      virtual ~StatelessValidator() = default;
-
-      virtual bool validate(const model::Transaction &transaction) const = 0;
-      virtual bool validate(const model::Query &query) const = 0;
+      void validateAmount(ReasonsGroupType &reason,
+                          const interface::Amount &amount) const
+      {};
     };
   }  // namespace validation
-}  // namespace iroha
+}  // namespace shared_model
 
-#endif  // IROHA_STATELESS_VALIDATOR_HPP
+#endif  // IROHA_SHARED_MODEL_AMOUNT_TRUE_VALIDATOR_HPP

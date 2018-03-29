@@ -22,21 +22,10 @@
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "model/command.hpp"
-#include "model/model_crypto_provider.hpp"
 #include "model/query_execution.hpp"
 
 namespace iroha {
   namespace model {
-
-    class MockCryptoProvider : public ModelCryptoProvider {
-     public:
-      MOCK_CONST_METHOD1(verify, bool(const Transaction &));
-      MOCK_CONST_METHOD1(verify, bool(const Query &));
-      MOCK_CONST_METHOD1(verify, bool(const Block &));
-      MOCK_CONST_METHOD1(sign, void(Block &));
-      MOCK_CONST_METHOD1(sign, void(Transaction &));
-      MOCK_CONST_METHOD1(sign, void(Query &));
-    };
 
     class MockCommand : public Command {
      public:

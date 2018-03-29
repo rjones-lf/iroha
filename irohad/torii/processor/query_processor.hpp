@@ -36,8 +36,8 @@ namespace iroha {
        * @param client - query emitter
        * @param query - client intent
        */
-      virtual void queryHandle(std::shared_ptr<
-                               shared_model::interface::Query> qry) = 0;
+      virtual void queryHandle(
+          std::shared_ptr<shared_model::interface::Query> qry) = 0;
 
       /**
        * Subscribe for query responses

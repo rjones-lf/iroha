@@ -17,8 +17,8 @@
 
 #include "main/application.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
-#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -115,12 +115,12 @@ void Irohad::resetOrderingService() {
 }
 
 bool Irohad::restoreWsv() {
-  return wsv_restorer_->restoreWsv(*storage)
-      .match([](iroha::expected::Value<void> v) -> bool { return true; },
-             [&](iroha::expected::Error<std::string> &error) -> bool {
-               log_->error(error.error);
-               return false;
-             });
+  return wsv_restorer_->restoreWsv(*storage).match(
+      [](iroha::expected::Value<void> v) { return true; },
+      [&](iroha::expected::Error<std::string> &error) {
+        log_->error(error.error);
+        return false;
+      });
 }
 
 /**
@@ -136,7 +136,11 @@ void Irohad::initPeerQuery() {
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  crypto_verifier = std::make_shared<iroha::model::ModelCryptoProviderImpl>(keypair);
+  shared_model::crypto::Keypair keypair_(
+      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
+      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
+  crypto_signer_ =
+      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair_);
 
   log_->info("[Init] => crypto provider");
 }
@@ -170,7 +174,7 @@ void Irohad::initSimulator() {
                                           stateful_validator,
                                           storage,
                                           storage->getBlockQuery(),
-                                          crypto_verifier);
+                                          crypto_signer_);
 
   log_->info("[Init] => init simulator");
 }
@@ -180,7 +184,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader = loader_init.initBlockLoader(
-      wsv, storage->getBlockQuery(), crypto_verifier);
+      wsv, storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }

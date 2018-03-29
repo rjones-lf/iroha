@@ -56,6 +56,19 @@ namespace shared_model {
       }
 
       /**
+       * String representation.
+       * @return string representation of the asset.
+       */
+      std::string toStringRepr() const {
+        if (precision() > 0) {
+          boost::multiprecision::cpp_dec_float_50 float50(intValue());
+          float50 /= pow(10, precision());
+          return float50.str(precision(), std::ios_base::fixed);
+        }
+        return intValue().str(0, std::ios_base::fixed);
+      }
+
+      /**
        * Stringify the data.
        * @return the content of asset.
        */

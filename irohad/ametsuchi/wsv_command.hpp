@@ -20,21 +20,22 @@
 
 #include <set>
 #include <string>
+
 #include "common/result.hpp"
 #include "common/types.hpp"
+#include "interfaces/common_objects/types.hpp"
 
-#include "common/types.hpp"  // for pubkey_t
+namespace shared_model {
+  namespace interface {
+    class Asset;
+    class Account;
+    class Domain;
+    class Peer;
+    class AccountAsset;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
-
-  namespace model {
-    struct Asset;
-    struct Account;
-    struct Domain;
-    struct Peer;
-    struct AccountAsset;
-  }
-
   namespace ametsuchi {
 
     /**
@@ -65,7 +66,8 @@ namespace iroha {
        * @param role_name
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertRole(const std::string &role_name) = 0;
+      virtual WsvCommandResult insertRole(
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
 
       /**
        * Bind account and role
@@ -74,7 +76,8 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountRole(
-          const std::string &account_id, const std::string &role_name) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
       /**
        * Unbind account and role
        * @param account_id
@@ -82,7 +85,8 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountRole(
-          const std::string &account_id, const std::string &role_name) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) = 0;
 
       /**
        * Bind role and permissions
@@ -91,8 +95,9 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertRolePermissions(
-          const std::string &role_id,
-          const std::set<std::string> &permissions) = 0;
+          const shared_model::interface::types::RoleIdType &role_id,
+          const std::set<shared_model::interface::types::PermissionNameType>
+              &permissions) = 0;
 
       /**
        * Insert grantable permission
@@ -102,9 +107,11 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountGrantablePermission(
-          const std::string &permittee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const shared_model::interface::types::AccountIdType
+              &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) = 0;
 
       /**
        * Delete grantable permission
@@ -115,23 +122,27 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountGrantablePermission(
-          const std::string &permittee_account_id,
-          const std::string &account_id,
-          const std::string &permission_id) = 0;
+          const shared_model::interface::types::AccountIdType
+              &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PermissionNameType
+              &permission_id) = 0;
 
       /**
        *git
        * @param account
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertAccount(const model::Account &account) = 0;
+      virtual WsvCommandResult insertAccount(
+          const shared_model::interface::Account &account) = 0;
 
       /**
        *
        * @param account
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult updateAccount(const model::Account &account) = 0;
+      virtual WsvCommandResult updateAccount(
+          const shared_model::interface::Account &account) = 0;
 
       /**
        * @param account_id  account in which update key value
@@ -142,8 +153,9 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult setAccountKV(
-          const std::string &account_id,
-          const std::string &creator_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountIdType
+              &creator_account_id,
           const std::string &key,
           const std::string &val) = 0;
 
@@ -152,7 +164,8 @@ namespace iroha {
        * @param asset
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertAsset(const model::Asset &asset) = 0;
+      virtual WsvCommandResult insertAsset(
+          const shared_model::interface::Asset &asset) = 0;
 
       /**
        * Update or insert account asset
@@ -160,14 +173,15 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult upsertAccountAsset(
-          const model::AccountAsset &asset) = 0;
+          const shared_model::interface::AccountAsset &asset) = 0;
 
       /**
        *
        * @param signatory
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertSignatory(const pubkey_t &signatory) = 0;
+      virtual WsvCommandResult insertSignatory(
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Insert account signatory relationship
@@ -176,7 +190,8 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountSignatory(
-          const std::string &account_id, const pubkey_t &signatory) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Delete account signatory relationship
@@ -185,35 +200,40 @@ namespace iroha {
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountSignatory(
-          const std::string &account_id, const pubkey_t &signatory) = 0;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        * Delete signatory
        * @param signatory
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult deleteSignatory(const pubkey_t &signatory) = 0;
+      virtual WsvCommandResult deleteSignatory(
+          const shared_model::interface::types::PubkeyType &signatory) = 0;
 
       /**
        *
        * @param peer
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertPeer(const model::Peer &peer) = 0;
+      virtual WsvCommandResult insertPeer(
+          const shared_model::interface::Peer &peer) = 0;
 
       /**
        *
        * @param peer
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult deletePeer(const model::Peer &peer) = 0;
+      virtual WsvCommandResult deletePeer(
+          const shared_model::interface::Peer &peer) = 0;
 
       /**
        *
        * @param peer
        * @return WsvCommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult insertDomain(const model::Domain &domain) = 0;
+      virtual WsvCommandResult insertDomain(
+          const shared_model::interface::Domain &domain) = 0;
     };
 
   }  // namespace ametsuchi

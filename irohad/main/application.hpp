@@ -21,6 +21,7 @@
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -43,7 +44,6 @@
 #include "validation/chain_validator.hpp"
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
-#include "validation/impl/stateless_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 
 namespace iroha {
@@ -67,7 +67,7 @@ class Irohad {
    * @param vote_delay - waiting time before sending vote to next peer
    * @param load_delay - waiting time before loading committed block from next
    * peer
-   * @param keypair - public and private keys for crypto provider
+   * @param keypair - public and private keys for crypto signer
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -152,7 +152,7 @@ class Irohad {
   // ------------------------| internal dependencies |-------------------------
 
   // crypto provider
-  std::shared_ptr<iroha::model::ModelCryptoProvider> crypto_verifier;
+  std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
 
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;

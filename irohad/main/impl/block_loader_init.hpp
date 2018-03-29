@@ -42,8 +42,7 @@ namespace iroha {
        */
       auto createLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
+          std::shared_ptr<ametsuchi::BlockQuery> storage);
 
      public:
       /**
@@ -52,8 +51,7 @@ namespace iroha {
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<model::ModelCryptoProvider> crypto_provider);
+          std::shared_ptr<ametsuchi::BlockQuery> storage);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

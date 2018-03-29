@@ -23,13 +23,10 @@
 #include <pqxx/nontransaction>
 
 #include "ametsuchi/mutable_storage.hpp"
+#include "execution/command_executor.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
-
-  namespace model {
-    class CommandExecutorFactory;
-  }
 
   namespace ametsuchi {
 
@@ -43,8 +40,7 @@ namespace iroha {
       MutableStorageImpl(
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<pqxx::lazyconnection> connection,
-          std::unique_ptr<pqxx::nontransaction> transaction,
-          std::shared_ptr<model::CommandExecutorFactory> command_executors);
+          std::unique_ptr<pqxx::nontransaction> transaction);
 
       bool apply(
           const shared_model::interface::Block &block,
@@ -67,7 +63,7 @@ namespace iroha {
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
-      std::shared_ptr<model::CommandExecutorFactory> command_executors_;
+      std::shared_ptr<CommandExecutor> command_executor_;
 
       bool committed;
 

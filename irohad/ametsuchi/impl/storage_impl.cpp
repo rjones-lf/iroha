@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "model/converters/json_common.hpp"
-#include "model/execution/command_executor_factory.hpp"  // for CommandExecutorFactory
 #include "postgres_ordering_service_persistent_state.hpp"
 
 // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
@@ -74,11 +73,6 @@ namespace iroha {
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors) {
-        return expected::makeError(kCommandExecutorError);
-      }
-
       auto postgres_connection =
           std::make_unique<pqxx::lazyconnection>(postgres_options_);
       try {
@@ -91,19 +85,12 @@ namespace iroha {
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(
-              std::move(postgres_connection),
-              std::move(wsv_transaction),
-              std::move(command_executors.value())));
+          std::make_unique<TemporaryWsvImpl>(std::move(postgres_connection),
+                                             std::move(wsv_transaction)));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
-      auto command_executors = model::CommandExecutorFactory::create();
-      if (not command_executors) {
-        return expected::makeError(kCommandExecutorError);
-      }
-
       auto postgres_connection =
           std::make_unique<pqxx::lazyconnection>(postgres_options_);
       try {
@@ -126,8 +113,7 @@ namespace iroha {
           std::make_unique<MutableStorageImpl>(
               top_hash.value_or(shared_model::interface::types::HashType("")),
               std::move(postgres_connection),
-              std::move(wsv_transaction),
-              std::move(command_executors.value())));
+              std::move(wsv_transaction)));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {

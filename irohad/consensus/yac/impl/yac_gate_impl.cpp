@@ -135,9 +135,8 @@ namespace iroha {
         current_block_.second->clearSignatures();
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          auto wrap = shared_model::detail::PolymorphicWrapper<
-              shared_model::interface::Signature>(sig);
-          current_block_.second->addSignature(wrap);
+          current_block_.second->addSignature(sig->signedData(),
+                                              sig->publicKey());
         }
       }
     }  // namespace yac

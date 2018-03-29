@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-#include <grpc++/create_channel.h>
+#include "network/impl/block_loader_impl.hpp"
+
 #include <algorithm>
 
+#include <grpc++/create_channel.h>
+
 #include "backend/protobuf/block.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/peer.hpp"
-#include "network/impl/block_loader_impl.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -31,12 +33,10 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
-      crypto_provider_(crypto_provider),
       stateless_validator_(stateless_validator) {
   log_ = logger::log("BlockLoaderImpl");
 }
@@ -82,25 +82,25 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(peer.value()).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          auto result =
-              std::make_shared<shared_model::proto::Block>(std::move(block));
-
-          // stateless validation of block
-          auto answer = stateless_validator_->validate(*result);
-          if (answer.hasErrors()) {
-            log_->error(answer.reason());
-            context.TryCancel();
-            continue;
-          }
-
-          std::unique_ptr<iroha::model::Block> old_block(
-              result->makeOldModel());
-          if (not crypto_provider_->verify(*old_block)) {
-            log_->error(kInvalidBlockSignatures);
-            context.TryCancel();
-          } else {
-            subscriber.on_next(std::move(result));
-          }
+          shared_model::proto::TransportBuilder<
+              shared_model::proto::Block,
+              shared_model::validation::DefaultSignableBlockValidator>()
+              .build(block)
+              .match(
+                  // success case
+                  [this, &context, &subscriber](
+                      const iroha::expected::Value<shared_model::proto::Block>
+                          &result) {
+                    subscriber.on_next(
+                        std::move(std::make_shared<shared_model::proto::Block>(
+                            result.value)));
+                  },
+                  // fail case
+                  [this,
+                   &context](const iroha::expected::Error<std::string> &error) {
+                    log_->error(error.error);
+                    context.TryCancel();
+                  });
         }
         reader->Finish();
         subscriber.on_completed();
@@ -129,14 +129,8 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
     return boost::none;
   }
 
-  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
-  std::unique_ptr<iroha::model::Block> old_block(result->makeOldModel());
-  if (not crypto_provider_->verify(*old_block)) {
-    log_->error(kInvalidBlockSignatures);
-    return boost::none;
-  }
-
   // stateless validation of block
+  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
   auto answer = stateless_validator_->validate(*result);
   if (answer.hasErrors()) {
     log_->error(answer.reason());

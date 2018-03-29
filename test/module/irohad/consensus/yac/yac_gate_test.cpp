@@ -39,10 +39,10 @@ using namespace framework::test_subscriber;
 using namespace shared_model::crypto;
 using namespace std;
 
+using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 class YacGateTest : public ::testing::Test {
  public:

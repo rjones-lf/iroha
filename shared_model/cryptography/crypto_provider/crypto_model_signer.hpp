@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,33 +18,39 @@
 #ifndef IROHA_CRYPTO_MODEL_SIGNER_HPP_
 #define IROHA_CRYPTO_MODEL_SIGNER_HPP_
 
-#include "cryptography/keypair.hpp"
-#include "interfaces/base/signable.hpp"
-#include "interfaces/common_objects/signature.hpp"
+#include "cryptography/crypto_provider/crypto_signer.hpp"
 
 namespace shared_model {
-  namespace crypto {
 
-    template <typename SignerT>
+  namespace interface {
+    class Block;
+    class Query;
+    class Transaction;
+  }
+
+  namespace crypto {
+    template <typename Algorithm = CryptoSigner<>>
     class CryptoModelSigner {
      public:
-      CryptoModelSigner(crypto::Keypair kp);
+      explicit CryptoModelSigner(const shared_model::crypto::Keypair &keypair);
 
-      void sign(interface::Signable &s) noexcept;
+      virtual ~CryptoModelSigner() = default;
+
+      template <typename T>
+      void sign(T &signable) const noexcept {
+        auto signedBlob = Algorithm::sign(signable.payload(), keypair_);
+        signable.addSignature(signedBlob, keypair_.publicKey());
+      }
 
      private:
-      crypto::Keypair keypair_;
+      shared_model::crypto::Keypair keypair_;
     };
 
-    /// implementation
-    template <typename SignerT>
-    void CryptoModelSigner<SignerT>::sign(interface::Signable &s) noexcept {
-      auto sigblob = SignerT::sign(s.hash(), this->keypair_);
-    }
+    template <typename Algorithm>
+    CryptoModelSigner<Algorithm>::CryptoModelSigner(
+        const shared_model::crypto::Keypair &keypair)
+        : keypair_(keypair) {}
 
-    template <typename SignerT>
-    CryptoModelSigner<SignerT>::CryptoModelSigner(crypto::Keypair kp)
-        : keypair_(std::move(kp)) {}
   }  // namespace crypto
 }  // namespace shared_model
 

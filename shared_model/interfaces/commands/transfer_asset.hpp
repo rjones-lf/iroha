@@ -19,8 +19,8 @@
 #define IROHA_SHARED_MODEL_TRANSFER_ASSET_HPP
 
 #include "interfaces/base/primitive.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "interfaces/common_objects/amount.hpp"
+#include "interfaces/common_objects/types.hpp"
 #ifndef DISABLE_BACKWARD
 #include "model/commands/transfer_asset.hpp"
 #endif

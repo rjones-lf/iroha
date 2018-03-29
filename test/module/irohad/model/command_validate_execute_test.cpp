@@ -16,8 +16,9 @@
  */
 
 #include <limits>
-
+#include "backend/protobuf/from_old_model.hpp"
 #include "builders/default_builders.hpp"
+#include "execution/command_executor.hpp"
 #include "framework/result_fixture.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -35,7 +36,6 @@
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
-#include "model/execution/command_executor_factory.hpp"
 #include "model/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
@@ -53,10 +53,13 @@ using namespace framework::expected;
 class CommandValidateExecuteTest : public ::testing::Test {
  public:
   void SetUp() override {
-    factory = CommandExecutorFactory::create().value();
-
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
+
+    executor = std::make_shared<iroha::CommandExecutor>(
+        iroha::CommandExecutor(wsv_query, wsv_command));
+    validator = std::make_shared<iroha::CommandValidator>(
+        iroha::CommandValidator(wsv_query));
 
     shared_model::builder::AccountBuilder<
         shared_model::proto::AccountBuilder,
@@ -96,25 +99,35 @@ class CommandValidateExecuteTest : public ::testing::Test {
                             .build());
   }
 
-  ExecutionResult validateAndExecute() {
-    auto executor = factory->getCommandExecutor(command);
-    if (executor->validate(*command, *wsv_query, creator->accountId())) {
-      return executor->execute(
-          *command, *wsv_query, *wsv_command, creator->accountId());
+  iroha::ExecutionResult validateAndExecute() {
+    shared_model::proto::Command new_command =
+        shared_model::proto::from_old(*command);
+    validator->setCreatorAccountId(creator->accountId());
+    executor->setCreatorAccountId(creator->accountId());
+
+    if (boost::apply_visitor(*validator, new_command.get())) {
+      return boost::apply_visitor(*executor, new_command.get());
     }
     return expected::makeError(
-        ExecutionError{"Validate", "validation of a command failed"});
+        iroha::ExecutionError{"Validate", "validation of a command failed"});
   }
 
-  ExecutionResult execute() {
-    auto executor = factory->getCommandExecutor(command);
-    return executor->execute(
-        *command, *wsv_query, *wsv_command, creator->accountId());
+  iroha::ExecutionResult execute() {
+    shared_model::proto::Command new_command =
+        shared_model::proto::from_old(*command);
+    executor->setCreatorAccountId(creator->accountId());
+    return boost::apply_visitor(*executor, new_command.get());
   }
 
   /// return result with empty error message
   WsvCommandResult makeEmptyError() {
     return WsvCommandResult(iroha::expected::makeError(""));
+  }
+
+  /// Returns error from result or throws error in case result contains value
+  iroha::ExecutionResult::ErrorType checkErrorCase(
+      const iroha::ExecutionResult &result) {
+    return boost::get<iroha::ExecutionResult::ErrorType>(result);
   }
 
   Amount max_amount{
@@ -136,7 +149,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<Command> command;
 
-  std::shared_ptr<CommandExecutorFactory> factory;
+  std::shared_ptr<iroha::CommandExecutor> executor;
+  std::shared_ptr<iroha::CommandValidator> validator;
 };
 
 class AddAssetQuantityTest : public CommandValidateExecuteTest {
@@ -565,11 +579,16 @@ TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
               hasAccountGrantablePermission(
                   admin_id, add_signatory->account_id, can_add_signatory))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
-      .WillOnce(Return(WsvCommandResult()));
   EXPECT_CALL(
       *wsv_command,
-      insertAccountSignatory(add_signatory->account_id, add_signatory->pubkey))
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {add_signatory->pubkey.begin(),
+                                          add_signatory->pubkey.end()})))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -582,13 +601,17 @@ TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
       .WillOnce(Return(role_permissions));
   add_signatory->account_id = creator->accountId();
 
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
-      .WillOnce(Return(WsvCommandResult()));
   EXPECT_CALL(
       *wsv_command,
-      insertAccountSignatory(add_signatory->account_id, add_signatory->pubkey))
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
       .WillOnce(Return(WsvCommandResult()));
-
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {add_signatory->pubkey.begin(),
+                                          add_signatory->pubkey.end()})))
+      .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
 
@@ -619,7 +642,10 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
                   admin_id, add_signatory->account_id, can_add_signatory))
       .WillOnce(Return(true));
   add_signatory->pubkey.fill(2);
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      insertSignatory(shared_model::crypto::PublicKey(
+          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
       .WillOnce(Return(makeEmptyError()));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -651,7 +677,10 @@ TEST_F(CreateAccountTest, ValidWhenNewAccount) {
   EXPECT_CALL(*wsv_query, getDomain(domain_id))
       .WillOnce(Return(default_domain));
 
-  EXPECT_CALL(*wsv_command, insertSignatory(create_account->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      insertSignatory(shared_model::crypto::PublicKey(
+          {create_account->pubkey.begin(), create_account->pubkey.end()})))
       .Times(1)
       .WillOnce(Return(WsvCommandResult()));
 
@@ -659,9 +688,11 @@ TEST_F(CreateAccountTest, ValidWhenNewAccount) {
       .WillOnce(Return(WsvCommandResult()));
 
   EXPECT_CALL(*wsv_command,
-              insertAccountSignatory(account_id, create_account->pubkey))
+              insertAccountSignatory(account_id,
+                                     shared_model::crypto::PublicKey(
+                                         {create_account->pubkey.begin(),
+                                          create_account->pubkey.end()})))
       .WillOnce(Return(WsvCommandResult()));
-
   EXPECT_CALL(*wsv_command, insertAccountRole(account_id, admin_role))
       .WillOnce(Return(WsvCommandResult()));
 
@@ -718,7 +749,7 @@ class CreateAssetTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     create_asset = std::make_shared<CreateAsset>();
-    create_asset->asset_name = "FCoin";
+    create_asset->asset_name = "fcoin";
     create_asset->domain_id = domain_id;
     create_asset->precision = 2;
 
@@ -769,7 +800,8 @@ class CreateDomainTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     create_domain = std::make_shared<CreateDomain>();
-    create_domain->domain_id = "CN";
+    create_domain->domain_id = "cn";
+    create_domain->user_default_role = "default";
 
     command = create_domain;
     role_permissions = {can_create_domain};
@@ -854,11 +886,15 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
 
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteSignatory(shared_model::crypto::PublicKey(
+          {remove_signatory->pubkey.begin(), remove_signatory->pubkey.end()})))
       .WillOnce(Return(WsvCommandResult()));
-
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
 
@@ -879,9 +915,15 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
   // delete methods must not be called because the account quorum is 1.
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .Times(0);
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey)).Times(0);
+  EXPECT_CALL(
+      *wsv_command,
+      deleteSignatory(shared_model::crypto::PublicKey(
+          {remove_signatory->pubkey.begin(), remove_signatory->pubkey.end()})))
+      .Times(0);
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -1006,7 +1048,9 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
 TEST_F(RemoveSignatoryTest, InvalidWhenAccountSignatoryDeletionFails) {
   EXPECT_CALL(*wsv_command,
               deleteAccountSignatory(remove_signatory->account_id,
-                                     remove_signatory->pubkey))
+                                     shared_model::crypto::PublicKey(
+                                         {remove_signatory->pubkey.begin(),
+                                          remove_signatory->pubkey.end()})))
       .WillOnce(Return(makeEmptyError()));
 
   ASSERT_NO_THROW(checkErrorCase(execute()));
@@ -1832,12 +1876,16 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-    const auto perm = "can_teach";
+    const auto perm = "can_add_signatory";
     exact_command = std::make_shared<GrantPermission>("yoda", perm);
     command = exact_command;
-    role_permissions = {can_grant + perm};
+    // It is different from 'perm' due to realisation of old/new model. See
+    // GrantablePermissions in primitive.proto
+    new_model_permission = "can_add_my_signatory";
+    role_permissions = {can_grant + new_model_permission};
   }
   std::shared_ptr<GrantPermission> exact_command;
+  std::string new_model_permission;
 };
 
 TEST_F(GrantPermissionTest, ValidCase) {
@@ -1848,7 +1896,7 @@ TEST_F(GrantPermissionTest, ValidCase) {
   EXPECT_CALL(*wsv_command,
               insertAccountGrantablePermission(exact_command->account_id,
                                                creator->accountId(),
-                                               exact_command->permission_name))
+                                               new_model_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
@@ -1870,7 +1918,7 @@ TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
   EXPECT_CALL(*wsv_command,
               insertAccountGrantablePermission(exact_command->account_id,
                                                creator->accountId(),
-                                               exact_command->permission_name))
+                                               new_model_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }
@@ -1879,31 +1927,32 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-    exact_command = std::make_shared<RevokePermission>("yoda", "CanTeach");
+    exact_command =
+        std::make_shared<RevokePermission>("yoda", "can_add_signatory");
+    new_model_permission = "can_add_my_signatory";
     command = exact_command;
   }
   std::shared_ptr<RevokePermission> exact_command;
+  std::string new_model_permission;
 };
 
 TEST_F(RevokePermissionTest, ValidCase) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          exact_command->account_id, admin_id, exact_command->permission_name))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  exact_command->account_id, admin_id, new_model_permission))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command,
               deleteAccountGrantablePermission(exact_command->account_id,
                                                creator->accountId(),
-                                               exact_command->permission_name))
+                                               new_model_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 }
 
 TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          exact_command->account_id, admin_id, exact_command->permission_name))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  exact_command->account_id, admin_id, new_model_permission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -1917,7 +1966,7 @@ TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
   EXPECT_CALL(*wsv_command,
               deleteAccountGrantablePermission(exact_command->account_id,
                                                creator->accountId(),
-                                               exact_command->permission_name))
+                                               new_model_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute()));
 }

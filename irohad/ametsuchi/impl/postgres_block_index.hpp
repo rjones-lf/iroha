@@ -23,8 +23,8 @@
 
 #include "ametsuchi/impl/block_index.hpp"
 #include "ametsuchi/impl/postgres_wsv_common.hpp"
-#include "logger/logger.hpp"
 #include "interfaces/transaction.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {

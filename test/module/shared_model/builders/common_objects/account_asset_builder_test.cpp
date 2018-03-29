@@ -77,8 +77,8 @@ TEST(AccountAssetBuilderTest, SeveralObjectsFromOneBuilder) {
       shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
 
   auto state = builder.accountId(valid_account_id)
-      .assetId(valid_asset_id)
-      .balance(valid_balance);
+                   .assetId(valid_asset_id)
+                   .balance(valid_balance);
 
   auto account_asset = state.build();
   auto account_asset2 = state.build();

@@ -32,6 +32,7 @@ namespace iroha {
     /**
      * Return function which can execute SQL statements on provided transaction
      * @param transaction on which to apply statement.
+     * @param logger is used to report an error.
      * @return Result with pqxx::result in value case, or exception message
      * if exception was caught
      */

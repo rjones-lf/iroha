@@ -28,20 +28,17 @@ auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
 
 auto BlockLoaderInit::createLoader(
     std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> storage,
-    std::shared_ptr<model::ModelCryptoProvider> crypto_provider) {
+    std::shared_ptr<BlockQuery> storage) {
   return std::make_shared<BlockLoaderImpl>(
       peer_query,
       storage,
-      crypto_provider,
       std::make_shared<shared_model::validation::DefaultBlockValidator>());
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
     std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> storage,
-    std::shared_ptr<model::ModelCryptoProvider> crypto_provider) {
+    std::shared_ptr<BlockQuery> storage) {
   service = createService(storage);
-  loader = createLoader(peer_query, storage, crypto_provider);
+  loader = createLoader(peer_query, storage);
   return loader;
 }

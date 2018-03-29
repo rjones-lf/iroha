@@ -78,9 +78,9 @@ TEST(AccountBuilderTest, SeveralObjectsFromOneBuilder) {
   auto valid_json_data = "{}";
 
   auto state = builder.accountId(valid_account_id)
-      .domainId(valid_domain_id)
-      .quorum(valid_quorum)
-      .jsonData(valid_json_data);
+                   .domainId(valid_domain_id)
+                   .quorum(valid_quorum)
+                   .jsonData(valid_json_data);
 
   auto account = state.build();
   auto account2 = state.build();

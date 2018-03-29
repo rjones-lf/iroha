@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -277,14 +276,7 @@ TEST(AcceptanceTest, TransactionEmptyPubKey) {
 
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
-  iroha::protocol::Signature protosig;
-  protosig.set_pubkey(shared_model::crypto::toBinaryString(
-      shared_model::crypto::PublicKey("")));
-  protosig.set_signature("");
-  auto *s1 = new shared_model::proto::Signature(protosig);
-  tx.addSignature(
-      shared_model::detail::PolymorphicWrapper<shared_model::proto::Signature>(
-          s1));
+  tx.addSignature(signedBlob, shared_model::crypto::PublicKey(""));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)
@@ -304,15 +296,9 @@ TEST(AcceptanceTest, TransactionEmptySignedblob) {
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
           .build();
-  iroha::protocol::Signature protosig;
-  protosig.set_pubkey(
-      shared_model::crypto::toBinaryString(kAdminKeypair.publicKey()));
-  protosig.set_signature(
-      shared_model::crypto::toBinaryString(shared_model::crypto::Blob("")));
-  auto *s1 = new shared_model::proto::Signature(protosig);
   tx.addSignature(
-      shared_model::detail::PolymorphicWrapper<shared_model::proto::Signature>(
-          s1));
+      shared_model::crypto::Signed(""),
+      kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)
@@ -334,14 +320,8 @@ TEST(AcceptanceTest, TransactionInvalidPublicKey) {
           .build();
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
-  iroha::protocol::Signature protosig;
-  protosig.set_pubkey(shared_model::crypto::toBinaryString(
-      shared_model::crypto::PublicKey(std::string(32, 'a'))));
-  protosig.set_signature(shared_model::crypto::toBinaryString(signedBlob));
-  auto *s1 = new shared_model::proto::Signature(protosig);
-  tx.addSignature(
-      shared_model::detail::PolymorphicWrapper<shared_model::proto::Signature>(
-          s1));
+  tx.addSignature(signedBlob,
+                  shared_model::crypto::PublicKey(std::string(32, 'a')));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)
@@ -361,19 +341,15 @@ TEST(AcceptanceTest, TransactionInvalidSignedBlob) {
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
           .build();
+
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
-  iroha::protocol::Signature protosig;
-  protosig.set_pubkey(
-      shared_model::crypto::toBinaryString(kAdminKeypair.publicKey()));
   auto raw = signedBlob.blob();
   raw[0] = (raw[0] == std::numeric_limits<uint8_t>::max() ? 0 : raw[0] + 1);
-  auto wrongBlob = shared_model::crypto::Blob(raw);
-  protosig.set_signature(shared_model::crypto::toBinaryString(wrongBlob));
-  auto *s1 = new shared_model::proto::Signature(protosig);
-  tx.addSignature(
-      shared_model::detail::PolymorphicWrapper<shared_model::proto::Signature>(
-          s1));
+  auto wrongBlob = shared_model::crypto::Signed(raw);
+
+  tx.addSignature(wrongBlob, kAdminKeypair.publicKey());
+
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)

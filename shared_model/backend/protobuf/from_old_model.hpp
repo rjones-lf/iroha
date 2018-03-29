@@ -28,9 +28,17 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "model/converters/pb_block_factory.hpp"
+#include "model/converters/pb_command_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_query_response_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
+
+#include "backend/protobuf/common_objects/account.hpp"
+#include "backend/protobuf/common_objects/account_asset.hpp"
+#include "backend/protobuf/common_objects/asset.hpp"
+#include "backend/protobuf/common_objects/domain.hpp"
+#include "backend/protobuf/common_objects/peer.hpp"
+#include "model/converters/pb_common.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -74,6 +82,49 @@ namespace shared_model {
       return shared_model::proto::QueryResponse(
           *iroha::model::converters::PbQueryResponseFactory().serialize(
               queryResponse));
+    }
+
+    inline static shared_model::proto::Account from_old(
+        const iroha::model::Account &account) {
+      return shared_model::proto::Account(
+          iroha::model::converters::serializeAccount(account));
+    }
+
+    inline static shared_model::proto::Peer from_old(
+        const iroha::model::Peer &peer) {
+      return shared_model::proto::Peer(
+          iroha::model::converters::serializePeer(peer));
+    }
+
+    inline static shared_model::proto::Asset from_old(
+        const iroha::model::Asset &asset) {
+      return shared_model::proto::Asset(
+          iroha::model::converters::serializeAsset(asset));
+    }
+
+    inline static shared_model::proto::AccountAsset from_old(
+        const iroha::model::AccountAsset &account_asset) {
+      return shared_model::proto::AccountAsset(
+          iroha::model::converters::serializeAccountAsset(account_asset));
+    }
+
+    inline static shared_model::proto::Domain from_old(
+        const iroha::model::Domain &domain) {
+      return shared_model::proto::Domain(
+          iroha::model::converters::serializeDomain(domain));
+    }
+
+    inline static shared_model::proto::Amount from_old(
+        const iroha::Amount &amount) {
+      return shared_model::proto::Amount(
+          iroha::model::converters::serializeAmount(amount));
+    }
+
+    inline static shared_model::proto::Command from_old(
+        const iroha::model::Command &command) {
+      return shared_model::proto::Command(
+          iroha::model::converters::PbCommandFactory().serializeAbstractCommand(
+              command));
     }
 
   }  // namespace proto

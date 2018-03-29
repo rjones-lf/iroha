@@ -19,17 +19,150 @@ Troubleshooting
 Java Library
 ------------
 
-Where to Get
+Prerequisites
+^^^^^^^^^^^^^
+
+- Java 6
+- Gradle
+
+Build Process
+^^^^^^^^^^^^^
+
+Clone Iroha repository
+
+.. code-block:: shell
+
+  git clone https://github.com/hyperledger/iroha.git --depth=1
+  cd iroha
+
+.. note:: For the latest version checkout a ``develop`` branch by adding 
+  ``-b develop`` parameter.
+
+Now we need to build our Java native library. Run 
+``example/java/build_library.sh``, which will take care of it.
+
+.. code-block:: shell
+
+  cd example/java
+  ./build_library.sh
+
+.. note:: ``build_library.sh`` script creates a ``dist`` folder with
+  files, needed in :ref:`java-how-to-use` section.
+
+.. _java-how-to-use:
+
+How to Use
+^^^^^^^^^^
+
+There are two ways of adding the Java library to your project:
+
+1. Import Java bindings through Maven Central
+2. Compile Java bindings manually
+
+Both options are described in the following sections.
+
+Import Java Bindings from Maven Central
+"""""""""""""""""""""""""""""""""""""""
+
+First of all, you need to copy ``example/java/dist/libirohajava.jnilib`` to 
+the root folder of your project.
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project
+
+If you use **Gradle**, add the following line to your ``build.gradle`` file:
+
+.. code-block:: groovy
+  :caption: build.gradle
+
+  compile group: 'jp.co.soramitsu', name: 'iroha', version: ‘0.0.7’
+
+If you use **Maven**, add this to your ``pom.xml``:
+
+.. code-block:: xml
+  :caption: pom.xml
+
+  <!-- https://mvnrepository.com/artifact/jp.co.soramitsu/iroha -->
+  <dependency>
+      <groupId>jp.co.soramitsu</groupId>
+      <artifactId>iroha</artifactId>
+      <version>0.0.7</version>
+  </dependency>
+
+.. note:: Set the latest version number from our 
+  `Maven repository <https://mvnrepository.com/artifact/jp.co.soramitsu/iroha>`_
+
+Compiling Java bindings Manually
+""""""""""""""""""""""""""""""""
+
+Java bindings were compiled with ``example/java/build_library.sh`` in 
+`Build Process` section. You need to copy ``example/java/dist/libirohajava.jnilib``
+to the root folder of your project:
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project
+
+If you use **Gradle**, you need to copy ``example/java/dist/iroha_lib.jar`` to the
+``libs`` folder of your project
+
+.. code-block:: shell 
+
+  cp dist/libirohajava.jnilib /path_to_your_project/libs
+
+Then please add the following to your ``build.gradle`` file:
+
+.. code-block:: groovy
+  :caption: build.gradle
+
+  dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+  }
+
+If you use **Maven**, you need to copy ``example/java/dist/iroha_lib.jar`` to the
+``src/main/resources/`` folder of your project
+
+.. code-block:: shell
+  
+  cp dist/iroha_lib.jar /path_to_your_project/src/main/resources
+
+After it please add this to your ``pom.xml``:
+
+.. code-block:: xml
+  :caption: pom.xml
+
+  <dependency>
+      <groupId>jp.co.soramitsu</groupId>
+      <artifactId>iroha</artifactId>
+      <version>0.0.7</version>
+      <systemPath>${project.basedir}/src/main/resources/iroha_lib.jar</systemPath>
+  </dependency>
+
+Example code
 ^^^^^^^^^^^^
+Explore ``example/java/TransactionExample.java`` file to get an idea of how to
+work with a library.
 
-How to Use/Import
-^^^^^^^^^^^^^^^^^
+Prerequisites
+"""""""""""""
+To run this example, you need an Iroha node up and running. Please check out
+:ref:`getting-started` if you want to learn how to start it.
 
-Example Code
-^^^^^^^^^^^^
+Running the Example
+"""""""""""""""""""
+To start the example, you need to build the example:
 
-Troubleshooting
-^^^^^^^^^^^^^^^
+.. code-block:: shell
+
+  ./prepare.sh
+  gradle build
+
+Now, to run this example please write:
+
+.. code-block:: shell
+
+  gradle run
 
 Android Library
 ---------------
@@ -62,43 +195,14 @@ Prerequisites
 Android NDK
     Please `download <https://developer.android.com/ndk/downloads/index.html>`__ and unpack NDK to any suitable folder.
 
-automake
-    .. code-block:: shell
-
-        sudo apt install automake
-        automake --version
-        # automake (GNU automake) 1.15
-
-bison
-    .. code-block:: shell
-
-        sudo apt install bison
-        bison --version
-        # bison (GNU Bison) 3.0.4
-
-cmake
-    Minimum required version is 3.8, but we recommend to install the latest available version (3.10.3 at the moment).
-    
-    Since Ubuntu repositories contain unsuitable version of cmake, you need to install the new one manually.
-    Here is how to build and install cmake from sources.
-
-    .. code-block:: shell
-
-        wget https://cmake.org/files/v3.10/cmake-3.10.3.tar.gz
-        tar -xvzf cmake-3.10.3.tar.gz
-        cd cmake-3.10.3/
-        ./configure
-        make
-        sudo make install
-        cmake --version
-        # cmake version 3.10.3
-
+Automake, Bison, Cmake
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
 
 Building the Library
 """"""""""""""""""""
 
 All you need now is to download `build script <https://github.com/hyperledger/iroha/blob/develop/example/Android/android-build.sh>`__
-``android-build.sh`` to any empty folder and launch it there. 
+``android-build.sh`` to any empty folder and launch it there.
 
 Launch parameters are listed in the table below.
 
@@ -159,7 +263,7 @@ All you need to do is a simple set of four steps:
 
        implementation 'jp.co.soramitsu.iroha.android:iroha-android-bindings:1.0'
 
-2. Copy the latest version of ``*.proto`` files from ``develop`` branch of Iroha `repository <https://github.com/hyperledger/iroha/tree/develop/schema>`__ into 
+2. Copy the latest version of ``*.proto`` files from ``develop`` branch of Iroha `repository <https://github.com/hyperledger/iroha/tree/develop/schema>`__ into
    ``app/src/main/proto/`` folder inside your project in Android Studio.
 
    The resulting directory structure should look like as follows:
@@ -204,7 +308,7 @@ All you need to do is a simple set of four steps:
 
    .. code-block:: groovy
 
-        apply plugin: 'com.google.protobuf' 
+        apply plugin: 'com.google.protobuf'
 
         dependencies {
             ...
@@ -248,8 +352,8 @@ How to Use Manually Built Library
 """""""""""""""""""""""""""""""""
 
 1. Create directory structure inside your Android project according to the package name of build library.
-   Put there all the ``.java`` files from ``bindings.zip`` archive. 
-   For example, the path could be ``app/src/main/java/com/mycompany/iroha`` if you built the library with 
+   Put there all the ``.java`` files from ``bindings.zip`` archive.
+   For example, the path could be ``app/src/main/java/com/mycompany/iroha`` if you built the library with
    ``com.mycompany.iroha`` package name.
 
 2. Create directory ``app/src/main/jniLibs/<platform>`` where ``<platform>`` is the name of target platform
@@ -301,14 +405,314 @@ Python Library
 Where to Get
 ^^^^^^^^^^^^
 
+There are two ways to get Iroha library for Python: via pip and manual compilation from source code. The installation via pip do the same steps as manual compilation so for both of them you need to install all of the prerequisites.
+
+Prerequisites
+"""""""""""""
+
+CMake, git, g++, boost, swig, protobuf, python
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
+
+Install Iroha Python Libraries
+""""""""""""""""""""""""""""""
+
+- Via PIP
+
+  .. code:: sh
+
+      pip install iroha
+
+  For the latest version
+
+  .. code:: sh
+
+      pip install -i https://testpypi.python.org/pypi iroha
+
+- Source code
+
+  .. code:: sh
+
+      git clone https://github.com/hyperledger/iroha.git
+      cd iroha
+
+  For the latest version checkout to develop branch by adding *-b develop* parameter.
+
+  .. code:: sh
+
+      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
+      cmake --build build --target irohapy
+
+      - SWIG_PYTHON=ON forces to build bindings for Python.
+      - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
+      - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
+
+  After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
+
 How to Use/Import
 ^^^^^^^^^^^^^^^^^
+
+Compile Protobuf Modules of Iroha from Schema Files
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Iroha communicates with users through protobuf messages. In order to send transactions and queries to Iroha node you need to get python module for generating protobuf messages.
+First of all you need to clone schema folder of Iroha repository. If you have already cloned Iroha repository in the previous step, just use schema folder from there.
+
+
+Prerequisites
+"""""""""""""
+
+protobuf, pip
+    Please refer to the page `Installing Dependencies <dependencies.html>`__ to get installation recipes for the tools.
+
+Building Protobuf Files
+"""""""""""""""""""""""
+
+.. code:: sh
+
+    pip install grpcio_tools
+    mkdir iroha-schema
+    git -C iroha-schema init
+    git -C iroha-schema remote add -f schema https://github.com/hyperledger/iroha.git
+    git -C iroha-schema config core.sparseCheckout true
+    echo "schema" >> iroha-schema/.git/info/sparse-checkout
+    git -C iroha-schema pull schema develop
+    cd iroha-schema
+    protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+    python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
+
+Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
+
+In order to specify Iroha libraries location:
+
+.. code:: sh
+
+  import sys
+  sys.path.insert(0, 'path/to/iroha/libs')
+
+
+Import Iroha and all of the protobuf modules that you need:
+
+.. code:: sh
+
+  import iroha
+  import block_pb2
+  import endpoint_pb2
+  import endpoint_pb2_grpc
+  import queries_pb2
 
 Example Code
 ^^^^^^^^^^^^
 
-Troubleshooting
-^^^^^^^^^^^^^^^
+.. Note::
+
+    Work with byte arrays is different in Python 2 and Python 3. Due to this fact, the work with hashes and blobs is different in the examples. Given examples work fine with both versions of Python.
+
+Import Iroha and schema classes, generated from Iroha protobuf:
+
+.. code:: python
+
+ import iroha
+
+ import block_pb2
+ import endpoint_pb2
+ import endpoint_pb2_grpc
+ import queries_pb2
+ import grpc
+
+Get Iroha objects:
+
+.. code:: python
+
+ tx_builder = iroha.ModelTransactionBuilder()
+ query_builder = iroha.ModelQueryBuilder()
+ crypto = iroha.ModelCrypto()
+ proto_tx_helper = iroha.ModelProtoTransaction()
+ proto_query_helper = iroha.ModelProtoQuery()
+
+Read public and private keys:
+
+.. code:: python
+
+ admin_priv = open("admin@test.priv", "r").read()
+ admin_pub = open("admin@test.pub", "r").read()
+ key_pair = crypto.convertFromExisting(admin_pub, admin_priv)
+
+Print transaction status with synchronous simple call:
+
+.. code:: python
+
+ def print_status(tx):
+    # Create status request
+
+    print("Hash of the transaction: ", tx.hash().hex())
+    tx_hash = tx.hash().blob()
+
+    # The work with byte arrays is different in Python 2 and 3
+    # Check python version
+    if sys.version_info[0] == 2:
+        # Python 2 version
+        tx_hash = ''.join(map(chr, tx_hash))
+    else:
+        # Python 3 version
+        tx_hash = bytes(tx_hash)
+
+    # Create request
+    request = endpoint_pb2.TxStatusRequest()
+    request.tx_hash = tx_hash
+
+    # Create connection to Iroha
+    channel = grpc.insecure_channel(IP+':'+port)
+    stub = endpoint_pb2_grpc.CommandServiceStub(channel)
+
+    # Send request
+    response = stub.Status(request)
+    status = endpoint_pb2.TxStatus.Name(response.tx_status)
+    print("Status of transaction is:", status)
+
+    if status != "COMMITTED":
+        print("Your transaction wasn't committed")
+        exit(1)
+
+Or streaming call:
+
+.. code:: python
+
+    ...
+    # Send request
+    response = stub.StatusStream(request)
+
+    for status in response:
+        print("Status of transaction:")
+        print(status)
+
+Send transactions to Iroha:
+
+.. code:: python
+
+  def send_tx(tx, key_pair):
+    tx_blob = proto_tx_helper.signAndAddSignature(tx, key_pair).blob()
+    proto_tx = block_pb2.Transaction()
+
+    if sys.version_info[0] == 2:
+        tmp = ''.join(map(chr, tx_blob))
+    else:
+        tmp = bytes(tx_blob)
+
+    proto_tx.ParseFromString(tmp)
+
+    channel = grpc.insecure_channel(IP+':'+port)
+    stub = endpoint_pb2_grpc.CommandServiceStub(channel)
+
+    stub.Torii(proto_tx)
+
+Send query to Iroha and receive a responce:
+
+.. code:: python
+
+  def send_query(query, key_pair):
+    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+
+    proto_query = queries_pb2.Query()
+
+    if sys.version_info[0] == 2:
+        tmp = ''.join(map(chr, query_blob))
+    else:
+        tmp = bytes(query_blob)
+
+    proto_query.ParseFromString(tmp)
+
+    channel = grpc.insecure_channel(IP+':'+port)
+    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
+    query_response = query_stub.Find(proto_query)
+
+    return query_response
+
+Create domain and asset:
+
+.. code:: python
+
+  tx = tx_builder.creatorAccountId(creator) \
+        .txCounter(tx_counter) \
+        .createdTime(current_time) \
+        .createDomain("domain", "user") \
+        .createAsset("coin", "domain", 2).build()
+
+  send_tx(tx, key_pair)
+  print_status(tx)
+
+Create asset quantity:
+
+.. code:: python
+
+  tx = tx_builder.creatorAccountId(creator) \
+        .txCounter(tx_counter) \
+        .createdTime(current_time) \
+        .addAssetQuantity("admin@test", "coin#domain", "1000.2").build()
+
+  send_tx(tx, key_pair)
+  print_status(tx)
+
+Create account:
+
+.. code:: python
+
+  user1_kp = crypto.generateKeypair()
+
+  tx = tx_builder.creatorAccountId(creator) \
+        .txCounter(tx_counter) \
+        .createdTime(current_time) \
+        .createAccount("userone", "domain", user1_kp.publicKey()).build()
+
+  send_tx(tx, key_pair)
+  print_status(tx)
+
+Send asset:
+
+.. code:: python
+
+  tx = tx_builder.creatorAccountId(creator) \
+        .txCounter(tx_counter) \
+        .createdTime(current_time) \
+        .transferAsset("admin@test", "userone@domain", "coin#domain", "Some message", "2.0").build()
+
+  send_tx(tx, key_pair)
+  print_status(tx)
+
+Get asset info:
+
+.. code:: python
+
+    query = query_builder.creatorAccountId(creator) \
+        .createdTime(current_time) \
+        .queryCounter(1) \
+        .getAssetInfo("coin#domain") \
+        .build()
+
+    query_response = send_query(query, key_pair)
+
+    if not query_response.HasField("asset_response"):
+        print("Query response error")
+        exit(1)
+    else:
+        print("Query responded with asset response")
+
+    asset_info = query_response.asset_response.asset
+    print("Asset Id =", asset_info.asset_id)
+    print("Precision =", asset_info.precision)
+
+Get account asset:
+
+.. code:: python
+
+    query = query_builder.creatorAccountId(creator) \
+        .createdTime(current_time) \
+        .queryCounter(11) \
+        .getAccountAssets("userone@domain", "coin#domain") \
+        .build()
+
+    query_response = send_query(query, key_pair)
+
+    print(query_response)
 
 NodeJS Library
 --------------
