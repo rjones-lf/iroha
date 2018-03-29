@@ -39,7 +39,7 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id to request its state", "account_name@domain", "alex@morgan"
+    "Account ID", "account id to request its state", "<account_name>@<domain_id>", "alex@morgan"
 
 Response Schema
 ^^^^^^^^^^^^^^^
@@ -66,9 +66,9 @@ Response Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id", "account_name@domain", "alex@morgan"
-    "Domain ID", "domain where the account was created", "`[A-Za-z0-9]{1,9}`", "morgan"
-    "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum < 10", "5"
+    "Account ID", "account id", "<account_name>@<domain_id>", "alex@morgan"
+    "Domain ID", "domain where the account was created", "RFC1035, RFC1123", "morgan"
+    "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum ≤ 128", "5"
     "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
 Get signatories
@@ -95,7 +95,7 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id to request signatories", "account_name@domain", "alex@morgan"
+    "Account ID", "account id to request signatories", "<account_name>@<domain_id>", "alex@morgan"
 
 Response Schema
 ^^^^^^^^^^^^^^^
@@ -183,7 +183,7 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id to request transactions from", "account_name@domain", "makoto@soramitsu"
+    "Account ID", "account id to request transactions from", "<account_name>@<domain_id>", "makoto@soramitsu"
 
 Response Schema
 ^^^^^^^^^^^^^^^
@@ -228,8 +228,8 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id to request transactions from", "account_name@domain", "makoto@soramitsu"
-    "Asset ID", "asset id in order to filter transactions containing this asset", "asset_name#domain", "jpy#japan"
+    "Account ID", "account id to request transactions from", "<account_name>@<domain_id>", "makoto@soramitsu"
+    "Asset ID", "asset id in order to filter transactions containing this asset", "<asset_name>#<domain_id>", "jpy#japan"
 
 Response Schema
 ^^^^^^^^^^^^^^^
@@ -274,8 +274,8 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id to request balance from", "account_name@domain", "makoto@soramitsu"
-    "Asset ID", "asset id to know its balance", "asset_name#domain", "jpy#japan"
+    "Account ID", "account id to request balance from", "<account_name>@<domain_id>", "makoto@soramitsu"
+    "Asset ID", "asset id to know its balance", "<asset_name>#<domain_id>", "jpy#japan"
 
 Response Schema
 ^^^^^^^^^^^^^^^
@@ -295,8 +295,8 @@ Response Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset ID", "identifier of asset used for checking the balance", "asset_name#domain", "jpy#japan"
-    "Account ID", "account which has this balance", "account_name@domain", "makoto@soramitsu"
+    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy#japan"
+    "Account ID", "account which has this balance", "<account_name>@<domain_id>", "makoto@soramitsu"
     "Balance", "balance of the asset", "Not less than 0", "200.20"
 
 Get asset info
@@ -323,7 +323,7 @@ Request Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset ID", "asset id to know related information", "asset_name#domain", "jpy#japan"
+    "Asset ID", "asset id to know related information", "<asset_name>#<domain_id>", "jpy#japan"
 
 
 Response Schema
@@ -344,8 +344,8 @@ Response Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset ID", "identifier of asset used for checking the balance", "`[A-Za-z0-9]{1,9}`", "jpy"
-    "Domain ID", "domain related to this asset", "`[A-Za-z0-9]{1,9}`", "japan"
+    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy"
+    "Domain ID", "domain related to this asset", "RFC1035, RFC1123", "japan"
     "Precision", "number of digits after comma", "0 < precision < 256", "2"
 
 Get roles
