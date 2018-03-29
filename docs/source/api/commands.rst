@@ -454,7 +454,7 @@ Structure
 Validation
 ^^^^^^^^^^
 
-1. Transaction creator should have previously granted this permission to a target account
+Transaction creator should have previously granted this permission to a target account
 
 Set account detail
 ------------------
@@ -490,8 +490,10 @@ Validation
 ^^^^^^^^^^
 
 Two cases:
-Case 1. When transaction creator wants to set account detail to his/her account and he or she has permission CanSetAccountInfo
-Case 2. CanSetAccountInfo was granted to transaction creator
+
+    Case 1. When transaction creator wants to set account detail to his/her account and he or she has permission CanSetAccountInfo
+
+    Case 2. CanSetAccountInfo was granted to transaction creator
 
 Set account quorum
 ------------------
