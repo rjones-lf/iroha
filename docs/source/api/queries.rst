@@ -424,4 +424,4 @@ Response Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Permissions", "array of permissions related to the role", "string of permissions related to the role", "{CanAddAssetQuantity, …}"
+    "Permissions", "array of permissions related to the role", "string of permissions related to the role", "{can_add_asset_qty, …}"
