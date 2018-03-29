@@ -61,7 +61,6 @@ namespace std {
 
 %include "cryptography/blob.hpp"
 %include "interfaces/common_objects/types.hpp"
-%include "interfaces/base/hashable.hpp"
 %include "interfaces/base/signable.hpp"
 %include "cryptography/public_key.hpp"
 %include "cryptography/private_key.hpp"
