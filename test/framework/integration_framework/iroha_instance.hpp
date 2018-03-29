@@ -21,8 +21,9 @@
 #include <chrono>
 #include <string>
 
-#include "integration/pipeline/test_irohad.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/integration_framework/iroha_instance.hpp"
+#include "framework/integration_framework/test_irohad.hpp"
 
 namespace integration_framework {
 
