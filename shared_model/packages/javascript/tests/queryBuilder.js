@@ -4,7 +4,7 @@ var iroha = require('../index')
 const accountId = 'admin@test'
 const assetId = 'coin#test'
 
-test('ModelTransactionBuilder tests', function (t) {
+test('ModelQueryBuilder tests', function (t) {
   t.plan(49)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
