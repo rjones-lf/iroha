@@ -19,21 +19,21 @@ Schema
 .. code-block:: proto
 
     message AddAssetQuantity {
-    string account_id = 1;
-    string asset_id = 2;
-    Amount amount = 3;
+        string account_id = 1;
+        string asset_id = 2;
+        Amount amount = 3;
     }
 
     message uint256 {
-       uint64 first = 1;
-       uint64 second = 2;
-       uint64 third = 3;
-       uint64 fourth = 4;
+        uint64 first = 1;
+        uint64 second = 2;
+        uint64 third = 3;
+        uint64 fourth = 4;
     }
 
     message Amount {
-       uint256 value = 1;
-       uint32 precision = 2;
+        uint256 value = 1;
+        uint32 precision = 2;
     }
 
 Structure
@@ -43,8 +43,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id in which to add asset", "account_name@domain", "alex@morgan"
-    "Asset ID", "id of the asset", "asset#domain", "usd#morgan"
+    "Account ID", "account id in which to add asset", "<account_name>@<domain_id>", "alex@morgan"
+    "Asset ID", "id of the asset", "<asset_name>#<domain_id>", "usd#morgan"
     "Amount", "positive amount of the asset to add", "> 0", "200.02"
 
 Validation
@@ -120,7 +120,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "Account to which to add signatory", "account_name@domain", "makoto@soramitsu"
+    "Account ID", "Account to which to add signatory", "<account_name>@<domain_id>", "makoto@soramitsu"
     "Public key", "Signatory to add to account", "ed25519 public key", "359f925e4eeecfdd6aa1abc0b79a6a121a5dd63bb612b603247ea4f8ad160156"
 
 Validation
@@ -193,7 +193,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account name", "domain-unique name for account", "A string in domain-name syntax defined in RFC1035 [#f1]_ ", "morgan.stanley"
+    "Account name", "domain-unique name for account", "`[a-z_0-9]{1,32}`", "morgan_stanley"
     "Domain ID", "target domain to make relation with", "should be created before the account", "america"
     "Main pubkey", "first public key to add to the account", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
@@ -203,8 +203,6 @@ Validation
 1. Transaction creator has permission to create an account
 2. Domain, passed as domain_id, has already been created in the system
 3. Such public key has not been added before as first public key of account or added to a multi-signature account
-
-.. [#f1] https://www.ietf.org/rfc/rfc1035.txt
 
 Create asset
 ------------
@@ -233,8 +231,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset name", "domain-unique name for asset", "`[A-Za-z0-9]{1,9}`", "soracoin"
-    "Domain ID", "target domain to make relation with", "already existent", "japan"
+    "Asset name", "domain-unique name for asset", "`[a-z_0-9]{1,32}`", "soracoin"
+    "Domain ID", "target domain to make relation with", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
     "Precision", "number of digits after comma/dot", "0 <= precision <= uint32 max", "2"
 
 Validation
@@ -268,7 +266,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Domain ID", "ID for created domain", "unique, `[0-9A-Za-z]{1,9}`", "japan05"
+    "Domain ID", "ID for created domain", "unique, RFC1035 [#f1]_, RFC1123 [#f2]_", "japan05"
     "Default role", "role for any created user in the domain", "one of the existing roles", "User"
 
 Validation
@@ -304,7 +302,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Role name", "name of role to create", "`[A-Za-z0-9_]{1,7}`", "User"
+    "Role name", "name of role to create", "`[a-z_0-9]{1,32}`", "User"
     "Permissions", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
 
 Validation
@@ -483,8 +481,8 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "id of account whom key-value information was set", "already existent", "makoto@soramitsu"
-    "Key", "key of information being set", "`[A-Za-z0-9_]{1,}`", "Name"
-    "Value", "value of corresponding key", "None", "Makoto"
+    "Key", "key of information being set", "`[A-Za-z0-9_]{1,64}`", "Name"
+    "Value", "value of corresponding key", "≤ 4096", "Makoto"
 
 Validation
 ^^^^^^^^^^
@@ -522,7 +520,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "ID of account to set quorum", "already existent", "makoto@soramitsu"
-    "Quorum", "number of signatories needed to be included with a transaction from this account", "0 < quorum < 10", "5"
+    "Quorum", "number of signatories needed to be included with a transaction from this account", "0 < quorum ≤ public-key set up to account ≤ 128", "5"
 
 Validation
 ^^^^^^^^^^
@@ -574,7 +572,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "account id from which to subtract asset", "already existent", "makoto@soramitsu"
-    "Asset ID", "id of the asset", "asset#domain", "usd#morgan"
+    "Asset ID", "id of the asset", "<asset_name>#<domain_id>", "usd#morgan"
     "Amount", "positive amount of the asset to subtract", "> 0", "200"
 
 Validation
@@ -616,13 +614,16 @@ Structure
     "Source account ID", "ID of account to withdraw asset from", "already existent", "makoto@soramitsu"
     "Destination account ID", "ID of account to send asset at", "already existent", "alex@california"
     "Asset ID", "ID of asset to transfer", "already existent", "usd#usa"
-    "Description", "Message to attach to transfer", "No constraints", "here's my money take it"
+    "Description", "Message to attach to transfer", "Max length is 64", "here's my money take it"
     "Amount", "amount of the asset to transfer", "0 < amount < max_uint256", "200.20"
 
 Validation
 ^^^^^^^^^^
 
-1. Source account has this asset in its AccountHasAsset relation
+1. Source account has this asset in its AccountHasAsset relation [#f1]_
 2. An amount is a positive number and asset precision is consistent with the asset definition
 3. Source account has enough amount of asset to transfer and is not zero
 4. Source account can transfer money, and destination account can receive money (their roles have these permissions)
+
+.. [#f1] https://www.ietf.org/rfc/rfc1035.txt
+.. [#f2] https://www.ietf.org/rfc/rfc1123.txt
