@@ -33,7 +33,7 @@ For more information, such as how to use client libraries in your target program
 
 ## Need help?
 
-* Join [telegram chat](https://t.me/joinchat/AgzrTUCZ6edlj6V612n5JQ) where all the maintainers team is able to help you
+* Join [telegram chat](https://t.me/joinchat/AgzrTUCZ6edlj6V612n5JQ) where the maintainers team is able to help you
 * Communicate in Gitter chat with our development community [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 * Submit issues via GitHub Iroha repository
 * Join [HyperLedger RocketChat](https://chat.hyperledger.org) #iroha channel to discuss your concerns and proposals
