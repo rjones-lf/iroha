@@ -106,24 +106,13 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = response->get();
-    /// check if obtained response is error response
-    boost::apply_visitor(
-        [](auto val) {
-          if (std::is_same<
-                  decltype(val),
-                  shared_model::detail::PolymorphicWrapper<
-                      shared_model::interface::AccountResponse>>::value) {
-            SUCCEED();
-          } else {
-            FAIL();
-          }
-
-        },
-        resp);
+    ASSERT_NO_THROW(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::AccountResponse>>(response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
+  ASSERT_TRUE(wrapper.validate());
 }
 
 /**
@@ -175,4 +164,5 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
+  ASSERT_TRUE(wrapper.validate());
 }
