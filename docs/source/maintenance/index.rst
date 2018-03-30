@@ -5,3 +5,6 @@ Hardware requirements, deployment process in details, aspects related to securit
 
 Ansible
 -------
+
+.. Attention:: Contents are missing for now.
+    Please check deploy/ansible folder and README.md file in it.
