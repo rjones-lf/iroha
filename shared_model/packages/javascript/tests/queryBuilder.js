@@ -5,7 +5,7 @@ const accountId = 'admin@test'
 const assetId = 'coin#test'
 
 test('ModelTransactionBuilder tests', function (t) {
-  t.plan(45)
+  t.plan(49)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
   const time = (new Date()).getTime()
@@ -90,6 +90,13 @@ test('ModelTransactionBuilder tests', function (t) {
   hv.add(new iroha.Hash('11111111111111111111111111111111'))
   hv.add(new iroha.Hash('22222222222222222222222222222222'))
   t.doesNotThrow(() => correctQuery.getTransactions(hv), null, 'Should not throw any exceptions')
+
+  // getAccountDetail() tests
+  t.comment('Testing getAccountTransactions()')
+  t.throws(() => correctQuery.getAccountDetail(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
+  t.throws(() => correctQuery.getAccountDetail('').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
+  t.throws(() => correctQuery.getAccountDetail('@@@').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
+  t.doesNotThrow(() => correctQuery.getAccountDetail(accountId).build(), null, 'Should not throw any exceptions')
 
   t.end()
 })
