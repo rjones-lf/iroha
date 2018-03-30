@@ -17,6 +17,10 @@
 
 #include "framework/integration_framework/iroha_instance.hpp"
 #include <boost/filesystem.hpp>
+#include <cstdlib>
+#include <sstream>
+#include "cryptography/keypair.hpp"
+#include "framework/integration_framework/test_irohad.hpp"
 
 using namespace std::chrono_literals;
 

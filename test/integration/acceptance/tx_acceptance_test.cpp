@@ -19,10 +19,8 @@
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "responses.pb.h"
 
@@ -295,9 +293,7 @@ TEST(AcceptanceTest, TransactionEmptySignedblob) {
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
           .build();
-  tx.addSignature(
-      shared_model::crypto::Signed(""),
-      kAdminKeypair.publicKey());
+  tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)

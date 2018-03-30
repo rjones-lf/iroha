@@ -385,3 +385,45 @@ TEST_F(TransferAsset, SourceIsDest) {
           baseTx().transferAsset(kUser1Id, kUser1Id, kAsset, kDesc, kAmount)));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
+
+/**
+ * @given some user with all required permission
+ * @when execute tx with TransferAsset command where the destination user's
+ * domain differ from the source user one
+ * @then the tx is commited
+ */
+TEST_F(TransferAsset, InterDomain) {
+  const auto kNewRole = "newrl";
+  const auto kNewDomain = "newdom";
+  const auto kUser2Id = kUser2 + "@" + kNewDomain;
+  IntegrationTestFramework()
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .sendTx(
+          shared_model::proto::TransactionBuilder()
+              .txCounter(1)
+              .creatorAccountId(
+                  integration_framework::IntegrationTestFramework::kAdminId)
+              .createdTime(iroha::time::now())
+              .createRole(kNewRole,
+                          std::vector<std::string>{iroha::model::can_receive})
+              .createDomain(kNewDomain, kNewRole)
+              .createAccount(
+                  kUser2,
+                  kNewDomain,
+                  crypto::DefaultCryptoAlgorithmType::generateKeypair()
+                      .publicKey())
+              .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+              .build()
+              .signAndAddSignature(kAdminKeypair))
+      .sendTx(addAssets(kUser1, kUser1Keypair, kAmount))
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 3); })
+      .sendTx(completeTx(
+          baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)))
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .done();
+}

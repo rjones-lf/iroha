@@ -19,12 +19,20 @@
 #define IROHA_IROHA_INSTANCE_HPP
 
 #include <chrono>
+#include <memory>
 #include <string>
 
-#include "integration/pipeline/test_irohad.hpp"
-#include "cryptography/keypair.hpp"
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }  // namespace interface
+  namespace crypto {
+    class Keypair;
+  }  // namespace crypto
+}  // namespace shared_model
 
 namespace integration_framework {
+  class TestIrohad;
 
   class IrohaInstance {
    public:
