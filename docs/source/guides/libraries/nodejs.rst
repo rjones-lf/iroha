@@ -1,7 +1,7 @@
 Node.js Library
 ---------------
 .. warning:: Please note that Node.js library is under heavy testing now and
-problems `might` occur. Don't hesitate to report them to us.
+  problems `might` occur. Don't hesitate to report them to us.
 
 There are two main ways of obtaining the Node.js library. If you are a happy
 macOS or Linux user, you can install it `through NPM <#installing-through-npm>`_.
@@ -48,7 +48,7 @@ macOS users can install dependencies with following commands:
   brew install protobuf boost # Iroha dependencies
 
 .. warning:: If you have SWIG already installed, you **MUST** install patched
-3.0.12 version instead using
+  3.0.12 version instead using
   `this patch <https://patch-diff.githubusercontent.com/raw/swig/swig/pull/968.patch>`_.
   The current version of SWIG doesn't support Node.js versions higher than 6.
   Also you can just delete the global installed SWIG and iroha will pull and
@@ -91,7 +91,7 @@ To start the example, you need to install all its dependencies
   npm install
 
 .. note:: if you have built the library manually, please change import paths
-to ``path-to-iroha/shared_model/packages/javascript`` in index.js
+  to ``path-to-iroha/shared_model/packages/javascript`` in index.js
 
 Now, to run this example please write:
 
