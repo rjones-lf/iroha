@@ -4,7 +4,7 @@ Account
 An Iroha entity that is able to perform specified set of actions.
 Each account belongs to one of existing `domains <#domain>`__.
 
-Account has some number of `roles <#role>`__ (can be none) — which is a collection of permissions.
+An account has some number of `roles <#role>`__ (can be none) — which is a collection of permissions.
 Only `grantable permissions <#grantable-permission>`__ are assigned to an account directly.
 
 Ametsuchi
@@ -17,7 +17,7 @@ Asset
 =====
 
 Any countable commodity or value. Each asset is related to one of existing `domains <#domain>`__.
-For example, asset can represent any kind of such units - currency unit, bar of gold, real estate unit, etc.
+For example, an asset can represent any kind of such units - currency unit, a bar of gold, real estate unit, etc.
 
 Block
 =====
@@ -34,11 +34,11 @@ Blocks are signed with the cryptographic signatures of Iroha `peers <#peer>`__, 
 
 *Inside payload*
 
-    - height — a quantity of blocks in the chain up to the block
-    - timestamp — unix time (in millis) of block forming by a peer
+    - height — a number of blocks in the chain up to the block
+    - timestamp — Unix time (in milliseconds) of block forming by a peer
     - body — transactions, which successfully passed validation and consensus step
     - transactions quantity
-    - previous hash of block
+    - previous hash of a block
 
 Block Creator
 =============
@@ -58,7 +58,7 @@ whereas in Iroha a client interacts with any peer similarly to a single server.
 Command
 =======
 
-Command is a request to Iroha that **does** change the `state <#world-state-view>`__.
+A command is a request to Iroha that **does** change the `state <#world-state-view>`__.
 For example, in order to create a new `role <#role>`__ in Iroha you have to issue `Create role <../api/commands.html#create-role>`__ command.
 
 Consensus
@@ -68,13 +68,13 @@ A consensus algorithm is a process in computer science used to achieve agreement
 
 *Consensus, as a process*
 
-    Algorithm to achieve agreement on a block among peers in the network. By having it in the system, reliability is increased.
+    An algorithm to achieve agreement on a block among peers in the network. By having it in the system, reliability is increased.
 
 *Consensus, as a component*
 
     Preserves consistent state among the `peers <#peer>`__ within a peer network.
-    Iroha uses own consensus algorithm called Yet Another Consensus (aka YAC). Distinctive features of this algorithm is its scalability, performance, and `Byzantine fault tolerance <https://en.wikipedia.org/wiki/Byzantine_fault_tolerance>`_.
-    If there are missing blocks, they will be downloaded from another peers via `Synchronizer <#synchronizer>`__.
+    Iroha uses own consensus algorithm called Yet Another Consensus (aka YAC). Distinctive features of this algorithm are its scalability, performance, and `Byzantine fault tolerance <https://en.wikipedia.org/wiki/Byzantine_fault_tolerance>`_.
+    If there are missing blocks, they will be downloaded from another peer via `Synchronizer <#synchronizer>`__.
     Committed blocks are stored in `Ametsuchi <#ametsuchi>`__ block storage.
 
 Domain
@@ -92,11 +92,11 @@ Ordering Service
 ================
 
 Internal Iroha component that combines several `transactions <#transaction>`__ that have been passed `stateless validation <#stateless-validation>`__ into a `proposal <#proposal>`__.
-Proposal creation could be triggerd by one of the following events:
+Proposal creation could be triggered by one of the following events:
 
-1. Time limit dedicated for transactions collection has expired.
+1. Time limit dedicated to transactions collection has expired.
 
-2. Ordering service has received maximum amount of transactions allowed for a single proposal.
+2. Ordering service has received the maximum amount of transactions allowed for a single proposal.
 
 Both parameters (timeout and maximum size of proposal) are configurable (check `environment-specific parameters <../guides/configuration.html#environment-specific-parameters>`_ page).
 
@@ -117,14 +117,14 @@ The main goal of PCS is to hide the complexity of interaction with consensus imp
 Permission
 ==========
 
-A named rule that gives a privilege to perform a command.
+A named rule that gives the privilege to perform a command.
 Permission **cannot** be granted to an `account <#account>`__ directly,
-instead an account has roles, which are the collection of permissions.
+instead, an account has roles, which are the collection of permissions.
 
 Grantable Permission
 --------------------
 
-Only grantable permission are given to an `account <#account>`__ directly.
+Only grantable permission is given to an `account <#account>`__ directly.
 An account that holds grantable permission is allowed to perform some particular action on behalf of another account. For example, if the account a@domain1 gives the account b@domain2 a permission that it can transfer assets — then  b@domain2 can transfer assets of a@domain1 to anyone.
 
 Proposal
@@ -158,7 +158,7 @@ Synchronizer
 ============
 
 Is a part of `consensus <#consensus>`__.
-Adds missing blocks into `peers' <#peer>`__ chains (downloads them from other peers).
+Adds missing blocks to `peers' <#peer>`__ chains (downloads them from other peers).
 
 Torii
 =====
@@ -171,7 +171,7 @@ Transaction
 ===========
 
 An ordered set of `commands <#command>`__, which is applied to the ledger atomically.
-Any non valid command within a transaction leads to rejection of the whole transaction during validation process.
+Any nonvalid command within a transaction leads to rejection of the whole transaction during the validation process.
 
 
 Validator
@@ -196,12 +196,12 @@ Verified Proposal Creator
 
 Internal Iroha component that performs `stateful validation <#stateful-validation>`_ of `transactions <#transaction>`__ contained in received `proposal <#proposal>`__.
 On the basis of transactions that have been passed stateful validation **verified proposal** will be created and passed to `Block Creator <#block-creator>`__.
-All the transactions that has not passed stateful validation will be dropped and not included into verified proposal.
+All the transactions that have not passed stateful validation will be dropped and not included in a verified proposal.
 
 World State View
 ================
 
 WSV reflects the current state of the system, can be considered as a snapshot.
-For example, WSV holds information about amount of `assets <#asset>`__ that an `account <#account>`__ has at the moment, but does not contains any info history of `transaction <#transaction>`__ flow.
+For example, WSV holds information about an amount of `assets <#asset>`__ that an `account <#account>`__ has at the moment but does not contain any info history of `transaction <#transaction>`__ flow.
 
 .. [#f1] https://en.bitcoin.it/wiki/Block
