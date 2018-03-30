@@ -1,20 +1,13 @@
 Client Libraries
 ================
 
+.. WARNING:: Some of the sections are still in the progress.
+    Please wait for them to be finished.
+
 C++ Library
 -----------
 
-Where to Get
-^^^^^^^^^^^^
-
-How to Use/Import
-^^^^^^^^^^^^^^^^^
-
-Example Code
-^^^^^^^^^^^^
-
-Troubleshooting
-^^^^^^^^^^^^^^^
+.. Attention:: Contents are missing for now.
 
 Java Library
 ------------
@@ -372,32 +365,12 @@ Explore ``bindings`` branch of `iroha-android <https://github.com/hyperledger/ir
 Objective-C Library
 -------------------
 
-Where to Get
-^^^^^^^^^^^^
-
-How to Use/Import
-^^^^^^^^^^^^^^^^^
-
-Example Code
-^^^^^^^^^^^^
-
-Troubleshooting
-^^^^^^^^^^^^^^^
+.. Attention:: Contents are missing for now.
 
 Swift Library
 -------------
 
-Where to Get
-^^^^^^^^^^^^
-
-How to Use/Import
-^^^^^^^^^^^^^^^^^
-
-Example Code
-^^^^^^^^^^^^
-
-Troubleshoting
-^^^^^^^^^^^^^^
+.. Attention:: Contents are missing for now.
 
 Python Library
 --------------

@@ -1,6 +1,8 @@
 Contribution
 ============
 
+.. Attention:: Contents are missing for now.
+
 Code of conduct
 ---------------
 
