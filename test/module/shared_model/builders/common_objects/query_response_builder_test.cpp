@@ -29,7 +29,6 @@
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
 const auto domain_id = "domain";
-const auto amount = "100.0";
 const auto hash = std::string(32, '0');
 
 uint64_t height = 1;
@@ -38,7 +37,11 @@ uint64_t counter = 1048576;
 
 boost::multiprecision::uint256_t valid_value = 1000;
 auto valid_precision = 1;
-
+const iroha::Amount amount(valid_value, valid_precision);
+const auto proto_amount = shared_model::proto::AmountBuilder()
+                              .intValue(valid_value)
+                              .precision(valid_precision)
+                              .build();
 const shared_model::interface::types::DetailType account_detail =
     "account-detail";
 const auto query_hash = shared_model::interface::types::HashType("hashhash");
@@ -51,20 +54,16 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
-          .accountAssetResponse(asset_id, account_id, amount)
+          .accountAssetResponse(asset_id, account_id, proto_amount)
           .build();
 
   const auto tmp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       query_response.get());
   const auto &asset_response = tmp->accountAsset();
 
-  shared_model::proto::AmountBuilder amountBuilder;
-  auto amount =
-      amountBuilder.intValue(valid_value).precision(valid_precision).build();
-
   ASSERT_EQ(asset_response.assetId(), asset_id);
   ASSERT_EQ(asset_response.accountId(), account_id);
-  ASSERT_EQ(asset_response.balance(), amount);
+  ASSERT_EQ(asset_response.balance(), proto_amount);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
@@ -313,24 +312,24 @@ TEST(QueryResponseBuilderTest, NoRolesErrorResponse) {
 }
 
 TEST(QueryResponseBuilderTest, SignatoriesResponse) {
-  std::vector<shared_model::interface::types::BlobType> blobs = {
-      shared_model::interface::types::BlobType("blob1"),
-      shared_model::interface::types::BlobType("blob2"),
-      shared_model::interface::types::BlobType("blob3")};
+  std::vector<shared_model::interface::types::PubkeyType> keys = {
+      shared_model::interface::types::PubkeyType("key1"),
+      shared_model::interface::types::PubkeyType("key1"),
+      shared_model::interface::types::PubkeyType("key1")};
 
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash).signatoriesResponse(blobs).build();
+      builder.queryHash(query_hash).signatoriesResponse(keys).build();
 
   const auto signatories_response =
       boost::get<w<shared_model::interface::SignatoriesResponse>>(
           query_response.get());
 
-  const auto &keys = signatories_response->keys();
-  ASSERT_EQ(blobs.size(), keys.size());
+  const auto &resp_keys = signatories_response->keys();
+  ASSERT_EQ(keys.size(), resp_keys.size());
 
   for (auto i = 0u; i < keys.size(); i++) {
-    ASSERT_EQ(blobs.at(i).blob(), keys.at(i)->blob());
+    ASSERT_EQ(keys.at(i).blob(), resp_keys.at(i)->blob());
   }
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }

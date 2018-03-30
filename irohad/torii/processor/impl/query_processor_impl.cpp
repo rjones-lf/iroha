@@ -28,18 +28,15 @@ namespace iroha {
 
     void QueryProcessorImpl::queryHandle(
         std::shared_ptr<shared_model::interface::Query> qry) {
-      std::shared_ptr<iroha::model::Query> query(qry->makeOldModel());
-      // TODO: 12.02.2018 grimadas Remove when query_executor has new model, as
-      // query is already stateless valid when passing to query  processor
-
-      auto qpf_response =
-          model::QueryProcessingFactory(storage_->getWsvQuery(),
-                                        storage_->getBlockQuery())
-              .execute(std::shared_ptr<const model::Query>(query));
-      auto qry_resp = shared_model::proto::from_old(qpf_response);
+      auto qpf = model::QueryProcessingFactory(storage_->getWsvQuery(),
+                                               storage_->getBlockQuery());
+      auto qpf_response = qpf.execute(*qry);
+      auto qry_resp =
+          std::static_pointer_cast<shared_model::proto::QueryResponse>(
+              qpf_response);
       subject_.get_subscriber().on_next(
           std::make_shared<shared_model::proto::QueryResponse>(
-              qry_resp.getTransport()));
+              qry_resp->getTransport()));
     }
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
