@@ -20,7 +20,7 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => queryBuilder.creatorAccountId(accountId).createdTime(0).queryCounter(1).getAccount(accountId).build(), /bad timestamp: too old, timestamp: 0, now:/, 'Should throw bad timestamp: too old')
   t.throws(() => queryBuilder.creatorAccountId(accountId).createdTime(time).queryCounter(0).getAccount(accountId).build(), /Counter should be > 0, passed value: 0/, 'Should throw Counter should be > 0')
 
-  // Transaction with valid txCounter, creatorAccountId and createdTime
+  // Query with valid queryCounter, creatorAccountId and createdTime
   let correctQuery = queryBuilder.creatorAccountId(accountId).createdTime(time).queryCounter(1)
 
   // getAccount() tests
