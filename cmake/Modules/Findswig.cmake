@@ -16,7 +16,7 @@ if(NOT SWIG_EXECUTABLE)
       URL_HASH SHA256=7cf9f447ae7ed1c51722efc45e7f14418d15d7a1e143ac9f09a668999f4fc94d
       PATCH_COMMAND patch -p1 < ${PROJECT_SOURCE_DIR}/../patch/add-nodejs8-support-to-swig.patch || true
       # We should install SWIG to properly access SWIG lib
-      CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --without-pcre --prefix=${EP_PREFIX}/src/swig_swig
+      CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --without-pcre --disable-ccache --prefix=${EP_PREFIX}/src/swig_swig
       BUILD_IN_SOURCE ON
       BUILD_COMMAND ${MAKE} swig
       TEST_COMMAND "" # remove test step
