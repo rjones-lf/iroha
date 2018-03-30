@@ -226,8 +226,8 @@ namespace shared_model {
         reason.second.push_back(
             "Permission set should contain at least one permission");
       }
-      if (not std::includes(iroha::model::all_perm_group.begin(),
-                            iroha::model::all_perm_group.end(),
+      if (not std::includes(iroha::model::role_perm_group.begin(),
+                            iroha::model::role_perm_group.end(),
                             permissions.begin(),
                             permissions.end())) {
         reason.second.push_back(

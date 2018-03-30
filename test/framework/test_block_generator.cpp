@@ -51,7 +51,7 @@ namespace framework {
       Signature sign{};
       transaction.signatures = {sign};
 
-      auto create_role = std::make_shared<CreateRole>("user", all_perm_group);
+      auto create_role = std::make_shared<CreateRole>("user", role_perm_group);
 
       auto create_domain = std::make_shared<CreateDomain>();
       create_domain->domain_id = "test";

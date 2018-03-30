@@ -516,7 +516,7 @@ class FieldValidatorTest : public ValidatorsTest {
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
 
   std::vector<FieldTestCase> permissionTestCases() {
-    auto valid_cases = iroha::model::all_perm_group
+    auto valid_cases = iroha::model::role_perm_group
         | boost::adaptors::transformed([&](const auto &permission) {
                          return makeTestCase(permission,
                                              &FieldValidatorTest::permission,

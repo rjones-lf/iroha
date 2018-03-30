@@ -215,7 +215,7 @@ class TestablePbCommandFactory
 TEST(CommandTest, create_role) {
   auto factory = iroha::model::converters::PbCommandFactory();
   std::set<std::string> perms;
-  perms.insert(all_perm_group.begin(), all_perm_group.end());
+  perms.insert(role_perm_group.begin(), role_perm_group.end());
 
   for (auto perm : perms) {
     TestablePbCommandFactory test_factory;
