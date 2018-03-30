@@ -193,7 +193,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account name", "domain-unique name for account", "[a-z_0-9]{1,32}", "morgan_stanley"
+    "Account name", "domain-unique name for account", "`[a-z_0-9]{1,32}`", "morgan_stanley"
     "Domain ID", "target domain to make relation with", "should be created before the account", "america"
     "Main pubkey", "first public key to add to the account", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
@@ -231,8 +231,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset name", "domain-unique name for asset", "[a-z_0-9]{1,32}", "soracoin"
-    "Domain ID", "target domain to make relation with", "RFC1035, RFC1123", "japan"
+    "Asset name", "domain-unique name for asset", "`[a-z_0-9]{1,32}`", "soracoin"
+    "Domain ID", "target domain to make relation with", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
     "Precision", "number of digits after comma/dot", "0 <= precision <= uint32 max", "2"
 
 Validation
@@ -266,7 +266,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Domain ID", "ID for created domain", "unique, RFC1035, RFC1123", "japan05"
+    "Domain ID", "ID for created domain", "unique, RFC1035 [#f1]_, RFC1123 [#f2]_", "japan05"
     "Default role", "role for any created user in the domain", "one of the existing roles", "User"
 
 Validation
@@ -302,7 +302,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Role name", "name of role to create", "[a-z_0-9]{1,32}", "User"
+    "Role name", "name of role to create", "`[a-z_0-9]{1,32}`", "User"
     "Permissions", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
 
 Validation
@@ -481,7 +481,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "id of account whom key-value information was set", "already existent", "makoto@soramitsu"
-    "Key", "key of information being set", "[A-Za-z0-9_]{1,64}", "Name"
+    "Key", "key of information being set", "`[A-Za-z0-9_]{1,64}`", "Name"
     "Value", "value of corresponding key", "≤ 4096", "Makoto"
 
 Validation
@@ -614,13 +614,16 @@ Structure
     "Source account ID", "ID of account to withdraw asset from", "already existent", "makoto@soramitsu"
     "Destination account ID", "ID of account to send asset at", "already existent", "alex@california"
     "Asset ID", "ID of asset to transfer", "already existent", "usd#usa"
-    "Description", "Message to attach to transfer", "No constraints", "here's my money take it"
+    "Description", "Message to attach to transfer", "Max length is 64", "here's my money take it"
     "Amount", "amount of the asset to transfer", "0 < amount < max_uint256", "200.20"
 
 Validation
 ^^^^^^^^^^
 
-1. Source account has this asset in its AccountHasAsset relation
+1. Source account has this asset in its AccountHasAsset relation [#f1]_
 2. An amount is a positive number and asset precision is consistent with the asset definition
 3. Source account has enough amount of asset to transfer and is not zero
 4. Source account can transfer money, and destination account can receive money (their roles have these permissions)
+
+.. [#f1] https://www.ietf.org/rfc/rfc1035.txt
+.. [#f2] https://www.ietf.org/rfc/rfc1123.txt
