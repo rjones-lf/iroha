@@ -67,7 +67,7 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "account id", "<account_name>@<domain_id>", "alex@morgan"
-    "Domain ID", "domain where the account was created", "RFC1035, RFC1123", "morgan"
+    "Domain ID", "domain where the account was created", "RFC1035 [#f1]_, RFC1123 [#f2]_ ", "morgan"
     "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum ≤ 128", "5"
     "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
@@ -345,7 +345,7 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy"
-    "Domain ID", "domain related to this asset", "RFC1035, RFC1123", "japan"
+    "Domain ID", "domain related to this asset", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
     "Precision", "number of digits after comma", "0 < precision < 256", "2"
 
 Get Roles
@@ -425,3 +425,6 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Permissions", "array of permissions related to the role", "string of permissions related to the role", "{can_add_asset_qty, …}"
+
+.. [#f1] https://www.ietf.org/rfc/rfc1035.txt
+.. [#f2] https://www.ietf.org/rfc/rfc1123.txt
