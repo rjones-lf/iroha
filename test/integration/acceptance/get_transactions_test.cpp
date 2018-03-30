@@ -163,6 +163,37 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 
 /**
  * @given some user with only can_get_my_txs permission
+ * @when query GetTransactions of existing transaction of the user, but with
+ * invalid signatures
+ * @then receive StatefullErrorResponse
+ */
+TEST_F(GetTransactions, InvalidSignatures) {
+  auto dummy_tx = dummyTx();
+  auto check = [&dummy_tx](auto &status) {
+    auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
+        interface::ErrorQueryResponse>>(status.get());
+    ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<
+                        interface::StatefulFailedErrorResponse>>(resp->get()));
+  };
+
+  auto query = proto::QueryBuilder()
+                   .createdTime(iroha::time::now())
+                   .creatorAccountId(kUserId)
+                   .queryCounter(1)
+                   .getTransactions(std::vector<crypto::Hash>{dummy_tx.hash()})
+                   .build()
+                   .signAndAddSignature(
+                       crypto::DefaultCryptoAlgorithmType::generateKeypair());
+
+  IntegrationTestFramework()
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendQuery(query, check)
+      .done();
+}
+
+/**
+ * @given some user with only can_get_my_txs permission
  * @when query GetTransactions with inexistent hash
  * @then TransactionsResponse with no transactions
  */

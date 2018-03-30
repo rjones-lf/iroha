@@ -17,13 +17,9 @@
 
 #include "validation/impl/stateful_validator_impl.hpp"
 
-#include <numeric>
-#include <set>
-
 #include <boost/range/adaptor/transformed.hpp>
 
 #include "builders/protobuf/proposal.hpp"
-#include "datetime/time.hpp"
 
 namespace iroha {
   namespace validation {

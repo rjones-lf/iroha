@@ -33,6 +33,13 @@ namespace iroha {
       explicit QueryProcessorImpl(std::shared_ptr<ametsuchi::Storage> storage);
 
       /**
+       * Checks if query has needed signatures
+       * @param qry arrived query
+       * @return true if passes stateful validation
+       */
+      bool checkSignatories(const shared_model::interface::Query &qry);
+
+      /**
        * Register client query
        * @param query - client intent
        */

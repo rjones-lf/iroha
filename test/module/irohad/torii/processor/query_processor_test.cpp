@@ -53,6 +53,12 @@ class QueryProcessorTest : public ::testing::Test {
   uint64_t counter;
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+
+  decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
+      pair =
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  std::vector<shared_model::interface::types::PubkeyType> signatories = {
+      keypair.publicKey()};
 };
 
 /**
@@ -95,25 +101,68 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
       .Times(2)
       .WillRepeatedly(Return(roles));
   EXPECT_CALL(*wsv_queries, getRolePermissions(role)).WillOnce(Return(perms));
+  EXPECT_CALL(*wsv_queries, getSignatories(account_id))
+      .WillRepeatedly(Return(signatories));
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = response->get();
-    /// check if obtained response is error response
-    boost::apply_visitor(
-        [](auto val) {
-          if (std::is_same<
-                  decltype(val),
-                  shared_model::detail::PolymorphicWrapper<
-                      shared_model::interface::AccountResponse>>::value) {
-            SUCCEED();
-          } else {
-            FAIL();
-          }
-
-        },
-        resp);
+    ASSERT_NO_THROW(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::AccountResponse>>(response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given account, ametsuchi queries and query processing factory
+ * @when signed with wrong key
+ * @then Query Processor should return StatefullFailed
+ */
+TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+  auto storage = std::make_shared<MockStorage>();
+  auto qpf = std::make_unique<model::QueryProcessingFactory>(wsv_queries,
+                                                             block_queries);
+
+  iroha::torii::QueryProcessorImpl qpi(storage);
+
+  auto query = TestUnsignedQueryBuilder()
+                   .createdTime(created_time)
+                   .creatorAccountId(account_id)
+                   .getAccount(account_id)
+                   .queryCounter(counter)
+                   .build()
+                   .signAndAddSignature(
+                       shared_model::crypto::DefaultCryptoAlgorithmType::
+                           generateKeypair());
+
+  auto qry_resp = std::make_shared<model::AccountResponse>();
+  auto account = model::Account();
+  account.account_id = account_id;
+  qry_resp->account = account;
+  std::shared_ptr<shared_model::interface::Account> shared_account = clone(
+      shared_model::proto::AccountBuilder().accountId(account_id).build());
+  auto role = "admin";
+  std::vector<std::string> roles = {role};
+  std::vector<std::string> perms = {iroha::model::can_get_my_account};
+
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
+  EXPECT_CALL(*wsv_queries, getSignatories(account_id))
+      .WillRepeatedly(Return(signatories));
+
+  auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
+  wrapper.subscribe([](auto response) {
+    auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
+        shared_model::interface::ErrorQueryResponse>>(response->get());
+    ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<
+                        shared_model::interface::StatefulFailedErrorResponse>>(
+        resp->get()));
+  });
+  qpi.queryHandle(
+      std::make_shared<shared_model::proto::Query>(query.getTransport()));
+  ASSERT_TRUE(wrapper.validate());
 }
