@@ -28,10 +28,10 @@
 #include "network/ordering_gate_transport.hpp"
 
 namespace shared_model {
-  namespace interaface {
+  namespace interface {
     class Transaction;
     class Proposal;
-  }  // namespace interaface
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {

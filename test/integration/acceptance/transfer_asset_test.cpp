@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <type_traits>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -282,6 +283,19 @@ TEST_F(TransferAsset, EmptyDesc) {
       .done();
 }
 
+template <typename Status>
+void validateStatus(shared_model::proto::TransactionResponse &status) {
+  boost::apply_visitor(
+      [](auto val) {
+        if (std::is_same<decltype(val), Status>::value) {
+          SUCCEED();
+        } else {
+          FAIL() << "obtained: " << typeid(decltype(*val.operator->())).name()
+                 << ", expected: " << typeid(Status).name() << std::endl;
+        }
+      },
+      status.get());
+}
 /**
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with very long description
@@ -290,6 +304,10 @@ TEST_F(TransferAsset, EmptyDesc) {
  */
 TEST_F(TransferAsset, LongDesc) {
   std::string long_desc(100000, 'a');
+  auto invalid_tx = completeTx(
+      baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, long_desc, kAmount));
+  using ExpectedStatusType = shared_model::detail::PolymorphicWrapper<
+      shared_model::interface::StatelessFailedTxResponse>;
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
@@ -297,9 +315,12 @@ TEST_F(TransferAsset, LongDesc) {
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().transferAsset(
-          kUser1Id, kUser2Id, kAsset, long_desc, kAmount)));
-  ASSERT_ANY_THROW(itf.skipProposal());
+      .sendTx(invalid_tx,
+              [](shared_model::proto::TransactionResponse &status) {
+                // check if returned status is as expected
+                ASSERT_NO_THROW(boost::get<ExpectedStatusType>(status.get()));
+              })
+      .done();
 }
 
 /**

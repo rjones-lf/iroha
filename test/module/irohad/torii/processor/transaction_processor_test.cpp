@@ -16,8 +16,8 @@
  */
 
 #include <boost/range/join.hpp>
-#include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -232,14 +232,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = shared_model::proto::TransactionBuilder()
-        .txCounter(i + 1)
-        .createdTime(iroha::time::now())
-        .creatorAccountId("admin@ru")
-        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
-        .build()
-        .signAndAddSignature(
-            shared_model::crypto::DefaultCryptoAlgorithmType::
-            generateKeypair());
+                    .txCounter(i + 1)
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -303,14 +303,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   std::vector<shared_model::proto::Transaction> block_txs;
   for (size_t i = 0; i < block_size; i++) {
     auto &&tx = shared_model::proto::TransactionBuilder()
-        .txCounter(i + 1)
-        .createdTime(iroha::time::now())
-        .creatorAccountId("admin@ru")
-        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
-        .build()
-        .signAndAddSignature(
-            shared_model::crypto::DefaultCryptoAlgorithmType::
-            generateKeypair());
+                    .txCounter(i + 1)
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
     block_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -321,14 +321,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
                     // in proposal but didn't appear in block
   for (size_t i = block_size; i < proposal_size; i++) {
     auto &&tx = shared_model::proto::TransactionBuilder()
-        .txCounter(i + 1)
-        .createdTime(iroha::time::now())
-        .creatorAccountId("admin@ru")
-        .addAssetQuantity("admin@tu", "coin#coin", "1.0")
-        .build()
-        .signAndAddSignature(
-            shared_model::crypto::DefaultCryptoAlgorithmType::
-            generateKeypair());
+                    .txCounter(i + 1)
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair());
     invalid_txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
