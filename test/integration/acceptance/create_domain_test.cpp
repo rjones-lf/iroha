@@ -154,12 +154,18 @@ TEST_F(CreateDomain, ExistentName) {
  * @then there is the tx in proposal
  */
 TEST_F(CreateDomain, MaxLenName) {
+  std::string maxLongDomain =
+      // 255 characters string
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad";
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().createDomain(std::string(9, 'a'), kRole)))
+      .sendTx(completeTx(baseTx().createDomain(maxLongDomain, kRole)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -173,12 +179,18 @@ TEST_F(CreateDomain, MaxLenName) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateDomain, TooLongName) {
+  std::string tooLongDomain =
+      // 256 characters string
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPads";
   IntegrationTestFramework itf;
   itf.setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().createDomain(std::string(10, 'a'), kRole)));
+      .sendTx(completeTx(baseTx().createDomain(std::string(257, 'a'), kRole)));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 

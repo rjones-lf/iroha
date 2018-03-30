@@ -166,7 +166,7 @@ TEST_F(CreateAccount, MaxLenName) {
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx().createAccount(
-          std::string(9, 'a'), kDomain, kNewUserKeypair.publicKey())))
+          std::string(32, 'a'), kDomain, kNewUserKeypair.publicKey())))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -186,7 +186,7 @@ TEST_F(CreateAccount, TooLongName) {
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx().createAccount(
-          std::string(10, 'a'), kDomain, kNewUserKeypair.publicKey())));
+          std::string(33, 'a'), kDomain, kNewUserKeypair.publicKey())));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 

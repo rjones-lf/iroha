@@ -363,6 +363,12 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidPeerAddressTestCase("hostname with hyphen", "a-hyphen.ru-i:8080", std::string(32, '0')),
       makeValidPeerAddressTestCase("common hostname with port", "altplus.com.jp:80", std::string(32, '0')),
       makeValidPeerAddressTestCase("max label length in hostname with port", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:8080", std::string(32, '0')),
+      makeValidPeerAddressTestCase("max domain name length in hostname with port",
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:256", std::string(32, '0')),
+
 
       makeInvalidPeerAddressTestCase("hostname starting with nonletter", "9.start.with.non.letter:0", std::string(32, '0')),
       makeInvalidPeerAddressTestCase("hostname starting with dash", "-startWithDash:65535", std::string(32, '0')),
@@ -432,6 +438,11 @@ class FieldValidatorTest : public ValidatorsTest {
       true_case("with_hyphen", "a-hyphen"),
       true_case("with_63_character", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"),
       true_case("ending_with_digit","endWith0"),
+      true_case("max_long_domain",
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"),
 
       false_case("space", " "),
       false_case("start_with_digit", "9start.with.non.letter"),
@@ -440,7 +451,12 @@ class FieldValidatorTest : public ValidatorsTest {
       false_case("with_space","no space is allowed"),
       false_case("end_with_hyphen", "endWith-"),
       false_case("label_ending_with_hyphen","label.endedWith-.is.not.allowed"),
-      false_case("too_long","aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters")
+      false_case("too_long_label","aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters"),
+      false_case("too_long_domain",
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+                 "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP")
         // clang-format on
     };
   }

@@ -94,9 +94,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
             });
 
     default_domain = clone(shared_model::proto::DomainBuilder()
-                            .domainId(domain_id)
-                            .defaultRole(admin_role)
-                            .build());
+                               .domainId(domain_id)
+                               .defaultRole(admin_role)
+                               .build());
   }
 
   iroha::ExecutionResult validateAndExecute() {
@@ -1199,27 +1199,27 @@ class TransferAssetTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     asset = clone(shared_model::proto::AssetBuilder()
-                  .assetId(asset_id)
-                  .domainId(domain_id)
-                  .precision(2)
-                  .build());
+                      .assetId(asset_id)
+                      .domainId(domain_id)
+                      .precision(2)
+                      .build());
 
     balance = clone(shared_model::proto::AmountBuilder()
-                  .intValue(150)
-                  .precision(2)
-                  .build());
+                        .intValue(150)
+                        .precision(2)
+                        .build());
 
     src_wallet = clone(shared_model::proto::AccountAssetBuilder()
-                  .assetId(asset_id)
-                  .accountId(admin_id)
-                  .balance(*balance)
-                  .build());
+                           .assetId(asset_id)
+                           .accountId(admin_id)
+                           .balance(*balance)
+                           .build());
 
     dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
-                  .assetId(asset_id)
-                  .accountId(account_id)
-                  .balance(*balance)
-                  .build());
+                           .assetId(asset_id)
+                           .accountId(account_id)
+                           .balance(*balance)
+                           .build());
 
     transfer_asset = std::make_shared<TransferAsset>();
     transfer_asset->src_account_id = admin_id;
@@ -1528,10 +1528,10 @@ TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
           .build());
 
   src_wallet = clone(shared_model::proto::AccountAssetBuilder()
-                .assetId(src_wallet->assetId())
-                .accountId(src_wallet->accountId())
-                .balance(*max_balance)
-                .build());
+                         .assetId(src_wallet->assetId())
+                         .accountId(src_wallet->accountId())
+                         .balance(*max_balance)
+                         .build());
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
       .WillOnce(Return(asset));
@@ -1592,22 +1592,6 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
       .WillRepeatedly(Return(WsvCommandResult()));
 
   ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-}
-
-TEST_F(TransferAssetTest, InvalidWhenZeroAmount) {
-  // Transfer zero assets
-  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .Times(2)
-      .WillRepeatedly(Return(role_permissions));
-
-  Amount amount(0, 2);
-  transfer_asset->amount = amount;
-
-  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
 
 class AddPeerTest : public CommandValidateExecuteTest {
@@ -1698,16 +1682,6 @@ TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
       .WillRepeatedly(Return(role_permissions));
   std::set<std::string> perms = {can_add_peer, can_append_role};
   command = std::make_shared<CreateRole>("master", perms);
-  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-}
-
-TEST_F(CreateRoleTest, InvalidCaseWhenWrongRoleName) {
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillRepeatedly(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillRepeatedly(Return(role_permissions));
-  std::set<std::string> perms = {can_create_role};
-  command = std::make_shared<CreateRole>("m!Aster", perms);
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
 

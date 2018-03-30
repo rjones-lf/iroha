@@ -164,7 +164,7 @@ TEST_F(CreateRole, LongRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(
-          baseTx({iroha::model::can_get_my_txs}, std::string(8, 'a'))));
+          baseTx({iroha::model::can_get_my_txs}, std::string(33, 'a'))));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 
@@ -180,7 +180,7 @@ TEST_F(CreateRole, MaxLenRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(
-          baseTx({iroha::model::can_get_my_txs}, std::string(7, 'a'))))
+          baseTx({iroha::model::can_get_my_txs}, std::string(32, 'a'))))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })

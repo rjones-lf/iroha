@@ -44,16 +44,21 @@ namespace iroha {
 
     /*                          Signatory                         */
     const std::string can_add_signatory = "can_add_signatory";
+    const std::string can_add_my_signatory = "can_add_my_signatory";
     const std::string can_remove_signatory = "can_remove_signatory";
+    const std::string can_remove_my_signatory = "can_remove_my_signatory";
     const std::string can_set_quorum = "can_set_quorum";
+    const std::string can_set_my_quorum = "can_set_my_quorum";
 
     /*                          Account                           */
     const std::string can_create_account = "can_create_account";
     const std::string can_set_detail = "can_set_detail";
+    const std::string can_set_my_account_detail = "can_set_my_account_detail";
 
     /*                           Asset                            */
     const std::string can_create_asset = "can_create_asset";
     const std::string can_transfer = "can_transfer";
+    const std::string can_transfer_my_assets = "can_transfer_my_assets";
     const std::string can_receive = "can_receive";
 
     /*                           Domain                           */
@@ -111,44 +116,40 @@ namespace iroha {
     const std::string can_get_all_txs = "can_get_all_txs";
 
     /* ~~~~~~~~                 Groups                ~~~~~~~~   */
-    const std::set<std::string>
-            read_self_group = {can_get_my_account,
-                               can_get_my_signatories,
-                               can_get_my_acc_ast,
-                               can_get_my_acc_detail,
-                               can_get_my_acc_txs,
-                               can_get_my_acc_ast_txs,
-                               can_get_my_txs
-                               };
+    const std::set<std::string> read_self_group = {can_get_my_account,
+                                                   can_get_my_signatories,
+                                                   can_get_my_acc_ast,
+                                                   can_get_my_acc_detail,
+                                                   can_get_my_acc_txs,
+                                                   can_get_my_acc_ast_txs,
+                                                   can_get_my_txs};
 
-    const std::set<std::string>
-            read_all_group = {can_get_all_accounts,
-                              can_get_all_signatories,
-                              can_get_all_acc_ast,
-                              can_get_all_acc_detail,
-                              can_get_all_acc_txs,
-                              can_get_all_acc_ast_txs,
-                              can_get_all_txs,
-                              can_get_roles,
-                              can_read_assets};
+    const std::set<std::string> read_all_group = {can_get_all_accounts,
+                                                  can_get_all_signatories,
+                                                  can_get_all_acc_ast,
+                                                  can_get_all_acc_detail,
+                                                  can_get_all_acc_txs,
+                                                  can_get_all_acc_ast_txs,
+                                                  can_get_all_txs,
+                                                  can_get_roles,
+                                                  can_read_assets};
 
-    const std::set<std::string>
-            read_domain_group = {can_get_domain_accounts,
-                                 can_get_domain_signatories,
-                                 can_get_domain_acc_ast,
-                                 can_get_domain_acc_detail,
-                                 can_get_domain_acc_txs,
-                                 can_get_domain_acc_ast_txs,
-                                 };
+    const std::set<std::string> read_domain_group = {
+        can_get_domain_accounts,
+        can_get_domain_signatories,
+        can_get_domain_acc_ast,
+        can_get_domain_acc_detail,
+        can_get_domain_acc_txs,
+        can_get_domain_acc_ast_txs,
+    };
 
     /*                   Grantable permissions                   */
     const std::string can_grant = "can_grant_";
-    const std::set<std::string>
-            grant_group = {can_grant + can_set_quorum,
-                           can_grant + can_add_signatory,
-                           can_grant + can_remove_signatory,
-                           can_grant + can_transfer,
-                           can_grant + can_set_detail};
+    const std::set<std::string> grant_group = {can_grant + can_set_quorum,
+                                               can_grant + can_add_signatory,
+                                               can_grant + can_remove_signatory,
+                                               can_grant + can_transfer,
+                                               can_grant + can_set_detail};
 
     const std::set<std::string>
             edit_self_group = {can_set_quorum,

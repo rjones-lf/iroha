@@ -124,12 +124,12 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
       const std::string init_ = R"(
 CREATE TABLE IF NOT EXISTS role (
-    role_id character varying(45),
+    role_id character varying(32),
     PRIMARY KEY (role_id)
 );
 CREATE TABLE IF NOT EXISTS domain (
-    domain_id character varying(164),
-    default_role character varying(45) NOT NULL REFERENCES role(role_id),
+    domain_id character varying(255),
+    default_role character varying(32) NOT NULL REFERENCES role(role_id),
     PRIMARY KEY (domain_id)
 );
 CREATE TABLE IF NOT EXISTS signatory (
@@ -137,49 +137,49 @@ CREATE TABLE IF NOT EXISTS signatory (
     PRIMARY KEY (public_key)
 );
 CREATE TABLE IF NOT EXISTS account (
-    account_id character varying(197),
-    domain_id character varying(164) NOT NULL REFERENCES domain,
+    account_id character varying(288),
+    domain_id character varying(255) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
     transaction_count int NOT NULL DEFAULT 0,
     data JSONB,
     PRIMARY KEY (account_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (
-    account_id character varying(197) NOT NULL REFERENCES account,
+    account_id character varying(288) NOT NULL REFERENCES account,
     public_key bytea NOT NULL REFERENCES signatory,
     PRIMARY KEY (account_id, public_key)
 );
 CREATE TABLE IF NOT EXISTS peer (
     public_key bytea NOT NULL,
-    address character varying(21) NOT NULL UNIQUE,
+    address character varying(261) NOT NULL UNIQUE,
     PRIMARY KEY (public_key)
 );
 CREATE TABLE IF NOT EXISTS asset (
-    asset_id character varying(197),
-    domain_id character varying(164) NOT NULL REFERENCES domain,
+    asset_id character varying(288),
+    domain_id character varying(255) NOT NULL REFERENCES domain,
     precision int NOT NULL,
     data json,
     PRIMARY KEY (asset_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_asset (
-    account_id character varying(197) NOT NULL REFERENCES account,
-    asset_id character varying(197) NOT NULL REFERENCES asset,
+    account_id character varying(288) NOT NULL REFERENCES account,
+    asset_id character varying(288) NOT NULL REFERENCES asset,
     amount decimal NOT NULL,
     PRIMARY KEY (account_id, asset_id)
 );
 CREATE TABLE IF NOT EXISTS role_has_permissions (
-    role_id character varying(45) NOT NULL REFERENCES role,
+    role_id character varying(32) NOT NULL REFERENCES role,
     permission_id character varying(45),
     PRIMARY KEY (role_id, permission_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_roles (
-    account_id character varying(197) NOT NULL REFERENCES account,
-    role_id character varying(45) NOT NULL REFERENCES role,
+    account_id character varying(288) NOT NULL REFERENCES account,
+    role_id character varying(32) NOT NULL REFERENCES role,
     PRIMARY KEY (account_id, role_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
-    permittee_account_id character varying(197) NOT NULL REFERENCES account,
-    account_id character varying(197) NOT NULL REFERENCES account,
+    permittee_account_id character varying(288) NOT NULL REFERENCES account,
+    account_id character varying(288) NOT NULL REFERENCES account,
     permission_id character varying(45),
     PRIMARY KEY (permittee_account_id, account_id, permission_id)
 );
