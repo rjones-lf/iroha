@@ -75,11 +75,10 @@ namespace iroha {
           model::QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
       if (not signatories) {
-        subject_.get_subscriber().on_next(buildStatefulError(qry.hash()));
         return false;
       }
       bool result = signaturesSubset({sig}, *signatories);
-      return bool(result);
+      return result;
     }
 
     void QueryProcessorImpl::queryHandle(
