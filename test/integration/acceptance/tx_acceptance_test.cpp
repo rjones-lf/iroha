@@ -293,9 +293,7 @@ TEST(AcceptanceTest, TransactionEmptySignedblob) {
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
           .build();
-  tx.addSignature(
-      shared_model::crypto::Signed(""),
-      kAdminKeypair.publicKey());
+  tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)

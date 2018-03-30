@@ -22,6 +22,8 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 constexpr auto kUser = "user@test";
 constexpr auto kAsset = "asset#domain";
@@ -29,7 +31,7 @@ const shared_model::crypto::Keypair kAdminKeypair =
     shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
 /**
- * @given GetAccount query
+ * @given GetAccount query with non-existing user
  * AND default-initialized IntegrationTestFramework
  * @when query is sent to the framework
  * @then query response is ErrorResponse with STATEFUL_INVALID reason
@@ -42,17 +44,15 @@ TEST(PipelineIntegrationTest, SendQuery) {
                    .getAccount(kUser)
                    .build()
                    .signAndAddSignature(
+                       // TODO: 30/03/17 @l4l use keygen adapter IR-1189
                        shared_model::crypto::DefaultCryptoAlgorithmType::
                            generateKeypair());
 
   auto check = [](auto &status) {
-    using ExpectedResponseType = shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::ErrorQueryResponse>;
-    using ExpectedReasonType = shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::StatefulFailedErrorResponse>;
-    ASSERT_NO_THROW(boost::get<ExpectedResponseType>(status.get()));
-    ASSERT_NO_THROW(boost::get<ExpectedReasonType>(
-        boost::get<ExpectedResponseType>(status.get())->get()));
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<
+            shared_model::interface::StatefulFailedErrorResponse>(),
+        status.get()));
   };
   integration_framework::IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
@@ -63,8 +63,8 @@ TEST(PipelineIntegrationTest, SendQuery) {
 /**
  * @given some user
  * @when sending sample AddAssetQuantity transaction to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on that tx
- * @and wait for proposal and block
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that tx,
+ * the tx is passed to proposal and does not appear in block
  */
 TEST(PipelineIntegrationTest, SendTx) {
   auto tx = shared_model::proto::TransactionBuilder()
@@ -78,9 +78,10 @@ TEST(PipelineIntegrationTest, SendTx) {
                         generateKeypair());
 
   auto checkStatelessValid = [](auto &status) {
-    ASSERT_NO_THROW(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::StatelessValidTxResponse>>(status.get()));
+    ASSERT_NO_THROW(boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::StatelessValidTxResponse>(),
+        status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
