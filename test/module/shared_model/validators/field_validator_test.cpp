@@ -421,11 +421,11 @@ class FieldValidatorTest : public ValidatorsTest {
   /// domain_id
   std::vector<FieldTestCase> domainIdTestCases() {
     auto true_case = [&](const auto &name, const auto &case_value) {
-      return makeTestCase(
+      return this->makeTestCase(
           name, &FieldValidatorTest::domain_id, case_value, true, "");
     };
     auto false_case = [&](const auto &name, const auto &case_value) {
-      return makeTestCase(
+      return this->makeTestCase(
           name, &FieldValidatorTest::domain_id, case_value, false, "");
     };
     return {
@@ -518,7 +518,7 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> permissionTestCases() {
     auto valid_cases = iroha::model::role_perm_group
         | boost::adaptors::transformed([&](const auto &permission) {
-                         return makeTestCase(permission,
+                         return this->makeTestCase(permission,
                                              &FieldValidatorTest::permission,
                                              permission,
                                              true,
