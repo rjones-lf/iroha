@@ -92,7 +92,7 @@ test('ModelTransactionBuilder tests', function (t) {
   t.doesNotThrow(() => correctQuery.getTransactions(hv), null, 'Should not throw any exceptions')
 
   // getAccountDetail() tests
-  t.comment('Testing getAccountTransactions()')
+  t.comment('Testing getAccountDetail()')
   t.throws(() => correctQuery.getAccountDetail(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctQuery.getAccountDetail('').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
   t.throws(() => correctQuery.getAccountDetail('@@@').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
