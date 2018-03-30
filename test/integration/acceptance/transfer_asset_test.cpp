@@ -283,19 +283,6 @@ TEST_F(TransferAsset, EmptyDesc) {
       .done();
 }
 
-template <typename Status>
-void validateStatus(shared_model::proto::TransactionResponse &status) {
-  boost::apply_visitor(
-      [](auto val) {
-        if (std::is_same<decltype(val), Status>::value) {
-          SUCCEED();
-        } else {
-          FAIL() << "obtained: " << typeid(decltype(*val.operator->())).name()
-                 << ", expected: " << typeid(Status).name() << std::endl;
-        }
-      },
-      status.get());
-}
 /**
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with very long description
