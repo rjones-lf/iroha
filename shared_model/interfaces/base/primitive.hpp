@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/swig_keyword_hider.hpp"
