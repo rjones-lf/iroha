@@ -105,7 +105,7 @@ A common precondition for both triggers is that at least one transaction should 
 Peer
 ====
 
-A node that is a part of cluster running Iroha.
+A node that is a part of Iroha network.
 It participates in `consensus <#consensus>`_ process.
 
 Peer Communication Service
