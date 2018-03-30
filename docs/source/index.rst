@@ -1,7 +1,7 @@
 Hyperledger Iroha documentation 
 *******************************
 
-:Last Reviewed: 2018-03-06
+:Last Reviewed: 2018-03-30
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_logo.png
 
