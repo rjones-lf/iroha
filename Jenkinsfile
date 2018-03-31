@@ -53,13 +53,13 @@ pipeline {
 
   agent any
   stages {
-    stage ('Stop bad job builds') {
+    stage ('Stop redundant job builds') {
       agent { label 'master' }
       steps {
         script {
           if (BRANCH_NAME != "develop") {
             if (params.Nightly) {
-                // Stop this job running if it is nightly but not the develop it should be
+                // Stop this job running in case it is nightly but not the develop it should be
                 def tmp = load ".jenkinsci/cancel-nightly-except-develop.groovy"
                 tmp.cancelThisJob()
             }
