@@ -36,7 +36,7 @@
 #include "model/commands/set_quorum.hpp"
 #include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 
 using ::testing::AllOf;

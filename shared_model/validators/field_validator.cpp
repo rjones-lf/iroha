@@ -18,7 +18,7 @@
 #include "validators/field_validator.hpp"
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
-#include "model/permissions.hpp"
+#include "permissions.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978

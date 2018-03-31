@@ -34,7 +34,7 @@
 #include "model/commands/transfer_asset.hpp"
 
 #include "model/converters/pb_command_factory.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha::model;
 

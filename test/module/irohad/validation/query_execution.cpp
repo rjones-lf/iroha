@@ -26,7 +26,7 @@
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "framework/test_subscriber.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "model/query_execution.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 

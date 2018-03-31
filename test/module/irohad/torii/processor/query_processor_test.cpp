@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 

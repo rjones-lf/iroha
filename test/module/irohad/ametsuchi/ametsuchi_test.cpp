@@ -24,7 +24,7 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/test_subscriber.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"

@@ -24,7 +24,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "model/block.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 

@@ -31,7 +31,7 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
 #include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "parser/parser.hpp"  // for parser::ParseValue
 

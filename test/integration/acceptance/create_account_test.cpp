@@ -21,7 +21,7 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace std::string_literals;

@@ -29,7 +29,7 @@
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"

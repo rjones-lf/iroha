@@ -25,7 +25,7 @@
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 

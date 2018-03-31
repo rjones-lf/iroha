@@ -21,7 +21,7 @@
 
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "utils/amount_utils.hpp"
 
 namespace iroha {

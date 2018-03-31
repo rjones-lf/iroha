@@ -20,7 +20,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "execution/common_executor.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha::model;
 using namespace iroha::ametsuchi;

@@ -26,7 +26,7 @@
 #include "datetime/time.hpp"
 // TODO (@l4l) IR-874 create more comfort way for permssion-dependent proto
 // building
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;

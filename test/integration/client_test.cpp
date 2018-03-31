@@ -39,7 +39,7 @@
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"

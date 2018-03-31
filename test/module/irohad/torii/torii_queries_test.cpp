@@ -27,7 +27,7 @@ limitations under the License.
 #include "model/converters/pb_common.hpp"
 
 #include "main/server_runner.hpp"
-#include "model/permissions.hpp"
+#include "validators/permissions.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
