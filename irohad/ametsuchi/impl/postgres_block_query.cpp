@@ -51,7 +51,7 @@ namespace iroha {
               shared_model::proto::from_old(block_old));
         };
         return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-            [this, block{std::move(block)}](auto s) {
+            [block{std::move(block)}](auto s) {
               if (block) {
                 s.on_next(block);
               }
@@ -120,7 +120,7 @@ namespace iroha {
                   *model::converters::stringToJson(bytesToString(bytes)))));
         };
         boost::for_each(
-            result | boost::adaptors::transformed([&block](const auto &x) {
+            result | boost::adaptors::transformed([](const auto &x) {
               return x.at("index").template as<size_t>();
             }),
             [&](auto x) {
@@ -198,7 +198,7 @@ namespace iroha {
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) |
           [this](auto blockId) { return block_store_.get(blockId); } |
-          [this](auto bytes) {
+          [](auto bytes) {
             // TODO IR-975 victordrobny 12.02.2018 convert directly to
             // shared_model::proto::Block after FlatFile will be reworked to new
             // model

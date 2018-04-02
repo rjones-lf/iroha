@@ -88,7 +88,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
               .build(block)
               .match(
                   // success case
-                  [this, &context, &subscriber](
+                  [&subscriber](
                       const iroha::expected::Value<shared_model::proto::Block>
                           &result) {
                     subscriber.on_next(

@@ -169,7 +169,7 @@ TEST_F(GetTransactions, HaveGetMyTx) {
  */
 TEST_F(GetTransactions, InvalidSignatures) {
   auto dummy_tx = dummyTx();
-  auto check = [&dummy_tx](auto &status) {
+  auto check = [](auto &status) {
     auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
         interface::ErrorQueryResponse>>(status.get());
     ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<

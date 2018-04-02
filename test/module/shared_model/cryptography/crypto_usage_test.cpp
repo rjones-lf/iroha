@@ -70,8 +70,7 @@ class CryptoUsageTest : public ::testing::Test {
         and std::all_of(
                 signable.signatures().begin(),
                 signable.signatures().end(),
-                [this,
-                 &signable](const shared_model::detail::PolymorphicWrapper<
+                [&signable](const shared_model::detail::PolymorphicWrapper<
                             shared_model::interface::Signature> &signature) {
                   return shared_model::crypto::CryptoVerifier<>::verify(
                       signature->signedData(),
