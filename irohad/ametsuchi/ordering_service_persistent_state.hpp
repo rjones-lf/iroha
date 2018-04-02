@@ -44,6 +44,8 @@ namespace iroha {
        * Reset storage to default state
        */
       virtual bool resetState() = 0;
+
+      virtual ~OrderingServicePersistentState() = default;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

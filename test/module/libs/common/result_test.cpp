@@ -166,6 +166,7 @@ class Base {
   virtual int getNumber() {
     return 0;
   }
+  virtual ~Base() = default;
 };
 
 class Derived : public Base {
