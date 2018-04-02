@@ -16,8 +16,8 @@ limitations under the License.
 #ifndef IROHA_VALIDATION_STATEFUL_VALIDATOR_HPP
 #define IROHA_VALIDATION_STATEFUL_VALIDATOR_HPP
 
-#include "ametsuchi/temporary_wsv.hpp"
-#include "model/proposal.hpp"
+#include <ametsuchi/temporary_wsv.hpp>
+#include <model/proposal.hpp>
 
 namespace iroha {
   namespace validation {
@@ -29,6 +29,19 @@ namespace iroha {
      public:
       virtual ~StatefulValidator() = default;
 
+
+   for( auto pubkey : pulic_keys){
+      for(auto sign : signatures){
+         if( sign.pubkey == pubkey)  {
+             count++; break;
+          }     
+      }
+  }
+     if ( count == public_key.size()) return True;
+     return False;
+
+
+
       /**
        * Function perform stateful validation on proposal
        * and return proposal with valid transactions
@@ -39,8 +52,8 @@ namespace iroha {
        * @return proposal with valid transactions
        */
       virtual model::Proposal validate(
-          const model::Proposal &proposal,
-          ametsuchi::TemporaryWsv &temporaryWsv) = 0;
+          const model::Proposal& proposal,
+          ametsuchi::TemporaryWsv& temporaryWsv) = 0;
     };
   }  // namespace validation
 }  // namespace iroha
