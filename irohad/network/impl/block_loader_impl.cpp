@@ -34,12 +34,10 @@ using namespace shared_model::interface;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQuery> peer_query,
     std::shared_ptr<BlockQuery> block_query,
-    std::shared_ptr<model::ModelCryptoProvider> crypto_provider,
     std::shared_ptr<shared_model::validation::DefaultBlockValidator>
         stateless_validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
-      crypto_provider_(crypto_provider),
       stateless_validator_(stateless_validator) {
   log_ = logger::log("BlockLoaderImpl");
 }
