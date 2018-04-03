@@ -16,7 +16,6 @@ properties([parameters([
   booleanParam(defaultValue: false, description: '', name: 'ARMv7'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv8'),
   booleanParam(defaultValue: true, description: '', name: 'MacOS'),
-  booleanParam(defaultValue: false, description: 'Whether it is a triggered build', name: 'Nightly'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java Bindings Build Type', name: 'JBBuildType'),
@@ -36,10 +35,6 @@ pipeline {
     CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
     SONAR_TOKEN = credentials('SONAR_TOKEN')
-    CODECOV_TOKEN = credentials('CODECOV_TOKEN')
-    DOCKERHUB = credentials('DOCKERHUB')
-    DOCKER_BASE_IMAGE_DEVELOP = 'hyperledger/iroha:develop'
-    DOCKER_BASE_IMAGE_RELEASE = 'hyperledger/iroha:latest'
     GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
 
     IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
@@ -49,49 +44,26 @@ pipeline {
     IROHA_POSTGRES_PORT = 5432
   }
 
-  triggers {
-        parameterizedCron('''
-0 23 * * * %BUILD_TYPE=Release; Linux=True; MacOS=True; ARMv7=False; ARMv8=True; Nightly=True; Doxygen=False; JavaBindings=False; PythonBindings=False; BindingsOnly=False; PARALLELISM=4
-        ''')
-    }
   options {
     buildDiscarder(logRotator(numToKeepStr: '20'))
   }
 
   agent any
   stages {
-    stage ('Stop bad job builds') {
+    stage ('Stop same job builds') {
       agent { label 'master' }
       steps {
         script {
-          if (BRANCH_NAME != "develop") {
-            if (params.Nightly) {
-                // Stop this job running if it is nightly but not the develop it should be
-                def tmp = load ".jenkinsci/cancel-nightly-except-develop.groovy"
-                tmp.cancelThisJob()
-            }
-            else {
-              // Stop same job running builds if it is commit/PR build and not triggered as nightly
-              def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
-              builds.cancelSameJobBuilds()
-            }
-          }
-          else {
-            if (!params.Nightly) {
-              // Stop same job running builds if it is develop but it is not nightly
-              def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
-              builds.cancelSameJobBuilds()
-            }
+          if (GIT_LOCAL_BRANCH != "develop") {
+            def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
+            builds.cancelSameJobBuilds()
           }
         }
       }
     }
     stage('Build Debug') {
       when {
-        allOf {
-          expression { params.BUILD_TYPE == 'Debug' }
-          expression { return !params.BindingsOnly }
-        }
+        expression { params.BUILD_TYPE == 'Debug' }
       }
       parallel {
         stage ('Linux') {
@@ -107,7 +79,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (BRANCH_NAME ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -135,7 +107,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (BRANCH_NAME ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -163,7 +135,7 @@ pipeline {
               else {
                 debugBuild.doDebugBuild()
               }
-              if (BRANCH_NAME ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -245,7 +217,7 @@ pipeline {
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
-              if (BRANCH_NAME ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -256,11 +228,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
                     }
                   }
                   finally {
@@ -279,10 +251,7 @@ pipeline {
     }
     stage('Build Release') {
       when {
-        allOf {
-          expression { params.BUILD_TYPE == 'Release' }
-          expression { return ! params.BindingsOnly }
-        }        
+        expression { params.BUILD_TYPE == 'Release' }      
       }
       parallel {
         stage('Linux') {
@@ -353,11 +322,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
                   }
                   finally {
@@ -374,7 +343,7 @@ pipeline {
       when {
         allOf {
           expression { return params.Doxygen }
-          expression { BRANCH_NAME ==~ /(master|develop)/ }
+          expression { GIT_LOCAL_BRANCH ==~ /(master|develop)/ }
         }
       }
       // build docs on any vacant node. Prefer `x86_64` over
@@ -408,20 +377,20 @@ pipeline {
           def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
           if (params.JavaBindings) {
-            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
-                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
-                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
-                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/x86_64/Dockerfile",
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop-build",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                                                  ['PARALLELISM': params.PARALLELISM])
             iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
               bindings.doJavaBindings(params.JBBuildType)
             }
           }
           if (params.PythonBindings) {
-            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
-                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
-                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
-                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/x86_64/Dockerfile",
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop-build",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                                                  ['PARALLELISM': params.PARALLELISM])
             iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
               bindings.doPythonBindings(params.PBBuildType)

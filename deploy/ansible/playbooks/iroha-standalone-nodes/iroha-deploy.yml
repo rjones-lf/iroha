@@ -12,4 +12,4 @@
       changed_when: False
     roles:
       - { role: docker, tags: docker }
-      - { role: iroha-standalone-deploy-node }
+      - { role: iroha-standalone-deploy-node, tags: iroha-standalone-deploy-node }
