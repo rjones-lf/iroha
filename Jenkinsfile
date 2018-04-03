@@ -12,15 +12,15 @@
 //   |            |----Release
 properties([parameters([
   choice(choices: 'Debug\nRelease', description: '', name: 'BUILD_TYPE'),
-  booleanParam(defaultValue: true, description: '', name: 'Linux'),
+  booleanParam(defaultValue: false, description: '', name: 'Linux'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv7'),
   booleanParam(defaultValue: false, description: '', name: 'ARMv8'),
-  booleanParam(defaultValue: true, description: '', name: 'MacOS'),
+  booleanParam(defaultValue: false, description: '', name: 'MacOS'),
   booleanParam(defaultValue: false, description: 'Whether it is a triggered build', name: 'Nightly'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
   booleanParam(defaultValue: false, description: 'Whether build Python bindings', name: 'PythonBindings'),
-  booleanParam(defaultValue: false, description: 'Whether build bindings only w/o Iroha itself', name: 'BindingsOnly'),
+  booleanParam(defaultValue: true, description: 'Whether build bindings only w/o Iroha itself', name: 'BindingsOnly'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
 
@@ -93,13 +93,7 @@ pipeline {
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
-                debugBuild.doDebugBuild(true)
-              }
-              else {
-                debugBuild.doDebugBuild()
-              }
+              debugBuild.doDebugBuild(true)
               if (BRANCH_NAME ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
@@ -107,6 +101,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop|feature\/ops-artifact)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/x86_64/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -123,9 +127,8 @@ pipeline {
           agent { label 'armv7' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.Linux && !params.ARMv8 && !params.MacOS && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              if (!params.Linux && !params.ARMv8 && !params.MacOS) {
                 debugBuild.doDebugBuild(true)
               }              
               else {
@@ -138,6 +141,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv7/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -154,9 +167,8 @@ pipeline {
           agent { label 'armv8' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.Linux && !params.MacOS && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              if (!params.Linux && !params.MacOS) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -169,6 +181,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv8/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -187,8 +209,7 @@ pipeline {
             script {
               def coverageEnabled = false
               def cmakeOptions = ""
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.Linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.Linux) {
                 coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
@@ -227,7 +248,7 @@ pipeline {
               """
               def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
               if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
+               currentBuild.result = "UNSTABLE"
               }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
@@ -246,17 +267,24 @@ pipeline {
                 sh "cmake --build build --target coverage.info"
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
-
               }
-              
-              // TODO: replace with upload to artifactory server
-              // only develop branch
-              if ( env.BRANCH_NAME == "develop" ) {
-                //archive(includes: 'build/bin/,compile_commands.json')
+              if (BRANCH_NAME ==~ /(master|develop)/) {
+                releaseBuild = load ".jenkinsci/mac-release-build.groovy"
+                releaseBuild.doReleaseBuild()
               }
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop|feature\/ops-artifact)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -282,7 +310,7 @@ pipeline {
       parallel {
         stage('Linux') {
           when { expression { return params.Linux } }
-          agent { label 'linux && x86_64' }
+          agent { label 'x86_64' }
           steps {
             script {
               def releaseBuild = load ".jenkinsci/release-build.groovy"
@@ -290,6 +318,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/x86_64/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -311,6 +349,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv7/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -332,6 +380,16 @@ pipeline {
             }
           }
           post {
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv8/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
+              }
+            }
             always {
               script {
                 timeout(time: 60, unit: "SECONDS") {
@@ -347,31 +405,19 @@ pipeline {
           when { expression { return params.MacOS } }            
           steps {
             script {
-              def scmVars = checkout scm
-              env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-              env.IROHA_HOME = "/opt/iroha"
-              env.IROHA_BUILD = "${env.IROHA_HOME}/build"
-
-              sh """
-                ccache --version
-                ccache --show-stats
-                ccache --zero-stats
-                ccache --max-size=5G
-              """  
-              sh """
-                cmake \
-                  -H. \
-                  -Bbuild \
-                  -DCMAKE_BUILD_TYPE=${params.BUILD_TYPE} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION}
-              """
-              sh "cmake --build build -- -j${params.PARALLELISM}"
-              sh "ccache --show-stats"
-              
-              // TODO: replace with upload to artifactory server
-              // only develop branch
-              if ( env.BRANCH_NAME == "develop" ) {
-                //archive(includes: 'build/bin/,compile_commands.json')
+              def releaseBuild = load ".jenkinsci/mac-release-build.groovy"
+              releaseBuild.doReleaseBuild()
+            }
+          }
+          post {                      
+            success {
+              script {
+                if (BRANCH_NAME ==~ /(master|develop)/) {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  filePaths = [ '\$(pwd)/build/bin/*' ]
+                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                }
               }
             }
           }
@@ -407,17 +453,55 @@ pipeline {
         }
       }
       agent { label 'x86_64' }
+      environment {
+        JAVA_HOME = '/usr/lib/jvm/java-8-oracle'
+      }
       steps {
         script {
           def bindings = load ".jenkinsci/bindings.groovy"
+          def fDiffer = load ".jenkinsci/remote-files-differ.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
-          sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile"
+          def commit = sh(script: "echo ${BRANCH_NAME} | md5sum | cut -c 1-8", returnStdout: true).trim()
+
+          if (fDiffer.remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile")) {
+            iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+
+          }
+          else {
+            // first commit in this branch or Dockerfile modified
+            if (fDiffer.remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile")) {
+              iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+            }
+            // reuse develop branch Docker image
+            else {
+              iC = docker.image("hyperledger/iroha:${platform}-develop")
+            }
+          }
+          
+          sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/bindings/Dockerfile"
           iC = docker.build("hyperledger/iroha-develop:${GIT_COMMIT}-${BUILD_NUMBER}", "-f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT} --build-arg PARALLELISM=${PARALLELISM}")
           sh "rm -rf /tmp/${env.GIT_COMMIT}"
           iC.inside {
             def scmVars = checkout scm
             bindings.doBindings()
+            // Archive artifacts with a customized name
+            if( params.JavaBindings || (!params.JavaBindings && !params.PythonBindings) ) {
+              sh "zip -j java-bindings.zip build/shared_model/bindings/*.java build/shared_model/bindings/libirohajava.so"
+            }
+            if( params.PythonBindings || (!params.JavaBindings && !params.PythonBindings) ) {
+              sh "zip -j python-bindings.zip build/shared_model/bindings/*.py build/shared_model/bindings/_iroha.so"
+            }            
           }
+        }
+      }
+      post {
+        success {
+          script {
+            def artifacts = load ".jenkinsci/artifacts.groovy"
+            def commit = env.GIT_COMMIT
+            filePaths = [ '\$(pwd)/*.zip' ]
+            artifacts.uploadArtifacts(filePaths, sprintf('/iroha/bindings/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+          }      
         }
       }
     }
