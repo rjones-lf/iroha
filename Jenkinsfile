@@ -180,8 +180,7 @@ pipeline {
               def cmakeOptions = ""
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
               if (!params.Linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
-                // TODO: true
-                coverageEnabled = false
+                coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
               def scmVars = checkout scm
@@ -217,10 +216,10 @@ pipeline {
                 pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
                 psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
               """
-              // def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
-              // if (testExitCode != 0) {
-              //   currentBuild.result = "UNSTABLE"
-              // }
+              def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
+              if (testExitCode != 0) {
+                currentBuild.result = "UNSTABLE"
+              }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
                 // Sonar
@@ -239,7 +238,7 @@ pipeline {
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
-              if (BRANCH_NAME ==~ /(master|develop)/ || env.CHANGE_ID != null) {
+              if (BRANCH_NAME ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -250,7 +249,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   if (currentBuild.result != "UNSTABLE") {
-                    if (BRANCH_NAME ==~ /(master|develop|feature\/ops-artifact)/ || env.CHANGE_ID != null) {
+                    if (BRANCH_NAME ==~ /(master|develop)/) {
                       try {
                         def artifacts = load ".jenkinsci/artifacts.groovy"
                         def commit = env.GIT_COMMIT
