@@ -77,7 +77,7 @@ namespace iroha {
       std::string asset = "coin#test";
     };
 
-    auto zero_string = std::string("0", 32);
+    auto zero_string = std::string(32, '0');
     auto fake_hash = shared_model::crypto::Hash(zero_string);
 
     /**

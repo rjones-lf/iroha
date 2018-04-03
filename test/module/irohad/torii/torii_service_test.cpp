@@ -127,7 +127,7 @@ class ToriiServiceTest : public testing::Test {
  */
 TEST_F(ToriiServiceTest, CommandClient) {
   iroha::protocol::TxStatusRequest tx_request;
-  tx_request.set_tx_hash(std::string('1', 32));
+  tx_request.set_tx_hash(std::string(32, '1'));
   iroha::protocol::ToriiResponse toriiResponse;
 
   auto client1 = torii::CommandSyncClient(Ip, Port);

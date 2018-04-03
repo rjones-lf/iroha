@@ -77,7 +77,7 @@ shared_model::proto::Block makeBlock(int height) {
   return TestBlockBuilder()
       .transactions(std::vector<shared_model::proto::Transaction>())
       .height(height)
-      .prevHash(shared_model::crypto::Hash(std::string("0", 32)))
+      .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
       .build();
 }
 

@@ -402,8 +402,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
-  shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
-  shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
+  shared_model::crypto::PublicKey pubkey1(std::string(32, '1'));
+  shared_model::crypto::PublicKey pubkey2(std::string(32, '2'));
 
   auto user1id = "userone@domain";
   auto user2id = "usertwo@domain";
@@ -691,8 +691,8 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
 
-  shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
-  shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
+  shared_model::crypto::PublicKey pubkey1(std::string(32, '1'));
+  shared_model::crypto::PublicKey pubkey2(std::string(32, '2'));
 
   auto txn1 =
       TestTransactionBuilder()

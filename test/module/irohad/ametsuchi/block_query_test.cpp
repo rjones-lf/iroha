@@ -104,7 +104,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
-  std::string zero_string = std::string("0", 32);
+  std::string zero_string = std::string(32, '0');
 };
 
 /**
@@ -186,7 +186,7 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string("9", 32));
+      invalid_tx_hash_2(std::string(32, '9'));
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
   wrapper.subscribe(
