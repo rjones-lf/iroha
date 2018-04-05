@@ -261,7 +261,7 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
     messages.push_back(val);
   });
 
-  // set flag to false
+  // this will set unlock_next_ to false, so proposals 4 and 3 are enqueued
   pushProposal(2);
 
   pushProposal(4);
