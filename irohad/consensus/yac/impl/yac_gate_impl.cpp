@@ -93,6 +93,15 @@ namespace iroha {
                 // node has voted for another block - load committed block
                 const auto model_hash =
                     hash_provider_->toModelHash(hash.value());
+
+                //FIXME IR-1226 / New node doesn't synchronise
+                //Actung!!! ugly hack
+                //logging somehow fixes concurrency problems
+                log_->info("Querying last block %s", model_hash.toString());
+                log_->info("Querying last block %s",
+                           shared_model::crypto::Hash(model_hash).toString());
+                //end FIXME
+
                 // iterate over peers who voted for the committed block
                 rxcpp::observable<>::iterate(commit_message.votes)
                     // allow other peers to apply commit
