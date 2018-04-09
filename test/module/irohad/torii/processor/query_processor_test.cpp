@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "validators/permissions.hpp"
 
 #include "framework/test_subscriber.hpp"
 #include "model/queries/responses/error_response.hpp"
@@ -91,7 +91,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
       shared_model::proto::AccountBuilder().accountId(account_id).build());
   auto role = "admin";
   std::vector<std::string> roles = {role};
-  std::vector<std::string> perms = {iroha::model::can_get_my_account};
+  std::vector<std::string> perms = {
+      shared_model::permissions::can_get_my_account};
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
@@ -147,7 +148,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
       shared_model::proto::AccountBuilder().accountId(account_id).build());
   auto role = "admin";
   std::vector<std::string> roles = {role};
-  std::vector<std::string> perms = {iroha::model::can_get_my_account};
+  std::vector<std::string> perms = {
+      shared_model::permissions::can_get_my_account};
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));

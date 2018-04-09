@@ -22,11 +22,12 @@
 #include "model/commands/create_account.hpp"
 #include "model/commands/create_asset.hpp"
 #include "model/commands/create_domain.hpp"
-#include "validators/permissions.hpp"
 #include "model/sha3_hash.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha;
 using namespace iroha::model;
+using namespace shared_model::permissions;
 
 namespace framework {
   namespace generator {

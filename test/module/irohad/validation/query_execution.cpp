@@ -39,6 +39,7 @@ using ::testing::_;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
+using namespace shared_model::permissions;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
 

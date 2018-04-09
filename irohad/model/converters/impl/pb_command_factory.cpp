@@ -21,6 +21,8 @@
 
 #include "model/converters/pb_common.hpp"
 
+using namespace shared_model::permissions;
+
 namespace iroha {
   namespace model {
     namespace converters {
@@ -85,19 +87,24 @@ namespace iroha {
             // Can get all account assets
             (protocol::RolePermission::can_get_all_acc_ast, can_get_all_acc_ast)
             // Can get domain account assets
-            (protocol::RolePermission::can_get_domain_acc_ast, can_get_domain_acc_ast)
+            (protocol::RolePermission::can_get_domain_acc_ast,
+             can_get_domain_acc_ast)
             // Can get my account detail
-            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
+            (protocol::RolePermission::can_get_my_acc_detail,
+             can_get_my_acc_detail)
             // Can get all account detail
-            (protocol::RolePermission::can_get_all_acc_detail, can_get_all_acc_detail)
+            (protocol::RolePermission::can_get_all_acc_detail,
+             can_get_all_acc_detail)
             // Can get domain account detail
-            (protocol::RolePermission::can_get_domain_acc_detail, can_get_domain_acc_detail)
+            (protocol::RolePermission::can_get_domain_acc_detail,
+             can_get_domain_acc_detail)
             // Can get my account transactions
             (protocol::RolePermission::can_get_my_acc_txs, can_get_my_acc_txs)
             // Can get all account transactions
             (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
             // Can get domain account transactions
-            (protocol::RolePermission::can_get_domain_acc_txs, can_get_domain_acc_txs)
+            (protocol::RolePermission::can_get_domain_acc_txs,
+             can_get_domain_acc_txs)
             // Can get my account assets transactions
             (protocol::RolePermission::can_get_my_acc_ast_txs,
              can_get_my_acc_ast_txs)
@@ -142,7 +149,7 @@ namespace iroha {
              can_set_detail)
             // Can transfer my assets
             (protocol::GrantablePermission::can_transfer_my_assets,
-                can_transfer);
+             can_transfer);
       }
 
       // asset quantity

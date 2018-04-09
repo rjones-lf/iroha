@@ -49,6 +49,7 @@ using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::expected;
+using namespace shared_model::permissions;
 
 class CommandValidateExecuteTest : public ::testing::Test {
  public:

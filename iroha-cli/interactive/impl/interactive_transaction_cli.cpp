@@ -36,6 +36,7 @@
 #include "parser/parser.hpp"  // for parser::ParseValue
 
 using namespace iroha::model;
+using namespace shared_model::permissions;
 
 namespace iroha_cli {
   namespace interactive {

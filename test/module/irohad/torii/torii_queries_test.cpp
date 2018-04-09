@@ -27,10 +27,10 @@ limitations under the License.
 #include "model/converters/pb_common.hpp"
 
 #include "main/server_runner.hpp"
-#include "validators/permissions.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
+#include "validators/permissions.hpp"
 
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -151,10 +151,11 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
   account.account_id = "b@domain";
   auto creator = "a@domain";
 
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          creator, account.account_id, iroha::model::can_get_my_account))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  creator,
+                  account.account_id,
+                  shared_model::permissions::can_get_my_account))
       .WillOnce(Return(false));
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
@@ -193,10 +194,11 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          creator, accountB->accountId(), iroha::model::can_get_my_account))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  creator,
+                  accountB->accountId(),
+                  shared_model::permissions::can_get_my_account))
       .WillOnce(Return(true));
 
   // Should be called once, after successful stateful validation
@@ -239,7 +241,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
       .WillRepeatedly(Return(roles));
-  std::vector<std::string> perm = {iroha::model::can_get_my_account};
+  std::vector<std::string> perm = {
+      shared_model::permissions::can_get_my_account};
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
 
   iroha::protocol::QueryResponse response;
@@ -276,9 +279,10 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  creator, accountb_id, iroha::model::can_get_my_acc_ast))
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          creator, accountb_id, shared_model::permissions::can_get_my_acc_ast))
       .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
       .WillOnce(Return(boost::none));
@@ -332,7 +336,8 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
       .WillRepeatedly(Return(signatories));
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles(creator)).WillOnce(Return(roles));
-  std::vector<std::string> perm = {iroha::model::can_get_my_acc_ast};
+  std::vector<std::string> perm = {
+      shared_model::permissions::can_get_my_acc_ast};
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
   EXPECT_CALL(*wsv_query, getAccountAsset(_, _))
       .WillOnce(Return(account_asset));
@@ -386,7 +391,9 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
       .WillRepeatedly(Return(signatories));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  creator, "b@domain", iroha::model::can_get_my_signatories))
+                  creator,
+                  "b@domain",
+                  shared_model::permissions::can_get_my_signatories))
       .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
       .WillOnce(Return(boost::none));
@@ -425,7 +432,8 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
 
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles(creator)).WillOnce(Return(roles));
-  std::vector<std::string> perm = {iroha::model::can_get_my_signatories};
+  std::vector<std::string> perm = {
+      shared_model::permissions::can_get_my_signatories};
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
 
   iroha::protocol::QueryResponse response;
@@ -482,7 +490,8 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
       .WillRepeatedly(Return(signatories));
   std::vector<std::string> roles = {"test"};
   EXPECT_CALL(*wsv_query, getAccountRoles(creator)).WillOnce(Return(roles));
-  std::vector<std::string> perm = {iroha::model::can_get_my_acc_txs};
+  std::vector<std::string> perm = {
+      shared_model::permissions::can_get_my_acc_txs};
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
   EXPECT_CALL(*block_query, getAccountTransactions(creator))
       .WillOnce(Return(txs_observable));

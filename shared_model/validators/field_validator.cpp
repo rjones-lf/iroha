@@ -18,8 +18,8 @@
 #include "validators/field_validator.hpp"
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
-#include "permissions.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "permissions.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -213,8 +213,8 @@ namespace shared_model {
     void FieldValidator::validatePermission(
         ReasonsGroupType &reason,
         const interface::types::PermissionNameType &permission_name) const {
-      if (iroha::model::all_perm_group.find(permission_name)
-          == iroha::model::all_perm_group.end()) {
+      if (shared_model::permissions::all_perm_group.find(permission_name)
+          == shared_model::permissions::all_perm_group.end()) {
         reason.second.push_back("Provided permission does not exist");
       }
     }
@@ -226,8 +226,8 @@ namespace shared_model {
         reason.second.push_back(
             "Permission set should contain at least one permission");
       }
-      if (not std::includes(iroha::model::role_perm_group.begin(),
-                            iroha::model::role_perm_group.end(),
+      if (not std::includes(shared_model::permissions::role_perm_group.begin(),
+                            shared_model::permissions::role_perm_group.end(),
                             permissions.begin(),
                             permissions.end())) {
         reason.second.push_back(

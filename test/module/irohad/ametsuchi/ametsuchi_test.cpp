@@ -24,10 +24,10 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/test_subscriber.hpp"
-#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
@@ -195,9 +195,9 @@ TEST_F(AmetsuchiTest, SampleTest) {
                    .createRole(
                        "user",
                        shared_model::interface::types::PermissionSetType{
-                           iroha::model::can_add_peer,
-                           iroha::model::can_create_asset,
-                           iroha::model::can_get_my_account})
+                           shared_model::permissions::can_add_peer,
+                           shared_model::permissions::can_create_asset,
+                           shared_model::permissions::can_get_my_account})
                    .createDomain(domain, "user")
                    .createAccount(user1name, domain, fake_pubkey)
                    .build()}))
@@ -234,7 +234,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
   validateCalls(blocks->getBlocks(1, 2),
-                [i = 0, &hashes](auto eachBlock) mutable {
+                [ i = 0, &hashes ](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -293,9 +293,10 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
       TestTransactionBuilder()
           .creatorAccountId(admin)
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      std::set<std::string>{
+                          shared_model::permissions::can_add_peer,
+                          shared_model::permissions::can_create_asset,
+                          shared_model::permissions::can_get_my_account})
           .createDomain(domain, "user")
           .createAccount(user1name, domain, fake_pubkey)
           .createAccount(user2name, domain, fake_pubkey)
@@ -376,7 +377,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
   validateCalls(blocks->getBlocks(1, 3),
-                [i = 0, &hashes](auto eachBlock) mutable {
+                [ i = 0, &hashes ](auto eachBlock) mutable {
                   EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
                   ++i;
                 },
@@ -413,9 +414,10 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
       TestTransactionBuilder()
           .creatorAccountId("adminone")
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      std::set<std::string>{
+                          shared_model::permissions::can_add_peer,
+                          shared_model::permissions::can_create_asset,
+                          shared_model::permissions::can_get_my_account})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -698,9 +700,10 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      std::set<std::string>{
+                          shared_model::permissions::can_add_peer,
+                          shared_model::permissions::can_create_asset,
+                          shared_model::permissions::can_get_my_account})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -709,9 +712,10 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("usertwo",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      std::set<std::string>{
+                          shared_model::permissions::can_add_peer,
+                          shared_model::permissions::can_create_asset,
+                          shared_model::permissions::can_get_my_account})
           .createDomain("domaintwo", "user")
           .build();
 
@@ -866,12 +870,13 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
           .txCounter(1)
           .createdTime(iroha::time::now())
           .createRole(default_role,
-                      std::vector<std::string>{iroha::model::can_create_domain,
-                                               iroha::model::can_create_account,
-                                               iroha::model::can_add_asset_qty,
-                                               iroha::model::can_add_peer,
-                                               iroha::model::can_receive,
-                                               iroha::model::can_transfer})
+                      std::vector<std::string>{
+                          shared_model::permissions::can_create_domain,
+                          shared_model::permissions::can_create_account,
+                          shared_model::permissions::can_add_asset_qty,
+                          shared_model::permissions::can_add_peer,
+                          shared_model::permissions::can_receive,
+                          shared_model::permissions::can_transfer})
           .createDomain(default_domain, default_role)
           .build()
           .signAndAddSignature(
