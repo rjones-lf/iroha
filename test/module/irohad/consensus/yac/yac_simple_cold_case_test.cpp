@@ -200,7 +200,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
     yac->on_vote(create_vote(YacHash{}, std::to_string(i)));
   }
 
-  // verify that on_commit subsctibers are notified
+  // verify that on_commit subscribers are notified
   ASSERT_EQ(default_peers.size() + 1, messages.size());
 }
 
@@ -232,6 +232,6 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   yac->on_reject(reject);
 
-  // verify that on_commit subsctibers are notified
+  // verify that on_commit subscribers are notified
   ASSERT_EQ(default_peers.size() + 1, messages.size());
 }
