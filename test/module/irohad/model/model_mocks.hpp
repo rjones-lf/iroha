@@ -22,7 +22,6 @@
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "model/command.hpp"
-#include "model/model_crypto_provider.hpp"
 #include "model/query_execution.hpp"
 
 namespace iroha {
