@@ -28,16 +28,6 @@
 namespace iroha {
   namespace model {
 
-    class MockCryptoProvider : public ModelCryptoProvider {
-     public:
-      MOCK_CONST_METHOD1(verify, bool(const Transaction &));
-      MOCK_CONST_METHOD1(verify, bool(const Query &));
-      MOCK_CONST_METHOD1(verify, bool(const Block &));
-      MOCK_CONST_METHOD1(sign, void(Block &));
-      MOCK_CONST_METHOD1(sign, void(Transaction &));
-      MOCK_CONST_METHOD1(sign, void(Query &));
-    };
-
     class MockCommand : public Command {
      public:
       MOCK_METHOD2(validate, bool(ametsuchi::WsvQuery &, const Account &));

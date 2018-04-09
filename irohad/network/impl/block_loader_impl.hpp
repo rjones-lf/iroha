@@ -26,7 +26,6 @@
 #include "ametsuchi/peer_query.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "validators/block_validator.hpp"
 #include "validators/default_validator.hpp"
 
 namespace iroha {
