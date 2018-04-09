@@ -18,7 +18,6 @@
 #include "network/impl/block_loader_impl.hpp"
 
 #include <grpc++/create_channel.h>
-#include <algorithm>
 
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
@@ -42,7 +41,6 @@ BlockLoaderImpl::BlockLoaderImpl(
 
 const char *kPeerNotFound = "Cannot find peer";
 const char *kTopBlockRetrieveFail = "Failed to retrieve top block";
-const char *kInvalidBlockSignatures = "Block signatures are invalid";
 const char *kPeerRetrieveFail = "Failed to retrieve peers";
 const char *kPeerFindFail = "Failed to find requested peer";
 

@@ -20,8 +20,6 @@
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
-using namespace iroha::model::converters;
 using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(std::shared_ptr<BlockQuery> storage)
@@ -35,7 +33,7 @@ grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
   storage_->getBlocksFrom(request->height())
       .map([](auto block) {
-        return std::static_pointer_cast<shared_model::proto::Block>(block)
+        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
             ->getTransport();
       })
       .as_blocking()
@@ -56,9 +54,9 @@ grpc::Status BlockLoaderService::retrieveBlock(
 
   boost::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
-      .filter([hash](auto block) { return block->hash() == hash; })
+      .filter([&hash](auto block) { return block->hash() == hash; })
       .map([](auto block) {
-        return std::static_pointer_cast<shared_model::proto::Block>(block)
+        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
             ->getTransport();
       })
       .as_blocking()
