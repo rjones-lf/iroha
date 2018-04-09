@@ -58,8 +58,10 @@ namespace iroha {
   template <typename T>
   static std::string encrypt(const T &key, const std::string &pass_phrase) {
     std::string ciphertext(key.size(), '\0');
+    // pass_size will always be > 0
     const auto pass_size = std::max(1ul, pass_phrase.size());
-
+    // When pass_phrase is empty it, pass_phrase[0] is "\0", so no out_of_range
+    // exception is possible
     for (auto i = 0u; i < key.size(); i++) {
       ciphertext[i] = key[i] ^ pass_phrase[i % pass_size];
     }
