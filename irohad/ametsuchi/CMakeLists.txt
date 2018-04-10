@@ -10,6 +10,7 @@ add_library(ametsuchi
     impl/postgres_block_index.cpp
     impl/postgres_ordering_service_persistent_state.cpp
     impl/wsv_restorer_impl.cpp
+    impl/postgres_options.cpp
     )
 
 target_link_libraries(ametsuchi
