@@ -43,7 +43,7 @@ namespace iroha {
         }
 
         for (const auto &sig_obj : tx.signatures) {
-          auto proto_signature = pbtx.add_signature();
+          auto proto_signature = pbtx.add_signatures();
           proto_signature->set_pubkey(sig_obj.pubkey.to_string());
           proto_signature->set_signature(sig_obj.signature.to_string());
         }
@@ -60,7 +60,7 @@ namespace iroha {
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
 
-        for (const auto &pb_sig : pb_tx.signature()) {
+        for (const auto &pb_sig : pb_tx.signatures()) {
           model::Signature sig{};
           sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
           sig.signature = sig_t::from_string(pb_sig.signature());

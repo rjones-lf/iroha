@@ -655,7 +655,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
   iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signature();  // at least one signature in message
+  proto_tx.add_signatures();  // at least one signature in message
 
   // iterate over all fields in transaction
   iterateContainer(
