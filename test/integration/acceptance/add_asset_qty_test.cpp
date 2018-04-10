@@ -49,7 +49,6 @@ class AddAssetQuantity : public ::testing::Test {
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }
@@ -248,7 +247,6 @@ TEST_F(AddAssetQuantity, OtherDomain) {
       // Generate new domain, new user and an asset
       .sendTx(
           shared_model::proto::TransactionBuilder()
-              .txCounter(1)
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
               .createdTime(iroha::time::now())

@@ -72,7 +72,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     auto genesis_tx =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
-            .txCounter(1)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
             .createRole(kDefaultRole,

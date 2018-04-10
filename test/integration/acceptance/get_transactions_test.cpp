@@ -54,7 +54,6 @@ class GetTransactions : public ::testing::Test {
   auto dummyTx() {
     return shared_model::proto::TransactionBuilder()
         .setAccountQuorum(kUserId, 1)
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now())
         .build()

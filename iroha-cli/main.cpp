@@ -178,7 +178,6 @@ int main(int argc, char *argv[]) {
         FLAGS_peer_ip,
         FLAGS_torii_port,
         0,
-        0,
         std::make_shared<iroha::model::ModelCryptoProviderImpl>(
             *std::unique_ptr<iroha::keypair_t>(keypair->makeOldModel())));
     interactiveCli.run();

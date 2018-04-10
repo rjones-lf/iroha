@@ -877,7 +877,6 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   auto genesis_tx =
       shared_model::proto::TransactionBuilder()
           .creatorAccountId("admin@test")
-          .txCounter(1)
           .createdTime(iroha::time::now())
           .createRole(default_role,
                       std::vector<std::string>{

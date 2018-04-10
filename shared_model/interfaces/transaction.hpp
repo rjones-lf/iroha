@@ -44,11 +44,6 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
-      /**
-       * @return actual number of transaction of this user
-       */
-      virtual types::CounterType transactionCounter() const = 0;
-
       /// Type of command
       using CommandType = detail::PolymorphicWrapper<Command>;
 
@@ -66,7 +61,6 @@ namespace shared_model {
             new iroha::model::Transaction();
         oldStyleTransaction->created_ts = createdTime();
         oldStyleTransaction->creator_account_id = creatorAccountId();
-        oldStyleTransaction->tx_counter = transactionCounter();
 
         std::for_each(commands().begin(),
                       commands().end(),
@@ -91,7 +85,6 @@ namespace shared_model {
         return detail::PrettyStringBuilder()
             .init("Transaction")
             .append("hash", hash().hex())
-            .append("txCounter", std::to_string(transactionCounter()))
             .append("creatorAccountId", creatorAccountId())
             .append("createdTime", std::to_string(createdTime()))
             .append("commands")

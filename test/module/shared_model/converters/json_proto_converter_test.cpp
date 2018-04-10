@@ -35,11 +35,9 @@ using namespace shared_model;
 TEST(JsonProtoConverterTest, JsonToProtoTxTest) {
   TestTransactionBuilder builder;
 
-  shared_model::interface::types::CounterType tx_counter = 1;
   std::string creator_account_id = "admin@test";
 
-  auto orig_tx = builder.txCounter(tx_counter)
-                     .creatorAccountId(creator_account_id)
+  auto orig_tx = builder.creatorAccountId(creator_account_id)
                      .createdTime(123)
                      .build();
 

@@ -23,21 +23,8 @@
 
 #include <gtest/gtest.h>
 
-/**
- * @given protobuf transaction with transaction counter set
- * @when converted to shared model
- * @then shared model is created correctly
- */
-TEST(ProtoTransaction, Create) {
-  iroha::protocol::Transaction transaction;
-  transaction.mutable_payload()->set_tx_counter(1);
-  shared_model::proto::Transaction proto(transaction);
-  ASSERT_EQ(proto.transactionCounter(), transaction.payload().tx_counter());
-}
-
 // common data for tests
 auto created_time = iroha::time::now();
-shared_model::interface::types::CounterType tx_counter = 1;
 std::string creator_account_id = "admin@test";
 
 /**
@@ -47,7 +34,6 @@ std::string creator_account_id = "admin@test";
 iroha::protocol::Transaction generateEmptyTransaction() {
   iroha::protocol::Transaction proto_tx;
   auto &payload = *proto_tx.mutable_payload();
-  payload.set_tx_counter(tx_counter);
   payload.set_creator_account_id(creator_account_id);
   payload.set_created_time(created_time);
 
@@ -98,7 +84,6 @@ TEST(ProtoTransaction, Builder) {
   sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(tx_counter)
                 .creatorAccountId(creator_account_id)
                 .addAssetQuantity(account_id, asset_id, amount)
                 .createdTime(created_time)
@@ -123,7 +108,6 @@ TEST(ProtoTransaction, BuilderWithInvalidTx) {
 
   ASSERT_THROW(
       shared_model::proto::TransactionBuilder()
-          .txCounter(tx_counter)
           .creatorAccountId(invalid_account_id)
           .addAssetQuantity(invalid_account_id, invalid_asset_id, amount)
           .createdTime(created_time)

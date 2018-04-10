@@ -482,7 +482,6 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
       std::shared_ptr<shared_model::interface::Transaction> current =
           clone(TestTransactionBuilder()
                     .creatorAccountId(account.accountId())
-                    .txCounter(i)
                     .build());
       result.push_back(current);
     }
@@ -521,7 +520,6 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   const auto &txs = tx_resp->transactions();
   for (auto i = 0ul; i < txs.size(); i++) {
     ASSERT_EQ(txs.at(i)->creatorAccountId(), account.accountId());
-    ASSERT_EQ(txs.at(i)->transactionCounter(), i);
   }
   ASSERT_EQ(model_query.hash(), resp.queryHash());
 }

@@ -54,7 +54,6 @@ class CreateRole : public ::testing::Test {
               const std::string &role_name) {
     return TestUnsignedTransactionBuilder()
         .createRole(role_name, perms)
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }

@@ -113,7 +113,7 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidator::validateDomainId,
                                           &FieldValidatorTest::domain_id,
                                           domain_id_test_cases));
-    for (const auto &field : {"tx_counter", "query_counter"}) {
+    for (const auto &field : {"query_counter"}) {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateCounter,
                                             &FieldValidatorTest::counter,

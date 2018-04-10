@@ -30,7 +30,6 @@ namespace iroha {
         Transaction tx;
         tx.created_ts = timestamp;
         tx.creator_account_id = "";
-        tx.tx_counter = 0;
         CommandGenerator command_generator;
         // Add peers
         for (size_t i = 0; i < peers_address.size(); ++i) {
@@ -76,22 +75,19 @@ namespace iroha {
       Transaction TransactionGenerator::generateTransaction(
           ts64_t timestamp,
           std::string creator_account_id,
-          uint64_t tx_counter,
           std::vector<std::shared_ptr<Command>> commands) {
         Transaction tx;
         tx.created_ts = timestamp;
         tx.creator_account_id = creator_account_id;
-        tx.tx_counter = tx_counter;
         tx.commands = commands;
         return tx;
       }
 
       Transaction TransactionGenerator::generateTransaction(
           std::string creator_account_id,
-          uint64_t tx_counter,
           std::vector<std::shared_ptr<Command>> commands) {
         return generateTransaction(
-            iroha::time::now(), creator_account_id, tx_counter, commands);
+            iroha::time::now(), creator_account_id, commands);
       }
 
     }  // namespace generators

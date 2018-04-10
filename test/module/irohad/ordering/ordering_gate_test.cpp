@@ -139,7 +139,6 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
 
   grpc::ServerContext context;
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
@@ -190,7 +189,6 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
   wrapper_after.subscribe();
 
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")

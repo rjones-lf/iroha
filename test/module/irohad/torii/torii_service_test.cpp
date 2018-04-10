@@ -154,7 +154,6 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto tx = TestTransactionBuilder()
                   .creatorAccountId("accountA")
-                  .txCounter(i)
                   .build();
     txs.push_back(tx);
     tx_hashes.push_back(tx.hash());
@@ -198,7 +197,6 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto shm_tx = shared_model::proto::TransactionBuilder()
                       .creatorAccountId(account_id)
-                      .txCounter(i + 1)
                       .createdTime(iroha::time::now())
                       .setAccountQuorum(account_id, 2)
                       .build()
@@ -307,7 +305,7 @@ TEST_F(ToriiServiceTest, CheckHash) {
 
   // create transactions, but do not send them
   for (size_t i = 0; i < tx_num; ++i) {
-    auto tx = TestTransactionBuilder().txCounter(i).build();
+    auto tx = TestTransactionBuilder().build();
     tx_hashes.push_back(tx.hash());
   }
 
@@ -340,11 +338,9 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
 
   auto new_tx = TestTransactionBuilder()
                     .creatorAccountId("accountA")
-                    .txCounter(1)
                     .build();
 
   auto iroha_tx = proto::TransactionBuilder()
-                      .txCounter(1)
                       .creatorAccountId("a@domain")
                       .setAccountQuorum("a@domain", 2)
                       .createdTime(iroha::time::now())

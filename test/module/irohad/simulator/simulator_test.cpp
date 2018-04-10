@@ -83,7 +83,6 @@ shared_model::proto::Block makeBlock(int height) {
 
 shared_model::proto::Proposal makeProposal(int height) {
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
@@ -112,7 +111,6 @@ TEST_F(SimulatorTest, ValidWhenInitialized) {
 TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   // proposal with height 2 => height 1 block present => new block generated
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")

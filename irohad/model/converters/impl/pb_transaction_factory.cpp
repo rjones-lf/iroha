@@ -34,7 +34,6 @@ namespace iroha {
         auto pl = pbtx.mutable_payload();
         pl->set_created_time(tx.created_ts);
         pl->set_creator_account_id(tx.creator_account_id);
-        pl->set_tx_counter(tx.tx_counter);
 
         for (const auto &command : tx.commands) {
           auto cmd = pl->add_commands();
@@ -56,7 +55,6 @@ namespace iroha {
         model::Transaction tx;
 
         const auto &pl = pb_tx.payload();
-        tx.tx_counter = pl.tx_counter();
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
 

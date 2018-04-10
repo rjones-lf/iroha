@@ -30,12 +30,10 @@ using namespace shared_model;
 class TransactionValidatorTest : public ValidatorsTest {
  protected:
   iroha::protocol::Transaction generateEmptyTransaction() {
-    shared_model::interface::types::CounterType tx_counter = 1;
     std::string creator_account_id = "admin@test";
 
     TestTransactionBuilder builder;
-    auto tx = builder.txCounter(tx_counter)
-                  .creatorAccountId(creator_account_id)
+    auto tx = builder.creatorAccountId(creator_account_id)
                   .createdTime(created_time)
                   .build()
                   .getTransport();

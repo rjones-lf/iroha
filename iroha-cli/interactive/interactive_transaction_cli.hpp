@@ -47,7 +47,6 @@ namespace iroha_cli {
           const std::string &creator_account,
           const std::string &default_peer_ip,
           int default_port,
-          uint64_t tx_counter,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
       /**
        * Run interactive query command line
