@@ -24,6 +24,19 @@
 
 namespace iroha {
   namespace torii {
+
+    template <class T>
+    const shared_model::interface::AbstractErrorResponse<T> &getError(
+        const shared_model::interface::QueryResponse &response) {
+      const auto &err = boost::get<shared_model::detail::PolymorphicWrapper<
+          shared_model::interface::ErrorQueryResponse>>(response.get());
+
+      const auto &si =
+          boost::get<shared_model::detail::PolymorphicWrapper<T>>(err->get());
+
+      return *si;
+    }
+
     class MockQueryProcessor : public QueryProcessor {
      public:
       MOCK_METHOD1(queryHandle,

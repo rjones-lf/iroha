@@ -26,7 +26,6 @@
  */
 using TestQueryResponseBuilder =
     shared_model::proto::TemplateQueryResponseBuilder<
-        (1 << shared_model::proto::TemplateQueryResponseBuilder<>::total) - 1,
-        shared_model::proto::QueryResponse>;
+        (1 << shared_model::proto::TemplateQueryResponseBuilder<>::total) - 1>;
 
 #endif  // IROHA_TEST_QUERY_RESPONSE_BUILDER_HPP
