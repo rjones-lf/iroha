@@ -167,8 +167,6 @@ namespace iroha {
           + transaction_.quote(account.domainId()) + ", "
           + transaction_.quote(account.quorum())
           + ", "
-          // Transaction counter
-          + transaction_.quote(default_tx_counter) + ", "
           + transaction_.quote(account.jsonData()) + ");");
 
       auto message_gen = [&] {
@@ -176,10 +174,9 @@ namespace iroha {
                               "account id: '%s', "
                               "domain id: '%s', "
                               "quorum: '%d', "
-                              "transaction counter: '%d', "
                               "json_data: %s")
                 % account.accountId() % account.domainId() % account.quorum()
-                % default_tx_counter % account.jsonData())
+                % account.jsonData())
             .str();
       };
 

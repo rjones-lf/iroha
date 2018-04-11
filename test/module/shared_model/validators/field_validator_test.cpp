@@ -466,7 +466,7 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::role_permission,
                     iroha::protocol::RolePermission::can_append_role)};
 
-  std::vector<FieldTestCase> tx_counter_test_cases{
+  std::vector<FieldTestCase> counter_test_cases{
       makeValidCase(&FieldValidatorTest::counter, 5),
       makeTestCase("zero_counter",
                    &FieldValidatorTest::counter,

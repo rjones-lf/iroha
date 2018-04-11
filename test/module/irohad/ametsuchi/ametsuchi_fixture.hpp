@@ -140,7 +140,6 @@ CREATE TABLE IF NOT EXISTS account (
     account_id character varying(288),
     domain_id character varying(255) NOT NULL REFERENCES domain,
     quorum int NOT NULL,
-    transaction_count int NOT NULL DEFAULT 0,
     data JSONB,
     PRIMARY KEY (account_id)
 );

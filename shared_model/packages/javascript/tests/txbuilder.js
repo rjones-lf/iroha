@@ -20,16 +20,16 @@ test('ModelTransactionBuilder tests', function (t) {
 
   t.comment('Basic TransactionBuilder tests')
 
-  t.throws(() => txBuilder.build(), /Transaction should contain at least one command/, 'Should throw exception 0 commands in transaction, wrong creator_account_id, timestamp and counter')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction, wrong timestamp and counter')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(0).txCounter(1).build(), /Transaction should contain at least one command bad timestamp: too old/, 'Should throw 0 commands + bad timestamp: too old')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(0).build(), /Transaction should contain at least one command Counter should be > 0/, 'Should throw 0 commands + Counter should be > 0')
-  t.throws(() => txBuilder.creatorAccountId('').createdTime(time).txCounter(1).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: ''/, 'Should throw 0 commands + Wrongly formed creator_account_id')
-  t.throws(() => txBuilder.creatorAccountId('@@@').createdTime(time).txCounter(1).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: '@@@'/, 'Should throw 0 commands + Wrongly formed creator_account_id')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(1).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction')
+  t.throws(() => txBuilder.build(), /Transaction should contain at least one command/, 'Should throw exception 0 commands in transaction, wrong creator_account_id, timestamp')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction, wrong timestamp')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(0).build(), /Transaction should contain at least one command bad timestamp: too old/, 'Should throw 0 commands + bad timestamp: too old')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).build(), /Transaction should contain at least one command/, 'Should throw 0 commands')
+  t.throws(() => txBuilder.creatorAccountId('').createdTime(time).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: ''/, 'Should throw 0 commands + Wrongly formed creator_account_id')
+  t.throws(() => txBuilder.creatorAccountId('@@@').createdTime(time).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: '@@@'/, 'Should throw 0 commands + Wrongly formed creator_account_id')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction')
 
-  // Transaction with valid txCounter, creatorAccountId and createdTime
-  let correctTx = txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(1)
+  // Transaction with valid creatorAccountId and createdTime
+  let correctTx = txBuilder.creatorAccountId(adminAccountId).createdTime(time)
 
   // addAssetQuantity() tests
   t.comment('Testing addAssetQuantity()')
