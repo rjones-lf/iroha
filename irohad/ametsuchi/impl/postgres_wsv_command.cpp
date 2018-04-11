@@ -356,8 +356,6 @@ namespace iroha {
             "UPDATE account\n"
             "   SET quorum=" +
             transaction_.quote(account.quorum()) +
-            ", transaction_count=" +
-            /*account.transaction_count*/ transaction_.quote(default_tx_counter) +
             "\n"
             " WHERE account_id=" +
             transaction_.quote(account.accountId()) + ";");

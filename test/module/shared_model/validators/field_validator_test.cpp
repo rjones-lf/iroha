@@ -117,7 +117,7 @@ class FieldValidatorTest : public ValidatorsTest {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateCounter,
                                             &FieldValidatorTest::counter,
-                                            tx_counter_test_cases));
+                                            counter_test_cases));
     }
 
     field_validators.insert(makeValidator("quorum",
