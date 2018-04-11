@@ -39,8 +39,10 @@ class HeavyTransactionTest : public ::testing::Test {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             shared_model::permissions::can_set_my_account_detail}) {
+  auto makeUserWithPerms(
+      const std::vector<std::string> &perms = {
+          shared_model::permissions::role_perm_group.begin(),
+          shared_model::permissions::role_perm_group.end()}) {
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), "role"s, perms)
         .build()
@@ -99,7 +101,8 @@ class HeavyTransactionTest : public ::testing::Test {
   }
 
   const std::string kUser = "user"s;
-  const std::string kUserId = kUser + "@test";
+  const std::string kUserId =
+      kUser + "@"s + IntegrationTestFramework::kDefaultDomain;
   const crypto::Keypair kUserKeypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
   const crypto::Keypair kAdminKeypair =
@@ -187,25 +190,31 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
  * @then query executed sucessfully
  */
 TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
-  auto query_checker = [](auto &status) {
-    auto response = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::AccountDetailResponse>(),
+  auto number_of_times = 15u;
+  auto size_of_data = 3 * 1024 * 1024u;
+
+  auto query_checker = [&](auto &status) {
+    auto response = *boost::apply_visitor(
+        interface::SpecifiedVisitor<interface::AccountResponse>(),
         status.get());
+    ASSERT_TRUE(response->account().jsonData().size()
+                >= number_of_times * size_of_data);
   };
 
-  auto data = generateData(2 * 1024 * 1024);
+  auto data = generateData(size_of_data);
 
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair).sendTx(makeUserWithPerms());
 
-  for (auto i = 0; i < 5; i++) {
-    itf.sendTx(complete(setAcountDetailTx("foo_1", data)))
+  for (auto i = 0u; i < number_of_times; i++) {
+    itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i), data)))
         .skipProposal()
-        .checkBlock([](auto &block) {
-          ASSERT_EQ(block->transactions().size(), 1);
-        });
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   }
 
-  itf.sendQuery(complete(baseQuery().getAccountDetail(kUserId)), query_checker)
+  // The query works fine only with ITF. It doesn't work in production version
+  // of Iroha
+  itf.sendQuery(complete(baseQuery().getAccount(kUserId)), query_checker)
       .done();
 }
