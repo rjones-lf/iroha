@@ -40,7 +40,7 @@ class HeavyTransactionTest : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             iroha::model::can_set_my_account_detail}) {
+                             shared_model::permissions::can_set_my_account_detail}) {
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), "role"s, perms)
         .build()
@@ -71,7 +71,7 @@ class HeavyTransactionTest : public ::testing::Test {
   /**
    * Util method for stub data generation
    * @param quantity - number of bytes
-   * @return new string with passed quantity lenght
+   * @return new string with passed quantity length
    */
   static auto generateData(size_t quantity) {
     return std::string(quantity, 'F');
@@ -108,50 +108,52 @@ class HeavyTransactionTest : public ::testing::Test {
 
 /**
  * @given some user with all required permissions
- * @when send tx with addAccountDetail with large data inside
+ * @when send tx with addAccountDetail with big, but stateless valid data inside
  * @then transaction is passed
  */
 TEST_F(HeavyTransactionTest, OneLargeTx) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      // "foo" transactions will be not passed because it has large size into
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      // "foo" transactions will not be passed because it has large size into
       // one field - 5Mb per one set
       .sendTx(complete(setAcountDetailTx("foo", generateData(5 * 1024 * 1024))))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
 /**
  * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will be not completed.
+ * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
  * @given some user with all required permissions
  * @when send many txes with addAccountDetail with large data inside
  * @then transaction have been passed
  */
 TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
-  IntegrationTestFramework()
-      .setInitialState(kAdminKeypair)
+  IntegrationTestFramework itf;
+
+  itf.setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      .sendTx(
-          complete(setAcountDetailTx("foo_1", generateData(2 * 1024 * 1024))))
-      .sendTx(
-          complete(setAcountDetailTx("foo_2", generateData(2 * 1024 * 1024))))
-      .sendTx(
-          complete(setAcountDetailTx("foo_3", generateData(2 * 1024 * 1024))))
-      .sendTx(
-          complete(setAcountDetailTx("foo_4", generateData(2 * 1024 * 1024))))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 4); })
+      .checkBlock([](auto &b) { ASSERT_EQ(b->transactions().size(), 1); });
+
+  for (auto i = 0; i < 4; ++i) {
+    itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i),
+                                          generateData(2 * 1024 * 1024))));
+  }
+  itf.skipProposal()
+      .checkBlock([](auto &b) { ASSERT_EQ(b->transactions().size(), 4); })
       .done();
 }
 
 /**
  * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will be not completed.
+ * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
  * @given some user with all required permissions
  * @when send tx with many addAccountDetails with large data inside
  * @then transaction is passed
@@ -165,7 +167,7 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      // in itf tx build from large_tx_build will be pass Torii but in
+      // in itf tx build from large_tx_build will pass in Torii but in
       // production the transaction will be failed before stateless validation
       // because of size.
       .sendTx(complete(large_tx_builder))
@@ -177,17 +179,16 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
 
 /**
  * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will be not completed.
+ * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
  * @given some user with all required permissions
- * AND itf that hanlde only 1 tx in OS.
+ * AND max proposal size is 1.
  * @when send txes with addAccountDetail with large data inside.
- * AND transactions are passed steful validation
- * @then transactions are passed
- * AND query for getting is done
+ * AND transactions are passed stateful validation
+ * @then query executed sucessfully
  */
 TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto query_checker = [](auto &status) {
-    boost::apply_visitor(
+    auto response = boost::apply_visitor(
         interface::SpecifiedVisitor<interface::AccountDetailResponse>(),
         status.get());
   };
@@ -200,8 +201,9 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   for (auto i = 0; i < 5; i++) {
     itf.sendTx(complete(setAcountDetailTx("foo_1", data)))
         .skipProposal()
-        .checkBlock(
-            [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+        .checkBlock([](auto &block) {
+          ASSERT_EQ(block->transactions().size(), 1);
+        });
   }
 
   itf.sendQuery(complete(baseQuery().getAccountDetail(kUserId)), query_checker)
