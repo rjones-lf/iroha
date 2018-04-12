@@ -20,6 +20,7 @@
 
 #include <boost/optional.hpp>
 
+#include "cryptography/default_hash_provider.hpp"
 #include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
@@ -48,16 +49,16 @@ namespace shared_model {
 #ifndef DISABLE_BACKWARD
     template <typename Model,
               typename OldModel,
-              typename HashProvider = shared_model::crypto::Sha3_256>
+              typename HashProvider = crypto::DefaultHashProvider>
     class Signable : public Primitive<Model, OldModel> {
 #else
     template <typename Model,
               typename HashProvider = shared_model::crypto::Sha3_256>
     class Signable : public ModelPrimitive<Model> {
 #endif
-     public:
       using HashProviderType = HashProvider;
 
+     public:
       /**
        * @return attached signatures
        */
