@@ -25,25 +25,6 @@
 namespace iroha {
   namespace torii {
 
-    /**
-     * This function tries to get a specific error from the query respons
-     * might throw an exception !!!
-     * @tparam T - the concrete response error to be extracted
-     * @param response - const ref to query response
-     * @return const ref to the concrete response error
-     */
-    template <class T>
-    const shared_model::interface::AbstractErrorResponse<T> &getError(
-        const shared_model::interface::QueryResponse &response) {
-      const auto &err = boost::get<shared_model::detail::PolymorphicWrapper<
-          shared_model::interface::ErrorQueryResponse>>(response.get());
-
-      const auto &si =
-          boost::get<shared_model::detail::PolymorphicWrapper<T>>(err->get());
-
-      return *si;
-    }
-
     class MockQueryProcessor : public QueryProcessor {
      public:
       MOCK_METHOD1(queryHandle,

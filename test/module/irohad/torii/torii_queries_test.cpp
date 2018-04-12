@@ -31,6 +31,7 @@ limitations under the License.
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
+#include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
 constexpr const char *Ip = "0.0.0.0";
@@ -128,8 +129,11 @@ TEST_F(ToriiQueriesTest, FindWhenResponseInvalid) {
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_TRUE(stat.ok());
   // Must return Error Response
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::StatelessFailedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatelessFailedErrorResponse>(),
+      resp.get()));
+
   ASSERT_EQ(query.hash(), resp.queryHash());
 }
 
@@ -171,8 +175,10 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
   auto resp = shared_model::proto::QueryResponse(response);
   // Must be invalid due to failed stateful validation caused by no permission
   // to read account
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::StatefulFailedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      resp.get()));
 
   ASSERT_EQ(model_query.hash(), resp.queryHash());
 }
@@ -302,8 +308,11 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
   ASSERT_TRUE(stat.ok());
   // Must be invalid due to failed stateful validation caused by no permission
   // to read account asset
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::StatefulFailedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      resp.get()));
+
   ASSERT_EQ(model_query.hash(), resp.queryHash());
 }
 
@@ -407,8 +416,11 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
   // Must be invalid due to failed stateful validation caused by no permission
   // to read account
   auto resp = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::StatefulFailedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      resp.get()));
+
   ASSERT_EQ(model_query.hash(), resp.queryHash());
 }
 
@@ -532,8 +544,11 @@ TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
     ASSERT_TRUE(stat.ok());
     auto resp = shared_model::proto::QueryResponse(response);
     // Must return Error Response
-    ASSERT_NO_THROW(
-        getError<shared_model::interface::StatelessFailedErrorResponse>(resp));
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<
+            shared_model::interface::StatelessFailedErrorResponse>(),
+        resp.get()));
+
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   }
 }

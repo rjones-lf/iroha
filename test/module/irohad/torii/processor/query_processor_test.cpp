@@ -52,8 +52,6 @@ class QueryProcessorTest : public ::testing::Test {
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-  shared_model::crypto::Keypair pair =
-      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
   std::vector<shared_model::interface::types::PubkeyType> signatories = {
       keypair.publicKey()};
 };

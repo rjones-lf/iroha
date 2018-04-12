@@ -21,6 +21,7 @@
 #include "builders/protobuf/queries.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 using namespace torii;
 
@@ -129,8 +130,10 @@ TEST_F(QueryServiceTest, InvalidWhenUniqueHash) {
   query_service->Find(query->getTransport(), response);
   ASSERT_TRUE(response.has_error_response());
   auto resp = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::NotSupportedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::NotSupportedErrorResponse>(),
+      resp.get()));
 }
 
 /**
@@ -155,6 +158,8 @@ TEST_F(QueryServiceTest, InvalidWhenDuplicateHash) {
   query_service->Find(query->getTransport(), response);
   ASSERT_TRUE(response.has_error_response());
   auto resp = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      getError<shared_model::interface::StatelessFailedErrorResponse>(resp));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatelessFailedErrorResponse>(),
+      resp.get()));
 }
