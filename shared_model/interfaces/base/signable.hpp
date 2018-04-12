@@ -55,7 +55,6 @@ namespace shared_model {
               typename HashProvider = shared_model::crypto::Sha3_256>
     class Signable : public ModelPrimitive<Model> {
 #endif
-      using HashProviderType = HashProvider;
 
      public:
       /**
@@ -105,7 +104,7 @@ namespace shared_model {
 
       const types::HashType &hash() const {
         if (hash_ == boost::none) {
-          hash_.emplace(HashProviderType::makeHash(payload()));
+          hash_.emplace(HashProvider::makeHash(payload()));
         }
         return *hash_;
       }
