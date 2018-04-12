@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "torii_mocks.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/validation/validation_mocks.hpp"
 
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
@@ -23,10 +26,6 @@ limitations under the License.
 #include "builders/protobuf/queries.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/network/network_mocks.hpp"
-#include "module/irohad/validation/validation_mocks.hpp"
 
 #include "main/server_runner.hpp"
 #include "torii/processor/query_processor_impl.hpp"
@@ -94,7 +93,7 @@ class ToriiQueriesTest : public testing::Test {
 TEST_F(ToriiQueriesTest, QueryClient) {
   iroha::protocol::QueryResponse response;
   auto query = TestUnsignedQueryBuilder()
-                   .creatorAccountId("accuntA")
+                   .creatorAccountId("accountA")
                    .getAccount("accountB")
                    .build()
                    .signAndAddSignature(pair);
@@ -119,7 +118,7 @@ TEST_F(ToriiQueriesTest, QueryClient) {
 TEST_F(ToriiQueriesTest, FindWhenResponseInvalid) {
   iroha::protocol::QueryResponse response;
   auto query = TestUnsignedQueryBuilder()
-                   .creatorAccountId("accuntA")
+                   .creatorAccountId("accountA")
                    .getAccount("accountB")
                    .build()
                    .signAndAddSignature(pair);
