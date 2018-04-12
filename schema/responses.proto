@@ -67,6 +67,7 @@ message ErrorResponse {
     NO_ROLES = 8;           // when there are no roles defined in the system
   }
   Reason reason = 1;
+  string message = 2;
 }
 
 message SignatoriesResponse {

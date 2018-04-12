@@ -210,6 +210,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
   ASSERT_TRUE(res.answer.has_error_response());
   ASSERT_EQ(res.answer.error_response().reason(),
             iroha::model::ErrorResponse::STATELESS_INVALID);
+  ASSERT_NE(res.answer.error_response().message().size(), 0);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenValid) {
