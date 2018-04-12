@@ -16,6 +16,8 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -111,7 +113,8 @@ class HeavyTransactionTest : public ::testing::Test {
 
 /**
  * @given some user with all required permissions
- * @when send tx with addAccountDetail with big, but stateless valid data inside
+ * @when send tx with addAccountDetail with big, but stateless invalid data
+ * inside
  * @then transaction is passed
  */
 TEST_F(HeavyTransactionTest, OneLargeTx) {
@@ -145,12 +148,14 @@ TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
       .skipProposal()
       .checkBlock([](auto &b) { ASSERT_EQ(b->transactions().size(), 1); });
 
-  for (auto i = 0; i < 4; ++i) {
+  auto number_of_txes = 4u;
+  for (auto i = 0u; i < number_of_txes; ++i) {
     itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i),
                                           generateData(2 * 1024 * 1024))));
   }
   itf.skipProposal()
-      .checkBlock([](auto &b) { ASSERT_EQ(b->transactions().size(), 4); })
+      .checkBlock(
+          [&](auto &b) { ASSERT_EQ(b->transactions().size(), number_of_txes); })
       .done();
 }
 
@@ -192,22 +197,31 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
 TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto number_of_times = 15u;
   auto size_of_data = 3 * 1024 * 1024u;
+  auto data = generateData(size_of_data);
+
+  auto name_generator = [](auto val) { return "foo_" + std::to_string(val); };
 
   auto query_checker = [&](auto &status) {
     auto response = *boost::apply_visitor(
         interface::SpecifiedVisitor<interface::AccountResponse>(),
         status.get());
-    ASSERT_TRUE(response->account().jsonData().size()
-                >= number_of_times * size_of_data);
-  };
 
-  auto data = generateData(size_of_data);
+    boost::property_tree::ptree root;
+    boost::property_tree::read_json(response->account().jsonData(), root);
+    auto user = root.get_child(kUserId);
+
+    ASSERT_EQ(number_of_times, user.size());
+
+    for (auto i = 0u; i < number_of_times; ++i) {
+      ASSERT_EQ(data, user.get<std::string>(name_generator(i)));
+    }
+  };
 
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair).sendTx(makeUserWithPerms());
 
-  for (auto i = 0u; i < number_of_times; i++) {
-    itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i), data)))
+  for (auto i = 0u; i < number_of_times; ++i) {
+    itf.sendTx(complete(setAcountDetailTx(name_generator(i), data)))
         .skipProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
