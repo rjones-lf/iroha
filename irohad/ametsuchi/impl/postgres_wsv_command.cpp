@@ -162,7 +162,7 @@ namespace iroha {
         const shared_model::interface::Account &account) {
       auto result = execute_(
           "INSERT INTO account(account_id, domain_id, quorum, "
-          "transaction_count, data) VALUES ("
+          "data) VALUES ("
           + transaction_.quote(account.accountId()) + ", "
           + transaction_.quote(account.domainId()) + ", "
           + transaction_.quote(account.quorum())
