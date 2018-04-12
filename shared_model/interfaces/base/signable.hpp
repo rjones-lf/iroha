@@ -21,7 +21,6 @@
 #include <boost/optional.hpp>
 
 #include "cryptography/default_hash_provider.hpp"
-#include "cryptography/hash_providers/sha3_256.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
