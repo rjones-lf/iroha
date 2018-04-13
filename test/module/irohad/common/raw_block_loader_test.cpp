@@ -18,14 +18,22 @@
 #include "main/raw_block_loader.hpp"
 #include <gtest/gtest.h>
 
-#include "framework/test_block_generator.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_common.hpp"
 #include "model/converters/pb_command_factory.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha::main;
 using namespace iroha::model::converters;
 using namespace iroha;
+
+auto generateBlock() {
+  return TestBlockBuilder()
+      .createdTime(100500)
+      .height(1)
+      .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+      .build();
+}
 
 /**
  * @given generated block
@@ -37,10 +45,11 @@ using namespace iroha;
  */
 TEST(BlockLoaderTest, BlockLoaderWhenParseBlock) {
   BlockLoader loader;
-  auto block = framework::generator::generateBlock();
-  auto doc = JsonBlockFactory().serialize(block);
+  auto block = generateBlock();
+  auto old_block = *std::unique_ptr<iroha::model::Block>(block.makeOldModel());
+  auto doc = JsonBlockFactory().serialize(old_block);
   auto str = jsonToString(doc);
   auto new_block = loader.parseBlock(str);
   ASSERT_TRUE(new_block);
-  ASSERT_EQ(block, *new_block);
+  ASSERT_EQ(old_block, *new_block);
 }
