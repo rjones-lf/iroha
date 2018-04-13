@@ -151,9 +151,9 @@ int main(int argc, char *argv[]) {
     log->info("Block is parsed");
 
     // Applying transactions from genesis block to iroha storage
-    irohad.storage->insertBlock(shared_model::proto::from_old(block.value()));
+    irohad.storage->insertBlock(*block.value());
     log->info("Genesis block inserted, number of transactions: {}",
-              block.value().transactions.size());
+              block.value()->transactions().size());
   }
 
   // init pipeline components

@@ -20,8 +20,10 @@
 #include <fstream>
 #include <iostream>
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "client.hpp"
 #include "common/assert_config.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_cli.hpp"
@@ -91,10 +93,10 @@ int main(int argc, char *argv[]) {
         0, std::move(peers_address));
     auto block = generator.generateGenesisBlock(0, {transaction});
     // Convert to json
-    JsonBlockFactory json_factory;
-    auto doc = json_factory.serialize(block);
     std::ofstream output_file("genesis.block");
-    output_file << jsonToString(doc);
+    output_file << shared_model::converters::protobuf::modelToJson(
+        shared_model::proto::from_old(block)
+      );
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network

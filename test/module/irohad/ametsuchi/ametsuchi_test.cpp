@@ -734,13 +734,14 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   auto tx2hash = txn2.hash();
   auto tx3hash = shared_model::crypto::Hash("some garbage");
 
-  auto tx1check = *blocks->getTxByHashSync(tx1hash);
+  auto tx1 = blocks->getTxByHashSync(tx1hash);
+  ASSERT_TRUE(tx1);
 
-  auto tx1 = *blocks->getTxByHashSync(tx1hash);
-  auto tx2 = *blocks->getTxByHashSync(tx2hash);
+  auto tx2 = blocks->getTxByHashSync(tx2hash);
+  ASSERT_TRUE(tx2);
 
-  ASSERT_EQ(*tx1.operator->(), txn1);
-  ASSERT_EQ(*tx2.operator->(), txn2);
+  ASSERT_EQ(**tx1, txn1);
+  ASSERT_EQ(**tx2, txn2);
   ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
 }
 

@@ -19,7 +19,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -83,13 +83,9 @@ class BlockQueryTest : public AmetsuchiTest {
             .build();
 
     for (const auto &b : {block1, block2}) {
-      // TODO IR-975 victordrobny 12.02.2018 convert from
-      // shared_model::proto::Block after FlatFile will be reworked to new
-      // model
-      auto old_block = *std::unique_ptr<iroha::model::Block>(b.makeOldModel());
       file->add(b.height(),
-                iroha::stringToBytes(iroha::model::converters::jsonToString(
-                    iroha::model::converters::JsonBlockFactory().serialize(old_block))));
+                iroha::stringToBytes(
+                    shared_model::converters::protobuf::modelToJson(b)));
       index->index(b);
       blocks_total++;
     }
@@ -167,10 +163,10 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
     static auto subs_cnt = 0;
     subs_cnt++;
     if (subs_cnt == 1) {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[1], (*tx)->hash());
     } else {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[3], (*tx)->hash());
     }
   });

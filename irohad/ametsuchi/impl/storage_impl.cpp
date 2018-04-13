@@ -22,12 +22,8 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
-#include "model/converters/json_common.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
-
-// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
-// shared_model https://soramitsu.atlassian.net/browse/IR-887
-#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -257,13 +253,11 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        // TODO: rework to shared model converters once they are available
-        // IR-1084 Nikita Alekseev
-        auto old_block =
-            *std::unique_ptr<model::Block>(block.second->makeOldModel());
-        block_store_->add(block.first,
-                          stringToBytes(model::converters::jsonToString(
-                              serializer_.serialize(old_block))));
+        block_store_->add(
+            block.first,
+            stringToBytes(shared_model::converters::protobuf::modelToJson(
+                *std::static_pointer_cast<shared_model::proto::Block>(
+                    block.second))));
       }
 
       storage->transaction_->exec("COMMIT;");

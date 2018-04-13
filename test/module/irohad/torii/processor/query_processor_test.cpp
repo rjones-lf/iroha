@@ -15,21 +15,19 @@
  * limitations under the License.
  */
 
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/validation/validation_mocks.hpp"
-#include "validators/permissions.hpp"
-
-#include "framework/test_subscriber.hpp"
-#include "model/queries/responses/error_response.hpp"
-#include "model/query_execution.hpp"
-#include "network/ordering_gate.hpp"
-#include "torii/processor/query_processor_impl.hpp"
-
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
+#include "framework/test_subscriber.hpp"
+#include "model/query_execution.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
+#include "network/ordering_gate.hpp"
+#include "torii/processor/query_processor_impl.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -54,9 +52,6 @@ class QueryProcessorTest : public ::testing::Test {
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-  decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
-      pair =
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
   std::vector<shared_model::interface::types::PubkeyType> signatories = {
       keypair.publicKey()};
 };
@@ -83,12 +78,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                    .build()
                    .signAndAddSignature(keypair);
 
-  auto qry_resp = std::make_shared<model::AccountResponse>();
-  auto account = model::Account();
-  account.account_id = account_id;
-  qry_resp->account = account;
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
+
   auto role = "admin";
   std::vector<std::string> roles = {role};
   std::vector<std::string> perms = {
@@ -140,10 +132,6 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                        shared_model::crypto::DefaultCryptoAlgorithmType::
                            generateKeypair());
 
-  auto qry_resp = std::make_shared<model::AccountResponse>();
-  auto account = model::Account();
-  account.account_id = account_id;
-  qry_resp->account = account;
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
   auto role = "admin";

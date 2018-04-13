@@ -16,6 +16,7 @@
  */
 
 #include <boost/range/join.hpp>
+
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/test_subscriber.hpp"
