@@ -25,7 +25,6 @@
 #include <pqxx/pqxx>
 #include <shared_mutex>
 #include "logger/logger.hpp"
-#include "model/converters/json_block_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -110,8 +109,6 @@ namespace iroha {
       std::shared_ptr<WsvQuery> wsv_;
 
       std::shared_ptr<BlockQuery> blocks_;
-
-      model::converters::JsonBlockFactory serializer_;
 
       // Allows multiple readers and a single writer
       std::shared_timed_mutex rw_lock_;
