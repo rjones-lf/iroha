@@ -23,6 +23,7 @@ target_link_libraries(tx_acceptance_test
         integration_framework
         shared_model_stateless_validation
         )
+
 addtest(get_transactions_test get_transactions_test.cpp)
 target_link_libraries(get_transactions_test
   application
@@ -86,3 +87,11 @@ target_link_libraries(create_account_test
   shared_model_proto_builders
   shared_model_stateless_validation
   )
+
+addtest(tx_heavy_data tx_heavy_data.cpp)
+target_link_libraries(tx_heavy_data
+        application
+        integration_framework
+        shared_model_proto_builders
+        shared_model_stateless_validation
+        )

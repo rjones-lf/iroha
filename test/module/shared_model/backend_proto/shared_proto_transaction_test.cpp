@@ -93,7 +93,7 @@ TEST(ProtoTransaction, Builder) {
       shared_model::crypto::Blob(proto_tx.payload().SerializeAsString()),
       keypair);
 
-  auto sig = proto_tx.add_signature();
+  auto sig = proto_tx.add_signatures();
   sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
   sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 

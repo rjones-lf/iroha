@@ -17,11 +17,19 @@
 
 #include <utility>
 
-#include "interfaces/transaction.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
+
+#include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ordering {
+
+    bool ProposalComparator::operator()(
+        const std::shared_ptr<shared_model::interface::Proposal> &lhs,
+        const std::shared_ptr<shared_model::interface::Proposal> &rhs) const {
+      return lhs->height() > rhs->height();
+    }
 
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport)

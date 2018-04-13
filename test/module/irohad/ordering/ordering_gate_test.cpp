@@ -224,3 +224,54 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
 
   ASSERT_TRUE(wrapper_after.validate());
 }
+
+/**
+ * @given Initialized OrderingGate
+ * AND MockPeerCommunicationService
+ * @when Receive proposals in random order
+ * @then on_proposal output is ordered
+ */
+TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
+  std::shared_ptr<OrderingGateTransport> transport =
+      std::make_shared<MockOrderingGateTransport>();
+
+  std::shared_ptr<MockPeerCommunicationService> pcs =
+      std::make_shared<MockPeerCommunicationService>();
+  rxcpp::subjects::subject<Commit> commit_subject;
+  EXPECT_CALL(*pcs, on_commit())
+      .WillOnce(Return(commit_subject.get_observable()));
+
+  auto pushCommit = [&] {
+    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
+        std::static_pointer_cast<shared_model::interface::Block>(
+            std::make_shared<shared_model::proto::Block>(
+                TestBlockBuilder().build()))));
+  };
+
+  OrderingGateImpl ordering_gate(transport);
+  ordering_gate.setPcs(*pcs);
+
+  auto pushProposal = [&](auto height) {
+    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
+        TestProposalBuilder().height(height).build()));
+  };
+
+  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
+  ordering_gate.on_proposal().subscribe([&](auto val) {
+    messages.push_back(val);
+  });
+
+  // this will set unlock_next_ to false, so proposals 4 and 3 are enqueued
+  pushProposal(2);
+
+  pushProposal(4);
+  pushProposal(3);
+
+  pushCommit();
+  pushCommit();
+
+  ASSERT_EQ(3, messages.size());
+  ASSERT_EQ(2, messages.at(0)->height());
+  ASSERT_EQ(3, messages.at(1)->height());
+  ASSERT_EQ(4, messages.at(2)->height());
+}

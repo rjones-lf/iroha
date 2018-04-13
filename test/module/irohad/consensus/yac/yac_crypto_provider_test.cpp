@@ -22,8 +22,8 @@
 #include "consensus/yac/messages.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 
-const auto pubkey = std::string('0', 32);
-const auto signed_data = std::string('1', 32);
+const auto pubkey = std::string(32, '0');
+const auto signed_data = std::string(32, '1');
 namespace iroha {
   namespace consensus {
     namespace yac {

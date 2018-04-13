@@ -24,9 +24,9 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "model/block.hpp"
-#include "validators/permissions.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "validators/permissions.hpp"
 
 // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
 // shared_model https://soramitsu.atlassian.net/browse/IR-887
@@ -61,9 +61,9 @@ class KVTest : public AmetsuchiTest {
 
     iroha::model::CreateRole createRole;
     createRole.role_name = "user";
-    createRole.permissions = {iroha::model::can_add_peer,
-                              iroha::model::can_create_asset,
-                              iroha::model::can_get_my_account};
+    createRole.permissions = {shared_model::permissions::can_add_peer,
+                              shared_model::permissions::can_create_asset,
+                              shared_model::permissions::can_get_my_account};
 
     // Create domain ru
     txn1_1.commands.push_back(

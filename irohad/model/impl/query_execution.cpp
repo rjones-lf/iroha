@@ -23,6 +23,7 @@
 #include "validators/permissions.hpp"
 
 using namespace iroha::model;
+using namespace shared_model::permissions;
 using namespace iroha::ametsuchi;
 
 // TODO: 28/03/2018 x3medima17 remove poly wrapper, IR-1011

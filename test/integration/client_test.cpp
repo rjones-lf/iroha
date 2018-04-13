@@ -58,6 +58,7 @@ using namespace iroha::validation;
 using namespace iroha::model::converters;
 using namespace iroha::model;
 using namespace shared_model::proto;
+using namespace shared_model::permissions;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds proposal_delay = 10s;

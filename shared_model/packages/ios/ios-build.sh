@@ -81,7 +81,7 @@ cp -R ./boost_1_66_0/boost "$DEPS_DIR"/include
 # protobuf
 git clone https://github.com/google/protobuf
 (cd ./protobuf;
-git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95)
+git checkout v3.5.1)
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -Dprotobuf_BUILD_TESTS=OFF -H./protobuf/cmake -B./protobuf/host_build # build for host to get js_embed
 VERBOSE=1 cmake --build ./protobuf/host_build -- -j"$CORES"
 # to be able to run js_embed we need its host version

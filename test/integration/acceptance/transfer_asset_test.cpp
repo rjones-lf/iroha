@@ -25,9 +25,9 @@
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -103,9 +103,10 @@ class TransferAsset : public ::testing::Test {
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  const std::vector<std::string> kPerms{iroha::model::can_add_asset_qty,
-                                        iroha::model::can_transfer,
-                                        iroha::model::can_receive};
+  const std::vector<std::string> kPerms{
+      shared_model::permissions::can_add_asset_qty,
+      shared_model::permissions::can_transfer,
+      shared_model::permissions::can_receive};
 };
 
 /**
@@ -137,8 +138,10 @@ TEST_F(TransferAsset, Basic) {
 TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          kUser1, kUser1Keypair, {iroha::model::can_transfer}, kRole1))
+      .sendTx(makeUserWithPerms(kUser1,
+                                kUser1Keypair,
+                                {shared_model::permissions::can_transfer},
+                                kRole1))
       .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
@@ -160,8 +163,10 @@ TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
 TEST_F(TransferAsset, WithOnlyCanReceivePerm) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          kUser1, kUser1Keypair, {iroha::model::can_receive}, kRole1))
+      .sendTx(makeUserWithPerms(kUser1,
+                                kUser1Keypair,
+                                {shared_model::permissions::can_receive},
+                                kRole1))
       .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
@@ -406,7 +411,8 @@ TEST_F(TransferAsset, InterDomain) {
                   integration_framework::IntegrationTestFramework::kAdminId)
               .createdTime(iroha::time::now())
               .createRole(kNewRole,
-                          std::vector<std::string>{iroha::model::can_receive})
+                          std::vector<std::string>{
+                              shared_model::permissions::can_receive})
               .createDomain(kNewDomain, kNewRole)
               .createAccount(
                   kUser2,
