@@ -55,7 +55,7 @@ RUN set -e; \
 # install protobuf
 RUN set -e; \
     git clone https://github.com/google/protobuf /tmp/protobuf; \
-    (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95); \
+    (cd /tmp/protobuf ; git checkout v3.5.1); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -Dprotobuf_BUILD_TESTS=OFF \
@@ -94,7 +94,7 @@ RUN set -e; \
 RUN set -e; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     cd /tmp/grpc; \
-    git checkout bfcbad3b86c7912968dc8e64f2121c920dad4dfb; \
+    git checkout v1.10.1; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DgRPC_BENCHMARK_PROVIDER="" \
