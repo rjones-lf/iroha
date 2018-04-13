@@ -125,10 +125,13 @@ TEST_F(HeavyTransactionTest, OneLargeTx) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // "foo" transactions will not be passed because it has large size into
       // one field - 5Mb per one set
-      .sendTx(complete(setAcountDetailTx("foo", generateData(5 * 1024 * 1024))))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .sendTx(complete(setAcountDetailTx("foo", generateData(5 * 1024 * 1024))),
+              [](const auto &status) {
+                ASSERT_NO_THROW(
+                    boost::get<shared_model::detail::PolymorphicWrapper<
+                        shared_model::interface::StatelessFailedTxResponse>>(
+                        status.get()));
+              })
       .done();
 }
 

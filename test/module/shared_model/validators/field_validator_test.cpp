@@ -498,7 +498,7 @@ class FieldValidatorTest : public ValidatorsTest {
       makeInvalidCase("long_value",
                       "value",
                       &FieldValidatorTest::detail_value,
-                      std::string(4097, '0'))};
+                      std::string(5 * 1024 * 1024, '0'))};
 
   std::vector<FieldTestCase> description_test_cases{
       makeValidCase(&FieldValidatorTest::description, "valid description"),
