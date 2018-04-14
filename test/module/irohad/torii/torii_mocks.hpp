@@ -24,6 +24,7 @@
 
 namespace iroha {
   namespace torii {
+
     class MockQueryProcessor : public QueryProcessor {
      public:
       MOCK_METHOD1(queryHandle,

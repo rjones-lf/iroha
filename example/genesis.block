@@ -1,116 +1,119 @@
 {
-    "signatures": [],
-    "created_ts": 0,
-    "hash": "ef9781aadf6d4d5ac8d01e14f7bbc805278ed9bb7200dafe8335bfc3a254e82b",
-    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-    "height": 1,
-    "txs_number": 1,
-    "transactions": [
-        {
-            "signatures": [],
-            "created_ts": 0,
-            "creator_account_id": "",
-            "tx_counter": 0,
-            "commands": [
-                {
-                    "command_type": "AddPeer",
-                    "peer": {
-                        "address": "localhost:10001",
-                        "peer_key": "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
-                    }
-                },
-                {
-                    "command_type": "CreateRole",
-                    "role_name": "admin",
-                    "permissions": [
-                        "can_add_peer",
-                        "can_add_signatory",
-                        "can_create_account",
-                        "can_create_domain",
-                        "can_get_my_acc_detail",
-                        "can_get_all_acc_detail",
-                        "can_get_all_acc_ast",
-                        "can_get_all_acc_ast_txs",
-                        "can_get_all_acc_txs",
-                        "can_get_all_accounts",
-                        "can_get_all_signatories",
-                        "can_get_all_txs",
-                        "can_get_roles",
-                        "can_read_assets",
-                        "can_remove_signatory",
-                        "can_set_detail",
-                        "can_set_quorum"
-                    ]
-                },
-                {
-                    "command_type": "CreateRole",
-                    "role_name": "user",
-                    "permissions": [
-                        "can_add_signatory",
-                        "can_get_my_account",
-                        "can_get_my_acc_detail",
-                        "can_get_domain_acc_detail",
-                        "can_get_my_acc_ast",
-                        "can_get_my_acc_ast_txs",
-                        "can_get_my_acc_txs",
-                        "can_get_my_signatories",
-                        "can_get_my_txs",
-                        "can_grant_can_add_signatory",
-                        "can_grant_can_remove_signatory",
-                        "can_grant_can_set_detail",
-                        "can_grant_can_set_quorum",
-                        "can_grant_can_transfer",
-                        "can_receive",
-                        "can_remove_signatory",
-                        "can_set_quorum",
-                        "can_set_detail",
-                        "can_transfer"
-                    ]
-                },
-                {
-                    "command_type": "CreateRole",
-                    "role_name": "money_creator",
-                    "permissions": [
-                        "can_add_asset_qty",
-                        "can_create_asset",
-                        "can_receive",
-                        "can_transfer"
-                    ]
-                },
-                {
-                    "command_type": "CreateDomain",
-                    "domain_id": "test",
-                    "user_default_role": "user"
-                },
-                {
-                    "command_type": "CreateAsset",
-                    "asset_name": "coin",
-                    "domain_id": "test",
-                    "precision": 2
-                },
-                {
-                    "command_type": "CreateAccount",
-                    "account_name": "admin",
-                    "domain_id": "test",
-                    "pubkey": "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
-                },
-                {
-                    "command_type": "CreateAccount",
-                    "account_name": "test",
-                    "domain_id": "test",
-                    "pubkey": "359f925e4eeecfdd6aa1abc0b79a6a121a5dd63bb612b603247ea4f8ad160156"
-                },
-                {
-                    "command_type": "AppendRole",
-                    "account_id": "admin@test",
-                    "role_name": "admin"
-                },
-                {
-                    "command_type": "AppendRole",
-                    "account_id": "admin@test",
-                    "role_name": "money_creator"
-                }
-            ]
-        }
-    ]
+   "payload":{
+      "transactions":[
+         {
+            "payload":{
+               "commands":[
+                  {
+                     "addPeer":{
+                        "peer":{
+                           "address":"localhost:10001",
+                           "peerKey":"0E2icbV/5jQmrh3Jf2lSEEA3QR/PTztzncIX9F5fyZs="
+                        }
+                     }
+                  },
+                  {
+                     "createRole":{
+                        "roleName":"admin",
+                        "permissions":[
+                           "can_add_peer",
+                           "can_add_signatory",
+                           "can_create_account",
+                           "can_create_domain",
+                           "can_get_all_acc_ast",
+                           "can_get_all_acc_ast_txs",
+                           "can_get_all_acc_detail",
+                           "can_get_all_acc_txs",
+                           "can_get_all_accounts",
+                           "can_get_all_signatories",
+                           "can_get_all_txs",
+                           "can_get_roles",
+                           "can_read_assets",
+                           "can_remove_signatory",
+                           "can_set_quorum"
+                        ]
+                     }
+                  },
+                  {
+                     "createRole":{
+                        "roleName":"user",
+                        "permissions":[
+                           "can_add_signatory",
+                           "can_get_my_acc_ast",
+                           "can_get_my_acc_ast_txs",
+                           "can_get_my_acc_detail",
+                           "can_get_my_acc_txs",
+                           "can_get_my_account",
+                           "can_get_my_signatories",
+                           "can_get_my_txs",
+                           "can_grant_can_add_signatory",
+                           "can_grant_can_remove_signatory",
+                           "can_grant_can_set_detail",
+                           "can_grant_can_set_quorum",
+                           "can_grant_can_transfer",
+                           "can_receive",
+                           "can_remove_signatory",
+                           "can_set_quorum",
+                           "can_transfer"
+                        ]
+                     }
+                  },
+                  {
+                     "createRole":{
+                        "roleName":"money_creator",
+                        "permissions":[
+                           "can_add_asset_qty",
+                           "can_create_asset",
+                           "can_receive",
+                           "can_transfer"
+                        ]
+                     }
+                  },
+                  {
+                     "createDomain":{
+                        "domainId":"test",
+                        "defaultRole":"user"
+                     }
+                  },
+                  {
+                     "createAsset":{
+                        "assetName":"coin",
+                        "domainId":"test",
+                        "precision":2
+                     }
+                  },
+                  {
+                     "createAccount":{
+                        "accountName":"admin",
+                        "domainId":"test",
+                        "mainPubkey":"iJ9riB4zG+IUh9t33PMsX409XoBm540v6sQjn+kdQW8="
+                     }
+                  },
+                  {
+                     "createAccount":{
+                        "accountName":"test",
+                        "domainId":"test",
+                        "mainPubkey":"3MfszkSPLhkKSBrsfKIe5S7aVG5mC0gg9JdtATIVcJc="
+                     }
+                  },
+                  {
+                     "appendRole":{
+                        "accountId":"admin@test",
+                        "roleName":"admin"
+                     }
+                  },
+                  {
+                     "appendRole":{
+                        "accountId":"admin@test",
+                        "roleName":"money_creator"
+                     }
+                  }
+               ]
+            }
+         }
+      ],
+      "txNumber":1,
+      "height":"1",
+      "prevBlockHash":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+   }
 }

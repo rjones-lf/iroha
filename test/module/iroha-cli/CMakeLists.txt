@@ -15,9 +15,12 @@
 # limitations under the License.
 #
 
-# Reusable tests
-add_subdirectory(iroha-cli)
-add_subdirectory(irohad)
-add_subdirectory(libs)
-add_subdirectory(vendor)
-add_subdirectory(shared_model)
+addtest(client_test client_test.cpp)
+target_link_libraries(client_test
+    client
+    processors
+    server_runner
+    )
+target_include_directories(client_test PUBLIC
+    ${PROJECT_SOURCE_DIR}/iroha-cli
+    )

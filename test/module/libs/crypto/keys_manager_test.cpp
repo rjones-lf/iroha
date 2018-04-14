@@ -52,17 +52,18 @@ class KeyManager : public ::testing::Test {
   const path test_dir = boost::filesystem::temp_directory_path()
       / boost::filesystem::unique_path();
   const std::string filepath = (test_dir / "keymanager_test_file").string();
-  const path pub_key_path = filepath + KeysManagerImpl::kPubExt;
-  const path pri_key_path = filepath + KeysManagerImpl::kPrivExt;
+  const path pub_key_path = filepath + KeysManagerImpl::kPublicKeyExtension;
+  const path pri_key_path = filepath + KeysManagerImpl::kPrivateKeyExtension;
   const std::string pubkey =
       "00576e02f23c8c694c322796cb3ef494829fdf484f4b42312fb7d776fbd5123b"s;
   const std::string prikey =
       "36f028580bb02cc8272a9a020f4200e346e276ae664e45ee80745574e2f5ab80"s;
   KeysManagerImpl manager = KeysManagerImpl(filepath);
   const std::string passphrase = "test";
-  const std::string nonexistent = (boost::filesystem::temp_directory_path()
-                                   / "path" / "that" / "doesnt" / "exist")
-                                      .string();
+  const std::string nonexistent =
+      (boost::filesystem::temp_directory_path() / "path" / "that" / "doesnt"
+       / "exist")
+          .string();
 };
 
 TEST_F(KeyManager, LoadNonExistentKeyFile) {

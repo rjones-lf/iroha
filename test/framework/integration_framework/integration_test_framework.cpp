@@ -75,12 +75,12 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             .txCounter(1)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(
-                kDefaultRole,
-                // TODO (@l4l) IR-874 create more confort way for
-                // permssion-dependent proto building
-                std::vector<std::string>{iroha::model::role_perm_group.begin(),
-                                         iroha::model::role_perm_group.end()})
+            .createRole(kDefaultRole,
+                        // TODO (@l4l) IR-874 create more confort way for
+                        // permssion-dependent proto building
+                        std::vector<std::string>{
+                            shared_model::permissions::role_perm_group.begin(),
+                            shared_model::permissions::role_perm_group.end()})
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)

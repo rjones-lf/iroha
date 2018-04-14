@@ -22,6 +22,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -76,7 +77,7 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          std::chrono::milliseconds load_delay,
-         const iroha::keypair_t &keypair);
+         const shared_model::crypto::Keypair &keypair);
 
   /**
    * Initialization of whole objects in system
@@ -204,7 +205,7 @@ class Irohad {
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
-  iroha::keypair_t keypair;
+  shared_model::crypto::Keypair keypair;
   grpc::ServerBuilder builder;
 };
 

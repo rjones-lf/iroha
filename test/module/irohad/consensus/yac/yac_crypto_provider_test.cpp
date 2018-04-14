@@ -20,7 +20,7 @@
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include "consensus/yac/messages.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 
 const auto pubkey = std::string(32, '0');
 const auto signed_data = std::string(32, '1');
@@ -29,13 +29,15 @@ namespace iroha {
     namespace yac {
       class YacCryptoProviderTest : public ::testing::Test {
        public:
-        YacCryptoProviderTest() : keypair(create_keypair()) {}
+        YacCryptoProviderTest()
+            : keypair(shared_model::crypto::DefaultCryptoAlgorithmType::
+                          generateKeypair()) {}
 
         void SetUp() override {
           crypto_provider = std::make_shared<CryptoProviderImpl>(keypair);
         }
 
-        const keypair_t keypair;
+        const shared_model::crypto::Keypair keypair;
         std::shared_ptr<CryptoProviderImpl> crypto_provider;
       };
 

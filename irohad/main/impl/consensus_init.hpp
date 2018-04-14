@@ -30,6 +30,7 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "cryptography/keypair.hpp"
 #include "network/block_loader.hpp"
 #include "simulator/block_creator.hpp"
 
@@ -45,7 +46,7 @@ namespace iroha {
 
         auto createNetwork();
 
-        auto createCryptoProvider(const keypair_t &keypair);
+        auto createCryptoProvider(const shared_model::crypto::Keypair &keypair);
 
         auto createTimer();
 
@@ -53,7 +54,7 @@ namespace iroha {
 
         std::shared_ptr<consensus::yac::Yac> createYac(
             ClusterOrdering initial_order,
-            const keypair_t &keypair,
+            const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds delay_milliseconds);
 
        public:
@@ -61,7 +62,7 @@ namespace iroha {
             std::shared_ptr<ametsuchi::PeerQuery> wsv,
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,
-            const keypair_t &keypair,
+            const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds vote_delay_milliseconds,
             std::chrono::milliseconds load_delay_milliseconds);
 

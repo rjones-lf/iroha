@@ -23,7 +23,7 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-      CryptoProviderImpl::CryptoProviderImpl(const keypair_t &keypair)
+      CryptoProviderImpl::CryptoProviderImpl(const shared_model::crypto::Keypair &keypair)
           : keypair_(keypair) {}
 
       bool CryptoProviderImpl::verify(CommitMessage msg) {
@@ -52,14 +52,15 @@ namespace iroha {
       VoteMessage CryptoProviderImpl::getVote(YacHash hash) {
         VoteMessage vote;
         vote.hash = hash;
+        keypair_t keypair = *std::unique_ptr<keypair_t>(keypair_.makeOldModel());
         auto signature = iroha::sign(
             iroha::sha3_256(
                 PbConverters::serializeVote(vote).hash().SerializeAsString())
                 .to_string(),
-            keypair_.pubkey,
-            keypair_.privkey);
+            keypair.pubkey,
+            keypair.privkey);
         vote.signature.signature = signature;
-        vote.signature.pubkey = keypair_.pubkey;
+        vote.signature.pubkey = keypair.pubkey;
         return vote;
       }
 

@@ -21,6 +21,6 @@ add_library(keys_manager
     )
 
 target_link_libraries(keys_manager
-    ed25519_crypto
+    shared_model_cryptography
     logger
     )

@@ -29,10 +29,10 @@
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/permissions.hpp"
 
 using namespace shared_model;
 
@@ -516,14 +516,15 @@ class FieldValidatorTest : public ValidatorsTest {
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
 
   std::vector<FieldTestCase> permissionTestCases() {
-    auto valid_cases = iroha::model::role_perm_group
+    auto valid_cases =
+        shared_model::permissions::role_perm_group
         | boost::adaptors::transformed([&](const auto &permission) {
-                         return this->makeTestCase(permission,
-                                             &FieldValidatorTest::permission,
-                                             permission,
-                                             true,
-                                             "");
-                       });
+            return this->makeTestCase(permission,
+                                      &FieldValidatorTest::permission,
+                                      permission,
+                                      true,
+                                      "");
+          });
     std::vector<FieldTestCase> invalid_cases = {
         makeInvalidCase("non existing permission",
                         "permission",
@@ -654,7 +655,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
   iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signature();  // at least one signature in message
+  proto_tx.add_signatures();  // at least one signature in message
 
   // iterate over all fields in transaction
   iterateContainer(

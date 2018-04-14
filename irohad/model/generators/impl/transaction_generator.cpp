@@ -36,7 +36,7 @@ namespace iroha {
         for (size_t i = 0; i < peers_address.size(); ++i) {
           KeysManagerImpl manager("node" + std::to_string(i));
           manager.createKeys();
-          auto keypair = *manager.loadKeys();
+          auto keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
           tx.commands.push_back(command_generator.generateAddPeer(
               Peer(peers_address[i], keypair.pubkey)));
         }
@@ -57,12 +57,12 @@ namespace iroha {
         // Create accounts
         KeysManagerImpl manager("admin@test");
         manager.createKeys();
-        auto keypair = *manager.loadKeys();
+        auto keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
         tx.commands.push_back(command_generator.generateCreateAccount(
             "admin", "test", keypair.pubkey));
         manager = KeysManagerImpl("test@test");
         manager.createKeys();
-        keypair = *manager.loadKeys();
+        keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
         tx.commands.push_back(command_generator.generateCreateAccount(
             "test", "test", keypair.pubkey));
 

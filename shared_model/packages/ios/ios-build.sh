@@ -90,7 +90,7 @@ cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" "${IOS_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARG
 VERBOSE=1 cmake --build ./protobuf/.build --target install -- -j"$CORES"
 
 # ed25519
-git clone git://github.com/hyperledger/iroha-ed25519
+git clone https://github.com/hyperledger/iroha-ed25519.git
 (cd ./iroha-ed25519;
 git checkout e7188b8393dbe5ac54378610d53630bd4a180038)
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" "${IOS_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARGS[@]}" -DTESTING=OFF -DBUILD=STATIC -H./iroha-ed25519 -B./iroha-ed25519/build

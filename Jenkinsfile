@@ -109,11 +109,8 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -140,11 +137,8 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -171,11 +165,8 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -246,25 +237,34 @@ pipeline {
                 sh "cmake --build build --target coverage.info"
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
-
               }
-              
-              // TODO: replace with upload to artifactory server
-              // only develop branch
-              if ( env.BRANCH_NAME == "develop" ) {
-                //archive(includes: 'build/bin/,compile_commands.json')
+              if (BRANCH_NAME ==~ /(master|develop)/) {
+                releaseBuild = load ".jenkinsci/mac-release-build.groovy"
+                releaseBuild.doReleaseBuild()
               }
             }
           }
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  cleanWs()
-                  sh """
-                    pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                    rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
-                  """
+                timeout(time: 600, unit: "SECONDS") {
+                  if (currentBuild.result != "UNSTABLE") {
+                    if (BRANCH_NAME ==~ /(master|develop)/) {
+                      try {
+                        def artifacts = load ".jenkinsci/artifacts.groovy"
+                        def commit = env.GIT_COMMIT
+                        filePaths = [ '\$(pwd)/build/*.tar.gz' ]
+                        artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
+                      }
+                      finally {
+                        cleanWs()
+                        sh """
+                          pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+                          rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
+                        """
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -282,7 +282,7 @@ pipeline {
       parallel {
         stage('Linux') {
           when { expression { return params.Linux } }
-          agent { label 'linux && x86_64' }
+          agent { label 'x86_64' }
           steps {
             script {
               def releaseBuild = load ".jenkinsci/release-build.groovy"
@@ -292,11 +292,8 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -313,14 +310,11 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
-          }            
+          }           
         }
         stage('ARMv8') {
           when { expression { return params.ARMv8 } }
@@ -334,44 +328,36 @@ pipeline {
           post {
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
-          }            
+          }          
         }
         stage('MacOS') {
           when { expression { return params.MacOS } }            
           steps {
             script {
-              def scmVars = checkout scm
-              env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-              env.IROHA_HOME = "/opt/iroha"
-              env.IROHA_BUILD = "${env.IROHA_HOME}/build"
-
-              sh """
-                ccache --version
-                ccache --show-stats
-                ccache --zero-stats
-                ccache --max-size=5G
-              """  
-              sh """
-                cmake \
-                  -H. \
-                  -Bbuild \
-                  -DCMAKE_BUILD_TYPE=${params.BUILD_TYPE} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION}
-              """
-              sh "cmake --build build -- -j${params.PARALLELISM}"
-              sh "ccache --show-stats"
-              
-              // TODO: replace with upload to artifactory server
-              // only develop branch
-              if ( env.BRANCH_NAME == "develop" ) {
-                //archive(includes: 'build/bin/,compile_commands.json')
+              def releaseBuild = load ".jenkinsci/mac-release-build.groovy"
+              releaseBuild.doReleaseBuild()
+            }
+          }
+          post {
+            always {
+              script {
+                timeout(time: 600, unit: "SECONDS") {
+                  if (BRANCH_NAME ==~ /(master|develop)/) {
+                    try {
+                      def artifacts = load ".jenkinsci/artifacts.groovy"
+                      def commit = env.GIT_COMMIT
+                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
+                    }
+                    finally {
+                      cleanWs()
+                    }
+                  }
+                }
               }
             }
           }

@@ -15,15 +15,23 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CLI_KEYS_MANAGER_HPP
-#define IROHA_CLI_KEYS_MANAGER_HPP
+#ifndef IROHA_KEYS_MANAGER_HPP
+#define IROHA_KEYS_MANAGER_HPP
 
 #include <string>
+
 #include <boost/optional.hpp>
 
-namespace iroha {
-  struct keypair_t;
+namespace shared_model {
+  namespace crypto {
+    class Keypair;
+  }
+}
 
+namespace iroha {
+  /**
+   * Interface provides facilities to create and store keypair on disk.
+   */
   class KeysManager {
    public:
     virtual ~KeysManager() = default;
@@ -35,19 +43,19 @@ namespace iroha {
     virtual bool createKeys() = 0;
 
     /**
-     * Load plain-text keys associated with the manager, then validate loaded
-     * keypair by signing and verifying signature of test message
-     * @return nullopt if no keypair found locally, or verification failure;
-     *         related keypair otherwise
-     */
-    virtual boost::optional<iroha::keypair_t> loadKeys() = 0;
-
-    /**
      * Create keys a new keypair and store it encrypted on disk
      * @param pass_phrase is a password for the keys
      * @return false if create account failed
      */
     virtual bool createKeys(const std::string &pass_phrase) = 0;
+
+    /**
+     * Load plain-text keys associated with the manager, then validate loaded
+     * keypair by signing and verifying signature of test message
+     * @return nullopt if no keypair found locally, or verification failure;
+     *         related keypair otherwise
+     */
+    virtual boost::optional<shared_model::crypto::Keypair> loadKeys() = 0;
 
     /**
      * Load encrypted keys associated with the manager, then validate loaded
@@ -56,9 +64,9 @@ namespace iroha {
      * @return nullopt if no keypair found locally, or verification failure;
      *         related keypair otherwise
      */
-    virtual boost::optional<iroha::keypair_t> loadKeys(
+    virtual boost::optional<shared_model::crypto::Keypair> loadKeys(
         const std::string &pass_phrase) = 0;
   };
 
 }  // namespace iroha
-#endif  // IROHA_CLI_KEYS_MANAGER_HPP
+#endif  // IROHA_KEYS_MANAGER_HPP
