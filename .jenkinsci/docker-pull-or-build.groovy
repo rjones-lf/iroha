@@ -13,17 +13,14 @@ def remoteFilesDiffer(f1, f2) {
 def dockerPullOrUpdate() {
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def commit = sh(script: "echo ${BRANCH_NAME} | md5sum | cut -c 1-8", returnStdout: true).trim()
-  if (remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile")) {
+  if (remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", 
+    "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile")) {
+    iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     // develop branch Docker image has been modified
     if (BRANCH_NAME == 'develop') {
-      iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
       docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
         iC.push("${platform}-develop")
       }
-    }
-    // build Docker image for current branch 
-    else {
-      iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     }
   }
   else {
@@ -34,7 +31,8 @@ def dockerPullOrUpdate() {
     }
     else {
       // first commit in this branch or Dockerfile modified
-      if (remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile")) {
+      if (remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", 
+        "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile")) {
         iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
       }
       // reuse develop branch Docker image
