@@ -44,7 +44,7 @@ namespace iroha {
         auto ok = false;
         while (cq_.Next(&got_tag, &ok)) {
           auto call = static_cast<AsyncClientCall *>(got_tag);
-          if (!call->status.ok()) {
+          if (not call->status.ok()) {
             log_->warn("RPC failed: {}", call->status.error_message());
           }
           delete call;
