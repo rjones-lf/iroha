@@ -32,7 +32,7 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      AsyncGrpcClient(logger::Logger &&log)
+      explicit AsyncGrpcClient(logger::Logger &&log)
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
             log_(std::move(log)) {}
 
