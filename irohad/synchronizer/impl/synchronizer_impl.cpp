@@ -87,12 +87,7 @@ namespace iroha {
               shared_model::crypto::PublicKey(signature->publicKey()));
           // Check chain last commit
           auto is_chain_end_expected =
-              chain.last()
-                  .all([&commit_message](auto block) {
-                    return (commit_message->hash() == block->hash());
-                  })
-                  .as_blocking()
-                  .first();
+              chain.as_blocking().last()->hash() == commit_message->hash();
 
           if (validator_->validateChain(chain, *storage)
               and is_chain_end_expected) {

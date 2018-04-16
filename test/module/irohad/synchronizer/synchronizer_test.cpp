@@ -157,6 +157,11 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+/**
+ * @given A commit from consensus and initialized components
+ * @when A valid chain with expected ending
+ * @then Successful commit
+ */
 TEST_F(SynchronizerTest, ValidWhenValidChain) {
   // commit from consensus => block validation failed, but chain validation
   // passed => commit successful
@@ -214,11 +219,11 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 }
 
 /**
- *
+ * @given A commit from consensus and initialized components
+ * @when A valid chain with unexpected ending
+ * @then No commit should be passed
  */
 TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
-  // commit from consensus => block validation failed, but chain validation
-  // passed => commit successful
   TemplateMockBlockValidator<MockBlockValidator> mockBlockValidator;
   EXPECT_CALL(*mockBlockValidator.validator, validate(_))
       .WillRepeatedly(Return(shared_model::validation::Answer()));
@@ -228,16 +233,16 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
       shared_model::proto::UnsignedWrapper<shared_model::proto::Block>>;
 
   auto block = TestUnsignedBlockBuilder(mockBlockValidator)
-      .height(5)
-      .build()
-      .signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::
-          generateKeypair());
+                   .height(5)
+                   .build()
+                   .signAndAddSignature(
+                       shared_model::crypto::DefaultCryptoAlgorithmType::
+                           generateKeypair());
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(std::move(block));
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
-  SetFactory(&createMockMutableStorage);
+      SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
@@ -248,13 +253,14 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 
   // wrong block has different hash
-  auto wrong_block_end = TestUnsignedBlockBuilder(mockBlockValidator)
-      .height(5)
-      .createdTime(iroha::time::now())
-      .build()
-      .signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::
-          generateKeypair());
+  auto wrong_block_end =
+      TestUnsignedBlockBuilder(mockBlockValidator)
+          .height(5)
+          .createdTime(iroha::time::now())
+          .build()
+          .signAndAddSignature(
+              shared_model::crypto::DefaultCryptoAlgorithmType::
+                  generateKeypair());
   std::shared_ptr<shared_model::interface::Block> wrong_test_block =
       std::make_shared<shared_model::proto::Block>(std::move(wrong_block_end));
 
@@ -263,7 +269,7 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<
-          std::shared_ptr<shared_model::interface::Block>>()));
+                       std::shared_ptr<shared_model::interface::Block>>()));
 
   init();
 
