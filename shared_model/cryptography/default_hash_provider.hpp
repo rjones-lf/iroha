@@ -22,8 +22,9 @@
 
 namespace shared_model {
   namespace crypto {
+    // Default class that provides hashing functionality
     using DefaultHashProvider = shared_model::crypto::Sha3_256;
-  }
+  }  // namespace crypto
 }  // namespace shared_model
 
 #endif  // IROHA_DEFAULT_HASH_PROVIDER_HPP
