@@ -14,6 +14,7 @@ This is the list of maintainers, including their email address for direct commun
 | Fyodor Muratov         | @muratovv                | fyodor@soramitsu.co.jp         | Architecture, Java library, QA  |
 | Andrei Lebedev         | @lebdron                 | andrei@soramitsu.co.jp         | Research                        |
 | Sergei Solonets        | @Solonets                | ssolonets@gmail.com            | Development                     |
+| Yanno Ban              | @yannoban                | ban.yanno@nbc.org.kh           | Development                     |
 | Dumitru Savva          | @x3medima17              | savva@soramitsu.co.jp          | Development                     |
 | Nikita Alekseev        | @nickaleks               | alekseev@soramitsu.co.jp       | Development                     |
 | Victor Drobny          | @victordrobny            | drobny@soramitsu.co.jp         | Development                     |
