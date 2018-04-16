@@ -15,8 +15,9 @@
 # limitations under the License.
 #
 
-addtest(query_execution query_execution.cpp)
-target_link_libraries(query_execution
+addtest(query_execution_test query_execution.cpp)
+target_link_libraries(query_execution_test
+    query_execution
     shared_model_interfaces
     shared_model_stateless_validation
     )
