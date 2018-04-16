@@ -53,7 +53,7 @@ master_doc = 'index'
 project = u'Iroha'
 documentation = u'Iroha Documentation'
 description = u'Distributed ledger technology platworm, written in C++'
-copyright = u'Creative Commons Attribution-NonCommercial 3.0 Unported'
+copyright = u'Creative Commons Attribution 4.0 International License (CC-BY-4.0)'
 author = u'Nikolay Yushkevich at Soramitsu Co Ltd'
 
 # The version info for the project you're documenting, acts as replacement for
