@@ -11,7 +11,7 @@
 
 Blockchain platform Hyperledger Iroha is designed for simple creation and management of assets. This is a distributed ledger of transactions.
 
-Check [overview](http://iroha.readthedocs.io/en/latest/overview/) page of our documentation.
+Check [overview](http://iroha.readthedocs.io/en/latest/overview.html) page of our documentation.
 
 <img height="300px" src="docs/image_assets/Iroha_3_sm.png"
  alt="Iroha logo" title="Iroha" align="right" />
