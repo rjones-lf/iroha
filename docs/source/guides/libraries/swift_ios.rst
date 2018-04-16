@@ -4,11 +4,8 @@ iOS Swift Library
 Objectives
 ^^^^^^^^^^
 
-In this guide, you learn about some of the common challenges facing Hyperledger/Iroha framework installation, setup, and deployment on the local machine for development (both for simulator/device).
-When you finish this course, you will gain the following knowledge:
+In this guide, you will learn:
 
--	How to build Iroha for your local machine (macOS)
--	How to start Iroha node using Docker (macOS)
 -	How to build client library for iOS
 -	How to configure test application
 -	How to interact with Iroha blockchain from the mobile device
