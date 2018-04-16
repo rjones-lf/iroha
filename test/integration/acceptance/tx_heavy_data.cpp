@@ -57,7 +57,6 @@ class HeavyTransactionTest : public ::testing::Test {
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }
