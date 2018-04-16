@@ -63,21 +63,21 @@ addtest(yac_network_test network_test.cpp)
 target_link_libraries(yac_network_test
     yac
     shared_model_interfaces
-    shared_model_stateless_validation
+    shared_model_default_builders
     )
 
 addtest(yac_peer_orderer_test peer_orderer_test.cpp)
 target_link_libraries(yac_peer_orderer_test
     yac
-    shared_model_stateless_validation
     shared_model_interfaces
+    shared_model_default_builders
     )
 
 addtest(yac_gate_test yac_gate_test.cpp)
 target_link_libraries(yac_gate_test
     yac
     shared_model_cryptography_model
-    shared_model_stateless_validation
+    shared_model_default_builders
     )
 
 addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
@@ -96,7 +96,7 @@ addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)
 target_link_libraries(yac_crypto_provider_test
     yac
     shared_model_cryptography_model
-    shared_model_stateless_validation
+    shared_model_default_builders
     )
 
 addtest(supermajority_checker_test supermajority_checker_test.cpp)

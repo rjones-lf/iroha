@@ -29,7 +29,6 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "validators/field_validator.hpp"
 
 using namespace boost::adaptors;
 using namespace iroha::ametsuchi;
