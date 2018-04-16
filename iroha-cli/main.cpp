@@ -59,14 +59,13 @@ DEFINE_bool(genesis_block,
             "Generate genesis block for new Iroha network");
 DEFINE_string(genesis_transaction,
               "",
-              "File with transaction in json format for the genesis");
+              "File with transaction in json format for the genesis block");
 DEFINE_string(peers_address,
               "",
               "File with peers address for new Iroha network");
 
 // Run iroha-cli in interactive mode
 DEFINE_bool(interactive, true, "Run iroha-cli in interactive mode");
-
 
 using namespace iroha::protocol;
 using namespace iroha::model::generators;
@@ -82,7 +81,7 @@ int main(int argc, char *argv[]) {
   if (FLAGS_genesis_block) {
     BlockGenerator generator;
     iroha::model::Transaction transaction;
-    if (FLAGS_genesis_transaction == "") {
+    if (FLAGS_genesis_transaction.empty()) {
       if (FLAGS_peers_address.empty()) {
         logger->error("--peers_address is empty");
         return EXIT_FAILURE;
