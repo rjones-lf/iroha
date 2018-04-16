@@ -88,8 +88,13 @@ TEST_F(SynchronizerTest, ValidWhenInitialized) {
   init();
 }
 
+
+/**
+ * @given A commit from consensus and initialized components
+ * @when a valid block that can be applied
+ * @then Successful commit
+ */
 TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
-  // commit from consensus => block validation passed => commit successful
   auto block = TestBlockBuilder().height(5).build();
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(std::move(block));
@@ -127,8 +132,12 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+/**
+ * @given A commit from consensus and initialized components
+ * @when Storage cannot be initialized
+ * @then No commit should be passed
+ */
 TEST_F(SynchronizerTest, ValidWhenBadStorage) {
-  // commit from consensus => storage not created => no commit
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
 
@@ -163,8 +172,6 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
  * @then Successful commit
  */
 TEST_F(SynchronizerTest, ValidWhenValidChain) {
-  // commit from consensus => block validation failed, but chain validation
-  // passed => commit successful
   TemplateMockBlockValidator<MockBlockValidator> mockBlockValidator;
   EXPECT_CALL(*mockBlockValidator.validator, validate(_))
       .WillOnce(Return(shared_model::validation::Answer()));
@@ -274,17 +281,10 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
   init();
 
   auto wrapper =
-      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([test_block](auto commit) {
-    auto block_wrapper = make_test_subscriber<CallExact>(commit, 1);
-    block_wrapper.subscribe([test_block](auto block) {
-      // Check commit block
-      ASSERT_EQ(block->height(), test_block->height());
-    });
-    ASSERT_TRUE(block_wrapper.validate());
-  });
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
+  wrapper.subscribe();
 
   synchronizer->process_commit(test_block);
 
-  ASSERT_FALSE(wrapper.validate());
+  ASSERT_TRUE(wrapper.validate());
 }
