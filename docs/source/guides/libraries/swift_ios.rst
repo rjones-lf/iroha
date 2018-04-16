@@ -16,8 +16,11 @@ When you finish this course, you will gain the following knowledge:
 Video Guide
 ^^^^^^^^^^^
 
-For more details please visit  `this video <https://www.youtube.com/watch?v=sjuK3I1I080&feature=youtu.be>`_
-Video fully describes all the steps below.
+For more details please visit the video below which fully describes all the steps.
+
+.. raw:: html
+
+    <iframe width="560" height="315" style="margin-bottom: 20px" src="https://www.youtube.com/embed/sjuK3I1I080" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 Prerequisites
 ^^^^^^^^^^^^^
@@ -257,93 +260,13 @@ iroha_preparation_script.sh
 Starting Iroha Node
 ^^^^^^^^^^^^^^^^^^^
 
-To operate, Iroha requires a  PostgreSQL database. Let’s start with creating a Docker network, so containers for Postgres and Iroha can run on the same virtual network and successfully communicate. In this guide we will call it  iroha-network, but you can use any name. In your terminal write following command:
+To run this example, you need an Iroha node up and running. Please check out
+:ref:`getting-started` if you want to learn how to start it.
 
-docker network create iroha-network
+Launching Iroha iOS sample
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Starting PostgreSQL Container
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Now we need to run  PostgreSQL in a container, attach it to the network you have created before, and expose ports for communication:
-
-  .. code-block:: bash
-
-      docker run --name some-postgres \
-      -e POSTGRES_USER=postgres \
-      -e POSTGRES_PASSWORD=mysecretpassword \
-      -p 5432:5432 \
-      --network=iroha-network \
-      -d postgres:9.5
-
-.. note:: If you already have Postgres running on a host system on defaultport(5432), then you should pick another free port that will be occupied. For example, 5433:  ``-p 5433:5432 \``
-
-Creating Blockstore
-^^^^^^^^^^^^^^^^^^^
-
-Before we run Iroha container, we should create persistent volume to store files, storing blocks for the chain. It is done via the following command:
-
-  .. code-block:: bash
-
-      docker volume create blockstore
- 
-Configuring Iroha Network
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. note:: To keep things simple, in this guide we will create a network containing only one node.
-
-Now we need to configure our Iroha network. This includes creating a configuration file, generating keypairs for a users, writing a list of peers and creating a genesis block. However, we have prepared an example configuration for this guide, so you can start playing with Iroha faster. In order to get those files, you need to clone the  Iroha repository from Github.
-
-  .. code-block:: bash
-
-      git clone -b develop https://github.com/hyperledger/iroha --depth=1
-
-We don't need to perform this since we've already downloaded Iroha when we were building client libraries.
-
-
-Starting Iroha Container
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. note:: Make sure now You are located in ``path/to/your/folder/for/example/iroha-ios/project/`` folder
-          docker run function uses relative path:
-          ``iroha/example``
-          so we need to be at the root where Iroha folder is located
-
-We are ready to launch our Iroha container. Let’s do it with the following command
-
-  .. code-block:: bash
-
-      docker run -it --name iroha \
-      -p 50051:50051 \
-      -v $(pwd)/iroha/example:/opt/iroha_data \
-      -v blockstore:/tmp/block_store \
-      --network=iroha-network \
-      --entrypoint=/bin/bash \
-      hyperledger/iroha-docker:develop
-
- 
-Let’s look in detail what this command does:
-
--	docker run -it --name iroha \ attaches you to docker container called iroha
--	with $(pwd)/iroha/example:/opt/iroha_data \ we add a folder containing our prepared configuration to a docker container into /opt/iroha_data.
--	-v blockstore:/tmp/block_store \ adds a persistent block storage which we created before to a container, so our blocks won’t be lost after we stop the container
--	--network=iroha-network \ adds our container to previously created iroha-network, so Iroha and Postgres could see each other.
--	--entrypoint=/bin/bash \ Because hyperledger/iroha-docker has the custom script which runs after starting the container, we want to override it so we can start Iroha Daemon manually.
--	hyperledger/iroha-docker:develop is the image which has the develop branch.
-
-Launching Iroha Daemon
-^^^^^^^^^^^^^^^^^^^^^^
-
-Now you are in the interactive shell of Iroha’s container. To actually run Iroha, we need to launch Iroha daemon –  irohad.
-
-  .. code-block:: bash
-
-      irohad --config config.docker --genesis_block genesis.block --keypair_name node0
-
-Here is complete output which means that we are successfully running Iroha node:
-
-.. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_006.png
-
-Now it's time to switch back toSwiftyIrohaSampleapplication and launch it on the simulator. Open Xcode project, select proper sample target and run.
+Now it's time to switch back to SwiftyIrohaSample application and launch it on the simulator. Open Xcode project, select proper sample target and run.
 The sample will send test transaction to our node and query the result from blockchain. Successful operations will look similar to this Xcode console output:
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_007.png
