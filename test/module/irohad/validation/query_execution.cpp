@@ -25,10 +25,10 @@
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "execution/query_execution.hpp"
 #include "framework/test_subscriber.hpp"
-#include "validators/permissions.hpp"
-#include "model/query_execution.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "validators/permissions.hpp"
 
 using ::testing::AllOf;
 using ::testing::AtLeast;
@@ -36,6 +36,7 @@ using ::testing::Return;
 using ::testing::StrictMock;
 using ::testing::_;
 
+using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
@@ -85,9 +86,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
    * @return wrapper with created transaction
    */
   wTransaction makeTransaction(std::string creator) {
-    return clone(TestTransactionBuilder()
-                     .creatorAccountId(creator)
-                     .build());
+    return clone(TestTransactionBuilder().creatorAccountId(creator).build());
   }
 
   /**

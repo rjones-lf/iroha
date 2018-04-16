@@ -71,8 +71,7 @@ namespace iroha {
       const auto &sig = *qry.signatures().begin();
 
       const auto &wsv_query = storage_->getWsvQuery();
-      auto qpf =
-          model::QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
+      auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
       if (not signatories) {
         return false;
@@ -90,8 +89,7 @@ namespace iroha {
       }
 
       const auto &wsv_query = storage_->getWsvQuery();
-      auto qpf =
-          model::QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
+      auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       auto qpf_response = qpf.execute(*qry);
       auto qry_resp =
           std::static_pointer_cast<shared_model::proto::QueryResponse>(
