@@ -69,7 +69,7 @@ Response Structure
     "Account ID", "account id", "<account_name>@<domain_id>", "alex@morgan"
     "Domain ID", "domain where the account was created", "RFC1035 [#f1]_, RFC1123 [#f2]_ ", "morgan"
     "Quorum", "number of signatories needed to sign the transaction to make it valid", "0 < quorum ≤ 128", "5"
-    "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
+    "JSON data", "keys of key-value account information", "JSON", "{ alex@morgan : [name,age] }"
 
 Get Signatories
 ^^^^^^^^^^^^^^^
