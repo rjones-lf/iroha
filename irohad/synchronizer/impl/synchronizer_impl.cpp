@@ -85,7 +85,17 @@ namespace iroha {
           }
           auto chain = blockLoader_->retrieveBlocks(
               shared_model::crypto::PublicKey(signature->publicKey()));
-          if (validator_->validateChain(chain, *storage)) {
+          // Check chain last commit
+          auto is_chain_end_expected =
+              chain.last()
+                  .all([&commit_message](auto block) {
+                    return (commit_message->hash() == block->hash());
+                  })
+                  .as_blocking()
+                  .first();
+
+          if (validator_->validateChain(chain, *storage)
+              and is_chain_end_expected) {
             // Peer send valid chain
             mutableFactory_->commit(std::move(storage));
             notifier_.get_subscriber().on_next(chain);
