@@ -42,17 +42,18 @@ namespace iroha {
      * Allows receiving transactions concurrently from multiple peers by using
      * concurrent queue
      * Sends proposal by given timer interval and proposal size
-     * @param delay_milliseconds timer delay
+     * @param proposal_timeout timer delay
      * @param max_size proposal size
      * @param persistent_state - storage for persistent state of ordering
      * service
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
+      using Rep = std::chrono::milliseconds::rep;
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
-          size_t delay_milliseconds,
+          rxcpp::observable<Rep> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state);
@@ -83,15 +84,10 @@ namespace iroha {
       void generateProposal() override;
 
       /**
-       * Method update peers for sending proposal
-       */
-
-      /**
-       * Update the timer to be called after delay_milliseconds_
+       * Update the timer to be called at proposal timeout
        */
       void updateTimer();
 
-      rxcpp::observable<long> timer;
       rxcpp::composite_subscription handle;
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
@@ -104,10 +100,6 @@ namespace iroha {
        */
       const size_t max_size_;
 
-      /**
-       *  wait for specified time if queue is empty
-       */
-      const size_t delay_milliseconds_;
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
       /**

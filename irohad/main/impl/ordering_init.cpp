@@ -38,7 +38,7 @@ namespace iroha {
       return std::make_shared<ordering::OrderingServiceImpl>(
           wsv,
           max_size,
-          delay_milliseconds.count(),
+          rxcpp::observable<>::timer(delay_milliseconds),
           transport,
           persistent_state);
     }
