@@ -9,4 +9,5 @@ Client Libraries
     libraries/java.rst
     libraries/nodejs.rst
     libraries/python.rst
-
+    libraries/swift_ios.rst
+    
