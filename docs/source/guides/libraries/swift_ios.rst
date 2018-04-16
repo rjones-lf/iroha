@@ -277,50 +277,6 @@ The output from Iroha terminal window (where the node is running):
 
 Great! We've sent our transaction to blockchain and verified that it's appeared.
  
-The script for Iroha node deployment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-iroha_preparation_script.sh
-"""""""""""""""""""""""""""
-
-  .. code-block:: bash
-
-      #!/bin/bash
-      IROHA_CONTAINER='iroha'
-      POSTGRESS_CONTAINER='some-postgres'
-      IROHA_NETWORK='iroha-network'
-
-      #fresh install
-      docker container kill $IROHA_CONTAINER
-      docker container kill $POSTGRESS_CONTAINER
-      docker container rm $IROHA_CONTAINER
-      docker container rm $POSTGRESS_CONTAINER
-      docker network rm $IROHA_NETWORK
-
-      docker network create $IROHA_NETWORK
-
-      docker run --name $POSTGRESS_CONTAINER \
-      -e POSTGRES_USER=postgres \
-      -e POSTGRES_PASSWORD=mysecretpassword \
-      -p 5432:5432 \
-      --network=$IROHA_NETWORK \
-      -d postgres:9.5
-
-      docker volume create blockstore
-
-      docker run -it --name $IROHA_CONTAINER \
-      -p 50051:50051 \
-      -v $(pwd)/iroha/example:/opt/iroha_data \
-      -v blockstore:/tmp/block_store \
-      --network=$IROHA_NETWORK \
-      --entrypoint=/bin/bash \
-      hyperledger/iroha-docker:develop
-
-Note
-Please keep in mind that irohad daemon still should be launched manually via
-irohad --config config.docker --genesis_block genesis.block --keypair_name node0
-
- 
 Conclusion
 ^^^^^^^^^^
 
