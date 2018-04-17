@@ -53,7 +53,6 @@ namespace shared_model {
       enum RequiredFields {
         Command,
         CreatorAccountId,
-        TxCounter,
         CreatedTime,
         TOTAL
       };
@@ -104,12 +103,6 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id) const {
         return transform<CreatorAccountId>([&](auto &tx) {
           tx.mutable_payload()->set_creator_account_id(account_id);
-        });
-      }
-
-      auto txCounter(interface::types::CounterType tx_counter) const {
-        return transform<TxCounter>([&](auto &tx) {
-          tx.mutable_payload()->set_tx_counter(tx_counter);
         });
       }
 

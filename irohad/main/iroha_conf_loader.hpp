@@ -18,6 +18,7 @@
 #ifndef IROHA_CONF_LOADER_HPP
 #define IROHA_CONF_LOADER_HPP
 
+#include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/rapidjson.h>

@@ -44,12 +44,11 @@ namespace iroha_cli {
         const std::string &account_name,
         const std::string &default_peer_ip,
         int default_port,
-        uint64_t tx_counter,
         uint64_t qry_counter,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : creator_(account_name),
           tx_cli_(
-              creator_, default_peer_ip, default_port, tx_counter, provider),
+              creator_, default_peer_ip, default_port, provider),
           query_cli_(
               creator_, default_peer_ip, default_port, qry_counter, provider),
           statusCli_(default_peer_ip, default_port) {

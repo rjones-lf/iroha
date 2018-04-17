@@ -70,7 +70,6 @@ TEST(PipelineIntegrationTest, SendTx) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kUser)
-                .txCounter(1)
                 .addAssetQuantity(kUser, kAsset, "1.0")
                 .build()
                 .signAndAddSignature(

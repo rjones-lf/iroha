@@ -19,13 +19,15 @@
 #define IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
 
 #include "consensus/yac/yac_crypto_provider.hpp"
+#include "cryptography/keypair.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
       class CryptoProviderImpl : public YacCryptoProvider {
        public:
-        explicit CryptoProviderImpl(const keypair_t &keypair);
+        explicit CryptoProviderImpl(
+            const shared_model::crypto::Keypair &keypair);
 
         bool verify(CommitMessage msg) override;
 
@@ -36,7 +38,7 @@ namespace iroha {
         VoteMessage getVote(YacHash hash) override;
 
        private:
-        keypair_t keypair_;
+        shared_model::crypto::Keypair keypair_;
       };
     }  // namespace yac
   }    // namespace consensus

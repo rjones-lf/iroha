@@ -210,8 +210,8 @@ namespace iroha {
                              // IR-497
                            },
                            [&](const CommitMessage &commit) {
-                             notifier_.get_subscriber().on_next(commit);
                              this->propagateCommit(commit);
+                             notifier_.get_subscriber().on_next(commit);
                            });
           }
           this->closeRound();
@@ -246,8 +246,8 @@ namespace iroha {
                              // propagate for all
                              log_->info("Propagate commit {} to whole network",
                                         vote.hash.block_hash);
-                             notifier_.get_subscriber().on_next(commit);
                              this->propagateCommit(commit);
+                             notifier_.get_subscriber().on_next(commit);
                            },
                            [&](const RejectMessage &reject) {
                              // propagate reject for all

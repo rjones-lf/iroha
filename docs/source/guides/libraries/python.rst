@@ -230,7 +230,6 @@ Create domain and asset:
 .. code:: python
 
   tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .createDomain("domain", "user") \
         .createAsset("coin", "domain", 2).build()
@@ -243,7 +242,6 @@ Create asset quantity:
 .. code:: python
 
   tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .addAssetQuantity("admin@test", "coin#domain", "1000.2").build()
 
@@ -257,7 +255,6 @@ Create account:
   user1_kp = crypto.generateKeypair()
 
   tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .createAccount("userone", "domain", user1_kp.publicKey()).build()
 
@@ -269,7 +266,6 @@ Send asset:
 .. code:: python
 
   tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .transferAsset("admin@test", "userone@domain", "coin#domain", "Some message", "2.0").build()
 

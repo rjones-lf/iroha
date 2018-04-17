@@ -28,14 +28,12 @@ var adminPub = fs.readFileSync('../admin@test.pub').toString()
 var keys = crypto.convertFromExisting(adminPub, adminPriv)
 
 var currentTime = Date.now()
-var startTxCounter = 1
 var startQueryCounter = 1
 var creator = 'admin@test'
 
 // build transaction
 var tx = txBuilder
   .creatorAccountId(creator)
-  .txCounter(startTxCounter)
   .createdTime(currentTime)
   .createDomain('ru', 'user')
   .createAsset('dollar', 'ru', 2)

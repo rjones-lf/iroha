@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PERMISSIONS_HPP
-#define IROHA_PERMISSIONS_HPP
+#ifndef SHARED_MODEL_PERMISSIONS_HPP
+#define SHARED_MODEL_PERMISSIONS_HPP
 
 #include <set>
 #include <string>
 
-namespace iroha {
-  namespace model {
+namespace shared_model {
+  namespace permissions {
 
     /* ~~~~~~~~       Command-related permissions        ~~~~~~~~ */
 
@@ -252,7 +252,7 @@ namespace iroha {
         can_set_my_account_detail,
         can_transfer_my_assets};
 
-  }  // namespace model
-}  // namespace iroha
+  }  // namespace shared_model
+}  // namespace permissions
 
-#endif  // IROHA_PERMISSIONS_HPP
+#endif  // SHARED_MODEL_PERMISSIONS_HPP

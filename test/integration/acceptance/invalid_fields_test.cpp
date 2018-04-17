@@ -46,14 +46,13 @@ class InvalidField : public ::testing::Test {
 TEST_F(InvalidField, Signature) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
-                .txCounter(1)
                 .creatorAccountId("admin@test")
                 .createdTime(iroha::time::now())
                 .build()
                 .signAndAddSignature(kAdminKeypair)
                 .getTransport();
   // extend signature to invalid size
-  auto sig = tx.mutable_signature(0)->mutable_signature();
+  auto sig = tx.mutable_signatures(0)->mutable_signature();
   sig->resize(sig->size() + 1, 'a');
   auto check = [](auto &resp) {
     ASSERT_TRUE(boost::apply_visitor(
@@ -75,14 +74,13 @@ TEST_F(InvalidField, Signature) {
 TEST_F(InvalidField, Pubkey) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
-                .txCounter(1)
                 .creatorAccountId("admin@test")
                 .createdTime(iroha::time::now())
                 .build()
                 .signAndAddSignature(kAdminKeypair)
                 .getTransport();
   // extend public key to invalid size
-  auto pkey = tx.mutable_signature(0)->mutable_pubkey();
+  auto pkey = tx.mutable_signatures(0)->mutable_pubkey();
   pkey->resize(pkey->size() + 1, 'a');
   auto check = [](auto &resp) {
     ASSERT_TRUE(boost::apply_visitor(

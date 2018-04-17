@@ -21,7 +21,7 @@
 #include "network/ordering_gate.hpp"
 
 #include <atomic>
-#include <tbb/concurrent_queue.h>
+#include <tbb/concurrent_priority_queue.h>
 
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
@@ -36,6 +36,15 @@ namespace shared_model {
 
 namespace iroha {
   namespace ordering {
+
+    /**
+     * Compare proposals by height
+     */
+    struct ProposalComparator {
+      bool operator()(
+          const std::shared_ptr<shared_model::interface::Proposal> &lhs,
+          const std::shared_ptr<shared_model::interface::Proposal> &rhs) const;
+    };
 
     /**
      * OrderingGate implementation with gRPC asynchronous client
@@ -78,7 +87,9 @@ namespace iroha {
       std::atomic_bool unlock_next_{true};
 
       /// queue with all proposals received from ordering service
-      tbb::concurrent_queue<std::shared_ptr<shared_model::interface::Proposal>>
+      tbb::concurrent_priority_queue<
+          std::shared_ptr<shared_model::interface::Proposal>,
+          ProposalComparator>
           proposal_queue_;
 
       /// subscription of pcs::on_commit

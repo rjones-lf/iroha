@@ -29,10 +29,10 @@
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/permissions.hpp"
 
 using namespace shared_model;
 
@@ -113,11 +113,11 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidator::validateDomainId,
                                           &FieldValidatorTest::domain_id,
                                           domain_id_test_cases));
-    for (const auto &field : {"tx_counter", "query_counter"}) {
+    for (const auto &field : {"query_counter"}) {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateCounter,
                                             &FieldValidatorTest::counter,
-                                            tx_counter_test_cases));
+                                            counter_test_cases));
     }
 
     field_validators.insert(makeValidator("quorum",
@@ -466,7 +466,7 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::role_permission,
                     iroha::protocol::RolePermission::can_append_role)};
 
-  std::vector<FieldTestCase> tx_counter_test_cases{
+  std::vector<FieldTestCase> counter_test_cases{
       makeValidCase(&FieldValidatorTest::counter, 5),
       makeTestCase("zero_counter",
                    &FieldValidatorTest::counter,
@@ -495,10 +495,12 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::detail_value, "valid value"),
       makeValidCase(&FieldValidatorTest::detail_value, std::string(4096, '0')),
       makeValidCase(&FieldValidatorTest::detail_value, ""),
-      makeInvalidCase("long_value",
-                      "value",
-                      &FieldValidatorTest::detail_value,
-                      std::string(4097, '0'))};
+      makeInvalidCase(
+          "long_value",
+          "value",
+          &FieldValidatorTest::detail_value,
+          // 5 Mb, value greater than can put into one setAccountDetail
+          std::string(5 * 1024 * 1024, '0'))};
 
   std::vector<FieldTestCase> description_test_cases{
       makeValidCase(&FieldValidatorTest::description, "valid description"),
@@ -516,14 +518,15 @@ class FieldValidatorTest : public ValidatorsTest {
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
 
   std::vector<FieldTestCase> permissionTestCases() {
-    auto valid_cases = iroha::model::role_perm_group
+    auto valid_cases =
+        shared_model::permissions::role_perm_group
         | boost::adaptors::transformed([&](const auto &permission) {
-                         return this->makeTestCase(permission,
-                                             &FieldValidatorTest::permission,
-                                             permission,
-                                             true,
-                                             "");
-                       });
+            return this->makeTestCase(permission,
+                                      &FieldValidatorTest::permission,
+                                      permission,
+                                      true,
+                                      "");
+          });
     std::vector<FieldTestCase> invalid_cases = {
         makeInvalidCase("non existing permission",
                         "permission",
@@ -654,7 +657,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
   iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signature();  // at least one signature in message
+  proto_tx.add_signatures();  // at least one signature in message
 
   // iterate over all fields in transaction
   iterateContainer(

@@ -52,9 +52,10 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
 OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     const std::string &server_address)
-    : client_(proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateChannel(
-          server_address, grpc::InsecureChannelCredentials()))),
-      log_(logger::log("OrderingGate")) {}
+    : network::AsyncGrpcClient<google::protobuf::Empty>(
+          logger::log("OrderingGate")),
+      client_(proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateChannel(
+          server_address, grpc::InsecureChannelCredentials()))) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {
@@ -64,6 +65,7 @@ void OrderingGateTransportGrpc::propagateTransaction(
   auto transaction_transport =
       static_cast<const shared_model::proto::Transaction &>(*transaction)
           .getTransport();
+  log_->debug("Propagating: '{}'", transaction_transport.DebugString());
   call->response_reader =
       client_->AsynconTransaction(&call->context, transaction_transport, &cq_);
 

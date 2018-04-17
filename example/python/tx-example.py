@@ -116,7 +116,6 @@ def send_query(query, key_pair):
 
 def tx1():
     tx = tx_builder.creatorAccountId(creator) \
-            .txCounter(1) \
             .createdTime(current_time) \
             .createDomain("domain", "user") \
             .createAsset("coin", "domain", 2).build()
@@ -127,7 +126,6 @@ def tx1():
 
 def tx2():
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(2) \
         .createdTime(current_time) \
         .addAssetQuantity("admin@test", "coin#domain", "1000.00").build()
 
@@ -139,7 +137,6 @@ def tx3():
     user1_kp = crypto.generateKeypair()
 
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(3) \
         .createdTime(current_time) \
         .createAccount("userone", "domain", user1_kp.publicKey()).build()
 
@@ -149,7 +146,6 @@ def tx3():
 
 def tx4():
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(4) \
         .createdTime(current_time) \
         .transferAsset("admin@test", "userone@domain", "coin#domain", "Some message", "2.00").build()
 

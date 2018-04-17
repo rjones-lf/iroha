@@ -27,12 +27,12 @@
  */
 using TestQueryBuilder = shared_model::proto::TemplateQueryBuilder<
     (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
-    shared_model::validation::QueryAlwaysValidValidator,
+    shared_model::validation::AlwaysValidValidator,
     shared_model::proto::Query>;
 
 using TestUnsignedQueryBuilder = shared_model::proto::TemplateQueryBuilder<
     (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
-    shared_model::validation::QueryAlwaysValidValidator,
+    shared_model::validation::AlwaysValidValidator,
     shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
 
 #endif  // IROHA_TEST_QUERY_BUILDER_HPP

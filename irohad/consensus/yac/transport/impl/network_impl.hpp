@@ -101,11 +101,6 @@ namespace iroha {
          * Subscriber of network messages
          */
         std::weak_ptr<YacNetworkNotifications> handler_;
-
-        /**
-         * Internal logger
-         */
-        logger::Logger log_;
       };
 
     }  // namespace yac

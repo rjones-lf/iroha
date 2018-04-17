@@ -13,13 +13,9 @@ def doReleaseBuild() {
     parallelism = 1
   }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
-  sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile"
-  // pull docker image for building release package of Iroha
-  // speeds up consequent image builds as we simply tag them 
-  sh "docker pull ${DOCKER_BASE_IMAGE_DEVELOP}"
-  iC = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
-
   sh "mkdir /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER} || true"
+  iC = docker.image("hyperledger/iroha:${platform}-develop")
+  iC.pull()
   iC.inside(""
     + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}"
     + " -v /var/jenkins/ccache:${CCACHE_RELEASE_DIR}") {
@@ -57,7 +53,7 @@ def doReleaseBuild() {
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/release/${platform}/entrypoint.sh"
   sh "cp /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
-  iCRelease = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}-release", "-f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
+  iCRelease = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
   docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
     if (env.BRANCH_NAME == 'develop') {
       iCRelease.push("${platform}-develop-latest")

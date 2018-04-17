@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_YAC_SIMPLE_CASE_TEST_HPP
-#define IROHA_YAC_SIMPLE_CASE_TEST_HPP
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -34,6 +31,7 @@ using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
 using ::testing::Return;
+using ::testing::Invoke;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
@@ -176,4 +174,64 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
 
   ASSERT_TRUE(wrapper.validate());
 }
-#endif  // IROHA_YAC_SIMPLE_CASE_TEST_HPP
+
+/**
+ * @given initialized YAC
+ * @when receive supermajority of votes for a hash
+ * @then commit is sent to the network before notifying subscribers
+ */
+TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
+  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).Times(default_peers.size())
+      .WillRepeatedly(Return(true));
+  std::vector<CommitMessage> messages;
+  EXPECT_CALL(*network, send_commit(_, _))
+      .Times(default_peers.size())
+      .WillRepeatedly(Invoke([&](const auto &, const auto &msg) {
+        messages.push_back(msg);
+      }));
+
+  yac->on_commit().subscribe([&](auto msg) {
+    // verify that commits are already sent to the network
+    ASSERT_EQ(default_peers.size(), messages.size());
+    messages.push_back(msg);
+  });
+
+  for (size_t i = 0; i < default_peers.size(); ++i) {
+    yac->on_vote(create_vote(YacHash{}, std::to_string(i)));
+  }
+
+  // verify that on_commit subscribers are notified
+  ASSERT_EQ(default_peers.size() + 1, messages.size());
+}
+
+/**
+ * @given initialized YAC
+ * @when receive reject message which triggers commit
+ * @then commit is sent to the network before notifying subscribers
+ */
+TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
+  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).WillOnce(Return(true));
+  EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
+  std::vector<CommitMessage> messages;
+  EXPECT_CALL(*network, send_commit(_, _))
+      .Times(default_peers.size())
+      .WillRepeatedly(Invoke([&](const auto &, const auto &msg) {
+        messages.push_back(msg);
+      }));
+
+  yac->on_commit().subscribe([&](auto msg) {
+    // verify that commits are already sent to the network
+    ASSERT_EQ(default_peers.size(), messages.size());
+    messages.push_back(msg);
+  });
+
+  RejectMessage reject({});
+  for (size_t i = 0; i < default_peers.size(); ++i) {
+    reject.votes.push_back(create_vote(YacHash{}, std::to_string(i)));
+  }
+
+  yac->on_reject(reject);
+
+  // verify that on_commit subscribers are notified
+  ASSERT_EQ(default_peers.size() + 1, messages.size());
+}

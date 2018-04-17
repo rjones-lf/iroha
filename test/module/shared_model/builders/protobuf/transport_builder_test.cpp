@@ -44,7 +44,6 @@ class TransportBuilderTest : public ::testing::Test {
   auto createTransaction() {
     return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
-        .txCounter(counter)
         .creatorAccountId(account_id)
         .setAccountQuorum(account_id, quorum)
         .build()
@@ -54,7 +53,6 @@ class TransportBuilderTest : public ::testing::Test {
   auto createInvalidTransaction() {
     return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
-        .txCounter(counter)
         .creatorAccountId(invalid_account_id)
         .setAccountQuorum(account_id, quorum)
         .build()

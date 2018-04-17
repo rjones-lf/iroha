@@ -17,6 +17,7 @@
 
 #include "torii/query_service.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "cryptography/default_hash_provider.hpp"
 #include "validators/default_validator.hpp"
 
 namespace torii {
@@ -41,7 +42,7 @@ namespace torii {
                           iroha::protocol::QueryResponse &response) {
     shared_model::crypto::Hash hash;
     auto blobPayload = shared_model::proto::makeBlob(request.payload());
-    hash = shared_model::proto::Query::HashProviderType::makeHash(blobPayload);
+    hash = shared_model::crypto::DefaultHashProvider::makeHash(blobPayload);
 
     if (cache_.findItem(hash)) {
       // Query was already processed
@@ -70,8 +71,8 @@ namespace torii {
                 cache_.addItem(hash, response);
               }
             },
-            [&hash, &response](
-                const iroha::expected::Error<std::string> &error) {
+            [&hash,
+             &response](const iroha::expected::Error<std::string> &error) {
               response.set_query_hash(
                   shared_model::crypto::toBinaryString(hash));
               response.mutable_error_response()->set_reason(

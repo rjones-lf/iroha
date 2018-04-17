@@ -30,6 +30,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
     ::grpc::ServerContext *context,
     const iroha::protocol::Transaction *request,
     ::google::protobuf::Empty *response) {
+  log_->info("OrderingServiceTransportGrpc::onTransaction");
   if (subscriber_.expired()) {
     log_->error("No subscriber");
   } else {
@@ -44,6 +45,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
 void OrderingServiceTransportGrpc::publishProposal(
     std::unique_ptr<shared_model::interface::Proposal> proposal,
     const std::vector<std::string> &peers) {
+  log_->info("OrderingServiceTransportGrpc::publishProposal");
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
@@ -57,6 +59,8 @@ void OrderingServiceTransportGrpc::publishProposal(
     auto call = new AsyncClientCall;
 
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
+    log_->debug("Publishing proposal: '{}'",
+                proto->getTransport().DebugString());
     call->response_reader = peer.second->AsynconProposal(
         &call->context, proto->getTransport(), &cq_);
 
@@ -65,4 +69,5 @@ void OrderingServiceTransportGrpc::publishProposal(
 }
 
 OrderingServiceTransportGrpc::OrderingServiceTransportGrpc()
-    : log_(logger::testLog("OrderingServiceTransportGrpc")) {}
+    : network::AsyncGrpcClient<google::protobuf::Empty>(
+          logger::log("OrderingServiceTransportGrpc")) {}

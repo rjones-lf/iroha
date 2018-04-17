@@ -55,6 +55,7 @@ namespace iroha {
             "Ledger don't have peers. Do you set correct genesis block?");
       }
       auto network_address = ledger_peers->front()->address();
+      log_->info("Ordering gate is at {}", network_address);
       ordering_gate_transport =
           std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(
               network_address);
