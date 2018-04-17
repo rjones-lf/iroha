@@ -35,7 +35,7 @@ namespace iroha {
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport)
         : transport_(std::move(transport)),
-          last_block_height(0),
+          last_block_height_(1),
           log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
@@ -58,8 +58,8 @@ namespace iroha {
         unlock_next_.store(true);
         // find height of last commited block
         block.subscribe([this](const auto &b) {
-          if (b->height() > this->last_block_height) {
-            this->last_block_height = b->height();
+          if (b->height() > this->last_block_height_) {
+            this->last_block_height_ = b->height();
           }
         });
         this->tryNextRound();
@@ -68,7 +68,7 @@ namespace iroha {
 
     void OrderingGateImpl::onProposal(
         std::shared_ptr<shared_model::interface::Proposal> proposal) {
-      log_->info("Received new proposal");
+      log_->info("Received new proposal, height: {}", proposal->height());
       proposal_queue_.push(std::move(proposal));
       tryNextRound();
     }
@@ -77,9 +77,16 @@ namespace iroha {
       while (not proposal_queue_.empty() and unlock_next_) {
         std::shared_ptr<shared_model::interface::Proposal> next_proposal;
         proposal_queue_.try_pop(next_proposal);
-        // check for out of order proposal
-        if (next_proposal->height() < last_block_height + 1) {
+        // check for old proposal
+        if (next_proposal->height() < last_block_height_ + 1) {
           log_->info("Old proposal, discarding");
+          continue;
+        }
+        // check for new proposal
+        if (next_proposal->height() > last_block_height_ + 1) {
+          log_->info("Proposal newer than last block, keeping in queue");
+          proposal_queue_.push(next_proposal);
+          unlock_next_.store(false);
           continue;
         }
         log_->info("Pass the proposal to pipeline");

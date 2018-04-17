@@ -239,11 +239,11 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
   EXPECT_CALL(*pcs, on_commit())
       .WillOnce(Return(commit_subject.get_observable()));
 
-  auto pushCommit = [&] {
+  auto pushCommit = [&](auto height) {
     commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
         std::static_pointer_cast<shared_model::interface::Block>(
             std::make_shared<shared_model::proto::Block>(
-                TestBlockBuilder().build()))));
+                TestBlockBuilder().height(height).build()))));
   };
 
   OrderingGateImpl ordering_gate(transport);
@@ -259,14 +259,14 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
     messages.push_back(val);
   });
 
-  // this will set unlock_next_ to false, so proposals 4 and 3 are enqueued
+  // this will set unlock_next_ to false, so proposals 3 and 4 are enqueued
   pushProposal(2);
 
   pushProposal(4);
   pushProposal(3);
 
-  pushCommit();
-  pushCommit();
+  pushCommit(2);
+  pushCommit(3);
 
   ASSERT_EQ(3, messages.size());
   ASSERT_EQ(2, messages.at(0)->height());
@@ -281,7 +281,7 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
  * @then on_proposal is not invoked on proposals
  * which are older than last committed block
  */
-TEST(OrderingGateQueueBehaviour, ReceiveWrongHeight) {
+TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
   std::shared_ptr<OrderingGateTransport> transport =
       std::make_shared<MockOrderingGateTransport>();
 
@@ -311,15 +311,69 @@ TEST(OrderingGateQueueBehaviour, ReceiveWrongHeight) {
     messages.push_back(val);
   });
 
-  pushProposal(1);
   pushProposal(2);
-
   pushProposal(3);
+
+  pushProposal(4);
   pushProposal(5);
   pushCommit(4);
 
   // proposals 2 and 3 must not be forwarded down the pipeline.
   EXPECT_EQ(2, messages.size());
-  ASSERT_EQ(1, messages.at(0)->height());
+  ASSERT_EQ(2, messages.at(0)->height());
   ASSERT_EQ(5, messages.at(1)->height());
+}
+
+/**
+ * @given Initialized OrderingGate
+ * AND MockPeerCommunicationService
+ * @when Proposals are newer than received commits
+ * @then newer proposals are kept in queue
+ */
+TEST(OrderingGateQueueBehaviour, KeepNewerProposals) {
+  std::shared_ptr<OrderingGateTransport> transport =
+      std::make_shared<MockOrderingGateTransport>();
+
+  std::shared_ptr<MockPeerCommunicationService> pcs =
+      std::make_shared<MockPeerCommunicationService>();
+  rxcpp::subjects::subject<Commit> commit_subject;
+  EXPECT_CALL(*pcs, on_commit())
+      .WillOnce(Return(commit_subject.get_observable()));
+
+  auto pushCommit = [&](auto height) {
+    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
+        std::static_pointer_cast<shared_model::interface::Block>(
+            std::make_shared<shared_model::proto::Block>(
+                TestBlockBuilder().height(height).build()))));
+  };
+
+  OrderingGateImpl ordering_gate(transport);
+  ordering_gate.setPcs(*pcs);
+
+  auto pushProposal = [&](auto height) {
+    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
+        TestProposalBuilder().height(height).build()));
+  };
+
+  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
+  ordering_gate.on_proposal().subscribe([&](auto val) {
+    messages.push_back(val);
+  });
+
+  pushProposal(2);
+  pushProposal(3);
+  pushProposal(4);
+
+  pushCommit(2);
+
+
+  // proposal 3 must  be forwarded down the pipeline, 4 kept in queue.
+  EXPECT_EQ(2, messages.size());
+  EXPECT_EQ(2, messages.at(0)->height());
+  EXPECT_EQ(3, messages.at(1)->height());
+
+  pushCommit(3);
+  // Now proposal 4 is forwarded to the pipeline
+  EXPECT_EQ(3, messages.size());
+  EXPECT_EQ(4, messages.at(2)->height());
 }

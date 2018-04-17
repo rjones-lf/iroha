@@ -95,7 +95,7 @@ namespace iroha {
           proposal_queue_;
 
       // last commited block height
-      shared_model::interface::types::HeightType last_block_height;
+      std::atomic<shared_model::interface::types::HeightType> last_block_height_;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;

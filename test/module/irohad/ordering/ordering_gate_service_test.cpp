@@ -115,7 +115,7 @@ class OrderingGateServiceTest : public ::testing::Test {
       // round inside the peer.
       std::shared_ptr<shared_model::interface::Block> block =
           std::make_shared<shared_model::proto::Block>(
-              TestBlockBuilder().build());
+              TestBlockBuilder().height(proposal->height()).build());
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
     });
