@@ -4,7 +4,7 @@ iOS Swift Library
 Objectives
 ^^^^^^^^^^
 
-In this guide, you will learn:
+In this guide you will learn:
 
 -	How to build client library for iOS
 -	How to configure test application
@@ -58,7 +58,7 @@ Let's start with the detailed instructions how to install Iroha on the local mac
 Instruction
 ^^^^^^^^^^^
 
-1.	Open the terminal and go to the folder where You want to install all artifacts:
+1.	Open the terminal and go to the folder where you want to install all artifacts:
 
   .. code-block:: bash
 
@@ -68,7 +68,7 @@ Instruction
 
   .. code-block:: bash
 
-      git clone https://github.com/soramitsu/iroha-ios.git
+      git clone https://github.com/hyperledger/iroha-ios.git
 
 3.	Go to the Iroha-ios folder:
 
@@ -102,13 +102,13 @@ Instruction
 
 8.	Remove old library sources:
 
-.. note:: Make sure You've located in ``grpc-swift/`` subfolder
+.. note:: Make sure you are located in ``grpc-swift/`` subfolder
 
   .. code-block:: bash
 
       # removes all files from the current directory
       rm -rf ./*
-      #removes all hidden files too (so clean build can be done)
+      # removes all hidden files too (so clean build can be done)
       rm -rf ./.*
  
 9.	Download release version of GRCP from git to the current directory:
@@ -129,7 +129,7 @@ Instruction
 
       cd ../../..
 
-.. note:: Make sure now You are located in ``path/to/your/folder/for/example/iroha-ios/project/`` folder
+.. note:: Make sure now you are located in ``path/to/your/folder/for/example/iroha-ios/project/`` folder
 
 12.	This step downloads script for client library which is needed to build client library. Clone it from the repository:
 
@@ -137,7 +137,7 @@ Instruction
 
       curl https://raw.githubusercontent.com/hyperledger/iroha/master/shared_model/packages/ios/ios-build.sh > ios-build.sh
 
-13.	Optional step. If You have issues with cloning during ios-build.sh execution do the following command before the script invocation:
+13.	Optional step. If you have issues with cloning during ios-build.sh execution do the following command before the script invocation:
 
   .. code-block:: bash
 
@@ -159,7 +159,7 @@ Instruction
 
   .. code-block:: bash
 
-      # this command shows location for simulator artefacts
+      # this command shows location for simulator artifacts
       # use this command for device instead:
       # mkdir -p iroha-ios/libs/iOS/
       mkdir -p iroha-ios/libs/Simulator/
@@ -168,7 +168,7 @@ Instruction
 
   .. code-block:: bash
 
-      # this command shows location for simulator artefacts
+      # this command shows location for simulator artifacts
       # use this command for device instead:
       # cp lib/* iroha-ios/libs/iOS/
       cp lib/* iroha-ios/libs/Simulator/
@@ -199,60 +199,15 @@ Instruction
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_005.png
 
-Before we launch the application and test it we should deploy Iroha on our local machine and launch it.
+Before we launch the application and test it we should deploy Iroha peer on our local machine and launch it.
 
 There is good news - steps 1-18 shouldn't be done manually every time - here is the script which does it automatically.
 
 The script for iOS client installation and setup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-iroha_preparation_script.sh
-"""""""""""""""""""""""""""
-
-  .. code-block:: bash
-
-    #!/bin/bash
-
-    #download ios client and update dependencies
-    git clone https://github.com/soramitsu/iroha-ios.git
-    cd iroha-ios/
-    carthage update --platform iOS
-    cd SwiftyIrohaExample
-    carthage update --platform iOS
-
-    #build grpc client for sample application
-    cd grpc-swift/
-    rm -rf ./*
-    rm -rf ./.*
-    git clone --branch 0.3.3 https://github.com/grpc/grpc-swift.git .
-    make
-
-    #back to the root where script was executed
-    cd ../../..
-
-    #download and build Iroha library for iOS
-    curl https://raw.githubusercontent.com/hyperledger/iroha/master/shared_model/packages/ios/ios-build.sh > ios-build.sh
-
-    #optional step - sometimes connection timeout appears when using git: scheme instead of https url
-    sed -i '' 's|git://github.com/hyperledger/iroha-ed25519|https://github.com/hyperledger/iroha-ed25519.git|g' ios-build.sh
-
-    #build library
-    chmod +x ios-build.sh
-    ./ios-build.sh SIMULATOR64 Debug
-
-    #place artefacts to proper sample's locations
-
-    # this command shows location for simulator artefacts
-    # use this command for device instead:
-    # mkdir -p iroha-ios/libs/iOS/
-    mkdir -p iroha-ios/libs/Simulator/
-
-    # this command shows location for simulator artefacts
-    # use this command for device instead:
-    # cp lib/* iroha-ios/libs/iOS/
-    cp lib/* iroha-ios/libs/Simulator/
-    cp -a include/. iroha-ios/headers/
-
+All you need now is to download `build script <https://github.com/hyperledger/iroha/blob/develop/shared_model/packages/ios/iroha-preparation.sh>`__
+``iroha-preparation.sh`` and launch it from ``path/to/your/folder/for/example/iroha-ios/project/``.
 
 Starting Iroha Node
 ^^^^^^^^^^^^^^^^^^^
@@ -272,11 +227,4 @@ The output from Iroha terminal window (where the node is running):
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_008.png
 
-Great! We've sent our transaction to blockchain and verified that it's appeared.
- 
-Conclusion
-^^^^^^^^^^
-
-Iroha framework is lightweight toolchain which gives common functions to operate with permissioned blockchains.
-The main advantage over traditional blockchain frameworks - mobile client operates with blockchain directly without an intermediate node
-which means that we are removing middleman between the ledger and mobile device.
+Great! We've sent our transaction and verified its presence in blockchain.
