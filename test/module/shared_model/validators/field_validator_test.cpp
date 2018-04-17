@@ -495,10 +495,12 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::detail_value, "valid value"),
       makeValidCase(&FieldValidatorTest::detail_value, std::string(4096, '0')),
       makeValidCase(&FieldValidatorTest::detail_value, ""),
-      makeInvalidCase("long_value",
-                      "value",
-                      &FieldValidatorTest::detail_value,
-                      std::string(5 * 1024 * 1024, '0'))};
+      makeInvalidCase(
+          "long_value",
+          "value",
+          &FieldValidatorTest::detail_value,
+          // 5 Mb, value greater than can put into one setAccountDetail
+          std::string(5 * 1024 * 1024, '0'))};
 
   std::vector<FieldTestCase> description_test_cases{
       makeValidCase(&FieldValidatorTest::description, "valid description"),

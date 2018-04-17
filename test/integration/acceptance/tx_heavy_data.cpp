@@ -127,10 +127,10 @@ TEST_F(HeavyTransactionTest, OneLargeTx) {
       // one field - 5Mb per one set
       .sendTx(complete(setAcountDetailTx("foo", generateData(5 * 1024 * 1024))),
               [](const auto &status) {
-                ASSERT_NO_THROW(
-                    boost::get<shared_model::detail::PolymorphicWrapper<
-                        shared_model::interface::StatelessFailedTxResponse>>(
-                        status.get()));
+                ASSERT_TRUE(boost::apply_visitor(
+                    shared_model::interface::SpecifiedVisitor<
+                        shared_model::interface::StatelessFailedTxResponse>(),
+                    status.get()));
               })
       .done();
 }
