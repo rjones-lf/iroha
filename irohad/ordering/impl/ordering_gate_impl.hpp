@@ -94,6 +94,7 @@ namespace iroha {
           ProposalComparator>
           proposal_queue_;
 
+      // last commited block height
       shared_model::interface::types::HeightType last_block_height;
 
       /// subscription of pcs::on_commit

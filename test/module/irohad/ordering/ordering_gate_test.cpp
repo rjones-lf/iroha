@@ -277,8 +277,9 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
 /**
  * @given Initialized OrderingGate
  * AND MockPeerCommunicationService
- * @when Receive proposals in random order
- * @then on_proposal output is ordered
+ * @when Receive commits which are newer than existing proposals
+ * @then on_proposal is not invoked on proposals
+ * which are older than last committed block
  */
 TEST(OrderingGateQueueBehaviour, ReceiveWrongHeight) {
   std::shared_ptr<OrderingGateTransport> transport =
@@ -310,7 +311,6 @@ TEST(OrderingGateQueueBehaviour, ReceiveWrongHeight) {
     messages.push_back(val);
   });
 
-  // this will set unlock_next_ to false, so proposals 4 and 3 are enqueued
   pushProposal(1);
   pushProposal(2);
 
@@ -318,6 +318,7 @@ TEST(OrderingGateQueueBehaviour, ReceiveWrongHeight) {
   pushProposal(5);
   pushCommit(4);
 
+  // proposals 2 and 3 must not be forwarded down the pipeline.
   EXPECT_EQ(2, messages.size());
   ASSERT_EQ(1, messages.at(0)->height());
   ASSERT_EQ(5, messages.at(1)->height());

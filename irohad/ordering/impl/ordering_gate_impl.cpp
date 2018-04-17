@@ -19,9 +19,9 @@
 
 #include "ordering/impl/ordering_gate_impl.hpp"
 
+#include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/transaction.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -34,7 +34,9 @@ namespace iroha {
 
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport)
-        : transport_(std::move(transport)), log_(logger::log("OrderingGate")), last_block_height(0) {}
+        : transport_(std::move(transport)),
+          last_block_height(0),
+          log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const shared_model::interface::Transaction>
@@ -53,13 +55,14 @@ namespace iroha {
     void OrderingGateImpl::setPcs(
         const iroha::network::PeerCommunicationService &pcs) {
       pcs_subscriber_ = pcs.on_commit().subscribe([this](const auto &block) {
-        // TODO: 05/03/2018 @muratovv rework behavior of queue with respect to
-        // block height IR-1042
+        unlock_next_.store(true);
+        // find height of last commited block
         block.subscribe([this](const auto &b) {
-          unlock_next_.store(true);
-          this->last_block_height = b->height();
-          this->tryNextRound();
+          if (b->height() > this->last_block_height) {
+            this->last_block_height = b->height();
+          }
         });
+        this->tryNextRound();
       });
     }
 
@@ -81,7 +84,6 @@ namespace iroha {
         }
         log_->info("Pass the proposal to pipeline");
         unlock_next_.store(false);
-//        last_proposal = next_proposal->height();
         proposals_.get_subscriber().on_next(next_proposal);
       }
     }
