@@ -173,7 +173,7 @@ Instruction
       # cp lib/* iroha-ios/libs/iOS/
       cp lib/* iroha-ios/libs/Simulator/
 
-18.	Don't forget to copy generated headers:
+18.	Do not forget to copy generated headers:
 
   .. code-block:: bash
 
@@ -195,13 +195,13 @@ Instruction
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_004.png
 
-23.	Congratulations! We are done. Select SwiftyIrohaExample target, choose iPhone simulator device and build the application to make sure we've done everything correctly:
+23.	Congratulations! We are done. Select SwiftyIrohaExample target, choose iPhone simulator device and build the application to make sure we have done everything correctly:
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_005.png
 
 Before we launch the application and test it we should deploy Iroha peer on our local machine and launch it.
 
-There is good news - steps 1-18 shouldn't be done manually every time - here is the script which does it automatically.
+There is good news - steps 1-18 should not be done manually every time - here is the script which does it automatically.
 
 The script for iOS client installation and setup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -227,4 +227,4 @@ The output from Iroha terminal window (where the node is running):
 
 .. image:: https://github.com/hyperledger/iroha/raw/develop/docs/image_assets/iroha_swift_guide/iroha_swift_guide_008.png
 
-Great! We've sent our transaction and verified its presence in blockchain.
+Great! We have sent our transaction and verified its presence in blockchain.
