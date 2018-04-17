@@ -49,7 +49,6 @@ class CryptoUsageTest : public ::testing::Test {
     transaction = std::make_unique<shared_model::proto::Transaction>(
         TestTransactionBuilder()
             .creatorAccountId(account_id)
-            .txCounter(1)
             .setAccountQuorum(account_id, 2)
             .build());
 

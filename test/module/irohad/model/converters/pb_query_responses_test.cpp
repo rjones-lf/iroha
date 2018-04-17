@@ -143,7 +143,6 @@ TEST(QueryResponseTest, TransactionsResponseTest) {
     std::vector<model::Transaction> result;
     for (size_t i = 0; i < 3; ++i) {
       model::Transaction current;
-      current.tx_counter = i;
       result.push_back(current);
     }
     return result;
@@ -153,14 +152,6 @@ TEST(QueryResponseTest, TransactionsResponseTest) {
   auto query_response = *pb_factory.serialize(shrd_tr);
 
   ASSERT_EQ(query_response.transactions_response().transactions().size(), 3);
-  for (size_t i = 0; i < 3; i++) {
-    ASSERT_EQ(query_response.transactions_response()
-                  .transactions()
-                  .Get(i)
-                  .payload()
-                  .tx_counter(),
-              i);
-  }
 }
 
 TEST(QueryResponseTest, roles_response) {

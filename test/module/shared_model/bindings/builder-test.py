@@ -14,7 +14,7 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       iroha.ModelTransactionBuilder().build()
   def generate_base(self):
-    return iroha.ModelTransactionBuilder().txCounter(123)\
+    return iroha.ModelTransactionBuilder()\
                                .createdTime(int(time.time() * 1000))\
                                .creatorAccountId("admin@test")\
 

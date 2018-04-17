@@ -39,6 +39,7 @@ using ::testing::_;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
+using namespace shared_model::permissions;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
 
@@ -80,14 +81,12 @@ class QueryValidateExecuteTest : public ::testing::Test {
 
   /**
    * Make transaction with specified parameters
-   * @param counter
    * @param creator
    * @return wrapper with created transaction
    */
-  wTransaction makeTransaction(int counter, std::string creator) {
+  wTransaction makeTransaction(std::string creator) {
     return clone(TestTransactionBuilder()
                      .creatorAccountId(creator)
-                     .txCounter(counter)
                      .build());
   }
 
@@ -101,7 +100,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
     return rxcpp::observable<>::iterate([&creator, &N, this] {
       std::vector<wTransaction> result;
       for (size_t i = 0; i < N; ++i) {
-        auto current = makeTransaction(i, creator);
+        auto current = makeTransaction(creator);
         result.push_back(current);
       }
       return result;

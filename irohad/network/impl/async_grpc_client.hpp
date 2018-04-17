@@ -32,7 +32,9 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      AsyncGrpcClient() : thread_(&AsyncGrpcClient::asyncCompleteRpc, this) {}
+      explicit AsyncGrpcClient(logger::Logger &&log)
+          : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
+            log_(std::move(log)) {}
 
       /**
        * Listen to gRPC server responses
@@ -42,7 +44,9 @@ namespace iroha {
         auto ok = false;
         while (cq_.Next(&got_tag, &ok)) {
           auto call = static_cast<AsyncClientCall *>(got_tag);
-
+          if (not call->status.ok()) {
+            log_->warn("RPC failed: {}", call->status.error_message());
+          }
           delete call;
         }
       }
@@ -56,6 +60,7 @@ namespace iroha {
 
       grpc::CompletionQueue cq_;
       std::thread thread_;
+      logger::Logger log_;
 
       /**
        * State and data information of gRPC call

@@ -21,8 +21,8 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -36,8 +36,8 @@ class CreateRole : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             iroha::model::can_get_my_txs,
-                             iroha::model::can_create_role}) {
+                             shared_model::permissions::can_get_my_txs,
+                             shared_model::permissions::can_create_role}) {
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), kNewRole, perms)
         .build()
@@ -54,13 +54,12 @@ class CreateRole : public ::testing::Test {
               const std::string &role_name) {
     return TestUnsignedTransactionBuilder()
         .createRole(role_name, perms)
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }
 
   auto baseTx(const std::vector<std::string> &perms = {
-                  iroha::model::can_get_my_txs}) {
+                  shared_model::permissions::can_get_my_txs}) {
     return baseTx(perms, kRole);
   }
 
@@ -110,7 +109,7 @@ TEST_F(CreateRole, Basic) {
 TEST_F(CreateRole, HaveNoPerms) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx()))
@@ -131,7 +130,8 @@ TEST_F(CreateRole, EmptyRole) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx({iroha::model::can_get_my_txs}, "")));
+      .sendTx(
+          completeTx(baseTx({shared_model::permissions::can_get_my_txs}, "")));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 
@@ -163,8 +163,8 @@ TEST_F(CreateRole, LongRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(
-          baseTx({iroha::model::can_get_my_txs}, std::string(33, 'a'))));
+      .sendTx(completeTx(baseTx({shared_model::permissions::can_get_my_txs},
+                                std::string(33, 'a'))));
   ASSERT_ANY_THROW(itf.skipProposal());
 }
 
@@ -179,8 +179,8 @@ TEST_F(CreateRole, MaxLenRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(
-          baseTx({iroha::model::can_get_my_txs}, std::string(32, 'a'))))
+      .sendTx(completeTx(baseTx({shared_model::permissions::can_get_my_txs},
+                                std::string(32, 'a'))))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })

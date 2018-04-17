@@ -49,11 +49,6 @@ Finally, Iroha is the only ledger that has a robust permission system, allowing 
 
 .. [#f1] Yet Another Consensus
 
-Is it fast?
------------
-
-As per the latest review date of these docs, according to `Huawei Caliper <https://github.com/hyperledger/caliper>`_ testing tool, Iroha is capable of processing 45 transactions per second. Theoretically, this is not even close to the limit of the system, and we will continue constant optimizations in order to improve stability and performance.
-
 How to create applications around Iroha?
 ----------------------------------------
 

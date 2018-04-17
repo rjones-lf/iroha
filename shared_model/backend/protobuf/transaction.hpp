@@ -46,10 +46,6 @@ namespace shared_model {
         return payload_.creator_account_id();
       }
 
-      interface::types::CounterType transactionCounter() const override {
-        return payload_.tx_counter();
-      }
-
       const Transaction::CommandsType &commands() const override {
         return *commands_;
       }
@@ -79,7 +75,7 @@ namespace shared_model {
           return false;
         }
 
-        auto sig = proto_->add_signature();
+        auto sig = proto_->add_signatures();
         sig->set_signature(crypto::toBinaryString(signed_blob));
         sig->set_pubkey(crypto::toBinaryString(public_key));
 
@@ -119,7 +115,7 @@ namespace shared_model {
           [this] { return makeBlob(payload_); }};
 
       const Lazy<interface::SignatureSetType> signatures_{[this] {
-        return boost::accumulate(proto_->signature(),
+        return boost::accumulate(proto_->signatures(),
                                  interface::SignatureSetType{},
                                  [](auto &&acc, const auto &sig) {
                                    acc.emplace(new Signature(sig));

@@ -69,12 +69,11 @@ class TransactionExample {
         long currentTime = System.currentTimeMillis();
         String creator = "admin@test";
 
-        long startTxCounter = 1, startQueryCounter = 1;
+        long startQueryCounter = 1;
 
         // build transaction (still unsigned)
         UnsignedTx utx = txBuilder.creatorAccountId(creator)
             .createdTime(BigInteger.valueOf(currentTime))
-            .txCounter(BigInteger.valueOf(startTxCounter))
             .createDomain("ru", "user")
             .createAsset("dollar", "ru", (short)2).build();
 

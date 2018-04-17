@@ -300,7 +300,7 @@ Response Structure
     "Balance", "balance of the asset", "Not less than 0", "200.20"
 
 Get Asset Info
---------------
+^^^^^^^^^^^^^^
 
 Purpose
 -------

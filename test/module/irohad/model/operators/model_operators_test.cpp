@@ -322,7 +322,6 @@ Transaction createTransaction() {
   Transaction transaction;
   transaction.created_ts = 1;
   transaction.creator_account_id = "132";
-  transaction.tx_counter = 5;
   transaction.signatures.push_back(createSignature());
 
   // commands

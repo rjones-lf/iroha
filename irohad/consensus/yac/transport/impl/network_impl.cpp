@@ -30,9 +30,9 @@ namespace iroha {
     namespace yac {
       // ----------| Public API |----------
 
-      NetworkImpl::NetworkImpl() {
-        log_ = logger::log("YacNetwork");
-      }
+      NetworkImpl::NetworkImpl()
+          : network::AsyncGrpcClient<google::protobuf::Empty>(
+                logger::log("YacNetwork")) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {

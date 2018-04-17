@@ -91,8 +91,6 @@ namespace iroha {
               &permission_id) override;
 
      private:
-      const size_t default_tx_counter = 0;
-
       pqxx::nontransaction &transaction_;
 
       using ExecuteType = decltype(makeExecuteResult(transaction_));

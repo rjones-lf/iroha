@@ -33,7 +33,7 @@ namespace iroha {
 
     TEST_F(CryptoProviderTest, SignAndVerifyTransaction) {
       auto model_tx =
-          generators::TransactionGenerator().generateTransaction("test", 0, {});
+          generators::TransactionGenerator().generateTransaction("test", {});
 
       provider.sign(model_tx);
       ASSERT_TRUE(provider.verify(model_tx));

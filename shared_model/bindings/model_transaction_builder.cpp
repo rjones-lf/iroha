@@ -20,17 +20,12 @@
 namespace shared_model {
   namespace bindings {
     ModelTransactionBuilder::ModelTransactionBuilder() {
-      *this = creatorAccountId("").createdTime(0).txCounter(0);
+      *this = creatorAccountId("").createdTime(0);
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::creatorAccountId(
         const interface::types::AccountIdType &account_id) {
       return ModelTransactionBuilder(builder_.creatorAccountId(account_id));
-    }
-
-    ModelTransactionBuilder ModelTransactionBuilder::txCounter(
-        interface::types::CounterType tx_counter) {
-      return ModelTransactionBuilder(builder_.txCounter(tx_counter));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::createdTime(
