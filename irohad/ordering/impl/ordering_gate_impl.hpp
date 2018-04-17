@@ -26,6 +26,8 @@
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
+#include "interfaces/common_objects/types.hpp"
+
 
 namespace shared_model {
   namespace interface {
@@ -91,6 +93,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Proposal>,
           ProposalComparator>
           proposal_queue_;
+
+      shared_model::interface::types::HeightType last_block_height;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;
