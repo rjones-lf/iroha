@@ -33,9 +33,10 @@ namespace iroha {
     }
 
     OrderingGateImpl::OrderingGateImpl(
-        std::shared_ptr<iroha::network::OrderingGateTransport> transport)
+        std::shared_ptr<iroha::network::OrderingGateTransport> transport,
+        shared_model::interface::types::HeightType initial_height)
         : transport_(std::move(transport)),
-          last_block_height_(1),
+          last_block_height_(initial_height),
           log_(logger::log("OrderingGate")) {}
 
     void OrderingGateImpl::propagateTransaction(

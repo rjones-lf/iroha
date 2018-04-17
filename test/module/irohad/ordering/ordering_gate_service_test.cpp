@@ -54,7 +54,7 @@ class OrderingGateServiceTest : public ::testing::Test {
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
-    gate = std::make_shared<OrderingGateImpl>(gate_transport);
+    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1);
     gate->setPcs(*pcs_);
     gate_transport->subscribe(gate);
 

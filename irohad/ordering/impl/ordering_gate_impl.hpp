@@ -57,8 +57,9 @@ namespace iroha {
     class OrderingGateImpl : public network::OrderingGate,
                              public network::OrderingGateNotification {
      public:
-      explicit OrderingGateImpl(
-          std::shared_ptr<iroha::network::OrderingGateTransport> transport);
+      OrderingGateImpl(
+          std::shared_ptr<iroha::network::OrderingGateTransport> transport,
+          shared_model::interface::types::HeightType initial_height);
 
       void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>

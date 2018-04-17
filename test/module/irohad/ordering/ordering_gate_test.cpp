@@ -73,7 +73,7 @@ class OrderingGateTest : public ::testing::Test {
       auto address = "0.0.0.0:" + std::to_string(port);
       // Initialize components after port has been bind
       transport = std::make_shared<OrderingGateTransportGrpc>(address);
-      gate_impl = std::make_shared<OrderingGateImpl>(transport);
+      gate_impl = std::make_shared<OrderingGateImpl>(transport, 1);
       transport->subscribe(gate_impl);
 
       ASSERT_NE(port, 0);
@@ -178,7 +178,7 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
   EXPECT_CALL(*pcs, on_commit())
       .WillOnce(Return(commit_subject.get_observable()));
 
-  OrderingGateImpl ordering_gate(transport);
+  OrderingGateImpl ordering_gate(transport, 1);
   ordering_gate.setPcs(*pcs);
 
   auto wrapper_before =
@@ -246,7 +246,7 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport);
+  OrderingGateImpl ordering_gate(transport, 1);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {
@@ -298,7 +298,7 @@ TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport);
+  OrderingGateImpl ordering_gate(transport, 1);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {
@@ -347,7 +347,7 @@ TEST(OrderingGateQueueBehaviour, KeepNewerProposals) {
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport);
+  OrderingGateImpl ordering_gate(transport, 1);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {

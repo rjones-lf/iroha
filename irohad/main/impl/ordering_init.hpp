@@ -18,6 +18,7 @@
 #ifndef IROHA_ORDERING_INIT_HPP
 #define IROHA_ORDERING_INIT_HPP
 
+#include "ametsuchi/block_query.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
@@ -43,7 +44,8 @@ namespace iroha {
        * service)
        * @param network_address - address of ordering service
        */
-      auto createGate(std::shared_ptr<OrderingGateTransport>);
+      auto createGate(std::shared_ptr<OrderingGateTransport>,
+                      std::shared_ptr<ametsuchi::BlockQuery>);
 
       /**
        * Init ordering service
@@ -74,7 +76,8 @@ namespace iroha {
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-              persistent_state);
+              persistent_state,
+          std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
       std::shared_ptr<ordering::OrderingServiceImpl> ordering_service;
       std::shared_ptr<ordering::OrderingGateImpl> ordering_gate;
