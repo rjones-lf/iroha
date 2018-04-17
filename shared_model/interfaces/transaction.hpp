@@ -74,7 +74,7 @@ namespace shared_model {
                       signatures().end(),
                       [oldStyleTransaction](auto &sig) {
                         oldStyleTransaction->signatures.emplace_back(
-                            *sig->makeOldModel());
+                            *sig.makeOldModel());
                       });
 
         return oldStyleTransaction;
@@ -91,7 +91,7 @@ namespace shared_model {
             .appendAll(commands(),
                        [](auto &command) { return command->toString(); })
             .append("signatures")
-            .appendAll(signatures(), [](auto &sig) { return sig->toString(); })
+            .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();
       }
     };

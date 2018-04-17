@@ -64,8 +64,10 @@ namespace shared_model {
         return *blob_;
       }
 
-      const interface::SignatureSetType &signatures() const override {
-        return *signatures_;
+      const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const override {
+        return *signatures_ | boost::adaptors::transformed([](auto& i) -> decltype(auto) {
+          return *i.operator->();
+        });
       }
 
       // TODO Alexey Chernyshov - 2018-03-28 -

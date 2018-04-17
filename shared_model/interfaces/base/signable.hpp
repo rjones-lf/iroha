@@ -19,6 +19,7 @@
 #define IROHA_SIGNABLE_HPP
 
 #include <boost/optional.hpp>
+#include <boost/range/any_range.hpp>
 
 #include "cryptography/default_hash_provider.hpp"
 #include "interfaces/common_objects/signable_hash.hpp"
@@ -60,7 +61,7 @@ namespace shared_model {
       /**
        * @return attached signatures
        */
-      virtual const SignatureSetType &signatures() const = 0;
+      virtual const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const = 0;
 
       /**
        * Attach signature to object
@@ -92,7 +93,8 @@ namespace shared_model {
        */
       bool operator==(const Model &rhs) const override {
         return this->hash() == rhs.hash()
-            and this->signatures() == rhs.signatures()
+//            and this->signatures() == rhs.signatures()
+            and boost::equal(this->signatures(), rhs.signatures())
             and this->createdTime() == rhs.createdTime();
       }
 
@@ -110,7 +112,7 @@ namespace shared_model {
             .init("Signable")
             .append("created_time", std::to_string(createdTime()))
             .appendAll(signatures(),
-                       [](auto &signature) { return signature->toString(); })
+                       [](auto &signature) { return signature.toString(); })
             .finalize();
       }
 

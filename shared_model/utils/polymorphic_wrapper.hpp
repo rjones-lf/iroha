@@ -105,6 +105,10 @@ namespace shared_model {
         return *ptr_ == *rhs.ptr_;
       }
 
+      bool operator!=(const PolymorphicWrapper &rhs) const {
+        return not (*ptr_ == *rhs.ptr_);
+      }
+
       /**
        * Mutable wrapped object pointer
        * @return pointer for wrapped object
