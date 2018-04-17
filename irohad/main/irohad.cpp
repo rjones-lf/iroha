@@ -154,6 +154,17 @@ int main(int argc, char *argv[]) {
               block.value()->transactions().size());
   }
 
+  // check if at least one block is available in the ledger
+  auto blocks_exist = false;
+  irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
+      [&blocks_exist](auto block) { blocks_exist = true; });
+
+  if (not blocks_exist) {
+    log->error(
+        "There are no blocks in the ledger. Use --genesis_block parameter.");
+    return EXIT_FAILURE;
+  }
+
   // init pipeline components
   irohad.init();
 
