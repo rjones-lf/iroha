@@ -16,9 +16,6 @@
  */
 
 #include "torii/processor/query_processor_impl.hpp"
-#include <boost/range/algorithm/find.hpp>
-#include <boost/range/algorithm/transform.hpp>
-#include <boost/range/as_literal.hpp>
 #include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 
