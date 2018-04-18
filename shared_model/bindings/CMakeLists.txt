@@ -42,12 +42,16 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
 
     add_dependencies(bindings swig)
 
-    macro (myswig_add_library)
+    macro (myswig_add_library target)
         swig_add_library(${ARGV})
-        # workaround for CMake 3.11+
-        if (swig_gen_target)
-            add_dependencies (${swig_gen_target} swig)
-        endif()
+        # get internal dependencies
+        get_target_property(dependencies
+            ${SWIG_MODULE_${target}_REAL_NAME}
+            MANUALLY_ADDED_DEPENDENCIES)
+        # add external project dependency on internal targets
+        foreach (dependency IN LISTS dependencies)
+            add_dependencies(${dependency} swig)
+        endforeach()
     endmacro()
 endif()
 
