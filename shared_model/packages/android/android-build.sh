@@ -100,9 +100,9 @@ mv "$DEPS_DIR"/lib/static/libed25519.a "$DEPS_DIR"/lib; rmdir "$DEPS_DIR"/lib/st
 
 # SWIG fixes
 sed -i.bak "s~find_package(JNI REQUIRED)~#find_package(JNI REQUIRED)~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~include_directories(${JAVA_INCLUDE_PATH})~#include_directories(${JAVA_INCLUDE_PATH})~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~include_directories(${JAVA_INCLUDE_PATH2})~#include_directories(${JAVA_INCLUDE_PATH2})~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~# the include path to jni.h~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE})~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH}~#\${JAVA_INCLUDE_PATH}~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH2}~#\${JAVA_INCLUDE_PATH2}~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~target_include_directories(\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE}~" ./iroha/shared_model/bindings/CMakeLists.txt
 sed -i.bak "s~swig_link_libraries(irohajava~swig_link_libraries(irohajava \"${PWD}/protobuf/.build/lib${PROTOBUF_LIB_NAME}.a\" \"${NDK_PATH}/platforms/android-${VERSION}/${ARCH}/usr/${LIBP}/liblog.so\"~" ./iroha/shared_model/bindings/CMakeLists.txt
 
 # build iroha

@@ -20,12 +20,13 @@ if(NOT SWIG_EXECUTABLE)
       BUILD_IN_SOURCE ON
       BUILD_COMMAND ${MAKE} swig
       TEST_COMMAND "" # remove test step
+      UPDATE_COMMAND "" # remove update step
       )
   ExternalProject_Get_Property(swig_swig source_dir)
 
   # Predefined vars for local installed SWIG
   set(SWIG_EXECUTABLE ${source_dir}/swig)
-  set(SWIG_DIR ${source_dir})
+  set(SWIG_DIR ${source_dir}/share/swig/3.0.12)
 
   add_dependencies(swig swig_swig)
 

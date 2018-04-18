@@ -41,6 +41,14 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
     add_dependencies(bindings swig)
+
+    macro (myswig_add_library)
+        swig_add_library(${ARGV})
+        # workaround for CMake 3.11+
+        if (swig_gen_target)
+            add_dependencies (${swig_gen_target} swig)
+        endif()
+    endmacro()
 endif()
 
 if (SWIG_PYTHON)
@@ -54,7 +62,7 @@ if (SWIG_PYTHON)
         set(MAC_OPTS "-flat_namespace -undefined suppress")
     endif()
 
-    swig_add_library(iroha LANGUAGE python SOURCES bindings.i)
+    myswig_add_library(iroha LANGUAGE python SOURCES bindings.i)
     swig_link_libraries(iroha ${Python_LIBRARIES} bindings ${MAC_OPTS})
     add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
     # path to where Python.h is found
@@ -66,7 +74,7 @@ endif()
 if (SWIG_JAVA)
     find_package(JNI REQUIRED)
 
-    swig_add_library(irohajava LANGUAGE java SOURCES bindings.i)
+    myswig_add_library(irohajava LANGUAGE java SOURCES bindings.i)
     swig_link_libraries(irohajava ${Java_LIBRARIES} bindings)
     # the include path to jni.h and jni_md.h
     target_include_directories(${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC
@@ -76,7 +84,7 @@ if (SWIG_JAVA)
 endif()
 
 if (SWIG_CSHARP)
-    swig_add_library(libirohacs LANGUAGE csharp SOURCES bindings.i)
+    myswig_add_library(libirohacs LANGUAGE csharp SOURCES bindings.i)
     swig_link_libraries(libirohacs bindings)
     add_custom_target(irohacs DEPENDS ${SWIG_MODULE_libirohacs_REAL_NAME})
 endif()
@@ -99,7 +107,7 @@ if (SWIG_NODE)
     set_property(SOURCE bindings.i PROPERTY SWIG_FLAGS "-node" "-DV8_VERSION=${V8_VERSION_HEX}")
 
     # Build SWIG library always statically for the subsequent assembly by GYP
-    swig_add_library(irohanode 
+    myswig_add_library(irohanode
         TYPE STATIC 
         LANGUAGE javascript 
         SOURCES bindings.i
