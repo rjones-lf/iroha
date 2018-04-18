@@ -130,7 +130,7 @@ namespace shared_model {
                            const interface::types::CounterType &counter) const;
 
       void validateSignatures(ReasonsGroupType &reason,
-                              const interface::SignatureSetType &signatures,
+                              const interface::SignatureRangeType &signatures,
                               const crypto::Blob &source) const;
 
       void validateDescription(

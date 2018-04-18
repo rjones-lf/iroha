@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_QUERY_HPP
 #define IROHA_SHARED_MODEL_PROTO_QUERY_HPP
 
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/numeric.hpp>
 
 #include "backend/protobuf/common_objects/signature.hpp"
@@ -119,10 +120,10 @@ namespace shared_model {
       }
 
       // ------------------------| Signable override  |-------------------------
-      const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const override {
-        return *signatures_ | boost::adaptors::transformed([](auto& i) -> decltype(auto) {
-          return *i.operator->();
-        });
+      interface::SignatureRangeType signatures() const override {
+        return *signatures_
+            | boost::adaptors::transformed(
+                  [](auto &i) -> decltype(auto) { return *i; });
       }
 
       bool addSignature(const crypto::Signed &signed_blob,

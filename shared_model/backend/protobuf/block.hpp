@@ -20,6 +20,7 @@
 
 #include "interfaces/iroha_internal/block.hpp"
 
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
@@ -64,10 +65,10 @@ namespace shared_model {
         return *blob_;
       }
 
-      const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const override {
-        return *signatures_ | boost::adaptors::transformed([](auto& i) -> decltype(auto) {
-          return *i.operator->();
-        });
+      interface::SignatureRangeType signatures() const override {
+        return *signatures_
+            | boost::adaptors::transformed(
+                  [](auto &i) -> decltype(auto) { return *i; });
       }
 
       // TODO Alexey Chernyshov - 2018-03-28 -
@@ -77,11 +78,12 @@ namespace shared_model {
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
-                     signatures_->end(),
-                     [&signed_blob, &public_key](auto signature) {
-                       return signature->signedData() == signed_blob
-                           and signature->publicKey() == public_key;
-                     }) != signatures_->end()) {
+                         signatures_->end(),
+                         [&signed_blob, &public_key](auto signature) {
+                           return signature->signedData() == signed_blob
+                               and signature->publicKey() == public_key;
+                         })
+            != signatures_->end()) {
           return false;
         }
 

@@ -84,7 +84,7 @@ namespace iroha {
             return;
           }
           auto chain = blockLoader_->retrieveBlocks(
-              shared_model::crypto::PublicKey(signature->publicKey()));
+              shared_model::crypto::PublicKey(signature.publicKey()));
           // Check chain last commit
           auto is_chain_end_expected =
               chain.as_blocking().last()->hash() == commit_message->hash();

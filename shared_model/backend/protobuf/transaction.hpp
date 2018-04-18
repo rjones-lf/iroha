@@ -21,7 +21,6 @@
 #include "interfaces/transaction.hpp"
 
 #include <boost/range/numeric.hpp>
-#include <boost/range/adaptor/type_erased.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
 #include "backend/protobuf/commands/proto_command.hpp"
@@ -60,9 +59,9 @@ namespace shared_model {
         return *blobTypePayload_;
       }
 
-      const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const override {
+      interface::SignatureRangeType signatures() const override {
         return *signatures_ | boost::adaptors::transformed([](const auto& i) -> decltype(auto) {
-          return *i.operator->();
+          return *i;
         });
       }
 

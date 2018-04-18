@@ -42,6 +42,10 @@ namespace shared_model {
 #define SIGNABLE(Model) Signable<Model, iroha::model::Model>
 #endif
 
+/// Type of signature range, which returns when signatures are invoked
+using SignatureRangeType = boost::any_range<const interface::Signature &,
+                                            boost::forward_traversal_tag>;
+
 /**
  * Interface provides signatures and adds them to model object
  * @tparam Model - your new style model
@@ -61,7 +65,7 @@ namespace shared_model {
       /**
        * @return attached signatures
        */
-      virtual const boost::any_range<const interface::Signature&, boost::forward_traversal_tag> &signatures() const = 0;
+      virtual SignatureRangeType signatures() const = 0;
 
       /**
        * Attach signature to object

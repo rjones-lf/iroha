@@ -292,11 +292,11 @@ namespace shared_model {
 
     void FieldValidator::validateSignatures(
         ReasonsGroupType &reason,
-        const interface::SignatureSetType &signatures,
+        const interface::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       for (const auto &signature : signatures) {
-        const auto &sign = signature->signedData();
-        const auto &pkey = signature->publicKey();
+        const auto &sign = signature.signedData();
+        const auto &pkey = signature.publicKey();
         bool is_valid = true;
 
         if (sign.blob().size() != 64) {

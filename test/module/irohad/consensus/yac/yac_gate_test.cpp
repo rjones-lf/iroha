@@ -187,7 +187,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // load block
   auto sig = expected_block->signatures().begin();
-  auto &pubkey = (*sig)->publicKey();
+  auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(expected_block));
 
