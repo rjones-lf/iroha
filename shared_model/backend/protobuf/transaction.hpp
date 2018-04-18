@@ -112,9 +112,9 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> blobTypePayload_{
           [this] { return makeBlob(payload_); }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
+      const Lazy<SignatureSetType> signatures_{[this] {
         return boost::accumulate(proto_->signatures(),
-                                 interface::SignatureSetType{},
+                                 SignatureSetType{},
                                  [](auto &&acc, const auto &sig) {
                                    acc.emplace(new Signature(sig));
                                    return std::forward<decltype(acc)>(acc);
