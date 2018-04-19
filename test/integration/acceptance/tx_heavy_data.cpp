@@ -136,8 +136,6 @@ TEST_F(HeavyTransactionTest, OneLargeTx) {
 }
 
 /**
- * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
  * @given some user with all required permissions
  * @when send many txes with addAccountDetail with large data inside
  * @then transaction have been passed
@@ -162,8 +160,6 @@ TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
 }
 
 /**
- * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
  * @given some user with all required permissions
  * @when send tx with many addAccountDetails with large data inside
  * @then transaction is passed
@@ -186,13 +182,14 @@ TEST_F(HeavyTransactionTest, VeryLargeTxWithManyCommands) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   // this sleep method is a temporary work-around
   // because BlockLoaderImpl Failed to retrieve top block
+  // TODO: IR-1264 neewy 19/04/2018
   std::this_thread::sleep_for(std::chrono::seconds(10));
   itf.done();
 }
 
 /**
- * NOTE: test is disabled until fix of
- * https://soramitsu.atlassian.net/browse/IR-1205 will not be completed.
+ * TODO: disabled until proposal process time in simulator is not optimized
+ * and now it takes more than 5 minutes 19/04/2018 neewy
  * @given some user with all required permissions
  * AND max proposal size is 1.
  * @when send txes with addAccountDetail with large data inside.

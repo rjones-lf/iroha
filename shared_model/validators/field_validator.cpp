@@ -48,7 +48,7 @@ namespace shared_model {
 
     const size_t FieldValidator::public_key_size = 32;
     /// limit for the set account detail size in bytes
-    const size_t FieldValidator::value_size = 4 * 1024 * 1024;
+    const size_t FieldValidator::value_size = INT_MAX;
     const size_t FieldValidator::description_size = 64;
 
     FieldValidator::FieldValidator(time_t future_gap)
