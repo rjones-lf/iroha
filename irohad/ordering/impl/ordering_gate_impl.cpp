@@ -16,6 +16,7 @@
  */
 
 #include <utility>
+#include <tuple>
 
 #include "ordering/impl/ordering_gate_impl.hpp"
 
@@ -34,10 +35,11 @@ namespace iroha {
 
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport,
-        shared_model::interface::types::HeightType initial_height)
+        shared_model::interface::types::HeightType initial_height,
+        bool run_async)
         : transport_(std::move(transport)),
           last_block_height_(initial_height),
-          log_(logger::log("OrderingGate")) {}
+          log_(logger::log("OrderingGate")), run_async_(run_async) {}
 
     void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const shared_model::interface::Transaction>
@@ -55,29 +57,44 @@ namespace iroha {
 
     void OrderingGateImpl::setPcs(
         const iroha::network::PeerCommunicationService &pcs) {
-      pcs_subscriber_ = pcs.on_commit().subscribe([this](const auto &block) {
-        unlock_next_.store(true);
+      log_->info("setPcs");
+
+      auto tap = pcs.on_commit().transform([](const Commit &block) {
         // find height of last commited block
-        block.subscribe([this](const auto &b) {
-          if (b->height() > this->last_block_height_) {
-            this->last_block_height_ = b->height();
-          }
-        });
-        this->tryNextRound();
-      });
+        return block.as_blocking().last()->height();
+      }).start_with(last_block_height_);
+
+      if (run_async_) {
+        pcs_subscriber_ =
+            net_proposals_.get_observable()
+                .combine_latest(rxcpp::synchronize_new_thread(), tap)
+                .subscribe([this](auto t) {
+                  this->tryNextRound(std::get<1>(t));
+                });
+      } else {
+        pcs_subscriber_ =
+            net_proposals_.get_observable()
+                .combine_latest(tap)
+                .subscribe([this](auto t) {
+                  this->tryNextRound(std::get<1>(t));
+                });
+      }
+
     }
 
     void OrderingGateImpl::onProposal(
         std::shared_ptr<shared_model::interface::Proposal> proposal) {
       log_->info("Received new proposal, height: {}", proposal->height());
       proposal_queue_.push(std::move(proposal));
-      tryNextRound();
+      std::lock_guard<std::mutex> lock(proposal_mutex_);
+      net_proposals_.get_subscriber().on_next(0);
     }
 
-    void OrderingGateImpl::tryNextRound() {
-      while (not proposal_queue_.empty() and unlock_next_) {
-        std::shared_ptr<shared_model::interface::Proposal> next_proposal;
-        proposal_queue_.try_pop(next_proposal);
+    void OrderingGateImpl::tryNextRound(
+        shared_model::interface::types::HeightType last_block_height_) {
+      log_->info("TryNextRound");
+      std::shared_ptr<shared_model::interface::Proposal> next_proposal;
+      while (proposal_queue_.try_pop(next_proposal)) {
         // check for old proposal
         if (next_proposal->height() < last_block_height_ + 1) {
           log_->info("Old proposal, discarding");
@@ -87,11 +104,10 @@ namespace iroha {
         if (next_proposal->height() > last_block_height_ + 1) {
           log_->info("Proposal newer than last block, keeping in queue");
           proposal_queue_.push(next_proposal);
-          unlock_next_.store(false);
-          continue;
+          break;
         }
-        log_->info("Pass the proposal to pipeline");
-        unlock_next_.store(false);
+        log_->info("Pass the proposal to pipeline height {}",
+                   next_proposal->height());
         proposals_.get_subscriber().on_next(next_proposal);
       }
     }

@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <iostream>
 
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -105,10 +106,13 @@ class OrderingGateServiceTest : public ::testing::Test {
       size_t times) {
     auto wrapper = make_test_subscriber<CallExact>(gate->on_proposal(), times);
     gate->on_proposal().subscribe([this](auto) {
+      std::cout << "on proposal subscriber 1\n";
       counter--;
       cv.notify_one();
+      std::cout << "on proposal subscriber 1 done\n";
     });
     gate->on_proposal().subscribe([this](auto proposal) {
+      std::cout << "on proposal subscriber 2\n";
       proposals.push_back(proposal);
 
       // emulate commit event after receiving the proposal to perform next
@@ -118,6 +122,8 @@ class OrderingGateServiceTest : public ::testing::Test {
               TestBlockBuilder().height(proposal->height()).build());
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
+
+      std::cout << "on proposal subscriber 2 done\n";
     });
     wrapper.subscribe();
     return wrapper;
@@ -136,8 +142,7 @@ class OrderingGateServiceTest : public ::testing::Test {
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair())
-            );
+                    generateKeypair()));
     gate->propagateTransaction(tx);
     // otherwise tx may come unordered
     std::this_thread::sleep_for(20ms);

@@ -16,6 +16,7 @@
  */
 #include <grpc++/grpc++.h>
 #include <gtest/gtest.h>
+#include <iostream>
 
 #include "framework/test_subscriber.hpp"
 
@@ -61,7 +62,6 @@ class OrderingGateTest : public ::testing::Test {
   }
 
   void SetUp() override {
-    thread = std::thread([this] {
       grpc::ServerBuilder builder;
       int port = 0;
       builder.AddListeningPort(
@@ -73,24 +73,15 @@ class OrderingGateTest : public ::testing::Test {
       auto address = "0.0.0.0:" + std::to_string(port);
       // Initialize components after port has been bind
       transport = std::make_shared<OrderingGateTransportGrpc>(address);
-      gate_impl = std::make_shared<OrderingGateImpl>(transport, 1);
+      gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
       transport->subscribe(gate_impl);
 
       ASSERT_NE(port, 0);
       ASSERT_TRUE(server);
-      cv.notify_one();
-      server->Wait();
-    });
-
-    std::unique_lock<std::mutex> lock(m);
-    cv.wait_for(lock, std::chrono::seconds(1));
   }
 
   void TearDown() override {
     server->Shutdown();
-    if (thread.joinable()) {
-      thread.join();
-    }
   }
 
   std::unique_ptr<grpc::Server> server;
@@ -98,7 +89,6 @@ class OrderingGateTest : public ::testing::Test {
   std::shared_ptr<OrderingGateTransportGrpc> transport;
   std::shared_ptr<OrderingGateImpl> gate_impl;
   std::shared_ptr<MockOrderingGateTransportGrpcService> fake_service;
-  std::thread thread;
   std::condition_variable cv;
   std::mutex m;
 };
@@ -136,6 +126,13 @@ TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
 TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto wrapper = make_test_subscriber<CallExact>(gate_impl->on_proposal(), 1);
   wrapper.subscribe();
+
+  std::shared_ptr<MockPeerCommunicationService> pcs =
+      std::make_shared<MockPeerCommunicationService>();
+  rxcpp::subjects::subject<Commit> commit_subject;
+  EXPECT_CALL(*pcs, on_commit())
+      .WillOnce(Return(commit_subject.get_observable()));
+  gate_impl->setPcs(*pcs);
 
   grpc::ServerContext context;
   auto tx = shared_model::proto::TransactionBuilder()
@@ -178,7 +175,7 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
   EXPECT_CALL(*pcs, on_commit())
       .WillOnce(Return(commit_subject.get_observable()));
 
-  OrderingGateImpl ordering_gate(transport, 1);
+  OrderingGateImpl ordering_gate(transport, 1, false);
   ordering_gate.setPcs(*pcs);
 
   auto wrapper_before =
@@ -205,7 +202,7 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
           .build());
   auto proposal2 = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
-          .height(2)
+          .height(3)
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
@@ -216,7 +213,8 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
   ASSERT_TRUE(wrapper_before.validate());
 
   std::shared_ptr<shared_model::interface::Block> block =
-      std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
+      std::make_shared<shared_model::proto::Block>(
+          TestBlockBuilder().height(2).build());
 
   commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(block));
 
@@ -240,13 +238,14 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
       .WillOnce(Return(commit_subject.get_observable()));
 
   auto pushCommit = [&](auto height) {
+    std::cout << "Commiting\n";
     commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
         std::static_pointer_cast<shared_model::interface::Block>(
             std::make_shared<shared_model::proto::Block>(
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport, 1);
+  OrderingGateImpl ordering_gate(transport, 1, false);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {
@@ -254,10 +253,14 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
         TestProposalBuilder().height(height).build()));
   };
 
+  std::condition_variable cv;
+  std::mutex m;
   std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe([&](auto val) {
-    messages.push_back(val);
-  });
+  ordering_gate.on_proposal().subscribe(
+      [&](auto val) {
+        messages.push_back(val);
+        cv.notify_one();
+      });
 
   // this will set unlock_next_ to false, so proposals 3 and 4 are enqueued
   pushProposal(2);
@@ -267,6 +270,9 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
 
   pushCommit(2);
   pushCommit(3);
+
+  std::unique_lock<std::mutex> lock(m);
+  cv.wait_for(lock, 10s, [&] { return messages.size() == 3; });
 
   ASSERT_EQ(3, messages.size());
   ASSERT_EQ(2, messages.at(0)->height());
@@ -298,7 +304,7 @@ TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport, 1);
+  OrderingGateImpl ordering_gate(transport, 1, false);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {
@@ -307,9 +313,8 @@ TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
   };
 
   std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe([&](auto val) {
-    messages.push_back(val);
-  });
+  ordering_gate.on_proposal().subscribe(
+      [&](auto val) { messages.push_back(val); });
 
   pushProposal(2);
   pushProposal(3);
@@ -347,7 +352,7 @@ TEST(OrderingGateQueueBehaviour, KeepNewerProposals) {
                 TestBlockBuilder().height(height).build()))));
   };
 
-  OrderingGateImpl ordering_gate(transport, 1);
+  OrderingGateImpl ordering_gate(transport, 1, false);
   ordering_gate.setPcs(*pcs);
 
   auto pushProposal = [&](auto height) {
@@ -356,16 +361,14 @@ TEST(OrderingGateQueueBehaviour, KeepNewerProposals) {
   };
 
   std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe([&](auto val) {
-    messages.push_back(val);
-  });
+  ordering_gate.on_proposal().subscribe(
+      [&](auto val) { messages.push_back(val); });
 
   pushProposal(2);
   pushProposal(3);
   pushProposal(4);
 
   pushCommit(2);
-
 
   // proposal 3 must  be forwarded down the pipeline, 4 kept in queue.
   EXPECT_EQ(2, messages.size());

@@ -20,14 +20,14 @@
 
 #include "network/ordering_gate.hpp"
 
-#include <atomic>
 #include <tbb/concurrent_priority_queue.h>
+#include <atomic>
+#include <mutex>
 
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
-#include "interfaces/common_objects/types.hpp"
-
 
 namespace shared_model {
   namespace interface {
@@ -59,7 +59,8 @@ namespace iroha {
      public:
       OrderingGateImpl(
           std::shared_ptr<iroha::network::OrderingGateTransport> transport,
-          shared_model::interface::types::HeightType initial_height);
+          shared_model::interface::types::HeightType initial_height,
+          bool run_async = true);
 
       void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
@@ -79,15 +80,18 @@ namespace iroha {
       /**
        * Try to push proposal for next consensus round
        */
-      void tryNextRound();
+      void tryNextRound(
+          shared_model::interface::types::HeightType last_block_height_);
 
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposals_;
+
+      rxcpp::subjects::subject<shared_model::interface::types::HeightType>
+          net_proposals_;
       std::shared_ptr<iroha::network::OrderingGateTransport> transport_;
 
-      /// invariant: true if proposal can be pushed to subscribers
-      std::atomic_bool unlock_next_{true};
+      std::mutex proposal_mutex_;
 
       /// queue with all proposals received from ordering service
       tbb::concurrent_priority_queue<
@@ -96,12 +100,14 @@ namespace iroha {
           proposal_queue_;
 
       // last commited block height
-      std::atomic<shared_model::interface::types::HeightType> last_block_height_;
+      shared_model::interface::types::HeightType last_block_height_;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;
 
       logger::Logger log_;
+
+      bool run_async_;
     };
   }  // namespace ordering
 }  // namespace iroha
