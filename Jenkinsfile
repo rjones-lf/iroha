@@ -218,7 +218,7 @@ pipeline {
               """
               def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
               if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
+                currentBuild.currentResult = "UNSTABLE"
               }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
@@ -249,7 +249,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.result == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
@@ -345,7 +345,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.result == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
