@@ -19,6 +19,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering;
 
@@ -53,15 +54,9 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     const std::string &server_address)
     : network::AsyncGrpcClient<google::protobuf::Empty>(
-          logger::log("OrderingGate")) {
-  // in order to bypass built-it limitation of gRPC message size
-  grpc::ChannelArguments args;
-  args.SetMaxSendMessageSize(INT_MAX);
-  args.SetMaxReceiveMessageSize(INT_MAX);
-  client_ =
-      proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateCustomChannel(
-          server_address, grpc::InsecureChannelCredentials(), args));
-}
+          logger::log("OrderingGate")),
+      client_(network::createClient<proto::OrderingServiceTransportGrpc>(
+          server_address)) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {

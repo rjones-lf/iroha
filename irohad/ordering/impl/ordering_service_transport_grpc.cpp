@@ -18,6 +18,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering;
 
@@ -49,15 +50,9 @@ void OrderingServiceTransportGrpc::publishProposal(
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
-// in order to bypass built-it limitation of gRPC message size
-  grpc::ChannelArguments args;
-  args.SetMaxSendMessageSize(INT_MAX);
-  args.SetMaxReceiveMessageSize(INT_MAX);
-
   for (const auto &peer : peers) {
     peers_map[peer] =
-        proto::OrderingGateTransportGrpc::NewStub(grpc::CreateCustomChannel(
-            peer, grpc::InsecureChannelCredentials(), args));
+        network::createClient<proto::OrderingGateTransportGrpc>(peer);
   }
 
   for (const auto &peer : peers_map) {

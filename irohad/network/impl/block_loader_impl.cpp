@@ -22,6 +22,7 @@
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -157,18 +158,11 @@ proto::Loader::Stub &BlockLoaderImpl::getPeerStub(
     const shared_model::interface::Peer &peer) {
   auto it = peer_connections_.find(peer.address());
   if (it == peer_connections_.end()) {
-    // in order to bypass built-it limitation of gRPC message size
-    grpc::ChannelArguments args;
-    args.SetMaxSendMessageSize(INT_MAX);
-    args.SetMaxReceiveMessageSize(INT_MAX);
-
-    it =
-        peer_connections_
-            .insert(std::make_pair(
-                peer.address(),
-                proto::Loader::NewStub(grpc::CreateCustomChannel(
-                    peer.address(), grpc::InsecureChannelCredentials(), args))))
-            .first;
+    it = peer_connections_
+             .insert(std::make_pair(
+                 peer.address(),
+                 network::createClient<proto::Loader>(peer.address())))
+             .first;
   }
   return *it->second;
 }

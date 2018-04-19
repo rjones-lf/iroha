@@ -16,6 +16,7 @@ limitations under the License.
 #include <grpc++/grpc++.h>
 
 #include "block.pb.h"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
 
 namespace torii {
@@ -24,17 +25,10 @@ namespace torii {
   using iroha::protocol::Transaction;
 
   CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
-      : ip_(ip), port_(port) {
-    // in order to bypass built-it limitation of gRPC message size
-    grpc::ChannelArguments args;
-    args.SetMaxSendMessageSize(INT_MAX);
-    args.SetMaxReceiveMessageSize(INT_MAX);
-
-    stub_ = iroha::protocol::CommandService::NewStub(
-        grpc::CreateCustomChannel(ip + ":" + std::to_string(port),
-                                  grpc::InsecureChannelCredentials(),
-                                  args));
-  }
+      : ip_(ip),
+        port_(port),
+        stub_(iroha::network::createClient<iroha::protocol::CommandService>(
+            ip + ":" + std::to_string(port))) {}
 
   CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
       : CommandSyncClient(rhs.ip_, rhs.port_) {}
