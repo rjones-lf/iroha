@@ -30,7 +30,7 @@
 TEST(QueryResponse, QueryResponseLoad) {
   iroha::protocol::QueryResponse response;
   const std::string hash = "123";
-  response.set_query_hash(hash);
+  response.set_query_hash(iroha::bytestringToHexstring(hash));
   auto refl = response.GetReflection();
   auto desc = response.GetDescriptor();
   auto resp_status = desc->FindOneofByName("response");
@@ -54,7 +54,7 @@ TEST(QueryResponse, QueryResponseLoad) {
 TEST(QueryResponse, ErrorResponseLoad) {
   iroha::protocol::QueryResponse response;
   const std::string hash = "123";
-  response.set_query_hash(hash);
+  response.set_query_hash(iroha::bytestringToHexstring(hash));
   auto error_resp = response.mutable_error_response();
   auto refl = error_resp->GetReflection();
   auto desc = error_resp->GetDescriptor();
