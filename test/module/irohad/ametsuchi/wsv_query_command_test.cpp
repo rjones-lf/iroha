@@ -20,10 +20,10 @@
 #include "backend/protobuf/from_old_model.hpp"
 #include "framework/result_fixture.hpp"
 #include "model/asset.hpp"
-#include "model/domain.hpp"
 #include "model/peer.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -33,12 +33,12 @@ namespace iroha {
     class WsvQueryCommandTest : public AmetsuchiTest {
      public:
       WsvQueryCommandTest() {
-        domain.domain_id = "domain";
-        domain.default_role = role;
+        domain = clone(
+            TestDomainBuilder().domainId("domain").defaultRole(role).build());
 
         account = clone(TestAccountBuilder()
-                            .domainId(domain.domain_id)
-                            .accountId("id@" + domain.domain_id)
+                            .domainId(domain->domainId())
+                            .accountId("id@" + domain->domainId())
                             .quorum(1)
                             .jsonData(R"({"id@domain": {"key": "value"}})")
                             .build());
@@ -63,7 +63,7 @@ namespace iroha {
 
       std::string role = "role", permission = "permission";
       std::shared_ptr<shared_model::interface::Account> account;
-      model::Domain domain;
+      std::shared_ptr<shared_model::interface::Domain> domain;
 
       std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::unique_ptr<pqxx::nontransaction> wsv_transaction;
@@ -122,8 +122,7 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
+        ASSERT_NO_THROW(checkValueCase(command->insertDomain(*domain)));
       }
     };
 
@@ -220,8 +219,7 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
+        ASSERT_NO_THROW(checkValueCase(command->insertDomain(*domain)));
         ASSERT_NO_THROW(checkValueCase(command->insertAccount(*account)));
       }
     };
@@ -305,8 +303,8 @@ namespace iroha {
       AccountGrantablePermissionTest() {
         permittee_account =
             clone(TestAccountBuilder()
-                      .domainId(domain.domain_id)
-                      .accountId("id2@" + domain.domain_id)
+                      .domainId(domain->domainId())
+                      .accountId("id2@" + domain->domainId())
                       .quorum(1)
                       .jsonData(R"({"id@domain": {"key": "value"}})")
                       .build());
@@ -315,8 +313,7 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
         ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
+        ASSERT_NO_THROW(checkValueCase(command->insertDomain(*domain)));
         ASSERT_NO_THROW(checkValueCase(command->insertAccount(*account)));
         ASSERT_NO_THROW(
             checkValueCase(command->insertAccount(*permittee_account)));
