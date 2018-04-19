@@ -17,13 +17,11 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "framework/result_fixture.hpp"
-#include "model/asset.hpp"
-#include "model/peer.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -363,13 +361,13 @@ namespace iroha {
     class DeletePeerTest : public WsvQueryCommandTest {
      public:
       DeletePeerTest() {
-        peer = model::Peer();
+        peer = clone(TestPeerBuilder().build());
       }
 
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
       }
-      model::Peer peer;
+      std::shared_ptr<shared_model::interface::Peer> peer;
     };
 
     /**
@@ -378,11 +376,9 @@ namespace iroha {
      * @then peer is successfully deleted
      */
     TEST_F(DeletePeerTest, DeletePeerValidWhenPeerExists) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertPeer(shared_model::proto::from_old(peer))));
+      ASSERT_NO_THROW(checkValueCase(command->insertPeer(*peer)));
 
-      ASSERT_NO_THROW(checkValueCase(
-          command->deletePeer(shared_model::proto::from_old(peer))));
+      ASSERT_NO_THROW(checkValueCase(command->deletePeer(*peer)));
     }
 
     class GetAssetTest : public WsvQueryCommandTest {};
