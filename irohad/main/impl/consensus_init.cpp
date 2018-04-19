@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,8 @@ namespace iroha {
         return consensus_network;
       }
 
-      auto YacInit::createCryptoProvider(const shared_model::crypto::Keypair &keypair) {
+      auto YacInit::createCryptoProvider(
+          const shared_model::crypto::Keypair &keypair) {
         auto crypto = std::make_shared<CryptoProviderImpl>(keypair);
 
         return crypto;
