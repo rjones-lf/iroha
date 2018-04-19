@@ -49,15 +49,19 @@ void OrderingServiceTransportGrpc::publishProposal(
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
+// in order to bypass built-it limitation of gRPC message size
+  grpc::ChannelArguments args;
+  args.SetMaxSendMessageSize(INT_MAX);
+  args.SetMaxReceiveMessageSize(INT_MAX);
 
   for (const auto &peer : peers) {
-    peers_map[peer] = proto::OrderingGateTransportGrpc::NewStub(
-        grpc::CreateChannel(peer, grpc::InsecureChannelCredentials()));
+    peers_map[peer] =
+        proto::OrderingGateTransportGrpc::NewStub(grpc::CreateCustomChannel(
+            peer, grpc::InsecureChannelCredentials(), args));
   }
 
   for (const auto &peer : peers_map) {
     auto call = new AsyncClientCall;
-
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
     log_->debug("Publishing proposal: '{}'",
                 proto->getTransport().DebugString());

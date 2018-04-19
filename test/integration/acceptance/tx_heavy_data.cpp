@@ -168,23 +168,26 @@ TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
  * @when send tx with many addAccountDetails with large data inside
  * @then transaction is passed
  */
-TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
+TEST_F(HeavyTransactionTest, VeryLargeTxWithManyCommands) {
   auto big_data = generateData(3 * 1024 * 1024);
   auto large_tx_builder = setAcountDetailTx("foo_1", big_data)
                               .setAccountDetail(kUserId, "foo_2", big_data)
                               .setAccountDetail(kUserId, "foo_3", big_data);
 
-  IntegrationTestFramework()
-      .setInitialState(kAdminKeypair)
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      // in itf tx build from large_tx_build will pass in Torii but in
-      // production the transaction will be failed before stateless validation
-      // because of size.
+      // in itf tx build from large_tx_build will pass in Torii but
+      // in production the transaction will be failed before
+      // stateless validation because of size.
       .sendTx(complete(large_tx_builder))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+  // this sleep method is a temporary work-around
+  // because BlockLoaderImpl Failed to retrieve top block
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+  itf.done();
 }
 
 /**

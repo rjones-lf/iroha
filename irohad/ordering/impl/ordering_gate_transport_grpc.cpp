@@ -53,9 +53,15 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     const std::string &server_address)
     : network::AsyncGrpcClient<google::protobuf::Empty>(
-          logger::log("OrderingGate")),
-      client_(proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateChannel(
-          server_address, grpc::InsecureChannelCredentials()))) {}
+          logger::log("OrderingGate")) {
+  // in order to bypass built-it limitation of gRPC message size
+  grpc::ChannelArguments args;
+  args.SetMaxSendMessageSize(INT_MAX);
+  args.SetMaxReceiveMessageSize(INT_MAX);
+  client_ =
+      proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateCustomChannel(
+          server_address, grpc::InsecureChannelCredentials(), args));
+}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {

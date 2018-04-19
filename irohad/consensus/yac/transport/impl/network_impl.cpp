@@ -154,8 +154,14 @@ namespace iroha {
       void NetworkImpl::createPeerConnection(
           const shared_model::interface::Peer &peer) {
         if (peers_.count(peer.address()) == 0) {
-          peers_[peer.address()] = proto::Yac::NewStub(grpc::CreateChannel(
-              peer.address(), grpc::InsecureChannelCredentials()));
+          // in order to bypass built-it limitation of gRPC message size
+          grpc::ChannelArguments args;
+          args.SetMaxSendMessageSize(INT_MAX);
+          args.SetMaxReceiveMessageSize(INT_MAX);
+
+          peers_[peer.address()] =
+              proto::Yac::NewStub(grpc::CreateCustomChannel(
+                  peer.address(), grpc::InsecureChannelCredentials(), args));
         }
       }
 

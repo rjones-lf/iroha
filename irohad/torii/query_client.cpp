@@ -19,11 +19,17 @@ namespace torii_utils {
   using iroha::protocol::QueryResponse;
 
   QuerySyncClient::QuerySyncClient(const std::string &ip, size_t port)
-      : ip_(ip),
-        port_(port),
-        stub_(iroha::protocol::QueryService::NewStub(
-            grpc::CreateChannel(ip + ":" + std::to_string(port),
-                                grpc::InsecureChannelCredentials()))) {}
+      : ip_(ip), port_(port) {
+    // in order to bypass built-it limitation of gRPC message size
+    grpc::ChannelArguments args;
+    args.SetMaxSendMessageSize(INT_MAX);
+    args.SetMaxReceiveMessageSize(INT_MAX);
+
+    stub_ = iroha::protocol::QueryService::NewStub(
+        grpc::CreateCustomChannel(ip + ":" + std::to_string(port),
+                                  grpc::InsecureChannelCredentials(),
+                                  args));
+  }
 
   QuerySyncClient::QuerySyncClient(const QuerySyncClient &rhs)
       : QuerySyncClient(rhs.ip_, rhs.port_) {}

@@ -24,11 +24,17 @@ namespace torii {
   using iroha::protocol::Transaction;
 
   CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
-      : ip_(ip),
-        port_(port),
-        stub_(iroha::protocol::CommandService::NewStub(
-            grpc::CreateChannel(ip + ":" + std::to_string(port),
-                                grpc::InsecureChannelCredentials()))) {}
+      : ip_(ip), port_(port) {
+    // in order to bypass built-it limitation of gRPC message size
+    grpc::ChannelArguments args;
+    args.SetMaxSendMessageSize(INT_MAX);
+    args.SetMaxReceiveMessageSize(INT_MAX);
+
+    stub_ = iroha::protocol::CommandService::NewStub(
+        grpc::CreateCustomChannel(ip + ":" + std::to_string(port),
+                                  grpc::InsecureChannelCredentials(),
+                                  args));
+  }
 
   CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
       : CommandSyncClient(rhs.ip_, rhs.port_) {}

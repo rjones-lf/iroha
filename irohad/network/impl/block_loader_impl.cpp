@@ -157,12 +157,18 @@ proto::Loader::Stub &BlockLoaderImpl::getPeerStub(
     const shared_model::interface::Peer &peer) {
   auto it = peer_connections_.find(peer.address());
   if (it == peer_connections_.end()) {
-    it = peer_connections_
-             .insert(std::make_pair(
-                 peer.address(),
-                 proto::Loader::NewStub(grpc::CreateChannel(
-                     peer.address(), grpc::InsecureChannelCredentials()))))
-             .first;
+    // in order to bypass built-it limitation of gRPC message size
+    grpc::ChannelArguments args;
+    args.SetMaxSendMessageSize(INT_MAX);
+    args.SetMaxReceiveMessageSize(INT_MAX);
+
+    it =
+        peer_connections_
+            .insert(std::make_pair(
+                peer.address(),
+                proto::Loader::NewStub(grpc::CreateCustomChannel(
+                    peer.address(), grpc::InsecureChannelCredentials(), args))))
+            .first;
   }
   return *it->second;
 }
