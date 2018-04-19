@@ -22,7 +22,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/block.hpp"
 #include "client.hpp"
 #include "common/assert_config.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
@@ -31,6 +31,7 @@
 #include "interactive/interactive_cli.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_query_factory.hpp"
+#include "model/converters/pb_block_factory.hpp"
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
 #include "validators.hpp"
@@ -115,8 +116,8 @@ int main(int argc, char *argv[]) {
     // Convert to json
     std::ofstream output_file("genesis.block");
     output_file << shared_model::converters::protobuf::modelToJson(
-        shared_model::proto::from_old(block)
-      );
+        shared_model::proto::Block(
+            iroha::model::converters::PbBlockFactory().serialize(block)));
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network
@@ -193,6 +194,11 @@ int main(int argc, char *argv[]) {
           FLAGS_pass_phrase);
       return EXIT_FAILURE;
     }
+
+    iroha::keypair_t old_keypair(
+        iroha::pubkey_t::from_string(toBinaryString(keypair->publicKey())),
+        iroha::pubkey_t::from_string(toBinaryString(keypair->privateKey())));
+
     // TODO 13/09/17 grimadas: Init counters from Iroha, or read from disk?
     // IR-334
     InteractiveCli interactiveCli(
@@ -200,8 +206,7 @@ int main(int argc, char *argv[]) {
         FLAGS_peer_ip,
         FLAGS_torii_port,
         0,
-        std::make_shared<iroha::model::ModelCryptoProviderImpl>(
-            *std::unique_ptr<iroha::keypair_t>(keypair->makeOldModel())));
+        std::make_shared<iroha::model::ModelCryptoProviderImpl>(old_keypair));
     interactiveCli.run();
   } else {
     logger->error("Invalid flags");

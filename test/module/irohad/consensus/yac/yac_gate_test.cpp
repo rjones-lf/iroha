@@ -18,7 +18,6 @@
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
 
-#include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"

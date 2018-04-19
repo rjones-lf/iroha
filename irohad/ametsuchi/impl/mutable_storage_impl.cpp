@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
