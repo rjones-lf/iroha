@@ -116,6 +116,7 @@ namespace iroha {
                     })
                     // need only the first
                     .first()
+                    .retry()
                     .subscribe(
                         // if load is successful from at least one node
                         [subscriber](auto block) {
