@@ -53,6 +53,13 @@ using namespace iroha::ametsuchi;
 using namespace framework::expected;
 using namespace shared_model::permissions;
 
+template <class T>
+std::shared_ptr<T> getCommand(
+    std::shared_ptr<shared_model::interface::Command> command) {
+  return clone(*(
+      boost::get<shared_model::detail::PolymorphicWrapper<T>>(command->get())));
+}
+
 class CommandValidateExecuteTest : public ::testing::Test {
  public:
   void SetUp() override {
@@ -1611,218 +1618,243 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
 //}
-//
-// class AddPeerTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    add_peer = std::make_shared<AddPeer>();
-//    add_peer->peer.address = "iroha_node:10001";
-//    add_peer->peer.pubkey.fill(4);
-//
-//    command = add_peer;
-//    role_permissions = {can_add_peer};
-//  }
-//
-//  std::shared_ptr<AddPeer> add_peer;
-//};
-//
-// TEST_F(AddPeerTest, ValidCase) {
-//  // Valid case
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_command,
-//  insertPeer(_)).WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(AddPeerTest, InvalidCaseWhenNoPermissions) {
-//  // Valid case
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given AddPeer
-// * @when command tries to insert peer but insertion fails
-// * @then execute returns false
-// */
-// TEST_F(AddPeerTest, InvalidCaseWhenInsertPeerFails) {
-//  EXPECT_CALL(*wsv_command, insertPeer(_)).WillOnce(Return(makeEmptyError()));
-//
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
-//
-// class CreateRoleTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//    std::set<std::string> perm = {can_create_role};
-//    create_role = std::make_shared<CreateRole>("master", perm);
-//    command = create_role;
-//    role_permissions = {can_create_role};
-//  }
-//  std::shared_ptr<CreateRole> create_role;
-//};
-//
-// TEST_F(CreateRoleTest, ValidCase) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillRepeatedly(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillRepeatedly(Return(role_permissions));
-//  EXPECT_CALL(*wsv_command, insertRole(create_role->role_name))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertRolePermissions(create_role->role_name, create_role->permissions))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateRoleTest, InvalidCaseWhenNoPermissions) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillRepeatedly(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillRepeatedly(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillRepeatedly(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillRepeatedly(Return(role_permissions));
-//  std::set<std::string> perms = {can_add_peer, can_append_role};
-//  command = std::make_shared<CreateRole>("master", perms);
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given CreateRole
-// * @when command tries to create new role, but insertion fails
-// * @then execute returns false
-// */
-// TEST_F(CreateRoleTest, InvalidCaseWhenRoleInsertionFails) {
-//  EXPECT_CALL(*wsv_command, insertRole(create_role->role_name))
-//      .WillOnce(Return(makeEmptyError()));
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
-//
-// class AppendRoleTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//    exact_command = std::make_shared<AppendRole>("yoda", "master");
-//    command = exact_command;
-//    role_permissions = {can_append_role};
-//  }
-//  std::shared_ptr<AppendRole> exact_command;
-//};
-//
-// TEST_F(AppendRoleTest, ValidCase) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .Times(2)
-//      .WillRepeatedly(Return(admin_roles));
-//
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
-//      .WillOnce(Return(role_permissions));
-//
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertAccountRole(exact_command->account_id, exact_command->role_name))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(AppendRoleTest, InvalidCaseNoPermissions) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given AppendRole
-// * @when command tries to append non-existing role
-// * @then execute() fails and returns false
-// */
-// TEST_F(AppendRoleTest, InvalidCaseNoAccountRole) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .Times(2)
-//      .WillOnce(Return(admin_roles))
-//      .WillOnce((Return(boost::none)));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
-//      .WillOnce(Return(role_permissions));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given AppendRole
-// * @when command tries to append non-existing role and creator does not have
-// any
-// * roles
-// * @then execute() fails and returns false
-// */
-// TEST_F(AppendRoleTest, InvalidCaseNoAccountRoleAndNoPermission) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .Times(2)
-//      .WillOnce(Return(admin_roles))
-//      .WillOnce((Return(boost::none)));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given AppendRole
-// * @when command tries to append role, but creator account does not have
-// * necessary permission
-// * @then execute() fails and returns false
-// */
-// TEST_F(AppendRoleTest, InvalidCaseRoleHasNoPermissions) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .Times(2)
-//      .WillOnce(Return(admin_roles))
-//      .WillOnce((Return(admin_roles)));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillOnce(Return(role_permissions))
-//      .WillOnce(Return(boost::none));
-//  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
-//      .WillOnce(Return(role_permissions));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given AppendRole
-// * @when command tries to append role, but insertion of account fails
-// * @then execute() fails
-// */
-// TEST_F(AppendRoleTest, InvalidCaseInsertAccountRoleFails) {
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertAccountRole(exact_command->account_id, exact_command->role_name))
-//      .WillOnce(Return(makeEmptyError()));
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
 
- class DetachRoleTest : public CommandValidateExecuteTest {
+class AddPeerTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_add_peer};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(*(
+        TestTransactionBuilder()
+            .addPeer("iroha_node:10001", shared_model::crypto::PublicKey("key"))
+            .build()
+            .commands()
+            .front()));
+    add_peer = getCommand<shared_model::interface::AddPeer>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::AddPeer> add_peer;
+};
+
+TEST_F(AddPeerTest, ValidCase) {
+  // Valid case
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_command, insertPeer(_)).WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(AddPeerTest, InvalidCaseWhenNoPermissions) {
+  // Valid case
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given AddPeer
+ * @when command tries to insert peer but insertion fails
+ * @then execute returns false
+ */
+TEST_F(AddPeerTest, InvalidCaseWhenInsertPeerFails) {
+  EXPECT_CALL(*wsv_command, insertPeer(_)).WillOnce(Return(makeEmptyError()));
+
+  ASSERT_NO_THROW(checkErrorCase(execute(command)));
+}
+
+class CreateRoleTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    std::set<std::string> perm = {can_create_role};
+    role_permissions = {can_create_role};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    exact_command = clone(*(TestTransactionBuilder()
+                                .createRole("yoda", perm)
+                                .build()
+                                .commands()
+                                .front()));
+    create_role =
+        getCommand<shared_model::interface::CreateRole>(exact_command);
+
+    std::set<std::string> master_perms = {can_add_peer, can_append_role};
+    master_command = clone(*(TestTransactionBuilder()
+                                 .createRole("master", master_perms)
+                                 .build()
+                                 .commands()
+                                 .front()));
+  }
+  std::shared_ptr<shared_model::interface::Command> exact_command;
+  std::shared_ptr<shared_model::interface::CreateRole> create_role;
+  std::shared_ptr<shared_model::interface::Command> master_command;
+};
+
+TEST_F(CreateRoleTest, ValidCase) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillRepeatedly(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillRepeatedly(Return(role_permissions));
+  EXPECT_CALL(*wsv_command, insertRole(create_role->roleName()))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command,
+              insertRolePermissions(create_role->roleName(),
+                                    create_role->rolePermissions()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
+}
+
+TEST_F(CreateRoleTest, InvalidCaseWhenNoPermissions) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillRepeatedly(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillRepeatedly(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillRepeatedly(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillRepeatedly(Return(role_permissions));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(master_command)));
+}
+
+/**
+ * @given CreateRole
+ * @when command tries to create new role, but insertion fails
+ * @then execute returns false
+ */
+TEST_F(CreateRoleTest, InvalidCaseWhenRoleInsertionFails) {
+  EXPECT_CALL(*wsv_command, insertRole(create_role->roleName()))
+      .WillOnce(Return(makeEmptyError()));
+  ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
+}
+
+class AppendRoleTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_append_role};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    exact_command = clone(*(TestTransactionBuilder()
+                                .appendRole("yoda", "master")
+                                .build()
+                                .commands()
+                                .front()));
+    exact_cmd = getCommand<shared_model::interface::AppendRole>(exact_command);
+  }
+  std::shared_ptr<shared_model::interface::Command> exact_command;
+  std::shared_ptr<shared_model::interface::AppendRole> exact_cmd;
+};
+
+TEST_F(AppendRoleTest, ValidCase) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .Times(2)
+      .WillRepeatedly(Return(admin_roles));
+
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command,
+              insertAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
+}
+
+TEST_F(AppendRoleTest, InvalidCaseNoPermissions) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given AppendRole
+ * @when command tries to append non-existing role
+ * @then execute() fails and returns false
+ */
+TEST_F(AppendRoleTest, InvalidCaseNoAccountRole) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .Times(2)
+      .WillOnce(Return(admin_roles))
+      .WillOnce((Return(boost::none)));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+      .WillOnce(Return(role_permissions));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given AppendRole
+ * @when command tries to append non-existing role and creator does not have
+ any
+ * roles
+ * @then execute() fails and returns false
+ */
+TEST_F(AppendRoleTest, InvalidCaseNoAccountRoleAndNoPermission) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .Times(2)
+      .WillOnce(Return(admin_roles))
+      .WillOnce((Return(boost::none)));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given AppendRole
+ * @when command tries to append role, but creator account does not have
+ * necessary permission
+ * @then execute() fails and returns false
+ */
+TEST_F(AppendRoleTest, InvalidCaseRoleHasNoPermissions) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .Times(2)
+      .WillOnce(Return(admin_roles))
+      .WillOnce((Return(admin_roles)));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillOnce(Return(role_permissions))
+      .WillOnce(Return(boost::none));
+  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+      .WillOnce(Return(role_permissions));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given AppendRole
+ * @when command tries to append role, but insertion of account fails
+ * @then execute() fails
+ */
+TEST_F(AppendRoleTest, InvalidCaseInsertAccountRoleFails) {
+  EXPECT_CALL(*wsv_command,
+              insertAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+      .WillOnce(Return(makeEmptyError()));
+  ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
+}
+
+class DetachRoleTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
@@ -1831,31 +1863,28 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
     exact_command = clone(*(TestTransactionBuilder()
-        .detachRole("yoda", "master")
-        .build()
-        .commands()
-        .front()));
-    exact_cmd = clone(*(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::DetachRole>>(exact_command->get())));
+                                .detachRole("yoda", "master")
+                                .build()
+                                .commands()
+                                .front()));
+    exact_cmd = getCommand<shared_model::interface::DetachRole>(exact_command);
   }
-   std::shared_ptr<shared_model::interface::Command> exact_command;
-   std::shared_ptr<shared_model::interface::DetachRole> exact_cmd;
+  std::shared_ptr<shared_model::interface::Command> exact_command;
+  std::shared_ptr<shared_model::interface::DetachRole> exact_cmd;
 };
 
- TEST_F(DetachRoleTest, ValidCase) {
+TEST_F(DetachRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+  EXPECT_CALL(*wsv_command,
+              deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
 }
 
- TEST_F(DetachRoleTest, InvalidCase) {
+TEST_F(DetachRoleTest, InvalidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
@@ -1868,10 +1897,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
  * @when deletion of account role fails
  * @then execute fails()
  */
- TEST_F(DetachRoleTest, InvalidCaseWhenDeleteAccountRoleFails) {
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+TEST_F(DetachRoleTest, InvalidCaseWhenDeleteAccountRoleFails) {
+  EXPECT_CALL(*wsv_command,
+              deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
 }
@@ -1890,9 +1918,8 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
                                 .build()
                                 .commands()
                                 .front()));
-    exact_cmd = clone(*(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::GrantPermission>>(exact_command->get())));
+    exact_cmd =
+        getCommand<shared_model::interface::GrantPermission>(exact_command);
   }
   std::shared_ptr<shared_model::interface::Command> exact_command;
   std::shared_ptr<shared_model::interface::GrantPermission> exact_cmd;
@@ -1947,9 +1974,8 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
                                 .build()
                                 .commands()
                                 .front()));
-    exact_cmd = clone(*(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::RevokePermission>>(exact_command->get())));
+    exact_cmd =
+        getCommand<shared_model::interface::RevokePermission>(exact_command);
   }
 
   std::shared_ptr<shared_model::interface::Command> exact_command;
@@ -2003,9 +2029,8 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
                                .build()
                                .commands()
                                .front()));
-    adminCmd = clone(*(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::SetAccountDetail>>(adminCommand->get())));
+    adminCmd =
+        getCommand<shared_model::interface::SetAccountDetail>(adminCommand);
 
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
     command = clone(*(TestTransactionBuilder()
@@ -2013,9 +2038,7 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
                           .build()
                           .commands()
                           .front()));
-    cmd = clone(
-        *(boost::get<shared_model::detail::PolymorphicWrapper<
-              shared_model::interface::SetAccountDetail>>(command->get())));
+    cmd = getCommand<shared_model::interface::SetAccountDetail>(command);
 
     role_permissions = {can_set_quorum};
   }
