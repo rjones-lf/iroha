@@ -1865,95 +1865,97 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //      .WillOnce(Return(makeEmptyError()));
 //  ASSERT_NO_THROW(checkErrorCase(execute()));
 //}
-//
-// class GrantPermissionTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//    const auto perm = "can_add_signatory";
-//    exact_command = std::make_shared<GrantPermission>("yoda", perm);
-//    command = exact_command;
-//    // It is different from 'perm' due to realisation of old/new model. See
-//    // GrantablePermissions in primitive.proto
-//    new_model_permission = "can_add_my_signatory";
-//    role_permissions = {can_grant + new_model_permission};
-//  }
-//  std::shared_ptr<GrantPermission> exact_command;
-//  std::string new_model_permission;
-//};
-//
-// TEST_F(GrantPermissionTest, ValidCase) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_command,
-//              insertAccountGrantablePermission(exact_command->account_id,
-//                                               creator->accountId(),
-//                                               new_model_permission))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given GrantPermission
-// * @when command tries to grant permission but insertion fails
-// * @then execute() fails
-// */
-// TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
-//  EXPECT_CALL(*wsv_command,
-//              insertAccountGrantablePermission(exact_command->account_id,
-//                                               creator->accountId(),
-//                                               new_model_permission))
-//      .WillOnce(Return(makeEmptyError()));
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
+
+ class GrantPermissionTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    expected_permission = can_add_my_signatory;
+    role_permissions = {can_grant + expected_permission};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    exact_command = clone(*(TestTransactionBuilder()
+        .grantPermission("yoda", expected_permission)
+        .build()
+        .commands()
+        .front()));
+    exact_cmd = clone(*(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::GrantPermission>>(exact_command->get())));
+  }
+   std::shared_ptr<shared_model::interface::Command> exact_command;
+   std::shared_ptr<shared_model::interface::GrantPermission> exact_cmd;
+   std::string expected_permission;
+};
+
+ TEST_F(GrantPermissionTest, ValidCase) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_command,
+              insertAccountGrantablePermission(exact_cmd->accountId(),
+                                               creator->accountId(),
+                                               expected_permission))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
+}
+
+ TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given GrantPermission
+ * @when command tries to grant permission but insertion fails
+ * @then execute() fails
+ */
+ TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
+  EXPECT_CALL(*wsv_command,
+              insertAccountGrantablePermission(exact_cmd->accountId(),
+                                               creator->accountId(),
+                                               expected_permission))
+      .WillOnce(Return(makeEmptyError()));
+  ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
+}
 
 class RevokePermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
+    expected_permission = "can_add_my_signatory";
+
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
     exact_command = clone(*(TestTransactionBuilder()
-        .revokePermission("yoda", can_set_quorum)//can_add_signatory)
+        .revokePermission("yoda", expected_permission)
         .build()
         .commands()
         .front()));
     exact_cmd = clone(*(
         boost::get<shared_model::detail::PolymorphicWrapper<
             shared_model::interface::RevokePermission>>(exact_command->get())));
-
-    new_model_permission = "can_add_my_signatory";
   }
 
   std::shared_ptr<shared_model::interface::Command> exact_command;
   std::shared_ptr<shared_model::interface::RevokePermission> exact_cmd;
-  std::string new_model_permission;
+  std::string expected_permission;
 };
 
 TEST_F(RevokePermissionTest, ValidCase) {
-  std::cout << std::endl;
-  std::cout << "}}}}}}}}}}" << exact_cmd->accountId() << "{{{" << std::endl;
-  std::cout << "}}}}}}}}}}" << exact_cmd->permissionName() << "{{{" << std::endl;
-  std::cout << "}}}}}}}}}}" << exact_cmd->toString() << "{{{" << std::endl;
-
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  exact_cmd->accountId(), admin_id, new_model_permission))
+                  exact_cmd->accountId(), admin_id, expected_permission))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command,
               deleteAccountGrantablePermission(exact_cmd->accountId(),
                                                creator->accountId(),
-                                               new_model_permission))
+                                               expected_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
 }
@@ -1961,7 +1963,7 @@ TEST_F(RevokePermissionTest, ValidCase) {
 TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  exact_cmd->accountId(), admin_id, new_model_permission))
+                  exact_cmd->accountId(), admin_id, expected_permission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
 }
@@ -1975,7 +1977,7 @@ TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
   EXPECT_CALL(*wsv_command,
               deleteAccountGrantablePermission(exact_cmd->accountId(),
                                                creator->accountId(),
-                                               new_model_permission))
+                                               expected_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
 }
