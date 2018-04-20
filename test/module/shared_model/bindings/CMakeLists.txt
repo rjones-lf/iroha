@@ -68,3 +68,10 @@ if (SWIG_JAVA)
   set_tests_properties(java_builders_test
     PROPERTIES DEPENDS builders)
 endif()
+
+if (SWIG_NODE)
+  find_package (nodejs REQUIRED)
+  add_test(NAME javascript_tests
+    COMMAND npm run test
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/shared_model/packages/javascript)
+endif()
