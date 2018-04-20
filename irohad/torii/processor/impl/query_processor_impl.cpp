@@ -90,7 +90,7 @@ namespace iroha {
 
       const auto &wsv_query = storage_->getWsvQuery();
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
-      auto qpf_response = qpf.execute(*qry);
+      auto qpf_response = qpf.validateAndExecute(*qry);
       auto qry_resp =
           std::static_pointer_cast<shared_model::proto::QueryResponse>(
               qpf_response);

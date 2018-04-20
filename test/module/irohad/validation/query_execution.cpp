@@ -77,7 +77,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
       const shared_model::interface::Query &query) {
-    return factory->execute(query);
+    return factory->validateAndExecute(query);
   }
 
   /**

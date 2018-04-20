@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ namespace shared_model {
 namespace iroha {
 
   /**
-   * Converting business objects to protobuf and vice versa
+   * Converting model objects to protobuf and vice versa
    */
   class QueryProcessingFactory {
     using QueryResponseBuilder =
@@ -45,9 +45,9 @@ namespace iroha {
      * Execute and validate query.
      *
      * @param query
-     * @return
+     * @return shared pointer to query response
      */
-    std::shared_ptr<shared_model::interface::QueryResponse> execute(
+    std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
         const shared_model::interface::Query &query);
     /**
      *

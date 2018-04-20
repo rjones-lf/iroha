@@ -348,7 +348,8 @@ QueryProcessingFactory::executeGetSignatories(
 }
 
 std::shared_ptr<shared_model::interface::QueryResponse>
-QueryProcessingFactory::execute(const shared_model::interface::Query &query) {
+QueryProcessingFactory::validateAndExecute(
+    const shared_model::interface::Query &query) {
   const auto &query_hash = query.hash();
   QueryResponseBuilderDone builder;
   // TODO: 29/04/2018 x3medima18, Add visitor class, IR-1185
