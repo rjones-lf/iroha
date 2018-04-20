@@ -32,7 +32,7 @@ namespace iroha {
      */
     template <typename T>
     auto createClient(const grpc::string& address) {
-      // in order to bypass built-it limitation of gRPC message size
+      // in order to bypass built-in limitation of gRPC message size
       grpc::ChannelArguments args;
       args.SetMaxSendMessageSize(INT_MAX);
       args.SetMaxReceiveMessageSize(INT_MAX);

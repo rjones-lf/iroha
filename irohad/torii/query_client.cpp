@@ -11,8 +11,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/query_client.hpp"
+
+#include "network/impl/grpc_channel_builder.hpp"
 
 namespace torii_utils {
 
@@ -20,8 +21,10 @@ namespace torii_utils {
   using iroha::protocol::QueryResponse;
 
   QuerySyncClient::QuerySyncClient(const std::string &ip, size_t port)
-      : ip_(ip), port_(port), stub_(iroha::network::createClient<iroha::protocol::QueryService>(
-      ip + ":" + std::to_string(port))) {}
+      : ip_(ip),
+        port_(port),
+        stub_(iroha::network::createClient<iroha::protocol::QueryService>(
+            ip + ":" + std::to_string(port))) {}
 
   QuerySyncClient::QuerySyncClient(const QuerySyncClient &rhs)
       : QuerySyncClient(rhs.ip_, rhs.port_) {}
