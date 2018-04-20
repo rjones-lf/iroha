@@ -111,31 +111,8 @@ class HeavyTransactionTest : public ::testing::Test {
 };
 
 /**
- * @given some user with all required permissions
- * @when send tx with addAccountDetail with big, but stateless invalid data
- * inside
- * @then transaction is passed
- */
-TEST_F(HeavyTransactionTest, OneLargeTx) {
-  IntegrationTestFramework()
-      .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      // "foo" transactions will not be passed because it has large size into
-      // one field - 5Mb per one set
-      .sendTx(complete(setAcountDetailTx("foo", generateData(5 * 1024 * 1024))),
-              [](const auto &status) {
-                ASSERT_TRUE(boost::apply_visitor(
-                    shared_model::interface::SpecifiedVisitor<
-                        shared_model::interface::StatelessFailedTxResponse>(),
-                    status.get()));
-              })
-      .done();
-}
-
-/**
+ * TODO: refactor the test when all stability issues are fixed
+ * IR-1264 20/04/2018 neewy
  * @given some user with all required permissions
  * @when send many txes with addAccountDetail with large data inside
  * @then transaction have been passed
@@ -189,12 +166,13 @@ TEST_F(HeavyTransactionTest, VeryLargeTxWithManyCommands) {
 
 /**
  * TODO: disabled until proposal process time in simulator is not optimized
- * and now it takes more than 5 minutes 19/04/2018 neewy
+ * and the test freezes (on a proposal verification stage)
+ * IR-1264 20/04/2018 neewy
  * @given some user with all required permissions
  * AND max proposal size is 1.
  * @when send txes with addAccountDetail with large data inside.
  * AND transactions are passed stateful validation
- * @then query executed sucessfully
+ * @then query executed successfully
  */
 TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto number_of_times = 15u;

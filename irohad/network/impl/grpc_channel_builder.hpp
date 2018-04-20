@@ -26,7 +26,7 @@ namespace iroha {
     /**
      * Creates client which is capable of sending and receiving
      * messages of INT_MAX bytes size
-     * @tparam T type for gRPC stun, e.g. proto::Yac
+     * @tparam T type for gRPC stub, e.g. proto::Yac
      * @param address ip address for connection, ipv4:port
      * @return gRPC stub of parametrized type
      */
