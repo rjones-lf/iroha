@@ -1215,334 +1215,361 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 //}
-//
-// class TransferAssetTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    asset = clone(shared_model::proto::AssetBuilder()
-//                      .assetId(asset_id)
-//                      .domainId(domain_id)
-//                      .precision(2)
-//                      .build());
-//
-//    balance = clone(shared_model::proto::AmountBuilder()
-//                        .intValue(150)
-//                        .precision(2)
-//                        .build());
-//
-//    src_wallet = clone(shared_model::proto::AccountAssetBuilder()
-//                           .assetId(asset_id)
-//                           .accountId(admin_id)
-//                           .balance(*balance)
-//                           .build());
-//
-//    dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
-//                           .assetId(asset_id)
-//                           .accountId(account_id)
-//                           .balance(*balance)
-//                           .build());
-//
-//    transfer_asset = std::make_shared<TransferAsset>();
-//    transfer_asset->src_account_id = admin_id;
-//    transfer_asset->dest_account_id = account_id;
-//    transfer_asset->asset_id = asset_id;
-//    transfer_asset->description = description;
-//    Amount amount(150, 2);
-//    transfer_asset->amount = amount;
-//    command = transfer_asset;
-//    role_permissions = {can_transfer, can_receive};
-//  }
-//
-//  std::shared_ptr<shared_model::interface::Amount> balance;
-//  std::shared_ptr<shared_model::interface::Asset> asset;
-//  std::shared_ptr<shared_model::interface::AccountAsset> src_wallet,
-//  dst_wallet;
-//
-//  std::shared_ptr<TransferAsset> transfer_asset;
-//};
-//
-// TEST_F(TransferAssetTest, ValidWhenNewWallet) {
+
+class TransferAssetTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    asset = clone(shared_model::proto::AssetBuilder()
+                      .assetId(asset_id)
+                      .domainId(domain_id)
+                      .precision(2)
+                      .build());
+
+    balance = clone(shared_model::proto::AmountBuilder()
+                        .intValue(150)
+                        .precision(2)
+                        .build());
+
+    src_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                           .assetId(asset_id)
+                           .accountId(admin_id)
+                           .balance(*balance)
+                           .build());
+
+    dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
+                           .assetId(asset_id)
+                           .accountId(account_id)
+                           .balance(*balance)
+                           .build());
+
+    role_permissions = {can_transfer, can_receive};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(*(
+        TestTransactionBuilder()
+            .transferAsset(admin_id, account_id, asset_id, description, "150.00")
+            .build()
+            .commands()
+            .front()));
+    transfer_asset =
+        getCommand<shared_model::interface::TransferAsset>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Amount> balance;
+  std::shared_ptr<shared_model::interface::Asset> asset;
+  std::shared_ptr<shared_model::interface::AccountAsset> src_wallet, dst_wallet;
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::TransferAsset> transfer_asset;
+};
+
+//TEST_F(TransferAssetTest, ValidWhenNewWallet) {
 //  // When there is no wallet - new accountAsset will be created
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
+//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
 //      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
+//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
 //      .WillOnce(Return(admin_roles));
 //  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
 //      .Times(2)
 //      .WillRepeatedly(Return(role_permissions));
 //
-//  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->dest_account_id, _))
+//  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
 //      .WillOnce(Return(boost::none));
 //
 //  EXPECT_CALL(
 //      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .Times(2)
+//      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+//      .Times(2)
 //      .WillRepeatedly(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
+//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
 //      .Times(2)
 //      .WillRepeatedly(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
+//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
 //      .WillOnce(Return(account));
 //
 //  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
 //      .Times(2)
 //      .WillRepeatedly(Return(WsvCommandResult()));
 //
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
+//  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
 //}
-//
-// TEST_F(TransferAssetTest, ValidWhenExistingWallet) {
-//  // When there is a wallet - no new accountAsset created
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(transfer_asset->dest_account_id,
-//                              transfer_asset->asset_id))
-//      .WillOnce(Return(dst_wallet));
-//
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .Times(2)
-//      .WillRepeatedly(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .Times(2)
-//      .WillRepeatedly(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
-//      .Times(2)
-//      .WillRepeatedly(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
-//  // Creator has no permissions
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
-//  // No destination account exists
-//  transfer_asset->dest_account_id = "noacc";
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAsset) {
-//  // No source account asset exists
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset));
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given TransferAsset
-// * @when command tries to transfer asset from non-existing account
-// * @then execute fails and returns false
-// */
-// TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAssetDuringExecute) {
-//  // No source account asset exists
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset));
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .Times(2) .WillOnce(Return(src_wallet))
-//      .WillOnce(Return(boost::none));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
-//      .WillOnce(Return(account));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given TransferAsset
-// * @when command tries to transfer non-existent asset
-// * @then isValid fails and returns false
-// */
-// TEST_F(TransferAssetTest, InvalidWhenNoAssetDuringValidation) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given TransferAsset
-// * @when command tries to transfer non-existent asset
-// * @then execute fails and returns false
-// */
-// TEST_F(TransferAssetTest, InvalidWhenNoAssetId) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset))
-//      .WillOnce(Return(boost::none));
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .Times(2)
-//      .WillRepeatedly(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(transfer_asset->dest_account_id,
-//                              transfer_asset->asset_id))
-//      .WillOnce(Return(dst_wallet));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
-//      .WillOnce(Return(account));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
-//  // No sufficient funds
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  Amount amount(155, 2);
-//
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .WillOnce(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given TransferAsset
-// * @when command tries to transfer amount which is less than source balance
-// * @then execute fails and returns false
-// */
-// TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset));
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .WillOnce(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(transfer_asset->dest_account_id,
-//                              transfer_asset->asset_id))
-//      .WillOnce(Return(dst_wallet));
-//
-//  // More than account balance
-//  transfer_asset->amount = Amount(155, 2);
-//
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
-//
-// TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
-//  // Amount has wrong precision
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->src_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .Times(2)
-//      .WillRepeatedly(Return(role_permissions));
-//
-//  Amount amount(transfer_asset->amount.getIntValue(), 30);
-//  transfer_asset->amount = amount;
-//
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .WillOnce(Return(asset));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
+
+TEST_F(TransferAssetTest, ValidWhenExistingWallet) {
+  // When there is a wallet - no new accountAsset created
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->destAccountId(),
+                              transfer_asset->assetId()))
+      .WillOnce(Return(dst_wallet));
+
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .Times(2)
+      .WillRepeatedly(Return(src_wallet));
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .Times(2)
+      .WillRepeatedly(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
+      .Times(2)
+      .WillRepeatedly(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
+  // Creator has no permissions
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
+  // No destination account exists
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command = clone(*(
+      TestTransactionBuilder()
+          .transferAsset(admin_id, "noacc", asset_id, description, "150.00")
+          .build()
+          .commands()
+          .front()));
+  auto transfer_asset =
+      getCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(boost::none));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAsset) {
+  // No source account asset exists
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset));
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given TransferAsset
+ * @when command tries to transfer asset from non-existing account
+ * @then execute fails and returns false
+ */
+TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAssetDuringExecute) {
+  // No source account asset exists
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset));
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .Times(2)
+      .WillOnce(Return(src_wallet))
+      .WillOnce(Return(boost::none));
+  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
+      .WillOnce(Return(account));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given TransferAsset
+ * @when command tries to transfer non-existent asset
+ * @then isValid fails and returns false
+ */
+TEST_F(TransferAssetTest, InvalidWhenNoAssetDuringValidation) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given TransferAsset
+ * @when command tries to transfer non-existent asset
+ * @then execute fails and returns false
+ */
+TEST_F(TransferAssetTest, InvalidWhenNoAssetId) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset))
+      .WillOnce(Return(boost::none));
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .Times(2)
+      .WillRepeatedly(Return(src_wallet));
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->destAccountId(),
+                              transfer_asset->assetId()))
+      .WillOnce(Return(dst_wallet));
+  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
+      .WillOnce(Return(account));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
+  // No sufficient funds
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  Amount amount(155, 2);
+
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .WillOnce(Return(src_wallet));
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given TransferAsset
+ * @when command tries to transfer amount which is less than source balance
+ * @then execute fails and returns false
+ */
+TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
+  // More than account balance
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command = clone(*(
+      TestTransactionBuilder()
+          .transferAsset(admin_id, account_id, asset_id, description, "155.00")
+          .build()
+          .commands()
+          .front()));
+  auto transfer_asset =
+      getCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset));
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .WillOnce(Return(src_wallet));
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->destAccountId(),
+                              transfer_asset->assetId()))
+      .WillOnce(Return(dst_wallet));
+
+  ASSERT_NO_THROW(checkErrorCase(execute(command)));
+}
+
+TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
+  // Amount has wrong precision
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command = clone(*(
+      TestTransactionBuilder()
+          .transferAsset(admin_id, account_id, asset_id, description, "155.000000000000000000000000")
+          .build()
+          .commands()
+          .front()));
+  auto transfer_asset =
+      getCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .Times(2)
+      .WillRepeatedly(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .WillOnce(Return(asset));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
 ///**
 // * @given TransferAsset
 // * @when command tries to transfer amount with wrong precision
 // * @then execute fails and returns false
 // */
-// TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
+//TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
+//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
 //      .WillOnce(Return(asset));
 //  EXPECT_CALL(
 //      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .WillOnce(Return(src_wallet));
+//      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+//      .WillOnce(Return(src_wallet));
 //  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(transfer_asset->dest_account_id,
-//                              transfer_asset->asset_id))
+//              getAccountAsset(transfer_asset->destAccountId(),
+//                              transfer_asset->assetId()))
 //      .WillOnce(Return(dst_wallet));
 //
 //  Amount amount(transfer_asset->amount.getIntValue(), 30);
 //  transfer_asset->amount = amount;
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
+//  ASSERT_NO_THROW(checkErrorCase(execute(command)));
 //}
-//
+
 ///**
 // * @given TransferAsset
 // * @when command tries to transfer asset which overflows destination balance
 // * @then execute fails and returns false
 // */
-// TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
+//TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
 //  std::shared_ptr<shared_model::interface::Amount> max_balance = clone(
 //      shared_model::proto::AmountBuilder()
 //          .intValue(
@@ -1556,68 +1583,82 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //                         .balance(*max_balance)
 //                         .build());
 //
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
+//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
 //      .WillOnce(Return(asset));
 //  EXPECT_CALL(
 //      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .WillOnce(Return(src_wallet));
+//      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+//      .WillOnce(Return(src_wallet));
 //  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(transfer_asset->dest_account_id,
-//                              transfer_asset->asset_id))
+//              getAccountAsset(transfer_asset->destAccountId(),
+//                              transfer_asset->assetId()))
 //      .WillOnce(Return(dst_wallet));
 //
 //  // More than account balance
 //  transfer_asset->amount = (max_amount - Amount(100, 2)).value();
 //
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
+//  ASSERT_NO_THROW(checkErrorCase(execute(command)));
 //}
-//
-// TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
-//  // Transfer creator is not connected to account
-//  transfer_asset->src_account_id = account_id;
-//  transfer_asset->dest_account_id = admin_id;
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(admin_id, account_id,
-//              can_transfer))
-//      .WillOnce(Return(false));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
-//  // Transfer creator is not connected to account
-//  transfer_asset->src_account_id = account_id;
-//  transfer_asset->dest_account_id = admin_id;
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(admin_id, account_id,
-//              can_transfer))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->dest_account_id, _))
-//      .WillOnce(Return(boost::none));
-//
-//  EXPECT_CALL(
-//      *wsv_query,
-//      getAccountAsset(transfer_asset->src_account_id,
-//      transfer_asset->asset_id)) .Times(2)
-//      .WillRepeatedly(Return(src_wallet));
-//  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->asset_id))
-//      .Times(2)
-//      .WillRepeatedly(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->dest_account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
-//      .Times(2)
-//      .WillRepeatedly(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
+
+TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
+  // Transfer creator is not connected to account
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command = clone(*(
+      TestTransactionBuilder()
+          .transferAsset(account_id, admin_id, asset_id, description, "155.00")
+          .build()
+          .commands()
+          .front()));
+  auto transfer_asset =
+      getCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(admin_id, account_id, can_transfer))
+      .WillOnce(Return(false));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
+  // Transfer creator is not connected to account
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command = clone(*(
+      TestTransactionBuilder()
+          .transferAsset(account_id, admin_id, asset_id, description, "155.00")
+          .build()
+          .commands()
+          .front()));
+  auto transfer_asset =
+      getCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(admin_id, account_id, can_transfer))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
+      .WillOnce(Return(boost::none));
+
+  EXPECT_CALL(
+      *wsv_query,
+      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+      .Times(2)
+      .WillRepeatedly(Return(src_wallet));
+  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
+      .Times(2)
+      .WillRepeatedly(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
+      .Times(2)
+      .WillRepeatedly(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
 
 class AddPeerTest : public CommandValidateExecuteTest {
  public:
