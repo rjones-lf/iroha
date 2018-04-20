@@ -385,7 +385,7 @@ TEST_F(BlockQueryTest, HasTxWithExistingHash) {
  * @when hasTxWithHash is invoked on non-existing hash
  * @then False is returned
  */
-TEST_F(BlockQueryTest, HasTxWithExistingHash) {
+TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
   shared_model::crypto::Hash invalid_tx_hash(zero_string);
   EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
 }
