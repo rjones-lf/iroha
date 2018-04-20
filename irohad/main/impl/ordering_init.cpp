@@ -24,12 +24,10 @@ namespace iroha {
     auto OrderingInit::createGate(
         std::shared_ptr<OrderingGateTransport> transport,
         std::shared_ptr<ametsuchi::BlockQuery> block_query) {
-      shared_model::interface::types::HeightType height;
-      block_query->getTopBlocks(1).subscribe(
-          [&height](const auto &block) { height = block->height(); });
+      auto height = block_query->getTopBlocks(1).as_blocking().last()->height();
       auto gate =
           std::make_shared<ordering::OrderingGateImpl>(transport, height);
-      log_->info("Creating Ordering Gate with initial height ", height);
+      log_->info("Creating Ordering Gate with initial height {}", height);
       transport->subscribe(gate);
       return gate;
     }
