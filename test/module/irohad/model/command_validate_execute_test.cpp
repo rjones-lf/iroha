@@ -1821,52 +1821,62 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //      .WillOnce(Return(makeEmptyError()));
 //  ASSERT_NO_THROW(checkErrorCase(execute()));
 //}
-//
-// class DetachRoleTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//    exact_command = std::make_shared<DetachRole>("yoda", "master");
-//    command = exact_command;
-//    role_permissions = {can_detach_role};
-//  }
-//  std::shared_ptr<DetachRole> exact_command;
-//};
-//
-// TEST_F(DetachRoleTest, ValidCase) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(
-//      *wsv_command,
-//      deleteAccountRole(exact_command->account_id, exact_command->role_name))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(DetachRoleTest, InvalidCase) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given DetachRole
-// * @when deletion of account role fails
-// * @then execute fails()
-// */
-// TEST_F(DetachRoleTest, InvalidCaseWhenDeleteAccountRoleFails) {
-//  EXPECT_CALL(
-//      *wsv_command,
-//      deleteAccountRole(exact_command->account_id, exact_command->role_name))
-//      .WillOnce(Return(makeEmptyError()));
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
 
- class GrantPermissionTest : public CommandValidateExecuteTest {
+ class DetachRoleTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_detach_role};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    exact_command = clone(*(TestTransactionBuilder()
+        .detachRole("yoda", "master")
+        .build()
+        .commands()
+        .front()));
+    exact_cmd = clone(*(
+        boost::get<shared_model::detail::PolymorphicWrapper<
+            shared_model::interface::DetachRole>>(exact_command->get())));
+  }
+   std::shared_ptr<shared_model::interface::Command> exact_command;
+   std::shared_ptr<shared_model::interface::DetachRole> exact_cmd;
+};
+
+ TEST_F(DetachRoleTest, ValidCase) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
+}
+
+ TEST_F(DetachRoleTest, InvalidCase) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(exact_command)));
+}
+
+/**
+ * @given DetachRole
+ * @when deletion of account role fails
+ * @then execute fails()
+ */
+ TEST_F(DetachRoleTest, InvalidCaseWhenDeleteAccountRoleFails) {
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountRole(exact_cmd->accountId(), exact_cmd->roleName()))
+      .WillOnce(Return(makeEmptyError()));
+  ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
+}
+
+class GrantPermissionTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
@@ -1876,33 +1886,33 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
     exact_command = clone(*(TestTransactionBuilder()
-        .grantPermission("yoda", expected_permission)
-        .build()
-        .commands()
-        .front()));
+                                .grantPermission("yoda", expected_permission)
+                                .build()
+                                .commands()
+                                .front()));
     exact_cmd = clone(*(
         boost::get<shared_model::detail::PolymorphicWrapper<
             shared_model::interface::GrantPermission>>(exact_command->get())));
   }
-   std::shared_ptr<shared_model::interface::Command> exact_command;
-   std::shared_ptr<shared_model::interface::GrantPermission> exact_cmd;
-   std::string expected_permission;
+  std::shared_ptr<shared_model::interface::Command> exact_command;
+  std::shared_ptr<shared_model::interface::GrantPermission> exact_cmd;
+  std::string expected_permission;
 };
 
- TEST_F(GrantPermissionTest, ValidCase) {
+TEST_F(GrantPermissionTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(exact_cmd->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+  EXPECT_CALL(
+      *wsv_command,
+      insertAccountGrantablePermission(
+          exact_cmd->accountId(), creator->accountId(), expected_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
 }
 
- TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
+TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
@@ -1915,11 +1925,11 @@ class CommandValidateExecuteTest : public ::testing::Test {
  * @when command tries to grant permission but insertion fails
  * @then execute() fails
  */
- TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(exact_cmd->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
+  EXPECT_CALL(
+      *wsv_command,
+      insertAccountGrantablePermission(
+          exact_cmd->accountId(), creator->accountId(), expected_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
 }
@@ -1933,10 +1943,10 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
     exact_command = clone(*(TestTransactionBuilder()
-        .revokePermission("yoda", expected_permission)
-        .build()
-        .commands()
-        .front()));
+                                .revokePermission("yoda", expected_permission)
+                                .build()
+                                .commands()
+                                .front()));
     exact_cmd = clone(*(
         boost::get<shared_model::detail::PolymorphicWrapper<
             shared_model::interface::RevokePermission>>(exact_command->get())));
@@ -1952,10 +1962,10 @@ TEST_F(RevokePermissionTest, ValidCase) {
               hasAccountGrantablePermission(
                   exact_cmd->accountId(), admin_id, expected_permission))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(exact_cmd->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountGrantablePermission(
+          exact_cmd->accountId(), creator->accountId(), expected_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(exact_command)));
 }
@@ -1974,10 +1984,10 @@ TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
  * @then execute fails
  */
 TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(exact_cmd->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+  EXPECT_CALL(
+      *wsv_command,
+      deleteAccountGrantablePermission(
+          exact_cmd->accountId(), creator->accountId(), expected_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_NO_THROW(checkErrorCase(execute(exact_command)));
 }
