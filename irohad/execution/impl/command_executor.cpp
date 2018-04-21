@@ -536,7 +536,7 @@ namespace iroha {
         (queries.hasAccountGrantablePermission(
             creator_account_id,
             command.accountId(),
-            shared_model::permissions::can_add_signatory));
+            shared_model::permissions::can_add_my_signatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -625,7 +625,7 @@ namespace iroha {
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               shared_model::permissions::can_remove_signatory));
+               shared_model::permissions::can_remove_my_signatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -647,7 +647,7 @@ namespace iroha {
         queries.hasAccountGrantablePermission(
             creator_account_id,
             command.accountId(),
-            shared_model::permissions::can_set_detail);
+            shared_model::permissions::can_set_my_account_detail);
   }
 
   bool CommandValidator::hasPermissions(
@@ -665,7 +665,7 @@ namespace iroha {
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               shared_model::permissions::can_set_quorum));
+               shared_model::permissions::can_set_my_quorum));
   }
 
   bool CommandValidator::hasPermissions(
@@ -689,7 +689,7 @@ namespace iroha {
                 and queries.hasAccountGrantablePermission(
                         creator_account_id,
                         command.srcAccountId(),
-                        shared_model::permissions::can_transfer))
+                        shared_model::permissions::can_transfer_my_assets))
                or
                // 2. Creator transfer from their account
                (creator_account_id == command.srcAccountId()

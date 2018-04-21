@@ -578,7 +578,7 @@ TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
   // Creator has role permissions to add signatory
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, add_signatory->account_id, can_add_signatory))
+                  admin_id, add_signatory->account_id, can_add_my_signatory))
       .WillOnce(Return(true));
   EXPECT_CALL(
       *wsv_command,
@@ -620,7 +620,7 @@ TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
   // Creator has no permission
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, add_signatory->account_id, can_add_signatory))
+                  admin_id, add_signatory->account_id, can_add_my_signatory))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -631,7 +631,7 @@ TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, add_signatory->account_id, can_add_signatory))
+                  admin_id, add_signatory->account_id, can_add_my_signatory))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -640,7 +640,7 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
   // Add same signatory
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, add_signatory->account_id, can_add_signatory))
+                  admin_id, add_signatory->account_id, can_add_my_signatory))
       .WillOnce(Return(true));
   add_signatory->pubkey.fill(2);
   EXPECT_CALL(
@@ -876,7 +876,7 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
@@ -904,7 +904,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
@@ -934,7 +934,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
   // Add same signatory
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -944,7 +944,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
   // Remove signatory not present in account
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
   remove_signatory->pubkey.fill(0xF);
 
@@ -966,7 +966,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
 TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
@@ -987,7 +987,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
 TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
@@ -1008,7 +1008,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
 TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, remove_signatory->account_id, can_remove_signatory))
+                  admin_id, remove_signatory->account_id, can_remove_my_signatory))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
@@ -1035,7 +1035,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
       .WillOnce(Return(std::vector<std::string>{admin_role}));
   EXPECT_CALL(
       *wsv_query,
-      hasAccountGrantablePermission(admin_id, admin_id, can_remove_signatory))
+      hasAccountGrantablePermission(admin_id, admin_id, can_remove_my_signatory))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -1084,7 +1084,7 @@ TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
   // Creator is admin
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, set_quorum->account_id, can_set_quorum))
+                  admin_id, set_quorum->account_id, can_set_my_quorum))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id))
@@ -1120,7 +1120,7 @@ TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
   // Creator has no permissions
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, set_quorum->account_id, can_set_quorum))
+                  admin_id, set_quorum->account_id, can_set_my_quorum))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -1131,7 +1131,7 @@ TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
   set_quorum->account_id = "noacc";
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  admin_id, set_quorum->account_id, can_set_quorum))
+                  admin_id, set_quorum->account_id, can_set_my_quorum))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
@@ -1556,7 +1556,7 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
   transfer_asset->src_account_id = account_id;
   transfer_asset->dest_account_id = admin_id;
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(admin_id, account_id, can_transfer))
+              hasAccountGrantablePermission(admin_id, account_id, can_transfer_my_assets))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 }
@@ -1566,7 +1566,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   transfer_asset->src_account_id = account_id;
   transfer_asset->dest_account_id = admin_id;
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(admin_id, account_id, can_transfer))
+              hasAccountGrantablePermission(admin_id, account_id, can_transfer_my_assets))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->dest_account_id))
@@ -1958,7 +1958,7 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     role_permissions = {can_set_quorum};
   }
   std::shared_ptr<SetAccountDetail> cmd;
-  std::string needed_permission = can_set_detail;
+  std::string needed_permission = can_set_my_account_detail;
 };
 
 /**

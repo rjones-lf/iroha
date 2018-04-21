@@ -120,20 +120,20 @@ namespace iroha {
             (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
 
             // Can grant set quorum
-            (protocol::RolePermission::can_grant_can_set_quorum,
-             can_grant + can_set_quorum)
+            (protocol::RolePermission::can_grant_can_set_my_quorum,
+             can_grant + can_set_my_quorum)
             // Can grant add signatory
-            (protocol::RolePermission::can_grant_can_add_signatory,
-             can_grant + can_add_signatory)
+            (protocol::RolePermission::can_grant_can_add_my_signatory,
+             can_grant + can_add_my_signatory)
             // Can grant remove signatory
-            (protocol::RolePermission::can_grant_can_remove_signatory,
-             can_grant + can_remove_signatory)
+            (protocol::RolePermission::can_grant_can_remove_my_signatory,
+             can_grant + can_remove_my_signatory)
             // Can grant can_transfer
-            (protocol::RolePermission::can_grant_can_transfer,
-             can_grant + can_transfer)
+            (protocol::RolePermission::can_grant_can_transfer_my_assets,
+             can_grant + can_transfer_my_assets)
             // Can write details to other accounts
-            (protocol::RolePermission::can_grant_can_set_detail,
-             can_grant + can_set_detail);
+            (protocol::RolePermission::can_grant_can_set_my_account_detail,
+             can_grant + can_set_my_account_detail);
 
         boost::assign::insert(pb_grant_map_)
             // Can add my signatory
