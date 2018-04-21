@@ -25,6 +25,8 @@ user1_kp = crypto.generateKeypair()
 current_time = int(round(time.time() * 1000)) - 10**5
 creator = "admin@test"
 
+query_counter = 1
+
 def get_status(tx):
     # Create status request
 
@@ -168,7 +170,6 @@ def grant_admin_to_add_detail_to_userone():
     Grant admin@test to be able to set details information to userone@domain
     """
     tx = tx_builder.creatorAccountId("userone@domain") \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .grantPermission(creator, "can_set_my_account_detail") \
         .build()
@@ -180,10 +181,7 @@ def set_age_to_userone_by_admin():
     """
     Set age to userone@domain by admin@test
     """
-    global tx_counter
-    tx_counter += 1
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(tx_counter) \
         .createdTime(current_time) \
         .setAccountDetail("userone@domain", "age", "18") \
         .build()
@@ -199,6 +197,7 @@ def get_coin_info():
     query_counter += 1
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
+        .queryCounter(query_counter) \
         .getAssetInfo("coin#domain") \
         .build()
 
@@ -219,8 +218,11 @@ def get_account_asset():
     """
     Get list of transactions done by userone@domain with asset coin#domain
     """
+    global query_counter
+    query_counter += 1
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
+        .queryCounter(query_counter) \
         .getAccountAssets("userone@domain", "coin#domain") \
         .build()
 
@@ -232,6 +234,8 @@ def get_userone_info():
     """
     Get userone's key value information
     """
+    global query_counter
+    query_counter += 1
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
         .queryCounter(query_counter) \
