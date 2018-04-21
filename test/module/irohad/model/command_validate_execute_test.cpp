@@ -1078,143 +1078,156 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(execute()));
 //}
-//
-// class SetQuorumTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    pubkey_t creator_key, account_key;
-//    creator_key.fill(0x1);
-//    account_key.fill(0x2);
-//    account_pubkeys = {
-//        shared_model::interface::types::PubkeyType(creator_key.to_string()),
-//        shared_model::interface::types::PubkeyType(account_key.to_string())};
-//    set_quorum = std::make_shared<SetQuorum>();
-//    set_quorum->account_id = account_id;
-//    set_quorum->new_quorum = 2;
-//
-//    command = set_quorum;
-//    role_permissions = {can_set_quorum};
-//  }
-//
-//  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
-//  std::shared_ptr<SetQuorum> set_quorum;
-//};
-//
-// TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
-//  // Creator is admin
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, set_quorum->account_id, can_set_quorum))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
-//      .WillOnce(Return(account_pubkeys));
-//
-//  EXPECT_CALL(*wsv_command, updateAccount(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(SetQuorumTest, ValidWhenSameAccount) {
-//  // Creator is the account
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  set_quorum->account_id = creator->accountId();
-//  EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id))
-//      .WillOnce(Return(account));
-//  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
-//      .WillOnce(Return(account_pubkeys));
-//  EXPECT_CALL(*wsv_command, updateAccount(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
-//  // Creator has no permissions
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, set_quorum->account_id, can_set_quorum))
-//      .WillOnce(Return(false));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
-//  // No such account exists
-//  set_quorum->account_id = "noacc";
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, set_quorum->account_id, can_set_quorum))
-//      .WillOnce(Return(false));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SetQuorum
-// * @when command tries to set quorum for non-existing account
-// * @then execute fails and returns false
-// */
-// TEST_F(SetQuorumTest, InvalidWhenNoAccountButPassedPermissions) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  set_quorum->account_id = creator->accountId();
-//  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
-//      .WillOnce(Return(account_pubkeys));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SetQuorum
-// * @when command tries to set quorum for account which does not have any
-// * signatories
-// * @then execute fails and returns false
-// */
-// TEST_F(SetQuorumTest, InvalidWhenNoSignatories) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  set_quorum->account_id = creator->accountId();
-//  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(SetQuorumTest, InvalidWhenNotEnoughSignatories) {
-//  // Creator is the account
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  set_quorum->account_id = creator->accountId();
-//  EXPECT_CALL(*wsv_query, getAccount(set_quorum->account_id)).Times(0);
-//  pubkey_t key;
-//  key.fill(0x1);
-//  std::vector<shared_model::interface::types::PubkeyType> acc_pubkeys = {
-//      shared_model::interface::types::PubkeyType(key.to_string())};
-//  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->account_id))
-//      .WillOnce(Return(acc_pubkeys));
-//  EXPECT_CALL(*wsv_command, updateAccount(_)).Times(0);
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+
+class SetQuorumTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    account_pubkeys = {
+        shared_model::interface::types::PubkeyType(std::string(32, '0')),
+        shared_model::interface::types::PubkeyType(std::string(32, '1'))};
+    role_permissions = {can_set_quorum};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(*(TestTransactionBuilder()
+                          .setAccountQuorum(account_id, 2)
+                          .build()
+                          .commands()
+                          .front()));
+    set_quorum = getCommand<shared_model::interface::SetQuorum>(command);
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    creator_command = clone(*(TestTransactionBuilder()
+                                  .setAccountQuorum(creator->accountId(), 2)
+                                  .build()
+                                  .commands()
+                                  .front()));
+    creator_set_quorum =
+        getCommand<shared_model::interface::SetQuorum>(creator_command);
+  }
+
+  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::SetQuorum> set_quorum;
+  std::shared_ptr<shared_model::interface::Command> creator_command;
+  std::shared_ptr<shared_model::interface::SetQuorum> creator_set_quorum;
+};
+
+TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
+  // Creator is admin
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, set_quorum->accountId(), can_set_quorum))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_query, getAccount(set_quorum->accountId()))
+      .WillOnce(Return(account));
+  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->accountId()))
+      .WillOnce(Return(account_pubkeys));
+  EXPECT_CALL(*wsv_command, updateAccount(_))
+      .WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(SetQuorumTest, ValidWhenSameAccount) {
+  // Creator is the account
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId()))
+      .WillOnce(Return(account));
+  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
+      .WillOnce(Return(account_pubkeys));
+  EXPECT_CALL(*wsv_command, updateAccount(_))
+      .WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(creator_command)));
+}
+
+TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
+  // Creator has no permissions
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, set_quorum->accountId(), can_set_quorum))
+      .WillOnce(Return(false));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
+  // No such account exists
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(*(TestTransactionBuilder()
+                        .setAccountQuorum("noacc", 2)
+                        .build()
+                        .commands()
+                        .front()));
+  set_quorum = getCommand<shared_model::interface::SetQuorum>(command);
+
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, set_quorum->accountId(), can_set_quorum))
+      .WillOnce(Return(false));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SetQuorum
+ * @when command tries to set quorum for non-existing account
+ * @then execute fails and returns false
+ */
+TEST_F(SetQuorumTest, InvalidWhenNoAccountButPassedPermissions) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
+      .WillOnce(Return(account_pubkeys));
+
+  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(creator_command)));
+}
+
+/**
+ * @given SetQuorum
+ * @when command tries to set quorum for account which does not have any
+ * signatories
+ * @then execute fails and returns false
+ */
+TEST_F(SetQuorumTest, InvalidWhenNoSignatories) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(creator_command)));
+}
+
+TEST_F(SetQuorumTest, InvalidWhenNotEnoughSignatories) {
+  // Creator is the account
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId())).Times(0);
+  pubkey_t key;
+  key.fill(0x1);
+  std::vector<shared_model::interface::types::PubkeyType> acc_pubkeys = {
+      shared_model::interface::types::PubkeyType(key.to_string())};
+  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
+      .WillOnce(Return(acc_pubkeys));
+  EXPECT_CALL(*wsv_command, updateAccount(_)).Times(0);
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(creator_command)));
+}
 
 class TransferAssetTest : public CommandValidateExecuteTest {
  public:
@@ -1278,9 +1291,9 @@ TEST_F(TransferAssetTest, ValidWhenNewWallet) {
   EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
       .WillOnce(Return(boost::none));
 
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
@@ -1311,9 +1324,9 @@ TEST_F(TransferAssetTest, ValidWhenExistingWallet) {
                               transfer_asset->assetId()))
       .WillOnce(Return(dst_wallet));
 
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
@@ -1340,12 +1353,12 @@ TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
 TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
   // No destination account exists
   // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
-  std::shared_ptr<shared_model::interface::Command> command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(admin_id, "noacc", asset_id, description, "150.00")
-          .build()
-          .commands()
-          .front()));
+  std::shared_ptr<shared_model::interface::Command> command = clone(
+      *(TestTransactionBuilder()
+            .transferAsset(admin_id, "noacc", asset_id, description, "150.00")
+            .build()
+            .commands()
+            .front()));
   auto transfer_asset =
       getCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1372,9 +1385,9 @@ TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAsset) {
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .WillOnce(Return(boost::none));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
@@ -1397,9 +1410,9 @@ TEST_F(TransferAssetTest, InvalidWhenNoSrcAccountAssetDuringExecute) {
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .Times(2)
       .WillOnce(Return(src_wallet))
       .WillOnce(Return(boost::none));
@@ -1446,9 +1459,9 @@ TEST_F(TransferAssetTest, InvalidWhenNoAssetId) {
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset))
       .WillOnce(Return(boost::none));
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query,
@@ -1473,9 +1486,9 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
 
   Amount amount(155, 2);
 
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .WillOnce(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
@@ -1504,9 +1517,9 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .WillOnce(Return(src_wallet));
   EXPECT_CALL(*wsv_query,
               getAccountAsset(transfer_asset->destAccountId(),
@@ -1516,15 +1529,13 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
   ASSERT_NO_THROW(checkErrorCase(execute(command)));
 }
 
-//TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
+// TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
 //  // Amount has wrong precision
 //  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
 //  std::shared_ptr<shared_model::interface::Command> command = clone(*(
 //      TestTransactionBuilder()
-//          .transferAsset(admin_id, account_id, asset_id, description, "155.000000000000000000000000")
-//          .build()
-//          .commands()
-//          .front()));
+//          .transferAsset(admin_id, account_id, asset_id, description,
+//          "155.000000000000000000000000") .build() .commands() .front()));
 //  auto transfer_asset =
 //      getCommand<shared_model::interface::TransferAsset>(command);
 //
@@ -1547,13 +1558,13 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
 // * @when command tries to transfer amount with wrong precision
 // * @then execute fails and returns false
 // */
-//TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
+// TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
 //  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
 //      .WillOnce(Return(asset));
 //  EXPECT_CALL(
 //      *wsv_query,
-//      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
-//      .WillOnce(Return(src_wallet));
+//      getAccountAsset(transfer_asset->srcAccountId(),
+//      transfer_asset->assetId())) .WillOnce(Return(src_wallet));
 //  EXPECT_CALL(*wsv_query,
 //              getAccountAsset(transfer_asset->destAccountId(),
 //                              transfer_asset->assetId()))
@@ -1569,7 +1580,7 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
 // * @when command tries to transfer asset which overflows destination balance
 // * @then execute fails and returns false
 // */
-//TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
+// TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
 //  std::shared_ptr<shared_model::interface::Amount> max_balance = clone(
 //      shared_model::proto::AmountBuilder()
 //          .intValue(
@@ -1587,8 +1598,8 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
 //      .WillOnce(Return(asset));
 //  EXPECT_CALL(
 //      *wsv_query,
-//      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
-//      .WillOnce(Return(src_wallet));
+//      getAccountAsset(transfer_asset->srcAccountId(),
+//      transfer_asset->assetId())) .WillOnce(Return(src_wallet));
 //  EXPECT_CALL(*wsv_query,
 //              getAccountAsset(transfer_asset->destAccountId(),
 //                              transfer_asset->assetId()))
@@ -1621,12 +1632,12 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
 TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   // Transfer creator is not connected to account
   // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
-  std::shared_ptr<shared_model::interface::Command> command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(account_id, admin_id, asset_id, description, "1.50")
-          .build()
-          .commands()
-          .front()));
+  std::shared_ptr<shared_model::interface::Command> command = clone(
+      *(TestTransactionBuilder()
+            .transferAsset(account_id, admin_id, asset_id, description, "1.50")
+            .build()
+            .commands()
+            .front()));
   auto transfer_asset =
       getCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1642,9 +1653,9 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
       .WillOnce(Return(boost::none));
 
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(transfer_asset->srcAccountId(), transfer_asset->assetId()))
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(transfer_asset->srcAccountId(),
+                              transfer_asset->assetId()))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
