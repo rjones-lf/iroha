@@ -869,9 +869,14 @@ namespace iroha {
     if (not account_asset) {
       return false;
     }
+    std::string str1 = account_asset.value()->balance().toString();
+    std::string str2 = command.amount().toString();
+    std::cout << str1 << " " << str2 << std::endl;
+    bool t1 = (bool)queries.getAccount(command.destAccountId());
+    bool t2 = compareAmount(account_asset.value()->balance(), command.amount()) >= 0;
     // Check if dest account exist
-    return queries.getAccount(command.destAccountId()) and
+    return t1 and
         // Balance in your wallet should be at least amount of transfer
-        compareAmount(account_asset.value()->balance(), command.amount()) >= 0;
+        t2;
   }
 }  // namespace iroha
