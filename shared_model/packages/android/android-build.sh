@@ -92,7 +92,7 @@ LDFLAGS="-llog -landroid" cmake "${ANDROID_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARGS[@
 VERBOSE=1 cmake --build ./protobuf/.build --target install -- -j"$CORES"
 
 # ed25519
-git clone git://github.com/hyperledger/iroha-ed25519
+git clone https://github.com/hyperledger/iroha-ed25519.git
 (cd ./iroha-ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038)
 cmake "${ANDROID_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARGS[@]}" -DTESTING=OFF -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DBUILD=STATIC -H./iroha-ed25519 -B./iroha-ed25519/build
 VERBOSE=1 cmake --build ./iroha-ed25519/build --target install -- -j"$CORES"

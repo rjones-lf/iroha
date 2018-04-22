@@ -125,7 +125,8 @@ namespace iroha {
           const shared_model::interface::GetAccountTransactions &query);
 
       QueryResponseBuilderDone executeGetTransactions(
-          const shared_model::interface::GetTransactions &query);
+          const shared_model::interface::GetTransactions &q,
+          const shared_model::interface::types::AccountIdType &accountId);
 
       std::shared_ptr<ametsuchi::WsvQuery> _wsvQuery;
       std::shared_ptr<ametsuchi::BlockQuery> _blockQuery;

@@ -1,7 +1,9 @@
 #!/usr/bin/env groovy
 
 def doDebugBuild(coverageEnabled=false) {
+  def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
   def parallelism = params.PARALLELISM
+  def platform = sh(script: 'uname -m', returnStdout: true).trim()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default. 
@@ -19,28 +21,19 @@ def doDebugBuild(coverageEnabled=false) {
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --name ${env.IROHA_POSTGRES_HOST}"
     + " --network=${env.IROHA_NETWORK}")
-
-  def platform = sh(script: 'uname -m', returnStdout: true).trim()
-  sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile"
-  // pull docker image in case we don't have one
-  // speeds up consequent image builds as we simply tag them
-  sh "docker pull ${DOCKER_BASE_IMAGE_DEVELOP}"
-  if (env.BRANCH_NAME == 'develop') {
-    iC = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
-    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-      iC.push("${platform}-develop")
-    }
-  }
-  else {
-    iC = docker.build("hyperledger/iroha-workflow:${GIT_COMMIT}-${BUILD_NUMBER}", "-f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT} --build-arg PARALLELISM=${parallelism}")
-  }
+  def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile",
+                                           ['PARALLELISM': params.PARALLELISM])
   iC.inside(""
     + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
     + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
     + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
     + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --network=${env.IROHA_NETWORK}"
-    + " -v /var/jenkins/ccache:${CCACHE_DIR}") {
+    + " -v /var/jenkins/ccache:${CCACHE_DIR}"
+    + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
 
     def scmVars = checkout scm
     def cmakeOptions = ""
@@ -95,12 +88,9 @@ def doDebugBuild(coverageEnabled=false) {
       sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
     }
-
-    // TODO: replace with upload to artifactory server
-    // develop branch only
-    if ( env.BRANCH_NAME == "develop" ) {
-      //archive(includes: 'build/bin/,compile_commands.json')
-    }
+    // copy built binaries to the volume
+    sh "cp ./build/bin/* /tmp/${GIT_COMMIT}/"
   }
 }
+
 return this

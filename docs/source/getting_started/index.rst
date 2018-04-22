@@ -103,7 +103,7 @@ command
   -v blockstore:/tmp/block_store \
   --network=iroha-network \
   --entrypoint=/bin/bash \
-  hyperledger/iroha-docker:develop
+  hyperledger/iroha:x86_64-develop-latest
 
 Let's look in detail what this command does:
 
@@ -116,10 +116,10 @@ Let's look in detail what this command does:
   the container
 - ``--network=iroha-network \`` adds our container to previously created
   ``iroha-network``, so Iroha and Postgres could see each other.
-- ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha-docker`` has
+- ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha`` has
   the custom script which runs after starting the container, we want to
   override it so we can start Iroha Daemon manually.
-- ``hyperledger/iroha-docker:develop`` is the image which has the ``develop``
+- ``hyperledger/iroha:x86_64-develop-latest`` is the image which has the ``develop``
   branch.
 
 Launching Iroha Daemon

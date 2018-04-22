@@ -23,8 +23,8 @@
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
-#include "validators/permissions.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -39,7 +39,7 @@ class GetTransactions : public ::testing::Test {
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms) {
     auto new_perms = perms;
-    new_perms.push_back(iroha::model::can_set_quorum);
+    new_perms.push_back(shared_model::permissions::can_set_quorum);
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), kNewRole, new_perms)
         .build()
@@ -54,7 +54,6 @@ class GetTransactions : public ::testing::Test {
   auto dummyTx() {
     return shared_model::proto::TransactionBuilder()
         .setAccountQuorum(kUserId, 1)
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now())
         .build()
@@ -101,7 +100,7 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
   auto dummy_tx = dummyTx();
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_read_assets}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_read_assets}))
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
@@ -127,7 +126,7 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_all_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_all_txs}))
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
@@ -153,7 +152,7 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
@@ -187,7 +186,7 @@ TEST_F(GetTransactions, InvalidSignatures) {
 
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .sendQuery(query, check)
       .done();
 }
@@ -208,7 +207,7 @@ TEST_F(GetTransactions, InexistentHash) {
 
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(crypto::Hash(std::string(32, '0'))), check)
@@ -219,9 +218,8 @@ TEST_F(GetTransactions, InexistentHash) {
  * @given some user with can_get_my_txs
  * @when query GetTransactions of existing transaction of the other user
  * @then TransactionsResponse with no transactions
- * TODO(@l4l) 02/01/18 Should be enabled after resolving IR-1039
  */
-TEST_F(GetTransactions, DISABLED_OtherUserTx) {
+TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
     auto resp = boost::apply_visitor(
         interface::SpecifiedVisitor<interface::TransactionsResponse>(),
@@ -230,7 +228,7 @@ TEST_F(GetTransactions, DISABLED_OtherUserTx) {
     ASSERT_EQ(resp.value()->transactions().size(), 0);
   };
 
-  auto tx = makeUserWithPerms({iroha::model::can_get_my_txs});
+  auto tx = makeUserWithPerms({shared_model::permissions::can_get_my_txs});
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
       .sendTx(tx)

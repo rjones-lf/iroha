@@ -19,8 +19,13 @@ properties([parameters([
   booleanParam(defaultValue: false, description: 'Whether it is a triggered build', name: 'Nightly'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
+  choice(choices: 'Release\nDebug', description: 'Java Bindings Build Type', name: 'JBBuildType'),
   booleanParam(defaultValue: false, description: 'Whether build Python bindings', name: 'PythonBindings'),
-  booleanParam(defaultValue: true, description: 'Whether build bindings only w/o Iroha itself', name: 'BindingsOnly'),
+  choice(choices: 'Release\nDebug', description: 'Python Bindings Build Type', name: 'PBBuildType'),
+  booleanParam(defaultValue: true, description: 'Whether build Android bindings', name: 'AndroidBindings'),
+  choice(choices: '26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14', description: 'Android Bindings ABI Version', name: 'ABABIVersion'),
+  choice(choices: 'Release\nDebug', description: 'Android Bindings Build Type', name: 'ABBuildType'),
+  choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android Bindings Platform', name: 'ABPlatform'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
 
@@ -113,11 +118,8 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -153,11 +155,8 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -193,11 +192,8 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -248,7 +244,7 @@ pipeline {
               """
               def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
               if (testExitCode != 0) {
-               currentBuild.result = "UNSTABLE"
+                currentBuild.currentResult = "UNSTABLE"
               }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
@@ -287,12 +283,22 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  cleanWs()
-                  sh """
-                    pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                    rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
-                  """
+                timeout(time: 600, unit: "SECONDS") {
+                  try {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                      def artifacts = load ".jenkinsci/artifacts.groovy"
+                      def commit = env.GIT_COMMIT
+                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
+                    }
+                  }
+                  finally {
+                    cleanWs()
+                    sh """
+                      pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+                      rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
+                    """
+                  }
                 }
               }
             }
@@ -330,11 +336,8 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
           }
@@ -361,14 +364,11 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
-          }            
+          }           
         }
         stage('ARMv8') {
           when { expression { return params.ARMv8 } }
@@ -392,14 +392,11 @@ pipeline {
             }
             always {
               script {
-                timeout(time: 60, unit: "SECONDS") {
-                  def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-                  cleanup.doDockerCleanup()
-                  cleanWs()
-                }
+                post = load ".jenkinsci/linux-post-step.groovy"
+                post.linuxPostStep()
               }
             }
-          }            
+          }          
         }
         stage('MacOS') {
           when { expression { return params.MacOS } }            
@@ -409,14 +406,21 @@ pipeline {
               releaseBuild.doReleaseBuild()
             }
           }
-          post {                      
-            success {
+          post {
+            always {
               script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                timeout(time: 600, unit: "SECONDS") {
+                  try {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                      def artifacts = load ".jenkinsci/artifacts.groovy"
+                      def commit = env.GIT_COMMIT
+                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                    }
+                  }
+                  finally {
+                    cleanWs()
+                  }
                 }
               }
             }
@@ -447,9 +451,9 @@ pipeline {
     stage('Build bindings') {
       when {
         anyOf {
-          expression { return params.BindingsOnly }
           expression { return params.PythonBindings }
           expression { return params.JavaBindings }
+          expression { return params.AndroidBindings }
         }
       }
       agent { label 'x86_64' }
@@ -459,38 +463,69 @@ pipeline {
       steps {
         script {
           def bindings = load ".jenkinsci/bindings.groovy"
-          def fDiffer = load ".jenkinsci/remote-files-differ.groovy"
+          def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
-          def commit = sh(script: "echo ${BRANCH_NAME} | md5sum | cut -c 1-8", returnStdout: true).trim()
-
-          if (fDiffer.remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile")) {
-            iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
-
-          }
-          else {
-            // first commit in this branch or Dockerfile modified
-            if (fDiffer.remoteFilesDiffer("https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile", "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile")) {
-              iC = docker.build("hyperledger/iroha:${commit}", "--build-arg PARALLELISM=${parallelism} -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
-            }
-            // reuse develop branch Docker image
-            else {
-              iC = docker.image("hyperledger/iroha:${platform}-develop")
+          if (params.JavaBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/x86_64/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM])
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doJavaBindings(params.JBBuildType)
             }
           }
-          
-          sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/bindings/Dockerfile"
-          iC = docker.build("hyperledger/iroha-develop:${GIT_COMMIT}-${BUILD_NUMBER}", "-f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT} --build-arg PARALLELISM=${PARALLELISM}")
-          sh "rm -rf /tmp/${env.GIT_COMMIT}"
-          iC.inside {
-            def scmVars = checkout scm
-            bindings.doBindings()
-            // Archive artifacts with a customized name
-            if( params.JavaBindings || (!params.JavaBindings && !params.PythonBindings) ) {
-              sh "zip -j java-bindings.zip build/shared_model/bindings/*.java build/shared_model/bindings/libirohajava.so"
+          if (params.PythonBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/x86_64/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM])
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doPythonBindings(params.PBBuildType)
             }
-            if( params.PythonBindings || (!params.JavaBindings && !params.PythonBindings) ) {
-              sh "zip -j python-bindings.zip build/shared_model/bindings/*.py build/shared_model/bindings/_iroha.so"
-            }            
+          }
+          if (params.AndroidBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("android-${params.ABPlatform}-${params.ABBuildType}",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/android/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
+                                                 "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/android/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
+            sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
+            sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doAndroidBindings(params.ABABIVersion)
+            }
+          }          
+        }
+      }
+      post {
+        always {
+          timeout(time: 600, unit: "SECONDS") {
+            script {
+              try {
+                if (currentBuild.currentResult == "SUCCESS") {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  if (params.JavaBindings) {
+                    javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  }
+                  if (params.PythonBindings) {
+                    pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  }
+                  if (params.AndroidBindings) {
+                    androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
+                  }
+                }
+              }
+              finally {
+                sh "rm -rf /tmp/${env.GIT_COMMIT}"
+                cleanWs()
+              }
+            }
           }
         }
       }

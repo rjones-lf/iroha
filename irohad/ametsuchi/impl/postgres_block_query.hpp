@@ -24,7 +24,6 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "logger/logger.hpp"
-#include "model/converters/json_block_factory.hpp"
 #include "postgres_wsv_common.hpp"
 
 namespace iroha {
@@ -95,7 +94,6 @@ namespace iroha {
       logger::Logger log_;
       using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
       ExecuteType execute_;
-      model::converters::JsonBlockFactory serializer_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

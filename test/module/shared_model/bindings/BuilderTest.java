@@ -28,7 +28,7 @@ public class BuilderTest {
     private ModelTransactionBuilder builder;
 
     ModelTransactionBuilder base() {
-        return new ModelTransactionBuilder().txCounter(BigInteger.valueOf(123))
+        return new ModelTransactionBuilder()
                 .createdTime(BigInteger.valueOf(System.currentTimeMillis()))
                 .creatorAccountId("admin@test");
     }

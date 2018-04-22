@@ -32,7 +32,9 @@ namespace shared_model {
     /**
      * Class that validates blocks and proposal common fieds
      */
-    template <typename Iface, typename FieldValidator, typename TransactionValidator>
+    template <typename Iface,
+              typename FieldValidator,
+              typename TransactionValidator>
     class ContainerValidator {
      protected:
       void validateHeight(ReasonsGroupType &reason,
@@ -49,9 +51,7 @@ namespace shared_model {
           const interface::Transaction &transaction) const {
         auto answer = transaction_validator_.validate(transaction);
         if (answer.hasErrors()) {
-          auto message = (boost::format("Tx #%d: %s")
-                          % transaction.transactionCounter() % answer.reason())
-                             .str();
+          auto message = (boost::format("Tx: %s") % answer.reason()).str();
           reason.second.push_back(message);
         }
       }
@@ -83,8 +83,10 @@ namespace shared_model {
         }
         return answer;
       }
+
      private:
       TransactionValidator transaction_validator_;
+
      protected:
       FieldValidator field_validator_;
     };

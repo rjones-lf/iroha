@@ -24,9 +24,9 @@ target_link_libraries(server_runner
     boost # iroha::expected::Result
     )
 
-add_library(raw_block_insertion impl/raw_block_loader.cpp)
-target_link_libraries(raw_block_insertion
-    json_model_converters
+add_library(raw_block_loader impl/raw_block_loader.cpp)
+target_link_libraries(raw_block_loader
+    shared_model_interfaces
     )
 
 add_library(application
@@ -39,7 +39,6 @@ target_link_libraries(application
     logger
     yac
     server_runner
-    model
     ametsuchi
     networking
     ordering_service
@@ -57,7 +56,7 @@ target_link_libraries(application
 add_executable(irohad irohad.cpp)
 target_link_libraries(irohad
     application
-    raw_block_insertion
+    raw_block_loader
     gflags
     rapidjson
     keys_manager

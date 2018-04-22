@@ -84,7 +84,6 @@ class OrderingServiceTest : public ::testing::Test {
   auto getTx() {
     return std::make_shared<shared_model::proto::Transaction>(
         shared_model::proto::TransactionBuilder()
-        .txCounter(2)
         .createdTime(iroha::time::now())
         .creatorAccountId("admin@ru")
         .addAssetQuantity("admin@tu", "coin#coin", "1.0")

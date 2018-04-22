@@ -21,8 +21,8 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -36,8 +36,8 @@ class SubtractAssetQuantity : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             iroha::model::can_subtract_asset_qty,
-                             iroha::model::can_add_asset_qty}) {
+                             shared_model::permissions::can_subtract_asset_qty,
+                             shared_model::permissions::can_add_asset_qty}) {
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), "role"s, perms)
         .build()
@@ -50,7 +50,6 @@ class SubtractAssetQuantity : public ::testing::Test {
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }
@@ -131,7 +130,7 @@ TEST_F(SubtractAssetQuantity, Overdraft) {
 TEST_F(SubtractAssetQuantity, NoPermissions) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_add_asset_qty}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_add_asset_qty}))
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()

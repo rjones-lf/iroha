@@ -17,72 +17,80 @@
 
 addtest(tx_acceptance_test tx_acceptance_test.cpp)
 target_link_libraries(tx_acceptance_test
-        application
-        raw_block_insertion
-        model_generators
-        integration_framework
-        shared_model_stateless_validation
-        )
+    application
+    raw_block_loader
+    integration_framework
+    shared_model_stateless_validation
+    )
+
 addtest(get_transactions_test get_transactions_test.cpp)
 target_link_libraries(get_transactions_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(add_asset_qty_test add_asset_qty_test.cpp)
 target_link_libraries(add_asset_qty_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(create_role_test create_role_test.cpp)
 target_link_libraries(create_role_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(invalid_fields_test invalid_fields_test.cpp)
 target_link_libraries(invalid_fields_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(transfer_asset_test transfer_asset_test.cpp)
 target_link_libraries(transfer_asset_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(create_domain_test create_domain_test.cpp)
 target_link_libraries(create_domain_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(subtract_asset_qty_test subtract_asset_qty_test.cpp)
 target_link_libraries(subtract_asset_qty_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
 
 addtest(create_account_test create_account_test.cpp)
 target_link_libraries(create_account_test
-  application
-  integration_framework
-  shared_model_proto_builders
-  shared_model_stateless_validation
-  )
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )
+
+addtest(tx_heavy_data tx_heavy_data.cpp)
+target_link_libraries(tx_heavy_data
+    application
+    integration_framework
+    shared_model_proto_builders
+    shared_model_stateless_validation
+    )

@@ -14,7 +14,7 @@ RUN apt-get update && \
 
 
 # add git repository
-RUN add-apt-repository -y ppa:git-core/ppa; \
+RUN add-apt-repository -y ppa:git-core/ppa && \
     apt-get update
 
 
@@ -265,6 +265,9 @@ RUN add-apt-repository -y ppa:jonathonf/python-3.6; \
 
 # install lcov
 RUN curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
+
+# install NDK
+RUN curl -L -o /tmp/ndk.zip https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip; unzip /tmp/ndk.zip -d /usr/local
 
 # non-interactive adduser
 #   -m = create home dir

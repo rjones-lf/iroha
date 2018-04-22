@@ -33,7 +33,6 @@ const auto hash = std::string(32, '0');
 
 uint64_t height = 1;
 uint8_t quorum = 2;
-uint64_t counter = 1048576;
 
 boost::multiprecision::uint256_t valid_value = 1000;
 auto valid_precision = 1;
@@ -337,7 +336,6 @@ TEST(QueryResponseBuilderTest, SignatoriesResponse) {
 TEST(QueryResponseBuilderTest, TransactionsResponse) {
   auto transaction = TestTransactionBuilder()
                          .createdTime(created_time)
-                         .txCounter(counter)
                          .creatorAccountId(account_id)
                          .setAccountQuorum(account_id, quorum)
                          .build();
