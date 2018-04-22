@@ -98,7 +98,13 @@ pipeline {
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
-              debugBuild.doDebugBuild(true)
+              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
+              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
+                debugBuild.doDebugBuild(true)
+              }
+              else {
+                debugBuild.doDebugBuild()
+              }
               if (BRANCH_NAME ==~ /(master|develop)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
@@ -106,16 +112,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop|feature\/ops-artifact)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/x86_64/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -129,8 +125,9 @@ pipeline {
           agent { label 'armv7' }
           steps {
             script {
-              def debugBuild = load ".jenkinsci/debug-build.groovy"
-              if (!params.Linux && !params.ARMv8 && !params.MacOS) {
+              debugBuild = load ".jenkinsci/debug-build.groovy"
+              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
+              if (!params.Linux && !params.ARMv8 && !params.MacOS && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
                 debugBuild.doDebugBuild(true)
               }              
               else {
@@ -143,16 +140,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv7/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -166,8 +153,9 @@ pipeline {
           agent { label 'armv8' }
           steps {
             script {
-              def debugBuild = load ".jenkinsci/debug-build.groovy"
-              if (!params.Linux && !params.MacOS) {
+              debugBuild = load ".jenkinsci/debug-build.groovy"
+              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
+              if (!params.Linux && !params.MacOS && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -180,16 +168,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv8/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -205,7 +183,8 @@ pipeline {
             script {
               def coverageEnabled = false
               def cmakeOptions = ""
-              if (!params.Linux) {
+              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
+              if (!params.Linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
                 coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
@@ -244,7 +223,11 @@ pipeline {
               """
               def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
               if (testExitCode != 0) {
+<<<<<<< HEAD
                 currentBuild.currentResult = "UNSTABLE"
+=======
+               currentBuild.result = "UNSTABLE"
+>>>>>>> a94c902... python + java + android bindings
               }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
@@ -271,16 +254,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop|feature\/ops-artifact)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 timeout(time: 600, unit: "SECONDS") {
@@ -324,16 +297,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/x86_64/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -352,16 +315,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv7/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -380,16 +333,6 @@ pipeline {
             }
           }
           post {
-            success {
-              script {
-                if (BRANCH_NAME ==~ /(master|develop)/) {
-                  def artifacts = load ".jenkinsci/artifacts.groovy"
-                  def commit = env.GIT_COMMIT
-                  filePaths = [ '\$(pwd)/build/bin/*' ]
-                  artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/armv8/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                }
-              }
-            }
             always {
               script {
                 post = load ".jenkinsci/linux-post-step.groovy"
@@ -527,16 +470,6 @@ pipeline {
               }
             }
           }
-        }
-      }
-      post {
-        success {
-          script {
-            def artifacts = load ".jenkinsci/artifacts.groovy"
-            def commit = env.GIT_COMMIT
-            filePaths = [ '\$(pwd)/*.zip' ]
-            artifacts.uploadArtifacts(filePaths, sprintf('/iroha/bindings/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-          }      
         }
       }
     }

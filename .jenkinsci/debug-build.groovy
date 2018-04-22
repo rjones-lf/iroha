@@ -3,6 +3,7 @@
 def doDebugBuild(coverageEnabled=false) {
   def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
   def parallelism = params.PARALLELISM
+  def platform = sh(script: 'uname -m', returnStdout: true).trim()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default. 
@@ -20,8 +21,11 @@ def doDebugBuild(coverageEnabled=false) {
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --name ${env.IROHA_POSTGRES_HOST}"
     + " --network=${env.IROHA_NETWORK}")
-
-  def iC = dPullOrBuild.dockerPullOrUpdate()
+  def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "https://raw.githubusercontent.com/hyperledger/iroha/develop/docker/develop/${platform}/Dockerfile",
+                                           ['PARALLELISM': params.PARALLELISM])
   iC.inside(""
     + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
     + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
