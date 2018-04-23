@@ -660,98 +660,123 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 //}
-//
-// class CreateAccountTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    create_account = std::make_shared<CreateAccount>();
-//    create_account->account_name = "test";
-//    create_account->domain_id = domain_id;
-//    create_account->pubkey.fill(2);
-//
-//    command = create_account;
-//    role_permissions = {can_create_account};
-//  }
-//
-//  std::shared_ptr<CreateAccount> create_account;
-//};
-//
-// TEST_F(CreateAccountTest, ValidWhenNewAccount) {
-//  // Valid case
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getDomain(domain_id))
-//      .WillOnce(Return(default_domain));
-//
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertSignatory(shared_model::crypto::PublicKey(
-//          {create_account->pubkey.begin(), create_account->pubkey.end()})))
-//      .Times(1)
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  EXPECT_CALL(*wsv_command, insertAccount(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  EXPECT_CALL(*wsv_command,
-//              insertAccountSignatory(account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {create_account->pubkey.begin(),
-//                                          create_account->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(*wsv_command, insertAccountRole(account_id, admin_role))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateAccountTest, InvalidWhenNoPermissions) {
-//  // Creator has no permission
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateAccountTest, InvalidWhenLongName) {
-//  // Not valid name for account
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  create_account->account_name =
-//      "aAccountNameMustBeLessThan64characters00000000000000000000000000";
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateAccountTest, InvalidWhenNameWithSystemSymbols) {
-//  // Not valid name for account (system symbols)
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  create_account->account_name = "test@";
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given CreateAccountCommand
-// * @when command tries to create account in a non-existing domain
-// * @then execute fails and returns false
-// */
-// TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getDomain(domain_id)).WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+
+class CreateAccountTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_create_account};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command =
+        clone(*(TestTransactionBuilder()
+                    .createAccount("test",
+                                   domain_id,
+                                   shared_model::interface::types::PubkeyType(
+                                       std::string(32, '2')))
+                    .build()
+                    .commands()
+                    .front()));
+    create_account =
+        getCommand<shared_model::interface::CreateAccount>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::CreateAccount> create_account;
+};
+
+TEST_F(CreateAccountTest, ValidWhenNewAccount) {
+  // Valid case
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getDomain(domain_id))
+      .WillOnce(Return(default_domain));
+
+  EXPECT_CALL(*wsv_command, insertSignatory(create_account->pubkey()))
+      .Times(1)
+      .WillOnce(Return(WsvCommandResult()));
+
+  EXPECT_CALL(*wsv_command, insertAccount(_))
+      .WillOnce(Return(WsvCommandResult()));
+
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(account_id, create_account->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command, insertAccountRole(account_id, admin_role))
+      .WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(CreateAccountTest, InvalidWhenNoPermissions) {
+  // Creator has no permission
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(CreateAccountTest, InvalidWhenLongName) {
+  // Not valid name for account
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .createAccount("aAccountNameMustBeLessThan64characters0000000"
+                                 "0000000000000000000",
+                                 domain_id,
+                                 shared_model::interface::types::PubkeyType(
+                                     std::string(32, '2')))
+                  .build()
+                  .commands()
+                  .front()));
+  create_account = getCommand<shared_model::interface::CreateAccount>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(CreateAccountTest, InvalidWhenNameWithSystemSymbols) {
+  // Not valid name for account (system symbols)
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .createAccount("test@",
+                                 domain_id,
+                                 shared_model::interface::types::PubkeyType(
+                                     std::string(32, '2')))
+                  .build()
+                  .commands()
+                  .front()));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given CreateAccountCommand
+ * @when command tries to create account in a non-existing domain
+ * @then execute fails and returns false
+ */
+TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getDomain(domain_id)).WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
 
 class CreateAssetTest : public CommandValidateExecuteTest {
  public:
