@@ -567,99 +567,126 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 //}
-//
-// class AddSignatoryTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    add_signatory = std::make_shared<AddSignatory>();
-//    add_signatory->account_id = account_id;
-//    add_signatory->pubkey.fill(1);  // Such Pubkey exist
-//    role_permissions = {can_add_signatory};
-//    command = add_signatory;
-//  }
-//
-//  std::shared_ptr<AddSignatory> add_signatory;
-//};
-//
-// TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
-//  // Creator has role permissions to add signatory
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, add_signatory->account_id, can_add_signatory))
-//      .WillOnce(Return(true));
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertSignatory(shared_model::crypto::PublicKey(
-//          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(*wsv_command,
-//              insertAccountSignatory(add_signatory->account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {add_signatory->pubkey.begin(),
-//                                          add_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
-//  // When creator is adding public keys to his account
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  add_signatory->account_id = creator->accountId();
-//
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertSignatory(shared_model::crypto::PublicKey(
-//          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(*wsv_command,
-//              insertAccountSignatory(add_signatory->account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {add_signatory->pubkey.begin(),
-//                                          add_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
-//  // Creator has no permission
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, add_signatory->account_id, can_add_signatory))
-//      .WillOnce(Return(false));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
-//  // Add to nonexistent account
-//  add_signatory->account_id = "noacc";
-//
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, add_signatory->account_id, can_add_signatory))
-//      .WillOnce(Return(false));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
-//  // Add same signatory
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, add_signatory->account_id, can_add_signatory))
-//      .WillOnce(Return(true));
-//  add_signatory->pubkey.fill(2);
-//  EXPECT_CALL(
-//      *wsv_command,
-//      insertSignatory(shared_model::crypto::PublicKey(
-//          {add_signatory->pubkey.begin(), add_signatory->pubkey.end()})))
-//      .WillOnce(Return(makeEmptyError()));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+
+class AddSignatoryTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_add_signatory};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command =
+        clone(*(TestTransactionBuilder()
+                    .addSignatory(account_id,
+                                  shared_model::interface::types::PubkeyType(
+                                      std::string(32, '1')))
+                    .build()
+                    .commands()
+                    .front()));
+    add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::AddSignatory> add_signatory;
+};
+
+TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
+  // Creator has role permissions to add signatory
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, add_signatory->accountId(), can_add_signatory))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->accountId(),
+                                     add_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
+  // When creator is adding public keys to his account
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .addSignatory(creator->accountId(),
+                                shared_model::interface::types::PubkeyType(
+                                    std::string(32, '1')))
+                  .build()
+                  .commands()
+                  .front()));
+  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command,
+              insertAccountSignatory(add_signatory->accountId(),
+                                     add_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
+  // Creator has no permission
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, add_signatory->accountId(), can_add_signatory))
+      .WillOnce(Return(false));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
+  // Add to nonexistent account
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .addSignatory("noacc",
+                                shared_model::interface::types::PubkeyType(
+                                    std::string(32, '1')))
+                  .build()
+                  .commands()
+                  .front()));
+  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, add_signatory->accountId(), can_add_signatory))
+      .WillOnce(Return(false));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
+  // Add same signatory
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .addSignatory(account_id,
+                                shared_model::interface::types::PubkeyType(
+                                    std::string(32, '2')))
+                  .build()
+                  .commands()
+                  .front()));
+  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, add_signatory->accountId(), can_add_signatory))
+      .WillOnce(Return(true));
+  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
+      .WillOnce(Return(makeEmptyError()));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
 
 class CreateAccountTest : public CommandValidateExecuteTest {
  public:
