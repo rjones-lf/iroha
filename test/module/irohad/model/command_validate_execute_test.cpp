@@ -353,180 +353,199 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 //}
-//
-// class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    shared_model::builder::AmountBuilder<
-//        shared_model::proto::AmountBuilder,
-//        shared_model::validation::FieldValidator>()
-//        .intValue(150ul)
-//        .precision(2)
-//        .build()
-//        .match(
-//            [&](expected::Value<
-//                std::shared_ptr<shared_model::interface::Amount>> &v) {
-//              balance = v.value;
-//            },
-//            [](expected::Error<std::shared_ptr<std::string>> &e) {
-//              FAIL() << *e.error;
-//            });
-//    ;
-//
-//    shared_model::builder::AssetBuilder<
-//        shared_model::proto::AssetBuilder,
-//        shared_model::validation::FieldValidator>()
-//        .assetId(asset_id)
-//        .domainId(domain_id)
-//        .precision(2)
-//        .build()
-//        .match(
-//            [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
-//                    &v) { asset = v.value; },
-//            [](expected::Error<std::shared_ptr<std::string>> &e) {
-//              FAIL() << *e.error;
-//            });
-//
-//    shared_model::builder::AccountAssetBuilder<
-//        shared_model::proto::AccountAssetBuilder,
-//        shared_model::validation::FieldValidator>()
-//        .assetId(asset_id)
-//        .accountId(account_id)
-//        .balance(*balance)
-//        .build()
-//        .match(
-//            [&](expected::Value<
-//                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
-//              wallet = v.value;
-//            },
-//            [](expected::Error<std::shared_ptr<std::string>> &e) {
-//              FAIL() << *e.error;
-//            });
-//
-//    subtract_asset_quantity = std::make_shared<SubtractAssetQuantity>();
-//    subtract_asset_quantity->account_id = creator->accountId();
-//    Amount amount(100, 2);
-//    subtract_asset_quantity->amount = amount;
-//    subtract_asset_quantity->asset_id = asset_id;
-//
-//    command = subtract_asset_quantity;
-//    role_permissions = {can_subtract_asset_qty};
-//  }
-//
-//  std::shared_ptr<shared_model::interface::Amount> balance;
-//  std::shared_ptr<shared_model::interface::Asset> asset;
-//  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
-//
-//  std::shared_ptr<SubtractAssetQuantity> subtract_asset_quantity;
-//};
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when account doesn't have wallet of target asset
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
-//  // Subtract asset - no wallet
-//  // When there is no wallet - Failed
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(subtract_asset_quantity->account_id,
-//                              subtract_asset_quantity->asset_id))
-//      .WillOnce(Return(boost::none));
-//
-//  EXPECT_CALL(*wsv_query,
-//  getAccountRoles(subtract_asset_quantity->account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when correct arguments
-// * @then executor will be passed
-// */
-// TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
-//  // There is already asset- there is a wallet
-//  // When there is a wallet - no new accountAsset created
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(subtract_asset_quantity->account_id,
-//                              subtract_asset_quantity->asset_id))
-//      .WillOnce(Return(wallet));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(*wsv_query,
-//  getAccountRoles(subtract_asset_quantity->account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when arguments amount is greater than wallet's amount
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
-//  Amount amount(1204, 2);
-//  subtract_asset_quantity->amount = amount;
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(subtract_asset_quantity->account_id,
-//                              subtract_asset_quantity->asset_id))
-//      .WillOnce(Return(wallet));
-//
-//  EXPECT_CALL(*wsv_query,
-//  getAccountRoles(subtract_asset_quantity->account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when account doesn't have role
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
-//  // Creator has no roles
-//  EXPECT_CALL(*wsv_query,
-//  getAccountRoles(subtract_asset_quantity->account_id))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when arguments amount is zero
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenZeroAmount) {
-//  // Amount is zero
-//  Amount amount(0);
-//  subtract_asset_quantity->amount = amount;
-//  EXPECT_CALL(*wsv_query, getAsset(asset->assetId())).WillOnce(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
+
+class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    shared_model::builder::AmountBuilder<
+        shared_model::proto::AmountBuilder,
+        shared_model::validation::FieldValidator>()
+        .intValue(150ul)
+        .precision(2)
+        .build()
+        .match(
+            [&](expected::Value<
+                std::shared_ptr<shared_model::interface::Amount>> &v) {
+              balance = v.value;
+            },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
+    ;
+
+    shared_model::builder::AssetBuilder<
+        shared_model::proto::AssetBuilder,
+        shared_model::validation::FieldValidator>()
+        .assetId(asset_id)
+        .domainId(domain_id)
+        .precision(2)
+        .build()
+        .match(
+            [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
+                    &v) { asset = v.value; },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
+
+    shared_model::builder::AccountAssetBuilder<
+        shared_model::proto::AccountAssetBuilder,
+        shared_model::validation::FieldValidator>()
+        .assetId(asset_id)
+        .accountId(account_id)
+        .balance(*balance)
+        .build()
+        .match(
+            [&](expected::Value<
+                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
+              wallet = v.value;
+            },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
+
+    role_permissions = {can_subtract_asset_qty};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(
+        *(TestTransactionBuilder()
+              .subtractAssetQuantity(creator->accountId(), asset_id, "1.00")
+              .build()
+              .commands()
+              .front()));
+    subtract_asset_quantity =
+        getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Amount> balance;
+  std::shared_ptr<shared_model::interface::Asset> asset;
+  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::SubtractAssetQuantity>
+      subtract_asset_quantity;
+};
+
+/**
+ * @given SubtractAssetQuantity
+ * @when account doesn't have wallet of target asset
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
+  // Subtract asset - no wallet
+  // When there is no wallet - Failed
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(subtract_asset_quantity->accountId(),
+                              subtract_asset_quantity->assetId()))
+      .WillOnce(Return(boost::none));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->accountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when correct arguments
+ * @then executor will be passed
+ */
+TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
+  // There is already asset- there is a wallet
+  // When there is a wallet - no new accountAsset created
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(subtract_asset_quantity->accountId(),
+                              subtract_asset_quantity->assetId()))
+      .WillOnce(Return(wallet));
+
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->accountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when arguments amount is greater than wallet's amount
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(
+      *(TestTransactionBuilder()
+          .subtractAssetQuantity(creator->accountId(), asset_id, "12.04")
+          .build()
+          .commands()
+          .front()));
+  subtract_asset_quantity =
+      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(subtract_asset_quantity->accountId(),
+                              subtract_asset_quantity->assetId()))
+      .WillOnce(Return(wallet));
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->accountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when account doesn't have role
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
+  // Creator has no roles
+  EXPECT_CALL(*wsv_query, getAccountRoles(subtract_asset_quantity->accountId()))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when arguments amount is zero
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenZeroAmount) {
+  // Amount is zero
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(
+      *(TestTransactionBuilder()
+          .subtractAssetQuantity(creator->accountId(), asset_id, "0")
+          .build()
+          .commands()
+          .front()));
+  subtract_asset_quantity =
+      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+
+  EXPECT_CALL(*wsv_query, getAsset(asset->assetId())).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
 ///**
 // * @given SubtractAssetQuantity
 // * @when arguments amount precision is invalid
 // * @then executor will be failed
 // */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
+//TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
 //  // Amount is with wrong precision (must be 2)
 //  Amount amount(subtract_asset_quantity->amount.getIntValue(), 30);
 //  subtract_asset_quantity->amount = amount;
@@ -535,38 +554,57 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
 //      .WillOnce(Return(role_permissions));
 //  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
+//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 //}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when account doesn't exist
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
-//  // Account to subtract doesn't exist
-//  subtract_asset_quantity->account_id = "noacc";
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given SubtractAssetQuantity
-// * @when asset doesn't exist
-// * @then executor will be failed
-// */
-// TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
-//  // Asset doesn't exist
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  subtract_asset_quantity->asset_id = "noass";
-//
-//  EXPECT_CALL(*wsv_query, getAsset(subtract_asset_quantity->asset_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when account doesn't exist
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
+  // Account to subtract doesn't exist
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(
+      *(TestTransactionBuilder()
+          .subtractAssetQuantity("noacc", asset_id, "12.04")
+          .build()
+          .commands()
+          .front()));
+  subtract_asset_quantity =
+      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given SubtractAssetQuantity
+ * @when asset doesn't exist
+ * @then executor will be failed
+ */
+TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
+  // Asset doesn't exist
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(
+      *(TestTransactionBuilder()
+          .subtractAssetQuantity(creator->accountId(), "no_asset", "12.04")
+          .build()
+          .commands()
+          .front()));
+  subtract_asset_quantity =
+      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(subtract_asset_quantity->assetId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
 
 class AddSignatoryTest : public CommandValidateExecuteTest {
  public:
