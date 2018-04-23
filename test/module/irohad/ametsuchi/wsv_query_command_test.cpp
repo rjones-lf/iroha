@@ -60,8 +60,8 @@ namespace iroha {
       }
 
       std::string role = "role", permission = "permission";
-      std::shared_ptr<shared_model::interface::Account> account;
-      std::shared_ptr<shared_model::interface::Domain> domain;
+      std::unique_ptr<shared_model::interface::Account> account;
+      std::unique_ptr<shared_model::interface::Domain> domain;
 
       std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::unique_ptr<pqxx::nontransaction> wsv_transaction;
