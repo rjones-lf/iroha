@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,6 +72,11 @@ namespace iroha {
 
     class RoleTest : public WsvQueryCommandTest {};
 
+    /**
+     * @given WSV command and valid role name
+     * @when trying to insert new role
+     * @then role is successfully inserted
+     */
     TEST_F(RoleTest, InsertRoleWhenValidName) {
       ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
       auto roles = query->getRoles();
@@ -80,6 +85,11 @@ namespace iroha {
       ASSERT_EQ(role, roles->front());
     }
 
+    /**
+     * @given WSV command and invalid role name
+     * @when trying to insert new role
+     * @then role is failed
+     */
     TEST_F(RoleTest, InsertRoleWhenInvalidName) {
       ASSERT_NO_THROW(
           checkErrorCase(command->insertRole(std::string(46, 'a'))));
@@ -96,6 +106,11 @@ namespace iroha {
       }
     };
 
+    /**
+     * @given WSV command and role exists and valid permissions
+     * @when trying to insert role permissions
+     * @then RolePermissions are inserted
+     */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenRoleExists) {
       ASSERT_NO_THROW(
           checkValueCase(command->insertRolePermissions(role, {permission})));
@@ -106,6 +121,11 @@ namespace iroha {
       ASSERT_EQ(permission, permissions->front());
     }
 
+    /**
+     * @given WSV command and role doesn't exist and valid permissions
+     * @when trying to insert role permissions
+     * @then RolePermissions are not inserted
+     */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenNoRole) {
       auto new_role = role + " ";
       ASSERT_NO_THROW(checkErrorCase(
@@ -222,6 +242,11 @@ namespace iroha {
       }
     };
 
+    /**
+     * @given WSV command and account exists and valid account role
+     * @when trying to insert account
+     * @then account role is inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenAccountRoleExist) {
       ASSERT_NO_THROW(checkValueCase(
           command->insertAccountRole(account->accountId(), role)));
@@ -232,6 +257,11 @@ namespace iroha {
       ASSERT_EQ(role, roles->front());
     }
 
+    /**
+     * @given WSV command and account does not exist and valid account role
+     * @when trying to insert account
+     * @then account role is not inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenNoAccount) {
       auto account_id = account->accountId() + " ";
       ASSERT_NO_THROW(
@@ -242,6 +272,11 @@ namespace iroha {
       ASSERT_EQ(0, roles->size());
     }
 
+    /**
+     * @given WSV command and account exists and invalid account role
+     * @when trying to insert account
+     * @then account role is not inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenNoRole) {
       auto new_role = role + " ";
       ASSERT_NO_THROW(checkErrorCase(
@@ -320,6 +355,11 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::Account> permittee_account;
     };
 
+    /**
+     * @given WSV command and account exists and valid grantable permissions
+     * @when trying to insert grantable permissions
+     * @then grantable permissions are inserted
+     */
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenAccountsExist) {
       ASSERT_NO_THROW(checkValueCase(command->insertAccountGrantablePermission(
@@ -329,6 +369,11 @@ namespace iroha {
           permittee_account->accountId(), account->accountId(), permission));
     }
 
+    /**
+     * @given WSV command and invalid permittee and valid grantable permissions
+     * @when trying to insert grantable permissions
+     * @then grantable permissions are not inserted
+     */
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenNoPermitteeAccount) {
       auto permittee_account_id = permittee_account->accountId() + " ";
@@ -349,6 +394,11 @@ namespace iroha {
           permittee_account->accountId(), account_id, permission));
     }
 
+    /**
+     * @given WSV command to delete grantable permission with valid parameters
+     * @when trying to delete grantable permissions
+     * @then grantable permissions are deleted
+     */
     TEST_F(AccountGrantablePermissionTest,
            DeleteAccountGrantablePermissionWhenAccountsPermissionExist) {
       ASSERT_NO_THROW(checkValueCase(command->deleteAccountGrantablePermission(
@@ -367,7 +417,7 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
       }
-      std::shared_ptr<shared_model::interface::Peer> peer;
+      std::unique_ptr<shared_model::interface::Peer> peer;
     };
 
     /**
