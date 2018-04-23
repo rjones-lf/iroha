@@ -752,58 +752,60 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
 //}
-//
-// class CreateAssetTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    create_asset = std::make_shared<CreateAsset>();
-//    create_asset->asset_name = "fcoin";
-//    create_asset->domain_id = domain_id;
-//    create_asset->precision = 2;
-//
-//    command = create_asset;
-//    role_permissions = {can_create_asset};
-//  }
-//
-//  std::shared_ptr<CreateAsset> create_asset;
-//};
-//
-// TEST_F(CreateAssetTest, ValidWhenCreatorHasPermissions) {
-//  // Creator is money creator
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_command, insertAsset(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateAssetTest, InvalidWhenNoPermissions) {
-//  // Creator has no permissions
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given CreateAsset
-// * @when command tries to create asset, but insertion fails
-// * @then execute() fails
-// */
-// TEST_F(CreateAssetTest, InvalidWhenAssetInsertionFails) {
-//  EXPECT_CALL(*wsv_command,
-//  insertAsset(_)).WillOnce(Return(makeEmptyError()));
-//
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
+
+class CreateAssetTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_create_asset};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(*(TestTransactionBuilder()
+                          .createAsset("fcoin", domain_id, 2)
+                          .build()
+                          .commands()
+                          .front()));
+    create_asset = getCommand<shared_model::interface::CreateAsset>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::CreateAsset> create_asset;
+};
+
+TEST_F(CreateAssetTest, ValidWhenCreatorHasPermissions) {
+  // Creator is money creator
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command, insertAsset(_))
+      .WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(CreateAssetTest, InvalidWhenNoPermissions) {
+  // Creator has no permissions
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given CreateAsset
+ * @when command tries to create asset, but insertion fails
+ * @then execute() fails
+ */
+TEST_F(CreateAssetTest, InvalidWhenAssetInsertionFails) {
+  EXPECT_CALL(*wsv_command, insertAsset(_)).WillOnce(Return(makeEmptyError()));
+
+  ASSERT_NO_THROW(checkErrorCase(execute(command)));
+}
 
 class CreateDomainTest : public CommandValidateExecuteTest {
  public:
