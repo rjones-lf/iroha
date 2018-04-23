@@ -18,6 +18,7 @@
 #ifndef IROHA_RESULT_HPP
 #define IROHA_RESULT_HPP
 
+#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
 #include "common/visitor.hpp"
@@ -106,7 +107,72 @@ namespace iroha {
                               std::forward<ValueMatch>(value_func),
                               std::forward<ErrorMatch>(error_func));
       }
+
+      constexpr bool has_val() const {
+        return some_val();
+      }
+
+      constexpr bool has_err() const {
+        return some_err();
+      }
+
+      constexpr auto some_val() const {
+        return visit_in_place(
+            *this,
+            [](ValueType v) { return boost::optional<ValueType>(v); },
+            [](ErrorType e) -> boost::optional<ValueType> { return {}; });
+      }
+
+      constexpr auto some_err() const {
+        return visit_in_place(
+            *this,
+            [](ValueType v) -> boost::optional<ErrorType> { return {}; },
+            [](ErrorType e) { return boost::optional<ErrorType>(e); });
+      }
+
+      /**
+       * @return new_res if this Result contains a value
+       *         otherwise return this
+       */
+      template <typename Value>
+      constexpr Result<Value, E> and_res(Result<Value, E> new_res) const {
+        return visit_in_place(
+            *this,
+            [res = new_res](ValueType) { return res; },
+            [](ErrorType err) -> Result<Value, E> { return err; });
+      }
+
+      /**
+       * @return new_res if this Result contains a error
+       *         otherwise return this
+       */
+      template <typename Value>
+      constexpr Result<Value, E> or_res(Result<Value, E> new_res) const {
+        return visit_in_place(
+            *this,
+            [](ValueType val) -> Result<Value, E> { return val; },
+            [res = new_res](ErrorType) { return res; });
+      }
     };
+
+    template <typename Val1, typename Val2, typename E, typename Fn>
+    auto rmap(Result<Val2, E> res, Fn &&map) {
+      return visit_in_place(
+          res,
+          [map](Value<Val2> val) -> Result<Val1, E> {
+            return Value<Val1>{map(val.value)};
+          },
+          [](Error<E> err) -> Result<Val1, E> { return err; });
+    }
+
+    template <typename Err1, typename Err2, typename V, typename Fn>
+    auto rmap_err(Result<V, Err2> res, Fn &&map) {
+      return visit_in_place(res,
+                            [](Value<V> val) -> Result<V, Err1> { return val; },
+                            [map](Error<Err2> err) -> Result<V, Err1> {
+                              return Error<Err1>{map(err.error)};
+                            });
+    }
 
     // Factory methods for avoiding type specification
     template <typename T>

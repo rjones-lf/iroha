@@ -158,6 +158,146 @@ TEST(ResultTest, ResultVoidError) {
                makeFailCase<Error<void>>(kErrorCaseMessage));
 }
 
+/**
+ * @given Result some value
+ * @when some_val function is invoked
+ * @then the value is returned
+ */
+TEST(ResultTest, SomeVal) {
+  Result<int, void> result = makeValue(5);
+  ASSERT_TRUE(result.some_val());
+}
+
+/**
+ * @given Result some error
+ * @when some_err function is invoked
+ * @then the error is returned
+ */
+TEST(ResultTest, SomeErr) {
+  Result<void, int> result = makeError(5);
+  ASSERT_TRUE(result.some_err());
+}
+
+/**
+ * @given Pair of results with some values
+ * @when and_res function is invoked
+ * @then result contains the last value
+ */
+TEST(ResultTest, AndResWithValVal) {
+  Result<int, void> result = makeValue(5);
+  Result<int, void> new_res = makeValue(4);
+  result.and_res(new_res).match([](Value<int> v) { ASSERT_EQ(4, v.value); },
+                                makeFailCase<Error<void>>(kErrorCaseMessage));
+}
+
+/**
+ * @given Pair of results: first with error, second with value
+ * @when and_res function is invoked
+ * @then result contains the first error
+ */
+TEST(ResultTest, AndResWithErrVal) {
+  Result<int, int> result = makeError(5);
+  Result<int, int> new_res = makeValue(4);
+  result.and_res(new_res).match(makeFailCase<Value<int>>(kValueCaseMessage),
+                                [](Error<int> e) { ASSERT_EQ(5, e.error); });
+}
+
+/**
+ * @given Pair of results: first with value, second with error
+ * @when and_res function is invoked
+ * @then result contains the second error
+ */
+TEST(ResultTest, AndResWithValErr) {
+  Result<int, int> result = makeValue(5);
+  Result<int, int> new_res = makeError(4);
+  result.and_res(new_res).match(makeFailCase<Value<int>>(kValueCaseMessage),
+                                [](Error<int> e) { ASSERT_EQ(4, e.error); });
+}
+
+/**
+ * @given Pair of results with some values
+ * @when or_res function is invoked
+ * @then result contains the first value
+ */
+TEST(ResultTest, OrResWithValVal) {
+  Result<int, void> result = makeValue(5);
+  Result<int, void> new_res = makeValue(4);
+  result.or_res(new_res).match([](Value<int> v) { ASSERT_EQ(5, v.value); },
+                               makeFailCase<Error<void>>(kErrorCaseMessage));
+}
+
+/**
+ * @given Pair of results: first with error, second with value
+ * @when or_res function is invoked
+ * @then result contains the second value
+ */
+TEST(ResultTest, OrResWithErrVal) {
+  Result<int, int> result = makeError(5);
+  Result<int, int> new_res = makeValue(4);
+  result.or_res(new_res).match([](Value<int> v) { ASSERT_EQ(4, v.value); },
+                               makeFailCase<Error<int>>(kErrorCaseMessage));
+}
+
+/**
+ * @given Pair of results with some errors
+ * @when or_res function is invoked
+ * @then result contains the last value
+ */
+TEST(ResultTest, OrResWithErrErr) {
+  Result<int, int> result = makeError(5);
+  Result<int, int> new_res = makeError(4);
+  result.or_res(new_res).match(makeFailCase<Value<int>>(kValueCaseMessage),
+                               [](Error<int> e) { ASSERT_EQ(4, e.error); });
+}
+
+/**
+ * @given Result with some value and some function
+ * @when rmap function is invoked
+ * @then result contains value after function application
+ */
+TEST(ResultTest, Rmap) {
+  Result<int, void> result = makeValue(5);
+  rmap<int>(result, [](auto i) { return i * 2; })
+      .match([](Value<int> v) { ASSERT_EQ(10, v.value); },
+             makeFailCase<Error<void>>(kErrorCaseMessage));
+}
+
+/**
+ * @given Result with some error and some function
+ * @when rmap function is invoked
+ * @then result contains the same error
+ */
+TEST(ResultTest, RmapBlank) {
+  Result<int, int> result = makeError(5);
+  rmap<int>(result, [](auto i) { return i * 2; })
+      .match(makeFailCase<Value<int>>(kValueCaseMessage),
+             [](Error<int> e) { ASSERT_EQ(5, e.error); });
+}
+
+/**
+ * @given Result with some error and some function
+ * @when rmap_err function is invoked
+ * @then result contains error after function application
+ */
+TEST(ResultTest, Rmaperr) {
+  Result<void, int> result = makeError(5);
+  rmap_err<int>(result, [](auto i) { return i * 2; })
+      .match(makeFailCase<Value<void>>(kValueCaseMessage),
+             [](Error<int> e) { ASSERT_EQ(10, e.error); });
+}
+
+/**
+ * @given Result with some error and some function
+ * @when rmap function is invoked
+ * @then result contains the same error
+ */
+TEST(ResultTest, RmaperrBlank) {
+  Result<int, int> result = makeValue(5);
+  rmap_err<int>(result, [](auto i) { return i * 2; })
+      .match([](Value<int> v) { ASSERT_EQ(5, v.value); },
+             makeFailCase<Error<int>>(kErrorCaseMessage));
+}
+
 /// Polymorphic result tests
 
 /// Base and Derived are classes, which can be used to test polymorphic behavior
@@ -188,7 +328,7 @@ TEST(PolyMorphicResultTest, PolymorphicValueConstruction) {
       [](Value<std::shared_ptr<Base>> &v) {
         ASSERT_EQ(1, v.value->getNumber());
       },
-        makeFailCase<Error<std::shared_ptr<std::string>>>(kErrorCaseMessage));
+      makeFailCase<Error<std::shared_ptr<std::string>>>(kErrorCaseMessage));
 }
 
 /**
@@ -199,9 +339,8 @@ TEST(PolyMorphicResultTest, PolymorphicValueConstruction) {
 TEST(PolyMorphicResultTest, PolymorphicErrorConstruction) {
   PolymorphicResult<Base, std::string> result =
       makeError(std::make_shared<std::string>(kErrorMessage));
-  result.match(
-      makeFailCase<Value<std::shared_ptr<Base>>>(kValueCaseMessage),
-      [](Error<std::shared_ptr<std::string>> &e) {
-        ASSERT_EQ(kErrorMessage, *e.error);
-      });
+  result.match(makeFailCase<Value<std::shared_ptr<Base>>>(kValueCaseMessage),
+               [](Error<std::shared_ptr<std::string>> &e) {
+                 ASSERT_EQ(kErrorMessage, *e.error);
+               });
 }
