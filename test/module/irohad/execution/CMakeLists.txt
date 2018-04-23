@@ -17,7 +17,6 @@
 
 addtest(command_validate_execute_test ../execution/command_validate_execute_test.cpp)
 target_link_libraries(command_validate_execute_test
-    model
     command_execution
     shared_model_stateless_validation
     )
