@@ -804,54 +804,57 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(execute()));
 //}
-//
-// class CreateDomainTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    create_domain = std::make_shared<CreateDomain>();
-//    create_domain->domain_id = "cn";
-//    create_domain->user_default_role = "default";
-//
-//    command = create_domain;
-//    role_permissions = {can_create_domain};
-//  }
-//
-//  std::shared_ptr<CreateDomain> create_domain;
-//};
-//
-// TEST_F(CreateDomainTest, ValidWhenCreatorHasPermissions) {
-//  // Valid case
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//
-//  EXPECT_CALL(*wsv_command, insertDomain(_))
-//      .WillOnce(Return(WsvCommandResult()));
-//
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(CreateDomainTest, InvalidWhenNoPermissions) {
-//  // Creator has no permissions
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(boost::none));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given CreateDomain
-// * @when command tries to create domain, but insertion fails
-// * @then execute() fails
-// */
-// TEST_F(CreateDomainTest, InvalidWhenDomainInsertionFails) {
-//  EXPECT_CALL(*wsv_command,
-//  insertDomain(_)).WillOnce(Return(makeEmptyError()));
-//
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
+
+class CreateDomainTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    role_permissions = {can_create_domain};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command = clone(*(TestTransactionBuilder()
+                          .createDomain("cn", "default")
+                          .build()
+                          .commands()
+                          .front()));
+    create_domain = getCommand<shared_model::interface::CreateDomain>(command);
+  }
+
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::CreateDomain> create_domain;
+};
+
+TEST_F(CreateDomainTest, ValidWhenCreatorHasPermissions) {
+  // Valid case
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command, insertDomain(_))
+      .WillOnce(Return(WsvCommandResult()));
+
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(CreateDomainTest, InvalidWhenNoPermissions) {
+  // Creator has no permissions
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(boost::none));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given CreateDomain
+ * @when command tries to create domain, but insertion fails
+ * @then execute() fails
+ */
+TEST_F(CreateDomainTest, InvalidWhenDomainInsertionFails) {
+  EXPECT_CALL(*wsv_command, insertDomain(_)).WillOnce(Return(makeEmptyError()));
+
+  ASSERT_NO_THROW(checkErrorCase(execute(command)));
+}
 
 class RemoveSignatoryTest : public CommandValidateExecuteTest {
  public:
