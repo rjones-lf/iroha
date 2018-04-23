@@ -72,6 +72,6 @@ endif()
 if (SWIG_NODE)
   find_package (nodejs REQUIRED)
   add_test(NAME javascript_tests
-    COMMAND npm run test
+    COMMAND npm install --build-from-source=iroha-lib; npm run test
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/shared_model/packages/javascript)
 endif()
