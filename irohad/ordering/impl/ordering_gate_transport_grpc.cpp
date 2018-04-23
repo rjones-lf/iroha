@@ -19,6 +19,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering;
 
@@ -54,8 +55,8 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     const std::string &server_address)
     : network::AsyncGrpcClient<google::protobuf::Empty>(
           logger::log("OrderingGate")),
-      client_(proto::OrderingServiceTransportGrpc::NewStub(grpc::CreateChannel(
-          server_address, grpc::InsecureChannelCredentials()))) {}
+      client_(network::createClient<proto::OrderingServiceTransportGrpc>(
+          server_address)) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {

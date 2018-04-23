@@ -218,7 +218,7 @@ pipeline {
               """
               def testExitCode = sh(script: 'IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 cmake --build build --target test', returnStatus: true)
               if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
+                currentBuild.currentResult = "UNSTABLE"
               }
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
@@ -248,22 +248,20 @@ pipeline {
             always {
               script {
                 timeout(time: 600, unit: "SECONDS") {
-                  if (currentBuild.result != "UNSTABLE") {
-                    if (BRANCH_NAME ==~ /(master|develop)/) {
-                      try {
-                        def artifacts = load ".jenkinsci/artifacts.groovy"
-                        def commit = env.GIT_COMMIT
-                        filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                        artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
-                      }
-                      finally {
-                        cleanWs()
-                        sh """
-                          pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                          rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
-                        """
-                      }
+                  try {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
+                      def artifacts = load ".jenkinsci/artifacts.groovy"
+                      def commit = env.GIT_COMMIT
+                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
                     }
+                  }
+                  finally {
+                    cleanWs()
+                    sh """
+                      pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+                      rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
+                    """
                   }
                 }
               }
@@ -346,16 +344,16 @@ pipeline {
             always {
               script {
                 timeout(time: 600, unit: "SECONDS") {
-                  if (BRANCH_NAME ==~ /(master|develop)/) {
-                    try {
+                  try {
+                    if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))                        
+                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [BRANCH_NAME, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
-                    finally {
-                      cleanWs()
-                    }
+                  }
+                  finally {
+                    cleanWs()
                   }
                 }
               }

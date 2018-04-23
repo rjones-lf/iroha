@@ -22,6 +22,7 @@
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -160,8 +161,7 @@ proto::Loader::Stub &BlockLoaderImpl::getPeerStub(
     it = peer_connections_
              .insert(std::make_pair(
                  peer.address(),
-                 proto::Loader::NewStub(grpc::CreateChannel(
-                     peer.address(), grpc::InsecureChannelCredentials()))))
+                 network::createClient<proto::Loader>(peer.address())))
              .first;
   }
   return *it->second;

@@ -42,10 +42,10 @@
 constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -167,10 +167,11 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(*old_tx).answer,
             iroha_cli::CliClient::OK);
   auto tx_hash = shm_tx.hash();
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port)
-                .getTxStatus(shared_model::crypto::toBinaryString(tx_hash))
-                .answer.tx_status(),
+  auto res = iroha_cli::CliClient(Ip, Port).getTxStatus(
+      shared_model::crypto::toBinaryString(tx_hash));
+  ASSERT_EQ(res.answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+  ASSERT_NE(res.answer.error_message().size(), 0);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
@@ -210,6 +211,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
   ASSERT_TRUE(res.answer.has_error_response());
   ASSERT_EQ(res.answer.error_response().reason(),
             iroha::model::ErrorResponse::STATELESS_INVALID);
+  ASSERT_NE(res.answer.error_response().message().size(), 0);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenValid) {

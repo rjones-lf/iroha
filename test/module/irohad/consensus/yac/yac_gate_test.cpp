@@ -200,3 +200,57 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
+
+/**
+ * @given yac gate
+ * @when recives new commit different to the one it voted for
+ * @then polls nodes for the block with corresponding hash until it succeed,
+ * (reciving none on the first poll)
+ */
+TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
+  // Vote for block => receive different block => load committed block
+
+  // make blocks
+  EXPECT_CALL(*block_creator, on_block())
+      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+
+  // make hash from block
+  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+
+  // generate order of peers
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
+      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
+
+  // expected values
+  expected_hash = YacHash("actual_proposal", "actual_block");
+
+  message.hash = expected_hash;
+
+  commit_message = CommitMessage({message});
+  expected_commit = rxcpp::observable<>::just(commit_message);
+
+  // yac consensus
+  EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
+
+  // convert yac hash to model hash
+  EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
+      .WillOnce(Return(expected_block->hash()));
+
+  // load block
+  auto sig = expected_block->signatures().begin();
+  auto &pubkey = (*sig)->publicKey();
+  EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
+      .WillOnce(Return(boost::none))
+      .WillOnce(Return(expected_block));
+
+  init();
+
+  // verify that yac gate emit expected block
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
+  gate_wrapper.subscribe(
+      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+
+  ASSERT_TRUE(gate_wrapper.validate());
+}
