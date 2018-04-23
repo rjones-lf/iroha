@@ -102,6 +102,51 @@ class CommandValidateExecuteTest : public ::testing::Test {
             [](expected::Error<std::shared_ptr<std::string>> &e) {
               FAIL() << *e.error;
             });
+
+    shared_model::builder::AssetBuilder<
+        shared_model::proto::AssetBuilder,
+        shared_model::validation::FieldValidator>()
+        .assetId(asset_id)
+        .domainId(domain_id)
+        .precision(2)
+        .build()
+        .match(
+            [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
+                    &v) { asset = v.value; },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
+
+    shared_model::builder::AmountBuilder<
+        shared_model::proto::AmountBuilder,
+        shared_model::validation::FieldValidator>()
+        .intValue(150)
+        .precision(2)
+        .build()
+        .match(
+            [&](expected::Value<
+                std::shared_ptr<shared_model::interface::Amount>> &v) {
+              balance = v.value;
+            },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
+
+    shared_model::builder::AccountAssetBuilder<
+        shared_model::proto::AccountAssetBuilder,
+        shared_model::validation::FieldValidator>()
+        .assetId(asset_id)
+        .accountId(account_id)
+        .balance(*balance)
+        .build()
+        .match(
+            [&](expected::Value<
+                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
+              wallet = v.value;
+            },
+            [](expected::Error<std::shared_ptr<std::string>> &e) {
+              FAIL() << *e.error;
+            });
   }
 
   iroha::ExecutionResult validateAndExecute(
@@ -148,57 +193,15 @@ class CommandValidateExecuteTest : public ::testing::Test {
   std::vector<std::string> admin_roles = {admin_role};
   std::vector<std::string> role_permissions;
   std::shared_ptr<shared_model::interface::Account> creator, account;
+  std::shared_ptr<shared_model::interface::Amount> balance;
+  std::shared_ptr<shared_model::interface::Asset> asset;
+  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
 };
 
 class AddAssetQuantityTest : public CommandValidateExecuteTest {
  public:
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
-
-    shared_model::builder::AssetBuilder<
-        shared_model::proto::AssetBuilder,
-        shared_model::validation::FieldValidator>()
-        .assetId(asset_id)
-        .domainId(domain_id)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
-                    &v) { asset = v.value; },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-
-    shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>()
-        .intValue(150)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>> &v) {
-              balance = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-
-    shared_model::builder::AccountAssetBuilder<
-        shared_model::proto::AccountAssetBuilder,
-        shared_model::validation::FieldValidator>()
-        .assetId(asset_id)
-        .accountId(account_id)
-        .balance(*balance)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
-              wallet = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
 
     role_permissions = {can_add_asset_qty};
 
@@ -213,20 +216,18 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
         getCommand<shared_model::interface::AddAssetQuantity>(command);
   }
 
-  std::shared_ptr<shared_model::interface::Amount> balance;
-  std::shared_ptr<shared_model::interface::Asset> asset;
-  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
-
   std::shared_ptr<shared_model::interface::Command> command;
   std::shared_ptr<shared_model::interface::AddAssetQuantity> add_asset_quantity;
 };
 
+/**
+ * @given AddAssetQuantity where accountAsset doesn't exist at first call
+ * @when command is executed, new accountAsset will be created
+ * @then executor will be passed
+ */
 TEST_F(AddAssetQuantityTest, ValidWhenNewWallet) {
-  // Add asset first time - no wallet
-  // When there is no wallet - new accountAsset will be created
   EXPECT_CALL(*wsv_query, getAccountAsset(add_asset_quantity->accountId(), _))
       .WillOnce(Return(boost::none));
-
   EXPECT_CALL(*wsv_query, getAsset(add_asset_quantity->assetId()))
       .WillOnce(Return(asset));
   EXPECT_CALL(*wsv_query, getAccount(add_asset_quantity->accountId()))
@@ -241,14 +242,16 @@ TEST_F(AddAssetQuantityTest, ValidWhenNewWallet) {
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
 }
 
+/**
+ * @given AddAssetQuantity where accountAsset exists
+ * @when command is executed
+ * @then executor will be passed
+ */
 TEST_F(AddAssetQuantityTest, ValidWhenExistingWallet) {
-  // There is already asset- there is a wallet
-  // When there is a wallet - no new accountAsset created
   EXPECT_CALL(*wsv_query,
               getAccountAsset(add_asset_quantity->accountId(),
                               add_asset_quantity->assetId()))
       .WillOnce(Return(wallet));
-
   EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
   EXPECT_CALL(*wsv_query, getAccount(add_asset_quantity->accountId()))
       .WillOnce(Return(account));
@@ -261,16 +264,23 @@ TEST_F(AddAssetQuantityTest, ValidWhenExistingWallet) {
   ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
 }
 
+/**
+ * @given AddAssetQuantity where command creator role is wrong
+ * @when command is executed
+ * @then executor will be failed
+ */
 TEST_F(AddAssetQuantityTest, InvalidWhenNoRoles) {
-  // Creator has no roles
   EXPECT_CALL(*wsv_query, getAccountRoles(add_asset_quantity->accountId()))
       .WillOnce(Return(boost::none));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
 
+/**
+ * @given AddAssetQuantity with 0 amount
+ * @when command is executed
+ * @then executor will be failed
+ */
 TEST_F(AddAssetQuantityTest, InvalidWhenZeroAmount) {
-  // Amount is zero
-
   // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
   command = clone(*(TestTransactionBuilder()
                         .addAssetQuantity(creator->accountId(), asset_id, "0")
@@ -372,52 +382,6 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>()
-        .intValue(150ul)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>> &v) {
-              balance = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-    ;
-
-    shared_model::builder::AssetBuilder<
-        shared_model::proto::AssetBuilder,
-        shared_model::validation::FieldValidator>()
-        .assetId(asset_id)
-        .domainId(domain_id)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<std::shared_ptr<shared_model::interface::Asset>>
-                    &v) { asset = v.value; },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-
-    shared_model::builder::AccountAssetBuilder<
-        shared_model::proto::AccountAssetBuilder,
-        shared_model::validation::FieldValidator>()
-        .assetId(asset_id)
-        .accountId(account_id)
-        .balance(*balance)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
-              wallet = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-
     role_permissions = {can_subtract_asset_qty};
 
     // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
@@ -430,10 +394,6 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
     subtract_asset_quantity =
         getCommand<shared_model::interface::SubtractAssetQuantity>(command);
   }
-
-  std::shared_ptr<shared_model::interface::Amount> balance;
-  std::shared_ptr<shared_model::interface::Asset> asset;
-  std::shared_ptr<shared_model::interface::AccountAsset> wallet;
 
   std::shared_ptr<shared_model::interface::Command> command;
   std::shared_ptr<shared_model::interface::SubtractAssetQuantity>
@@ -1185,9 +1145,9 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
       .WillOnce(Return(std::vector<std::string>{}));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
       .WillOnce(Return(std::vector<std::string>{admin_role}));
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(admin_id, admin_id, can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(
+                  admin_id, admin_id, can_remove_my_signatory))
       .WillOnce(Return(false));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
@@ -1362,17 +1322,6 @@ class TransferAssetTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    asset = clone(shared_model::proto::AssetBuilder()
-                      .assetId(asset_id)
-                      .domainId(domain_id)
-                      .precision(2)
-                      .build());
-
-    balance = clone(shared_model::proto::AmountBuilder()
-                        .intValue(150)
-                        .precision(2)
-                        .build());
-
     src_wallet = clone(shared_model::proto::AccountAssetBuilder()
                            .assetId(asset_id)
                            .accountId(admin_id)
@@ -1398,8 +1347,6 @@ class TransferAssetTest : public CommandValidateExecuteTest {
         getCommand<shared_model::interface::TransferAsset>(command);
   }
 
-  std::shared_ptr<shared_model::interface::Amount> balance;
-  std::shared_ptr<shared_model::interface::Asset> asset;
   std::shared_ptr<shared_model::interface::AccountAsset> src_wallet, dst_wallet;
 
   std::shared_ptr<shared_model::interface::Command> command;
@@ -1752,7 +1699,8 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
       getCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(admin_id, account_id, can_transfer_my_assets))
+              hasAccountGrantablePermission(
+                  admin_id, account_id, can_transfer_my_assets))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
@@ -1770,7 +1718,8 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
       getCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(admin_id, account_id, can_transfer_my_assets))
+              hasAccountGrantablePermission(
+                  admin_id, account_id, can_transfer_my_assets))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
