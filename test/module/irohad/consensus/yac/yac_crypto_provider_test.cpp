@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
-#include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include "consensus/yac/messages.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 

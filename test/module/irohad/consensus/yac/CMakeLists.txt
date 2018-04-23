@@ -1,5 +1,5 @@
 #
-# Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+# Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
 # http://soramitsu.co.jp
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@
 addtest(cluster_order_test cluster_order_test.cpp)
 target_link_libraries(cluster_order_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_cold_case_test yac_simple_cold_case_test.cpp)
@@ -83,13 +83,13 @@ target_link_libraries(yac_gate_test
 addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
 target_link_libraries(yac_hash_provider_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_common_test yac_common_test.cpp)
 target_link_libraries(yac_common_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)

@@ -32,7 +32,9 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -49,12 +51,28 @@ namespace iroha {
         return clone(ptr);
       }
 
+      /**
+       * Creates test signature with empty signed data, and provided pubkey
+       * @param pub_key - public key to put in the signature
+       * @return new signature
+       */
+      std::shared_ptr<shared_model::interface::Signature> createSig(
+          const std::string &pub_key) {
+        auto tmp =
+            shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+                .publicKey();
+        std::string key(tmp.blob().size(), 0);
+        std::copy(pub_key.begin(), pub_key.end(), key.begin());
+
+        return clone(TestSignatureBuilder()
+                         .publicKey(shared_model::crypto::PublicKey(key))
+                         .build());
+      }
+
       VoteMessage create_vote(YacHash hash, std::string pub_key) {
         VoteMessage vote;
         vote.hash = hash;
-        // TODO: 19.01.2019 kamil substitute with function, IR-813
-        std::copy(
-            pub_key.begin(), pub_key.end(), vote.signature.pubkey.begin());
+        vote.signature = createSig(pub_key);
         return vote;
       }
 
@@ -67,6 +85,7 @@ namespace iroha {
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;
           vote.hash = hash;
+          vote.signature = createSig("");
           return vote;
         }
 

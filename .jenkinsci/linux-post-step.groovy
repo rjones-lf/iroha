@@ -1,7 +1,7 @@
 def linuxPostStep() {
   timeout(time: 600, unit: "SECONDS") {
     try {
-      if (currentBuild.result != "UNSTABLE" && BRANCH_NAME ==~ /(master|develop)/) {
+      if (currentBuild.currentResult == "SUCCESS" && BRANCH_NAME ==~ /(master|develop)/) {
         def artifacts = load ".jenkinsci/artifacts.groovy"
         def commit = env.GIT_COMMIT
         def platform = sh(script: 'uname -m', returnStdout: true).trim()
