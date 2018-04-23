@@ -852,232 +852,248 @@ class CommandValidateExecuteTest : public ::testing::Test {
 //
 //  ASSERT_NO_THROW(checkErrorCase(execute()));
 //}
-//
-// class RemoveSignatoryTest : public CommandValidateExecuteTest {
-// public:
-//  void SetUp() override {
-//    CommandValidateExecuteTest::SetUp();
-//
-//    pubkey_t creator_key, account_key;
-//    creator_key.fill(0x1);
-//    account_key.fill(0x2);
-//
-//    account_pubkeys = {
-//        shared_model::interface::types::PubkeyType(account_key.to_string())};
-//    many_pubkeys = {
-//        shared_model::interface::types::PubkeyType(creator_key.to_string()),
-//        shared_model::interface::types::PubkeyType(account_key.to_string())};
-//
-//    remove_signatory = std::make_shared<RemoveSignatory>();
-//    remove_signatory->account_id = account_id;
-//    remove_signatory->pubkey.fill(1);
-//
-//    command = remove_signatory;
-//    role_permissions = {can_remove_signatory};
-//  }
-//
-//  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
-//  std::vector<shared_model::interface::types::PubkeyType> many_pubkeys;
-//  std::shared_ptr<RemoveSignatory> remove_signatory;
-//};
-//
-// TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
-//  // Creator is admin
-//  // Add same signatory
-//
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//      .WillOnce(Return(many_pubkeys));
-//
-//  EXPECT_CALL(*wsv_command,
-//              deleteAccountSignatory(remove_signatory->account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {remove_signatory->pubkey.begin(),
-//                                          remove_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  EXPECT_CALL(
-//      *wsv_command,
-//      deleteSignatory(shared_model::crypto::PublicKey(
-//          {remove_signatory->pubkey.begin(),
-//          remove_signatory->pubkey.end()})))
-//      .WillOnce(Return(WsvCommandResult()));
-//  ASSERT_NO_THROW(checkValueCase(validateAndExecute()));
-//}
-//
-// TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
-//  // Creator is admin
-//
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//      .WillOnce(Return(account_pubkeys));
-//
-//  // delete methods must not be called because the account quorum is 1.
-//  EXPECT_CALL(*wsv_command,
-//              deleteAccountSignatory(remove_signatory->account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {remove_signatory->pubkey.begin(),
-//                                          remove_signatory->pubkey.end()})))
-//      .Times(0);
-//  EXPECT_CALL(
-//      *wsv_command,
-//      deleteSignatory(shared_model::crypto::PublicKey(
-//          {remove_signatory->pubkey.begin(),
-//          remove_signatory->pubkey.end()})))
-//      .Times(0);
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
-//  // Creator has no permissions
-//  // Add same signatory
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(false));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
-//  // Remove signatory not present in account
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//  remove_signatory->pubkey.fill(0xF);
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//
-//      .WillOnce(Return(account_pubkeys));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given RemoveSignatory
-// * @when command tries to remove signatory from non-existing account
-// * @then execute fails and returns false
-// */
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//      .WillOnce(Return(many_pubkeys));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given RemoveSignatory
-// * @when command tries to remove signatory from account which does not have
-// any
-// * signatories
-// * @then execute fails and returns false
-// */
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(account));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given RemoveSignatory
-// * @when command tries to remove signatory from non-existing account and it
-// has
-// * no signatories
-// * @then execute fails and returns false
-// */
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
-//  EXPECT_CALL(*wsv_query,
-//              hasAccountGrantablePermission(
-//                  admin_id, remove_signatory->account_id,
-//                  can_remove_signatory))
-//      .WillOnce(Return(true));
-//
-//  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->account_id))
-//      .WillOnce(Return(boost::none));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given RemoveSignatory
-// * @when command tries to remove signatory from creator's account but has no
-// * permissions and no grantable permissions to do that
-// * @then execute fails and returns false
-// */
-// TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
-//  remove_signatory->account_id = creator->accountId();
-//
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(std::vector<std::string>{}));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
-//      .WillOnce(Return(std::vector<std::string>{admin_role}));
-//  EXPECT_CALL(
-//      *wsv_query,
-//      hasAccountGrantablePermission(admin_id, admin_id, can_remove_signatory))
-//      .WillOnce(Return(false));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
-//
-///**
-// * @given RemoveSignatory
-// * @when command tries to remove signatory but deletion fails
-// * @then execute() fails
-// */
-// TEST_F(RemoveSignatoryTest, InvalidWhenAccountSignatoryDeletionFails) {
-//  EXPECT_CALL(*wsv_command,
-//              deleteAccountSignatory(remove_signatory->account_id,
-//                                     shared_model::crypto::PublicKey(
-//                                         {remove_signatory->pubkey.begin(),
-//                                          remove_signatory->pubkey.end()})))
-//      .WillOnce(Return(makeEmptyError()));
-//
-//  ASSERT_NO_THROW(checkErrorCase(execute()));
-//}
+
+class RemoveSignatoryTest : public CommandValidateExecuteTest {
+ public:
+  void SetUp() override {
+    CommandValidateExecuteTest::SetUp();
+
+    auto creator_key =
+        shared_model::interface::types::PubkeyType(std::string(32, '1'));
+    auto account_key =
+        shared_model::interface::types::PubkeyType(std::string(32, '2'));
+
+    account_pubkeys = {shared_model::interface::types::PubkeyType(account_key)};
+
+    many_pubkeys = {shared_model::interface::types::PubkeyType(creator_key),
+                    shared_model::interface::types::PubkeyType(account_key)};
+
+    role_permissions = {can_remove_signatory};
+
+    // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+    command =
+        clone(*(TestTransactionBuilder()
+                    .removeSignatory(account_id,
+                                     shared_model::interface::types::PubkeyType(
+                                         std::string(32, '1')))
+                    .build()
+                    .commands()
+                    .front()));
+    remove_signatory =
+        getCommand<shared_model::interface::RemoveSignatory>(command);
+  }
+
+  std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
+  std::vector<shared_model::interface::types::PubkeyType> many_pubkeys;
+  std::shared_ptr<shared_model::interface::Command> command;
+  std::shared_ptr<shared_model::interface::RemoveSignatory> remove_signatory;
+};
+
+TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
+  // Creator is admin
+  // Add same signatory
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
+      .WillOnce(Return(many_pubkeys));
+
+  EXPECT_CALL(*wsv_command,
+              deleteAccountSignatory(remove_signatory->accountId(),
+                                     remove_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_NO_THROW(checkValueCase(validateAndExecute(command)));
+}
+
+TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
+  // Creator is admin
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
+      .WillOnce(Return(account_pubkeys));
+
+  // delete methods must not be called because the account quorum is 1.
+  EXPECT_CALL(*wsv_command,
+              deleteAccountSignatory(remove_signatory->accountId(),
+                                     remove_signatory->pubkey()))
+      .Times(0);
+  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey()))
+      .Times(0);
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
+  // Creator has no permissions
+  // Add same signatory
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(false));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
+  // Remove signatory not present in account
+
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> wrong_key_command =
+      clone(*(TestTransactionBuilder()
+                  .removeSignatory(account_id,
+                                   shared_model::interface::types::PubkeyType(
+                                       std::string(32, 0xF)))
+                  .build()
+                  .commands()
+                  .front()));
+  auto wrong_key_remove_signatory =
+      getCommand<shared_model::interface::RemoveSignatory>(wrong_key_command);
+
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(admin_id,
+                                    wrong_key_remove_signatory->accountId(),
+                                    can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(wrong_key_remove_signatory->accountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_query,
+              getSignatories(wrong_key_remove_signatory->accountId()))
+
+      .WillOnce(Return(account_pubkeys));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(wrong_key_command)));
+}
+
+/**
+ * @given RemoveSignatory
+ * @when command tries to remove signatory from non-existing account
+ * @then execute fails and returns false
+ */
+TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
+      .WillOnce(Return(boost::none));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
+      .WillOnce(Return(many_pubkeys));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given RemoveSignatory
+ * @when command tries to remove signatory from account which does not have
+ any
+ * signatories
+ * @then execute fails and returns false
+ */
+TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
+      .WillOnce(Return(account));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given RemoveSignatory
+ * @when command tries to remove signatory from non-existing account and it
+ has
+ * no signatories
+ * @then execute fails and returns false
+ */
+TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          admin_id, remove_signatory->accountId(), can_remove_signatory))
+      .WillOnce(Return(true));
+
+  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
+      .WillOnce(Return(boost::none));
+
+  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
+      .WillOnce(Return(boost::none));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given RemoveSignatory
+ * @when command tries to remove signatory from creator's account but has no
+ * permissions and no grantable permissions to do that
+ * @then execute fails and returns false
+ */
+TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  std::shared_ptr<shared_model::interface::Command> command =
+      clone(*(TestTransactionBuilder()
+                  .removeSignatory(creator->accountId(),
+                                   shared_model::interface::types::PubkeyType(
+                                       std::string(32, '1')))
+                  .build()
+                  .commands()
+                  .front()));
+  auto remove_signatory =
+      getCommand<shared_model::interface::RemoveSignatory>(command);
+
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(std::vector<std::string>{}));
+  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
+      .WillOnce(Return(std::vector<std::string>{admin_role}));
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(admin_id, admin_id, can_remove_signatory))
+      .WillOnce(Return(false));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
+
+/**
+ * @given RemoveSignatory
+ * @when command tries to remove signatory but deletion fails
+ * @then execute() fails
+ */
+TEST_F(RemoveSignatoryTest, InvalidWhenAccountSignatoryDeletionFails) {
+  EXPECT_CALL(*wsv_command,
+              deleteAccountSignatory(remove_signatory->accountId(),
+                                     remove_signatory->pubkey()))
+      .WillOnce(Return(makeEmptyError()));
+
+  ASSERT_NO_THROW(checkErrorCase(execute(command)));
+}
 
 class SetQuorumTest : public CommandValidateExecuteTest {
  public:
