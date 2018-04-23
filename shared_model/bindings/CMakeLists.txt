@@ -48,10 +48,12 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
         get_target_property(dependencies
             ${SWIG_MODULE_${target}_REAL_NAME}
             MANUALLY_ADDED_DEPENDENCIES)
-        # add external project dependency on internal targets
-        foreach (dependency IN LISTS dependencies)
-            add_dependencies(${dependency} swig)
-        endforeach()
+        if (dependencies)
+            # add external project dependency on internal targets
+            foreach (dependency IN LISTS dependencies)
+                add_dependencies(${dependency} swig)
+            endforeach()
+        endif()
     endmacro()
 endif()
 
