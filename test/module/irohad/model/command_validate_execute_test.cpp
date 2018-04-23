@@ -184,8 +184,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
   std::unique_ptr<iroha::CommandExecutor> executor;
   std::unique_ptr<iroha::CommandValidator> validator;
 
-  Amount max_amount{
-      std::numeric_limits<boost::multiprecision::uint256_t>::max(), 2};
+  std::string max_amount_str =
+      std::numeric_limits<boost::multiprecision::uint256_t>::max().str()
+      + ".00";
   std::string admin_id = "admin@test", account_id = "test@test",
               asset_id = "coin#test", domain_id = "test",
               description = "test transfer";
@@ -298,17 +299,29 @@ TEST_F(AddAssetQuantityTest, InvalidWhenZeroAmount) {
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
 
-// TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
-//  // Amount is with wrong precision (must be 2)
-//  Amount amount(add_asset_quantity->amount.getIntValue(), 30);
-//  add_asset_quantity->amount = amount;
-//  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+/**
+ * @given AddAssetQuantity with amount with wrong precision (must be 2)
+ * @when command is executed
+ * @then executor will be failed
+ */
+TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command =
+      clone(*(TestTransactionBuilder()
+                  .addAssetQuantity(creator->accountId(), asset_id, "1.0000")
+                  .build()
+                  .commands()
+                  .front()));
+  add_asset_quantity =
+      getCommand<shared_model::interface::AddAssetQuantity>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
 
 /**
  * @given AddAssetQuantity
@@ -328,9 +341,12 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAccount) {
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
 
+/**
+ * @given AddAssetQuantity with wrong asset
+ * @when command is executed
+ * @then execute fails and returns false
+ */
 TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
-  // Asset doesn't exist
-
   // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
   command =
       clone(*(TestTransactionBuilder()
@@ -352,30 +368,36 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
 
-///**
-// * @given AddAssetQuantity
-// * @when command adds value which overflows account balance
-// * @then execute fails and returns false
-// */
-// TEST_F(AddAssetQuantityTest, InvalidWhenAssetAdditionFails) {
-//  // amount overflows
-//  add_asset_quantity->amount = max_amount;
-//
-//  EXPECT_CALL(*wsv_query,
-//              getAccountAsset(add_asset_quantity->account_id,
-//                              add_asset_quantity->asset_id))
-//      .WillOnce(Return(wallet));
-//
-//  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
-//  EXPECT_CALL(*wsv_query, getAccount(add_asset_quantity->account_id))
-//      .WillOnce(Return(account));
-//  EXPECT_CALL(*wsv_query, getAccountRoles(add_asset_quantity->account_id))
-//      .WillOnce(Return(admin_roles));
-//  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-//      .WillOnce(Return(role_permissions));
-//
-//  ASSERT_NO_THROW(checkErrorCase(validateAndExecute()));
-//}
+/**
+ * @given AddAssetQuantity
+ * @when command adds value which overflows account balance
+ * @then execute fails and returns false
+ */
+TEST_F(AddAssetQuantityTest, InvalidWhenAssetAdditionFails) {
+  // TODO 2018-04-20 Alexey Chernyshov - rework with CommandBuilder
+  command = clone(
+      *(TestTransactionBuilder()
+            .addAssetQuantity(creator->accountId(), asset_id, max_amount_str)
+            .build()
+            .commands()
+            .front()));
+  add_asset_quantity =
+      getCommand<shared_model::interface::AddAssetQuantity>(command);
+
+  EXPECT_CALL(*wsv_query,
+              getAccountAsset(add_asset_quantity->accountId(),
+                              add_asset_quantity->assetId()))
+      .WillOnce(Return(wallet));
+  EXPECT_CALL(*wsv_query, getAsset(asset_id)).WillOnce(Return(asset));
+  EXPECT_CALL(*wsv_query, getAccount(add_asset_quantity->accountId()))
+      .WillOnce(Return(account));
+  EXPECT_CALL(*wsv_query, getAccountRoles(add_asset_quantity->accountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
+      .WillOnce(Return(role_permissions));
+
+  ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
+}
 
 class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
  public:
