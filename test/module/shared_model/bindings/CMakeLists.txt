@@ -36,7 +36,7 @@ if (SWIG_PYTHON)
   if(SUPPORT_PYTHON2)
     find_package(PythonInterp 2.7 REQUIRED)
   else()
-    find_package(PythonInterp 3.6 REQUIRED)
+    find_package(PythonInterp 3.5 REQUIRED)
   endif()
   add_test(NAME python_transaction_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py

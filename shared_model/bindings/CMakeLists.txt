@@ -47,7 +47,7 @@ if (SWIG_PYTHON)
     if(SUPPORT_PYTHON2)
         find_package(PythonLibs 2.7 REQUIRED)
     else()
-        find_package(PythonLibs 3.6 REQUIRED)
+        find_package(PythonLibs 3.5 REQUIRED)
     endif()
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
