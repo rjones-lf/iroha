@@ -8,8 +8,9 @@ find_package_handle_standard_args(SWIG DEFAULT_MSG
 
 if(NOT SWIG_EXECUTABLE)
   find_package(Git REQUIRED)
-  set(URL ftp://www.mirrorservice.org/sites/ftp.sourceforge.net/pub/sourceforge/s/sw/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz)
-  set_target_description(swig "Simplified Wrapper and Interface Generator (SWIG)" ${URL} 3.0.12)
+  set(SWIG_VERSION 3.0.12)
+  set(URL ftp://www.mirrorservice.org/sites/ftp.sourceforge.net/pub/sourceforge/s/sw/swig/swig/swig-${SWIG_VERSION}/swig-${SWIG_VERSION}.tar.gz)
+  set_target_description(swig "Simplified Wrapper and Interface Generator (SWIG)" ${URL} ${SWIG_VERSION})
 
   ExternalProject_Add(swig_swig
       URL ${URL}
@@ -26,7 +27,7 @@ if(NOT SWIG_EXECUTABLE)
 
   # Predefined vars for local installed SWIG
   set(SWIG_EXECUTABLE ${source_dir}/swig)
-  set(SWIG_DIR ${source_dir}/share/swig/3.0.12)
+  set(SWIG_DIR ${source_dir}/share/swig/${SWIG_VERSION})
 
   add_dependencies(swig swig_swig)
 

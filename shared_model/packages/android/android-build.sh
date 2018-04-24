@@ -7,7 +7,7 @@ fi
 if [[ ( "$#" -ne 4 ) && ( "$#" -ne 5 ) ]]; then
     echo "Illegal number of parameters"
     echo "Usage: $0 <PLATFORM> <ANDROID_VERSION> <NDK_PATH> <PACKAGE> [BUILD_TYPE=Release]"
-    echo "Example: $0 arm64-v8a 26 /Users/me/Downloads/android-ndk-r16b jp.co.soramitsu.iroha.android Debug"
+    echo "Example: $0 arm64-v8a 26 $HOME/Downloads/android-ndk-r16b jp.co.soramitsu.iroha.android Debug"
     exit 1
 fi
 
