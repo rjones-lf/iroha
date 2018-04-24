@@ -35,6 +35,19 @@ using namespace iroha::ametsuchi;
 using namespace framework::expected;
 using namespace shared_model::permissions;
 
+// TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework function with
+// CommandBuilder
+/**
+ * Hepler function to build command and wrap it into
+ * std::unique_ptr<>
+ * @param builder command builder
+ * @return command
+ */
+std::unique_ptr<shared_model::interface::Command> buildCommand(
+    const TestTransactionBuilder &builder) {
+  return clone(*(builder.build().commands().front()));
+}
+
 /**
  * Helper function to get concrete command from Command container.
  * @tparam T - type of concrete command
@@ -42,7 +55,7 @@ using namespace shared_model::permissions;
  * @return concrete command extracted from container
  */
 template <class T>
-std::shared_ptr<T> getCommand(
+std::shared_ptr<T> getConcreteCommand(
     const std::unique_ptr<shared_model::interface::Command> &command) {
   return clone(
       *(boost::apply_visitor(shared_model::interface::SpecifiedVisitor<T>(),
@@ -203,14 +216,10 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
     role_permissions = {can_add_asset_qty};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command =
-        clone(*(TestTransactionBuilder()
-                    .addAssetQuantity(creator->accountId(), kAssetId, "3.50")
-                    .build()
-                    .commands()
-                    .front()));
+    command = buildCommand(TestTransactionBuilder().addAssetQuantity(
+        creator->accountId(), kAssetId, "3.50"));
     add_asset_quantity =
-        getCommand<shared_model::interface::AddAssetQuantity>(command);
+        getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
   }
 
   std::shared_ptr<shared_model::interface::AddAssetQuantity> add_asset_quantity;
@@ -279,14 +288,10 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoRoles) {
 TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - IR-1276 - rework with
   // CommandBuilder
-  command =
-      clone(*(TestTransactionBuilder()
-                  .addAssetQuantity(creator->accountId(), kAssetId, "1.0000")
-                  .build()
-                  .commands()
-                  .front()));
+  command = buildCommand(TestTransactionBuilder().addAssetQuantity(
+      creator->accountId(), kAssetId, "1.0000"));
   add_asset_quantity =
-      getCommand<shared_model::interface::AddAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillOnce(Return(admin_roles));
@@ -322,14 +327,10 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAccount) {
 TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - IR-1276 - rework with
   // CommandBuilder
-  command =
-      clone(*(TestTransactionBuilder()
-                  .addAssetQuantity(creator->accountId(), "no_asset", "3.50")
-                  .build()
-                  .commands()
-                  .front()));
+  command = buildCommand(TestTransactionBuilder().addAssetQuantity(
+      creator->accountId(), "no_asset", "3.50"));
   add_asset_quantity =
-      getCommand<shared_model::interface::AddAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillOnce(Return(admin_roles));
@@ -349,14 +350,10 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
  */
 TEST_F(AddAssetQuantityTest, InvalidWhenAssetAdditionFails) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .addAssetQuantity(creator->accountId(), kAssetId, kMaxAmountStr)
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().addAssetQuantity(
+      creator->accountId(), kAssetId, kMaxAmountStr));
   add_asset_quantity =
-      getCommand<shared_model::interface::AddAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
 
   EXPECT_CALL(*wsv_query,
               getAccountAsset(add_asset_quantity->accountId(),
@@ -381,14 +378,11 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
     role_permissions = {can_subtract_asset_qty};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(
-        *(TestTransactionBuilder()
-              .subtractAssetQuantity(creator->accountId(), kAssetId, "1.00")
-              .build()
-              .commands()
-              .front()));
+    command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
+        creator->accountId(), kAssetId, "1.00"));
     subtract_asset_quantity =
-        getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+        getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
+            command);
   }
 
   std::shared_ptr<shared_model::interface::SubtractAssetQuantity>
@@ -440,14 +434,11 @@ TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
  */
 TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .subtractAssetQuantity(creator->accountId(), kAssetId, "12.04")
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
+      creator->accountId(), kAssetId, "12.04"));
   subtract_asset_quantity =
-      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
+          command);
 
   EXPECT_CALL(*wsv_query,
               getAccountAsset(subtract_asset_quantity->accountId(),
@@ -481,14 +472,11 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
  */
 TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .subtractAssetQuantity(creator->accountId(), kAssetId, "1.0000")
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
+      creator->accountId(), kAssetId, "1.0000"));
   subtract_asset_quantity =
-      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
+          command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillOnce(Return(admin_roles));
@@ -505,13 +493,11 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
  */
 TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .subtractAssetQuantity("noacc", kAssetId, "12.04")
-                        .build()
-                        .commands()
-                        .front()));
+  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
+      "noacc", kAssetId, "12.04"));
   subtract_asset_quantity =
-      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
+          command);
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
@@ -523,14 +509,11 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
  */
 TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .subtractAssetQuantity(creator->accountId(), "no_asset", "12.04")
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
+      creator->accountId(), "no_asset", "12.04"));
   subtract_asset_quantity =
-      getCommand<shared_model::interface::SubtractAssetQuantity>(command);
+      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
+          command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillOnce(Return(admin_roles));
@@ -550,12 +533,10 @@ class AddSignatoryTest : public CommandValidateExecuteTest {
     role_permissions = {can_add_signatory};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .addSignatory(kAccountId, kPubKey1)
-                          .build()
-                          .commands()
-                          .front()));
-    add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+    command = buildCommand(
+        TestTransactionBuilder().addSignatory(kAccountId, kPubKey1));
+    add_signatory =
+        getConcreteCommand<shared_model::interface::AddSignatory>(command);
   }
 
   std::shared_ptr<shared_model::interface::AddSignatory> add_signatory;
@@ -587,12 +568,10 @@ TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
  */
 TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .addSignatory(creator->accountId(), kPubKey1)
-                        .build()
-                        .commands()
-                        .front()));
-  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+  command = buildCommand(
+      TestTransactionBuilder().addSignatory(creator->accountId(), kPubKey1));
+  add_signatory =
+      getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillOnce(Return(admin_roles));
@@ -629,12 +608,10 @@ TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
  */
 TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .addSignatory("noacc", kPubKey1)
-                        .build()
-                        .commands()
-                        .front()));
-  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+  command =
+      buildCommand(TestTransactionBuilder().addSignatory("noacc", kPubKey1));
+  add_signatory =
+      getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -651,12 +628,10 @@ TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
  */
 TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .addSignatory(kAccountId, kPubKey2)
-                        .build()
-                        .commands()
-                        .front()));
-  add_signatory = getCommand<shared_model::interface::AddSignatory>(command);
+  command =
+      buildCommand(TestTransactionBuilder().addSignatory(kAccountId, kPubKey2));
+  add_signatory =
+      getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -676,13 +651,10 @@ class CreateAccountTest : public CommandValidateExecuteTest {
     role_permissions = {can_create_account};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .createAccount("test", kDomainId, kPubKey2)
-                          .build()
-                          .commands()
-                          .front()));
+    command = buildCommand(
+        TestTransactionBuilder().createAccount("test", kDomainId, kPubKey2));
     create_account =
-        getCommand<shared_model::interface::CreateAccount>(command);
+        getConcreteCommand<shared_model::interface::CreateAccount>(command);
 
     default_domain = clone(shared_model::proto::DomainBuilder()
                                .domainId(kDomainId)
@@ -756,12 +728,10 @@ class CreateAssetTest : public CommandValidateExecuteTest {
     role_permissions = {can_create_asset};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .createAsset("fcoin", kDomainId, 2)
-                          .build()
-                          .commands()
-                          .front()));
-    create_asset = getCommand<shared_model::interface::CreateAsset>(command);
+    command = buildCommand(
+        TestTransactionBuilder().createAsset("fcoin", kDomainId, 2));
+    create_asset =
+        getConcreteCommand<shared_model::interface::CreateAsset>(command);
   }
 
   std::shared_ptr<shared_model::interface::CreateAsset> create_asset;
@@ -816,12 +786,10 @@ class CreateDomainTest : public CommandValidateExecuteTest {
     role_permissions = {can_create_domain};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .createDomain("cn", "default")
-                          .build()
-                          .commands()
-                          .front()));
-    create_domain = getCommand<shared_model::interface::CreateDomain>(command);
+    command =
+        buildCommand(TestTransactionBuilder().createDomain("cn", "default"));
+    create_domain =
+        getConcreteCommand<shared_model::interface::CreateDomain>(command);
   }
 
   std::shared_ptr<shared_model::interface::CreateDomain> create_domain;
@@ -881,13 +849,10 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
     role_permissions = {can_remove_signatory};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .removeSignatory(kAccountId, kPubKey1)
-                          .build()
-                          .commands()
-                          .front()));
+    command = buildCommand(
+        TestTransactionBuilder().removeSignatory(kAccountId, kPubKey1));
     remove_signatory =
-        getCommand<shared_model::interface::RemoveSignatory>(command);
+        getConcreteCommand<shared_model::interface::RemoveSignatory>(command);
   }
 
   std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
@@ -976,13 +941,11 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
 TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   std::unique_ptr<shared_model::interface::Command> wrong_key_command =
-      clone(*(TestTransactionBuilder()
-                  .removeSignatory(kAccountId, kPubKey1)
-                  .build()
-                  .commands()
-                  .front()));
+      buildCommand(
+          TestTransactionBuilder().removeSignatory(kAccountId, kPubKey1));
   auto wrong_key_remove_signatory =
-      getCommand<shared_model::interface::RemoveSignatory>(wrong_key_command);
+      getConcreteCommand<shared_model::interface::RemoveSignatory>(
+          wrong_key_command);
 
   EXPECT_CALL(
       *wsv_query,
@@ -1074,13 +1037,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .removeSignatory(creator->accountId(), kPubKey1)
-                        .build()
-                        .commands()
-                        .front()));
+  command = buildCommand(
+      TestTransactionBuilder().removeSignatory(creator->accountId(), kPubKey1));
   auto remove_signatory =
-      getCommand<shared_model::interface::RemoveSignatory>(command);
+      getConcreteCommand<shared_model::interface::RemoveSignatory>(command);
 
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(std::vector<std::string>{}));
@@ -1117,21 +1077,16 @@ class SetQuorumTest : public CommandValidateExecuteTest {
     role_permissions = {can_set_quorum};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .setAccountQuorum(kAccountId, 2)
-                          .build()
-                          .commands()
-                          .front()));
-    set_quorum = getCommand<shared_model::interface::SetQuorum>(command);
+    command =
+        buildCommand(TestTransactionBuilder().setAccountQuorum(kAccountId, 2));
+    set_quorum =
+        getConcreteCommand<shared_model::interface::SetQuorum>(command);
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    creator_command = clone(*(TestTransactionBuilder()
-                                  .setAccountQuorum(creator->accountId(), 2)
-                                  .build()
-                                  .commands()
-                                  .front()));
+    creator_command = buildCommand(
+        TestTransactionBuilder().setAccountQuorum(creator->accountId(), 2));
     creator_set_quorum =
-        getCommand<shared_model::interface::SetQuorum>(creator_command);
+        getConcreteCommand<shared_model::interface::SetQuorum>(creator_command);
   }
 
   std::vector<shared_model::interface::types::PubkeyType> account_pubkeys;
@@ -1200,12 +1155,8 @@ TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
  */
 TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .setAccountQuorum("noacc", 2)
-                        .build()
-                        .commands()
-                        .front()));
-  set_quorum = getCommand<shared_model::interface::SetQuorum>(command);
+  command = buildCommand(TestTransactionBuilder().setAccountQuorum("noacc", 2));
+  set_quorum = getConcreteCommand<shared_model::interface::SetQuorum>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -1293,14 +1244,10 @@ class TransferAssetTest : public CommandValidateExecuteTest {
     role_permissions = {can_transfer, can_receive};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(
-        TestTransactionBuilder()
-            .transferAsset(kAdminId, kAccountId, kAssetId, kDescription, "1.50")
-            .build()
-            .commands()
-            .front()));
+    command = buildCommand(TestTransactionBuilder().transferAsset(
+        kAdminId, kAccountId, kAssetId, kDescription, "1.50"));
     transfer_asset =
-        getCommand<shared_model::interface::TransferAsset>(command);
+        getConcreteCommand<shared_model::interface::TransferAsset>(command);
   }
 
   std::shared_ptr<shared_model::interface::AccountAsset> src_wallet, dst_wallet;
@@ -1389,14 +1336,10 @@ TEST_F(TransferAssetTest, ValidWhenExistingWallet) {
 TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   // Transfer creator is not connected to account
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .transferAsset(kAccountId, kAdminId, kAssetId, kDescription, "1.50")
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAccountId, kAdminId, kAssetId, kDescription, "1.50"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -1449,14 +1392,10 @@ TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
  */
 TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(
-      *(TestTransactionBuilder()
-            .transferAsset(kAdminId, "noacc", kAssetId, kDescription, "150.00")
-            .build()
-            .commands()
-            .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAdminId, "noacc", kAssetId, kDescription, "150.00"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
       .WillOnce(Return(boost::none));
@@ -1581,14 +1520,10 @@ TEST_F(TransferAssetTest, InvalidWhenNoAssetId) {
  */
 TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(kAdminId, kAccountId, kAssetId, kDescription, "155.00")
-          .build()
-          .commands()
-          .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAdminId, kAccountId, kAssetId, kDescription, "155.00"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
       .WillOnce(Return(admin_roles));
@@ -1617,14 +1552,10 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
  */
 TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(kAdminId, kAccountId, kAssetId, kDescription, "155.00")
-          .build()
-          .commands()
-          .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAdminId, kAccountId, kAssetId, kDescription, "155.00"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
@@ -1647,15 +1578,10 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
  */
 TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command =
-      clone(*(TestTransactionBuilder()
-                  .transferAsset(
-                      kAdminId, kAccountId, kAssetId, kDescription, "155.0000")
-                  .build()
-                  .commands()
-                  .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAdminId, kAccountId, kAssetId, kDescription, "155.0000"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
       .WillOnce(Return(admin_roles));
@@ -1678,14 +1604,10 @@ TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
  */
 TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(kAdminId, kAccountId, kAssetId, kDescription, "1.5000")
-          .build()
-          .commands()
-          .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAdminId, kAccountId, kAssetId, kDescription, "1.5000"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));
@@ -1743,14 +1665,10 @@ TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
 TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
   // Transfer creator is not connected to account
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(
-      TestTransactionBuilder()
-          .transferAsset(kAccountId, kAdminId, kAssetId, kDescription, "155.00")
-          .build()
-          .commands()
-          .front()));
+  command = buildCommand(TestTransactionBuilder().transferAsset(
+      kAccountId, kAdminId, kAssetId, kDescription, "155.00"));
   auto transfer_asset =
-      getCommand<shared_model::interface::TransferAsset>(command);
+      getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -1767,12 +1685,8 @@ class AddPeerTest : public CommandValidateExecuteTest {
     role_permissions = {can_add_peer};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(
-        TestTransactionBuilder()
-            .addPeer("iroha_node:10001", shared_model::crypto::PublicKey("key"))
-            .build()
-            .commands()
-            .front()));
+    command = buildCommand(TestTransactionBuilder().addPeer(
+        "iroha_node:10001", shared_model::crypto::PublicKey("key")));
   }
 };
 
@@ -1826,12 +1740,9 @@ class CreateRoleTest : public CommandValidateExecuteTest {
     role_permissions = {can_create_role};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .createRole("yoda", perm)
-                          .build()
-                          .commands()
-                          .front()));
-    create_role = getCommand<shared_model::interface::CreateRole>(command);
+    command = buildCommand(TestTransactionBuilder().createRole("yoda", perm));
+    create_role =
+        getConcreteCommand<shared_model::interface::CreateRole>(command);
   }
   std::shared_ptr<shared_model::interface::CreateRole> create_role;
 };
@@ -1876,11 +1787,8 @@ TEST_F(CreateRoleTest, InvalidCaseWhenNoPermissions) {
 TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   std::set<std::string> master_perms = {can_add_peer, can_append_role};
-  command = clone(*(TestTransactionBuilder()
-                        .createRole("master", master_perms)
-                        .build()
-                        .commands()
-                        .front()));
+  command =
+      buildCommand(TestTransactionBuilder().createRole("master", master_perms));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillRepeatedly(Return(admin_roles));
@@ -1908,12 +1816,10 @@ class AppendRoleTest : public CommandValidateExecuteTest {
     role_permissions = {can_append_role};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .appendRole("yoda", "master")
-                          .build()
-                          .commands()
-                          .front()));
-    append_role = getCommand<shared_model::interface::AppendRole>(command);
+    command =
+        buildCommand(TestTransactionBuilder().appendRole("yoda", "master"));
+    append_role =
+        getConcreteCommand<shared_model::interface::AppendRole>(command);
   }
   std::shared_ptr<shared_model::interface::AppendRole> append_role;
 };
@@ -2032,12 +1938,10 @@ class DetachRoleTest : public CommandValidateExecuteTest {
     role_permissions = {can_detach_role};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .detachRole("yoda", "master")
-                          .build()
-                          .commands()
-                          .front()));
-    detach_role = getCommand<shared_model::interface::DetachRole>(command);
+    command =
+        buildCommand(TestTransactionBuilder().detachRole("yoda", "master"));
+    detach_role =
+        getConcreteCommand<shared_model::interface::DetachRole>(command);
   }
   std::shared_ptr<shared_model::interface::DetachRole> detach_role;
 };
@@ -2094,13 +1998,10 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
     role_permissions = {can_grant + expected_permission};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .grantPermission("yoda", expected_permission)
-                          .build()
-                          .commands()
-                          .front()));
+    command = buildCommand(
+        TestTransactionBuilder().grantPermission("yoda", expected_permission));
     grant_permission =
-        getCommand<shared_model::interface::GrantPermission>(command);
+        getConcreteCommand<shared_model::interface::GrantPermission>(command);
   }
   std::shared_ptr<shared_model::interface::GrantPermission> grant_permission;
   std::string expected_permission;
@@ -2159,13 +2060,10 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
     expected_permission = can_add_my_signatory;
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .revokePermission("yoda", expected_permission)
-                          .build()
-                          .commands()
-                          .front()));
+    command = buildCommand(
+        TestTransactionBuilder().revokePermission("yoda", expected_permission));
     revoke_permission =
-        getCommand<shared_model::interface::RevokePermission>(command);
+        getConcreteCommand<shared_model::interface::RevokePermission>(command);
   }
 
   std::shared_ptr<shared_model::interface::RevokePermission> revoke_permission;
@@ -2225,13 +2123,10 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = clone(*(TestTransactionBuilder()
-                          .setAccountDetail(kAdminId, "key", "val")
-                          .build()
-                          .commands()
-                          .front()));
+    command = buildCommand(
+        TestTransactionBuilder().setAccountDetail(kAdminId, "key", "val"));
     set_aacount_detail =
-        getCommand<shared_model::interface::SetAccountDetail>(command);
+        getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
     role_permissions = {can_set_quorum};
   }
@@ -2263,13 +2158,10 @@ TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
  */
 TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .setAccountDetail(kAccountId, "key", "val")
-                        .build()
-                        .commands()
-                        .front()));
+  command = buildCommand(
+      TestTransactionBuilder().setAccountDetail(kAccountId, "key", "val"));
   set_aacount_detail =
-      getCommand<shared_model::interface::SetAccountDetail>(command);
+      getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
@@ -2285,13 +2177,10 @@ TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
  */
 TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = clone(*(TestTransactionBuilder()
-                        .setAccountDetail(kAccountId, "key", "val")
-                        .build()
-                        .commands()
-                        .front()));
+  command = buildCommand(
+      TestTransactionBuilder().setAccountDetail(kAccountId, "key", "val"));
   set_aacount_detail =
-      getCommand<shared_model::interface::SetAccountDetail>(command);
+      getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
