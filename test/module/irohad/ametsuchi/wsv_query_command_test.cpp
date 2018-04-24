@@ -333,7 +333,9 @@ namespace iroha {
 
     class AccountGrantablePermissionTest : public WsvQueryCommandTest {
      public:
-      AccountGrantablePermissionTest() {
+      void SetUp() override {
+        WsvQueryCommandTest::SetUp();
+
         permittee_account =
             clone(TestAccountBuilder()
                       .domainId(domain->domainId())
@@ -341,10 +343,7 @@ namespace iroha {
                       .quorum(1)
                       .jsonData(R"({"id@domain": {"key": "value"}})")
                       .build());
-      }
 
-      void SetUp() override {
-        WsvQueryCommandTest::SetUp();
         ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
         ASSERT_NO_THROW(checkValueCase(command->insertDomain(*domain)));
         ASSERT_NO_THROW(checkValueCase(command->insertAccount(*account)));
@@ -410,12 +409,10 @@ namespace iroha {
 
     class DeletePeerTest : public WsvQueryCommandTest {
      public:
-      DeletePeerTest() {
-        peer = clone(TestPeerBuilder().build());
-      }
-
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
+
+        peer = clone(TestPeerBuilder().build());
       }
       std::unique_ptr<shared_model::interface::Peer> peer;
     };
