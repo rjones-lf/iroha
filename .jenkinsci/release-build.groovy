@@ -45,7 +45,7 @@ def doReleaseBuild() {
     sh "cmake --build build --target package -- -j${parallelism}"
     sh "ccache --show-stats"
 
-    // copy build package to the volume
+    // move build package to the volume
     sh "mv ./build/iroha-*.deb /tmp/${GIT_COMMIT}/iroha.deb"
     sh "mv ./build/*.tar.gz /tmp/${GIT_COMMIT}/iroha.tar.gz"
   }
