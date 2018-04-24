@@ -23,21 +23,31 @@
 namespace framework {
   namespace expected {
     /**
-     * @throws bad_get exception if result contains error
-     * @return value from result
+     * @return optional with value if present
+     *         otherwise none
      */
     template <typename ResultType>
-    typename ResultType::ValueType checkValueCase(const ResultType &result) {
-      return boost::get<typename ResultType::ValueType>(result);
+    boost::optional<typename ResultType::ValueType> val(const ResultType &res) {
+      using VType = typename ResultType::ValueType;
+      using EType = typename ResultType::ErrorType;
+      return iroha::visit_in_place(
+          res,
+          [](VType v) { return boost::optional<VType>(v); },
+          [](EType e) -> boost::optional<VType> { return {}; });
     }
 
     /**
-     * @throws bad_get exception if result contains value
-     * @return error from result
+     * @return optional with error if present
+     *         otherwise none
      */
     template <typename ResultType>
-    typename ResultType::ErrorType checkErrorCase(const ResultType &result) {
-      return boost::get<typename ResultType::ErrorType>(result);
+    boost::optional<typename ResultType::ErrorType> err(const ResultType &res) {
+      using VType = typename ResultType::ValueType;
+      using EType = typename ResultType::ErrorType;
+      return iroha::visit_in_place(
+          res,
+          [](VType v) -> boost::optional<EType> { return {}; },
+          [](EType e) { return boost::optional<EType>(e); });
     }
   }  // namespace expected
 }  // namespace framework

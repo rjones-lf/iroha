@@ -108,29 +108,14 @@ namespace iroha {
                               std::forward<ErrorMatch>(error_func));
       }
 
-      constexpr bool has_val() const {
-        return some_val();
-      }
-
-      constexpr bool has_err() const {
-        return some_err();
-      }
-
-      constexpr auto some_val() const {
-        return visit_in_place(
-            *this,
-            [](ValueType v) { return boost::optional<ValueType>(v); },
-            [](ErrorType e) -> boost::optional<ValueType> { return {}; });
-      }
-
-      constexpr auto some_err() const {
-        return visit_in_place(
-            *this,
-            [](ValueType v) -> boost::optional<ErrorType> { return {}; },
-            [](ErrorType e) { return boost::optional<ErrorType>(e); });
-      }
-
       /**
+       * Lazy error AND-chaining
+       * Works by the following table (aka boolean lazy AND):
+       * err1 * any  -> err1
+       * val1 * err2 -> err2
+       * val1 * val2 -> val2
+       *
+       * @param new_res second chain argument
        * @return new_res if this Result contains a value
        *         otherwise return this
        */
@@ -143,6 +128,13 @@ namespace iroha {
       }
 
       /**
+       * Lazy error OR-chaining
+       * Works by the following table (aka boolean lazy OR):
+       * val1 * any  -> val1
+       * err1 * val2 -> val2
+       * err1 * err2 -> err2
+       *
+       * @param new_res second chain argument
        * @return new_res if this Result contains a error
        *         otherwise return this
        */
@@ -155,18 +147,14 @@ namespace iroha {
       }
     };
 
-    template <typename Val1, typename Val2, typename E, typename Fn>
-    auto rmap(Result<Val2, E> res, Fn &&map) {
-      return visit_in_place(
-          res,
-          [map](Value<Val2> val) -> Result<Val1, E> {
-            return Value<Val1>{map(val.value)};
-          },
-          [](Error<E> err) -> Result<Val1, E> { return err; });
-    }
-
+    /**
+     * Get a new result with changed error
+     * @param res for operating for
+     * @param map callback for error mapping
+     * @return result with changed error
+     */
     template <typename Err1, typename Err2, typename V, typename Fn>
-    auto rmap_err(Result<V, Err2> res, Fn &&map) {
+    auto map_error(Result<V, Err2> res, Fn &&map) {
       return visit_in_place(res,
                             [](Value<V> val) -> Result<V, Err1> { return val; },
                             [map](Error<Err2> err) -> Result<V, Err1> {

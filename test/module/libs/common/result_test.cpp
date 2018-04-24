@@ -159,26 +159,6 @@ TEST(ResultTest, ResultVoidError) {
 }
 
 /**
- * @given Result some value
- * @when some_val function is invoked
- * @then the value is returned
- */
-TEST(ResultTest, SomeVal) {
-  Result<int, void> result = makeValue(5);
-  ASSERT_TRUE(result.some_val());
-}
-
-/**
- * @given Result some error
- * @when some_err function is invoked
- * @then the error is returned
- */
-TEST(ResultTest, SomeErr) {
-  Result<void, int> result = makeError(5);
-  ASSERT_TRUE(result.some_err());
-}
-
-/**
  * @given Pair of results with some values
  * @when and_res function is invoked
  * @then result contains the last value
@@ -251,37 +231,13 @@ TEST(ResultTest, OrResWithErrErr) {
 }
 
 /**
- * @given Result with some value and some function
- * @when rmap function is invoked
- * @then result contains value after function application
- */
-TEST(ResultTest, Rmap) {
-  Result<int, void> result = makeValue(5);
-  rmap<int>(result, [](auto i) { return i * 2; })
-      .match([](Value<int> v) { ASSERT_EQ(10, v.value); },
-             makeFailCase<Error<void>>(kErrorCaseMessage));
-}
-
-/**
  * @given Result with some error and some function
- * @when rmap function is invoked
- * @then result contains the same error
- */
-TEST(ResultTest, RmapBlank) {
-  Result<int, int> result = makeError(5);
-  rmap<int>(result, [](auto i) { return i * 2; })
-      .match(makeFailCase<Value<int>>(kValueCaseMessage),
-             [](Error<int> e) { ASSERT_EQ(5, e.error); });
-}
-
-/**
- * @given Result with some error and some function
- * @when rmap_err function is invoked
+ * @when map_error function is invoked
  * @then result contains error after function application
  */
-TEST(ResultTest, Rmaperr) {
+TEST(ResultTest, MapError) {
   Result<void, int> result = makeError(5);
-  rmap_err<int>(result, [](auto i) { return i * 2; })
+  map_error<int>(result, [](auto i) { return i * 2; })
       .match(makeFailCase<Value<void>>(kValueCaseMessage),
              [](Error<int> e) { ASSERT_EQ(10, e.error); });
 }
@@ -291,9 +247,9 @@ TEST(ResultTest, Rmaperr) {
  * @when rmap function is invoked
  * @then result contains the same error
  */
-TEST(ResultTest, RmaperrBlank) {
+TEST(ResultTest, MapErrorBlank) {
   Result<int, int> result = makeValue(5);
-  rmap_err<int>(result, [](auto i) { return i * 2; })
+  map_error<int>(result, [](auto i) { return i * 2; })
       .match([](Value<int> v) { ASSERT_EQ(5, v.value); },
              makeFailCase<Error<int>>(kErrorCaseMessage));
 }

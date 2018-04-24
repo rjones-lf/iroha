@@ -46,7 +46,7 @@ using AmountBuilder = shared_model::builder::AmountBuilderWithoutValidator;
 std::shared_ptr<shared_model::interface::Amount> getAmount(
     const shared_model::builder::BuilderResult<shared_model::interface::Amount>
         &result) {
-  return framework::expected::checkValueCase(result).value;
+  return framework::expected::val(result)->value;
 }
 
 /**
