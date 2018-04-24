@@ -113,6 +113,7 @@ namespace torii {
                   shared_model::crypto::toBinaryString(tx_hash));
               response.set_tx_status(
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+              response.set_error_message(std::move(error.error));
             });
 
     cache_->addItem(tx_hash, response);

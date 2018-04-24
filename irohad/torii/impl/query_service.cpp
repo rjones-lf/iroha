@@ -77,6 +77,7 @@ namespace torii {
                   shared_model::crypto::toBinaryString(hash));
               response.mutable_error_response()->set_reason(
                   iroha::protocol::ErrorResponse::STATELESS_INVALID);
+              response.mutable_error_response()->set_message(std::move(error.error));
             });
   }
 

@@ -18,6 +18,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering;
 
@@ -49,15 +50,13 @@ void OrderingServiceTransportGrpc::publishProposal(
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
-
   for (const auto &peer : peers) {
-    peers_map[peer] = proto::OrderingGateTransportGrpc::NewStub(
-        grpc::CreateChannel(peer, grpc::InsecureChannelCredentials()));
+    peers_map[peer] =
+        network::createClient<proto::OrderingGateTransportGrpc>(peer);
   }
 
   for (const auto &peer : peers_map) {
     auto call = new AsyncClientCall;
-
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
     log_->debug("Publishing proposal: '{}'",
                 proto->getTransport().DebugString());
