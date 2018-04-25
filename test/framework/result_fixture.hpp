@@ -22,18 +22,21 @@
 
 namespace framework {
   namespace expected {
+    template <typename ResultType>
+    using ValueOf = iroha::expected::ValueOf<ResultType>;
+    template <typename ResultType>
+    using ErrorOf = iroha::expected::ErrorOf<ResultType>;
     /**
      * @return optional with value if present
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<typename ResultType::ValueType> val(const ResultType &res) {
-      using VType = typename ResultType::ValueType;
-      using EType = typename ResultType::ErrorType;
+    boost::optional<ValueOf<ResultType>> val(const ResultType &res) {
+      using RetType = boost::optional<ValueOf<ResultType>>;
       return iroha::visit_in_place(
           res,
-          [](VType v) { return boost::optional<VType>(v); },
-          [](EType e) -> boost::optional<VType> { return {}; });
+          [](ValueOf<ResultType> v) { return RetType(v); },
+          [](ErrorOf<ResultType> e) -> RetType { return {}; });
     }
 
     /**
@@ -41,13 +44,12 @@ namespace framework {
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<typename ResultType::ErrorType> err(const ResultType &res) {
-      using VType = typename ResultType::ValueType;
-      using EType = typename ResultType::ErrorType;
+    boost::optional<ErrorOf<ResultType>> err(const ResultType &res) {
+      using RetType = boost::optional<ErrorOf<ResultType>>;
       return iroha::visit_in_place(
           res,
-          [](VType v) -> boost::optional<EType> { return {}; },
-          [](EType e) { return boost::optional<EType>(e); });
+          [](ValueOf<ResultType> v) -> RetType { return {}; },
+          [](ErrorOf<ResultType> e) { return RetType(e); });
     }
   }  // namespace expected
 }  // namespace framework

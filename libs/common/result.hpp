@@ -120,7 +120,8 @@ namespace iroha {
        *         otherwise return this
        */
       template <typename Value>
-      constexpr Result<Value, E> and_res(Result<Value, E> new_res) const {
+      constexpr Result<Value, E> and_res(
+          const Result<Value, E> &new_res) const {
         return visit_in_place(
             *this,
             [res = new_res](ValueType) { return res; },
@@ -139,13 +140,18 @@ namespace iroha {
        *         otherwise return this
        */
       template <typename Value>
-      constexpr Result<Value, E> or_res(Result<Value, E> new_res) const {
+      constexpr Result<Value, E> or_res(const Result<Value, E> &new_res) const {
         return visit_in_place(
             *this,
             [](ValueType val) -> Result<Value, E> { return val; },
             [res = new_res](ErrorType) { return res; });
       }
     };
+
+    template <typename ResultType>
+    using ValueOf = typename ResultType::ValueType;
+    template <typename ResultType>
+    using ErrorOf = typename ResultType::ErrorType;
 
     /**
      * Get a new result with the copied value or mapped error
@@ -154,7 +160,7 @@ namespace iroha {
      * @return result with changed error
      */
     template <typename Err1, typename Err2, typename V, typename Fn>
-    auto map_error(Result<V, Err2> res, Fn &&map) {
+    Result<V, Err1> map_error(const Result<V, Err2> &res, Fn &&map) {
       return visit_in_place(res,
                             [](Value<V> val) -> Result<V, Err1> { return val; },
                             [map](Error<Err2> err) -> Result<V, Err1> {
