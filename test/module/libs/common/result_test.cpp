@@ -244,7 +244,7 @@ TEST(ResultTest, MapError) {
 
 /**
  * @given Result with some error and some function
- * @when rmap function is invoked
+ * @when map_error function is invoked
  * @then result contains the same error
  */
 TEST(ResultTest, MapErrorBlank) {

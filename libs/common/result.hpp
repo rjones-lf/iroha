@@ -148,8 +148,8 @@ namespace iroha {
     };
 
     /**
-     * Get a new result with changed error
-     * @param res for operating for
+     * Get a new result with the copied value or mapped error
+     * @param res base Result for getting new one
      * @param map callback for error mapping
      * @return result with changed error
      */
