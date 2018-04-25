@@ -51,44 +51,32 @@ namespace iroha {
               rxcpp::observe_on_new_thread())
               .map([](auto) { return ProposalEvent::kTimerEvent; });
 
+      auto subscribe = [&](auto merge_strategy) {
+        handle_ = merge_strategy(rxcpp::observable<>::from(
+                                     timer, transactions_.get_observable()))
+                      .subscribe([this](auto &&v) {
+                        auto check_queue = [&] {
+                          switch (v) {
+                            case ProposalEvent::kTimerEvent:
+                              return not queue_.empty();
+                            case ProposalEvent::kTransactionEvent:
+                              return queue_.unsafe_size() >= max_size_;
+                            default:
+                              BOOST_ASSERT_MSG(false, "Unknown value");
+                          }
+                        };
+                        if (check_queue()) {
+                          this->generateProposal();
+                        }
+                      });
+      };
+
       if (is_async) {
-        handle_ =
-            rxcpp::observable<>::from(timer, transactions_.get_observable())
-                .merge(rxcpp::synchronize_new_thread())
-                .subscribe([this](auto &&v) {
-                  auto check_queue = [&] {
-                    switch (v) {
-                      case ProposalEvent::kTimerEvent:
-                        return not queue_.empty();
-                      case ProposalEvent::kTransactionEvent:
-                        return queue_.unsafe_size() >= max_size_;
-                      default:
-                        BOOST_ASSERT_MSG(false, "Unknown value");
-                    }
-                  };
-                  if (check_queue()) {
-                    this->generateProposal();
-                  }
-                });
+        subscribe([](auto observable) {
+          return observable.merge(rxcpp::synchronize_new_thread());
+        });
       } else {
-        handle_ =
-            rxcpp::observable<>::from(timer, transactions_.get_observable())
-                .merge()
-                .subscribe([this](auto &&v) {
-                  auto check_queue = [&] {
-                    switch (v) {
-                      case ProposalEvent::kTimerEvent:
-                        return not queue_.empty();
-                      case ProposalEvent::kTransactionEvent:
-                        return queue_.unsafe_size() >= max_size_;
-                      default:
-                        BOOST_ASSERT_MSG(false, "Unknown value");
-                    }
-                  };
-                  if (check_queue()) {
-                    this->generateProposal();
-                  }
-                });
+        subscribe([](auto observable) { return observable.merge(); });
       }
     }
 
@@ -98,7 +86,7 @@ namespace iroha {
       log_->info("Queue size is {}", queue_.unsafe_size());
 
       // on_next calls should not be concurrent
-      std::lock_guard<std::mutex> lk(m_);
+      std::lock_guard<std::mutex> lk(mutex_);
       transactions_.get_subscriber().on_next(ProposalEvent::kTransactionEvent);
     }
 

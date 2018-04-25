@@ -48,7 +48,7 @@ namespace iroha {
        * Constructor
        * @param wsv interface for fetching peers from world state view
        * @param max_size maximum size of proposal
-       * @param delay_milliseconds time
+       * @param delay_milliseconds timeout for proposal generation
        * @param transport receive transactions and publish proposals
        * @param persistent_state storage for auxiliary information
        * @param is_async whether proposals are generated in a separate thread
@@ -133,7 +133,7 @@ namespace iroha {
       /**
        * Mutex for incoming transactions
        */
-      std::mutex m_;
+      std::mutex mutex_;
 
       logger::Logger log_;
     };
