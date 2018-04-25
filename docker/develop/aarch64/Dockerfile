@@ -8,14 +8,13 @@ ARG CMAKE_BUILD_TYPE=Release
 ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /opt/iroha/build
 
-RUN apt-get update; \
-    apt-get -y upgrade; \
+RUN apt-get update && \
     apt-get -y --no-install-recommends install apt-utils software-properties-common; \
     apt-get -y clean
 
 
 # add git repository
-RUN add-apt-repository -y ppa:git-core/ppa; \
+RUN add-apt-repository -y ppa:git-core/ppa && \
     apt-get update
 
 

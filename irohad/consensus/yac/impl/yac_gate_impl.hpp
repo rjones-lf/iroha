@@ -49,6 +49,11 @@ namespace iroha {
                     std::shared_ptr<network::BlockLoader> block_loader,
                     uint64_t delay);
         void vote(const shared_model::interface::Block &) override;
+        /**
+         * method called when commit recived
+         * assumes to retrieve a block eventually
+         * @return observable with the Block commited
+         */
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
         on_commit() override;
 

@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/process.hpp>
@@ -30,7 +32,6 @@
 #undef RAPIDJSON_HAS_STDSTRING
 
 #include "framework/config_helper.hpp"
-#include "model/converters/json_common.hpp"
 
 using namespace boost::process;
 using namespace boost::filesystem;
@@ -52,8 +53,10 @@ class IrohadTest : public testing::Test {
     auto config_copy_json = parse_iroha_config(path_config_.string());
     config_copy_json[config_members::PgOpt].SetString(pgopts_.data(),
                                                       pgopts_.size());
-    auto config_copy_string =
-        iroha::model::converters::jsonToString(config_copy_json);
+    rapidjson::StringBuffer sb;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
+    config_copy_json.Accept(writer);
+    std::string config_copy_string = sb.GetString();
     std::ofstream copy_file(config_copy_);
     copy_file.write(config_copy_string.data(), config_copy_string.size());
   }

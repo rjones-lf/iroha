@@ -65,6 +65,7 @@ namespace shared_model {
             .append("accountId", accountId())
             .append("domainId", domainId())
             .append("quorum", std::to_string(quorum()))
+            .append("json", jsonData())
             .finalize();
       }
 

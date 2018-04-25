@@ -4,7 +4,7 @@ add_library(networking
 
 target_link_libraries(networking
     rxcpp
-    model
+    shared_model_interfaces
     ordering_service
     synchronizer
     logger
@@ -15,10 +15,9 @@ add_library(block_loader
     )
 
 target_link_libraries(block_loader
-    pb_model_converters
     loader_grpc
     rxcpp
-    model
+    shared_model_interfaces
     )
 
 add_library(block_loader_service

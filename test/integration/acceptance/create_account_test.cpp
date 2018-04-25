@@ -21,8 +21,8 @@
 #include "datetime/time.hpp"
 #include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -36,7 +36,7 @@ class CreateAccount : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             iroha::model::can_create_account}) {
+                             shared_model::permissions::can_create_account}) {
     return framework::createUserWithPerms(
                kUser, kUserKeypair.publicKey(), "role"s, perms)
         .build()
@@ -49,7 +49,6 @@ class CreateAccount : public ::testing::Test {
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now());
   }
@@ -103,7 +102,7 @@ TEST_F(CreateAccount, Basic) {
 TEST_F(CreateAccount, NoPermissions) {
   IntegrationTestFramework()
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({iroha::model::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .skipProposal()
       .skipBlock()
       .sendTx(completeTx(baseTx().createAccount(

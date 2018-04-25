@@ -84,7 +84,7 @@ namespace iroha {
         }
 
         if (response) {
-          response->set_query_hash(query_response->query_hash.to_string());
+          response->set_query_hash(query_response->query_hash.to_hexstring());
         }
         return response;
       }

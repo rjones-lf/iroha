@@ -39,10 +39,9 @@ template <typename... T, typename Archive>
 auto loadQueryResponse(Archive &&ar) {
   int which =
       ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
-  return shared_model::detail::variant_impl<T...>::
-      template load<shared_model::interface::QueryResponse::
-                        QueryResponseVariantType>(std::forward<Archive>(ar),
-                                                  which);
+  return shared_model::detail::variant_impl<T...>::template load<
+      shared_model::interface::QueryResponse::QueryResponseVariantType>(
+      std::forward<Archive>(ar), which);
 }
 
 namespace shared_model {
@@ -97,8 +96,10 @@ namespace shared_model {
         return loadQueryResponse<ProtoQueryResponseListType>(*proto_);
       }};
 
-      const Lazy<interface::types::HashType> hash_{
-          [this] { return interface::types::HashType(proto_->query_hash()); }};
+      const Lazy<interface::types::HashType> hash_{[this] {
+        return interface::types::HashType(
+            iroha::hexstringToBytestring(proto_->query_hash()).get());
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

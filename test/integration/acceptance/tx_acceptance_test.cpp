@@ -58,7 +58,6 @@ auto checkStatefulValid = [](auto &block) {
  */
 TEST(AcceptanceTest, NonExistentCreatorAccountId) {
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kNonUser)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -75,72 +74,12 @@ TEST(AcceptanceTest, NonExistentCreatorAccountId) {
 
 /**
  * @given some user
- * @when sending 2 transactions with the same txCounter to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on both txs
- *       AND STATELESS_VALIDATION_SUCCESS on first
- *       AND STATEFUL_VALIDATION_FAILED on second
- */
-
-// TODO: Solonets / IR-1166 - Double tx counter / Satisfy disabled test
-TEST(AcceptanceTest, DISABLED_DublicatedTxCounter) {
-  auto tx1 = shared_model::proto::TransactionBuilder()
-                 .txCounter(2)
-                 .createdTime(iroha::time::now())
-                 .creatorAccountId(kAdmin)
-                 .addAssetQuantity(kAdmin, kAsset, "1.0")
-                 .build()
-                 .signAndAddSignature(kAdminKeypair);
-  auto tx2 = shared_model::proto::TransactionBuilder()
-                 .txCounter(2)
-                 .createdTime(iroha::time::now())
-                 .creatorAccountId(kAdmin)
-                 .addAssetQuantity(kAdmin, kAsset, "1.0")
-                 .build()
-                 .signAndAddSignature(kAdminKeypair);
-
-  integration_framework::IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(tx1, checkStatelessValid)
-      .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .sendTx(tx2, checkStatelessValid)
-      .skipProposal()
-      .checkBlock(checkStatefulInvalid)
-      .done();
-}
-
-/**
- * @given some user
- * @when sending transactions with the Maximum txCounter possible to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status
- *       AND STATEFUL_VALIDATION_SUCCESS on that tx
- */
-TEST(AcceptanceTest, MaxTxCounter) {
-  auto tx1 = shared_model::proto::TransactionBuilder()
-                 .txCounter(2)
-                 .createdTime(iroha::time::now())
-                 .creatorAccountId(kAdmin)
-                 .addAssetQuantity(kAdmin, kAsset, "1.0")
-                 .build()
-                 .signAndAddSignature(kAdminKeypair);
-
-  integration_framework::IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(tx1, checkStatelessValid)
-      .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
-}
-
-/**
- * @given some user
  * @when sending transactions with an 1 hour old UNIX time
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST(AcceptanceTest, Transaction1HourOld) {
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now(std::chrono::hours(-1)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -162,7 +101,6 @@ TEST(AcceptanceTest, Transaction1HourOld) {
  */
 TEST(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now(std::chrono::hours(24)
                                               - std::chrono::minutes(1)))
                 .creatorAccountId(kAdmin)
@@ -185,7 +123,6 @@ TEST(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
 TEST(AcceptanceTest, TransactionMore24HourOld) {
   ASSERT_ANY_THROW(
       auto tx = shared_model::proto::TransactionBuilder()
-                    .txCounter(2)
                     .createdTime(iroha::time::now(std::chrono::hours(24)
                                                   + std::chrono::minutes(1)))
                     .creatorAccountId(kAdmin)
@@ -193,7 +130,6 @@ TEST(AcceptanceTest, TransactionMore24HourOld) {
                     .build()
                     .signAndAddSignature(kAdminKeypair););
   auto tx = TestUnsignedTransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now(std::chrono::hours(24)
                                               + std::chrono::minutes(1)))
                 .creatorAccountId(kAdmin)
@@ -214,7 +150,6 @@ TEST(AcceptanceTest, TransactionMore24HourOld) {
  */
 TEST(AcceptanceTest, Transaction5MinutesFromFuture) {
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now(std::chrono::minutes(5)
                                               - std::chrono::seconds(10)))
                 .creatorAccountId(kAdmin)
@@ -238,14 +173,12 @@ TEST(AcceptanceTest, Transaction5MinutesFromFuture) {
 TEST(AcceptanceTest, Transaction10MinutesFromFuture) {
   ASSERT_ANY_THROW(
       auto tx = shared_model::proto::TransactionBuilder()
-                    .txCounter(2)
                     .createdTime(iroha::time::now(std::chrono::minutes(10)))
                     .creatorAccountId(kAdmin)
                     .addAssetQuantity(kAdmin, kAsset, "1.0")
                     .build()
                     .signAndAddSignature(kAdminKeypair););
   auto tx = TestUnsignedTransactionBuilder()
-                .txCounter(2)
                 .createdTime(iroha::time::now(std::chrono::minutes(10)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -265,7 +198,6 @@ TEST(AcceptanceTest, Transaction10MinutesFromFuture) {
 TEST(AcceptanceTest, TransactionEmptyPubKey) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
-          .txCounter(2)
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -288,7 +220,6 @@ TEST(AcceptanceTest, TransactionEmptyPubKey) {
 TEST(AcceptanceTest, TransactionEmptySignedblob) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
-          .txCounter(2)
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -308,7 +239,6 @@ TEST(AcceptanceTest, TransactionEmptySignedblob) {
 TEST(AcceptanceTest, TransactionInvalidPublicKey) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
-          .txCounter(2)
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -331,7 +261,6 @@ TEST(AcceptanceTest, TransactionInvalidPublicKey) {
 TEST(AcceptanceTest, TransactionInvalidSignedBlob) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
-          .txCounter(2)
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -360,7 +289,6 @@ TEST(AcceptanceTest, TransactionInvalidSignedBlob) {
 TEST(AcceptanceTest, TransactionValidSignedBlob) {
   shared_model::proto::Transaction tx =
       shared_model::proto::TransactionBuilder()
-          .txCounter(2)
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")

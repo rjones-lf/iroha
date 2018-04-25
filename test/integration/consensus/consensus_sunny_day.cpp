@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,11 +16,14 @@
  */
 
 #include <grpc++/grpc++.h>
+
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 using ::testing::An;
 using ::testing::Return;
@@ -36,17 +39,23 @@ auto mk_local_peer(uint64_t num) {
 class FixedCryptoProvider : public MockYacCryptoProvider {
  public:
   explicit FixedCryptoProvider(const std::string &public_key) {
-    pubkey.fill(0);
-    std::copy(public_key.begin(), public_key.end(), pubkey.begin());
+    // TODO 15.04.2018 x3medima17 IR-1189: move to separate class
+    auto size =
+        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+            .publicKey().size();
+    // TODO 16.04.2018 x3medima17 IR-977: add sizes
+    std::string key(size, 0);
+    std::copy(public_key.begin(), public_key.end(), key.begin());
+    pubkey = clone(shared_model::crypto::PublicKey(key));
   }
 
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
-    vote.signature.pubkey = pubkey;
+    vote.signature = clone(TestSignatureBuilder().publicKey(*pubkey).build());
     return vote;
   }
 
-  decltype(VoteMessage().signature.pubkey) pubkey;
+  std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {
@@ -142,7 +151,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
   YacHash my_hash("proposal_hash", "block_hash");
-
+  my_hash.block_signature = createSig("");
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
 

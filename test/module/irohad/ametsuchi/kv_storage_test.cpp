@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,20 +17,15 @@
 
 #include <gtest/gtest.h>
 #include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
-#include "model/block.hpp"
-#include "validators/permissions.hpp"
-#include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-
-// TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
-// shared_model https://soramitsu.atlassian.net/browse/IR-887
-#include "backend/protobuf/from_old_model.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/permissions.hpp"
 
 using namespace iroha::ametsuchi;
 
@@ -55,54 +50,34 @@ class KVTest : public AmetsuchiTest {
     blocks = storage->getBlockQuery();
     wsv_query = storage->getWsvQuery();
 
-    // First transaction in block1
-    iroha::model::Transaction txn1_1;
-    txn1_1.creator_account_id = "userone@ru";
-
-    iroha::model::CreateRole createRole;
-    createRole.role_name = "user";
-    createRole.permissions = {iroha::model::can_add_peer,
-                              iroha::model::can_create_asset,
-                              iroha::model::can_get_my_account};
-
-    // Create domain ru
-    txn1_1.commands.push_back(
-        std::make_shared<iroha::model::CreateRole>(createRole));
-    iroha::model::CreateDomain createDomain;
-    createDomain.domain_id = "ru";
-    createDomain.user_default_role = "user";
-    txn1_1.commands.push_back(
-        std::make_shared<iroha::model::CreateDomain>(createDomain));
-
-    // Create account user1
-    iroha::model::CreateAccount createAccount1;
-    createAccount1.account_name = account_name1;
-    createAccount1.domain_id = domain_id;
-    txn1_1.commands.push_back(
-        std::make_shared<iroha::model::CreateAccount>(createAccount1));
-
-    // Create account user2
-    iroha::model::CreateAccount createAccount2;
-    createAccount2.account_name = account_name2;
-    createAccount2.domain_id = domain_id;
-    txn1_1.commands.push_back(
-        std::make_shared<iroha::model::CreateAccount>(createAccount2));
-
-    // Set age for user2
-    iroha::model::SetAccountDetail setAccount2Age;
-    setAccount2Age.account_id = account_name2 + "@" + domain_id;
-    setAccount2Age.key = "age";
-    setAccount2Age.value = "24";
-    txn1_1.commands.push_back(
-        std::make_shared<iroha::model::SetAccountDetail>(setAccount2Age));
-
-    iroha::model::Block old_block1;
-    old_block1.height = 1;
-    old_block1.transactions.push_back(txn1_1);
-    old_block1.prev_hash.fill(0);
-    auto block1hash = iroha::hash(old_block1);
-    old_block1.hash = block1hash;
-    old_block1.txs_number = old_block1.transactions.size();
+    std::string empty_key(32, '0');
+    // transaction for block 1
+    auto txn =
+        TestTransactionBuilder()
+            .creatorAccountId("userone@ru")
+            .createRole(
+                "user",
+                std::vector<shared_model::interface::types::PermissionNameType>{
+                    shared_model::permissions::can_add_peer,
+                    shared_model::permissions::can_create_asset,
+                    shared_model::permissions::can_get_my_account})
+            .createDomain("ru", "user")
+            .createAccount(
+                account_name1,
+                domain_id,
+                shared_model::crypto::PublicKey(empty_key))
+            .createAccount(
+                account_name2,
+                domain_id,
+                shared_model::crypto::PublicKey(empty_key))
+            .setAccountDetail(account_name2 + "@" + domain_id, "age", "24")
+            .build();
+    auto block1 =
+        TestBlockBuilder()
+            .height(1)
+            .prevHash(shared_model::crypto::Hash(empty_key))
+            .transactions(std::vector<shared_model::proto::Transaction>{txn})
+            .build();
 
     {
       std::unique_ptr<MutableStorage> ms;
@@ -113,9 +88,7 @@ class KVTest : public AmetsuchiTest {
           [](iroha::expected::Error<std::string> &error) {
             FAIL() << "MutableStorage: " << error.error;
           });
-      // TODO: 14-02-2018 Alexey Chernyshov remove this after relocation to
-      // shared_model https://soramitsu.atlassian.net/browse/IR-887
-      auto block1 = shared_model::proto::from_old(old_block1);
+
       ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
         return true;
       });

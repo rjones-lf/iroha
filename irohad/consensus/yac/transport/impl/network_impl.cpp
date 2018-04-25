@@ -24,15 +24,16 @@
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
       // ----------| Public API |----------
 
-      NetworkImpl::NetworkImpl() {
-        log_ = logger::log("YacNetwork");
-      }
+      NetworkImpl::NetworkImpl()
+          : network::AsyncGrpcClient<google::protobuf::Empty>(
+                logger::log("YacNetwork")) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
@@ -154,8 +155,8 @@ namespace iroha {
       void NetworkImpl::createPeerConnection(
           const shared_model::interface::Peer &peer) {
         if (peers_.count(peer.address()) == 0) {
-          peers_[peer.address()] = proto::Yac::NewStub(grpc::CreateChannel(
-              peer.address(), grpc::InsecureChannelCredentials()));
+          peers_[peer.address()] =
+              network::createClient<proto::Yac>(peer.address());
         }
       }
 

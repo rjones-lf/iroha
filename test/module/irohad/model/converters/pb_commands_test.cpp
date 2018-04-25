@@ -37,6 +37,7 @@
 #include "validators/permissions.hpp"
 
 using namespace iroha::model;
+using namespace shared_model::permissions;
 
 void command_converter_test(iroha::model::Command &abstract_command) {
   auto factory = iroha::model::converters::PbCommandFactory();

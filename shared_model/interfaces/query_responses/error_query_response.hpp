@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_QUERY_ERROR_RESPONSE_HPP
 
 #include <boost/variant.hpp>
+
 #include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_detail_error_response.hpp"
@@ -29,6 +30,7 @@
 #include "interfaces/query_responses/error_responses/not_supported_error_response.hpp"
 #include "interfaces/query_responses/error_responses/stateful_failed_error_response.hpp"
 #include "interfaces/query_responses/error_responses/stateless_failed_error_response.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

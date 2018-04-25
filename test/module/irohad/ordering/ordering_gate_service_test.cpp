@@ -130,7 +130,6 @@ class OrderingGateServiceTest : public ::testing::Test {
   void send_transaction(size_t i) {
     auto tx = std::make_shared<shared_model::proto::Transaction>(
         shared_model::proto::TransactionBuilder()
-            .txCounter(i)
             .createdTime(iroha::time::now())
             .creatorAccountId("admin@ru")
             .addAssetQuantity("admin@tu", "coin#coin", "1.0")
@@ -219,13 +218,6 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   ASSERT_EQ(proposals.at(1)->transactions().size(), 2);
   ASSERT_EQ(counter, 0);
   ASSERT_TRUE(wrapper.validate());
-
-  size_t i = 1;
-  for (auto &&proposal : proposals) {
-    for (auto &&tx : proposal->transactions()) {
-      ASSERT_EQ(tx->transactionCounter(), i++);
-    }
-  }
 }
 
 /**
@@ -275,11 +267,7 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   ASSERT_EQ(proposals.size(), 2);
   ASSERT_EQ(counter, 0);
 
-  size_t i = 1;
   for (auto &&proposal : proposals) {
     ASSERT_EQ(proposal->transactions().size(), 5);
-    for (auto &&tx : proposal->transactions()) {
-      ASSERT_EQ(tx->transactionCounter(), i++);
-    }
   }
 }
