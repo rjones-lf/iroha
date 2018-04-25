@@ -44,11 +44,13 @@ namespace iroha {
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
+      /// Proposal observable type
+      using Rep = std::chrono::milliseconds::rep;
       /**
        * Constructor
        * @param wsv interface for fetching peers from world state view
        * @param max_size maximum size of proposal
-       * @param delay_milliseconds timeout for proposal generation
+       * @param proposal_timeout timeout for proposal generation
        * @param transport receive transactions and publish proposals
        * @param persistent_state storage for auxiliary information
        * @param is_async whether proposals are generated in a separate thread
@@ -56,7 +58,7 @@ namespace iroha {
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
-          size_t delay_milliseconds,
+          rxcpp::observable<Rep> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
@@ -102,11 +104,6 @@ namespace iroha {
        * max number of txs in proposal
        */
       const size_t max_size_;
-
-      /**
-       *  wait for specified time if queue is empty
-       */
-      const size_t delay_milliseconds_;
 
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
