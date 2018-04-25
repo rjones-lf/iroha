@@ -31,7 +31,7 @@ namespace framework {
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<ValueOf<ResultType>> val(const ResultType &res) {
+    boost::optional<ValueOf<ResultType>> val(const ResultType &res) noexcept {
       using RetType = boost::optional<ValueOf<ResultType>>;
       return iroha::visit_in_place(
           res,
@@ -44,7 +44,7 @@ namespace framework {
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<ErrorOf<ResultType>> err(const ResultType &res) {
+    boost::optional<ErrorOf<ResultType>> err(const ResultType &res) noexcept {
       using RetType = boost::optional<ErrorOf<ResultType>>;
       return iroha::visit_in_place(
           res,

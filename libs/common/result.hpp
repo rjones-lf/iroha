@@ -120,8 +120,8 @@ namespace iroha {
        *         otherwise return this
        */
       template <typename Value>
-      constexpr Result<Value, E> and_res(
-          const Result<Value, E> &new_res) const {
+      constexpr Result<Value, E> and_res(const Result<Value, E> &new_res) const
+          noexcept {
         return visit_in_place(
             *this,
             [res = new_res](ValueType) { return res; },
@@ -140,7 +140,8 @@ namespace iroha {
        *         otherwise return this
        */
       template <typename Value>
-      constexpr Result<Value, E> or_res(const Result<Value, E> &new_res) const {
+      constexpr Result<Value, E> or_res(const Result<Value, E> &new_res) const
+          noexcept {
         return visit_in_place(
             *this,
             [](ValueType val) -> Result<Value, E> { return val; },
@@ -160,7 +161,7 @@ namespace iroha {
      * @return result with changed error
      */
     template <typename Err1, typename Err2, typename V, typename Fn>
-    Result<V, Err1> map_error(const Result<V, Err2> &res, Fn &&map) {
+    Result<V, Err1> map_error(const Result<V, Err2> &res, Fn &&map) noexcept {
       return visit_in_place(res,
                             [](Value<V> val) -> Result<V, Err1> { return val; },
                             [map](Error<Err2> err) -> Result<V, Err1> {
