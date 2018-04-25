@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <utility>
 #include <tuple>
+#include <utility>
 
 #include "ordering/impl/ordering_gate_impl.hpp"
 
@@ -39,7 +39,8 @@ namespace iroha {
         bool run_async)
         : transport_(std::move(transport)),
           last_block_height_(initial_height),
-          log_(logger::log("OrderingGate")), run_async_(run_async) {}
+          log_(logger::log("OrderingGate")),
+          run_async_(run_async) {}
 
     void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const shared_model::interface::Transaction>
@@ -59,27 +60,27 @@ namespace iroha {
         const iroha::network::PeerCommunicationService &pcs) {
       log_->info("setPcs");
 
-      auto tap = pcs.on_commit().transform([](const Commit &block) {
-        // find height of last commited block
-        return block.as_blocking().last()->height();
-      }).start_with(last_block_height_);
+      auto top_block_height = pcs.on_commit()
+                                  .transform([](const Commit &block) {
+                                    // find height of last commited block
+                                    return block.as_blocking().last()->height();
+                                  })
+                                  .start_with(last_block_height_);
 
       if (run_async_) {
-        pcs_subscriber_ =
-            net_proposals_.get_observable()
-                .combine_latest(rxcpp::synchronize_new_thread(), tap)
-                .subscribe([this](auto t) {
-                  this->tryNextRound(std::get<1>(t));
-                });
+        pcs_subscriber_ = net_proposals_.get_observable()
+                              .combine_latest(rxcpp::synchronize_new_thread(),
+                                              top_block_height)
+                              .subscribe([this](const auto &t) {
+                                this->tryNextRound(std::get<1>(t));
+                              });
       } else {
-        pcs_subscriber_ =
-            net_proposals_.get_observable()
-                .combine_latest(tap)
-                .subscribe([this](auto t) {
-                  this->tryNextRound(std::get<1>(t));
-                });
+        pcs_subscriber_ = net_proposals_.get_observable()
+                              .combine_latest(top_block_height)
+                              .subscribe([this](const auto &t) {
+                                this->tryNextRound(std::get<1>(t));
+                              });
       }
-
     }
 
     void OrderingGateImpl::onProposal(

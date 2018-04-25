@@ -57,6 +57,12 @@ namespace iroha {
     class OrderingGateImpl : public network::OrderingGate,
                              public network::OrderingGateNotification {
      public:
+      /**
+       * @param transport - network communication layer
+       * @param initial_height - height of the last block stored on this peer
+       * @param run_async - whether proposals should be handled on
+       * asynchronously (on separate thread). Default is true.
+       */
       OrderingGateImpl(
           std::shared_ptr<iroha::network::OrderingGateTransport> transport,
           shared_model::interface::types::HeightType initial_height,
@@ -79,6 +85,10 @@ namespace iroha {
      private:
       /**
        * Try to push proposal for next consensus round
+       * @param - last_block_height_ - what is the last block stored on this
+       * peer, or for which commit was received. If block is newer than
+       * currently stored proposals, proposals are discarded. If it is older,
+       * newer proposals are propagated in order
        */
       void tryNextRound(
           shared_model::interface::types::HeightType last_block_height_);
@@ -99,7 +109,7 @@ namespace iroha {
           ProposalComparator>
           proposal_queue_;
 
-      // last commited block height
+      /// last commited block height
       shared_model::interface::types::HeightType last_block_height_;
 
       /// subscription of pcs::on_commit

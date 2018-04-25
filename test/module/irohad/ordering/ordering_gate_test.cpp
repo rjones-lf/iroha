@@ -16,7 +16,6 @@
  */
 #include <grpc++/grpc++.h>
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "framework/test_subscriber.hpp"
 
@@ -38,6 +37,8 @@ using namespace std::chrono_literals;
 using ::testing::_;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
+
+using shared_model::interface::types::HeightType;
 
 class MockOrderingGateTransportGrpcService
     : public proto::OrderingServiceTransportGrpc::Service {
@@ -62,22 +63,22 @@ class OrderingGateTest : public ::testing::Test {
   }
 
   void SetUp() override {
-      grpc::ServerBuilder builder;
-      int port = 0;
-      builder.AddListeningPort(
-          "0.0.0.0:0", grpc::InsecureServerCredentials(), &port);
+    grpc::ServerBuilder builder;
+    int port = 0;
+    builder.AddListeningPort(
+        "0.0.0.0:0", grpc::InsecureServerCredentials(), &port);
 
-      builder.RegisterService(fake_service.get());
+    builder.RegisterService(fake_service.get());
 
-      server = builder.BuildAndStart();
-      auto address = "0.0.0.0:" + std::to_string(port);
-      // Initialize components after port has been bind
-      transport = std::make_shared<OrderingGateTransportGrpc>(address);
-      gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
-      transport->subscribe(gate_impl);
+    server = builder.BuildAndStart();
+    auto address = "0.0.0.0:" + std::to_string(port);
+    // Initialize components after port has been bind
+    transport = std::make_shared<OrderingGateTransportGrpc>(address);
+    gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
+    transport->subscribe(gate_impl);
 
-      ASSERT_NE(port, 0);
-      ASSERT_TRUE(server);
+    ASSERT_NE(port, 0);
+    ASSERT_TRUE(server);
   }
 
   void TearDown() override {
@@ -158,6 +159,42 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+class QueueBehaviorTest : public ::testing::Test {
+ public:
+  QueueBehaviorTest(): ordering_gate(transport, 1, false) {};
+
+  void SetUp() override {
+    std::shared_ptr<OrderingGateTransport> transport =
+        std::make_shared<MockOrderingGateTransport>();
+    std::shared_ptr<MockPeerCommunicationService> pcs =
+        std::make_shared<MockPeerCommunicationService>();
+    EXPECT_CALL(*pcs, on_commit())
+        .WillOnce(Return(commit_subject.get_observable()));
+
+    ordering_gate.setPcs(*pcs);
+    ordering_gate.on_proposal().subscribe(
+        [&](auto val) { messages.push_back(val); });
+  }
+
+  std::shared_ptr<OrderingGateTransport> transport;
+  std::shared_ptr<MockPeerCommunicationService> pcs;
+  rxcpp::subjects::subject<Commit> commit_subject;
+  OrderingGateImpl ordering_gate;
+  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
+
+  void pushCommit(HeightType height) {
+    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
+        std::static_pointer_cast<shared_model::interface::Block>(
+            std::make_shared<shared_model::proto::Block>(
+                TestBlockBuilder().height(height).build()))));
+  }
+
+  void pushProposal(HeightType height) {
+    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
+        TestProposalBuilder().height(height).build()));
+  };
+};
+
 /**
  * @given Initialized OrderingGate
  *        AND MockPeerCommunicationService
@@ -165,19 +202,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
  *        AND one commit in node
  * @then  Check that send round appears after commit
  */
-TEST(OrderingGateQueueBehaviour, SendManyProposals) {
-  std::shared_ptr<OrderingGateTransport> transport =
-      std::make_shared<MockOrderingGateTransport>();
-
-  std::shared_ptr<MockPeerCommunicationService> pcs =
-      std::make_shared<MockPeerCommunicationService>();
-  rxcpp::subjects::subject<Commit> commit_subject;
-  EXPECT_CALL(*pcs, on_commit())
-      .WillOnce(Return(commit_subject.get_observable()));
-
-  OrderingGateImpl ordering_gate(transport, 1, false);
-  ordering_gate.setPcs(*pcs);
-
+TEST_F(QueueBehaviorTest, SendManyProposals) {
   auto wrapper_before =
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 1);
   wrapper_before.subscribe();
@@ -227,41 +252,7 @@ TEST(OrderingGateQueueBehaviour, SendManyProposals) {
  * @when Receive proposals in random order
  * @then on_proposal output is ordered
  */
-TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
-  std::shared_ptr<OrderingGateTransport> transport =
-      std::make_shared<MockOrderingGateTransport>();
-
-  std::shared_ptr<MockPeerCommunicationService> pcs =
-      std::make_shared<MockPeerCommunicationService>();
-  rxcpp::subjects::subject<Commit> commit_subject;
-  EXPECT_CALL(*pcs, on_commit())
-      .WillOnce(Return(commit_subject.get_observable()));
-
-  auto pushCommit = [&](auto height) {
-    std::cout << "Commiting\n";
-    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
-        std::static_pointer_cast<shared_model::interface::Block>(
-            std::make_shared<shared_model::proto::Block>(
-                TestBlockBuilder().height(height).build()))));
-  };
-
-  OrderingGateImpl ordering_gate(transport, 1, false);
-  ordering_gate.setPcs(*pcs);
-
-  auto pushProposal = [&](auto height) {
-    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
-        TestProposalBuilder().height(height).build()));
-  };
-
-  std::condition_variable cv;
-  std::mutex m;
-  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe(
-      [&](auto val) {
-        messages.push_back(val);
-        cv.notify_one();
-      });
-
+TEST_F(QueueBehaviorTest, ReceiveUnordered) {
   // this will set unlock_next_ to false, so proposals 3 and 4 are enqueued
   pushProposal(2);
 
@@ -270,9 +261,6 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
 
   pushCommit(2);
   pushCommit(3);
-
-  std::unique_lock<std::mutex> lock(m);
-  cv.wait_for(lock, 10s, [&] { return messages.size() == 3; });
 
   ASSERT_EQ(3, messages.size());
   ASSERT_EQ(2, messages.at(0)->height());
@@ -287,35 +275,7 @@ TEST(OrderingGateQueueBehaviour, ReceiveUnordered) {
  * @then on_proposal is not invoked on proposals
  * which are older than last committed block
  */
-TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
-  std::shared_ptr<OrderingGateTransport> transport =
-      std::make_shared<MockOrderingGateTransport>();
-
-  std::shared_ptr<MockPeerCommunicationService> pcs =
-      std::make_shared<MockPeerCommunicationService>();
-  rxcpp::subjects::subject<Commit> commit_subject;
-  EXPECT_CALL(*pcs, on_commit())
-      .WillOnce(Return(commit_subject.get_observable()));
-
-  auto pushCommit = [&](auto height) {
-    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
-        std::static_pointer_cast<shared_model::interface::Block>(
-            std::make_shared<shared_model::proto::Block>(
-                TestBlockBuilder().height(height).build()))));
-  };
-
-  OrderingGateImpl ordering_gate(transport, 1, false);
-  ordering_gate.setPcs(*pcs);
-
-  auto pushProposal = [&](auto height) {
-    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
-        TestProposalBuilder().height(height).build()));
-  };
-
-  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe(
-      [&](auto val) { messages.push_back(val); });
-
+TEST_F(QueueBehaviorTest, DiscardOldProposals) {
   pushProposal(2);
   pushProposal(3);
 
@@ -335,35 +295,7 @@ TEST(OrderingGateQueueBehaviour, DiscardOldProposals) {
  * @when Proposals are newer than received commits
  * @then newer proposals are kept in queue
  */
-TEST(OrderingGateQueueBehaviour, KeepNewerProposals) {
-  std::shared_ptr<OrderingGateTransport> transport =
-      std::make_shared<MockOrderingGateTransport>();
-
-  std::shared_ptr<MockPeerCommunicationService> pcs =
-      std::make_shared<MockPeerCommunicationService>();
-  rxcpp::subjects::subject<Commit> commit_subject;
-  EXPECT_CALL(*pcs, on_commit())
-      .WillOnce(Return(commit_subject.get_observable()));
-
-  auto pushCommit = [&](auto height) {
-    commit_subject.get_subscriber().on_next(rxcpp::observable<>::just(
-        std::static_pointer_cast<shared_model::interface::Block>(
-            std::make_shared<shared_model::proto::Block>(
-                TestBlockBuilder().height(height).build()))));
-  };
-
-  OrderingGateImpl ordering_gate(transport, 1, false);
-  ordering_gate.setPcs(*pcs);
-
-  auto pushProposal = [&](auto height) {
-    ordering_gate.onProposal(std::make_shared<shared_model::proto::Proposal>(
-        TestProposalBuilder().height(height).build()));
-  };
-
-  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
-  ordering_gate.on_proposal().subscribe(
-      [&](auto val) { messages.push_back(val); });
-
+TEST_F(QueueBehaviorTest, KeepNewerProposals) {
   pushProposal(2);
   pushProposal(3);
   pushProposal(4);

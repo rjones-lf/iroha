@@ -16,7 +16,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -55,7 +54,7 @@ class OrderingGateServiceTest : public ::testing::Test {
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
-    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1);
+    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1, false);
     gate->setPcs(*pcs_);
     gate_transport->subscribe(gate);
 
@@ -106,10 +105,8 @@ class OrderingGateServiceTest : public ::testing::Test {
       size_t times) {
     auto wrapper = make_test_subscriber<CallExact>(gate->on_proposal(), times);
     gate->on_proposal().subscribe([this](auto) {
-      std::cout << "on proposal subscriber 1\n";
       counter--;
       cv.notify_one();
-      std::cout << "on proposal subscriber 1 done\n";
     });
     gate->on_proposal().subscribe([this](auto proposal) {
       std::cout << "on proposal subscriber 2\n";
@@ -123,7 +120,6 @@ class OrderingGateServiceTest : public ::testing::Test {
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
 
-      std::cout << "on proposal subscriber 2 done\n";
     });
     wrapper.subscribe();
     return wrapper;

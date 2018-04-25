@@ -43,6 +43,7 @@ namespace iroha {
        * Init effective realisation of ordering gate (client of ordering
        * service)
        * @param network_address - address of ordering service
+       * @param block_query - block store to get last block height
        */
       auto createGate(std::shared_ptr<OrderingGateTransport>,
                       std::shared_ptr<ametsuchi::BlockQuery>);
@@ -69,7 +70,8 @@ namespace iroha {
        * @param loop - handler of async events
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
-       * @return effective realisation of OrderingGate
+       * @param block_query - block store to get last block height
+       * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<ordering::OrderingGateImpl> initOrderingGate(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
