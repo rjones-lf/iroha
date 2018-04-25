@@ -181,12 +181,18 @@ class CommandValidateExecuteTest : public ::testing::Test {
   const std::string kMaxAmountStr =
       std::numeric_limits<boost::multiprecision::uint256_t>::max().str()
       + ".00";
+  const std::string kAmountWrongPrecision = "1.0000";
+  const std::string kAmount = "1.00";
+  const std::string kAmountOverflow = "12.04";
   const std::string kAdminId = "admin@test";
   const std::string kAccountId = "test@test";
+  const std::string kNoAcountId = "noacc";
   const std::string kAssetId = "coin#test";
+  const std::string kNoAssetId = "no_asset#test";
   const std::string kDomainId = "test";
   const std::string kDescription = "test transfer";
   const std::string kAdminRole = "admin";
+  const std::string kMasterRole = "master";
   const std::vector<std::string> admin_roles = {kAdminRole};
   const shared_model::interface::types::PubkeyType kPubKey1 =
       shared_model::interface::types::PubkeyType(std::string(32, '1'));
@@ -217,7 +223,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().addAssetQuantity(
-        creator->accountId(), kAssetId, "3.50"));
+        creator->accountId(), kAssetId, kAmount));
     add_asset_quantity =
         getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
   }
@@ -289,7 +295,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - IR-1276 - rework with
   // CommandBuilder
   command = buildCommand(TestTransactionBuilder().addAssetQuantity(
-      creator->accountId(), kAssetId, "1.0000"));
+      creator->accountId(), kAssetId, kAmountWrongPrecision));
   add_asset_quantity =
       getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
 
@@ -328,7 +334,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - IR-1276 - rework with
   // CommandBuilder
   command = buildCommand(TestTransactionBuilder().addAssetQuantity(
-      creator->accountId(), "no_asset", "3.50"));
+      creator->accountId(), kNoAssetId, kAmount));
   add_asset_quantity =
       getConcreteCommand<shared_model::interface::AddAssetQuantity>(command);
 
@@ -379,7 +385,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-        creator->accountId(), kAssetId, "1.00"));
+        creator->accountId(), kAssetId, kAmount));
     subtract_asset_quantity =
         getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
             command);
@@ -435,7 +441,7 @@ TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
 TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      creator->accountId(), kAssetId, "12.04"));
+      creator->accountId(), kAssetId, kAmountOverflow));
   subtract_asset_quantity =
       getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
           command);
@@ -473,7 +479,7 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
 TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      creator->accountId(), kAssetId, "1.0000"));
+      creator->accountId(), kAssetId, kAmountWrongPrecision));
   subtract_asset_quantity =
       getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
           command);
@@ -494,7 +500,7 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
 TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      "noacc", kAssetId, "12.04"));
+      kNoAcountId, kAssetId, kAmount));
   subtract_asset_quantity =
       getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
           command);
@@ -510,7 +516,7 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAccount) {
 TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      creator->accountId(), "no_asset", "12.04"));
+      creator->accountId(), kNoAssetId, kAmount));
   subtract_asset_quantity =
       getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
           command);
@@ -609,7 +615,7 @@ TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
 TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command =
-      buildCommand(TestTransactionBuilder().addSignatory("noacc", kPubKey1));
+      buildCommand(TestTransactionBuilder().addSignatory(kNoAcountId, kPubKey1));
   add_signatory =
       getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
@@ -787,7 +793,7 @@ class CreateDomainTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
-        buildCommand(TestTransactionBuilder().createDomain("cn", "default"));
+        buildCommand(TestTransactionBuilder().createDomain("cn", kDomainId));
     create_domain =
         getConcreteCommand<shared_model::interface::CreateDomain>(command);
   }
@@ -918,12 +924,11 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
 }
 
 /**
- * @given RemoveSignatory and creator has not permissons
+ * @given RemoveSignatory and creator has not grantable permissions
  * @when command is executed
  * @then executor will be passed
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
-  // Add same signatory
   EXPECT_CALL(
       *wsv_query,
       hasAccountGrantablePermission(
@@ -1155,7 +1160,7 @@ TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
  */
 TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = buildCommand(TestTransactionBuilder().setAccountQuorum("noacc", 2));
+  command = buildCommand(TestTransactionBuilder().setAccountQuorum(kNoAcountId, 2));
   set_quorum = getConcreteCommand<shared_model::interface::SetQuorum>(command);
 
   EXPECT_CALL(*wsv_query,
@@ -1245,7 +1250,7 @@ class TransferAssetTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().transferAsset(
-        kAdminId, kAccountId, kAssetId, kDescription, "1.50"));
+        kAdminId, kAccountId, kAssetId, kDescription, kAmount));
     transfer_asset =
         getConcreteCommand<shared_model::interface::TransferAsset>(command);
   }
@@ -1337,7 +1342,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   // Transfer creator is not connected to account
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAccountId, kAdminId, kAssetId, kDescription, "1.50"));
+      kAccountId, kAdminId, kAssetId, kDescription, kAmount));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1393,7 +1398,7 @@ TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
 TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAdminId, "noacc", kAssetId, kDescription, "150.00"));
+      kAdminId, kNoAcountId, kAssetId, kDescription, kAmount));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1521,7 +1526,7 @@ TEST_F(TransferAssetTest, InvalidWhenNoAssetId) {
 TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAdminId, kAccountId, kAssetId, kDescription, "155.00"));
+      kAdminId, kAccountId, kAssetId, kDescription, kAmountOverflow));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1553,7 +1558,7 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFunds) {
 TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAdminId, kAccountId, kAssetId, kDescription, "155.00"));
+      kAdminId, kAccountId, kAssetId, kDescription, kAmountOverflow));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1579,7 +1584,7 @@ TEST_F(TransferAssetTest, InvalidWhenInsufficientFundsDuringExecute) {
 TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAdminId, kAccountId, kAssetId, kDescription, "155.0000"));
+      kAdminId, kAccountId, kAssetId, kDescription, kAmountWrongPrecision));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1605,7 +1610,7 @@ TEST_F(TransferAssetTest, InvalidWhenWrongPrecision) {
 TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAdminId, kAccountId, kAssetId, kDescription, "1.5000"));
+      kAdminId, kAccountId, kAssetId, kDescription, kAmountWrongPrecision));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1666,7 +1671,7 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
   // Transfer creator is not connected to account
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(TestTransactionBuilder().transferAsset(
-      kAccountId, kAdminId, kAssetId, kDescription, "155.00"));
+      kAccountId, kAdminId, kAssetId, kDescription, kAmount));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
 
@@ -1685,8 +1690,8 @@ class AddPeerTest : public CommandValidateExecuteTest {
     role_permissions = {can_add_peer};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = buildCommand(TestTransactionBuilder().addPeer(
-        "iroha_node:10001", shared_model::crypto::PublicKey("key")));
+    command = buildCommand(
+        TestTransactionBuilder().addPeer("iroha_node:10001", kPubKey1));
   }
 };
 
@@ -1740,7 +1745,7 @@ class CreateRoleTest : public CommandValidateExecuteTest {
     role_permissions = {can_create_role};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-    command = buildCommand(TestTransactionBuilder().createRole("yoda", perm));
+    command = buildCommand(TestTransactionBuilder().createRole(kAccountId, perm));
     create_role =
         getConcreteCommand<shared_model::interface::CreateRole>(command);
   }
@@ -1788,7 +1793,7 @@ TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   std::set<std::string> master_perms = {can_add_peer, can_append_role};
   command =
-      buildCommand(TestTransactionBuilder().createRole("master", master_perms));
+      buildCommand(TestTransactionBuilder().createRole(kMasterRole, master_perms));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
       .WillRepeatedly(Return(admin_roles));
@@ -1817,7 +1822,7 @@ class AppendRoleTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
-        buildCommand(TestTransactionBuilder().appendRole("yoda", "master"));
+        buildCommand(TestTransactionBuilder().appendRole(kAccountId, kMasterRole));
     append_role =
         getConcreteCommand<shared_model::interface::AppendRole>(command);
   }
@@ -1837,7 +1842,7 @@ TEST_F(AppendRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .Times(2)
       .WillRepeatedly(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(
@@ -1872,7 +1877,7 @@ TEST_F(AppendRoleTest, InvalidCaseNoAccountRole) {
       .WillOnce((Return(boost::none)));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(role_permissions));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
@@ -1891,7 +1896,7 @@ TEST_F(AppendRoleTest, InvalidCaseNoAccountRoleAndNoPermission) {
       .WillOnce((Return(boost::none)));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(boost::none));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
@@ -1911,7 +1916,7 @@ TEST_F(AppendRoleTest, InvalidCaseRoleHasNoPermissions) {
       .Times(2)
       .WillOnce(Return(role_permissions))
       .WillOnce(Return(boost::none));
-  EXPECT_CALL(*wsv_query, getRolePermissions("master"))
+  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(role_permissions));
 
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
@@ -1939,7 +1944,7 @@ class DetachRoleTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
-        buildCommand(TestTransactionBuilder().detachRole("yoda", "master"));
+        buildCommand(TestTransactionBuilder().detachRole(kAccountId, kMasterRole));
     detach_role =
         getConcreteCommand<shared_model::interface::DetachRole>(command);
   }
@@ -1999,7 +2004,7 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
-        TestTransactionBuilder().grantPermission("yoda", expected_permission));
+        TestTransactionBuilder().grantPermission(kAccountId, expected_permission));
     grant_permission =
         getConcreteCommand<shared_model::interface::GrantPermission>(command);
   }
@@ -2061,7 +2066,7 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
-        TestTransactionBuilder().revokePermission("yoda", expected_permission));
+        TestTransactionBuilder().revokePermission(kAccountId, expected_permission));
     revoke_permission =
         getConcreteCommand<shared_model::interface::RevokePermission>(command);
   }
@@ -2124,14 +2129,16 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
-        TestTransactionBuilder().setAccountDetail(kAdminId, "key", "val"));
+        TestTransactionBuilder().setAccountDetail(kAdminId, kKey, kValue));
     set_aacount_detail =
         getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
     role_permissions = {can_set_quorum};
   }
 
-  std::string needed_permission = can_set_my_account_detail;
+  const std::string kKey = "key";
+  const std::string kValue = "val";
+  const std::string kNeededPermission = can_set_my_account_detail;
 
   std::shared_ptr<shared_model::interface::SetAccountDetail> set_aacount_detail;
 };
@@ -2159,13 +2166,13 @@ TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
 TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
-      TestTransactionBuilder().setAccountDetail(kAccountId, "key", "val"));
+      TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
   set_aacount_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, set_aacount_detail->accountId(), needed_permission))
+                  kAdminId, set_aacount_detail->accountId(), kNeededPermission))
       .WillOnce(Return(false));
   ASSERT_NO_THROW(checkErrorCase(validateAndExecute(command)));
 }
@@ -2178,13 +2185,13 @@ TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
 TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
-      TestTransactionBuilder().setAccountDetail(kAccountId, "key", "val"));
+      TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
   set_aacount_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, set_aacount_detail->accountId(), needed_permission))
+                  kAdminId, set_aacount_detail->accountId(), kNeededPermission))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command,
               setAccountKV(set_aacount_detail->accountId(),
