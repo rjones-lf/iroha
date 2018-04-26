@@ -45,7 +45,7 @@ namespace iroha {
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
         return std::all_of(
-            signatures.begin(), signatures.end(), [&peers](auto& signature) {
+            signatures.begin(), signatures.end(), [&peers](const auto& signature) {
               return std::find_if(
                          peers.begin(),
                          peers.end(),
