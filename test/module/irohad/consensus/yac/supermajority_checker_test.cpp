@@ -17,7 +17,14 @@
 
 #include <gtest/gtest.h>
 
+#include "backend/protobuf/common_objects/signature.hpp"
+#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
+#include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 
 using namespace iroha::consensus::yac;
@@ -86,4 +93,39 @@ TEST_F(SupermajorityCheckerTest, RejectProofNegativeCase) {
   ASSERT_FALSE(hasReject(4, 6, 7));
   ASSERT_FALSE(hasReject(5, 6, 7));
   ASSERT_FALSE(hasReject(6, 6, 7));
+}
+
+/**
+ * @given a pair of peers and a pair different signatures by the first peer
+ * @when hasSupermajority is called
+ * @then it return false
+ */
+TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
+  using namespace shared_model::crypto;
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
+  auto make_peer_key = [&peers](const std::string &key) {
+    PublicKey pub_key(key);
+    peers.emplace_back(clone(shared_model::proto::PeerBuilder()
+                                 .address("localhost")
+                                 .pubkey(pub_key)
+                                 .build()));
+    return pub_key;
+  };
+
+  auto peer_key = make_peer_key(std::string(32, '0'));
+  make_peer_key(std::string(32, '1'));
+
+  auto make_sig = [](const PublicKey &peer_key, const std::string &sig) {
+    return shared_model::interface::types::SignatureType(
+        std::static_pointer_cast<shared_model::interface::Signature>(
+            std::make_shared<shared_model::proto::Signature>(
+                shared_model::proto::SignatureBuilder()
+                    .publicKey(peer_key)
+                    .signedData(Signed(sig))
+                    .build())));
+  };
+  shared_model::interface::SignatureSetType signatures{make_sig(peer_key, "1"),
+                                                       make_sig(peer_key, "2")};
+
+  ASSERT_FALSE(hasSupermajority(signatures, peers));
 }

@@ -3,6 +3,7 @@
 def doDebugBuild(coverageEnabled=false) {
   def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
   def parallelism = params.PARALLELISM
+  def platform = sh(script: 'uname -m', returnStdout: true).trim()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default. 
@@ -20,16 +21,18 @@ def doDebugBuild(coverageEnabled=false) {
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --name ${env.IROHA_POSTGRES_HOST}"
     + " --network=${env.IROHA_NETWORK}")
-
-  def iC = dPullOrBuild.dockerPullOrUpdate()
+  def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop",
+                                           "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                           "${env.GIT_RAW_BASE_URL}/develop/docker/develop/${platform}/Dockerfile",
+                                           ['PARALLELISM': params.PARALLELISM])
   iC.inside(""
     + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
     + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
     + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
     + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --network=${env.IROHA_NETWORK}"
-    + " -v /var/jenkins/ccache:${CCACHE_DIR}"
-    + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
+    + " -v /var/jenkins/ccache:${CCACHE_DIR}") {
 
     def scmVars = checkout scm
     def cmakeOptions = ""
@@ -84,8 +87,6 @@ def doDebugBuild(coverageEnabled=false) {
       sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
     }
-    // copy built binaries to the volume
-    sh "cp ./build/bin/* /tmp/${GIT_COMMIT}/"
   }
 }
 

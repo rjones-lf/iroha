@@ -233,3 +233,82 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
   ordering_service->onTransaction(getTx());
   makeProposalTimeout();
 }
+
+/**
+ * @given Ordering service up and running
+ * @when Send 1000 transactions from each of 2 threads
+ * @then Ordering service should not crash
+ */
+TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
+  const auto max_proposal = 1;
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(1)));
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
+      .WillRepeatedly(Return(false));
+
+  auto ordering_service = initOs(max_proposal);
+
+  auto on_tx = [&]() {
+    for (int i = 0; i < 1000; ++i) {
+      ordering_service->onTransaction(getTx());
+    }
+  };
+
+  const auto num_threads = 2;
+
+  std::vector<std::thread> threads;
+  for (int i = 0; i < num_threads; ++i) {
+    threads.emplace_back(std::thread(on_tx));
+  }
+
+  for (int i = 0; i < num_threads; ++i) {
+    threads.at(i).join();
+  }
+  makeProposalTimeout();
+}
+
+/**
+ * @given Ordering service up and running
+ * @when Send 1000 transactions from a separate thread and perform 5 second
+ * delay during generateProposal() so destructor of OrderingServiceImpl is
+ * called before generateProposal() finished
+ * @then Ordering service should not crash and publishProposal() should not be
+ * called after destructor call
+ */
+TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
+  const auto max_proposal = 100000;
+  const auto commit_delay = 100ms;
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(boost::optional<size_t>(1)));
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
+      .WillRepeatedly(InvokeWithoutArgs([] {
+        std::this_thread::sleep_for(5s);
+        return true;
+      }));
+  EXPECT_CALL(*wsv, getLedgerPeers())
+      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
+
+  {
+    EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(AtLeast(1));
+    OrderingServiceImpl ordering_service(
+        wsv,
+        max_proposal,
+        rxcpp::observable<>::interval(commit_delay,
+                                      rxcpp::observe_on_new_thread()),
+        fake_transport,
+        fake_persistent_state,
+        true);
+
+    auto on_tx = [&]() {
+      for (int i = 0; i < 1000; ++i) {
+        ordering_service.onTransaction(getTx());
+      }
+    };
+
+    std::thread thread(on_tx);
+    thread.join();
+  }
+  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(0);
+}

@@ -102,4 +102,6 @@ target_link_libraries(yac_crypto_provider_test
 addtest(supermajority_checker_test supermajority_checker_test.cpp)
 target_link_libraries(supermajority_checker_test
     yac
+    shared_model_cryptography
+    shared_model_stateless_validation
     )

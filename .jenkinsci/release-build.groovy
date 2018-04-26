@@ -45,13 +45,14 @@ def doReleaseBuild() {
     sh "cmake --build build --target package -- -j${parallelism}"
     sh "ccache --show-stats"
 
-    // copy build package to the volume
-    sh "cp ./build/iroha-*.deb /tmp/${GIT_COMMIT}/iroha.deb"
+    // move build package to the volume
+    sh "mv ./build/iroha-*.deb /tmp/${GIT_COMMIT}/iroha.deb"
+    sh "mv ./build/*.tar.gz /tmp/${GIT_COMMIT}/iroha.tar.gz"
   }
   
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/release/${platform}/Dockerfile"
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/release/${platform}/entrypoint.sh"
-  sh "cp /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
+  sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("hyperledger/iroha:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
   docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {

@@ -48,13 +48,6 @@ target_link_libraries(model_operators_test
     model
     )
 
-addtest(command_validate_execute_test command_validate_execute_test.cpp)
-target_link_libraries(command_validate_execute_test
-    model
-    command_execution
-    shared_model_stateless_validation
-    )
-
 addtest(json_command_converter_test converters/json_commands_test.cpp)
 target_link_libraries(json_command_converter_test
     json_model_converters
