@@ -50,15 +50,14 @@ namespace iroha {
               log_->error("error while converting from JSON");
             }
 
-            return rxcpp::observable<>::create<
-                PostgresBlockQuery::wBlock>([block{std::move(block)}](
-                const auto &s) {
-              if (block) {
-                s.on_next(std::make_shared<shared_model::proto::Block>(
-                    block.value()));
-              }
-              s.on_completed();
-            });
+            return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
+                [block{std::move(block)}](const auto &s) {
+                  if (block) {
+                    s.on_next(std::make_shared<shared_model::proto::Block>(
+                        block.value()));
+                  }
+                  s.on_completed();
+                });
           });
     }
 
@@ -189,7 +188,7 @@ namespace iroha {
           [this, tx_hashes](const auto &subscriber) {
             std::for_each(tx_hashes.begin(),
                           tx_hashes.end(),
-                          [ that = this, &subscriber ](const auto &tx_hash) {
+                          [that = this, &subscriber](const auto &tx_hash) {
                             subscriber.on_next(that->getTxByHashSync(tx_hash));
                           });
             subscriber.on_completed();
@@ -220,6 +219,11 @@ namespace iroha {
             PostgresBlockQuery::wTransaction(clone(**it)));
       }
       return result;
+    }
+
+    bool PostgresBlockQuery::hasTxWithHash(
+        const shared_model::crypto::Hash &hash) {
+      return getBlockId(hash) != boost::none;
     }
 
   }  // namespace ametsuchi

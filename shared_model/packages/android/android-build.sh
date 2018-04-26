@@ -7,7 +7,7 @@ fi
 if [[ ( "$#" -ne 4 ) && ( "$#" -ne 5 ) ]]; then
     echo "Illegal number of parameters"
     echo "Usage: $0 <PLATFORM> <ANDROID_VERSION> <NDK_PATH> <PACKAGE> [BUILD_TYPE=Release]"
-    echo "Example: $0 arm64-v8a 26 /Users/me/Downloads/android-ndk-r16b jp.co.soramitsu.iroha.android Debug"
+    echo "Example: $0 arm64-v8a 26 $HOME/Downloads/android-ndk-r16b jp.co.soramitsu.iroha.android Debug"
     exit 1
 fi
 
@@ -99,10 +99,10 @@ VERBOSE=1 cmake --build ./iroha-ed25519/build --target install -- -j"$CORES"
 mv "$DEPS_DIR"/lib/static/libed25519.a "$DEPS_DIR"/lib; rmdir "$DEPS_DIR"/lib/static/
 
 # SWIG fixes
-sed -i.bak "s~find_package(JNI REQUIRED)~#find_package(JNI REQUIRED)~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~include_directories(${JAVA_INCLUDE_PATH})~#include_directories(${JAVA_INCLUDE_PATH})~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~include_directories(${JAVA_INCLUDE_PATH2})~#include_directories(${JAVA_INCLUDE_PATH2})~" ./iroha/shared_model/bindings/CMakeLists.txt
-sed -i.bak "s~# the include path to jni.h~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE})~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~find_package(JNI REQUIRED)~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS} -package ${PACKAGE})~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH}~#\${JAVA_INCLUDE_PATH}~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~\${JAVA_INCLUDE_PATH2}~#\${JAVA_INCLUDE_PATH2}~" ./iroha/shared_model/bindings/CMakeLists.txt
+sed -i.bak "s~target_include_directories(\${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC~SET(CMAKE_SWIG_FLAGS \${CMAKE_SWIG_FLAGS}~" ./iroha/shared_model/bindings/CMakeLists.txt
 sed -i.bak "s~swig_link_libraries(irohajava~swig_link_libraries(irohajava \"${PWD}/protobuf/.build/lib${PROTOBUF_LIB_NAME}.a\" \"${NDK_PATH}/platforms/android-${VERSION}/${ARCH}/usr/${LIBP}/liblog.so\"~" ./iroha/shared_model/bindings/CMakeLists.txt
 
 # build iroha

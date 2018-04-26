@@ -5,7 +5,7 @@ const accountId = 'admin@test'
 const assetId = 'coin#test'
 
 test('ModelQueryBuilder tests', function (t) {
-  t.plan(49)
+  t.plan(50)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
   const time = (new Date()).getTime()
@@ -86,9 +86,13 @@ test('ModelQueryBuilder tests', function (t) {
   t.comment('Testing getTransactions()')
   t.throws(() => correctQuery.getTransactions(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctQuery.getTransactions(''), /argument 2 of type 'std::vector< shared_model::crypto::Hash >/, 'Should throw ...argument 2 of type...')
+
   let hv = new iroha.HashVector()
   hv.add(new iroha.Hash('11111111111111111111111111111111'))
   hv.add(new iroha.Hash('22222222222222222222222222222222'))
+  let emptyHv = new iroha.HashVector()
+
+  t.throws(() => correctQuery.getTransactions(emptyHv), /Hash set should contain at least one hash/, 'Should throw Hash set should contain at least one hash')
   t.doesNotThrow(() => correctQuery.getTransactions(hv), null, 'Should not throw any exceptions')
 
   // getAccountDetail() tests

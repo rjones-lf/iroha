@@ -12,17 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Reusable tests
-add_subdirectory(ametsuchi)
-add_subdirectory(common)
-add_subdirectory(consensus)
-add_subdirectory(execution)
-add_subdirectory(logger)
-add_subdirectory(main)
-add_subdirectory(model)
-add_subdirectory(network)
-add_subdirectory(ordering)
-add_subdirectory(simulator)
-add_subdirectory(synchronizer)
-add_subdirectory(torii)
-add_subdirectory(validation)
+addtest(command_validate_execute_test command_validate_execute_test.cpp)
+target_link_libraries(command_validate_execute_test
+    command_execution
+    shared_model_stateless_validation
+    )

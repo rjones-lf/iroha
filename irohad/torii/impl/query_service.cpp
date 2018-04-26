@@ -74,7 +74,7 @@ namespace torii {
             [&hash,
              &response](const iroha::expected::Error<std::string> &error) {
               response.set_query_hash(
-                  shared_model::crypto::toBinaryString(hash));
+                  hash.hex());
               response.mutable_error_response()->set_reason(
                   iroha::protocol::ErrorResponse::STATELESS_INVALID);
               response.mutable_error_response()->set_message(std::move(error.error));

@@ -23,17 +23,21 @@ RUN set -e; \
         automake libtool \
         # dev dependencies
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
-        # CircleCI dependencies
-        git ssh tar gzip ca-certificates python3 python3-pip python3-setuptools \
+        # CI dependencies
+        git ssh tar gzip ca-certificates \
+        # Pythons
+        python-pip python3-pip python3-setuptools python-dev \
+        # SWIG dependencies
+        libpcre3-dev autoconf bison  \
         # other
-        wget curl file unzip gdb iputils-ping vim ccache \
-        gcovr cppcheck doxygen graphviz graphviz-dev; \
+        wget curl file gdb ccache \
+        gcovr cppcheck doxygen graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 
-# install cmake 3.7.2
+# install cmake 3.10.2
 RUN set -e; \
     git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout 35413bf2c1b33980afd418030af27f184872af6b); \
+    (cd /tmp/cmake ; git checkout c1e087a9d3af74299d7681c9f9de59e5977a1539); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --system-curl --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \
@@ -202,15 +206,6 @@ RUN set -e; \
     ldconfig; \
     rm -rf /tmp/tbb
 
-# install docker
-ENV DOCKER_VERSION=17.06.0-ce
-RUN set -e; \
-    curl -L -o /tmp/docker-${DOCKER_VERSION}.tgz https://download.docker.com/linux/static/stable/armhf/docker-${DOCKER_VERSION}.tgz; \
-    tar -xz -C /tmp -f /tmp/docker-${DOCKER_VERSION}.tgz; \
-    mv /tmp/docker/* /usr/bin; \
-    rm /tmp/docker-${DOCKER_VERSION}.tgz; \
-    rm -rf /tmp/docker
-
 # install sonar cli
 ENV SONAR_CLI_VERSION=3.0.3.778
 RUN set -e; \
@@ -235,10 +230,38 @@ RUN set -e; \
     rm -rf /tmp/ed25519
 
 # fetch lcov reports converter
-RUN curl -L -o /tmp/lcov_cobertura.py https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/8c55cd11f80a21e7e46f20f8c81fcde0bf11f5e5/lcov_cobertura/lcov_cobertura.py
+RUN set -e; \
+    curl -L -o /tmp/lcov_cobertura.py https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/8c55cd11f80a21e7e46f20f8c81fcde0bf11f5e5/lcov_cobertura/lcov_cobertura.py
+
+RUN set -e; \
+    add-apt-repository -y ppa:webupd8team/java; \
+    apt-get update; \
+    echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections; \
+    apt-get -y install oracle-java8-installer; \
+    java -version
+
+# Build SWIG
+RUN set -e; \
+    curl -L -o /tmp/swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz; \
+    tar -C /tmp -zxf /tmp/swig-3.0.12.tar.gz; \
+    cd /tmp/swig-rel-3.0.12; \
+    ./autogen.sh && ./configure && make -j${PARALLELISM}; \
+    make install; \
+    rm -rf /tmp/swig-rel-3.0.12
+
+RUN set -e; \
+    add-apt-repository -y ppa:jonathonf/python-3.6; \
+    apt-get update; \
+    apt-get -y install python3.6-dev
+
+# python bindings dependencies
+RUN set -e; \
+    pip install grpcio_tools; \
+    pip3 install grpcio_tools
 
 # install lcov
-RUN curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
+RUN set -e; \
+    curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
 
 # non-interactive adduser
 #   -m = create home dir

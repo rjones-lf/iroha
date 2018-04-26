@@ -19,8 +19,14 @@ properties([parameters([
   booleanParam(defaultValue: false, description: 'Whether it is a triggered build', name: 'Nightly'),
   booleanParam(defaultValue: false, description: 'Whether build docs or not', name: 'Doxygen'),
   booleanParam(defaultValue: false, description: 'Whether build Java bindings', name: 'JavaBindings'),
+  choice(choices: 'Release\nDebug', description: 'Java Bindings Build Type', name: 'JBBuildType'),
   booleanParam(defaultValue: false, description: 'Whether build Python bindings', name: 'PythonBindings'),
-  booleanParam(defaultValue: false, description: 'Whether build bindings only w/o Iroha itself', name: 'BindingsOnly'),
+  choice(choices: 'Release\nDebug', description: 'Python Bindings Build Type', name: 'PBBuildType'),
+  choice(choices: 'python3\npython2', description: 'Python Bindings Version', name: 'PBVersion'),
+  booleanParam(defaultValue: false, description: 'Whether build Android bindings', name: 'AndroidBindings'),
+  choice(choices: '26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14', description: 'Android Bindings ABI Version', name: 'ABABIVersion'),
+  choice(choices: 'Release\nDebug', description: 'Android Bindings Build Type', name: 'ABBuildType'),
+  choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android Bindings Platform', name: 'ABPlatform'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
 
@@ -34,6 +40,7 @@ pipeline {
     DOCKERHUB = credentials('DOCKERHUB')
     DOCKER_BASE_IMAGE_DEVELOP = 'hyperledger/iroha:develop'
     DOCKER_BASE_IMAGE_RELEASE = 'hyperledger/iroha:latest'
+    GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
 
     IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
     IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
@@ -385,22 +392,81 @@ pipeline {
     stage('Build bindings') {
       when {
         anyOf {
-          expression { return params.BindingsOnly }
           expression { return params.PythonBindings }
           expression { return params.JavaBindings }
+          expression { return params.AndroidBindings }
         }
       }
       agent { label 'x86_64' }
+      environment {
+        JAVA_HOME = '/usr/lib/jvm/java-8-oracle'
+      }
       steps {
         script {
           def bindings = load ".jenkinsci/bindings.groovy"
+          def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
-          sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs https://raw.githubusercontent.com/hyperledger/iroha/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile"
-          iC = docker.build("hyperledger/iroha-develop:${GIT_COMMIT}-${BUILD_NUMBER}", "-f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT} --build-arg PARALLELISM=${PARALLELISM}")
-          sh "rm -rf /tmp/${env.GIT_COMMIT}"
-          iC.inside {
-            def scmVars = checkout scm
-            bindings.doBindings()
+          if (params.JavaBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/x86_64/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM])
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doJavaBindings(params.JBBuildType)
+            }
+          }
+          if (params.PythonBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/develop/x86_64/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM])
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doPythonBindings(params.PBBuildType)
+            }
+          }
+          if (params.AndroidBindings) {
+            iC = dPullOrBuild.dockerPullOrUpdate("android-${params.ABPlatform}-${params.ABBuildType}",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
+                                                 "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                                                 ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
+            sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
+            sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
+            iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+              bindings.doAndroidBindings(params.ABABIVersion)
+            }
+          }          
+        }
+      }
+      post {
+        always {
+          timeout(time: 600, unit: "SECONDS") {
+            script {
+              try {
+                if (currentBuild.currentResult == "SUCCESS") {
+                  def artifacts = load ".jenkinsci/artifacts.groovy"
+                  def commit = env.GIT_COMMIT
+                  if (params.JavaBindings) {
+                    javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  }
+                  if (params.PythonBindings) {
+                    pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  }
+                  if (params.AndroidBindings) {
+                    androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
+                    artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
+                  }
+                }
+              }
+              finally {
+                sh "rm -rf /tmp/${env.GIT_COMMIT}"
+                cleanWs()
+              }
+            }
           }
         }
       }
