@@ -67,19 +67,22 @@ namespace iroha {
                                   })
                                   .start_with(last_block_height_);
 
+      auto subscribe = [&](auto merge_strategy) {
+        pcs_subscriber_ = merge_strategy(net_proposals_.get_observable())
+                              .subscribe([this](const auto &t) {
+                                this->tryNextRound(std::get<1>(t));
+                              });
+      };
+
       if (run_async_) {
-        pcs_subscriber_ = net_proposals_.get_observable()
-                              .combine_latest(rxcpp::synchronize_new_thread(),
-                                              top_block_height)
-                              .subscribe([this](const auto &t) {
-                                this->tryNextRound(std::get<1>(t));
-                              });
+       subscribe([&top_block_height](auto observable) {
+         return observable.combine_latest(rxcpp::synchronize_new_thread(),
+                         top_block_height);
+       });
       } else {
-        pcs_subscriber_ = net_proposals_.get_observable()
-                              .combine_latest(top_block_height)
-                              .subscribe([this](const auto &t) {
-                                this->tryNextRound(std::get<1>(t));
-                              });
+        subscribe([&top_block_height](auto observable) {
+          return observable.combine_latest(top_block_height);
+        });
       }
     }
 
