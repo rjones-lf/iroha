@@ -42,11 +42,12 @@ namespace iroha {
       /**
        * Init effective realisation of ordering gate (client of ordering
        * service)
-       * @param network_address - address of ordering service
+       * @param transport - object which will be notified
+       * about incoming proposals
        * @param block_query - block store to get last block height
        */
-      auto createGate(std::shared_ptr<OrderingGateTransport>,
-                      std::shared_ptr<ametsuchi::BlockQuery>);
+      auto createGate(std::shared_ptr<OrderingGateTransport> transport,
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
       /**
        * Init ordering service
