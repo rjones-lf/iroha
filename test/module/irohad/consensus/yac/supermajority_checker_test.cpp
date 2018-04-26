@@ -113,8 +113,8 @@ TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
     return pub_key;
   };
 
-  auto peer1_key = make_peer_key(std::string(32, '0'));
-  auto peer2_key = make_peer_key(std::string(32, '1'));
+  auto peer_key = make_peer_key(std::string(32, '0'));
+  make_peer_key(std::string(32, '1'));
 
   auto make_sig = [](const PublicKey &peer_key, const std::string &sig) {
     return shared_model::detail::PolymorphicWrapper<
@@ -126,8 +126,8 @@ TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
                     .signedData(Signed(sig))
                     .build())));
   };
-  shared_model::interface::SignatureSetType signatures{
-      make_sig(peer1_key, "1"), make_sig(peer1_key, "2")};
+  shared_model::interface::SignatureSetType signatures{make_sig(peer_key, "1"),
+                                                       make_sig(peer_key, "2")};
 
   ASSERT_FALSE(hasSupermajority(signatures, peers));
 }
