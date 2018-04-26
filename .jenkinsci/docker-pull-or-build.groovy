@@ -16,9 +16,8 @@ def buildOptionsString(options) {
     options.each { k, v ->
       s += "--build-arg ${k}=${v} "
     }
-    return s
   }
-  return ''
+  return s
 }
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
