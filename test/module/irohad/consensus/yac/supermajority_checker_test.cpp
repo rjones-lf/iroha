@@ -26,7 +26,6 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 using namespace iroha::consensus::yac;
 
@@ -117,8 +116,7 @@ TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
   make_peer_key(std::string(32, '1'));
 
   auto make_sig = [](const PublicKey &peer_key, const std::string &sig) {
-    return shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::Signature>(
+    return shared_model::interface::types::SignatureType(
         std::static_pointer_cast<shared_model::interface::Signature>(
             std::make_shared<shared_model::proto::Signature>(
                 shared_model::proto::SignatureBuilder()
