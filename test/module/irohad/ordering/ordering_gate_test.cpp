@@ -312,3 +312,46 @@ TEST_F(QueueBehaviorTest, KeepNewerProposals) {
   EXPECT_EQ(3, messages.size());
   EXPECT_EQ(4, messages.at(2)->height());
 }
+
+/**
+ * @given Initialized OrderingGate
+ * AND MockPeerCommunicationService
+ * @when commit is received before any proposals
+ * @then old proposals are discarded and new is propagated
+ */
+TEST_F(QueueBehaviorTest, CommitBeforeProposal) {
+  pushCommit(4);
+
+  // Old proposals should be discarded
+  pushProposal(2);
+  pushProposal(3);
+  pushProposal(4);
+
+  EXPECT_EQ(0, messages.size());
+
+  // should be propagated
+  pushProposal(5);
+
+  // should not be propagated
+  pushProposal(6);
+
+  EXPECT_EQ(1, messages.size());
+  EXPECT_EQ(5, messages.at(0)->height());
+}
+
+/**
+ * @given Initialized OrderingGate
+ * AND MockPeerCommunicationService
+ * @when commit is received which newer than all proposals
+ * @then all proposals are discarded and none are propagated
+ */
+TEST_F(QueueBehaviorTest, CommitNewerThanAllProposals) {
+  pushProposal(2);
+  // Old proposals should be discarded
+  pushProposal(3);
+  pushProposal(4);
+
+  pushCommit(4);
+  EXPECT_EQ(1, messages.size());
+  EXPECT_EQ(2, messages.at(0)->height());
+}
