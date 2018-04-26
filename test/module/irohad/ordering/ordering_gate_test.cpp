@@ -128,8 +128,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto wrapper = make_test_subscriber<CallExact>(gate_impl->on_proposal(), 1);
   wrapper.subscribe();
 
-  std::shared_ptr<MockPeerCommunicationService> pcs =
-      std::make_shared<MockPeerCommunicationService>();
+  auto pcs = std::make_shared<MockPeerCommunicationService>();
   rxcpp::subjects::subject<Commit> commit_subject;
   EXPECT_CALL(*pcs, on_commit())
       .WillOnce(Return(commit_subject.get_observable()));
@@ -161,13 +160,11 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
 
 class QueueBehaviorTest : public ::testing::Test {
  public:
-  QueueBehaviorTest(): ordering_gate(transport, 1, false) {};
+  QueueBehaviorTest() : ordering_gate(transport, 1, false){};
 
   void SetUp() override {
-    std::shared_ptr<OrderingGateTransport> transport =
-        std::make_shared<MockOrderingGateTransport>();
-    std::shared_ptr<MockPeerCommunicationService> pcs =
-        std::make_shared<MockPeerCommunicationService>();
+    transport = std::make_shared<MockOrderingGateTransport>();
+    pcs = std::make_shared<MockPeerCommunicationService>();
     EXPECT_CALL(*pcs, on_commit())
         .WillOnce(Return(commit_subject.get_observable()));
 
@@ -176,7 +173,7 @@ class QueueBehaviorTest : public ::testing::Test {
         [&](auto val) { messages.push_back(val); });
   }
 
-  std::shared_ptr<OrderingGateTransport> transport;
+  std::shared_ptr<MockOrderingGateTransport> transport;
   std::shared_ptr<MockPeerCommunicationService> pcs;
   rxcpp::subjects::subject<Commit> commit_subject;
   OrderingGateImpl ordering_gate;

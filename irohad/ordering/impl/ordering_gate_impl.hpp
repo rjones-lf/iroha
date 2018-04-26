@@ -20,9 +20,9 @@
 
 #include "network/ordering_gate.hpp"
 
-#include <tbb/concurrent_priority_queue.h>
-#include <atomic>
 #include <mutex>
+
+#include <tbb/concurrent_priority_queue.h>
 
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
@@ -60,7 +60,7 @@ namespace iroha {
       /**
        * @param transport - network communication layer
        * @param initial_height - height of the last block stored on this peer
-       * @param run_async - whether proposals should be handled on
+       * @param run_async - whether proposals should be handled
        * asynchronously (on separate thread). Default is true.
        */
       OrderingGateImpl(
@@ -85,13 +85,13 @@ namespace iroha {
      private:
       /**
        * Try to push proposal for next consensus round
-       * @param - last_block_height_ - what is the last block stored on this
+       * @param - last_block_height - what is the last block stored on this
        * peer, or for which commit was received. If block is newer than
        * currently stored proposals, proposals are discarded. If it is older,
        * newer proposals are propagated in order
        */
       void tryNextRound(
-          shared_model::interface::types::HeightType last_block_height_);
+          shared_model::interface::types::HeightType last_block_height);
 
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>

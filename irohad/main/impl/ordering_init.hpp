@@ -43,7 +43,7 @@ namespace iroha {
        * Init effective realisation of ordering gate (client of ordering
        * service)
        * @param transport - object which will be notified
-       * about incoming proposals
+       * about incoming proposals and send transactions
        * @param block_query - block store to get last block height
        */
       auto createGate(std::shared_ptr<OrderingGateTransport> transport,

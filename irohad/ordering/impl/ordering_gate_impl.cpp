@@ -60,12 +60,13 @@ namespace iroha {
         const iroha::network::PeerCommunicationService &pcs) {
       log_->info("setPcs");
 
-      auto top_block_height = pcs.on_commit()
-                                  .transform([](const Commit &block) {
-                                    // find height of last commited block
-                                    return block.as_blocking().last()->height();
-                                  })
-                                  .start_with(last_block_height_);
+      auto top_block_height =
+          pcs.on_commit()
+              .transform([](const Commit &commit) {
+                // find height of last commited block
+                return commit.as_blocking().last()->height();
+              })
+              .start_with(last_block_height_);
 
       auto subscribe = [&](auto merge_strategy) {
         pcs_subscriber_ = merge_strategy(net_proposals_.get_observable())
@@ -75,10 +76,10 @@ namespace iroha {
       };
 
       if (run_async_) {
-       subscribe([&top_block_height](auto observable) {
-         return observable.combine_latest(rxcpp::synchronize_new_thread(),
-                         top_block_height);
-       });
+        subscribe([&top_block_height](auto observable) {
+          return observable.combine_latest(rxcpp::synchronize_new_thread(),
+                                           top_block_height);
+        });
       } else {
         subscribe([&top_block_height](auto observable) {
           return observable.combine_latest(top_block_height);
@@ -95,18 +96,18 @@ namespace iroha {
     }
 
     void OrderingGateImpl::tryNextRound(
-        shared_model::interface::types::HeightType last_block_height_) {
-      log_->info("TryNextRound");
+        shared_model::interface::types::HeightType last_block_height) {
+      log_->debug("TryNextRound");
       std::shared_ptr<shared_model::interface::Proposal> next_proposal;
       while (proposal_queue_.try_pop(next_proposal)) {
         // check for old proposal
-        if (next_proposal->height() < last_block_height_ + 1) {
-          log_->info("Old proposal, discarding");
+        if (next_proposal->height() < last_block_height + 1) {
+          log_->debug("Old proposal, discarding");
           continue;
         }
         // check for new proposal
-        if (next_proposal->height() > last_block_height_ + 1) {
-          log_->info("Proposal newer than last block, keeping in queue");
+        if (next_proposal->height() > last_block_height + 1) {
+          log_->debug("Proposal newer than last block, keeping in queue");
           proposal_queue_.push(next_proposal);
           break;
         }

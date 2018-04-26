@@ -109,9 +109,7 @@ class OrderingGateServiceTest : public ::testing::Test {
       cv.notify_one();
     });
     gate->on_proposal().subscribe([this](auto proposal) {
-      std::cout << "on proposal subscriber 2\n";
       proposals.push_back(proposal);
-
       // emulate commit event after receiving the proposal to perform next
       // round inside the peer.
       std::shared_ptr<shared_model::interface::Block> block =
