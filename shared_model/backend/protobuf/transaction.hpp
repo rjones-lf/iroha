@@ -20,8 +20,8 @@
 
 #include "interfaces/transaction.hpp"
 
-#include <boost/range/numeric.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/numeric.hpp>
 
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
@@ -59,10 +59,14 @@ namespace shared_model {
         return *blobTypePayload_;
       }
 
-      interface::SignatureRangeType signatures() const override {
-        return *signatures_ | boost::adaptors::transformed([](const auto& i) -> decltype(auto) {
-          return *i;
-        });
+      interface::types::SignatureRangeType signatures() const override {
+        return *signatures_
+            | boost::adaptors::transformed(
+                  [](const auto &i) -> decltype(auto) { return *i; });
+      }
+
+      interface::types::SignatureSizeType signaturesSize() const override {
+        return signatures_->size();
       }
 
       bool addSignature(const crypto::Signed &signed_blob,

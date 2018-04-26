@@ -18,11 +18,11 @@
 #ifndef IROHA_SIGNABLE_HPP
 #define IROHA_SIGNABLE_HPP
 
+#include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
-#include <boost/range/any_range.hpp>
+#include <unordered_set>
 
 #include "cryptography/default_hash_provider.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
@@ -41,10 +41,6 @@ namespace shared_model {
 #else
 #define SIGNABLE(Model) Signable<Model, iroha::model::Model>
 #endif
-
-    /// Type of signature range, which returns when signatures are invoked
-    using SignatureRangeType = boost::any_range<const interface::Signature &,
-                                                boost::forward_traversal_tag>;
 
 /**
  * Interface provides signatures and adds them to model object
@@ -65,7 +61,8 @@ namespace shared_model {
       /**
        * @return attached signatures
        */
-      virtual SignatureRangeType signatures() const = 0;
+      virtual types::SignatureRangeType signatures() const = 0;
+      virtual types::SignatureSizeType signaturesSize() const = 0;
 
       /**
        * Attach signature to object
@@ -97,7 +94,6 @@ namespace shared_model {
        */
       bool operator==(const Model &rhs) const override {
         return this->hash() == rhs.hash()
-            //            and this->signatures() == rhs.signatures()
             and boost::equal(this->signatures(), rhs.signatures())
             and this->createdTime() == rhs.createdTime();
       }
@@ -121,6 +117,27 @@ namespace shared_model {
       }
 
      protected:
+      /**
+       * Hash class for SigWrapper type. It's required since std::unordered_set
+       * uses hash inside and it should be declared explicitly for user-defined
+       * types.
+       */
+      class SignableHash {
+       public:
+        /**
+         * Operator which actually calculates hash. Uses boost::hash_combine to
+         * calculate hash from several fields.
+         * @param sig - item to find hash from
+         * @return calculated hash
+         */
+        size_t operator()(const types::SignatureType &sig) const {
+          std::size_t seed = 0;
+          boost::hash_combine(seed, sig->publicKey().blob());
+          boost::hash_combine(seed, sig->signedData().blob());
+          return seed;
+        }
+      };
+
       using SignatureSetType =
           std::unordered_set<types::SignatureType, SignableHash>;
 

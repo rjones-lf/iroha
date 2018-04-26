@@ -292,7 +292,7 @@ namespace shared_model {
 
     void FieldValidator::validateSignatures(
         ReasonsGroupType &reason,
-        const interface::SignatureRangeType &signatures,
+        const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();

@@ -65,10 +65,14 @@ namespace shared_model {
         return *blob_;
       }
 
-      interface::SignatureRangeType signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_
             | boost::adaptors::transformed(
-                  [](auto &i) -> decltype(auto) { return *i; });
+                  [](const auto &i) -> decltype(auto) { return *i; });
+      }
+
+      interface::types::SignatureSizeType signaturesSize() const override {
+        return signatures_->size();
       }
 
       // TODO Alexey Chernyshov - 2018-03-28 -
@@ -79,7 +83,7 @@ namespace shared_model {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
-                         [&signed_blob, &public_key](auto signature) {
+                         [&signed_blob, &public_key](const auto &signature) {
                            return signature->signedData() == signed_blob
                                and signature->publicKey() == public_key;
                          })

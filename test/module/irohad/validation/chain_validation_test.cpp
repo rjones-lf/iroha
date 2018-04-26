@@ -76,7 +76,8 @@ TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
   auto block = getBlockBuilder().build();
 
-  EXPECT_CALL(*supermajority_checker, hasSupermajority(block.signatures(), _))
+  EXPECT_CALL(*supermajority_checker,
+              hasSupermajority(block.signatures(), _, _))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
@@ -117,7 +118,8 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
   auto block = getBlockBuilder().build();
 
-  EXPECT_CALL(*supermajority_checker, hasSupermajority(block.signatures(), _))
+  EXPECT_CALL(*supermajority_checker,
+              hasSupermajority(block.signatures(), _, _))
       .WillOnce(Return(false));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
@@ -141,7 +143,7 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
         return std::shared_ptr<shared_model::interface::Block>(clone(x));
       });
 
-  EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
+  EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _, _))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));

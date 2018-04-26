@@ -23,10 +23,11 @@ namespace iroha {
     namespace yac {
 
       bool SupermajorityCheckerImpl::hasSupermajority(
-          const shared_model::interface::SignatureRangeType &signatures,
+          const shared_model::interface::types::SignatureRangeType &signatures,
+          const shared_model::interface::types::SignatureSizeType signatures_size,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
-        return checkSize(boost::range_detail::range_calculate_size(signatures), peers.size())
+        return checkSize(signatures_size, peers.size())
             and peersSubset(signatures, peers);
       }
 
@@ -40,7 +41,7 @@ namespace iroha {
       }
 
       bool SupermajorityCheckerImpl::peersSubset(
-          const shared_model::interface::SignatureRangeType &signatures,
+          const shared_model::interface::types::SignatureRangeType &signatures,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
         return std::all_of(

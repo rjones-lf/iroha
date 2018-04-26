@@ -120,10 +120,14 @@ namespace shared_model {
       }
 
       // ------------------------| Signable override  |-------------------------
-      interface::SignatureRangeType signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_
             | boost::adaptors::transformed(
                   [](auto &i) -> decltype(auto) { return *i; });
+      }
+
+      interface::types::SignatureSizeType signaturesSize() const override {
+        return signatures_->size();
       }
 
       bool addSignature(const crypto::Signed &signed_blob,

@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_TYPES_HPP
 #define IROHA_SHARED_MODEL_TYPES_HPP
 
+#include <boost/range/any_range.hpp>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -68,6 +69,11 @@ namespace shared_model {
       // TODO Alexey Chernyshov 2018-03-28 - remove PolymorphicWrapper here
       // https://soramitsu.atlassian.net/browse/IR-1175
       using SignatureType = detail::PolymorphicWrapper<Signature>;
+      /// Type of signature range, which returns when signatures are invoked
+      using SignatureRangeType = boost::any_range<const interface::Signature &,
+                                                  boost::forward_traversal_tag>;
+      /// Type of signatures size
+      using SignatureSizeType = size_t;
       /// Type of timestamp
       using TimestampType = uint64_t;
       /// Type of peer address
