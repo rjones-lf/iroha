@@ -95,3 +95,45 @@ TEST(PipelineIntegrationTest, SendTx) {
       .checkBlock(checkBlock)
       .done();
 }
+
+/**
+ * @given some user
+ * @when sending multiple AddAssetQuantity transactions to the peer
+ * @then receive STATELESS_VALIDATION_SUCCESS status on txs,
+ * txs are passed to proposal and do not appear in blocks
+ */
+TEST(PipelineIntegrationTest, SendMultipleTx) {
+  auto keypair =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto getTx = [&] {
+    return shared_model::proto::TransactionBuilder()
+        .createdTime(iroha::time::now())
+        .creatorAccountId(kUser)
+        .addAssetQuantity(kUser, kAsset, "1.0")
+        .build()
+        .signAndAddSignature(keypair);
+  };
+
+  auto checkStatelessValid = [](auto &status) {
+    ASSERT_NO_THROW(boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::StatelessValidTxResponse>(),
+        status.get()));
+  };
+  auto checkProposal = [](auto &proposal) {
+    ASSERT_EQ(proposal->transactions().size(), 1);
+  };
+  auto checkBlock = [](auto &block) {
+    ASSERT_EQ(block->transactions().size(), 0);
+  };
+  integration_framework::IntegrationTestFramework itf(1);
+  itf.setInitialState(kAdminKeypair);
+  // Send multiple transactions so that several proposals are enqueued in OG
+  for (int i = 0; i < 5; ++i) {
+    itf.sendTx(getTx(), checkStatelessValid);
+  }
+  for (int i = 0; i < 5; ++i) {
+    itf.checkProposal(checkProposal).checkBlock(checkBlock);
+  }
+  itf.done();
+}

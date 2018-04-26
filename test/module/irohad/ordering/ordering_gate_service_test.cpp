@@ -70,44 +70,28 @@ class OrderingGateServiceTest : public ::testing::Test {
   }
 
   void start() {
-    std::mutex mtx;
-    std::condition_variable cv;
-    thread = std::thread([&cv, this] {
-      grpc::ServerBuilder builder;
-      int port = 0;
-      builder.AddListeningPort(
-          address, grpc::InsecureServerCredentials(), &port);
+    grpc::ServerBuilder builder;
+    int port = 0;
+    builder.AddListeningPort(address, grpc::InsecureServerCredentials(), &port);
 
-      builder.RegisterService(gate_transport.get());
+    builder.RegisterService(gate_transport.get());
 
-      builder.RegisterService(service_transport.get());
+    builder.RegisterService(service_transport.get());
 
-      server = builder.BuildAndStart();
-      ASSERT_NE(port, 0);
-      ASSERT_TRUE(server);
-      cv.notify_one();
-      server->Wait();
-    });
-
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait_for(lock, std::chrono::seconds(1));
+    server = builder.BuildAndStart();
+    ASSERT_NE(port, 0);
+    ASSERT_TRUE(server);
   }
 
   void TearDown() override {
     proposals.clear();
     server->Shutdown();
-    if (thread.joinable()) {
-      thread.join();
-    }
   }
 
   TestSubscriber<std::shared_ptr<shared_model::interface::Proposal>> init(
       size_t times) {
     auto wrapper = make_test_subscriber<CallExact>(gate->on_proposal(), times);
-    gate->on_proposal().subscribe([this](auto) {
-      counter--;
-      cv.notify_one();
-    });
+    wrapper.subscribe();
     gate->on_proposal().subscribe([this](auto proposal) {
       proposals.push_back(proposal);
 
@@ -119,15 +103,27 @@ class OrderingGateServiceTest : public ::testing::Test {
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
     });
-    wrapper.subscribe();
+    gate->on_proposal().subscribe([this](auto) {
+      counter--;
+      cv.notify_one();
+    });
     return wrapper;
+  }
+
+  auto initOs(size_t max_proposal, size_t commit_delay) {
+    return std::make_shared<OrderingServiceImpl>(wsv,
+                                                 max_proposal,
+                                                 commit_delay,
+                                                 service_transport,
+                                                 fake_persistent_state,
+                                                 false);
   }
 
   /**
    * Send a stub transaction to OS
    * @param i - number of transaction
    */
-  void send_transaction(size_t i) {
+  void send_transaction() {
     auto tx = std::make_shared<shared_model::proto::Transaction>(
         shared_model::proto::TransactionBuilder()
             .createdTime(iroha::time::now())
@@ -136,11 +132,8 @@ class OrderingGateServiceTest : public ::testing::Test {
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair())
-            );
+                    generateKeypair()));
     gate->propagateTransaction(tx);
-    // otherwise tx may come unordered
-    std::this_thread::sleep_for(20ms);
   }
 
   std::string address{"0.0.0.0:50051"};
@@ -156,7 +149,6 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::atomic<size_t> counter;
   std::condition_variable cv;
   std::mutex m;
-  std::thread thread;
   std::shared_ptr<grpc::Server> server;
 
   std::shared_ptr<shared_model::interface::Peer> peer;
@@ -192,11 +184,7 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
       .Times(1)
       .WillOnce(Return(true));
 
-  service = std::make_shared<OrderingServiceImpl>(wsv,
-                                                  max_proposal,
-                                                  commit_delay,
-                                                  service_transport,
-                                                  fake_persistent_state);
+  service = initOs(max_proposal, commit_delay);
   service_transport->subscribe(service);
 
   start();
@@ -204,12 +192,12 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   auto wrapper = init(2);
 
   for (size_t i = 0; i < 8; ++i) {
-    send_transaction(i + 1);
+    send_transaction();
   }
 
   cv.wait_for(lk, 10s);
-  send_transaction(9);
-  send_transaction(10);
+  send_transaction();
+  send_transaction();
   cv.wait_for(lk, 10s);
 
   std::this_thread::sleep_for(1s);
@@ -232,7 +220,7 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
       .WillRepeatedly(Return(std::vector<wPeer>{peer}));
 
   const size_t max_proposal = 5;
-  const size_t commit_delay = 1000;
+  const size_t commit_delay = 10000;
 
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
@@ -245,25 +233,22 @@ TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
       .Times(1)
       .WillOnce(Return(true));
 
-  service = std::make_shared<OrderingServiceImpl>(wsv,
-                                                  max_proposal,
-                                                  commit_delay,
-                                                  service_transport,
-                                                  fake_persistent_state);
+  service = initOs(max_proposal, commit_delay);
   service_transport->subscribe(service);
 
   start();
   std::unique_lock<std::mutex> lk(m);
   auto wrapper = init(2);
 
-  for (size_t i = 0; i < 10; ++i) {
-    send_transaction(i + 1);
+  for (size_t j = 0; j < 2; ++j) {
+    for (size_t i = 0; i < 5; ++i) {
+      send_transaction();
+    }
+    // long == something wrong
+    cv.wait_for(lk, 10s, [&] { return counter == (1 - j); });
   }
 
-  // long == something wrong
-  cv.wait_for(lk, 10s, [this]() { return counter == 0; });
-
-  ASSERT_TRUE(wrapper.validate());
+  ASSERT_TRUE(wrapper.validate()) << wrapper.what();
   ASSERT_EQ(proposals.size(), 2);
   ASSERT_EQ(counter, 0);
 

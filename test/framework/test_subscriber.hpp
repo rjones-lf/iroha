@@ -145,6 +145,14 @@ namespace framework {
         return strategy_->validate();
       }
 
+      /**
+       * Failure reason
+       * @return reason string if validation is unsuccessful
+       */
+      std::string what() {
+        return strategy_->invalidate_reason_;
+      }
+
      private:
       rxcpp::observable<T> unwrapped_;
       std::unique_ptr<VerificationStrategy<T>> strategy_;

@@ -45,13 +45,16 @@ namespace iroha {
       // restore state of ordering service from persistent storage
       proposal_height_ = persistent_state_->loadProposalHeight().value();
 
-      rxcpp::observable<ProposalEvent> timer =
-          rxcpp::observable<>::interval(
-              std::chrono::milliseconds(delay_milliseconds_),
-              rxcpp::observe_on_new_thread())
-              .map([](auto) { return ProposalEvent::kTimerEvent; });
-
       auto subscribe = [&](auto merge_strategy) {
+        auto interval = std::chrono::milliseconds(delay_milliseconds_);
+
+        rxcpp::observable<ProposalEvent> timer =
+            rxcpp::observable<>::interval(
+                std::chrono::steady_clock::now() + interval,
+                interval,
+                rxcpp::observe_on_new_thread())
+                .map([](auto) { return ProposalEvent::kTimerEvent; });
+
         handle_ = merge_strategy(rxcpp::observable<>::from(
                                      timer, transactions_.get_observable()))
                       .subscribe([this](auto &&v) {

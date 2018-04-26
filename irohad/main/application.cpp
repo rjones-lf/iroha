@@ -67,7 +67,6 @@ void Irohad::init() {
   initWsvRestorer();
   restoreWsv();
 
-  initPeerQuery();
   initCryptoProvider();
   initValidators();
   initOrderingGate();
@@ -124,15 +123,6 @@ bool Irohad::restoreWsv() {
 }
 
 /**
- * Initializing peer query interface
- */
-void Irohad::initPeerQuery() {
-  wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
-
-  log_->info("[Init] => peer query");
-}
-
-/**
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
@@ -158,7 +148,10 @@ void Irohad::initValidators() {
  */
 void Irohad::initOrderingGate() {
   ordering_gate = ordering_init.initOrderingGate(
-      wsv, max_proposal_size_, proposal_delay_, ordering_service_storage_);
+      std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+      max_proposal_size_,
+      proposal_delay_,
+      ordering_service_storage_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -180,7 +173,9 @@ void Irohad::initSimulator() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(wsv, storage->getBlockQuery());
+  block_loader = loader_init.initBlockLoader(
+      std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+      storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
@@ -190,7 +185,7 @@ void Irohad::initBlockLoader() {
  */
 void Irohad::initConsensusGate() {
   consensus_gate = yac_init.initConsensusGate(
-      wsv,
+      std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
       simulator,
       block_loader,
       keypair,
