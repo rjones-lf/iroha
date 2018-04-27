@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,13 +27,13 @@ namespace iroha {
    */
   class MstTimeProvider {
    public:
-
+    virtual ~MstTimeProvider() = default;
     /**
      * Fetching current time in system
      * @return current time
      */
     virtual TimeType getCurrentTime() const = 0;
   };
-} // namespace iroha
+}  // namespace iroha
 
-#endif //IROHA_MST_TIME_PROVIDER_HPP
+#endif  // IROHA_MST_TIME_PROVIDER_HPP
