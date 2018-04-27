@@ -49,8 +49,6 @@ TEST_F(YacTest, YacWhenInit) {
 
   MockTimer timer_;
 
-  auto fake_delay_ = 100500;
-
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
 
@@ -58,8 +56,7 @@ TEST_F(YacTest, YacWhenInit) {
                           std::make_shared<MockYacNetwork>(network_),
                           std::make_shared<MockYacCryptoProvider>(crypto_),
                           std::make_shared<MockTimer>(timer_),
-                          *order,
-                          fake_delay_);
+                          *order);
 
   network_.subscribe(yac_);
 }

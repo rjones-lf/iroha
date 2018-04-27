@@ -100,8 +100,7 @@ namespace iroha {
 
       class MockTimer : public Timer {
        public:
-        void invokeAfterDelay(uint64_t millis,
-                              std::function<void()> handler) override {
+        void invokeAfterDelay(std::function<void()> handler) override {
           handler();
         }
 
@@ -243,7 +242,6 @@ namespace iroha {
         std::shared_ptr<MockYacNetwork> network;
         std::shared_ptr<MockYacCryptoProvider> crypto;
         std::shared_ptr<MockTimer> timer;
-        uint64_t delay = 100500;
         std::shared_ptr<Yac> yac;
 
         // ------|Round|------
@@ -267,8 +265,7 @@ namespace iroha {
                             network,
                             crypto,
                             timer,
-                            ordering.value(),
-                            delay);
+                            ordering.value());
           network->subscribe(yac);
         };
 

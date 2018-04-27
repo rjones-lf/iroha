@@ -45,8 +45,9 @@ namespace iroha {
         return crypto;
       }
 
-      auto YacInit::createTimer() {
-        return std::make_shared<TimerImpl>();
+      auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
+        return std::make_shared<TimerImpl>(rxcpp::observable<>::timer(
+            delay_milliseconds, rxcpp::observe_on_new_thread()));
       }
 
       auto YacInit::createHashProvider() {
@@ -60,9 +61,8 @@ namespace iroha {
         return Yac::create(YacVoteStorage(),
                            createNetwork(),
                            createCryptoProvider(keypair),
-                           createTimer(),
-                           initial_order,
-                           delay_milliseconds.count());
+                           createTimer(delay_milliseconds),
+                           initial_order);
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
