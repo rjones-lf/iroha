@@ -61,18 +61,18 @@ namespace iroha {
           pg_opt_without_db_name_(pg_opt_without_db_name),
           options_map_(options_map) {}
 
-    std::string PostgresOptions::optionsString() {
+    std::string PostgresOptions::optionsString() const {
       return pg_opt_;
     }
 
-    std::string PostgresOptions::optionsStringWithoutDbName() {
+    std::string PostgresOptions::optionsStringWithoutDbName() const {
       return pg_opt_without_db_name_;
     }
 
     boost::optional<std::string> PostgresOptions::getOption(
-        const std::string option) {
+        const std::string &option) const {
       return options_map_.find(option) != options_map_.end()
-          ? options_map_.at(option)
+          ? boost::make_optional(options_map_.at(option))
           : boost::none;
     }
 

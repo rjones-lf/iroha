@@ -31,9 +31,9 @@ namespace iroha {
           const std::string pg_opt);
       PostgresOptions() = delete;
 
-      std::string optionsString();
-      std::string optionsStringWithoutDbName();
-      boost::optional<std::string> getOption(const std::string option);
+      std::string optionsString() const;
+      std::string optionsStringWithoutDbName() const;
+      boost::optional<std::string> getOption(const std::string &option) const;
 
      private:
       PostgresOptions(
