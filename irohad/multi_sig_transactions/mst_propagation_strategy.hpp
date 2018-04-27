@@ -29,6 +29,7 @@ namespace iroha {
    */
   class PropagationStrategy {
    public:
+    virtual ~PropagationStrategy() = default;
     using PropagationData =
         std::vector<std::shared_ptr<shared_model::interface::Peer>>;
 
