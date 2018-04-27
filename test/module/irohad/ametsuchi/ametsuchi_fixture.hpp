@@ -85,7 +85,7 @@ namespace iroha {
 
       void SetUp() override {
         connect();
-        //        storage->dropStorage();
+        storage->dropStorage();
       }
 
       void TearDown() override {
