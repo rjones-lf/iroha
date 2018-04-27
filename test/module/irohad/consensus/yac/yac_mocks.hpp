@@ -261,17 +261,17 @@ namespace iroha {
           timer = std::make_shared<MockTimer>();
           auto ordering = ClusterOrdering::create(default_peers);
           ASSERT_TRUE(ordering);
-          yac = Yac::create(YacVoteStorage(),
-                            network,
-                            crypto,
-                            timer,
-                            ordering.value());
-          network->subscribe(yac);
-        };
+          initYac(ordering.value());
+        }
 
         void TearDown() override {
           network->release();
-        };
+        }
+
+        void initYac(ClusterOrdering ordering) {
+          yac = Yac::create(YacVoteStorage(), network, crypto, timer, ordering);
+          network->subscribe(yac);
+        }
       };
     }  // namespace yac
   }    // namespace consensus

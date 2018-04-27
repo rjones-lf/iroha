@@ -30,8 +30,8 @@
 using ::testing::_;
 using ::testing::An;
 using ::testing::AtLeast;
-using ::testing::Return;
 using ::testing::Invoke;
+using ::testing::Return;
 
 using namespace iroha::consensus::yac;
 using namespace framework::test_subscriber;
@@ -41,24 +41,7 @@ using namespace std;
  * Test provide use case for init yac object
  */
 TEST_F(YacTest, YacWhenInit) {
-  cout << "----------|Just init object|----------" << endl;
-
-  MockYacNetwork network_;
-
-  MockYacCryptoProvider crypto_;
-
-  MockTimer timer_;
-
-  auto order = ClusterOrdering::create(default_peers);
-  ASSERT_TRUE(order);
-
-  auto yac_ = Yac::create(YacVoteStorage(),
-                          std::make_shared<MockYacNetwork>(network_),
-                          std::make_shared<MockYacCryptoProvider>(crypto_),
-                          std::make_shared<MockTimer>(timer_),
-                          *order);
-
-  network_.subscribe(yac_);
+  // covered by setup
 }
 
 /**
@@ -178,14 +161,14 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
  * @then commit is sent to the network before notifying subscribers
  */
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).Times(default_peers.size())
+  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
+      .Times(default_peers.size())
       .WillRepeatedly(Return(true));
   std::vector<CommitMessage> messages;
   EXPECT_CALL(*network, send_commit(_, _))
       .Times(default_peers.size())
-      .WillRepeatedly(Invoke([&](const auto &, const auto &msg) {
-        messages.push_back(msg);
-      }));
+      .WillRepeatedly(Invoke(
+          [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
   yac->on_commit().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
@@ -212,9 +195,8 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   std::vector<CommitMessage> messages;
   EXPECT_CALL(*network, send_commit(_, _))
       .Times(default_peers.size())
-      .WillRepeatedly(Invoke([&](const auto &, const auto &msg) {
-        messages.push_back(msg);
-      }));
+      .WillRepeatedly(Invoke(
+          [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
   yac->on_commit().subscribe([&](auto msg) {
     // verify that commits are already sent to the network

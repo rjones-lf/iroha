@@ -41,8 +41,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -72,8 +71,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
@@ -112,8 +110,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 
   EXPECT_CALL(*timer, deny()).Times(2);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   YacHash my_hash("proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
@@ -155,8 +152,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -199,8 +195,7 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);

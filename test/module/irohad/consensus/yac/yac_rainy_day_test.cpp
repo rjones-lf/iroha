@@ -41,8 +41,7 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(my_peers.size());
@@ -80,8 +79,7 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
 
@@ -120,8 +118,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value());
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _))

@@ -78,8 +78,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 
-    yac = Yac::create(
-        YacVoteStorage(), network, crypto, timer, order.value());
+    yac = Yac::create(YacVoteStorage(), network, crypto, timer, order.value());
     network->subscribe(yac);
 
     grpc::ServerBuilder builder;
@@ -128,8 +127,10 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::condition_variable cv;
   std::mutex m;
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe(
-      [&cv](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; cv.notify_one(); });
+  wrapper.subscribe([&cv](auto hash) {
+    std::cout << "^_^ COMMITTED!!!" << std::endl;
+    cv.notify_one();
+  });
 
   EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
       .Times(1)
