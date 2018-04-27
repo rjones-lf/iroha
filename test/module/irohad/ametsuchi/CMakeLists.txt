@@ -39,6 +39,12 @@ target_link_libraries(kv_storage_test
     libs_common
     )
 
+addtest(storage_test storage_test.cpp)
+target_link_libraries(storage_test
+    ametsuchi
+    libs_common
+    )
+
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     pqxx
