@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
+#include "interfaces/transaction_responses/mst_expired_response.hpp"
 #include "interfaces/transaction_responses/not_received_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
@@ -41,6 +42,8 @@ namespace shared_model {
                      iroha::protocol::ToriiResponse>;
     using CommittedTxResponse = TrivialProto<interface::CommittedTxResponse,
                                              iroha::protocol::ToriiResponse>;
+    using MstExpiredResponse = TrivialProto<interface::MstExpiredResponse,
+                                            iroha::protocol::ToriiResponse>;
     using NotReceivedTxResponse = TrivialProto<interface::NotReceivedTxResponse,
                                                iroha::protocol::ToriiResponse>;
   }  // namespace proto

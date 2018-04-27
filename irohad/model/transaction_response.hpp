@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,10 +44,10 @@ namespace iroha {
         STATEFUL_VALIDATION_SUCCESS,
         /// tx pipeline succeeded, tx is committed
         COMMITTED,
-        /// transaction is not in handler map
-        NOT_RECEIVED,
         /// tx is expired in mst validation
         MST_EXPIRED,
+        /// transaction is not in handler map
+        NOT_RECEIVED,
       };
 
       Status current_status{};
