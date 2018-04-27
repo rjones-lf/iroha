@@ -428,7 +428,6 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    // FIXME: should be mst expired type
     ASSERT_TRUE(
         boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
                                  shared_model::interface::MstExpiredResponse>(),
