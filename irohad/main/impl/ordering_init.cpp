@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,8 +38,8 @@ namespace iroha {
       return std::make_shared<ordering::OrderingServiceImpl>(
           wsv,
           max_size,
-          rxcpp::observable<>::timer(delay_milliseconds,
-                                     rxcpp::observe_on_new_thread()),
+          rxcpp::observable<>::interval(delay_milliseconds,
+                                        rxcpp::observe_on_new_thread()),
           transport,
           persistent_state);
     }
