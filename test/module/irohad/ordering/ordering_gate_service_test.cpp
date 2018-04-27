@@ -163,7 +163,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;
-  rxcpp::subjects::subject<OrderingServiceImpl::Rep> proposal_timeout;
+  rxcpp::subjects::subject<long> proposal_timeout;
 
   std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
   std::thread thread;

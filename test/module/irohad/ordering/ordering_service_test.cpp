@@ -115,7 +115,7 @@ class OrderingServiceTest : public ::testing::Test {
   std::string address{"0.0.0.0:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
-  rxcpp::subjects::subject<OrderingServiceImpl::Rep> proposal_timeout;
+  rxcpp::subjects::subject<long> proposal_timeout;
 };
 
 /**

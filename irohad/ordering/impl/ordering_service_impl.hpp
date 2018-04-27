@@ -44,8 +44,6 @@ namespace iroha {
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
-      /// Proposal observable type
-      using Rep = std::chrono::milliseconds::rep;
       /**
        * Constructor
        * @param wsv interface for fetching peers from world state view
@@ -58,7 +56,7 @@ namespace iroha {
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
-          rxcpp::observable<Rep> proposal_timeout,
+          rxcpp::observable<long> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
