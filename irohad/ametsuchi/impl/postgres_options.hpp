@@ -25,14 +25,36 @@
 namespace iroha {
   namespace ametsuchi {
 
+    /**
+     * Type for convenient parse and accessing postres options from pg_opt
+     * string
+     */
     class PostgresOptions {
      public:
+      /**
+       * Create Postgres Options instance
+       * @param pg_opt -- options string
+       * @return Result containing Postgres Options instance if pg_opt is valid and error otherwise
+       */
       static expected::Result<PostgresOptions, std::string> create(
           const std::string pg_opt);
       PostgresOptions() = delete;
 
+      /**
+       * @return full pg_opt string with options
+       */
       std::string optionsString() const;
+
+      /**
+       * @return pg_opt string without dbname param
+       */
       std::string optionsStringWithoutDbName() const;
+
+      /**
+       * get option's value by name
+       * @param option is the option's name
+       * @return optional on option's value, empty if such option does not exist
+       */
       boost::optional<std::string> getOption(const std::string &option) const;
 
      private:
