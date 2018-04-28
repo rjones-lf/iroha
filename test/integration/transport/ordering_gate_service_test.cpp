@@ -54,7 +54,7 @@ class OrderingGateServiceTest : public ::testing::Test {
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
     gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
-    gate = std::make_shared<OrderingGateImpl>(gate_transport);
+    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1, false);
     gate->setPcs(*pcs_);
     gate_transport->subscribe(gate);
 
@@ -115,14 +115,14 @@ class OrderingGateServiceTest : public ::testing::Test {
     auto wrapper = make_test_subscriber<CallExact>(gate->on_proposal(), times);
     gate->on_proposal().subscribe([this](auto proposal) {
       proposals.push_back(proposal);
-
       // emulate commit event after receiving the proposal to perform next
       // round inside the peer.
       std::shared_ptr<shared_model::interface::Block> block =
           std::make_shared<shared_model::proto::Block>(
-              TestBlockBuilder().build());
+              TestBlockBuilder().height(proposal->height()).build());
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
+
     });
     wrapper.subscribe();
     return wrapper;

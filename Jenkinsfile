@@ -340,7 +340,8 @@ pipeline {
           }          
         }
         stage('MacOS') {
-          when { expression { return params.MacOS } }            
+          when { expression { return params.MacOS } }
+          agent { label 'mac' }
           steps {
             script {
               def releaseBuild = load ".jenkinsci/mac-release-build.groovy"

@@ -157,8 +157,11 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(
-      wsv, max_proposal_size_, proposal_delay_, ordering_service_storage_);
+  ordering_gate = ordering_init.initOrderingGate(wsv,
+                                                 max_proposal_size_,
+                                                 proposal_delay_,
+                                                 ordering_service_storage_,
+                                                 storage->getBlockQuery());
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -190,12 +193,7 @@ void Irohad::initBlockLoader() {
  */
 void Irohad::initConsensusGate() {
   consensus_gate = yac_init.initConsensusGate(
-      wsv,
-      simulator,
-      block_loader,
-      keypair,
-      vote_delay_,
-      load_delay_);
+      wsv, simulator, block_loader, keypair, vote_delay_, load_delay_);
 
   log_->info("[Init] => consensus gate");
 }

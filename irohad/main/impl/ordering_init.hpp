@@ -18,6 +18,7 @@
 #ifndef IROHA_ORDERING_INIT_HPP
 #define IROHA_ORDERING_INIT_HPP
 
+#include "ametsuchi/block_query.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
@@ -41,9 +42,12 @@ namespace iroha {
       /**
        * Init effective realisation of ordering gate (client of ordering
        * service)
-       * @param network_address - address of ordering service
+       * @param transport - object which will be notified
+       * about incoming proposals and send transactions
+       * @param block_query - block store to get last block height
        */
-      auto createGate(std::shared_ptr<OrderingGateTransport>);
+      auto createGate(std::shared_ptr<OrderingGateTransport> transport,
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
       /**
        * Init ordering service
@@ -67,14 +71,16 @@ namespace iroha {
        * @param loop - handler of async events
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
-       * @return effective realisation of OrderingGate
+       * @param block_query - block store to get last block height
+       * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<ordering::OrderingGateImpl> initOrderingGate(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-              persistent_state);
+              persistent_state,
+          std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
       std::shared_ptr<ordering::OrderingServiceImpl> ordering_service;
       std::shared_ptr<ordering::OrderingGateImpl> ordering_gate;
