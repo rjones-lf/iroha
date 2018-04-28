@@ -82,7 +82,7 @@ def doDebugBuild(coverageEnabled=false) {
               -Dsonar.github.pullRequest=${CHANGE_ID}
           """
         }
-
+      }
       sh "cmake --build build --target coverage.info"
       sh "python /tmp/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
