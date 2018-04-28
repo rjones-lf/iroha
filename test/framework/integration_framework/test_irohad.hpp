@@ -76,6 +76,12 @@ namespace integration_framework {
                  });
       log_->info("===> iroha initialized");
     }
+
+    void terminate() {
+      if (internal_server) {
+        internal_server->shutdown();
+      }
+    }
   };
 }  // namespace integration_framework
 

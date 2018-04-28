@@ -65,3 +65,9 @@ void ServerRunner::waitForServersReady() {
     serverInstanceCV_.wait(lock);
   }
 }
+
+void ServerRunner::shutdown() {
+  if (serverInstance_) {
+    serverInstance_->Shutdown();
+  }
+}
