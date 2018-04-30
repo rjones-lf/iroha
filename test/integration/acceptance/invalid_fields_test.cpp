@@ -46,7 +46,6 @@ class InvalidField : public ::testing::Test {
 TEST_F(InvalidField, Signature) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
-                .txCounter(1)
                 .creatorAccountId("admin@test")
                 .createdTime(iroha::time::now())
                 .build()
@@ -75,7 +74,6 @@ TEST_F(InvalidField, Signature) {
 TEST_F(InvalidField, Pubkey) {
   auto tx = proto::TransactionBuilder()
                 .createAccount(kUser, "test", kUserKeypair.publicKey())
-                .txCounter(1)
                 .creatorAccountId("admin@test")
                 .createdTime(iroha::time::now())
                 .build()

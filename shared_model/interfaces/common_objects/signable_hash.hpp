@@ -18,7 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_SIGNABLE_HASH_HPP
 #define IROHA_SHARED_MODEL_SIGNABLE_HASH_HPP
 
-#include <boost/functional/hash.hpp>
 #include <unordered_set>
 
 #include "interfaces/common_objects/signature.hpp"
@@ -28,23 +27,28 @@ namespace shared_model {
 
   namespace interface {
     /**
-     * Hash class for SigWrapper type. It's required since std::unordered_set
-     * uses hash inside and it should be declared explicitly for user-defined
-     * types.
+     * Property class for SignatureSetType that contains hashing and comparison
+     * operations.
      */
-    class SignableHash {
+    class SignatureSetTypeOps {
      public:
       /**
-       * Operator which actually calculates hash. Uses boost::hash_combine to
-       * calculate hash from several fields.
-       * @param sig - item to find hash from
-       * @return calculated hash
+       * @param sig is item to find hash from
+       * @return calculated hash of public key
        */
       size_t operator()(const types::SignatureType &sig) const {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, sig->publicKey().blob());
-        boost::hash_combine(seed, sig->signedData().blob());
-        return seed;
+        return std::hash<std::string>{}(sig->publicKey().hex());
+      }
+
+      /**
+       * Function for set elements uniqueness by public key
+       * @param lhs
+       * @param rhs
+       * @return true, if public keys are the same
+       */
+      bool operator()(const types::SignatureType &lhs,
+                      const types::SignatureType &rhs) const {
+        return lhs->publicKey() == rhs->publicKey();
       }
     };
     /**
@@ -54,8 +58,9 @@ namespace shared_model {
      * limitations: it requires to have write access for elements for some
      * internal operations.
      */
-    using SignatureSetType =
-        std::unordered_set<types::SignatureType, SignableHash>;
+    using SignatureSetType = std::unordered_set<types::SignatureType,
+                                                SignatureSetTypeOps,
+                                                SignatureSetTypeOps>;
   }  // namespace interface
 }  // namespace shared_model
 

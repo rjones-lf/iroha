@@ -21,7 +21,6 @@
 #include "ametsuchi/block_query.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "model/converters/pb_block_factory.hpp"
 
 namespace iroha {
   namespace network {
@@ -40,7 +39,6 @@ namespace iroha {
                                  protocol::Block *response) override;
 
      private:
-      model::converters::PbBlockFactory factory_;
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
       logger::Logger log_;
     };

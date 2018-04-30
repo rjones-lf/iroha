@@ -19,5 +19,5 @@ add_library(shared_model_stateless_validation
 
 target_link_libraries(shared_model_stateless_validation
         schema
-        model_interfaces
+        shared_model_interfaces
         )

@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "consensus/yac/yac_hash_provider.hpp"  // for YacHash
-#include "model/signature.hpp"                  // for model::Signature
+#include "interfaces/common_objects/signature.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -32,10 +32,10 @@ namespace iroha {
        */
       struct VoteMessage {
         YacHash hash;
-        model::Signature signature;
+        std::shared_ptr<shared_model::interface::Signature> signature;
 
         bool operator==(const VoteMessage &rhs) const {
-          return hash == rhs.hash and signature == rhs.signature;
+          return hash == rhs.hash and *signature == *rhs.signature;
         }
 
         bool operator!=(const VoteMessage &rhs) const {

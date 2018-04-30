@@ -52,8 +52,8 @@ class KeyManager : public ::testing::Test {
   const path test_dir = boost::filesystem::temp_directory_path()
       / boost::filesystem::unique_path();
   const std::string filepath = (test_dir / "keymanager_test_file").string();
-  const path pub_key_path = filepath + KeysManagerImpl::kPubExt;
-  const path pri_key_path = filepath + KeysManagerImpl::kPrivExt;
+  const path pub_key_path = filepath + KeysManagerImpl::kPublicKeyExtension;
+  const path pri_key_path = filepath + KeysManagerImpl::kPrivateKeyExtension;
   const std::string pubkey =
       "00576e02f23c8c694c322796cb3ef494829fdf484f4b42312fb7d776fbd5123b"s;
   const std::string prikey =

@@ -46,10 +46,6 @@ namespace shared_model {
         return payload_.creator_account_id();
       }
 
-      interface::types::CounterType transactionCounter() const override {
-        return payload_.tx_counter();
-      }
-
       const Transaction::CommandsType &commands() const override {
         return *commands_;
       }

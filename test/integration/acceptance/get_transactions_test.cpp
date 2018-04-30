@@ -54,7 +54,6 @@ class GetTransactions : public ::testing::Test {
   auto dummyTx() {
     return shared_model::proto::TransactionBuilder()
         .setAccountQuorum(kUserId, 1)
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now())
         .build()
@@ -219,9 +218,8 @@ TEST_F(GetTransactions, InexistentHash) {
  * @given some user with can_get_my_txs
  * @when query GetTransactions of existing transaction of the other user
  * @then TransactionsResponse with no transactions
- * TODO(@l4l) 02/01/18 Should be enabled after resolving IR-1039
  */
-TEST_F(GetTransactions, DISABLED_OtherUserTx) {
+TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
     auto resp = boost::apply_visitor(
         interface::SpecifiedVisitor<interface::TransactionsResponse>(),

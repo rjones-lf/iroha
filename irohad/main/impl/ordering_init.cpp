@@ -22,8 +22,12 @@
 namespace iroha {
   namespace network {
     auto OrderingInit::createGate(
-        std::shared_ptr<OrderingGateTransport> transport) {
-      auto gate = std::make_shared<ordering::OrderingGateImpl>(transport);
+        std::shared_ptr<OrderingGateTransport> transport,
+        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
+      auto height = block_query->getTopBlocks(1).as_blocking().last()->height();
+      auto gate =
+          std::make_shared<ordering::OrderingGateImpl>(transport, height);
+      log_->info("Creating Ordering Gate with initial height {}", height);
       transport->subscribe(gate);
       return gate;
     }
@@ -48,13 +52,15 @@ namespace iroha {
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-            persistent_state) {
+            persistent_state,
+        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
       auto ledger_peers = wsv->getLedgerPeers();
       if (not ledger_peers or ledger_peers.value().empty()) {
         log_->error(
             "Ledger don't have peers. Do you set correct genesis block?");
       }
       auto network_address = ledger_peers->front()->address();
+      log_->info("Ordering gate is at {}", network_address);
       ordering_gate_transport =
           std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(
               network_address);
@@ -67,7 +73,7 @@ namespace iroha {
                                        ordering_service_transport,
                                        persistent_state);
       ordering_service_transport->subscribe(ordering_service);
-      ordering_gate = createGate(ordering_gate_transport);
+      ordering_gate = createGate(ordering_gate_transport, block_query);
       return ordering_gate;
     }
   }  // namespace network

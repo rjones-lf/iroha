@@ -62,6 +62,8 @@ namespace iroha {
 
       rxcpp::observable<wBlock> getTopBlocks(uint32_t count) override;
 
+      bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
+
      private:
       /**
        * Returns all blocks' ids containing given account id

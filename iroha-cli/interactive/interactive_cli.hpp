@@ -32,7 +32,6 @@ namespace iroha_cli {
        * @param account_name registered in Iroha network
        * @param default_peer_ip default peer ip to send transactions/query
        * @param default_port default port of peer's Iroha Torii
-       * @param tx_counter synchronized nonce for sending transaction
        * @param qry_counter synchronized nonce for sending queries
        * @param provider crypto provider to make signatures
        */
@@ -40,7 +39,6 @@ namespace iroha_cli {
           const std::string &account_name,
           const std::string &default_peer_ip,
           int default_port,
-          uint64_t tx_counter,
           uint64_t qry_counter,
           const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider);
       /**

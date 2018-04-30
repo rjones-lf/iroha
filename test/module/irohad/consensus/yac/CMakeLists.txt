@@ -1,5 +1,5 @@
 #
-# Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+# Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
 # http://soramitsu.co.jp
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,49 +19,39 @@
 addtest(cluster_order_test cluster_order_test.cpp)
 target_link_libraries(cluster_order_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_cold_case_test yac_simple_cold_case_test.cpp)
 target_link_libraries(yac_cold_case_test
     yac
-    model
-    shared_model_cryptography_model
     )
 
 addtest(yac_sunny_day_test yac_sunny_day_test.cpp)
 target_link_libraries(yac_sunny_day_test
     yac
-    model
     shared_model_cryptography_model
     )
 
 addtest(yac_rainy_day_test yac_rainy_day_test.cpp)
 target_link_libraries(yac_rainy_day_test
     yac
-    model
     shared_model_cryptography_model
     )
 
 addtest(yac_unknown_peer_test yac_unknown_peer_test.cpp)
 target_link_libraries(yac_unknown_peer_test
     yac
-    model
-    shared_model_stateless_validation
     )
 
 addtest(yac_block_storage_test yac_block_storage_test.cpp)
 target_link_libraries(yac_block_storage_test
     yac
-    model
-    shared_model_cryptography_model
     )
 
 addtest(yac_proposal_storage_test yac_proposal_storage_test.cpp)
 target_link_libraries(yac_proposal_storage_test
     yac
-    model
-    shared_model_stateless_validation
     )
 
 addtest(yac_timer_test timer_test.cpp)
@@ -72,47 +62,46 @@ target_link_libraries(yac_timer_test
 addtest(yac_network_test network_test.cpp)
 target_link_libraries(yac_network_test
     yac
-    model
-    shared_model_stateless_validation
+    shared_model_interfaces
+    shared_model_default_builders
     )
 
 addtest(yac_peer_orderer_test peer_orderer_test.cpp)
 target_link_libraries(yac_peer_orderer_test
     yac
-    shared_model_stateless_validation
-    model
+    shared_model_interfaces
+    shared_model_default_builders
     )
 
 addtest(yac_gate_test yac_gate_test.cpp)
 target_link_libraries(yac_gate_test
     yac
-    model
     shared_model_cryptography_model
-    shared_model_stateless_validation
+    shared_model_default_builders
     )
 
 addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
 target_link_libraries(yac_hash_provider_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_common_test yac_common_test.cpp)
 target_link_libraries(yac_common_test
     yac
-    shared_model_cryptography_model
+    shared_model_cryptography
     )
 
 addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)
 target_link_libraries(yac_crypto_provider_test
     yac
-    model
     shared_model_cryptography_model
-    shared_model_stateless_validation
+    shared_model_default_builders
     )
 
 addtest(supermajority_checker_test supermajority_checker_test.cpp)
 target_link_libraries(supermajority_checker_test
     yac
-    model
+    shared_model_cryptography
+    shared_model_stateless_validation
     )

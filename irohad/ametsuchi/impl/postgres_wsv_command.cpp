@@ -162,13 +162,11 @@ namespace iroha {
         const shared_model::interface::Account &account) {
       auto result = execute_(
           "INSERT INTO account(account_id, domain_id, quorum, "
-          "transaction_count, data) VALUES ("
+          "data) VALUES ("
           + transaction_.quote(account.accountId()) + ", "
           + transaction_.quote(account.domainId()) + ", "
           + transaction_.quote(account.quorum())
           + ", "
-          // Transaction counter
-          + transaction_.quote(default_tx_counter) + ", "
           + transaction_.quote(account.jsonData()) + ");");
 
       auto message_gen = [&] {
@@ -176,10 +174,9 @@ namespace iroha {
                               "account id: '%s', "
                               "domain id: '%s', "
                               "quorum: '%d', "
-                              "transaction counter: '%d', "
                               "json_data: %s")
                 % account.accountId() % account.domainId() % account.quorum()
-                % default_tx_counter % account.jsonData())
+                % account.jsonData())
             .str();
       };
 
@@ -359,8 +356,6 @@ namespace iroha {
             "UPDATE account\n"
             "   SET quorum=" +
             transaction_.quote(account.quorum()) +
-            ", transaction_count=" +
-            /*account.transaction_count*/ transaction_.quote(default_tx_counter) +
             "\n"
             " WHERE account_id=" +
             transaction_.quote(account.accountId()) + ";");

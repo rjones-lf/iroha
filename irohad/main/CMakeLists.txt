@@ -26,7 +26,7 @@ target_link_libraries(server_runner
 
 add_library(raw_block_loader impl/raw_block_loader.cpp)
 target_link_libraries(raw_block_loader
-    model_interfaces
+    shared_model_interfaces
     )
 
 add_library(application
@@ -39,7 +39,6 @@ target_link_libraries(application
     logger
     yac
     server_runner
-    model
     ametsuchi
     networking
     ordering_service

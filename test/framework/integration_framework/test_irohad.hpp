@@ -44,7 +44,7 @@ namespace integration_framework {
                  proposal_delay,
                  vote_delay,
                  load_delay,
-                 *std::unique_ptr<iroha::keypair_t>(keypair.makeOldModel())) {}
+                 keypair) {}
 
     auto &getCommandService() {
       return command_service;

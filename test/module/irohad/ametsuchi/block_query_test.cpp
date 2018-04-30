@@ -366,3 +366,25 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
 
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given block store with preinserted blocks
+ * @when hasTxWithHash is invoked on existing transaction hash
+ * @then True is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithExistingHash) {
+  for (const auto &hash : tx_hashes) {
+    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+  }
+}
+
+/**
+ * @given block store with preinserted blocks
+ * user1@test AND 1 tx created by user2@test
+ * @when hasTxWithHash is invoked on non-existing hash
+ * @then False is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
+  shared_model::crypto::Hash invalid_tx_hash(zero_string);
+  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+}
