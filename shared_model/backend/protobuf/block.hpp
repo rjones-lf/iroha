@@ -71,10 +71,6 @@ namespace shared_model {
                   [](const auto &i) -> decltype(auto) { return *i; });
       }
 
-      interface::types::SignatureSizeType signaturesSize() const override {
-        return signatures_->size();
-      }
-
       // TODO Alexey Chernyshov - 2018-03-28 -
       // rework code duplication after fix protobuf
       // https://soramitsu.atlassian.net/browse/IR-1175

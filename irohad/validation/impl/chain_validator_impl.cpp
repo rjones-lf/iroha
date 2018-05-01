@@ -44,7 +44,6 @@ namespace iroha {
             }
             return block.prevHash() == top_hash
                 and supermajority_checker_->hasSupermajority(block.signatures(),
-                                                             block.signaturesSize(),
                                                              peers.value());
           };
 

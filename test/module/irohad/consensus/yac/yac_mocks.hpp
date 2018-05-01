@@ -222,12 +222,10 @@ namespace iroha {
 
       class MockSupermajorityChecker : public SupermajorityChecker {
        public:
-        MOCK_CONST_METHOD3(
+        MOCK_CONST_METHOD2(
             hasSupermajority,
             bool(const shared_model::interface::types::SignatureRangeType
                      &signatures,
-                 const shared_model::interface::types::SignatureSizeType
-                     signatures_size,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD2(checkSize, bool(uint64_t current, uint64_t all));

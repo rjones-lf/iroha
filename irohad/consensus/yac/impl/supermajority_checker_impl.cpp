@@ -24,10 +24,9 @@ namespace iroha {
 
       bool SupermajorityCheckerImpl::hasSupermajority(
           const shared_model::interface::types::SignatureRangeType &signatures,
-          const shared_model::interface::types::SignatureSizeType signatures_size,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
-        return checkSize(signatures_size, peers.size())
+        return checkSize(boost::size(signatures), peers.size())
             and peersSubset(signatures, peers);
       }
 
@@ -45,7 +44,9 @@ namespace iroha {
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
         return std::all_of(
-            signatures.begin(), signatures.end(), [&peers](const auto& signature) {
+            signatures.begin(),
+            signatures.end(),
+            [&peers](const auto &signature) {
               return std::find_if(
                          peers.begin(),
                          peers.end(),

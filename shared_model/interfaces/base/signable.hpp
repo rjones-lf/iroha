@@ -62,7 +62,6 @@ namespace shared_model {
        * @return attached signatures
        */
       virtual types::SignatureRangeType signatures() const = 0;
-      virtual types::SignatureSizeType signaturesSize() const = 0;
 
       /**
        * Attach signature to object

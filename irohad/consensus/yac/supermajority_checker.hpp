@@ -48,8 +48,6 @@ namespace iroha {
         virtual bool hasSupermajority(
             const shared_model::interface::types::SignatureRangeType
                 &signatures,
-            const shared_model::interface::types::SignatureSizeType
-                signatures_size,
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const = 0;
 

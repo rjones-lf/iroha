@@ -65,10 +65,6 @@ namespace shared_model {
                   [](const auto &i) -> decltype(auto) { return *i; });
       }
 
-      interface::types::SignatureSizeType signaturesSize() const override {
-        return signatures_->size();
-      }
-
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
