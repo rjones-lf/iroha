@@ -122,6 +122,8 @@ class OrderingGateServiceTest : public ::testing::Test {
               TestBlockBuilder().height(proposal->height()).build());
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
+      counter--;
+      cv.notify_one();
     });
     wrapper.subscribe();
     return wrapper;
@@ -151,7 +153,8 @@ class OrderingGateServiceTest : public ::testing::Test {
   }
 
   void waitForGate() {
-    std::this_thread::sleep_for(10s);
+    std::unique_lock<std::mutex> lk(m);
+    cv.wait_for(lk, 10s, [this] { return counter == 0; });
   }
 
   std::string address{"0.0.0.0:50051"};
@@ -165,6 +168,9 @@ class OrderingGateServiceTest : public ::testing::Test {
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 
   std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
+  std::atomic<size_t> counter;
+  std::condition_variable cv;
+  std::mutex m;
   std::thread thread;
   std::shared_ptr<grpc::Server> server;
 
@@ -200,6 +206,7 @@ TEST_F(OrderingGateServiceTest, DISABLED_SplittingBunchTransactions) {
   initOs(max_proposal);
   start();
   auto wrapper = init(2);
+  counter = 2;
 
   for (size_t i = 0; i < 8; ++i) {
     send_transaction(i + 1);
@@ -240,6 +247,7 @@ TEST_F(OrderingGateServiceTest, DISABLED_ProposalsReceivedWhenProposalSize) {
   initOs(max_proposal);
   start();
   auto wrapper = init(2);
+  counter = 2;
 
   for (size_t i = 0; i < 10; ++i) {
     send_transaction(i + 1);
