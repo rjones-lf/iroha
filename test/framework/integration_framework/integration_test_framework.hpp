@@ -39,11 +39,11 @@ namespace shared_model {
   namespace interface {
     class Block;
     class Proposal;
-  }
+  }  // namespace interface
   namespace proto {
     class Block;
   }
-}
+}  // namespace shared_model
 
 namespace integration_framework {
 
@@ -59,26 +59,28 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - (default = 10) Maximum amount of
      * transactions per proposal
+     * @param mst support enables multisignature tx support
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size = 10,
+        bool mst_support = false,
         std::function<void(IntegrationTestFramework &)> deleter =
             [](IntegrationTestFramework &itf) { itf.done(); });
 
     ~IntegrationTestFramework();
 
     /**
-    * Construct default genesis block.
-    *
-    * Genesis block contains single transaction that
-    * creates a single role (kDefaultRole), domain (kDefaultDomain),
-    * account (kAdminName) and asset (kAssetName).
-    * @param key - signing key
-    * @return signed genesis block
-    */
+     * Construct default genesis block.
+     *
+     * Genesis block contains single transaction that
+     * creates a single role (kDefaultRole), domain (kDefaultDomain),
+     * account (kAdminName) and asset (kAssetName).
+     * @param key - signing key
+     * @return signed genesis block
+     */
     static shared_model::proto::Block defaultBlock(
         const shared_model::crypto::Keypair &key);
 
@@ -210,8 +212,7 @@ namespace integration_framework {
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
-    std::shared_ptr<IrohaInstance> iroha_instance_ =
-        std::make_shared<IrohaInstance>();
+    std::shared_ptr<IrohaInstance> iroha_instance_;
 
     // config area
 

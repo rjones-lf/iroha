@@ -21,6 +21,8 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "multi_sig_transactions/mst_processor_fair.hpp"
+#include "multi_sig_transactions/mst_processor_stub.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -44,6 +46,7 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                std::chrono::milliseconds load_delay,
+               bool is_mst_supported,
                const shared_model::crypto::Keypair &keypair)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
@@ -53,6 +56,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
       load_delay_(load_delay),
+      is_mst_supported_(is_mst_supported),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -232,16 +236,22 @@ void Irohad::initPeerCommunicationService() {
 }
 
 void Irohad::initMstProcessor() {
-  auto mst_transport = std::make_shared<MstTransportGrpc>();
-  auto mst_completer = std::make_shared<DefaultCompleter>();
-  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
-  // TODO: @l4l magics should be fixed with options in cli branch
-  //            check #661 for details
-  auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-      wsv, std::chrono::seconds(5) /*emitting period*/, 2 /*amount per once*/);
-  auto mst_time = std::make_shared<MstTimeProviderImpl>();
-  mst_processor = std::make_shared<FairMstProcessor>(
-      mst_transport, mst_storage, mst_propagation, mst_time);
+  if (is_mst_supported_) {
+    auto mst_transport = std::make_shared<MstTransportGrpc>();
+    auto mst_completer = std::make_shared<DefaultCompleter>();
+    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+    // TODO: @l4l magics should be fixed with options in cli branch
+    //            check #661 for details
+    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
+        wsv,
+        std::chrono::seconds(5) /*emitting period*/,
+        2 /*amount per once*/);
+    auto mst_time = std::make_shared<MstTimeProviderImpl>();
+    mst_processor = std::make_shared<FairMstProcessor>(
+        mst_transport, mst_storage, mst_propagation, mst_time);
+  } else {
+    mst_processor = std::make_shared<StubMstProcessor>();
+  }
   log_->info("[Init] => MST processor");
 }
 

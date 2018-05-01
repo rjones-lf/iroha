@@ -35,6 +35,7 @@ namespace integration_framework {
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                std::chrono::milliseconds load_delay,
+               bool is_mst_supported,
                const shared_model::crypto::Keypair &keypair)
         : Irohad(block_store_dir,
                  pg_conn,
@@ -44,6 +45,7 @@ namespace integration_framework {
                  proposal_delay,
                  vote_delay,
                  load_delay,
+                 is_mst_supported,
                  keypair) {}
 
     auto &getCommandService() {

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_PROCESSOR_IMPL_HPP
-#define IROHA_MST_PROCESSOR_IMPL_HPP
+#ifndef IROHA_MST_PROCESSOR_FAIR_HPP
+#define IROHA_MST_PROCESSOR_FAIR_HPP
 
 #include <memory>
 #include "logger/logger.hpp"
@@ -83,8 +83,6 @@ namespace iroha {
     std::shared_ptr<PropagationStrategy> strategy_;
     std::shared_ptr<MstTimeProvider> time_provider_;
 
-    logger::Logger log_;
-
     // rx subjects
 
     /// use for share new states from other peers
@@ -101,4 +99,4 @@ namespace iroha {
   };
 }  // namespace iroha
 
-#endif  // IROHA_MST_PROCESSOR_IMPL_HPP
+#endif  // IROHA_MST_PROCESSOR_FAIR_HPP

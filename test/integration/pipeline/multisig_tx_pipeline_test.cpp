@@ -94,7 +94,7 @@ class MstPipelineTest : public testing::Test {
 TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx().quorum(3);
 
-  IntegrationTestFramework itf;
+  IntegrationTestFramework itf(true);
   itf.setInitialState(kAdminKeypair)
       .sendTx(makeMstUser())
       .skipProposal()

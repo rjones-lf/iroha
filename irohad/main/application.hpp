@@ -29,7 +29,7 @@
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
-#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
@@ -73,6 +73,7 @@ class Irohad {
    * @param load_delay - waiting time before loading committed block from next
    * peer
    * @param keypair - public and private keys for crypto signer
+   * @param is_mst_supported - enable or disable mst processing support
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -82,6 +83,7 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          std::chrono::milliseconds load_delay,
+         bool is_mst_supported,
          const shared_model::crypto::Keypair &keypair);
 
   /**
@@ -155,6 +157,7 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   std::chrono::milliseconds load_delay_;
+  bool is_mst_supported_;
 
   // ------------------------| internal dependencies |-------------------------
 

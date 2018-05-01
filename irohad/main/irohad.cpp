@@ -116,6 +116,7 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
+                config[mbr::MstSupport].GetBool(),
                 *keypair);
 
   // Check if iroha daemon storage was successfully initialized

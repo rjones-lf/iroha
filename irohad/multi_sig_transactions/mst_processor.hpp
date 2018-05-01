@@ -63,6 +63,8 @@ namespace iroha {
    protected:
     MstProcessor();
 
+    logger::Logger log_;
+
    private:
     // ------------------------| inheritance interface |------------------------
 
@@ -88,10 +90,6 @@ namespace iroha {
      */
     virtual auto onExpiredTransactionsImpl() const
         -> decltype(onExpiredTransactions()) = 0;
-
-    // -------------------------------| fields |--------------------------------
-
-    logger::Logger log_;
   };
 }  // namespace iroha
 

@@ -22,7 +22,7 @@
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
-#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_processor_fair.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
 auto log_ = logger::log("MstProcessorTest");
@@ -30,8 +30,8 @@ auto log_ = logger::log("MstProcessorTest");
 using namespace iroha;
 using namespace framework::test_subscriber;
 
-using testing::Return;
 using testing::_;
+using testing::Return;
 
 class TestCompleter : public Completer {
   bool operator()(const DataType transaction) const override {

@@ -26,7 +26,7 @@ using namespace std::chrono_literals;
 
 namespace integration_framework {
 
-  IrohaInstance::IrohaInstance()
+  IrohaInstance::IrohaInstance(bool mst_support)
       : block_store_dir_(
             (boost::filesystem::temp_directory_path() / "block_store")
                 .string()),
@@ -35,7 +35,8 @@ namespace integration_framework {
         internal_port_(50541),
         proposal_delay_(5000ms),
         vote_delay_(5000ms),
-        load_delay_(5000ms) {}
+        load_delay_(5000ms),
+        is_mst_supported_(mst_support) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->dropStorage();
@@ -58,6 +59,7 @@ namespace integration_framework {
                                              proposal_delay_,
                                              vote_delay_,
                                              load_delay_,
+                                             is_mst_supported_,
                                              key_pair);
   }
 

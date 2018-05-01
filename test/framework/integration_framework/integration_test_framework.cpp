@@ -50,9 +50,12 @@ namespace integration_framework {
 
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
+      bool mst_support,
       std::function<void(integration_framework::IntegrationTestFramework &)>
           deleter)
-      : maximum_proposal_size_(maximum_proposal_size), deleter_(deleter) {}
+      : iroha_instance_(std::make_shared<IrohaInstance>(mst_support)),
+        maximum_proposal_size_(maximum_proposal_size),
+        deleter_(deleter) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
     if (deleter_) {
