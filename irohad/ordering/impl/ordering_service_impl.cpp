@@ -18,7 +18,7 @@ namespace iroha {
     OrderingServiceImpl::OrderingServiceImpl(
         std::shared_ptr<ametsuchi::PeerQuery> wsv,
         size_t max_size,
-        rxcpp::observable<Timeout> proposal_timeout,
+        rxcpp::observable<TimeoutType> proposal_timeout,
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,

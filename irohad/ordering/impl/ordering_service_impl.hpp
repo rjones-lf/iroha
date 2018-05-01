@@ -32,7 +32,7 @@ namespace iroha {
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
-      using Timeout = long;
+      using TimeoutType = long;
       /**
        * Constructor
        * @param wsv interface for fetching peers from world state view
@@ -45,7 +45,7 @@ namespace iroha {
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
-          rxcpp::observable<Timeout> proposal_timeout,
+          rxcpp::observable<TimeoutType> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
