@@ -122,7 +122,6 @@ class OrderingGateServiceTest : public ::testing::Test {
               TestBlockBuilder().height(proposal->height()).build());
       commit_subject_.get_subscriber().on_next(
           rxcpp::observable<>::just(block));
-
     });
     wrapper.subscribe();
     return wrapper;
@@ -152,7 +151,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   }
 
   void waitForGate() {
-    std::this_thread::sleep_for(500ms);
+    std::this_thread::sleep_for(10s);
   }
 
   std::string address{"0.0.0.0:50051"};
@@ -163,7 +162,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;
-  rxcpp::subjects::subject<long> proposal_timeout;
+  rxcpp::subjects::subject<OrderingServiceImpl::Timeout> proposal_timeout;
 
   std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
   std::thread thread;

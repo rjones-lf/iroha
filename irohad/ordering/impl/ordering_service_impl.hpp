@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_ORDERING_SERVICE_IMPL_HPP
@@ -44,11 +32,12 @@ namespace iroha {
      */
     class OrderingServiceImpl : public network::OrderingService {
      public:
+      using Timeout = long;
       /**
        * Constructor
        * @param wsv interface for fetching peers from world state view
        * @param max_size maximum size of proposal
-       * @param proposal_timeout timeout for proposal generation
+       * @param proposal_timeout observable timeout for proposal creation
        * @param transport receive transactions and publish proposals
        * @param persistent_state storage for auxiliary information
        * @param is_async whether proposals are generated in a separate thread
@@ -56,7 +45,7 @@ namespace iroha {
       OrderingServiceImpl(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
-          rxcpp::observable<long> proposal_timeout,
+          rxcpp::observable<Timeout> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,

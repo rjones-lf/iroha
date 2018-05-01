@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <grpc++/grpc++.h>
@@ -41,8 +29,6 @@ using ::testing::DoAll;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
-
-static logger::Logger log_ = logger::testLog("OrderingService");
 
 class MockOrderingServiceTransport : public network::OrderingServiceTransport {
  public:
@@ -104,7 +90,6 @@ class OrderingServiceTest : public ::testing::Test {
   }
 
   void makeProposalTimeout() {
-    log_->info("proposal timeout tick");
     proposal_timeout.get_subscriber().on_next(0);
   }
 
@@ -115,7 +100,7 @@ class OrderingServiceTest : public ::testing::Test {
   std::string address{"0.0.0.0:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
-  rxcpp::subjects::subject<long> proposal_timeout;
+  rxcpp::subjects::subject<OrderingServiceImpl::Timeout> proposal_timeout;
 };
 
 /**
@@ -195,10 +180,7 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
       .WillOnce(Return(boost::optional<size_t>(2)));
   EXPECT_CALL(*wsv, getLedgerPeers())
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
-  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _))
-      .Times(2)
-      .WillRepeatedly(
-          InvokeWithoutArgs([&] { log_->info("Proposal send to grpc"); }));
+  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(2);
 
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);
