@@ -54,6 +54,8 @@
           'files': [
             '<(SHARED_INTERMEDIATE_DIR)/bindings/libirohanode.a',
             '<(SHARED_INTERMEDIATE_DIR)/bindings/libbindings.a',
+            '<(SHARED_INTERMEDIATE_DIR)/generator/libgenerator.a',
+            '<(SHARED_INTERMEDIATE_DIR)/amount/libiroha_amount.a',
             '<(SHARED_INTERMEDIATE_DIR)/schema/libschema.a',
             '<(SHARED_INTERMEDIATE_DIR)/validators/libshared_model_stateless_validation.a',
             '<(SHARED_INTERMEDIATE_DIR)/cryptography/ed25519_sha3_impl/libshared_model_cryptography.a',
@@ -89,6 +91,8 @@
 
         '-lirohanode', # Library contains SWIG runtime
         '-lbindings',
+        '-lgenerator',
+        '-liroha_amount',
         '-lschema',
         '-lshared_model_stateless_validation',
         # Cryptography libs
