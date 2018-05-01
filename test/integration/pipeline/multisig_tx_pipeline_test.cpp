@@ -15,159 +15,94 @@
  * limitations under the License.
  */
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <initializer_list>
-#include "crypto/keys_manager_impl.hpp"
-#include "integration/pipeline/tx_pipeline_integration_test_fixture.hpp"
-#include "model/generators/command_generator.hpp"
-#include "model/generators/query_generator.hpp"
-#include "model/generators/transaction_generator.hpp"
-#include "model/model_crypto_provider_impl.hpp"
+#include "builders/protobuf/transaction.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "datetime/time.hpp"
+#include "framework/base_tx.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
+#include "validators/permissions.hpp"
 
-using namespace std::literals;
-using namespace iroha::model;
+using namespace std::string_literals;
+using namespace integration_framework;
+using namespace shared_model;
 
-const std::chrono::milliseconds kProposalDelay = 1000ms;
-const std::chrono::milliseconds kVoteDelay = 1000ms;
-const std::chrono::milliseconds kLoadDelay = 1000ms;
-
-class MstPipelineTest : public TxPipelineIntegrationTestFixture {
+class MstPipelineTest : public testing::Test {
  public:
-  void SetUp() override {
-    iroha::ametsuchi::AmetsuchiTest::SetUp();
-
-    auto genesis_tx =
-        generators::TransactionGenerator().generateGenesisTransaction(
-            0, {"0.0.0.0:10001"});
-    genesis_tx.quorum = 1;
-    genesis_block =
-        generators::BlockGenerator().generateGenesisBlock(0, {genesis_tx});
-
-    manager = std::make_shared<iroha::KeysManagerImpl>("node0");
-    auto keypair = manager->loadKeys().value();
-
-    irohad = std::make_shared<TestIrohad>(block_store_path,
-                                          pgopt_,
-                                          0,
-                                          10001,
-                                          10,
-                                          kProposalDelay,
-                                          kVoteDelay,
-                                          kLoadDelay,
-                                          keypair);
-
-    ASSERT_TRUE(irohad->storage);
-
-    irohad->storage->insertBlock(genesis_block);
-    irohad->resetOrderingService();
-    irohad->init();
-    irohad->run();
-  }
-
-  void TearDown() override {
-    iroha::ametsuchi::AmetsuchiTest::TearDown();
-    std::remove("node0.pub");
-    std::remove("node0.priv");
-    std::remove("admin@test.pub");
-    std::remove("admin@test.priv");
-    std::remove("test@test.pub");
-    std::remove("test@test.priv");
-    std::remove("multi@test.pub");
-    std::remove("multi@test.priv");
+  /**
+   * @param tx pre-built transaction
+   * @param signatory id of signatory
+   * @return signed transaction
+   */
+  template <typename TxBuilder>
+  auto signTx(TxBuilder tx, const crypto::Keypair &key) const {
+    return tx.build().signAndAddSignature(key);
   }
 
   /**
-   * Creates txes for multiquorum account and send it
-   * @param account is name of new account
-   * @param signers is a list of account signers
-   * @param quorum is number of signatories required for valid tx
-   * @return true if successful
+   * Create valid base pre-built transaction
+   * @return pre-built tx
    */
-  bool createMultiQuorumAccount(std::string account,
-                                std::initializer_list<std::string> signers,
-                                uint32_t quorum) {
-    generators::CommandGenerator gen;
-    auto domain = "@test";
-    auto keypair = createNewAccountKeypair(account + domain);
-    iroha::KeysManagerImpl manager("admin@test");
-    Transaction tx = generators::TransactionGenerator().generateTransaction(
-        "admin@test",
-        1,
-        {gen.generateCreateAccount(account, "test", keypair.pubkey),
-         gen.generateSetQuorum(account + domain, quorum)});
-    for (auto s : signers) {
-      auto key = createNewAccountKeypair(s);
-      tx.commands.push_back(gen.generateAddSignatory(s, key.pubkey));
+  auto baseTx() const {
+    return proto::TransactionBuilder()
+        .createdTime(iroha::time::now())
+        .creatorAccountId(kUserId)
+        .addAssetQuantity(kUserId, kAsset, "1.0");
+  }
+
+  /**
+   * Creates the transaction with the user creation commands
+   * @param perms are the permissions of the user
+   * @return built tx and a hash of its payload
+   */
+  auto makeMstUser(size_t sigs = 2) {
+    auto tx = framework::createUserWithPerms(
+                  kUser,
+                  kUserKeypair.publicKey(),
+                  kNewRole,
+                  std::vector<std::string>{
+                      shared_model::permissions::can_add_asset_qty})
+                  .setAccountQuorum(kUserId, sigs + 1);
+
+    for (size_t i = 0; i < sigs; ++i) {
+      signatories.emplace_back(
+          crypto::DefaultCryptoAlgorithmType::generateKeypair());
+      tx = tx.addSignatory(kUserId, signatories[i].publicKey());
     }
 
-    auto admin_keypair = manager.loadKeys().value();
-    ModelCryptoProviderImpl(admin_keypair).sign(tx);
-    return sendForCommit(tx);
+    return tx.build().signAndAddSignature(kAdminKeypair);
   }
 
-  /**
-   * Send model tx, and wait for a commit
-   * @param tx is transaction to be sent
-   * @param timeout is waiting time for commit
-   * @return true if commit happened
-   */
-  bool sendForCommit(const Transaction &tx,
-                     const std::chrono::milliseconds timeout = kProposalDelay
-                         + kVoteDelay) {
-    std::unique_lock<std::mutex> lk(m);
-    irohad->getPeerCommunicationService()->on_commit().subscribe(
-        [this](auto) { cv.notify_one(); });
-    send(tx);
-    return cv.wait_for(lk, timeout) == std::cv_status::no_timeout;
-  }
-
-  const std::string account = "multi@test";
-  const std::string signer = "signer@signer";
-  const std::string asset = "coin#test";
-
- private:
-  /**
-   * Send model tx
-   * @param tx is transaction to be sent
-   */
-  void send(const Transaction &tx) {
-    auto pb_tx = converters::PbTransactionFactory().serialize(tx);
-
-    google::protobuf::Empty response;
-    irohad->getCommandService()->Torii(pb_tx);
-  }
+  const std::string kUser = "user"s;
+  const std::string kNewRole = "rl"s;
+  const std::string kUserId = kUser + "@test";
+  const std::string kAsset = "asset#domain";
+  std::vector<crypto::Keypair> signatories;
+  const crypto::Keypair kAdminKeypair =
+      crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  const crypto::Keypair kUserKeypair =
+      crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
 /**
- * Creates a new signed copy of transaction
- * @param tx is a base transaction
- * @param account is an account for searching the keypair
- */
-Transaction sign(const Transaction &tx, const std::string &account) {
-  Transaction tmp = tx;
-  iroha::KeysManagerImpl manager(account);
-  EXPECT_TRUE(manager.loadKeys().has_value());
-  auto keypair = manager.loadKeys().value();
-  ModelCryptoProviderImpl provider(keypair);
-  provider.sign(tmp);
-  return tmp;
-}
-
-/**
- * @given multisignature account, its signer
+ * @given multisignature account, pair of signers
  *        AND tx with an AddAssetQuantity command
- * @when sending with author signature and then with signer's one
+ * @when sending with author signature and then with signers' one
  * @then firstly there's no commit then it is
  */
 TEST_F(MstPipelineTest, OnePeerSendsTest) {
-  ASSERT_TRUE(createMultiQuorumAccount("multi", {signer}, 2));
-  auto cmd = generators::CommandGenerator().generateAddAssetQuantity(
-      account, asset, iroha::Amount().createFromString("20.00").value());
-  auto tx =
-      generators::TransactionGenerator().generateTransaction(account, 2, {cmd});
-  tx.quorum = 2;
+  auto tx = baseTx().quorum(3);
 
-  ASSERT_FALSE(sendForCommit(sign(tx, account)));
-  ASSERT_TRUE(sendForCommit(sign(tx, signer)));
+  IntegrationTestFramework itf;
+  itf.setInitialState(kAdminKeypair)
+      .sendTx(makeMstUser())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(signTx(tx, kUserKeypair));
+  ASSERT_ANY_THROW(itf.skipProposal());
+  itf.sendTx(signTx(tx, signatories.at(0)))
+      .sendTx(signTx(tx, signatories.at(1)))
+      .skipProposal()
+      .skipBlock();
 }
