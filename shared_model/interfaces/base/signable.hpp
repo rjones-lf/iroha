@@ -115,31 +115,6 @@ namespace shared_model {
             .finalize();
       }
 
-     protected:
-      /**
-       * Hash class for SigWrapper type. It's required since std::unordered_set
-       * uses hash inside and it should be declared explicitly for user-defined
-       * types.
-       */
-      class SignableHash {
-       public:
-        /**
-         * Operator which actually calculates hash. Uses boost::hash_combine to
-         * calculate hash from several fields.
-         * @param sig - item to find hash from
-         * @return calculated hash
-         */
-        size_t operator()(const types::SignatureType &sig) const {
-          std::size_t seed = 0;
-          boost::hash_combine(seed, sig->publicKey().blob());
-          boost::hash_combine(seed, sig->signedData().blob());
-          return seed;
-        }
-      };
-
-      using SignatureSetType =
-          std::unordered_set<types::SignatureType, SignableHash>;
-
      private:
       mutable boost::optional<types::HashType> hash_;
     };

@@ -27,6 +27,7 @@
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
+#include "interfaces/common_objects/signable_hash.hpp"
 
 #include "backend/protobuf/queries/proto_get_account.hpp"
 #include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
@@ -154,8 +155,8 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> payload_{
           [this] { return makeBlob(proto_->payload()); }};
 
-      const Lazy<SignatureSetType> signatures_{[this] {
-        SignatureSetType set;
+      const Lazy<interface::SignatureSetType> signatures_{[this] {
+        interface::SignatureSetType set;
         if (proto_->has_signature()) {
           set.emplace(new Signature(proto_->signature()));
         }

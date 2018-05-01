@@ -26,6 +26,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
 #include "common_objects/trivial_proto.hpp"
+#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 #include "block.pb.h"
@@ -130,8 +131,8 @@ namespace shared_model {
         return interface::types::HashType(proto_->payload().prev_block_hash());
       }};
 
-      const Lazy<SignatureSetType> signatures_{[this] {
-        SignatureSetType sigs;
+      const Lazy<interface::SignatureSetType> signatures_{[this] {
+        interface::SignatureSetType sigs;
         for (const auto &sig : proto_->signatures()) {
           auto curr = detail::makePolymorphic<proto::Signature>(sig);
           sigs.insert(curr);
