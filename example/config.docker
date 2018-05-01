@@ -7,5 +7,5 @@
   "proposal_delay" : 5000,
   "vote_delay" : 5000,
   "load_delay" : 5000,
-  "mst_enable" : true
+  "mst_enable" : false
 }
