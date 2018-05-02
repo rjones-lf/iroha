@@ -27,13 +27,14 @@ namespace iroha {
       class TimerImpl : public Timer {
        public:
         /// Delay observable type
-        using Rep = long;
+        using TimeoutType = long;
 
         /**
          * Constructor
          * @param invoke_delay cold observable which specifies invoke strategy
          */
-        TimerImpl(rxcpp::observable<Rep> invoke_delay);
+        explicit TimerImpl(
+            std::function<rxcpp::observable<TimeoutType>()> invoke_delay);
         TimerImpl(const TimerImpl &) = delete;
         TimerImpl &operator=(const TimerImpl &) = delete;
 
@@ -43,7 +44,7 @@ namespace iroha {
         ~TimerImpl() override;
 
        private:
-        rxcpp::observable<Rep> invoke_delay_;
+        std::function<rxcpp::observable<TimeoutType>()> invoke_delay_;
         rxcpp::composite_subscription handle_;
       };
     }  // namespace yac

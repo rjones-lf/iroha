@@ -46,8 +46,15 @@ namespace iroha {
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
-        return std::make_shared<TimerImpl>(rxcpp::observable<>::timer(
-            delay_milliseconds, rxcpp::observe_on_new_thread()));
+        return std::make_shared<TimerImpl>([delay_milliseconds] {
+          // static factory with a single thread
+          static rxcpp::observe_on_one_worker worker(
+              rxcpp::observe_on_new_thread()
+                  .create_coordinator()
+                  .get_scheduler());
+          return rxcpp::observable<>::timer(
+              std::chrono::milliseconds(delay_milliseconds), worker);
+        });
       }
 
       auto YacInit::createHashProvider() {

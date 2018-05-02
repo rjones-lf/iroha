@@ -21,12 +21,13 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-      TimerImpl::TimerImpl(rxcpp::observable<Rep> invoke_delay)
-          : invoke_delay_(invoke_delay) {}
+      TimerImpl::TimerImpl(
+          std::function<rxcpp::observable<TimeoutType>()> invoke_delay)
+          : invoke_delay_(std::move(invoke_delay)) {}
 
       void TimerImpl::invokeAfterDelay(std::function<void()> handler) {
         deny();
-        handle_ = invoke_delay_.subscribe(
+        handle_ = invoke_delay_().subscribe(
             [handler{std::move(handler)}](auto) { handler(); });
       }
 

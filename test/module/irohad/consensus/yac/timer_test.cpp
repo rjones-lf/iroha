@@ -24,7 +24,8 @@ using namespace iroha::consensus::yac;
 class TimerTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    timer = std::make_shared<TimerImpl>(invoke_delay.get_observable());
+    timer = std::make_shared<TimerImpl>(
+        [this] { return invoke_delay.get_observable(); });
   }
 
   void TearDown() override {
@@ -36,7 +37,7 @@ class TimerTest : public ::testing::Test {
   }
 
  public:
-  rxcpp::subjects::subject<TimerImpl::Rep> invoke_delay;
+  rxcpp::subjects::subject<TimerImpl::TimeoutType> invoke_delay;
   std::shared_ptr<Timer> timer;
 };
 

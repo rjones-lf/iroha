@@ -38,13 +38,6 @@ using namespace framework::test_subscriber;
 using namespace std;
 
 /**
- * Test provide use case for init yac object
- */
-TEST_F(YacTest, YacWhenInit) {
-  // covered by setup
-}
-
-/**
  * Test provide scenario when yac vote for hash
  */
 TEST_F(YacTest, YacWhenVoting) {

@@ -73,8 +73,13 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   void SetUp() override {
     network = std::make_shared<NetworkImpl>();
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
-    timer = std::make_shared<TimerImpl>(rxcpp::observable<>::timer(
-        std::chrono::milliseconds(delay), rxcpp::observe_on_new_thread()));
+    timer = std::make_shared<TimerImpl>([this] {
+      // static factory with a single thread
+      static rxcpp::observe_on_one_worker worker(
+          rxcpp::observe_on_new_thread().create_coordinator().get_scheduler());
+      return rxcpp::observable<>::timer(std::chrono::milliseconds(delay),
+                                        worker);
+    });
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 
