@@ -59,8 +59,8 @@ namespace integration_framework {
                                              proposal_delay_,
                                              vote_delay_,
                                              load_delay_,
-                                             is_mst_supported_,
-                                             key_pair);
+                                             key_pair,
+                                             is_mst_supported_);
   }
 
   void IrohaInstance::run() {

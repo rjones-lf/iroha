@@ -17,7 +17,7 @@
 
 #include <utility>
 
-#include "multi_sig_transactions/mst_processor_fair.hpp"
+#include "multi_sig_transactions/mst_processor_impl.hpp"
 
 namespace iroha {
 

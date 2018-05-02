@@ -28,11 +28,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
-#include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
-#include "multi_sig_transactions/mst_time_provider_impl.hpp"
-#include "multi_sig_transactions/storage/mst_storage_impl.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -83,8 +79,8 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          std::chrono::milliseconds load_delay,
-         bool is_mst_supported,
-         const shared_model::crypto::Keypair &keypair);
+         const shared_model::crypto::Keypair &keypair,
+         bool is_mst_supported);
 
   /**
    * Initialization of whole objects in system

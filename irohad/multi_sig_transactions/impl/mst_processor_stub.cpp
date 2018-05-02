@@ -7,20 +7,20 @@
 
 using namespace iroha;
 
-auto StubMstProcessor::propagateTransactionImpl(const DataType transaction)
+auto MstProcessorStub::propagateTransactionImpl(const DataType transaction)
     -> decltype(propagateTransaction(transaction)) {
   log_->error("Multisig transactions are disabled. Skipping transaction: {}",
               transaction->toString());
 }
 
-auto StubMstProcessor::onStateUpdateImpl() const -> decltype(onStateUpdate()) {
+auto MstProcessorStub::onStateUpdateImpl() const -> decltype(onStateUpdate()) {
   log_->warn(
       "Multisig transactions are disabled, so MstProcessor observable won't "
       "emit any events");
   return rxcpp::observable<>::empty<std::shared_ptr<MstState>>();
 }
 
-auto StubMstProcessor::onPreparedTransactionsImpl() const
+auto MstProcessorStub::onPreparedTransactionsImpl() const
     -> decltype(onPreparedTransactions()) {
   log_->warn(
       "Multisig transactions are disabled, so MstProcessor observable won't "
@@ -28,7 +28,7 @@ auto StubMstProcessor::onPreparedTransactionsImpl() const
   return rxcpp::observable<>::empty<DataType>();
 }
 
-auto StubMstProcessor::onExpiredTransactionsImpl() const
+auto MstProcessorStub::onExpiredTransactionsImpl() const
     -> decltype(onExpiredTransactions()) {
   log_->warn(
       "Multisig transactions are disabled, so MstProcessor observable won't "

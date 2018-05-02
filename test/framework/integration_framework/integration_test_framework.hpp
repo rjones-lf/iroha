@@ -66,9 +66,9 @@ namespace integration_framework {
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size = 10,
-        bool mst_support = false,
         std::function<void(IntegrationTestFramework &)> deleter =
-            [](IntegrationTestFramework &itf) { itf.done(); });
+            [](IntegrationTestFramework &itf) { itf.done(); },
+        bool mst_support = false);
 
     ~IntegrationTestFramework();
 

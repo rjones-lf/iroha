@@ -56,7 +56,7 @@ TEST(RegressionTest, SequentialInitialization) {
     ASSERT_EQ(block->transactions().size(), 0);
   };
   {
-    integration_framework::IntegrationTestFramework(10, false, [](auto &) {})
+    integration_framework::IntegrationTestFramework(10, [](auto &) {})
         .setInitialState(kAdminKeypair)
         .sendTx(tx, checkStatelessValid)
         .skipProposal()

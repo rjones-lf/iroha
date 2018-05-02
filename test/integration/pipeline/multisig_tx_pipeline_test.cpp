@@ -56,7 +56,7 @@ class MstPipelineTest : public testing::Test {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeMstUser(size_t sigs = 2) {
+  auto makeMstUser(size_t sigs = kSignatories) {
     auto tx = framework::createUserWithPerms(
                   kUser,
                   kUserKeypair.publicKey(),
@@ -78,6 +78,7 @@ class MstPipelineTest : public testing::Test {
   const std::string kNewRole = "rl"s;
   const std::string kUserId = kUser + "@test";
   const std::string kAsset = "asset#domain";
+  static const size_t kSignatories = 2;
   std::vector<crypto::Keypair> signatories;
   const crypto::Keypair kAdminKeypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -92,9 +93,10 @@ class MstPipelineTest : public testing::Test {
  * @then firstly there's no commit then it is
  */
 TEST_F(MstPipelineTest, OnePeerSendsTest) {
-  auto tx = baseTx().quorum(3);
+  const size_t kProposalSize = 10;
+  auto tx = baseTx().quorum(kSignatories + 1);
 
-  IntegrationTestFramework itf(true);
+  IntegrationTestFramework itf(kProposalSize, [](auto &i) { i.done(); }, true);
   itf.setInitialState(kAdminKeypair)
       .sendTx(makeMstUser())
       .skipProposal()

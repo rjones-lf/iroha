@@ -9,7 +9,7 @@
 #include "multi_sig_transactions/mst_processor.hpp"
 
 namespace iroha {
-  class StubMstProcessor : public MstProcessor {
+  class MstProcessorStub : public MstProcessor {
     auto propagateTransactionImpl(const DataType transaction)
         -> decltype(propagateTransaction(transaction)) override;
 
