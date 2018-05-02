@@ -9,7 +9,7 @@ using namespace iroha;
 
 auto StubMstProcessor::propagateTransactionImpl(const DataType transaction)
     -> decltype(propagateTransaction(transaction)) {
-  log_->error("Multisig transactions disabled. Skipping transaction: {}",
+  log_->error("Multisig transactions are disabled. Skipping transaction: {}",
               transaction->toString());
 }
 
