@@ -19,10 +19,6 @@ def buildOptionsString(options) {
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
   buildOptions = buildOptionsString(buildOptions)
-  // GIT_PREVIOUS_COMMIT is null for first PR build
-  if (!previousDockerfileURL) {
-    previousDockerfileURL = currentDockerfileURL
-  }
   def commit = sh(script: "echo ${GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
   if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
     // Dockerfile has been changed compared to the previous commit
