@@ -55,7 +55,7 @@ RUN set -e; \
     ldconfig; \
     rm -rf /tmp/boost
 
-# install protobuf
+# install protobuf v3.5.1
 RUN set -e; \
     git clone https://github.com/google/protobuf /tmp/protobuf; \
     (cd /tmp/protobuf ; git checkout 106ffc04be1abf3ff3399f54ccf149815b287dd9); \
@@ -97,6 +97,7 @@ RUN set -e; \
 RUN set -e; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     cd /tmp/grpc; \
+    # Release 1.11.0
     git checkout bd44e485f69d70ca4095cea92decd98de3892aa6; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
