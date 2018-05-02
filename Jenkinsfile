@@ -374,7 +374,7 @@ pipeline {
       steps {
         script {
           def bindings = load ".jenkinsci/bindings.groovy"
-          def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"          
+          def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
           def previousCommit = !env.GIT_PREVIOUS_COMMIT ? env.GIT_COMMIT : env.GIT_PREVIOUS_COMMIT
           if (params.JavaBindings) {

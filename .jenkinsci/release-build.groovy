@@ -9,7 +9,7 @@ def doReleaseBuild() {
   if (!parallelism) {
     parallelism = 4
   }
-  if ("arm7" in env.NODE_NAME) {
+  if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()

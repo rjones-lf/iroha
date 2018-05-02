@@ -2,7 +2,7 @@
 
 def doDebugBuild(coverageEnabled=false) {
   def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
-  def parallelism = env.PARALLELISM
+  def parallelism = params.PARALLELISM
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def previousCommit = !env.GIT_PREVIOUS_COMMIT ? env.GIT_COMMIT : env.GIT_PREVIOUS_COMMIT
   // params are always null unless job is started
@@ -12,7 +12,7 @@ def doDebugBuild(coverageEnabled=false) {
   if (!parallelism) {
     parallelism = 4
   }
-  if ("arm7" in env.NODE_NAME) {
+  if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
   sh "docker network create ${env.IROHA_NETWORK}"
