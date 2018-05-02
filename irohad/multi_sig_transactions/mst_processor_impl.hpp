@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_MST_PROCESSOR_FAIR_HPP
-#define IROHA_MST_PROCESSOR_FAIR_HPP
+#ifndef IROHA_MST_PROCESSOR_IMPL_HPP
+#define IROHA_MST_PROCESSOR_IMPL_HPP
 
 #include <memory>
 #include "logger/logger.hpp"
@@ -99,4 +99,4 @@ namespace iroha {
   };
 }  // namespace iroha
 
-#endif  // IROHA_MST_PROCESSOR_FAIR_HPP
+#endif  // IROHA_MST_PROCESSOR_IMPL_HPP

@@ -59,10 +59,10 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - (default = 10) Maximum amount of
      * transactions per proposal
-     * @param mst support enables multisignature tx support
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
+     * @param mst_support enables multisignature tx support
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size = 10,
