@@ -16,7 +16,6 @@
  */
 
 #include "torii/processor/query_processor_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 
 namespace iroha {
