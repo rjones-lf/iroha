@@ -72,8 +72,6 @@ namespace shared_model {
       /// Type of signature range, which returns when signatures are invoked
       using SignatureRangeType = boost::any_range<const interface::Signature &,
                                                   boost::forward_traversal_tag>;
-      /// Type of signatures size
-      using SignatureSizeType = size_t;
       /// Type of timestamp
       using TimestampType = uint64_t;
       /// Type of peer address

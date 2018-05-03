@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
@@ -24,6 +25,7 @@
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 
@@ -124,8 +126,13 @@ TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
                     .signedData(Signed(sig))
                     .build())));
   };
-  shared_model::interface::SignatureSetType signatures{make_sig(peer_key, "1"),
-                                                       make_sig(peer_key, "2")};
+  std::unordered_set<shared_model::interface::types::SignatureType,
+                     shared_model::interface::SignatureSetTypeOps,
+                     shared_model::interface::SignatureSetTypeOps>
+      signatures{make_sig(peer_key, "1"), make_sig(peer_key, "2")};
 
-  ASSERT_FALSE(hasSupermajority(signatures, peers));
+  auto sig_range = signatures
+      | boost::adaptors::transformed(
+                       [](const auto &sig) -> decltype(auto) { return *sig; });
+  ASSERT_FALSE(hasSupermajority(sig_range, peers));
 }

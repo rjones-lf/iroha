@@ -51,16 +51,6 @@ namespace shared_model {
         return lhs->publicKey() == rhs->publicKey();
       }
     };
-    /**
-     * Type of set of signatures
-     *
-     * Note: we can't use const SignatureType due to unordered_set
-     * limitations: it requires to have write access for elements for some
-     * internal operations.
-     */
-    using SignatureSetType = std::unordered_set<types::SignatureType,
-                                                SignatureSetTypeOps,
-                                                SignatureSetTypeOps>;
   }  // namespace interface
 }  // namespace shared_model
 

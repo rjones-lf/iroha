@@ -24,6 +24,7 @@
 
 #include "cryptography/default_hash_provider.hpp"
 #include "interfaces/common_objects/signature.hpp"
+#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 
@@ -114,6 +115,18 @@ namespace shared_model {
                        [](auto &signature) { return signature.toString(); })
             .finalize();
       }
+
+     protected:
+      /**
+       * Type of set of signatures
+       *
+       * Note: we can't use const SignatureType due to unordered_set
+       * limitations: it requires to have write access for elements for some
+       * internal operations.
+       */
+      using SignatureSetType = std::unordered_set<types::SignatureType,
+                                                  SignatureSetTypeOps,
+                                                  SignatureSetTypeOps>;
 
      private:
       mutable boost::optional<types::HashType> hash_;

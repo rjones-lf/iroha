@@ -155,8 +155,8 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> payload_{
           [this] { return makeBlob(proto_->payload()); }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
-        interface::SignatureSetType set;
+      const Lazy<SignatureSetType> signatures_{[this] {
+        SignatureSetType set;
         if (proto_->has_signature()) {
           set.emplace(new Signature(proto_->signature()));
         }
