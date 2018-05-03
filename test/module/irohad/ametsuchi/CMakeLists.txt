@@ -45,6 +45,12 @@ target_link_libraries(storage_test
     libs_common
     )
 
+addtest(postgres_options_test postgres_options_test.cpp)
+target_link_libraries(postgres_options_test
+    ametsuchi
+    libs_common
+    )
+
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     pqxx
