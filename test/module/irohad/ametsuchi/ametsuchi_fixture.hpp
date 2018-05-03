@@ -89,8 +89,8 @@ namespace iroha {
       }
 
       void TearDown() override {
-        disconnect();
         clear();
+        disconnect();
       }
 
       std::shared_ptr<pqxx::lazyconnection> connection;
