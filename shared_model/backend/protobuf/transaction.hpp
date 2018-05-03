@@ -23,7 +23,6 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/numeric.hpp>
 
-#include "interfaces/common_objects/signable_hash.hpp"
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"

@@ -26,7 +26,6 @@
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
 #include "common_objects/trivial_proto.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 #include "block.pb.h"

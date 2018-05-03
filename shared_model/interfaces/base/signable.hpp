@@ -24,7 +24,6 @@
 
 #include "cryptography/default_hash_provider.hpp"
 #include "interfaces/common_objects/signature.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 
@@ -117,6 +116,10 @@ namespace shared_model {
       }
 
      protected:
+      /// Type of transaction signature
+      // TODO Alexey Chernyshov 2018-03-28 - remove PolymorphicWrapper here
+      // https://soramitsu.atlassian.net/browse/IR-1175
+      using SignatureType = detail::PolymorphicWrapper<Signature>;
       /**
        * Type of set of signatures
        *
@@ -124,7 +127,30 @@ namespace shared_model {
        * limitations: it requires to have write access for elements for some
        * internal operations.
        */
-      using SignatureSetType = std::unordered_set<types::SignatureType,
+
+      class SignatureSetTypeOps {
+       public:
+        /**
+         * @param sig is item to find hash from
+         * @return calculated hash of public key
+         */
+        size_t operator()(const SignatureType &sig) const {
+          return std::hash<std::string>{}(sig->publicKey().hex());
+        }
+
+        /**
+         * Function for set elements uniqueness by public key
+         * @param lhs
+         * @param rhs
+         * @return true, if public keys are the same
+         */
+        bool operator()(const SignatureType &lhs,
+                        const SignatureType &rhs) const {
+          return lhs->publicKey() == rhs->publicKey();
+        }
+      };
+
+      using SignatureSetType = std::unordered_set<SignatureType,
                                                   SignatureSetTypeOps,
                                                   SignatureSetTypeOps>;
 
