@@ -71,12 +71,6 @@ namespace shared_model {
                                 const crypto::PublicKey &public_key) = 0;
 
       /**
-       * Clear object's signatures
-       * @return true, if signatures were cleared
-       */
-      virtual bool clearSignatures() = 0;
-
-      /**
        * @return time of creation
        */
       virtual types::TimestampType createdTime() const = 0;

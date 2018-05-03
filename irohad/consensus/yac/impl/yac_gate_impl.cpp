@@ -131,7 +131,6 @@ namespace iroha {
       }
 
       void YacGateImpl::copySignatures(const CommitMessage &commit) {
-        current_block_.second->clearSignatures();
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
           current_block_.second->addSignature(sig->signedData(),
