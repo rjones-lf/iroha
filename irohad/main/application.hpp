@@ -112,7 +112,7 @@ class Irohad {
 
   virtual void initStorage();
 
-  virtual void initPeerQuery();
+  virtual std::unique_ptr<iroha::ametsuchi::PeerQuery> initPeerQuery();
 
   virtual void initCryptoProvider();
 
@@ -157,9 +157,6 @@ class Irohad {
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
-
-  // peer query
-  std::shared_ptr<iroha::ametsuchi::PeerQuery> wsv;
 
   // WSV restorer
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;

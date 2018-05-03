@@ -126,10 +126,8 @@ bool Irohad::restoreWsv() {
 /**
  * Initializing peer query interface
  */
-void Irohad::initPeerQuery() {
-  wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
-
-  log_->info("[Init] => peer query");
+std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
+  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
 }
 
 /**
@@ -157,7 +155,7 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(wsv,
+  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
@@ -183,7 +181,8 @@ void Irohad::initSimulator() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(wsv, storage->getBlockQuery());
+  block_loader =
+      loader_init.initBlockLoader(initPeerQuery(), storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
@@ -192,8 +191,12 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(
-      wsv, simulator, block_loader, keypair, vote_delay_, load_delay_);
+  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+                                              simulator,
+                                              block_loader,
+                                              keypair,
+                                              vote_delay_,
+                                              load_delay_);
 
   log_->info("[Init] => consensus gate");
 }
