@@ -20,8 +20,8 @@
 
 #include "ametsuchi/storage.hpp"
 
-#include <cmath>
 #include <boost/optional.hpp>
+#include <cmath>
 #include <pqxx/pqxx>
 #include <shared_mutex>
 #include "logger/logger.hpp"
@@ -61,7 +61,8 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      virtual bool insertBlock(const shared_model::interface::Block &block) override;
+      virtual bool insertBlock(
+          const shared_model::interface::Block &block) override;
 
       /**
        * Insert blocks without validation
@@ -69,7 +70,8 @@ namespace iroha {
        * @return true if inserted
        */
       virtual bool insertBlocks(
-          const std::vector<std::shared_ptr<shared_model::interface::Block>> &blocks) override;
+          const std::vector<std::shared_ptr<shared_model::interface::Block>>
+              &blocks) override;
 
       virtual void dropStorage() override;
 
@@ -78,6 +80,9 @@ namespace iroha {
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
       std::shared_ptr<BlockQuery> getBlockQuery() const override;
+
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      on_commit() override;
 
       ~StorageImpl() override;
 
@@ -114,6 +119,9 @@ namespace iroha {
       std::shared_timed_mutex rw_lock_;
 
       logger::Logger log_;
+
+      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+          notifier_;
 
      protected:
       const std::string init_ = R"(
