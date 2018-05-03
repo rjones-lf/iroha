@@ -247,7 +247,7 @@ void Irohad::initMstProcessor() {
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        wsv,
+        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
