@@ -35,24 +35,23 @@ namespace iroha {
       log_->info("transactions in proposal: {}",
                  proposal.transactions().size());
       auto checking_transaction = [this](const auto &tx, auto &queries) {
-        return bool(
-            queries.getAccount(tx.creatorAccountId()) |
-            [&](const auto &account) {
-              // Check if tx creator has account and has quorum to
-              // execute transaction
-              return boost::range_detail::range_calculate_size(tx.signatures())
-                      >= account->quorum()
-                  ? queries.getSignatories(tx.creatorAccountId())
-                  : boost::none;
-            }
-            |
-            [&](const auto &signatories) {
-              // Check if signatures in transaction are account
-              // signatory
-              return this->signaturesSubset(tx.signatures(), signatories)
-                  ? boost::make_optional(signatories)
-                  : boost::none;
-            });
+        return bool(queries.getAccount(tx.creatorAccountId()) |
+                    [&](const auto &account) {
+                      // Check if tx creator has account and has quorum to
+                      // execute transaction
+                      return boost::size(tx.signatures()) >= account->quorum()
+                          ? queries.getSignatories(tx.creatorAccountId())
+                          : boost::none;
+                    }
+                    |
+                    [&](const auto &signatories) {
+                      // Check if signatures in transaction are account
+                      // signatory
+                      return this->signaturesSubset(tx.signatures(),
+                                                    signatories)
+                          ? boost::make_optional(signatories)
+                          : boost::none;
+                    });
       };
 
       // Filter only valid transactions

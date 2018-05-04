@@ -65,7 +65,7 @@ class CryptoUsageTest : public ::testing::Test {
 
   template <typename T>
   bool verify(const T &signable) const {
-    return boost::range_detail::range_calculate_size(signable.signatures()) > 0
+    return boost::size(signable.signatures()) > 0
         and std::all_of(signable.signatures().begin(),
                         signable.signatures().end(),
                         [&signable](const auto &signature) {

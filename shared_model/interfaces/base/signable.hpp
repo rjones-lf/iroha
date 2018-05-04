@@ -143,16 +143,14 @@ namespace shared_model {
          * @return true, if public keys are the same
          */
         template <typename T>
-        bool operator()(const T &lhs,
-                        const T &rhs) const {
+        bool operator()(const T &lhs, const T &rhs) const {
           return lhs.publicKey() == rhs.publicKey();
         }
       };
 
-      template<typename T>
-      using SignatureSetType = std::unordered_set<T,
-                                                  SignatureSetTypeOps,
-                                                  SignatureSetTypeOps>;
+      template <typename T>
+      using SignatureSetType =
+          std::unordered_set<T, SignatureSetTypeOps, SignatureSetTypeOps>;
 
      private:
       mutable boost::optional<types::HashType> hash_;

@@ -17,6 +17,7 @@
 
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/signature.hpp"
 
 namespace iroha {
   namespace consensus {

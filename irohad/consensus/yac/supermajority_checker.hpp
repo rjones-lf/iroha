@@ -19,7 +19,7 @@
 #define IROHA_CONSENSUS_SUPERMAJORITY_CHECKER_HPP
 
 #include <vector>
-#include "interfaces/base/signable.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
