@@ -17,7 +17,6 @@
 
 #include <gtest/gtest.h>
 
-#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"

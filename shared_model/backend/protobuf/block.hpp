@@ -20,7 +20,6 @@
 
 #include "interfaces/iroha_internal/block.hpp"
 
-#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
