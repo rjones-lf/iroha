@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 #include <limits>
 
+#include "interfaces/queries/query_payload_meta.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "permissions.hpp"
 
@@ -338,6 +339,10 @@ namespace shared_model {
         }
       }
     }
+
+    void FieldValidator::validateQueryPayloadMeta(
+        ReasonsGroupType &reason,
+        const interface::QueryPayloadMeta &meta) const {}
 
     void FieldValidator::validateDescription(
         shared_model::validation::ReasonsGroupType &reason,

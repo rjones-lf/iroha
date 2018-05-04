@@ -151,19 +151,21 @@ namespace iroha {
         sign.pubkey = pubkey_t::from_string(pb_sign.pubkey());
         sign.signature = sig_t::from_string(pb_sign.signature());
 
-        val->query_counter = pl.query_counter();
+        val->query_counter = pl.meta().query_counter();
         val->signature = sign;
-        val->created_ts = pl.created_time();
-        val->creator_account_id = pl.creator_account_id();
+        val->created_ts = pl.meta().created_time();
+        val->creator_account_id = pl.meta().creator_account_id();
         return val;
       }
 
       void PbQueryFactory::serializeQueryMetaData(
           protocol::Query &pb_query, std::shared_ptr<const Query> query) const {
         auto pl = pb_query.mutable_payload();
-        pl->set_creator_account_id(query->creator_account_id);
-        pl->set_created_time(query->created_ts);
-        pl->set_query_counter(query->query_counter);
+        iroha::protocol::QueryPayloadMeta *meta = new iroha::protocol::QueryPayloadMeta();
+        meta->set_created_time(query->created_ts);
+        meta->set_creator_account_id(query->creator_account_id);
+        meta->set_query_counter(query->query_counter);
+        pl->set_allocated_meta(meta);
         // Set signatures
         auto sig = pb_query.mutable_signature();
         sig->set_signature(query->signature.signature.to_string());

@@ -1,0 +1,64 @@
+/**
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
+ * http://soramitsu.co.jp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef IROHA_SHARED_MODEL_BLOCKS_QUERY_VALIDATOR_HPP
+#define IROHA_SHARED_MODEL_BLOCKS_QUERY_VALIDATOR_HPP
+
+#include "interfaces/queries/blocks_query.hpp"
+#include "validators/answer.hpp"
+
+namespace shared_model {
+  namespace validation {
+    /**
+     * Class that validates blocks query field from query
+     * @tparam FieldValidator - field validator type
+     */
+    template <typename FieldValidator>
+    class BlocksQueryValidator {
+     public:
+      BlocksQueryValidator(const FieldValidator &field_validator = FieldValidator())
+          : field_validator_(field_validator) {}
+
+      /**
+       * Applies validation to given query
+       * @param qry - query to validate
+       * @return Answer containing found error if any
+       */
+      Answer validate(const interface::BlocksQuery &qry) const {
+        Answer answer;
+        std::string qry_reason_name = "Blocks query";
+        ReasonsGroupType qry_reason(qry_reason_name, GroupedReasons());
+
+        field_validator_.validateCreatorAccountId(qry_reason,
+                                                  qry.creatorAccountId());
+        field_validator_.validateCreatedTime(qry_reason, qry.createdTime());
+        field_validator_.validateCounter(qry_reason, qry.queryCounter());
+
+        if (not qry_reason.second.empty()) {
+          answer.addReason(std::move(qry_reason));
+        }
+        return answer;
+      }
+
+     private:
+      Answer answer_;
+      FieldValidator field_validator_;
+    };
+  }  // namespace validation
+}  // namespace shared_model
+
+#endif  // IROHA_SHARED_MODEL_BLOCKS_QUERY_VALIDATOR_HPP
