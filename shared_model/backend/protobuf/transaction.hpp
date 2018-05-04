@@ -66,9 +66,8 @@ namespace shared_model {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
-                         [&signed_blob, &public_key](auto signature) {
-                           return signature.signedData() == signed_blob
-                               and signature.publicKey() == public_key;
+                         [&public_key](const auto& signature) {
+                           return signature.publicKey() == public_key;
                          })
             != signatures_->end()) {
           return false;
