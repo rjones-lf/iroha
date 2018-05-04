@@ -34,10 +34,15 @@ namespace iroha {
       /**
        * Create Postgres Options instance
        * @param pg_opt -- options string
-       * @return Result containing Postgres Options instance if pg_opt is valid and error otherwise
+       * @return Result containing Postgres Options instance if pg_opt is valid
+       * and error otherwise
        */
       static expected::Result<PostgresOptions, std::string> create(
           const std::string pg_opt);
+
+      /**
+       * Prohibit initialization of the PostgresOptions with no params
+       */
       PostgresOptions() = delete;
 
       /**

@@ -12,7 +12,7 @@ namespace iroha {
 
     expected::Result<PostgresOptions, std::string> PostgresOptions::create(
         std::string postgres_options) {
-      // parse options
+      // Split into param=value list (split by space)
       std::regex pattern{R"([^ ]+)"};
       std::set<std::string> tokens{
           std::sregex_token_iterator{std::begin(postgres_options),
