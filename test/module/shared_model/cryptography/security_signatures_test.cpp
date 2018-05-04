@@ -34,7 +34,7 @@ TEST(SecuritySignature, SignatureOperatorEqual) {
 /**
  * @given Transaction with marked signature
  * @when  Invoke ::addSignature with same public key but different signed
- * @then  Expect true
+ * @then  Expect that second signature doesn't added
  */
 TEST(SecuritySignature, TransactionAddsignature) {
   auto tx = TestTransactionBuilder().build();
@@ -47,7 +47,7 @@ TEST(SecuritySignature, TransactionAddsignature) {
 /**
  * @given Block with marked signature
  * @when  Invoke ::addSignature with same public key but different signed
- * @then  Expect true
+ * @then  Expect that second signature doesn't added
  */
 TEST(SecuritySignature, BlockAddSignature) {
   auto block = TestBlockBuilder().build();
