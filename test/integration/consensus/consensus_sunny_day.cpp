@@ -75,10 +75,11 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread
-      static rxcpp::observe_on_one_worker worker(
+      // see YacInit::createTimer in consensus_init.cpp
+      static rxcpp::observe_on_one_worker coordination(
           rxcpp::observe_on_new_thread().create_coordinator().get_scheduler());
       return rxcpp::observable<>::timer(std::chrono::milliseconds(delay),
-                                        worker);
+                                        coordination);
     });
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
