@@ -32,9 +32,9 @@ TEST(SecuritySignature, SignatureOperatorEqual) {
 }
 
 /**
- * @given Transaction with marked signature
+ * @given Transaction with given signature
  * @when  Invoke ::addSignature with same public key but different signed
- * @then  Expect that second signature doesn't added
+ * @then  Expect that second signature wasn't added
  */
 TEST(SecuritySignature, TransactionAddsignature) {
   auto tx = TestTransactionBuilder().build();
@@ -45,9 +45,9 @@ TEST(SecuritySignature, TransactionAddsignature) {
 }
 
 /**
- * @given Block with marked signature
+ * @given Block with given signature
  * @when  Invoke ::addSignature with same public key but different signed
- * @then  Expect that second signature doesn't added
+ * @then  Expect that second signature wasn't added
  */
 TEST(SecuritySignature, BlockAddSignature) {
   auto block = TestBlockBuilder().build();
