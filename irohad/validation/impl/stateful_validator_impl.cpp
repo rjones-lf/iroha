@@ -95,18 +95,14 @@ namespace iroha {
     bool StatefulValidatorImpl::signaturesSubset(
         const shared_model::interface::SignatureSetType &signatures,
         const std::vector<shared_model::crypto::PublicKey> &public_keys) {
-      // TODO 09/10/17 Lebedev: simplify the subset verification IR-510
-      // #goodfirstissue
-      std::unordered_set<std::string> txPubkeys;
-      for (auto sign : signatures) {
-        txPubkeys.insert(sign->publicKey().toString());
-      }
-      return std::all_of(public_keys.begin(),
+            
+	   return std::all_of(public_keys.begin(),
                          public_keys.end(),
-                         [&txPubkeys](const auto &public_key) {
-                           return txPubkeys.find(public_key.toString())
-                               != txPubkeys.end();
+                         [&signatures](const auto &public_key) {
+                           return signatures.find(public_key)
+                               != signatures.end();
                          });
+      
     }
 
   }  // namespace validation
