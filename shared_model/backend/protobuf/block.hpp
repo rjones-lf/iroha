@@ -66,9 +66,7 @@ namespace shared_model {
       }
 
       interface::types::SignatureRangeType signatures() const override {
-        return *signatures_
-            | boost::adaptors::transformed(
-                  [](const auto &i) -> decltype(auto) { return *i; });
+        return *signatures_;
       }
 
       // TODO Alexey Chernyshov - 2018-03-28 -
@@ -80,8 +78,8 @@ namespace shared_model {
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
                          [&signed_blob, &public_key](const auto &signature) {
-                           return signature->signedData() == signed_blob
-                               and signature->publicKey() == public_key;
+                           return signature.signedData() == signed_blob
+                               and signature.publicKey() == public_key;
                          })
             != signatures_->end()) {
           return false;
@@ -130,11 +128,10 @@ namespace shared_model {
         return interface::types::HashType(proto_->payload().prev_block_hash());
       }};
 
-      const Lazy<SignatureSetType> signatures_{[this] {
-        SignatureSetType sigs;
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+          SignatureSetType<proto::Signature> sigs;
         for (const auto &sig : proto_->signatures()) {
-          auto curr = detail::makePolymorphic<proto::Signature>(sig);
-          sigs.insert(curr);
+          sigs.emplace(sig);
         }
         return sigs;
       }};

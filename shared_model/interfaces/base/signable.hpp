@@ -116,10 +116,6 @@ namespace shared_model {
       }
 
      protected:
-      /// Type of transaction signature
-      // TODO Alexey Chernyshov 2018-03-28 - remove PolymorphicWrapper here
-      // https://soramitsu.atlassian.net/browse/IR-1175
-      using SignatureType = detail::PolymorphicWrapper<Signature>;
       /**
        * Type of set of signatures
        *
@@ -128,14 +124,16 @@ namespace shared_model {
        * internal operations.
        */
 
+     protected:
       class SignatureSetTypeOps {
        public:
         /**
          * @param sig is item to find hash from
          * @return calculated hash of public key
          */
-        size_t operator()(const SignatureType &sig) const {
-          return std::hash<std::string>{}(sig->publicKey().hex());
+        template <typename T>
+        size_t operator()(const T &sig) const {
+          return std::hash<std::string>{}(sig.publicKey().hex());
         }
 
         /**
@@ -144,13 +142,15 @@ namespace shared_model {
          * @param rhs
          * @return true, if public keys are the same
          */
-        bool operator()(const SignatureType &lhs,
-                        const SignatureType &rhs) const {
-          return lhs->publicKey() == rhs->publicKey();
+        template <typename T>
+        bool operator()(const T &lhs,
+                        const T &rhs) const {
+          return lhs.publicKey() == rhs.publicKey();
         }
       };
 
-      using SignatureSetType = std::unordered_set<SignatureType,
+      template<typename T>
+      using SignatureSetType = std::unordered_set<T,
                                                   SignatureSetTypeOps,
                                                   SignatureSetTypeOps>;
 

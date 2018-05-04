@@ -121,9 +121,7 @@ namespace shared_model {
 
       // ------------------------| Signable override  |-------------------------
       interface::types::SignatureRangeType signatures() const override {
-        return *signatures_
-            | boost::adaptors::transformed(
-                  [](auto &i) -> decltype(auto) { return *i; });
+        return *signatures_;
       }
 
       bool addSignature(const crypto::Signed &signed_blob,
@@ -154,10 +152,10 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> payload_{
           [this] { return makeBlob(proto_->payload()); }};
 
-      const Lazy<SignatureSetType> signatures_{[this] {
-        SignatureSetType set;
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+          SignatureSetType<proto::Signature> set;
         if (proto_->has_signature()) {
-          set.emplace(new Signature(proto_->signature()));
+          set.emplace(proto_->signature());
         }
         return set;
       }};

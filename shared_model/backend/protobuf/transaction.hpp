@@ -60,9 +60,7 @@ namespace shared_model {
       }
 
       interface::types::SignatureRangeType signatures() const override {
-        return *signatures_
-            | boost::adaptors::transformed(
-                  [](const auto &i) -> decltype(auto) { return *i; });
+        return *signatures_;
       }
 
       bool addSignature(const crypto::Signed &signed_blob,
@@ -71,8 +69,8 @@ namespace shared_model {
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
                          [&signed_blob, &public_key](auto signature) {
-                           return signature->signedData() == signed_blob
-                               and signature->publicKey() == public_key;
+                           return signature.signedData() == signed_blob
+                               and signature.publicKey() == public_key;
                          })
             != signatures_->end()) {
           return false;
@@ -112,11 +110,11 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> blobTypePayload_{
           [this] { return makeBlob(payload_); }};
 
-      const Lazy<SignatureSetType> signatures_{[this] {
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
         return boost::accumulate(proto_->signatures(),
-                                 SignatureSetType{},
+                                 SignatureSetType<proto::Signature>{},
                                  [](auto &&acc, const auto &sig) {
-                                   acc.emplace(new Signature(sig));
+                                   acc.emplace(sig);
                                    return std::forward<decltype(acc)>(acc);
                                  });
       }};
