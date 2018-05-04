@@ -75,11 +75,10 @@ namespace shared_model {
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
-                         signatures_->end(),
-                         [&public_key](const auto &signature) {
-                           return signature.publicKey() == public_key;
-                         })
-            != signatures_->end()) {
+                     signatures_->end(),
+                     [&public_key](auto signature) {
+                       return signature->publicKey() == public_key;
+                     }) != signatures_->end()) {
           return false;
         }
 
