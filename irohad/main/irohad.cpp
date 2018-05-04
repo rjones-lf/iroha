@@ -8,6 +8,7 @@
  *
  *        http://www.apache.org/licenses/LICENSE-2.0
  *
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,6 +140,27 @@ int main(int argc, char *argv[]) {
       log->error("Failed to parse genesis block");
       return EXIT_FAILURE;
     }
+
+    // check if genesis block already exist
+    auto genesis_block_exist = false;
+    irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
+        [&genesis_block_exist](auto block) { genesis_block_exist = true; });
+
+    if (genesis_block_exist) {
+        std::string choice;
+        std::cout << "Warning : " << config[mbr::BlockStorePath].GetString()
+            << " already contains ledger data which will be overwritten."
+            << " Continue[y/n]? :";
+        if (not std::getline(std::cin, choice)) {
+            // Input is a terminating symbol
+            log->error("Invalid input to ledger overwrite confirmation");
+            return EXIT_FAILURE;
+        } else if (SHORT_YES.compare(choice) != 0 and YES.compare(choice) != 0){
+            log->info("Cannot start with existing ledger. Shutting down...");
+            return 0;
+        }
+    }
+
 
     // clear previous storage if any
     irohad.dropStorage();

@@ -53,6 +53,10 @@ namespace iroha {
   }
 }  // namespace iroha
 
+// user response strings
+const std::string SHORT_YES = "y";
+const std::string YES = "yes";
+
 class Irohad {
  public:
   /**
