@@ -25,6 +25,9 @@ dependencies {
 }
 
 protobuf {
+  protoc {
+    path = PROTOBUF_PROTOC_EXECUTABLE
+  }
   generatedFilesBaseDir = SWIG_BUILD_DIR + '/gen'
 }
 
@@ -51,7 +54,8 @@ junitPlatform {
 }
 
 junitPlatformTest {
-    systemProperty 'java.library.path', SWIG_BUILD_DIR
+    systemProperty 'java.library.path', PATH_DIRS
+    environment "PATH", PATH_DIRS
 }
 
 project.buildDir = SWIG_BUILD_DIR
