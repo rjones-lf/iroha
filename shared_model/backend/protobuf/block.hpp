@@ -77,7 +77,7 @@ namespace shared_model {
         if (std::find_if(signatures_->begin(),
                      signatures_->end(),
                      [&public_key](auto signature) {
-                       return signature->publicKey() == public_key;
+                       return signature.publicKey() == public_key;
                      }) != signatures_->end()) {
           return false;
         }
