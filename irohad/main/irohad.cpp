@@ -74,6 +74,11 @@ DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
  */
 DEFINE_validator(keypair_name, &validate_keypair_name);
 
+/**
+ * Creating boolean flag to overwrite genesis block forcefully
+ */
+DEFINE_bool(overwrite_genesis, false, "Overwrite genesis block if existing");
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
@@ -141,24 +146,29 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
-    // check if genesis block already exist
-    auto genesis_block_exist = false;
-    irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
-        [&genesis_block_exist](auto block) { genesis_block_exist = true; });
+    // Check if force flag to overwrite genesis block specified
+    if (not FLAGS_overwrite_genesis) {
+        auto genesis_block_exist = false;
+        irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
+            [&genesis_block_exist](auto block) { genesis_block_exist = true; });
 
-    if (genesis_block_exist) {
-        std::string choice;
-        std::cout << "Warning : " << config[mbr::BlockStorePath].GetString()
-            << " already contains ledger data which will be overwritten."
-            << " Continue[y/n]? :";
-        if (not std::getline(std::cin, choice)) {
-            // Input is a terminating symbol
-            log->error("Invalid input to ledger overwrite confirmation");
-            return EXIT_FAILURE;
-        } else if (SHORT_YES.compare(choice) != 0 and YES.compare(choice) != 0){
-            log->info("Cannot start with existing ledger. Shutting down...");
-            return 0;
+        // check if genesis block already existing
+        if (genesis_block_exist) {
+            std::string choice;
+            std::cout << "Warning : " << config[mbr::BlockStorePath].GetString()
+                << " already contains ledger data which will be overwritten."
+                << " Continue[y/n]? :";
+            if (not std::getline(std::cin, choice)) {
+                // Input is a terminating symbol
+                log->error("Invalid input to ledger overwrite confirmation");
+                return EXIT_FAILURE;
+            } else if (SHORT_YES.compare(choice) != 0 and YES.compare(choice) != 0){
+                log->info("Cannot start with existing ledger. Shutting down...");
+                return 0;
+            }
         }
+    } else {
+        log->info("Force flag to overwrite genesis block specified");
     }
 
 
