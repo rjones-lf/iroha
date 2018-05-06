@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
 
 using namespace iroha::ametsuchi;
@@ -26,7 +28,11 @@ class StorageTest : public ::testing::Test {
  protected:
   std::string block_store_path =
       (boost::filesystem::temp_directory_path() / "block_store").string();
-  std::string dbname_ = "irohadb";
+
+  // generate random valid dbname
+  std::string dbname_ = "d"
+      + boost::uuids::to_string(boost::uuids::random_generator()())
+            .substr(0, 8);
 
   std::string pg_opt_without_dbname_ =
       "host=localhost port=5432 user=postgres password=mysecretpassword";
