@@ -25,12 +25,12 @@ namespace iroha {
         std::vector<std::string> key_value;
         boost::split(key_value, s, boost::is_any_of("="));
         if (key_value.size() != 2) {
-          return expected::makeError("postgres options parse error");
+          return expected::makeError("postgres options parse error: cannot get param name and value from " + s);
         }
         std::string key = key_value.at(0);
         std::string value = key_value.at(1);
         if (key.empty() or value.empty()) {
-          return expected::makeError("postgres options parse error");
+          return expected::makeError("postgres options parse error: param name or value is empty");
         }
         options.insert({key, value});
         if (key != "dbname") {

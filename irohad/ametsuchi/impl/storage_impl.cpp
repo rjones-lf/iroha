@@ -198,7 +198,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
-    void StorageImpl::createDatabaseIfNotExist(
+    expected::Result<bool, std::string> StorageImpl::createDatabaseIfNotExist(
         const std::string &dbname,
         const std::string &options_str_without_dbname) {
       auto temp_connection =
@@ -206,11 +206,18 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       auto transaction =
           std::make_unique<pqxx::nontransaction>(*temp_connection);
       // check if database dbname exists
-      auto result = transaction->exec(
-          "SELECT datname FROM pg_catalog.pg_database WHERE datname = "
-          + transaction->quote(dbname));
-      if (result.size() == 0) {
-        transaction->exec("CREATE DATABASE " + dbname);
+      try {
+        auto result = transaction->exec(
+            "SELECT datname FROM pg_catalog.pg_database WHERE datname = "
+            + transaction->quote(dbname));
+        if (result.size() == 0) {
+          transaction->exec("CREATE DATABASE " + dbname);
+          return expected::makeValue(true);
+        }
+        return expected::makeValue(false);
+      } catch (const pqxx::failure &e) {
+        return expected::makeError<std::string>(
+            std::string("Connection to PostgreSQL broken: ") + e.what());
       }
     }
 
@@ -255,10 +262,19 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
                  [&block_store_dir](const PostgresOptions &options)
                  -> expected::Result<std::shared_ptr<StorageImpl>,
                                      std::string> {
-        options.getOption("dbname") | [&options](const auto &dbname) {
-          createDatabaseIfNotExist(dbname,
-                                   options.optionsStringWithoutDbName());
-        };
+        boost::optional<std::string> string_res = boost::none;
+        options.getOption("dbname") |
+            [&options, &string_res](const auto &dbname) {
+              createDatabaseIfNotExist(dbname,
+                                       options.optionsStringWithoutDbName())
+                  .match([](expected::Value<bool> &val) {},
+                         [&string_res](expected::Error<std::string> &error) {
+                           string_res = error.error;
+                         });
+            };
+        if (string_res) {
+          return expected::makeError(string_res.value());
+        }
 
         auto ctx_result =
             initConnections(block_store_dir, options.optionsString());

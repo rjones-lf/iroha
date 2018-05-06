@@ -44,7 +44,7 @@ namespace iroha {
 
     class StorageImpl : public Storage {
      protected:
-      static void createDatabaseIfNotExist(
+      static expected::Result<bool, std::string> createDatabaseIfNotExist(
           const std::string &dbname,
           const std::string &options_str_without_dbname);
 

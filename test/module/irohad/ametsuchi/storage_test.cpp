@@ -57,3 +57,13 @@ TEST_F(StorageTest, CreateStorageWithDatabase) {
       + transaction->quote(dbname_));
   ASSERT_EQ(result.size(), 1);
 }
+
+TEST_F(StorageTest, CreateStorageWithInvalidPgOpt) {
+  std::string pg_opt = "host=localhost port=5432 users=nonexistinguser";
+  StorageImpl::create(block_store_path, pg_opt)
+      .match(
+          [](const Value<std::shared_ptr<StorageImpl>> &) {
+            FAIL() << "storage created, but should not";
+          },
+          [](const Error<std::string> &) { SUCCEED(); });
+}

@@ -20,6 +20,9 @@
 
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
+#include <boost/uuid/uuid.hpp>             // uuid class
+#include <boost/uuid/uuid_generators.hpp>  // generators
+#include <boost/uuid/uuid_io.hpp>          // streaming operators etc.
 #include <pqxx/pqxx>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/files.hpp"
@@ -99,7 +102,9 @@ namespace iroha {
 
       std::string pgopt_ =
           "host=localhost port=5432 user=postgres password=mysecretpassword "
-          "dbname=iroha_db";
+          "dbname=d"
+          + boost::uuids::to_string(boost::uuids::random_generator()())
+                .substr(0, 8);
 
       std::string block_store_path = (boost::filesystem::temp_directory_path()
                                       / boost::filesystem::unique_path())
