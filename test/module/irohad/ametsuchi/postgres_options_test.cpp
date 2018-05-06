@@ -12,7 +12,8 @@ using namespace iroha::ametsuchi;
 /**
  * @given pg_opt string with param1 and param2
  * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created @and it contains param1 and
+ * @then PostgresOptions object successfully created
+ * AND it contains param1 and
  * param2
  */
 TEST(PostgresOptionsTest, ParamExist) {
@@ -34,7 +35,8 @@ TEST(PostgresOptionsTest, ParamExist) {
 /**
  * @given pg_opt string without non_existing_param
  * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created @and doesn't contain
+ * @then PostgresOptions object successfully created
+ * AND doesn't contain
  * non_existing_param in it
  */
 TEST(PostgresOptionsTest, ParamNotExist) {
@@ -50,7 +52,8 @@ TEST(PostgresOptionsTest, ParamNotExist) {
 /**
  * @given pg_opt string with dbname param
  * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created @and doesn't contain
+ * @then PostgresOptions object successfully created
+ * AND doesn't contain
  * non_existing_param in it
  */
 TEST(PostgresOptionsTest, DBNameParam) {
@@ -62,7 +65,8 @@ TEST(PostgresOptionsTest, DBNameParam) {
         auto dbname = options.value.getOption("dbname");
         ASSERT_TRUE(dbname);
 
-        // check if optionsStringWithoutDbName returns pg_opt without dbname param
+        // check if optionsStringWithoutDbName returns pg_opt without dbname
+        // param
         auto pg_opt_without_dbname =
             boost::trim_copy(options.value.optionsStringWithoutDbName());
         ASSERT_EQ(pg_opt_without_dbname, "param1=val1 param2=val2");
