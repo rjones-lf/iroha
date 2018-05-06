@@ -54,6 +54,8 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 |               | used by peer to sign the blocks                                 |
 +---------------+-----------------------------------------------------------------+
 
+.. Attention:: If transactions exist in the specified block_store directory, daemon asks for confirmation before overwriting them. To explicitly allow the daemon to overwrite transactions and hence skip the confirmation, use `--overwrite_genesis` flag.
+
 An example of shell command, running Iroha daemon is 
 
 .. code-block:: shell
