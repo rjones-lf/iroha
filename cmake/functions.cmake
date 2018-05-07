@@ -27,8 +27,15 @@ function(addtest test_name SOURCES)
   add_executable(${test_name} ${SOURCES})
   target_link_libraries(${test_name} gtest gmock)
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
+
+  # fetch directory after test in source dir call
+  # for example:
+  # "/Users/user/iroha/test/integration/acceptance"
+  # match to "integration"
+  string(REGEX REPLACE ".*test\\/([a-zA-Z]+).*" "\\1" output ${CMAKE_CURRENT_SOURCE_DIR})
+
   add_test(
-      NAME ${test_name}
+      NAME "${output}_${test_name}"
       COMMAND $<TARGET_FILE:${test_name}> ${test_xml_output}
   )
   strictmode(${test_name})
