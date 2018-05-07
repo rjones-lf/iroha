@@ -85,8 +85,8 @@ namespace iroha {
        * TODO 27/10/2017 luckychess Values are quite random and should be tuned
        * for better performance and may be even move to config IR-579
        */
-      uint32_t max_handler_map_size_high_;
-      uint32_t max_handler_map_size_low_;
+      const uint32_t max_handler_map_size_high_;
+      const uint32_t max_handler_map_size_low_;
     };
   }  // namespace cache
 }  // namespace iroha
