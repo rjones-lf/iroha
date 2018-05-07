@@ -1,4 +1,4 @@
-# Copyright 2017 Soramitsu Co., Ltd.
+# Copyright 2018 Soramitsu Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(CMAKE_BUILD_TYPE Debug)
-
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/test_bin)
-
 # Reusable tests
-add_subdirectory(common)
 add_subdirectory(ametsuchi)
+add_subdirectory(common)
 add_subdirectory(consensus)
+add_subdirectory(execution)
 add_subdirectory(logger)
-add_subdirectory(validation)
-add_subdirectory(torii)
 add_subdirectory(main)
 add_subdirectory(model)
-add_subdirectory(synchronizer)
-add_subdirectory(simulator)
-add_subdirectory(ordering)
 add_subdirectory(network)
+add_subdirectory(ordering)
+add_subdirectory(simulator)
+add_subdirectory(synchronizer)
+add_subdirectory(torii)
+add_subdirectory(validation)

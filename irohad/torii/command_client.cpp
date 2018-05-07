@@ -16,6 +16,7 @@ limitations under the License.
 #include <grpc++/grpc++.h>
 
 #include "block.pb.h"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
 
 namespace torii {
@@ -26,9 +27,8 @@ namespace torii {
   CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
       : ip_(ip),
         port_(port),
-        stub_(iroha::protocol::CommandService::NewStub(
-            grpc::CreateChannel(ip + ":" + std::to_string(port),
-                                grpc::InsecureChannelCredentials()))) {}
+        stub_(iroha::network::createClient<iroha::protocol::CommandService>(
+            ip + ":" + std::to_string(port))) {}
 
   CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
       : CommandSyncClient(rhs.ip_, rhs.port_) {}

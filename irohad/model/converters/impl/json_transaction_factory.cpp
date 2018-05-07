@@ -43,7 +43,6 @@ namespace iroha {
         document.AddMember("created_ts", transaction.created_ts, allocator);
         document.AddMember(
             "creator_account_id", transaction.creator_account_id, allocator);
-        document.AddMember("tx_counter", transaction.tx_counter, allocator);
 
         Value commands;
         commands.SetArray();
@@ -82,7 +81,6 @@ namespace iroha {
         return boost::make_optional(Transaction())
             | des.Uint64(&Transaction::created_ts, "created_ts")
             | des.String(&Transaction::creator_account_id, "creator_account_id")
-            | des.Uint64(&Transaction::tx_counter, "tx_counter")
             | des.Array(&Transaction::signatures, "signatures")
             | des.Array(&Transaction::commands, "commands", des_commands);
       }

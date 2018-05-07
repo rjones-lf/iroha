@@ -32,7 +32,9 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -49,12 +51,28 @@ namespace iroha {
         return clone(ptr);
       }
 
+      /**
+       * Creates test signature with empty signed data, and provided pubkey
+       * @param pub_key - public key to put in the signature
+       * @return new signature
+       */
+      std::shared_ptr<shared_model::interface::Signature> createSig(
+          const std::string &pub_key) {
+        auto tmp =
+            shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+                .publicKey();
+        std::string key(tmp.blob().size(), 0);
+        std::copy(pub_key.begin(), pub_key.end(), key.begin());
+
+        return clone(TestSignatureBuilder()
+                         .publicKey(shared_model::crypto::PublicKey(key))
+                         .build());
+      }
+
       VoteMessage create_vote(YacHash hash, std::string pub_key) {
         VoteMessage vote;
         vote.hash = hash;
-        // TODO: 19.01.2019 kamil substitute with function, IR-813
-        std::copy(
-            pub_key.begin(), pub_key.end(), vote.signature.pubkey.begin());
+        vote.signature = createSig(pub_key);
         return vote;
       }
 
@@ -67,6 +85,7 @@ namespace iroha {
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;
           vote.hash = hash;
+          vote.signature = createSig("");
           return vote;
         }
 
@@ -81,8 +100,7 @@ namespace iroha {
 
       class MockTimer : public Timer {
        public:
-        void invokeAfterDelay(uint64_t millis,
-                              std::function<void()> handler) override {
+        void invokeAfterDelay(std::function<void()> handler) override {
           handler();
         }
 
@@ -205,13 +223,15 @@ namespace iroha {
        public:
         MOCK_CONST_METHOD2(
             hasSupermajority,
-            bool(const shared_model::interface::SignatureSetType &signatures,
+            bool(const shared_model::interface::types::SignatureRangeType
+                     &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD2(checkSize, bool(uint64_t current, uint64_t all));
         MOCK_CONST_METHOD2(
             peersSubset,
-            bool(const shared_model::interface::SignatureSetType &signatures,
+            bool(const shared_model::interface::types::SignatureRangeType
+                     &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD3(
@@ -224,7 +244,6 @@ namespace iroha {
         std::shared_ptr<MockYacNetwork> network;
         std::shared_ptr<MockYacCryptoProvider> crypto;
         std::shared_ptr<MockTimer> timer;
-        uint64_t delay = 100500;
         std::shared_ptr<Yac> yac;
 
         // ------|Round|------
@@ -244,18 +263,17 @@ namespace iroha {
           timer = std::make_shared<MockTimer>();
           auto ordering = ClusterOrdering::create(default_peers);
           ASSERT_TRUE(ordering);
-          yac = Yac::create(YacVoteStorage(),
-                            network,
-                            crypto,
-                            timer,
-                            ordering.value(),
-                            delay);
-          network->subscribe(yac);
-        };
+          initYac(ordering.value());
+        }
 
         void TearDown() override {
           network->release();
-        };
+        }
+
+        void initYac(ClusterOrdering ordering) {
+          yac = Yac::create(YacVoteStorage(), network, crypto, timer, ordering);
+          network->subscribe(yac);
+        }
       };
     }  // namespace yac
   }    // namespace consensus

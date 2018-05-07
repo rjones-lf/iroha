@@ -18,13 +18,22 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 
 #include <memory>
+
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
-#include "cryptography/hash_providers/sha3_256.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
-// TODO (@l4l) IR-874 create more comfort way for permssion-dependent proto
+#include "framework/integration_framework/iroha_instance.hpp"
+#include "framework/integration_framework/test_irohad.hpp"
+// TODO (@l4l) IR-874 create more comfort way for permission-dependent proto
 // building
 #include "validators/permissions.hpp"
 
@@ -39,48 +48,35 @@ namespace integration_framework {
   const std::string IntegrationTestFramework::kAdminId = "admin@test";
   const std::string IntegrationTestFramework::kAssetName = "coin";
 
+  IntegrationTestFramework::IntegrationTestFramework(
+      size_t maximum_proposal_size,
+      std::function<void(integration_framework::IntegrationTestFramework &)>
+          deleter)
+      : maximum_proposal_size_(maximum_proposal_size), deleter_(deleter) {}
+
   IntegrationTestFramework::~IntegrationTestFramework() {
-    pqxx::lazyconnection connection(iroha_instance_->pg_conn_);
-    const auto drop = R"(
-DROP TABLE IF EXISTS account_has_signatory;
-DROP TABLE IF EXISTS account_has_asset;
-DROP TABLE IF EXISTS role_has_permissions;
-DROP TABLE IF EXISTS account_has_roles;
-DROP TABLE IF EXISTS account_has_grantable_permissions;
-DROP TABLE IF EXISTS account;
-DROP TABLE IF EXISTS asset;
-DROP TABLE IF EXISTS domain;
-DROP TABLE IF EXISTS signatory;
-DROP TABLE IF EXISTS peer;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
-DROP TABLE IF EXISTS height_by_account_set;
-DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
-)";
-
-    pqxx::work txn(connection);
-    txn.exec(drop);
-    txn.commit();
-    connection.disconnect();
-
-    iroha::remove_dir_contents(iroha_instance_->block_store_dir_);
+    if (deleter_) {
+      deleter_(*this);
+    }
+    // the code below should be executed anyway in order to prevent app hang
+    if (iroha_instance_ and iroha_instance_->instance_) {
+      iroha_instance_->instance_->terminate();
+    }
   }
 
-  IntegrationTestFramework &IntegrationTestFramework::setInitialState(
+  shared_model::proto::Block IntegrationTestFramework::defaultBlock(
       const shared_model::crypto::Keypair &key) {
     auto genesis_tx =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
-            .txCounter(1)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(
-                kDefaultRole,
-                // TODO (@l4l) IR-874 create more confort way for
-                // permssion-dependent proto building
-                std::vector<std::string>{iroha::model::role_perm_group.begin(),
-                                         iroha::model::role_perm_group.end()})
+            .createRole(kDefaultRole,
+                        // TODO (@l4l) IR-874 create more comfort way for
+                        // permission-dependent proto building
+                        std::vector<std::string>{
+                            shared_model::permissions::role_perm_group.begin(),
+                            shared_model::permissions::role_perm_group.end()})
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)
@@ -91,18 +87,24 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             .transactions(
                 std::vector<shared_model::proto::Transaction>{genesis_tx})
             .height(1)
-            .prevHash(Sha3_256::makeHash(Blob("")))
+            .prevHash(DefaultHashProvider::makeHash(Blob("")))
             .createdTime(iroha::time::now())
             .build()
             .signAndAddSignature(key);
-    return setInitialState(key, genesis_block);
+    return genesis_block;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::setInitialState(
+      const Keypair &keypair) {
+    return setInitialState(keypair,
+                           IntegrationTestFramework::defaultBlock(keypair));
   }
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
     log_->info("init state");
     // peer initialization
-    iroha_instance_->initPipeline(keypair, maximum_block_size_);
+    iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
     // iroha_instance_->clearLedger();
     // log_->info("cleared ledger");
@@ -152,8 +154,39 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
   }
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
+      const shared_model::proto::Transaction &tx,
+      std::function<void(const shared_model::proto::TransactionResponse &)>
+          validation) {
+    log_->info("send transaction");
+    iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
+        tx.getTransport());
+    // fetch status of transaction
+    shared_model::proto::TransactionResponse status = getTxStatus(tx.hash());
+
+    // check validation function
+    validation(status);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
     sendTx(tx, [](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendQuery(
+      const shared_model::proto::Query &qry,
+      std::function<void(const shared_model::proto::QueryResponse &)>
+          validation) {
+    log_->info("send query");
+
+    iroha::protocol::QueryResponse response;
+    iroha_instance_->getIrohaInstance()->getQueryService()->Find(
+        qry.getTransport(), response);
+    auto query_response =
+        shared_model::proto::QueryResponse(std::move(response));
+
+    validation(query_response);
     return *this;
   }
 
@@ -163,8 +196,29 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::checkProposal(
+      std::function<void(const ProposalType &)> validation) {
+    log_->info("check proposal");
+    // fetch first proposal from proposal queue
+    ProposalType proposal;
+    fetchFromQueue(
+        proposal_queue_, proposal, proposal_waiting, "missed proposal");
+    validation(proposal);
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::skipProposal() {
     checkProposal([](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::checkBlock(
+      std::function<void(const BlockType &)> validation) {
+    // fetch first from block queue
+    log_->info("check block");
+    BlockType block;
+    fetchFromQueue(block_queue_, block, block_waiting, "missed block");
+    validation(block);
     return *this;
   }
 

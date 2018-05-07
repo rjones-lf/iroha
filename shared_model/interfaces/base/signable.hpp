@@ -18,10 +18,11 @@
 #ifndef IROHA_SIGNABLE_HPP
 #define IROHA_SIGNABLE_HPP
 
+#include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
+#include <unordered_set>
 
-#include "cryptography/hash_providers/sha3_256.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
+#include "cryptography/default_hash_provider.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
@@ -48,20 +49,19 @@ namespace shared_model {
 #ifndef DISABLE_BACKWARD
     template <typename Model,
               typename OldModel,
-              typename HashProvider = shared_model::crypto::Sha3_256>
+              typename HashProvider = crypto::DefaultHashProvider>
     class Signable : public Primitive<Model, OldModel> {
 #else
     template <typename Model,
               typename HashProvider = shared_model::crypto::Sha3_256>
     class Signable : public ModelPrimitive<Model> {
 #endif
-     public:
-      using HashProviderType = HashProvider;
 
+     public:
       /**
        * @return attached signatures
        */
-      virtual const SignatureSetType &signatures() const = 0;
+      virtual types::SignatureRangeType signatures() const = 0;
 
       /**
        * Attach signature to object
@@ -70,12 +70,6 @@ namespace shared_model {
        */
       virtual bool addSignature(const crypto::Signed &signed_blob,
                                 const crypto::PublicKey &public_key) = 0;
-
-      /**
-       * Clear object's signatures
-       * @return true, if signatures were cleared
-       */
-      virtual bool clearSignatures() = 0;
 
       /**
        * @return time of creation
@@ -99,13 +93,13 @@ namespace shared_model {
        */
       bool operator==(const Model &rhs) const override {
         return this->hash() == rhs.hash()
-            and this->signatures() == rhs.signatures()
+            and boost::equal(this->signatures(), rhs.signatures())
             and this->createdTime() == rhs.createdTime();
       }
 
       const types::HashType &hash() const {
         if (hash_ == boost::none) {
-          hash_.emplace(HashProviderType::makeHash(payload()));
+          hash_.emplace(HashProvider::makeHash(payload()));
         }
         return *hash_;
       }
@@ -117,9 +111,46 @@ namespace shared_model {
             .init("Signable")
             .append("created_time", std::to_string(createdTime()))
             .appendAll(signatures(),
-                       [](auto &signature) { return signature->toString(); })
+                       [](auto &signature) { return signature.toString(); })
             .finalize();
       }
+
+     protected:
+      /**
+       * Type of set of signatures
+       *
+       * Note: we can't use const SignatureType due to unordered_set
+       * limitations: it requires to have write access for elements for some
+       * internal operations.
+       */
+
+     protected:
+      class SignatureSetTypeOps {
+       public:
+        /**
+         * @param sig is item to find hash from
+         * @return calculated hash of public key
+         */
+        template <typename T>
+        size_t operator()(const T &sig) const {
+          return std::hash<std::string>{}(sig.publicKey().hex());
+        }
+
+        /**
+         * Function for set elements uniqueness by public key
+         * @param lhs
+         * @param rhs
+         * @return true, if public keys are the same
+         */
+        template <typename T>
+        bool operator()(const T &lhs, const T &rhs) const {
+          return lhs.publicKey() == rhs.publicKey();
+        }
+      };
+
+      template <typename T>
+      using SignatureSetType =
+          std::unordered_set<T, SignatureSetTypeOps, SignatureSetTypeOps>;
 
      private:
       mutable boost::optional<types::HashType> hash_;

@@ -1,35 +1,33 @@
-version: '3'
+version: '2'
 
 services:
-  node:
-    image: hyperledger/iroha-docker-develop:v1
+  iroha:
+    image: hyperledger/iroha:develop
+    container_name: iroha
     ports:
-      - "${IROHA_PORT}:50051"
-      - "${DEBUGGER_PORT}:20000"
+      - "50051:50051"
     environment:
-      - IROHA_POSTGRES_HOST=${COMPOSE_PROJECT_NAME}_postgres_1
+      - IROHA_POSTGRES_HOST=iroha-postgres
       - IROHA_POSTGRES_PORT=5432
       - IROHA_POSTGRES_USER=iroha
-      - IROHA_POSTGRES_PASSWORD=helloworld
-      - CCACHE_DIR=/tmp/ccache
-    # export G_ID=$(id -g $(whoami))
-    # export U_ID=$(id -g $(whoami))
-    user: ${U_ID:-0}:${G_ID:-0}
+      - IROHA_POSTGRES_PASSWORD=iroha
     depends_on:
       - postgres
     tty: true
+    environment:
+      - KEY=node0
     volumes:
-      - ../:/opt/iroha
-      - ccache-data:/tmp/ccache
-    working_dir: /opt/iroha
-    cap_add:
-      - SYS_PTRACE
+      # as configured in example/config.sample
+      - /tmp/block_store
+      - ./iroha/example:/opt/iroha_data
+    restart: always
 
   postgres:
     image: postgres:9.5
+    container_name: iroha-postgres
     environment:
       - POSTGRES_USER=iroha
-      - IROHA_POSTGRES_PASSWORD=helloworld
-
-volumes:
-  ccache-data:
+      - POSTGRES_PASSWORD=iroha
+    expose: 
+      - 5432
+    restart: always

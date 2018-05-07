@@ -16,13 +16,10 @@
  */
 
 #include "network/impl/block_loader_service.hpp"
-
-#include "common/byteutils.hpp"
+#include "backend/protobuf/block.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
-using namespace iroha::model::converters;
 using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(std::shared_ptr<BlockQuery> storage)
@@ -35,9 +32,9 @@ grpc::Status BlockLoaderService::retrieveBlocks(
     const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
   storage_->getBlocksFrom(request->height())
-      .map([this](auto block) {
-        return factory_.serialize(
-            *std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+      .map([](auto block) {
+        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+            ->getTransport();
       })
       .as_blocking()
       .subscribe([writer](auto block) { writer->Write(block); });
@@ -48,23 +45,19 @@ grpc::Status BlockLoaderService::retrieveBlock(
     ::grpc::ServerContext *context,
     const proto::BlockRequest *request,
     protocol::Block *response) {
-  const auto hash = stringToBlob<Block::HashType::size()>(request->hash());
-  if (not hash) {
-    log_->error("Bad hash in request, {}",
-                bytestringToHexstring(request->hash()));
+  const auto hash = shared_model::crypto::Hash(request->hash());
+  if (hash.size() == 0) {
+    log_->error("Bad hash in request");
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
                         "Bad hash provided");
   }
 
   boost::optional<protocol::Block> result;
   storage_->getBlocksFrom(1)
-      .filter([hash](auto block) {
-        return shared_model::crypto::toBinaryString(block->hash())
-            == hash->to_string();
-      })
-      .map([this](auto block) {
-        return factory_.serialize(
-            *std::unique_ptr<iroha::model::Block>(block->makeOldModel()));
+      .filter([&hash](auto block) { return block->hash() == hash; })
+      .map([](auto block) {
+        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+            ->getTransport();
       })
       .as_blocking()
       .subscribe([&result](auto block) { result = block; });

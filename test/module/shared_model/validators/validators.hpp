@@ -27,18 +27,12 @@ namespace shared_model {
     // TODO: kamilsa 01.02.2018 IR-873 Replace all these validators with mock
     // classes
 
-    template <typename Iface>
     struct AlwaysValidValidator {
-      Answer validate(const Iface &) const {
+      template <typename T>
+      Answer validate(const T &) const {
         return {};
       }
     };
-    using TransactionAlwaysValidValidator =
-        AlwaysValidValidator<interface::Transaction>;
-    using BlockAlwaysValidValidator = AlwaysValidValidator<interface::Block>;
-    using ProposalAlwaysValidValidator =
-        AlwaysValidValidator<interface::Proposal>;
-    using QueryAlwaysValidValidator = AlwaysValidValidator<interface::Query>;
 
   }  // namespace validation
 }  // namespace shared_model

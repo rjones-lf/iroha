@@ -17,8 +17,8 @@
 
 #include "framework/config_helper.hpp"
 
-#include <cstdlib>
 #include <sstream>
+#include "logger/logger.hpp"
 
 namespace integration_framework {
   std::string getPostgresCredsOrDefault(const std::string &default_conn) {
@@ -32,6 +32,7 @@ namespace integration_framework {
       std::stringstream ss;
       ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
          << " password=" << pg_pass;
+      logger::log("ITF")->info("Postgres credentials: {}", ss.str());
       return ss.str();
     }
   }

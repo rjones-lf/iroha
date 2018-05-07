@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 #include "network/impl/peer_communication_service_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 
 namespace iroha {
   namespace network {

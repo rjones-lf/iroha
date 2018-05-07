@@ -48,15 +48,13 @@ namespace iroha {
             std::shared_ptr<YacNetwork> network,
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
-            ClusterOrdering order,
-            uint64_t delay);
+            ClusterOrdering order);
 
         Yac(YacVoteStorage vote_storage,
             std::shared_ptr<YacNetwork> network,
             std::shared_ptr<YacCryptoProvider> crypto,
             std::shared_ptr<Timer> timer,
-            ClusterOrdering order,
-            uint64_t delay);
+            ClusterOrdering order);
 
         // ------|Hash gate|------
 
@@ -132,9 +130,6 @@ namespace iroha {
 
         // ------|One round|------
         ClusterOrdering cluster_order_;
-
-        // ------|Constants|------
-        const uint64_t delay_;
 
         // ------|Logger|------
         logger::Logger log_;

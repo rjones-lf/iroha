@@ -31,7 +31,8 @@ namespace iroha {
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
-        std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer)
+        std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
+            crypto_signer)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
@@ -65,8 +66,10 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      block_queries_->getTopBlocks(1).as_blocking().subscribe(
-          [this](auto block) { last_block = block; });
+      block_queries_->getTopBlocks(1)
+          .subscribe_on(rxcpp::observe_on_new_thread())
+          .as_blocking()
+          .subscribe([this](auto block) { last_block = block; });
       if (not last_block) {
         log_->warn("Could not fetch last block");
         return;
@@ -97,8 +100,8 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic, so
-      // that this cast will not be needed
+      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic,
+      // so that this cast will not be needed
       auto proto_txs =
           proposal.transactions()
           | boost::adaptors::transformed([](const auto &polymorphic_tx) {

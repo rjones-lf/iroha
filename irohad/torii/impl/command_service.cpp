@@ -16,6 +16,7 @@
  */
 
 #include <thread>
+
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
 #include "ametsuchi/block_query.hpp"
@@ -24,6 +25,7 @@
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/byteutils.hpp"
 #include "common/types.hpp"
+#include "cryptography/default_hash_provider.hpp"
 #include "endpoint.pb.h"
 #include "torii/command_service.hpp"
 #include "validators/default_validator.hpp"
@@ -100,9 +102,8 @@ namespace torii {
               // getting hash from invalid transaction
               auto blobPayload =
                   shared_model::proto::makeBlob(request.payload());
-              tx_hash =
-                  shared_model::proto::Transaction::HashProviderType::makeHash(
-                      blobPayload);
+              tx_hash = shared_model::crypto::DefaultHashProvider::makeHash(
+                  blobPayload);
               log_->warn("Stateless invalid tx: {}, hash: {}",
                          error.error,
                          tx_hash.hex());
@@ -112,6 +113,7 @@ namespace torii {
                   shared_model::crypto::toBinaryString(tx_hash));
               response.set_tx_status(
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+              response.set_error_message(std::move(error.error));
             });
 
     cache_->addItem(tx_hash, response);
@@ -133,7 +135,7 @@ namespace torii {
       response.CopyFrom(*resp);
     } else {
       response.set_tx_hash(request.tx_hash());
-      if (block_query_->getTxByHashSync(
+      if (block_query_->hasTxWithHash(
               shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {

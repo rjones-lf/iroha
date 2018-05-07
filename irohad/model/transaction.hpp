@@ -55,17 +55,6 @@ namespace iroha {
       std::string creator_account_id{};
 
       /**
-       * Number for protecting against replay attack.
-       * Number that is stored inside of each account.
-       * Used to prevent replay attacks.
-       * During a stateful validation look at account and compare numbers
-       * if number inside a transaction is less than in account,
-       * this transaction is replayed.
-       * META field
-       */
-      uint64_t tx_counter{};
-
-      /**
        * Bunch of commands attached to transaction
        * shared_ptr is used since Proposal has to be copied
        * BODY field

@@ -9,34 +9,36 @@ const assetId = 'coin#test'
 const testAccountId = 'test@test'
 
 test('ModelTransactionBuilder tests', function (t) {
-  t.plan(130)
+  t.plan(135)
 
   let crypto = new iroha.ModelCrypto()
   let keypair = crypto.convertFromExisting(publicKey, privateKey)
 
   let txBuilder = new iroha.ModelTransactionBuilder()
   const time = (new Date()).getTime()
+  const futureTime = 2400000000000
   const address = '0.0.0.0:50051'
 
   t.comment('Basic TransactionBuilder tests')
 
-  t.throws(() => txBuilder.build(), /Transaction should contain at least one command/, 'Should throw exception 0 commands in transaction, wrong creator_account_id, timestamp and counter')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction, wrong timestamp and counter')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(0).txCounter(1).build(), /Transaction should contain at least one command bad timestamp: too old/, 'Should throw 0 commands + bad timestamp: too old')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(0).build(), /Transaction should contain at least one command Counter should be > 0/, 'Should throw 0 commands + Counter should be > 0')
-  t.throws(() => txBuilder.creatorAccountId('').createdTime(time).txCounter(1).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: ''/, 'Should throw 0 commands + Wrongly formed creator_account_id')
-  t.throws(() => txBuilder.creatorAccountId('@@@').createdTime(time).txCounter(1).build(), /Transaction should contain at least one command Wrongly formed creator_account_id, passed value: '@@@'/, 'Should throw 0 commands + Wrongly formed creator_account_id')
-  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(1).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction')
+  t.throws(() => txBuilder.build(), /Transaction should contain at least one command(.*)Wrongly formed creator_account_id, passed value: ''(.*)bad timestamp: too old/, 'Should throw exception 0 commands in transaction, wrong creator_account_id, timestamp')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).build(), /Transaction should contain at least one command(.*)bad timestamp: too old/, 'Should throw exception about zero commands in transaction, wrong timestamp')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(0).build(), /Transaction should contain at least one command(.*)bad timestamp: too old/, 'Should throw 0 commands + bad timestamp: too old')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).build(), /Transaction should contain at least one command/, 'Should throw 0 commands')
+  t.throws(() => txBuilder.creatorAccountId('').createdTime(time).build(), /Transaction should contain at least one command(.*)Wrongly formed creator_account_id, passed value: ''/, 'Should throw 0 commands + Wrongly formed creator_account_id')
+  t.throws(() => txBuilder.creatorAccountId('@@@').createdTime(time).build(), /Transaction should contain at least one command(.*)Wrongly formed creator_account_id, passed value: '@@@'/, 'Should throw 0 commands + Wrongly formed creator_account_id')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(futureTime).build(), /Transaction should contain at least one command(.*)bad timestamp: sent from future/, 'Should throw exception about zero commands in transaction, Sent from future')
+  t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction')
 
-  // Transaction with valid txCounter, creatorAccountId and createdTime
-  let correctTx = txBuilder.creatorAccountId(adminAccountId).createdTime(time).txCounter(1)
+  // Transaction with valid creatorAccountId and createdTime
+  let correctTx = txBuilder.creatorAccountId(adminAccountId).createdTime(time)
 
   // addAssetQuantity() tests
   t.comment('Testing addAssetQuantity()')
   t.throws(() => correctTx.addAssetQuantity(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.addAssetQuantity(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.addAssetQuantity('', ''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.addAssetQuantity('', '', '').build(), /AddAssetQuantity: \[\[Wrongly formed account_id, passed value: '' Wrongly formed asset_id, passed value: '' Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
+  t.throws(() => correctTx.addAssetQuantity('', '', '').build(), /AddAssetQuantity: \[\[Wrongly formed account_id, passed value: ''(.*)Wrongly formed asset_id, passed value: ''(.*)Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
   t.throws(() => correctTx.addAssetQuantity(adminAccountId, assetId, '0').build(), /AddAssetQuantity: \[\[Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw Amount must be greater than 0')
   t.throws(() => correctTx.addAssetQuantity('', assetId, '1000').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.addAssetQuantity('@@@', assetId, '1000').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
@@ -74,12 +76,11 @@ test('ModelTransactionBuilder tests', function (t) {
   t.comment('Testing appendRole()')
   t.throws(() => correctTx.appendRole(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.appendRole(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.appendRole('', 'ruser').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.appendRole('@@@', 'ruser').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.appendRole('', 'new_user_role').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.appendRole('@@@', 'new_user_role').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.appendRole(adminAccountId, '').build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.appendRole(adminAccountId, '@@@').build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
-  // TODO: 8 symbols
-  t.doesNotThrow(() => correctTx.appendRole(adminAccountId, 'ruser').build(), null, 'Should not throw any exceptions')
+  t.doesNotThrow(() => correctTx.appendRole(adminAccountId, 'new_user_role').build(), null, 'Should not throw any exceptions')
 
   // createAsset() tests
   t.comment('Testing createAsset()')
@@ -110,34 +111,40 @@ test('ModelTransactionBuilder tests', function (t) {
   t.comment('Testing createDomain()')
   t.throws(() => correctTx.createDomain(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.createDomain(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.createDomain('', 'ruser').build(), /Wrongly formed domain_id, passed value: ''/, 'Should throw Wrongly formed domain_id')
-  t.throws(() => correctTx.createDomain('$$$', 'ruser').build(), /Wrongly formed domain_id, passed value: '\$\$\$'/, 'Should throw Wrongly formed domain_id')
+  t.throws(() => correctTx.createDomain('', 'new_user_role').build(), /Wrongly formed domain_id, passed value: ''/, 'Should throw Wrongly formed domain_id')
+  t.throws(() => correctTx.createDomain('$$$', 'new_user_role').build(), /Wrongly formed domain_id, passed value: '\$\$\$'/, 'Should throw Wrongly formed domain_id')
   t.throws(() => correctTx.createDomain('domain', '').build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.createDomain('domain', '@@@').build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
-  t.doesNotThrow(() => correctTx.createDomain('domain', 'ruser').build(), null, 'Should not throw any exceptions')
+  t.doesNotThrow(() => correctTx.createDomain('domain', 'new_user_role').build(), null, 'Should not throw any exceptions')
 
   // createRole() tests
   t.comment('Testing createRole()')
   t.throws(() => correctTx.createRole(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.createRole(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
+
   let sv = new iroha.StringVector()
-  sv.add('permission1')
-  sv.add('permission2')
+  sv.add('can_add_peer')
+  sv.add('can_read_assets')
+  let emptySv = new iroha.StringVector()
+  let invalidPermissionSv = new iroha.StringVector()
+  invalidPermissionSv.add('wrong_permission')
+
+  t.throws(() => correctTx.createRole('new_user_role', emptySv).build(), /Permission set should contain at least one permission/, 'Should throw Permission set should contain at least one permission')
+  t.throws(() => correctTx.createRole('new_user_role', invalidPermissionSv).build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
   t.throws(() => correctTx.createRole('', sv).build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.createRole('@@@', sv).build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
-  t.throws(() => correctTx.createRole('ruser', '').build(), /argument 3 of type 'std::vector< shared_model::interface::types::PermissionNameType >/, 'Should throw ...argument 3 of type...')
-  t.doesNotThrow(() => correctTx.createRole('ruser', sv).build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctTx.createRole('new_user_role', '').build(), /argument 3 of type 'std::vector< shared_model::interface::types::PermissionNameType >/, 'Should throw ...argument 3 of type...')
+  t.doesNotThrow(() => correctTx.createRole('new_user_role', sv).build(), null, 'Should not throw any exceptions')
 
   // detachRole() tests
   t.comment('Testing detachRole()')
   t.throws(() => correctTx.detachRole(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.detachRole(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.detachRole('', 'ruser').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.detachRole('@@@', 'ruser').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.detachRole('', 'new_user_role').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.detachRole('@@@', 'new_user_role').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.detachRole(adminAccountId, '').build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.detachRole(adminAccountId, '@@@').build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
-  // TODO: 8 symbols
-  t.doesNotThrow(() => correctTx.detachRole(adminAccountId, 'ruser').build(), null, 'Should not throw any exceptions')
+  t.doesNotThrow(() => correctTx.detachRole(adminAccountId, 'new_user_role').build(), null, 'Should not throw any exceptions')
 
   // grantPermission() tests
   t.comment('Testing grantPermission()')
@@ -145,8 +152,8 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => correctTx.grantPermission(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.grantPermission('', 'can_read_assets').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.grantPermission('@@@', 'can_read_assets').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.grantPermission(adminAccountId, '').build(), /Wrongly formed permission, passed value: ''/, 'Should throw Wrongly formed permission')
-  t.throws(() => correctTx.grantPermission(adminAccountId, '@@@').build(), /Wrongly formed permission, passed value: '@@@'/, 'Should throw Wrongly formed permission')
+  t.throws(() => correctTx.grantPermission(adminAccountId, '').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
+  t.throws(() => correctTx.grantPermission(adminAccountId, '@@@').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
   t.doesNotThrow(() => correctTx.grantPermission(adminAccountId, 'can_read_assets').build(), null, 'Should not throw any exceptions')
 
   // revokePermission() tests
@@ -155,8 +162,8 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => correctTx.revokePermission(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.revokePermission('', 'can_read_assets').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.revokePermission('@@@', 'can_read_assets').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.revokePermission(adminAccountId, '').build(), /Wrongly formed permission, passed value: ''/, 'Should throw Wrongly formed permission')
-  t.throws(() => correctTx.revokePermission(adminAccountId, '@@@').build(), /Wrongly formed permission, passed value: '@@@'/, 'Should throw Wrongly formed permission')
+  t.throws(() => correctTx.revokePermission(adminAccountId, '').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
+  t.throws(() => correctTx.revokePermission(adminAccountId, '@@@').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
   t.doesNotThrow(() => correctTx.revokePermission(adminAccountId, 'can_read_assets').build(), null, 'Should not throw any exceptions')
 
   // setAccountDetail() tests
@@ -177,6 +184,8 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => correctTx.setAccountQuorum('', 10).build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.setAccountQuorum('@@@', 10).build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
   t.throws(() => correctTx.setAccountQuorum(adminAccountId, 'kek').build(), /argument 3 of type 'shared_model::interface::types::QuorumType'/, 'Should throw ...argument 3 of type...')
+  t.throws(() => correctTx.setAccountQuorum(adminAccountId, 0).build(), /Quorum should be within range \(0, 128\]/, 'Should throw Quorum should be within range (0, 128]')
+  t.throws(() => correctTx.setAccountQuorum(adminAccountId, 200).build(), /Quorum should be within range \(0, 128\]/, 'Should throw Quorum should be within range (0, 128]')
   t.doesNotThrow(() => correctTx.setAccountQuorum(adminAccountId, 10).build(), null, 'Should not throw any exceptions')
 
   // subtractAssetQuantity() tests
@@ -184,7 +193,7 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => correctTx.subtractAssetQuantity(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.subtractAssetQuantity(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.subtractAssetQuantity('', ''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.subtractAssetQuantity('', '', '').build(), /SubtractAssetQuantity: \[\[Wrongly formed account_id, passed value: '' Wrongly formed asset_id, passed value: '' Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
+  t.throws(() => correctTx.subtractAssetQuantity('', '', '').build(), /SubtractAssetQuantity: \[\[Wrongly formed account_id, passed value: ''(.*)Wrongly formed asset_id, passed value: ''(.*)Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
   t.throws(() => correctTx.subtractAssetQuantity(adminAccountId, assetId, '0').build(), /SubtractAssetQuantity: \[\[Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw Amount must be greater than 0')
   // TODO: MAYBE Throw an exception on real amount
   // t.throws(() => correctTx.subtractAssetQuantity(adminAccountId, assetId, '0.123').build(), /SubtractAssetQuantity: \[\[Amount must be integer, passed value: 0.123 \]\]/, 'Should throw Amount must be integer')

@@ -15,23 +15,37 @@
  * limitations under the License.
  */
 
+#include <tuple>
 #include <utility>
 
-#include "interfaces/transaction.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
+
+#include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ordering {
 
+    bool ProposalComparator::operator()(
+        const std::shared_ptr<shared_model::interface::Proposal> &lhs,
+        const std::shared_ptr<shared_model::interface::Proposal> &rhs) const {
+      return lhs->height() > rhs->height();
+    }
+
     OrderingGateImpl::OrderingGateImpl(
-        std::shared_ptr<iroha::network::OrderingGateTransport> transport)
-        : transport_(std::move(transport)), log_(logger::log("OrderingGate")) {}
+        std::shared_ptr<iroha::network::OrderingGateTransport> transport,
+        shared_model::interface::types::HeightType initial_height,
+        bool run_async)
+        : transport_(std::move(transport)),
+          last_block_height_(initial_height),
+          log_(logger::log("OrderingGate")),
+          run_async_(run_async) {}
 
     void OrderingGateImpl::propagateTransaction(
         std::shared_ptr<const shared_model::interface::Transaction>
             transaction) {
-      log_->info("propagate tx, tx_counter: {} account_id: {}",
-                 std::to_string(transaction->transactionCounter()),
+      log_->info("propagate tx, account_id: {}",
                  " account_id: " + transaction->creatorAccountId());
 
       transport_->propagateTransaction(transaction);
@@ -44,27 +58,61 @@ namespace iroha {
 
     void OrderingGateImpl::setPcs(
         const iroha::network::PeerCommunicationService &pcs) {
-      pcs_subscriber_ = pcs.on_commit().subscribe([this](auto) {
-        // TODO: 05/03/2018 @muratovv rework behavior of queue with respect to
-        // block height IR-1042
-        unlock_next_.store(true);
-        this->tryNextRound();
+      log_->info("setPcs");
 
-      });
+      auto top_block_height =
+          pcs.on_commit()
+              .transform([](const Commit &commit) {
+                // find height of last commited block
+                return commit.as_blocking().last()->height();
+              })
+              .start_with(last_block_height_);
+
+      auto subscribe = [&](auto merge_strategy) {
+        pcs_subscriber_ = merge_strategy(net_proposals_.get_observable())
+                              .subscribe([this](const auto &t) {
+                                this->tryNextRound(std::get<1>(t));
+                              });
+      };
+
+      if (run_async_) {
+        subscribe([&top_block_height](auto observable) {
+          return observable.combine_latest(rxcpp::synchronize_new_thread(),
+                                           top_block_height);
+        });
+      } else {
+        subscribe([&top_block_height](auto observable) {
+          return observable.combine_latest(top_block_height);
+        });
+      }
     }
 
     void OrderingGateImpl::onProposal(
         std::shared_ptr<shared_model::interface::Proposal> proposal) {
-      log_->info("Received new proposal");
+      log_->info("Received new proposal, height: {}", proposal->height());
       proposal_queue_.push(std::move(proposal));
-      tryNextRound();
+      std::lock_guard<std::mutex> lock(proposal_mutex_);
+      net_proposals_.get_subscriber().on_next(0);
     }
 
-    void OrderingGateImpl::tryNextRound() {
-      if (not proposal_queue_.empty() and unlock_next_.exchange(false)) {
-        std::shared_ptr<shared_model::interface::Proposal> next_proposal;
-        proposal_queue_.try_pop(next_proposal);
-        log_->info("Pass the proposal to pipeline");
+    void OrderingGateImpl::tryNextRound(
+        shared_model::interface::types::HeightType last_block_height) {
+      log_->debug("TryNextRound");
+      std::shared_ptr<shared_model::interface::Proposal> next_proposal;
+      while (proposal_queue_.try_pop(next_proposal)) {
+        // check for old proposal
+        if (next_proposal->height() < last_block_height + 1) {
+          log_->debug("Old proposal, discarding");
+          continue;
+        }
+        // check for new proposal
+        if (next_proposal->height() > last_block_height + 1) {
+          log_->debug("Proposal newer than last block, keeping in queue");
+          proposal_queue_.push(next_proposal);
+          break;
+        }
+        log_->info("Pass the proposal to pipeline height {}",
+                   next_proposal->height());
         proposals_.get_subscriber().on_next(next_proposal);
       }
     }

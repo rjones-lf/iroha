@@ -76,7 +76,7 @@ namespace shared_model {
         std::for_each(
             signatures().begin(), signatures().end(), [&old_block](auto &sig) {
               std::unique_ptr<iroha::model::Signature> old_sig(
-                  sig->makeOldModel());
+                  sig.makeOldModel());
               old_block->sigs.emplace_back(*old_sig);
             });
         return old_block;
@@ -94,7 +94,7 @@ namespace shared_model {
             .append("transactions")
             .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
             .append("signatures")
-            .appendAll(signatures(), [](auto &sig) { return sig->toString(); })
+            .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();
       }
     };

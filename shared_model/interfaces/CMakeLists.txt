@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(model_interfaces
+add_library(shared_model_interfaces
     impl.cpp
     )
 
-target_link_libraries(model_interfaces
+target_link_libraries(shared_model_interfaces
     old_model
     shared_model_cryptography
     ${Boost_LIBRARIES}

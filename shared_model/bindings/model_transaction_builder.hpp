@@ -47,14 +47,6 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id);
 
       /**
-       * Sets transaction counter field
-       * @param tx_counter - transaction counter
-       * @return builder with tx_counter field appended
-       */
-      ModelTransactionBuilder txCounter(
-          interface::types::CounterType tx_counter);
-
-      /**
        * Sets time of creation
        * @param created_time - time of creation
        * @return builder with created_time field appended

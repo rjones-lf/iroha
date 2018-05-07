@@ -44,6 +44,10 @@ iroha::expected::Result<int, std::string> ServerRunner::run() {
     builder.RegisterService(service.get());
   }
 
+  // in order to bypass built-it limitation of gRPC message size
+  builder.SetMaxReceiveMessageSize(INT_MAX);
+  builder.SetMaxSendMessageSize(INT_MAX);
+
   serverInstance_ = builder.BuildAndStart();
   serverInstanceCV_.notify_one();
 
@@ -59,5 +63,11 @@ void ServerRunner::waitForServersReady() {
   std::unique_lock<std::mutex> lock(waitForServer_);
   while (not serverInstance_) {
     serverInstanceCV_.wait(lock);
+  }
+}
+
+void ServerRunner::shutdown() {
+  if (serverInstance_) {
+    serverInstance_->Shutdown();
   }
 }

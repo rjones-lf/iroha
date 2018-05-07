@@ -42,7 +42,7 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                std::chrono::milliseconds load_delay,
-               const keypair_t &keypair)
+               const shared_model::crypto::Keypair &keypair)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       torii_port_(torii_port),
@@ -126,21 +126,16 @@ bool Irohad::restoreWsv() {
 /**
  * Initializing peer query interface
  */
-void Irohad::initPeerQuery() {
-  wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
-
-  log_->info("[Init] => peer query");
+std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
+  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
 }
 
 /**
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  shared_model::crypto::Keypair keypair_(
-      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
-      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
   crypto_signer_ =
-      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair_);
+      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair);
 
   log_->info("[Init] => crypto provider");
 }
@@ -160,8 +155,11 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(
-      wsv, max_proposal_size_, proposal_delay_, ordering_service_storage_);
+  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
+                                                 max_proposal_size_,
+                                                 proposal_delay_,
+                                                 ordering_service_storage_,
+                                                 storage->getBlockQuery());
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -183,8 +181,8 @@ void Irohad::initSimulator() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(
-      wsv, storage->getBlockQuery());
+  block_loader =
+      loader_init.initBlockLoader(initPeerQuery(), storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
@@ -193,8 +191,12 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(
-      wsv, simulator, block_loader, keypair, vote_delay_, load_delay_);
+  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+                                              simulator,
+                                              block_loader,
+                                              keypair,
+                                              vote_delay_,
+                                              load_delay_);
 
   log_->info("[Init] => consensus gate");
 }

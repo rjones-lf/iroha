@@ -19,7 +19,7 @@
 #define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
 #include "ametsuchi/storage.hpp"
-#include "model/query_execution.hpp"
+#include "execution/query_execution.hpp"
 #include "torii/processor/query_processor.hpp"
 
 namespace iroha {
