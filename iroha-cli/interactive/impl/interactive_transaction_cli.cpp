@@ -226,7 +226,7 @@ namespace iroha_cli {
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
           this, line, command_handlers_, command_params_descriptions_);
 
-      if (not res) {
+      if (not *res) {
         // Continue parsing
         return true;
       }
@@ -333,7 +333,7 @@ namespace iroha_cli {
           parser::parseValue<boost::multiprecision::uint256_t>(params[2]);
       auto precision = parser::parseValue<uint32_t>(params[3]);
       if (not val_int or not precision) {
-        std::cout << "Wrong format for amount" << std::endl;
+        std::cout << "Wrong format for amount or precision should be greater than 0" << std::endl;
         return nullptr;
       }
       if (precision.value() > 255) {
