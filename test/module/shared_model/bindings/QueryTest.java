@@ -457,6 +457,7 @@ public class QueryTest {
 
     // The following four tests are disabled because there is a need to
     // clarify desired behavior.
+    // TODO igor-egorov, 08.05.2018, IR-1322
     @Disabled
     @Test
     void getTransactionsWithEmptyVector() {
@@ -464,6 +465,7 @@ public class QueryTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    // TODO igor-egorov, 08.05.2018, IR-1325
     @Disabled
     @Test
     void getTransactionsWithInvalidHashSizes() {
@@ -482,6 +484,7 @@ public class QueryTest {
         }
     }
 
+    // TODO igor-egorov, 08.05.2018, IR-1325
     @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash1() {
@@ -495,6 +498,7 @@ public class QueryTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    // TODO igor-egorov, 08.05.2018, IR-1325
     @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash2() {
