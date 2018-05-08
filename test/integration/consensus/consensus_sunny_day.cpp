@@ -26,6 +26,7 @@
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 using ::testing::An;
+using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 
 using namespace iroha::consensus::yac;
@@ -114,7 +115,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     }
     if (num_peers == 1) {
       delay_before = 0;
-      delay_after = 50;
+      delay_after = 5 * 1000;
     } else {
       delay_before = 10 * 1000;
       delay_after = 3 * default_peers.size() + 10 * 1000;
@@ -130,13 +131,19 @@ std::vector<std::shared_ptr<shared_model::interface::Peer>>
     ConsensusSunnyDayTest::default_peers;
 
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
+  std::condition_variable cv;
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
   wrapper.subscribe(
       [](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; });
 
   EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
       .Times(1)
-      .WillRepeatedly(Return(true));
+      .WillRepeatedly(DoAll(InvokeWithoutArgs([&cv] {
+                              // wake up after commit is received from the
+                              // network so that it is safe to shutdown
+                              cv.notify_one();
+                            }),
+                            Return(true)));
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
   // Wait for other peers to start
@@ -148,7 +155,9 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   ASSERT_TRUE(order);
 
   yac->vote(my_hash, *order);
-  std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
+  std::mutex m;
+  std::unique_lock<std::mutex> lk(m);
+  cv.wait_for(lk, std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());
 }
