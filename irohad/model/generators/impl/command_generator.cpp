@@ -32,6 +32,7 @@
 #include "validators/permissions.hpp"
 
 using namespace generator;
+using namespace shared_model::permissions;
 
 namespace iroha {
   namespace model {

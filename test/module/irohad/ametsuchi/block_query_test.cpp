@@ -19,7 +19,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -83,13 +83,9 @@ class BlockQueryTest : public AmetsuchiTest {
             .build();
 
     for (const auto &b : {block1, block2}) {
-      // TODO IR-975 victordrobny 12.02.2018 convert from
-      // shared_model::proto::Block after FlatFile will be reworked to new
-      // model
-      auto old_block = *std::unique_ptr<iroha::model::Block>(b.makeOldModel());
       file->add(b.height(),
-                iroha::stringToBytes(iroha::model::converters::jsonToString(
-                    iroha::model::converters::JsonBlockFactory().serialize(old_block))));
+                iroha::stringToBytes(
+                    shared_model::converters::protobuf::modelToJson(b)));
       index->index(b);
       blocks_total++;
     }
@@ -104,7 +100,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
-  std::string zero_string = std::string("0", 32);
+  std::string zero_string = std::string(32, '0');
 };
 
 /**
@@ -167,10 +163,10 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
     static auto subs_cnt = 0;
     subs_cnt++;
     if (subs_cnt == 1) {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[1], (*tx)->hash());
     } else {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[3], (*tx)->hash());
     }
   });
@@ -186,7 +182,7 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string("9", 32));
+      invalid_tx_hash_2(std::string(32, '9'));
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
   wrapper.subscribe(
@@ -369,4 +365,26 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
       [&counter](const auto &b) { ASSERT_EQ(b->height(), counter++); });
 
   ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with preinserted blocks
+ * @when hasTxWithHash is invoked on existing transaction hash
+ * @then True is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithExistingHash) {
+  for (const auto &hash : tx_hashes) {
+    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+  }
+}
+
+/**
+ * @given block store with preinserted blocks
+ * user1@test AND 1 tx created by user2@test
+ * @when hasTxWithHash is invoked on non-existing hash
+ * @then False is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
+  shared_model::crypto::Hash invalid_tx_hash(zero_string);
+  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
 }

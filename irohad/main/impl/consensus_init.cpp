@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,14 +38,41 @@ namespace iroha {
         return consensus_network;
       }
 
-      auto YacInit::createCryptoProvider(const keypair_t &keypair) {
+      auto YacInit::createCryptoProvider(
+          const shared_model::crypto::Keypair &keypair) {
         auto crypto = std::make_shared<CryptoProviderImpl>(keypair);
 
         return crypto;
       }
 
-      auto YacInit::createTimer() {
-        return std::make_shared<TimerImpl>();
+      auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
+        return std::make_shared<TimerImpl>([delay_milliseconds] {
+          // static factory with a single thread
+          //
+          // observe_on_new_thread -- coordination which creates new thread with
+          // observe_on strategy -- all subsequent operations will be performed
+          // on this thread.
+          //
+          // scheduler owns a timeline that is exposed by the now() method.
+          // scheduler is also a factory for workers in that timeline.
+          //
+          // coordination is a factory for coordinators and has a scheduler.
+          //
+          // coordinator has a worker, and is a factory for coordinated
+          // observables, subscribers and schedulable functions.
+          //
+          // A new thread scheduler is created
+          // by calling .create_coordinator().get_scheduler()
+          //
+          // static allows to reuse the same thread in subsequent calls to this
+          // lambda
+          static rxcpp::observe_on_one_worker coordination(
+              rxcpp::observe_on_new_thread()
+                  .create_coordinator()
+                  .get_scheduler());
+          return rxcpp::observable<>::timer(
+              std::chrono::milliseconds(delay_milliseconds), coordination);
+        });
       }
 
       auto YacInit::createHashProvider() {
@@ -54,21 +81,20 @@ namespace iroha {
 
       std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
           ClusterOrdering initial_order,
-          const keypair_t &keypair,
+          const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds delay_milliseconds) {
         return Yac::create(YacVoteStorage(),
                            createNetwork(),
                            createCryptoProvider(keypair),
-                           createTimer(),
-                           initial_order,
-                           delay_milliseconds.count());
+                           createTimer(delay_milliseconds),
+                           initial_order);
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
-          const keypair_t &keypair,
+          const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds vote_delay_milliseconds,
           std::chrono::milliseconds load_delay_milliseconds) {
         auto peer_orderer = createPeerOrderer(wsv);

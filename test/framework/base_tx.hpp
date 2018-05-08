@@ -35,7 +35,6 @@ namespace framework {
             user,
             integration_framework::IntegrationTestFramework::kDefaultDomain,
             key)
-        .txCounter(1)
         .creatorAccountId(
             integration_framework::IntegrationTestFramework::kAdminId)
         .createdTime(iroha::time::now());

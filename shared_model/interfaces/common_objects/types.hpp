@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_TYPES_HPP
 #define IROHA_SHARED_MODEL_TYPES_HPP
 
+#include <boost/range/any_range.hpp>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -64,10 +65,9 @@ namespace shared_model {
       using PermissionSetType = std::set<PermissionNameType>;
       /// Type of Quorum used in transaction and set quorum
       using QuorumType = uint32_t;
-      /// Type of transaction signature
-      // TODO Alexey Chernyshov 2018-03-28 - remove PolymorphicWrapper here
-      // https://soramitsu.atlassian.net/browse/IR-1175
-      using SignatureType = detail::PolymorphicWrapper<Signature>;
+      /// Type of signature range, which returns when signatures are invoked
+      using SignatureRangeType = boost::any_range<const interface::Signature &,
+                                                  boost::forward_traversal_tag>;
       /// Type of timestamp
       using TimestampType = uint64_t;
       /// Type of peer address

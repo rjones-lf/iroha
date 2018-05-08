@@ -163,6 +163,7 @@ namespace iroha {
                    rxcpp::observable<wBlock>(
                        shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {

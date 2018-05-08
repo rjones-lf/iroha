@@ -20,9 +20,11 @@
 
 #include "network/ordering_gate.hpp"
 
-#include <atomic>
-#include <tbb/concurrent_queue.h>
+#include <mutex>
 
+#include <tbb/concurrent_priority_queue.h>
+
+#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
@@ -38,6 +40,15 @@ namespace iroha {
   namespace ordering {
 
     /**
+     * Compare proposals by height
+     */
+    struct ProposalComparator {
+      bool operator()(
+          const std::shared_ptr<shared_model::interface::Proposal> &lhs,
+          const std::shared_ptr<shared_model::interface::Proposal> &rhs) const;
+    };
+
+    /**
      * OrderingGate implementation with gRPC asynchronous client
      * Interacts with given OrderingService
      * by propagating transactions and receiving proposals
@@ -46,8 +57,16 @@ namespace iroha {
     class OrderingGateImpl : public network::OrderingGate,
                              public network::OrderingGateNotification {
      public:
-      explicit OrderingGateImpl(
-          std::shared_ptr<iroha::network::OrderingGateTransport> transport);
+      /**
+       * @param transport - network communication layer
+       * @param initial_height - height of the last block stored on this peer
+       * @param run_async - whether proposals should be handled
+       * asynchronously (on separate thread). Default is true.
+       */
+      OrderingGateImpl(
+          std::shared_ptr<iroha::network::OrderingGateTransport> transport,
+          shared_model::interface::types::HeightType initial_height,
+          bool run_async = true);
 
       void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
@@ -66,25 +85,39 @@ namespace iroha {
      private:
       /**
        * Try to push proposal for next consensus round
+       * @param - last_block_height - what is the last block stored on this
+       * peer, or for which commit was received. If block is newer than
+       * currently stored proposals, proposals are discarded. If it is older,
+       * newer proposals are propagated in order
        */
-      void tryNextRound();
+      void tryNextRound(
+          shared_model::interface::types::HeightType last_block_height);
 
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposals_;
+
+      rxcpp::subjects::subject<shared_model::interface::types::HeightType>
+          net_proposals_;
       std::shared_ptr<iroha::network::OrderingGateTransport> transport_;
 
-      /// invariant: true if proposal can be pushed to subscribers
-      std::atomic_bool unlock_next_{true};
+      std::mutex proposal_mutex_;
 
       /// queue with all proposals received from ordering service
-      tbb::concurrent_queue<std::shared_ptr<shared_model::interface::Proposal>>
+      tbb::concurrent_priority_queue<
+          std::shared_ptr<shared_model::interface::Proposal>,
+          ProposalComparator>
           proposal_queue_;
+
+      /// last commited block height
+      shared_model::interface::types::HeightType last_block_height_;
 
       /// subscription of pcs::on_commit
       rxcpp::composite_subscription pcs_subscriber_;
 
       logger::Logger log_;
+
+      bool run_async_;
     };
   }  // namespace ordering
 }  // namespace iroha

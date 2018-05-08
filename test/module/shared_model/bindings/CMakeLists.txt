@@ -36,7 +36,7 @@ if (SWIG_PYTHON)
   if(SUPPORT_PYTHON2)
     find_package(PythonInterp 2.7 REQUIRED)
   else()
-    find_package(PythonInterp 3.6 REQUIRED)
+    find_package(PythonInterp 3.5 REQUIRED)
   endif()
   add_test(NAME python_transaction_test
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
@@ -67,4 +67,11 @@ if (SWIG_JAVA)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   set_tests_properties(java_builders_test
     PROPERTIES DEPENDS builders)
+endif()
+
+if (SWIG_NODE)
+  find_package (nodejs REQUIRED)
+  add_test(NAME javascript_tests
+    COMMAND npm run build-and-test
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/shared_model/packages/javascript)
 endif()

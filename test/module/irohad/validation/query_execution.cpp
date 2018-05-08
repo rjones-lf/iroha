@@ -25,10 +25,10 @@
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "execution/query_execution.hpp"
 #include "framework/test_subscriber.hpp"
-#include "validators/permissions.hpp"
-#include "model/query_execution.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "validators/permissions.hpp"
 
 using ::testing::AllOf;
 using ::testing::AtLeast;
@@ -36,9 +36,11 @@ using ::testing::Return;
 using ::testing::StrictMock;
 using ::testing::_;
 
+using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::model;
 using namespace framework::test_subscriber;
+using namespace shared_model::permissions;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
 
@@ -75,20 +77,16 @@ class QueryValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
       const shared_model::interface::Query &query) {
-    return factory->execute(query);
+    return factory->validateAndExecute(query);
   }
 
   /**
    * Make transaction with specified parameters
-   * @param counter
    * @param creator
    * @return wrapper with created transaction
    */
-  wTransaction makeTransaction(int counter, std::string creator) {
-    return clone(TestTransactionBuilder()
-                     .creatorAccountId(creator)
-                     .txCounter(counter)
-                     .build());
+  wTransaction makeTransaction(std::string creator) {
+    return clone(TestTransactionBuilder().creatorAccountId(creator).build());
   }
 
   /**
@@ -101,7 +99,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
     return rxcpp::observable<>::iterate([&creator, &N, this] {
       std::vector<wTransaction> result;
       for (size_t i = 0; i < N; ++i) {
-        auto current = makeTransaction(i, creator);
+        auto current = makeTransaction(creator);
         result.push_back(current);
       }
       return result;

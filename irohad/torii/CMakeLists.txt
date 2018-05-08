@@ -20,22 +20,20 @@ add_library(command_client command_client.cpp)
 target_link_libraries(command_client
     torii_service
     endpoint
-    model
+    schema
     )
-
 target_link_libraries(query_client
-        torii_service
-        endpoint
-        )
+    torii_service
+    endpoint
+    )
 
 add_library(torii_service
     impl/query_service.cpp
     impl/command_service.cpp
     )
 target_link_libraries(torii_service
-    pb_model_converters
     endpoint
-    model
+    shared_model_proto_backend
     logger
     shared_model_stateless_validation
     )

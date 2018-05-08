@@ -20,6 +20,7 @@ enum TxStatus {
 message ToriiResponse {
   TxStatus tx_status = 1;
   bytes tx_hash = 2;
+  string error_message = 3;
 }
 
 message TxStatusRequest{

@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,9 +35,9 @@ namespace iroha {
             "Crypto verification failed for message.\n Votes: ";
         result += logger::to_string(votes, [](const auto &vote) {
           std::string result = "(Public key: ";
-          result += vote.signature.pubkey.to_hexstring();
+          result += vote.signature->publicKey().hex();
           result += ", Signature: ";
-          result += vote.signature.signature.to_hexstring();
+          result += vote.signature->signedData().hex();
           result += ")\n";
           return result;
         });
@@ -54,24 +54,21 @@ namespace iroha {
           std::shared_ptr<YacNetwork> network,
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
-          ClusterOrdering order,
-          uint64_t delay) {
+          ClusterOrdering order) {
         return std::make_shared<Yac>(
-            vote_storage, network, crypto, timer, order, delay);
+            vote_storage, network, crypto, timer, order);
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
                std::shared_ptr<YacNetwork> network,
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
-               ClusterOrdering order,
-               uint64_t delay)
+               ClusterOrdering order)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
-            cluster_order_(order),
-            delay_(delay) {
+            cluster_order_(order){
         log_ = logger::log("YAC");
       }
 
@@ -137,8 +134,7 @@ namespace iroha {
         network_->send_vote(cluster_order_.currentLeader(), vote);
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
-          timer_->invokeAfterDelay(delay_,
-                                   [this, vote] { this->votingStep(vote); });
+          timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
         }
       }
 
@@ -151,11 +147,7 @@ namespace iroha {
         auto peers = cluster_order_.getPeers();
         auto it =
             std::find_if(peers.begin(), peers.end(), [&](const auto &peer) {
-              // TODO: 24/03/2018 x3medima17, remove makeOldModel after
-              // migrating VoteMessage to the new model
-              auto old_peer =
-                  *std::unique_ptr<model::Peer>(peer->makeOldModel());
-              return old_peer.pubkey == vote.signature.pubkey;
+              return peer->pubkey() == vote.signature->publicKey();
             });
         return it != peers.end() ? boost::make_optional(std::move(*it))
                                  : boost::none;
@@ -210,8 +202,8 @@ namespace iroha {
                              // IR-497
                            },
                            [&](const CommitMessage &commit) {
-                             notifier_.get_subscriber().on_next(commit);
                              this->propagateCommit(commit);
+                             notifier_.get_subscriber().on_next(commit);
                            });
           }
           this->closeRound();
@@ -228,7 +220,7 @@ namespace iroha {
         } else {
           log_->info("Apply vote: {} from unknown peer {}",
                      vote.hash.block_hash,
-                     vote.signature.pubkey.to_hexstring());
+                     vote.signature->publicKey().hex());
         }
 
         auto answer =
@@ -246,8 +238,8 @@ namespace iroha {
                              // propagate for all
                              log_->info("Propagate commit {} to whole network",
                                         vote.hash.block_hash);
-                             notifier_.get_subscriber().on_next(commit);
                              this->propagateCommit(commit);
+                             notifier_.get_subscriber().on_next(commit);
                            },
                            [&](const RejectMessage &reject) {
                              // propagate reject for all

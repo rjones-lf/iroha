@@ -19,13 +19,17 @@
 #define IROHA_RAW_BLOCK_INSERTION_HPP
 
 #include <memory>
-#include <boost/optional.hpp>
 #include <string>
-#include <vector>
-#include "ametsuchi/storage.hpp"
+
+#include <boost/optional.hpp>
+
 #include "logger/logger.hpp"
-#include "model/block.hpp"
-#include "model/converters/json_block_factory.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}
 
 namespace iroha {
   namespace main {
@@ -44,19 +48,17 @@ namespace iroha {
        * @param data - raw presenetation of block
        * @return object if operation done successfully, nullopt otherwise
        */
-      boost::optional<model::Block> parseBlock(std::string data);
+      boost::optional<std::shared_ptr<shared_model::interface::Block>>
+      parseBlock(const std::string &data);
 
       /**
-       * Additional method
        * Loading file from target path
        * @param path - target file
-       * @return string with content or nullopt
+       * @return string with file content or nullopt
        */
-      boost::optional<std::string> loadFile(std::string path);
+      boost::optional<std::string> loadFile(const std::string &path);
 
      private:
-      model::converters::JsonBlockFactory block_factory_;
-
       logger::Logger log_;
     };
 

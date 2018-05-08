@@ -67,7 +67,7 @@ Go to the NPM package directory and start the build process
 .. code-block:: shell
 
   cd iroha/shared_model/packages/javascript
-  npm install
+  npm install --build-from-source=iroha-lib
 
 That's all. You can use the library now.
 

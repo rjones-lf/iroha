@@ -43,6 +43,7 @@ using namespace rapidjson;
 using namespace iroha;
 using namespace iroha::model;
 using namespace iroha::model::converters;
+using namespace shared_model::permissions;
 
 class JsonCommandTest : public ::testing::Test {
  public:

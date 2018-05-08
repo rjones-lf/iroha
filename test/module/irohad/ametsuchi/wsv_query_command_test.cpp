@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,10 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "model/account.hpp"
-#include "model/asset.hpp"
-#include "model/domain.hpp"
-#include "model/peer.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/shared_model/builders/protobuf/test_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -33,12 +31,15 @@ namespace iroha {
     class WsvQueryCommandTest : public AmetsuchiTest {
      public:
       WsvQueryCommandTest() {
-        domain.domain_id = "domain";
-        domain.default_role = role;
-        account.domain_id = domain.domain_id;
-        account.account_id = "id@" + account.domain_id;
-        account.quorum = 1;
-        account.json_data = R"({"id@domain": {"key": "value"}})";
+        domain = clone(
+            TestDomainBuilder().domainId("domain").defaultRole(role).build());
+
+        account = clone(TestAccountBuilder()
+                            .domainId(domain->domainId())
+                            .accountId("id@" + domain->domainId())
+                            .quorum(1)
+                            .jsonData(R"({"id@domain": {"key": "value"}})")
+                            .build());
       }
 
       void SetUp() override {
@@ -59,8 +60,8 @@ namespace iroha {
       }
 
       std::string role = "role", permission = "permission";
-      model::Account account;
-      model::Domain domain;
+      std::unique_ptr<shared_model::interface::Account> account;
+      std::unique_ptr<shared_model::interface::Domain> domain;
 
       std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::unique_ptr<pqxx::nontransaction> wsv_transaction;
@@ -71,17 +72,26 @@ namespace iroha {
 
     class RoleTest : public WsvQueryCommandTest {};
 
+    /**
+     * @given WSV command and valid role name
+     * @when trying to insert new role
+     * @then role is successfully inserted
+     */
     TEST_F(RoleTest, InsertRoleWhenValidName) {
-      ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
+      ASSERT_TRUE(val(command->insertRole(role)));
       auto roles = query->getRoles();
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
       ASSERT_EQ(role, roles->front());
     }
 
+    /**
+     * @given WSV command and invalid role name
+     * @when trying to insert new role
+     * @then role is failed
+     */
     TEST_F(RoleTest, InsertRoleWhenInvalidName) {
-      ASSERT_NO_THROW(
-          checkErrorCase(command->insertRole(std::string(46, 'a'))));
+      ASSERT_TRUE(err(command->insertRole(std::string(46, 'a'))));
 
       auto roles = query->getRoles();
       ASSERT_TRUE(roles);
@@ -91,13 +101,17 @@ namespace iroha {
     class RolePermissionsTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
-        ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
+        ASSERT_TRUE(val(command->insertRole(role)));
       }
     };
 
+    /**
+     * @given WSV command and role exists and valid permissions
+     * @when trying to insert role permissions
+     * @then RolePermissions are inserted
+     */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenRoleExists) {
-      ASSERT_NO_THROW(
-          checkValueCase(command->insertRolePermissions(role, {permission})));
+      ASSERT_TRUE(val(command->insertRolePermissions(role, {permission})));
 
       auto permissions = query->getRolePermissions(role);
       ASSERT_TRUE(permissions);
@@ -105,10 +119,14 @@ namespace iroha {
       ASSERT_EQ(permission, permissions->front());
     }
 
+    /**
+     * @given WSV command and role doesn't exist and valid permissions
+     * @when trying to insert role permissions
+     * @then RolePermissions are not inserted
+     */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenNoRole) {
       auto new_role = role + " ";
-      ASSERT_NO_THROW(checkErrorCase(
-          command->insertRolePermissions(new_role, {permission})));
+      ASSERT_TRUE(err(command->insertRolePermissions(new_role, {permission})));
 
       auto permissions = query->getRolePermissions(new_role);
       ASSERT_TRUE(permissions);
@@ -118,9 +136,8 @@ namespace iroha {
     class AccountTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
-        ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
+        ASSERT_TRUE(val(command->insertRole(role)));
+        ASSERT_TRUE(val(command->insertDomain(*domain)));
       }
     };
 
@@ -130,11 +147,10 @@ namespace iroha {
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertAccountWithJSONData) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertAccount(shared_model::proto::from_old(account))));
-      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
-      ASSERT_EQ(account.json_data, acc.value()->jsonData());
+      ASSERT_EQ(account->jsonData(), acc.value()->jsonData());
     }
 
     /**
@@ -143,11 +159,10 @@ namespace iroha {
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewJSONDataAccount) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertAccount(shared_model::proto::from_old(account))));
-      ASSERT_NO_THROW(checkValueCase(command->setAccountKV(
-          account.account_id, account.account_id, "id", "val")));
-      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "id", "val")));
+      auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
       ASSERT_EQ(R"({"id@domain": {"id": "val", "key": "value"}})",
                 acc.value()->jsonData());
@@ -159,11 +174,10 @@ namespace iroha {
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewJSONDataToOtherAccount) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertAccount(shared_model::proto::from_old(account))));
-      ASSERT_NO_THROW(checkValueCase(
-          command->setAccountKV(account.account_id, "admin", "id", "val")));
-      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(
+          command->setAccountKV(account->accountId(), "admin", "id", "val")));
+      auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
       ASSERT_EQ(R"({"admin": {"id": "val"}, "id@domain": {"key": "value"}})",
                 acc.value()->jsonData());
@@ -175,11 +189,10 @@ namespace iroha {
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, InsertNewComplexJSONDataAccount) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertAccount(shared_model::proto::from_old(account))));
-      ASSERT_NO_THROW(checkValueCase(command->setAccountKV(
-          account.account_id, account.account_id, "id", "[val1, val2]")));
-      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "id", "[val1, val2]")));
+      auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
       ASSERT_EQ(R"({"id@domain": {"id": "[val1, val2]", "key": "value"}})",
                 acc.value()->jsonData());
@@ -191,11 +204,10 @@ namespace iroha {
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, UpdateAccountJSONData) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertAccount(shared_model::proto::from_old(account))));
-      ASSERT_NO_THROW(checkValueCase(command->setAccountKV(
-          account.account_id, account.account_id, "key", "val2")));
-      auto acc = query->getAccount(account.account_id);
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "key", "val2")));
+      auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
       ASSERT_EQ(R"({"id@domain": {"key": "val2"}})", acc.value()->jsonData());
     }
@@ -221,40 +233,51 @@ namespace iroha {
     class AccountRoleTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
-        ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertAccount(shared_model::proto::from_old(account))));
+        ASSERT_TRUE(val(command->insertRole(role)));
+        ASSERT_TRUE(val(command->insertDomain(*domain)));
+        ASSERT_TRUE(val(command->insertAccount(*account)));
       }
     };
 
+    /**
+     * @given WSV command and account exists and valid account role
+     * @when trying to insert account
+     * @then account role is inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenAccountRoleExist) {
-      ASSERT_NO_THROW(
-          checkValueCase(command->insertAccountRole(account.account_id, role)));
+      ASSERT_TRUE(val(command->insertAccountRole(account->accountId(), role)));
 
-      auto roles = query->getAccountRoles(account.account_id);
+      auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
       ASSERT_EQ(role, roles->front());
     }
 
+    /**
+     * @given WSV command and account does not exist and valid account role
+     * @when trying to insert account
+     * @then account role is not inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenNoAccount) {
-      auto account_id = account.account_id + " ";
-      ASSERT_NO_THROW(
-          checkErrorCase(command->insertAccountRole(account_id, role)));
+      auto account_id = account->accountId() + " ";
+      ASSERT_TRUE(err(command->insertAccountRole(account_id, role)));
 
       auto roles = query->getAccountRoles(account_id);
       ASSERT_TRUE(roles);
       ASSERT_EQ(0, roles->size());
     }
 
+    /**
+     * @given WSV command and account exists and invalid account role
+     * @when trying to insert account
+     * @then account role is not inserted
+     */
     TEST_F(AccountRoleTest, InsertAccountRoleWhenNoRole) {
       auto new_role = role + " ";
-      ASSERT_NO_THROW(checkErrorCase(
-          command->insertAccountRole(account.account_id, new_role)));
+      ASSERT_TRUE(
+          err(command->insertAccountRole(account->accountId(), new_role)));
 
-      auto roles = query->getAccountRoles(account.account_id);
+      auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_EQ(0, roles->size());
     }
@@ -265,11 +288,9 @@ namespace iroha {
      * @then role is detached
      */
     TEST_F(AccountRoleTest, DeleteAccountRoleWhenExist) {
-      ASSERT_NO_THROW(
-          checkValueCase(command->insertAccountRole(account.account_id, role)));
-      ASSERT_NO_THROW(
-          checkValueCase(command->deleteAccountRole(account.account_id, role)));
-      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(val(command->insertAccountRole(account->accountId(), role)));
+      ASSERT_TRUE(val(command->deleteAccountRole(account->accountId(), role)));
+      auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_EQ(0, roles->size());
     }
@@ -280,10 +301,9 @@ namespace iroha {
      * @then nothing is deleted
      */
     TEST_F(AccountRoleTest, DeleteAccountRoleWhenNoAccount) {
-      ASSERT_NO_THROW(
-          checkValueCase(command->insertAccountRole(account.account_id, role)));
-      ASSERT_NO_THROW(checkValueCase(command->deleteAccountRole("no", role)));
-      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(val(command->insertAccountRole(account->accountId(), role)));
+      ASSERT_TRUE(val(command->deleteAccountRole("no", role)));
+      auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
     }
@@ -294,85 +314,96 @@ namespace iroha {
      * @then nothing is deleted
      */
     TEST_F(AccountRoleTest, DeleteAccountRoleWhenNoRole) {
-      ASSERT_NO_THROW(
-          checkValueCase(command->insertAccountRole(account.account_id, role)));
-      ASSERT_NO_THROW(
-          checkValueCase(command->deleteAccountRole(account.account_id, "no")));
-      auto roles = query->getAccountRoles(account.account_id);
+      ASSERT_TRUE(val(command->insertAccountRole(account->accountId(), role)));
+      ASSERT_TRUE(val(command->deleteAccountRole(account->accountId(), "no")));
+      auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_EQ(1, roles->size());
     }
 
     class AccountGrantablePermissionTest : public WsvQueryCommandTest {
      public:
-      AccountGrantablePermissionTest() {
-        permittee_account = account;
-        permittee_account.account_id = "id2@" + permittee_account.domain_id;
-        permittee_account.quorum = 1;
-      }
-
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
-        ASSERT_NO_THROW(checkValueCase(command->insertRole(role)));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertDomain(shared_model::proto::from_old(domain))));
-        ASSERT_NO_THROW(checkValueCase(
-            command->insertAccount(shared_model::proto::from_old(account))));
-        ASSERT_NO_THROW(checkValueCase(command->insertAccount(
-            shared_model::proto::from_old(permittee_account))));
+
+        permittee_account =
+            clone(TestAccountBuilder()
+                      .domainId(domain->domainId())
+                      .accountId("id2@" + domain->domainId())
+                      .quorum(1)
+                      .jsonData(R"({"id@domain": {"key": "value"}})")
+                      .build());
+
+        ASSERT_TRUE(val(command->insertRole(role)));
+        ASSERT_TRUE(val(command->insertDomain(*domain)));
+        ASSERT_TRUE(val(command->insertAccount(*account)));
+        ASSERT_TRUE(val(command->insertAccount(*permittee_account)));
       }
 
-      model::Account permittee_account;
+      std::shared_ptr<shared_model::interface::Account> permittee_account;
     };
 
+    /**
+     * @given WSV command and account exists and valid grantable permissions
+     * @when trying to insert grantable permissions
+     * @then grantable permissions are inserted
+     */
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenAccountsExist) {
-      ASSERT_NO_THROW(checkValueCase(command->insertAccountGrantablePermission(
-          permittee_account.account_id, account.account_id, permission)));
+      ASSERT_TRUE(val(command->insertAccountGrantablePermission(
+          permittee_account->accountId(), account->accountId(), permission)));
 
       ASSERT_TRUE(query->hasAccountGrantablePermission(
-          permittee_account.account_id, account.account_id, permission));
+          permittee_account->accountId(), account->accountId(), permission));
     }
 
+    /**
+     * @given WSV command and invalid permittee and valid grantable permissions
+     * @when trying to insert grantable permissions
+     * @then grantable permissions are not inserted
+     */
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenNoPermitteeAccount) {
-      auto permittee_account_id = permittee_account.account_id + " ";
-      ASSERT_NO_THROW(checkErrorCase(command->insertAccountGrantablePermission(
-          permittee_account_id, account.account_id, permission)));
+      auto permittee_account_id = permittee_account->accountId() + " ";
+      ASSERT_TRUE(err(command->insertAccountGrantablePermission(
+          permittee_account_id, account->accountId(), permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account_id, account.account_id, permission));
+          permittee_account_id, account->accountId(), permission));
     }
 
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenNoAccount) {
-      auto account_id = account.account_id + " ";
-      ASSERT_NO_THROW(checkErrorCase(command->insertAccountGrantablePermission(
-          permittee_account.account_id, account_id, permission)));
+      auto account_id = account->accountId() + " ";
+      ASSERT_TRUE(err(command->insertAccountGrantablePermission(
+          permittee_account->accountId(), account_id, permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account.account_id, account_id, permission));
+          permittee_account->accountId(), account_id, permission));
     }
 
+    /**
+     * @given WSV command to delete grantable permission with valid parameters
+     * @when trying to delete grantable permissions
+     * @then grantable permissions are deleted
+     */
     TEST_F(AccountGrantablePermissionTest,
            DeleteAccountGrantablePermissionWhenAccountsPermissionExist) {
-      ASSERT_NO_THROW(checkValueCase(command->deleteAccountGrantablePermission(
-          permittee_account.account_id, account.account_id, permission)));
+      ASSERT_TRUE(val(command->deleteAccountGrantablePermission(
+          permittee_account->accountId(), account->accountId(), permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account.account_id, account.account_id, permission));
+          permittee_account->accountId(), account->accountId(), permission));
     }
 
     class DeletePeerTest : public WsvQueryCommandTest {
      public:
-      DeletePeerTest() {
-        peer = model::Peer();
-      }
-
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
+
+        peer = clone(TestPeerBuilder().build());
       }
-      model::Peer peer;
+      std::unique_ptr<shared_model::interface::Peer> peer;
     };
 
     /**
@@ -381,11 +412,9 @@ namespace iroha {
      * @then peer is successfully deleted
      */
     TEST_F(DeletePeerTest, DeletePeerValidWhenPeerExists) {
-      ASSERT_NO_THROW(checkValueCase(
-          command->insertPeer(shared_model::proto::from_old(peer))));
+      ASSERT_TRUE(val(command->insertPeer(*peer)));
 
-      ASSERT_NO_THROW(checkValueCase(
-          command->deletePeer(shared_model::proto::from_old(peer))));
+      ASSERT_TRUE(val(command->deletePeer(*peer)));
     }
 
     class GetAssetTest : public WsvQueryCommandTest {};
