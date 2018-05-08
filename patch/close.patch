@@ -1,0 +1,29 @@
+diff --git a/lib/randombytes/random/random.c b/lib/randombytes/random/random.c
+index e5eca79..e6e862e 100644
+--- a/lib/randombytes/random/random.c
++++ b/lib/randombytes/random/random.c
+@@ -13,6 +13,7 @@ int randombytes(unsigned char *p, int len) {
+     while (completed < len) {
+       ssize_t result = read(source, p + completed, len - completed);
+       if (result < 0) {
++        close(source);
+         return ED25519_ERROR;
+       }
+       completed += result;
+diff --git a/lib/randombytes/urandom/urandom.c b/lib/randombytes/urandom/urandom.c
+index ecad2cf..5b4ec0d 100644
+--- a/lib/randombytes/urandom/urandom.c
++++ b/lib/randombytes/urandom/urandom.c
+@@ -9,9 +9,12 @@ int randombytes(unsigned char *p, int len) {
+   } else {
+     ssize_t result = read(source, p, len);
+     if (result < 0) {
++      close(source);
+       return ED25519_ERROR; /* something went wrong */
+     }
+   }
+ 
++  close(source);
++
+   return ED25519_SUCCESS;
+ }

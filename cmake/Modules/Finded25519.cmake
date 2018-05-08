@@ -16,10 +16,16 @@ set(VERSION e7188b8393dbe5ac54378610d53630bd4a180038)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
 if (NOT ed25519_FOUND)
+  if (NOT WIN32)
+    find_package(Git REQUIRED)
+    set(PATCH_RANDOM ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/close.patch || true)
+  endif ()
+
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}
       CMAKE_ARGS     -DTESTING=OFF -DBUILD=STATIC
+      PATCH_COMMAND  ${PATCH_RANDOM}
       BUILD_BYPRODUCTS ${EP_PREFIX}/src/hyperledger_ed25519-build/libed25519.a
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND    "" # remove test step
