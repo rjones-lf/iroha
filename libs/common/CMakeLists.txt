@@ -5,7 +5,7 @@ add_library(libs_common
 target_link_libraries(libs_common
     logger
     )
-
+target_link_libraries(libs_common boost)
 add_library(common INTERFACE)
 target_include_directories(common INTERFACE
     ${PROJECT_SOURCE_DIR}/libs/common
