@@ -2,9 +2,10 @@
 
 def doDebugBuild(coverageEnabled=false) {
   def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
+  def pCommit = load ".jenkinsci/previous-commit.groovy"
   def parallelism = params.PARALLELISM
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
-  def previousCommit = !env.GIT_PREVIOUS_COMMIT ? env.GIT_COMMIT : env.GIT_PREVIOUS_COMMIT
+  def previousCommit = pCommit.previousCommitOrCurrent()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default. 

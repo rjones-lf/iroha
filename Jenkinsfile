@@ -401,8 +401,9 @@ pipeline {
         script {
           def bindings = load ".jenkinsci/bindings.groovy"
           def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
+          def pCommit = load ".jenkinsci/previous-commit.groovy"
           def platform = sh(script: 'uname -m', returnStdout: true).trim()
-          def previousCommit = !env.GIT_PREVIOUS_COMMIT ? env.GIT_COMMIT : env.GIT_PREVIOUS_COMMIT
+          def previousCommit = pCommit.previousCommitOrCurrent()
           if (params.JavaBindings) {
             iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop-build",
                                                  "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
