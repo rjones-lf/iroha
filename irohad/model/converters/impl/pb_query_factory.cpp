@@ -160,12 +160,10 @@ namespace iroha {
 
       void PbQueryFactory::serializeQueryMetaData(
           protocol::Query &pb_query, std::shared_ptr<const Query> query) const {
-        auto pl = pb_query.mutable_payload();
         auto *meta = pb_query.mutable_payload()->mutable_meta();
         meta->set_created_time(query->created_ts);
         meta->set_creator_account_id(query->creator_account_id);
         meta->set_query_counter(query->query_counter);
-        pl->set_allocated_meta(meta);
         // Set signatures
         auto sig = pb_query.mutable_signature();
         sig->set_signature(query->signature.signature.to_string());
