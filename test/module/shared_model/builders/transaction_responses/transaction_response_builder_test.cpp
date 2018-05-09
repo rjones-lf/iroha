@@ -28,8 +28,8 @@ using shared_model::builder::TransactionStatusBuilder;
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, StatelessFailedStatus) {
-  using StatelessFailedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatelessFailedTxResponse>;
+  using StatelessFailedStatusType =
+      shared_model::interface::StatelessFailedTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -52,8 +52,8 @@ TEST(TransactionResponseBuilderTest, StatelessFailedStatus) {
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, StatelessValidStatus) {
-  using StatelessValidStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatelessValidTxResponse>;
+  using StatelessValidStatusType =
+      shared_model::interface::StatelessValidTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -76,8 +76,8 @@ TEST(TransactionResponseBuilderTest, StatelessValidStatus) {
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, StatefulFailedStatus) {
-  using StatefulFailedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulFailedTxResponse>;
+  using StatefulFailedStatusType =
+      shared_model::interface::StatefulFailedTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -100,8 +100,8 @@ TEST(TransactionResponseBuilderTest, StatefulFailedStatus) {
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, StatefulValidStatus) {
-  using StatefulValidStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulValidTxResponse>;
+  using StatefulValidStatusType =
+      shared_model::interface::StatefulValidTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -124,8 +124,7 @@ TEST(TransactionResponseBuilderTest, StatefulValidStatus) {
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, CommittedStatus) {
-  using CommittedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::CommittedTxResponse>;
+  using CommittedStatusType = shared_model::interface::CommittedTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -148,8 +147,7 @@ TEST(TransactionResponseBuilderTest, CommittedStatus) {
  * @then built object has expected status and hash
  */
 TEST(TransactionResponseBuilderTest, NotReceivedStatus) {
-  using NotReceivedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::NotReceivedTxResponse>;
+  using NotReceivedStatusType = shared_model::interface::NotReceivedTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 
@@ -172,8 +170,7 @@ TEST(TransactionResponseBuilderTest, NotReceivedStatus) {
  * @then Two constructed TransactionStatus objects are identical
  */
 TEST(ProtoTransactionStatusBuilderTest, SeveralObjectsFromOneBuilder) {
-  using NotReceivedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::NotReceivedTxResponse>;
+  using NotReceivedStatusType = shared_model::interface::NotReceivedTxResponse;
 
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
 

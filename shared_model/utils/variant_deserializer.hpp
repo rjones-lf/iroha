@@ -52,6 +52,9 @@ namespace shared_model {
        * Deserializer implementation
        */
       struct load_impl {
+        template <typename T>
+        using FrontType = typename boost::mpl::front<T>::type;
+
         /**
          * Deserialize container in variant using type in list by specified
          * index
@@ -65,10 +68,12 @@ namespace shared_model {
          * @param v result variant
          */
         template <class V, class T = typename V::types, class Archive>
-        static V invoke(Archive &&ar, int which) {
+        static auto invoke(Archive &&ar, int which) -> typename std::enable_if<
+            not std::is_same<FrontType<S>, FrontType<T>>::value,
+            V>::type {
           if (which == 0) {
-            using head_type = typename boost::mpl::front<S>::type;
-            using variant_head_type = typename boost::mpl::front<T>::type;
+            using head_type = FrontType<S>;
+            using variant_head_type = FrontType<T>;
             // Given two variant type lists T and S, where T is list of abstract
             // types, and S is list of implementations, ensure that there is a
             // corresponding implementation for each abstract type
@@ -80,6 +85,33 @@ namespace shared_model {
                 "variant_head_type is not base of head_type");
             return V(head_type(new typename head_type::WrappedType(
                 std::forward<Archive>(ar))));
+          } else {
+            using type = typename boost::mpl::pop_front<S>::type;
+            using variant_type = typename boost::mpl::pop_front<T>::type;
+            return variant_impl<type>::template load<V, variant_type>(
+                std::forward<Archive>(ar), which - 1);
+          }
+        }
+
+        /**
+         * Deserialize container in variant using type in list by specified
+         * index
+         * If type selector is 0, head type is required type, and it is used
+         * Otherwise call helper without front element in type list
+         * @tparam V variant type for deserialization
+         * @tparam T list of candidate types
+         * @tparam Archive container type
+         * @param ar container to be deserialized
+         * @param which type index in list
+         * @param v result variant
+         */
+        template <class V, class T = typename V::types, class Archive>
+        static auto invoke(Archive &&ar, int which) -> typename std::enable_if<
+            std::is_same<FrontType<S>, FrontType<T>>::value,
+            V>::type {
+          if (which == 0) {
+            using head_type = FrontType<S>;
+            return V(head_type(std::forward<Archive>(ar)));
           } else {
             using type = typename boost::mpl::pop_front<S>::type;
             using variant_type = typename boost::mpl::pop_front<T>::type;

@@ -26,19 +26,28 @@ namespace shared_model {
   namespace interface {
     template <typename Type>
     class SpecifiedVisitor
-        : public boost::static_visitor<
-              boost::optional<shared_model::detail::PolymorphicWrapper<Type>>> {
+        : public boost::static_visitor<boost::optional<const Type &>> {
      private:
-      using Y = shared_model::detail::PolymorphicWrapper<Type>;
+      using Y = shared_model::detail::PolymorphicWrapper<
+          std::remove_cv_t<std::remove_reference_t<Type>>>;
 
      public:
-      boost::optional<Y> operator()(const Y &t) const {
+      boost::optional<const Type &> operator()(const Y &t) const {
+        return *t;
+      }
+
+      boost::optional<const Type &> operator()(const Type &t) const {
         return t;
       }
 
       template <typename T>
-      boost::optional<Y> operator()(
+      boost::optional<const Type &> operator()(
           const shared_model::detail::PolymorphicWrapper<T> &t) const {
+        return boost::none;
+      }
+
+      template <typename T>
+      boost::optional<const Type &> operator()(const T &t) const {
         return boost::none;
       }
     };

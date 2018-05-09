@@ -23,20 +23,6 @@
 #include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T, typename Archive>
-auto loadTxResponse(Archive &&ar) {
-  unsigned which = ar.GetDescriptor()
-                       ->FindFieldByName("tx_status")
-                       ->enum_type()
-                       ->FindValueByNumber(ar.tx_status())
-                       ->index();
-  constexpr unsigned last = boost::mpl::size<T...>::type::value - 1;
-
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::TransactionResponse::ResponseVariantType>(
-      std::forward<Archive>(ar), which > last ? last : which);
-}
-
 namespace shared_model {
   namespace proto {
     /**
@@ -47,18 +33,14 @@ namespace shared_model {
                                iroha::protocol::ToriiResponse,
                                TransactionResponse> {
      private:
-      /// PolymorphicWrapper shortcut type
-      template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
-
      public:
       /// Type of variant, that handle all concrete tx responses in the system
-      using ProtoResponseVariantType = wrap<StatelessFailedTxResponse,
-                                            StatelessValidTxResponse,
-                                            StatefulFailedTxResponse,
-                                            StatefulValidTxResponse,
-                                            CommittedTxResponse,
-                                            NotReceivedTxResponse>;
+      using ProtoResponseVariantType = boost::variant<StatelessFailedTxResponse,
+                                                      StatelessValidTxResponse,
+                                                      StatefulFailedTxResponse,
+                                                      StatefulValidTxResponse,
+                                                      CommittedTxResponse,
+                                                      NotReceivedTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;
@@ -83,7 +65,7 @@ namespace shared_model {
       /**
        * @return attached concrete tx response
        */
-      const ResponseVariantType &get() const override {
+      ResponseVariantType get() const override {
         return *variant_;
       }
 
@@ -92,11 +74,25 @@ namespace shared_model {
       using Lazy = detail::LazyInitializer<T>;
 
       /// lazy variant shortcut
-      using LazyVariantType = Lazy<ResponseVariantType>;
+      using LazyVariantType = Lazy<ProtoResponseVariantType>;
 
       // lazy
-      const LazyVariantType variant_{detail::makeLazyInitializer(
-          [this] { return loadTxResponse<ProtoResponseListType>(*proto_); })};
+      const LazyVariantType variant_{detail::makeLazyInitializer([this] {
+        auto &&ar = *proto_;
+
+        unsigned which = ar.GetDescriptor()
+                             ->FindFieldByName("tx_status")
+                             ->enum_type()
+                             ->FindValueByNumber(ar.tx_status())
+                             ->index();
+        constexpr unsigned last =
+            boost::mpl::size<ProtoResponseListType>::type::value - 1;
+
+        return shared_model::detail::variant_impl<ProtoResponseListType>::
+            template load<shared_model::proto::TransactionResponse::
+                              ProtoResponseVariantType>(
+                std::forward<decltype(ar)>(ar), which > last ? last : which);
+      })};
 
       // stub hash
       const Lazy<crypto::Hash> hash_{
