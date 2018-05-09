@@ -37,7 +37,6 @@ namespace shared_model {
      * General note: this class is container for queries but not a base class.
      */
     class BlocksQuery : public SIGNABLE(BlocksQuery) {
-     private:
      public:
       /**
        * @return id of query creator

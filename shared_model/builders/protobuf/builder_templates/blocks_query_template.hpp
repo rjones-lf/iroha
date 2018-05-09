@@ -80,29 +80,23 @@ namespace shared_model {
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {
-          auto *meta = new iroha::protocol::QueryPayloadMeta(
-              qry.meta());
+          auto *meta = qry.mutable_meta();
           meta->set_created_time(created_time);
-          qry.set_allocated_meta(meta);
         });
       }
 
       auto creatorAccountId(
           const interface::types::AccountIdType &creator_account_id) const {
         return transform<CreatorAccountId>([&](auto &qry) {
-          auto *meta = new iroha::protocol::QueryPayloadMeta(
-              qry.meta());
+          auto *meta = qry.mutable_meta();
           meta->set_creator_account_id(creator_account_id);
-          qry.set_allocated_meta(meta);
         });
       }
 
       auto queryCounter(interface::types::CounterType query_counter) const {
         return transform<QueryCounter>([&](auto &qry) {
-          auto *meta = new iroha::protocol::QueryPayloadMeta(
-              qry.meta());
+          auto *meta = qry.mutable_meta();
           meta->set_query_counter(query_counter);
-          qry.set_allocated_meta(meta);
         });
       }
 

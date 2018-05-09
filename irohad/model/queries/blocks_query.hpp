@@ -19,6 +19,7 @@
 #define IROHA_BLOCKS_QUERY_HPP
 
 #include <string>
+
 #include "common/types.hpp"
 #include "model/signature.hpp"
 
@@ -51,7 +52,7 @@ namespace iroha {
        */
       uint64_t query_counter{};
 
-      virtual ~BlocksQuery() {}
+      ~BlocksQuery() {}
     };
   }  // namespace model
 }  // namespace iroha

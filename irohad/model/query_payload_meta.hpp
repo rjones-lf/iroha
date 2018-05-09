@@ -19,6 +19,7 @@
 #define IROHA_QUERY_PAYLOAD_META_HPP
 
 #include <string>
+
 #include "common/types.hpp"
 #include "model/signature.hpp"
 
@@ -46,7 +47,7 @@ namespace iroha {
        */
       uint64_t query_counter{};
 
-      virtual ~QueryPayloadMeta() {}
+      ~QueryPayloadMeta() {}
     };
   }  // namespace model
 }  // namespace iroha

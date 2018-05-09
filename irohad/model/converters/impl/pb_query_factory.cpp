@@ -161,7 +161,7 @@ namespace iroha {
       void PbQueryFactory::serializeQueryMetaData(
           protocol::Query &pb_query, std::shared_ptr<const Query> query) const {
         auto pl = pb_query.mutable_payload();
-        iroha::protocol::QueryPayloadMeta *meta = new iroha::protocol::QueryPayloadMeta();
+        auto *meta = pb_query.mutable_payload()->mutable_meta();
         meta->set_created_time(query->created_ts);
         meta->set_creator_account_id(query->creator_account_id);
         meta->set_query_counter(query->query_counter);
