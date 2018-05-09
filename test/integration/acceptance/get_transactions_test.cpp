@@ -139,8 +139,8 @@ TEST_F(GetTransactions, InvalidSignatures) {
   auto check = [](auto &status) {
     auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
         interface::ErrorQueryResponse>>(status.get());
-    ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<
-                        interface::StatefulFailedErrorResponse>>(resp->get()));
+    ASSERT_NO_THROW(
+        boost::get<const interface::StatefulFailedErrorResponse>(resp->get()));
   };
 
   auto query = baseQry()

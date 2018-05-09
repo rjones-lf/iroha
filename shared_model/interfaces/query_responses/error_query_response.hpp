@@ -41,9 +41,9 @@ namespace shared_model {
      */
     class ErrorQueryResponse : public ModelPrimitive<ErrorQueryResponse> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using w = boost::variant<const Value &...>;
 
      public:
       /// Type of container with all concrete error query responses
@@ -63,7 +63,7 @@ namespace shared_model {
       /**
        * @return reference to const variant with concrete error response
        */
-      virtual const QueryErrorResponseVariantType &get() const = 0;
+      virtual QueryErrorResponseVariantType get() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 

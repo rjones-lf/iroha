@@ -108,204 +108,31 @@ TEST(QueryResponseBuilderTest, AccountResponse) {
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
-TEST(QueryResponseBuilderTest, StatefulFailedErrorResponse) {
+template <typename T>
+class ErrorResponseTest : public ::testing::Test {};
+
+using ErrorResponseTypes =
+    ::testing::Types<shared_model::interface::StatelessFailedErrorResponse,
+                     shared_model::interface::StatefulFailedErrorResponse,
+                     shared_model::interface::NoAccountErrorResponse,
+                     shared_model::interface::NoAccountAssetsErrorResponse,
+                     shared_model::interface::NoAccountDetailErrorResponse,
+                     shared_model::interface::NoSignatoriesErrorResponse,
+                     shared_model::interface::NotSupportedErrorResponse,
+                     shared_model::interface::NoAssetErrorResponse,
+                     shared_model::interface::NoRolesErrorResponse>;
+TYPED_TEST_CASE(ErrorResponseTest, ErrorResponseTypes);
+
+TYPED_TEST(ErrorResponseTest, TypeErrorResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::StatefulFailedErrorResponse>()
-          .build();
+      builder.queryHash(query_hash).errorQueryResponse<TypeParam>().build();
 
   const auto error_response =
       boost::get<w<shared_model::interface::ErrorQueryResponse>>(
           query_response.get());
 
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, StatelessFailedErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::StatelessFailedErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoAccountErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<shared_model::interface::NoAccountErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoAccountErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoAccountAssetsErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::NoAccountAssetsErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoAccountAssetsErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoAccountDetailErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::NoAccountDetailErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoAccountDetailErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoSignatoriesErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::NoSignatoriesErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoSignatoriesErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NotSupportedErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<
-              shared_model::interface::NotSupportedErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NotSupportedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoAssetErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<shared_model::interface::NoAssetErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(boost::get<w<shared_model::interface::NoAssetErrorResponse>>(
-      error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
-
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-}
-
-TEST(QueryResponseBuilderTest, NoRolesErrorResponse) {
-  shared_model::proto::TemplateQueryResponseBuilder<> builder;
-  shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash)
-          .errorQueryResponse<shared_model::interface::NoRolesErrorResponse>()
-          .build();
-
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(boost::get<w<shared_model::interface::NoRolesErrorResponse>>(
-      error_response->get()));
-
-  ASSERT_ANY_THROW(
-      boost::get<w<shared_model::interface::StatelessFailedErrorResponse>>(
-          error_response->get()));
+  ASSERT_NO_THROW(boost::get<const TypeParam>(error_response->get()));
 
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }

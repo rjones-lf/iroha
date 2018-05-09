@@ -34,9 +34,9 @@ using namespace iroha::ametsuchi;
 using namespace iroha::validation;
 using namespace framework::test_subscriber;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
-using ::testing::_;
 
 class QueryProcessorTest : public ::testing::Test {
  public:
@@ -148,9 +148,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
   wrapper.subscribe([](auto response) {
     auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
         shared_model::interface::ErrorQueryResponse>>(response->get());
-    ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<
-                        shared_model::interface::StatefulFailedErrorResponse>>(
-        resp->get()));
+    ASSERT_NO_THROW(
+        boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
+            resp->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));

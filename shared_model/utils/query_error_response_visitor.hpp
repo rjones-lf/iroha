@@ -30,13 +30,9 @@ namespace shared_model {
       bool operator()(
           const shared_model::detail::PolymorphicWrapper<
               shared_model::interface::ErrorQueryResponse> &status) const {
-        using ExpectedError = shared_model::detail::PolymorphicWrapper<Error>;
-        try {
-          auto _ = boost::get<ExpectedError>(status->get());
-          return true;
-        } catch (...) {
-        }
-        return false;
+        return iroha::visit_in_place(status->get(),
+                                     [](const Error &) { return true; },
+                                     [](const auto &) { return false; });
       }
 
       template <typename T>

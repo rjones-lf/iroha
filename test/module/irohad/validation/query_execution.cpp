@@ -30,11 +30,11 @@
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "validators/permissions.hpp"
 
+using ::testing::_;
 using ::testing::AllOf;
 using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::StrictMock;
-using ::testing::_;
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -266,7 +266,7 @@ TEST_F(GetAccountTest, DifferentDomainAccountInValidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -296,7 +296,7 @@ TEST_F(GetAccountTest, NoAccountExist) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoAccountErrorResponse>>(
+      boost::get<const shared_model::interface::NoAccountErrorResponse>(
           cast_resp->get()));
 }
 
@@ -526,7 +526,7 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -571,7 +571,7 @@ TEST_F(GetAccountAssetsTest, NoAccountExist) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoAccountAssetsErrorResponse>>(
+      boost::get<const shared_model::interface::NoAccountAssetsErrorResponse>(
           cast_resp->get()));
 }
 
@@ -720,7 +720,7 @@ TEST_F(GetSignatoriesTest, DifferentDomainAccountInValidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -749,7 +749,7 @@ TEST_F(GetSignatoriesTest, NoAccountExist) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::NoSignatoriesErrorResponse>>(
+      boost::get<const shared_model::interface::NoSignatoriesErrorResponse>(
           cast_resp->get()));
 }
 
@@ -921,7 +921,7 @@ TEST_F(GetAccountTransactionsTest, DifferentDomainAccountInValidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1119,7 +1119,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1237,7 +1237,7 @@ TEST_F(GetAssetInfoTest, PermissionsInvalidCase) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1262,8 +1262,9 @@ TEST_F(GetAssetInfoTest, AssetInvalidCase) {
   auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
       response->get());
 
-  ASSERT_NO_THROW(boost::get<w<shared_model::interface::NoAssetErrorResponse>>(
-      cast_resp->get()));
+  ASSERT_NO_THROW(
+      boost::get<const shared_model::interface::NoAssetErrorResponse>(
+          cast_resp->get()));
 }
 
 /// --------- Get Roles -------------
@@ -1321,7 +1322,7 @@ TEST_F(GetRolesTest, InValidCaseNoPermissions) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1342,7 +1343,7 @@ TEST_F(GetRolesTest, InValidCaseNoRoles) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1408,7 +1409,7 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoPermissions) {
       response->get());
 
   ASSERT_NO_THROW(
-      boost::get<w<shared_model::interface::StatefulFailedErrorResponse>>(
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
           cast_resp->get()));
 }
 
@@ -1434,6 +1435,7 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoRole) {
   auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
       response->get());
 
-  ASSERT_NO_THROW(boost::get<w<shared_model::interface::NoRolesErrorResponse>>(
-      cast_resp->get()));
+  ASSERT_NO_THROW(
+      boost::get<const shared_model::interface::NoRolesErrorResponse>(
+          cast_resp->get()));
 }
