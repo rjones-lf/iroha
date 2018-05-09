@@ -41,12 +41,15 @@ namespace iroha_cli {
     handler_map_[DATA_LOSS] = "DATA_LOSS";
   }
 
-  void GrpcResponseHandler::handle(
+  bool GrpcResponseHandler::handle(
       CliClient::Response<CliClient::TxStatus> response) {
     if (response.status.ok()) {
       tx_handler_.handle(response.answer);
+        return true ;
     } else {
       handleGrpcErrors(response.status.error_code());
+        std::cout << "Error has occured. Not able to complete transaction" << std::endl ;
+        return false ;
     }
   }
 
