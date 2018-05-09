@@ -61,7 +61,11 @@ namespace shared_model {
       constexpr boost::multiprecision::uint256_t mask_bits =
           std::numeric_limits<uint64_t>::max();
       auto convert = [&](auto i) {
-        return (amount >> offset * i & mask_bits)
+        // Select two middle bits from 011011 and offset = 2
+        // 011011 >> (2 * 1) = 000110
+        // Have to mask 2 high bits to prevent any overflows
+        // 000110 & 000011 = 000010
+        return ((amount >> (offset * i)) & mask_bits)
             .template convert_to<uint64_t>();
       };
       value.set_first(convert(3));
