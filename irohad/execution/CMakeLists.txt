@@ -29,3 +29,12 @@ target_link_libraries(command_execution
         rxcpp
         shared_model_default_builders
         )
+
+add_library(query_execution
+        impl/query_execution.cpp
+        )
+
+target_link_libraries(query_execution
+        rxcpp
+        shared_model_default_builders
+        )

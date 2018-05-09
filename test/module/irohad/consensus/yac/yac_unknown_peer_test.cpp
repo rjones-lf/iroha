@@ -73,12 +73,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  // delay preference
-  uint64_t wait_seconds = 10;
-  delay = wait_seconds * 1000;
-
-  yac = Yac::create(
-      YacVoteStorage(), network, crypto, timer, my_order.value(), delay);
+  initYac(my_order.value());
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);

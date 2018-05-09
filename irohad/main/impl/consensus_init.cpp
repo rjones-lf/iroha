@@ -45,8 +45,34 @@ namespace iroha {
         return crypto;
       }
 
-      auto YacInit::createTimer() {
-        return std::make_shared<TimerImpl>();
+      auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
+        return std::make_shared<TimerImpl>([delay_milliseconds] {
+          // static factory with a single thread
+          //
+          // observe_on_new_thread -- coordination which creates new thread with
+          // observe_on strategy -- all subsequent operations will be performed
+          // on this thread.
+          //
+          // scheduler owns a timeline that is exposed by the now() method.
+          // scheduler is also a factory for workers in that timeline.
+          //
+          // coordination is a factory for coordinators and has a scheduler.
+          //
+          // coordinator has a worker, and is a factory for coordinated
+          // observables, subscribers and schedulable functions.
+          //
+          // A new thread scheduler is created
+          // by calling .create_coordinator().get_scheduler()
+          //
+          // static allows to reuse the same thread in subsequent calls to this
+          // lambda
+          static rxcpp::observe_on_one_worker coordination(
+              rxcpp::observe_on_new_thread()
+                  .create_coordinator()
+                  .get_scheduler());
+          return rxcpp::observable<>::timer(
+              std::chrono::milliseconds(delay_milliseconds), coordination);
+        });
       }
 
       auto YacInit::createHashProvider() {
@@ -60,9 +86,8 @@ namespace iroha {
         return Yac::create(YacVoteStorage(),
                            createNetwork(),
                            createCryptoProvider(keypair),
-                           createTimer(),
-                           initial_order,
-                           delay_milliseconds.count());
+                           createTimer(delay_milliseconds),
+                           initial_order);
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(

@@ -23,7 +23,6 @@
 #include "datetime/time.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
-#include "interfaces/common_objects/signable_hash.hpp"
 #include "interfaces/transaction.hpp"
 #include "validators/answer.hpp"
 
@@ -129,9 +128,10 @@ namespace shared_model {
       void validateCounter(ReasonsGroupType &reason,
                            const interface::types::CounterType &counter) const;
 
-      void validateSignatures(ReasonsGroupType &reason,
-                              const interface::SignatureSetType &signatures,
-                              const crypto::Blob &source) const;
+      void validateSignatures(
+          ReasonsGroupType &reason,
+          const interface::types::SignatureRangeType &signatures,
+          const crypto::Blob &source) const;
 
       void validateDescription(
           ReasonsGroupType &reason,

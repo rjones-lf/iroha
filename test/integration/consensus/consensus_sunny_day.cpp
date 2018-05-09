@@ -26,6 +26,7 @@
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 using ::testing::An;
+using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 
 using namespace iroha::consensus::yac;
@@ -42,7 +43,8 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
     // TODO 15.04.2018 x3medima17 IR-1189: move to separate class
     auto size =
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-            .publicKey().size();
+            .publicKey()
+            .size();
     // TODO 16.04.2018 x3medima17 IR-977: add sizes
     std::string key(size, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
@@ -60,7 +62,6 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
 
 class ConsensusSunnyDayTest : public ::testing::Test {
  public:
-  std::thread thread;
   std::unique_ptr<grpc::Server> server;
   std::shared_ptr<NetworkImpl> network;
   std::shared_ptr<MockYacCryptoProvider> crypto;
@@ -73,40 +74,32 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   void SetUp() override {
     network = std::make_shared<NetworkImpl>();
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
-    timer = std::make_shared<TimerImpl>();
+    timer = std::make_shared<TimerImpl>([this] {
+      // static factory with a single thread
+      // see YacInit::createTimer in consensus_init.cpp
+      static rxcpp::observe_on_one_worker coordination(
+          rxcpp::observe_on_new_thread().create_coordinator().get_scheduler());
+      return rxcpp::observable<>::timer(std::chrono::milliseconds(delay),
+                                        coordination);
+    });
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 
-    yac = Yac::create(
-        YacVoteStorage(), network, crypto, timer, order.value(), delay);
+    yac = Yac::create(YacVoteStorage(), network, crypto, timer, order.value());
     network->subscribe(yac);
 
-    std::mutex mtx;
-    std::condition_variable cv;
-
-    thread = std::thread([&cv, this] {
-      grpc::ServerBuilder builder;
-      int port = 0;
-      builder.AddListeningPort(
-          my_peer->address(), grpc::InsecureServerCredentials(), &port);
-      builder.RegisterService(network.get());
-      server = builder.BuildAndStart();
-      ASSERT_TRUE(server);
-      ASSERT_NE(port, 0);
-      cv.notify_one();
-      server->Wait();
-    });
-
-    // wait until server woke up
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock);
+    grpc::ServerBuilder builder;
+    int port = 0;
+    builder.AddListeningPort(
+        my_peer->address(), grpc::InsecureServerCredentials(), &port);
+    builder.RegisterService(network.get());
+    server = builder.BuildAndStart();
+    ASSERT_TRUE(server);
+    ASSERT_NE(port, 0);
   }
 
   void TearDown() override {
     server->Shutdown();
-    if (thread.joinable()) {
-      thread.join();
-    }
   }
 
   static uint64_t my_num, delay_before, delay_after;
@@ -122,7 +115,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     }
     if (num_peers == 1) {
       delay_before = 0;
-      delay_after = 50;
+      delay_after = 5 * 1000;
     } else {
       delay_before = 10 * 1000;
       delay_after = 3 * default_peers.size() + 10 * 1000;
@@ -138,13 +131,19 @@ std::vector<std::shared_ptr<shared_model::interface::Peer>>
     ConsensusSunnyDayTest::default_peers;
 
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
+  std::condition_variable cv;
   auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
   wrapper.subscribe(
       [](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; });
 
   EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
       .Times(1)
-      .WillRepeatedly(Return(true));
+      .WillRepeatedly(DoAll(InvokeWithoutArgs([&cv] {
+                              // wake up after commit is received from the
+                              // network so that it is safe to shutdown
+                              cv.notify_one();
+                            }),
+                            Return(true)));
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
   // Wait for other peers to start
@@ -156,7 +155,9 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   ASSERT_TRUE(order);
 
   yac->vote(my_hash, *order);
-  std::this_thread::sleep_for(std::chrono::milliseconds(delay_after));
+  std::mutex m;
+  std::unique_lock<std::mutex> lk(m);
+  cv.wait_for(lk, std::chrono::milliseconds(delay_after));
 
   ASSERT_TRUE(wrapper.validate());
 }

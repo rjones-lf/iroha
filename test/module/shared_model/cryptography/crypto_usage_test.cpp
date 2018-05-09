@@ -65,17 +65,15 @@ class CryptoUsageTest : public ::testing::Test {
 
   template <typename T>
   bool verify(const T &signable) const {
-    return signable.signatures().size() > 0
-        and std::all_of(
-                signable.signatures().begin(),
-                signable.signatures().end(),
-                [&signable](const shared_model::detail::PolymorphicWrapper<
-                            shared_model::interface::Signature> &signature) {
-                  return shared_model::crypto::CryptoVerifier<>::verify(
-                      signature->signedData(),
-                      signable.payload(),
-                      signature->publicKey());
-                });
+    return boost::size(signable.signatures()) > 0
+        and std::all_of(signable.signatures().begin(),
+                        signable.signatures().end(),
+                        [&signable](const auto &signature) {
+                          return shared_model::crypto::CryptoVerifier<>::verify(
+                              signature.signedData(),
+                              signable.payload(),
+                              signature.publicKey());
+                        });
   }
 
   Blob data;

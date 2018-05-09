@@ -48,7 +48,7 @@ namespace iroha {
 
         auto createCryptoProvider(const shared_model::crypto::Keypair &keypair);
 
-        auto createTimer();
+        auto createTimer(std::chrono::milliseconds delay_milliseconds);
 
         auto createHashProvider();
 

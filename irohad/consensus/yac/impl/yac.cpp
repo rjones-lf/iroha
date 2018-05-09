@@ -54,24 +54,21 @@ namespace iroha {
           std::shared_ptr<YacNetwork> network,
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
-          ClusterOrdering order,
-          uint64_t delay) {
+          ClusterOrdering order) {
         return std::make_shared<Yac>(
-            vote_storage, network, crypto, timer, order, delay);
+            vote_storage, network, crypto, timer, order);
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
                std::shared_ptr<YacNetwork> network,
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
-               ClusterOrdering order,
-               uint64_t delay)
+               ClusterOrdering order)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
-            cluster_order_(order),
-            delay_(delay) {
+            cluster_order_(order){
         log_ = logger::log("YAC");
       }
 
@@ -137,8 +134,7 @@ namespace iroha {
         network_->send_vote(cluster_order_.currentLeader(), vote);
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
-          timer_->invokeAfterDelay(delay_,
-                                   [this, vote] { this->votingStep(vote); });
+          timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
         }
       }
 

@@ -78,10 +78,10 @@ curl -OL https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.
 tar xf ./boost_1_66_0.tar.gz
 cp -R ./boost_1_66_0/boost "$DEPS_DIR"/include
 
-# protobuf
+# protobuf v3.5.1
 git clone https://github.com/google/protobuf
 (cd ./protobuf;
-git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95)
+git checkout 106ffc04be1abf3ff3399f54ccf149815b287dd9)
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -Dprotobuf_BUILD_TESTS=OFF -H./protobuf/cmake -B./protobuf/host_build # build for host to get js_embed
 VERBOSE=1 cmake --build ./protobuf/host_build -- -j"$CORES"
 # to be able to run js_embed we need its host version

@@ -201,7 +201,7 @@ namespace iroha {
 
     /* Signature */
     bool Signature::operator==(const Signature &rhs) const {
-      return rhs.pubkey == pubkey && rhs.signature == signature;
+      return rhs.pubkey == pubkey;
     }
 
     /* Transaction */

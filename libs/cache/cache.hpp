@@ -25,22 +25,30 @@
 namespace iroha {
   namespace cache {
 
-  /**
-   * Cache for arbitrary types
-   * @tparam KeyType type of key objects
-   * @tparam ValueType type of value objects
-   * @tparam KeyHash hasher for keys
-   */
-    template <typename KeyType, typename ValueType, typename KeyHash = std::hash<KeyType>>
-    class Cache
-        : public AbstractCache<KeyType, ValueType, Cache<KeyType, ValueType, KeyHash>> {
+    /**
+     * Cache for arbitrary types
+     * @tparam KeyType type of key objects
+     * @tparam ValueType type of value objects
+     * @tparam KeyHash hasher for keys
+     */
+    template <typename KeyType,
+              typename ValueType,
+              typename KeyHash = std::hash<KeyType>>
+    class Cache : public AbstractCache<KeyType,
+                                       ValueType,
+                                       Cache<KeyType, ValueType, KeyHash>> {
      public:
+      Cache(uint32_t max_handler_map_size_high = 20000,
+            uint32_t max_handler_map_size_low = 10000)
+          : max_handler_map_size_high_(max_handler_map_size_high),
+            max_handler_map_size_low_(max_handler_map_size_low) {}
+
       uint32_t getIndexSizeHighImpl() const {
-        return MAX_HANDLER_MAP_SIZE_HIGH;
+        return max_handler_map_size_high_;
       }
 
       uint32_t getIndexSizeLowImpl() const {
-        return MAX_HANDLER_MAP_SIZE_LOW;
+        return max_handler_map_size_low_;
       }
 
       uint32_t getCacheItemCountImpl() const {
@@ -77,8 +85,8 @@ namespace iroha {
        * TODO 27/10/2017 luckychess Values are quite random and should be tuned
        * for better performance and may be even move to config IR-579
        */
-      const uint32_t MAX_HANDLER_MAP_SIZE_HIGH = 20000;
-      const uint32_t MAX_HANDLER_MAP_SIZE_LOW = 10000;
+      const uint32_t max_handler_map_size_high_;
+      const uint32_t max_handler_map_size_low_;
     };
   }  // namespace cache
 }  // namespace iroha
