@@ -21,7 +21,8 @@ git clone https://github.com/boostorg/boost /tmp/boost; \
     rm -rf /tmp/boost
 
 # Protobuf (static) v3.5.1
-git clone --depth 1 --branch 106ffc04be1abf3ff3399f54ccf149815b287dd9 https://github.com/google/protobuf
+git clone --branch master https://github.com/google/protobuf
 cd protobuf
+git reset --hard 106ffc04be1abf3ff3399f54ccf149815b287dd9
 cmake -Hcmake/ -Bbuild -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release
 sudo cmake --build build/ --target install -- -j"$(getconf _NPROCESSORS_ONLN)"
