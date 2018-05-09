@@ -482,10 +482,12 @@ namespace iroha_cli {
 
       GrpcResponseHandler response_handler;
 
-      response_handler.handle(
-          CliClient(address.value().first, address.value().second).sendTx(tx));
+      if(response_handler.handle(
+          CliClient(address.value().first, address.value().second).sendTx(tx)))
 
-      printTxHash(tx);
+          printTxHash(tx);
+
+
       printEnd();
       // Stop parsing
       return false;
