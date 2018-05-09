@@ -51,8 +51,6 @@ namespace iroha {
        * Query counter
        */
       uint64_t query_counter{};
-
-      ~BlocksQuery() {}
     };
   }  // namespace model
 }  // namespace iroha

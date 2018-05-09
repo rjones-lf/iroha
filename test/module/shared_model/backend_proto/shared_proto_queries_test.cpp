@@ -97,11 +97,10 @@ TEST(ProtoQueryBuilder, BlocksQueryBuilder) {
   std::string account_id = "admin@test", asset_id = "coin#test";
 
   iroha::protocol::BlocksQuery proto_query;
-  auto *meta = new iroha::protocol::QueryPayloadMeta();
+  auto *meta = proto_query.mutable_meta();
   meta->set_created_time(created_time);
   meta->set_creator_account_id(account_id);
   meta->set_query_counter(query_counter);
-  proto_query.set_allocated_meta(meta);
 
   auto keypair =
       shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
