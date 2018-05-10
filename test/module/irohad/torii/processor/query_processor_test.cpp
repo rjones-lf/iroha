@@ -100,9 +100,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    ASSERT_NO_THROW(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::AccountResponse>>(response->get()));
+    ASSERT_NO_THROW(boost::get<const shared_model::interface::AccountResponse>(
+        response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));

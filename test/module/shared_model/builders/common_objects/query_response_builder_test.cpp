@@ -47,9 +47,6 @@ const shared_model::interface::types::DetailType account_detail =
 const auto query_hash = shared_model::interface::types::HashType("hashhash");
 decltype(iroha::time::now()) created_time = iroha::time::now();
 
-template <class T>
-using w = shared_model::detail::PolymorphicWrapper<T>;
-
 TEST(QueryResponseBuilderTest, AccountAssetResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
@@ -57,9 +54,10 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
           .accountAssetResponse(asset_id, account_id, proto_amount)
           .build();
 
-  const auto tmp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
-      query_response.get());
-  const auto &asset_response = tmp->accountAsset();
+  const auto &tmp =
+      boost::get<const shared_model::interface::AccountAssetResponse>(
+          query_response.get());
+  const auto &asset_response = tmp.accountAsset();
 
   ASSERT_EQ(asset_response.assetId(), asset_id);
   ASSERT_EQ(asset_response.accountId(), account_id);
@@ -74,11 +72,11 @@ TEST(QueryResponseBuilderTest, AccountDetailResponse) {
           .accountDetailResponse(account_detail)
           .build();
 
-  const auto account_detail_response =
-      boost::get<w<shared_model::interface::AccountDetailResponse>>(
+  const auto &account_detail_response =
+      boost::get<const shared_model::interface::AccountDetailResponse>(
           query_response.get());
 
-  ASSERT_EQ(account_detail_response->detail(), account_detail);
+  ASSERT_EQ(account_detail_response.detail(), account_detail);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
@@ -100,12 +98,12 @@ TEST(QueryResponseBuilderTest, AccountResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).accountResponse(account, roles).build();
 
-  const auto account_response =
-      boost::get<w<shared_model::interface::AccountResponse>>(
+  const auto &account_response =
+      boost::get<const shared_model::interface::AccountResponse>(
           query_response.get());
 
-  ASSERT_EQ(account_response->account(), account);
-  ASSERT_EQ(account_response->roles(), roles);
+  ASSERT_EQ(account_response.account(), account);
+  ASSERT_EQ(account_response.roles(), roles);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
@@ -146,11 +144,11 @@ TEST(QueryResponseBuilderTest, SignatoriesResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).signatoriesResponse(keys).build();
 
-  const auto signatories_response =
-      boost::get<w<shared_model::interface::SignatoriesResponse>>(
+  const auto &signatories_response =
+      boost::get<const shared_model::interface::SignatoriesResponse>(
           query_response.get());
 
-  const auto &resp_keys = signatories_response->keys();
+  const auto &resp_keys = signatories_response.keys();
   ASSERT_EQ(keys.size(), resp_keys.size());
 
   for (auto i = 0u; i < keys.size(); i++) {
@@ -170,11 +168,11 @@ TEST(QueryResponseBuilderTest, TransactionsResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).transactionsResponse({transaction}).build();
 
-  const auto transactions_response =
-      boost::get<w<shared_model::interface::TransactionsResponse>>(
+  const auto &transactions_response =
+      boost::get<const shared_model::interface::TransactionsResponse>(
           query_response.get());
 
-  const auto &txs = transactions_response->transactions();
+  const auto &txs = transactions_response.transactions();
 
   ASSERT_EQ(txs.size(), 1);
   ASSERT_EQ(*txs.back(), transaction);
@@ -188,11 +186,11 @@ TEST(QueryResponseBuilderTest, AssetResponse) {
           .assetResponse(asset_id, domain_id, valid_precision)
           .build();
 
-  const auto asset_response =
-      boost::get<w<shared_model::interface::AssetResponse>>(
+  const auto &asset_response =
+      boost::get<const shared_model::interface::AssetResponse>(
           query_response.get());
 
-  const auto &asset = asset_response->asset();
+  const auto &asset = asset_response.asset();
   ASSERT_EQ(asset.assetId(), asset_id);
   ASSERT_EQ(asset.domainId(), domain_id);
   ASSERT_EQ(asset.precision(), valid_precision);
@@ -206,11 +204,11 @@ TEST(QueryResponseBuilderTest, RolesResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).rolesResponse(roles).build();
 
-  const auto roles_response =
-      boost::get<w<shared_model::interface::RolesResponse>>(
+  const auto &roles_response =
+      boost::get<const shared_model::interface::RolesResponse>(
           query_response.get());
 
-  ASSERT_EQ(roles_response->roles(), roles);
+  ASSERT_EQ(roles_response.roles(), roles);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
@@ -221,10 +219,10 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).rolePermissionsResponse(roles).build();
 
-  const auto role_permissions_response =
-      boost::get<w<shared_model::interface::RolePermissionsResponse>>(
+  const auto &role_permissions_response =
+      boost::get<const shared_model::interface::RolePermissionsResponse>(
           query_response.get());
 
-  ASSERT_EQ(role_permissions_response->rolePermissions(), roles);
+  ASSERT_EQ(role_permissions_response.rolePermissions(), roles);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }

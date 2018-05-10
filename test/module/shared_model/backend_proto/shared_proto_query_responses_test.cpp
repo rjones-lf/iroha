@@ -69,10 +69,9 @@ TEST(QueryResponse, ErrorResponseLoad) {
             error_resp, resp_reason, resp_reason_enum->value(i)->number());
         auto shared_response = shared_model::proto::QueryResponse(response);
         ASSERT_EQ(i,
-                  boost::get<shared_model::detail::PolymorphicWrapper<
-                      shared_model::interface::ErrorQueryResponse>>(
+                  boost::get<const shared_model::interface::ErrorQueryResponse>(
                       shared_response.get())
-                      ->get()
+                      .get()
                       .which());
         ASSERT_EQ(shared_response.queryHash(),
                   shared_model::crypto::Hash(hash));
