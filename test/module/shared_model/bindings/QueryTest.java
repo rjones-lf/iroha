@@ -77,13 +77,37 @@ public class QueryTest {
         "@@@"
     };
 
+    private final String[] validHosts = {
+        "test",
+        "u9EEA432F",
+        "a-hyphen",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad",
+        "endWith0",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"
+    };
+
     private final String[] invalidHosts = {
+        "",
+        " ",
+        "   ",
+        "9start.with.digit",
+        "-startWithDash",
+        "@.is.not.allowed",
+        "no space is allowed",
+        "endWith-",
+        "label.endedWith-.is.not.allowed",
+        "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
         "257.257.257.257",
         "host#host",
         "asd@asd",
-        "ab..cd",
-        "",
-        "   "
+        "ab..cd"
     };
 
     private final String[] invalidKeysBytes = {
@@ -160,8 +184,10 @@ public class QueryTest {
     void getAccountWithInvalidCreator() {
         setGetAccount();
         for (String accountName: invalidNameSymbols1) {
-            ModelQueryBuilder builder = base().creatorAccountId(accountName + "@test");
-            assertThrows(IllegalArgumentException.class, builder::build);
+            for (String host: validHosts) {
+                ModelQueryBuilder builder = base().creatorAccountId(accountName + "@" + host);
+                assertThrows(IllegalArgumentException.class, builder::build);
+            }
         }
     }
 
@@ -210,8 +236,10 @@ public class QueryTest {
     @Test
     void getSignatories() {
         for (String account: validNameSymbols1) {
-            UnsignedQuery query = builder.getSignatories(account + "@test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getSignatories(account + "@" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 
@@ -242,8 +270,10 @@ public class QueryTest {
     @Test
     void getAccountTransactions() {
         for (String account: validNameSymbols1) {
-            UnsignedQuery query = builder.getAccountTransactions(account + "@test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getAccountTransactions(account + "@" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 
@@ -274,8 +304,10 @@ public class QueryTest {
     @Test
     void getAccountAssetTransactions() {
         for (String name: validNameSymbols1) {
-            UnsignedQuery query = builder.getAccountAssetTransactions(name + "@test", name + "#test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getAccountAssetTransactions(name + "@" + host, name + "#" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 
@@ -328,8 +360,10 @@ public class QueryTest {
     @Test
     void getAccountAssets() {
         for (String name: validNameSymbols1) {
-            UnsignedQuery query = builder.getAccountAssets(name + "@test", name + "#test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getAccountAssets(name + "@" + host, name + "#" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 
@@ -390,8 +424,10 @@ public class QueryTest {
     @Test
     void getAssetInfo() {
         for (String asset: validNameSymbols1) {
-            UnsignedQuery query = builder.getAssetInfo(asset + "#test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getAssetInfo(asset + "#" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 
@@ -517,8 +553,10 @@ public class QueryTest {
     @Test
     void getAccountDetail() {
         for (String account: validNameSymbols1) {
-            UnsignedQuery query = builder.getAccountDetail(account + "@test").build();
-            assertTrue(checkProtoQuery(proto(query)));
+            for (String host: validHosts) {
+                UnsignedQuery query = builder.getAccountDetail(account + "@" + host).build();
+                assertTrue(checkProtoQuery(proto(query)));
+            }
         }
     }
 

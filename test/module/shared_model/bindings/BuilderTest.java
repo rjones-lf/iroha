@@ -82,13 +82,37 @@ public class BuilderTest {
         "@@@"
     };
 
+    private final String[] validHosts = {
+        "test",
+        "u9EEA432F",
+        "a-hyphen",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad",
+        "endWith0",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"
+    };
+
     private final String[] invalidHosts = {
+        "",
+        " ",
+        "   ",
+        "9start.with.digit",
+        "-startWithDash",
+        "@.is.not.allowed",
+        "no space is allowed",
+        "endWith-",
+        "label.endedWith-.is.not.allowed",
+        "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters",
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
+        "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
         "257.257.257.257",
         "host#host",
         "asd@asd",
-        "ab..cd",
-        "",
-        "   "
+        "ab..cd"
     };
 
     private final String[] invalidKeysBytes = {
@@ -151,8 +175,10 @@ public class BuilderTest {
 
     @Test
     void addPeer() {
-        UnsignedTx tx = builder.addPeer("123.123.123.123:123", keys.publicKey()).build();
-        assertTrue(checkProtoTx(proto(tx)));
+        for (String host: validHosts) {
+            UnsignedTx tx = builder.addPeer(host + ":123", keys.publicKey()).build();
+            assertTrue(checkProtoTx(proto(tx)));
+        }
     }
 
     @Test
@@ -214,9 +240,11 @@ public class BuilderTest {
     @Test
     void addSignatory() {
         for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            UnsignedTx tx = builder.addSignatory("admin@test", keys.publicKey()).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                UnsignedTx tx = builder.addSignatory(accountId, keys.publicKey()).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -262,13 +290,27 @@ public class BuilderTest {
 
     @Test
     void addAssetQuantityValidAccountsAndAssets() {
-        for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            for (String assetName: validNameSymbols1) {
-                String assetId = assetName + "#test";
-                UnsignedTx tx = builder.addAssetQuantity(accountId, assetId, "100").build();
+        for (String host: validHosts) {
+            for (String name: validNameSymbols1) {
+                UnsignedTx tx = builder.addAssetQuantity(name + "@" + host, name + "#" + host, "100").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
+        }
+    }
+
+    @Test
+    void addAssetQuantityInvalidAccountDomain() {
+        for (String host: invalidHosts) {
+            ModelTransactionBuilder builder = base().addAssetQuantity("admin@" + host, "asset#test", "10");
+            assertThrows(IllegalArgumentException.class, builder::build);
+        }
+    }
+
+    @Test
+    void addAssetQuantityInvalidAssetDomain() {
+        for (String host: invalidHosts) {
+            ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#" + host, "10");
+            assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
@@ -321,9 +363,11 @@ public class BuilderTest {
     @Test
     void removeSignatory() {
         for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            UnsignedTx tx = builder.removeSignatory(accountId, keys.publicKey()).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                UnsignedTx tx = builder.removeSignatory(accountId, keys.publicKey()).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -343,6 +387,14 @@ public class BuilderTest {
     }
 
     @Test
+    void removeSignatoryInvalidAccountDomain() {
+        for (String host: invalidHosts) {
+            ModelTransactionBuilder builder = base().removeSignatory("admin@" + host, keys.publicKey());
+            assertThrows(IllegalArgumentException.class, builder::build);
+        }
+    }
+
+    @Test
     void removeSignatoryInvalidKey() {
         for (String invalidKeyBytes: invalidKeysBytes) {
             ModelTransactionBuilder builder = base().removeSignatory("admin@test", new PublicKey(invalidKeyBytes));
@@ -355,8 +407,10 @@ public class BuilderTest {
     @Test
     void createAccount() {
         for (String accountName: validNameSymbols1) {
-            UnsignedTx tx = builder.createAccount(accountName, "domain", keys.publicKey()).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                UnsignedTx tx = builder.createAccount(accountName, host, keys.publicKey()).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -389,8 +443,10 @@ public class BuilderTest {
     @Test
     void createDomain() {
         for (String role: validNameSymbols1) {
-            UnsignedTx tx = builder.createDomain("domain", role).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                UnsignedTx tx = builder.createDomain(host, role).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -416,9 +472,11 @@ public class BuilderTest {
     @Test
     void setAccountQuorum() {
         for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            UnsignedTx tx = builder.setAccountQuorum("admin@test", 128).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                UnsignedTx tx = builder.setAccountQuorum(accountId, 128).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -441,6 +499,12 @@ public class BuilderTest {
     }
 
     @Test
+    void setAccountQuorumEmptyAccount() {
+        ModelTransactionBuilder builder = base().setAccountQuorum("", 123);
+        assertThrows(IllegalArgumentException.class, builder::build);
+    }
+
+    @Test
     void setAccountQuorumInvalidQuantity() {
         for (int quorumSize: new int[]{0, 129, -100}) {
             ModelTransactionBuilder builder = base().setAccountQuorum("admin@test", quorumSize);
@@ -452,12 +516,14 @@ public class BuilderTest {
 
     @Test
     void transferAsset() {
-        for (int i = 0; i < validNameSymbols1.length; i++) {
-            String from = validNameSymbols1[i] + "@test";
-            String to = validNameSymbols1[(i + 1) % validNameSymbols1.length] + "@test";
-            String asset = validNameSymbols1[(i + 2) % validNameSymbols1.length] + "#test";
-            UnsignedTx tx = builder.transferAsset(from, to, asset, "description", "123.456").build();
-            assertTrue(checkProtoTx(proto(tx)));
+        for (String host: validHosts) {
+            for (int i = 0; i < validNameSymbols1.length; i++) {
+                String from = validNameSymbols1[i] + "@" + host;
+                String to = validNameSymbols1[(i + 1) % validNameSymbols1.length] + "@" + host;
+                String asset = validNameSymbols1[(i + 2) % validNameSymbols1.length] + "#" + host;
+                UnsignedTx tx = builder.transferAsset(from, to, asset, "description", "123.456").build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -579,9 +645,11 @@ public class BuilderTest {
     @Test
     void setAccountDetail() {
         for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            UnsignedTx tx = builder.setAccountDetail(accountId, "fyodor", "kek").build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                UnsignedTx tx = builder.setAccountDetail(accountId, "fyodor", "kek").build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -656,9 +724,11 @@ public class BuilderTest {
     @Test
     void appendRole() {
         for (String account: validNameSymbols1) {
-            String accountId = account + "@test";
-            UnsignedTx tx = builder.appendRole(accountId, account).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = account + "@" + host;
+                UnsignedTx tx = builder.appendRole(accountId, account).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -694,8 +764,10 @@ public class BuilderTest {
     @Test
     void createAsset() {
         for (String assetName: validNameSymbols1) {
-            UnsignedTx tx = builder.createAsset(assetName, "test", (short) 6).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                UnsignedTx tx = builder.createAsset(assetName, host, (short) 6).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -789,9 +861,11 @@ public class BuilderTest {
     @Test
     void detachRole() {
         for (String name: validNameSymbols1) {
-            String accountId = name + "@test";
-            UnsignedTx tx = builder.detachRole(accountId, name).build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = name + "@" + host;
+                UnsignedTx tx = builder.detachRole(accountId, name).build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -832,18 +906,22 @@ public class BuilderTest {
     @Test
     void grantPermission() {
         for (String accountName: validNameSymbols1) {
-            String accountId = accountName + "@test";
-            UnsignedTx tx = builder.grantPermission(accountId, "can_set_my_quorum").build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                UnsignedTx tx = builder.grantPermission(accountId, "can_set_my_quorum").build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
     @Test
     void grantPermissionInvalidAccount() {
         for (String accountName: invalidNameSymbols1) {
-            String accountId = accountName + "@test";
-            ModelTransactionBuilder builder = base().grantPermission(accountId, "can_set_my_quorum");
-            assertThrows(IllegalArgumentException.class, builder::build);
+            for (String host: validHosts) {
+                String accountId = accountName + "@" + host;
+                ModelTransactionBuilder builder = base().grantPermission(accountId, "can_set_my_quorum");
+                assertThrows(IllegalArgumentException.class, builder::build);
+            }
         }
     }
 
@@ -872,8 +950,10 @@ public class BuilderTest {
     @Test
     void revokePermission() {
         for (String accountName: validNameSymbols1) {
-            UnsignedTx tx = builder.revokePermission(accountName + "@test", "can_set_my_quorum").build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                UnsignedTx tx = builder.revokePermission(accountName + "@" + host, "can_set_my_quorum").build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
@@ -918,8 +998,10 @@ public class BuilderTest {
     @Test
     void subtractAssetQuantity() {
         for (String name: validNameSymbols1) {
-            UnsignedTx tx = builder.subtractAssetQuantity(name + "@test", name + "#test", "10.22").build();
-            assertTrue(checkProtoTx(proto(tx)));
+            for (String host: validHosts) {
+                UnsignedTx tx = builder.subtractAssetQuantity(name + "@" + host, name + "#" + host, "10.22").build();
+                assertTrue(checkProtoTx(proto(tx)));
+            }
         }
     }
 
