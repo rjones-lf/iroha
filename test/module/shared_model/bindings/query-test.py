@@ -20,8 +20,8 @@ class BuilderTest(unittest.TestCase):
 
   def generate_base(self):
     return iroha.ModelQueryBuilder().queryCounter(123)\
-                               .createdTime(int(time.time() * 1000))\
-                               .creatorAccountId("admin@test")\
+      .createdTime(int(time.time() * 1000))\
+      .creatorAccountId("admin@test")
 
   def setUp(self):
     self.keys = iroha.ModelCrypto().generateKeypair()
@@ -51,7 +51,7 @@ class BuilderTest(unittest.TestCase):
         tmp = ''.join(map(chr, blob.blob()))
       else:
         tmp = bytes(blob.blob())
-        qry.Query.FromString(tmp)
+      qry.Query.FromString(tmp)
     except DecodeError as e:
       print(e)
       return False

@@ -20,8 +20,8 @@ class BuilderTest(unittest.TestCase):
       iroha.ModelTransactionBuilder().build()
   def generate_base(self):
     return iroha.ModelTransactionBuilder()\
-                               .createdTime(int(time.time() * 1000))\
-                               .creatorAccountId("admin@test")\
+      .createdTime(int(time.time() * 1000))\
+      .creatorAccountId("admin@test")
 
   def setUp(self):
     self.keys = iroha.ModelCrypto().generateKeypair()
