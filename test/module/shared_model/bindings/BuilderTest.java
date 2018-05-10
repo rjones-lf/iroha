@@ -830,6 +830,11 @@ public class BuilderTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    /* Disabled till IR-1267 will be fixed. */
+    /* Please run this test on mac host after enabling,
+       because the test was passing on Linux host and failing on macOs.
+    */
+    @Disabled
     @Test
     void createRoleWrongPermissions() {
         StringVector permissions = new StringVector();
