@@ -82,7 +82,7 @@ public class BuilderTest {
         "@@@"
     };
 
-    private final String[] validHosts = {
+    private final String[] validDomains = {
         "test",
         "u9EEA432F",
         "a-hyphen",
@@ -94,7 +94,7 @@ public class BuilderTest {
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"
     };
 
-    private final String[] invalidHosts = {
+    private final String[] invalidDomains = {
         "",
         " ",
         "   ",
@@ -110,7 +110,7 @@ public class BuilderTest {
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
         "257.257.257.257",
-        "host#host",
+        "domain#domain",
         "asd@asd",
         "ab..cd"
     };
@@ -175,8 +175,8 @@ public class BuilderTest {
 
     @Test
     void addPeer() {
-        for (String host: validHosts) {
-            UnsignedTx tx = builder.addPeer(host + ":123", keys.publicKey()).build();
+        for (String domain: validDomains) {
+            UnsignedTx tx = builder.addPeer(domain + ":123", keys.publicKey()).build();
             assertTrue(checkProtoTx(proto(tx)));
         }
     }
@@ -211,8 +211,8 @@ public class BuilderTest {
     @Test
     void addPeerWithInvalidCreatorDomain() {
         setAddPeer();
-        for (String host: invalidHosts) {
-            builder.creatorAccountId("admin@" + host);
+        for (String domain: invalidDomains) {
+            builder.creatorAccountId("admin@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -227,10 +227,10 @@ public class BuilderTest {
     }
 
     @Test
-    void addPeerWithInvalidHost() {
+    void addPeerWithInvalidDomain() {
         setAddPeer();
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().addPeer(host, keys.publicKey());
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().addPeer(domain, keys.publicKey());
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -240,8 +240,8 @@ public class BuilderTest {
     @Test
     void addSignatory() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 UnsignedTx tx = builder.addSignatory(accountId, keys.publicKey()).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -265,8 +265,8 @@ public class BuilderTest {
 
     @Test
     void addSignatoryInvalidDomain() {
-        for (String host: invalidHosts) {
-            String accountId = "user@" + host;
+        for (String domain: invalidDomains) {
+            String accountId = "user@" + domain;
             ModelTransactionBuilder builder = base().addSignatory(accountId, keys.publicKey());
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -290,9 +290,9 @@ public class BuilderTest {
 
     @Test
     void addAssetQuantityValidAccountsAndAssets() {
-        for (String host: validHosts) {
+        for (String domain: validDomains) {
             for (String name: validNameSymbols1) {
-                UnsignedTx tx = builder.addAssetQuantity(name + "@" + host, name + "#" + host, "100").build();
+                UnsignedTx tx = builder.addAssetQuantity(name + "@" + domain, name + "#" + domain, "100").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -300,16 +300,16 @@ public class BuilderTest {
 
     @Test
     void addAssetQuantityInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@" + host, "asset#test", "10");
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().addAssetQuantity("admin@" + domain, "asset#test", "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void addAssetQuantityInvalidAssetDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#" + host, "10");
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -363,8 +363,8 @@ public class BuilderTest {
     @Test
     void removeSignatory() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 UnsignedTx tx = builder.removeSignatory(accountId, keys.publicKey()).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -388,8 +388,8 @@ public class BuilderTest {
 
     @Test
     void removeSignatoryInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().removeSignatory("admin@" + host, keys.publicKey());
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().removeSignatory("admin@" + domain, keys.publicKey());
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -407,8 +407,8 @@ public class BuilderTest {
     @Test
     void createAccount() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedTx tx = builder.createAccount(accountName, host, keys.publicKey()).build();
+            for (String domain: validDomains) {
+                UnsignedTx tx = builder.createAccount(accountName, domain, keys.publicKey()).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -424,8 +424,8 @@ public class BuilderTest {
 
     @Test
     void createAccountInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().createAccount("admin", host, keys.publicKey());
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().createAccount("admin", domain, keys.publicKey());
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -443,17 +443,17 @@ public class BuilderTest {
     @Test
     void createDomain() {
         for (String role: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedTx tx = builder.createDomain(host, role).build();
+            for (String domain: validDomains) {
+                UnsignedTx tx = builder.createDomain(domain, role).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
     }
 
     @Test
-    void createDomainInvalidHost() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().createDomain(host, "role");
+    void createDomainInvalidDomain() {
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().createDomain(domain, "role");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -472,8 +472,8 @@ public class BuilderTest {
     @Test
     void setAccountQuorum() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 UnsignedTx tx = builder.setAccountQuorum(accountId, 128).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -491,8 +491,8 @@ public class BuilderTest {
 
     @Test
     void setAccountQuorumInvalidDomain() {
-        for (String host: invalidHosts) {
-            String accountId = "admin@" + host;
+        for (String domain: invalidDomains) {
+            String accountId = "admin@" + domain;
             ModelTransactionBuilder builder = base().setAccountQuorum(accountId, 123);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -516,11 +516,11 @@ public class BuilderTest {
 
     @Test
     void transferAsset() {
-        for (String host: validHosts) {
+        for (String domain: validDomains) {
             for (int i = 0; i < validNameSymbols1.length; i++) {
-                String from = validNameSymbols1[i] + "@" + host;
-                String to = validNameSymbols1[(i + 1) % validNameSymbols1.length] + "@" + host;
-                String asset = validNameSymbols1[(i + 2) % validNameSymbols1.length] + "#" + host;
+                String from = validNameSymbols1[i] + "@" + domain;
+                String to = validNameSymbols1[(i + 1) % validNameSymbols1.length] + "@" + domain;
+                String asset = validNameSymbols1[(i + 2) % validNameSymbols1.length] + "#" + domain;
                 UnsignedTx tx = builder.transferAsset(from, to, asset, "description", "123.456").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -576,18 +576,18 @@ public class BuilderTest {
     }
 
     @Test
-    void transferAssetWithInvalidFromHost() {
-        for (String host: invalidHosts) {
-            String accountId = "from@" + host;
+    void transferAssetWithInvalidFromDomain() {
+        for (String domain: invalidDomains) {
+            String accountId = "from@" + domain;
             ModelTransactionBuilder builder = base().transferAsset(accountId, "to@test", "asset#test", "description", "100");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
-    void transferAssetWithInvalidToHost() {
-        for (String host: invalidHosts) {
-            String accountId = "to@" + host;
+    void transferAssetWithInvalidToDomain() {
+        for (String domain: invalidDomains) {
+            String accountId = "to@" + domain;
             ModelTransactionBuilder builder = base().transferAsset("from@test", accountId, "asset#test", "description", "100");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -595,8 +595,8 @@ public class BuilderTest {
 
     @Test
     void transferAssetWithInvalidAssetDomain() {
-        for (String host: invalidHosts) {
-            String assetId = "asset#" + host;
+        for (String domain: invalidDomains) {
+            String assetId = "asset#" + domain;
             ModelTransactionBuilder builder = base().transferAsset("from@test", "to@test", assetId, "description", "100");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -645,8 +645,8 @@ public class BuilderTest {
     @Test
     void setAccountDetail() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 UnsignedTx tx = builder.setAccountDetail(accountId, "fyodor", "kek").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -670,8 +670,8 @@ public class BuilderTest {
 
     @Test
     void setAccountDetailInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            String accountId = "admin@" + host;
+        for (String domain: invalidDomains) {
+            String accountId = "admin@" + domain;
             ModelTransactionBuilder builder = base().setAccountDetail(accountId, "fyodor", "true");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -724,8 +724,8 @@ public class BuilderTest {
     @Test
     void appendRole() {
         for (String account: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = account + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = account + "@" + domain;
                 UnsignedTx tx = builder.appendRole(accountId, account).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -743,8 +743,8 @@ public class BuilderTest {
 
     @Test
     void appendRoleInvalidDomain() {
-        for (String host: invalidHosts) {
-            String accountId = "admin@" + host;
+        for (String domain: invalidDomains) {
+            String accountId = "admin@" + domain;
             ModelTransactionBuilder builder = base().appendRole(accountId, "user");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -764,8 +764,8 @@ public class BuilderTest {
     @Test
     void createAsset() {
         for (String assetName: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedTx tx = builder.createAsset(assetName, host, (short) 6).build();
+            for (String domain: validDomains) {
+                UnsignedTx tx = builder.createAsset(assetName, domain, (short) 6).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -781,8 +781,8 @@ public class BuilderTest {
 
     @Test
     void createAssetWithInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().createAsset("asset", host, (short) 6);
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().createAsset("asset", domain, (short) 6);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -866,8 +866,8 @@ public class BuilderTest {
     @Test
     void detachRole() {
         for (String name: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = name + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = name + "@" + domain;
                 UnsignedTx tx = builder.detachRole(accountId, name).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -885,8 +885,8 @@ public class BuilderTest {
 
     @Test
     void detachRoleInvalidDomain() {
-        for (String host: invalidHosts) {
-            String accountId = "admin@" + host;
+        for (String domain: invalidDomains) {
+            String accountId = "admin@" + domain;
             ModelTransactionBuilder builder = base().detachRole(accountId, "role");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
@@ -911,8 +911,8 @@ public class BuilderTest {
     @Test
     void grantPermission() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 UnsignedTx tx = builder.grantPermission(accountId, "can_set_my_quorum").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
@@ -922,8 +922,8 @@ public class BuilderTest {
     @Test
     void grantPermissionInvalidAccount() {
         for (String accountName: invalidNameSymbols1) {
-            for (String host: validHosts) {
-                String accountId = accountName + "@" + host;
+            for (String domain: validDomains) {
+                String accountId = accountName + "@" + domain;
                 ModelTransactionBuilder builder = base().grantPermission(accountId, "can_set_my_quorum");
                 assertThrows(IllegalArgumentException.class, builder::build);
             }
@@ -955,8 +955,8 @@ public class BuilderTest {
     @Test
     void revokePermission() {
         for (String accountName: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedTx tx = builder.revokePermission(accountName + "@" + host, "can_set_my_quorum").build();
+            for (String domain: validDomains) {
+                UnsignedTx tx = builder.revokePermission(accountName + "@" + domain, "can_set_my_quorum").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -972,8 +972,8 @@ public class BuilderTest {
 
     @Test
     void revokePermissionInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().revokePermission("admin@" + host, "can_set_my_quorum");
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().revokePermission("admin@" + domain, "can_set_my_quorum");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -1003,8 +1003,8 @@ public class BuilderTest {
     @Test
     void subtractAssetQuantity() {
         for (String name: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedTx tx = builder.subtractAssetQuantity(name + "@" + host, name + "#" + host, "10.22").build();
+            for (String domain: validDomains) {
+                UnsignedTx tx = builder.subtractAssetQuantity(name + "@" + domain, name + "#" + domain, "10.22").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -1020,8 +1020,8 @@ public class BuilderTest {
 
     @Test
     void subtractAssetQuantityInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@" + host, "coin#test", "10");
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@" + domain, "coin#test", "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -1036,8 +1036,8 @@ public class BuilderTest {
 
     @Test
     void subtractAssetQuantityInvalidAssetDomain() {
-        for (String host: invalidHosts) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#" + host, "10");
+        for (String domain: invalidDomains) {
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }

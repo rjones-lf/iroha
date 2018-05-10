@@ -77,7 +77,7 @@ public class QueryTest {
         "@@@"
     };
 
-    private final String[] validHosts = {
+    private final String[] validDomains = {
         "test",
         "u9EEA432F",
         "a-hyphen",
@@ -89,7 +89,7 @@ public class QueryTest {
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad"
     };
 
-    private final String[] invalidHosts = {
+    private final String[] invalidDomains = {
         "",
         " ",
         "   ",
@@ -105,7 +105,7 @@ public class QueryTest {
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad." +
         "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
         "257.257.257.257",
-        "host#host",
+        "domain#domain",
         "asd@asd",
         "ab..cd"
     };
@@ -184,8 +184,8 @@ public class QueryTest {
     void getAccountWithInvalidCreator() {
         setGetAccount();
         for (String accountName: invalidNameSymbols1) {
-            for (String host: validHosts) {
-                ModelQueryBuilder builder = base().creatorAccountId(accountName + "@" + host);
+            for (String domain: validDomains) {
+                ModelQueryBuilder builder = base().creatorAccountId(accountName + "@" + domain);
                 assertThrows(IllegalArgumentException.class, builder::build);
             }
         }
@@ -194,8 +194,8 @@ public class QueryTest {
     @Test
     void getAccountWithInvalidCreatorDomain() {
         setGetAccount();
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().creatorAccountId("user@" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().creatorAccountId("user@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -225,8 +225,8 @@ public class QueryTest {
 
     @Test
     void getAccountWithInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccount("admin@" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccount("admin@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -236,8 +236,8 @@ public class QueryTest {
     @Test
     void getSignatories() {
         for (String account: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getSignatories(account + "@" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getSignatories(account + "@" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -259,8 +259,8 @@ public class QueryTest {
 
     @Test
     void getSignatoriesInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getSignatories("user@" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getSignatories("user@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -270,8 +270,8 @@ public class QueryTest {
     @Test
     void getAccountTransactions() {
         for (String account: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getAccountTransactions(account + "@" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getAccountTransactions(account + "@" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -287,8 +287,8 @@ public class QueryTest {
 
     @Test
     void getAccountTransactionsInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountTransactions("user@" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountTransactions("user@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -304,8 +304,8 @@ public class QueryTest {
     @Test
     void getAccountAssetTransactions() {
         for (String name: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getAccountAssetTransactions(name + "@" + host, name + "#" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getAccountAssetTransactions(name + "@" + domain, name + "#" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -321,8 +321,8 @@ public class QueryTest {
 
     @Test
     void getAccountAssetTransactionsInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountAssetTransactions("user@" + host, "coin#test");
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountAssetTransactions("user@" + domain, "coin#test");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -343,8 +343,8 @@ public class QueryTest {
 
     @Test
     void getAccountAssetTransactionsInvalidAssetDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountAssetTransactions("user@test", "coin#" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountAssetTransactions("user@test", "coin#" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -360,8 +360,8 @@ public class QueryTest {
     @Test
     void getAccountAssets() {
         for (String name: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getAccountAssets(name + "@" + host, name + "#" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getAccountAssets(name + "@" + domain, name + "#" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -377,8 +377,8 @@ public class QueryTest {
 
     @Test
     void getAccountAssetsWithInvalidAccountDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountAssets("user@" + host, "coin#test");
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountAssets("user@" + domain, "coin#test");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -399,8 +399,8 @@ public class QueryTest {
 
     @Test
     void getAccountAssetsWithInvalidAssetDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountAssets("user@test", "coin#" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountAssets("user@test", "coin#" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -424,8 +424,8 @@ public class QueryTest {
     @Test
     void getAssetInfo() {
         for (String asset: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getAssetInfo(asset + "#" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getAssetInfo(asset + "#" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -441,8 +441,8 @@ public class QueryTest {
 
     @Test
     void getAssetInfoWithInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAssetInfo("coin#" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAssetInfo("coin#" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -553,8 +553,8 @@ public class QueryTest {
     @Test
     void getAccountDetail() {
         for (String account: validNameSymbols1) {
-            for (String host: validHosts) {
-                UnsignedQuery query = builder.getAccountDetail(account + "@" + host).build();
+            for (String domain: validDomains) {
+                UnsignedQuery query = builder.getAccountDetail(account + "@" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -570,8 +570,8 @@ public class QueryTest {
 
     @Test
     void getAccountDetailWithInvalidDomain() {
-        for (String host: invalidHosts) {
-            ModelQueryBuilder builder = base().getAccountDetail("user@" + host);
+        for (String domain: invalidDomains) {
+            ModelQueryBuilder builder = base().getAccountDetail("user@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
