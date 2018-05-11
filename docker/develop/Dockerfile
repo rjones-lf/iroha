@@ -96,8 +96,7 @@ RUN set -e; \
 # install grpc 1.11.0
 RUN set -e; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
-    cd /tmp/grpc; \
-    git checkout bd44e485f69d70ca4095cea92decd98de3892aa6; \
+    (cd /tmp/grpc ; git checkout bd44e485f69d70ca4095cea92decd98de3892aa6); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DgRPC_BENCHMARK_PROVIDER="" \
@@ -109,12 +108,7 @@ RUN set -e; \
         -DBUILD_SHARED_LIBS=ON \
         -H/tmp/grpc \
         -B/tmp/grpc/.build; \
-    cd /tmp/grpc/.build; \
-    make -j${PARALLELISM} gpr grpc grpc++ grpc_cpp_plugin; \
-    # copy libs to /usr/local/lib
-    cp libgpr.so libgrpc.so libgrpc++.so libgrpc_plugin_support.so /usr/local/lib; \
-    cp grpc_cpp_plugin /usr/local/bin; \
-    cp -R ../include /usr/local; \
+    cmake --build /tmp/grpc/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/grpc
 
