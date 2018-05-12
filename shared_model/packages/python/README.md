@@ -1,5 +1,5 @@
 # Python client library example
-***Please read `setup.py` and take a look at the branch that are you going to use.***
+***Default branch that is going to be built is develop, if you want to build other branch, please set it in setup.py***
 
 ## How to install iroha python library
 To install latest release:
