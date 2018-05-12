@@ -59,17 +59,22 @@ endif()
 
 if (SWIG_PYTHON)
     if(SUPPORT_PYTHON2)
-        find_package(PythonLibs 2.7 REQUIRED)
+        set(PYTHON_VER 2.7)
     else()
-        find_package(PythonLibs 3.5 REQUIRED)
+        set(PYTHON_VER 3.5)
     endif()
+
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+        find_package(PythonInterp ${PYTHON_VER} REQUIRED)
+    endif()
+    find_package(PythonLibs ${PYTHON_VER} REQUIRED)
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
         set(MAC_OPTS "-flat_namespace -undefined suppress")
     endif()
 
     myswig_add_library(iroha LANGUAGE python SOURCES bindings.i)
-    swig_link_libraries(iroha ${Python_LIBRARIES} bindings ${MAC_OPTS})
+    swig_link_libraries(iroha ${PYTHON_LIBRARIES} bindings ${MAC_OPTS})
     add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
     # path to where Python.h is found
     target_include_directories(${SWIG_MODULE_iroha_REAL_NAME} PUBLIC

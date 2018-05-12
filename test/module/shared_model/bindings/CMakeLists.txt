@@ -38,11 +38,27 @@ if (SWIG_PYTHON)
   else()
     find_package(PythonInterp 3.5 REQUIRED)
   endif()
+
+  file(TO_NATIVE_PATH ${SWIG_BUILD_DIR} SWIG_LIB_DIR)
+  if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    set(SWIG_LIB_DIR "${SWIG_LIB_DIR}\\$<CONFIG>")
+  endif()
+
+  if (MSVC)
+    set(SEPARATOR $<SEMICOLON>)
+  else ()
+    set(SEPARATOR :)
+  endif()
+
   add_test(NAME python_transaction_test
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
+    COMMAND ${CMAKE_COMMAND} -E
+      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
+      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
   add_test(NAME python_query_test
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
+    COMMAND ${CMAKE_COMMAND} -E
+      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
+      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
 
   foreach(item "block" "commands" "primitive" "queries")
@@ -55,7 +71,6 @@ if (SWIG_PYTHON)
   foreach(test "python_transaction_test" "python_query_test")
     set_tests_properties(${test}
       PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
-                 ENVIRONMENT "PYTHONPATH=$ENV{PYTHONPATH}:${SWIG_BUILD_DIR}"
                  DEPENDS python_tests)
   endforeach(test)
 endif()
