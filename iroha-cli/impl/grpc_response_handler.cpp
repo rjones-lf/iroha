@@ -48,7 +48,7 @@ namespace iroha_cli {
         return true ;
     } else {
       handleGrpcErrors(response.status.error_code());
-        std::cout << "Error has occured. Not able to complete transaction" << std::endl ;
+        log_->error("Error has occured. Not able to complete transaction") ;
         return false ;
     }
   }
