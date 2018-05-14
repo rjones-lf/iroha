@@ -936,6 +936,10 @@ public class BuilderTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    // TODO igor-egorov, 14.05.2018 IR-1267
+    // Please test using clang on macOS before enabling
+    // This test does not fail on Linux with GCC 5.4.0
+    @Disabled
     @Test
     void grantPermissionWithInvalidName() {
         String permissions[] = {
@@ -984,6 +988,10 @@ public class BuilderTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    // TODO igor-egorov, 14.05.2018 IR-1267
+    // Please test using clang on macOS before enabling
+    // This test does not fail on Linux with GCC 5.4.0
+    @Disabled
     @Test
     void revokePermissionWithInvalidName() {
         String permissions[] = {
