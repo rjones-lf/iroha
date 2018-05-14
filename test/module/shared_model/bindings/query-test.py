@@ -239,7 +239,7 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getAccountAssetTransactions("admin@{}".format(domain), "coin#test").build()
 
-  def test_get_account_asset_transactions_empty_aссount(self):
+  def test_get_account_asset_transactions_empty_account(self):
     with self.assertRaises(ValueError):
       self.base().getAccountAssetTransactions("", "coin#test").build()
 
@@ -275,7 +275,7 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getAccountAssets("admin@{}".format(domain), "coin#test").build()
 
-  def test_get_account_assets_empty_aссount(self):
+  def test_get_account_assets_empty_account(self):
     with self.assertRaises(ValueError):
       self.base().getAccountAssets("", "coin#test").build()
 
