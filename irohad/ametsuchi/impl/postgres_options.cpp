@@ -10,44 +10,20 @@
 namespace iroha {
   namespace ametsuchi {
 
-    expected::Result<PostgresOptions, std::string> PostgresOptions::create(
-        std::string postgres_options) {
-      // Split into param=value list (split by space)
-      std::regex pattern{R"([^ ]+)"};
-      std::set<std::string> tokens{
-          std::sregex_token_iterator{std::begin(postgres_options),
-                                     std::end(postgres_options),
-                                     pattern},
-          std::sregex_token_iterator{}};
-      std::unordered_map<std::string, std::string> options;
-      std::string pg_opt_without_db_name;
-      for (const auto &s : tokens) {
-        std::vector<std::string> key_value;
-        boost::split(key_value, s, boost::is_any_of("="));
-        if (key_value.size() != 2) {
-          return expected::makeError("postgres options parse error: cannot get param name and value from " + s);
-        }
-        std::string key = key_value.at(0);
-        std::string value = key_value.at(1);
-        if (key.empty() or value.empty()) {
-          return expected::makeError("postgres options parse error: param name or value is empty");
-        }
-        options.insert({key, value});
-        if (key != "dbname") {
-          pg_opt_without_db_name += s + " ";
-        }
-      }
-      return expected::makeValue(
-          PostgresOptions(postgres_options, pg_opt_without_db_name, options));
-    }
+    PostgresOptions::PostgresOptions(const std::string &pg_opt)
+        : pg_opt_(pg_opt) {
+      std::smatch m;
+      // regex to fetch dbname from pg_opt string
+      std::regex e("\\b(dbname=)([^ ]*)");
 
-    PostgresOptions::PostgresOptions(
-        const std::string &pg_opt,
-        const std::string &pg_opt_without_db_name,
-        const std::unordered_map<std::string, std::string> &options_map)
-        : pg_opt_(pg_opt),
-          pg_opt_without_db_name_(pg_opt_without_db_name),
-          options_map_(options_map) {}
+      if (std::regex_search(pg_opt_, m, e)) {
+        dbname_ = *(m.end() - 1);
+        pg_opt_without_db_name_ = m.prefix().str() + m.suffix().str();
+      } else {
+        dbname_ = boost::none;
+        pg_opt_without_db_name_ = pg_opt_;
+      }
+    }
 
     std::string PostgresOptions::optionsString() const {
       return pg_opt_;
@@ -57,11 +33,8 @@ namespace iroha {
       return pg_opt_without_db_name_;
     }
 
-    boost::optional<std::string> PostgresOptions::getOption(
-        const std::string &option) const {
-      return options_map_.find(option) != options_map_.end()
-          ? boost::make_optional(options_map_.at(option))
-          : boost::none;
+    boost::optional<std::string> PostgresOptions::dbname() const {
+      return dbname_;
     }
 
   }  // namespace ametsuchi

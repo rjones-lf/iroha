@@ -258,39 +258,37 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(std::string block_store_dir,
                         std::string postgres_options) {
-      return PostgresOptions::create(postgres_options) |
-                 [&block_store_dir](const PostgresOptions &options)
-                 -> expected::Result<std::shared_ptr<StorageImpl>,
-                                     std::string> {
-        boost::optional<std::string> string_res = boost::none;
-        options.getOption("dbname") |
-            [&options, &string_res](const auto &dbname) {
-              createDatabaseIfNotExist(dbname,
-                                       options.optionsStringWithoutDbName())
-                  .match([](expected::Value<bool> &val) {},
-                         [&string_res](expected::Error<std::string> &error) {
-                           string_res = error.error;
-                         });
-            };
-        if (string_res) {
-          return expected::makeError(string_res.value());
-        }
+      boost::optional<std::string> string_res = boost::none;
 
-        auto ctx_result =
-            initConnections(block_store_dir, options.optionsString());
-        expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
-        ctx_result.match(
-            [&](expected::Value<ConnectionContext> &ctx) {
-              storage = expected::makeValue(std::shared_ptr<StorageImpl>(
-                  new StorageImpl(block_store_dir,
-                                  options,
-                                  std::move(ctx.value.block_store),
-                                  std::move(ctx.value.pg_lazy),
-                                  std::move(ctx.value.pg_nontx))));
-            },
-            [&](expected::Error<std::string> &error) { storage = error; });
-        return storage;
+      PostgresOptions options(postgres_options);
+
+      // create database if
+      options.dbname() | [&options, &string_res](const std::string &dbname) {
+        createDatabaseIfNotExist(dbname, options.optionsStringWithoutDbName())
+            .match([](expected::Value<bool> &val) {},
+                   [&string_res](expected::Error<std::string> &error) {
+                     string_res = error.error;
+                   });
       };
+
+      if (string_res) {
+        return expected::makeError(string_res.value());
+      }
+
+      auto ctx_result =
+          initConnections(block_store_dir, options.optionsString());
+      expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
+      ctx_result.match(
+          [&](expected::Value<ConnectionContext> &ctx) {
+            storage = expected::makeValue(std::shared_ptr<StorageImpl>(
+                new StorageImpl(block_store_dir,
+                                options,
+                                std::move(ctx.value.block_store),
+                                std::move(ctx.value.pg_lazy),
+                                std::move(ctx.value.pg_nontx))));
+          },
+          [&](expected::Error<std::string> &error) { storage = error; });
+      return storage;
     }
 
     void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {

@@ -31,14 +31,6 @@ namespace iroha {
      */
     class PostgresOptions {
      public:
-      /**
-       * Create Postgres Options instance
-       * @param pg_opt -- options string
-       * @return Result containing Postgres Options instance if pg_opt is valid
-       * and error otherwise
-       */
-      static expected::Result<PostgresOptions, std::string> create(
-          const std::string pg_opt);
 
       /**
        * Prohibit initialization of the PostgresOptions with no params
@@ -55,22 +47,14 @@ namespace iroha {
        */
       std::string optionsStringWithoutDbName() const;
 
-      /**
-       * get option's value by name
-       * @param option is the option's name
-       * @return optional on option's value, empty if such option does not exist
-       */
-      boost::optional<std::string> getOption(const std::string &option) const;
+      boost::optional<std::string> dbname() const;
+
+      explicit PostgresOptions(const std::string &pg_opt);
 
      private:
-      PostgresOptions(
-          const std::string &pg_opt,
-          const std::string &pg_opt_without_db_name,
-          const std::unordered_map<std::string, std::string> &options_map);
-
       const std::string pg_opt_;
-      const std::string pg_opt_without_db_name_;
-      const std::unordered_map<std::string, std::string> options_map_;
+      std::string pg_opt_without_db_name_;
+      boost::optional<std::string> dbname_;
     };
 
   }  // namespace ametsuchi
