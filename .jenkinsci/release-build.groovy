@@ -7,10 +7,10 @@ def doReleaseBuild() {
   // this is the case for the FIRST build only.
   // So just set this to same value as default. 
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
-  if (parallelism == null) {
+  if (!parallelism) {
     parallelism = 4
   }
-  if ("arm7" in env.NODE_NAME) {
+  if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()

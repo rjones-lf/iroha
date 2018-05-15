@@ -13,7 +13,21 @@ find_package(Threads REQUIRED)
 #           protobuf           #
 ################################
 option(FIND_PROTOBUF "Try to find protobuf in system" ON)
-find_package(protobuf)
+if (MSVC)
+  set(CMAKE_MODULE_PATH "")
+  find_package(Protobuf REQUIRED)
+  add_library(protobuf INTERFACE)
+  target_link_libraries(protobuf INTERFACE
+      protobuf::libprotobuf
+      )
+  add_executable(protoc IMPORTED)
+  set_target_properties(protoc PROPERTIES
+      IMPORTED_LOCATION ${Protobuf_PROTOC_EXECUTABLE}
+      )
+  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
+else ()
+  find_package(protobuf)
+endif()
 
 ##########################
 #         boost          #
@@ -34,5 +48,17 @@ find_package(ed25519)
 ##########################
 # testing is an option. Look at the main CMakeLists.txt for details.
 if (TESTING)
-  find_package(gtest)
+  if (MSVC)
+    set(CMAKE_MODULE_PATH "")
+    find_package(GTest REQUIRED)
+    add_library(gtest INTERFACE)
+    add_library(gmock INTERFACE)
+
+    target_link_libraries(gtest INTERFACE
+        GTest::GTest GTest::Main
+        )
+    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
+  else ()
+    find_package(gtest)
+  endif()
 endif ()

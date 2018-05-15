@@ -25,9 +25,11 @@ include_directories(
 
 if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-  set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+  if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+  endif ()
 
   if(CMAKE_GENERATOR MATCHES "Make")
     set(MAKE "$(MAKE)")

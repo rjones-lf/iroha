@@ -7,7 +7,7 @@
   iroha_net: iroha_network  # name of docker network
   containerConfPath: /opt/iroha_data  # path to folder with config files inside docker container
 
-  irohaDockerImage: hyperledger/iroha-docker # docker image name
-  irohaDockerImageTag: develop_latest  # docker image tag
+  irohaDockerImage: hyperledger/iroha # docker image name
+  irohaDockerImageTag: develop  # docker image tag
   dbDockerImage: postgres
   dbDockerImageTag: 9.5

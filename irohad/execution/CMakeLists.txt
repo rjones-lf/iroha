@@ -17,6 +17,7 @@ add_library(common_execution
         )
 target_link_libraries(common_execution
         rxcpp
+        boost
         )
 
 add_library(command_execution

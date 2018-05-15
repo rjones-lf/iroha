@@ -19,6 +19,7 @@
 #define IROHA_COMMON_TYPES_HPP
 
 #include <array>
+#include <ciso646>
 #include <cstdio>
 #include <iomanip>
 #include <sstream>
