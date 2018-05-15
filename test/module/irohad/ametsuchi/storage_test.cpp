@@ -64,6 +64,11 @@ TEST_F(StorageTest, CreateStorageWithDatabase) {
   ASSERT_EQ(result.size(), 1);
 }
 
+/**
+ * @given Bad Postgres options string with nonexisting user in it
+ * @when Create storage using that options string
+ * @then Database is not created and error case is executed
+ */
 TEST_F(StorageTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt = "host=localhost port=5432 users=nonexistinguser";
   StorageImpl::create(block_store_path, pg_opt)
