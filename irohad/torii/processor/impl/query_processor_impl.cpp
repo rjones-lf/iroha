@@ -48,9 +48,9 @@ namespace iroha {
       const auto &sig = qry.signatures();
 
       return boost::size(sig) == 1
-          && signatories | [&sig](const auto &signatories) {
-               return validation::signaturesSubset(sig, signatories);
-             };
+          and signatories | [&sig](const auto &signatories) {
+                return validation::signaturesSubset(sig, signatories);
+              };
     }
 
     void QueryProcessorImpl::queryHandle(
