@@ -4,6 +4,7 @@
  */
 
 #include "ametsuchi/impl/postgres_options.hpp"
+
 #include <boost/algorithm/string.hpp>
 #include <regex>
 
@@ -14,11 +15,23 @@ namespace iroha {
         : pg_opt_(pg_opt) {
       std::smatch m;
       // regex to fetch dbname from pg_opt string
-      std::regex e("\\b(dbname=)([^ ]*)");
+      std::regex e("\\bdbname=([^ ]*)");
 
       if (std::regex_search(pg_opt_, m, e)) {
         dbname_ = *(m.end() - 1);
+
+        // get pg_opt_without_db_name_
         pg_opt_without_db_name_ = m.prefix().str() + m.suffix().str();
+
+        // remove consecutive spaces
+        auto end =
+            std::unique(pg_opt_without_db_name_.begin(),
+                        pg_opt_without_db_name_.end(),
+                        [](char l, char r) {
+                          return std::isspace(l) && std::isspace(r) && l == r;
+                        });
+        pg_opt_without_db_name_ =
+            std::string(pg_opt_without_db_name_.begin(), end);
       } else {
         dbname_ = boost::none;
         pg_opt_without_db_name_ = pg_opt_;

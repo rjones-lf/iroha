@@ -4,76 +4,43 @@
  */
 
 #include "ametsuchi/impl/postgres_options.hpp"
+
 #include <gtest/gtest.h>
-#include <boost/algorithm/string.hpp>
 
 using namespace iroha::ametsuchi;
 
 /**
- * @given pg_opt string with param1 and param2
+ * @given pg_opt string with param1, param2 and dbname
  * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created
- * AND it contains param1 and
- * param2
+ * @then PostgresOptions contains dbname with
+ * AND optionsString is equal to given pg_opt string
+ * AND optionsStringWithoutDbName is equal to pg_opt string without dbname param
  */
-TEST(PostgresOptionsTest, ParamExist) {
-  std::string pg_opt_string = "param1=val1 param2=val2";
-  auto pg_opt = PostgresOptions::create(pg_opt_string);
-  pg_opt.match(
-      [](iroha::expected::Value<PostgresOptions> options) {
-        auto param1 = options.value.getOption("param1");
-        ASSERT_TRUE(param1);
-        ASSERT_EQ(param1.value(), "val1");
+TEST(PostgresOptionsTest, DBnameParamExist) {
+  std::string dbname = "irohadb";
+  std::string pg_opt_string = "param1=val1 dbname=" + dbname + " param2=val2";
+  auto pg_opt = PostgresOptions(pg_opt_string);
 
-        auto param2 = options.value.getOption("param2");
-        ASSERT_TRUE(param2);
-        ASSERT_EQ(param2.value(), "val2");
-      },
-      [](auto) { FAIL() << "Creation of PostgresOptions object failed"; });
+  auto obtained_dbname = pg_opt.dbname();
+  ASSERT_TRUE(obtained_dbname);
+  ASSERT_EQ(obtained_dbname.value(), dbname);
+  ASSERT_EQ(pg_opt.optionsString(), pg_opt_string);
+  ASSERT_EQ(pg_opt.optionsStringWithoutDbName(), "param1=val1 param2=val2");
 }
 
 /**
- * @given pg_opt string without non_existing_param
+ * @given pg_opt string param1 and param2
  * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created
- * AND doesn't contain
- * non_existing_param in it
+ * @then PostgresOptions does not contain dbname
+ * AND optionsString equals to given pg_opt string
+ * AND optionsStringWithoutDbName also equal pg_opt string
  */
-TEST(PostgresOptionsTest, ParamNotExist) {
+TEST(PostgresOptionsTest, DBnameParamNotExist) {
   std::string pg_opt_string = "param1=val1 param2=val2";
-  auto pg_opt = PostgresOptions::create(pg_opt_string);
-  pg_opt.match(
-      [](iroha::expected::Value<PostgresOptions> options) {
-        ASSERT_FALSE(options.value.getOption("non_existing_param"));
-      },
-      [](auto) { FAIL() << "Creation of PostgresOptions object failed"; });
-}
+  auto pg_opt = PostgresOptions(pg_opt_string);
 
-/**
- * @given pg_opt string with dbname param
- * @when PostgresOptions object is created from given pg_opt string
- * @then PostgresOptions object successfully created
- * AND doesn't contain
- * non_existing_param in it
- */
-TEST(PostgresOptionsTest, DBNameParam) {
-  std::string pg_opt_with_dbname = "param1=val1 param2=val2 dbname=iroha_db";
-  auto pg_opt = PostgresOptions::create(pg_opt_with_dbname);
-  pg_opt.match(
-      [&pg_opt_with_dbname](iroha::expected::Value<PostgresOptions> options) {
-        // check if dbname param exists
-        auto dbname = options.value.getOption("dbname");
-        ASSERT_TRUE(dbname);
-
-        // check if optionsStringWithoutDbName returns pg_opt without dbname
-        // param
-        auto pg_opt_without_dbname =
-            boost::trim_copy(options.value.optionsStringWithoutDbName());
-        ASSERT_EQ(pg_opt_without_dbname, "param1=val1 param2=val2");
-
-        // check if optionsString returns full pg_opt
-        auto pg_opt_str = boost::trim_copy(options.value.optionsString());
-        ASSERT_EQ(pg_opt_str, pg_opt_with_dbname);
-      },
-      [](auto) { FAIL() << "Creation of PostgresOptions object failed"; });
+  auto obtained_dbname = pg_opt.dbname();
+  ASSERT_FALSE(obtained_dbname);
+  ASSERT_EQ(pg_opt.optionsString(), pg_opt_string);
+  ASSERT_EQ(pg_opt.optionsStringWithoutDbName(), pg_opt_string);
 }
