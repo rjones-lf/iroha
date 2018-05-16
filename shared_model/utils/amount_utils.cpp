@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#include <boost/format.hpp>
 #include "utils/amount_utils.hpp"
+#include <boost/format.hpp>
 
 namespace shared_model {
   namespace detail {
@@ -44,8 +44,10 @@ namespace shared_model {
           increaseValuePrecision(b.intValue(), max_precision - b.precision());
       if (val_a < a.intValue() || val_b < b.intValue() || val_a + val_b < val_a
           || val_a + val_b < val_b) {
-        return iroha::expected::makeError(
-            std::make_shared<std::string>("addition overflows"));
+        return iroha::expected::makeError(std::make_shared<std::string>(
+            (boost::format("addition overflows (%s + %s)") % a.intValue().str()
+             % b.intValue().str())
+                .str()));
       }
       return shared_model::builder::AmountBuilderWithoutValidator()
           .precision(max_precision)
@@ -66,7 +68,9 @@ namespace shared_model {
       // check if a greater than b
       if (a.intValue() < b.intValue()) {
         return iroha::expected::makeError(std::make_shared<std::string>(
-            (boost::format("minuend is smaller than subtrahend (%s - %s)") % a.intValue().str() % b.intValue().str()).str()));
+            (boost::format("minuend is smaller than subtrahend (%s - %s)")
+             % a.intValue().str() % b.intValue().str())
+                .str()));
       }
       auto max_precision = std::max(a.precision(), b.precision());
       auto val_a =
@@ -95,7 +99,9 @@ namespace shared_model {
                             const int new_precision) {
       if (amount.precision() > new_precision) {
         return iroha::expected::makeError(std::make_shared<std::string>(
-            "new precision is smaller than current"));
+            (boost::format("new precision is smaller than current (%d < %d)")
+             % new_precision % amount.precision())
+                .str()));
       }
       auto val_amount = increaseValuePrecision(
           amount.intValue(), new_precision - amount.precision());
