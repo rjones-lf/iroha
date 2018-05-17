@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 
+#include "backend/protobuf/from_old_model.hpp"
 #include "client.hpp"
 #include "common/byteutils.hpp"
 #include "crypto/keys_manager_impl.hpp"
@@ -194,9 +195,8 @@ namespace iroha_cli {
       GetTransactions::TxHashCollectionType tx_hashes;
       std::for_each(
           params.begin(), params.end(), [&tx_hashes](auto const &hex_hash) {
-            if (auto opt = iroha::
-                    hexstringToArray<GetTransactions::TxHashType::size()>(
-                        hex_hash)) {
+            if (auto opt = iroha::hexstringToArray<
+                    GetTransactions::TxHashType::size()>(hex_hash)) {
               tx_hashes.push_back(*opt);
             }
           });
@@ -262,7 +262,8 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
-      GrpcResponseHandler{}.handle(client.sendQuery(query_));
+      GrpcResponseHandler{}.handle(
+          client.sendQuery(shared_model::proto::from_old(query_)));
       printEnd();
       // Stop parsing
       return false;

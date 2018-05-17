@@ -23,12 +23,12 @@
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
-namespace iroha {
-  namespace model {
-    struct Query;
-    struct Transaction;
-  }
-}
+namespace shared_model {
+  namespace interface {
+    class Transaction;
+    class Query;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha_cli {
 
@@ -50,7 +50,7 @@ namespace iroha_cli {
      * @return
      */
     CliClient::Response<CliClient::TxStatus> sendTx(
-        iroha::model::Transaction tx);
+        const shared_model::interface::Transaction &tx);
 
     /**
      * Send Query to Iroha Peer, i.e. target_ip:port
@@ -58,7 +58,7 @@ namespace iroha_cli {
      * @return
      */
     CliClient::Response<iroha::protocol::QueryResponse> sendQuery(
-        std::shared_ptr<iroha::model::Query> query);
+        const shared_model::interface::Query &query);
 
     CliClient::Response<iroha::protocol::ToriiResponse> getTxStatus(
         std::string tx_hash);

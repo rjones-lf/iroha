@@ -74,6 +74,14 @@ using namespace iroha::model::converters;
 using namespace iroha_cli::interactive;
 namespace fs = boost::filesystem;
 
+iroha::keypair_t *makeOldModel(const shared_model::crypto::Keypair &keypair) {
+  return new iroha::keypair_t{
+      shared_model::crypto::PublicKey::OldPublicKeyType::from_string(
+          toBinaryString(keypair.publicKey())),
+      shared_model::crypto::PrivateKey::OldPrivateKeyType::from_string(
+          toBinaryString(keypair.privateKey()))};
+}
+
 int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   gflags::ShutDownCommandLineFlags();
@@ -115,8 +123,7 @@ int main(int argc, char *argv[]) {
     // Convert to json
     std::ofstream output_file("genesis.block");
     output_file << shared_model::converters::protobuf::modelToJson(
-        shared_model::proto::from_old(block)
-      );
+        shared_model::proto::from_old(block));
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network
@@ -151,7 +158,8 @@ int main(int argc, char *argv[]) {
       if (not tx_opt) {
         logger->error("Json transaction has wrong format.");
       } else {
-        response_handler.handle(client.sendTx(tx_opt.value()));
+        response_handler.handle(
+            client.sendTx(shared_model::proto::from_old(*tx_opt)));
       }
     }
     if (not FLAGS_json_query.empty()) {
@@ -164,7 +172,9 @@ int main(int argc, char *argv[]) {
       if (not query_opt) {
         logger->error("Json has wrong format.");
       } else {
-        response_handler.handle(client.sendQuery(query_opt.value()));
+        auto response =
+            client.sendQuery(shared_model::proto::from_old(query_opt.value()));
+        response_handler.handle(response);
       }
     }
   }
@@ -201,7 +211,7 @@ int main(int argc, char *argv[]) {
         FLAGS_torii_port,
         0,
         std::make_shared<iroha::model::ModelCryptoProviderImpl>(
-            *std::unique_ptr<iroha::keypair_t>(keypair->makeOldModel())));
+            *std::unique_ptr<iroha::keypair_t>(makeOldModel(*keypair))));
     interactiveCli.run();
   } else {
     logger->error("Invalid flags");
