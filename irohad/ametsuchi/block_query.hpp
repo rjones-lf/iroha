@@ -90,9 +90,8 @@ namespace iroha {
       virtual rxcpp::observable<wBlock> getTopBlocks(uint32_t count) = 0;
 
       /**
-       * Get given number of blocks from top.
-       * @param count - number of blocks to retrieve
-       * @return observable of Model Block
+       * Get height of the top block.
+       * @return height
        */
       virtual uint32_t getTopBlockHeight() = 0;
 
