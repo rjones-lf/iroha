@@ -88,8 +88,8 @@ TEST(ResultTest, ResultBindOperatorSuccesfulCase) {
 
   auto result = get_int() | negate_int;
 
-  result.match([](Value<int> v) { ASSERT_EQ(-10, v.value); },
-               makeFailCase<Error<std::string>>(kErrorCaseMessage));
+  result.match2([](int v) { ASSERT_EQ(-10, v); },
+               makeFailCase<std::string>(kErrorCaseMessage));
 }
 
 // function which must not be called for test to pass
