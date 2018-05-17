@@ -62,7 +62,7 @@ namespace shared_model {
       /**
        * @return attached concrete tx response
        */
-      virtual ResponseVariantType get() const = 0;
+      virtual const ResponseVariantType &get() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 

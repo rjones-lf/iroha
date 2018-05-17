@@ -65,8 +65,8 @@ namespace shared_model {
       /**
        * @return attached concrete tx response
        */
-      ResponseVariantType get() const override {
-        return *variant_;
+      const ResponseVariantType &get() const override {
+        return *ivariant_;
       }
 
      private:
@@ -93,6 +93,9 @@ namespace shared_model {
                               ProtoResponseVariantType>(
                 std::forward<decltype(ar)>(ar), which > last ? last : which);
       })};
+
+      const Lazy<ResponseVariantType> ivariant_{detail::makeLazyInitializer(
+          [this] { return ResponseVariantType(*variant_); })};
 
       // stub hash
       const Lazy<crypto::Hash> hash_{
