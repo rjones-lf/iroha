@@ -18,7 +18,8 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 
-#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
+
 #include "client.hpp"
 #include "common/byteutils.hpp"
 #include "crypto/keys_manager_impl.hpp"
@@ -27,6 +28,7 @@
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_query_cli.hpp"
 #include "model/converters/json_query_factory.hpp"
+#include "model/converters/pb_query_factory.hpp"
 #include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
@@ -262,8 +264,9 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
-      GrpcResponseHandler{}.handle(
-          client.sendQuery(shared_model::proto::from_old(query_)));
+      auto query = shared_model::proto::Query(
+          *iroha::model::converters::PbQueryFactory().serialize(query_));
+      GrpcResponseHandler{}.handle(client.sendQuery(query));
       printEnd();
       // Stop parsing
       return false;

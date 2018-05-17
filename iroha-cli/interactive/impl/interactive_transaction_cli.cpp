@@ -20,7 +20,7 @@
 #include <fstream>
 #include <utility>
 
-#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "client.hpp"
 #include "grpc_response_handler.hpp"
 #include "model/commands/append_role.hpp"
@@ -32,6 +32,7 @@
 #include "model/converters/json_common.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_common.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 #include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/sha3_hash.hpp"
 #include "parser/parser.hpp"  // for parser::ParseValue
@@ -478,7 +479,8 @@ namespace iroha_cli {
       provider_->sign(tx);
 
       GrpcResponseHandler response_handler;
-      auto shared_tx = shared_model::proto::from_old(tx);
+      auto shared_tx = shared_model::proto::Transaction(
+          iroha::model::converters::PbTransactionFactory().serialize(tx));
       response_handler.handle(
           CliClient(address.value().first, address.value().second)
               .sendTx(shared_tx));

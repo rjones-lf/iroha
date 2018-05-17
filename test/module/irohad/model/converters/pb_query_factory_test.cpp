@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-#include "model/converters/pb_query_factory.hpp"
 #include <gtest/gtest.h>
-#include "model/generators/query_generator.hpp"
-#include "model/sha3_hash.hpp"
 
+#include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
+#include "model/generators/query_generator.hpp"
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
+#include "model/sha3_hash.hpp"
 
 using namespace iroha::model::converters;
 using namespace iroha::model::generators;

@@ -122,8 +122,9 @@ int main(int argc, char *argv[]) {
     auto block = generator.generateGenesisBlock(0, {transaction});
     // Convert to json
     std::ofstream output_file("genesis.block");
-    output_file << shared_model::converters::protobuf::modelToJson(
-        shared_model::proto::from_old(block));
+    auto bl = shared_model::proto::Block(
+        iroha::model::converters::PbBlockFactory().serialize(block));
+    output_file << shared_model::converters::protobuf::modelToJson(bl);
     logger->info("File saved to genesis.block");
   }
   // Create new pub/priv key, register in Iroha Network
@@ -158,8 +159,10 @@ int main(int argc, char *argv[]) {
       if (not tx_opt) {
         logger->error("Json transaction has wrong format.");
       } else {
-        response_handler.handle(
-            client.sendTx(shared_model::proto::from_old(*tx_opt)));
+        auto tx = shared_model::proto::Transaction(
+            iroha::model::converters::PbTransactionFactory().serialize(
+                *tx_opt));
+        response_handler.handle(client.sendTx(tx));
       }
     }
     if (not FLAGS_json_query.empty()) {
@@ -172,8 +175,9 @@ int main(int argc, char *argv[]) {
       if (not query_opt) {
         logger->error("Json has wrong format.");
       } else {
-        auto response =
-            client.sendQuery(shared_model::proto::from_old(query_opt.value()));
+        auto query = shared_model::proto::Query(
+            *iroha::model::converters::PbQueryFactory().serialize(*query_opt));
+        auto response = client.sendQuery(query);
         response_handler.handle(response);
       }
     }
