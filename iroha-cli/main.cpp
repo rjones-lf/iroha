@@ -19,12 +19,10 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/rapidjson.h>
 #include <boost/filesystem.hpp>
-#include <fstream>
 #include <iostream>
 
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "client.hpp"
-#include "common/assert_config.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
@@ -36,7 +34,6 @@
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
-#include "validators.hpp"
 
 // Account information
 DEFINE_bool(new_account,
