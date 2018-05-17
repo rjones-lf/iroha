@@ -22,7 +22,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "backend/protobuf/from_old_model.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
 #include "client.hpp"
 #include "common/assert_config.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
@@ -31,6 +31,9 @@
 #include "interactive/interactive_cli.hpp"
 #include "model/converters/json_block_factory.hpp"
 #include "model/converters/json_query_factory.hpp"
+#include "model/converters/pb_block_factory.hpp"
+#include "model/converters/pb_query_factory.hpp"
+#include "model/converters/pb_transaction_factory.hpp"
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
 #include "validators.hpp"
