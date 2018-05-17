@@ -12,7 +12,6 @@
 #include "interfaces/utils/specified_visitor.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 

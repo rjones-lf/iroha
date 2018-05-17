@@ -8,7 +8,6 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 

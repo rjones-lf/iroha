@@ -8,7 +8,6 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -19,7 +18,7 @@ class CreateAccount : public AcceptanceFixture {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
-  const std::string kNewUser = "userone"s;
+  const std::string kNewUser = "userone";
   const crypto::Keypair kNewUserKeypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
@@ -68,7 +67,7 @@ TEST_F(CreateAccount, NoPermissions) {
  * @then there is no tx in proposal
  */
 TEST_F(CreateAccount, NoDomain) {
-  const std::string nonexistent_domain = "asdf"s;
+  const std::string nonexistent_domain = "asdf";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -88,7 +87,7 @@ TEST_F(CreateAccount, NoDomain) {
  * @then there is no tx in proposal
  */
 TEST_F(CreateAccount, ExistingName) {
-  const std::string &existing_name = kUser;
+  std::string existing_name = kUser;
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -145,7 +144,7 @@ TEST_F(CreateAccount, TooLongName) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateAccount, EmptyName) {
-  const std::string &empty_name = "";
+  std::string empty_name = "";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())

@@ -9,11 +9,9 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
 
-using namespace std::string_literals;
-
 AcceptanceFixture::AcceptanceFixture()
-    : kUser("user"s),
-      kRole("role"s),
+    : kUser("user"),
+      kRole("role"),
       kDomain(integration_framework::IntegrationTestFramework::kDefaultDomain),
       kAsset(integration_framework::IntegrationTestFramework::kAssetName + "#"
              + integration_framework::IntegrationTestFramework::kDefaultDomain),

@@ -8,7 +8,6 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -64,7 +63,7 @@ TEST_F(CreateDomain, NoPermissions) {
  * @then there is no tx in proposal
  */
 TEST_F(CreateDomain, NoRole) {
-  const std::string nonexistent_role = "asdf"s;
+  const std::string nonexistent_role = "asdf";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -83,7 +82,7 @@ TEST_F(CreateDomain, NoRole) {
  * @then there is no tx in proposal
  */
 TEST_F(CreateDomain, ExistingName) {
-  const std::string &existing_domain = IntegrationTestFramework::kDefaultDomain;
+  std::string existing_domain = IntegrationTestFramework::kDefaultDomain;
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -143,7 +142,7 @@ TEST_F(CreateDomain, TooLongName) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateDomain, EmptyName) {
-  const std::string &empty_name = "";
+  std::string empty_name = "";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -160,7 +159,7 @@ TEST_F(CreateDomain, EmptyName) {
  *       (aka skipProposal throws)
  */
 TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
-  const std::string &empty_name = "";
+  std::string empty_name = "";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())

@@ -12,7 +12,6 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -34,7 +33,7 @@ class CreateRole : public AcceptanceFixture {
     return baseTx(perms, kRole);
   }
 
-  const std::string kNewRole = "rl"s;
+  const std::string kNewRole = "rl";
 };
 
 /**

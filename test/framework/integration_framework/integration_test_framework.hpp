@@ -57,7 +57,7 @@ namespace integration_framework {
    public:
     /**
      * Construct test framework instance
-     * @param maximum_proposal_size - Maximum amount of transactions per
+     * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.

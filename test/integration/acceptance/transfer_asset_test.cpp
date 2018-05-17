@@ -13,7 +13,6 @@
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -70,12 +69,12 @@ class TransferAsset : public AcceptanceFixture {
     return builder.build().signAndAddSignature(kUser1Keypair);
   }
 
-  const std::string kAmount = "1.0"s;
-  const std::string kDesc = "description"s;
-  const std::string kUser1 = "userone"s;
-  const std::string kUser2 = "usertwo"s;
-  const std::string kRole1 = "roleone"s;
-  const std::string kRole2 = "roletwo"s;
+  const std::string kAmount = "1.0";
+  const std::string kDesc = "description";
+  const std::string kUser1 = "userone";
+  const std::string kUser2 = "usertwo";
+  const std::string kRole1 = "roleone";
+  const std::string kRole2 = "roletwo";
   const std::string kUser1Id = kUser1 + "@test";
   const std::string kUser2Id = kUser2 + "@test";
   const crypto::Keypair kUser1Keypair =
@@ -170,7 +169,7 @@ TEST_F(TransferAsset, WithOnlyCanReceivePerm) {
  * @then there is an empty proposal
  */
 TEST_F(TransferAsset, NonexistentDest) {
-  const std::string &nonexistent = "inexist@test"s;
+  std::string nonexistent = "inexist@test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
@@ -194,7 +193,7 @@ TEST_F(TransferAsset, NonexistentDest) {
  * @then there is an empty proposal
  */
 TEST_F(TransferAsset, NonexistentAsset) {
-  const std::string &nonexistent = "inexist#test"s;
+  std::string nonexistent = "inexist#test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
@@ -331,7 +330,7 @@ TEST_F(TransferAsset, MoreThanHas) {
  * second
  */
 TEST_F(TransferAsset, Uint256DestOverflow) {
-  const std::string &uint256_halfmax =
+  std::string uint256_halfmax =
       "723700557733226221397318656304299424082937404160253525246609900049457060"
       "2495.0";  // 2**252 - 1
   IntegrationTestFramework(1)

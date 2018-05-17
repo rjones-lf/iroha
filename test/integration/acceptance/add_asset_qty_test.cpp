@@ -8,7 +8,6 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -98,7 +97,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
  * second
  */
 TEST_F(AddAssetQuantity, Uint256DestOverflow) {
-  const std::string &uint256_halfmax =
+  std::string uint256_halfmax =
       "723700557733226221397318656304299424082937404160253525246609900049457060"
       "2495.0";  // 2**252 - 1
   IntegrationTestFramework(1)
@@ -127,7 +126,7 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
  * @then there is an empty proposal
  */
 TEST_F(AddAssetQuantity, NonexistentAccount) {
-  const std::string &nonexistent = "inexist@test"s;
+  std::string nonexistent = "inexist@test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -142,11 +141,11 @@ TEST_F(AddAssetQuantity, NonexistentAccount) {
 
 /**
  * @given some user with all required permissions
- * @when execute tx with AddAssetQuantity command with inexistent asset
+ * @when execute tx with AddAssetQuantity command with nonexistent asset
  * @then there is an empty proposal
  */
 TEST_F(AddAssetQuantity, NonexistentAsset) {
-  const std::string &nonexistent = "inexist#test"s;
+  std::string nonexistent = "inexist#test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())

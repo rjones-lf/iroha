@@ -13,7 +13,6 @@
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -50,7 +49,7 @@ class GetTransactions : public AcceptanceFixture {
         std::vector<crypto::Hash>{hash}));
   }
 
-  const std::string kNewRole = "rl"s;
+  const std::string kNewRole = "rl";
 };
 
 /**

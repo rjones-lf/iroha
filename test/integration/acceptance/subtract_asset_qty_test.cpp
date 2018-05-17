@@ -11,7 +11,6 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
@@ -144,7 +143,7 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
  * @then there is an empty proposal
  */
 TEST_F(SubtractAssetQuantity, NonexistentAccount) {
-  const std::string &nonexistent = "inexist@test"s;
+  std::string nonexistent = "inexist@test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
@@ -167,7 +166,7 @@ TEST_F(SubtractAssetQuantity, NonexistentAccount) {
  * @then there is an empty proposal
  */
 TEST_F(SubtractAssetQuantity, NonexistentAsset) {
-  const std::string &nonexistent = "inexist#test"s;
+  std::string nonexistent = "inexist#test";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
