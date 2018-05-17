@@ -1,53 +1,36 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/queries.hpp"
-#include "builders/protobuf/transaction.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "responses.pb.h"
+#include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
 
-constexpr auto kAdmin = "admin@test";
-constexpr auto kNonUser = "nonuser@test";
-constexpr auto kAsset = "coin#test";
-const shared_model::crypto::Keypair kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-auto checkStatelessValid = [](auto &status) {
-  ASSERT_NO_THROW(
-      boost::get<shared_model::detail::PolymorphicWrapper<
-          shared_model::interface::StatelessValidTxResponse>>(status.get()));
-};
-auto checkStatelessInvalid = [](auto &status) {
-  ASSERT_NO_THROW(
-      boost::get<shared_model::detail::PolymorphicWrapper<
-          shared_model::interface::StatelessFailedTxResponse>>(status.get()));
-};
-auto checkProposal = [](auto &proposal) {
-  ASSERT_EQ(proposal->transactions().size(), 1);
+class AcceptanceTest : public AcceptanceFixture {
+ public:
+  const std::string kAdmin = "admin@test";
+  const std::string kNonUser = "nonuser@test";
 
-};
-auto checkStatefulInvalid = [](auto &block) {
-  ASSERT_EQ(block->transactions().size(), 0);
-};
-auto checkStatefulValid = [](auto &block) {
-  ASSERT_EQ(block->transactions().size(), 1);
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkStatelessValid = [](auto &status) {
+        ASSERT_TRUE(boost::apply_visitor(
+            shared_model::interface::SpecifiedVisitor<
+                shared_model::interface::StatelessValidTxResponse>(),
+            status.get()));
+      };
+  const std::function<void(
+      const std::shared_ptr<shared_model::interface::Proposal> &)>
+      checkProposal =
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
+  const std::function<void(
+      const std::shared_ptr<shared_model::interface::Block> &)>
+      checkStatefulInvalid =
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); };
+  const std::function<void(
+      const std::shared_ptr<shared_model::interface::Block> &)>
+      checkStatefulValid =
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); };
 };
 
 /**
@@ -56,8 +39,8 @@ auto checkStatefulValid = [](auto &block) {
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_FAILED on that tx
  */
-TEST(AcceptanceTest, NonExistentCreatorAccountId) {
-  auto tx = shared_model::proto::TransactionBuilder()
+TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
+  auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kNonUser)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -78,8 +61,8 @@ TEST(AcceptanceTest, NonExistentCreatorAccountId) {
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
-TEST(AcceptanceTest, Transaction1HourOld) {
-  auto tx = shared_model::proto::TransactionBuilder()
+TEST_F(AcceptanceTest, Transaction1HourOld) {
+  auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now(std::chrono::hours(-1)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
@@ -99,8 +82,8 @@ TEST(AcceptanceTest, Transaction1HourOld) {
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
-TEST(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
-  auto tx = shared_model::proto::TransactionBuilder()
+TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
+  auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now(std::chrono::hours(24)
                                               - std::chrono::minutes(1)))
                 .creatorAccountId(kAdmin)
@@ -120,15 +103,7 @@ TEST(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
  * @when sending transactions with an more than 24 hour old UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, TransactionMore24HourOld) {
-  ASSERT_ANY_THROW(
-      auto tx = shared_model::proto::TransactionBuilder()
-                    .createdTime(iroha::time::now(std::chrono::hours(24)
-                                                  + std::chrono::minutes(1)))
-                    .creatorAccountId(kAdmin)
-                    .addAssetQuantity(kAdmin, kAsset, "1.0")
-                    .build()
-                    .signAndAddSignature(kAdminKeypair););
+TEST_F(AcceptanceTest, TransactionMore24HourOld) {
   auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now(std::chrono::hours(24)
                                               + std::chrono::minutes(1)))
@@ -148,8 +123,8 @@ TEST(AcceptanceTest, TransactionMore24HourOld) {
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
-TEST(AcceptanceTest, Transaction5MinutesFromFuture) {
-  auto tx = shared_model::proto::TransactionBuilder()
+TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
+  auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now(std::chrono::minutes(5)
                                               - std::chrono::seconds(10)))
                 .creatorAccountId(kAdmin)
@@ -170,14 +145,7 @@ TEST(AcceptanceTest, Transaction5MinutesFromFuture) {
  * @when sending transactions with an 10 minutes from future UNIX time
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, Transaction10MinutesFromFuture) {
-  ASSERT_ANY_THROW(
-      auto tx = shared_model::proto::TransactionBuilder()
-                    .createdTime(iroha::time::now(std::chrono::minutes(10)))
-                    .creatorAccountId(kAdmin)
-                    .addAssetQuantity(kAdmin, kAsset, "1.0")
-                    .build()
-                    .signAndAddSignature(kAdminKeypair););
+TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
   auto tx = TestUnsignedTransactionBuilder()
                 .createdTime(iroha::time::now(std::chrono::minutes(10)))
                 .creatorAccountId(kAdmin)
@@ -195,7 +163,7 @@ TEST(AcceptanceTest, Transaction10MinutesFromFuture) {
  * @when sending transactions with an empty public Key
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, TransactionEmptyPubKey) {
+TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
           .createdTime(iroha::time::now())
@@ -217,7 +185,7 @@ TEST(AcceptanceTest, TransactionEmptyPubKey) {
  * @when sending transactions with an empty signedBlob
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, TransactionEmptySignedblob) {
+TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
           .createdTime(iroha::time::now())
@@ -236,7 +204,7 @@ TEST(AcceptanceTest, TransactionEmptySignedblob) {
  * @when sending transactions with Invalid PublicKey
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, TransactionInvalidPublicKey) {
+TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
           .createdTime(iroha::time::now())
@@ -258,7 +226,7 @@ TEST(AcceptanceTest, TransactionInvalidPublicKey) {
  * @when sending transactions with Invalid SignedBlock
  * @then receive STATELESS_VALIDATION_FAILED status
  */
-TEST(AcceptanceTest, TransactionInvalidSignedBlob) {
+TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
   shared_model::proto::Transaction tx =
       TestTransactionBuilder()
           .createdTime(iroha::time::now())
@@ -286,9 +254,9 @@ TEST(AcceptanceTest, TransactionInvalidSignedBlob) {
  * @then receive STATELESS_VALIDATION_SUCCESS status
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
-TEST(AcceptanceTest, TransactionValidSignedBlob) {
+TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
   shared_model::proto::Transaction tx =
-      shared_model::proto::TransactionBuilder()
+      TestUnsignedTransactionBuilder()
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")

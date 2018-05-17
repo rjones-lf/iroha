@@ -45,7 +45,8 @@ TEST_F(AmountTest, PlusTest) {
                            shared_model::interface::Amount>> &b_value) {
               auto c = *a_value.value + *b_value.value;
               c.match(
-                  [](const auto &c_value) {
+                  [](const iroha::expected::Value<std::shared_ptr<
+                         shared_model::interface::Amount>> &c_value) {
                     ASSERT_EQ(c_value.value->intValue(), 1334567);
                     ASSERT_EQ(c_value.value->precision(), 3);
                   },
@@ -83,7 +84,8 @@ TEST_F(AmountTest, MinusTest) {
                            shared_model::interface::Amount>> &b_value) {
               auto c = *a_value.value - *b_value.value;
               c.match(
-                  [](const auto &c_value) {
+                  [](const iroha::expected::Value<std::shared_ptr<
+                      shared_model::interface::Amount>> &c_value) {
                     ASSERT_EQ(c_value.value->intValue(), 1134567);
                     ASSERT_EQ(c_value.value->precision(), 3);
                   },
@@ -136,10 +138,11 @@ TEST_F(AmountTest, PrecisionTest) {
 TEST_F(AmountTest, PlusOverflowsTest) {
   const std::string &uint256_halfmax =
       "723700557733226221397318656304299424082937404160253525246609900049457060"
-          "2495.0";  // 2**252 - 1
+      "2495.0";  // 2**252 - 1
   iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
                           std::shared_ptr<std::string>>
-      a = shared_model::builder::DefaultAmountBuilder::fromString(uint256_halfmax);
+      a = shared_model::builder::DefaultAmountBuilder::fromString(
+          uint256_halfmax);
 
   iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
                           std::shared_ptr<std::string>>
@@ -147,17 +150,18 @@ TEST_F(AmountTest, PlusOverflowsTest) {
 
   a.match(
       [&b](const iroha::expected::Value<
-          std::shared_ptr<shared_model::interface::Amount>> &a_value) {
+           std::shared_ptr<shared_model::interface::Amount>> &a_value) {
         b.match(
             [&a_value](const iroha::expected::Value<std::shared_ptr<
-                shared_model::interface::Amount>> &b_value) {
+                           shared_model::interface::Amount>> &b_value) {
               auto c = *a_value.value + *b_value.value;
               c.match(
-                  [](const auto &c_value) {
+                  [](const iroha::expected::Value<std::shared_ptr<
+                      shared_model::interface::Amount>> &c_value) {
                     FAIL() << "Operation successful but shouldn't";
                   },
                   [](const iroha::expected::Error<std::shared_ptr<std::string>>
-                     &e) { SUCCEED() << *e.error; });
+                         &e) { SUCCEED() << *e.error; });
             },
             [](const iroha::expected::Error<std::shared_ptr<std::string>> &e) {
               FAIL() << *e.error;
