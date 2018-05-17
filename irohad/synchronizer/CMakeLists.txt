@@ -3,7 +3,7 @@ add_library(synchronizer
     )
 
 target_link_libraries(synchronizer
-    model
+    shared_model_interfaces
     rxcpp
     logger
     )

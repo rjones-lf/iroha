@@ -226,7 +226,7 @@ Installation on macOS
 
     CMAKE_BUILD_TYPE="Release"
     git clone https://github.com/google/protobuf /tmp/protobuf;
-    (cd /tmp/protobuf ; git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95);
+    (cd /tmp/protobuf ; git checkout 106ffc04be1abf3ff3399f54ccf149815b287dd9);
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -Dprotobuf_BUILD_TESTS=OFF \

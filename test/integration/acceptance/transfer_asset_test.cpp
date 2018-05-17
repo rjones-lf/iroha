@@ -59,7 +59,6 @@ class TransferAsset : public ::testing::Test {
                                const std::string &amount) {
     const std::string kUserId = user + "@test";
     return proto::TransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now())
         .addAssetQuantity(kUserId, kAsset, amount)
@@ -73,7 +72,6 @@ class TransferAsset : public ::testing::Test {
    */
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
-        .txCounter(1)
         .creatorAccountId(kUser1 + "@test")
         .createdTime(iroha::time::now());
   }
@@ -308,7 +306,7 @@ TEST_F(TransferAsset, LongDesc) {
       .skipProposal()
       .skipBlock()
       .sendTx(invalid_tx,
-              [](shared_model::proto::TransactionResponse &status) {
+              [](const shared_model::proto::TransactionResponse &status) {
                 // check if returned status is as expected
                 ASSERT_NO_THROW(boost::get<ExpectedStatusType>(status.get()));
               })
@@ -406,7 +404,6 @@ TEST_F(TransferAsset, InterDomain) {
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
       .sendTx(
           shared_model::proto::TransactionBuilder()
-              .txCounter(1)
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
               .createdTime(iroha::time::now())

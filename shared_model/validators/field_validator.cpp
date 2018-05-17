@@ -47,7 +47,8 @@ namespace shared_model {
     const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
 
     const size_t FieldValidator::public_key_size = 32;
-    const size_t FieldValidator::value_size = 4096;
+    /// limit for the set account detail size in bytes
+    const size_t FieldValidator::value_size = 4 * 1024 * 1024;
     const size_t FieldValidator::description_size = 64;
 
     FieldValidator::FieldValidator(time_t future_gap)
@@ -291,11 +292,11 @@ namespace shared_model {
 
     void FieldValidator::validateSignatures(
         ReasonsGroupType &reason,
-        const interface::SignatureSetType &signatures,
+        const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       for (const auto &signature : signatures) {
-        const auto &sign = signature->signedData();
-        const auto &pkey = signature->publicKey();
+        const auto &sign = signature.signedData();
+        const auto &pkey = signature.publicKey();
         bool is_valid = true;
 
         if (sign.blob().size() != 64) {

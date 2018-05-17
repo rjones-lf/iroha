@@ -2,7 +2,7 @@ addtest(irohad_test irohad_test.cpp)
 target_link_libraries(irohad_test
         boost
         pqxx
-        json_model_converters
+        rapidjson
         integration_framework_config_helper
         libs_common
         )

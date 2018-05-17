@@ -64,7 +64,7 @@ namespace shared_model {
         return *blob_;
       }
 
-      const interface::SignatureSetType &signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_;
       }
 
@@ -75,11 +75,11 @@ namespace shared_model {
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
-                     signatures_->end(),
-                     [&signed_blob, &public_key](auto signature) {
-                       return signature->signedData() == signed_blob
-                           and signature->publicKey() == public_key;
-                     }) != signatures_->end()) {
+                         signatures_->end(),
+                         [&public_key](const auto &signature) {
+                           return signature.publicKey() == public_key;
+                         })
+            != signatures_->end()) {
           return false;
         }
 
@@ -89,11 +89,6 @@ namespace shared_model {
 
         signatures_.invalidate();
         return true;
-      }
-
-      bool clearSignatures() override {
-        signatures_->clear();
-        return (signatures_->size() == 0);
       }
 
       interface::types::TimestampType createdTime() const override {
@@ -131,11 +126,10 @@ namespace shared_model {
         return interface::types::HashType(proto_->payload().prev_block_hash());
       }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
-        interface::SignatureSetType sigs;
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+        SignatureSetType<proto::Signature> sigs;
         for (const auto &sig : proto_->signatures()) {
-          auto curr = detail::makePolymorphic<proto::Signature>(sig);
-          sigs.insert(curr);
+          sigs.emplace(sig);
         }
         return sigs;
       }};

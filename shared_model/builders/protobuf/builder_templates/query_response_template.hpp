@@ -205,7 +205,7 @@ namespace shared_model {
       auto queryHash(const interface::types::HashType &query_hash) const {
         return transform<QueryHash>([&](auto &proto_query_response) {
           proto_query_response.set_query_hash(
-              crypto::toBinaryString(query_hash));
+              query_hash.hex());
         });
       }
 

@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include "model/query_execution.hpp"
+#include "execution/query_execution.hpp"
 
 #include <boost/algorithm/string.hpp>
 
 #include "execution/common_executor.hpp"
 #include "validators/permissions.hpp"
 
-using namespace iroha::model;
 using namespace shared_model::permissions;
+using namespace iroha;
 using namespace iroha::ametsuchi;
 
 // TODO: 28/03/2018 x3medima17 remove poly wrapper, IR-1011
@@ -271,7 +271,7 @@ QueryProcessingFactory::executeGetAccountAssets(
 }
 
 QueryProcessingFactory::QueryResponseBuilderDone
-iroha::model::QueryProcessingFactory::executeGetAccountDetail(
+QueryProcessingFactory::executeGetAccountDetail(
     const shared_model::interface::GetAccountDetail &query) {
   auto acct_detail = _wsvQuery->getAccountDetail(query.accountId());
   if (not acct_detail) {
@@ -282,7 +282,7 @@ iroha::model::QueryProcessingFactory::executeGetAccountDetail(
 }
 
 QueryProcessingFactory::QueryResponseBuilderDone
-iroha::model::QueryProcessingFactory::executeGetAccountAssetTransactions(
+QueryProcessingFactory::executeGetAccountAssetTransactions(
     const shared_model::interface::GetAccountAssetTransactions &query) {
   auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(
       query.accountId(), query.assetId());
@@ -313,18 +313,22 @@ QueryProcessingFactory::executeGetAccountTransactions(
 }
 
 QueryProcessingFactory::QueryResponseBuilderDone
-iroha::model::QueryProcessingFactory::executeGetTransactions(
-    const shared_model::interface::GetTransactions &query) {
-  const std::vector<shared_model::crypto::Hash> &hashes =
-      query.transactionHashes();
+QueryProcessingFactory::executeGetTransactions(
+    const shared_model::interface::GetTransactions &q,
+    const shared_model::interface::types::AccountIdType &accountId) {
+  const std::vector<shared_model::crypto::Hash> &hashes = q.transactionHashes();
 
   auto transactions = _blockQuery->getTransactions(hashes);
 
   std::vector<shared_model::proto::Transaction> txs;
+  bool can_get_all =
+      checkAccountRolePermission(accountId, *_wsvQuery, can_get_all_txs);
   transactions.subscribe([&](const auto &tx) {
     if (tx) {
-      txs.push_back(
-          *std::static_pointer_cast<shared_model::proto::Transaction>(*tx));
+      auto proto_tx =
+          *std::static_pointer_cast<shared_model::proto::Transaction>(*tx);
+      if (can_get_all or proto_tx.creatorAccountId() == accountId)
+        txs.push_back(proto_tx);
     }
   });
 
@@ -344,7 +348,8 @@ QueryProcessingFactory::executeGetSignatories(
 }
 
 std::shared_ptr<shared_model::interface::QueryResponse>
-QueryProcessingFactory::execute(const shared_model::interface::Query &query) {
+QueryProcessingFactory::validateAndExecute(
+    const shared_model::interface::Query &query) {
   const auto &query_hash = query.hash();
   QueryResponseBuilderDone builder;
   // TODO: 29/04/2018 x3medima18, Add visitor class, IR-1185
@@ -378,7 +383,7 @@ QueryProcessingFactory::execute(const shared_model::interface::Query &query) {
         if (not validate(query, *q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetTransactions(*q);
+          builder = executeGetTransactions(*q, query.creatorAccountId());
         }
         return clone(builder.queryHash(query_hash).build());
       },

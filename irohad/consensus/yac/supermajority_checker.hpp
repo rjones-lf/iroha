@@ -19,7 +19,7 @@
 #define IROHA_CONSENSUS_SUPERMAJORITY_CHECKER_HPP
 
 #include <vector>
-#include "interfaces/common_objects/signable_hash.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -46,7 +46,8 @@ namespace iroha {
          * @return true on supermajority is achieved or false otherwise
          */
         virtual bool hasSupermajority(
-            const shared_model::interface::SignatureSetType &signatures,
+            const shared_model::interface::types::SignatureRangeType
+                &signatures,
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const = 0;
 
@@ -65,7 +66,8 @@ namespace iroha {
          * @return true if is subset or false otherwise
          */
         virtual bool peersSubset(
-            const shared_model::interface::SignatureSetType &signatures,
+            const shared_model::interface::types::SignatureRangeType
+                &signatures,
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const = 0;
 

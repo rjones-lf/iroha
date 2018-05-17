@@ -18,28 +18,32 @@
 #ifndef IROHA_INTEGRATION_FRAMEWORK_HPP
 #define IROHA_INTEGRATION_FRAMEWORK_HPP
 
-#include <tbb/concurrent_queue.h>
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <functional>
 #include <queue>
 #include <string>
 #include <thread>
 #include <vector>
-#include "crypto/keys_manager_impl.hpp"
-#include "cryptography/blob.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "cryptography/keypair.hpp"
+
+#include <tbb/concurrent_queue.h>
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "logger/logger.hpp"
 
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/queries/proto_query.hpp"
-#include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "backend/protobuf/transaction.hpp"
-#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+namespace shared_model {
+  namespace crypto {
+    class Keypair;
+  }
+  namespace interface {
+    class Block;
+    class Proposal;
+  }
+  namespace proto {
+    class Block;
+  }
+}
 
 namespace integration_framework {
 
@@ -51,56 +55,134 @@ namespace integration_framework {
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
 
    public:
-    IntegrationTestFramework(size_t maximum_block_size = 10)
-        : maximum_block_size_(maximum_block_size) {}
+    /**
+     * Construct test framework instance
+     * @param maximum_proposal_size - (default = 10) Maximum amount of
+     * transactions per proposal
+     * @param destructor_lambda - (default nullptr) Pointer to function which
+     * receives pointer to constructed instance of Integration Test Framework.
+     * If specified, then will be called instead of default destructor's code
+     */
+    explicit IntegrationTestFramework(
+        size_t maximum_proposal_size = 10,
+        std::function<void(IntegrationTestFramework &)> deleter =
+            [](IntegrationTestFramework &itf) { itf.done(); });
+
     ~IntegrationTestFramework();
+
+    /**
+    * Construct default genesis block.
+    *
+    * Genesis block contains single transaction that
+    * creates a single role (kDefaultRole), domain (kDefaultDomain),
+    * account (kAdminName) and asset (kAssetName).
+    * @param key - signing key
+    * @return signed genesis block
+    */
+    static shared_model::proto::Block defaultBlock(
+        const shared_model::crypto::Keypair &key);
+
+    /**
+     * Initialize Iroha instance with default genesis block and provided signing
+     * key
+     * @param keypair - signing key
+     * @return this
+     */
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
+
+    /**
+     * Initialize Iroha instance with provided genesis block and signing key
+     * @param keypair - signing key
+     * @param block - genesis block used for iroha initialization
+     * @return this
+     */
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair,
         const shared_model::interface::Block &block);
 
-    template <typename Lambda>
-    IntegrationTestFramework &sendTx(const shared_model::proto::Transaction &tx,
-                                     Lambda validation);
+    /**
+     * Send transaction to Iroha and validate its status
+     * @param tx - transaction for sending
+     * @param validation - callback for transaction status validation that
+     * receives object of type \relates shared_model::proto::TransactionResponse
+     * by reference
+     * @return this
+     */
+    IntegrationTestFramework &sendTx(
+        const shared_model::proto::Transaction &tx,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
+
+    /**
+     * Send transaction to Iroha without status validation
+     * @param tx - transaction for sending
+     * @return this
+     */
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx);
+
+    /**
+     * Check current status of transaction
+     * @param hash - hash of transaction to check
+     * @return TransactonResponse object
+     */
     shared_model::proto::TransactionResponse getTxStatus(
         const shared_model::crypto::Hash &hash);
 
-    template <typename Lambda>
-    IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry,
-                                        Lambda validation);
+    /**
+     * Send query to Iroha and validate the response
+     * @param qry - query to be requested
+     * @param validation - callback for query result check that receives object
+     * of type \relates shared_model::proto::QueryResponse by reference
+     * @return this
+     */
+    IntegrationTestFramework &sendQuery(
+        const shared_model::proto::Query &qry,
+        std::function<void(const shared_model::proto::QueryResponse &)>
+            validation);
+
+    /**
+     * Send query to Iroha without response validation
+     * @param qry - query to be requested
+     * @return this
+     */
     IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry);
 
-    template <typename Lambda>
-    IntegrationTestFramework &checkProposal(Lambda validation);
+    /**
+     * Request next proposal from queue and serve it with custom handler
+     * @param validation - callback that receives object of type \relates
+     * std::shared_ptr<shared_model::interface::Proposal> by reference
+     * @return this
+     */
+    IntegrationTestFramework &checkProposal(
+        std::function<void(const ProposalType &)> validation);
+
+    /**
+     * Request next proposal from queue and skip it
+     * @return this
+     */
     IntegrationTestFramework &skipProposal();
 
-    template <typename Lambda>
-    IntegrationTestFramework &checkBlock(Lambda validation);
+    /**
+     * Request next block from queue and serve it with custom handler
+     * @param validation - callback that receives object of type \relates
+     * std::shared_ptr<shared_model::interface::Block> by reference
+     * @return this
+     */
+    IntegrationTestFramework &checkBlock(
+        std::function<void(const BlockType &)> validation);
+
+    /**
+     * Request next block from queue and skip it
+     * @return this
+     */
     IntegrationTestFramework &skipBlock();
 
     /**
-     * Shutdown iroha
+     * Shutdown ITF instance
      */
     void done();
-
-    /**
-     * general way to fetch object from concurrent queue
-     * @tparam Queue - Type of queue
-     * @tparam ObjectType - Type of fetched object
-     * @tparam WaitTime - time for waiting if data doesn't appear
-     * @param queue - queue instance for fetching
-     * @param ref_for_insertion - reference to insert object
-     * @param wait - time of waiting
-     * @param error_reason - reason if thehre is no appeared object at all
-     */
-    template <typename Queue, typename ObjectType, typename WaitTime>
-    void fetchFromQueue(Queue &queue,
-                        ObjectType &ref_for_insertion,
-                        const WaitTime &wait,
-                        const std::string &error_reason);
 
     static const std::string kDefaultDomain;
     static const std::string kDefaultRole;
@@ -110,6 +192,22 @@ namespace integration_framework {
     static const std::string kAssetName;
 
    protected:
+    /**
+     * general way to fetch object from concurrent queue
+     * @tparam Queue - Type of queue
+     * @tparam ObjectType - Type of fetched object
+     * @tparam WaitTime - time for waiting if data doesn't appear
+     * @param queue - queue instance for fetching
+     * @param ref_for_insertion - reference to insert object
+     * @param wait - time of waiting
+     * @param error_reason - reason if there is no appeared object at all
+     */
+    template <typename Queue, typename ObjectType, typename WaitTime>
+    void fetchFromQueue(Queue &queue,
+                        ObjectType &ref_for_insertion,
+                        const WaitTime &wait,
+                        const std::string &error_reason);
+
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::shared_ptr<IrohaInstance> iroha_instance_ =
@@ -124,65 +222,14 @@ namespace integration_framework {
     /// maximum time of waiting before appearing next committed block
     const milliseconds block_waiting = milliseconds(20000);
 
-    size_t maximum_block_size_;
+    size_t maximum_proposal_size_;
 
    private:
     logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;
+    std::function<void(IntegrationTestFramework &)> deleter_;
   };
-
-  template <typename Lambda>
-  IntegrationTestFramework &IntegrationTestFramework::sendTx(
-      const shared_model::proto::Transaction &tx, Lambda validation) {
-    log_->info("send transaction");
-    iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
-        tx.getTransport());
-    // fetch status of transaction
-    shared_model::proto::TransactionResponse status = getTxStatus(tx.hash());
-
-    // check validation function
-    validation(status);
-    return *this;
-  }
-
-  template <typename Lambda>
-  IntegrationTestFramework &IntegrationTestFramework::sendQuery(
-      const shared_model::proto::Query &qry, Lambda validation) {
-    log_->info("send query");
-
-    iroha::protocol::QueryResponse response;
-    iroha_instance_->getIrohaInstance()->getQueryService()->Find(
-        qry.getTransport(), response);
-    auto query_response =
-        shared_model::proto::QueryResponse(std::move(response));
-
-    validation(query_response);
-    return *this;
-  }
-
-  template <typename Lambda>
-  IntegrationTestFramework &IntegrationTestFramework::checkBlock(
-      Lambda validation) {
-    // fetch first from block queue
-    log_->info("check block");
-    BlockType block;
-    fetchFromQueue(block_queue_, block, block_waiting, "missed block");
-    validation(block);
-    return *this;
-  }
-
-  template <typename Lambda>
-  IntegrationTestFramework &IntegrationTestFramework::checkProposal(
-      Lambda validation) {
-    log_->info("check proposal");
-    // fetch first proposal from proposal queue
-    ProposalType proposal;
-    fetchFromQueue(
-        proposal_queue_, proposal, proposal_waiting, "missed proposal");
-    validation(proposal);
-    return *this;
-  }
 
   template <typename Queue, typename ObjectType, typename WaitTime>
   void IntegrationTestFramework::fetchFromQueue(

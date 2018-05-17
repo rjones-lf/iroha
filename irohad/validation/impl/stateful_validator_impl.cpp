@@ -39,7 +39,7 @@ namespace iroha {
                     [&](const auto &account) {
                       // Check if tx creator has account and has quorum to
                       // execute transaction
-                      return tx.signatures().size() >= account->quorum()
+                      return boost::size(tx.signatures()) >= account->quorum()
                           ? queries.getSignatories(tx.creatorAccountId())
                           : boost::none;
                     }
@@ -93,13 +93,13 @@ namespace iroha {
     }
 
     bool StatefulValidatorImpl::signaturesSubset(
-        const shared_model::interface::SignatureSetType &signatures,
+        const shared_model::interface::types::SignatureRangeType &signatures,
         const std::vector<shared_model::crypto::PublicKey> &public_keys) {
       // TODO 09/10/17 Lebedev: simplify the subset verification IR-510
       // #goodfirstissue
       std::unordered_set<std::string> txPubkeys;
-      for (auto sign : signatures) {
-        txPubkeys.insert(sign->publicKey().toString());
+      for (auto &sign : signatures) {
+        txPubkeys.insert(sign.publicKey().toString());
       }
       return std::all_of(public_keys.begin(),
                          public_keys.end(),

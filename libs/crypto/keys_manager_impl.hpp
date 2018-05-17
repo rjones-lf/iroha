@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_CLI_KEYS_MANAGER_IMPL_HPP
-#define IROHA_CLI_KEYS_MANAGER_IMPL_HPP
+#ifndef IROHA_KEYS_MANAGER_IMPL_HPP
+#define IROHA_KEYS_MANAGER_IMPL_HPP
 
 #include "crypto/keys_manager.hpp"
 
 #include <boost/optional.hpp>
-
-#include "common/types.hpp"  // for keypair_t, pubkey_t, privkey_t
+#include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -31,15 +30,15 @@ namespace iroha {
    public:
     explicit KeysManagerImpl(const std::string &account_name);
 
-    boost::optional<iroha::keypair_t> loadKeys() override;
-    boost::optional<iroha::keypair_t> loadKeys(
-        const std::string &pass_phrase) override;
-
     bool createKeys() override;
     bool createKeys(const std::string &pass_phrase) override;
 
-    static const std::string kPubExt;
-    static const std::string kPrivExt;
+    boost::optional<shared_model::crypto::Keypair> loadKeys() override;
+    boost::optional<shared_model::crypto::Keypair> loadKeys(
+        const std::string &pass_phrase) override;
+
+    static const std::string kPublicKeyExtension;
+    static const std::string kPrivateKeyExtension;
 
    private:
     /**
@@ -47,7 +46,7 @@ namespace iroha {
      * @param keypair - keypair for validation
      * @return true, if verification of signature is successful
      */
-    bool validate(const iroha::keypair_t &keypair) const;
+    bool validate(const shared_model::crypto::Keypair &keypair) const;
 
     /**
      * Tries to load file to the resulting string
@@ -69,4 +68,4 @@ namespace iroha {
     logger::Logger log_;
   };
 }  // namespace iroha
-#endif  // IROHA_CLI_KEYS_MANAGER_IMPL_HPP
+#endif  // IROHA_KEYS_MANAGER_IMPL_HPP

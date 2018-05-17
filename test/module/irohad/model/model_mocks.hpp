@@ -21,8 +21,8 @@
 #include <gmock/gmock.h>
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "execution/query_execution.hpp"
 #include "model/command.hpp"
-#include "model/query_execution.hpp"
 
 namespace iroha {
   namespace model {

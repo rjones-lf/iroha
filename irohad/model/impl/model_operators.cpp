@@ -201,7 +201,7 @@ namespace iroha {
 
     /* Signature */
     bool Signature::operator==(const Signature &rhs) const {
-      return rhs.pubkey == pubkey && rhs.signature == signature;
+      return rhs.pubkey == pubkey;
     }
 
     /* Transaction */
@@ -211,7 +211,7 @@ namespace iroha {
                         rhs.commands.begin(),
                         rhs.commands.end(),
                         [](const auto &i, const auto &j) { return *i == *j; })
-          && rhs.tx_counter == tx_counter && rhs.signatures == signatures
+          && rhs.signatures == signatures
           && rhs.created_ts == created_ts;
     }
 

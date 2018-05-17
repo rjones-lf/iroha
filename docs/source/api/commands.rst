@@ -462,6 +462,8 @@ Purpose
 
 Purpose of set account detail command is to set key-value information for a given account
 
+.. warning:: If there was a value for a given key already in the storage then it will be replaced with the new value
+
 Schema
 ^^^^^^
 

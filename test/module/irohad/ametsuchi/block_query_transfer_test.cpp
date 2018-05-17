@@ -18,7 +18,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -52,16 +52,10 @@ namespace iroha {
         transaction->exec(init_);
       }
 
-      void insert(const shared_model::interface::Block &block) {
-        // TODO IR-975 victordrobny 12.02.2018 convert from
-        // shared_model::proto::Block after FlatFile will be reworked to new
-        // model
-        auto old_block =
-            *std::unique_ptr<iroha::model::Block>(block.makeOldModel());
-        file->add(
-            block.height(),
-            iroha::stringToBytes(model::converters::jsonToString(
-                model::converters::JsonBlockFactory().serialize(old_block))));
+      void insert(const shared_model::proto::Block &block) {
+        file->add(block.height(),
+                  iroha::stringToBytes(
+                      shared_model::converters::protobuf::modelToJson(block)));
         index->index(block);
       }
 

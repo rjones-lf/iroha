@@ -20,13 +20,6 @@ target_link_libraries(test_subscriber_testing
     rxcpp
     )
 
-add_library(test_block_generator test_block_generator.cpp)
-target_link_libraries(test_block_generator
-    model
-    )
-
-target_include_directories(test_block_generator PUBLIC ${PROJECT_SOURCE_DIR}/test)
-
 
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
@@ -34,14 +27,12 @@ add_library(integration_framework
     )
 target_link_libraries(integration_framework
     application
-    raw_block_insertion
-    keys_manager
-    model_generators
-    pb_model_converters
-    tbb
     )
 
 target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
 add_library(integration_framework_config_helper config_helper.cpp)
+target_link_libraries(integration_framework_config_helper
+    logger
+    )
 target_include_directories(integration_framework_config_helper PUBLIC ${PROJECT_SOURCE_DIR}/test)

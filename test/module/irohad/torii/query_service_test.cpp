@@ -17,8 +17,11 @@
 
 #include "torii/query_service.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 using namespace torii;
 
@@ -48,19 +51,16 @@ class QueryServiceTest : public ::testing::Test {
                 shared_model::crypto::DefaultCryptoAlgorithmType::
                     generateKeypair()));
 
-    // TODO: IR-1041 Update to query response builders (kamilsa, 04.03.2018)
-    protocol::QueryResponse response;
-    response.set_query_hash(
-        shared_model::crypto::toBinaryString(query->hash()));
-    auto account_response = response.mutable_account_response();
-    account_response->add_account_roles("user");
-    auto account = account_response->mutable_account();
-    account->set_domain_id("ru");
-    account->set_account_id("a");
-    account->set_quorum(2);
+    auto account = shared_model::proto::AccountBuilder()
+                       .accountId("a")
+                       .domainId("ru")
+                       .quorum(2)
+                       .build();
 
-    model_response = std::make_shared<shared_model::proto::QueryResponse>(
-        std::move(response));
+    model_response = clone(TestQueryResponseBuilder()
+                               .accountResponse(account, {"user"})
+                               .queryHash(query->hash())
+                               .build());
   }
 
   void init() {
@@ -99,8 +99,8 @@ TEST_F(QueryServiceTest, ValidWhenUniqueHash) {
 
   protocol::QueryResponse response;
   query_service->Find(query->getTransport(), response);
-  ASSERT_EQ(response.SerializeAsString(),
-            model_response->getTransport().SerializeAsString());
+  auto resp = shared_model::proto::QueryResponse(response);
+  ASSERT_EQ(resp, *model_response);
 }
 
 /**
@@ -129,8 +129,11 @@ TEST_F(QueryServiceTest, InvalidWhenUniqueHash) {
   protocol::QueryResponse response;
   query_service->Find(query->getTransport(), response);
   ASSERT_TRUE(response.has_error_response());
-  ASSERT_EQ(response.error_response().reason(),
-            protocol::ErrorResponse::NOT_SUPPORTED);
+  auto resp = shared_model::proto::QueryResponse(response);
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::NotSupportedErrorResponse>(),
+      resp.get()));
 }
 
 /**
@@ -154,6 +157,9 @@ TEST_F(QueryServiceTest, InvalidWhenDuplicateHash) {
   // second call of the same query
   query_service->Find(query->getTransport(), response);
   ASSERT_TRUE(response.has_error_response());
-  ASSERT_EQ(response.error_response().reason(),
-            protocol::ErrorResponse::STATELESS_INVALID);
+  auto resp = shared_model::proto::QueryResponse(response);
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatelessFailedErrorResponse>(),
+      resp.get()));
 }

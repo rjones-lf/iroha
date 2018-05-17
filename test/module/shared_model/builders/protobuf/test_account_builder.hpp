@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,15 @@
  * limitations under the License.
  */
 
-#include "model/generators/signature_generator.hpp"
+#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 
-namespace iroha {
-  namespace model {
-    namespace generators {
+#ifndef IROHA_TEST_ACCOUNT_BUILDER_HPP
+#define IROHA_TEST_ACCOUNT_BUILDER_HPP
 
-      Signature generateSignature(size_t seed) {
-        Signature sign;
-        // sign.pubkey
-        sign.pubkey = generator::random_blob<pubkey_t::size()>(seed);
-        sign.signature = generator::random_blob<sig_t::size()>(
-            generator::random_number(0, seed));
-        return sign;
-      }
+/**
+ * Builder alias, to build shared model proto block object avoiding validation
+ * and "required fields" check
+ */
+using TestAccountBuilder = shared_model::proto::AccountBuilder;
 
-    }  // namespace generators
-  }    // namespace model
-}  // namespace iroha
+#endif //IROHA_TEST_ACCOUNT_BUILDER_HPP

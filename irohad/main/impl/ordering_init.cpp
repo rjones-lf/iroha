@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "main/impl/ordering_init.hpp"
@@ -22,8 +10,12 @@
 namespace iroha {
   namespace network {
     auto OrderingInit::createGate(
-        std::shared_ptr<OrderingGateTransport> transport) {
-      auto gate = std::make_shared<ordering::OrderingGateImpl>(transport);
+        std::shared_ptr<OrderingGateTransport> transport,
+        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
+      auto height = block_query->getTopBlocks(1).as_blocking().last()->height();
+      auto gate =
+          std::make_shared<ordering::OrderingGateImpl>(transport, height);
+      log_->info("Creating Ordering Gate with initial height {}", height);
       transport->subscribe(gate);
       return gate;
     }
@@ -38,7 +30,8 @@ namespace iroha {
       return std::make_shared<ordering::OrderingServiceImpl>(
           wsv,
           max_size,
-          delay_milliseconds.count(),
+          rxcpp::observable<>::interval(delay_milliseconds,
+                                        rxcpp::observe_on_new_thread()),
           transport,
           persistent_state);
     }
@@ -48,13 +41,15 @@ namespace iroha {
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-            persistent_state) {
+            persistent_state,
+        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
       auto ledger_peers = wsv->getLedgerPeers();
       if (not ledger_peers or ledger_peers.value().empty()) {
         log_->error(
             "Ledger don't have peers. Do you set correct genesis block?");
       }
       auto network_address = ledger_peers->front()->address();
+      log_->info("Ordering gate is at {}", network_address);
       ordering_gate_transport =
           std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(
               network_address);
@@ -67,7 +62,7 @@ namespace iroha {
                                        ordering_service_transport,
                                        persistent_state);
       ordering_service_transport->subscribe(ordering_service);
-      ordering_gate = createGate(ordering_gate_transport);
+      ordering_gate = createGate(ordering_gate_transport, block_query);
       return ordering_gate;
     }
   }  // namespace network

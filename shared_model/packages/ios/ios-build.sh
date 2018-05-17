@@ -78,10 +78,10 @@ curl -OL https://dl.bintray.com/boostorg/release/1.66.0/source/boost_1_66_0.tar.
 tar xf ./boost_1_66_0.tar.gz
 cp -R ./boost_1_66_0/boost "$DEPS_DIR"/include
 
-# protobuf
+# protobuf v3.5.1
 git clone https://github.com/google/protobuf
 (cd ./protobuf;
-git checkout 80a37e0782d2d702d52234b62dd4b9ec74fd2c95)
+git checkout 106ffc04be1abf3ff3399f54ccf149815b287dd9)
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -Dprotobuf_BUILD_TESTS=OFF -H./protobuf/cmake -B./protobuf/host_build # build for host to get js_embed
 VERBOSE=1 cmake --build ./protobuf/host_build -- -j"$CORES"
 # to be able to run js_embed we need its host version
@@ -90,7 +90,7 @@ cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" "${IOS_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARG
 VERBOSE=1 cmake --build ./protobuf/.build --target install -- -j"$CORES"
 
 # ed25519
-git clone git://github.com/hyperledger/iroha-ed25519
+git clone https://github.com/hyperledger/iroha-ed25519.git
 (cd ./iroha-ed25519;
 git checkout e7188b8393dbe5ac54378610d53630bd4a180038)
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" "${IOS_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARGS[@]}" -DTESTING=OFF -DBUILD=STATIC -H./iroha-ed25519 -B./iroha-ed25519/build

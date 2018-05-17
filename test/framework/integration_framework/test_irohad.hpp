@@ -44,7 +44,7 @@ namespace integration_framework {
                  proposal_delay,
                  vote_delay,
                  load_delay,
-                 *std::unique_ptr<iroha::keypair_t>(keypair.makeOldModel())) {}
+                 keypair) {}
 
     auto &getCommandService() {
       return command_service;
@@ -75,6 +75,12 @@ namespace integration_framework {
                    BOOST_ASSERT_MSG(false, e.error.c_str());
                  });
       log_->info("===> iroha initialized");
+    }
+
+    void terminate() {
+      if (internal_server) {
+        internal_server->shutdown();
+      }
     }
   };
 }  // namespace integration_framework
