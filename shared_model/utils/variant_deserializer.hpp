@@ -68,9 +68,9 @@ namespace shared_model {
          * @param v result variant
          */
         template <class V, class T = typename V::types, class Archive>
-        static auto invoke(Archive &&ar, int which) -> typename std::enable_if<
+        static auto invoke(Archive &&ar, int which) -> std::enable_if_t<
             not std::is_same<FrontType<S>, FrontType<T>>::value,
-            V>::type {
+            V> {
           if (which == 0) {
             using head_type = FrontType<S>;
             using variant_head_type = FrontType<T>;
@@ -106,9 +106,9 @@ namespace shared_model {
          * @param v result variant
          */
         template <class V, class T = typename V::types, class Archive>
-        static auto invoke(Archive &&ar, int which) -> typename std::enable_if<
-            std::is_same<FrontType<S>, FrontType<T>>::value,
-            V>::type {
+        static auto invoke(Archive &&ar, int which)
+            -> std::enable_if_t<std::is_same<FrontType<S>, FrontType<T>>::value,
+                                V> {
           if (which == 0) {
             using head_type = FrontType<S>;
             return V(head_type(std::forward<Archive>(ar)));
