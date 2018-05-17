@@ -21,7 +21,6 @@
 #include "interfaces/transaction.hpp"
 
 #include <boost/range/numeric.hpp>
-
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"
@@ -46,10 +45,6 @@ namespace shared_model {
         return payload_.creator_account_id();
       }
 
-      interface::types::CounterType transactionCounter() const override {
-        return payload_.tx_counter();
-      }
-
       const Transaction::CommandsType &commands() const override {
         return *commands_;
       }
@@ -62,7 +57,7 @@ namespace shared_model {
         return *blobTypePayload_;
       }
 
-      const interface::SignatureSetType &signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_;
       }
 
@@ -71,25 +66,19 @@ namespace shared_model {
         // if already has such signature
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
-                         [&signed_blob, &public_key](auto signature) {
-                           return signature->signedData() == signed_blob
-                               and signature->publicKey() == public_key;
+                         [&public_key](const auto &signature) {
+                           return signature.publicKey() == public_key;
                          })
             != signatures_->end()) {
           return false;
         }
 
-        auto sig = proto_->add_signature();
+        auto sig = proto_->add_signatures();
         sig->set_signature(crypto::toBinaryString(signed_blob));
         sig->set_pubkey(crypto::toBinaryString(public_key));
 
         signatures_.invalidate();
         return true;
-      }
-
-      bool clearSignatures() override {
-        signatures_->clear();
-        return (signatures_->size() == 0);
       }
 
       interface::types::TimestampType createdTime() const override {
@@ -118,11 +107,11 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> blobTypePayload_{
           [this] { return makeBlob(payload_); }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
-        return boost::accumulate(proto_->signature(),
-                                 interface::SignatureSetType{},
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+        return boost::accumulate(proto_->signatures(),
+                                 SignatureSetType<proto::Signature>{},
                                  [](auto &&acc, const auto &sig) {
-                                   acc.emplace(new Signature(sig));
+                                   acc.emplace(sig);
                                    return std::forward<decltype(acc)>(acc);
                                  });
       }};

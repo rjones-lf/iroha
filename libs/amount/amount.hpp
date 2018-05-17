@@ -20,6 +20,7 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/optional.hpp>
+#include <ciso646>
 #include <cstdint>
 #include <string>
 

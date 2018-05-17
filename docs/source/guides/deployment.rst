@@ -70,7 +70,7 @@ In order to run Iroha peer as a single instance in Docker, you should pull the i
 
 .. code-block:: shell
 
-    docker pull hyperledger/iroha-docker:latest
+    docker pull hyperledger/iroha:latest
 
 .. Hint:: Use *latest* tag for latest stable release, and *develop* for latest development version  
 
@@ -138,7 +138,7 @@ If they are met, you can move forward with the following command:
     -e KEY='node0' \
     # Docker network name
     --network=iroha-network \
-    hyperledger/iroha-docker:latest
+    hyperledger/iroha:latest
 
 Running multiple instances (peer network)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

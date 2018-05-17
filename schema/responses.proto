@@ -67,6 +67,7 @@ message ErrorResponse {
     NO_ROLES = 8;           // when there are no roles defined in the system
   }
   Reason reason = 1;
+  string message = 2;
 }
 
 message SignatoriesResponse {
@@ -89,5 +90,5 @@ message QueryResponse {
     RolesResponse roles_response = 8;
     RolePermissionsResponse role_permissions_response = 9;
   }
-  bytes query_hash = 10;
+  string query_hash = 10;
 }

@@ -26,21 +26,26 @@ namespace iroha {
     namespace yac {
       class TimerImpl : public Timer {
        public:
-        TimerImpl() = default;
+        /// Delay observable type
+        using TimeoutType = long;
+
+        /**
+         * Constructor
+         * @param invoke_delay cold observable which specifies invoke strategy
+         */
+        explicit TimerImpl(
+            std::function<rxcpp::observable<TimeoutType>()> invoke_delay);
         TimerImpl(const TimerImpl &) = delete;
         TimerImpl &operator=(const TimerImpl &) = delete;
 
-        void invokeAfterDelay(uint64_t millis,
-                              std::function<void()> handler) override;
+        void invokeAfterDelay(std::function<void()> handler) override;
         void deny() override;
 
         ~TimerImpl() override;
 
        private:
-        std::function<void()> handler_;
-
-        rxcpp::observable<long> timer;
-        rxcpp::composite_subscription handle;
+        std::function<rxcpp::observable<TimeoutType>()> invoke_delay_;
+        rxcpp::composite_subscription handle_;
       };
     }  // namespace yac
   }    // namespace consensus

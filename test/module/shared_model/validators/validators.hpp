@@ -18,27 +18,18 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
-#include <gmock/gmock.h>
-#include "interfaces/transaction.hpp"
-
 namespace shared_model {
   namespace validation {
 
     // TODO: kamilsa 01.02.2018 IR-873 Replace all these validators with mock
     // classes
 
-    template <typename Iface>
     struct AlwaysValidValidator {
-      Answer validate(const Iface &) const {
+      template <typename T>
+      Answer validate(const T &) const {
         return {};
       }
     };
-    using TransactionAlwaysValidValidator =
-        AlwaysValidValidator<interface::Transaction>;
-    using BlockAlwaysValidValidator = AlwaysValidValidator<interface::Block>;
-    using ProposalAlwaysValidValidator =
-        AlwaysValidValidator<interface::Proposal>;
-    using QueryAlwaysValidValidator = AlwaysValidValidator<interface::Query>;
 
   }  // namespace validation
 }  // namespace shared_model

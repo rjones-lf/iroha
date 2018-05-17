@@ -70,10 +70,11 @@ namespace iroha {
     for (size_t i = 0; i < result.length(); ++i) {
       std::string byte = str.substr(i * 2, 2);
       try {
-        result.at(i) = std::stoul(byte, nullptr, 16);
-      } catch (const std::invalid_argument &e) {
+        result.at(i) =
+            static_cast<std::string::value_type>(std::stoul(byte, nullptr, 16));
+      } catch (const std::invalid_argument &) {
         return boost::none;
-      } catch (const std::out_of_range &e) {
+      } catch (const std::out_of_range &) {
         return boost::none;
       }
     }

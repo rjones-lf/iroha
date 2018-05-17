@@ -60,7 +60,7 @@ parts:
       ./b2 cxxflags="-std=c++14" install
   protobuf:
     source: https://github.com/google/protobuf.git
-    source-commit: 80a37e0782d2d702d52234b62dd4b9ec74fd2c95
+    source-commit: 106ffc04be1abf3ff3399f54ccf149815b287dd9 # Protocol Buffers v3.5.1
     source-subdir: cmake
     plugin: cmake
     configflags: [-Dprotobuf_BUILD_TESTS=OFF, -Dprotobuf_BUILD_SHARED_LIBS=ON]
@@ -79,7 +79,7 @@ parts:
     after: [cmake]
   grpc:
     source: https://github.com/grpc/grpc.git
-    source-commit: bfcbad3b86c7912968dc8e64f2121c920dad4dfb
+    source-commit: bd44e485f69d70ca4095cea92decd98de3892aa6 # Release 1.11.0
     plugin: cmake
     configflags:
      - -DgRPC_ZLIB_PROVIDER=package

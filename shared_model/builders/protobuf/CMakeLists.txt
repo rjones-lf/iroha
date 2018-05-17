@@ -19,6 +19,6 @@ add_library(shared_model_proto_builders
 
 target_link_libraries(
     shared_model_proto_builders
-    model_interfaces
+    shared_model_interfaces
     shared_model_proto_backend
 )

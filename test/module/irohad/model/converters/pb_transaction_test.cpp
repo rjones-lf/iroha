@@ -39,7 +39,6 @@ TEST(TransactionTest, tx_test) {
   orig_tx.signatures = {siga};
 
   orig_tx.created_ts = 2;
-  orig_tx.tx_counter = 1;
 
   auto c1 = iroha::model::CreateDomain();
   c1.domain_id = "keker";

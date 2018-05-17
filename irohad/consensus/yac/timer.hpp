@@ -30,12 +30,10 @@ namespace iroha {
       class Timer {
        public:
         /**
-         * Invoke handler after delay
-         * @param millis - number of milliseconds before invoking
+         * Invoke handler with class-specific strategy
          * @param handler - function, that will be invoked
          */
-        virtual void invokeAfterDelay(uint64_t millis,
-                                      std::function<void()> handler) = 0;
+        virtual void invokeAfterDelay(std::function<void()> handler) = 0;
 
         /**
          * Stop timer

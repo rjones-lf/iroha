@@ -18,8 +18,8 @@
 #include "validators/field_validator.hpp"
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
-#include "permissions.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "permissions.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -47,7 +47,8 @@ namespace shared_model {
     const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
 
     const size_t FieldValidator::public_key_size = 32;
-    const size_t FieldValidator::value_size = 4096;
+    /// limit for the set account detail size in bytes
+    const size_t FieldValidator::value_size = 4 * 1024 * 1024;
     const size_t FieldValidator::description_size = 64;
 
     FieldValidator::FieldValidator(time_t future_gap)
@@ -213,8 +214,8 @@ namespace shared_model {
     void FieldValidator::validatePermission(
         ReasonsGroupType &reason,
         const interface::types::PermissionNameType &permission_name) const {
-      if (iroha::model::all_perm_group.find(permission_name)
-          == iroha::model::all_perm_group.end()) {
+      if (shared_model::permissions::all_perm_group.find(permission_name)
+          == shared_model::permissions::all_perm_group.end()) {
         reason.second.push_back("Provided permission does not exist");
       }
     }
@@ -226,8 +227,8 @@ namespace shared_model {
         reason.second.push_back(
             "Permission set should contain at least one permission");
       }
-      if (not std::includes(iroha::model::role_perm_group.begin(),
-                            iroha::model::role_perm_group.end(),
+      if (not std::includes(shared_model::permissions::role_perm_group.begin(),
+                            shared_model::permissions::role_perm_group.end(),
                             permissions.begin(),
                             permissions.end())) {
         reason.second.push_back(
@@ -291,11 +292,11 @@ namespace shared_model {
 
     void FieldValidator::validateSignatures(
         ReasonsGroupType &reason,
-        const interface::SignatureSetType &signatures,
+        const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       for (const auto &signature : signatures) {
-        const auto &sign = signature->signedData();
-        const auto &pkey = signature->publicKey();
+        const auto &sign = signature.signedData();
+        const auto &pkey = signature.publicKey();
         bool is_valid = true;
 
         if (sign.blob().size() != 64) {

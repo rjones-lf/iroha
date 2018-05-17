@@ -53,7 +53,6 @@ namespace iroha {
      private:
       std::weak_ptr<iroha::network::OrderingGateNotification> subscriber_;
       std::unique_ptr<proto::OrderingServiceTransportGrpc::Stub> client_;
-      logger::Logger log_;
     };
 
   }  // namespace ordering

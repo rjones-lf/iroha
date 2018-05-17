@@ -33,9 +33,13 @@ namespace integration_framework {
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
         internal_port_(50541),
-        proposal_delay_(5000ms),
-        vote_delay_(5000ms),
-        load_delay_(5000ms) {}
+        // proposal_timeout results in non-deterministic behavior due
+        // to thread scheduling and network
+        proposal_delay_(1h),
+        // not required due to solo consensus
+        vote_delay_(0ms),
+        // same as above
+        load_delay_(0ms) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->dropStorage();

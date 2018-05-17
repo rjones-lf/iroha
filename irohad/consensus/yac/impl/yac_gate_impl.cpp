@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,9 +103,7 @@ namespace iroha {
                           std::shared_ptr<shared_model::interface::Block>>(
                           [this, model_hash, vote](auto subscriber) {
                             auto block = block_loader_->retrieveBlock(
-                                shared_model::crypto::PublicKey(
-                                    {vote.signature.pubkey.begin(),
-                                     vote.signature.pubkey.end()}),
+                                vote.signature->publicKey(),
                                 shared_model::crypto::Hash(model_hash));
                             // if load is successful
                             if (block) {
@@ -116,6 +114,7 @@ namespace iroha {
                     })
                     // need only the first
                     .first()
+                    .retry()
                     .subscribe(
                         // if load is successful from at least one node
                         [subscriber](auto block) {
@@ -132,7 +131,6 @@ namespace iroha {
       }
 
       void YacGateImpl::copySignatures(const CommitMessage &commit) {
-        current_block_.second->clearSignatures();
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
           current_block_.second->addSignature(sig->signedData(),

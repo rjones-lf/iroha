@@ -26,7 +26,7 @@ find_package_handle_standard_args(grpc DEFAULT_MSG
     )
 
 set(URL https://github.com/grpc/grpc)
-set(VERSION bfcbad3b86c7912968dc8e64f2121c920dad4dfb)
+set(VERSION bd44e485f69d70ca4095cea92decd98de3892aa6) # Release 1.11.0
 set_target_description(grpc "Remote Procedure Call library" ${URL} ${VERSION})
 
 if (NOT grpc_FOUND)
@@ -40,8 +40,6 @@ if (NOT grpc_FOUND)
         -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf
         -DgRPC_ZLIB_PROVIDER=package
         -DBUILD_SHARED_LIBS=ON
-      PATCH_COMMAND
-        ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/fix-protobuf-package-include.patch || true
       BUILD_BYPRODUCTS
         ${EP_PREFIX}/src/grpc_grpc-build/grpc_cpp_plugin
         ${EP_PREFIX}/src/grpc_grpc-build/${CMAKE_SHARED_LIBRARY_PREFIX}gpr${CMAKE_SHARED_LIBRARY_SUFFIX}

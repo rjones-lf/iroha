@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_PERMISSIONS_HPP
-#define IROHA_PERMISSIONS_HPP
+#ifndef SHARED_MODEL_PERMISSIONS_HPP
+#define SHARED_MODEL_PERMISSIONS_HPP
 
 #include <set>
 #include <string>
 
-namespace iroha {
-  namespace model {
+namespace shared_model {
+  namespace permissions {
 
     /* ~~~~~~~~       Command-related permissions        ~~~~~~~~ */
 
@@ -115,6 +115,9 @@ namespace iroha {
     const std::string can_get_my_txs = "can_get_my_txs";
     const std::string can_get_all_txs = "can_get_all_txs";
 
+    /*                           Blocks                           */
+    const std::string can_get_blocks = "can_get_blocks";
+
     /* ~~~~~~~~                 Groups                ~~~~~~~~   */
     const std::set<std::string> read_self_group = {can_get_my_account,
                                                    can_get_my_signatories,
@@ -132,7 +135,8 @@ namespace iroha {
                                                   can_get_all_acc_ast_txs,
                                                   can_get_all_txs,
                                                   can_get_roles,
-                                                  can_read_assets};
+                                                  can_read_assets,
+                                                  can_get_blocks};
 
     const std::set<std::string> read_domain_group = {
         can_get_domain_accounts,
@@ -145,11 +149,11 @@ namespace iroha {
 
     /*                   Grantable permissions                   */
     const std::string can_grant = "can_grant_";
-    const std::set<std::string> grant_group = {can_grant + can_set_quorum,
-                                               can_grant + can_add_signatory,
-                                               can_grant + can_remove_signatory,
-                                               can_grant + can_transfer,
-                                               can_grant + can_set_detail};
+    const std::set<std::string> grant_group = {can_grant + can_set_my_quorum,
+                                               can_grant + can_add_my_signatory,
+                                               can_grant + can_remove_my_signatory,
+                                               can_grant + can_transfer_my_assets,
+                                               can_grant + can_set_my_account_detail};
 
     const std::set<std::string> edit_self_group = {
         can_set_quorum, can_add_signatory, can_remove_signatory};
@@ -195,11 +199,11 @@ namespace iroha {
         can_get_domain_acc_ast_txs,
         can_get_my_txs,
         can_get_all_txs,
-        can_grant + can_set_quorum,
-        can_grant + can_add_signatory,
-        can_grant + can_remove_signatory,
-        can_grant + can_transfer,
-        can_grant + can_set_detail};
+        can_grant + can_set_my_quorum,
+        can_grant + can_add_my_signatory,
+        can_grant + can_remove_my_signatory,
+        can_grant + can_transfer_my_assets,
+        can_grant + can_set_my_account_detail};
 
     /*                    All permissions                        */
     const std::set<std::string> all_perm_group = {
@@ -240,19 +244,20 @@ namespace iroha {
         can_get_domain_acc_ast_txs,
         can_get_my_txs,
         can_get_all_txs,
-        can_grant + can_set_quorum,
-        can_grant + can_add_signatory,
-        can_grant + can_remove_signatory,
-        can_grant + can_transfer,
-        can_grant + can_set_detail,
+        can_grant + can_set_my_quorum,
+        can_grant + can_add_my_signatory,
+        can_grant + can_remove_my_signatory,
+        can_grant + can_transfer_my_assets,
+        can_grant + can_set_my_account_detail,
         // TODO: IR 1190 kamilsa 30.03.2018 move permissions below to separated group
         can_add_my_signatory,
         can_remove_my_signatory,
         can_set_my_quorum,
         can_set_my_account_detail,
-        can_transfer_my_assets};
+        can_transfer_my_assets,
+        can_get_blocks};
 
-  }  // namespace model
-}  // namespace iroha
+  }  // namespace shared_model
+}  // namespace permissions
 
-#endif  // IROHA_PERMISSIONS_HPP
+#endif  // SHARED_MODEL_PERMISSIONS_HPP

@@ -4,6 +4,6 @@ add_library(shared_model_proto_backend
 
 target_link_libraries(shared_model_proto_backend
     schema
-    model_interfaces
+    shared_model_interfaces
     iroha_amount
     )

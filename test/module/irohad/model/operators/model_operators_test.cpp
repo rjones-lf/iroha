@@ -313,7 +313,15 @@ TEST(ModelOperatorTest, SignatureTest) {
 
   ASSERT_EQ(sig1, sig2);
   sig1.signature[0] = 0x23;
-  ASSERT_NE(sig1, sig2);
+
+  // equals because public keys are same
+  ASSERT_EQ(sig1, sig2);
+
+  auto sig3 = createSignature();
+  sig3.pubkey[0] = 0x23;
+
+  // not equals because public keys are different
+  ASSERT_NE(sig1, sig3);
 }
 
 // -----|Transaction|-----
@@ -322,7 +330,6 @@ Transaction createTransaction() {
   Transaction transaction;
   transaction.created_ts = 1;
   transaction.creator_account_id = "132";
-  transaction.tx_counter = 5;
   transaction.signatures.push_back(createSignature());
 
   // commands

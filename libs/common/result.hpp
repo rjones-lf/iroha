@@ -18,6 +18,9 @@
 #ifndef IROHA_RESULT_HPP
 #define IROHA_RESULT_HPP
 
+#include <ciso646>
+
+#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 
 #include "common/visitor.hpp"
@@ -106,7 +109,67 @@ namespace iroha {
                               std::forward<ValueMatch>(value_func),
                               std::forward<ErrorMatch>(error_func));
       }
+
+      /**
+       * Lazy error AND-chaining
+       * Works by the following table (aka boolean lazy AND):
+       * err1 * any  -> err1
+       * val1 * err2 -> err2
+       * val1 * val2 -> val2
+       *
+       * @param new_res second chain argument
+       * @return new_res if this Result contains a value
+       *         otherwise return this
+       */
+      template <typename Value>
+      constexpr Result<Value, E> and_res(const Result<Value, E> &new_res) const
+          noexcept {
+        return visit_in_place(
+            *this,
+            [res = new_res](ValueType) { return res; },
+            [](ErrorType err) -> Result<Value, E> { return err; });
+      }
+
+      /**
+       * Lazy error OR-chaining
+       * Works by the following table (aka boolean lazy OR):
+       * val1 * any  -> val1
+       * err1 * val2 -> val2
+       * err1 * err2 -> err2
+       *
+       * @param new_res second chain argument
+       * @return new_res if this Result contains a error
+       *         otherwise return this
+       */
+      template <typename Value>
+      constexpr Result<Value, E> or_res(const Result<Value, E> &new_res) const
+          noexcept {
+        return visit_in_place(
+            *this,
+            [](ValueType val) -> Result<Value, E> { return val; },
+            [res = new_res](ErrorType) { return res; });
+      }
     };
+
+    template <typename ResultType>
+    using ValueOf = typename ResultType::ValueType;
+    template <typename ResultType>
+    using ErrorOf = typename ResultType::ErrorType;
+
+    /**
+     * Get a new result with the copied value or mapped error
+     * @param res base Result for getting new one
+     * @param map callback for error mapping
+     * @return result with changed error
+     */
+    template <typename Err1, typename Err2, typename V, typename Fn>
+    Result<V, Err1> map_error(const Result<V, Err2> &res, Fn &&map) noexcept {
+      return visit_in_place(res,
+                            [](Value<V> val) -> Result<V, Err1> { return val; },
+                            [map](Error<Err2> err) -> Result<V, Err1> {
+                              return Error<Err1>{map(err.error)};
+                            });
+    }
 
     // Factory methods for avoiding type specification
     template <typename T>

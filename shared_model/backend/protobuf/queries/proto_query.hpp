@@ -19,7 +19,6 @@
 #define IROHA_SHARED_MODEL_PROTO_QUERY_HPP
 
 #include <boost/range/numeric.hpp>
-
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query.hpp"
@@ -119,7 +118,7 @@ namespace shared_model {
       }
 
       // ------------------------| Signable override  |-------------------------
-      const interface::SignatureSetType &signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_;
       }
 
@@ -133,11 +132,6 @@ namespace shared_model {
         sig->set_signature(crypto::toBinaryString(signed_blob));
         sig->set_pubkey(crypto::toBinaryString(public_key));
         return true;
-      }
-
-      bool clearSignatures() override {
-        signatures_->clear();
-        return (signatures_->size() == 0);
       }
 
       interface::types::TimestampType createdTime() const override {
@@ -156,10 +150,10 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> payload_{
           [this] { return makeBlob(proto_->payload()); }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
-        interface::SignatureSetType set;
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+        SignatureSetType<proto::Signature> set;
         if (proto_->has_signature()) {
-          set.emplace(new Signature(proto_->signature()));
+          set.emplace(proto_->signature());
         }
         return set;
       }};

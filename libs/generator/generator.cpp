@@ -19,11 +19,6 @@
 
 namespace generator {
 
-  int64_t random_number(int64_t min, int64_t max) {
-    uint32_t SEED_ = 1337;
-    return min + (rand_r(&SEED_) % (max - min));
-  }
-
   std::string randomString(size_t len) {
     std::string str(len, 0);
     std::generate_n(

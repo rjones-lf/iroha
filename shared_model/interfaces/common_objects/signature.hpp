@@ -58,8 +58,7 @@ namespace shared_model {
       virtual const SignedType &signedData() const = 0;
 
       bool operator==(const Signature &rhs) const override {
-        return publicKey() == rhs.publicKey()
-            and signedData() == rhs.signedData();
+        return publicKey() == rhs.publicKey();
       }
 
 #ifndef DISABLE_BACKWARD

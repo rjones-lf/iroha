@@ -52,9 +52,9 @@ master_doc = 'index'
 # General information about the project.
 project = u'Iroha'
 documentation = u'Iroha Documentation'
-description = u'Distributed ledger technology platworm, written in C++'
-copyright = u'Creative Commons Attribution-NonCommercial 3.0 Unported'
-author = u'Nikolay Yushkevich at Soramitsu Co Ltd'
+description = u'Distributed ledger technology platform, written in C++'
+copyright = u'2018 Soramitsu Co., Ltd.'
+author = u'Nikolay Yushkevich at Soramitsu Co., Ltd.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
