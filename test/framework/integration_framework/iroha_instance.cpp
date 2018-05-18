@@ -28,7 +28,7 @@ namespace integration_framework {
 
   IrohaInstance::IrohaInstance()
       : block_store_dir_(
-            (boost::filesystem::temp_directory_path() / "block_store")
+            (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path())
                 .string()),
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
