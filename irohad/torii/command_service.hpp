@@ -125,7 +125,7 @@ namespace torii {
         override;
 
    private:
-    void checkCacheAndSend(
+    bool checkCacheAndSend(
         const boost::optional<iroha::protocol::ToriiResponse> &resp,
         grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer)
         const;

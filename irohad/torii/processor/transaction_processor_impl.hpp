@@ -18,6 +18,7 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 #define IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 
+#include <mutex>
 #include "builders/default_builders.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"
@@ -60,9 +61,11 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
-      shared_model::builder::DefaultTransactionStatusBuilder status_builder_;
-
       logger::Logger log_;
+
+      /// prevents from emitting new tx statuses from different threads
+      /// in parallel
+      std::mutex notifier_mutex_;
     };
   }  // namespace torii
 }  // namespace iroha

@@ -33,19 +33,17 @@ For more information, such as how to use client libraries in your target program
 
 ## Need help?
 
-* Join [telegram chat](https://t.me/joinchat/AgzrTUCZ6edlj6V612n5JQ) where the maintainers team is able to help you
-* Communicate in Gitter chat with our development community [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+* Join [telegram chat](https://t.me/hyperledgeriroha) where the maintainers team is able to help you
+* Communicate in Gitter chat with our development community [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby)
 * Submit issues via GitHub Iroha repository
 * Join [HyperLedger RocketChat](https://chat.hyperledger.org) #iroha channel to discuss your concerns and proposals
 * Use mailing list to spread your word within Iroha development community [hyperledger-iroha@lists.hyperledger.org](mailto:hyperledger-iroha@lists.hyperledger.org)
 
 ## License
 
-Copyright 2016 – 2018 Soramitsu Co., Ltd.
-
-Iroha codebase is licensed under the Apache License, 
-Version 2.0 (the "License"); you may not use this file except 
-in compliance with the License. You may obtain a copy of the 
+Iroha codebase is licensed under the Apache License,
+Version 2.0 (the "License"); you may not use this file except
+in compliance with the License. You may obtain a copy of the
 License at http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -54,6 +52,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Iroha documentation files are made available under the Creative Commons 
-Attribution 4.0 International License (CC-BY-4.0), available at 
+Iroha documentation files are made available under the Creative Commons
+Attribution 4.0 International License (CC-BY-4.0), available at
 http://creativecommons.org/licenses/by/4.0/
