@@ -65,18 +65,6 @@ namespace shared_model {
             and defaultRole() == rhs.defaultRole();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->domain_id = domainId();
-        oldModel->default_role = defaultRole();
-        return oldModel;
-      }
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -55,15 +55,6 @@ namespace shared_model {
         return detail::PrettyStringBuilder().init(className()).finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      iroha::model::TransactionResponse *makeOldModel() const override {
-        auto tx_response = new iroha::model::TransactionResponse();
-        tx_response->current_status = oldModelStatus();
-        return tx_response;
-      }
-
-#endif
-
       bool operator==(const Model &rhs) const override {
         return true;
       }

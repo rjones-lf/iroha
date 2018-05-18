@@ -57,17 +57,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new OldModelType;
-        oldModel->account_id = accountId();
-        oldModel->key = key();
-        oldModel->value = value();
-        return oldModel;
-      }
-
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and key() == rhs.key()
             and value() == rhs.value();

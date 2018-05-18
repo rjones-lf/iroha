@@ -50,15 +50,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::RevokePermission;
-        oldModel->account_id = accountId();
-        oldModel->permission_name = permissionName();
-        return oldModel;
-      }
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId()
             and permissionName() == rhs.permissionName();

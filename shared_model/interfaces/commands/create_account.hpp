@@ -55,17 +55,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateAccount;
-        oldModel->account_name = accountName();
-        oldModel->domain_id = domainId();
-        oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
-        return oldModel;
-      }
-
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return accountName() == rhs.accountName()
             and domainId() == rhs.domainId() and pubkey() == rhs.pubkey();

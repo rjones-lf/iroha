@@ -56,32 +56,6 @@ namespace shared_model {
        */
       virtual const types::TransactionsCollectionType &transactions() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      iroha::model::Block *makeOldModel() const override {
-        iroha::model::Block *old_block = new iroha::model::Block();
-        old_block->height = height();
-        constexpr auto hash_size = iroha::model::Block::HashType::size();
-        old_block->prev_hash =
-            *iroha::hexstringToArray<hash_size>(prevHash().hex());
-        old_block->txs_number = txsNumber();
-        std::for_each(transactions().begin(),
-                      transactions().end(),
-                      [&old_block](auto &tx) {
-                        std::unique_ptr<iroha::model::Transaction> old_tx(
-                            tx->makeOldModel());
-                        old_block->transactions.emplace_back(*old_tx);
-                      });
-        old_block->created_ts = createdTime();
-        old_block->hash = *iroha::hexstringToArray<hash_size>(hash().hex());
-        std::for_each(
-            signatures().begin(), signatures().end(), [&old_block](auto &sig) {
-              std::unique_ptr<iroha::model::Signature> old_sig(
-                  sig.makeOldModel());
-              old_block->sigs.emplace_back(*old_sig);
-            });
-        return old_block;
-      }
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

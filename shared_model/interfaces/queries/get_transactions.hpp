@@ -40,18 +40,6 @@ namespace shared_model {
        */
       virtual const TransactionHashesType &transactionHashes() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new OldModelType;
-        boost::for_each(transactionHashes(), [&oldModel](const auto &hash) {
-          oldModel->tx_hashes.push_back(
-              hash.template makeOldModel<
-                  iroha::model::GetTransactions::TxHashType>());
-        });
-        return oldModel;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

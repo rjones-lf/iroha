@@ -48,16 +48,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::AddPeer;
-        oldModel->peer.address = peer().address();
-        oldModel->peer.pubkey =
-            peer().pubkey().makeOldModel<decltype(oldModel->peer.pubkey)>();
-        return oldModel;
-      }
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return peer() == rhs.peer();
       }

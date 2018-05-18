@@ -56,17 +56,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateAsset;
-        oldModel->asset_name = assetName();
-        oldModel->domain_id = domainId();
-        oldModel->precision = precision();
-        return oldModel;
-      }
-
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return assetName() == rhs.assetName() and domainId() == rhs.domainId()
             and precision() == rhs.precision();

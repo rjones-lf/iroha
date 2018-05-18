@@ -73,15 +73,6 @@ namespace shared_model {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto response = boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        response->tx_hash = crypto::toBinaryString(transactionHash());
-        return response;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return transactionHash() == rhs.transactionHash()

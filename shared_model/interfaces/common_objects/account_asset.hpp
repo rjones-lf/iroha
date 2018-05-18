@@ -74,24 +74,6 @@ namespace shared_model {
             and balance() == rhs.balance();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->account_id = accountId();
-        oldModel->asset_id = assetId();
-        using OldBalanceType = decltype(oldModel->balance);
-        // Use shared_ptr and placement-new to copy new model field
-        // to the field of old model for returning raw pointer
-        auto p = std::shared_ptr<OldBalanceType>(balance().makeOldModel());
-        new (&oldModel->balance) OldBalanceType(*p);
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

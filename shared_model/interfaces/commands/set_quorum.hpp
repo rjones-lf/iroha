@@ -49,15 +49,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::SetQuorum;
-        oldModel->account_id = accountId();
-        oldModel->new_quorum = newQuorum();
-        return oldModel;
-      }
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId()
             and newQuorum() == rhs.newQuorum();

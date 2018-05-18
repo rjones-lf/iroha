@@ -32,12 +32,6 @@ namespace shared_model {
      */
     class GetRoles : public PRIMITIVE(GetRoles) {
      public:
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        return new iroha::model::GetRoles;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder().init("GetRoles").finalize();

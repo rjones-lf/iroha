@@ -80,16 +80,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        return new OldModelType(intValue(), precision());
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

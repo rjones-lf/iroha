@@ -35,20 +35,6 @@ namespace shared_model {
       }
     };
 
-#ifndef DISABLE_BACKWARD
-    /**
-     * Class provides generic converter for old-fashion domain objects
-     * @tparam T abstract return type
-     */
-    template <typename T>
-    class OldModelCreatorVisitor : public boost::static_visitor<T> {
-     public:
-      template <typename InputType>
-      T operator()(const InputType &operand) const {
-        return operand->makeOldModel();
-      }
-    };
-#endif
 
   }  // namespace detail
 }  // namespace shared_model

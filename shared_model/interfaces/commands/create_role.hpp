@@ -54,16 +54,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateRole;
-        oldModel->role_name = roleName();
-        oldModel->permissions.insert(rolePermissions().begin(),
-                                     rolePermissions().end());
-        return oldModel;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return roleName() == rhs.roleName()

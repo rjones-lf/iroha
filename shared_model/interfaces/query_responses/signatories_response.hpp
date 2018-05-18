@@ -57,22 +57,6 @@ namespace shared_model {
         return keys() == rhs.keys();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of signatories response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        const auto vs = keys();
-        std::for_each(vs.begin(), vs.end(), [&oldModel](const auto &key) {
-          oldModel->keys.emplace_back(
-              key->template makeOldModel<iroha::pubkey_t>());
-        });
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

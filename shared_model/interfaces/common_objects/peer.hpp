@@ -65,18 +65,6 @@ namespace shared_model {
         return address() == rhs.address() and pubkey() == rhs.pubkey();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->address = address();
-        oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
-        return oldModel;
-      }
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

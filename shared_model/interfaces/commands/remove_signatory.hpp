@@ -49,15 +49,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::RemoveSignatory;
-        oldModel->account_id = accountId();
-        oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
-        return oldModel;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and pubkey() == rhs.pubkey();

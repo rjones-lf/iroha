@@ -72,19 +72,6 @@ namespace shared_model {
             and precision() == rhs.precision();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->asset_id = assetId();
-        oldModel->domain_id = domainId();
-        oldModel->precision = precision();
-        return oldModel;
-      }
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

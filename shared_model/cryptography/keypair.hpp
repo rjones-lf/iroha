@@ -61,10 +61,6 @@ namespace shared_model {
 
       std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      KeypairOldModelType *makeOldModel() const override;
-
-#endif
 
      private:
       Keypair *clone() const override;

@@ -61,23 +61,6 @@ namespace shared_model {
         return accountAsset() == rhs.accountAsset();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        using OldAccountAssetType = decltype(oldModel->acct_asset);
-        /// Use shared_ptr and placement-new to copy new model field to
-        /// oldModel's field and to return raw pointer
-        auto p =
-            std::shared_ptr<OldAccountAssetType>(accountAsset().makeOldModel());
-        new (&oldModel->acct_asset) OldAccountAssetType(*p);
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

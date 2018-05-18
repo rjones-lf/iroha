@@ -53,24 +53,6 @@ namespace shared_model {
        */
       virtual types::TimestampType createdTime() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      iroha::model::Proposal *makeOldModel() const override {
-        auto txs =
-            boost::accumulate(transactions(),
-                              std::vector<iroha::model::Transaction>{},
-                              [](auto &&vec, const auto &tx) {
-                                std::unique_ptr<iroha::model::Transaction> ptr(
-                                    tx->makeOldModel());
-                                vec.emplace_back(*ptr);
-                                return std::forward<decltype(vec)>(vec);
-                              });
-
-        auto oldModel = new iroha::model::Proposal(txs);
-        oldModel->height = height();
-        oldModel->created_time = createdTime();
-        return oldModel;
-      }
-#endif
 
       bool operator==(const Proposal &rhs) const override {
         return transactions() == rhs.transactions() and height() == rhs.height()

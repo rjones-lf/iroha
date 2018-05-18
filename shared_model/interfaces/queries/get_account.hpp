@@ -34,14 +34,6 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &accountId() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAccount;
-        oldModel->account_id = accountId();
-        return oldModel;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

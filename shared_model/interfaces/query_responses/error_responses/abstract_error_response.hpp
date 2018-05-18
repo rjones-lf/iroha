@@ -55,15 +55,6 @@ namespace shared_model {
         return detail::PrettyStringBuilder().init(reason()).finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      iroha::model::ErrorResponse *makeOldModel() const override {
-        auto error_response = new iroha::model::ErrorResponse();
-        error_response->reason = oldModelReason();
-        return error_response;
-      }
-
-#endif
-
       bool operator==(const Model &rhs) const override {
         return true;
       }

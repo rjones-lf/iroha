@@ -59,27 +59,6 @@ namespace shared_model {
         return transactions() == rhs.transactions();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of transactions response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->transactions = rxcpp::observable<>::iterate([this] {
-          using OldTxType = iroha::model::Transaction;
-          std::vector<OldTxType> ret;
-          const auto txs = transactions();
-          std::for_each(txs.begin(), txs.end(), [&ret](const auto &tx) {
-            auto p = std::shared_ptr<OldTxType>(tx->makeOldModel());
-            ret.push_back(*p);
-          });
-          return ret;
-        }());
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

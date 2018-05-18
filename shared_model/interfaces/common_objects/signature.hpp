@@ -61,19 +61,6 @@ namespace shared_model {
         return publicKey() == rhs.publicKey();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        iroha::model::Signature *oldStyleSignature =
-            new iroha::model::Signature();
-        oldStyleSignature->signature = *iroha::hexstringToArray<
-            iroha::model::Signature::SignatureType::size()>(signedData().hex());
-        oldStyleSignature->pubkey =
-            *iroha::hexstringToArray<iroha::model::Signature::KeyType::size()>(
-                publicKey().hex());
-        return oldStyleSignature;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

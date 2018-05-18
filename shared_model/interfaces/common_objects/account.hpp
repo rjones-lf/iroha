@@ -79,20 +79,6 @@ namespace shared_model {
             and quorum() == rhs.quorum() and jsonData() == rhs.jsonData();
       }
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->account_id = accountId();
-        oldModel->domain_id = domainId();
-        oldModel->quorum = quorum();
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -38,15 +38,6 @@ namespace shared_model {
        */
       virtual const types::RoleIdType &roleId() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetRolePermissions;
-        oldModel->role_id = roleId();
-        return oldModel;
-      }
-
-#endif
-
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("GetRolePermissions")

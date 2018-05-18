@@ -56,21 +56,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::SubtractAssetQuantity;
-        using OldAmountType = iroha::Amount;
-        /// Use shared_ptr and placement-new to copy new model field to
-        /// oldModel's field and to return raw pointer
-        auto p = std::shared_ptr<OldAmountType>(amount().makeOldModel());
-        new (&oldModel->amount) OldAmountType(*p);
-        oldModel->account_id = accountId();
-        oldModel->asset_id = assetId();
-        return oldModel;
-      }
-
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and assetId() == rhs.assetId()
             and amount() == rhs.amount();

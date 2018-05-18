@@ -78,15 +78,6 @@ namespace shared_model {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto query_response = boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        using hashType = decltype(query_response->query_hash);
-        query_response->query_hash = queryHash().makeOldModel<hashType>();
-        return query_response;
-      }
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return queryHash() == rhs.queryHash() and get() == rhs.get();

@@ -58,19 +58,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return roles() == rhs.roles();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of roles response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->roles = roles();
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

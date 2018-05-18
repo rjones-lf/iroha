@@ -49,15 +49,6 @@ namespace shared_model {
             .finalize();
       }
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateDomain;
-        oldModel->domain_id = domainId();
-        oldModel->user_default_role = userDefaultRole();
-        return oldModel;
-      }
-#endif
-
       bool operator==(const ModelType &rhs) const override {
         return domainId() == rhs.domainId()
             and userDefaultRole() == rhs.userDefaultRole();
