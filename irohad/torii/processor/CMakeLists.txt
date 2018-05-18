@@ -8,4 +8,5 @@ target_link_libraries(processors PUBLIC
     logger
     endpoint
     shared_model_proto_builders
+    query_execution
     )
