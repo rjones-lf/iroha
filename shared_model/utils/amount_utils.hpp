@@ -26,6 +26,7 @@ namespace shared_model {
   namespace interface {
     class Amount;
   }  // namespace interface
+
   namespace detail {
     boost::multiprecision::uint256_t increaseValuePrecision(
         boost::multiprecision::uint256_t value, int degree);
