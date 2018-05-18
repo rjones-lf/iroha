@@ -110,27 +110,6 @@ namespace iroha {
                               std::forward<ErrorMatch>(error_func));
       }
 
-      template <typename ValueMatch, typename ErrorMatch>
-      constexpr auto match2(ValueMatch &&value_func, ErrorMatch &&error_func) {
-        switch (this->which()) {
-          case 0:
-            return value_func(boost::get<ValueType>(*this).value);
-          case 1:
-            return error_func(boost::get<ErrorType>(*this).error);
-        }
-      };
-
-      template <typename ValueMatch, typename ErrorMatch>
-      constexpr auto match2(ValueMatch &&value_func,
-                            ErrorMatch &&error_func) const {
-        switch (this->which()) {
-          case 0:
-            return value_func(boost::get<ValueType>(*this).value);
-          case 1:
-            return error_func(boost::get<ErrorType>(*this).error);
-        }
-      };
-
       /**
        * Lazy error AND-chaining
        * Works by the following table (aka boolean lazy AND):

@@ -27,9 +27,9 @@ using namespace std::chrono_literals;
 namespace integration_framework {
 
   IrohaInstance::IrohaInstance()
-      : block_store_dir_(
-            (boost::filesystem::temp_directory_path() / boost::filesystem::unique_path())
-                .string()),
+      : block_store_dir_((boost::filesystem::temp_directory_path()
+                          / boost::filesystem::unique_path())
+                             .string()),
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
         internal_port_(50541),
