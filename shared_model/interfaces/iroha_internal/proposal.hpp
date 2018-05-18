@@ -20,19 +20,15 @@
 
 #include <boost/range/numeric.hpp>
 #include <vector>
-#include "interfaces/base/primitive.hpp"
+
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/proposal.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
 
-    class Proposal : public PRIMITIVE(Proposal) {
+    class Proposal : public ModelPrimitive<Proposal> {
      public:
       template <class T>
       using w = detail::PolymorphicWrapper<T>;
@@ -52,7 +48,6 @@ namespace shared_model {
        * @return created time
        */
       virtual types::TimestampType createdTime() const = 0;
-
 
       bool operator==(const Proposal &rhs) const override {
         return transactions() == rhs.transactions() and height() == rhs.height()

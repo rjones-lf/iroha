@@ -18,13 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_ADD_PEER_HPP
 #define IROHA_SHARED_MODEL_ADD_PEER_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/add_peer.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -32,7 +27,7 @@ namespace shared_model {
     /**
      * Add new peer to Iroha
      */
-    class AddPeer : public PRIMITIVE(AddPeer) {
+    class AddPeer : public ModelPrimitive<AddPeer> {
      public:
       /**
        * Return peer to be added by the command.

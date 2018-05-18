@@ -18,13 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_DOMAIN_HPP
 #define IROHA_SHARED_MODEL_DOMAIN_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/domain.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -32,7 +27,7 @@ namespace shared_model {
     /**
      * Domain object represents administrative unit within the system
      */
-    class Domain : public PRIMITIVE(Domain) {
+    class Domain : public ModelPrimitive<Domain> {
      public:
       /**
        * @return Identity of domain
@@ -64,7 +59,6 @@ namespace shared_model {
         return domainId() == rhs.domainId()
             and defaultRole() == rhs.defaultRole();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

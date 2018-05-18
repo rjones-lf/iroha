@@ -18,19 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_GRANT_PERMISSION_HPP
 #define IROHA_SHARED_MODEL_GRANT_PERMISSION_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/grant_permission.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Grant permission to the account
      */
-    class GrantPermission : public PRIMITIVE(GrantPermission) {
+    class GrantPermission : public ModelPrimitive<GrantPermission> {
      public:
       /**
        * @return Id of the account to whom grant permission

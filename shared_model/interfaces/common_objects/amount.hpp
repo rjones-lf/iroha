@@ -21,8 +21,8 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
+
 #include "amount/amount.hpp"
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 
@@ -32,7 +32,7 @@ namespace shared_model {
     /**
      * Representation of fixed point number
      */
-    class Amount : public PRIMITIVE_WITH_OLD(Amount, iroha::Amount) {
+    class Amount : public ModelPrimitive<Amount> {
      public:
       /**
        * Gets integer representation value, which ignores precision
@@ -79,7 +79,6 @@ namespace shared_model {
             .append("precision", std::to_string(precision()))
             .finalize();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

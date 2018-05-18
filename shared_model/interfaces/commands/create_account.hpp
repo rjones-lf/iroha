@@ -18,12 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_ACCOUNT_HPP
 #define IROHA_SHARED_MODEL_CREATE_ACCOUNT_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_account.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +26,7 @@ namespace shared_model {
     /**
      * Create acccount in Iroha domain
      */
-    class CreateAccount : public PRIMITIVE(CreateAccount) {
+    class CreateAccount : public ModelPrimitive<CreateAccount> {
      public:
       /**
        * @return Name of the account to create in Iroha

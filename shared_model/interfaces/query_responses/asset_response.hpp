@@ -19,22 +19,18 @@
 #define IROHA_SHARED_MODEL_ASSET_RESPONSE_HPP
 
 #include <new>
-#include "interfaces/base/primitive.hpp"
+
 #include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/asset_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with asset
      */
-    class AssetResponse : public PRIMITIVE(AssetResponse) {
+    class AssetResponse : public ModelPrimitive<AssetResponse> {
      public:
       /**
        * @return Attached asset
@@ -58,7 +54,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return asset() == rhs.asset();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

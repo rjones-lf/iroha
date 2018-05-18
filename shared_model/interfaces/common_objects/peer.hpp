@@ -19,12 +19,7 @@
 #define IROHA_SHARED_MODEL_PEER_HPP
 
 #include "common/types.hpp"
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/peer.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -32,7 +27,7 @@ namespace shared_model {
     /**
      * Representation of a network participant.
      */
-    class Peer : public PRIMITIVE(Peer) {
+    class Peer : public ModelPrimitive<Peer> {
      public:
       /**
        * @return Peer address, for fetching data
@@ -64,7 +59,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return address() == rhs.address() and pubkey() == rhs.pubkey();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

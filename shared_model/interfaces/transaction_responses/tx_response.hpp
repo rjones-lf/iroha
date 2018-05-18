@@ -19,7 +19,6 @@
 #define IROHA_TX_RESPONSE_HPP
 
 #include <boost/variant.hpp>
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/transaction.hpp"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
 #include "interfaces/transaction_responses/not_received_tx_response.hpp"
@@ -30,16 +29,12 @@
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/transaction_response.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
     /**
      * TransactionResponse is a status of transaction in system
      */
-    class TransactionResponse : public PRIMITIVE(TransactionResponse) {
+    class TransactionResponse : public ModelPrimitive<TransactionResponse> {
      private:
       /// PolymorphicWrapper shortcut type
       template <typename... Value>
@@ -72,7 +67,6 @@ namespace shared_model {
       std::string toString() const override {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
-
 
       bool operator==(const ModelType &rhs) const override {
         return transactionHash() == rhs.transactionHash()

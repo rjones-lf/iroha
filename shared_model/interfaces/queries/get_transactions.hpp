@@ -18,19 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_transactions.hpp"
-#endif
-
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace shared_model {
   namespace interface {
-    class GetTransactions : public PRIMITIVE(GetTransactions) {
+    class GetTransactions : public ModelPrimitive<GetTransactions> {
      public:
       /// type of hashes collection
       using TransactionHashesType = std::vector<interface::types::HashType>;
@@ -39,7 +34,6 @@ namespace shared_model {
        * @return Hashes of transactions to fetch
        */
       virtual const TransactionHashesType &transactionHashes() const = 0;
-
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

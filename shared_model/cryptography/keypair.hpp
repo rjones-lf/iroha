@@ -20,7 +20,6 @@
 
 #include "cryptography/private_key.hpp"
 #include "cryptography/public_key.hpp"
-#include "interfaces/base/primitive.hpp"
 
 #include "common/types.hpp"  // for keypair_t
 
@@ -32,11 +31,8 @@ namespace shared_model {
     /**
      * Class for holding a keypair: public key and private key
      */
-#ifndef DISABLE_BACKWARD
-    class Keypair : public interface::Primitive<Keypair, KeypairOldModelType> {
-#else
+
     class Keypair : public interface::ModelPrimitive<Keypair> {
-#endif
      public:
       /// Type of public key
       using PublicKeyType = PublicKey;
@@ -60,7 +56,6 @@ namespace shared_model {
       bool operator==(const Keypair &keypair) const override;
 
       std::string toString() const override;
-
 
      private:
       Keypair *clone() const override;

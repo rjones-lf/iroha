@@ -18,12 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_DETACH_ROLE_HPP
 #define IROHA_SHARED_MODEL_DETACH_ROLE_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/detach_role.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +26,7 @@ namespace shared_model {
     /**
      * Remove role from account used in Iroha
      */
-    class DetachRole : public PRIMITIVE(DetachRole) {
+    class DetachRole : public ModelPrimitive<DetachRole> {
      public:
       /**
        * @return Account to remove the role

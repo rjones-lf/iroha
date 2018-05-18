@@ -18,23 +18,18 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/transactions_response.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
     /**
      * Container of asset, for fetching data.
      */
-    class TransactionsResponse : public PRIMITIVE(TransactionsResponse) {
+    class TransactionsResponse : public ModelPrimitive<TransactionsResponse> {
      public:
       /**
        * @return Attached transactions
@@ -58,7 +53,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return transactions() == rhs.transactions();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

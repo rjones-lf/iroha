@@ -18,21 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_GET_ROLES_HPP
 #define IROHA_SHARED_MODEL_GET_ROLES_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_roles.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Get all roles in the current system
      */
-    class GetRoles : public PRIMITIVE(GetRoles) {
+    class GetRoles : public ModelPrimitive<GetRoles> {
      public:
-
       std::string toString() const override {
         return detail::PrettyStringBuilder().init("GetRoles").finalize();
       }

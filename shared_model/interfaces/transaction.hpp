@@ -19,16 +19,12 @@
 #define IROHA_SHARED_MODEL_TRANSACTION_HPP
 
 #include <vector>
-#include "interfaces/base/primitive.hpp"
+
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/transaction.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -37,7 +33,7 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    class Transaction : public SIGNABLE(Transaction) {
+    class Transaction : public Signable<Transaction> {
      public:
       /**
        * @return creator of transaction

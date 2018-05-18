@@ -19,12 +19,7 @@
 #ifndef IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 #define IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/error_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -33,21 +28,13 @@ namespace shared_model {
      * @tparam Model - concrete model error response
      */
     template <typename Model>
-    class AbstractErrorResponse
-        : public PRIMITIVE_WITH_OLD(Model, iroha::model::ErrorResponse) {
+    class AbstractErrorResponse : public ModelPrimitive<Model> {
      private:
       /**
        * @return string representation of error reason
        */
       virtual std::string reason() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * @return old model error reason
-       */
-      virtual iroha::model::ErrorResponse::Reason oldModelReason() const = 0;
-
-#endif
      public:
       // ------------------------| Primitive override |-------------------------
 

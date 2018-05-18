@@ -18,19 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 #define IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/remove_signatory.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Remove signatory from the account
      */
-    class RemoveSignatory : public PRIMITIVE(RemoveSignatory) {
+    class RemoveSignatory : public ModelPrimitive<RemoveSignatory> {
      public:
       /**
        * @return account from which remove signatory
@@ -48,7 +43,6 @@ namespace shared_model {
             .append(pubkey().toString())
             .finalize();
       }
-
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and pubkey() == rhs.pubkey();

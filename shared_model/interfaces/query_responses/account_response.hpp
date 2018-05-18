@@ -19,22 +19,18 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_RESPONSE_HPP
 
 #include <new>
-#include "interfaces/base/primitive.hpp"
+
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/account_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with account
      */
-    class AccountResponse : public PRIMITIVE(AccountResponse) {
+    class AccountResponse : public ModelPrimitive<AccountResponse> {
      public:
       /// Collection of role_id types
       using AccountRolesIdType = std::vector<types::RoleIdType>;
@@ -70,7 +66,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return account() == rhs.account() and roles() == rhs.roles();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -22,12 +22,7 @@
 #include "cryptography/blob.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
-#include "interfaces/base/primitive.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/signature.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -35,7 +30,7 @@ namespace shared_model {
     /**
      * Class represents signature of high-level domain objects.
      */
-    class Signature : public PRIMITIVE(Signature) {
+    class Signature : public ModelPrimitive<Signature> {
      public:
       /**
        * Type of public key
@@ -60,7 +55,6 @@ namespace shared_model {
       bool operator==(const Signature &rhs) const override {
         return publicKey() == rhs.publicKey();
       }
-
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

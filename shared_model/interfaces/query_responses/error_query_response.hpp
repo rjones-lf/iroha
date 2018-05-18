@@ -20,7 +20,6 @@
 
 #include <boost/variant.hpp>
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_detail_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_error_response.hpp"
@@ -39,9 +38,7 @@ namespace shared_model {
      * QueryErrorResponse interface container for all concrete error responses
      * possible achieved in the system.
      */
-    class ErrorQueryResponse
-        : public PRIMITIVE_WITH_OLD(ErrorQueryResponse,
-                                    iroha::model::ErrorResponse) {
+    class ErrorQueryResponse : public ModelPrimitive<ErrorQueryResponse> {
      private:
       /// Shortcut type for polymorphic wrapper
       template <typename... Value>
@@ -72,7 +69,6 @@ namespace shared_model {
       std::string toString() const override {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
-
 
       bool operator==(const ModelType &rhs) const override {
         return get() == rhs.get();

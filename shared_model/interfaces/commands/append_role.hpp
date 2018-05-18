@@ -18,12 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_APPEND_ROLE_HPP
 #define IROHA_SHARED_MODEL_APPEND_ROLE_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/append_role.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +26,7 @@ namespace shared_model {
     /**
      * Add role to account used in Iroha
      */
-    class AppendRole : public PRIMITIVE(AppendRole) {
+    class AppendRole : public ModelPrimitive<AppendRole> {
      public:
       /**
        * @return Account to add the role

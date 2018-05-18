@@ -33,13 +33,6 @@ namespace shared_model {
       std::string reason() const override {
         return "NoRolesErrorResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::ErrorResponse::Reason oldModelReason() const override {
-        return iroha::model::ErrorResponse::Reason::NO_ROLES;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

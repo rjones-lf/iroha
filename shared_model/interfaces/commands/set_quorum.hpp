@@ -18,19 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_SET_QUORUM_HPP
 #define IROHA_SHARED_MODEL_SET_QUORUM_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/set_quorum.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Set quorum of the account
      */
-    class SetQuorum : public PRIMITIVE(SetQuorum) {
+    class SetQuorum : public ModelPrimitive<SetQuorum> {
      public:
       /**
        * @return Id of the account to set quorum

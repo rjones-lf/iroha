@@ -18,22 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_account.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
-    class GetAccount : public PRIMITIVE(GetAccount) {
+    class GetAccount : public ModelPrimitive<GetAccount> {
      public:
       /**
        * @return Identity of user, for fetching data
        */
       virtual const types::AccountIdType &accountId() const = 0;
-
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

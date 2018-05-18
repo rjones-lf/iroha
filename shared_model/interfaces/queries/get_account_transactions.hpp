@@ -18,25 +18,20 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_TRANSACTIONS_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_transactions.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Query for getting transactions of account
      */
-    class GetAccountTransactions : public PRIMITIVE(GetAccountTransactions) {
+    class GetAccountTransactions
+        : public ModelPrimitive<GetAccountTransactions> {
      public:
       /**
        * @return account_id of requested transactions
        */
       virtual const types::AccountIdType &accountId() const = 0;
-
 
       virtual std::string toString() const override {
         return detail::PrettyStringBuilder()

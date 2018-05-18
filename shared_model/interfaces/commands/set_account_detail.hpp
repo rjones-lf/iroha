@@ -18,11 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_SET_ACCOUNT_DETAIL_HPP
 #define IROHA_SHARED_MODEL_SET_ACCOUNT_DETAIL_HPP
 
-#ifndef DISABLE_BACKWARD
-#include "model/commands/set_account_detail.hpp"
-#endif
-
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -31,7 +26,7 @@ namespace shared_model {
     /**
      * Set key-value pair of given account
      */
-    class SetAccountDetail : public PRIMITIVE(SetAccountDetail) {
+    class SetAccountDetail : public ModelPrimitive<SetAccountDetail> {
      public:
       /**
        * @return Identity of user to set account detail

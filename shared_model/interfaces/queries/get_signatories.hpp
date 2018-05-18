@@ -18,12 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_GET_SIGNATORIES_HPP
 #define IROHA_SHARED_MODEL_GET_SIGNATORIES_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_signatories.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +26,7 @@ namespace shared_model {
     /**
      * Query for getting all signatories attached to account
      */
-    class GetSignatories : public PRIMITIVE(GetSignatories) {
+    class GetSignatories : public ModelPrimitive<GetSignatories> {
      public:
       /**
        * @return account_id of requested signatories

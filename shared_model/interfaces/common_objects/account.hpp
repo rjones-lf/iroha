@@ -19,13 +19,8 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_HPP
 
 #include "cryptography/hash.hpp"
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/account.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -33,7 +28,7 @@ namespace shared_model {
     /**
      * User identity information in the system
      */
-    class Account : public PRIMITIVE(Account) {
+    class Account : public ModelPrimitive<Account> {
      public:
       /**
        * @return Identity of user, for fetching data
@@ -78,7 +73,6 @@ namespace shared_model {
         return accountId() == rhs.accountId() and domainId() == rhs.domainId()
             and quorum() == rhs.quorum() and jsonData() == rhs.jsonData();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

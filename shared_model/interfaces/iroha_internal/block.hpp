@@ -25,16 +25,10 @@
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/block.hpp"
-#include "model/signature.hpp"
-#include "model/transaction.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
 
-    class Block : public SIGNABLE(Block) {
+    class Block : public Signable<Block> {
      public:
       /**
        * @return block number in the ledger
@@ -55,7 +49,6 @@ namespace shared_model {
        * @return collection of transactions
        */
       virtual const types::TransactionsCollectionType &transactions() const = 0;
-
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

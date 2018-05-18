@@ -18,19 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 #define IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_domain.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Create domain in Iroha
      */
-    class CreateDomain : public PRIMITIVE(CreateDomain) {
+    class CreateDomain : public ModelPrimitive<CreateDomain> {
      public:
       /**
        * @return Id of the domain to create

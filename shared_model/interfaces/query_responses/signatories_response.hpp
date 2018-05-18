@@ -18,21 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_SIGNATORIES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_SIGNATORIES_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/signatories_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Container of asset, for fetching data.
      */
-    class SignatoriesResponse : public PRIMITIVE(SignatoriesResponse) {
+    class SignatoriesResponse : public ModelPrimitive<SignatoriesResponse> {
      public:
       /**
        * @return All public keys attached to account
@@ -56,7 +51,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return keys() == rhs.keys();
       }
-
     };
   }  // namespace interface
 }  // namespace shared_model

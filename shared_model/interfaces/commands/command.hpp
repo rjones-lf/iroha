@@ -21,7 +21,6 @@
 #include <boost/variant.hpp>
 #include <utility>
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -41,10 +40,6 @@
 #include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/command.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
 
@@ -52,7 +47,7 @@ namespace shared_model {
      * Class provides commands container for all commands in system.
      * General note: this class is container for commands, not a base class.
      */
-    class Command : public PRIMITIVE(Command) {
+    class Command : public ModelPrimitive<Command> {
      private:
       /// PolymorphicWrapper shortcut type
       template <typename... Value>
