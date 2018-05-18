@@ -7,6 +7,7 @@
 #define IROHA_SHARED_MODEL_QUERY_PAYLOAD_META_HPP
 
 #include "interfaces/base/primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 #ifndef DISABLE_BACKWARD
 #include "model/query_payload_meta.hpp"
