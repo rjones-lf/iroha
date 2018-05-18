@@ -15,7 +15,7 @@ things simple, we will use Docker.
 Prerequisites
 -------------
 For this guide, you need a computer running Unix-like system with ``docker``
-installed. You can read how to install it on a 
+installed. You can read how to install it on a
 `Docker's website <https://www.docker.com/community-edition/>`_.
 
 .. note:: Please note that you can use Iroha without ``docker`` as well. You
@@ -76,10 +76,10 @@ Configuring Iroha Network
   this guide.
 
 Now we need to configure our Iroha network. This includes creating a
-configuration file, generating keypairs for a users, writing a list of peers 
+configuration file, generating keypairs for a users, writing a list of peers
 and creating a genesis block. However, we have prepared an example
-configuration for this guide, so you can start playing with Iroha faster. 
-In order to get those files, you need to clone the 
+configuration for this guide, so you can start playing with Iroha faster.
+In order to get those files, you need to clone the
 `Iroha repository <github.com/hyperledger/iroha>`_ from Github.
 
 .. code-block:: shell
@@ -103,7 +103,7 @@ command
   -v blockstore:/tmp/block_store \
   --network=iroha-network \
   --entrypoint=/bin/bash \
-  hyperledger/iroha:x86_64-develop-latest
+  hyperledger/iroha:develop
 
 Let's look in detail what this command does:
 
@@ -119,7 +119,7 @@ Let's look in detail what this command does:
 - ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha`` has
   the custom script which runs after starting the container, we want to
   override it so we can start Iroha Daemon manually.
-- ``hyperledger/iroha:x86_64-develop-latest`` is the image which has the ``develop``
+- ``hyperledger/iroha:develop`` is the image which has the ``develop``
   branch.
 
 Launching Iroha Daemon
@@ -178,7 +178,7 @@ account to work with Iroha.
 
 .. note:: Full account name has a ``@`` symbol between name and domain. Note
   that the keypair has the same name.
- 
+
 Creating the First Transaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -206,7 +206,7 @@ Quantity (add_ast_qty)``, enter Account ID – ``admin@test``, asset ID –
 
 .. note:: Full asset name has a ``#`` symbol between name and domain.
 
-Let's transfer 100.50 ``coolcoins`` from ``admin@test`` to ``test@test`` 
+Let's transfer 100.50 ``coolcoins`` from ``admin@test`` to ``test@test``
 by adding one more command and choosing ``5. Transfer Assets (tran_ast)``.
 Enter Source Account and Destination Account, in our case ``admin@test`` and
 ``test@test``, Asset ID (``coolcoin#test``), integer part and precision
@@ -225,7 +225,7 @@ Congratulations! You have submitted your first transaction to Iroha.
 Creating the First Query
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now let's check if ``coolcoins`` were successfully transferred from 
+Now let's check if ``coolcoins`` were successfully transferred from
 ``admin@test`` to ``test@test``. Choose ``2. New query
 (qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if
 ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with
@@ -257,7 +257,7 @@ Account, in our case ``admin@test`` and ``test@test``, Asset ID
 (``coolcoin#test``), integer part and precision (``10000000`` and ``2``
 accordingly). Send a transaction to Iroha peer as you did before. Well, it says
 
-.. code:: 
+.. code::
 
   [2018-03-21 12:58:40.791297963][th:520][info] TransactionResponseHandler Transaction successfully sent
   Congratulation, your transaction was accepted for processing.
@@ -269,11 +269,11 @@ had successfully cheated Iroha? Let's try to see transaction's status. Choose
 you can get in the console after the previous command. Let's send it to Iroha.
 It replies with:
 
-.. code:: 
+.. code::
 
   Transaction has not passed stateful validation.
 
 Apparently no. Our transaction was not accepted because it did not pass
 stateful validation and ``coolcoins`` were not transferred. You can check
-the status of ``admin@test`` and ``test@test`` with queries to be sure 
+the status of ``admin@test`` and ``test@test`` with queries to be sure
 (like we did earlier).

@@ -335,11 +335,6 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   using namespace shared_model;
 
   auto client = torii::CommandSyncClient(Ip, Port);
-
-  auto new_tx = TestTransactionBuilder()
-                    .creatorAccountId("accountA")
-                    .build();
-
   auto iroha_tx = proto::TransactionBuilder()
                       .creatorAccountId("a@domain")
                       .setAccountQuorum("a@domain", 2)
@@ -359,7 +354,7 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
     client.StatusStream(tx_request, torii_response);
   });
 
-  client.Torii(new_tx.getTransport());
+  client.Torii(iroha_tx.getTransport());
 
   std::vector<decltype(iroha_tx)> txs;
   txs.push_back(iroha_tx);
@@ -391,7 +386,7 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   block_notifier_.get_subscriber().on_completed();
   t.join();
 
-  ASSERT_GE(torii_response.size(), 3);
+  ASSERT_GE(torii_response.size(), 2);
   ASSERT_EQ(torii_response.back().tx_status(),
             iroha::protocol::TxStatus::COMMITTED);
 }

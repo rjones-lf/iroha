@@ -43,9 +43,8 @@ TEST(RegressionTest, SequentialInitialization) {
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_TRUE(boost::apply_visitor(
-        shared_model::interface::
-            SpecifiedVisitor<shared_model::interface::
-                                 StatelessValidTxResponse>(),
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
   auto checkProposal = [](auto &proposal) {
@@ -55,14 +54,14 @@ TEST(RegressionTest, SequentialInitialization) {
     ASSERT_EQ(block->transactions().size(), 0);
   };
   {
-    integration_framework::IntegrationTestFramework(10, [](auto &) {})
+    integration_framework::IntegrationTestFramework(1, [](auto &) {})
         .setInitialState(kAdminKeypair)
         .sendTx(tx, checkStatelessValid)
         .skipProposal()
         .skipBlock();
   }
   {
-    integration_framework::IntegrationTestFramework()
+    integration_framework::IntegrationTestFramework(1)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, checkStatelessValid)
         .checkProposal(checkProposal)
@@ -77,7 +76,7 @@ TEST(RegressionTest, SequentialInitialization) {
  * @then no errors are caused as the result
  */
 TEST(RegressionTest, DoubleCallOfDone) {
-  integration_framework::IntegrationTestFramework itf;
+  integration_framework::IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair).done();
   itf.done();
 }

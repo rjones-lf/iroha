@@ -170,3 +170,24 @@ TEST(CacheTest, CustomHasher) {
   ASSERT_TRUE(val);
   ASSERT_EQ(val.value(), value);
 }
+
+/**
+ * @given initialized cache with given parameters
+ * @when insert cache.getIndexSizeHigh() items into it + 1
+ * @then after the last insertion amount of items should decrease to
+ * cache.getIndexSizeLow()
+ */
+TEST(CacheTest, InsertCustomSize) {
+  Cache<std::string, std::string> cache(1, 1);
+  cache.addItem("key", "value");
+  ASSERT_EQ(cache.getCacheItemCount(), cache.getIndexSizeHigh());
+  auto val = cache.findItem("key");
+  ASSERT_TRUE(val);
+  ASSERT_EQ(val.value(), "value");
+  cache.addItem("key2", "value2");
+  ASSERT_EQ(cache.getCacheItemCount(), cache.getIndexSizeLow());
+  val = cache.findItem("key");
+  ASSERT_FALSE(val);
+  ASSERT_TRUE(cache.findItem("key2"));
+  ASSERT_EQ(cache.findItem("key2").value(), "value2");
+}

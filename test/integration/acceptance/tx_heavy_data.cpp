@@ -1,40 +1,21 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include "builders/protobuf/queries.hpp"
-#include "builders/protobuf/transaction.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "datetime/time.hpp"
-#include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/utils/specified_visitor.hpp"
-#include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
-class HeavyTransactionTest : public ::testing::Test {
+class HeavyTransactionTest : public AcceptanceFixture {
  public:
   /**
    * Creates the transaction with the user creation commands
@@ -45,20 +26,7 @@ class HeavyTransactionTest : public ::testing::Test {
       const std::vector<std::string> &perms = {
           shared_model::permissions::role_perm_group.begin(),
           shared_model::permissions::role_perm_group.end()}) {
-    return framework::createUserWithPerms(
-               kUser, kUserKeypair.publicKey(), "role"s, perms)
-        .build()
-        .signAndAddSignature(kAdminKeypair);
-  }
-
-  /**
-   * Create valid base pre-built transaction
-   * @return pre-built tx
-   */
-  auto baseTx() {
-    return TestUnsignedTransactionBuilder()
-        .creatorAccountId(kUserId)
-        .createdTime(iroha::time::now());
+    return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
   /**
@@ -81,33 +49,12 @@ class HeavyTransactionTest : public ::testing::Test {
   }
 
   /**
-   * Sign pre-built object
-   * @param builder is a pre-built signable object
-   * @return completed object
-   */
-  template <typename Builder>
-  auto complete(Builder builder) {
-    return builder.build().signAndAddSignature(kUserKeypair);
-  }
-
-  /**
    * Create valid basis of pre-built query
    * @return query stub with counter, creator and time
    */
   auto baseQuery() {
-    return TestUnsignedQueryBuilder()
-        .queryCounter(1)
-        .creatorAccountId(kUserId)
-        .createdTime(iroha::time::now());
+    return baseQry().queryCounter(1);
   }
-
-  const std::string kUser = "user"s;
-  const std::string kUserId =
-      kUser + "@"s + IntegrationTestFramework::kDefaultDomain;
-  const crypto::Keypair kUserKeypair =
-      crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  const crypto::Keypair kAdminKeypair =
-      crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
 /**
@@ -118,50 +65,43 @@ class HeavyTransactionTest : public ::testing::Test {
  * @then transaction have been passed
  */
 TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
-  IntegrationTestFramework itf;
-
-  itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock([](auto &b) { ASSERT_EQ(b->transactions().size(), 1); });
-
   auto number_of_txes = 4u;
+  IntegrationTestFramework itf(number_of_txes + 1);
+
+  itf.setInitialState(kAdminKeypair).sendTx(makeUserWithPerms());
+
   for (auto i = 0u; i < number_of_txes; ++i) {
     itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i),
                                           generateData(2 * 1024 * 1024))));
   }
   itf.skipProposal()
-      .checkBlock(
-          [&](auto &b) { ASSERT_EQ(b->transactions().size(), number_of_txes); })
+      .checkBlock([&](auto &b) {
+        ASSERT_EQ(b->transactions().size(), number_of_txes + 1);
+      })
       .done();
 }
 
 /**
+ * TODO: enable the test when performance issues are solved
+ * IR-1264 14/05/2018 andrei
  * @given some user with all required permissions
  * @when send tx with many addAccountDetails with large data inside
  * @then transaction is passed
  */
-TEST_F(HeavyTransactionTest, VeryLargeTxWithManyCommands) {
+TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
   auto big_data = generateData(3 * 1024 * 1024);
   auto large_tx_builder = setAcountDetailTx("foo_1", big_data)
                               .setAccountDetail(kUserId, "foo_2", big_data)
                               .setAccountDetail(kUserId, "foo_3", big_data);
 
-  IntegrationTestFramework itf;
-  itf.setInitialState(kAdminKeypair)
+  IntegrationTestFramework(2)
+      .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      // in itf tx build from large_tx_build will pass in Torii but
-      // in production the transaction will be failed before
-      // stateless validation because of size.
       .sendTx(complete(large_tx_builder))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
-  // this sleep method is a temporary work-around
-  // because BlockLoaderImpl Failed to retrieve top block
-  // TODO: IR-1264 neewy 19/04/2018
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-  itf.done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
+      .done();
 }
 
 /**

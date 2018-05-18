@@ -101,8 +101,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
   })";
   auto res = querySerializer.deserialize(json_query);
   ASSERT_TRUE(res);
-  auto casted =
-      std::static_pointer_cast<iroha::model::GetAccountAssets>(*res);
+  auto casted = std::static_pointer_cast<iroha::model::GetAccountAssets>(*res);
   ASSERT_EQ("test@test", casted->account_id);
   ASSERT_EQ("coin#test", casted->asset_id);
 }
@@ -127,8 +126,7 @@ TEST(QuerySerializerTest, DeserializeGetAccountDetailWhenValid) {
   })";
   auto res = querySerializer.deserialize(json_query);
   ASSERT_TRUE(res);
-  auto casted =
-      std::static_pointer_cast<iroha::model::GetAccountDetail>(*res);
+  auto casted = std::static_pointer_cast<iroha::model::GetAccountDetail>(*res);
   ASSERT_EQ("test@test", casted->account_id);
 }
 
@@ -162,7 +160,6 @@ TEST(QuerySerialzierTest, DeserializeGetTransactionsWithInvalidHash) {
   QueryGenerator queryGenerator;
   const auto val =
       queryGenerator.generateGetTransactions(0, "123", 0, {valid_size_hash});
-  val->signature = generateSignature(42);
   const auto json = queryFactory.serialize(val);
   auto json_doc_opt = iroha::model::converters::stringToJson(json);
   ASSERT_TRUE(json_doc_opt);
@@ -194,7 +191,6 @@ TEST(QuerySerializerTest, SerializeGetAccount) {
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccount(0, "123", 0, "test");
-  val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val);
@@ -207,7 +203,6 @@ TEST(QuerySerializerTest, SerializeGetAccountAssets) {
   QueryGenerator queryGenerator;
   auto val =
       queryGenerator.generateGetAccountAssets(0, "123", 0, "test", "coin");
-  val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val);
@@ -219,7 +214,6 @@ TEST(QuerySerializerTest, SerializeGetAccountTransactions) {
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAccountTransactions(0, "123", 0, "test");
-  val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val);
@@ -233,7 +227,6 @@ TEST(QuerySerializerTest, SerialiizeGetTransactions) {
   hash1[0] = 1, hash2[0] = 2;
   auto val =
       queryGenerator.generateGetTransactions(0, "admin", 0, {hash1, hash2});
-  val->signature = generateSignature(42);
   runQueryTest(val);
 }
 
@@ -241,7 +234,6 @@ TEST(QuerySerializerTest, SerializeGetSignatories) {
   JsonQueryFactory queryFactory;
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetSignatories(0, "123", 0, "test");
-  val->signature = generateSignature(42);
   auto json = queryFactory.serialize(val);
   auto ser_val = queryFactory.deserialize(json);
   ASSERT_TRUE(ser_val);
@@ -252,20 +244,17 @@ TEST(QuerySerializerTest, SerializeGetSignatories) {
 TEST(QuerySerializerTest, get_asset_info) {
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetAssetInfo();
-  val->signature = generateSignature(42);
   runQueryTest(val);
 }
 
 TEST(QuerySerializerTest, get_roles) {
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetRoles();
-  val->signature = generateSignature(42);
   runQueryTest(val);
 }
 
 TEST(QuerySerializerTest, get_role_permissions) {
   QueryGenerator queryGenerator;
   auto val = queryGenerator.generateGetRolePermissions();
-  val->signature = generateSignature(42);
   runQueryTest(val);
 }

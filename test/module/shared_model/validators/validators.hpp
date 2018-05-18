@@ -18,9 +18,6 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
-#include <gmock/gmock.h>
-#include "interfaces/transaction.hpp"
-
 namespace shared_model {
   namespace validation {
 

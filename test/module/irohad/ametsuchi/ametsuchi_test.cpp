@@ -621,6 +621,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
       "=> insert block "
       "=> assert that inserted");
   ASSERT_TRUE(storage);
+  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe();
   auto wsv = storage->getWsvQuery();
   ASSERT_EQ(0, wsv->getPeers().value().size());
 
@@ -636,6 +638,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
   log->info("Drop ledger");
 
   storage->dropStorage();
+
+  ASSERT_TRUE(wrapper.validate());
 }
 
 TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {

@@ -115,6 +115,9 @@ namespace shared_model {
     const std::string can_get_my_txs = "can_get_my_txs";
     const std::string can_get_all_txs = "can_get_all_txs";
 
+    /*                           Blocks                           */
+    const std::string can_get_blocks = "can_get_blocks";
+
     /* ~~~~~~~~                 Groups                ~~~~~~~~   */
     const std::set<std::string> read_self_group = {can_get_my_account,
                                                    can_get_my_signatories,
@@ -132,7 +135,8 @@ namespace shared_model {
                                                   can_get_all_acc_ast_txs,
                                                   can_get_all_txs,
                                                   can_get_roles,
-                                                  can_read_assets};
+                                                  can_read_assets,
+                                                  can_get_blocks};
 
     const std::set<std::string> read_domain_group = {
         can_get_domain_accounts,
@@ -250,7 +254,8 @@ namespace shared_model {
         can_remove_my_signatory,
         can_set_my_quorum,
         can_set_my_account_detail,
-        can_transfer_my_assets};
+        can_transfer_my_assets,
+        can_get_blocks};
 
   }  // namespace shared_model
 }  // namespace permissions

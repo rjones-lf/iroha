@@ -57,8 +57,7 @@ class YacGateTest : public ::testing::Test {
             .signAndAddSignature(keypair);
 
     expected_block = clone(tmp);
-    const auto &wrapped_sig = *(expected_block->signatures().begin());
-    const auto &signature = *wrapped_sig;
+    const auto &signature = *(expected_block->signatures().begin());
 
     expected_hash.block_signature = clone(signature);
     message.hash = expected_hash;
@@ -187,7 +186,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // load block
   auto sig = expected_block->signatures().begin();
-  auto &pubkey = (*sig)->publicKey();
+  auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(expected_block));
 
@@ -240,7 +239,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
 
   // load block
   auto sig = expected_block->signatures().begin();
-  auto &pubkey = (*sig)->publicKey();
+  auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(boost::none))
       .WillOnce(Return(expected_block));

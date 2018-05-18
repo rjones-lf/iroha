@@ -18,6 +18,8 @@
 #ifndef IROHA_RESULT_HPP
 #define IROHA_RESULT_HPP
 
+#include <ciso646>
+
 #include <boost/optional.hpp>
 #include <boost/variant.hpp>
 

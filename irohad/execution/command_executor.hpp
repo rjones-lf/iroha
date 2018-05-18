@@ -141,7 +141,7 @@ namespace iroha {
     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
     shared_model::interface::types::AccountIdType creator_account_id;
 
-    shared_model::builder::DefaultAmountBuilder amount_builder_;
+    shared_model::builder::AmountBuilderWithoutValidator amount_builder_;
     shared_model::builder::DefaultAccountAssetBuilder account_asset_builder_;
     shared_model::builder::DefaultAccountBuilder account_builder_;
     shared_model::builder::DefaultAssetBuilder asset_builder_;

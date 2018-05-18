@@ -21,11 +21,8 @@
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "cryptography/public_key.hpp"
-#include "cryptography/signed.hpp"
-#include "interfaces/common_objects/peer.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha::consensus::yac;
 
@@ -115,17 +112,9 @@ TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
   auto peer_key = make_peer_key(std::string(32, '0'));
   make_peer_key(std::string(32, '1'));
 
-  auto make_sig = [](const PublicKey &peer_key, const std::string &sig) {
-    return shared_model::interface::types::SignatureType(
-        std::static_pointer_cast<shared_model::interface::Signature>(
-            std::make_shared<shared_model::proto::Signature>(
-                shared_model::proto::SignatureBuilder()
-                    .publicKey(peer_key)
-                    .signedData(Signed(sig))
-                    .build())));
-  };
-  shared_model::interface::SignatureSetType signatures{make_sig(peer_key, "1"),
-                                                       make_sig(peer_key, "2")};
+  auto block = TestBlockBuilder().build();
+  block.addSignature(Signed("1"), peer_key);
+  block.addSignature(Signed("2"), peer_key);
 
-  ASSERT_FALSE(hasSupermajority(signatures, peers));
+  ASSERT_FALSE(hasSupermajority(block.signatures(), peers));
 }

@@ -25,6 +25,16 @@
 namespace iroha {
   namespace model {
     namespace generators {
+
+      iroha::keypair_t *makeOldModel(
+          const shared_model::crypto::Keypair &keypair) {
+        return new iroha::keypair_t{
+            shared_model::crypto::PublicKey::OldPublicKeyType::from_string(
+                toBinaryString(keypair.publicKey())),
+            shared_model::crypto::PrivateKey::OldPrivateKeyType::from_string(
+                toBinaryString(keypair.privateKey()))};
+      }
+
       Transaction TransactionGenerator::generateGenesisTransaction(
           ts64_t timestamp, std::vector<std::string> peers_address) {
         Transaction tx;
@@ -35,7 +45,8 @@ namespace iroha {
         for (size_t i = 0; i < peers_address.size(); ++i) {
           KeysManagerImpl manager("node" + std::to_string(i));
           manager.createKeys();
-          auto keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
+          auto keypair = *std::unique_ptr<iroha::keypair_t>(
+              makeOldModel(*manager.loadKeys()));
           tx.commands.push_back(command_generator.generateAddPeer(
               Peer(peers_address[i], keypair.pubkey)));
         }
@@ -56,12 +67,14 @@ namespace iroha {
         // Create accounts
         KeysManagerImpl manager("admin@test");
         manager.createKeys();
-        auto keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
+        auto keypair = *std::unique_ptr<iroha::keypair_t>(
+            makeOldModel(*manager.loadKeys()));
         tx.commands.push_back(command_generator.generateCreateAccount(
             "admin", "test", keypair.pubkey));
         manager = KeysManagerImpl("test@test");
         manager.createKeys();
-        keypair = *std::unique_ptr<iroha::keypair_t>(manager.loadKeys()->makeOldModel());
+        keypair = *std::unique_ptr<iroha::keypair_t>(
+            makeOldModel(*manager.loadKeys()));
         tx.commands.push_back(command_generator.generateCreateAccount(
             "test", "test", keypair.pubkey));
 

@@ -1,76 +1,24 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
-#include "backend/protobuf/transaction.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "datetime/time.hpp"
-#include "framework/base_tx.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "integration/acceptance/acceptance_fixture.hpp"
 #include "validators/permissions.hpp"
 
-using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
-class AddAssetQuantity : public ::testing::Test {
+class AddAssetQuantity : public AcceptanceFixture {
  public:
-  /**
-   * Creates the transaction with the user creation commands
-   * @param perms are the permissions of the user
-   * @return built tx and a hash of its payload
-   */
   auto makeUserWithPerms(const std::vector<std::string> &perms = {
                              shared_model::permissions::can_add_asset_qty}) {
-    return framework::createUserWithPerms(
-               kUser, kUserKeypair.publicKey(), "role"s, perms)
-        .build()
-        .signAndAddSignature(kAdminKeypair);
+    return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
-  /**
-   * Create valid base pre-built transaction
-   * @return pre-built tx
-   */
-  auto baseTx() {
-    return TestUnsignedTransactionBuilder()
-        .creatorAccountId(kUserId)
-        .createdTime(iroha::time::now());
-  }
-
-  /**
-   * Completes pre-built transaction
-   * @param builder is a pre-built tx
-   * @return built tx
-   */
-  template <typename TestTransactionBuilder>
-  auto completeTx(TestTransactionBuilder builder) {
-    return builder.build().signAndAddSignature(kUserKeypair);
-  }
-
-  const std::string kUser = "user"s;
-  const std::string kAsset = IntegrationTestFramework::kAssetName + "#test";
-  const std::string kUserId = kUser + "@test";
   const std::string kAmount = "1.0";
-  const crypto::Keypair kAdminKeypair =
-      crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  const crypto::Keypair kUserKeypair =
-      crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
 /**
@@ -79,12 +27,12 @@ class AddAssetQuantity : public ::testing::Test {
  * @then there is the tx in proposal
  */
 TEST_F(AddAssetQuantity, Basic) {
-  IntegrationTestFramework()
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().addAssetQuantity(kUserId, kAsset, kAmount)))
+      .sendTx(complete(baseTx().addAssetQuantity(kUserId, kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -97,12 +45,12 @@ TEST_F(AddAssetQuantity, Basic) {
  * @then there is no tx in proposal
  */
 TEST_F(AddAssetQuantity, NoPermissions) {
-  IntegrationTestFramework()
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().addAssetQuantity(kUserId, kAsset, kAmount)))
+      .sendTx(complete(baseTx().addAssetQuantity(kUserId, kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -116,13 +64,13 @@ TEST_F(AddAssetQuantity, NoPermissions) {
  *       (aka skipProposal throws)
  */
 TEST_F(AddAssetQuantity, NegativeAmount) {
-  IntegrationTestFramework itf;
-  itf.setInitialState(kAdminKeypair)
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().addAssetQuantity(kUserId, kAsset, "-1.0")));
-  ASSERT_ANY_THROW(itf.skipProposal());
+      .sendTx(complete(baseTx().addAssetQuantity(kUserId, kAsset, "-1.0")),
+              checkStatelessInvalid);
 }
 
 /**
@@ -132,13 +80,13 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
  *       (aka skipProposal throws)
  */
 TEST_F(AddAssetQuantity, ZeroAmount) {
-  IntegrationTestFramework itf;
-  itf.setInitialState(kAdminKeypair)
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().addAssetQuantity(kUserId, kAsset, "0.0")));
-  ASSERT_ANY_THROW(itf.skipProposal());
+      .sendTx(complete(baseTx().addAssetQuantity(kUserId, kAsset, "0.0")),
+              checkStatelessInvalid);
 }
 
 /**
@@ -149,23 +97,23 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
  * second
  */
 TEST_F(AddAssetQuantity, Uint256DestOverflow) {
-  const std::string &uint256_halfmax =
+  std::string uint256_halfmax =
       "723700557733226221397318656304299424082937404160253525246609900049457060"
       "2495.0";  // 2**252 - 1
-  IntegrationTestFramework()
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
       // Add first half of the maximum
-      .sendTx(completeTx(
-          baseTx().addAssetQuantity(kUserId, kAsset, uint256_halfmax)))
+      .sendTx(
+          complete(baseTx().addAssetQuantity(kUserId, kAsset, uint256_halfmax)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add second half of the maximum
-      .sendTx(completeTx(
-          baseTx().addAssetQuantity(kUserId, kAsset, uint256_halfmax)))
+      .sendTx(
+          complete(baseTx().addAssetQuantity(kUserId, kAsset, uint256_halfmax)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -174,18 +122,17 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
 
 /**
  * @given some user with all required permissions
- * @when execute tx with AddAssetQuantity command with inexistent account
+ * @when execute tx with AddAssetQuantity command with nonexistent account
  * @then there is an empty proposal
  */
-TEST_F(AddAssetQuantity, InexistentAccount) {
-  const std::string &inexistent = "inexist@test"s;
-  IntegrationTestFramework()
+TEST_F(AddAssetQuantity, NonexistentAccount) {
+  std::string nonexistent = "inexist@test";
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(
-          completeTx(baseTx().addAssetQuantity(inexistent, kAsset, kAmount)))
+      .sendTx(complete(baseTx().addAssetQuantity(nonexistent, kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -194,18 +141,18 @@ TEST_F(AddAssetQuantity, InexistentAccount) {
 
 /**
  * @given some user with all required permissions
- * @when execute tx with AddAssetQuantity command with inexistent asset
+ * @when execute tx with AddAssetQuantity command with nonexistent asset
  * @then there is an empty proposal
  */
-TEST_F(AddAssetQuantity, InexistentAsset) {
-  const std::string &inexistent = "inexist#test"s;
-  IntegrationTestFramework()
+TEST_F(AddAssetQuantity, NonexistentAsset) {
+  std::string nonexistent = "inexist#test";
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
       .sendTx(
-          completeTx(baseTx().addAssetQuantity(kUserId, inexistent, kAmount)))
+          complete(baseTx().addAssetQuantity(kUserId, nonexistent, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -218,12 +165,12 @@ TEST_F(AddAssetQuantity, InexistentAsset) {
  * @then there is no tx in proposal
  */
 TEST_F(AddAssetQuantity, OtherUser) {
-  IntegrationTestFramework()
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(completeTx(baseTx().addAssetQuantity(
+      .sendTx(complete(baseTx().addAssetQuantity(
           IntegrationTestFramework::kAdminId, kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
@@ -241,12 +188,12 @@ TEST_F(AddAssetQuantity, OtherDomain) {
   const auto kNewRole = "newrl";
   const auto kNewDomain = "newdom";
   const auto kNewUser = "newusr";
-  IntegrationTestFramework itf;
-  itf.setInitialState(kAdminKeypair)
+  IntegrationTestFramework(2)
+      .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       // Generate new domain, new user and an asset
       .sendTx(
-          shared_model::proto::TransactionBuilder()
+          TestUnsignedTransactionBuilder()
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
               .createdTime(iroha::time::now())
@@ -266,6 +213,6 @@ TEST_F(AddAssetQuantity, OtherDomain) {
       // Make sure everything is committed
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
-      .sendTx(completeTx(baseTx().addAssetQuantity(kNewUser, kAsset, kAmount)));
-  ASSERT_ANY_THROW(itf.skipProposal());
+      .sendTx(complete(baseTx().addAssetQuantity(kNewUser, kAsset, kAmount)),
+              checkStatelessInvalid);
 }

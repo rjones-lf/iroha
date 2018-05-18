@@ -114,7 +114,7 @@ namespace shared_model {
                         // for_each cycle will assign last signature for old
                         // model. Also, if in new model absence at least one
                         // signature, this part will be worked correctly.
-                        auto old_sig = signature_wrapper->makeOldModel();
+                        auto old_sig = signature_wrapper.makeOldModel();
                         old_model->signature = *old_sig;
                         delete old_sig;
                       });

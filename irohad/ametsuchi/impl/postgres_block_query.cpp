@@ -101,6 +101,7 @@ namespace iroha {
                  -> boost::optional<
                      shared_model::interface::types::HeightType> {
         if (result.size() == 0) {
+          log_->info("No block with transaction {}", hash.toString());
           return boost::none;
         }
         return result[0]

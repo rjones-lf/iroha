@@ -126,6 +126,8 @@ namespace iroha {
                                         const auto &top_hash) { return true; });
             log_->info("block inserted: {}", inserted);
             commit(std::move(storage.value));
+            notifier_.get_subscriber().on_next(
+                std::shared_ptr<shared_model::interface::Block>(clone(block)));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -282,6 +284,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
       return blocks_;
+    }
+    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+    StorageImpl::on_commit() {
+      return notifier_.get_observable();
     }
   }  // namespace ametsuchi
 }  // namespace iroha

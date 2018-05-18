@@ -57,14 +57,14 @@ namespace integration_framework {
    public:
     /**
      * Construct test framework instance
-     * @param maximum_proposal_size - (default = 10) Maximum amount of
-     * transactions per proposal
+     * @param maximum_proposal_size - Maximum number of transactions per
+     * proposal
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
      */
     explicit IntegrationTestFramework(
-        size_t maximum_proposal_size = 10,
+        size_t maximum_proposal_size,
         std::function<void(IntegrationTestFramework &)> deleter =
             [](IntegrationTestFramework &itf) { itf.done(); });
 
