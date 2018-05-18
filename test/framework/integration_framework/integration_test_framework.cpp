@@ -229,6 +229,8 @@ namespace integration_framework {
 
   void IntegrationTestFramework::done() {
     log_->info("done");
-    iroha_instance_->instance_->storage->dropStorage();
+    if (iroha_instance_->instance_ and iroha_instance_->instance_->storage) {
+      iroha_instance_->instance_->storage->dropStorage();
+    }
   }
 }  // namespace integration_framework
