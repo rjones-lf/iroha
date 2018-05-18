@@ -36,17 +36,9 @@ namespace shared_model {
        */
       virtual const interface::Peer &peer() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AddPeer")
-            .append("peer_address", peer().address())
-            .append("pubkey", peer().pubkey().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return peer() == rhs.peer();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_CREATE_DOMAIN_HPP
 #define IROHA_PROTO_CREATE_DOMAIN_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/create_domain.hpp"
 
 namespace shared_model {
@@ -28,25 +30,18 @@ namespace shared_model {
                                                     CreateDomain> {
      public:
       template <typename CommandType>
-      explicit CreateDomain(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit CreateDomain(CommandType &&command);
 
-      CreateDomain(const CreateDomain &o) : CreateDomain(o.proto_) {}
+      CreateDomain(const CreateDomain &o);
 
-      CreateDomain(CreateDomain &&o) noexcept
-          : CreateDomain(std::move(o.proto_)) {}
+      CreateDomain(CreateDomain &&o) noexcept;
 
-      const interface::types::DomainIdType &domainId() const override {
-        return create_domain_.domain_id();
-      }
+      const interface::types::DomainIdType &domainId() const override;
 
-      const interface::types::RoleIdType &userDefaultRole() const override {
-        return create_domain_.default_role();
-      }
+      const interface::types::RoleIdType &userDefaultRole() const override;
 
      private:
-      const iroha::protocol::CreateDomain &create_domain_{
-          proto_->create_domain()};
+      const iroha::protocol::CreateDomain &create_domain_;
     };
 
   }  // namespace proto

@@ -1,5 +1,21 @@
 add_library(shared_model_proto_backend
-    impl.cpp
+    commands/impl/proto_add_asset_quantity.cpp
+    commands/impl/proto_add_peer.cpp
+    commands/impl/proto_add_signatory.cpp
+    commands/impl/proto_append_role.cpp
+    commands/impl/proto_command.cpp
+    commands/impl/proto_create_account.cpp
+    commands/impl/proto_create_asset.cpp
+    commands/impl/proto_create_domain.cpp
+    commands/impl/proto_create_role.cpp
+    commands/impl/proto_detach_role.cpp
+    commands/impl/proto_grant_permission.cpp
+    commands/impl/proto_remove_signatory.cpp
+    commands/impl/proto_revoke_permission.cpp
+    commands/impl/proto_set_account_detail.cpp
+    commands/impl/proto_set_quorum.cpp
+    commands/impl/proto_subtract_asset_quantity.cpp
+    commands/impl/proto_transfer_asset.cpp
     )
 
 target_link_libraries(shared_model_proto_backend

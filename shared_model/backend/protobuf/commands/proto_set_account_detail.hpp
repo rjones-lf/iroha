@@ -22,8 +22,6 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
-#include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -33,30 +31,20 @@ namespace shared_model {
                                SetAccountDetail> {
      public:
       template <typename CommandType>
-      explicit SetAccountDetail(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit SetAccountDetail(CommandType &&command);
 
-      SetAccountDetail(const SetAccountDetail &o)
-          : SetAccountDetail(o.proto_) {}
+      SetAccountDetail(const SetAccountDetail &o);
 
-      SetAccountDetail(SetAccountDetail &&o) noexcept
-          : SetAccountDetail(std::move(o.proto_)) {}
+      SetAccountDetail(SetAccountDetail &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return set_account_detail_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::AccountDetailKeyType &key() const override {
-        return set_account_detail_.key();
-      }
+      const interface::types::AccountDetailKeyType &key() const override;
 
-      const interface::types::AccountDetailValueType &value() const override {
-        return set_account_detail_.value();
-      }
+      const interface::types::AccountDetailValueType &value() const override;
 
      private:
-      const iroha::protocol::SetAccountDetail &set_account_detail_{
-          proto_->set_account_detail()};
+      const iroha::protocol::SetAccountDetail &set_account_detail_;
     };
 
   }  // namespace proto

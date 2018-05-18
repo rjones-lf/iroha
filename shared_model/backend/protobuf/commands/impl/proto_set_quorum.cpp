@@ -1,0 +1,33 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "backend/protobuf/commands/proto_set_quorum.hpp"
+
+namespace shared_model {
+  namespace proto {
+
+    template <typename CommandType>
+    SetQuorum::SetQuorum(CommandType &&command)
+        : CopyableProto(std::forward<CommandType>(command)),
+          set_quorum_{proto_->set_quorum()} {}
+
+    template SetQuorum::SetQuorum(iroha::protocol::Command &command);
+    template SetQuorum::SetQuorum(const iroha::protocol::Command &command);
+
+    SetQuorum::SetQuorum(const SetQuorum &o) : SetQuorum(o.proto_) {}
+
+    SetQuorum::SetQuorum(SetQuorum &&o) noexcept
+        : SetQuorum(std::move(o.proto_)) {}
+
+    const interface::types::AccountIdType &SetQuorum::accountId() const {
+      return set_quorum_.account_id();
+    }
+
+    interface::types::QuorumType SetQuorum::newQuorum() const {
+      return set_quorum_.quorum();
+    }
+
+  }  // namespace proto
+}  // namespace shared_model
