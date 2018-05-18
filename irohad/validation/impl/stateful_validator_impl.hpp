@@ -40,7 +40,7 @@ namespace iroha {
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions
        */
-      std::shared_ptr<shared_model::interface::Proposal> validate(
+      std::shared_ptr<shared_model::interface::VerifiedProposal> validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 

@@ -18,8 +18,12 @@
 #ifndef IROHA_TRANSPORT_BUILDER_HPP
 #define IROHA_TRANSPORT_BUILDER_HPP
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/empty_block.hpp"
 #include "common/result.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "utils/polymorphic_wrapper.hpp"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -48,6 +52,53 @@ namespace shared_model {
           return iroha::expected::makeError(answer.reason());
         }
         return iroha::expected::makeValue(T(std::move(transport)));
+      }
+
+     private:
+      SV stateless_validator_;
+    };
+
+    /**
+     * Class for building BlockVariantType containing either Block or EmptyBlock
+     * @tparam SV Stateless validator type
+     */
+    template <typename SV>
+    class TransportBuilder<interface::BlockVariantType, SV> {
+     private:
+      /**
+       * Create container type (i.e. Block or EmptyBlock)
+       * @tparam T container type
+       * @param transport is protobuf object from which container type is built
+       * @return Result containing BlockVariantType or error message with string
+       * type
+       */
+      template <typename T>
+      iroha::expected::Result<interface::BlockVariantType, std::string>
+      createContainer(const iroha::protocol::Block &transport) {
+        auto result = std::make_shared<T>(transport);
+        auto answer = stateless_validator_.validate(*result);
+        if (answer.hasErrors()) {
+          return iroha::expected::makeError(answer.reason());
+        }
+        return iroha::expected::makeValue(result);
+      }
+
+     public:
+      TransportBuilder<interface::BlockVariantType, SV>(
+          SV stateless_validator = SV())
+          : stateless_validator_(stateless_validator) {}
+
+      /**
+       * Builds BlockVariantType from transport object
+       * @param transport
+       * @return
+       */
+      iroha::expected::Result<interface::BlockVariantType, std::string> build(
+          iroha::protocol::Block transport) {
+        if (transport.payload().transactions().size() == 0) {
+          return createContainer<shared_model::proto::EmptyBlock>(transport);
+        }
+        return createContainer<shared_model::proto::Block>(transport);
       }
 
      private:

@@ -32,23 +32,26 @@ namespace shared_model {
      * means of replacing template parameters
      * @tparam S -- field counter for checking that all required fields are set
      * @tparam SV -- stateless validator called when build method is invoked
+     * @tparam BT -- type of object to be built
      */
-    template <int S = 0, typename SV = validation::DefaultProposalValidator>
+    template <int S = 0,
+              typename SV = validation::DefaultProposalValidator,
+              typename BT = Proposal>
     class TemplateProposalBuilder {
      private:
-      template <int, typename>
+      template <int, typename, typename>
       friend class TemplateProposalBuilder;
 
       enum RequiredFields { Transactions, Height, CreatedTime, TOTAL };
 
       template <int s>
-      using NextBuilder = TemplateProposalBuilder<S | (1 << s), SV>;
+      using NextBuilder = TemplateProposalBuilder<S | (1 << s), SV, BT>;
 
       iroha::protocol::Proposal proposal_;
       SV stateless_validator_;
 
       template <int Sp>
-      TemplateProposalBuilder(const TemplateProposalBuilder<Sp, SV> &o)
+      TemplateProposalBuilder(const TemplateProposalBuilder<Sp, SV, BT> &o)
           : proposal_(o.proposal_),
             stateless_validator_(o.stateless_validator_) {}
 
@@ -90,9 +93,9 @@ namespace shared_model {
             [&](auto &proposal) { proposal.set_created_time(created_time); });
       }
 
-      Proposal build() {
+      BT build() {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-        auto result = Proposal(iroha::protocol::Proposal(proposal_));
+        auto result = BT(iroha::protocol::Proposal(proposal_));
         auto answer = stateless_validator_.validate(result);
         if (answer.hasErrors()) {
           throw std::invalid_argument(answer.reason());

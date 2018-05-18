@@ -18,14 +18,9 @@
 #ifndef IROHA_PROPOSAL_VALIDATOR_HPP
 #define IROHA_PROPOSAL_VALIDATOR_HPP
 
-#include <boost/format.hpp>
-#include <regex>
-#include "datetime/time.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "validators/answer.hpp"
-
-// TODO 22/01/2018 x3medima17: write stateless validator IR-836
+#include "validators/container_fields/container_validator.hpp"
+#include "validators/container_fields/non_empty_transactions_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -34,20 +29,23 @@ namespace shared_model {
      * Class that validates proposal
      */
     template <typename FieldValidator, typename TransactionValidator>
-    class ProposalValidator : public ContainerValidator<interface::Proposal,
-                                                        FieldValidator,
-                                                        TransactionValidator> {
+    class ProposalValidator
+        : public ContainerValidator<
+              interface::Proposal,
+              FieldValidator,
+              NonEmptyTransactionsValidator<TransactionValidator>> {
      public:
       /**
-       * Applies validation on proposal
-       * @param proposal
+       * Applies validation on block
+       * @param block
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Proposal &prop) const {
-        return ContainerValidator<interface::Proposal,
-                                  FieldValidator,
-                                  TransactionValidator>::validate(prop,
-                                                                  "Proposal");
+      Answer validate(const interface::Proposal &proposal) const {
+        return ContainerValidator<
+            interface::Proposal,
+            FieldValidator,
+            NonEmptyTransactionsValidator<TransactionValidator>>::
+            validate(proposal, "Proposal");
       }
     };
 

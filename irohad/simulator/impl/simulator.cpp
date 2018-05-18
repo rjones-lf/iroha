@@ -46,8 +46,9 @@ namespace iroha {
 
       notifier_.get_observable().subscribe(
           verified_proposal_subscription_,
-          [this](const std::shared_ptr<shared_model::interface::Proposal>
-                     &verified_proposal) {
+          [this](
+              std::shared_ptr<shared_model::interface::VerifiedProposal>
+                  verified_proposal) {
             this->process_verified_proposal(*verified_proposal);
           });
     }
@@ -57,7 +58,8 @@ namespace iroha {
       verified_proposal_subscription_.unsubscribe();
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::VerifiedProposal>>
     Simulator::on_verified_proposal() {
       return notifier_.get_observable();
     }
@@ -97,7 +99,7 @@ namespace iroha {
     }
 
     void Simulator::process_verified_proposal(
-        const shared_model::interface::Proposal &proposal) {
+        const shared_model::interface::VerifiedProposal &proposal) {
       log_->info("process verified proposal");
 
       // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic,

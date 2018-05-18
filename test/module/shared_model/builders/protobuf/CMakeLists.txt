@@ -69,8 +69,33 @@ target_link_libraries(proto_account_asset_builder_test
     )
 
 addtest(proto_transaction_responses_builder_test
-    transaction_responses/proto_transaction_response_builder.cpp)
+    transaction_responses/proto_transaction_response_builder.cpp
+    )
 
 target_link_libraries(proto_transaction_responses_builder_test
     shared_model_proto_builders
+    )
+
+addtest(block_builder_test
+    containers/block_builder_test.cpp
+    )
+
+target_link_libraries(block_builder_test
+    shared_model_stateless_validation
+    )
+
+addtest(proposal_builder_test
+    containers/proposal_builder_test.cpp
+    )
+
+target_link_libraries(proposal_builder_test
+    shared_model_stateless_validation
+    )
+
+addtest(verified_proposal_builder_test
+    containers/verified_proposal_builder_test.cpp
+    )
+
+target_link_libraries(verified_proposal_builder_test
+    shared_model_stateless_validation
     )

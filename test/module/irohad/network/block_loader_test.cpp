@@ -26,6 +26,7 @@
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/builder_templates/block_template.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
@@ -82,6 +83,14 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
+    auto keypair =
+        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+    auto tx = shared_model::proto::TransactionBuilder()
+                  .creatorAccountId("account@domain")
+                  .setAccountQuorum("account@domain", 1)
+                  .createdTime(iroha::time::now())
+                  .build()
+                  .signAndAddSignature(keypair);
     constexpr auto kTotal = (1 << 4) - 1;
     return shared_model::proto::TemplateBlockBuilder<
                kTotal,
@@ -89,7 +98,8 @@ class BlockLoaderTest : public testing::Test {
                shared_model::proto::Block>()
         .height(1)
         .prevHash(Hash(std::string(32, '0')))
-        .createdTime(iroha::time::now());
+        .createdTime(iroha::time::now())
+        .transactions(std::vector<decltype(tx)>{tx});
   }
 
   std::shared_ptr<shared_model::interface::Peer> peer;

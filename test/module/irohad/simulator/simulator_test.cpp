@@ -16,6 +16,8 @@
  */
 
 #include "simulator/impl/simulator.hpp"
+#include <backend/protobuf/verified_proposal.hpp>
+#include <builders/protobuf/verified_proposal.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -119,12 +121,23 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                     shared_model::crypto::DefaultCryptoAlgorithmType::
                         generateKeypair());
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+
+  auto created_time = iroha::time::now();
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
           .height(2)
-          .createdTime(iroha::time::now())
+          .createdTime(created_time)
           .transactions(txs)
           .build());
+
+  auto verified_proposal =
+      std::make_shared<shared_model::proto::VerifiedProposal>(
+          shared_model::proto::VerifiedProposalBuilder()
+              .height(2)
+              .createdTime(created_time)
+              .transactions(txs)
+              .build());
+
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
@@ -132,7 +145,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
           [](auto &&x) { return wBlock(clone(x)); })));
 
-  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
+  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(verified_proposal));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<

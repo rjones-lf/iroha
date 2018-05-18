@@ -20,6 +20,7 @@
 
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -47,11 +48,17 @@ class YacGateTest : public ::testing::Test {
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
     expected_hash = YacHash("proposal", "block");
+    auto tx = shared_model::proto::TransactionBuilder()
+                  .creatorAccountId("account@domain")
+                  .setAccountQuorum("account@domain", 1)
+                  .createdTime(iroha::time::now())
+                  .build()
+                  .signAndAddSignature(keypair);
     shared_model::proto::Block tmp =
         shared_model::proto::BlockBuilder()
             .height(1)
             .createdTime(iroha::time::now())
-            .transactions(std::vector<shared_model::proto::Transaction>{})
+            .transactions(std::vector<shared_model::proto::Transaction>{tx})
             .prevHash(Sha3_256::makeHash(Blob("block")))
             .build()
             .signAndAddSignature(keypair);

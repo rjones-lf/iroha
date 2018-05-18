@@ -19,7 +19,7 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 
-#include "builders/protobuf/proposal.hpp"
+#include "builders/protobuf/verified_proposal.hpp"
 
 namespace iroha {
   namespace validation {
@@ -28,7 +28,7 @@ namespace iroha {
       log_ = logger::log("SFV");
     }
 
-    std::shared_ptr<shared_model::interface::Proposal>
+    std::shared_ptr<shared_model::interface::VerifiedProposal>
     StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
         ametsuchi::TemporaryWsv &temporaryWsv) {
@@ -79,7 +79,7 @@ namespace iroha {
               return static_cast<const shared_model::proto::Transaction &>(
                   *polymorphic_tx.operator->());
             });
-      auto validated_proposal = shared_model::proto::ProposalBuilder()
+      auto validated_proposal = shared_model::proto::VerifiedProposalBuilder()
                                     .createdTime(proposal.createdTime())
                                     .height(proposal.height())
                                     .transactions(valid_proto_txs)

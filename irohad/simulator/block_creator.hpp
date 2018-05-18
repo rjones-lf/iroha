@@ -24,8 +24,9 @@ namespace shared_model {
   namespace interface {
     class Block;
     class Proposal;
-  }
-}
+    class VerifiedProposal;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace simulator {
@@ -39,13 +40,15 @@ namespace iroha {
        * Processing proposal for making stateful validation
        * @param proposal - object for validation
        */
-      virtual void process_verified_proposal(const shared_model::interface::Proposal &) = 0;
+      virtual void process_verified_proposal(
+          const shared_model::interface::VerifiedProposal &) = 0;
 
       /**
        * Emit blocks made from proposals
        * @return
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>> on_block() = 0;
+      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      on_block() = 0;
 
       virtual ~BlockCreator() = default;
     };

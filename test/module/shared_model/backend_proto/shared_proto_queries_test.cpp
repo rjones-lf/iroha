@@ -17,11 +17,8 @@
 
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/queries.hpp"
-#include "cryptography/crypto_provider/crypto_signer.hpp"
 
 #include <gtest/gtest.h>
-
-#include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 
 /**

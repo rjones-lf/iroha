@@ -23,7 +23,8 @@
 namespace shared_model {
   namespace interface {
     class Proposal;
-  }
+    class VerifiedProposal;
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
@@ -46,7 +47,7 @@ namespace iroha {
        * @return
        */
       virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::Proposal>>
+          std::shared_ptr<shared_model::interface::VerifiedProposal>>
       on_verified_proposal() = 0;
 
       virtual ~VerifiedProposalCreator() = default;

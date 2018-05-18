@@ -18,12 +18,17 @@
 #ifndef IROHA_PROTO_PROPOSAL_BUILDER_HPP
 #define IROHA_PROTO_PROPOSAL_BUILDER_HPP
 
+#include "backend/protobuf/proposal.hpp"
 #include "builders/protobuf/builder_templates/proposal_template.hpp"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace proto {
 
-    using ProposalBuilder = TemplateProposalBuilder<>;
+    using ProposalBuilder =
+        TemplateProposalBuilder<0,
+                                validation::DefaultProposalValidator,
+                                Proposal>;
   }
 }  // namespace shared_model
 

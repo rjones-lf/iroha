@@ -23,17 +23,17 @@
 namespace shared_model {
   namespace interface {
     class Block;
-  }
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
   namespace network {
-
     /**
      * Public api of consensus module
      */
     class ConsensusGate {
      public:
+
       /**
        * Providing data for consensus for voting
        */
