@@ -20,12 +20,10 @@ addtest(cluster_order_test cluster_order_test.cpp)
 target_link_libraries(cluster_order_test
     yac
     shared_model_cryptography
-    shared_model_proto_backend
     )
 
 addtest(yac_cold_case_test yac_simple_cold_case_test.cpp)
 target_link_libraries(yac_cold_case_test
-    shared_model_proto_backend
     yac
     )
 
@@ -33,32 +31,27 @@ addtest(yac_sunny_day_test yac_sunny_day_test.cpp)
 target_link_libraries(yac_sunny_day_test
     yac
     shared_model_cryptography_model
-    shared_model_proto_backend
     )
 
 addtest(yac_rainy_day_test yac_rainy_day_test.cpp)
 target_link_libraries(yac_rainy_day_test
     yac
     shared_model_cryptography_model
-    shared_model_proto_backend
     )
 
 addtest(yac_unknown_peer_test yac_unknown_peer_test.cpp)
 target_link_libraries(yac_unknown_peer_test
     yac
-    shared_model_proto_backend
     )
 
 addtest(yac_block_storage_test yac_block_storage_test.cpp)
 target_link_libraries(yac_block_storage_test
     yac
-    shared_model_proto_backend
     )
 
 addtest(yac_proposal_storage_test yac_proposal_storage_test.cpp)
 target_link_libraries(yac_proposal_storage_test
     yac
-    shared_model_proto_backend
     )
 
 addtest(yac_timer_test timer_test.cpp)
@@ -91,14 +84,12 @@ addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
 target_link_libraries(yac_hash_provider_test
     yac
     shared_model_cryptography
-    shared_model_proto_backend
     )
 
 addtest(yac_common_test yac_common_test.cpp)
 target_link_libraries(yac_common_test
     yac
     shared_model_cryptography
-    shared_model_proto_backend
     )
 
 addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)
