@@ -20,6 +20,7 @@
 #include "datetime/time.hpp"
 
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
+#include "builders/protobuf/builder_templates/block_query_response_template.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "cryptography/keypair.hpp"
@@ -27,6 +28,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
@@ -250,4 +252,17 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
     ASSERT_EQ(role_permissions_response.rolePermissions(), roles);
     ASSERT_EQ(query_response.queryHash(), query_hash);
   });
+}
+
+TEST(QueryResponseBuilderTest, BlockQueryResponse) {
+  const std::vector<std::string> roles = {"role1", "role2", "role3"};
+
+  shared_model::proto::TemplateBlockQueryResponseBuilder<> builder;
+  auto block = TestBlockBuilder().height(3).createdTime(created_time).prevHash(query_hash).build();
+  shared_model::proto::BlockQueryResponse query_response =
+      builder.blockResponse(block).build();
+
+  const auto block_error_response =
+      boost::get<w<shared_model::interface::BlockErrorResponse>>(
+          query_response.get());
 }
