@@ -6,6 +6,4 @@ target_link_libraries(blob_converter_test
 AddTest(raw_block_loader_test raw_block_loader_test.cpp)
 target_link_libraries(raw_block_loader_test
     raw_block_loader
-    shared_model_proto_backend
-    logger
     )

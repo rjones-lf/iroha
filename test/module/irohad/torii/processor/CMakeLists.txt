@@ -11,5 +11,4 @@ target_link_libraries(query_processor_test
     processors
     shared_model_cryptography
     query_execution
-    common_execution
     )
