@@ -21,6 +21,7 @@
 #include <boost/range/numeric.hpp>
 #include <vector>
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"

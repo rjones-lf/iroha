@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "amount/amount.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 

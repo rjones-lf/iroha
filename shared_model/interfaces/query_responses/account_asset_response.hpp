@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_ASSET_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_ASSET_RESPONSE_HPP
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"

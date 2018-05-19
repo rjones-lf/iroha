@@ -18,7 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_PEER_HPP
 #define IROHA_SHARED_MODEL_PEER_HPP
 
-#include "common/types.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {

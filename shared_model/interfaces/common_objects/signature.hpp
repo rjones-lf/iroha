@@ -18,10 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_SIGNATURE_HPP
 #define IROHA_SHARED_MODEL_SIGNATURE_HPP
 
-#include "common/byteutils.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

@@ -19,6 +19,8 @@
 #define IROHA_TX_RESPONSE_HPP
 
 #include <boost/variant.hpp>
+
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/transaction.hpp"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
 #include "interfaces/transaction_responses/not_received_tx_response.hpp"

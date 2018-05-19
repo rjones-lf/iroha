@@ -19,6 +19,7 @@
 #ifndef IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 #define IROHA_ABSTRACT_ERROR_RESPONSE_HPP
 
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

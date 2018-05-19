@@ -21,6 +21,7 @@
 #include <numeric>
 #include <set>
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {

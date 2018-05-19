@@ -29,6 +29,7 @@
 #include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "common/byteutils.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "responses.pb.h"

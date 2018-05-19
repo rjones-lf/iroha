@@ -21,6 +21,7 @@
 #include <boost/variant.hpp>
 #include <utility>
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"

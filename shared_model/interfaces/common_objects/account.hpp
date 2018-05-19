@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_HPP
 
 #include "cryptography/hash.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 

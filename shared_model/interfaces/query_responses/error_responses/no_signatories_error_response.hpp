@@ -25,7 +25,7 @@
 namespace shared_model {
   namespace interface {
     /**
-     * Error response of broken query, no specified roles
+     * Error response of broken query, no signatories
      */
     class NoSignatoriesErrorResponse
         : public AbstractErrorResponse<NoSignatoriesErrorResponse> {

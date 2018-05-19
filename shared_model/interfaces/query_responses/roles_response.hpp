@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 

@@ -38,7 +38,7 @@ Install Iroha Python Libraries
 
   .. code:: sh
 
-      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
+      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSUPPORT_PYTHON2=ON;
       cmake --build build --target irohapy
 
       - SWIG_PYTHON=ON forces to build bindings for Python.

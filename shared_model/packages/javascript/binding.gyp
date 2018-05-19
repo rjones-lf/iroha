@@ -83,7 +83,7 @@
       'sources': [
         '<(SHARED_INTERMEDIATE_DIR)/bindings/bindingsJAVASCRIPT_wrap.cxx'
       ],
-      'cflags_cc': ['-std=c++14', '-fexceptions', '-DDISABLE_BACKWARD'],
+      'cflags_cc': ['-std=c++14', '-fexceptions'],
       'cflags_cc!': ['-fno-rtti'],
       'libraries': [
         '-L/usr/local/lib',
@@ -110,7 +110,7 @@
             'xcode_settings': {
               'GCC_ENABLE_CPP_RTTI': 'YES',
               'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-              'OTHER_CFLAGS': ['-std=c++14', '-DDISABLE_BACKWARD']
+              'OTHER_CFLAGS': ['-std=c++14']
             }
           }
         ]

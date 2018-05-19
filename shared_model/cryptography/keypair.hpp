@@ -20,18 +20,14 @@
 
 #include "cryptography/private_key.hpp"
 #include "cryptography/public_key.hpp"
-
-#include "common/types.hpp"  // for keypair_t
+#include "interfaces/base/model_primitive.hpp"
 
 namespace shared_model {
   namespace crypto {
 
-    using KeypairOldModelType = iroha::keypair_t;
-
     /**
      * Class for holding a keypair: public key and private key
      */
-
     class Keypair : public interface::ModelPrimitive<Keypair> {
      public:
       /// Type of public key

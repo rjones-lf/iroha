@@ -47,7 +47,6 @@ namespace shared_model {
       return new Keypair(publicKey(), privateKey());
     }
 
-
     Keypair::Keypair(const Keypair::PublicKeyType &public_key,
                      const Keypair::PrivateKeyType &private_key)
         : public_key_(public_key), private_key_(private_key) {}

@@ -20,6 +20,7 @@
 
 #include <boost/variant.hpp>
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/query_responses/error_responses/no_account_assets_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_detail_error_response.hpp"
 #include "interfaces/query_responses/error_responses/no_account_error_response.hpp"

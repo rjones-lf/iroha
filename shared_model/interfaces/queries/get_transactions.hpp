@@ -18,8 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 
-#include <boost/range/algorithm/for_each.hpp>
-
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 

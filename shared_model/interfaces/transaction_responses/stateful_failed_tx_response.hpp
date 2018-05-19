@@ -18,8 +18,6 @@
 #ifndef IROHA_STATEFUL_FAILED_TX_RESPONSE_HPP
 #define IROHA_STATEFUL_FAILED_TX_RESPONSE_HPP
 
-#include "utils/string_builder.hpp"
-
 namespace shared_model {
   namespace interface {
 

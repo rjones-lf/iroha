@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_DOMAIN_HPP
 #define IROHA_SHARED_MODEL_DOMAIN_HPP
 
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
 

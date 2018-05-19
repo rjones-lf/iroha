@@ -25,7 +25,7 @@
 namespace shared_model {
   namespace interface {
     /**
-     * Error response of broken query, no specified roles
+     * Error response of broken query, not supported
      */
     class NotSupportedErrorResponse
         : public AbstractErrorResponse<NotSupportedErrorResponse> {
