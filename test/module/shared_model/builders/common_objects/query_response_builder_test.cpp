@@ -25,6 +25,7 @@
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
@@ -128,11 +129,9 @@ TYPED_TEST(ErrorResponseTest, TypeErrorResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).errorQueryResponse<TypeParam>().build();
 
-  const auto error_response =
-      boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-          query_response.get());
-
-  ASSERT_NO_THROW(boost::get<const TypeParam>(error_response->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<TypeParam>(),
+      query_response.get()));
 
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }

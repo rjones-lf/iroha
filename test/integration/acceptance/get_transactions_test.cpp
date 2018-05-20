@@ -137,10 +137,10 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 TEST_F(GetTransactions, InvalidSignatures) {
   auto dummy_tx = dummyTx();
   auto check = [](auto &status) {
-    auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
-        interface::ErrorQueryResponse>>(status.get());
-    ASSERT_NO_THROW(
-        boost::get<const interface::StatefulFailedErrorResponse>(resp->get()));
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<
+            shared_model::interface::StatefulFailedErrorResponse>(),
+        status.get()));
   };
 
   auto query = baseQry()

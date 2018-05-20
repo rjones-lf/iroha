@@ -28,6 +28,7 @@
 #include "execution/query_execution.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
 using ::testing::_;
@@ -262,12 +263,10 @@ TEST_F(GetAccountTest, DifferentDomainAccountInValidCase) {
 
   auto response = validateAndExecute(query);
 
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
-
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -292,12 +291,10 @@ TEST_F(GetAccountTest, NoAccountExist) {
 
   auto response = validateAndExecute(query);
 
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
-
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::NoAccountErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::NoAccountErrorResponse>(),
+      response->get()));
 }
 
 /// --------- Get Account Assets -------------
@@ -522,12 +519,10 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
 
   auto response = validateAndExecute(query);
 
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
-
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -567,12 +562,10 @@ TEST_F(GetAccountAssetsTest, NoAccountExist) {
 
   auto response = validateAndExecute(query);
 
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
-
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::NoAccountAssetsErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::NoAccountAssetsErrorResponse>(),
+      response->get()));
 }
 
 /// --------- Get Signatories-------------
@@ -716,12 +709,11 @@ TEST_F(GetSignatoriesTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -745,12 +737,11 @@ TEST_F(GetSignatoriesTest, NoAccountExist) {
   EXPECT_CALL(*wsv_query, getSignatories("none")).WillOnce(Return(boost::none));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::NoSignatoriesErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::NoSignatoriesErrorResponse>(),
+      response->get()));
 }
 
 /// --------- Get Account Transactions-------------
@@ -917,12 +908,11 @@ TEST_F(GetAccountTransactionsTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -1115,12 +1105,11 @@ TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -1233,12 +1222,11 @@ TEST_F(GetAssetInfoTest, PermissionsInvalidCase) {
       .WillOnce(Return(role_permissions));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -1259,12 +1247,11 @@ TEST_F(GetAssetInfoTest, AssetInvalidCase) {
   EXPECT_CALL(*wsv_query, getAsset("none")).WillOnce(Return(boost::none));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::NoAssetErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(
+      boost::apply_visitor(shared_model::interface::QueryErrorResponseChecker<
+                               shared_model::interface::NoAssetErrorResponse>(),
+                           response->get()));
 }
 
 /// --------- Get Roles -------------
@@ -1318,12 +1305,11 @@ TEST_F(GetRolesTest, InValidCaseNoPermissions) {
       .WillOnce(Return(role_permissions));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -1339,12 +1325,11 @@ TEST_F(GetRolesTest, InValidCaseNoRoles) {
       .WillOnce(Return(admin_roles));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /// --------- Get Role Permissions -------------
@@ -1405,12 +1390,11 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoPermissions) {
       .WillOnce(Return(role_permissions));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -1432,10 +1416,9 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoRole) {
       .WillOnce(Return(boost::none));
 
   auto response = validateAndExecute(query);
-  auto cast_resp = boost::get<w<shared_model::interface::ErrorQueryResponse>>(
-      response->get());
 
-  ASSERT_NO_THROW(
-      boost::get<const shared_model::interface::NoRolesErrorResponse>(
-          cast_resp->get()));
+  ASSERT_TRUE(
+      boost::apply_visitor(shared_model::interface::QueryErrorResponseChecker<
+                               shared_model::interface::NoRolesErrorResponse>(),
+                           response->get()));
 }

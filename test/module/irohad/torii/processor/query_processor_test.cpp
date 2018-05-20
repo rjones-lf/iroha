@@ -27,6 +27,7 @@
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "network/ordering_gate.hpp"
 #include "torii/processor/query_processor_impl.hpp"
+#include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
 using namespace iroha;
@@ -146,11 +147,10 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::ErrorQueryResponse>>(response->get());
-    ASSERT_NO_THROW(
-        boost::get<const shared_model::interface::StatefulFailedErrorResponse>(
-            resp->get()));
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<
+            shared_model::interface::StatefulFailedErrorResponse>(),
+        response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
