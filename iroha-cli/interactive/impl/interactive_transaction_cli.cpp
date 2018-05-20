@@ -228,7 +228,7 @@ namespace iroha_cli {
 
       if (not res and not *res) {
         // Continue parsing
-        std::cout << "Enter the value again" << std::endl ;
+        std::cout << "Unable to parse the result." << std::endl;
         return true;
       }
 
