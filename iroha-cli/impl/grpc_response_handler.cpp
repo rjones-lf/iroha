@@ -45,11 +45,11 @@ namespace iroha_cli {
       CliClient::Response<CliClient::TxStatus> response) {
     if (response.status.ok()) {
       tx_handler_.handle(response.answer);
-        return true ;
+        return true;
     } else {
       handleGrpcErrors(response.status.error_code());
-        log_->error("Error has occured. Not able to complete transaction") ;
-        return false ;
+        log_->error("Error has occured. Not able to complete transaction");
+        return false;
     }
   }
 
