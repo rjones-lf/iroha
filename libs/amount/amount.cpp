@@ -135,9 +135,17 @@ namespace iroha {
 
   std::vector<uint64_t> Amount::to_uint64s() {
     std::vector<uint64_t> array(4);
-    ;
+    constexpr boost::multiprecision::uint256_t mask_bits =
+        std::numeric_limits<uint64_t>::max();
+    auto convert = [&](auto i) {
+      // Select two middle bits from 011011 and offset = 2
+      // 011011 >> (2 * 1) = 000110
+      // Have to mask 2 high bits to prevent any overflows
+      // 000110 & 000011 = 000010
+      return ((value_ >> (64 * i)) & mask_bits).template convert_to<uint64_t>();
+    };
     for (int i = 0; i < 4; i++) {
-      uint64_t res = (value_ >> i * 64).convert_to<uint64_t>();
+      uint64_t res = convert(i);
       array[3 - i] = res;
     }
     return array;

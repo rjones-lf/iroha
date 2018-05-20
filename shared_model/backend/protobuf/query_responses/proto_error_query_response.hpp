@@ -59,8 +59,8 @@ namespace shared_model {
       ErrorQueryResponse(ErrorQueryResponse &&o) noexcept
           : ErrorQueryResponse(std::move(o.proto_)) {}
 
-      QueryErrorResponseVariantType get() const override {
-        return *variant_;
+      const QueryErrorResponseVariantType &get() const override {
+        return *ivariant_;
       }
 
      private:
@@ -83,6 +83,10 @@ namespace shared_model {
                 ProtoQueryErrorResponseVariantType>(
                 std::forward<decltype(ar)>(ar), which);
       }};
+
+      const Lazy<QueryErrorResponseVariantType> ivariant_{
+          detail::makeLazyInitializer(
+              [this] { return QueryErrorResponseVariantType(*variant_); })};
     };
   }  // namespace proto
 }  // namespace shared_model

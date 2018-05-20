@@ -36,8 +36,7 @@ namespace shared_model {
       }
 
       template <typename T>
-      bool operator()(
-          const shared_model::detail::PolymorphicWrapper<T> &) const {
+      bool operator()(const T &) const {
         return false;
       }
     };

@@ -69,7 +69,7 @@ TEST_F(AmountTest, TestBasic) {
   auto vec = g.to_uint64s();
   iroha::Amount h(vec.at(0), vec.at(1), vec.at(2), vec.at(3));
   ASSERT_EQ(h.getPrecision(), 0);
-  ASSERT_EQ(g, h);
+  ASSERT_EQ(g, h) << g.to_string() << " " << h.to_string();
 }
 
 // test with different precisions and values

@@ -63,7 +63,7 @@ namespace shared_model {
       /**
        * @return reference to const variant with concrete error response
        */
-      virtual QueryErrorResponseVariantType get() const = 0;
+      virtual const QueryErrorResponseVariantType &get() const = 0;
 
       // ------------------------| Primitive override |-------------------------
 
