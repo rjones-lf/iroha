@@ -81,5 +81,6 @@ addtest(block_builder_test
     )
 
 target_link_libraries(block_builder_test
+    shared_model_proto_builders
     shared_model_stateless_validation
     )
