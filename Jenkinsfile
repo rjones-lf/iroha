@@ -10,10 +10,19 @@ pipeline {
     stage ('all') {
       parallel {
         stage ('checkout') {
-          agent { label 'linux && x86_64' }
+          agent { label 'x86_64_aws_cov' }
           steps {
             script {
-              checkout scm
+              if (env.CHANGE_ID) {
+                checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches:
+                  [[name: "${CHANGE_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions:
+                  [[$class: 'PreBuildMerge', options: [fastForwardMode: 'FF_ONLY', mergeRemote: 'origin',
+                  mergeStrategy: 'default', mergeTarget: "${CHANGE_TARGET}"]], [$class: 'LocalBranch'],
+                  [$class: 'CleanCheckout'], [$class: 'PruneStaleBranch'], [$class: 'UserIdentity',
+                  email: 'jenkins@soramitsu.co.jp', name: 'jenkins']], submoduleCfg: [], userRemoteConfigs:
+                  [[credentialsId: 'sorabot-github-user', url: 'https://github.com/hyperledger/iroha.git']]]
+              }
+              sh('echo This commit is mergeable')
             }
           }
         }
@@ -44,18 +53,11 @@ pipeline {
                   }
                   return true
                 }
-
-                checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: 
-                  [[name: "${CHANGE_BRANCH}"]], doGenerateSubmoduleConfigurations: false, extensions: 
-                  [[$class: 'PreBuildMerge', options: [fastForwardMode: 'FF_ONLY', mergeRemote: 'origin', 
-                  mergeStrategy: 'default', mergeTarget: "${CHANGE_TARGET}", squash: true]], [$class: 'LocalBranch'], 
-                  [$class: 'CleanCheckout'], [$class: 'PruneStaleBranch'], [$class: 'UserIdentity', 
-                  email: 'jenkins@soramitsu.co.jp', name: 'jenkins']], submoduleCfg: [], userRemoteConfigs: 
-                  [[credentialsId: 'sorabot-github-user', url: 'https://github.com/hyperledger/iroha.git']]]
-                sh "git checkout ${CHANGE_TARGET}"
-                sh "git reset --hard ORIG_HEAD && git merge --ff-only --squash ${CHANGE_BRANCH} && git add . && git commit --no-edit"
-                sh('echo This commit is mergeable')
-                // sh("git push https://${sorabot}@github.com/hyperledger/iroha.git HEAD:${CHANGE_TARGET}")
+                def jsonMergeResult = sh(script: """
+                  curl -X PUT -H "Authorization: token ${sorabot}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge
+                """)
+                jsonMergeResult = slurper.parseText(jsonMergeResult)
+                sh("echo ${jsonMergeResult.message}")
               }
             }
           }
