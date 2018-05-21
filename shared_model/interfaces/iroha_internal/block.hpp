@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_BLOCK_HPP
 
 #include "interfaces/iroha_internal/abstract_block.hpp"
+#include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
