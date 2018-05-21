@@ -52,8 +52,9 @@ namespace integration_framework {
       size_t maximum_proposal_size,
       std::function<void(integration_framework::IntegrationTestFramework &)>
           deleter,
-      bool mst_support)
-      : iroha_instance_(std::make_shared<IrohaInstance>(mst_support)),
+      bool mst_support,
+      const std::string &block_store_path)
+      : iroha_instance_(std::make_shared<IrohaInstance>(mst_support, block_store_path)),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -106,16 +107,31 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
+    initPipeline(keypair);
+    iroha_instance_->makeGenesis(block);
+    log_->info("added genesis block");
+    subscribeQueuesAndRun();
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::recoverState(
+      const Keypair &keypair) {
+    initPipeline(keypair);
+    iroha_instance_->instance_->init();
+    subscribeQueuesAndRun();
+    return *this;
+  }
+
+  void IntegrationTestFramework::initPipeline(
+      const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
     // peer initialization
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    // iroha_instance_->clearLedger();
-    // log_->info("cleared ledger");
     iroha_instance_->instance_->resetOrderingService();
-    iroha_instance_->makeGenesis(block);
-    log_->info("added genesis block");
+  }
 
+  void IntegrationTestFramework::subscribeQueuesAndRun() {
     // subscribing for components
 
     iroha_instance_->getIrohaInstance()
@@ -143,7 +159,6 @@ namespace integration_framework {
     // start instance
     iroha_instance_->run();
     log_->info("run iroha");
-    return *this;
   }
 
   shared_model::proto::TransactionResponse
