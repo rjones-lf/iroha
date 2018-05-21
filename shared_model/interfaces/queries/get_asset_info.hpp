@@ -18,33 +18,20 @@
 #ifndef IROHA_SHARED_MODEL_GET_ASSET_INFO_HPP
 #define IROHA_SHARED_MODEL_GET_ASSET_INFO_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_asset_info.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Get meta data of asset
      */
-    class GetAssetInfo : public PRIMITIVE(GetAssetInfo) {
+    class GetAssetInfo : public ModelPrimitive<GetAssetInfo> {
      public:
       /**
        * @return asset identifier to get asset's information
        */
       virtual const types::AssetIdType &assetId() const = 0;
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAssetInfo;
-        oldModel->asset_id = assetId();
-        return oldModel;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

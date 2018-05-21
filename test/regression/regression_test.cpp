@@ -80,3 +80,13 @@ TEST(RegressionTest, DoubleCallOfDone) {
   itf.setInitialState(kAdminKeypair).done();
   itf.done();
 }
+
+/**
+ * @given non initialized ITF instance
+ * @when done method is called inside destructor
+ * @then no exceptions are risen
+ */
+TEST(RegressionTest, DestructionOfNonInitializedItf) {
+  integration_framework::IntegrationTestFramework itf(
+      1, [](auto &itf) { itf.done(); });
+}

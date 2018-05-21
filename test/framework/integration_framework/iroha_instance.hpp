@@ -22,6 +22,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/filesystem.hpp>
+
 namespace shared_model {
   namespace interface {
     class Block;
@@ -36,7 +38,10 @@ namespace integration_framework {
 
   class IrohaInstance {
    public:
-    IrohaInstance();
+    IrohaInstance(const std::string &block_store_path =
+                      (boost::filesystem::temp_directory_path()
+                       / boost::filesystem::unique_path())
+                          .string());
 
     void makeGenesis(const shared_model::interface::Block &block);
 

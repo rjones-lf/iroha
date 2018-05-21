@@ -26,19 +26,38 @@ namespace shared_model {
   namespace interface {
     template <typename Type>
     class SpecifiedVisitor
-        : public boost::static_visitor<
-              boost::optional<shared_model::detail::PolymorphicWrapper<Type>>> {
+        : public boost::static_visitor<boost::optional<const Type &>> {
      private:
-      using Y = shared_model::detail::PolymorphicWrapper<Type>;
+      using Y = shared_model::detail::PolymorphicWrapper<
+          std::remove_const_t<std::remove_reference_t<Type>>>;
 
      public:
-      boost::optional<Y> operator()(const Y &t) const {
+      /**
+       * Match polymorphic wrapper for template type
+       * @param t polymorphic wrapper object of specified type
+       * @return const reference to value stored in polymorphic wrapper
+       */
+      boost::optional<const Type &> operator()(const Y &t) const {
+        return *t;
+      }
+
+      /**
+       * Match template type
+       * @param t const reference to object of specified type
+       * @return const reference to value
+       */
+      boost::optional<const Type &> operator()(const Type &t) const {
         return t;
       }
 
+      /**
+       * Match any other type that was not matched by methods above
+       * @tparam T any type not matched by two types above
+       * @param t object of specified type
+       * @return none
+       */
       template <typename T>
-      boost::optional<Y> operator()(
-          const shared_model::detail::PolymorphicWrapper<T> &t) const {
+      boost::optional<const Type &> operator()(const T &t) const {
         return boost::none;
       }
     };

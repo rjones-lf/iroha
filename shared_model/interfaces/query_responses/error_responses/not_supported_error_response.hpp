@@ -25,7 +25,7 @@
 namespace shared_model {
   namespace interface {
     /**
-     * Error response of broken query, no specified roles
+     * Error response of broken query, not supported
      */
     class NotSupportedErrorResponse
         : public AbstractErrorResponse<NotSupportedErrorResponse> {
@@ -33,13 +33,6 @@ namespace shared_model {
       std::string reason() const override {
         return "NotSupportedErrorResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::ErrorResponse::Reason oldModelReason() const override {
-        return iroha::model::ErrorResponse::Reason::NOT_SUPPORTED;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -25,7 +25,7 @@
 namespace shared_model {
   namespace interface {
     /**
-     * Error response of broken query, no specified roles
+     * Error response of broken query, no signatories
      */
     class NoSignatoriesErrorResponse
         : public AbstractErrorResponse<NoSignatoriesErrorResponse> {
@@ -33,13 +33,6 @@ namespace shared_model {
       std::string reason() const override {
         return "NoSignatoriesErrorResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::ErrorResponse::Reason oldModelReason() const override {
-        return iroha::model::ErrorResponse::Reason::NO_SIGNATORIES;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

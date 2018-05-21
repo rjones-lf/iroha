@@ -36,4 +36,5 @@ target_link_libraries(torii_service
     shared_model_proto_backend
     logger
     shared_model_stateless_validation
+    processors
     )

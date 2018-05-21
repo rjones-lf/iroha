@@ -100,8 +100,9 @@ namespace iroha {
       std::string pgopt_ =
           "host=localhost port=5432 user=postgres password=mysecretpassword";
 
-      std::string block_store_path =
-          (boost::filesystem::temp_directory_path() / "block_store").string();
+      std::string block_store_path = (boost::filesystem::temp_directory_path()
+                                      / boost::filesystem::unique_path())
+                                         .string();
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
       const std::string drop_ = R"(

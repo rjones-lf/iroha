@@ -38,7 +38,6 @@ using ::testing::_;
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
-using namespace iroha::model;
 using namespace framework::test_subscriber;
 using namespace shared_model::permissions;
 
@@ -118,7 +117,6 @@ class QueryValidateExecuteTest : public ::testing::Test {
   std::shared_ptr<MockBlockQuery> block_query;
 
   std::shared_ptr<QueryProcessingFactory> factory;
-  std::shared_ptr<Query> query;
 };
 
 class GetAccountTest : public QueryValidateExecuteTest {
@@ -1277,7 +1275,6 @@ class GetRolesTest : public QueryValidateExecuteTest {
     roles = {admin_role, "some_role"};
   }
   std::vector<std::string> roles;
-  std::shared_ptr<GetRoles> qry;
 };
 
 /**
@@ -1359,7 +1356,6 @@ class GetRolePermissionsTest : public QueryValidateExecuteTest {
   }
   std::string role_id = "user";
   std::vector<std::string> perms;
-  std::shared_ptr<GetRolePermissions> qry;
 };
 
 /**

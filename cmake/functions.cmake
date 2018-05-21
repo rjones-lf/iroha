@@ -96,10 +96,17 @@ endfunction()
 
 function(compile_proto_to_python PROTO)
   string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
+  if (MSVC)
+    set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
+    set(GEN_ARGS ${Protobuf_INCLUDE_DIR})
+  else()
+    set(GEN_COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}")
+    set(GEN_ARGS ${protobuf_INCLUDE_DIR})
+  endif()
   add_custom_command(
       OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
-      COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
+      COMMAND ${GEN_COMMAND}
+      ARGS -I${GEN_ARGS} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
       DEPENDS protoc
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )

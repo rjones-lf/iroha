@@ -12,6 +12,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
 using namespace iroha;
@@ -53,16 +54,7 @@ class TransactionProcessorTest : public ::testing::Test {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
-      boost::apply_visitor(
-          [](auto val) {
-            if (std::is_same<decltype(val), Status>::value) {
-              SUCCEED();
-            } else {
-              FAIL() << "obtained: " << typeid(decltype(val)).name()
-                     << ", expected: " << typeid(Status).name() << std::endl;
-            }
-          },
-          tx_status->second->get());
+      boost::apply_visitor(verifyType<Status>(), tx_status->second->get());
     }
   }
 
@@ -120,8 +112,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   ASSERT_TRUE(wrapper.validate());
 
   SCOPED_TRACE("Stateless valid status verification");
-  validateStatuses<shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatelessValidTxResponse>>(txs);
+  validateStatuses<shared_model::interface::StatelessValidTxResponse>(txs);
 }
 
 /**
@@ -177,8 +168,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   ASSERT_TRUE(wrapper.validate());
 
   SCOPED_TRACE("Stateful valid status verification");
-  validateStatuses<shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulValidTxResponse>>(txs);
+  validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
 }
 
 /**
@@ -230,8 +220,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   ASSERT_TRUE(wrapper.validate());
 
   SCOPED_TRACE("Committed status verification");
-  validateStatuses<shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::CommittedTxResponse>>(txs);
+  validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
 }
 
 /**
@@ -294,13 +283,12 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   {
     SCOPED_TRACE("Stateful invalid status verification");
     // check that all invalid transactions will have stateful invalid status
-    validateStatuses<shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::StatefulFailedTxResponse>>(invalid_txs);
+    validateStatuses<shared_model::interface::StatefulFailedTxResponse>(
+        invalid_txs);
   }
   {
     SCOPED_TRACE("Committed status verification");
     // check that all transactions from block will be committed
-    validateStatuses<shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::CommittedTxResponse>>(block_txs);
+    validateStatuses<shared_model::interface::CommittedTxResponse>(block_txs);
   }
 }

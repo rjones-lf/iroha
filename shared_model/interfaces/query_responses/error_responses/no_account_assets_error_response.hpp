@@ -33,13 +33,6 @@ namespace shared_model {
       std::string reason() const override {
         return "NoAccountAssetsErrorResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::ErrorResponse::Reason oldModelReason() const override {
-        return iroha::model::ErrorResponse::Reason::NO_ACCOUNT_ASSETS;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -39,4 +39,5 @@ add_library(query_execution
 target_link_libraries(query_execution
         rxcpp
         shared_model_default_builders
+        common_execution
         )

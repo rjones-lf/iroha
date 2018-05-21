@@ -18,8 +18,6 @@
 #ifndef IROHA_UNKNOWN_TX_RESPONSE_HPP
 #define IROHA_UNKNOWN_TX_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
-
 namespace shared_model {
   namespace interface {
     /**
@@ -31,14 +29,6 @@ namespace shared_model {
       std::string className() const override {
         return "NotReceivedTxResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::TransactionResponse::Status oldModelStatus()
-          const override {
-        return iroha::model::TransactionResponse::Status::NOT_RECEIVED;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -101,7 +101,7 @@ rmdir "$DEPS_DIR"/lib/static/
 # build iroha
 sed -i.bak "s~find_library(protobuf_LIBRARY protobuf)~find_library(protobuf_LIBRARY ${PROTOBUF_LIB_NAME})~" ./iroha/cmake/Modules/Findprotobuf.cmake
 sed -i.bak "s~find_program(protoc_EXECUTABLE protoc~set(protoc_EXECUTABLE \"${PWD}/protobuf/host_build/protoc\"~" ./iroha/cmake/Modules/Findprotobuf.cmake # use host protoc
-cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -H./iroha/shared_model -B./iroha/shared_model/build "${IOS_TOOLCHAIN_ARGS[@]}" -DTESTING=OFF -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DCMAKE_PREFIX_PATH="$DEPS_DIR"
+cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -H./iroha/shared_model -B./iroha/shared_model/build "${IOS_TOOLCHAIN_ARGS[@]}" -DTESTING=OFF -DCMAKE_PREFIX_PATH="$DEPS_DIR"
 VERBOSE=1 cmake --build ./iroha/shared_model/build --target bindings -- -j"$CORES"
 
 # copy artifacts

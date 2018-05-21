@@ -18,33 +18,20 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_DETAIL_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_DETAIL_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_account_detail.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Query for get all account's assets and balance
      */
-    class GetAccountDetail : public PRIMITIVE(GetAccountDetail) {
+    class GetAccountDetail : public ModelPrimitive<GetAccountDetail> {
      public:
       /**
        * @return account identifier
        */
       virtual const types::AccountIdType &accountId() const = 0;
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAccountDetail;
-        oldModel->account_id = accountId();
-        return oldModel;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

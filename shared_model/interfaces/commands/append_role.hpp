@@ -18,12 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_APPEND_ROLE_HPP
 #define IROHA_SHARED_MODEL_APPEND_ROLE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/append_role.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +27,7 @@ namespace shared_model {
     /**
      * Add role to account used in Iroha
      */
-    class AppendRole : public PRIMITIVE(AppendRole) {
+    class AppendRole : public ModelPrimitive<AppendRole> {
      public:
       /**
        * @return Account to add the role
@@ -49,16 +45,6 @@ namespace shared_model {
             .append("account_id", accountId())
             .finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::AppendRole;
-        oldModel->role_name = roleName();
-        oldModel->account_id = accountId();
-        return oldModel;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId() and roleName() == rhs.roleName();

@@ -41,9 +41,6 @@ if (NOT IROHA_ROOT_PROJECT)
 
   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
 
-  set(SHARED_MODEL_DISABLE_COMPATIBILITY ON)
-  add_definitions(-DDISABLE_BACKWARD)
-
   include(FeatureSummary)
   include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/functions.cmake)
   include(cmake/dependencies.cmake)
@@ -51,13 +48,6 @@ if (NOT IROHA_ROOT_PROJECT)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../schema schema)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
-endif ()
-add_library(old_model INTERFACE)
-
-if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
-  target_link_libraries(old_model INTERFACE
-      model
-      )
 endif ()
 
 add_subdirectory(backend)

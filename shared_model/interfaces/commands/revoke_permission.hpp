@@ -18,19 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_REVOKE_PERMISSION_HPP
 #define IROHA_SHARED_MODEL_REVOKE_PERMISSION_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/revoke_permission.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Revoke permission from account
      */
-    class RevokePermission : public PRIMITIVE(RevokePermission) {
+    class RevokePermission : public ModelPrimitive<RevokePermission> {
      public:
       /**
        * @return account from which revoke permission
@@ -49,15 +45,6 @@ namespace shared_model {
             .append("permission", permissionName())
             .finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::RevokePermission;
-        oldModel->account_id = accountId();
-        oldModel->permission_name = permissionName();
-        return oldModel;
-      }
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return accountId() == rhs.accountId()

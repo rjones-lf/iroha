@@ -38,11 +38,10 @@ Install Iroha Python Libraries
 
   .. code:: sh
 
-      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
+      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSUPPORT_PYTHON2=ON;
       cmake --build build --target irohapy
 
       - SWIG_PYTHON=ON forces to build bindings for Python.
-      - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
       - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
 
   After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.

@@ -19,12 +19,10 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/rapidjson.h>
 #include <boost/filesystem.hpp>
-#include <fstream>
 #include <iostream>
 
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "client.hpp"
-#include "common/assert_config.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
@@ -36,7 +34,6 @@
 #include "model/converters/pb_transaction_factory.hpp"
 #include "model/generators/block_generator.hpp"
 #include "model/model_crypto_provider_impl.hpp"
-#include "validators.hpp"
 
 // Account information
 DEFINE_bool(new_account,
@@ -79,10 +76,8 @@ namespace fs = boost::filesystem;
 
 iroha::keypair_t *makeOldModel(const shared_model::crypto::Keypair &keypair) {
   return new iroha::keypair_t{
-      shared_model::crypto::PublicKey::OldPublicKeyType::from_string(
-          toBinaryString(keypair.publicKey())),
-      shared_model::crypto::PrivateKey::OldPrivateKeyType::from_string(
-          toBinaryString(keypair.privateKey()))};
+      iroha::pubkey_t::from_string(toBinaryString(keypair.publicKey())),
+      iroha::privkey_t::from_string(toBinaryString(keypair.privateKey()))};
 }
 
 int main(int argc, char *argv[]) {

@@ -16,6 +16,8 @@
  */
 
 #include "torii/processor/query_processor_impl.hpp"
+#include "boost/range/size.hpp"
+#include "validation/utils.hpp"
 
 namespace iroha {
   namespace torii {
@@ -40,17 +42,15 @@ namespace iroha {
 
     bool QueryProcessorImpl::checkSignatories(
         const shared_model::interface::Query &qry) {
-      const auto &sig = *qry.signatures().begin();
-
       const auto &wsv_query = storage_->getWsvQuery();
-      auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
+
       auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
-      if (not signatories) {
-        return false;
-      }
-      return std::find(
-                 signatories->begin(), signatories->end(), sig.publicKey())
-          != signatories->end();
+      const auto &sig = qry.signatures();
+
+      return boost::size(sig) == 1
+          and signatories | [&sig](const auto &signatories) {
+                return validation::signaturesSubset(sig, signatories);
+              };
     }
 
     void QueryProcessorImpl::queryHandle(

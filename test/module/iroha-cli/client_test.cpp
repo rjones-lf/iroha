@@ -207,7 +207,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
   ASSERT_TRUE(res.status.ok());
   ASSERT_TRUE(res.answer.has_error_response());
   ASSERT_EQ(res.answer.error_response().reason(),
-            iroha::model::ErrorResponse::STATELESS_INVALID);
+            iroha::protocol::ErrorResponse::STATELESS_INVALID);
   ASSERT_NE(res.answer.error_response().message().size(), 0);
 }
 
@@ -246,9 +246,6 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
 
 TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   iroha_cli::CliClient client(Ip, Port);
-
-  auto account_test = iroha::model::Account();
-  account_test.account_id = "test@test";
 
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));

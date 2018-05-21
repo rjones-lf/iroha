@@ -17,7 +17,6 @@ add_library(shared_model_interfaces
     )
 
 target_link_libraries(shared_model_interfaces
-    old_model
     shared_model_cryptography
     ${Boost_LIBRARIES}
     )
