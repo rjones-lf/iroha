@@ -64,6 +64,7 @@ namespace integration_framework {
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
      * @param mst_support enables multisignature tx support
+     * @param block_store_path specifies path where blocks will be stored
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
