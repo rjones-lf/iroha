@@ -107,8 +107,10 @@ namespace iroha {
     auto current_time = time_provider_->getCurrentTime();
     std::for_each(
         data.begin(), data.end(), [this, &current_time](const auto &peer) {
-          transport_->sendState(*peer,
-                                storage_->getDiffState(peer, current_time));
+          auto diff = storage_->getDiffState(peer, current_time);
+          if (not diff.isEmpty()) {
+            transport_->sendState(*peer, diff);
+          }
         });
   }
 
