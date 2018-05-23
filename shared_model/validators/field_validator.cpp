@@ -215,8 +215,8 @@ namespace shared_model {
        * uint8_t, but it is going to be changed and the validation will become
        * meaningful.
        */
-      auto min = std::numeric_limits<uint8_t>::min();
-      auto max = std::numeric_limits<uint8_t>::max();
+      interface::types::PrecisionType min = std::numeric_limits<uint8_t>::min();
+      interface::types::PrecisionType max = std::numeric_limits<uint8_t>::max();
       if (precision < min or precision > max) {
         auto message =
             (boost::format(
