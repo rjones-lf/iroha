@@ -14,8 +14,8 @@ namespace shared_model {
 
     /// Block variant with either block or empty block
     using BlockVariantType =
-    boost::variant<std::shared_ptr<shared_model::interface::Block>,
-    std::shared_ptr<shared_model::interface::EmptyBlock>>;
+        boost::variant<std::shared_ptr<shared_model::interface::Block>,
+                       std::shared_ptr<shared_model::interface::EmptyBlock>>;
   }  // namespace interface
 }  // namespace shared_model
 
