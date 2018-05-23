@@ -76,7 +76,7 @@ TEST(RegressionTest, SequentialInitialization) {
 /**
  * @given ITF instance
  * @when instance is shutdown without blocks erase
- * @then another ITF instance can restore VSW from blockstore
+ * @then another ITF instance can restore WSV from blockstore
  */
 TEST(RegressionTest, StateRecovery) {
   auto userKeypair =
