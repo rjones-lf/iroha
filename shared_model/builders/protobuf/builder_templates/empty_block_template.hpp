@@ -11,23 +11,21 @@
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/iroha_internal/block.hpp"
-#include "interfaces/transaction.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace proto {
 
     /**
-     * Template block builder for creating new types of block builders by
-     * means of replacing template parameters
+     * Template empty block builder for creating new types of empty block
+     * builders by means of replacing template parameters
      * @tparam S -- field counter for checking that all required fields are set
      * @tparam SV -- stateless validator called when build method is invoked
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-        typename SV = validation::DefaultEmptyBlockValidator,
-        typename BT = UnsignedWrapper<proto::EmptyBlock>>
+              typename SV = validation::DefaultEmptyBlockValidator,
+              typename BT = UnsignedWrapper<proto::EmptyBlock>>
     class TemplateEmptyBlockBuilder {
      private:
       template <int, typename, typename>
@@ -83,9 +81,6 @@ namespace shared_model {
 
       BT build() {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
-
-        auto tx_number = block_.payload().transactions().size();
-        block_.mutable_payload()->set_tx_number(tx_number);
 
         auto result = EmptyBlock(iroha::protocol::Block(block_));
         auto answer = stateless_validator_.validate(result);

@@ -12,8 +12,10 @@
 namespace shared_model {
   namespace interface {
 
-      class AbstractBlock : public Signable<AbstractBlock> {
-
+    /**
+     * Parent class for Block and EmptyBlock
+     */
+    class AbstractBlock : public Signable<AbstractBlock> {
      public:
       /**
        * @return block number in the ledger
