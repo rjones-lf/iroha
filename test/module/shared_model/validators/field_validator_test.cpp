@@ -140,8 +140,7 @@ class FieldValidatorTest : public ValidatorsTest {
                               "signature",
                               "commands",
                               "quorum",
-                              "tx_hashes",
-                              "precision"}) {
+                              "tx_hashes"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
