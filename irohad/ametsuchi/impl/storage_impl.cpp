@@ -201,10 +201,9 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     expected::Result<bool, std::string> StorageImpl::createDatabaseIfNotExist(
         const std::string &dbname,
         const std::string &options_str_without_dbname) {
-      auto temp_connection =
-          std::make_unique<pqxx::lazyconnection>(options_str_without_dbname);
+      pqxx::lazyconnection temp_connection(options_str_without_dbname);
       auto transaction =
-          std::make_unique<pqxx::nontransaction>(*temp_connection);
+          std::make_unique<pqxx::nontransaction>(temp_connection);
       // check if database dbname exists
       try {
         auto result = transaction->exec(
