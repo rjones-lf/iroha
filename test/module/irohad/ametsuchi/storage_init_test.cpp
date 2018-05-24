@@ -15,19 +15,15 @@ using namespace iroha::expected;
 class StorageInitTest : public ::testing::Test {
  public:
   StorageInitTest() {
-    auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
-    auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
-    auto pg_user = std::getenv("IROHA_POSTGRES_USER");
-    auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
-    if (not pg_host) {
-      pg_opt_without_dbname_ =
-          "host=localhost port=5432 user=postgres password=mysecretpassword ";
-    } else {
-      std::stringstream ss;
-      ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-         << " password=" << pg_pass;
-      pg_opt_without_dbname_ = ss.str();
-    }
+    std::string env_var;
+    std::stringstream ss;
+    // clang-format off
+    ss << "host=" << (env_var = std::getenv("IROHA_POSTGRES_HOST") ? env_var : "localhost");
+    ss << " port=" << (env_var = std::getenv("IROHA_POSTGRES_PORT") ? env_var : "5432");
+    ss << " user=" << (env_var = std::getenv("IROHA_POSTGRES_USER") ? env_var : "postgres");
+    ss << " password=" << (env_var = std::getenv("IROHA_POSTGRES_PASSWORD") ? env_var : "mysecretpassword");
+    // clang-format on
+    pg_opt_without_dbname_ = ss.str();
     pgopt_ = pg_opt_without_dbname_ + " dbname=" + dbname_;
   }
 
