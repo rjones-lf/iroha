@@ -9,27 +9,29 @@ def mergePullRequest() {
   	return false
   }
 	// TODO: fill commit message + commit title
-	def slurper = new groovy.json.JsonSlurperClassic()
-	def commitTitle = "sample title"
-	def commitMessage = "sample message"
-	def mergeMethod = getMergeMethod()
-	
-	def jsonResponseReview = sh(script: """
-	curl -H "Authorization: token ${sorabot}" \
-			 -H "Accept: application/vnd.github.v3+json" \
-			 -X POST -d "commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}" \
-			 -w "%{http_code}\n" \
-			 https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true).trim()
-	def githubResponce = sh(script: """echo ${jsonResponseReview} | grep -E "^\\d{3}")""", returnStdout: true).trim()
-	jsonResponseReview = sh(script: """echo ${jsonResponseReview} | grep -v -E "^\\d{3}")""", returnStdout: true).trim()
-	
-	println "Responce code: ${githubResponce},  message: ${jsonResponseReview}"
-	if ( githubResponce != "200" ) {
-		return false
-	}
-	jsonResponseReview = slurper.parseText(jsonResponseReview)
-	if (jsonResponseReview.merge != "true") {
-		return false
+	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
+		def slurper = new groovy.json.JsonSlurperClassic()
+		def commitTitle = "sample title"
+		def commitMessage = "sample message"
+		def mergeMethod = getMergeMethod()
+		
+		def jsonResponseReview = sh(script: """
+		curl -H "Authorization: token ${sorabot}" \
+				 -H "Accept: application/vnd.github.v3+json" \
+				 -X POST -d "commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}" \
+				 -w "%{http_code}\n" \
+				 https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true).trim()
+		def githubResponce = sh(script: """echo ${jsonResponseReview} | grep -E "^\\d{3}")""", returnStdout: true).trim()
+		jsonResponseReview = sh(script: """echo ${jsonResponseReview} | grep -v -E "^\\d{3}")""", returnStdout: true).trim()
+		
+		println "Responce code: ${githubResponce},  message: ${jsonResponseReview}"
+		if ( githubResponce != "200" ) {
+			return false
+		}
+		jsonResponseReview = slurper.parseText(jsonResponseReview)
+		if (jsonResponseReview.merge != "true") {
+			return false
+		}
 	}
 	return true
 	
