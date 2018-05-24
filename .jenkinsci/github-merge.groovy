@@ -5,7 +5,7 @@
 
 
 def mergePullRequest() {
-  if ( ! checkMergeAcceptance() ) {
+  if ( !checkMergeAcceptance() ) {
   	return false
   }
 	// TODO: fill commit message + commit title
@@ -89,8 +89,8 @@ def checkMergeAcceptance() {
 		//   sh "echo 'Merge failed. Email of the commit does not match Jenkins user'"
 		//   return false
 		// }
-		return true
   }
+  return true
 }
 
 def getMergeMethod() {
