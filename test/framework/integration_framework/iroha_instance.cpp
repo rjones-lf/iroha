@@ -25,7 +25,8 @@ using namespace std::chrono_literals;
 
 namespace integration_framework {
 
-  IrohaInstance::IrohaInstance(bool mst_support, const std::string &block_store_path)
+  IrohaInstance::IrohaInstance(bool mst_support,
+                               const std::string &block_store_path)
       : block_store_dir_(block_store_path),
         pg_conn_(getPostgreCredsOrDefault()),
         torii_port_(11501),
@@ -83,7 +84,9 @@ namespace integration_framework {
     } else {
       std::stringstream ss;
       ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-         << " password=" << pg_pass;
+         << " password=" << pg_pass << " dbname="
+         << boost::uuids::to_string(boost::uuids::random_generator()())
+                .substr(0, 8);
       return ss.str();
     }
   }

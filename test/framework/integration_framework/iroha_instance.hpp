@@ -18,6 +18,8 @@
 #ifndef IROHA_IROHA_INSTANCE_HPP
 #define IROHA_IROHA_INSTANCE_HPP
 
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <memory>
 #include <string>
@@ -51,10 +53,14 @@ namespace integration_framework {
 
     std::shared_ptr<TestIrohad> &getIrohaInstance();
 
-    std::string getPostgreCredsOrDefault(const std::string &default_conn =
-                                             "host=localhost port=5432 "
-                                             "user=postgres "
-                                             "password=mysecretpassword");
+    std::string getPostgreCredsOrDefault(
+        const std::string &default_conn =
+            "host=localhost port=5432 "
+            "user=postgres "
+            "password=mysecretpassword "
+            "dbname=db"
+            + boost::uuids::to_string(boost::uuids::random_generator()())
+                  .substr(0, 8));
 
     std::shared_ptr<TestIrohad> instance_;
 
