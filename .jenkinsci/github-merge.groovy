@@ -18,7 +18,7 @@ def mergePullRequest() {
 		def jsonResponseReview = sh(script: """
 		curl -H "Authorization: token ${sorabot}" \
 				 -H "Accept: application/vnd.github.v3+json" \
-				 -X POST --data '{"commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}"}' \
+				 -X PUT --data '{"commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}"}' \
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
 		
 		// def githubResponce = sh(script: """echo ${jsonResponseReview} | grep -E "^\\d{3}")""", returnStdout: true).trim()
