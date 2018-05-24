@@ -241,33 +241,28 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
 
 /**
  * @given initialized mst processor
- * AND two peers
  * AND our state contains one transaction
- * AND one of peers has empty state, another - the same transaction as in our
- * state
+ * AND one peer with the same state as our
  *
  * @when received notification about new propagation
  *
- * @then check that transport invoked only for peer which state differs from
- * our
+ * @then check that transport was not invoked
  */
 TEST_F(MstProcessorTest, emptyStatePropagation) {
   // ---------------------------------| then |----------------------------------
-  EXPECT_CALL(*transport, sendState(_, _)).Times(1);
+  EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  auto first_peer = makePeer("first", "first_pubkey");
-  auto second_peer = makePeer("second", "second_pubkey");
+  auto another_peer = makePeer("another", "another_pubkey");
 
-  auto first_peer_state = MstState::empty();
-  first_peer_state += makeTx(1);
+  auto another_peer_state = MstState::empty();
+  another_peer_state += makeTx(1);
 
-  storage->apply(first_peer, first_peer_state);
-  ASSERT_TRUE(storage->getDiffState(first_peer, time_now).isEmpty());
-  ASSERT_TRUE(not storage->getDiffState(second_peer, time_now).isEmpty());
+  storage->apply(another_peer, another_peer_state);
+  ASSERT_TRUE(storage->getDiffState(another_peer, time_now).isEmpty());
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      first_peer, second_peer};
+      another_peer};
   propagation_subject.get_subscriber().on_next(peers);
 }
