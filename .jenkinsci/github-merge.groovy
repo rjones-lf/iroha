@@ -24,8 +24,8 @@ def mergePullRequest() {
 		// def githubResponce = sh(script: """echo ${jsonResponseReview} | grep -E "^\\d{3}")""", returnStdout: true).trim()
 		// jsonResponseReview = sh(script: """echo ${jsonResponseReview} | grep -v -E "^\\d{3}")""", returnStdout: true).trim()
 		
-		// println ${githubResponce}
-		println ${jsonResponseReview}
+		echo jsonResponseReview
+		
 
 		// if ( githubResponce != "200" ) {
 		// 	return false
