@@ -13,6 +13,24 @@ using namespace iroha::ametsuchi;
 using namespace iroha::expected;
 
 class StorageInitTest : public ::testing::Test {
+ public:
+  StorageInitTest() {
+    auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
+    auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
+    auto pg_user = std::getenv("IROHA_POSTGRES_USER");
+    auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
+    if (not pg_host) {
+      pg_opt_without_dbname_ =
+          "host=localhost port=5432 user=postgres password=mysecretpassword ";
+    } else {
+      std::stringstream ss;
+      ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
+         << " password=" << pg_pass;
+      pg_opt_without_dbname_ = ss.str();
+    }
+    pgopt_ = pg_opt_without_dbname_ + " dbname=" + dbname_;
+  }
+
  protected:
   std::string block_store_path =
       (boost::filesystem::temp_directory_path() / "block_store").string();
@@ -22,9 +40,8 @@ class StorageInitTest : public ::testing::Test {
       + boost::uuids::to_string(boost::uuids::random_generator()())
             .substr(0, 8);
 
-  std::string pg_opt_without_dbname_ =
-      "host=localhost port=5432 user=postgres password=mysecretpassword";
-  std::string pgopt_ = pg_opt_without_dbname_ + " dbname=" + dbname_;
+  std::string pg_opt_without_dbname_;
+  std::string pgopt_;
 
   void TearDown() override {
     auto temp_connection =
