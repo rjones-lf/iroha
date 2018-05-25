@@ -8,12 +8,17 @@
 // - "system_" for system tests, respectively.
 
 def chooseTestType() {
-	if ( params.Merge_PR || env.IS_MERGE_ACCEPTED == 'true' ) {
+	if ( params.Merge_PR && env.NODE_NAME.contains('x86_64') ) {
 		return "(module|integration|system|regression)*"
 	}
-	if ( params.Nightly )
-	{
+	if ( params.Merge_PR && !env.NODE_NAME.contains('x86_64') ) {
+		return "module*"
+	}
+	if ( params.Nightly && env.NODE_NAME.contains('x86_64') ) {
 		return "*"
+	}
+	if ( params.Nightly && !env.NODE_NAME.contains('x86_64') ) {
+		return "(module|integration|system|cmake|regression)*"
 	}
 	return "module*"
 }

@@ -19,12 +19,12 @@ You can find the build log attached to this email
 		return
 	}
 	// merge commit build results
-	if ( env.IS_MERGE_ACCEPTED == "true" ) {
+	if ( params.Merge_PR ) {
 		if ( currentBuild.currentResult == "SUCCESS" ) {
-			mergeMessage = "Merged: true"
+			mergeMessage = "Merged to ${env.CHANGE_TARGET}: true"
 		}
 		else {
-			mergeMessage = "Merged: false"
+			mergeMessage = "Merged to ${env.CHANGE_TARGET}: false"
 		}
 
 		if ( env.CHANGE_TARGET == 'master' ) {

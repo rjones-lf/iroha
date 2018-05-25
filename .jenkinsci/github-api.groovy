@@ -1,9 +1,5 @@
 #!/usr/bin/env groovy
 
-//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.6.0')
-//import groovyx.net.http.*
-
-
 def mergePullRequest() {
   if ( !checkMergeAcceptance() ) {
   	return false
@@ -32,33 +28,6 @@ def mergePullRequest() {
 		}
 	}
 	return true
-	
-	// def github = new HTTPBuilder( 'https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge' )
-
-	// http.request (POST, JSON){ req ->
-	// 	body = [
-	// 		"commit_title" : "${commitTitle}",
-	// 		"commit_message" : "${commitMessage}",
-	// 		"sha" : "${env.GIT_COMMIT}",
-	// 		"merge_method" : "${mergeMethod}"
-	// 	]
-
-	// 	headers.'Authorization' = "token ${sorabot}"
-	// 	headers.'Accept' = "application/vnd.github.v3+json"
-
-	// 	// success response handler
-	// 	response.success = { resp, json ->
-	// 		println ${json.message}
-	// 		if ( ${json.merged} == 'true' ) { return true }
-	// 		else { return false }
-	// 	}
-
-	// 	response.failure = { resp, json ->
-	// 		println ${json.message}
-	// 		println "Unexpected error: ${resp.statusLine.statusCode}"
-	// 		return false
-	// 	}
-	// }
 }
 
 def checkMergeAcceptance() {
@@ -113,6 +82,9 @@ def getPullRequestReviewers() {
 	def jsonResponseReview = sh(script: """
 		curl -H "Authorization: token ${sorabot}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
 		""", returnStdout: true).trim()
+
+	echo jsonResponseReview
+	echo jsonResponseReviewers
 	jsonResponseReviewers = slurper.parseText(jsonResponseReviewers)
 	if (jsonResponseReviewers.size() > 0) {
 	  jsonResponseReviewers.users.each {
@@ -127,7 +99,6 @@ def getPullRequestReviewers() {
 	  	}
 	  }
 	}
-	echo ghUsersList
 	return ghUsersList
 }
 
