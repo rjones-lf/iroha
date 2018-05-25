@@ -497,7 +497,7 @@ pipeline {
       when {
         allOf {
           expression { return env.CHANGE_ID }
-          expression { return GIT_PREVIOUS_COMMIT }
+          expression { return env.GIT_PREVIOUS_COMMIT }
         }
       }
       steps {
@@ -517,7 +517,7 @@ pipeline {
       when {
         anyOf {
           expression { return params.MERGE_PR }
-          expression { return IS_MERGE_ACCEPTED == "true" }
+          expression { return env.IS_MERGE_ACCEPTED == "true" }
         }
       }
       parallel {
@@ -579,7 +579,7 @@ pipeline {
       when {
         anyOf {
           expression { return params.MERGE_PR }
-          expression { return IS_MERGE_ACCEPTED == "true" }
+          expression { return env.IS_MERGE_ACCEPTED == "true" }
         }
       }
       parallel {
