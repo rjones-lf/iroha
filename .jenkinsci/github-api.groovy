@@ -8,7 +8,6 @@ def mergePullRequest() {
   if ( !checkMergeAcceptance() ) {
   	return false
   }
-	// TODO: fill commit message + commit title
 	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
 		def slurper = new groovy.json.JsonSlurperClassic()
 		def commitTitle = ""
