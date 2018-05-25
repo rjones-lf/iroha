@@ -113,7 +113,7 @@ def writePullRequestComment() {
 			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
 			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
 			""", returnStdout: true).trim()
-		def githubResponce = sh(script:'printf ${jsonResponseComment} | grep -E "\\d{3}', returnStdout: true).trim()
+		def githubResponce = sh(script:'printf ${jsonResponseComment} | grep -E "\\d{3}"', returnStdout: true).trim()
 		if (githubResponce == "201") {
 			return true
 		}
