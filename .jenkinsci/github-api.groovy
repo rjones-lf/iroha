@@ -9,16 +9,16 @@ def mergePullRequest() {
 		def commitTitle = ""
 		def commitMessage = ""
 		def mergeMethod = getMergeMethod()
-		
 		def jsonResponseMerge = sh(script: """
 		curl -H "Authorization: token ${sorabot}" \
 				 -H "Accept: application/vnd.github.v3+json" \
 				 -X PUT --data '{"commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}"}' \
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
-		
-		def githubResponce = sh(script:'printf ${jsonResponseMerge} | grep -E "\\d{3}', returnStdout: true).trim()
-		jsonResponseMerge = sh(script:'printf ${jsonResponseMerge} | grep -v -E "\\d{3}', returnStdout: true).trim()
-		
+		def githubResponce = sh(script:"""echo -ne ${jsonResponseMerge} | cut -d '}' -f2 """, returnStdout: true).trim()
+		jsonResponseMerge = sh(script:"""echo -ne ${jsonResponseMerge} | cut -d '}' -f1 """, returnStdout: true).trim()
+		if (githubResponce ==~ "201") {
+			return true
+		}
 		if ( githubResponce != "200" ) {
 			return false
 		}
@@ -82,9 +82,6 @@ def getPullRequestReviewers() {
 	def jsonResponseReview = sh(script: """
 		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
 		""", returnStdout: true).trim()
-
-	// echo jsonResponseReview
-	// echo jsonResponseReviewers
 	jsonResponseReviewers = slurper.parseText(jsonResponseReviewers)
 	if (jsonResponseReviewers.size() > 0) {
 	  jsonResponseReviewers.users.each {
@@ -101,7 +98,6 @@ def getPullRequestReviewers() {
 	}
 	return ghUsersList
 }
-
 // comment to github issues with reviewers mentions with build status
 def writePullRequestComment() {
 	def ghUsersList = getPullRequestReviewers()
@@ -113,8 +109,8 @@ def writePullRequestComment() {
 			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
 			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
 			""", returnStdout: true).trim()
-		def githubResponce = sh(script:'printf ${jsonResponseComment} | grep -E "\\d{3}"', returnStdout: true).trim()
-		if (githubResponce == "201") {
+		def githubResponce = sh(script:"""echo -ne ${jsonResponseComment} | cut -d '}' -f2 """, returnStdout: true).trim()
+		if (githubResponce ==~ "201") {
 			return true
 		}
 	}
