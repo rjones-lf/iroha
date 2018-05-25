@@ -5,6 +5,8 @@ def doJavaBindings(buildType=Release) {
   def commit = env.GIT_COMMIT
   def artifactsPath = sprintf('%1$s/java-bindings-%2$s-%3$s-%4$s.zip', 
     [currentPath, buildType, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
+  // do not use preinstalled libed25519
+  sh "rm -rf /usr/local/include/ed25519*; unlink /usr/local/lib/libed25519.so; rm -f /usr/local/lib/libed25519.so.1.2.2"
   sh """
     cmake \
       -H. \
