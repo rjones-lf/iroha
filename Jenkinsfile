@@ -1,6 +1,6 @@
 // Overall pipeline looks like the following
 //
-// |--Stop excess jobs--|----BUILD----|--Pre-Coverage--|------Test------|-Post Coverage-|-Build rest-|--Publish--|
+// |--Pre-build jobs--|----BUILD----|--Pre-Coverage--|------Test------|-Post Coverage-|-Build rest-|-Pre-merge request-|-Pre-merge build-|-Pre-merge test-|-Post step-|
 //                      |             |                |                |               |
 //                      |-> Linux     |-> lcov         |-> Linux        |-> lcov        |-> gen docs
 //                      |-> ARMv7                      |-> ARMv7        |-> SonarQube   |-> bindings
@@ -627,26 +627,20 @@ pipeline {
     }
   }
   post {
-    // TODO: learn about of order: always in post-step executes before 
     success {
       script {
         // merge pull request if everything is ok
-        def merge = load ".jenkinsci/github-merge.groovy"
-        currentBuild.result = merge.mergePullRequest() ? "SUCCESS" : "FAILURE"
+        if ( env.IS_MERGE_ACCEPTED == "true" || params.MERGE_PR ) {
+          def merge = load ".jenkinsci/github-api.groovy"
+          currentBuild.result = merge.mergePullRequest() ? "SUCCESS" : "FAILURE"
+        }
       }
     }
     cleanup {
       script {
-        // TODO: prepare email body content somehow (e.g. using class)
-        sh "echo ${currentBuild.result}"
-      }
-      emailext( subject: '$DEFAULT_SUBJECT',
-                body: '$DEFAULT_CONTENT',
-                attachLog: true,
-                compressLog: true,
-                to: "${GIT_COMMITER_EMAIL}"
-      )
-      script {
+        def notify = load ".jenkinsci/notifications.groovy"
+        notify.notifyBuildResults()
+
         if ( params.Linux ) {
           node ('x86_64_aws_test') {
             def post = load ".jenkinsci/linux-post-step.groovy"
