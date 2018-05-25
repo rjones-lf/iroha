@@ -9,10 +9,10 @@
 
 def chooseTestType() {
 	if ( params.Merge_PR && env.NODE_NAME.contains('x86_64') ) {
-		return "(module|integration|system|regression)*"
+		return "(module|integration|system|cmake|regression)*"
 	}
 	if ( params.Merge_PR && !env.NODE_NAME.contains('x86_64') ) {
-		return "module*"
+		return ""
 	}
 	if ( params.Nightly && env.NODE_NAME.contains('x86_64') ) {
 		return "*"
