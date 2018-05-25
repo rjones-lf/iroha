@@ -16,15 +16,15 @@ namespace shared_model {
             return interface::types::PubkeyType(create_account_.main_pubkey());
           }} {}
 
-    template CreateAccount::CreateAccount(iroha::protocol::Command &command);
-    template CreateAccount::CreateAccount(
-        const iroha::protocol::Command &command);
+    template CreateAccount::CreateAccount(CreateAccount::TransportType &);
+    template CreateAccount::CreateAccount(const CreateAccount::TransportType &);
+    template CreateAccount::CreateAccount(CreateAccount::TransportType &&);
 
     CreateAccount::CreateAccount(const CreateAccount &o)
-        : CreateAccount(o.proto_) {}
+        : CreateAccount(*o.proto_) {}
 
     CreateAccount::CreateAccount(CreateAccount &&o) noexcept
-        : CreateAccount(std::move(o.proto_)) {}
+        : CreateAccount(std::move(*o.proto_)) {}
 
     const interface::types::PubkeyType &CreateAccount::pubkey() const {
       return *pubkey_;

@@ -16,15 +16,17 @@ namespace shared_model {
               [this] { return proto::Amount(add_asset_quantity_.amount()); }} {}
 
     template AddAssetQuantity::AddAssetQuantity(
-        iroha::protocol::Command &command);
+        AddAssetQuantity::TransportType &);
     template AddAssetQuantity::AddAssetQuantity(
-        const iroha::protocol::Command &command);
+        const AddAssetQuantity::TransportType &);
+    template AddAssetQuantity::AddAssetQuantity(
+        AddAssetQuantity::TransportType &&);
 
     AddAssetQuantity::AddAssetQuantity(const AddAssetQuantity &o)
-        : AddAssetQuantity(o.proto_) {}
+        : AddAssetQuantity(*o.proto_) {}
 
     AddAssetQuantity::AddAssetQuantity(AddAssetQuantity &&o) noexcept
-        : AddAssetQuantity(std::move(o.proto_)) {}
+        : AddAssetQuantity(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &AddAssetQuantity::accountId() const {
       return add_asset_quantity_.account_id();

@@ -23,12 +23,13 @@ namespace shared_model {
             return loadCommand<ProtoCommandListType>(*proto_);
           }} {}
 
-    template Command::Command(iroha::protocol::Command &command);
-    template Command::Command(const iroha::protocol::Command &command);
+    template Command::Command(Command::TransportType &);
+    template Command::Command(const Command::TransportType &);
+    template Command::Command(Command::TransportType &&);
 
-    Command::Command(const Command &o) : Command(o.proto_) {}
+    Command::Command(const Command &o) : Command(*o.proto_) {}
 
-    Command::Command(Command &&o) noexcept : Command(std::move(o.proto_)) {}
+    Command::Command(Command &&o) noexcept : Command(std::move(*o.proto_)) {}
 
     const Command::CommandVariantType &Command::get() const {
       return *variant_;

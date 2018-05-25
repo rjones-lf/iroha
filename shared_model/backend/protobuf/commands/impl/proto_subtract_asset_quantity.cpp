@@ -17,16 +17,18 @@ namespace shared_model {
           }} {}
 
     template SubtractAssetQuantity::SubtractAssetQuantity(
-        iroha::protocol::Command &command);
+        SubtractAssetQuantity::TransportType &);
     template SubtractAssetQuantity::SubtractAssetQuantity(
-        const iroha::protocol::Command &command);
+        const SubtractAssetQuantity::TransportType &);
+    template SubtractAssetQuantity::SubtractAssetQuantity(
+        SubtractAssetQuantity::TransportType &&);
 
     SubtractAssetQuantity::SubtractAssetQuantity(const SubtractAssetQuantity &o)
-        : SubtractAssetQuantity(o.proto_) {}
+        : SubtractAssetQuantity(*o.proto_) {}
 
     SubtractAssetQuantity::SubtractAssetQuantity(
         SubtractAssetQuantity &&o) noexcept
-        : SubtractAssetQuantity(std::move(o.proto_)) {}
+        : SubtractAssetQuantity(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &SubtractAssetQuantity::accountId()
         const {

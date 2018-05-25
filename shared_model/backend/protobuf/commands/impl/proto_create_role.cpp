@@ -25,13 +25,14 @@ namespace shared_model {
                 });
           }} {}
 
-    template CreateRole::CreateRole(iroha::protocol::Command &command);
-    template CreateRole::CreateRole(const iroha::protocol::Command &command);
+    template CreateRole::CreateRole(CreateRole::TransportType &);
+    template CreateRole::CreateRole(const CreateRole::TransportType &);
+    template CreateRole::CreateRole(CreateRole::TransportType &&);
 
-    CreateRole::CreateRole(const CreateRole &o) : CreateRole(o.proto_) {}
+    CreateRole::CreateRole(const CreateRole &o) : CreateRole(*o.proto_) {}
 
     CreateRole::CreateRole(CreateRole &&o) noexcept
-        : CreateRole(std::move(o.proto_)) {}
+        : CreateRole(std::move(*o.proto_)) {}
 
     const interface::types::RoleIdType &CreateRole::roleName() const {
       return create_role_.role_name();

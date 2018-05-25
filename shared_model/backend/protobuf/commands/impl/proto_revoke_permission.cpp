@@ -14,15 +14,17 @@ namespace shared_model {
           revoke_permission_{proto_->revoke_permission()} {}
 
     template RevokePermission::RevokePermission(
-        iroha::protocol::Command &command);
+        RevokePermission::TransportType &);
     template RevokePermission::RevokePermission(
-        const iroha::protocol::Command &command);
+        const RevokePermission::TransportType &);
+    template RevokePermission::RevokePermission(
+        RevokePermission::TransportType &&);
 
     RevokePermission::RevokePermission(const RevokePermission &o)
-        : RevokePermission(o.proto_) {}
+        : RevokePermission(*o.proto_) {}
 
     RevokePermission::RevokePermission(RevokePermission &&o) noexcept
-        : RevokePermission(std::move(o.proto_)) {}
+        : RevokePermission(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &RevokePermission::accountId() const {
       return revoke_permission_.account_id();

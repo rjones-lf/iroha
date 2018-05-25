@@ -14,15 +14,15 @@ namespace shared_model {
           transfer_asset_{proto_->transfer_asset()},
           amount_{[this] { return proto::Amount(transfer_asset_.amount()); }} {}
 
-    template TransferAsset::TransferAsset(iroha::protocol::Command &command);
-    template TransferAsset::TransferAsset(
-        const iroha::protocol::Command &command);
+    template TransferAsset::TransferAsset(TransferAsset::TransportType &);
+    template TransferAsset::TransferAsset(const TransferAsset::TransportType &);
+    template TransferAsset::TransferAsset(TransferAsset::TransportType &&);
 
     TransferAsset::TransferAsset(const TransferAsset &o)
-        : TransferAsset(o.proto_) {}
+        : TransferAsset(*o.proto_) {}
 
     TransferAsset::TransferAsset(TransferAsset &&o) noexcept
-        : TransferAsset(std::move(o.proto_)) {}
+        : TransferAsset(std::move(*o.proto_)) {}
 
     const interface::Amount &TransferAsset::amount() const {
       return *amount_;

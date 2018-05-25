@@ -16,16 +16,17 @@ namespace shared_model {
             return interface::types::PubkeyType(remove_signatory_.public_key());
           }} {}
 
+    template RemoveSignatory::RemoveSignatory(RemoveSignatory::TransportType &);
     template RemoveSignatory::RemoveSignatory(
-        iroha::protocol::Command &command);
+        const RemoveSignatory::TransportType &);
     template RemoveSignatory::RemoveSignatory(
-        const iroha::protocol::Command &command);
+        RemoveSignatory::TransportType &&);
 
     RemoveSignatory::RemoveSignatory(const RemoveSignatory &o)
-        : RemoveSignatory(o.proto_) {}
+        : RemoveSignatory(*o.proto_) {}
 
     RemoveSignatory::RemoveSignatory(RemoveSignatory &&o) noexcept
-        : RemoveSignatory(std::move(o.proto_)) {}
+        : RemoveSignatory(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &RemoveSignatory::accountId() const {
       return remove_signatory_.account_id();

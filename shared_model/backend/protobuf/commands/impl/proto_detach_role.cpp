@@ -13,13 +13,14 @@ namespace shared_model {
         : CopyableProto(std::forward<CommandType>(command)),
           detach_role_{proto_->detach_role()} {}
 
-    template DetachRole::DetachRole(iroha::protocol::Command &command);
-    template DetachRole::DetachRole(const iroha::protocol::Command &command);
+    template DetachRole::DetachRole(DetachRole::TransportType &);
+    template DetachRole::DetachRole(const DetachRole::TransportType &);
+    template DetachRole::DetachRole(DetachRole::TransportType &&);
 
-    DetachRole::DetachRole(const DetachRole &o) : DetachRole(o.proto_) {}
+    DetachRole::DetachRole(const DetachRole &o) : DetachRole(*o.proto_) {}
 
     DetachRole::DetachRole(DetachRole &&o) noexcept
-        : DetachRole(std::move(o.proto_)) {}
+        : DetachRole(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &DetachRole::accountId() const {
       return detach_role_.account_id();

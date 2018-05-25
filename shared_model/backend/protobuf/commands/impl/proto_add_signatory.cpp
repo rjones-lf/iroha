@@ -16,15 +16,15 @@ namespace shared_model {
             return interface::types::PubkeyType(add_signatory_.public_key());
           }} {}
 
-    template AddSignatory::AddSignatory(iroha::protocol::Command &command);
-    template AddSignatory::AddSignatory(
-        const iroha::protocol::Command &command);
+    template AddSignatory::AddSignatory(AddSignatory::TransportType &);
+    template AddSignatory::AddSignatory(const AddSignatory::TransportType &);
+    template AddSignatory::AddSignatory(AddSignatory::TransportType &&);
 
     AddSignatory::AddSignatory(const AddSignatory &o)
-        : AddSignatory(o.proto_) {}
+        : AddSignatory(*o.proto_) {}
 
     AddSignatory::AddSignatory(AddSignatory &&o) noexcept
-        : AddSignatory(std::move(o.proto_)) {}
+        : AddSignatory(std::move(*o.proto_)) {}
 
     const interface::types::AccountIdType &AddSignatory::accountId() const {
       return add_signatory_.account_id();

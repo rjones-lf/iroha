@@ -14,12 +14,13 @@ namespace shared_model {
           add_peer_{proto_->add_peer()},
           peer_{[this] { return proto::Peer(add_peer_.peer()); }} {}
 
-    template AddPeer::AddPeer(iroha::protocol::Command &command);
-    template AddPeer::AddPeer(const iroha::protocol::Command &command);
+    template AddPeer::AddPeer(AddPeer::TransportType &);
+    template AddPeer::AddPeer(const AddPeer::TransportType &);
+    template AddPeer::AddPeer(AddPeer::TransportType &&);
 
-    AddPeer::AddPeer(const AddPeer &o) : AddPeer(o.proto_) {}
+    AddPeer::AddPeer(const AddPeer &o) : AddPeer(*o.proto_) {}
 
-    AddPeer::AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(o.proto_)) {}
+    AddPeer::AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(*o.proto_)) {}
 
     const interface::Peer &AddPeer::peer() const {
       return *peer_;
