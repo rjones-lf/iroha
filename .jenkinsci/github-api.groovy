@@ -83,8 +83,8 @@ def getPullRequestReviewers() {
 		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
 		""", returnStdout: true).trim()
 
-	echo jsonResponseReview
-	echo jsonResponseReviewers
+	// echo jsonResponseReview
+	// echo jsonResponseReviewers
 	jsonResponseReviewers = slurper.parseText(jsonResponseReviewers)
 	if (jsonResponseReviewers.size() > 0) {
 	  jsonResponseReviewers.users.each {
@@ -95,7 +95,7 @@ def getPullRequestReviewers() {
 	if (jsonResponseReview.size() > 0) {
 	  jsonResponseReview.each {
 	  	if ("${it.state}" == "APPROVED") {
-	  		ghUsersList = ghUsersList.concat("@${it.login} ")
+	  		ghUsersList = ghUsersList.concat("@${it.user.login} ")
 	  	}
 	  }
 	}
