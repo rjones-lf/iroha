@@ -72,7 +72,6 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   rxcpp::subjects::subject<Commit> commit_notifier_;
 };
 
-// TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {

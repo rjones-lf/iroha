@@ -46,7 +46,6 @@ using namespace iroha::torii;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
 
-// TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {

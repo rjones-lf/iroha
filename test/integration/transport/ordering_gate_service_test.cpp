@@ -41,7 +41,6 @@ using ::testing::Return;
 
 using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 
-// TODO: refactor services to allow dynamic port binding IR-741
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
