@@ -116,7 +116,7 @@ pipeline {
               expression { return params.ARMv7 }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
                 expression { return params.Merge_PR }
               }
@@ -144,7 +144,7 @@ pipeline {
               expression { return params.ARMv8 }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
                 expression { return params.Merge_PR }
               }
@@ -171,11 +171,11 @@ pipeline {
             anyOf {
               allOf {
                 expression { return env.CHANGE_ID }
-                not { expression { return GIT_PREVIOUS_COMMIT } }
+                not { expression { return env.GIT_PREVIOUS_COMMIT } }
               }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
                 expression { return params.Merge_PR }
               }
@@ -205,17 +205,17 @@ pipeline {
           expression { params.Coverage }  // by request
           allOf {
             expression { return env.CHANGE_ID }
-            not { expression { return GIT_PREVIOUS_COMMIT } }
+            not { expression { return env.GIT_PREVIOUS_COMMIT } }
           }
           allOf {
             expression { return env.CHANGE_ID }
-            expression { return GIT_PREVIOUS_COMMIT }
+            expression { return env.GIT_PREVIOUS_COMMIT }
             expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
             expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
           }
           allOf {
-            expression { params.BUILD_TYPE == 'Debug' }
-            expression { GIT_LOCAL_BRANCH ==~ /master/ }
+            expression { return params.BUILD_TYPE == 'Debug' }
+            expression { return env.GIT_LOCAL_BRANCH ==~ /master/ }
           }
         }
       }
@@ -253,9 +253,9 @@ pipeline {
           expression { return params.BUILD_TYPE == "Debug"}
           allOf {
             expression { return env.CHANGE_ID }
-            not { expression { return GIT_PREVIOUS_COMMIT } }
+            not { expression { return env.GIT_PREVIOUS_COMMIT } }
             expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-            expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
+            expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
           }
         }
       }
@@ -267,9 +267,9 @@ pipeline {
               expression { return params.Linux }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-                expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
+                expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
           }
@@ -289,9 +289,9 @@ pipeline {
               expression { return params.ARMv7 }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-                expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
+                expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
           }
@@ -311,9 +311,9 @@ pipeline {
               expression { return params.ARMv8 }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-                expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
+                expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
           }
@@ -332,11 +332,11 @@ pipeline {
             anyOf {
               allOf {
                 expression { return env.CHANGE_ID }
-                not { expression { return GIT_PREVIOUS_COMMIT } }
+                not { expression { return env.GIT_PREVIOUS_COMMIT } }
               }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
                 expression { return params.Merge_PR }
               }
@@ -360,17 +360,17 @@ pipeline {
           expression { params.Coverage }  // by request
           allOf {
             expression { return env.CHANGE_ID }
-            not { expression { return GIT_PREVIOUS_COMMIT } }
+            not { expression { return env.GIT_PREVIOUS_COMMIT } }
           }
           allOf {
             expression { return env.CHANGE_ID }
-            expression { return GIT_PREVIOUS_COMMIT }
+            expression { return env.GIT_PREVIOUS_COMMIT }
             expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-            expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
+            expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
           }
           allOf {
-            expression { params.BUILD_TYPE == 'Debug' }
-            expression { GIT_LOCAL_BRANCH ==~ /master/ }
+            expression { return params.BUILD_TYPE == 'Debug' }
+            expression { return env.GIT_LOCAL_BRANCH ==~ /master/ }
           }
         }
       }
@@ -409,16 +409,16 @@ pipeline {
               expression { params.Coverage }  // by request
               allOf {
                 expression { return env.CHANGE_ID }
-                not { expression { return GIT_PREVIOUS_COMMIT } }
+                not { expression { return env.GIT_PREVIOUS_COMMIT } }
               }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
-                expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
+                expression { return env.GIT_PREVIOUS_COMMIT }
+                expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
               allOf {
-                expression { params.BUILD_TYPE == 'Debug' }
-                expression { GIT_LOCAL_BRANCH ==~ /master/ }
+                expression { return params.BUILD_TYPE == 'Debug' }
+                expression { return env.GIT_LOCAL_BRANCH ==~ /master/ }
               }
             }
           } 
@@ -456,8 +456,8 @@ pipeline {
         stage('Build release') {
           when {
             allOf {
-              expression { params.BUILD_TYPE == 'Debug' }
-              expression { return GIT_LOCAL_BRANCH ==~ /(develop|master|trunk)/ }
+              expression { return params.BUILD_TYPE == 'Debug' }
+              expression { return env.GIT_LOCAL_BRANCH ==~ /(develop|master|trunk)/ }
             }
           }
           steps{
@@ -517,9 +517,9 @@ pipeline {
               expression { return params.AndroidBindings }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
-                expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
+                expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
               }
             }
           }

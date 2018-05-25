@@ -45,7 +45,7 @@ You can find the build log attached to this email
 		def notify = load ".jenkinsci/github-api.groovy"
 		notify.writePullRequestComment()
 	}
-  
+  return
 }
 
 def sendEmail(content, to) {
