@@ -108,7 +108,7 @@ namespace iroha {
      * @return State that provide difference between left and right states
      * axiom operators:
      * A + B == B + A
-     * A - B == A + (B - A)
+     * A + B == B + (A - B)
      */
     MstState operator-(const MstState &rhs) const;
 
