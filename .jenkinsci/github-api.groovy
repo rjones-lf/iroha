@@ -16,10 +16,7 @@ def mergePullRequest() {
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
 		def githubResponce = sh(script:"""echo -ne ${jsonResponseMerge} | cut -d '}' -f2 """, returnStdout: true).trim()
 		jsonResponseMerge = sh(script:"""echo -ne ${jsonResponseMerge} | cut -d '}' -f1 """, returnStdout: true).trim()
-		if (githubResponce ==~ "201") {
-			return true
-		}
-		if ( githubResponce != "200" ) {
+		if ( githubResponce !=~ "200" ) {
 			return false
 		}
 		jsonResponseMerge = slurper.parseText(jsonResponseMerge)
