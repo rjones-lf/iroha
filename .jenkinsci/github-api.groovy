@@ -77,10 +77,10 @@ def getPullRequestReviewers() {
 	// there is no github API that allows to get all reviewers for the PR. 
 	// thus we use github API twice to request for reviews and requested reviewers. afterwards, results are concatenated with @
 	def jsonResponseReviewers = sh(script: """
-		curl -H "Authorization: token ${sorabot}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/requested_reviewers
+		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/requested_reviewers
 		""", returnStdout: true).trim()
 	def jsonResponseReview = sh(script: """
-		curl -H "Authorization: token ${sorabot}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
+		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
 		""", returnStdout: true).trim()
 
 	echo jsonResponseReview
@@ -106,12 +106,12 @@ def getPullRequestReviewers() {
 def writePullRequestComment() {
 	def ghUsersList = getPullRequestReviewers()
 	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
-  	def slurper = new groovy.json.JsonSlurperClassic()
-  	def jsonResponseComment = sh(script: """
-  		curl -H "Authorization: token ${sorabot}" \
-  		-H "Accept: application/vnd.github.v3+json" \
-  		-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
-  		-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
+		def slurper = new groovy.json.JsonSlurperClassic()
+		def jsonResponseComment = sh(script: """
+			curl -H "Authorization: token ${sorabot}" \
+			-H "Accept: application/vnd.github.v3+json" \
+			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
+			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
 			""", returnStdout: true).trim()
 		def githubResponce = sh(script:'printf ${jsonResponseComment} | grep -E "\\d{3}', returnStdout: true).trim()
 		if (githubResponce == "201") {
