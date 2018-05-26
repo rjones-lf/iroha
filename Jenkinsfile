@@ -88,7 +88,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }
               }
             }
@@ -117,7 +117,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }
               }
             }
@@ -145,7 +145,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }
               }
             }
@@ -176,7 +176,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }
               }
               expression { return params.MacOS }
@@ -210,7 +210,7 @@ pipeline {
           allOf {
             expression { return env.CHANGE_ID }
             expression { return env.GIT_PREVIOUS_COMMIT }
-            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
             expression { params.Merge_PR }  // merging PR (allowed only if it's a pull request)
           }
           allOf {
@@ -254,7 +254,7 @@ pipeline {
           allOf {
             expression { return env.CHANGE_ID }
             not { expression { return env.GIT_PREVIOUS_COMMIT } }
-            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
             expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
           }
         }
@@ -268,7 +268,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
@@ -290,7 +290,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
@@ -312,7 +312,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
               }
             }
@@ -337,7 +337,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }
               }
               expression { return params.MacOS }
@@ -365,7 +365,7 @@ pipeline {
           allOf {
             expression { return env.CHANGE_ID }
             expression { return env.GIT_PREVIOUS_COMMIT }
-            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+            expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
             expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request)
           }
           allOf {
@@ -518,7 +518,7 @@ pipeline {
               allOf {
                 expression { return env.CHANGE_ID }
                 expression { return env.GIT_PREVIOUS_COMMIT }
-                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
+                expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk|temp)/ }
                 expression { return params.Merge_PR }  // merging PR (allowed only if it's a pull request commit)
               }
             }
