@@ -639,6 +639,8 @@ pipeline {
             post.linuxPostStep()
           }
         }
+
+        sh """echo "Build duration: ${currentBuild.durationString}" """
       }
     }
   }
