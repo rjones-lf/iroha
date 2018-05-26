@@ -14,7 +14,6 @@ def mergePullRequest() {
 				 -H "Accept: application/vnd.github.v3+json" \
 				 -X PUT --data '{"commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}"}' \
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
-		// TODO: fix parsing of github responce code and json
 		def githubResponce = sh(script:"""printf '%s\n' "${jsonResponseMerge}" | tail -n 1""", returnStdout: true).trim()
 		//jsonResponseMerge = sh(script:"""printf '%s\n' "${jsonResponseMerge}" | cut -d '}' -f1 """, returnStdout: true).trim()
 		if ( ! ( githubResponce ==~ "200" ) ) {
@@ -107,7 +106,6 @@ def writePullRequestComment() {
 			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
 			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
 			""", returnStdout: true).trim()
-		// TODO: fix parsing of github responce code and json
 		def githubResponce = sh(script:"""printf '%s\n' "${jsonResponseComment}" | tail -n1 """, returnStdout: true).trim()
 		if (githubResponce ==~ "201") {
 			return true
