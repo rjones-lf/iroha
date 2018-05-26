@@ -15,13 +15,13 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
   if (agentType == 'Darwin') {
     shaSumBinary = 'shasum -a 256'
     md5SumBinary = 'md5 -r'
-    gpgKeyBinary = gpgKeyBinary = 'GPG_TTY=\$(tty) gpg --pinentry-mode loopback --armor --detach-sign --no-tty --batch --yes --passphrase-fd 0'
+    gpgKeyBinary = 'GPG_TTY=\$(tty) gpg --pinentry-mode loopback --armor --detach-sign --no-tty --batch --yes --passphrase-fd 0'
   }
   sh "> \$(pwd)/batch.txt"
 
   withCredentials([file(credentialsId: 'ci_gpg_privkey', variable: 'CI_GPG_PRIVKEY'), string(credentialsId: 'ci_gpg_masterkey', variable: 'CI_GPG_MASTERKEY')]) {
 
-    sh "gpg --yes --batch --no-tty --import ${CI_GPG_PRIVKEY}"
+    sh "gpg --yes --batch --no-tty --import ${CI_GPG_PRIVKEY} || true"
 
     filePathsConverted.each {
       sh "echo put ${it} $uploadPath >> \$(pwd)/batch.txt;"
@@ -52,3 +52,4 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['artifact.soramitsu.
 }
 
 return this
+
