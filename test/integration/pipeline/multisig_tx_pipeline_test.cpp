@@ -76,7 +76,7 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
       baseTx().setAccountQuorum(kUserId, kSignatories).quorum(kSignatories + 1);
   auto user_tx = makeMstUser();
 
-  IntegrationTestFramework(1, [](auto &i) { i.done(); }, true)
+  IntegrationTestFramework(1, {}, [](auto &i) { i.done(); }, true)
       .setInitialState(kAdminKeypair)
       .sendTx(user_tx)
       .skipBlock()
