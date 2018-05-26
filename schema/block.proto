@@ -13,6 +13,7 @@ message Header {
     repeated Command commands = 1;
     string creator_account_id = 2;
     uint64 created_time = 3;
+    uint32 quorum = 4;
    }
 
   Payload payload = 1;

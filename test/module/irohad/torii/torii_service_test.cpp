@@ -20,6 +20,7 @@ limitations under the License.
 #include "endpoint.pb.h"
 #include "main/server_runner.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
@@ -33,13 +34,14 @@ constexpr const char *Ip = "0.0.0.0";
 constexpr int Port = 50051;
 constexpr size_t TimesToriiBlocking = 5;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
+using namespace iroha::torii;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds proposal_delay = 10s;
@@ -81,11 +83,17 @@ class ToriiServiceTest : public testing::Test {
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
         prop_notifier_, commit_notifier_);
+    mst = std::make_shared<iroha::MockMstProcessor>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
 
+    EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+        .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
+    EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+        .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
+
     auto tx_processor =
-        std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock);
+        std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock, mst);
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
@@ -111,8 +119,11 @@ class ToriiServiceTest : public testing::Test {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
+  rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
+  std::shared_ptr<iroha::MockMstProcessor> mst;
 
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -152,9 +163,7 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
 
   // create transactions, but do not send them
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
-    auto tx = TestTransactionBuilder()
-                  .creatorAccountId("accountA")
-                  .build();
+    auto tx = TestTransactionBuilder().creatorAccountId("accountA").build();
     txs.push_back(tx);
     tx_hashes.push_back(tx.hash());
   }
@@ -199,6 +208,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
                       .creatorAccountId(account_id)
                       .createdTime(iroha::time::now())
                       .setAccountQuorum(account_id, 2)
+                      .quorum(1)
                       .build()
                       .signAndAddSignature(
                           shared_model::crypto::DefaultCryptoAlgorithmType::
@@ -339,6 +349,7 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                       .creatorAccountId("a@domain")
                       .setAccountQuorum("a@domain", 2)
                       .createdTime(iroha::time::now())
+                      .quorum(1)
                       .build()
                       .signAndAddSignature(keypair);
 

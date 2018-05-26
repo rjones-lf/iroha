@@ -34,10 +34,10 @@ using namespace iroha::simulator;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::_;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -86,6 +86,7 @@ shared_model::proto::Proposal makeProposal(int height) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
@@ -114,6 +115,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::

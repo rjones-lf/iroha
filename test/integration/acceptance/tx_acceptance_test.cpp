@@ -44,6 +44,7 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kNonUser)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
 
@@ -66,6 +67,7 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
                 .createdTime(iroha::time::now(std::chrono::hours(-1)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
   integration_framework::IntegrationTestFramework(1)
@@ -88,6 +90,7 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
                                               - std::chrono::minutes(1)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
   integration_framework::IntegrationTestFramework(1)
@@ -109,6 +112,7 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
                                               + std::chrono::minutes(1)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
   integration_framework::IntegrationTestFramework(1)
@@ -129,6 +133,7 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
                                               - std::chrono::seconds(10)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
 
@@ -150,6 +155,7 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
                 .createdTime(iroha::time::now(std::chrono::minutes(10)))
                 .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair);
   integration_framework::IntegrationTestFramework(1)
@@ -169,6 +175,7 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
+          .quorum(1)
           .build();
 
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
@@ -191,6 +198,7 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
+          .quorum(1)
           .build();
   tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
@@ -210,6 +218,7 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
+          .quorum(1)
           .build();
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
@@ -232,6 +241,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
+          .quorum(1)
           .build();
 
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
@@ -260,6 +270,7 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
           .createdTime(iroha::time::now())
           .creatorAccountId(kAdmin)
           .addAssetQuantity(kAdmin, kAsset, "1.0")
+          .quorum(1)
           .build()
           .signAndAddSignature(kAdminKeypair);
   integration_framework::IntegrationTestFramework(1)

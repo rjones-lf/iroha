@@ -27,8 +27,9 @@ namespace iroha {
     using network::PeerCommunicationService;
 
     TransactionProcessorImpl::TransactionProcessorImpl(
-        std::shared_ptr<PeerCommunicationService> pcs)
-        : pcs_(std::move(pcs)) {
+        std::shared_ptr<PeerCommunicationService> pcs,
+        std::shared_ptr<MstProcessor> mst_processor)
+        : pcs_(std::move(pcs)), mst_processor_(std::move(mst_processor)) {
       log_ = logger::log("TxProcessor");
 
       // insert all txs from proposal to proposal set
@@ -93,12 +94,33 @@ namespace iroha {
               candidate_set_.clear();
             });
       });
+
+      mst_processor_->onPreparedTransactions().subscribe([this](auto &&tx) {
+        log_->info("MST tx prepared");
+        return this->pcs_->propagate_transaction(tx);
+      });
+      mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
+        log_->info("MST tx expired");
+        std::lock_guard<std::mutex> lock(notifier_mutex_);
+        this->notifier_.get_subscriber().on_next(
+            shared_model::builder::DefaultTransactionStatusBuilder()
+                .mstExpired()
+                .txHash(tx->hash())
+                .build());
+        ;
+      });
     }
 
     void TransactionProcessorImpl::transactionHandle(
         std::shared_ptr<shared_model::interface::Transaction> transaction) {
       log_->info("handle transaction");
+      if (boost::size(transaction->signatures()) < transaction->quorum()) {
+        log_->info("waiting for quorum signatures");
+        mst_processor_->propagateTransaction(transaction);
+        return;
+      }
 
+      log_->info("propagating tx");
       pcs_->propagate_transaction(transaction);
     }
 
@@ -107,6 +129,5 @@ namespace iroha {
     TransactionProcessorImpl::transactionNotifier() {
       return notifier_.get_observable();
     }
-
   }  // namespace torii
 }  // namespace iroha

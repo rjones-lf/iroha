@@ -40,6 +40,7 @@ namespace shared_model {
                                                       StatefulFailedTxResponse,
                                                       StatefulValidTxResponse,
                                                       CommittedTxResponse,
+                                                      MstExpiredResponse,
                                                       NotReceivedTxResponse>;
 
       /// Type with list of types in ResponseVariantType

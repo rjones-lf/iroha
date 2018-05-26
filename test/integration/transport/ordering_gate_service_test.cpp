@@ -139,6 +139,7 @@ class OrderingGateServiceTest : public ::testing::Test {
             .createdTime(iroha::time::now())
             .creatorAccountId("admin@ru")
             .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+            .quorum(1)
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::

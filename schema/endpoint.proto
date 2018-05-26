@@ -14,7 +14,8 @@ enum TxStatus {
   STATEFUL_VALIDATION_FAILED = 2;
   STATEFUL_VALIDATION_SUCCESS = 3;
   COMMITTED = 4;
-  NOT_RECEIVED = 5;
+  MST_EXPIRED = 5;
+  NOT_RECEIVED = 6;
 }
 
 message ToriiResponse {

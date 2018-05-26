@@ -139,6 +139,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
@@ -211,6 +212,7 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::

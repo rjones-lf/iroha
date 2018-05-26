@@ -22,8 +22,6 @@
 #include <memory>
 #include <string>
 
-#include <boost/filesystem.hpp>
-
 namespace shared_model {
   namespace interface {
     class Block;
@@ -38,10 +36,10 @@ namespace integration_framework {
 
   class IrohaInstance {
    public:
-    IrohaInstance(const std::string &block_store_path =
-                      (boost::filesystem::temp_directory_path()
-                       / boost::filesystem::unique_path())
-                          .string());
+    /**
+     * @param mst_support enables multisignature tx support
+     */
+    IrohaInstance(bool mst_support, const std::string &block_store_path);
 
     void makeGenesis(const shared_model::interface::Block &block);
 
@@ -68,6 +66,7 @@ namespace integration_framework {
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
     const std::chrono::milliseconds load_delay_;
+    const bool is_mst_supported_;
   };
 }  // namespace integration_framework
 #endif  // IROHA_IROHA_INSTANCE_HPP

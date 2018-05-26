@@ -52,6 +52,7 @@ target_link_libraries(application
     simulator
     block_loader
     block_loader_service
+    mst_processor
     torii_service
     )
 
