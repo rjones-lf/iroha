@@ -67,8 +67,8 @@ namespace shared_model {
       QueryResponse(QueryResponse &&o) noexcept
           : QueryResponse(std::move(o.proto_)) {}
 
-      QueryResponseVariantType get() const override {
-        return *variant_;
+      const QueryResponseVariantType &get() const override {
+        return *ivariant_;
       }
 
       const interface::types::HashType &queryHash() const override {
@@ -89,6 +89,10 @@ namespace shared_model {
             template load<ProtoQueryResponseVariantType>(
                 std::forward<decltype(ar)>(ar), which);
       }};
+
+      const Lazy<QueryResponseVariantType> ivariant_{
+          detail::makeLazyInitializer(
+              [this] { return QueryResponseVariantType(*variant_); })};
 
       const Lazy<interface::types::HashType> hash_{[this] {
         return interface::types::HashType(

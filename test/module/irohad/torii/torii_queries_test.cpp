@@ -27,6 +27,7 @@ limitations under the License.
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
+#include "interfaces/utils/specified_visitor.hpp"
 #include "main/server_runner.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_client.hpp"
@@ -224,7 +225,9 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   ASSERT_FALSE(response.has_error_response());
 
   auto &account_resp =
-      boost::get<const shared_model::interface::AccountResponse>(resp.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::AccountResponse>(),
+                            resp.get());
 
   ASSERT_EQ(account_resp.account().accountId(), accountB->accountId());
   ASSERT_EQ(account_resp.roles().size(), 1);
@@ -264,7 +267,9 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
   ASSERT_FALSE(response.has_error_response());
 
   auto &detail_resp =
-      boost::get<const shared_model::interface::AccountResponse>(resp.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::AccountResponse>(),
+                            resp.get());
 
   ASSERT_EQ(detail_resp.account().accountId(), account->accountId());
   ASSERT_EQ(detail_resp.account().domainId(), account->domainId());
@@ -367,9 +372,10 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   ASSERT_FALSE(response.has_error_response());
 
   auto resp = shared_model::proto::QueryResponse(response);
-  auto &asset_resp =
-      boost::get<const shared_model::interface::AccountAssetResponse>(
-          resp.get());
+  auto &asset_resp = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::AccountAssetResponse>(),
+      resp.get());
 
   // Check if the fields in account asset response are correct
   ASSERT_EQ(asset_resp.accountAsset().assetId(), account_asset->assetId());
@@ -456,10 +462,11 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
       model_query.getTransport(), response);
   auto shared_response = shared_model::proto::QueryResponse(response);
   auto resp_pubkey =
-      *boost::get<const shared_model::interface::SignatoriesResponse>(
-          shared_response.get())
-          .keys()
-          .begin();
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::SignatoriesResponse>(),
+                            shared_response.get())
+           ->keys()
+           .begin();
 
   ASSERT_TRUE(stat.ok());
   /// Should not return Error Response because tx is stateless and stateful
@@ -516,9 +523,10 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
   auto resp = shared_model::proto::QueryResponse(response);
-  auto &tx_resp =
-      boost::get<const shared_model::interface::TransactionsResponse>(
-          resp.get());
+  auto &tx_resp = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::TransactionsResponse>(),
+      resp.get());
 
   const auto &txs = tx_resp.transactions();
   for (auto i = 0ul; i < txs.size(); i++) {

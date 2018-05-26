@@ -62,7 +62,7 @@ namespace shared_model {
       /**
        * @return reference to const variant with concrete qr
        */
-      virtual QueryResponseVariantType get() const = 0;
+      virtual const QueryResponseVariantType &get() const = 0;
 
       /**
        * @return hash of corresponding query

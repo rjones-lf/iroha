@@ -24,6 +24,7 @@
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
@@ -54,9 +55,10 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
           .accountAssetResponse(asset_id, account_id, proto_amount)
           .build();
 
-  const auto &tmp =
-      boost::get<const shared_model::interface::AccountAssetResponse>(
-          query_response.get());
+  const auto &tmp = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::AccountAssetResponse>(),
+      query_response.get());
   const auto &asset_response = tmp.accountAsset();
 
   ASSERT_EQ(asset_response.assetId(), asset_id);
@@ -72,9 +74,10 @@ TEST(QueryResponseBuilderTest, AccountDetailResponse) {
           .accountDetailResponse(account_detail)
           .build();
 
-  const auto &account_detail_response =
-      boost::get<const shared_model::interface::AccountDetailResponse>(
-          query_response.get());
+  const auto &account_detail_response = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::AccountDetailResponse>(),
+      query_response.get());
 
   ASSERT_EQ(account_detail_response.detail(), account_detail);
   ASSERT_EQ(query_response.queryHash(), query_hash);
@@ -99,8 +102,9 @@ TEST(QueryResponseBuilderTest, AccountResponse) {
       builder.queryHash(query_hash).accountResponse(account, roles).build();
 
   const auto &account_response =
-      boost::get<const shared_model::interface::AccountResponse>(
-          query_response.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::AccountResponse>(),
+                            query_response.get());
 
   ASSERT_EQ(account_response.account(), account);
   ASSERT_EQ(account_response.roles(), roles);
@@ -145,8 +149,9 @@ TEST(QueryResponseBuilderTest, SignatoriesResponse) {
       builder.queryHash(query_hash).signatoriesResponse(keys).build();
 
   const auto &signatories_response =
-      boost::get<const shared_model::interface::SignatoriesResponse>(
-          query_response.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::SignatoriesResponse>(),
+                            query_response.get());
 
   const auto &resp_keys = signatories_response.keys();
   ASSERT_EQ(keys.size(), resp_keys.size());
@@ -168,9 +173,10 @@ TEST(QueryResponseBuilderTest, TransactionsResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).transactionsResponse({transaction}).build();
 
-  const auto &transactions_response =
-      boost::get<const shared_model::interface::TransactionsResponse>(
-          query_response.get());
+  const auto &transactions_response = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::TransactionsResponse>(),
+      query_response.get());
 
   const auto &txs = transactions_response.transactions();
 
@@ -187,8 +193,9 @@ TEST(QueryResponseBuilderTest, AssetResponse) {
           .build();
 
   const auto &asset_response =
-      boost::get<const shared_model::interface::AssetResponse>(
-          query_response.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::AssetResponse>(),
+                            query_response.get());
 
   const auto &asset = asset_response.asset();
   ASSERT_EQ(asset.assetId(), asset_id);
@@ -205,8 +212,9 @@ TEST(QueryResponseBuilderTest, RolesResponse) {
       builder.queryHash(query_hash).rolesResponse(roles).build();
 
   const auto &roles_response =
-      boost::get<const shared_model::interface::RolesResponse>(
-          query_response.get());
+      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                shared_model::interface::RolesResponse>(),
+                            query_response.get());
 
   ASSERT_EQ(roles_response.roles(), roles);
   ASSERT_EQ(query_response.queryHash(), query_hash);
@@ -219,9 +227,10 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash).rolePermissionsResponse(roles).build();
 
-  const auto &role_permissions_response =
-      boost::get<const shared_model::interface::RolePermissionsResponse>(
-          query_response.get());
+  const auto &role_permissions_response = *boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<
+          shared_model::interface::RolePermissionsResponse>(),
+      query_response.get());
 
   ASSERT_EQ(role_permissions_response.rolePermissions(), roles);
   ASSERT_EQ(query_response.queryHash(), query_hash);
