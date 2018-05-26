@@ -196,7 +196,7 @@ class OrderingGateServiceTest : public ::testing::Test {
  * @then  Received proposal with 8 transactions
  *        AND proposal with 2 transactions
  */
-TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
+TEST_F(OrderingGateServiceTest, DISABLED_SplittingBunchTransactions) {
   const size_t max_proposal = 100;
 
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
@@ -238,7 +238,7 @@ TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
  * @when Two bunches of 5 tx has been sent
  * @then Transactions are splitted in two proposals by 5 tx each
  */
-TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
+TEST_F(OrderingGateServiceTest, DISABLED_ProposalsReceivedWhenProposalSize) {
   const size_t max_proposal = 5;
 
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
