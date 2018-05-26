@@ -44,18 +44,9 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-    peer = clone(shared_model::proto::PeerBuilder()
-                     .address(address)
-                     .pubkey(shared_model::interface::types::PubkeyType(
-                         std::string(32, '0')))
-                     .build());
     pcs_ = std::make_shared<MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
-    gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
-    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1, false);
-    gate->setPcs(*pcs_);
-    gate_transport->subscribe(gate);
 
     service_transport = std::make_shared<OrderingServiceTransportGrpc>();
 
@@ -77,36 +68,50 @@ class OrderingGateServiceTest : public ::testing::Test {
     service_transport->subscribe(service);
   }
 
-  void start() {
-    std::mutex mtx;
-    std::condition_variable cv;
-    thread = std::thread([&cv, this] {
-      grpc::ServerBuilder builder;
-      int port = 0;
-      builder.AddListeningPort(
-          address, grpc::InsecureServerCredentials(), &port);
+  void initGate(std::string address) {
+    gate_transport = std::make_shared<OrderingGateTransportGrpc>(address);
+    gate = std::make_shared<OrderingGateImpl>(gate_transport, 1, false);
+    gate->setPcs(*pcs_);
+    gate_transport->subscribe(gate);
+  }
 
-      builder.RegisterService(gate_transport.get());
+  void start(size_t max_proposal) {
+    // make service server
+    initOs(max_proposal);
+    grpc::ServerBuilder service_builder;
+    int service_port = 0;
+    service_builder.AddListeningPort(
+        kAddress + ":0", grpc::InsecureServerCredentials(), &service_port);
+    service_builder.RegisterService(service_transport.get());
+    service_server = service_builder.BuildAndStart();
+    // check startup
+    ASSERT_NE(service_port, 0);
+    ASSERT_TRUE(service_server);
 
-      builder.RegisterService(service_transport.get());
+    // make gate server
+    initGate(kAddress + ":" + std::to_string(service_port));
+    grpc::ServerBuilder gate_builder;
+    int gate_port = 0;
+    gate_builder.AddListeningPort(
+        kAddress + ":0", grpc::InsecureServerCredentials(), &gate_port);
+    gate_builder.RegisterService(gate_transport.get());
+    gate_server = gate_builder.BuildAndStart();
+    // check startup
+    ASSERT_NE(gate_port, 0);
+    ASSERT_TRUE(gate_server);
 
-      server = builder.BuildAndStart();
-      ASSERT_NE(port, 0);
-      ASSERT_TRUE(server);
-      cv.notify_one();
-      server->Wait();
-    });
-
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait_for(lock, std::chrono::seconds(1));
+    // setup peer
+    peer = clone(shared_model::proto::PeerBuilder()
+                     .address(kAddress + ":" + std::to_string(gate_port))
+                     .pubkey(shared_model::interface::types::PubkeyType(
+                         std::string(32, '0')))
+                     .build());
   }
 
   void TearDown() override {
     proposals.clear();
-    server->Shutdown();
-    if (thread.joinable()) {
-      thread.join();
-    }
+    gate_server->Shutdown();
+    service_server->Shutdown();
   }
 
   TestSubscriber<std::shared_ptr<shared_model::interface::Proposal>> init(
@@ -157,7 +162,13 @@ class OrderingGateServiceTest : public ::testing::Test {
     cv.wait_for(lk, 10s, [this] { return counter == 0; });
   }
 
-  std::string address{"0.0.0.0:50051"};
+  std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
+  std::atomic<size_t> counter;
+  std::shared_ptr<shared_model::interface::Peer> peer;
+  std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
+  std::shared_ptr<MockPeerQuery> wsv;
+
+ private:
   std::shared_ptr<OrderingGateImpl> gate;
   std::shared_ptr<OrderingServiceImpl> service;
 
@@ -167,18 +178,15 @@ class OrderingGateServiceTest : public ::testing::Test {
   rxcpp::subjects::subject<Commit> commit_subject_;
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 
-  std::vector<std::shared_ptr<shared_model::interface::Proposal>> proposals;
-  std::atomic<size_t> counter;
   std::condition_variable cv;
   std::mutex m;
-  std::thread thread;
-  std::shared_ptr<grpc::Server> server;
+  std::shared_ptr<grpc::Server> service_server;
+  std::shared_ptr<grpc::Server> gate_server;
 
-  std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<OrderingGateTransportGrpc> gate_transport;
   std::shared_ptr<OrderingServiceTransportGrpc> service_transport;
-  std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
-  std::shared_ptr<MockPeerQuery> wsv;
+
+  const std::string kAddress = "127.0.0.1";
 };
 
 /**
@@ -188,11 +196,9 @@ class OrderingGateServiceTest : public ::testing::Test {
  * @then  Received proposal with 8 transactions
  *        AND proposal with 2 transactions
  */
-TEST_F(OrderingGateServiceTest, DISABLED_SplittingBunchTransactions) {
+TEST_F(OrderingGateServiceTest, SplittingBunchTransactions) {
   const size_t max_proposal = 100;
 
-  EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
       .WillOnce(Return(boost::optional<size_t>(2)));
@@ -203,8 +209,11 @@ TEST_F(OrderingGateServiceTest, DISABLED_SplittingBunchTransactions) {
       .Times(1)
       .WillOnce(Return(true));
 
-  initOs(max_proposal);
-  start();
+  start(max_proposal);
+
+  EXPECT_CALL(*wsv, getLedgerPeers())
+      .WillRepeatedly(Return(std::vector<wPeer>{peer}));
+
   auto wrapper = init(2);
   counter = 2;
 
@@ -229,11 +238,9 @@ TEST_F(OrderingGateServiceTest, DISABLED_SplittingBunchTransactions) {
  * @when Two bunches of 5 tx has been sent
  * @then Transactions are splitted in two proposals by 5 tx each
  */
-TEST_F(OrderingGateServiceTest, DISABLED_ProposalsReceivedWhenProposalSize) {
+TEST_F(OrderingGateServiceTest, ProposalsReceivedWhenProposalSize) {
   const size_t max_proposal = 5;
 
-  EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
       .WillOnce(Return(boost::optional<size_t>(2)));
@@ -244,8 +251,11 @@ TEST_F(OrderingGateServiceTest, DISABLED_ProposalsReceivedWhenProposalSize) {
       .Times(1)
       .WillOnce(Return(true));
 
-  initOs(max_proposal);
-  start();
+  start(max_proposal);
+
+  EXPECT_CALL(*wsv, getLedgerPeers())
+      .WillRepeatedly(Return(std::vector<wPeer>{peer}));
+
   auto wrapper = init(2);
   counter = 2;
 
