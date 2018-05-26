@@ -87,7 +87,7 @@ pipeline {
               expression { return params.Linux }
               allOf {
                 expression { return env.CHANGE_ID }
-                expression { return GIT_PREVIOUS_COMMIT }
+                expression { return env.GIT_PREVIOUS_COMMIT }
                 expression { return env.CHANGE_TARGET ==~ /(master|develop|trunk)/ }
                 expression { return params.Merge_PR }
               }
