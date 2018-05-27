@@ -1,0 +1,103 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "backend/protobuf/permissions.hpp"
+#include <gtest/gtest.h>
+#include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/irange.hpp>
+
+using namespace shared_model::proto::permissions;
+
+template <typename PermType>
+static PermType getRole(int i) {
+  return static_cast<PermType>(i);
+}
+
+class RolePermType {
+ public:
+  using Proto = iroha::protocol::RolePermission;
+  using Model = shared_model::interface::permissions::Role;
+
+  static auto descriptor() {
+    return iroha::protocol::RolePermission_descriptor();
+  }
+
+  static auto size() {
+    return iroha::protocol::RolePermission_ARRAYSIZE;
+  }
+
+  static void parse(const std::string &name, Proto *t) {
+    iroha::protocol::RolePermission_Parse(name, t);
+  }
+};
+
+class GrantablePermType {
+ public:
+  using Proto = iroha::protocol::GrantablePermission;
+  using Model = shared_model::interface::permissions::Grantable;
+
+  static auto descriptor() {
+    return iroha::protocol::GrantablePermission_descriptor();
+  }
+
+  static auto size() {
+    return iroha::protocol::GrantablePermission_ARRAYSIZE;
+  }
+
+  static void parse(const std::string &name, Proto *t) {
+    iroha::protocol::GrantablePermission_Parse(name, t);
+  }
+};
+
+template <typename T>
+class ProtoPermission : public ::testing::Test {
+ public:
+  typename T::Proto perm;
+};
+
+typedef ::testing::Types<RolePermType, GrantablePermType> PermTypes;
+TYPED_TEST_CASE(ProtoPermission, PermTypes);
+
+/**
+ * For each protobuf RolePermission
+ * @given protobuf RolePermission
+ * @when fromTransport is called
+ * @then related sm type produced
+ */
+TYPED_TEST(ProtoPermission, RoleFromTransport) {
+  boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
+    this->perm = getRole<decltype(this->perm)>(i);
+    auto converted = fromTransport(this->perm);
+    ASSERT_EQ(getRole<typename TypeParam::Model>(i), *converted);
+  });
+}
+
+/**
+ * For each protobuf RolePermission
+ * @given protobuf RolePermission
+ * @when composition of fromTransport and toTransport is called
+ * @then previous protobuf object produced
+ */
+TYPED_TEST(ProtoPermission, RoleFromToTransport) {
+  auto desc = TypeParam::descriptor();
+  boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
+    TypeParam::parse(desc->value(i)->name(), &this->perm);
+    auto converted = fromTransport(this->perm);
+    ASSERT_EQ(this->perm, toTransport(*converted));
+  });
+}
+
+/**
+ * For each sm role permission type
+ * @given protobuf RolePermission
+ * @when toTransport is called
+ * @then related protobuf object permission produced
+ */
+TYPED_TEST(ProtoPermission, RoleToTransport) {
+  boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
+    this->perm = getRole<decltype(this->perm)>(i);
+    ASSERT_EQ(this->perm, toTransport(getRole<typename TypeParam::Model>(i)));
+  });
+}
