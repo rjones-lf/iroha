@@ -19,23 +19,23 @@ You can find the build log attached to this email
 		return
 	}
 	// merge commit build results
-	if ( env.IS_MERGE_ACCEPTED == "true" ) {
+	if ( params.Merge_PR ) {
 		if ( currentBuild.currentResult == "SUCCESS" ) {
-			mergeMessage = "Merged: true"
+			mergeMessage = "Merged to ${env.CHANGE_TARGET}: true"
 		}
 		else {
-			mergeMessage = "Merged: false"
+			mergeMessage = "Merged to ${env.CHANGE_TARGET}: false"
 		}
 
 		if ( env.CHANGE_TARGET == 'master' ) {
 			def receivers = "iroha-maintainers@soramitsu.co.jp"
 			sendEmail(content, receivers)
 		}
-		elif ( env.CHANGE_TARGET == 'develop' ) {
+		else if ( env.CHANGE_TARGET == 'develop' ) {
 			def receivers = "andrei@soramitsu.co.jp, fyodor@soramitsu.co.jp, ${GIT_COMMITER_EMAIL}"
 			sendEmail(content, receivers)
 		}
-		elif ( env.CHANGE_TARGET == 'trunk' ) {
+		else {
 			def receivers = "${GIT_COMMITER_EMAIL}"
 			sendEmail(content, receivers)
 		}
@@ -45,7 +45,7 @@ You can find the build log attached to this email
 		def notify = load ".jenkinsci/github-api.groovy"
 		notify.writePullRequestComment()
 	}
-  
+  return
 }
 
 def sendEmail(content, to) {

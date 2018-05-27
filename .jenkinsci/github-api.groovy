@@ -1,30 +1,22 @@
 #!/usr/bin/env groovy
 
-//@Grab(group='org.codehaus.groovy.modules.http-builder', module='http-builder', version='0.6.0')
-//import groovyx.net.http.*
-
-
 def mergePullRequest() {
   if ( !checkMergeAcceptance() ) {
   	return false
   }
-	// TODO: fill commit message + commit title
 	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
 		def slurper = new groovy.json.JsonSlurperClassic()
 		def commitTitle = ""
 		def commitMessage = ""
 		def mergeMethod = getMergeMethod()
-		
 		def jsonResponseMerge = sh(script: """
 		curl -H "Authorization: token ${sorabot}" \
 				 -H "Accept: application/vnd.github.v3+json" \
 				 -X PUT --data '{"commit_title":"${commitTitle}","commit_message":"${commitMessage}","sha":"${env.GIT_COMMIT}","merge_method":"${mergeMethod}"}' \
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
-		
-		def githubResponce = sh(script:'printf ${jsonResponseMerge} | grep -E "\\d{3}', returnStdout: true).trim()
-		jsonResponseMerge = sh(script:'printf ${jsonResponseMerge} | grep -v -E "\\d{3}', returnStdout: true).trim()
-		
-		if ( githubResponce != "200" ) {
+		def githubResponce = sh(script:"""printf '%s\n' "${jsonResponseMerge}" | tail -n 1""", returnStdout: true).trim()
+		//jsonResponseMerge = sh(script:"""printf '%s\n' "${jsonResponseMerge}" | cut -d '}' -f1 """, returnStdout: true).trim()
+		if ( ! ( githubResponce ==~ "200" ) ) {
 			return false
 		}
 		jsonResponseMerge = slurper.parseText(jsonResponseMerge)
@@ -33,33 +25,6 @@ def mergePullRequest() {
 		}
 	}
 	return true
-	
-	// def github = new HTTPBuilder( 'https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge' )
-
-	// http.request (POST, JSON){ req ->
-	// 	body = [
-	// 		"commit_title" : "${commitTitle}",
-	// 		"commit_message" : "${commitMessage}",
-	// 		"sha" : "${env.GIT_COMMIT}",
-	// 		"merge_method" : "${mergeMethod}"
-	// 	]
-
-	// 	headers.'Authorization' = "token ${sorabot}"
-	// 	headers.'Accept' = "application/vnd.github.v3+json"
-
-	// 	// success response handler
-	// 	response.success = { resp, json ->
-	// 		println ${json.message}
-	// 		if ( ${json.merged} == 'true' ) { return true }
-	// 		else { return false }
-	// 	}
-
-	// 	response.failure = { resp, json ->
-	// 		println ${json.message}
-	// 		println "Unexpected error: ${resp.statusLine.statusCode}"
-	// 		return false
-	// 	}
-	// }
 }
 
 def checkMergeAcceptance() {
@@ -109,10 +74,10 @@ def getPullRequestReviewers() {
 	// there is no github API that allows to get all reviewers for the PR. 
 	// thus we use github API twice to request for reviews and requested reviewers. afterwards, results are concatenated with @
 	def jsonResponseReviewers = sh(script: """
-		curl -H "Authorization: token ${sorabot}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/requested_reviewers
+		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/requested_reviewers
 		""", returnStdout: true).trim()
 	def jsonResponseReview = sh(script: """
-		curl -H "Authorization: token ${sorabot}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
+		curl https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/reviews
 		""", returnStdout: true).trim()
 	jsonResponseReviewers = slurper.parseText(jsonResponseReviewers)
 	if (jsonResponseReviewers.size() > 0) {
@@ -124,27 +89,25 @@ def getPullRequestReviewers() {
 	if (jsonResponseReview.size() > 0) {
 	  jsonResponseReview.each {
 	  	if ("${it.state}" == "APPROVED") {
-	  		ghUsersList = ghUsersList.concat("@${it.login} ")
+	  		ghUsersList = ghUsersList.concat("@${it.user.login} ")
 	  	}
 	  }
 	}
-	echo ghUsersList
 	return ghUsersList
 }
-
 // comment to github issues with reviewers mentions with build status
 def writePullRequestComment() {
 	def ghUsersList = getPullRequestReviewers()
 	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
-  	def slurper = new groovy.json.JsonSlurperClassic()
-  	def jsonResponseComment = sh(script: """
-  		curl -H "Authorization: token ${sorabot}" \
-  		-H "Accept: application/vnd.github.v3+json" \
-  		-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
-  		-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
+		def slurper = new groovy.json.JsonSlurperClassic()
+		def jsonResponseComment = sh(script: """
+			curl -H "Authorization: token ${sorabot}" \
+			-H "Accept: application/vnd.github.v3+json" \
+			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
+			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
 			""", returnStdout: true).trim()
-		def githubResponce = sh(script:'printf ${jsonResponseComment} | grep -E "\\d{3}', returnStdout: true).trim()
-		if (githubResponce == "201") {
+		def githubResponce = sh(script:"""printf '%s\n' "${jsonResponseComment}" | tail -n1 """, returnStdout: true).trim()
+		if (githubResponce ==~ "201") {
 			return true
 		}
 	}
