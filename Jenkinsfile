@@ -606,7 +606,7 @@ pipeline {
     success {
       script {
         // merge pull request if everything is ok
-        if ( params.MERGE_PR ) {
+        if ( params.Merge_PR ) {
           def merge = load ".jenkinsci/github-api.groovy"
           currentBuild.result = merge.mergePullRequest() ? "SUCCESS" : "FAILURE"
         }
@@ -641,8 +641,6 @@ pipeline {
             post.linuxPostStep()
           }
         }
-
-        sh """echo "Build duration: ${currentBuild.durationString}" """
       }
     }
   }
