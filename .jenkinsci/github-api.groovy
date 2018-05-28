@@ -1,9 +1,7 @@
 #!/usr/bin/env groovy
 
 def mergePullRequest() {
-  if ( ! ( checkMergeAcceptance() ) ) {
-  	return false
-  }
+  if ( ! ( checkMergeAcceptance() ) ) { return false  }
 	withCredentials([string(credentialsId: 'jenkins-integration-test', variable: 'sorabot')]) {
 		def slurper = new groovy.json.JsonSlurperClassic()
 		def commitTitle = ""
@@ -53,8 +51,8 @@ def checkMergeAcceptance() {
 		  sh "echo 'Merge failed. Email of the commit does not match Jenkins user'"
 		  return false
 		}
+		else { return true }
   }
-  return true
 }
 
 def getMergeMethod() {
@@ -93,6 +91,7 @@ def getPullRequestReviewers() {
 	}
 	return ghUsersList
 }
+
 // comment to github issues with reviewers mentions with build status
 def writePullRequestComment() {
 	def ghUsersList = getPullRequestReviewers()
