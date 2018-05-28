@@ -25,6 +25,7 @@ You can find the build log attached to this email
 		}
 		else {
 			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: false"
+
 		}
 
 		if ( env.CHANGE_TARGET == 'master' ) {

@@ -103,8 +103,7 @@ def writePullRequestComment() {
 			-H "Accept: application/vnd.github.v3+json" \
 			-X POST --data '{"body":"${ghUsersList} commit ${env.GIT_COMMIT} build status: ${currentBuild.currentResult}"}' \
 			-w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/issues/${CHANGE_ID}/comments
-			""", returnStdout: true).trim()
-		
+			""", returnStdout: true).trim()		
 		def githubResponce = sh(script:"""set +x; printf '%s\n' "${jsonResponseComment}" | tail -n 1 ; set -x""", returnStdout: true).trim()
 		if (githubResponce ==~ "201") {
 			return true
