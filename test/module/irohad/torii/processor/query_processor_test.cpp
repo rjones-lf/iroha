@@ -78,7 +78,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                    .getAccount(account_id)
                    .queryCounter(counter)
                    .build()
-                   .signAndAddSignature(keypair);
+                   .signAndAddSignature(keypair)
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
@@ -133,7 +134,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                    .build()
                    .signAndAddSignature(
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());

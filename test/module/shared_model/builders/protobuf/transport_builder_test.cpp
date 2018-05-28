@@ -19,12 +19,12 @@
 
 #include "block.pb.h"
 #include "builders/protobuf/block.hpp"
+#include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "common/types.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -63,14 +63,16 @@ class TransportBuilderTest : public ::testing::Test {
     return getBaseTransactionBuilder<shared_model::proto::TransactionBuilder>()
         .creatorAccountId(account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidTransaction() {
     return getBaseTransactionBuilder<TestTransactionBuilder>()
         .creatorAccountId(invalid_account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   //-------------------------------------Query-------------------------------------
@@ -86,14 +88,16 @@ class TransportBuilderTest : public ::testing::Test {
     return getBaseQueryBuilder<shared_model::proto::QueryBuilder>()
         .creatorAccountId(account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidQuery() {
     return getBaseQueryBuilder<TestUnsignedQueryBuilder>()
         .creatorAccountId(invalid_account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   //-------------------------------------Block-------------------------------------

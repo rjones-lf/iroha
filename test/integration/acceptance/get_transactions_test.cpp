@@ -148,7 +148,8 @@ TEST_F(GetTransactions, InvalidSignatures) {
                    .getTransactions(std::vector<crypto::Hash>{dummy_tx.hash()})
                    .build()
                    .signAndAddSignature(
-                       crypto::DefaultCryptoAlgorithmType::generateKeypair());
+                       crypto::DefaultCryptoAlgorithmType::generateKeypair())
+                   .finish();
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)

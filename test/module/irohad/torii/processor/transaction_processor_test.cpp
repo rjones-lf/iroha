@@ -342,8 +342,13 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
-      clone(base_tx().quorum(2).build().signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()));
+      clone(base_tx()
+                .quorum(2)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish());
 
   tp->transactionHandle(tx);
   mst_prepared_notifier.get_subscriber().on_next(after_mst);
@@ -359,8 +364,13 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
-      clone(base_tx().quorum(2).build().signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()));
+      clone(base_tx()
+                .quorum(2)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish());
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {

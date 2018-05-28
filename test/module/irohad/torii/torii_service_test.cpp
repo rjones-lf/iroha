@@ -215,7 +215,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
                       .build()
                       .signAndAddSignature(
                           shared_model::crypto::DefaultCryptoAlgorithmType::
-                              generateKeypair());
+                              generateKeypair())
+                      .finish();
     const auto &new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);
@@ -354,7 +355,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                       .createdTime(iroha::time::now())
                       .quorum(1)
                       .build()
-                      .signAndAddSignature(keypair);
+                      .signAndAddSignature(keypair)
+                      .finish();
 
   std::string txhash = crypto::toBinaryString(iroha_tx.hash());
 
@@ -386,7 +388,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                          .transactions(txs)
                          .prevHash(crypto::Hash(std::string(32, '0')))
                          .build()
-                         .signAndAddSignature(keypair));
+                         .signAndAddSignature(keypair)
+                         .finish());
 
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>

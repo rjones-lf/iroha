@@ -54,7 +54,8 @@ namespace integration_framework {
           deleter,
       bool mst_support,
       const std::string &block_store_path)
-      : iroha_instance_(std::make_shared<IrohaInstance>(mst_support, block_store_path)),
+      : iroha_instance_(
+            std::make_shared<IrohaInstance>(mst_support, block_store_path)),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -86,7 +87,8 @@ namespace integration_framework {
             .createAsset(kAssetName, kDefaultDomain, 1)
             .quorum(1)
             .build()
-            .signAndAddSignature(key);
+            .signAndAddSignature(key)
+            .finish();
     auto genesis_block =
         shared_model::proto::BlockBuilder()
             .transactions(
@@ -95,7 +97,8 @@ namespace integration_framework {
             .prevHash(DefaultHashProvider::makeHash(Blob("")))
             .createdTime(iroha::time::now())
             .build()
-            .signAndAddSignature(key);
+            .signAndAddSignature(key)
+            .finish();
     return genesis_block;
   }
 

@@ -29,7 +29,8 @@ class TransferAsset : public AcceptanceFixture {
                          const std::string &role) {
     return createUserWithPerms(user, key.publicKey(), role, perms)
         .build()
-        .signAndAddSignature(kAdminKeypair);
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
   }
 
   proto::Transaction addAssets(const std::string &user,
@@ -47,7 +48,8 @@ class TransferAsset : public AcceptanceFixture {
         .addAssetQuantity(kUserId, kAsset, amount)
         .quorum(1)
         .build()
-        .signAndAddSignature(key);
+        .signAndAddSignature(key)
+        .finish();
   }
 
   /**
@@ -68,7 +70,7 @@ class TransferAsset : public AcceptanceFixture {
    */
   template <typename TestTransactionBuilder>
   auto completeTx(TestTransactionBuilder builder) {
-    return builder.build().signAndAddSignature(kUser1Keypair);
+    return builder.build().signAndAddSignature(kUser1Keypair).finish();
   }
 
   const std::string kAmount = "1.0";
@@ -130,7 +132,8 @@ TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
       .sendTx(baseTx()
                   .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)
                   .build()
-                  .signAndAddSignature(kUser1Keypair))
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
@@ -159,7 +162,8 @@ TEST_F(TransferAsset, WithOnlyCanReceivePerm) {
       .sendTx(baseTx()
                   .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)
                   .build()
-                  .signAndAddSignature(kUser1Keypair))
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
@@ -183,7 +187,8 @@ TEST_F(TransferAsset, NonexistentDest) {
       .sendTx(baseTx()
                   .transferAsset(kUser1Id, nonexistent, kAsset, kDesc, kAmount)
                   .build()
-                  .signAndAddSignature(kUser1Keypair))
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
@@ -211,7 +216,8 @@ TEST_F(TransferAsset, NonexistentAsset) {
           baseTx()
               .transferAsset(kUser1Id, kUser2Id, nonexistent, kDesc, kAmount)
               .build()
-              .signAndAddSignature(kUser1Keypair))
+              .signAndAddSignature(kUser1Keypair)
+              .finish())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
@@ -234,7 +240,8 @@ TEST_F(TransferAsset, NegativeAmount) {
       .sendTx(baseTx()
                   .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, "-1.0")
                   .build()
-                  .signAndAddSignature(kUser1Keypair),
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish(),
               checkStatelessInvalid);
 }
 
@@ -255,7 +262,8 @@ TEST_F(TransferAsset, ZeroAmount) {
       .sendTx(baseTx()
                   .transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, "0.0")
                   .build()
-                  .signAndAddSignature(kUser1Keypair),
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish(),
               checkStatelessInvalid);
 }
 
@@ -415,7 +423,8 @@ TEST_F(TransferAsset, InterDomain) {
               .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
               .quorum(1)
               .build()
-              .signAndAddSignature(kAdminKeypair))
+              .signAndAddSignature(kAdminKeypair)
+              .finish())
       .sendTx(addAssets(kUser1, kUser1Keypair, kAmount))
       .sendTx(completeTx(
           baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)))

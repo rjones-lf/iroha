@@ -91,7 +91,7 @@ TEST(ProtoTransaction, Builder) {
                 .quorum(1)
                 .build();
 
-  auto signedTx = tx.signAndAddSignature(keypair);
+  auto signedTx = tx.signAndAddSignature(keypair).finish();
   auto &proto = signedTx.getTransport();
 
   ASSERT_EQ(proto_tx.SerializeAsString(), proto.SerializeAsString());

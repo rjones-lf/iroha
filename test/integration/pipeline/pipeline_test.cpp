@@ -46,7 +46,8 @@ TEST(PipelineIntegrationTest, SendQuery) {
                    .signAndAddSignature(
                        // TODO: 30/03/17 @l4l use keygen adapter IR-1189
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   auto check = [](auto &status) {
     ASSERT_TRUE(boost::apply_visitor(
@@ -75,7 +76,8 @@ TEST(PipelineIntegrationTest, SendTx) {
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(

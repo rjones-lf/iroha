@@ -90,7 +90,8 @@ shared_model::proto::Proposal makeProposal(int height) {
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   auto proposal = shared_model::proto::ProposalBuilder()
                       .height(height)
@@ -119,7 +120,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()

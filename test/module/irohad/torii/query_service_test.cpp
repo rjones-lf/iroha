@@ -31,8 +31,8 @@ using namespace iroha::torii;
 using namespace shared_model::detail;
 using namespace shared_model::interface;
 using ::testing::_;
-using ::testing::Return;
 using ::testing::Invoke;
+using ::testing::Return;
 using ::testing::Truly;
 
 class QueryServiceTest : public ::testing::Test {
@@ -49,7 +49,8 @@ class QueryServiceTest : public ::testing::Test {
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair()));
+                    generateKeypair())
+            .finish());
 
     auto account = shared_model::proto::AccountBuilder()
                        .accountId("a")

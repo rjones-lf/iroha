@@ -184,7 +184,8 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
                    .build()
                    .signAndAddSignature(
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(std::move(block));
 
@@ -243,7 +244,8 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
                    .build()
                    .signAndAddSignature(
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(std::move(block));
 
@@ -266,7 +268,8 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
           .build()
           .signAndAddSignature(
               shared_model::crypto::DefaultCryptoAlgorithmType::
-                  generateKeypair());
+                  generateKeypair())
+          .finish();
   std::shared_ptr<shared_model::interface::Block> wrong_test_block =
       std::make_shared<shared_model::proto::Block>(std::move(wrong_block_end));
 
