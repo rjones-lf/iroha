@@ -15,13 +15,17 @@ using namespace iroha::expected;
 class StorageInitTest : public ::testing::Test {
  public:
   StorageInitTest() {
-    std::string env_var;
+    auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
+    auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
+    auto pg_user = std::getenv("IROHA_POSTGRES_USER");
+    auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
+
     std::stringstream ss;
     // clang-format off
-    ss << "host=" << (env_var = std::getenv("IROHA_POSTGRES_HOST")) ? env_var : "localhost";
-    ss << " port=" << (env_var = std::getenv("IROHA_POSTGRES_PORT")) ? env_var : "5432";
-    ss << " user=" << (env_var = std::getenv("IROHA_POSTGRES_USER")) ? env_var : "postgres";
-    ss << " password=" << (env_var = std::getenv("IROHA_POSTGRES_PASSWORD")) ? env_var : "mysecretpassword";
+    ss << "host=" << (pg_host ? pg_host : "localhost");
+    ss << " port=" << (pg_port ? pg_port : "5432");
+    ss << " user=" << (pg_user ? pg_user : "postgres");
+    ss << " password=" << (pg_pass ? pg_pass : "mysecretpassword");
     // clang-format on
     pg_opt_without_dbname_ = ss.str();
     pgopt_ = pg_opt_without_dbname_ + " dbname=" + dbname_;
