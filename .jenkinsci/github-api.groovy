@@ -106,6 +106,7 @@ def writePullRequestComment() {
 			""", returnStdout: true).trim()
 		
 		def githubResponce = sh(script:"""set +x; printf '%s\n' "${jsonResponseComment}" | tail -n 1 ; set -x""", returnStdout: true).trim()
+		echo githubResponce
 		if (githubResponce ==~ "201") {
 			return true
 		}
