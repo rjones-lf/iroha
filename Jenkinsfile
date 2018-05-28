@@ -9,12 +9,6 @@
 //
 // NOTE: In build stage we differentiate only platforms in pipeline scheme. Build/Release is filtered inside the platform
 // TODO: limit stage of pipeline for execution: 3 hours
-// TODO: download and save docker images to amazon EFS: docker_base_image_{develop,release}
-// TODO: pull saved docker images and refresh them in case they are old
-// TODO: save docker images loaded previously if they are old (updated after docker pull command)
-// (postponed) TODO: limit nightly build pipeline execution for 3 days max
-// (pending) TODO: how to do all types of tests on all platforms (create stage in parallel for each platform and test - 4x5=20?!?!)
-// TODO: upload artifacts at the post stage of each platform
 
 properties([parameters([
   choice(choices: 'Debug\nRelease', description: '', name: 'BUILD_TYPE'),

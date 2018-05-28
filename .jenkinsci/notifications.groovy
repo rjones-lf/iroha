@@ -10,12 +10,22 @@ def notifyBuildResults() {
 	}
 	// merge commit build results
 	if ( params.Merge_PR ) {
-		if ( currentBuild.currentResult == "SUCCESS" ) { mergeMessage = "Merge status to ${env.CHANGE_TARGET}: true" }
-		else { mergeMessage = "Merge status to ${env.CHANGE_TARGET}: false" }
+		if ( currentBuild.currentResult == "SUCCESS" ) {
+			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: true"
+		}
+		else {
+			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: false"
+		}
 
-		if ( env.CHANGE_TARGET == 'master' ) { 	receivers = "iroha-maintainers@soramitsu.co.jp" }
-		else if ( env.CHANGE_TARGET == 'develop' ) { receivers = "andrei@soramitsu.co.jp, fyodor@soramitsu.co.jp, ${GIT_COMMITER_EMAIL}" }
-		else { receivers = "${GIT_COMMITER_EMAIL}" }
+		if ( env.CHANGE_TARGET == 'master' ) {
+			receivers = "iroha-maintainers@soramitsu.co.jp"
+		}
+		else if ( env.CHANGE_TARGET == 'develop' ) { 
+			receivers = "andrei@soramitsu.co.jp, fyodor@soramitsu.co.jp, ${GIT_COMMITER_EMAIL}"
+		}
+		else {
+			receivers = "${GIT_COMMITER_EMAIL}"
+		}
 
 		sendEmail(buildContent(mergeMessage), receivers)
 	}
