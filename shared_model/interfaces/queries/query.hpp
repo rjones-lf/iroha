@@ -68,7 +68,7 @@ namespace shared_model {
       /**
        * @return reference to const variant with concrete command
        */
-      virtual QueryVariantType get() const = 0;
+      virtual const QueryVariantType &get() const = 0;
 
       /**
        * @return id of query creator

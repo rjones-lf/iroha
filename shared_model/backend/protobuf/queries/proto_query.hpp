@@ -67,8 +67,8 @@ namespace shared_model {
 
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
-      Query::QueryVariantType get() const override {
-        return *variant_;
+      const Query::QueryVariantType &get() const override {
+        return *ivariant_;
       }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
@@ -133,6 +133,9 @@ namespace shared_model {
             template load<ProtoQueryVariantType>(std::forward<decltype(ar)>(ar),
                                                  which);
       }};
+
+      const Lazy<QueryVariantType> ivariant_{detail::makeLazyInitializer(
+          [this] { return QueryVariantType(*variant_); })};
 
       const Lazy<interface::types::BlobType> blob_{
           [this] { return makeBlob(*proto_); }};
