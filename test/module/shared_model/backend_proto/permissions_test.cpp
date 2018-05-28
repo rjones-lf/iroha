@@ -111,3 +111,17 @@ TYPED_TEST(ProtoPermission, SizesMatch) {
   ASSERT_EQ(static_cast<decltype(TypeParam::size())>(TypeParam::Model::COUNT),
             TypeParam::size());
 }
+
+TEST(ProtoPermission, PermissionSet) {
+  using Role = shared_model::interface::permissions::Role;
+  using PermSet = shared_model::interface::PermissionSet<Role>;
+  PermSet set{Role::kAppendRole, Role::kAddAssetQty, Role::kAddPeer};
+  ASSERT_TRUE(set[Role::kAppendRole]);
+  ASSERT_TRUE(set[Role::kAddAssetQty]);
+  ASSERT_TRUE(set[Role::kAddPeer]);
+  ASSERT_FALSE(set[Role::kTransfer]);
+  set.set(Role::kTransfer);
+  ASSERT_TRUE(set[Role::kTransfer]);
+  set.unset(Role::kAddAssetQty);
+  ASSERT_FALSE(set[Role::kAddAssetQty]);
+}
