@@ -30,7 +30,7 @@ def notifyBuildResults() {
 		sendEmail(buildContent(mergeMessage), receivers)
 	}
 	else {
-		// write comment if it is a pull request commit
+		// write comment to the PR page on github if it is a pull request commit
 		def notify = load ".jenkinsci/github-api.groovy"
 		notify.writePullRequestComment()
 	}
