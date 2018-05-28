@@ -38,7 +38,8 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
           key)
       .creatorAccountId(
           integration_framework::IntegrationTestFramework::kAdminId)
-      .createdTime(iroha::time::now());
+      .createdTime(iroha::time::now())
+      .quorum(1);
 }
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
@@ -84,7 +85,7 @@ template auto AcceptanceFixture::base<TestUnsignedQueryBuilder>(
 
 auto AcceptanceFixture::baseTx()
     -> decltype(base(TestUnsignedTransactionBuilder())) {
-  return base(TestUnsignedTransactionBuilder());
+  return base(TestUnsignedTransactionBuilder()).quorum(1);
 }
 
 auto AcceptanceFixture::baseQry()

@@ -56,6 +56,7 @@ class TransportBuilderTest : public ::testing::Test {
   auto getBaseTransactionBuilder() {
     return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
+        .quorum(quorum)
         .setAccountQuorum(account_id, quorum);
   }
 

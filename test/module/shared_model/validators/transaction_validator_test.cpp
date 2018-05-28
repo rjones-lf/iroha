@@ -35,6 +35,7 @@ class TransactionValidatorTest : public ValidatorsTest {
     TestTransactionBuilder builder;
     auto tx = builder.creatorAccountId(creator_account_id)
                   .createdTime(created_time)
+                  .quorum(1)
                   .build()
                   .getTransport();
     return tx;
