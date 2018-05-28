@@ -53,6 +53,8 @@ namespace shared_model {
         kTransferMyAssets,
         kSetMyAccountDetail,
         kGetBlocks,
+
+        COUNT
       };
 
       enum class Grantable {
@@ -61,6 +63,8 @@ namespace shared_model {
         kSetMyQuorum,
         kSetMyAccountDetail,
         kTransferMyAssets,
+
+        COUNT
       };
     }  // namespace permissions
   }    // namespace interface

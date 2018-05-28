@@ -101,3 +101,13 @@ TYPED_TEST(ProtoPermission, RoleToTransport) {
     ASSERT_EQ(this->perm, toTransport(getRole<typename TypeParam::Model>(i)));
   });
 }
+
+/**
+ * @given sizes of protobuf and sm permissions
+ * @when -
+ * @then they are equal
+ */
+TYPED_TEST(ProtoPermission, SizesMatch) {
+  ASSERT_EQ(static_cast<decltype(TypeParam::size())>(TypeParam::Model::COUNT),
+            TypeParam::size());
+}
