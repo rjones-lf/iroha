@@ -28,7 +28,7 @@ def notifyBuildResults() {
 }
 
 def buildContent(mergeMessage="") {
-	return content = """
+	return """
 <h4>This email informs you about the build results on Jenkins CI</h4>
 <h4>Build status: ${currentBuild.currentResult}. ${mergeMessage}</h4>
 <p>
@@ -37,7 +37,7 @@ Check <a href = "${BUILD_URL}">console output</a> to view the results.
 <p>
 You can find the build log attached to this email
 </p>
-	"""
+"""
 }
 
 def sendEmail(content, to) {
