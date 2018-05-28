@@ -1,6 +1,10 @@
 #!/usr/bin/env groovy
 
 def doReleaseBuild(coverageEnabled=false) {
+  def parallelism = params.PARALLELISM
+  if (parallelism == null) {
+    parallelism = 4
+  }
   def scmVars = checkout scm
   env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
   env.IROHA_HOME = "/opt/iroha"

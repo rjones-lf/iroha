@@ -13,6 +13,9 @@ def doReleaseBuild() {
   if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
+  if ( env.NODE_NAME ==~ /^x86_64.+/ ) {
+    parallelism = 8
+  }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   sh "mkdir /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER} || true"
   iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")

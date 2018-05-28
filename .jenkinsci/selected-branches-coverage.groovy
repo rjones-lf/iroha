@@ -1,12 +1,14 @@
 #!/usr/bin/env groovy
 
-def selectedBranchesCoverage(branches, PRCoverage=true) {
+def selectedBranchesCoverage() {
 	// trigger coverage if branch is either develop or master, or it is a PR
-	if (PRCoverage) {
-		return env.GIT_LOCAL_BRANCH in branches || env.CHANGE_ID != null
+	def branch_coverage = ['master']
+
+	if ( params.Coverage ) {
+		return true
 	}
 	else {
-		return env.GIT_LOCAL_BRANCH in branches
+		return env.GIT_LOCAL_BRANCH in branch_coverage || env.CHANGE_ID != null && env.GIT_COMMIT == env.GIT_PREVIOUS_COMMIT
 	}
 }
 
