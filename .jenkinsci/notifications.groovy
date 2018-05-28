@@ -21,10 +21,11 @@ You can find the build log attached to this email
 	// merge commit build results
 	if ( params.Merge_PR ) {
 		if ( currentBuild.currentResult == "SUCCESS" ) {
-			mergeMessage = "Merged to ${env.CHANGE_TARGET}: true"
+			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: true"
 		}
 		else {
-			mergeMessage = "Merged to ${env.CHANGE_TARGET}: false"
+			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: false"
+
 		}
 
 		if ( env.CHANGE_TARGET == 'master' ) {
