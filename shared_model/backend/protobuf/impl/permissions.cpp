@@ -10,7 +10,7 @@ namespace shared_model {
     namespace permissions {
 
       boost::optional<interface::permissions::Role> fromTransport(
-          iroha::protocol::RolePermission perm) {
+          iroha::protocol::RolePermission perm) noexcept {
         return iroha::protocol::RolePermission_IsValid(perm)
             ? boost::optional<interface::permissions::Role>(
                   static_cast<interface::permissions::Role>(perm))
@@ -27,7 +27,7 @@ namespace shared_model {
       }
 
       boost::optional<interface::permissions::Grantable> fromTransport(
-          iroha::protocol::GrantablePermission perm) {
+          iroha::protocol::GrantablePermission perm) noexcept {
         return iroha::protocol::GrantablePermission_IsValid(perm)
             ? boost::optional<interface::permissions::Grantable>(
                   static_cast<interface::permissions::Grantable>(perm))

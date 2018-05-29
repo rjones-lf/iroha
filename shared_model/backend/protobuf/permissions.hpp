@@ -9,9 +9,8 @@
 #include "interfaces/permissions.hpp"
 
 #include <boost/optional.hpp>
-#include <boost/variant.hpp>
+#include <string>
 #include "primitive.pb.h"
-#include "utils/variant_deserializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -22,7 +21,7 @@ namespace shared_model {
        * @return sm object if conversion can be done
        */
       boost::optional<interface::permissions::Role> fromTransport(
-          iroha::protocol::RolePermission perm);
+          iroha::protocol::RolePermission perm) noexcept;
       /**
        * @param sm object for conversion
        * @return protobuf object
@@ -40,7 +39,7 @@ namespace shared_model {
        * @return sm object if conversion can be done
        */
       boost::optional<interface::permissions::Grantable> fromTransport(
-          iroha::protocol::GrantablePermission perm);
+          iroha::protocol::GrantablePermission perm) noexcept;
       /**
        * @param sm object for conversion
        * @return protobuf object
@@ -51,7 +50,7 @@ namespace shared_model {
        * @param sm object for conversion
        * @return its string representation
        */
-      std::string toString(interface::permissions::Role r);
+      std::string toString(interface::permissions::Grantable r);
     }  // namespace permissions
   }    // namespace proto
 }  // namespace shared_model
