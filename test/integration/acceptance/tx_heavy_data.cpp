@@ -8,8 +8,8 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
 #include "validators/permissions.hpp"
 
 using namespace integration_framework;
@@ -122,7 +122,10 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto name_generator = [](auto val) { return "foo_" + std::to_string(val); };
 
   auto query_checker = [&](auto &status) {
-    auto &&response = *boost::apply_visitor(
+    ASSERT_NO_THROW(boost::apply_visitor(
+        interface::SpecifiedVisitor<const interface::AccountResponse &>(),
+        status.get()));
+    auto &&response = boost::apply_visitor(
         interface::SpecifiedVisitor<const interface::AccountResponse &>(),
         status.get());
 

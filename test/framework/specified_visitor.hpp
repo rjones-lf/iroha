@@ -18,15 +18,13 @@
 #ifndef IROHA_SPECIFIED_VISITOR_HPP
 #define IROHA_SPECIFIED_VISITOR_HPP
 
-#include <boost/optional.hpp>
 #include <boost/variant.hpp>
 #include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace interface {
     template <typename Type>
-    class SpecifiedVisitor
-        : public boost::static_visitor<boost::optional<const Type &>> {
+    class SpecifiedVisitor : public boost::static_visitor<const Type &> {
      private:
       using Y = shared_model::detail::PolymorphicWrapper<
           std::remove_const_t<std::remove_reference_t<Type>>>;
@@ -37,7 +35,7 @@ namespace shared_model {
        * @param t polymorphic wrapper object of specified type
        * @return const reference to value stored in polymorphic wrapper
        */
-      boost::optional<const Type &> operator()(const Y &t) const {
+      const Type &operator()(const Y &t) const {
         return *t;
       }
 
@@ -46,7 +44,7 @@ namespace shared_model {
        * @param t const reference to object of specified type
        * @return const reference to value
        */
-      boost::optional<const Type &> operator()(const Type &t) const {
+      const Type &operator()(const Type &t) const {
         return t;
       }
 
@@ -57,8 +55,8 @@ namespace shared_model {
        * @return none
        */
       template <typename T>
-      boost::optional<const Type &> operator()(const T &t) const {
-        return boost::none;
+      const Type &operator()(const T &t) const {
+        throw std::runtime_error("unexpected type provided");
       }
     };
   }  // namespace interface

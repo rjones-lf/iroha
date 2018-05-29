@@ -4,8 +4,8 @@
  */
 
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
 
 class AcceptanceTest : public AcceptanceFixture {
  public:
@@ -14,7 +14,7 @@ class AcceptanceTest : public AcceptanceFixture {
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessValid = [](auto &status) {
-        ASSERT_TRUE(boost::apply_visitor(
+        ASSERT_NO_THROW(boost::apply_visitor(
             shared_model::interface::SpecifiedVisitor<
                 shared_model::interface::StatelessValidTxResponse>(),
             status.get()));

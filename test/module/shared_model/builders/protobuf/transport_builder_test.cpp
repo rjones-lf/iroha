@@ -19,12 +19,12 @@
 
 #include "block.pb.h"
 #include "builders/protobuf/block.hpp"
+#include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "common/types.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
