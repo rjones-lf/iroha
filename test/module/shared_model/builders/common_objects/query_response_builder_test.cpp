@@ -20,15 +20,17 @@
 #include "datetime/time.hpp"
 
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
-#include "builders/protobuf/builder_templates/block_query_response_template.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
+#include "builders/query_responses/block_query_response_builder.hpp"
 #include "cryptography/keypair.hpp"
 #include "framework/specified_visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
@@ -255,14 +257,40 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
 }
 
 TEST(QueryResponseBuilderTest, BlockQueryResponse) {
-  const std::vector<std::string> roles = {"role1", "role2", "role3"};
+  auto transaction = TestTransactionBuilder()
+                         .createdTime(created_time)
+                         .creatorAccountId(account_id)
+                         .setAccountQuorum(account_id, quorum)
+                         .build();
+  shared_model::builder::BlockQueryResponseBuilder<
+      shared_model::proto::BlockQueryResponseBuilder>
+      builder;
+  auto block = TestBlockBuilder()
+                   .height(3)
+                   .createdTime(created_time)
+                   .prevHash(query_hash)
+                   .transactions(std::vector<shared_model::proto::Transaction>{
+                       transaction})
+                   .build();
+  auto query_response = builder.blockResponse(block).build();
 
-  shared_model::proto::TemplateBlockQueryResponseBuilder<> builder;
-  auto block = TestBlockBuilder().height(3).createdTime(created_time).prevHash(query_hash).build();
-  shared_model::proto::BlockQueryResponse query_response =
-      builder.blockResponse(block).build();
+  const auto block_response =
+      boost::get<w<shared_model::interface::BlockResponse>>(
+          query_response->get());
 
-  const auto block_error_response =
+  ASSERT_EQ(block, block_response->block());
+}
+
+TEST(QueryResponseBuilderTest, BlockQueryErrorResponse) {
+  shared_model::builder::BlockQueryResponseBuilder<
+      shared_model::proto::BlockQueryResponseBuilder>
+      builder;
+  std::string message("some error message");
+  auto query_response = builder.errorResponse(message).build();
+
+  const auto block_response =
       boost::get<w<shared_model::interface::BlockErrorResponse>>(
-          query_response.get());
+          query_response->get());
+
+  ASSERT_EQ(message, block_response->message());
 }

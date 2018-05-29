@@ -103,7 +103,7 @@ message BlockErrorResponse {
 
 message BlockQueryResponse {
   oneof response {
-    BlockErrorResponse error_response = 1;
-    BlockResponse block_response = 2;
+    BlockResponse block_response = 1;
+    BlockErrorResponse error_response = 2;
   }
 }
