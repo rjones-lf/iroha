@@ -19,9 +19,7 @@ def doJavaBindings(os, buildType=Release) {
       ${cmakeOptions}
   """
   sh "cmake --build build --target irohajava --config ${buildType}"
-  // TODO: Java tests never finishes on Windows Server 2016. Disable until issue is resolved
-  // https://github.com/hyperledger/iroha/issues/1342
-  // sh "cd build; ctest -R java -C ${buildType} --output-on-failure"
+  // TODO 29.05.18 @bakhtin Java tests never finishes on Windows Server 2016. IR-1380
   sh "zip -j $artifactsPath build/bindings/*.java build/bindings/*.dll build/bindings/libirohajava.so"
   if (os == 'windows') {
     sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
