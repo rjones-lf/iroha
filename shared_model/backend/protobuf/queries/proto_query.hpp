@@ -118,13 +118,6 @@ namespace shared_model {
       // lazy
       const LazyVariantType variant_{[this] {
         auto &&ar = *proto_;
-        if (not ar.has_payload()) {
-          throw std::invalid_argument("Query missing payload");
-        }
-        if (ar.payload().query_case()
-            == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
-          throw std::invalid_argument("Missing concrete query");
-        }
         int which = ar.payload()
                         .GetDescriptor()
                         ->FindFieldByNumber(ar.payload().query_case())
