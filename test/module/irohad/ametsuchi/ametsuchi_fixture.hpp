@@ -47,9 +47,7 @@ namespace iroha {
         }
         std::stringstream ss;
         ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-           << " password=" << pg_pass << " dbname="
-           << boost::uuids::to_string(boost::uuids::random_generator()())
-                  .substr(0, 8);
+           << " password=" << pg_pass << " dbname=" << dbname_;
         pgopt_ = ss.str();
         log->info("host={}, port={}, user={}, password={}",
                   pg_host,
