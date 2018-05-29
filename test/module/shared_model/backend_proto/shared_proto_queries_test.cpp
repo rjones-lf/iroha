@@ -54,12 +54,11 @@ TEST(ProtoQueryBuilder, Builder) {
   std::string account_id = "admin@test", asset_id = "coin#test";
 
   iroha::protocol::Query proto_query;
-  auto *meta = new iroha::protocol::QueryPayloadMeta();
+  auto &payload = *proto_query.mutable_payload();
+  auto *meta = payload.mutable_meta();
   meta->set_created_time(created_time);
   meta->set_creator_account_id(account_id);
   meta->set_query_counter(query_counter);
-  auto &payload = *proto_query.mutable_payload();
-  payload.set_allocated_meta(meta);
   {
     auto &query = *payload.mutable_get_account_assets();
     query.set_account_id(account_id);
@@ -77,11 +76,11 @@ TEST(ProtoQueryBuilder, Builder) {
   sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto query = shared_model::proto::QueryBuilder()
-      .createdTime(created_time)
-      .creatorAccountId(account_id)
-      .getAccountAssets(account_id, asset_id)
-      .queryCounter(query_counter)
-      .build();
+                   .createdTime(created_time)
+                   .creatorAccountId(account_id)
+                   .getAccountAssets(account_id, asset_id)
+                   .queryCounter(query_counter)
+                   .build();
 
   auto proto = query.signAndAddSignature(keypair).getTransport();
   ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
@@ -113,10 +112,10 @@ TEST(ProtoQueryBuilder, BlocksQueryBuilder) {
   sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto query = shared_model::proto::BlocksQueryBuilder()
-      .createdTime(created_time)
-      .creatorAccountId(account_id)
-      .queryCounter(query_counter)
-      .build();
+                   .createdTime(created_time)
+                   .creatorAccountId(account_id)
+                   .queryCounter(query_counter)
+                   .build();
 
   auto proto = query.signAndAddSignature(keypair).finish().getTransport();
   ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
