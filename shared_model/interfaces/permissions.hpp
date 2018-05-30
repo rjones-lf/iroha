@@ -92,7 +92,7 @@ namespace shared_model {
       bool operator[](Perm p) const;
       bool test(Perm p) const;
 
-      bool is_subset_of(const PermissionSet<Perm> &r);
+      bool isSubsetOf(const PermissionSet<Perm> &r);
 
      private:
       constexpr auto bit(Perm p) const {

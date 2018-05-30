@@ -8,9 +8,10 @@
 
 #include "interfaces/permissions.hpp"
 
-#include <boost/optional.hpp>
 #include <string>
 #include <vector>
+
+#include <boost/optional.hpp>
 #include "primitive.pb.h"
 
 namespace shared_model {
@@ -23,12 +24,14 @@ namespace shared_model {
        */
       boost::optional<interface::permissions::Role> fromTransport(
           iroha::protocol::RolePermission perm) noexcept;
+
       /**
        * @param sm object for conversion
        * @return protobuf object
        */
       iroha::protocol::RolePermission toTransport(
           interface::permissions::Role r);
+
       /**
        * @param sm object for conversion
        * @return its string representation
@@ -41,22 +44,34 @@ namespace shared_model {
        */
       boost::optional<interface::permissions::Grantable> fromTransport(
           iroha::protocol::GrantablePermission perm) noexcept;
+
       /**
        * @param sm object for conversion
        * @return protobuf object
        */
       iroha::protocol::GrantablePermission toTransport(
           interface::permissions::Grantable r);
+
       /**
        * @param sm object for conversion
        * @return its string representation
        */
       std::string toString(interface::permissions::Grantable r);
 
+      /**
+       * @param set for stringify
+       * @return vector of string representation of set elements
+       */
       std::vector<std::string> toString(
-          interface::PermissionSet<interface::permissions::Role> set);
+          const interface::PermissionSet<interface::permissions::Role> &set);
+
+      /**
+       * @param set for stringify
+       * @return vector of string representation of set elements
+       */
       std::vector<std::string> toString(
-          interface::PermissionSet<interface::permissions::Grantable> set);
+          const interface::PermissionSet<interface::permissions::Grantable>
+              &set);
     }  // namespace permissions
   }    // namespace proto
 }  // namespace shared_model

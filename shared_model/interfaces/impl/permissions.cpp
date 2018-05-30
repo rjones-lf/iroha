@@ -11,8 +11,8 @@ template <typename Perm>
 PermissionSet<Perm>::PermissionSet(std::initializer_list<Perm> list) {
   append(list);
 }
-template <typename Perm>
 
+template <typename Perm>
 PermissionSet<Perm> &PermissionSet<Perm>::append(
     std::initializer_list<Perm> list) {
   for (auto l : list) {
@@ -44,9 +44,9 @@ bool PermissionSet<Perm>::test(Perm p) const {
 }
 
 template <typename Perm>
-bool PermissionSet<Perm>::is_subset_of(const PermissionSet<Perm> &r) {
+bool PermissionSet<Perm>::isSubsetOf(const PermissionSet<Perm> &r) {
   return (*this & r) == *this;
 }
 
-template class PermissionSet<permissions::Role>;
-template class PermissionSet<permissions::Grantable>;
+template class shared_model::interface::PermissionSet<permissions::Role>;
+template class shared_model::interface::PermissionSet<permissions::Grantable>;

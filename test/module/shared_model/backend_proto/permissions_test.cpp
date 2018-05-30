@@ -154,8 +154,8 @@ TEST(ProtoPermission, PermissionSubset) {
   ASSERT_FALSE(big.test(Role::kGetDomainAccounts));
   nonsub.set(Role::kGetDomainAccounts);
 
-  ASSERT_TRUE(sub.is_subset_of(big));
-  ASSERT_TRUE(sub.is_subset_of(sub));
-  ASSERT_FALSE(nonsub.is_subset_of(sub));
-  ASSERT_FALSE(nonsub.is_subset_of(big));
+  ASSERT_TRUE(sub.isSubsetOf(big));
+  ASSERT_TRUE(sub.isSubsetOf(sub));
+  ASSERT_FALSE(nonsub.isSubsetOf(sub));
+  ASSERT_FALSE(nonsub.isSubsetOf(big));
 }
