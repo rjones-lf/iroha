@@ -15,6 +15,7 @@ namespace shared_model {
           amount_{
               [this] { return proto::Amount(add_asset_quantity_.amount()); }} {}
 
+    // TODO 30/05/2018 andrei Reduce boilerplate code in variant classes
     template AddAssetQuantity::AddAssetQuantity(
         AddAssetQuantity::TransportType &);
     template AddAssetQuantity::AddAssetQuantity(
