@@ -36,6 +36,11 @@ Schema
         uint32 precision = 2;
     }
 
+.. note::
+    Please note that due to a known issue you would not get any exception if you pass invalid precision value.
+    Valid range is: 0 <= precision <= 255
+
+
 Structure
 ^^^^^^^^^
 
@@ -224,6 +229,10 @@ Schema
         uint32 precision = 3;
     }
 
+.. note::
+    Please note that due to a known issue you would not get any exception if you pass invalid precision value.
+    Valid range is: 0 <= precision <= 255
+
 Structure
 ^^^^^^^^^
 
@@ -233,7 +242,7 @@ Structure
 
     "Asset name", "domain-unique name for asset", "`[a-z_0-9]{1,32}`", "soracoin"
     "Domain ID", "target domain to make relation with", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
-    "Precision", "number of digits after comma/dot", "0 <= precision <= uint32 max", "2"
+    "Precision", "number of digits after comma/dot", "0 <= precision <= 255", "2"
 
 Validation
 ^^^^^^^^^^
@@ -565,6 +574,10 @@ Schema
        uint256 value = 1;
        uint32 precision = 2;
     }
+
+.. note::
+    Please note that due to a known issue you would not get any exception if you pass invalid precision value.
+    Valid range is: 0 <= precision <= 255
 
 Structure
 ^^^^^^^^^

@@ -26,48 +26,24 @@
 #include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T, typename Archive>
-auto loadErrorResponse(Archive &&ar) {
-  unsigned which = ar.GetDescriptor()
-                       ->FindFieldByName("reason")
-                       ->enum_type()
-                       ->FindValueByNumber(ar.reason())
-                       ->index();
-  return shared_model::detail::variant_impl<T...>::
-      template load<shared_model::interface::ErrorQueryResponse::
-                        QueryErrorResponseVariantType>(
-          std::forward<Archive>(ar), which);
-}
-
 namespace shared_model {
   namespace proto {
     class ErrorQueryResponse final
         : public CopyableProto<interface::ErrorQueryResponse,
                                iroha::protocol::QueryResponse,
                                ErrorQueryResponse> {
-     private:
-      /// polymorphic wrapper type shortcut
-      template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
-
-      /// lazy variant shortcut
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      using LazyVariantType = Lazy<QueryErrorResponseVariantType>;
-
      public:
       /// type of proto variant
       using ProtoQueryErrorResponseVariantType =
-          wrap<StatelessFailedErrorResponse,
-               StatefulFailedErrorResponse,
-               NoAccountErrorResponse,
-               NoAccountAssetsErrorResponse,
-               NoAccountDetailErrorResponse,
-               NoSignatoriesErrorResponse,
-               NotSupportedErrorResponse,
-               NoAssetErrorResponse,
-               NoRolesErrorResponse>;
+          boost::variant<StatelessFailedErrorResponse,
+                         StatefulFailedErrorResponse,
+                         NoAccountErrorResponse,
+                         NoAccountAssetsErrorResponse,
+                         NoAccountDetailErrorResponse,
+                         NoSignatoriesErrorResponse,
+                         NotSupportedErrorResponse,
+                         NoAssetErrorResponse,
+                         NoRolesErrorResponse>;
 
       /// list of types in proto variant
       using ProtoQueryErrorResponseListType =
@@ -84,14 +60,33 @@ namespace shared_model {
           : ErrorQueryResponse(std::move(o.proto_)) {}
 
       const QueryErrorResponseVariantType &get() const override {
-        return *variant_;
+        return *ivariant_;
       }
 
      private:
+      /// lazy variant shortcut
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      using LazyVariantType = Lazy<ProtoQueryErrorResponseVariantType>;
+
       const LazyVariantType variant_{[this] {
-        return loadErrorResponse<ProtoQueryErrorResponseListType>(
-            proto_->error_response());
+        auto &&ar = proto_->error_response();
+
+        unsigned which = ar.GetDescriptor()
+                             ->FindFieldByName("reason")
+                             ->enum_type()
+                             ->FindValueByNumber(ar.reason())
+                             ->index();
+        return shared_model::detail::
+            variant_impl<ProtoQueryErrorResponseListType>::template load<
+                ProtoQueryErrorResponseVariantType>(
+                std::forward<decltype(ar)>(ar), which);
       }};
+
+      const Lazy<QueryErrorResponseVariantType> ivariant_{
+          detail::makeLazyInitializer(
+              [this] { return QueryErrorResponseVariantType(*variant_); })};
     };
   }  // namespace proto
 }  // namespace shared_model

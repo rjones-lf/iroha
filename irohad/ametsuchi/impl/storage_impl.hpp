@@ -24,6 +24,7 @@
 #include <cmath>
 #include <pqxx/pqxx>
 #include <shared_mutex>
+#include "ametsuchi/impl/postgres_options.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -43,6 +44,10 @@ namespace iroha {
 
     class StorageImpl : public Storage {
      protected:
+      static expected::Result<bool, std::string> createDatabaseIfNotExist(
+          const std::string &dbname,
+          const std::string &options_str_without_dbname);
+
       static expected::Result<ConnectionContext, std::string> initConnections(
           std::string block_store_dir, std::string postgres_options);
 
@@ -88,7 +93,7 @@ namespace iroha {
 
      protected:
       StorageImpl(std::string block_store_dir,
-                  std::string postgres_options,
+                  PostgresOptions postgres_options,
                   std::unique_ptr<FlatFile> block_store,
                   std::unique_ptr<pqxx::lazyconnection> wsv_connection,
                   std::unique_ptr<pqxx::nontransaction> wsv_transaction);
@@ -99,7 +104,7 @@ namespace iroha {
       const std::string block_store_dir_;
 
       // db info
-      const std::string postgres_options_;
+      const PostgresOptions postgres_options_;
 
      private:
       std::unique_ptr<FlatFile> block_store_;

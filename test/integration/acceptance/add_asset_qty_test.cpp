@@ -207,6 +207,7 @@ TEST_F(AddAssetQuantity, OtherDomain) {
                   crypto::DefaultCryptoAlgorithmType::generateKeypair()
                       .publicKey())
               .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+              .quorum(1)
               .build()
               .signAndAddSignature(kAdminKeypair))
       .skipProposal()

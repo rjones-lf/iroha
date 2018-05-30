@@ -40,6 +40,14 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
+      /// Type of quorum
+      using QuorumType = uint8_t;
+
+      /**
+       * @return quorum of transaction
+       */
+      virtual QuorumType quorum() const = 0;
+
       /// Type of command
       using CommandType = detail::PolymorphicWrapper<Command>;
 
@@ -57,6 +65,7 @@ namespace shared_model {
             .append("hash", hash().hex())
             .append("creatorAccountId", creatorAccountId())
             .append("createdTime", std::to_string(createdTime()))
+            .append("quorum", std::to_string(quorum()))
             .append("commands")
             .appendAll(commands(),
                        [](auto &command) { return command->toString(); })

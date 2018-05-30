@@ -28,6 +28,7 @@ if (IROHA_ROOT_PROJECT)
   compile_proto_to_grpc_cpp(yac.proto)
   compile_proto_to_grpc_cpp(ordering.proto)
   compile_proto_to_grpc_cpp(loader.proto)
+  compile_proto_to_grpc_cpp(mst.proto)
 endif ()
 
 add_library(schema
@@ -81,6 +82,15 @@ if (IROHA_ROOT_PROJECT)
       loader.grpc.pb.cc
       )
   target_link_libraries(loader_grpc
+      schema
+      grpc++
+      )
+
+  add_library(mst_grpc
+      mst.pb.cc
+      mst.grpc.pb.cc
+      )
+  target_link_libraries(mst_grpc
       schema
       grpc++
       )

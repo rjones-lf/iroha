@@ -88,7 +88,6 @@ TEST_F(SynchronizerTest, ValidWhenInitialized) {
   init();
 }
 
-
 /**
  * @given A commit from consensus and initialized components
  * @when a valid block that can be applied

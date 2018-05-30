@@ -10,6 +10,10 @@ def doJavaBindings(os, buildType=Release) {
     sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
+  if (os == 'linux') {
+    // do not use preinstalled libed25519
+    sh "rm -rf /usr/local/include/ed25519*; unlink /usr/local/lib/libed25519.so; rm -f /usr/local/lib/libed25519.so.1.2.2"
+  }
   sh """
     cmake \
       -Hshared_model \
@@ -40,6 +44,10 @@ def doPythonBindings(os, buildType=Release) {
   if (os == 'windows') {
     sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
+  }
+  if (os == 'linux') {
+    // do not use preinstalled libed25519
+    sh "rm -rf /usr/local/include/ed25519*; unlink /usr/local/lib/libed25519.so; rm -f /usr/local/lib/libed25519.so.1.2.2"
   }
   if (env.PBVersion == "python2") { supportPython2 = "ON" }
   sh """

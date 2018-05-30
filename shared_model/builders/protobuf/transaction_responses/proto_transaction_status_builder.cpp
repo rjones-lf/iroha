@@ -75,6 +75,12 @@ namespace shared_model {
       return copy;
     }
 
+    TransactionStatusBuilder TransactionStatusBuilder::mstExpired() {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_tx_status(iroha::protocol::TxStatus::MST_EXPIRED);
+      return copy;
+    }
+
     TransactionStatusBuilder TransactionStatusBuilder::txHash(
         const crypto::Hash &hash) {
       TransactionStatusBuilder copy(*this);

@@ -21,6 +21,7 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 #include "cryptography/hash.hpp"
+#include "interfaces/utils/specified_visitor.hpp"
 
 /**
  * @given protobuf's QueryResponse with different responses and some hash
@@ -69,8 +70,9 @@ TEST(QueryResponse, ErrorResponseLoad) {
             error_resp, resp_reason, resp_reason_enum->value(i)->number());
         auto shared_response = shared_model::proto::QueryResponse(response);
         ASSERT_EQ(i,
-                  boost::get<shared_model::detail::PolymorphicWrapper<
-                      shared_model::interface::ErrorQueryResponse>>(
+                  boost::apply_visitor(
+                      shared_model::interface::SpecifiedVisitor<
+                          shared_model::interface::ErrorQueryResponse>(),
                       shared_response.get())
                       ->get()
                       .which());

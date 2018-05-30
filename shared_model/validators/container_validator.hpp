@@ -37,15 +37,6 @@ namespace shared_model {
               typename TransactionValidator>
     class ContainerValidator {
      protected:
-      void validateHeight(ReasonsGroupType &reason,
-                          const interface::types::HeightType &height) const {
-        if (height <= 0) {
-          auto message =
-              (boost::format("Height should be > 0, passed value: %d") % height)
-                  .str();
-          reason.second.push_back(message);
-        }
-      }
       void validateTransaction(
           ReasonsGroupType &reason,
           const interface::Transaction &transaction) const {
@@ -76,7 +67,7 @@ namespace shared_model {
         ReasonsGroupType reason;
         reason.first = reason_name;
         field_validator_.validateCreatedTime(reason, cont.createdTime());
-        validateHeight(reason, cont.height());
+        field_validator_.validateHeight(reason, cont.height());
         validateTransactions(reason, cont.transactions());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));

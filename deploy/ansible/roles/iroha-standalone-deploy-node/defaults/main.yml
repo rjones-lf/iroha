@@ -8,6 +8,6 @@
   containerConfPath: /opt/iroha_data
 
   irohaDockerImage: hyperledger/iroha # docker image name
-  irohaDockerImageTag: develop  # docker image tag
+  irohaDockerImageTag: latest  # docker image tag
   dbDockerImage: postgres
   dbDockerImageTag: 9.5

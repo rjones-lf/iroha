@@ -211,8 +211,7 @@ namespace iroha {
                         rhs.commands.begin(),
                         rhs.commands.end(),
                         [](const auto &i, const auto &j) { return *i == *j; })
-          && rhs.signatures == signatures
-          && rhs.created_ts == created_ts;
+          && rhs.quorum == quorum && rhs.created_ts == created_ts;
     }
 
     /* Proposal */

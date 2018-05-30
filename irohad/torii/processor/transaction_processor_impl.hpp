@@ -22,6 +22,7 @@
 #include "builders/default_builders.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
 
@@ -31,10 +32,11 @@ namespace iroha {
      public:
       /**
        * @param pcs - provide information proposals and commits
-       * @param validator - perform stateless validation
+       * @param mst_processor is a handler for multisignature transactions
        */
       TransactionProcessorImpl(
-          std::shared_ptr<network::PeerCommunicationService> pcs);
+          std::shared_ptr<network::PeerCommunicationService> pcs,
+          std::shared_ptr<MstProcessor> mst_processor);
 
       void transactionHandle(
           std::shared_ptr<shared_model::interface::Transaction> transaction)
@@ -49,6 +51,7 @@ namespace iroha {
       std::shared_ptr<network::PeerCommunicationService> pcs_;
 
       // processing
+      std::shared_ptr<MstProcessor> mst_processor_;
       std::unordered_set<shared_model::crypto::Hash,
                          shared_model::crypto::Hash::Hasher>
           proposal_set_;

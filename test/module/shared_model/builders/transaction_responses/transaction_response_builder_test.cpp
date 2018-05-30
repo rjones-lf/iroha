@@ -142,6 +142,28 @@ TEST(TransactionResponseBuilderTest, CommittedStatus) {
 }
 
 /**
+ * @given expected transaction mst expired status and hash
+ * @when model object is built using these status and hash
+ * @then built object has expected status and hash
+ */
+TEST(TransactionResponseBuilderTest, MstExpiredStatus) {
+  using MstStatusType = shared_model::interface::MstExpiredResponse;
+
+  auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
+
+  auto committed_response =
+      TransactionStatusBuilder<shared_model::proto::TransactionStatusBuilder>()
+          .mstExpired()
+          .txHash(expected_hash)
+          .build();
+
+  // check if type in reponse is as expected
+  boost::apply_visitor(verifyType<MstStatusType>(), committed_response->get());
+
+  ASSERT_EQ(committed_response->transactionHash(), expected_hash);
+}
+
+/**
  * @given expected transaction not received status and hash
  * @when model object is built using these status and hash
  * @then built object has expected status and hash
