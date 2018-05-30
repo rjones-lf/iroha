@@ -238,3 +238,31 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
       makePeer("one", "sign_one"), makePeer("two", "sign_two")};
   propagation_subject.get_subscriber().on_next(peers);
 }
+
+/**
+ * @given initialized mst processor
+ * AND our state contains one transaction
+ * AND one peer with the same state as our
+ *
+ * @when received notification about new propagation
+ *
+ * @then check that transport was not invoked
+ */
+TEST_F(MstProcessorTest, emptyStatePropagation) {
+  // ---------------------------------| then |----------------------------------
+  EXPECT_CALL(*transport, sendState(_, _)).Times(0);
+
+  // ---------------------------------| given |---------------------------------
+  auto another_peer = makePeer("another", "another_pubkey");
+
+  auto another_peer_state = MstState::empty();
+  another_peer_state += makeTx(1);
+
+  storage->apply(another_peer, another_peer_state);
+  ASSERT_TRUE(storage->getDiffState(another_peer, time_now).isEmpty());
+
+  // ---------------------------------| when |----------------------------------
+  std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
+      another_peer};
+  propagation_subject.get_subscriber().on_next(peers);
+}

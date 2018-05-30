@@ -30,8 +30,6 @@ limitations under the License.
 #include "torii/command_service.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
-constexpr const char *Ip = "0.0.0.0";
-constexpr int Port = 50051;
 constexpr size_t TimesToriiBlocking = 5;
 
 using ::testing::_;
@@ -74,11 +72,10 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   rxcpp::subjects::subject<Commit> commit_notifier_;
 };
 
-// TODO: allow dynamic port binding in ServerRunner IR-741
 class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner = new ServerRunner(std::string(Ip) + ":" + std::to_string(Port));
+    runner = std::make_unique<ServerRunner>(ip + ":0");
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
@@ -102,16 +99,19 @@ class ToriiServiceTest : public testing::Test {
     runner
         ->append(std::make_unique<torii::CommandService>(
             tx_processor, block_query, proposal_delay))
-        .run();
+        .run()
+        .match(
+            [this](iroha::expected::Value<int> port) {
+              this->port = port.value;
+            },
+            [](iroha::expected::Error<std::string> err) {
+              FAIL() << err.error;
+            });
 
     runner->waitForServersReady();
   }
 
-  virtual void TearDown() {
-    delete runner;
-  }
-
-  ServerRunner *runner;
+  std::unique_ptr<ServerRunner> runner;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
@@ -127,6 +127,9 @@ class ToriiServiceTest : public testing::Test {
 
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+
+  const std::string ip = "127.0.0.1";
+  int port;
 };
 
 /**
@@ -139,7 +142,7 @@ TEST_F(ToriiServiceTest, CommandClient) {
   tx_request.set_tx_hash(std::string(32, '1'));
   iroha::protocol::ToriiResponse toriiResponse;
 
-  auto client1 = torii::CommandSyncClient(Ip, Port);
+  auto client1 = torii::CommandSyncClient(ip, port);
   // Copy ctor
   torii::CommandSyncClient client2(client1);
   // copy assignment
@@ -169,7 +172,7 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
   }
 
   // get statuses of unsent transactions
-  auto client = torii::CommandSyncClient(Ip, Port);
+  auto client = torii::CommandSyncClient(ip, port);
 
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     iroha::protocol::TxStatusRequest tx_request;
@@ -199,7 +202,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   std::vector<shared_model::proto::Transaction> txs;
   std::vector<shared_model::interface::types::HashType> tx_hashes;
 
-  auto client1 = torii::CommandSyncClient(Ip, Port);
+  auto client1 = torii::CommandSyncClient(ip, port);
 
   // create transactions and send them to Torii
   std::string account_id = "some@account";
@@ -319,7 +322,7 @@ TEST_F(ToriiServiceTest, CheckHash) {
     tx_hashes.push_back(tx.hash());
   }
 
-  auto client = torii::CommandSyncClient(Ip, Port);
+  auto client = torii::CommandSyncClient(ip, port);
 
   // get statuses of transactions
   for (auto &hash : tx_hashes) {
@@ -344,7 +347,7 @@ TEST_F(ToriiServiceTest, CheckHash) {
 TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   using namespace shared_model;
 
-  auto client = torii::CommandSyncClient(Ip, Port);
+  auto client = torii::CommandSyncClient(ip, port);
   auto iroha_tx = proto::TransactionBuilder()
                       .creatorAccountId("a@domain")
                       .setAccountQuorum("a@domain", 2)
@@ -408,7 +411,7 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
  * @then ensure that response will have exactly 1 status - NOT_RECEIVED
  */
 TEST_F(ToriiServiceTest, StreamingNoTx) {
-  auto client = torii::CommandSyncClient(Ip, Port);
+  auto client = torii::CommandSyncClient(ip, port);
   std::vector<iroha::protocol::ToriiResponse> torii_response;
   std::thread t([&]() {
     iroha::protocol::TxStatusRequest tx_request;

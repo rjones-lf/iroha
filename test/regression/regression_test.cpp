@@ -20,7 +20,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
+#include "framework/specified_visitor.hpp"
 
 constexpr auto kUser = "user@test";
 constexpr auto kAsset = "asset#domain";
@@ -44,10 +44,9 @@ TEST(RegressionTest, SequentialInitialization) {
                         generateKeypair());
 
   auto checkStatelessValid = [](auto &status) {
-    ASSERT_TRUE(boost::apply_visitor(
-        shared_model::interface::
-            SpecifiedVisitor<shared_model::interface::
-                                 StatelessValidTxResponse>(),
+    ASSERT_NO_THROW(boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
   auto checkProposal = [](auto &proposal) {
@@ -103,13 +102,14 @@ TEST(RegressionTest, StateRecovery) {
   };
   auto checkOne = [](auto &res) { ASSERT_EQ(res->transactions().size(), 1); };
   auto checkQuery = [&tx](auto &status) {
-    auto resp = boost::apply_visitor(
-        shared_model::interface::
-            SpecifiedVisitor<shared_model::interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(resp.value().transactions().size(), 1);
-    ASSERT_EQ(*resp.value().transactions()[0].operator->(), tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          shared_model::interface::SpecifiedVisitor<
+              shared_model::interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), tx);
+    });
   };
   auto path =
       (boost::filesystem::temp_directory_path() / "iroha-state-recovery-test")

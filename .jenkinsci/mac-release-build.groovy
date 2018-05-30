@@ -19,7 +19,7 @@ def doReleaseBuild(coverageEnabled=false) {
       -DPACKAGE_TGZ=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DIROHA_VERSION=${env.IROHA_VERSION}
-    
+
     cmake --build build --target package -- -j${params.PARALLELISM}
     mv ./build/iroha-${env.IROHA_VERSION}-*.tar.gz ./build/iroha.tar.gz
     ccache --show-stats
