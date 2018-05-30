@@ -42,6 +42,30 @@ namespace shared_model {
       std::string toString(interface::permissions::Grantable r) {
         return iroha::protocol::GrantablePermission_Name(toTransport(r));
       }
+
+      std::vector<std::string> toString(
+          interface::PermissionSet<interface::permissions::Role> set) {
+        std::vector<std::string> v;
+        for (size_t i = 0; i < set.size(); ++i) {
+          auto perm = static_cast<interface::permissions::Role>(i);
+          if (set[perm]) {
+            v.push_back(toString(perm));
+          }
+        }
+        return v;
+      }
+
+      std::vector<std::string> toString(
+          interface::PermissionSet<interface::permissions::Grantable> set) {
+        std::vector<std::string> v;
+        for (size_t i = 0; i < set.size(); ++i) {
+          auto perm = static_cast<interface::permissions::Grantable>(i);
+          if (set[perm]) {
+            v.push_back(toString(perm));
+          }
+        }
+        return v;
+      }
     }  // namespace permissions
   }    // namespace proto
 }  // namespace shared_model

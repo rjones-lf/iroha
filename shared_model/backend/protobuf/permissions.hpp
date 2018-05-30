@@ -10,6 +10,7 @@
 
 #include <boost/optional.hpp>
 #include <string>
+#include <vector>
 #include "primitive.pb.h"
 
 namespace shared_model {
@@ -51,6 +52,11 @@ namespace shared_model {
        * @return its string representation
        */
       std::string toString(interface::permissions::Grantable r);
+
+      std::vector<std::string> toString(
+          interface::PermissionSet<interface::permissions::Role> set);
+      std::vector<std::string> toString(
+          interface::PermissionSet<interface::permissions::Grantable> set);
     }  // namespace permissions
   }    // namespace proto
 }  // namespace shared_model
