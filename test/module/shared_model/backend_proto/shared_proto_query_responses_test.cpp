@@ -69,18 +69,16 @@ TEST(QueryResponse, ErrorResponseLoad) {
         refl->SetEnumValue(
             error_resp, resp_reason, resp_reason_enum->value(i)->number());
         auto shared_response = shared_model::proto::QueryResponse(response);
-        ASSERT_NO_THROW(boost::apply_visitor(
-            shared_model::interface::SpecifiedVisitor<
-                shared_model::interface::ErrorQueryResponse>(),
-            shared_response.get()));
-        ASSERT_EQ(i,
-                  boost::apply_visitor(
-                      shared_model::interface::SpecifiedVisitor<
-                          shared_model::interface::ErrorQueryResponse>(),
-                      shared_response.get())
-                      .get()
-                      .which());
-        ASSERT_EQ(shared_response.queryHash(),
-                  shared_model::crypto::Hash(hash));
+        ASSERT_NO_THROW({
+          ASSERT_EQ(i,
+                    boost::apply_visitor(
+                        shared_model::interface::SpecifiedVisitor<
+                            shared_model::interface::ErrorQueryResponse>(),
+                        shared_response.get())
+                        .get()
+                        .which());
+          ASSERT_EQ(shared_response.queryHash(),
+                    shared_model::crypto::Hash(hash));
+        });
       });
 }
