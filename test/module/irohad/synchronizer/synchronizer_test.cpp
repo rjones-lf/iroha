@@ -287,3 +287,61 @@ TEST_F(SynchronizerTest, InvalidWhenUnexpectedEnd) {
 
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given A valid block that cannot be applied directly
+ * @when process_commit is called
+ * @then observable of retrieveBlocks must be evaluated once
+ */
+TEST_F(SynchronizerTest, OnlyOneRetrieval) {
+  TemplateMockBlockValidator<MockBlockValidator> mockBlockValidator;
+  EXPECT_CALL(*mockBlockValidator.validator, validate(_))
+      .WillRepeatedly(Return(shared_model::validation::Answer()));
+  using TestUnsignedBlockBuilder = shared_model::proto::TemplateBlockBuilder<
+      (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+      TemplateMockBlockValidator<MockBlockValidator>,
+      shared_model::proto::UnsignedWrapper<shared_model::proto::Block>>;
+
+  auto block = TestUnsignedBlockBuilder(mockBlockValidator)
+                   .height(5)
+                   .build()
+                   .signAndAddSignature(
+                       shared_model::crypto::DefaultCryptoAlgorithmType::
+                           generateKeypair());
+  std::shared_ptr<shared_model::interface::Block> test_block =
+      std::make_shared<shared_model::proto::Block>(std::move(block));
+  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
+      SetFactory(&createMockMutableStorage);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
+  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
+  EXPECT_CALL(*consensus_gate, on_commit())
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Block>>()));
+  EXPECT_CALL(*chain_validator, validateBlock(testing::Ref(*test_block), _))
+      .WillOnce(Return(false));
+  EXPECT_CALL(*chain_validator, validateChain(_, _))
+      .WillOnce(testing::Invoke([](auto chain, auto &) {
+        // emulate chain check
+        chain.as_blocking().subscribe([](auto) {});
+        return true;
+      }));
+  EXPECT_CALL(*block_loader, retrieveBlocks(_))
+      .WillOnce(
+          Return(rxcpp::observable<>::create<
+                 std::shared_ptr<shared_model::interface::Block>>([](auto s) {
+            static int times = 0;
+            if (times++) {
+              FAIL()
+                  << "Observable of retrieveBlocks must be evaluated only once";
+            }
+            s.on_next(std::make_shared<shared_model::proto::Block>(
+                TestBlockBuilder().height(5).build()));
+            s.on_completed();
+          })));
+  init();
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe();
+  synchronizer->process_commit(test_block);
+  ASSERT_TRUE(wrapper.validate());
+}
