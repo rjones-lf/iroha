@@ -67,6 +67,7 @@ namespace iroha {
       auto qry_resp =
           std::static_pointer_cast<shared_model::proto::QueryResponse>(
               qpf_response);
+      std::lock_guard<std::mutex> lock(notifier_mutex_);
       subject_.get_subscriber().on_next(
           std::make_shared<shared_model::proto::QueryResponse>(
               qry_resp->getTransport()));
