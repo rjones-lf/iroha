@@ -24,11 +24,11 @@ namespace shared_model {
         SubtractAssetQuantity::TransportType &&);
 
     SubtractAssetQuantity::SubtractAssetQuantity(const SubtractAssetQuantity &o)
-        : SubtractAssetQuantity(*o.proto_) {}
+        : SubtractAssetQuantity(o.proto_) {}
 
     SubtractAssetQuantity::SubtractAssetQuantity(
         SubtractAssetQuantity &&o) noexcept
-        : SubtractAssetQuantity(std::move(*o.proto_)) {}
+        : SubtractAssetQuantity(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &SubtractAssetQuantity::accountId()
         const {

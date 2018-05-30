@@ -17,10 +17,10 @@ namespace shared_model {
     template SetQuorum::SetQuorum(const SetQuorum::TransportType &);
     template SetQuorum::SetQuorum(SetQuorum::TransportType &&);
 
-    SetQuorum::SetQuorum(const SetQuorum &o) : SetQuorum(*o.proto_) {}
+    SetQuorum::SetQuorum(const SetQuorum &o) : SetQuorum(o.proto_) {}
 
     SetQuorum::SetQuorum(SetQuorum &&o) noexcept
-        : SetQuorum(std::move(*o.proto_)) {}
+        : SetQuorum(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &SetQuorum::accountId() const {
       return set_quorum_.account_id();

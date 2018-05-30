@@ -18,9 +18,9 @@ namespace shared_model {
     template AddPeer::AddPeer(const AddPeer::TransportType &);
     template AddPeer::AddPeer(AddPeer::TransportType &&);
 
-    AddPeer::AddPeer(const AddPeer &o) : AddPeer(*o.proto_) {}
+    AddPeer::AddPeer(const AddPeer &o) : AddPeer(o.proto_) {}
 
-    AddPeer::AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(*o.proto_)) {}
+    AddPeer::AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(o.proto_)) {}
 
     const interface::Peer &AddPeer::peer() const {
       return *peer_;

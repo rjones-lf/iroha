@@ -27,9 +27,9 @@ namespace shared_model {
     template Command::Command(const Command::TransportType &);
     template Command::Command(Command::TransportType &&);
 
-    Command::Command(const Command &o) : Command(*o.proto_) {}
+    Command::Command(const Command &o) : Command(o.proto_) {}
 
-    Command::Command(Command &&o) noexcept : Command(std::move(*o.proto_)) {}
+    Command::Command(Command &&o) noexcept : Command(std::move(o.proto_)) {}
 
     const Command::CommandVariantType &Command::get() const {
       return *variant_;

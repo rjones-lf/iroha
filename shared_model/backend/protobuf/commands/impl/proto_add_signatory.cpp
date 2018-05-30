@@ -21,10 +21,10 @@ namespace shared_model {
     template AddSignatory::AddSignatory(AddSignatory::TransportType &&);
 
     AddSignatory::AddSignatory(const AddSignatory &o)
-        : AddSignatory(*o.proto_) {}
+        : AddSignatory(o.proto_) {}
 
     AddSignatory::AddSignatory(AddSignatory &&o) noexcept
-        : AddSignatory(std::move(*o.proto_)) {}
+        : AddSignatory(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &AddSignatory::accountId() const {
       return add_signatory_.account_id();

@@ -18,10 +18,10 @@ namespace shared_model {
     template CreateDomain::CreateDomain(CreateDomain::TransportType &&);
 
     CreateDomain::CreateDomain(const CreateDomain &o)
-        : CreateDomain(*o.proto_) {}
+        : CreateDomain(o.proto_) {}
 
     CreateDomain::CreateDomain(CreateDomain &&o) noexcept
-        : CreateDomain(std::move(*o.proto_)) {}
+        : CreateDomain(std::move(o.proto_)) {}
 
     const interface::types::DomainIdType &CreateDomain::domainId() const {
       return create_domain_.domain_id();

@@ -23,10 +23,10 @@ namespace shared_model {
         RemoveSignatory::TransportType &&);
 
     RemoveSignatory::RemoveSignatory(const RemoveSignatory &o)
-        : RemoveSignatory(*o.proto_) {}
+        : RemoveSignatory(o.proto_) {}
 
     RemoveSignatory::RemoveSignatory(RemoveSignatory &&o) noexcept
-        : RemoveSignatory(std::move(*o.proto_)) {}
+        : RemoveSignatory(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &RemoveSignatory::accountId() const {
       return remove_signatory_.account_id();

@@ -19,10 +19,10 @@ namespace shared_model {
     template TransferAsset::TransferAsset(TransferAsset::TransportType &&);
 
     TransferAsset::TransferAsset(const TransferAsset &o)
-        : TransferAsset(*o.proto_) {}
+        : TransferAsset(o.proto_) {}
 
     TransferAsset::TransferAsset(TransferAsset &&o) noexcept
-        : TransferAsset(std::move(*o.proto_)) {}
+        : TransferAsset(std::move(o.proto_)) {}
 
     const interface::Amount &TransferAsset::amount() const {
       return *amount_;

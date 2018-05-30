@@ -21,10 +21,10 @@ namespace shared_model {
         SetAccountDetail::TransportType &&);
 
     SetAccountDetail::SetAccountDetail(const SetAccountDetail &o)
-        : SetAccountDetail(*o.proto_) {}
+        : SetAccountDetail(o.proto_) {}
 
     SetAccountDetail::SetAccountDetail(SetAccountDetail &&o) noexcept
-        : SetAccountDetail(std::move(*o.proto_)) {}
+        : SetAccountDetail(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &SetAccountDetail::accountId() const {
       return set_account_detail_.account_id();

@@ -21,10 +21,10 @@ namespace shared_model {
         RevokePermission::TransportType &&);
 
     RevokePermission::RevokePermission(const RevokePermission &o)
-        : RevokePermission(*o.proto_) {}
+        : RevokePermission(o.proto_) {}
 
     RevokePermission::RevokePermission(RevokePermission &&o) noexcept
-        : RevokePermission(std::move(*o.proto_)) {}
+        : RevokePermission(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &RevokePermission::accountId() const {
       return revoke_permission_.account_id();

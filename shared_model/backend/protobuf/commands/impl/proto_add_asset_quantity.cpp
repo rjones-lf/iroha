@@ -23,10 +23,10 @@ namespace shared_model {
         AddAssetQuantity::TransportType &&);
 
     AddAssetQuantity::AddAssetQuantity(const AddAssetQuantity &o)
-        : AddAssetQuantity(*o.proto_) {}
+        : AddAssetQuantity(o.proto_) {}
 
     AddAssetQuantity::AddAssetQuantity(AddAssetQuantity &&o) noexcept
-        : AddAssetQuantity(std::move(*o.proto_)) {}
+        : AddAssetQuantity(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &AddAssetQuantity::accountId() const {
       return add_asset_quantity_.account_id();
