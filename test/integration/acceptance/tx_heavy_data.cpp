@@ -122,22 +122,21 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto name_generator = [](auto val) { return "foo_" + std::to_string(val); };
 
   auto query_checker = [&](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        interface::SpecifiedVisitor<const interface::AccountResponse &>(),
-        status.get()));
-    auto &&response = boost::apply_visitor(
-        interface::SpecifiedVisitor<const interface::AccountResponse &>(),
-        status.get());
+    ASSERT_NO_THROW({
+      auto &&response = boost::apply_visitor(
+          interface::SpecifiedVisitor<const interface::AccountResponse &>(),
+          status.get());
 
-    boost::property_tree::ptree root;
-    boost::property_tree::read_json(response.account().jsonData(), root);
-    auto user = root.get_child(kUserId);
+      boost::property_tree::ptree root;
+      boost::property_tree::read_json(response.account().jsonData(), root);
+      auto user = root.get_child(kUserId);
 
-    ASSERT_EQ(number_of_times, user.size());
+      ASSERT_EQ(number_of_times, user.size());
 
-    for (auto i = 0u; i < number_of_times; ++i) {
-      ASSERT_EQ(data, user.get<std::string>(name_generator(i)));
-    }
+      for (auto i = 0u; i < number_of_times; ++i) {
+        ASSERT_EQ(data, user.get<std::string>(name_generator(i)));
+      }
+    });
   };
 
   IntegrationTestFramework itf(1);

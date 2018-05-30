@@ -102,16 +102,14 @@ TEST(RegressionTest, StateRecovery) {
   };
   auto checkOne = [](auto &res) { ASSERT_EQ(res->transactions().size(), 1); };
   auto checkQuery = [&tx](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
-            shared_model::interface::TransactionsResponse>(),
-        status.get()));
-    const auto &resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
-            shared_model::interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_EQ(resp.transactions().size(), 1);
-    ASSERT_EQ(*resp.transactions()[0].operator->(), tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          shared_model::interface::SpecifiedVisitor<
+              shared_model::interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), tx);
+    });
   };
   auto path =
       (boost::filesystem::temp_directory_path() / "iroha-state-recovery-test")

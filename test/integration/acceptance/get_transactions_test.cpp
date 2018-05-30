@@ -84,14 +84,13 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
 TEST_F(GetTransactions, HaveGetAllTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get()));
-    const auto &resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_EQ(resp.transactions().size(), 1);
-    ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    });
   };
 
   IntegrationTestFramework(2)
@@ -112,14 +111,13 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 TEST_F(GetTransactions, HaveGetMyTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get()));
-    const auto &resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_EQ(resp.transactions().size(), 1);
-    ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    });
   };
 
   IntegrationTestFramework(2)
@@ -169,13 +167,12 @@ TEST_F(GetTransactions, InvalidSignatures) {
  */
 TEST_F(GetTransactions, NonexistentHash) {
   auto check = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get()));
-    const auto &resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_EQ(resp.transactions().size(), 0);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 0);
+    });
   };
 
   IntegrationTestFramework(1)
@@ -194,13 +191,12 @@ TEST_F(GetTransactions, NonexistentHash) {
  */
 TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get()));
-    const auto &resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_EQ(resp.transactions().size(), 0);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 0);
+    });
   };
 
   auto tx = makeUserWithPerms();

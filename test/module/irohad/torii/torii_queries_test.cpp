@@ -227,18 +227,16 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
-  ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountResponse>(),
-                           resp.get()));
-  const auto &account_resp =
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountResponse>(),
-                           resp.get());
+  ASSERT_NO_THROW({
+    const auto &account_resp =
+        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                 shared_model::interface::AccountResponse>(),
+                             resp.get());
 
-  ASSERT_EQ(account_resp.account().accountId(), accountB->accountId());
-  ASSERT_EQ(account_resp.roles().size(), 1);
-  ASSERT_EQ(model_query.hash(), resp.queryHash());
+    ASSERT_EQ(account_resp.account().accountId(), accountB->accountId());
+    ASSERT_EQ(account_resp.roles().size(), 1);
+    ASSERT_EQ(model_query.hash(), resp.queryHash());
+  });
 }
 
 TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
@@ -273,18 +271,16 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
-  ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountResponse>(),
-                           resp.get()));
-  const auto &detail_resp =
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountResponse>(),
-                           resp.get());
+  ASSERT_NO_THROW({
+    const auto &detail_resp =
+        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                 shared_model::interface::AccountResponse>(),
+                             resp.get());
 
-  ASSERT_EQ(detail_resp.account().accountId(), account->accountId());
-  ASSERT_EQ(detail_resp.account().domainId(), account->domainId());
-  ASSERT_EQ(model_query.hash(), resp.queryHash());
+    ASSERT_EQ(detail_resp.account().accountId(), account->accountId());
+    ASSERT_EQ(detail_resp.account().domainId(), account->domainId());
+    ASSERT_EQ(model_query.hash(), resp.queryHash());
+  });
 }
 
 /**
@@ -383,20 +379,19 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   ASSERT_FALSE(response.has_error_response());
 
   auto resp = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountAssetResponse>(),
-                           resp.get()));
-  const auto &asset_resp =
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::AccountAssetResponse>(),
-                           resp.get());
+  ASSERT_NO_THROW({
+    const auto &asset_resp = boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::AccountAssetResponse>(),
+        resp.get());
 
-  // Check if the fields in account asset response are correct
-  ASSERT_EQ(asset_resp.accountAsset().assetId(), account_asset->assetId());
-  ASSERT_EQ(asset_resp.accountAsset().accountId(), account_asset->accountId());
-  ASSERT_EQ(asset_resp.accountAsset().balance(), account_asset->balance());
-  ASSERT_EQ(model_query.hash(), resp.queryHash());
+    // Check if the fields in account asset response are correct
+    ASSERT_EQ(asset_resp.accountAsset().assetId(), account_asset->assetId());
+    ASSERT_EQ(asset_resp.accountAsset().accountId(),
+              account_asset->accountId());
+    ASSERT_EQ(asset_resp.accountAsset().balance(), account_asset->balance());
+    ASSERT_EQ(model_query.hash(), resp.queryHash());
+  });
 }
 
 /**
@@ -476,24 +471,22 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
   auto shared_response = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::SignatoriesResponse>(),
-                           shared_response.get()));
-  auto resp_pubkey =
-      *boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+  ASSERT_NO_THROW({
+    auto resp_pubkey = *boost::apply_visitor(
+                            shared_model::interface::SpecifiedVisitor<
                                 shared_model::interface::SignatoriesResponse>(),
                             shared_response.get())
-           .keys()
-           .begin();
+                            .keys()
+                            .begin();
 
-  ASSERT_TRUE(stat.ok());
-  /// Should not return Error Response because tx is stateless and stateful
-  /// valid
-  ASSERT_FALSE(response.has_error_response());
-  // check if fields in response are valid
-  ASSERT_EQ(*resp_pubkey, signatories.back());
-  ASSERT_EQ(model_query.hash(), shared_response.queryHash());
+    ASSERT_TRUE(stat.ok());
+    /// Should not return Error Response because tx is stateless and stateful
+    /// valid
+    ASSERT_FALSE(response.has_error_response());
+    // check if fields in response are valid
+    ASSERT_EQ(*resp_pubkey, signatories.back());
+    ASSERT_EQ(model_query.hash(), shared_response.queryHash());
+  });
 }
 
 /**
@@ -542,20 +535,18 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
   auto resp = shared_model::proto::QueryResponse(response);
-  ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::TransactionsResponse>(),
-                           resp.get()));
-  const auto &tx_resp =
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
-                               shared_model::interface::TransactionsResponse>(),
-                           resp.get());
+  ASSERT_NO_THROW({
+    const auto &tx_resp = boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            shared_model::interface::TransactionsResponse>(),
+        resp.get());
 
-  const auto &txs = tx_resp.transactions();
-  for (auto i = 0ul; i < txs.size(); i++) {
-    ASSERT_EQ(txs.at(i)->creatorAccountId(), account.accountId());
-  }
-  ASSERT_EQ(model_query.hash(), resp.queryHash());
+    const auto &txs = tx_resp.transactions();
+    for (auto i = 0ul; i < txs.size(); i++) {
+      ASSERT_EQ(txs.at(i)->creatorAccountId(), account.accountId());
+    }
+    ASSERT_EQ(model_query.hash(), resp.queryHash());
+  });
 }
 
 TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
