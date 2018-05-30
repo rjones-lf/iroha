@@ -82,39 +82,17 @@ namespace shared_model {
       using Parent::size;
       using Parent::operator==;
       using Parent::operator!=;
+      PermissionSet(std::initializer_list<Perm> list);
 
-      PermissionSet(std::initializer_list<Perm> list) {
-        append(list);
-      }
+      PermissionSet &append(std::initializer_list<Perm> list);
 
-      PermissionSet &append(std::initializer_list<Perm> list) {
-        for (auto l : list) {
-          set(l);
-        }
-        return *this;
-      }
+      PermissionSet &set(Perm p);
+      PermissionSet &unset(Perm p);
 
-      PermissionSet &set(Perm p) {
-        Parent::set(bit(p), true);
-        return *this;
-      }
+      bool operator[](Perm p) const;
+      bool test(Perm p) const;
 
-      PermissionSet &unset(Perm p) {
-        Parent::set(bit(p), false);
-        return *this;
-      }
-
-      constexpr bool operator[](Perm p) const {
-        return Parent::operator[](bit(p));
-      }
-
-      bool test(Perm p) const {
-        return Parent::test(bit(p));
-      }
-
-      bool is_subset_of(const PermissionSet<Perm> &r) {
-        return (*this & r) == *this;
-      }
+      bool is_subset_of(const PermissionSet<Perm> &r);
 
      private:
       constexpr auto bit(Perm p) const {
@@ -122,8 +100,8 @@ namespace shared_model {
       }
     };
 
-    template class PermissionSet<permissions::Role>;
-    template class PermissionSet<permissions::Grantable>;
+    extern template class PermissionSet<permissions::Role>;
+    extern template class PermissionSet<permissions::Grantable>;
   }  // namespace interface
 }  // namespace shared_model
 

@@ -14,6 +14,7 @@
 
 add_library(shared_model_interfaces
     impl.cpp
+    impl/permissions.cpp
     )
 
 target_link_libraries(shared_model_interfaces
