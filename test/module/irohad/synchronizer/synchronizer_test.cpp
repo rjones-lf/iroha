@@ -71,7 +71,8 @@ class SynchronizerTest : public ::testing::Test {
         consensus_gate, chain_validator, mutable_factory, block_loader);
   }
 
-  auto makeCommit(size_t time = iroha::time::now()) const {
+  std::shared_ptr<shared_model::interface::Block> makeCommit(
+      size_t time = iroha::time::now()) const {
     using TestUnsignedBlockBuilder = shared_model::proto::TemplateBlockBuilder<
         (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
         shared_model::validation::AlwaysValidValidator,
@@ -83,8 +84,7 @@ class SynchronizerTest : public ::testing::Test {
                      .signAndAddSignature(
                          shared_model::crypto::DefaultCryptoAlgorithmType::
                              generateKeypair());
-    return std::static_pointer_cast<shared_model::interface::Block>(
-        std::make_shared<shared_model::proto::Block>(std::move(block)));
+    return std::make_shared<shared_model::proto::Block>(std::move(block));
   }
 
   std::shared_ptr<MockChainValidator> chain_validator;
