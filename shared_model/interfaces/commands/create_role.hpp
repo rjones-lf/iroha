@@ -20,19 +20,16 @@
 
 #include <numeric>
 #include <set>
-#include "interfaces/base/primitive.hpp"
-#include "interfaces/common_objects/types.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_role.hpp"
-#endif
+#include "interfaces/base/model_primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
     /**
      * Create new role in Iroha
      */
-    class CreateRole : public PRIMITIVE(CreateRole) {
+    class CreateRole : public ModelPrimitive<CreateRole> {
      public:
       /**
        * @return Id of the domain to create
@@ -53,17 +50,6 @@ namespace shared_model {
             .appendAll(roles_set, [](auto &role) { return role; })
             .finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateRole;
-        oldModel->role_name = roleName();
-        oldModel->permissions.insert(rolePermissions().begin(),
-                                     rolePermissions().end());
-        return oldModel;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return roleName() == rhs.roleName()

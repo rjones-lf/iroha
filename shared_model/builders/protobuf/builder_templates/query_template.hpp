@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
 #define IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
 
+#include <boost/range/algorithm/for_each.hpp>
+
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -202,6 +204,13 @@ namespace shared_model {
 
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
+        if (not query_.has_payload()) {
+          throw std::invalid_argument("Query missing payload");
+        }
+        if (query_.payload().query_case()
+            == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
+          throw std::invalid_argument("Missing concrete query");
+        }
         auto result = Query(iroha::protocol::Query(query_));
         auto answer = stateless_validator_.validate(result);
         if (answer.hasErrors()) {

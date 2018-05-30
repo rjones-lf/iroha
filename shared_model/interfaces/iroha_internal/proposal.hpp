@@ -20,19 +20,16 @@
 
 #include <boost/range/numeric.hpp>
 #include <vector>
-#include "interfaces/base/primitive.hpp"
+
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/proposal.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
 
-    class Proposal : public PRIMITIVE(Proposal) {
+    class Proposal : public ModelPrimitive<Proposal> {
      public:
       template <class T>
       using w = detail::PolymorphicWrapper<T>;
@@ -52,25 +49,6 @@ namespace shared_model {
        * @return created time
        */
       virtual types::TimestampType createdTime() const = 0;
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::Proposal *makeOldModel() const override {
-        auto txs =
-            boost::accumulate(transactions(),
-                              std::vector<iroha::model::Transaction>{},
-                              [](auto &&vec, const auto &tx) {
-                                std::unique_ptr<iroha::model::Transaction> ptr(
-                                    tx->makeOldModel());
-                                vec.emplace_back(*ptr);
-                                return std::forward<decltype(vec)>(vec);
-                              });
-
-        auto oldModel = new iroha::model::Proposal(txs);
-        oldModel->height = height();
-        oldModel->created_time = createdTime();
-        return oldModel;
-      }
-#endif
 
       bool operator==(const Proposal &rhs) const override {
         return transactions() == rhs.transactions() and height() == rhs.height()

@@ -27,8 +27,8 @@ using shared_model::proto::TransactionStatusBuilder;
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestStatelessFailedStatus) {
-  using StatelessFailedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatelessFailedTxResponse>;
+  using StatelessFailedStatusType =
+      shared_model::interface::StatelessFailedTxResponse;
 
   auto expected_status = iroha::protocol::STATELESS_VALIDATION_FAILED;
   auto expected_hash = std::string(32, '1');
@@ -53,8 +53,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatelessFailedStatus) {
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestStatelessValidStatus) {
-  using StatelessValidStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatelessValidTxResponse>;
+  using StatelessValidStatusType =
+      shared_model::interface::StatelessValidTxResponse;
 
   auto expected_status = iroha::protocol::STATELESS_VALIDATION_SUCCESS;
   auto expected_hash = std::string(32, '1');
@@ -79,8 +79,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatelessValidStatus) {
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestStatefulFailedStatus) {
-  using StatefulFailedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulFailedTxResponse>;
+  using StatefulFailedStatusType =
+      shared_model::interface::StatefulFailedTxResponse;
 
   auto expected_status = iroha::protocol::STATEFUL_VALIDATION_FAILED;
   auto expected_hash = std::string(32, '1');
@@ -105,8 +105,8 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatefulFailedStatus) {
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestStatefulValidStatus) {
-  using StatefulValidStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::StatefulValidTxResponse>;
+  using StatefulValidStatusType =
+      shared_model::interface::StatefulValidTxResponse;
 
   auto expected_status = iroha::protocol::STATEFUL_VALIDATION_SUCCESS;
   auto expected_hash = std::string(32, '1');
@@ -131,8 +131,7 @@ TEST(ProtoTransactionStatusBuilderTest, TestStatefulValidStatus) {
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestCommittedStatus) {
-  using CommittedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::CommittedTxResponse>;
+  using CommittedStatusType = shared_model::interface::CommittedTxResponse;
 
   auto expected_status = iroha::protocol::COMMITTED;
   auto expected_hash = std::string(32, '1');
@@ -157,8 +156,7 @@ TEST(ProtoTransactionStatusBuilderTest, TestCommittedStatus) {
  * @then built object has expected status and hash
  */
 TEST(ProtoTransactionStatusBuilderTest, TestNotReceivedStatus) {
-  using NotReceivedStatusType = shared_model::detail::PolymorphicWrapper<
-      shared_model::interface::NotReceivedTxResponse>;
+  using NotReceivedStatusType = shared_model::interface::NotReceivedTxResponse;
 
   auto expected_status = iroha::protocol::NOT_RECEIVED;
   auto expected_hash = std::string(32, '1');

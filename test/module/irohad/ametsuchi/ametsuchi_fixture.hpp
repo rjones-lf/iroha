@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <pqxx/pqxx>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/files.hpp"
@@ -68,19 +70,19 @@ namespace iroha {
       }
 
       virtual void connect() {
-        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
-        try {
-          connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-
         StorageImpl::create(block_store_path, pgopt_)
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
                    [](iroha::expected::Error<std::string> &error) {
                      FAIL() << "StorageImpl: " << error.error;
                    });
+
+        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
+        try {
+          connection->activate();
+        } catch (const pqxx::broken_connection &e) {
+          FAIL() << "Connection to PostgreSQL broken: " << e.what();
+        }
       }
 
       void SetUp() override {
@@ -97,11 +99,18 @@ namespace iroha {
 
       std::shared_ptr<StorageImpl> storage;
 
+      // generate random valid dbname
+      std::string dbname_ = "d"
+          + boost::uuids::to_string(boost::uuids::random_generator()())
+                .substr(0, 8);
       std::string pgopt_ =
-          "host=localhost port=5432 user=postgres password=mysecretpassword";
+          "host=localhost port=5432 user=postgres password=mysecretpassword "
+          "dbname="
+          + dbname_;
 
-      std::string block_store_path =
-          (boost::filesystem::temp_directory_path() / "block_store").string();
+      std::string block_store_path = (boost::filesystem::temp_directory_path()
+                                      / boost::filesystem::unique_path())
+                                         .string();
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
       const std::string drop_ = R"(

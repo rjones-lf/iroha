@@ -69,7 +69,7 @@ namespace torii {
                 iroha::expected::Value<shared_model::proto::Transaction>
                     &iroha_tx) {
               tx_hash = iroha_tx.value.hash();
-              if (cache_->findItem(tx_hash)) {
+              if (cache_->findItem(tx_hash) and iroha_tx.value.quorum() < 2) {
                 log_->warn("Found transaction {} in cache, ignoring",
                            tx_hash.hex());
                 return;

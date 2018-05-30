@@ -1,3 +1,4 @@
+
 # Copyright 2017 Soramitsu Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,4 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(connection)
+add_subdirectory(state)
+add_subdirectory(storage)
+add_subdirectory(transport)
+
+
+add_library(mst_processor
+    impl/gossip_propagation_strategy.cpp
+    impl/mst_processor_impl.cpp
+    impl/mst_processor_stub.cpp
+    impl/mst_processor.cpp
+    )
+
+target_link_libraries(mst_processor
+    mst_storage
+    mst_transport
+    mst_state
+    logger
+    )

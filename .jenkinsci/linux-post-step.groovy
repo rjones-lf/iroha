@@ -10,10 +10,8 @@ def linuxPostStep() {
       }
     }
     finally {
-      if (env.BUILD_TYPE == 'Debug') {
-        def cleanup = load ".jenkinsci/docker-cleanup.groovy"
-        cleanup.doDockerCleanup()
-      }
+      def cleanup = load ".jenkinsci/docker-cleanup.groovy"
+      cleanup.doDockerCleanup()
       cleanWs()
     }
   }

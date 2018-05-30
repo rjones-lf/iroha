@@ -42,17 +42,26 @@ namespace iroha {
 
       using SignaturesType = decltype(signatures);
 
+      using TimeType = ts64_t;
+
       /**
        * Creation timestamp
        * HEADER field
        */
-      ts64_t created_ts{};
+      TimeType created_ts{};
 
       /**
        * Account id of transaction creator.
        * META field
        */
       std::string creator_account_id{};
+
+      /**
+       * Quorum means number of signatures required for processing transaction
+       * in system.
+       * This field should be > 0.
+       */
+      uint8_t quorum = 1;
 
       /**
        * Bunch of commands attached to transaction

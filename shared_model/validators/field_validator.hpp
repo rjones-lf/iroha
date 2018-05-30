@@ -137,6 +137,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::DescriptionType &description) const;
 
+      void validateHeight(
+          ReasonsGroupType &reason,
+          const interface::types::HeightType &height) const;
+
      private:
       const static std::string account_name_pattern_;
       const static std::string asset_name_pattern_;

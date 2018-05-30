@@ -130,13 +130,17 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidatorTest::permission,
                                           permission_test_cases));
 
+    field_validators.insert(makeValidator("precision",
+                                          &FieldValidator::validatePrecision,
+                                          &FieldValidatorTest::precision,
+                                          precision_test_cases));
+
     // TODO: add validation to all fields
     for (const auto &field : {"value",
                               "signature",
                               "commands",
                               "quorum",
-                              "tx_hashes",
-                              "precision"}) {
+                              "tx_hashes"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
@@ -540,6 +544,31 @@ class FieldValidatorTest : public ValidatorsTest {
     return all_cases;
   }
   std::vector<FieldTestCase> permission_test_cases = permissionTestCases();
+
+  std::vector<FieldTestCase> precision_test_cases{
+      makeValidCase(&FieldValidatorTest::precision, 0),
+      makeValidCase(&FieldValidatorTest::precision, 1),
+      makeValidCase(&FieldValidatorTest::precision, 255),
+
+      // The following cases are written because the type of PrecisionType is
+      // going to be changed.
+
+      // The case is disabled till PrecisionType will become a signed type,
+      // now it is unsigned char.
+      //      makeTestCase("negative precision",
+      //                   &FieldValidatorTest::precision,
+      //                   -3,
+      //                   false,
+      //                   "negative precision"),
+
+      // Disabled, because PrecisionType is 1 byte type. The case should be
+      // enabled when PrecisionType will be 2 bytes int or more.
+      //      makeTestCase("precision value is more than max",
+      //                   &FieldValidatorTest::precision,
+      //                   256,
+      //                   false,
+      //                   "more than max")
+  };
 
   /**************************************************************************/
 

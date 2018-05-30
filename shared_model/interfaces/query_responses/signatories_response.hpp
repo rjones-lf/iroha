@@ -18,21 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_SIGNATORIES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_SIGNATORIES_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/signatories_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Container of asset, for fetching data.
      */
-    class SignatoriesResponse : public PRIMITIVE(SignatoriesResponse) {
+    class SignatoriesResponse : public ModelPrimitive<SignatoriesResponse> {
      public:
       /**
        * @return All public keys attached to account
@@ -56,23 +51,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return keys() == rhs.keys();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of signatories response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        const auto vs = keys();
-        std::for_each(vs.begin(), vs.end(), [&oldModel](const auto &key) {
-          oldModel->keys.emplace_back(
-              key->template makeOldModel<iroha::pubkey_t>());
-        });
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

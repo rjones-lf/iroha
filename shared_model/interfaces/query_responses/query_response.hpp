@@ -19,7 +19,8 @@
 #define IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 
 #include <boost/variant.hpp>
-#include "interfaces/base/primitive.hpp"
+
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
@@ -30,10 +31,6 @@
 #include "interfaces/query_responses/signatories_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/query_response.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
     /**
@@ -41,11 +38,11 @@ namespace shared_model {
      * available in the system.
      * General note: this class is container for QRs but not a base class.
      */
-    class QueryResponse : public PRIMITIVE(QueryResponse) {
+    class QueryResponse : public ModelPrimitive<QueryResponse> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using w = boost::variant<const Value &...>;
 
      public:
       /// Type of container with all concrete query response
@@ -77,16 +74,6 @@ namespace shared_model {
       std::string toString() const override {
         return boost::apply_visitor(detail::ToStringVisitor(), get());
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto query_response = boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        using hashType = decltype(query_response->query_hash);
-        query_response->query_hash = queryHash().makeOldModel<hashType>();
-        return query_response;
-      }
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return queryHash() == rhs.queryHash() and get() == rhs.get();

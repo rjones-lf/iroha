@@ -20,8 +20,8 @@
 #include "builders/default_builders.hpp"
 #include "execution/command_executor.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/specified_visitor.hpp"
 #include "interfaces/commands/command.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/permissions.hpp"
@@ -57,10 +57,8 @@ std::unique_ptr<shared_model::interface::Command> buildCommand(
 template <class T>
 std::shared_ptr<T> getConcreteCommand(
     const std::unique_ptr<shared_model::interface::Command> &command) {
-  return clone(
-      *(boost::apply_visitor(shared_model::interface::SpecifiedVisitor<T>(),
-                             command->get())
-            .value()));
+  return clone(boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<T>(), command->get()));
 }
 
 class CommandValidateExecuteTest : public ::testing::Test {

@@ -18,23 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_TRANSACTIONS_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/transaction.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/transactions_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Container of asset, for fetching data.
      */
-    class TransactionsResponse : public PRIMITIVE(TransactionsResponse) {
+    class TransactionsResponse : public ModelPrimitive<TransactionsResponse> {
      public:
       /**
        * @return Attached transactions
@@ -58,28 +51,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return transactions() == rhs.transactions();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of transactions response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->transactions = rxcpp::observable<>::iterate([this] {
-          using OldTxType = iroha::model::Transaction;
-          std::vector<OldTxType> ret;
-          const auto txs = transactions();
-          std::for_each(txs.begin(), txs.end(), [&ret](const auto &tx) {
-            auto p = std::shared_ptr<OldTxType>(tx->makeOldModel());
-            ret.push_back(*p);
-          });
-          return ret;
-        }());
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

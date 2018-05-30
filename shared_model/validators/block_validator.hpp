@@ -19,12 +19,12 @@
 #define IROHA_BLOCK_VALIDATOR_HPP
 
 #include <boost/format.hpp>
-#include "validators/container_validator.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
+#include "validators/container_validator.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-837
 

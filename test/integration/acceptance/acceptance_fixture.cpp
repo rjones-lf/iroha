@@ -7,7 +7,7 @@
 
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
+#include "framework/specified_visitor.hpp"
 
 AcceptanceFixture::AcceptanceFixture()
     : kUser("user"),
@@ -23,7 +23,7 @@ AcceptanceFixture::AcceptanceFixture()
       kUserKeypair(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       checkStatelessInvalid([](auto &status) {
-        ASSERT_TRUE(boost::apply_visitor(
+        ASSERT_NO_THROW(boost::apply_visitor(
             shared_model::interface::SpecifiedVisitor<
                 shared_model::interface::StatelessFailedTxResponse>(),
             status.get()));

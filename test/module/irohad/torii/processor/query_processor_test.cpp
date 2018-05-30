@@ -21,12 +21,14 @@
 #include "cryptography/keypair.hpp"
 #include "execution/query_execution.hpp"
 #include "framework/test_subscriber.hpp"
+#include "framework/specified_visitor.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "network/ordering_gate.hpp"
 #include "torii/processor/query_processor_impl.hpp"
+#include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
 using namespace iroha;
@@ -34,9 +36,9 @@ using namespace iroha::ametsuchi;
 using namespace iroha::validation;
 using namespace framework::test_subscriber;
 
+using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
-using ::testing::_;
 
 class QueryProcessorTest : public ::testing::Test {
  public:
@@ -100,8 +102,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::AccountResponse>>(response->get()));
+        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                 shared_model::interface::AccountResponse>(),
+                             response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
@@ -146,11 +149,10 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    auto resp = boost::get<shared_model::detail::PolymorphicWrapper<
-        shared_model::interface::ErrorQueryResponse>>(response->get());
-    ASSERT_NO_THROW(boost::get<shared_model::detail::PolymorphicWrapper<
-                        shared_model::interface::StatefulFailedErrorResponse>>(
-        resp->get()));
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<
+            shared_model::interface::StatefulFailedErrorResponse>(),
+        response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));

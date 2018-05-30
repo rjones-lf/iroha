@@ -18,20 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ROLES_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/roles_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with all roles of the current system
      */
-    class RolesResponse : public PRIMITIVE(RolesResponse) {
+    class RolesResponse : public ModelPrimitive<RolesResponse> {
      public:
       /// type of roles collection
       using RolesIdType = std::vector<types::RoleIdType>;
@@ -58,19 +54,6 @@ namespace shared_model {
       bool operator==(const ModelType &rhs) const override {
         return roles() == rhs.roles();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of roles response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->roles = roles();
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

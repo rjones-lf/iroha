@@ -18,13 +18,9 @@
 #ifndef IROHA_SHARED_MODEL_ASSET_HPP
 #define IROHA_SHARED_MODEL_ASSET_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/asset.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -32,7 +28,7 @@ namespace shared_model {
     /**
      * Representation of valuable goods in the system
      */
-    class Asset : public PRIMITIVE(Asset) {
+    class Asset : public ModelPrimitive<Asset> {
      public:
       /**
        * @return Identity of asset
@@ -71,20 +67,6 @@ namespace shared_model {
         return assetId() == rhs.assetId() and domainId() == rhs.domainId()
             and precision() == rhs.precision();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->asset_id = assetId();
-        oldModel->domain_id = domainId();
-        oldModel->precision = precision();
-        return oldModel;
-      }
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

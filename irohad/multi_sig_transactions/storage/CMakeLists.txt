@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Command Connection Test
-AddTest(command_connection_test
-  command_connection_test.cpp
-)
-target_link_libraries(command_connection_test
-  server_runner
-  command_client
-  command_service
-  schema
-  endpoint
-  gtest
-)
+add_library(mst_storage
+    impl/mst_storage.cpp
+    impl/mst_storage_impl.cpp
+    )
+
+target_link_libraries(mst_storage
+    model
+    mst_state
+    )

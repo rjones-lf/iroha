@@ -18,6 +18,8 @@
 #ifndef IROHA_TRANSACTION_BUILDERS_COMMON_HPP
 #define IROHA_TRANSACTION_BUILDERS_COMMON_HPP
 
+#include "common/visitor.hpp"
+
 /**
  * Prepares lambda that checks if val's type is the same with T type
  * @tparam T expected type
@@ -25,14 +27,8 @@
  */
 template <typename T>
 auto verifyType() {
-  return [](auto val) {
-    if (std::is_same<decltype(val), T>::value) {
-      SUCCEED();
-    } else {
-      FAIL() << "obtained: " << typeid(decltype(val)).name() << std::endl
-             << "expected: " << typeid(T).name() << std::endl;
-    }
-  };
+  return iroha::make_visitor([](const T &val) { SUCCEED(); },
+                             [](const auto &val) { FAIL() << val.toString(); });
 }
 
-#endif //IROHA_TRANSACTION_BUILDERS_COMMON_HPP
+#endif  // IROHA_TRANSACTION_BUILDERS_COMMON_HPP

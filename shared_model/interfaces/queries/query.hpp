@@ -20,7 +20,6 @@
 
 #include <boost/variant.hpp>
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/queries/get_account.hpp"
@@ -33,13 +32,8 @@
 #include "interfaces/queries/get_roles.hpp"
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/query.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -49,11 +43,11 @@ namespace shared_model {
      * system.
      * General note: this class is container for queries but not a base class.
      */
-    class Query : public SIGNABLE(Query) {
+    class Query : public Signable<Query> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using wrap = boost::variant<const Value &...>;
 
      public:
       /// Type of variant, that handle concrete query
@@ -99,28 +93,6 @@ namespace shared_model {
             .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
             .finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto old_model = boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        old_model->creator_account_id = creatorAccountId();
-        old_model->query_counter = queryCounter();
-        // signature related
-        old_model->created_ts = createdTime();
-        std::for_each(signatures().begin(),
-                      signatures().end(),
-                      [&old_model](auto &signature_wrapper) {
-                        // for_each cycle will assign last signature for old
-                        // model. Also, if in new model absence at least one
-                        // signature, this part will be worked correctly.
-                        auto old_sig = signature_wrapper.makeOldModel();
-                        old_model->signature = *old_sig;
-                        delete old_sig;
-                      });
-        return old_model;
-      }
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return this->get() == rhs.get();

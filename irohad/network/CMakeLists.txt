@@ -18,6 +18,8 @@ target_link_libraries(block_loader
     loader_grpc
     rxcpp
     shared_model_interfaces
+    shared_model_proto_backend
+    logger
     )
 
 add_library(block_loader_service

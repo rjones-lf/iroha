@@ -85,6 +85,10 @@ namespace shared_model {
         return payload_.created_time();
       }
 
+      Transaction::QuorumType quorum() const override {
+        return payload_.quorum();
+      }
+
      private:
       // lazy
       template <typename T>

@@ -18,8 +18,6 @@
 #ifndef IROHA_STATELESS_VALID_TX_RESPONSE_HPP
 #define IROHA_STATELESS_VALID_TX_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
-
 namespace shared_model {
   namespace interface {
     /**
@@ -31,15 +29,6 @@ namespace shared_model {
       std::string className() const override {
         return "StatelessValidTxResponse";
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::TransactionResponse::Status oldModelStatus()
-          const override {
-        return iroha::model::TransactionResponse::Status::
-            STATELESS_VALIDATION_SUCCESS;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -45,6 +45,7 @@ class TransferAsset : public AcceptanceFixture {
         .creatorAccountId(kUserId)
         .createdTime(iroha::time::now())
         .addAssetQuantity(kUserId, kAsset, amount)
+        .quorum(1)
         .build()
         .signAndAddSignature(key);
   }
@@ -56,7 +57,8 @@ class TransferAsset : public AcceptanceFixture {
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
         .creatorAccountId(kUser1 + "@test")
-        .createdTime(iroha::time::now());
+        .createdTime(iroha::time::now())
+        .quorum(1);
   }
 
   /**
@@ -411,6 +413,7 @@ TEST_F(TransferAsset, InterDomain) {
                   crypto::DefaultCryptoAlgorithmType::generateKeypair()
                       .publicKey())
               .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+              .quorum(1)
               .build()
               .signAndAddSignature(kAdminKeypair))
       .sendTx(addAssets(kUser1, kUser1Keypair, kAmount))

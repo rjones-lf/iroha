@@ -36,6 +36,7 @@ namespace config_members {
   const char *ProposalDelay = "proposal_delay";
   const char *VoteDelay = "vote_delay";
   const char *LoadDelay = "load_delay";
+  const char *MstSupport = "mst_enable";
 }  // namespace config_members
 
 /**
@@ -51,6 +52,7 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   rapidjson::IStreamWrapper isw(ifs_iroha);
   const std::string kStrType = "string";
   const std::string kUintType = "uint";
+  const std::string kBoolType = "bool";
   doc.ParseStream(isw);
   ac::assert_fatal(
       not doc.HasParseError(),
@@ -95,6 +97,11 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
                    ac::no_member_error(mbr::LoadDelay));
   ac::assert_fatal(doc[mbr::LoadDelay].IsUint(),
                    ac::type_error(mbr::LoadDelay, kUintType));
+
+  ac::assert_fatal(doc.HasMember(mbr::MstSupport),
+                   ac::no_member_error(mbr::MstSupport));
+  ac::assert_fatal(doc[mbr::MstSupport].IsBool(),
+                   ac::type_error(mbr::MstSupport, kBoolType));
   return doc;
 }
 

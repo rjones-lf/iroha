@@ -18,19 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_ASSET_HPP
 #define IROHA_SHARED_MODEL_CREATE_ASSET_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_asset.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Create asset in Iroha domain
      */
-    class CreateAsset : public PRIMITIVE(CreateAsset) {
+    class CreateAsset : public ModelPrimitive<CreateAsset> {
      public:
       /**
        * @return Asset name to create
@@ -55,17 +51,6 @@ namespace shared_model {
             .append("precision", std::to_string(precision()))
             .finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateAsset;
-        oldModel->asset_name = assetName();
-        oldModel->domain_id = domainId();
-        oldModel->precision = precision();
-        return oldModel;
-      }
-
-#endif
 
       bool operator==(const ModelType &rhs) const override {
         return assetName() == rhs.assetName() and domainId() == rhs.domainId()
