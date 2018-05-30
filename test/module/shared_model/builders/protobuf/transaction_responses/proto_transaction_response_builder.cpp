@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
+#include "framework/specified_visitor.hpp"
 
 using shared_model::proto::TransactionStatusBuilder;
 
@@ -75,7 +75,9 @@ TYPED_TEST(ProtoTransactionStatusBuilderTest, TestStatusType) {
                       .txHash(shared_model::crypto::Hash(expected_hash))
                       .build();
 
-  boost::apply_visitor(verifyType<StatusType>(), response.get());
+  ASSERT_NO_THROW(boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<StatusType>(),
+      response.get()));
 
   auto proto_status = response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);

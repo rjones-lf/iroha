@@ -14,7 +14,6 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
 using namespace iroha;
@@ -70,7 +69,9 @@ class TransactionProcessorTest : public ::testing::Test {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
-      boost::apply_visitor(verifyType<Status>(), tx_status->second->get());
+      ASSERT_NO_THROW(boost::apply_visitor(
+          shared_model::interface::SpecifiedVisitor<Status>(),
+          tx_status->second->get()));
     }
   }
 

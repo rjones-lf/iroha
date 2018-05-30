@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include "builders/default_builders.hpp"
 #include "builders/transaction_responses/transaction_status_builder.hpp"
-#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
+#include "framework/specified_visitor.hpp"
 
 using shared_model::builder::TransactionStatusBuilder;
 
@@ -72,7 +72,9 @@ TYPED_TEST(TransactionResponseBuilderTest, StatusType) {
       (BuilderType().*TypeParam::member)().txHash(expected_hash).build();
 
   // check if type in response is as expected
-  boost::apply_visitor(verifyType<StatusType>(), response->get());
+  ASSERT_NO_THROW(boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<StatusType>(),
+      response->get()));
 
   ASSERT_EQ(response->transactionHash(), expected_hash);
 }
@@ -95,5 +97,7 @@ TEST(ProtoTransactionStatusBuilderTest, SeveralObjectsFromOneBuilder) {
   ASSERT_EQ(*response1, *response2);
   ASSERT_EQ(response1->transactionHash(), expected_hash);
 
-  boost::apply_visitor(verifyType<NotReceivedStatusType>(), response1->get());
+  ASSERT_NO_THROW(boost::apply_visitor(
+      shared_model::interface::SpecifiedVisitor<NotReceivedStatusType>(),
+      response1->get()));
 }
