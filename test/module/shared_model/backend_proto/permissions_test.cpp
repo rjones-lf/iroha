@@ -125,3 +125,37 @@ TEST(ProtoPermission, PermissionSet) {
   set.unset(Role::kAddAssetQty);
   ASSERT_FALSE(set[Role::kAddAssetQty]);
 }
+
+TEST(ProtoPermission, PermissionSubset) {
+  using Role = shared_model::interface::permissions::Role;
+  using PermSet = shared_model::interface::PermissionSet<Role>;
+  PermSet big{Role::kAppendRole,
+              Role::kCreateRole,
+              Role::kDetachRole,
+              Role::kAddAssetQty,
+              Role::kSubtractAssetQty,
+              Role::kAddPeer,
+              Role::kAddSignatory,
+              Role::kRemoveSignatory,
+              Role::kSetQuorum,
+              Role::kCreateAccount,
+              Role::kSetDetail,
+              Role::kCreateAsset,
+              Role::kTransfer,
+              Role::kReceive};
+  PermSet sub{Role::kAppendRole,
+              Role::kCreateRole,
+              Role::kDetachRole,
+              Role::kSubtractAssetQty,
+              Role::kAddSignatory,
+              Role::kSetDetail,
+              Role::kCreateAsset};
+  auto nonsub = sub;
+  ASSERT_FALSE(big.test(Role::kGetDomainAccounts));
+  nonsub.set(Role::kGetDomainAccounts);
+
+  ASSERT_TRUE(sub.is_subset_of(big));
+  ASSERT_TRUE(sub.is_subset_of(sub));
+  ASSERT_FALSE(nonsub.is_subset_of(sub));
+  ASSERT_FALSE(nonsub.is_subset_of(big));
+}

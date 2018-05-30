@@ -73,14 +73,11 @@ namespace shared_model {
 
     template <typename Perm>
     class PermissionSet
-        : protected std::bitset<static_cast<size_t>(Perm::COUNT)> {
+        : private std::bitset<static_cast<size_t>(Perm::COUNT)> {
      private:
       using Parent = std::bitset<static_cast<size_t>(Perm::COUNT)>;
 
      public:
-      using Parent::all;
-      using Parent::any;
-      using Parent::none;
       using Parent::reset;
       using Parent::size;
       using Parent::operator==;
@@ -113,6 +110,10 @@ namespace shared_model {
 
       bool test(Perm p) const {
         return Parent::test(bit(p));
+      }
+
+      bool is_subset_of(const PermissionSet<Perm> &r) {
+        return (*this & r) == *this;
       }
 
      private:
