@@ -40,9 +40,9 @@ namespace shared_model {
      */
     class QueryResponse : public ModelPrimitive<QueryResponse> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using w = boost::variant<const Value &...>;
 
      public:
       /// Type of container with all concrete query response

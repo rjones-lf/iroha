@@ -38,53 +38,23 @@
 #include "backend/protobuf/queries/proto_get_transactions.hpp"
 #include "backend/protobuf/util.hpp"
 
-template <typename... T, typename Archive>
-shared_model::interface::Query::QueryVariantType loadQuery(Archive &&ar) {
-  if (not ar.has_payload()) {
-    throw std::invalid_argument("Query missing payload");
-  }
-  if (ar.payload().query_case()
-      == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
-    throw std::invalid_argument("Missing concrete query");
-  }
-  int which = ar.payload()
-                  .GetDescriptor()
-                  ->FindFieldByNumber(ar.payload().query_case())
-                  ->index_in_oneof();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::Query::QueryVariantType>(
-      std::forward<Archive>(ar), which);
-}
-
 namespace shared_model {
   namespace proto {
     class Query FINAL : public CopyableProto<interface::Query,
                                              iroha::protocol::Query,
                                              Query> {
-     private:
-      /// polymorphic wrapper type shortcut
-      template <typename Value>
-      using wrap = detail::PolymorphicWrapper<Value>;
-
-      /// lazy variant shortcut
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      using LazyVariantType = Lazy<QueryVariantType>;
-
      public:
       /// type of proto variant
-      using ProtoQueryVariantType =
-          boost::variant<wrap<GetAccount>,
-                         wrap<GetSignatories>,
-                         wrap<GetAccountTransactions>,
-                         wrap<GetAccountAssetTransactions>,
-                         wrap<GetTransactions>,
-                         wrap<GetAccountAssets>,
-                         wrap<GetAccountDetail>,
-                         wrap<GetRoles>,
-                         wrap<GetRolePermissions>,
-                         wrap<GetAssetInfo>>;
+      using ProtoQueryVariantType = boost::variant<GetAccount,
+                                                   GetSignatories,
+                                                   GetAccountTransactions,
+                                                   GetAccountAssetTransactions,
+                                                   GetTransactions,
+                                                   GetAccountAssets,
+                                                   GetAccountDetail,
+                                                   GetRoles,
+                                                   GetRolePermissions,
+                                                   GetAssetInfo>;
 
       /// list of types in proto variant
       using ProtoQueryListType = ProtoQueryVariantType::types;
@@ -98,7 +68,7 @@ namespace shared_model {
       Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
 
       const Query::QueryVariantType &get() const override {
-        return *variant_;
+        return *ivariant_;
       }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
@@ -139,10 +109,26 @@ namespace shared_model {
       }
 
      private:
+      /// lazy variant shortcut
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      using LazyVariantType = Lazy<ProtoQueryVariantType>;
       // ------------------------------| fields |-------------------------------
       // lazy
-      const LazyVariantType variant_{
-          [this] { return loadQuery<ProtoQueryListType>(*proto_); }};
+      const LazyVariantType variant_{[this] {
+        auto &&ar = *proto_;
+        int which = ar.payload()
+                        .GetDescriptor()
+                        ->FindFieldByNumber(ar.payload().query_case())
+                        ->index_in_oneof();
+        return shared_model::detail::variant_impl<ProtoQueryListType>::
+            template load<ProtoQueryVariantType>(std::forward<decltype(ar)>(ar),
+                                                 which);
+      }};
+
+      const Lazy<QueryVariantType> ivariant_{detail::makeLazyInitializer(
+          [this] { return QueryVariantType(*variant_); })};
 
       const Lazy<interface::types::BlobType> blob_{
           [this] { return makeBlob(*proto_); }};

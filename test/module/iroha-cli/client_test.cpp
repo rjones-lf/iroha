@@ -41,9 +41,6 @@
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 
-constexpr const char *Ip = "0.0.0.0";
-constexpr int Port = 50051;
-
 using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
@@ -63,8 +60,7 @@ class ClientServerTest : public testing::Test {
   virtual void SetUp() {
     spdlog::set_level(spdlog::level::off);
     // Run a server
-    runner = std::make_unique<ServerRunner>(std::string(Ip) + ":"
-                                            + std::to_string(Port));
+    runner = std::make_unique<ServerRunner>(ip + ":0");
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<MockPeerCommunicationService>();
@@ -105,7 +101,14 @@ class ClientServerTest : public testing::Test {
         ->append(std::make_unique<torii::CommandService>(
             tx_processor, block_query, proposal_delay))
         .append(std::make_unique<torii::QueryService>(qpi))
-        .run();
+        .run()
+        .match(
+            [this](iroha::expected::Value<int> port) {
+              this->port = port.value;
+            },
+            [](iroha::expected::Error<std::string> err) {
+              FAIL() << err.error;
+            });
 
     runner->waitForServersReady();
   }
@@ -125,10 +128,13 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
+
+  const std::string ip = "127.0.0.1";
+  int port;
 };
 
 TEST_F(ClientServerTest, SendTxWhenValid) {
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
   EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
 
   auto shm_tx = shared_model::proto::TransactionBuilder()
@@ -146,7 +152,7 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
 }
 
 TEST_F(ClientServerTest, SendTxWhenInvalidJson) {
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
   // Must not call stateful validation since json is invalid
   // Json with no Transaction
   auto json_string =
@@ -174,10 +180,10 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
                     .setAccountQuorum("some@@account", 2)
                     .build();
 
-  ASSERT_EQ(iroha_cli::CliClient(Ip, Port).sendTx(shm_tx).answer,
+  ASSERT_EQ(iroha_cli::CliClient(ip, port).sendTx(shm_tx).answer,
             iroha_cli::CliClient::OK);
   auto tx_hash = shm_tx.hash();
-  auto res = iroha_cli::CliClient(Ip, Port).getTxStatus(
+  auto res = iroha_cli::CliClient(ip, port).getTxStatus(
       shared_model::crypto::toBinaryString(tx_hash));
   ASSERT_EQ(res.answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
@@ -185,7 +191,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
   // Must not call stateful validation since json is invalid and shouldn't be
   // passed to stateless validation
 
@@ -206,7 +212,7 @@ TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
 }
 
 TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
 
   shared_model::proto::Query query = TestQueryBuilder()
                                          .createdTime(0)
@@ -225,7 +231,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatelessInvalid) {
 
 TEST_F(ClientServerTest, SendQueryWhenValid) {
   // TODO: 30/04/2018 x3medima17, fix Uninteresting mock function call, IR-1187
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
 
   std::shared_ptr<shared_model::interface::Account> account_test = clone(
       shared_model::proto::AccountBuilder().accountId("test@test").build());
@@ -257,7 +263,7 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
 }
 
 TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
-  iroha_cli::CliClient client(Ip, Port);
+  iroha_cli::CliClient client(ip, port);
 
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));

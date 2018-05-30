@@ -337,6 +337,10 @@ Response Schema
         uint32 precision = 3;
     }
 
+.. note::
+    Please note that due to a known issue you would not get any exception if you pass invalid precision value.
+    Valid range is: 0 <= precision <= 255
+
 Response Structure
 ^^^^^^^^^^^^^^^^^^
 
@@ -346,7 +350,7 @@ Response Structure
 
     "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy"
     "Domain ID", "domain related to this asset", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
-    "Precision", "number of digits after comma", "0 < precision < 256", "2"
+    "Precision", "number of digits after comma", "0 <= precision <= 255", "2"
 
 Get Roles
 ^^^^^^^^^
