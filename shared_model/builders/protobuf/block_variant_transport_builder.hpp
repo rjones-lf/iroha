@@ -6,6 +6,7 @@
 #ifndef IROHA_BLOCK_VARIANT_TRANSPORT_BUILDER_HPP
 #define IROHA_BLOCK_VARIANT_TRANSPORT_BUILDER_HPP
 
+#include "backend/protobuf/block.hpp"
 #include "backend/protobuf/empty_block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
