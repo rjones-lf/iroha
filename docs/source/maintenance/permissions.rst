@@ -57,7 +57,7 @@ can_transfer
 
 Allows sending `assets <../core_concepts/glossary.html#asset>`__ from an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator.
 
-You can transfer an asset from one domain to another, even if the other domain does not have an asset with the same name.
+You can transfer an asset from one `domain <../core_concepts/glossary.html#domain>`__ to another, even if the other domain does not have an asset with the same name.
 
 .. Note:: Please note that destination account should have `can_receive`_ permission.
 
@@ -82,7 +82,7 @@ can_add_asset_qty
 
 Allows issuing `assets <../core_concepts/glossary.html#asset>`__.
 
-The corresponding command can be executed only for an account of transaction creator and only if that account has a role with the permission.
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Add Asset Quantity <../api/commands.html#add-asset-quantity>`__
 
@@ -91,7 +91,7 @@ can_subtract_asset_qty
 
 Allows burning `assets <../core_concepts/glossary.html#asset>`__.
 
-The corresponding command can be executed only for an account of transaction creator and only if that account has a role with the permission.
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Subtract Asset Quantity <../api/commands.html#subtract-asset-quantity>`__
 
@@ -151,7 +151,7 @@ can_add_peer
 
 Allows adding `peers <../core_concepts/glossary.html#peer>`__ to the network.
 
-A new peer will be a valid participant in the next consensus round after an agreement on transaction containing "addPeer" command.
+A new peer will be a valid participant in the next `consensus <../core_concepts/glossary.html#consensus>`__ round after an agreement on `transaction <../core_concepts/glossary.html#transaction>`__ containing "addPeer" `command <../core_concepts/glossary.html#command>`__.
 
 Related API method: `Add Peer <../api/commands.html#add-peer>`__
 
@@ -196,7 +196,7 @@ can_add_signatory
 
 Allows linking additional public keys to `account <../core_concepts/glossary.html#account>`__.
 
-The corresponding command can be executed only for an account of transaction creator and only if that account has a role with the permission.
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an account of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Add Signatory <../api/commands.html#add-signatory>`__
 
@@ -216,7 +216,7 @@ can_remove_signatory
 
 Allows unlinking additional public keys from an `account <../core_concepts/glossary.html#account>`__.
 
-The corresponding command can be executed only for an account of transaction creator and only if that account has a role with the permission.
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an account of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Remove Signatory <../api/commands.html#remove-signatory>`__
 
@@ -236,7 +236,7 @@ can_set_quorum
 
 Allows setting `quorum <../core_concepts/glossary.html#quorum>`__.
 
-At least the same number (or more) of public keys should be already linked to an account.
+At least the same number (or more) of public keys should be already linked to an `account <../core_concepts/glossary.html#account>`__.
 
 Related API method: `Set Account Quorum <../api/commands.html#set-account-quorum>`__
 
