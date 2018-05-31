@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_REMOVE_SIGNATORY_HPP
 #define IROHA_PROTO_REMOVE_SIGNATORY_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/remove_signatory.hpp"
 
 namespace shared_model {
@@ -29,33 +31,24 @@ namespace shared_model {
                                RemoveSignatory> {
      public:
       template <typename CommandType>
-      explicit RemoveSignatory(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit RemoveSignatory(CommandType &&command);
 
-      RemoveSignatory(const RemoveSignatory &o) : RemoveSignatory(o.proto_) {}
+      RemoveSignatory(const RemoveSignatory &o);
 
-      RemoveSignatory(RemoveSignatory &&o) noexcept
-          : RemoveSignatory(std::move(o.proto_)) {}
+      RemoveSignatory(RemoveSignatory &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return remove_signatory_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PubkeyType &pubkey() const override {
-        return *pubkey_;
-      }
+      const interface::types::PubkeyType &pubkey() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::RemoveSignatory &remove_signatory_{
-          proto_->remove_sign()};
+      const iroha::protocol::RemoveSignatory &remove_signatory_;
 
-      const Lazy<interface::types::PubkeyType> pubkey_{[this] {
-        return interface::types::PubkeyType(remove_signatory_.public_key());
-      }};
+      const Lazy<interface::types::PubkeyType> pubkey_;
     };
 
   }  // namespace proto

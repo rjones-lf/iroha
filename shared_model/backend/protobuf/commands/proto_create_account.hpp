@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_CREATE_ACCOUNT_HPP
 #define IROHA_PROTO_CREATE_ACCOUNT_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/create_account.hpp"
 
 namespace shared_model {
@@ -28,37 +30,26 @@ namespace shared_model {
                                                      CreateAccount> {
      public:
       template <typename CommandType>
-      explicit CreateAccount(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit CreateAccount(CommandType &&command);
 
-      CreateAccount(const CreateAccount &o) : CreateAccount(o.proto_) {}
+      CreateAccount(const CreateAccount &o);
 
-      CreateAccount(CreateAccount &&o) noexcept
-          : CreateAccount(std::move(o.proto_)) {}
+      CreateAccount(CreateAccount &&o) noexcept;
 
-      const interface::types::PubkeyType &pubkey() const override {
-        return *pubkey_;
-      }
+      const interface::types::PubkeyType &pubkey() const override;
 
-      const interface::types::AccountNameType &accountName() const override {
-        return create_account_.account_name();
-      }
+      const interface::types::AccountNameType &accountName() const override;
 
-      const interface::types::DomainIdType &domainId() const override {
-        return create_account_.domain_id();
-      }
+      const interface::types::DomainIdType &domainId() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::CreateAccount &create_account_{
-          proto_->create_account()};
+      const iroha::protocol::CreateAccount &create_account_;
 
-      const Lazy<interface::types::PubkeyType> pubkey_{[this] {
-        return interface::types::PubkeyType(create_account_.main_pubkey());
-      }};
+      const Lazy<interface::types::PubkeyType> pubkey_;
     };
 
   }  // namespace proto

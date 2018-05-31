@@ -51,6 +51,11 @@ target_link_libraries(invalid_fields_test
     acceptance_fixture
     )
 
+addtest(query_test query_test.cpp)
+target_link_libraries(query_test
+    acceptance_fixture
+    )
+
 addtest(subtract_asset_qty_test subtract_asset_qty_test.cpp)
 target_link_libraries(subtract_asset_qty_test
     acceptance_fixture

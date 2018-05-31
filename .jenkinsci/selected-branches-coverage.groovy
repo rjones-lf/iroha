@@ -6,7 +6,7 @@ def selectedBranchesCoverage(branches, PRCoverage=true) {
 		return env.GIT_LOCAL_BRANCH in branches || env.CHANGE_ID != null
 	}
 	else {
-		return env.GIT_LOCAL_BRANCH in branches	
+		return env.GIT_LOCAL_BRANCH in branches
 	}
 }
 

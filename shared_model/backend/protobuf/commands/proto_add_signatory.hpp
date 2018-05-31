@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_ADD_SIGNATORY_HPP
 #define IROHA_PROTO_ADD_SIGNATORY_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/add_signatory.hpp"
 
 namespace shared_model {
@@ -27,33 +29,24 @@ namespace shared_model {
                                                     AddSignatory> {
      public:
       template <typename CommandType>
-      explicit AddSignatory(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit AddSignatory(CommandType &&command);
 
-      AddSignatory(const AddSignatory &o) : AddSignatory(o.proto_) {}
+      AddSignatory(const AddSignatory &o);
 
-      AddSignatory(AddSignatory &&o) noexcept
-          : AddSignatory(std::move(o.proto_)) {}
+      AddSignatory(AddSignatory &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return add_signatory_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PubkeyType &pubkey() const override {
-        return *pubkey_;
-      }
+      const interface::types::PubkeyType &pubkey() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::AddSignatory &add_signatory_{
-          proto_->add_signatory()};
+      const iroha::protocol::AddSignatory &add_signatory_;
 
-      const Lazy<interface::types::PubkeyType> pubkey_{[this] {
-        return interface::types::PubkeyType(add_signatory_.public_key());
-      }};
+      const Lazy<interface::types::PubkeyType> pubkey_;
     };
 
   }  // namespace proto

@@ -60,16 +60,15 @@ namespace iroha {
           [&](auto &status, const auto &cmd) {
             return visit_in_place(
                 cmd->get(),
-                [&](const shared_model::detail::PolymorphicWrapper<
-                    shared_model::interface::TransferAsset> &command) {
-                  status &= this->indexAccountIdHeight(command->srcAccountId(),
-                                                       height)
-                      & this->indexAccountIdHeight(command->destAccountId(),
+                [&](const shared_model::interface::TransferAsset &command) {
+                  status &=
+                      this->indexAccountIdHeight(command.srcAccountId(), height)
+                      & this->indexAccountIdHeight(command.destAccountId(),
                                                    height);
 
                   auto ids = {account_id,
-                              command->srcAccountId(),
-                              command->destAccountId()};
+                              command.srcAccountId(),
+                              command.destAccountId()};
                   // flat map accounts to unindexed keys
                   boost::for_each(ids, [&](const auto &id) {
                     auto res = execute_(
@@ -79,14 +78,13 @@ namespace iroha {
                         "VALUES ("
                         + transaction_.quote(id) + ", "
                         + transaction_.quote(height) + ", "
-                        + transaction_.quote(command->assetId()) + ", "
+                        + transaction_.quote(command.assetId()) + ", "
                         + transaction_.quote(index) + ");");
                     status &= res != boost::none;
                   });
                   return status;
                 },
                 [&](const auto &command) { return true; });
-
           });
     }
 

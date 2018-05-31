@@ -25,9 +25,11 @@ using namespace std::chrono_literals;
 
 namespace integration_framework {
 
-  IrohaInstance::IrohaInstance(bool mst_support, const std::string &block_store_path)
+  IrohaInstance::IrohaInstance(bool mst_support,
+                               const std::string &block_store_path,
+                               const boost::optional<std::string> &dbname)
       : block_store_dir_(block_store_path),
-        pg_conn_(getPostgreCredsOrDefault()),
+        pg_conn_(getPostgreCredsOrDefault(dbname)),
         torii_port_(11501),
         internal_port_(50541),
         // proposal_timeout results in non-deterministic behavior due
@@ -73,17 +75,31 @@ namespace integration_framework {
   }
 
   std::string IrohaInstance::getPostgreCredsOrDefault(
-      const std::string &default_conn) {
+      const boost::optional<std::string> &dbname) {
     auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
     auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
     auto pg_user = std::getenv("IROHA_POSTGRES_USER");
     auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
+    std::string db = " dbname=";
+    if (dbname) {
+      db += dbname.value();
+    } else {
+      db += "db"
+          + boost::uuids::to_string(boost::uuids::random_generator()())
+                .substr(0, 8);
+    }
+
     if (not pg_host) {
-      return default_conn;
+      std::string def_conn =
+          "host=localhost port=5432 "
+          "user=postgres "
+          "password=mysecretpassword "
+          + db;
+      return def_conn;
     } else {
       std::stringstream ss;
       ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-         << " password=" << pg_pass;
+         << " password=" << pg_pass << db;
       return ss.str();
     }
   }

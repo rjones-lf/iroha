@@ -30,25 +30,21 @@ namespace shared_model {
                                                AddPeer> {
      public:
       template <typename CommandType>
-      explicit AddPeer(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit AddPeer(CommandType &&command);
 
-      AddPeer(const AddPeer &o) : AddPeer(o.proto_) {}
+      AddPeer(const AddPeer &o);
 
-      AddPeer(AddPeer &&o) noexcept : AddPeer(std::move(o.proto_)) {}
+      AddPeer(AddPeer &&o) noexcept;
 
-      const interface::Peer &peer() const override {
-        return *peer_;
-      }
+      const interface::Peer &peer() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::AddPeer &add_peer_{proto_->add_peer()};
-      const Lazy<proto::Peer> peer_{
-          [this] { return proto::Peer(add_peer_.peer()); }};
+      const iroha::protocol::AddPeer &add_peer_;
+      const Lazy<proto::Peer> peer_;
     };
   }  // namespace proto
 }  // namespace shared_model

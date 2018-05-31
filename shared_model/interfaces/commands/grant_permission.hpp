@@ -37,18 +37,9 @@ namespace shared_model {
        */
       virtual const types::PermissionNameType &permissionName() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("GrantPermission")
-            .append("account_id", accountId())
-            .append("permission", permissionName())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId()
-            and permissionName() == rhs.permissionName();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

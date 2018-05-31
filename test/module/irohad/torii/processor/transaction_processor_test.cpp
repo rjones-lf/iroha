@@ -7,8 +7,8 @@
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -364,7 +364,7 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    ASSERT_TRUE(
+    ASSERT_NO_THROW(
         boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
                                  shared_model::interface::MstExpiredResponse>(),
                              response->get()));

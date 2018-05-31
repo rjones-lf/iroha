@@ -616,6 +616,8 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().grantPermission("admin@{}".format(domain), "can_set_my_quorum").build()
 
+  # TODO @bakhtin, 30.05.2018, IR-1267
+  @unittest.skip("Disabled till IR-1267 will be fixed")
   def test_grant_permission_with_invalid_name(self):
     permissions = [
       "",
@@ -649,6 +651,8 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       self.base().revokePermission("", "can_set_my_quorum").build()
 
+  # TODO @bakhtin, 30.05.2018, IR-1267
+  @unittest.skip("Disabled till IR-1267 will be fixed")
   def test_revoke_permission_with_invalid_name(self):
     permissions = [
       "",

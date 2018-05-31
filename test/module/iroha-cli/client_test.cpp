@@ -99,7 +99,7 @@ class ClientServerTest : public testing::Test {
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
-            tx_processor, block_query, proposal_delay))
+            tx_processor, storage, proposal_delay))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(

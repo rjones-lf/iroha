@@ -36,41 +36,24 @@
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T, typename Archive>
-auto loadQueryResponse(Archive &&ar) {
-  int which =
-      ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::QueryResponse::QueryResponseVariantType>(
-      std::forward<Archive>(ar), which);
-}
-
 namespace shared_model {
   namespace proto {
     class QueryResponse final
         : public CopyableProto<interface::QueryResponse,
                                iroha::protocol::QueryResponse,
                                QueryResponse> {
-     private:
-      template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
-
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      using LazyVariantType = Lazy<QueryResponseVariantType>;
-
      public:
       /// type of proto variant
-      using ProtoQueryResponseVariantType = w<AccountAssetResponse,
-                                              AccountDetailResponse,
-                                              AccountResponse,
-                                              ErrorQueryResponse,
-                                              SignatoriesResponse,
-                                              TransactionsResponse,
-                                              AssetResponse,
-                                              RolesResponse,
-                                              RolePermissionsResponse>;
+      using ProtoQueryResponseVariantType =
+          boost::variant<AccountAssetResponse,
+                         AccountDetailResponse,
+                         AccountResponse,
+                         ErrorQueryResponse,
+                         SignatoriesResponse,
+                         TransactionsResponse,
+                         AssetResponse,
+                         RolesResponse,
+                         RolePermissionsResponse>;
 
       /// list of types in variant
       using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;
@@ -85,7 +68,7 @@ namespace shared_model {
           : QueryResponse(std::move(o.proto_)) {}
 
       const QueryResponseVariantType &get() const override {
-        return *variant_;
+        return *ivariant_;
       }
 
       const interface::types::HashType &queryHash() const override {
@@ -93,9 +76,23 @@ namespace shared_model {
       }
 
      private:
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      using LazyVariantType = Lazy<ProtoQueryResponseVariantType>;
+
       const LazyVariantType variant_{[this] {
-        return loadQueryResponse<ProtoQueryResponseListType>(*proto_);
+        auto &&ar = *proto_;
+        int which =
+            ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
+        return shared_model::detail::variant_impl<ProtoQueryResponseListType>::
+            template load<ProtoQueryResponseVariantType>(
+                std::forward<decltype(ar)>(ar), which);
       }};
+
+      const Lazy<QueryResponseVariantType> ivariant_{
+          detail::makeLazyInitializer(
+              [this] { return QueryResponseVariantType(*variant_); })};
 
       const Lazy<interface::types::HashType> hash_{[this] {
         return interface::types::HashType(

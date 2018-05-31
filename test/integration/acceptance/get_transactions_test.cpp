@@ -8,8 +8,8 @@
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/permissions.hpp"
 
@@ -84,12 +84,13 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
 TEST_F(GetTransactions, HaveGetAllTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
-    auto resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(resp.value().transactions().size(), 1);
-    ASSERT_EQ(*resp.value().transactions()[0].operator->(), dummy_tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    });
   };
 
   IntegrationTestFramework(2)
@@ -110,12 +111,13 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 TEST_F(GetTransactions, HaveGetMyTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
-    auto resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(resp.value().transactions().size(), 1);
-    ASSERT_EQ(*resp.value().transactions()[0].operator->(), dummy_tx);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 1);
+      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+    });
   };
 
   IntegrationTestFramework(2)
@@ -165,11 +167,12 @@ TEST_F(GetTransactions, InvalidSignatures) {
  */
 TEST_F(GetTransactions, NonexistentHash) {
   auto check = [](auto &status) {
-    auto resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(resp.value().transactions().size(), 0);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 0);
+    });
   };
 
   IntegrationTestFramework(1)
@@ -188,11 +191,12 @@ TEST_F(GetTransactions, NonexistentHash) {
  */
 TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
-    auto resp = boost::apply_visitor(
-        interface::SpecifiedVisitor<interface::TransactionsResponse>(),
-        status.get());
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(resp.value().transactions().size(), 0);
+    ASSERT_NO_THROW({
+      const auto &resp = boost::apply_visitor(
+          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          status.get());
+      ASSERT_EQ(resp.transactions().size(), 0);
+    });
   };
 
   auto tx = makeUserWithPerms();

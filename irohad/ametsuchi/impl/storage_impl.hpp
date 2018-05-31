@@ -33,13 +33,9 @@ namespace iroha {
     class FlatFile;
 
     struct ConnectionContext {
-      ConnectionContext(std::unique_ptr<FlatFile> block_store,
-                        std::unique_ptr<pqxx::lazyconnection> pg_lazy,
-                        std::unique_ptr<pqxx::nontransaction> pg_nontx);
+      explicit ConnectionContext(std::unique_ptr<FlatFile> block_store);
 
       std::unique_ptr<FlatFile> block_store;
-      std::unique_ptr<pqxx::lazyconnection> pg_lazy;
-      std::unique_ptr<pqxx::nontransaction> pg_nontx;
     };
 
     class StorageImpl : public Storage {
@@ -49,7 +45,7 @@ namespace iroha {
           const std::string &options_str_without_dbname);
 
       static expected::Result<ConnectionContext, std::string> initConnections(
-          std::string block_store_dir, std::string postgres_options);
+          std::string block_store_dir);
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
@@ -89,14 +85,10 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
 
-      ~StorageImpl() override;
-
      protected:
       StorageImpl(std::string block_store_dir,
                   PostgresOptions postgres_options,
-                  std::unique_ptr<FlatFile> block_store,
-                  std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                  std::unique_ptr<pqxx::nontransaction> wsv_transaction);
+                  std::unique_ptr<FlatFile> block_store);
 
       /**
        * Folder with raw blocks
@@ -108,17 +100,6 @@ namespace iroha {
 
      private:
       std::unique_ptr<FlatFile> block_store_;
-
-      /**
-       * Pg connection with direct transaction management
-       */
-      std::unique_ptr<pqxx::lazyconnection> wsv_connection_;
-
-      std::unique_ptr<pqxx::nontransaction> wsv_transaction_;
-
-      std::shared_ptr<WsvQuery> wsv_;
-
-      std::shared_ptr<BlockQuery> blocks_;
 
       // Allows multiple readers and a single writer
       std::shared_timed_mutex rw_lock_;

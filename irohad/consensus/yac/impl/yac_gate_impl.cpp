@@ -28,7 +28,6 @@
 #include "interfaces/common_objects/signature.hpp"
 #include "network/block_loader.hpp"
 #include "simulator/block_creator.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace iroha {
   namespace consensus {
