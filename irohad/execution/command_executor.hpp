@@ -75,63 +75,52 @@ namespace iroha {
     CommandExecutor(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
                     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
 
-    // TODO: 28.03.2018 vdrobny IR-1011 Rework PolymorphicWrapper with
-    // std::reference_wrapper with const semantic
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::AddAssetQuantity> &command);
+        const shared_model::interface::AddAssetQuantity &command);
 
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::AddPeer> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::AddSignatory> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::AppendRole> &command);
+    ExecutionResult operator()(const shared_model::interface::AddPeer &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::CreateAccount> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::CreateAsset> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::CreateDomain> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::CreateRole> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::DetachRole> &command);
+        const shared_model::interface::AddSignatory &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::GrantPermission> &command);
+        const shared_model::interface::AppendRole &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::RemoveSignatory> &command);
+        const shared_model::interface::CreateAccount &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::RevokePermission> &command);
+        const shared_model::interface::CreateAsset &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::SetAccountDetail> &command);
-
-    ExecutionResult operator()(const shared_model::detail::PolymorphicWrapper<
-                               shared_model::interface::SetQuorum> &command);
+        const shared_model::interface::CreateDomain &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::SubtractAssetQuantity> &command);
+        const shared_model::interface::CreateRole &command);
 
     ExecutionResult operator()(
-        const shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::TransferAsset> &command);
+        const shared_model::interface::DetachRole &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::GrantPermission &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::RemoveSignatory &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::RevokePermission &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::SetAccountDetail &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::SetQuorum &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::SubtractAssetQuantity &command);
+
+    ExecutionResult operator()(
+        const shared_model::interface::TransferAsset &command);
 
     void setCreatorAccountId(const shared_model::interface::types::AccountIdType
                                  &creator_account_id);
@@ -153,10 +142,9 @@ namespace iroha {
     CommandValidator(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries);
 
     template <typename CommandType>
-    bool operator()(
-        const shared_model::detail::PolymorphicWrapper<CommandType> &command) {
-      return hasPermissions(*command.operator->(), *queries, creator_account_id)
-          and isValid(*command.operator->(), *queries, creator_account_id);
+    bool operator()(const CommandType &command) {
+      return hasPermissions(command, *queries, creator_account_id)
+          and isValid(command, *queries, creator_account_id);
     }
 
     void setCreatorAccountId(const shared_model::interface::types::AccountIdType

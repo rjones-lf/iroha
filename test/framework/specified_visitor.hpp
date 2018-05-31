@@ -19,26 +19,12 @@
 #define IROHA_SPECIFIED_VISITOR_HPP
 
 #include <boost/variant.hpp>
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace interface {
     template <typename Type>
     class SpecifiedVisitor : public boost::static_visitor<const Type &> {
-     private:
-      using Y = shared_model::detail::PolymorphicWrapper<
-          std::remove_const_t<std::remove_reference_t<Type>>>;
-
      public:
-      /**
-       * Match polymorphic wrapper for template type
-       * @param t polymorphic wrapper object of specified type
-       * @return const reference to value stored in polymorphic wrapper
-       */
-      const Type &operator()(const Y &t) const {
-        return *t;
-      }
-
       /**
        * Match template type
        * @param t const reference to object of specified type

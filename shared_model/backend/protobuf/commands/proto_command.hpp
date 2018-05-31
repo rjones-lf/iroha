@@ -47,35 +47,24 @@ namespace shared_model {
     class Command final : public CopyableProto<interface::Command,
                                                iroha::protocol::Command,
                                                Command> {
-     private:
-      /// polymorphic wrapper type shortcut
-      template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
-
-      /// lazy variant shortcut
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      using LazyVariantType = Lazy<CommandVariantType>;
-
      public:
       /// type of proto variant
-      using ProtoCommandVariantType = wrap<AddAssetQuantity,
-                                           AddPeer,
-                                           AddSignatory,
-                                           AppendRole,
-                                           CreateAccount,
-                                           CreateAsset,
-                                           CreateDomain,
-                                           CreateRole,
-                                           DetachRole,
-                                           GrantPermission,
-                                           RemoveSignatory,
-                                           RevokePermission,
-                                           SetAccountDetail,
-                                           SetQuorum,
-                                           SubtractAssetQuantity,
-                                           TransferAsset>;
+      using ProtoCommandVariantType = boost::variant<AddAssetQuantity,
+                                                     AddPeer,
+                                                     AddSignatory,
+                                                     AppendRole,
+                                                     CreateAccount,
+                                                     CreateAsset,
+                                                     CreateDomain,
+                                                     CreateRole,
+                                                     DetachRole,
+                                                     GrantPermission,
+                                                     RemoveSignatory,
+                                                     RevokePermission,
+                                                     SetAccountDetail,
+                                                     SetQuorum,
+                                                     SubtractAssetQuantity,
+                                                     TransferAsset>;
 
       /// list of types in proto variant
       using ProtoCommandListType = ProtoCommandVariantType::types;
@@ -90,8 +79,16 @@ namespace shared_model {
       const CommandVariantType &get() const override;
 
      private:
+      /// lazy variant shortcut
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      using LazyVariantType = Lazy<ProtoCommandVariantType>;
+
       // lazy
       const LazyVariantType variant_;
+
+      const Lazy<CommandVariantType> ivariant_;
     };
   }  // namespace proto
 }  // namespace shared_model

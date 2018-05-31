@@ -6,22 +6,23 @@
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T, typename Archive>
-auto loadCommand(Archive &&ar) {
-  int which = ar.GetDescriptor()->FindFieldByNumber(ar.command_case())->index();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::Command::CommandVariantType>(
-      std::forward<Archive>(ar), which);
-}
-
 namespace shared_model {
   namespace proto {
 
     template <typename CommandType>
     Command::Command(CommandType &&command)
-        : CopyableProto(std::forward<CommandType>(command)), variant_{[this] {
-            return loadCommand<ProtoCommandListType>(*proto_);
-          }} {}
+        : CopyableProto(std::forward<CommandType>(command)),
+          variant_{[this] {
+            auto &&ar = *proto_;
+            int which = ar.GetDescriptor()
+                            ->FindFieldByNumber(ar.command_case())
+                            ->index();
+            return shared_model::detail::variant_impl<ProtoCommandListType>::
+                template load<ProtoCommandVariantType>(
+                    std::forward<decltype(ar)>(ar), which);
+          }},
+          ivariant_{detail::makeLazyInitializer(
+              [this] { return CommandVariantType(*variant_); })} {}
 
     template Command::Command(Command::TransportType &);
     template Command::Command(const Command::TransportType &);
@@ -32,7 +33,7 @@ namespace shared_model {
     Command::Command(Command &&o) noexcept : Command(std::move(o.proto_)) {}
 
     const Command::CommandVariantType &Command::get() const {
-      return *variant_;
+      return *ivariant_;
     }
 
   }  // namespace proto
