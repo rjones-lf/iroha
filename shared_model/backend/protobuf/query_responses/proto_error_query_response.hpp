@@ -23,7 +23,6 @@
 #include "interfaces/query_responses/error_query_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace shared_model {

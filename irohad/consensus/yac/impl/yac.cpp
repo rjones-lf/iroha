@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "consensus/yac/yac.hpp"
+
 #include <utility>
 
 #include "common/types.hpp"
@@ -22,7 +24,6 @@
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/timer.hpp"
-#include "consensus/yac/yac.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
 #include "interfaces/common_objects/peer.hpp"
 

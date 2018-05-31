@@ -18,11 +18,11 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_SIGNATORIES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_PROTO_SIGNATORIES_RESPONSE_HPP
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
+
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {

@@ -18,12 +18,12 @@
 #ifndef IROHA_SHARED_MODEL_TYPES_HPP
 #define IROHA_SHARED_MODEL_TYPES_HPP
 
-#include <boost/range/any_range.hpp>
 #include <cstdint>
 #include <set>
 #include <string>
 #include <vector>
 
+#include <boost/range/any_range.hpp>
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
 
