@@ -17,19 +17,19 @@
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 
-#include "interfaces/iroha_internal/block.hpp"
+#include "common/visitor.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
       YacHash YacHashProviderImpl::makeHash(
-          const shared_model::interface::Block &block) const {
+          const shared_model::interface::BlockVariant &block_variant) const {
         YacHash result;
-        auto hex_hash = block.hash().hex();
+        auto hex_hash = block_variant.hash().hex();
         result.proposal_hash = hex_hash;
         result.block_hash = hex_hash;
-        const auto &sig = *block.signatures().begin();
+        const auto &sig = *block_variant.signatures().begin();
         result.block_signature = clone(sig);
         return result;
       }

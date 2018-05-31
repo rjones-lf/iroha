@@ -75,11 +75,10 @@ namespace iroha {
 
     class MockConsensusGate : public ConsensusGate {
      public:
-      MOCK_METHOD1(vote, void(const shared_model::interface::Block &));
+      MOCK_METHOD1(vote, void(const shared_model::interface::BlockVariant &));
 
-      MOCK_METHOD0(
-          on_commit,
-          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>());
+      MOCK_METHOD0(on_commit,
+                   rxcpp::observable<shared_model::interface::BlockVariant>());
     };
   }  // namespace network
 }  // namespace iroha
