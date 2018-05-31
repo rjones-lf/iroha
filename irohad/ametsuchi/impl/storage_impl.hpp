@@ -33,7 +33,7 @@ namespace iroha {
     class FlatFile;
 
     struct ConnectionContext {
-      ConnectionContext(std::unique_ptr<FlatFile> block_store);
+      explicit ConnectionContext(std::unique_ptr<FlatFile> block_store);
 
       std::unique_ptr<FlatFile> block_store;
     };
