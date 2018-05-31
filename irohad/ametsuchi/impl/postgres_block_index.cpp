@@ -59,7 +59,7 @@ namespace iroha {
           true,
           [&](auto &status, const auto &cmd) {
             return visit_in_place(
-                cmd->get(),
+                cmd.get(),
                 [&](const shared_model::interface::TransferAsset &command) {
                   status &=
                       this->indexAccountIdHeight(command.srcAccountId(), height)

@@ -54,9 +54,8 @@ namespace iroha {
             function) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction->creatorAccountId());
-        auto execute_command = [this](auto command) {
-          auto result =
-              boost::apply_visitor(*command_executor_, command->get());
+        auto execute_command = [this](auto &command) {
+          auto result = boost::apply_visitor(*command_executor_, command.get());
           return result.match([](expected::Value<void> &v) { return true; },
                               [&](expected::Error<ExecutionError> &e) {
                                 log_->error(e.error.toString());

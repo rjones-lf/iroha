@@ -18,12 +18,9 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTION_HPP
 #define IROHA_SHARED_MODEL_TRANSACTION_HPP
 
-#include <vector>
-
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
@@ -48,16 +45,15 @@ namespace shared_model {
        */
       virtual QuorumType quorum() const = 0;
 
-      /// Type of command
-      using CommandType = detail::PolymorphicWrapper<Command>;
-
       /// Type of ordered collection of commands
-      using CommandsType = std::vector<CommandType>;
+      using CommandsType = boost::any_range<Command,
+                                            boost::random_access_traversal_tag,
+                                            const Command &>;
 
       /**
        * @return attached commands
        */
-      virtual const CommandsType &commands() const = 0;
+      virtual CommandsType commands() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -68,7 +64,7 @@ namespace shared_model {
             .append("quorum", std::to_string(quorum()))
             .append("commands")
             .appendAll(commands(),
-                       [](auto &command) { return command->toString(); })
+                       [](auto &command) { return command.toString(); })
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

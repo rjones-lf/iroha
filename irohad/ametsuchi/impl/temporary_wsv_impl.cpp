@@ -45,12 +45,12 @@ namespace iroha {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto execute_command = [this, &tx_creator](auto command) {
+      auto execute_command = [this, &tx_creator](auto &command) {
         auto account = wsv_->getAccount(tx_creator).value();
-        if (not boost::apply_visitor(*command_validator_, command->get())) {
+        if (not boost::apply_visitor(*command_validator_, command.get())) {
           return false;
         }
-        auto result = boost::apply_visitor(*command_executor_, command->get());
+        auto result = boost::apply_visitor(*command_executor_, command.get());
         return result.match([](expected::Value<void> &v) { return true; },
                             [this](expected::Error<ExecutionError> &e) {
                               log_->error(e.error.toString());

@@ -45,7 +45,7 @@ using namespace shared_model::permissions;
  */
 std::unique_ptr<shared_model::interface::Command> buildCommand(
     const TestTransactionBuilder &builder) {
-  return clone(*(builder.build().commands().front()));
+  return clone(builder.build().commands().front());
 }
 
 /**

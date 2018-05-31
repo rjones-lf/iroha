@@ -264,8 +264,7 @@ namespace shared_model {
         }
 
         for (const auto &command : tx.commands()) {
-          auto reason =
-              boost::apply_visitor(command_validator_, command->get());
+          auto reason = boost::apply_visitor(command_validator_, command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));
           }
