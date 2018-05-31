@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.lang.Thread;
 
+import jp.co.soramitsu.iroha.*;
+
 class TransactionExample {
     static {
         try {
