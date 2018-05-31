@@ -119,8 +119,12 @@ namespace shared_model {
       }};
 
       const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-        return SignatureSetType<proto::Signature>(proto_->signatures().begin(),
-                                                  proto_->signatures().end());
+        auto signatures = proto_->signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
       }};
 
       const Lazy<interface::types::BlobType> payload_blob_{

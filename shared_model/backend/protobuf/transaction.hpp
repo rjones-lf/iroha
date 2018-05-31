@@ -20,6 +20,8 @@
 
 #include "interfaces/transaction.hpp"
 
+#include <boost/range/adaptor/transformed.hpp>
+
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"
@@ -107,8 +109,12 @@ namespace shared_model {
           [this] { return makeBlob(payload_); }};
 
       const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-        return SignatureSetType<proto::Signature>(proto_->signatures().begin(),
-                                                  proto_->signatures().end());
+        auto signatures = proto_->signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
       }};
     };
   }  // namespace proto
