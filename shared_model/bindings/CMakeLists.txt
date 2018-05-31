@@ -33,7 +33,7 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
-    if (SWIG_JAVA)
+    if (SWIG_JAVA AND SWIG_JAVA_PKG)
         set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
         string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})   
     else()
