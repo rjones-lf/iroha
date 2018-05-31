@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,15 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_GET_ACCOUNT_ASSETS_HPP
-#define IROHA_GET_ACCOUNT_ASSETS_HPP
+#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 
-#include <string>
-#include "model/query.hpp"
+#ifndef IROHA_TEST_ACCOUNT_BUILDER_HPP
+#define IROHA_TEST_ACCOUNT_BUILDER_HPP
 
-namespace iroha {
-  namespace model {
+/**
+ * Builder alias, to build shared model proto block object avoiding validation
+ * and "required fields" check
+ */
+using TestAccountAssetBuilder = shared_model::proto::AccountAsset;
 
-    /**
-     * Query for get all account's assets and balance
-     */
-    struct GetAccountAssets : Query {
-      std::string account_id{};
-    };
-  }  // namespace model
-}  // namespace iroha
-#endif  // IROHA_GET_ACCOUNT_ASSETS_HPP
+#endif //IROHA_TEST_ACCOUNT_BUILDER_HPP

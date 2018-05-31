@@ -20,10 +20,12 @@
 
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/reference_holder.hpp"
+#include <boost/range/numeric.hpp>
 
 namespace shared_model {
   namespace proto {
@@ -42,8 +44,8 @@ namespace shared_model {
       AccountAssetResponse(AccountAssetResponse &&o)
           : AccountAssetResponse(std::move(o.proto_)) {}
 
-      const interface::AccountAsset &accountAsset() const override {
-        return *accountAsset_;
+      const interface::types::AccountAssetCollectionType accountAssets() const override {
+        return *accountAssets_;
       }
 
      private:
@@ -53,8 +55,15 @@ namespace shared_model {
       const iroha::protocol::AccountAssetResponse &accountAssetResponse_{
           proto_->account_assets_response()};
 
-      const Lazy<AccountAsset> accountAsset_{[this] {
-        return AccountAsset(accountAssetResponse_.account_asset());
+      const Lazy<interface::types::AccountAssetCollectionType> accountAssets_{
+        [this] {
+          return boost::accumulate(
+              accountAssetResponse_.account_assets(),
+              interface::types::AccountAssetCollectionType{},
+              [](auto &&assets, const auto &asset) {
+                assets.emplace_back(new AccountAsset(asset));
+                return std::move(assets);
+              });
       }};
     };
   }  // namespace proto

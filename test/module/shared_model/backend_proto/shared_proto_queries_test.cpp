@@ -61,7 +61,6 @@ TEST(ProtoQueryBuilder, Builder) {
   {
     auto &query = *payload.mutable_get_account_assets();
     query.set_account_id(account_id);
-    query.set_asset_id(asset_id);
   }
 
   auto keypair =
@@ -77,7 +76,7 @@ TEST(ProtoQueryBuilder, Builder) {
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)
                    .creatorAccountId(account_id)
-                   .getAccountAssets(account_id, asset_id)
+                   .getAccountAssets(account_id)
                    .queryCounter(query_counter)
                    .build();
 

@@ -344,21 +344,23 @@ class GetAccountAssetsTest : public QueryValidateExecuteTest {
 TEST_F(GetAccountAssetsTest, MyAccountValidCase) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets(admin_id, asset_id)
+                   .getAccountAssets(admin_id)
                    .build();
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAccountAsset(admin_id, asset_id))
-      .WillOnce(Return(accountAsset));
+  EXPECT_CALL(*wsv_query, getAccountAssets(admin_id))
+      .WillOnce(Return(
+          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
+              {accountAsset})));
   auto response = validateAndExecute(query);
   auto cast_resp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       response->get());
 
-  ASSERT_EQ(cast_resp->accountAsset().accountId(), admin_id);
-  ASSERT_EQ(cast_resp->accountAsset().assetId(), asset_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->accountId(), admin_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->assetId(), asset_id);
 }
 
 /**
@@ -369,7 +371,7 @@ TEST_F(GetAccountAssetsTest, MyAccountValidCase) {
 TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets(account_id, asset_id)
+                   .getAccountAssets(account_id)
                    .build();
 
   shared_model::builder::AccountAssetBuilder<
@@ -391,15 +393,16 @@ TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAccountAsset(account_id, asset_id))
-      .WillOnce(Return(accountAsset));
+  EXPECT_CALL(*wsv_query, getAccountAssets(account_id))
+      .WillOnce(Return(std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
+          {accountAsset})));
 
   auto response = validateAndExecute(query);
   auto cast_resp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       response->get());
 
-  ASSERT_EQ(cast_resp->accountAsset().accountId(), account_id);
-  ASSERT_EQ(cast_resp->accountAsset().assetId(), asset_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->accountId(), account_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->assetId(), asset_id);
 }
 
 /**
@@ -410,7 +413,7 @@ TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
 TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets(account_id, asset_id)
+                   .getAccountAssets(account_id)
                    .build();
 
   shared_model::builder::AccountAssetBuilder<
@@ -432,15 +435,16 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAccountAsset(account_id, asset_id))
-      .WillOnce(Return(accountAsset));
+  EXPECT_CALL(*wsv_query, getAccountAssets(account_id))
+      .WillOnce(Return(std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
+          {accountAsset})));
 
   auto response = validateAndExecute(query);
   auto cast_resp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       response->get());
 
-  ASSERT_EQ(cast_resp->accountAsset().accountId(), account_id);
-  ASSERT_EQ(cast_resp->accountAsset().assetId(), asset_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->accountId(), account_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->assetId(), asset_id);
 }
 
 /**
@@ -451,7 +455,7 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
 TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets(account_id, asset_id)
+                   .getAccountAssets(account_id)
                    .build();
 
   accountAsset = clone(shared_model::proto::AccountAssetBuilder()
@@ -470,15 +474,16 @@ TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
       hasAccountGrantablePermission(admin_id, account_id, can_get_my_acc_ast))
       .WillOnce(Return(true));
 
-  EXPECT_CALL(*wsv_query, getAccountAsset(account_id, asset_id))
-      .WillOnce(Return(accountAsset));
+  EXPECT_CALL(*wsv_query, getAccountAssets(account_id))
+      .WillOnce(Return(std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
+          {accountAsset})));
 
   auto response = validateAndExecute(query);
   auto cast_resp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       response->get());
 
-  ASSERT_EQ(cast_resp->accountAsset().accountId(), account_id);
-  ASSERT_EQ(cast_resp->accountAsset().assetId(), asset_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->accountId(), account_id);
+  ASSERT_EQ(cast_resp->accountAssets()[0]->assetId(), asset_id);
 }
 
 /**
@@ -489,7 +494,7 @@ TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
 TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets("test@test2", asset_id)
+                   .getAccountAssets("test@test2")
                    .build();
 
   shared_model::builder::AccountAssetBuilder<
@@ -533,7 +538,7 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
 TEST_F(GetAccountAssetsTest, NoAccountExist) {
   auto query = TestQueryBuilder()
                    .creatorAccountId(admin_id)
-                   .getAccountAssets("none", asset_id)
+                   .getAccountAssets("none")
                    .build();
 
   shared_model::builder::AccountAssetBuilder<
@@ -557,7 +562,7 @@ TEST_F(GetAccountAssetsTest, NoAccountExist) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*wsv_query, getAccountAsset("none", asset_id))
+  EXPECT_CALL(*wsv_query, getAccountAssets("none"))
       .WillOnce(Return(boost::none));
 
   auto response = validateAndExecute(query);

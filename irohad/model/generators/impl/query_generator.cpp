@@ -55,7 +55,6 @@ namespace iroha {
         query->creator_account_id = creator;
         query->query_counter = query_counter;
         query->account_id = account_id;
-        query->asset_id = asset_id;
         return query;
       }
 

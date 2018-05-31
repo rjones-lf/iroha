@@ -34,6 +34,7 @@ namespace shared_model {
 
     class Signature;
     class Transaction;
+    class AccountAsset;
 
     namespace types {
       /// Type of hash
@@ -92,6 +93,10 @@ namespace shared_model {
       using TransactionType = detail::PolymorphicWrapper<Transaction>;
       /// Type of transactions' collection
       using TransactionsCollectionType = std::vector<TransactionType>;
+      /// Type of a single AccountAsset
+      using AccountAssetType = detail::PolymorphicWrapper<AccountAsset>;
+      /// Type of transactions' collection
+      using AccountAssetCollectionType = std::vector<AccountAssetType>;
       /// Type of the transfer message
       using DescriptionType = std::string;
     }  // namespace types

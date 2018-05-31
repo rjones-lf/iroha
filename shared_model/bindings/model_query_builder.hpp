@@ -97,12 +97,10 @@ namespace shared_model {
       /**
        * Queries balance of specific asset for given account
        * @param account_id - id of account to query
-       * @param asset_id - asset id to query about
        * @return builder with getAccountAssets query inside
        */
       ModelQueryBuilder getAccountAssets(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id);
+          const interface::types::AccountIdType &account_id);
 
       /**
        * Queries available roles in the system

@@ -54,12 +54,14 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
-          .accountAssetResponse(asset_id, account_id, proto_amount)
+          .accountAssetResponse({
+
+                                })
           .build();
 
   const auto tmp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       query_response.get());
-  const auto &asset_response = tmp->accountAsset();
+  const auto &asset_response = *(tmp->accountAssets()[0]);
 
   ASSERT_EQ(asset_response.assetId(), asset_id);
   ASSERT_EQ(asset_response.accountId(), account_id);

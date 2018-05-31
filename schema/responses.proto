@@ -30,7 +30,7 @@ message AccountAsset {
 
 // *** Responses *** //
 message AccountAssetResponse {
-  AccountAsset account_asset = 1;
+  repeated AccountAsset account_assets = 1;
 }
 
 message AccountDetailResponse {

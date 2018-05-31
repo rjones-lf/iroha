@@ -74,7 +74,6 @@ namespace iroha {
               const auto &pb_cast = pl.get_account_assets();
               auto query = GetAccountAssets();
               query.account_id = pb_cast.account_id();
-              query.asset_id = pb_cast.asset_id();
               val = std::make_shared<model::GetAccountAssets>(query);
               break;
             }
@@ -200,7 +199,6 @@ namespace iroha {
         auto pb_query_mut =
             pb_query.mutable_payload()->mutable_get_account_assets();
         pb_query_mut->set_account_id(tmp->account_id);
-        pb_query_mut->set_asset_id(tmp->asset_id);
         return pb_query;
       }
 

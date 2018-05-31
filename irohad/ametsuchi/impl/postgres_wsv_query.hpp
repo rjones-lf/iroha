@@ -51,6 +51,9 @@ namespace iroha {
                          &account_id) override;
       boost::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
+      boost::optional<std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
+      getAccountAssets(
+          const shared_model::interface::types::AccountIdType &account_id) override;
       boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,

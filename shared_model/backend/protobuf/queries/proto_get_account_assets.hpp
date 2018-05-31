@@ -45,9 +45,6 @@ namespace shared_model {
         return account_assets_.account_id();
       }
 
-      const interface::types::AssetIdType &assetId() const override {
-        return account_assets_.asset_id();
-      }
 
      private:
       // ------------------------------| fields |-------------------------------
