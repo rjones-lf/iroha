@@ -68,12 +68,14 @@ namespace integration_framework {
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
+        const boost::optional<std::string> &dbname = boost::none,
         std::function<void(IntegrationTestFramework &)> deleter =
             [](IntegrationTestFramework &itf) { itf.done(); },
         bool mst_support = false,
         const std::string &block_store_path =
-        (boost::filesystem::temp_directory_path()
-            / boost::filesystem::unique_path()).string());
+            (boost::filesystem::temp_directory_path()
+             / boost::filesystem::unique_path())
+                .string());
 
     ~IntegrationTestFramework();
 

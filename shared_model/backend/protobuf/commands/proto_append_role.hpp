@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_APPEND_ROLE_HPP
 #define IROHA_PROTO_APPEND_ROLE_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/append_role.hpp"
 
 namespace shared_model {
@@ -28,23 +30,18 @@ namespace shared_model {
                                                   AppendRole> {
      public:
       template <typename CommandType>
-      explicit AppendRole(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit AppendRole(CommandType &&command);
 
-      AppendRole(const AppendRole &o) : AppendRole(o.proto_) {}
+      AppendRole(const AppendRole &o);
 
-      AppendRole(AppendRole &&o) noexcept : AppendRole(std::move(o.proto_)) {}
+      AppendRole(AppendRole &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return append_role_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::RoleIdType &roleName() const override {
-        return append_role_.role_name();
-      }
+      const interface::types::RoleIdType &roleName() const override;
 
      private:
-      const iroha::protocol::AppendRole &append_role_{proto_->append_role()};
+      const iroha::protocol::AppendRole &append_role_;
     };
 
   }  // namespace proto

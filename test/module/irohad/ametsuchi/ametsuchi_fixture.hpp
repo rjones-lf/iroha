@@ -47,7 +47,7 @@ namespace iroha {
         }
         std::stringstream ss;
         ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-           << " password=" << pg_pass;
+           << " password=" << pg_pass << " dbname=" << dbname_;
         pgopt_ = ss.str();
         log->info("host={}, port={}, user={}, password={}",
                   pg_host,

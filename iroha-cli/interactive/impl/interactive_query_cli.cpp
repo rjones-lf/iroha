@@ -43,6 +43,7 @@ namespace iroha_cli {
       description_map_ = {
           {GET_ACC, "Get Account Information"},
           {GET_ACC_AST, "Get Account's Assets"},
+          {GET_ACC_AST_TX, "Get Account's Asset Transactions"},
           {GET_ACC_TX, "Get Account's Transactions"},
           {GET_TX, "Get Transactions by transactions' hashes"},
           {GET_ACC_SIGN, "Get Account's Signatories"},
@@ -60,6 +61,7 @@ namespace iroha_cli {
       query_params_descriptions_ = {
           {GET_ACC, {acc_id}},
           {GET_ACC_AST, {acc_id, ast_id}},
+          {GET_ACC_AST_TX, {acc_id, ast_id}},
           {GET_ACC_TX, {acc_id}},
           {GET_TX, {tx_hashes}},
           {GET_ACC_SIGN, {acc_id}},
@@ -72,6 +74,7 @@ namespace iroha_cli {
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
           {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
+          {GET_ACC_AST_TX, &InteractiveQueryCli::parseGetAccountAssetTransactions},
           {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
           {GET_TX, &InteractiveQueryCli::parseGetTransactions},
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
@@ -181,6 +184,14 @@ namespace iroha_cli {
       auto account_id = params[0];
       auto asset_id = params[1];
       return generator_.generateGetAccountAssets(
+          local_time_, creator_, counter_, account_id, asset_id);
+    }
+
+    std::shared_ptr<iroha::model::Query>
+    InteractiveQueryCli::parseGetAccountAssetTransactions(QueryParams params) {
+      auto account_id = params[0];
+      auto asset_id = params[1];
+      return generator_.generateGetAccountAssetTransactions(
           local_time_, creator_, counter_, account_id, asset_id);
     }
 

@@ -19,7 +19,6 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 #include <gtest/gtest.h>
 

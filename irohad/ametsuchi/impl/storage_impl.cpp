@@ -32,40 +32,16 @@ namespace iroha {
     const char *kPsqlBroken = "Connection to PostgreSQL broken: %s";
     const char *kTmpWsv = "TemporaryWsv";
 
-    ConnectionContext::ConnectionContext(
-        std::unique_ptr<FlatFile> block_store,
-        std::unique_ptr<pqxx::lazyconnection> pg_lazy,
-        std::unique_ptr<pqxx::nontransaction> pg_nontx)
-        : block_store(std::move(block_store)),
-          pg_lazy(std::move(pg_lazy)),
-          pg_nontx(std::move(pg_nontx)) {}
+    ConnectionContext::ConnectionContext(std::unique_ptr<FlatFile> block_store)
+        : block_store(std::move(block_store)) {}
 
-    StorageImpl::~StorageImpl() {
-      wsv_transaction_->commit();
-      wsv_connection_->disconnect();
-      log_->info("PostgresQL connection closed");
-    }
-
-    StorageImpl::StorageImpl(
-        std::string block_store_dir,
-        PostgresOptions postgres_options,
-        std::unique_ptr<FlatFile> block_store,
-        std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-        std::unique_ptr<pqxx::nontransaction> wsv_transaction)
+    StorageImpl::StorageImpl(std::string block_store_dir,
+                             PostgresOptions postgres_options,
+                             std::unique_ptr<FlatFile> block_store)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
-          wsv_connection_(std::move(wsv_connection)),
-          wsv_transaction_(std::move(wsv_transaction)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*wsv_transaction_)),
-          blocks_(std::make_shared<PostgresBlockQuery>(*wsv_transaction_,
-                                                       *block_store_)) {
-      log_ = logger::log("StorageImpl");
-
-      wsv_transaction_->exec(init_);
-      wsv_transaction_->exec(
-          "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;");
-    }
+          log_(logger::log("StorageImpl")) {}
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
@@ -100,7 +76,8 @@ namespace iroha {
 
       boost::optional<shared_model::interface::types::HashType> top_hash;
 
-      blocks_->getTopBlocks(1)
+      getBlockQuery()
+          ->getTopBlocks(1)
           .subscribe_on(rxcpp::observe_on_new_thread())
           .as_blocking()
           .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
@@ -221,8 +198,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     }
 
     expected::Result<ConnectionContext, std::string>
-    StorageImpl::initConnections(std::string block_store_dir,
-                                 std::string postgres_options) {
+    StorageImpl::initConnections(std::string block_store_dir) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
 
@@ -234,24 +210,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       }
       log_->info("block store created");
 
-      auto postgres_connection =
-          std::make_unique<pqxx::lazyconnection>(postgres_options);
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        return expected::makeError(
-            (boost::format(kPsqlBroken) % e.what()).str());
-      }
-      log_->info("connection to PostgreSQL completed");
-
-      auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
-          *postgres_connection, "Storage");
-      log_->info("transaction to PostgreSQL initialized");
-
-      return expected::makeValue(
-          ConnectionContext(std::move(*block_store),
-                            std::move(postgres_connection),
-                            std::move(wsv_transaction)));
+      return expected::makeValue(ConnectionContext(std::move(*block_store)));
     }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
@@ -274,17 +233,14 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
         return expected::makeError(string_res.value());
       }
 
-      auto ctx_result =
-          initConnections(block_store_dir, options.optionsString());
+      auto ctx_result = initConnections(block_store_dir);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
             storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                 new StorageImpl(block_store_dir,
                                 options,
-                                std::move(ctx.value.block_store),
-                                std::move(ctx.value.pg_lazy),
-                                std::move(ctx.value.pg_nontx))));
+                                std::move(ctx.value.block_store))));
           },
           [&](expected::Error<std::string> &error) { storage = error; });
       return storage;
@@ -323,8 +279,23 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      return blocks_;
+      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
+          postgres_options_.optionsString());
+      try {
+        postgres_connection->activate();
+      } catch (const pqxx::broken_connection &e) {
+        // TODO 29.03.2018 vdrobny IR-1184 Handle this exception
+        throw pqxx::broken_connection(e);
+      }
+      auto wsv_transaction =
+          std::make_unique<pqxx::nontransaction>(*postgres_connection);
+
+      return std::make_shared<PostgresBlockQuery>(
+          std::move(postgres_connection),
+          std::move(wsv_transaction),
+          *block_store_);
     }
+
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();

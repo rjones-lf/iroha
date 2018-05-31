@@ -26,10 +26,6 @@ using namespace shared_model::permissions;
 using namespace iroha;
 using namespace iroha::ametsuchi;
 
-// TODO: 28/03/2018 x3medima17 remove poly wrapper, IR-1011
-template <class T>
-using w = shared_model::detail::PolymorphicWrapper<T>;
-
 QueryProcessingFactory::QueryProcessingFactory(
     std::shared_ptr<ametsuchi::WsvQuery> wsvQuery,
     std::shared_ptr<ametsuchi::BlockQuery> blockQuery)
@@ -355,83 +351,83 @@ QueryProcessingFactory::validateAndExecute(
   // TODO: 29/04/2018 x3medima18, Add visitor class, IR-1185
   return visit_in_place(
       query.get(),
-      [&](const w<shared_model::interface::GetAccount> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAccount &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccount(*q);
+          builder = executeGetAccount(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetSignatories> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetSignatories &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetSignatories(*q);
+          builder = executeGetSignatories(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetAccountTransactions> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAccountTransactions &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountTransactions(*q);
+          builder = executeGetAccountTransactions(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetTransactions> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetTransactions &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetTransactions(*q, query.creatorAccountId());
+          builder = executeGetTransactions(q, query.creatorAccountId());
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetAccountAssetTransactions> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAccountAssetTransactions &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountAssetTransactions(*q);
+          builder = executeGetAccountAssetTransactions(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetAccountAssets> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAccountAssets &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountAssets(*q);
+          builder = executeGetAccountAssets(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetAccountDetail> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAccountDetail &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountDetail(*q);
+          builder = executeGetAccountDetail(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetRoles> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetRoles &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetRoles(*q);
+          builder = executeGetRoles(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetRolePermissions> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetRolePermissions &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetRolePermissions(*q);
+          builder = executeGetRolePermissions(q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
-      [&](const w<shared_model::interface::GetAssetInfo> &q) {
-        if (not validate(query, *q)) {
+      [&](const shared_model::interface::GetAssetInfo &q) {
+        if (not validate(query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAssetInfo(*q);
+          builder = executeGetAssetInfo(q);
         }
         return clone(builder.queryHash(query_hash).build());
       }

@@ -9,6 +9,7 @@
 #include "backend/protobuf/empty_block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
+#include "backend/protobuf/empty_block.hpp"
 
 namespace shared_model {
   namespace proto {

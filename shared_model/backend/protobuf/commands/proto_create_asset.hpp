@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_CREATE_ASSET_HPP
 #define IROHA_PROTO_CREATE_ASSET_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/create_asset.hpp"
 
 namespace shared_model {
@@ -28,35 +30,26 @@ namespace shared_model {
                                                    CreateAsset> {
      public:
       template <typename CommandType>
-      explicit CreateAsset(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit CreateAsset(CommandType &&command);
 
-      CreateAsset(const CreateAsset &o) : CreateAsset(o.proto_) {}
+      CreateAsset(const CreateAsset &o);
 
-      CreateAsset(CreateAsset &&o) noexcept : CreateAsset(std::move(o.proto_)) {
-      }
+      CreateAsset(CreateAsset &&o) noexcept;
 
-      const interface::types::AssetNameType &assetName() const override {
-        return create_asset_.asset_name();
-      }
+      const interface::types::AssetNameType &assetName() const override;
 
-      const interface::types::DomainIdType &domainId() const override {
-        return create_asset_.domain_id();
-      }
+      const interface::types::DomainIdType &domainId() const override;
 
-      const PrecisionType &precision() const override {
-        return *precision_;
-      }
+      const PrecisionType &precision() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::CreateAsset &create_asset_{proto_->create_asset()};
+      const iroha::protocol::CreateAsset &create_asset_;
 
-      const Lazy<PrecisionType> precision_{
-          [this] { return create_asset_.precision(); }};
+      const Lazy<PrecisionType> precision_;
     };
 
   }  // namespace proto

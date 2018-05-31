@@ -55,9 +55,6 @@ namespace shared_model {
 
       using ProtoQueryResponse = iroha::protocol::QueryResponse;
 
-      template <class T>
-      using w = shared_model::detail::PolymorphicWrapper<T>;
-
       template <int Sp>
       TemplateQueryResponseBuilder(const TemplateQueryResponseBuilder<Sp> &o)
           : query_response_(o.query_response_) {}

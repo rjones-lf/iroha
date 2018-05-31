@@ -19,7 +19,6 @@
 #define IROHA_BUILDERS_COMMON_HPP
 
 #include "common/result.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
 // TODO: 16.02.2018 nickaleks: Add validators for common_objects IR-986

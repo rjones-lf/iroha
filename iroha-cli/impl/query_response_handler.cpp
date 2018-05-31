@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "query_response_handler.hpp"
 #include "logger/logger.hpp"
 #include "model/converters/pb_common.hpp"
@@ -76,6 +77,9 @@ namespace iroha_cli {
     kRoles,
     kJsonData,
     kCreatorId,
+    kCreatedTime,
+    kHash,
+    kCommands,
     kDefault,
   };
 
@@ -89,6 +93,9 @@ namespace iroha_cli {
       {kRoles, "-Roles-: "},
       {kJsonData, "-Data-: {}"},
       {kCreatorId, "-Creator Id- {}"},
+      {kCreatedTime, "-Created Time- {}"},
+      {kHash, "-Hash- {}"},
+      {kCommands, "-Commands- {}"},
       {kDefault, " {} "}};
 
   void QueryResponseHandler::handleErrorResponse(
@@ -166,11 +173,19 @@ namespace iroha_cli {
 
   void QueryResponseHandler::handleTransactionsResponse(
       const iroha::protocol::QueryResponse &response) {
-    auto txs = response.transactions_response().transactions();
+    auto resp = shared_model::proto::TransactionsResponse(response);
+    auto txs = resp.transactions();
     std::for_each(txs.begin(), txs.end(), [this](auto tx) {
       log_->info("[Transaction]");
-      log_->info(prefix.at(kCreatorId), tx.payload().creator_account_id());
-      // TODO 13/09/17 grimadas: add other fields: tx head, tx body IR-507
+      log_->info(prefix.at(kHash), tx->hash().hex());
+      log_->info(prefix.at(kCreatorId), tx->creatorAccountId());
+      log_->info(prefix.at(kCreatedTime), tx->createdTime());
+      log_->info(prefix.at(kCommands), tx->commands().size());
+
+      auto cmds = tx->commands();
+      std::for_each(cmds.begin(), cmds.end(), [this](auto cmd) {
+        log_->info(prefix.at(kDefault), cmd->toString());
+      });
     });
   }
 
