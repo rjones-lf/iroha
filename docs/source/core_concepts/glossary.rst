@@ -188,8 +188,8 @@ Quorum
 ======
 
 In the context of transactions signing, quorum number is a minimum amount
-of signatures required to consider transaction signed.
-The default value is one.
+of signatures required to consider a transaction signed.
+The default value is 1.
 Each account can link additional public keys and increase own quorum number.
 
 Synchronizer
