@@ -35,7 +35,7 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
 
     if (SWIG_JAVA)
         set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
-        set(CMAKE_SWIG_OUTDIR ${SWIG_JAVA_OUTDIR})     
+        string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})   
     else()
         set(CMAKE_SWIG_FLAGS "")
     endif()
