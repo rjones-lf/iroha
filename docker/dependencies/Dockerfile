@@ -27,9 +27,9 @@ RUN set -e; \
         # CI dependencies
         git ssh tar gzip ca-certificates gnupg \
         # Pythons
-#        python-pip python3-pip python3-setuptools python-dev \
+        python-pip python3-pip python3-setuptools python-dev \
         # SWIG dependencies
-#        libpcre3-dev autoconf bison  \
+        libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb ccache \
         gcovr cppcheck doxygen graphviz graphviz-dev unzip zip; \
@@ -52,7 +52,7 @@ RUN set -e; \
     (cd /tmp/boost ; git submodule update --init --recursive); \
     (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
-    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install --prefix=/opt/iroha/dependencies/boost); \
+    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install --prefix=/opt/dependencies/boost); \
     ldconfig; \
     rm -rf /tmp/boost
 
@@ -66,7 +66,7 @@ RUN set -e; \
         -Dprotobuf_BUILD_SHARED_LIBS=ON \
         -H/tmp/protobuf/cmake \
         -B/tmp/protobuf/.build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/protobuf; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/protobuf; \
     cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/protobuf
@@ -79,7 +79,7 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/gflags \
         -B/tmp/gflags/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/gflags; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/gflags; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/gflags
@@ -92,7 +92,7 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/c-ares \
         -B/tmp/c-ares/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/c-ares; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/c-ares; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/c-ares
@@ -101,6 +101,7 @@ RUN set -e; \
 RUN set -e; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bd44e485f69d70ca4095cea92decd98de3892aa6); \
+    export LD_LIBRARY_PATH="/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH"; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DgRPC_BENCHMARK_PROVIDER="" \
@@ -112,7 +113,8 @@ RUN set -e; \
         -DBUILD_SHARED_LIBS=ON \
         -H/tmp/grpc \
         -B/tmp/grpc/.build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/grpc; \
+        -DCMAKE_PREFIX_PATH="/opt/dependencies/c-ares/;/opt/dependencies/c-ares/include;/opt/dependencies/protobuf" \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/grpc; \
     cmake --build /tmp/grpc/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/grpc
@@ -125,7 +127,7 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/googletest \
         -B/tmp/googletest/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/gtest; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/gtest; \
     cmake --build /tmp/googletest/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/googletest
@@ -137,7 +139,7 @@ RUN set -e; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DSPDLOG_BUILD_TESTING=OFF -H/tmp/spdlog -B/tmp/spdlog/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/spdlog; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/spdlog; \
     cmake --build /tmp/spdlog/build --target install; \
     rm -rf /tmp/spdlog
 
@@ -149,7 +151,7 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/RxCpp \
         -B/tmp/RxCpp/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/rxcpp; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/rxcpp; \
     cmake --build /tmp/RxCpp/build --target install; \
     rm -rf /tmp/RxCpp
 
@@ -162,7 +164,7 @@ RUN set -e; \
         -DRAPIDJSON_BUILD_EXAMPLES=OFF \
         -H/tmp/rapidjson \
         -B/tmp/rapidjson/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/rapidjson; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/rapidjson; \
     cmake --build /tmp/rapidjson/build --target install; \
     ldconfig; \
     rm -rf /tmp/rapidjson
@@ -172,7 +174,7 @@ RUN set -e; \
     git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/postgresql; \
     cd /tmp/postgresql; \
     git checkout 029386ccbddd0a33d481b94e511f5219b03e6636; \
-    ./configure --without-readline --prefix=/opt/iroha/dependencies/libpq; \
+    ./configure --without-readline --prefix=/opt/dependencies/libpq; \
     # build
     make -j${PARALLELISM} -C src/bin/pg_config; \
     make -j${PARALLELISM} -C src/interfaces/libpq; \
@@ -188,11 +190,12 @@ RUN set -e; \
 
 # install pqxx
 RUN set -e; \
+    export PATH="/opt/dependencies/libpq/bin:$PATH"; \
     git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
     curl -L -o /tmp/libpqxx/config/config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
     curl -L -o /tmp/libpqxx/config/config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
-    (cd /tmp/libpqxx ; /tmp/libpqxx/configure --disable-documentation --with-pic --prefix=/opt/iroha/dependencies/pqxx); \
+    (cd /tmp/libpqxx ; /tmp/libpqxx/configure --disable-documentation --with-pic --prefix=/opt/dependencies/libpqxx); \
     make -j${PARALLELISM} -C /tmp/libpqxx; \
     make -C /tmp/libpqxx install; \
     ldconfig; \
@@ -203,10 +206,10 @@ RUN set -e; \
     git clone https://github.com/01org/tbb /tmp/tbb; \
     (cd /tmp/tbb ; git checkout eb6336ad29450f2a64af5123ca1b9429ff6bc11d); \
     make -j${PARALLELISM} -C /tmp/tbb tbb_build_prefix=build; \
-    mkdir /opt/iroha/dependencies/tbb /opt/iroha/dependencies/tbb/lib /opt/iroha/dependencies/tbb/include; \
-    cp /tmp/tbb/build/build_debug/*.so* /opt/iroha/dependencies/tbb/lib; \
-    cp /tmp/tbb/build/build_release/*.so* /opt/iroha/dependencies/tbb/lib; \
-    cp -r /tmp/tbb/include/* /opt/iroha/dependencies/tbb/include; \
+    mkdir /opt/dependencies/tbb /opt/dependencies/tbb/lib /opt/dependencies/tbb/include; \
+    cp /tmp/tbb/build/build_debug/*.so* /opt/dependencies/tbb/lib; \
+    cp /tmp/tbb/build/build_release/*.so* /opt/dependencies/tbb/lib; \
+    cp -r /tmp/tbb/include/* /opt/dependencies/tbb/include; \
     ldconfig; \
     rm -rf /tmp/tbb
 
@@ -229,15 +232,10 @@ RUN set -e; \
         -DTESTING=OFF \
         -H/tmp/ed25519 \
         -B/tmp/ed25519/build \
-        -DCMAKE_INSTALL_PREFIX=/opt/iroha/dependencies/ed25519; \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/ed25519; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
-
-# pull latest Iroha
-RUN set -e; \
-    git clone https://github.com/hyperledger/iroha.git /opt/iroha; \
-    (cd /opt/iroha/iroha ; git checkout develop)
 
 # fetch lcov reports converter
 #RUN set -e; \
