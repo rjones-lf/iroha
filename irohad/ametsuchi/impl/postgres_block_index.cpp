@@ -94,8 +94,8 @@ namespace iroha {
       boost::for_each(
           block.transactions() | boost::adaptors::indexed(0),
           [&](const auto &tx) {
-            const auto &creator_id = tx.value()->creatorAccountId();
-            const auto &hash = tx.value()->hash().blob();
+            const auto &creator_id = tx.value().creatorAccountId();
+            const auto &hash = tx.value().hash().blob();
             const auto &index = std::to_string(tx.index());
 
             // tx hash -> block where hash is stored
@@ -117,7 +117,7 @@ namespace iroha {
                 + ");");
 
             this->indexAccountAssets(
-                creator_id, height, index, tx.value()->commands());
+                creator_id, height, index, tx.value().commands());
           });
     }
   }  // namespace ametsuchi

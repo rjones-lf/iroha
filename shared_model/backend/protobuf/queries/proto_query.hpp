@@ -18,7 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_QUERY_HPP
 #define IROHA_SHARED_MODEL_PROTO_QUERY_HPP
 
-#include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query.hpp"

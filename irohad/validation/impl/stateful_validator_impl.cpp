@@ -17,6 +17,7 @@
 
 #include "validation/impl/stateful_validator_impl.hpp"
 
+#include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "builders/protobuf/proposal.hpp"
 #include "validation/utils.hpp"
@@ -54,29 +55,17 @@ namespace iroha {
       };
 
       // Filter only valid transactions
-      auto filter = [&temporaryWsv, checking_transaction](auto &acc,
-                                                          const auto &tx) {
-        auto answer =
-            temporaryWsv.apply(*(tx.operator->()), checking_transaction);
-        if (answer) {
-          acc.push_back(tx);
-        }
-        return acc;
+      auto filter = [&temporaryWsv, checking_transaction](auto &tx) {
+        return temporaryWsv.apply(tx, checking_transaction);
       };
-
-      auto &txs = proposal.transactions();
-      decltype(txs) valid = {};
-
-      auto valid_txs = std::accumulate(txs.begin(), txs.end(), valid, filter);
 
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
       // cast is not needed and stateful validator does not know about the
       // transport
       auto valid_proto_txs =
-          valid_txs
-          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
-              return static_cast<const shared_model::proto::Transaction &>(
-                  *polymorphic_tx.operator->());
+          proposal.transactions() | boost::adaptors::filtered(filter)
+          | boost::adaptors::transformed([](auto &tx) {
+              return static_cast<const shared_model::proto::Transaction &>(tx);
             });
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())

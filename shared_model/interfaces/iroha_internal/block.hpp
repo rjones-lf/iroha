@@ -35,7 +35,7 @@ namespace shared_model {
       /**
        * @return collection of transactions
        */
-      virtual const types::TransactionsCollectionType &transactions() const = 0;
+      virtual types::TransactionsCollectionType transactions() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -46,7 +46,7 @@ namespace shared_model {
             .append("txsNumber", std::to_string(txsNumber()))
             .append("createdtime", std::to_string(createdTime()))
             .append("transactions")
-            .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
+            .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

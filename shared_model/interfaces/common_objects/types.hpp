@@ -88,10 +88,11 @@ namespace shared_model {
       using AccountDetailValueType = std::string;
       /// Type of a number of transactions in block
       using TransactionsNumberType = uint16_t;
-      /// Type of a single Transaction
-      using TransactionType = detail::PolymorphicWrapper<Transaction>;
       /// Type of transactions' collection
-      using TransactionsCollectionType = std::vector<TransactionType>;
+      using TransactionsCollectionType =
+          boost::any_range<Transaction,
+                           boost::random_access_traversal_tag,
+                           const Transaction &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
     }  // namespace types

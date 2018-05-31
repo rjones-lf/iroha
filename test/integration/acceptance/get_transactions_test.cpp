@@ -89,7 +89,7 @@ TEST_F(GetTransactions, HaveGetAllTx) {
           interface::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+      ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
   };
 
@@ -116,7 +116,7 @@ TEST_F(GetTransactions, HaveGetMyTx) {
           interface::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+      ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
   };
 

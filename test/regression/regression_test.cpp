@@ -110,7 +110,7 @@ TEST(RegressionTest, StateRecovery) {
               shared_model::interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), tx);
+      ASSERT_EQ(resp.transactions().front(), tx);
     });
   };
   auto path =

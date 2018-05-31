@@ -542,8 +542,8 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
         resp.get());
 
     const auto &txs = tx_resp.transactions();
-    for (auto i = 0ul; i < txs.size(); i++) {
-      ASSERT_EQ(txs.at(i)->creatorAccountId(), account.accountId());
+    for (const auto &tx : txs) {
+      ASSERT_EQ(tx.creatorAccountId(), account.accountId());
     }
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });

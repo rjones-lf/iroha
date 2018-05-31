@@ -832,7 +832,7 @@ TEST_F(GetAccountTransactionsTest, MyAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(admin_id, tx->creatorAccountId());
+      EXPECT_EQ(admin_id, tx.creatorAccountId());
     }
   });
 }
@@ -867,7 +867,7 @@ TEST_F(GetAccountTransactionsTest, AllAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }
@@ -902,7 +902,7 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }
@@ -941,7 +941,7 @@ TEST_F(GetAccountTransactionsTest, GrantAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }
@@ -1047,7 +1047,7 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(admin_id, tx->creatorAccountId());
+      EXPECT_EQ(admin_id, tx.creatorAccountId());
     }
   });
 }
@@ -1082,7 +1082,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }
@@ -1117,7 +1117,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }
@@ -1156,7 +1156,7 @@ TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
 
     ASSERT_EQ(cast_resp.transactions().size(), N);
     for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx->creatorAccountId());
+      EXPECT_EQ(account_id, tx.creatorAccountId());
     }
   });
 }

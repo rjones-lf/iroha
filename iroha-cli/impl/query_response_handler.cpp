@@ -175,16 +175,16 @@ namespace iroha_cli {
       const iroha::protocol::QueryResponse &response) {
     auto resp = shared_model::proto::TransactionsResponse(response);
     auto txs = resp.transactions();
-    std::for_each(txs.begin(), txs.end(), [this](auto tx) {
+    std::for_each(txs.begin(), txs.end(), [this](auto &tx) {
       log_->info("[Transaction]");
-      log_->info(prefix.at(kHash), tx->hash().hex());
-      log_->info(prefix.at(kCreatorId), tx->creatorAccountId());
-      log_->info(prefix.at(kCreatedTime), tx->createdTime());
-      log_->info(prefix.at(kCommands), tx->commands().size());
+      log_->info(prefix.at(kHash), tx.hash().hex());
+      log_->info(prefix.at(kCreatorId), tx.creatorAccountId());
+      log_->info(prefix.at(kCreatedTime), tx.createdTime());
+      log_->info(prefix.at(kCommands), tx.commands().size());
 
-      auto cmds = tx->commands();
-      std::for_each(cmds.begin(), cmds.end(), [this](auto cmd) {
-        log_->info(prefix.at(kDefault), cmd->toString());
+      auto cmds = tx.commands();
+      std::for_each(cmds.begin(), cmds.end(), [this](auto &cmd) {
+        log_->info(prefix.at(kDefault), cmd.toString());
       });
     });
   }

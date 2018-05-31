@@ -35,7 +35,7 @@ namespace iroha {
       // insert all txs from proposal to proposal set
       pcs_->on_proposal().subscribe([this](auto model_proposal) {
         for (const auto &tx : model_proposal->transactions()) {
-          auto hash = tx->hash();
+          auto hash = tx.hash();
           proposal_set_.insert(hash);
           log_->info("on proposal stateless success: {}", hash.hex());
           // different on_next() calls (this one and below) can happen in
@@ -55,7 +55,7 @@ namespace iroha {
             // on next..
             [this](auto model_block) {
               for (const auto &tx : model_block->transactions()) {
-                auto hash = tx->hash();
+                auto hash = tx.hash();
                 if (this->proposal_set_.find(hash) != proposal_set_.end()) {
                   proposal_set_.erase(hash);
                   candidate_set_.insert(hash);

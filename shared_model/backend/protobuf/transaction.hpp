@@ -20,7 +20,6 @@
 
 #include "interfaces/transaction.hpp"
 
-#include <boost/range/numeric.hpp>
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "block.pb.h"

@@ -60,7 +60,7 @@ TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
           interface::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+      ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
   };
 

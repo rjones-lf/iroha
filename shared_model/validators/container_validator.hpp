@@ -17,6 +17,7 @@
 
 #ifndef IROHA_CONTAINER_VALIDATOR_HPP
 #define IROHA_CONTAINER_VALIDATOR_HPP
+
 #include <boost/format.hpp>
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -29,7 +30,7 @@ namespace shared_model {
   namespace validation {
 
     /**
-     * Class that validates blocks and proposal common fieds
+     * Class that validates blocks and proposal common fields
      */
     template <typename Iface,
               typename FieldValidator,
@@ -50,7 +51,7 @@ namespace shared_model {
           const interface::types::TransactionsCollectionType &transactions)
           const {
         for (const auto &tx : transactions) {
-          validateTransaction(reason, *tx);
+          validateTransaction(reason, tx);
         }
       }
 

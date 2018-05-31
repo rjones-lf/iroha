@@ -190,7 +190,7 @@ TEST(QueryResponseBuilderTest, TransactionsResponse) {
     const auto &txs = transactions_response.transactions();
 
     ASSERT_EQ(txs.size(), 1);
-    ASSERT_EQ(*txs.back(), transaction);
+    ASSERT_EQ(txs.back(), transaction);
     ASSERT_EQ(query_response.queryHash(), query_hash);
   });
 }

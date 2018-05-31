@@ -139,7 +139,7 @@ namespace iroha {
             }),
             [&](const auto &x) {
               subscriber.on_next(PostgresBlockQuery::wTransaction(
-                  clone(*block->transactions().at(x))));
+                  clone(block->transactions()[x])));
             });
       };
     }
@@ -225,10 +225,10 @@ namespace iroha {
       auto it =
           std::find_if(block->transactions().begin(),
                        block->transactions().end(),
-                       [&hash](const auto &tx) { return tx->hash() == hash; });
+                       [&hash](const auto &tx) { return tx.hash() == hash; });
       if (it != block->transactions().end()) {
         result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction(clone(**it)));
+            PostgresBlockQuery::wTransaction(clone(*it)));
       }
       return result;
     }
