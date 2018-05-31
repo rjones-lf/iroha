@@ -18,6 +18,7 @@
 #include <random>
 
 #include "ametsuchi/peer_query.hpp"
+#include "common/types.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"

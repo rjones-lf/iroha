@@ -53,13 +53,9 @@ namespace shared_model {
           proto_->signatories_response()};
 
       const Lazy<interface::types::PublicKeyCollectionType> keys_{[this] {
-        return boost::accumulate(
-            signatoriesResponse_.keys(),
-            interface::types::PublicKeyCollectionType{},
-            [](auto &&acc, const auto &key) {
-              acc.emplace_back(new interface::types::PubkeyType(key));
-              return std::move(acc);
-            });
+        return interface::types::PublicKeyCollectionType(
+            signatoriesResponse_.keys().begin(),
+            signatoriesResponse_.keys().end());
       }};
     };
   }  // namespace proto

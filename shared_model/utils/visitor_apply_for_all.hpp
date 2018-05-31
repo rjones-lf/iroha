@@ -30,18 +30,10 @@ namespace shared_model {
     class ToStringVisitor : public boost::static_visitor<std::string> {
      public:
       template <typename InputType>
-      auto operator()(const InputType &operand) const
-          -> decltype(operand.toString(), std::string()) {
+      auto operator()(const InputType &operand) const {
         return operand.toString();
       }
-
-      template <typename InputType>
-      auto operator()(const InputType &operand) const
-          -> decltype(operand->toString(), std::string()) {
-        return operand->toString();
-      }
     };
-
 
   }  // namespace detail
 }  // namespace shared_model

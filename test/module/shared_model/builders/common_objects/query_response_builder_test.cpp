@@ -164,7 +164,7 @@ TEST(QueryResponseBuilderTest, SignatoriesResponse) {
     ASSERT_EQ(keys.size(), resp_keys.size());
 
     for (auto i = 0u; i < keys.size(); i++) {
-      ASSERT_EQ(keys.at(i).blob(), resp_keys.at(i)->blob());
+      ASSERT_EQ(keys.at(i).blob(), resp_keys.at(i).blob());
     }
     ASSERT_EQ(query_response.queryHash(), query_hash);
   });

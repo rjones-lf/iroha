@@ -17,6 +17,7 @@
 
 #include <utility>
 
+#include "common/types.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -68,7 +69,7 @@ namespace iroha {
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
-            cluster_order_(order){
+            cluster_order_(order) {
         log_ = logger::log("YAC");
       }
 

@@ -20,8 +20,6 @@
 
 #include "cryptography/blob.hpp"
 
-#include "common/types.hpp"
-
 namespace shared_model {
   namespace crypto {
     /**
@@ -33,12 +31,7 @@ namespace shared_model {
 
       explicit PublicKey(const Blob &blob);
 
-      using OldPublicKeyType = iroha::pubkey_t;
-
       std::string toString() const override;
-
-     protected:
-      PublicKey *clone() const override;
     };
   }  // namespace crypto
 }  // namespace shared_model

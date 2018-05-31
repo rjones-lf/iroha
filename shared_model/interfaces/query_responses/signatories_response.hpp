@@ -41,7 +41,7 @@ namespace shared_model {
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("SignatoriesResponse")
-            .appendAll(keys(), [](auto &key) { return key->toString(); })
+            .appendAll(keys(), [](auto &key) { return key.toString(); })
             .finalize();
       }
 

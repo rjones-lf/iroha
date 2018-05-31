@@ -484,7 +484,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
     /// valid
     ASSERT_FALSE(response.has_error_response());
     // check if fields in response are valid
-    ASSERT_EQ(*resp_pubkey, signatories.back());
+    ASSERT_EQ(resp_pubkey, signatories.back());
     ASSERT_EQ(model_query.hash(), shared_response.queryHash());
   });
 }

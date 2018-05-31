@@ -33,9 +33,5 @@ namespace shared_model {
           .finalize();
     }
 
-    PublicKey *PublicKey::clone() const {
-      return new PublicKey(crypto::toBinaryString(*this));
-    }
-
   }  // namespace crypto
 }  // namespace shared_model

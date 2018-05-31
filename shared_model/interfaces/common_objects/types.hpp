@@ -26,7 +26,6 @@
 
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
 
@@ -51,8 +50,7 @@ namespace shared_model {
       /// Type of public key
       using PubkeyType = crypto::PublicKey;
       /// Type of public keys' collection
-      using PublicKeyCollectionType =
-          std::vector<detail::PolymorphicWrapper<PubkeyType>>;
+      using PublicKeyCollectionType = std::vector<PubkeyType>;
       /// Type of role (i.e admin, user)
       using RoleIdType = std::string;
       /// Iroha domain id type
