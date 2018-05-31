@@ -38,9 +38,9 @@ namespace shared_model {
        * Constructs new unsigned object instance
        * @param o - object received from builder
        */
-      explicit UnsignedWrapper(const T &o) : unsigned_(o) {}
+      explicit UnsignedWrapper(const T &o) : object_(o) {}
 
-      explicit UnsignedWrapper(T &&o) : unsigned_(std::move(o)) {}
+      explicit UnsignedWrapper(T &&o) : object_(std::move(o)) {}
 
       /**
        * Add signature and retrieve signed result
@@ -49,22 +49,25 @@ namespace shared_model {
        */
       UnsignedWrapper &signAndAddSignature(const crypto::Keypair &keypair) {
         auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
-            shared_model::crypto::Blob(unsigned_.payload()), keypair);
-        unsigned_.addSignature(signedBlob, keypair.publicKey());
+            shared_model::crypto::Blob(object_.payload()), keypair);
+        object_.addSignature(signedBlob, keypair.publicKey());
         // TODO: 05.12.2017 luckychess think about false case
         return *this;
       }
 
       T finish() {
-        return unsigned_;
+        if (boost::size(object_.signatures()) == 0) {
+          throw std::invalid_argument("Cannot get object without signatures");
+        }
+        return object_;
       }
 
       interface::types::HashType hash() {
-        return unsigned_.hash();
+        return object_.hash();
       }
 
      private:
-      T unsigned_;
+      T object_;
     };
   }  // namespace proto
 }  // namespace shared_model
