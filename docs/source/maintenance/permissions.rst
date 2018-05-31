@@ -2,6 +2,18 @@
 Permissions
 ***********
 
+Hyperledger Iroha uses a role-based access control system to limit actions of its users.
+This system greatly helps to implement use cases involving user groups having different access levels —
+ranging from the weak users, who can't even receive asset transfer to the super-users.
+The beauty of our permission system is that you don't have to have a super-user
+in your Iroha setup or use all the possible permissions: you can create segregated and lightweight roles.
+
+Maintenance of the system involves setting up roles and permissions, that are included in the roles.
+This might be done at the initial step of system deployment — in genesis block,
+or later when Iroha network is up and running, roles can be changed (if there is a role that can do that :)
+
+This section will help you to understand permissions and give you an idea of how to create roles including certain permissions.
+
 Command-related permissions
 ===========================
 
@@ -27,11 +39,11 @@ Related API method: `Set Account Detail <../api/commands.html#set-account-detail
 can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. Hint:: This is grantable permission.
+.. Hint:: This is a grantable permission.
 
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ to set details for the another specified account.
 
-Please see the example for the usage details.
+See the example (to be done) for the usage details.
 
 Related API method: `Set Account Detail <../api/commands.html#set-account-detail>`__
 
@@ -59,18 +71,18 @@ Allows sending `assets <../core_concepts/glossary.html#asset>`__ from an `accoun
 
 You can transfer an asset from one `domain <../core_concepts/glossary.html#domain>`__ to another, even if the other domain does not have an asset with the same name.
 
-.. Note:: Please note that destination account should have `can_receive`_ permission.
+.. Note:: Destination account should have `can_receive`_ permission.
 
 Related API method: `Transfer Asset <../api/commands.html#transfer-asset>`__
 
 can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. Hint:: This is grantable permission.
+.. Hint:: This is a grantable permission.
 
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ to transfer `assets <../core_concepts/glossary.html#asset>`__ of another specified account.
 
-Please see the example for the usage details.
+See the example (to be done) for the usage details.
 
 Related API method: `Transfer Asset <../api/commands.html#transfer-asset>`__
 
@@ -111,35 +123,35 @@ Grant
 can_grant_can_add_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Allows to `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
+Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
 
 can_grant_can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Allows to `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
+Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
 
 can_grant_can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Allows to `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_account_detail`_ `permission <../core_concepts/glossary.html#permission>`__.
+Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_account_detail`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
 
 can_grant_can_set_my_quorum
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Allows to `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_quorum`_ `permission <../core_concepts/glossary.html#permission>`__.
+Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_quorum`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
 
 can_grant_can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Allows to `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer_my_assets`_ `permission <../core_concepts/glossary.html#permission>`__.
+Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer_my_assets`_ `permission <../core_concepts/glossary.html#permission>`__.
 
 Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
 
@@ -185,7 +197,7 @@ Signatory
 can_add_my_signatory
 ^^^^^^^^^^^^^^^^^^^^
 
-.. Hint:: This is grantable permission.
+.. Hint:: This is a grantable permission.
 
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ to add an extra public key to the another specified account.
 
@@ -203,11 +215,11 @@ Related API method: `Add Signatory <../api/commands.html#add-signatory>`__
 can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. Hint:: This is grantable permission.
+.. Hint:: This is a grantable permission.
 
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ remove public key from the another specified account.
 
-Please see the example for the usage details.
+See the example (to be done) for the usage details.
 
 Related API method: `Remove Signatory <../api/commands.html#remove-signatory>`__
 
@@ -223,11 +235,11 @@ Related API method: `Remove Signatory <../api/commands.html#remove-signatory>`__
 can_set_my_quorum
 ^^^^^^^^^^^^^^^^^
 
-.. Hint:: This is grantable permission.
+.. Hint:: This is a grantable permission.
 
 `Permission <../core_concepts/glossary.html#permission>`__ that allows a specified `account <../core_concepts/glossary.html#account>`__ to set `quorum <../core_concepts/glossary.html#quorum>`__ for the another specified account.
 
-Please see the example for the usage details.
+See the example (to be done) for the usage details.
 
 Related API method: `Set Account Quorum <../api/commands.html#set-account-quorum>`__
 
