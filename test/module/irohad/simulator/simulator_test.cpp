@@ -16,6 +16,7 @@
  */
 
 #include "simulator/impl/simulator.hpp"
+#include <framework/specified_visitor.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -160,8 +161,13 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](auto block) {
-    ASSERT_EQ(block->height(), proposal->height());
+  block_wrapper.subscribe([&proposal](const auto &block_variant) {
+    ASSERT_EQ(block_variant.height(), proposal->height());
+    auto block = boost::apply_visitor(
+        shared_model::interface::SpecifiedVisitor<
+            std::shared_ptr<shared_model::interface::Block>>(),
+        block_variant);
+    ASSERT_TRUE(block);
     ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
