@@ -19,12 +19,16 @@
 
 #include "execution/command_executor.hpp"
 
+#include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/from_old.hpp"
 #include "utils/amount_utils.hpp"
 #include "validators/permissions.hpp"
 
 using namespace shared_model::detail;
+using namespace shared_model::interface::permissions;
+using namespace shared_model::proto::permissions;
 
 namespace iroha {
 
@@ -502,9 +506,7 @@ namespace iroha {
     // any asset
     return creator_account_id == command.accountId()
         and checkAccountRolePermission(
-                creator_account_id,
-                queries,
-                shared_model::permissions::can_add_asset_qty);
+                creator_account_id, queries, Role::kAddAssetQty);
   }
 
   bool CommandValidator::hasPermissions(
@@ -512,7 +514,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id, queries, shared_model::permissions::can_add_peer);
+        creator_account_id, queries, Role::kAddPeer);
   }
 
   bool CommandValidator::hasPermissions(
@@ -524,15 +526,13 @@ namespace iroha {
         // account and he has permission CanAddSignatory
         (command.accountId() == creator_account_id
          and checkAccountRolePermission(
-                 creator_account_id,
-                 queries,
-                 shared_model::permissions::can_add_signatory))
+                 creator_account_id, queries, Role::kAddSignatory))
         or
         // Case 2. Creator has granted permission for it
         (queries.hasAccountGrantablePermission(
             creator_account_id,
             command.accountId(),
-            shared_model::permissions::can_add_my_signatory));
+            toString(Role::kAddMySignatory)));
   }
 
   bool CommandValidator::hasPermissions(
@@ -540,9 +540,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_append_role);
+        creator_account_id, queries, Role::kAppendRole);
   }
 
   bool CommandValidator::hasPermissions(
@@ -550,9 +548,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_create_account);
+        creator_account_id, queries, Role::kCreateAccount);
   }
 
   bool CommandValidator::hasPermissions(
@@ -560,9 +556,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_create_asset);
+        creator_account_id, queries, Role::kCreateAsset);
   }
 
   bool CommandValidator::hasPermissions(
@@ -570,9 +564,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_create_domain);
+        creator_account_id, queries, Role::kCreateDomain);
   }
 
   bool CommandValidator::hasPermissions(
@@ -580,9 +572,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_create_role);
+        creator_account_id, queries, Role::kCreateRole);
   }
 
   bool CommandValidator::hasPermissions(
@@ -590,9 +580,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return checkAccountRolePermission(
-        creator_account_id,
-        queries,
-        shared_model::permissions::can_detach_role);
+        creator_account_id, queries, Role::kDetachRole);
   }
 
   bool CommandValidator::hasPermissions(
@@ -602,7 +590,8 @@ namespace iroha {
     return checkAccountRolePermission(
         creator_account_id,
         queries,
-        shared_model::permissions::can_grant + command.permissionName());
+        fromOldR(shared_model::permissions::can_grant
+                 + command.permissionName()));
   }
 
   bool CommandValidator::hasPermissions(
@@ -614,14 +603,12 @@ namespace iroha {
         // permission on it
         (creator_account_id == command.accountId()
          and checkAccountRolePermission(
-                 creator_account_id,
-                 queries,
-                 shared_model::permissions::can_remove_signatory))
+                 creator_account_id, queries, Role::kRemoveSignatory))
         // 2. Creator has granted permission on removal
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               shared_model::permissions::can_remove_my_signatory));
+               toString(Role::kRemoveMySignatory)));
   }
 
   bool CommandValidator::hasPermissions(
@@ -643,7 +630,7 @@ namespace iroha {
         queries.hasAccountGrantablePermission(
             creator_account_id,
             command.accountId(),
-            shared_model::permissions::can_set_my_account_detail);
+            toString(Role::kSetMyAccountDetail));
   }
 
   bool CommandValidator::hasPermissions(
@@ -654,14 +641,12 @@ namespace iroha {
         // 1. Creator set quorum for his account -> must have permission
         (creator_account_id == command.accountId()
          and checkAccountRolePermission(
-                 creator_account_id,
-                 queries,
-                 shared_model::permissions::can_set_quorum))
+                 creator_account_id, queries, Role::kSetQuorum))
         // 2. Creator has granted permission on it
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               shared_model::permissions::can_set_my_quorum));
+               toString(Role::kSetMyQuorum)));
   }
 
   bool CommandValidator::hasPermissions(
@@ -670,9 +655,7 @@ namespace iroha {
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return creator_account_id == command.accountId()
         and checkAccountRolePermission(
-                creator_account_id,
-                queries,
-                shared_model::permissions::can_subtract_asset_qty);
+                creator_account_id, queries, Role::kSubtractAssetQty);
   }
 
   bool CommandValidator::hasPermissions(
@@ -685,18 +668,15 @@ namespace iroha {
                 and queries.hasAccountGrantablePermission(
                         creator_account_id,
                         command.srcAccountId(),
-                        shared_model::permissions::can_transfer_my_assets))
+                        toString(Role::kTransferMyAssets)))
                or
                // 2. Creator transfer from their account
                (creator_account_id == command.srcAccountId()
                 and checkAccountRolePermission(
-                        creator_account_id,
-                        queries,
-                        shared_model::permissions::can_transfer)))
+                        creator_account_id, queries, Role::kTransfer)))
         // For both cases, dest_account must have can_receive
-        and checkAccountRolePermission(command.destAccountId(),
-                                       queries,
-                                       shared_model::permissions::can_receive);
+        and checkAccountRolePermission(
+                command.destAccountId(), queries, Role::kReceive);
   }
 
   bool CommandValidator::isValid(
@@ -777,7 +757,7 @@ namespace iroha {
                        command.rolePermissions().end(),
                        [&queries, &creator_account_id](auto perm) {
                          return checkAccountRolePermission(
-                             creator_account_id, queries, perm);
+                             creator_account_id, queries, fromOldR(perm));
                        });
   }
 
