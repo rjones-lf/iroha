@@ -81,7 +81,7 @@ namespace shared_model {
       using Parent::Parent;
       using Parent::reset;
       using Parent::size;
-      PermissionSet(std::initializer_list<Perm> list);
+      explicit PermissionSet(std::initializer_list<Perm> list);
 
       PermissionSet &append(std::initializer_list<Perm> list);
 
