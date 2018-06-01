@@ -27,6 +27,7 @@
 #include <boost/range/join.hpp>
 
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
@@ -136,11 +137,8 @@ class FieldValidatorTest : public ValidatorsTest {
                                           precision_test_cases));
 
     // TODO: add validation to all fields
-    for (const auto &field : {"value",
-                              "signature",
-                              "commands",
-                              "quorum",
-                              "tx_hashes"}) {
+    for (const auto &field :
+         {"value", "signature", "commands", "quorum", "tx_hashes"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
@@ -641,7 +639,7 @@ class FieldValidatorTest : public ValidatorsTest {
                              &FieldValidator::validatePermissions,
                              &FieldValidatorTest::role_permission,
                              [](auto &&x) {
-                               return interface::CreateRole::PermissionsType{
+                               return interface::types::PermissionSetType{
                                    iroha::protocol::RolePermission_Name(x)};
                              },
                              permissions_test_cases),

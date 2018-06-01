@@ -39,8 +39,9 @@ namespace shared_model {
 
       const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PermissionNameType &permissionName()
-          const override;
+      interface::permissions::Grantable permissionName() const override;
+
+      std::string toString() const override;
 
      private:
       const iroha::protocol::GrantPermission &grant_permission_;

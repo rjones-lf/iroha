@@ -21,6 +21,7 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
 #include "interfaces/commands/create_role.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -37,7 +38,9 @@ namespace shared_model {
 
       const interface::types::RoleIdType &roleName() const override;
 
-      const PermissionsType &rolePermissions() const override;
+      const interface::RolePermissionSet &rolePermissions() const override;
+
+      std::string toString() const override;
 
      private:
       // lazy
@@ -46,7 +49,7 @@ namespace shared_model {
 
       const iroha::protocol::CreateRole &create_role_;
 
-      const Lazy<PermissionsType> role_permissions_;
+      const Lazy<interface::RolePermissionSet> role_permissions_;
     };
   }  // namespace proto
 }  // namespace shared_model
