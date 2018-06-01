@@ -290,9 +290,9 @@ RUN set -e; \
 
 # udpate necessary environment variables
 RUN set -e; \
-    echo "export PATH=/opt/dependencies/libpq/bin:$PATH" >> ~/.bashrc; \
-    echo "export LIBRARY_PATH=/opt/dependencies/tbb/lib:/opt/dependencies/c-ares/lib:$LIBRARY_PATH" >> ~/.bashrc; \
-    echo "export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:/opt/dependencies/c-ares/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
+    echo "export PATH=/opt/dependencies/boost/include:/opt/dependencies/c-ares/include:/opt/dependencies/ed25519/include:/opt/dependencies/gflags/include:/opt/dependencies/grpc/include:/opt/dependencies/gtest/include:/opt/dependencies/includepq/include:/opt/dependencies/includepqxx/include:/opt/dependencies/protobuf/include:/opt/dependencies/rapidjson/include:/opt/dependencies/rxcpp/include:/opt/dependencies/spdlog/include:/opt/dependencies/tbb/include:/opt/dependencies/libpq/bin:$PATH" >> ~/.bashrc; \
+    echo "export LIBRARY_PATH=/opt/dependencies/boost/lib:/opt/dependencies/c-ares/lib:/opt/dependencies/ed25519/lib:/opt/dependencies/gflags/lib:/opt/dependencies/grpc/lib:/opt/dependencies/gtest/lib:/opt/dependencies/libpq/lib:/opt/dependencies/libpqxx/lib:/opt/dependencies/protobuf/lib:/opt/dependencies/rapidjson/lib:/opt/dependencies/rxcpp/lib:/opt/dependencies/spdlog/lib:/opt/dependencies/tbb/lib:$LIBRARY_PATH" >> ~/.bashrc; \
+    echo "export LD_LIBRARY_PATH=/opt/dependencies/boost/lib:/opt/dependencies/c-ares/lib:/opt/dependencies/ed25519/lib:/opt/dependencies/gflags/lib:/opt/dependencies/grpc/lib:/opt/dependencies/gtest/lib:/opt/dependencies/libpq/lib:/opt/dependencies/libpqxx/lib:/opt/dependencies/protobuf/lib:/opt/dependencies/rapidjson/lib:/opt/dependencies/rxcpp/lib:/opt/dependencies/spdlog/lib:/opt/dependencies/tbb/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 
 USER iroha-dpnds-test
 CMD ["/bin/bash"]
