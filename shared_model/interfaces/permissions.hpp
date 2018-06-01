@@ -95,6 +95,9 @@ namespace shared_model {
 
       bool operator==(const PermissionSet<Perm> &r) const;
       bool operator!=(const PermissionSet<Perm> &r) const;
+      PermissionSet<Perm> &operator&=(const PermissionSet<Perm> &r);
+      PermissionSet<Perm> &operator|=(const PermissionSet<Perm> &r);
+      PermissionSet<Perm> &operator^=(const PermissionSet<Perm> &r);
 
      private:
       constexpr auto bit(Perm p) const {

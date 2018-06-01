@@ -58,5 +58,24 @@ bool PermissionSet<Perm>::operator!=(const PermissionSet<Perm> &r) const {
   return Parent::operator!=(r);
 }
 
+template <typename Perm>
+PermissionSet<Perm> &PermissionSet<Perm>::operator&=(
+    const PermissionSet<Perm> &r) {
+  Parent::operator&=(r);
+  return *this;
+}
+template <typename Perm>
+PermissionSet<Perm> &PermissionSet<Perm>::operator|=(
+    const PermissionSet<Perm> &r) {
+  Parent::operator|=(r);
+  return *this;
+}
+template <typename Perm>
+PermissionSet<Perm> &PermissionSet<Perm>::operator^=(
+    const PermissionSet<Perm> &r) {
+  Parent::operator^=(r);
+  return *this;
+}
+
 template class shared_model::interface::PermissionSet<permissions::Role>;
 template class shared_model::interface::PermissionSet<permissions::Grantable>;
