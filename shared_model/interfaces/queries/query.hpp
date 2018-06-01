@@ -32,7 +32,6 @@
 #include "interfaces/queries/get_roles.hpp"
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
@@ -46,9 +45,9 @@ namespace shared_model {
      */
     class Query : public Signable<Query> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using wrap = boost::variant<const Value &...>;
 
      public:
       /// Type of variant, that handle concrete query

@@ -16,10 +16,13 @@
  */
 
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
-#include <boost/assert.hpp>
-#include <boost/range/irange.hpp>
+
 #include <numeric>
 #include <random>
+
+#include <boost/assert.hpp>
+#include <boost/range/irange.hpp>
+#include "common/types.hpp"
 
 namespace iroha {
 

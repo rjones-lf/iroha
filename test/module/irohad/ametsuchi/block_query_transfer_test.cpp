@@ -132,7 +132,7 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, SenderAssetName) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
@@ -150,7 +150,7 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, ReceiverAssetName) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
@@ -168,7 +168,7 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, GrantedTransfer) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator3);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
       auto wrapper = make_test_subscriber<CallExact>(
@@ -187,12 +187,12 @@ namespace iroha {
     TEST_F(BlockQueryTransferTest, TwoBlocks) {
       auto block = makeBlock(creator1, creator2, asset);
 
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
       auto block2 = makeBlock(creator1, creator2, asset, 2, block.hash());
 
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block2);
 
       auto wrapper = make_test_subscriber<CallExact>(

@@ -99,7 +99,7 @@ class ClientServerTest : public testing::Test {
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
-            tx_processor, block_query, proposal_delay))
+            tx_processor, storage, proposal_delay))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(
@@ -145,7 +145,8 @@ TEST_F(ClientServerTest, SendTxWhenValid) {
                     .build()
                     .signAndAddSignature(
                         shared_model::crypto::DefaultCryptoAlgorithmType::
-                            generateKeypair());
+                            generateKeypair())
+                    .finish();
 
   auto status = client.sendTx(shm_tx);
   ASSERT_EQ(status.answer, iroha_cli::CliClient::OK);
@@ -256,7 +257,8 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
                    .queryCounter(1)
                    .getAccountDetail("test@test")
                    .build()
-                   .signAndAddSignature(pair);
+                   .signAndAddSignature(pair)
+                   .finish();
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.account_detail_response().detail(), "value");
@@ -282,7 +284,8 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                    .queryCounter(1)
                    .getAccountDetail("test@test")
                    .build()
-                   .signAndAddSignature(pair);
+                   .signAndAddSignature(pair)
+                   .finish();
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.error_response().reason(),

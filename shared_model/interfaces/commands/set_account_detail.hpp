@@ -44,19 +44,9 @@ namespace shared_model {
        */
       virtual const types::AccountDetailValueType &value() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("SetAccountDetail")
-            .append("account_id", accountId())
-            .append("key", key())
-            .append("value", value())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and key() == rhs.key()
-            and value() == rhs.value();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -83,11 +83,16 @@ namespace iroha {
           if (not storage) {
             return;
           }
-          auto chain = blockLoader_->retrieveBlocks(
+          auto network_chain = blockLoader_->retrieveBlocks(
               shared_model::crypto::PublicKey(signature.publicKey()));
           // Check chain last commit
+          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+          network_chain.as_blocking().subscribe(
+              [&blocks](auto block) { blocks.push_back(block); });
           auto is_chain_end_expected =
-              chain.as_blocking().last()->hash() == commit_message->hash();
+              blocks.back()->hash() == commit_message->hash();
+          auto chain =
+              rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
 
           if (validator_->validateChain(chain, *storage)
               and is_chain_end_expected) {

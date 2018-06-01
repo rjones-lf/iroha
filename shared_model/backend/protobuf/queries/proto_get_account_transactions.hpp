@@ -22,7 +22,6 @@
 
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {

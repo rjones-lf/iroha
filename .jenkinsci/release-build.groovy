@@ -5,7 +5,7 @@ def doReleaseBuild() {
   def manifest = load ".jenkinsci/docker-manifest.groovy"
   // params are always null unless job is started
   // this is the case for the FIRST build only.
-  // So just set this to same value as default. 
+  // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
   if (!parallelism) {
     parallelism = 4
@@ -31,7 +31,7 @@ def doReleaseBuild() {
       ccache --show-stats
       ccache --zero-stats
       ccache --max-size=5G
-    """  
+    """
     sh """
       cmake \
         -H. \
@@ -50,7 +50,7 @@ def doReleaseBuild() {
     sh "mv ./build/iroha-*.deb /tmp/${GIT_COMMIT}/iroha.deb"
     sh "mv ./build/*.tar.gz /tmp/${GIT_COMMIT}/iroha.tar.gz"
   }
-  
+
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/Dockerfile"
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/entrypoint.sh"
   sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"

@@ -18,15 +18,14 @@
 #ifndef IROHA_SHARED_MODEL_TYPES_HPP
 #define IROHA_SHARED_MODEL_TYPES_HPP
 
-#include <boost/range/any_range.hpp>
 #include <cstdint>
 #include <set>
 #include <string>
 #include <vector>
 
+#include <boost/range/any_range.hpp>
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
 
@@ -52,8 +51,7 @@ namespace shared_model {
       /// Type of public key
       using PubkeyType = crypto::PublicKey;
       /// Type of public keys' collection
-      using PublicKeyCollectionType =
-          std::vector<detail::PolymorphicWrapper<PubkeyType>>;
+      using PublicKeyCollectionType = std::vector<PubkeyType>;
       /// Type of role (i.e admin, user)
       using RoleIdType = std::string;
       /// Iroha domain id type
@@ -89,14 +87,14 @@ namespace shared_model {
       using AccountDetailValueType = std::string;
       /// Type of a number of transactions in block
       using TransactionsNumberType = uint16_t;
-      /// Type of a single Transaction
-      using TransactionType = detail::PolymorphicWrapper<Transaction>;
       /// Type of transactions' collection
-      using TransactionsCollectionType = std::vector<TransactionType>;
-      /// Type of a single AccountAsset
-      using AccountAssetType = detail::PolymorphicWrapper<AccountAsset>;
-      /// Type of transactions' collection
-      using AccountAssetCollectionType = std::vector<AccountAssetType>;
+      using TransactionsCollectionType =
+          boost::any_range<Transaction,
+                           boost::random_access_traversal_tag,
+                           const Transaction &>;
+       using AccountAssetCollectionType =  boost::any_range<Transaction,
+                                                            boost::random_access_traversal_tag,
+                                                            const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
     }  // namespace types

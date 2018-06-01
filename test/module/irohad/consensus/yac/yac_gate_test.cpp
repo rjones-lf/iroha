@@ -54,7 +54,8 @@ class YacGateTest : public ::testing::Test {
             .transactions(std::vector<shared_model::proto::Transaction>{})
             .prevHash(Sha3_256::makeHash(Blob("block")))
             .build()
-            .signAndAddSignature(keypair);
+            .signAndAddSignature(keypair)
+            .finish();
 
     expected_block = clone(tmp);
     const auto &signature = *(expected_block->signatures().begin());

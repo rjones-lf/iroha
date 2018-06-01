@@ -38,17 +38,9 @@ namespace shared_model {
        */
       virtual const types::RoleIdType &roleName() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("DetachRole")
-            .append("role_name", roleName())
-            .append("account_id", accountId())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and roleName() == rhs.roleName();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

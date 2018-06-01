@@ -20,7 +20,6 @@
 
 #include <boost/variant.hpp>
 #include "interfaces/query_responses/error_query_response.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -28,9 +27,8 @@ namespace shared_model {
     class QueryErrorResponseChecker : public boost::static_visitor<bool> {
      public:
       bool operator()(
-          const shared_model::detail::PolymorphicWrapper<
-              shared_model::interface::ErrorQueryResponse> &status) const {
-        return iroha::visit_in_place(status->get(),
+          const shared_model::interface::ErrorQueryResponse &status) const {
+        return iroha::visit_in_place(status.get(),
                                      [](const Error &) { return true; },
                                      [](const auto &) { return false; });
       }

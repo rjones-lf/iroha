@@ -34,6 +34,7 @@ target_link_libraries(transport_test
     logger
     shared_model_cryptography
     shared_model_stateless_validation
+    shared_model_proto_backend
     )
 
 AddTest(mst_processor_test mst_processor_test.cpp)

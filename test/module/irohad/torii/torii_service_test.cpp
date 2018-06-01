@@ -83,6 +83,7 @@ class ToriiServiceTest : public testing::Test {
     mst = std::make_shared<iroha::MockMstProcessor>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
+    storage = std::make_shared<MockStorage>();
 
     EXPECT_CALL(*mst, onPreparedTransactionsImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
@@ -94,11 +95,12 @@ class ToriiServiceTest : public testing::Test {
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
+    EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
-            tx_processor, block_query, proposal_delay))
+            tx_processor, storage, proposal_delay))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -115,6 +117,7 @@ class ToriiServiceTest : public testing::Test {
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
+  std::shared_ptr<MockStorage> storage;
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
@@ -215,7 +218,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
                       .build()
                       .signAndAddSignature(
                           shared_model::crypto::DefaultCryptoAlgorithmType::
-                              generateKeypair());
+                              generateKeypair())
+                      .finish();
     const auto &new_tx = shm_tx.getTransport();
 
     auto stat = client1.Torii(new_tx);
@@ -354,7 +358,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                       .createdTime(iroha::time::now())
                       .quorum(1)
                       .build()
-                      .signAndAddSignature(keypair);
+                      .signAndAddSignature(keypair)
+                      .finish();
 
   std::string txhash = crypto::toBinaryString(iroha_tx.hash());
 
@@ -386,7 +391,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                          .transactions(txs)
                          .prevHash(crypto::Hash(std::string(32, '0')))
                          .build()
-                         .signAndAddSignature(keypair));
+                         .signAndAddSignature(keypair)
+                         .finish());
 
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>

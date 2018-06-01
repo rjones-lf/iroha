@@ -147,7 +147,8 @@ class OrderingGateServiceTest : public ::testing::Test {
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair()));
+                    generateKeypair())
+            .finish());
     gate->propagateTransaction(tx);
     // otherwise tx may come unordered
     std::this_thread::sleep_for(20ms);

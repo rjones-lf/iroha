@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/storage.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
@@ -45,7 +45,7 @@ namespace torii {
      */
     CommandService(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
-        std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
+        std::shared_ptr<iroha::ametsuchi::Storage> storage,
         std::chrono::milliseconds proposal_delay);
 
     /**
@@ -138,7 +138,7 @@ namespace torii {
                                           shared_model::crypto::Hash::Hasher>;
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
-    std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query_;
+    std::shared_ptr<iroha::ametsuchi::Storage> storage_;
     std::chrono::milliseconds proposal_delay_;
     std::chrono::milliseconds start_tx_processing_duration_;
     std::shared_ptr<CacheType> cache_;

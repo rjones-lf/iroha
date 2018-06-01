@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "torii/command_service.hpp"
+
 #include <thread>
 
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
@@ -27,7 +29,6 @@
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "endpoint.pb.h"
-#include "torii/command_service.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace std::chrono_literals;
@@ -36,10 +37,10 @@ namespace torii {
 
   CommandService::CommandService(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
-      std::shared_ptr<iroha::ametsuchi::BlockQuery> block_query,
+      std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::chrono::milliseconds proposal_delay)
       : tx_processor_(tx_processor),
-        block_query_(block_query),
+        storage_(storage),
         proposal_delay_(proposal_delay),
         start_tx_processing_duration_(1s),
         cache_(std::make_shared<CacheType>()),
@@ -124,7 +125,7 @@ namespace torii {
       response.CopyFrom(*resp);
     } else {
       response.set_tx_hash(request.tx_hash());
-      if (block_query_->hasTxWithHash(
+      if (storage_->getBlockQuery()->hasTxWithHash(
               shared_model::crypto::Hash(request.tx_hash()))) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
       } else {

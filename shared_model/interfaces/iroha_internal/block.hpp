@@ -18,26 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_BLOCK_HPP
 #define IROHA_SHARED_MODEL_BLOCK_HPP
 
-#include "interfaces/base/signable.hpp"
-#include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/abstract_block.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    class Block : public Signable<Block> {
+    class Block : public AbstractBlock {
      public:
-      /**
-       * @return block number in the ledger
-       */
-      virtual types::HeightType height() const = 0;
-
-      /**
-       * @return hash of a previous block
-       */
-      virtual const types::HashType &prevHash() const = 0;
-
       /**
        * @return amount of transactions in block
        */
@@ -46,7 +35,7 @@ namespace shared_model {
       /**
        * @return collection of transactions
        */
-      virtual const types::TransactionsCollectionType &transactions() const = 0;
+      virtual types::TransactionsCollectionType transactions() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -57,7 +46,7 @@ namespace shared_model {
             .append("txsNumber", std::to_string(txsNumber()))
             .append("createdtime", std::to_string(createdTime()))
             .append("transactions")
-            .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
+            .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

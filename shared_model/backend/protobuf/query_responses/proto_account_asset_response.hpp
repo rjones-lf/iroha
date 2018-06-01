@@ -24,7 +24,6 @@
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 #include <boost/range/numeric.hpp>
 
 namespace shared_model {

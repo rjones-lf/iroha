@@ -268,7 +268,7 @@ void Irohad::initTransactionCommandService() {
       std::make_shared<TransactionProcessorImpl>(pcs, mst_processor);
 
   command_service = std::make_shared<::torii::CommandService>(
-      tx_processor, storage->getBlockQuery(), proposal_delay_);
+      tx_processor, storage, proposal_delay_);
 
   log_->info("[Init] => command service");
 }

@@ -21,6 +21,7 @@
 #include "cryptography/keypair.hpp"
 #include "execution/query_execution.hpp"
 #include "framework/test_subscriber.hpp"
+#include "framework/specified_visitor.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -77,7 +78,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                    .getAccount(account_id)
                    .queryCounter(counter)
                    .build()
-                   .signAndAddSignature(keypair);
+                   .signAndAddSignature(keypair)
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
@@ -101,8 +103,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::get<shared_model::detail::PolymorphicWrapper<
-            shared_model::interface::AccountResponse>>(response->get()));
+        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+                                 shared_model::interface::AccountResponse>(),
+                             response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
@@ -131,7 +134,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                    .build()
                    .signAndAddSignature(
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());

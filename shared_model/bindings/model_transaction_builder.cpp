@@ -20,7 +20,7 @@
 namespace shared_model {
   namespace bindings {
     ModelTransactionBuilder::ModelTransactionBuilder() {
-      *this = creatorAccountId("").createdTime(0);
+      *this = creatorAccountId("").createdTime(0).quorum(1);
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::creatorAccountId(
@@ -31,6 +31,11 @@ namespace shared_model {
     ModelTransactionBuilder ModelTransactionBuilder::createdTime(
         interface::types::TimestampType created_time) {
       return ModelTransactionBuilder(builder_.createdTime(created_time));
+    }
+
+    ModelTransactionBuilder ModelTransactionBuilder::quorum(
+        interface::types::QuorumType quorum) {
+      return ModelTransactionBuilder(builder_.quorum(quorum));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(

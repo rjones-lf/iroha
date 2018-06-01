@@ -22,7 +22,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
+#include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 constexpr auto kUser = "user@test";
@@ -46,7 +46,8 @@ TEST(PipelineIntegrationTest, SendQuery) {
                    .signAndAddSignature(
                        // TODO: 30/03/17 @l4l use keygen adapter IR-1189
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   auto check = [](auto &status) {
     ASSERT_TRUE(boost::apply_visitor(
@@ -75,7 +76,8 @@ TEST(PipelineIntegrationTest, SendTx) {
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
