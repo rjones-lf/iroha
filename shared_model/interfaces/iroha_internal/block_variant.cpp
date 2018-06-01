@@ -9,7 +9,7 @@ namespace shared_model {
   namespace interface {
 
     template <typename Func, typename... Args>
-    static auto invoke(const BlockVariant *var, Func &&f, Args &&... args) {
+    decltype(auto) invoke(const BlockVariant *var, Func &&f, Args &&... args) {
       return iroha::visit_in_place(
           *var, [&](const auto &any_block) -> decltype(auto) {
             return ((*any_block.*f)(std::forward<Args>(args)...));
@@ -21,15 +21,15 @@ namespace shared_model {
     }
 
     const interface::types::HashType &BlockVariant::prevHash() const {
-      return std::move(invoke(this, &AbstractBlock::prevHash));
+      return invoke(this, &AbstractBlock::prevHash);
     }
 
     const interface::types::BlobType &BlockVariant::blob() const {
-      return std::move(invoke(this, &AbstractBlock::blob));
+      return invoke(this, &AbstractBlock::blob);
     }
 
     interface::types::SignatureRangeType BlockVariant::signatures() const {
-      return std::move(invoke(this, &AbstractBlock::signatures));
+      return invoke(this, &AbstractBlock::signatures);
     }
 
     bool BlockVariant::addSignature(const crypto::Signed &signed_blob,
@@ -39,11 +39,11 @@ namespace shared_model {
     }
 
     interface::types::TimestampType BlockVariant::createdTime() const {
-      return std::move(invoke(this, &AbstractBlock::createdTime));
+      return invoke(this, &AbstractBlock::createdTime);
     }
 
     const interface::types::BlobType &BlockVariant::payload() const {
-      return std::move(invoke(this, &AbstractBlock::payload));
+      return invoke(this, &AbstractBlock::payload);
     }
 
     bool BlockVariant::operator==(const BlockVariant &rhs) const {
