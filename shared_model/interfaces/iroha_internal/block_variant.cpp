@@ -8,10 +8,12 @@
 namespace shared_model {
   namespace interface {
 
-    template <typename Func>
-    auto invoke(const BlockVariant *var, Func f) {
+    template <typename Func, typename... Args>
+    static auto invoke(const BlockVariant *var, Func &&f, Args &&... args) {
       return iroha::visit_in_place(
-          *var, [&f](const auto any_block) { return (*any_block.*f)(); });
+          *var, [&](const auto &any_block) -> decltype(auto) {
+            return ((*any_block.*f)(std::forward<Args>(args)...));
+          });
     }
 
     interface::types::HeightType BlockVariant::height() const {
@@ -32,16 +34,12 @@ namespace shared_model {
 
     bool BlockVariant::addSignature(const crypto::Signed &signed_blob,
                                     const crypto::PublicKey &public_key) {
-      return iroha::visit_in_place(
-          *this, [&signed_blob, &public_key](const auto &any_block) {
-            return any_block->addSignature(signed_blob, public_key);
-          });
+      return invoke(
+          this, &AbstractBlock::addSignature, signed_blob, public_key);
     }
 
     interface::types::TimestampType BlockVariant::createdTime() const {
-      return std::move(iroha::visit_in_place(*this, [](const auto &any_block) {
-        return any_block->createdTime();
-      }));
+      return std::move(invoke(this, &AbstractBlock::createdTime));
     }
 
     const interface::types::BlobType &BlockVariant::payload() const {
