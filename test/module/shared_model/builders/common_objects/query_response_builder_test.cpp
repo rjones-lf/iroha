@@ -26,6 +26,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "builders/default_builders.hpp"
 
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
@@ -54,18 +55,20 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
-          .accountAssetResponse({
-
-                                })
+          .accountAssetResponse(
+              {shared_model::proto::AccountAssetBuilder()
+                         .accountId(account_id)
+                         .assetId(asset_id)
+                         .balance(proto_amount)
+                         .build()})
           .build();
 
   const auto tmp = boost::get<w<shared_model::interface::AccountAssetResponse>>(
       query_response.get());
-  const auto &asset_response = *(tmp->accountAssets()[0]);
-
-  ASSERT_EQ(asset_response.assetId(), asset_id);
-  ASSERT_EQ(asset_response.accountId(), account_id);
-  ASSERT_EQ(asset_response.balance(), proto_amount);
+  const auto asset_response = tmp->accountAssets()[0];
+  ASSERT_EQ(asset_response->assetId(), asset_id);
+  ASSERT_EQ(asset_response->accountId(), account_id);
+  ASSERT_EQ(asset_response->balance(), proto_amount);
   ASSERT_EQ(query_response.queryHash(), query_hash);
 }
 
