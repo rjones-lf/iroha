@@ -20,8 +20,7 @@
 
 #include <boost/variant.hpp>
 
-namespace shared_model {
-  namespace interface {
+namespace framework {
     template <typename Type>
     class SpecifiedVisitor : public boost::static_visitor<const Type &> {
      public:
@@ -45,7 +44,6 @@ namespace shared_model {
         throw std::runtime_error("unexpected type provided");
       }
     };
-  }  // namespace interface
-}  // namespace shared_model
+}  // namespace framework
 
 #endif  // IROHA_SPECIFIED_VISITOR_HPP
