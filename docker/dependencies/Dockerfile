@@ -68,6 +68,7 @@ RUN set -e; \
         -B/tmp/protobuf/.build \
         -DCMAKE_INSTALL_PREFIX=/opt/dependencies/protobuf; \
     cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}; \
+    export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH; \
     ldconfig; \
     rm -rf /tmp/protobuf
 
@@ -184,6 +185,7 @@ RUN set -e; \
     make -C src/bin/pg_config install; \
     make -C src/interfaces/libpq install; \
     make -C src/include install; \
+    export PATH=/opt/dependencies/libpq/bin:$PATH; \
     ldconfig; \
     # remove
     rm -rf /tmp/postgresql
@@ -274,7 +276,7 @@ RUN set -e; \
 # non-interactive adduser
 #   -m = create home dir
 #   -s = set default shell
-#   iroha-ci = username
+#   iroha-dpnds-test = username
 #   -u = userid, default for Ubuntu is 1000
 #   -U = create a group same as username
 #   no password
@@ -286,6 +288,11 @@ RUN set -e; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
 
+# udpate necessary environment variables
+RUN set -e; \
+    echo "export PATH=/opt/dependencies/libpq/bin:$PATH" >> ~/.bashrc; \
+    echo "export LIBRARY_PATH=/opt/dependencies/tbb/lib:/opt/dependencies/c-ares/lib:$LIBRARY_PATH" >> ~/.bashrc; \
+    echo "export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:/opt/dependencies/c-ares/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 
 USER iroha-dpnds-test
 CMD ["/bin/bash"]
