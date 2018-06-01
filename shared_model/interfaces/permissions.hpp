@@ -78,10 +78,9 @@ namespace shared_model {
       using Parent = std::bitset<static_cast<size_t>(Perm::COUNT)>;
 
      public:
+      using Parent::Parent;
       using Parent::reset;
       using Parent::size;
-      using Parent::operator==;
-      using Parent::operator!=;
       PermissionSet(std::initializer_list<Perm> list);
 
       PermissionSet &append(std::initializer_list<Perm> list);
@@ -92,7 +91,10 @@ namespace shared_model {
       bool operator[](Perm p) const;
       bool test(Perm p) const;
 
-      bool isSubsetOf(const PermissionSet<Perm> &r);
+      bool isSubsetOf(const PermissionSet<Perm> &r) const;
+
+      bool operator==(const PermissionSet<Perm> &r) const;
+      bool operator!=(const PermissionSet<Perm> &r) const;
 
      private:
       constexpr auto bit(Perm p) const {
@@ -102,6 +104,9 @@ namespace shared_model {
 
     extern template class PermissionSet<permissions::Role>;
     extern template class PermissionSet<permissions::Grantable>;
+
+    using RolePermissionSet = PermissionSet<permissions::Role>;
+    using GrantablePermissionSet = PermissionSet<permissions::Grantable>;
   }  // namespace interface
 }  // namespace shared_model
 

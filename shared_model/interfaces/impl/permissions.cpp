@@ -44,8 +44,18 @@ bool PermissionSet<Perm>::test(Perm p) const {
 }
 
 template <typename Perm>
-bool PermissionSet<Perm>::isSubsetOf(const PermissionSet<Perm> &r) {
+bool PermissionSet<Perm>::isSubsetOf(const PermissionSet<Perm> &r) const {
   return (*this & r) == *this;
+}
+
+template <typename Perm>
+bool PermissionSet<Perm>::operator==(const PermissionSet<Perm> &r) const {
+  return Parent::operator==(r);
+}
+
+template <typename Perm>
+bool PermissionSet<Perm>::operator!=(const PermissionSet<Perm> &r) const {
+  return Parent::operator!=(r);
 }
 
 template class shared_model::interface::PermissionSet<permissions::Role>;
