@@ -6,6 +6,7 @@
 #ifndef IROHA_BLOCK_VARIANT_HPP
 #define IROHA_BLOCK_VARIANT_HPP
 
+#include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/empty_block.hpp"
 
@@ -23,53 +24,28 @@ namespace shared_model {
                          std::shared_ptr<shared_model::interface::EmptyBlock>>;
 
      public:
+      using AbstractBlock::hash;
       using VariantType::VariantType;
 
-      interface::types::HeightType height() const override {
-        return iroha::visit_in_place(
-            *this, [](const auto &any_block) { return any_block->height(); });
-      }
+      interface::types::HeightType height() const override;
 
-      const interface::types::HashType &prevHash() const override {
-        return std::move(iroha::visit_in_place(
-            *this,
-            [](const auto &any_block) { return any_block->prevHash(); }));
-      }
+      const interface::types::HashType &prevHash() const override;
 
-      const interface::types::BlobType &blob() const override {
-        return std::move(iroha::visit_in_place(
-            *this, [](const auto &any_block) { return any_block->blob(); }));
-      }
+      const interface::types::BlobType &blob() const override;
 
-      interface::types::SignatureRangeType signatures() const override {
-        return std::move(iroha::visit_in_place(
-            *this,
-            [](const auto &any_block) { return any_block->signatures(); }));
-      }
+      interface::types::SignatureRangeType signatures() const override;
 
       bool addSignature(const crypto::Signed &signed_blob,
-                        const crypto::PublicKey &public_key) override {
-        return std::move(iroha::visit_in_place(
-            *this, [&signed_blob, &public_key](const auto &any_block) {
-              return any_block->addSignature(signed_blob, public_key);
-            }));
-      }
+                        const crypto::PublicKey &public_key) override;
 
-      interface::types::TimestampType createdTime() const override {
-        return std::move(iroha::visit_in_place(
-            *this,
-            [](const auto &any_block) { return any_block->createdTime(); }));
-      }
+      interface::types::TimestampType createdTime() const override;
 
-      const interface::types::BlobType &payload() const override {
-        return std::move(iroha::visit_in_place(
-            *this, [](const auto &any_block) { return any_block->payload(); }));
-      }
+      const interface::types::BlobType &payload() const override;
+
+      bool operator==(const BlockVariant &rhs) const;
 
      protected:
-      BlockVariant *clone() const override {
-        return new BlockVariant(*this);
-      }
+      BlockVariant *clone() const override;
     };
 
   }  // namespace interface
