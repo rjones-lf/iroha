@@ -9,12 +9,13 @@ namespace shared_model {
   namespace proto {
     namespace permissions {
 
-      boost::optional<interface::permissions::Role> fromTransport(
+      bool isValid(iroha::protocol::RolePermission perm) noexcept {
+        return iroha::protocol::RolePermission_IsValid(perm);
+      }
+
+      interface::permissions::Role fromTransport(
           iroha::protocol::RolePermission perm) noexcept {
-        return iroha::protocol::RolePermission_IsValid(perm)
-            ? boost::optional<interface::permissions::Role>(
-                  static_cast<interface::permissions::Role>(perm))
-            : boost::none;
+        return static_cast<interface::permissions::Role>(perm);
       }
 
       iroha::protocol::RolePermission toTransport(
@@ -26,12 +27,13 @@ namespace shared_model {
         return iroha::protocol::RolePermission_Name(toTransport(r));
       }
 
-      boost::optional<interface::permissions::Grantable> fromTransport(
+      bool isValid(iroha::protocol::GrantablePermission perm) noexcept {
+        return iroha::protocol::GrantablePermission_IsValid(perm);
+      }
+
+      interface::permissions::Grantable fromTransport(
           iroha::protocol::GrantablePermission perm) noexcept {
-        return iroha::protocol::GrantablePermission_IsValid(perm)
-            ? boost::optional<interface::permissions::Grantable>(
-                  static_cast<interface::permissions::Grantable>(perm))
-            : boost::none;
+        return static_cast<interface::permissions::Grantable>(perm);
       }
 
       iroha::protocol::GrantablePermission toTransport(

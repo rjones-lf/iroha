@@ -19,10 +19,17 @@ namespace shared_model {
     namespace permissions {
 
       /**
-       * @param perm protocol object for conversion
-       * @return sm object if conversion can be done
+       * @param perm protocol object for checking
+       * @return true if valid, false otherwise
        */
-      boost::optional<interface::permissions::Role> fromTransport(
+      bool isValid(iroha::protocol::RolePermission perm) noexcept;
+
+      /**
+       * Perform deserialization without checks
+       * @param perm protocol object for conversion
+       * @return sm object
+       */
+      interface::permissions::Role fromTransport(
           iroha::protocol::RolePermission perm) noexcept;
 
       /**
@@ -39,10 +46,17 @@ namespace shared_model {
       std::string toString(interface::permissions::Role r);
 
       /**
-       * @param perm protocol object for conversion
-       * @return sm object if conversion can be done
+       * @param perm protocol object for checking
+       * @return true if valid, false otherwise
        */
-      boost::optional<interface::permissions::Grantable> fromTransport(
+      bool isValid(iroha::protocol::GrantablePermission perm) noexcept;
+
+      /**
+       * Perform deserialization without checks
+       * @param perm protocol object for conversion
+       * @return sm object
+       */
+      interface::permissions::Grantable fromTransport(
           iroha::protocol::GrantablePermission perm) noexcept;
 
       /**

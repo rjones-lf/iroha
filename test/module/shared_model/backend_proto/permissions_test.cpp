@@ -66,11 +66,24 @@ TYPED_TEST_CASE(ProtoPermission, PermTypes);
  * @when fromTransport is called
  * @then related sm type produced
  */
-TYPED_TEST(ProtoPermission, RoleFromTransport) {
+TYPED_TEST(ProtoPermission, IsValid) {
+  boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
+    this->perm = getRole<decltype(this->perm)>(i);
+    ASSERT_TRUE(isValid(this->perm));
+  });
+}
+
+/**
+ * For each protobuf RolePermission
+ * @given protobuf RolePermission
+ * @when fromTransport is called
+ * @then related sm type produced
+ */
+TYPED_TEST(ProtoPermission, FromTransport) {
   boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
     this->perm = getRole<decltype(this->perm)>(i);
     auto converted = fromTransport(this->perm);
-    ASSERT_EQ(getRole<typename TypeParam::Model>(i), *converted);
+    ASSERT_EQ(getRole<typename TypeParam::Model>(i), converted);
   });
 }
 
@@ -80,12 +93,12 @@ TYPED_TEST(ProtoPermission, RoleFromTransport) {
  * @when composition of fromTransport and toTransport is called
  * @then previous protobuf object produced
  */
-TYPED_TEST(ProtoPermission, RoleFromToTransport) {
+TYPED_TEST(ProtoPermission, FromToTransport) {
   auto desc = TypeParam::descriptor();
   boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
     TypeParam::parse(desc->value(i)->name(), &this->perm);
     auto converted = fromTransport(this->perm);
-    ASSERT_EQ(this->perm, toTransport(*converted));
+    ASSERT_EQ(this->perm, toTransport(converted));
   });
 }
 
@@ -95,7 +108,7 @@ TYPED_TEST(ProtoPermission, RoleFromToTransport) {
  * @when toTransport is called
  * @then related protobuf object permission produced
  */
-TYPED_TEST(ProtoPermission, RoleToTransport) {
+TYPED_TEST(ProtoPermission, ToTransport) {
   boost::for_each(boost::irange(0, TypeParam::size()), [&](auto i) {
     this->perm = getRole<decltype(this->perm)>(i);
     ASSERT_EQ(this->perm, toTransport(getRole<typename TypeParam::Model>(i)));
