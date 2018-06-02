@@ -19,9 +19,9 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
-#include "interfaces/from_old.hpp"
 
 using namespace shared_model::interface::permissions;
 using namespace shared_model::proto::permissions;

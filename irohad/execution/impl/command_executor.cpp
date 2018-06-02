@@ -19,10 +19,10 @@
 
 #include "execution/command_executor.hpp"
 
+#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
-#include "interfaces/from_old.hpp"
 #include "utils/amount_utils.hpp"
 #include "validators/permissions.hpp"
 

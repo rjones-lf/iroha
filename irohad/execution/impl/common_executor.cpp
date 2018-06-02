@@ -19,9 +19,9 @@
 
 #include <algorithm>
 
+#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
-#include "interfaces/from_old.hpp"
 
 namespace iroha {
 
@@ -33,7 +33,7 @@ namespace iroha {
       return boost::none;
     }
     auto r = roles.value();
-    shared_model::interface::RolePermissionSet permissions;
+    shared_model::interface::RolePermissionSet permissions{};
     std::for_each(r.begin(), r.end(), [&permissions, &queries](auto &role) {
       auto perms = queries.getRolePermissions(role);
       if (not perms) {
