@@ -30,10 +30,8 @@ namespace integration_framework {
 
     if (pg_host and pg_port and pg_user and pg_pass) {
       std::stringstream ss;
-      ss << "host=" << pg_host;
-      ss << " port=" << pg_port;
-      ss << " user=" << pg_user;
-      ss << " password=" << pg_pass;
+      ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
+         << " password=" << pg_pass;
       return ss.str();
     }
     return default_conn;
