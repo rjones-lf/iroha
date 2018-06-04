@@ -13,7 +13,6 @@ RUN apt-get update && \
     apt-get -y --no-install-recommends install apt-utils software-properties-common; \
     apt-get -y clean
 
-
 # add git repository
 RUN add-apt-repository -y ppa:git-core/ppa && \
     apt-get update
@@ -68,7 +67,6 @@ RUN set -e; \
         -B/tmp/protobuf/.build \
         -DCMAKE_INSTALL_PREFIX=/opt/dependencies/protobuf; \
     cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}; \
-    export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH; \
     ldconfig; \
     rm -rf /tmp/protobuf
 
@@ -100,9 +98,9 @@ RUN set -e; \
 
 # install grpc 1.11.0
 RUN set -e; \
+    export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bd44e485f69d70ca4095cea92decd98de3892aa6); \
-    export LD_LIBRARY_PATH="/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH"; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DgRPC_BENCHMARK_PROVIDER="" \
@@ -114,7 +112,7 @@ RUN set -e; \
         -DBUILD_SHARED_LIBS=ON \
         -H/tmp/grpc \
         -B/tmp/grpc/.build \
-        -DCMAKE_PREFIX_PATH="/opt/dependencies/c-ares/;/opt/dependencies/c-ares/include;/opt/dependencies/protobuf" \
+        -DCMAKE_PREFIX_PATH="/opt/dependencies/c-ares;/opt/dependencies/protobuf" \
         -DCMAKE_INSTALL_PREFIX=/opt/dependencies/grpc; \
     cmake --build /tmp/grpc/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
@@ -185,14 +183,13 @@ RUN set -e; \
     make -C src/bin/pg_config install; \
     make -C src/interfaces/libpq install; \
     make -C src/include install; \
-    export PATH=/opt/dependencies/libpq/bin:$PATH; \
     ldconfig; \
     # remove
     rm -rf /tmp/postgresql
 
 # install pqxx
 RUN set -e; \
-    export PATH="/opt/dependencies/libpq/bin:$PATH"; \
+    export PATH=/opt/dependencies/libpq/bin:$PATH; \
     git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
     curl -L -o /tmp/libpqxx/config/config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
@@ -215,16 +212,6 @@ RUN set -e; \
     ldconfig; \
     rm -rf /tmp/tbb
 
-# install sonar cli
-#ENV SONAR_CLI_VERSION=3.0.3.778
-#RUN set -e; \
-#    mkdir -p /opt/sonar; \
-#    curl -L -o /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
-#    unzip -o -d /tmp/sonar-scanner /tmp/sonar.zip; \
-#    mv /tmp/sonar-scanner/sonar-scanner-${SONAR_CLI_VERSION}-linux /opt/sonar/scanner; \
-#    ln -s -f /opt/sonar/scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner; \
-#    rm -rf /tmp/sonar*
-
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
@@ -238,40 +225,6 @@ RUN set -e; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
-
-# fetch lcov reports converter
-#RUN set -e; \
-#    curl -L -o /tmp/lcov_cobertura.py https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/8c55cd11f80a21e7e46f20f8c81fcde0bf11f5e5/lcov_cobertura/lcov_cobertura.py
-
-#RUN set -e; \
-#    add-apt-repository -y ppa:webupd8team/java; \
-#    apt-get update; \
-#    echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections; \
-#    apt-get -y install oracle-java8-installer; \
-#    java -version
-
-# Build SWIG
-#RUN set -e; \
-#    curl -L -o /tmp/swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz; \
-#    tar -C /tmp -zxf /tmp/swig-3.0.12.tar.gz; \
-#    cd /tmp/swig-rel-3.0.12; \
-#    ./autogen.sh && ./configure && make -j${PARALLELISM}; \
-#    make install; \
-#    rm -rf /tmp/swig-rel-3.0.12
-
-#RUN set -e; \
-#    add-apt-repository -y ppa:jonathonf/python-3.6; \
-#    apt-get update; \
-#    apt-get -y install python3.6-dev
-
-# python bindings dependencies
-#RUN set -e; \
-#    pip install grpcio_tools; \
-#    pip3 install grpcio_tools
-
-# install lcov
-#RUN set -e; \
-#    curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
 
 # non-interactive adduser
 #   -m = create home dir
@@ -287,12 +240,6 @@ RUN set -e; \
     chmod -R 777 /opt/iroha; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
-
-# udpate necessary environment variables
-RUN set -e; \
-    echo "export PATH=/opt/dependencies/boost/include:/opt/dependencies/c-ares/include:/opt/dependencies/ed25519/include:/opt/dependencies/gflags/include:/opt/dependencies/grpc/include:/opt/dependencies/gtest/include:/opt/dependencies/includepq/include:/opt/dependencies/includepqxx/include:/opt/dependencies/protobuf/include:/opt/dependencies/rapidjson/include:/opt/dependencies/rxcpp/include:/opt/dependencies/spdlog/include:/opt/dependencies/tbb/include:/opt/dependencies/libpq/bin:$PATH" >> ~/.bashrc; \
-    echo "export LIBRARY_PATH=/opt/dependencies/boost/lib:/opt/dependencies/c-ares/lib:/opt/dependencies/ed25519/lib:/opt/dependencies/gflags/lib:/opt/dependencies/grpc/lib:/opt/dependencies/gtest/lib:/opt/dependencies/libpq/lib:/opt/dependencies/libpqxx/lib:/opt/dependencies/protobuf/lib:/opt/dependencies/rapidjson/lib:/opt/dependencies/rxcpp/lib:/opt/dependencies/spdlog/lib:/opt/dependencies/tbb/lib:$LIBRARY_PATH" >> ~/.bashrc; \
-    echo "export LD_LIBRARY_PATH=/opt/dependencies/boost/lib:/opt/dependencies/c-ares/lib:/opt/dependencies/ed25519/lib:/opt/dependencies/gflags/lib:/opt/dependencies/grpc/lib:/opt/dependencies/gtest/lib:/opt/dependencies/libpq/lib:/opt/dependencies/libpqxx/lib:/opt/dependencies/protobuf/lib:/opt/dependencies/rapidjson/lib:/opt/dependencies/rxcpp/lib:/opt/dependencies/spdlog/lib:/opt/dependencies/tbb/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
 
 USER iroha-dpnds-test
 CMD ["/bin/bash"]
