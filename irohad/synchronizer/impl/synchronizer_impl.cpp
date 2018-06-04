@@ -62,6 +62,8 @@ namespace iroha {
         return;
       }
 
+      // TODO kamilsa 4.06.2018 IR-1300. Remove this conversion from variant to
+      // block, when synchronizer is able to process block variants
       auto commit_message = iroha::visit_in_place(
           commit_message_variant,
           [](std::shared_ptr<shared_model::interface::EmptyBlock> empty_block)

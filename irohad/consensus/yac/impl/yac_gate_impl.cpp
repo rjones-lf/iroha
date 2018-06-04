@@ -49,7 +49,7 @@ namespace iroha {
             delay_(delay) {
         log_ = logger::log("YacGate");
         block_creator_->on_block().subscribe(
-            [this](auto block) { this->vote(block); });
+            [this](const auto& block) { this->vote(block); });
       }
 
       void YacGateImpl::vote(
