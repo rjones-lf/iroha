@@ -44,10 +44,6 @@ namespace shared_model {
 
       bool operator==(const BlockVariant &rhs) const;
 
-      bool operator==(const BlockVariant &rhs) const {
-        return AbstractBlock::operator==(rhs);
-      }
-
      protected:
       BlockVariant *clone() const override;
     };
