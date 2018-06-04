@@ -256,6 +256,11 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
   });
 }
 
+/**
+ * @given ready block
+ * @when response builder builds block_response object with that block
+ * @then original block and block in block response are equal
+ */
 TEST(QueryResponseBuilderTest, BlockQueryResponse) {
   auto transaction = TestTransactionBuilder()
                          .createdTime(created_time)
@@ -281,6 +286,11 @@ TEST(QueryResponseBuilderTest, BlockQueryResponse) {
   ASSERT_EQ(block, block_response->block());
 }
 
+/**
+ * @given response builder
+ * @when response builder builds error response with some error message
+ * @then block response with that message is built
+ */
 TEST(QueryResponseBuilderTest, BlockQueryErrorResponse) {
   shared_model::builder::BlockQueryResponseBuilder<
       shared_model::proto::BlockQueryResponseBuilder>
