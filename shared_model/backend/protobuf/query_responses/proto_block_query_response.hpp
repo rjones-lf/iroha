@@ -33,7 +33,7 @@ namespace shared_model {
                                BlockQueryResponse> {
      private:
       template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using w = boost::variant<const Value &...>;
 
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
