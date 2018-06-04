@@ -37,21 +37,17 @@ namespace shared_model {
       BlockQueryResponseBuilder copy(*this);
       shared_model::proto::Block &proto_block =
           static_cast<shared_model::proto::Block &>(block);
-      iroha::protocol::BlockResponse *response =
-          new iroha::protocol::BlockResponse();
+      iroha::protocol::BlockResponse *response = copy.query_response_.mutable_block_response();
       response->set_allocated_block(
           new iroha::protocol::Block(proto_block.getTransport()));
-      copy.query_response_.set_allocated_block_response(response);
       return copy;
     }
 
     BlockQueryResponseBuilder BlockQueryResponseBuilder::errorResponse(
         std::string &message) {
       BlockQueryResponseBuilder copy(*this);
-      iroha::protocol::BlockErrorResponse *response =
-          new iroha::protocol::BlockErrorResponse();
+      iroha::protocol::BlockErrorResponse *response = copy.query_response_.mutable_error_response();
       response->set_message(message);
-      copy.query_response_.set_allocated_error_response(response);
       return copy;
     }
   }  // namespace proto

@@ -22,7 +22,7 @@ namespace shared_model {
   namespace builder {
 
     /**
-     * Builder to construct transaction status object
+     * Builder to construct block query response object
      * @tparam BuilderImpl
      */
     template <typename BuilderImpl>

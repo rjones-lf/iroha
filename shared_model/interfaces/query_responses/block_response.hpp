@@ -18,7 +18,6 @@
 #ifndef IROHA_SHARED_MODEL_BLOCK_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_BLOCK_RESPONSE_HPP
 
-#include <new>
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/common_objects/types.hpp"
