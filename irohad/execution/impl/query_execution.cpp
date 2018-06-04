@@ -258,9 +258,12 @@ QueryProcessingFactory::executeGetAccountAssets(
     return buildError<shared_model::interface::NoAccountAssetsErrorResponse>();
   }
   std::vector<shared_model::proto::AccountAsset> account_assets;
-  for (auto asset: *acct_assets)
+  for (auto asset: *acct_assets) {
+    //TODO: IR-1239 remove static cast when query response builder is updated
+    // and accepts interface objects
     account_assets.push_back(
         *std::static_pointer_cast<shared_model::proto::AccountAsset>(asset));
+  }
   auto response =
       QueryResponseBuilder().accountAssetResponse(account_assets);
   return response;
