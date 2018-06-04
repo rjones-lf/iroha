@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
@@ -37,7 +25,8 @@ namespace shared_model {
       BlockQueryResponseBuilder copy(*this);
       shared_model::proto::Block &proto_block =
           static_cast<shared_model::proto::Block &>(block);
-      iroha::protocol::BlockResponse *response = copy.query_response_.mutable_block_response();
+      iroha::protocol::BlockResponse *response =
+          copy.query_response_.mutable_block_response();
       response->set_allocated_block(
           new iroha::protocol::Block(proto_block.getTransport()));
       return copy;
@@ -46,7 +35,8 @@ namespace shared_model {
     BlockQueryResponseBuilder BlockQueryResponseBuilder::errorResponse(
         std::string &message) {
       BlockQueryResponseBuilder copy(*this);
-      iroha::protocol::BlockErrorResponse *response = copy.query_response_.mutable_error_response();
+      iroha::protocol::BlockErrorResponse *response =
+          copy.query_response_.mutable_error_response();
       response->set_message(message);
       return copy;
     }
