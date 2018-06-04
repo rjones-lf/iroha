@@ -33,7 +33,13 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
-    set(CMAKE_SWIG_FLAGS "")
+    if (SWIG_JAVA AND SWIG_JAVA_PKG)
+        set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
+        string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})   
+    else()
+        set(CMAKE_SWIG_FLAGS "")
+    endif()
+    
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
     set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 

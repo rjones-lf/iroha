@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_library(shared_model_interfaces
+    impl/permissions.cpp
     commands/impl/add_asset_quantity.cpp
     commands/impl/add_peer.cpp
     commands/impl/add_signatory.cpp
