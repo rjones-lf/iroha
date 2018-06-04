@@ -393,15 +393,16 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
         shared_model::interface::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
-
-  // Check if the fields in account asset response are correct
-  ASSERT_EQ(asset_resp.accountAssets()[0]->assetId(),
-            account_asset->assetId());
-  ASSERT_EQ(asset_resp.accountAssets()[0]->accountId(),
-            account_asset->accountId());
-  ASSERT_EQ(asset_resp.accountAssets()[0]->balance(),
-            account_asset->balance());
-  ASSERT_EQ(model_query.hash(), resp.queryHash());
+    std::cout << asset_resp.toString() << std::endl;
+    // Check if the fields in account asset response are correct
+    ASSERT_EQ(asset_resp.accountAssets()[0].assetId(),
+              account_asset->assetId());
+    ASSERT_EQ(asset_resp.accountAssets()[0].accountId(),
+              account_asset->accountId());
+    ASSERT_EQ(asset_resp.accountAssets()[0].balance(),
+              account_asset->balance());
+    ASSERT_EQ(model_query.hash(), resp.queryHash());
+  });
 }
 
 /**

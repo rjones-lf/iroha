@@ -54,15 +54,11 @@ namespace shared_model {
       const iroha::protocol::AccountAssetResponse &accountAssetResponse_{
           proto_->account_assets_response()};
 
-      const Lazy<interface::types::AccountAssetCollectionType> accountAssets_{
+      const Lazy<std::vector<AccountAsset>> accountAssets_{
         [this] {
-          return boost::accumulate(
-              accountAssetResponse_.account_assets(),
-              interface::types::AccountAssetCollectionType{},
-              [](auto &&assets, const auto &asset) {
-                assets.emplace_back(new AccountAsset(asset));
-                return std::move(assets);
-              });
+          return std::vector<proto::AccountAsset>(
+              accountAssetResponse_.account_assets().begin(),
+              accountAssetResponse_.account_assets().end());
       }};
     };
   }  // namespace proto

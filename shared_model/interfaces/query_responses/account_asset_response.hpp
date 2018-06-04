@@ -44,7 +44,7 @@ namespace shared_model {
         auto response = detail::PrettyStringBuilder()
             .init("AccountAssetResponse");
         for (auto &asset: accountAssets())
-            response.append(asset->toString());
+            response.append(asset.toString());
         return response.finalize();
       }
 

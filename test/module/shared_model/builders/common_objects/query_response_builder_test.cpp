@@ -65,11 +65,11 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
       shared_model::interface::SpecifiedVisitor<
           shared_model::interface::AccountAssetResponse>(),
       query_response.get());
-  const auto asset_response = tmp->accountAssets()[0];
+  const auto &asset_response = tmp.accountAssets()[0];
 
-  ASSERT_EQ(asset_response->assetId(), asset_id);
-  ASSERT_EQ(asset_response->accountId(), account_id);
-  ASSERT_EQ(asset_response->balance(), proto_amount);
+  ASSERT_EQ(asset_response.assetId(), asset_id);
+  ASSERT_EQ(asset_response.accountId(), account_id);
+  ASSERT_EQ(asset_response.balance(), proto_amount);
   ASSERT_EQ(query_response.queryHash(), query_hash);
                   });
 }
