@@ -5,6 +5,8 @@
 
 #include "interfaces/iroha_internal/block_variant.hpp"
 
+#include "common/visitor.hpp"
+
 namespace shared_model {
   namespace interface {
 
