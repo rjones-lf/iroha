@@ -33,7 +33,6 @@
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 

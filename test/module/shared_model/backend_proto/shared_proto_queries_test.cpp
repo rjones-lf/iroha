@@ -82,7 +82,7 @@ TEST(ProtoQueryBuilder, Builder) {
                    .queryCounter(query_counter)
                    .build();
 
-  auto proto = query.signAndAddSignature(keypair).getTransport();
+  auto proto = query.signAndAddSignature(keypair).finish().getTransport();
   ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
 }
 

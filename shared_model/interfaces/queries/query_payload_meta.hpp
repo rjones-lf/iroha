@@ -6,12 +6,8 @@
 #ifndef IROHA_SHARED_MODEL_QUERY_PAYLOAD_META_HPP
 #define IROHA_SHARED_MODEL_QUERY_PAYLOAD_META_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/query_payload_meta.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -20,7 +16,7 @@ namespace shared_model {
      * Class QueryPayloadMeta provides metadata of query payload
      * General note: this class is container for queries but not a base class.
      */
-    class QueryPayloadMeta : public PRIMITIVE(QueryPayloadMeta) {
+    class QueryPayloadMeta : public ModelPrimitive<QueryPayloadMeta> {
      public:
       /**
        * @return id of query creator
@@ -39,16 +35,6 @@ namespace shared_model {
        */
       virtual types::TimestampType createdTime() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto *old_model = new OldModelType();
-        old_model->creator_account_id = creatorAccountId();
-        old_model->query_counter = queryCounter();
-        // signature related
-        old_model->created_ts = createdTime();
-        return old_model;
-      }
-#endif
       bool operator==(const ModelType &rhs) const override {
         return creatorAccountId() == rhs.creatorAccountId()
             && queryCounter() == rhs.queryCounter()

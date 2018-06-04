@@ -18,6 +18,7 @@ namespace shared_model {
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
+
      public:
       template <typename BlocksQueryType>
       explicit BlocksQuery(BlocksQueryType &&query)
@@ -25,7 +26,8 @@ namespace shared_model {
 
       BlocksQuery(const BlocksQuery &o) : BlocksQuery(o.proto_) {}
 
-      BlocksQuery(BlocksQuery &&o) noexcept : BlocksQuery(std::move(o.proto_)) {}
+      BlocksQuery(BlocksQuery &&o) noexcept
+          : BlocksQuery(std::move(o.proto_)) {}
 
       const interface::types::AccountIdType &creatorAccountId() const override {
         return proto_->meta().creator_account_id();
@@ -44,7 +46,7 @@ namespace shared_model {
       }
 
       // ------------------------| Signable override  |-------------------------
-      const interface::SignatureSetType &signatures() const override {
+      interface::types::SignatureRangeType signatures() const override {
         return *signatures_;
       }
 
@@ -60,11 +62,6 @@ namespace shared_model {
         return true;
       }
 
-      bool clearSignatures() override {
-        signatures_->clear();
-        return (signatures_->size() == 0);
-      }
-
       interface::types::TimestampType createdTime() const override {
         return proto_->meta().created_time();
       }
@@ -78,10 +75,10 @@ namespace shared_model {
       const Lazy<interface::types::BlobType> payload_{
           [this] { return makeBlob(proto_->meta()); }};
 
-      const Lazy<interface::SignatureSetType> signatures_{[this] {
-        interface::SignatureSetType set;
+      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+        SignatureSetType<proto::Signature> set;
         if (proto_->has_signature()) {
-          set.emplace(new Signature(proto_->signature()));
+          set.emplace(proto_->signature());
         }
         return set;
       }};
