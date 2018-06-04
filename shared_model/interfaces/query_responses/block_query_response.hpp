@@ -22,7 +22,7 @@ namespace shared_model {
      private:
       /// Shortcut type for polymorphic wrapper
       template <typename... Value>
-      using w = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using w = boost::variant<const Value &...>;
 
      public:
       /// Type of container with all concrete query response
