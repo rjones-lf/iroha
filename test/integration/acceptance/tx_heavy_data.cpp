@@ -124,7 +124,7 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   auto query_checker = [&](auto &status) {
     ASSERT_NO_THROW({
       auto &&response = boost::apply_visitor(
-          interface::SpecifiedVisitor<const interface::AccountResponse &>(),
+          framework::SpecifiedVisitor<const interface::AccountResponse &>(),
           status.get());
 
       boost::property_tree::ptree root;

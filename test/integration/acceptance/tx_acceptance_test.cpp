@@ -15,7 +15,7 @@ class AcceptanceTest : public AcceptanceFixture {
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessValid = [](auto &status) {
         ASSERT_NO_THROW(boost::apply_visitor(
-            shared_model::interface::SpecifiedVisitor<
+            framework::SpecifiedVisitor<
                 shared_model::interface::StatelessValidTxResponse>(),
             status.get()));
       };

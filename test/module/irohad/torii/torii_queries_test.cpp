@@ -233,7 +233,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   ASSERT_NO_THROW({
     const auto &account_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              resp.get());
 
@@ -278,7 +278,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
 
   ASSERT_NO_THROW({
     const auto &detail_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              resp.get());
 
@@ -390,7 +390,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     const auto &asset_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
     std::cout << asset_resp.toString() << std::endl;
@@ -486,7 +486,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   auto shared_response = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     auto resp_pubkey = *boost::apply_visitor(
-                            shared_model::interface::SpecifiedVisitor<
+                            framework::SpecifiedVisitor<
                                 shared_model::interface::SignatoriesResponse>(),
                             shared_response.get())
                             .keys()
@@ -551,7 +551,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     const auto &tx_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         resp.get());
 

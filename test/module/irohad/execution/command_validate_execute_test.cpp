@@ -58,7 +58,7 @@ template <class T>
 std::shared_ptr<T> getConcreteCommand(
     const std::unique_ptr<shared_model::interface::Command> &command) {
   return clone(boost::apply_visitor(
-      shared_model::interface::SpecifiedVisitor<T>(), command->get()));
+      framework::SpecifiedVisitor<T>(), command->get()));
 }
 
 class CommandValidateExecuteTest : public ::testing::Test {

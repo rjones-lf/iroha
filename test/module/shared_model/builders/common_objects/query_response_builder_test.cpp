@@ -62,7 +62,7 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
           .build();
   ASSERT_NO_THROW({
   const auto &tmp = boost::apply_visitor(
-      shared_model::interface::SpecifiedVisitor<
+      framework::SpecifiedVisitor<
           shared_model::interface::AccountAssetResponse>(),
       query_response.get());
   const auto &asset_response = tmp.accountAssets()[0];
@@ -83,7 +83,7 @@ TEST(QueryResponseBuilderTest, AccountDetailResponse) {
 
   ASSERT_NO_THROW({
     const auto &account_detail_response = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountDetailResponse>(),
         query_response.get());
 
@@ -112,7 +112,7 @@ TEST(QueryResponseBuilderTest, AccountResponse) {
 
   ASSERT_NO_THROW({
     const auto &account_response =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              query_response.get());
 
@@ -161,7 +161,7 @@ TEST(QueryResponseBuilderTest, SignatoriesResponse) {
 
   ASSERT_NO_THROW({
     const auto &signatories_response = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::SignatoriesResponse>(),
         query_response.get());
 
@@ -188,7 +188,7 @@ TEST(QueryResponseBuilderTest, TransactionsResponse) {
 
   ASSERT_NO_THROW({
     const auto &transactions_response = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         query_response.get());
 
@@ -209,7 +209,7 @@ TEST(QueryResponseBuilderTest, AssetResponse) {
 
   ASSERT_NO_THROW({
     const auto &asset_response =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AssetResponse>(),
                              query_response.get());
 
@@ -230,7 +230,7 @@ TEST(QueryResponseBuilderTest, RolesResponse) {
 
   ASSERT_NO_THROW({
     const auto &roles_response =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::RolesResponse>(),
                              query_response.get());
 
@@ -248,7 +248,7 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
 
   ASSERT_NO_THROW({
     const auto &role_permissions_response = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::RolePermissionsResponse>(),
         query_response.get());
 

@@ -70,7 +70,7 @@ class TransactionProcessorTest : public ::testing::Test {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
       ASSERT_NO_THROW(boost::apply_visitor(
-          shared_model::interface::SpecifiedVisitor<Status>(),
+          framework::SpecifiedVisitor<Status>(),
           tx_status->second->get()));
     }
   }
@@ -376,7 +376,7 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::MstExpiredResponse>(),
                              response->get()));
   });
