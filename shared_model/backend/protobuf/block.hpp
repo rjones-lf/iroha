@@ -20,7 +20,6 @@
 
 #include "interfaces/iroha_internal/block.hpp"
 
-#include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
@@ -35,9 +34,6 @@ namespace shared_model {
     class Block final : public CopyableProto<interface::Block,
                                              iroha::protocol::Block,
                                              Block> {
-      template <class T>
-      using w = detail::PolymorphicWrapper<T>;
-
      public:
       template <class BlockType>
       explicit Block(BlockType &&block)
@@ -47,7 +43,7 @@ namespace shared_model {
 
       Block(Block &&o) noexcept : Block(std::move(o.proto_)) {}
 
-      const interface::types::TransactionsCollectionType &transactions()
+      interface::types::TransactionsCollectionType transactions()
           const override {
         return *transactions_;
       }
@@ -110,13 +106,9 @@ namespace shared_model {
 
       const iroha::protocol::Block::Payload &payload_{proto_->payload()};
 
-      const Lazy<std::vector<w<interface::Transaction>>> transactions_{[this] {
-        std::vector<w<interface::Transaction>> txs;
-        for (const auto &tx : payload_.transactions()) {
-          auto tmp = detail::makePolymorphic<proto::Transaction>(tx);
-          txs.emplace_back(tmp);
-        }
-        return txs;
+      const Lazy<std::vector<proto::Transaction>> transactions_{[this] {
+        return std::vector<proto::Transaction>(payload_.transactions().begin(),
+                                               payload_.transactions().end());
       }};
 
       const Lazy<interface::types::BlobType> blob_{
@@ -127,11 +119,12 @@ namespace shared_model {
       }};
 
       const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-        SignatureSetType<proto::Signature> sigs;
-        for (const auto &sig : proto_->signatures()) {
-          sigs.emplace(sig);
-        }
-        return sigs;
+        auto signatures = proto_->signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
       }};
 
       const Lazy<interface::types::BlobType> payload_blob_{

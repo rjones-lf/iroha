@@ -60,12 +60,10 @@ class MstProcessorTest : public testing::Test {
   std::shared_ptr<MockPropagationStrategy> propagation_strategy;
   std::shared_ptr<MockTimeProvider> time_provider;
 
-  const shared_model::interface::types::CounterType time_before =
-      iroha::time::now() - 10000;
   const shared_model::interface::types::CounterType time_now =
       iroha::time::now();
-  const shared_model::interface::types::CounterType time_after =
-      iroha::time::now() + 10000;
+  const shared_model::interface::types::CounterType time_before = time_now - 1;
+  const shared_model::interface::types::CounterType time_after = time_now + 1;
 
  protected:
   void SetUp() override {

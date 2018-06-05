@@ -24,6 +24,7 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/transaction.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -132,6 +133,9 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::SignatureRangeType &signatures,
           const crypto::Blob &source) const;
+
+      void validateQueryPayloadMeta(ReasonsGroupType &reason,
+                              const interface::QueryPayloadMeta &meta) const;
 
       void validateDescription(
           ReasonsGroupType &reason,

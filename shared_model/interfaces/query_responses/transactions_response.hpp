@@ -41,7 +41,7 @@ namespace shared_model {
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("TransactionsResponse")
-            .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
+            .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
             .finalize();
       }
 

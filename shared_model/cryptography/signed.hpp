@@ -20,8 +20,6 @@
 
 #include "cryptography/blob.hpp"
 
-#include "common/types.hpp"  // for iroha::sig_t
-
 namespace shared_model {
   namespace crypto {
     /**
@@ -30,8 +28,6 @@ namespace shared_model {
      */
     class Signed : public Blob {
      public:
-      using OldSignatureType = iroha::sig_t;
-
       explicit Signed(const std::string &blob);
 
       explicit Signed(const Bytes &blob);

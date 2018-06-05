@@ -53,18 +53,17 @@ namespace iroha {
                            const shared_model::interface::types::HashType &)>
             function) {
       auto execute_transaction = [this](auto &transaction) {
-        command_executor_->setCreatorAccountId(transaction->creatorAccountId());
-        auto execute_command = [this](auto command) {
-          auto result =
-              boost::apply_visitor(*command_executor_, command->get());
+        command_executor_->setCreatorAccountId(transaction.creatorAccountId());
+        auto execute_command = [this](auto &command) {
+          auto result = boost::apply_visitor(*command_executor_, command.get());
           return result.match([](expected::Value<void> &v) { return true; },
                               [&](expected::Error<ExecutionError> &e) {
                                 log_->error(e.error.toString());
                                 return false;
                               });
         };
-        return std::all_of(transaction->commands().begin(),
-                           transaction->commands().end(),
+        return std::all_of(transaction.commands().begin(),
+                           transaction.commands().end(),
                            execute_command);
       };
 

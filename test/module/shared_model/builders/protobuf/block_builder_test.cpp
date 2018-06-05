@@ -20,6 +20,7 @@ TEST(BlockBuilderTest, BlockWithTransactions) {
       TestTransactionBuilder()
           .createdTime(iroha::time::now())
           .creatorAccountId("admin@test")
+          .quorum(1)
           .addAssetQuantity("admin@test", "coin#test", "1.0")
           .build();
 

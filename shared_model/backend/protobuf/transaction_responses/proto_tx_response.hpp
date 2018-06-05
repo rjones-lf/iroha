@@ -20,7 +20,6 @@
 
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace shared_model {

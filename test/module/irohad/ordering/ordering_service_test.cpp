@@ -77,7 +77,8 @@ class OrderingServiceTest : public ::testing::Test {
             .build()
             .signAndAddSignature(
                 shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair()));
+                    generateKeypair())
+            .finish());
   }
 
   auto initOs(size_t max_proposal) {

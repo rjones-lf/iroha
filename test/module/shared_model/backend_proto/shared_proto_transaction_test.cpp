@@ -19,7 +19,6 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 #include <gtest/gtest.h>
 
@@ -91,7 +90,7 @@ TEST(ProtoTransaction, Builder) {
                 .quorum(1)
                 .build();
 
-  auto signedTx = tx.signAndAddSignature(keypair);
+  auto signedTx = tx.signAndAddSignature(keypair).finish();
   auto &proto = signedTx.getTransport();
 
   ASSERT_EQ(proto_tx.SerializeAsString(), proto.SerializeAsString());

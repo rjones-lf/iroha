@@ -19,6 +19,7 @@
 #define IROHA_TEST_QUERY_BUILDER_HPP
 
 #include "builders/protobuf/builder_templates/query_template.hpp"
+#include "builders/protobuf/builder_templates/blocks_query_template.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
 /**
@@ -34,5 +35,10 @@ using TestUnsignedQueryBuilder = shared_model::proto::TemplateQueryBuilder<
     (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
     shared_model::validation::AlwaysValidValidator,
     shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
+
+using TestBlocksQueryBuilder = shared_model::proto::TemplateQueryBuilder<
+    (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
+    shared_model::validation::AlwaysValidValidator,
+    shared_model::proto::BlocksQuery>;
 
 #endif  // IROHA_TEST_QUERY_BUILDER_HPP

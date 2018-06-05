@@ -27,6 +27,7 @@
 #include <boost/range/join.hpp>
 
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/queries/proto_query_payload_meta.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
@@ -545,6 +546,20 @@ class FieldValidatorTest : public ValidatorsTest {
   }
   std::vector<FieldTestCase> permission_test_cases = permissionTestCases();
 
+  std::vector<FieldTestCase> meta_test_cases = [&]() {
+    iroha::protocol::QueryPayloadMeta meta;
+    meta.set_created_time(iroha::time::now());
+    meta.set_creator_account_id("admin@test");
+    meta.set_query_counter(5);
+    std::vector<FieldTestCase> all_cases;
+    all_cases.push_back(makeTestCase("meta test",
+                                     &FieldValidatorTest::meta,
+                                     meta,
+                                     true,
+                                     ""));
+    return all_cases;
+  }();
+
   std::vector<FieldTestCase> precision_test_cases{
       makeValidCase(&FieldValidatorTest::precision, 0),
       makeValidCase(&FieldValidatorTest::precision, 1),
@@ -649,6 +664,13 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateCreatedTime,
                     &FieldValidatorTest::created_time,
                     created_time_test_cases),
+      makeTransformValidator("meta",
+                    &FieldValidator::validateQueryPayloadMeta,
+                    &FieldValidatorTest::meta,
+                    [](auto &&x) {
+                       return shared_model::proto::QueryPayloadMeta(x);
+                     },
+                    meta_test_cases),
       makeValidator("description",
                     &FieldValidator::validateDescription,
                     &FieldValidatorTest::description,

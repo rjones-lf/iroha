@@ -14,7 +14,6 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "module/shared_model/builders/transaction_responses/transaction_builders_common.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
 using namespace iroha;
@@ -70,7 +69,9 @@ class TransactionProcessorTest : public ::testing::Test {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
-      boost::apply_visitor(verifyType<Status>(), tx_status->second->get());
+      ASSERT_NO_THROW(boost::apply_visitor(
+          framework::SpecifiedVisitor<Status>(),
+          tx_status->second->get()));
     }
   }
 
@@ -342,8 +343,13 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
-      clone(base_tx().quorum(2).build().signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()));
+      clone(base_tx()
+                .quorum(2)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish());
 
   tp->transactionHandle(tx);
   mst_prepared_notifier.get_subscriber().on_next(after_mst);
@@ -359,13 +365,18 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
-      clone(base_tx().quorum(2).build().signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()));
+      clone(base_tx()
+                .quorum(2)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish());
 
   auto wrapper = make_test_subscriber<CallExact>(tp->transactionNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::MstExpiredResponse>(),
                              response->get()));
   });

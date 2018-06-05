@@ -19,47 +19,31 @@
 #define IROHA_SPECIFIED_VISITOR_HPP
 
 #include <boost/variant.hpp>
-#include "utils/polymorphic_wrapper.hpp"
 
-namespace shared_model {
-  namespace interface {
-    template <typename Type>
-    class SpecifiedVisitor : public boost::static_visitor<const Type &> {
-     private:
-      using Y = shared_model::detail::PolymorphicWrapper<
-          std::remove_const_t<std::remove_reference_t<Type>>>;
+namespace framework {
+  template <typename Type>
+  class SpecifiedVisitor : public boost::static_visitor<const Type &> {
+   public:
+    /**
+     * Match template type
+     * @param t const reference to object of specified type
+     * @return const reference to value
+     */
+    const Type &operator()(const Type &t) const {
+      return t;
+    }
 
-     public:
-      /**
-       * Match polymorphic wrapper for template type
-       * @param t polymorphic wrapper object of specified type
-       * @return const reference to value stored in polymorphic wrapper
-       */
-      const Type &operator()(const Y &t) const {
-        return *t;
-      }
-
-      /**
-       * Match template type
-       * @param t const reference to object of specified type
-       * @return const reference to value
-       */
-      const Type &operator()(const Type &t) const {
-        return t;
-      }
-
-      /**
-       * Match any other type that was not matched by methods above
-       * @tparam T any type not matched by two types above
-       * @param t object of specified type
-       * @return none
-       */
-      template <typename T>
-      const Type &operator()(const T &t) const {
-        throw std::runtime_error("unexpected type provided");
-      }
-    };
-  }  // namespace interface
-}  // namespace shared_model
+    /**
+     * Match any other type that was not matched by methods above
+     * @tparam T any type not matched by two types above
+     * @param t object of specified type
+     * @return none
+     */
+    template <typename T>
+    const Type &operator()(const T &t) const {
+      throw std::runtime_error("unexpected type provided");
+    }
+  };
+}  // namespace framework
 
 #endif  // IROHA_SPECIFIED_VISITOR_HPP

@@ -209,7 +209,8 @@ TEST_F(AddAssetQuantity, OtherDomain) {
               .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
               .quorum(1)
               .build()
-              .signAndAddSignature(kAdminKeypair))
+              .signAndAddSignature(kAdminKeypair)
+              .finish())
       .skipProposal()
       // Make sure everything is committed
       .checkBlock(

@@ -17,7 +17,6 @@
 #include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {

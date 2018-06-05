@@ -96,9 +96,10 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built object
    */
   template <typename Builder>
-  auto complete(Builder builder)
-      -> decltype(builder.build().signAndAddSignature(
-          std::declval<shared_model::crypto::Keypair>()));
+  auto complete(Builder builder) -> decltype(
+      builder.build()
+          .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+          .finish());
 
   const std::string kUser;
   const std::string kRole;

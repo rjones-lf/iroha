@@ -184,6 +184,14 @@ A request to Iroha that does **not** change the `state <#world-state-view>`__.
 By performing a query, a client can get request data from the state,
 for example a balance of his account, a history of transactions, etc.
 
+Quorum
+======
+
+In the context of transactions signing, quorum number is a minimum amount
+of signatures required to consider a transaction signed.
+The default value is 1.
+Each account can link additional public keys and increase own quorum number.
+
 Synchronizer
 ============
 

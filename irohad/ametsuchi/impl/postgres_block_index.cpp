@@ -17,7 +17,6 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/numeric.hpp>
 #include <unordered_set>
@@ -59,17 +58,16 @@ namespace iroha {
           true,
           [&](auto &status, const auto &cmd) {
             return visit_in_place(
-                cmd->get(),
-                [&](const shared_model::detail::PolymorphicWrapper<
-                    shared_model::interface::TransferAsset> &command) {
-                  status &= this->indexAccountIdHeight(command->srcAccountId(),
-                                                       height)
-                      & this->indexAccountIdHeight(command->destAccountId(),
+                cmd.get(),
+                [&](const shared_model::interface::TransferAsset &command) {
+                  status &=
+                      this->indexAccountIdHeight(command.srcAccountId(), height)
+                      & this->indexAccountIdHeight(command.destAccountId(),
                                                    height);
 
                   auto ids = {account_id,
-                              command->srcAccountId(),
-                              command->destAccountId()};
+                              command.srcAccountId(),
+                              command.destAccountId()};
                   // flat map accounts to unindexed keys
                   boost::for_each(ids, [&](const auto &id) {
                     auto res = execute_(
@@ -79,14 +77,13 @@ namespace iroha {
                         "VALUES ("
                         + transaction_.quote(id) + ", "
                         + transaction_.quote(height) + ", "
-                        + transaction_.quote(command->assetId()) + ", "
+                        + transaction_.quote(command.assetId()) + ", "
                         + transaction_.quote(index) + ");");
                     status &= res != boost::none;
                   });
                   return status;
                 },
                 [&](const auto &command) { return true; });
-
           });
     }
 
@@ -96,8 +93,8 @@ namespace iroha {
       boost::for_each(
           block.transactions() | boost::adaptors::indexed(0),
           [&](const auto &tx) {
-            const auto &creator_id = tx.value()->creatorAccountId();
-            const auto &hash = tx.value()->hash().blob();
+            const auto &creator_id = tx.value().creatorAccountId();
+            const auto &hash = tx.value().hash().blob();
             const auto &index = std::to_string(tx.index());
 
             // tx hash -> block where hash is stored
@@ -119,7 +116,7 @@ namespace iroha {
                 + ");");
 
             this->indexAccountAssets(
-                creator_id, height, index, tx.value()->commands());
+                creator_id, height, index, tx.value().commands());
           });
     }
   }  // namespace ametsuchi

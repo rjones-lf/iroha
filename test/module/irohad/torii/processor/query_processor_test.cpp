@@ -78,7 +78,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                    .getAccount(account_id)
                    .queryCounter(counter)
                    .build()
-                   .signAndAddSignature(keypair);
+                   .signAndAddSignature(keypair)
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
@@ -102,7 +103,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get()));
   });
@@ -133,7 +134,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                    .build()
                    .signAndAddSignature(
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());

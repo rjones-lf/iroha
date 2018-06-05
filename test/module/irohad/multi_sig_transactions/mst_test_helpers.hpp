@@ -41,7 +41,8 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .setAccountQuorum("user@test", counter)
           .quorum(quorum)
           .build()
-          .signAndAddSignature(keypair));
+          .signAndAddSignature(keypair)
+          .finish());
 }
 
 inline auto makePeer(const std::string &address, const std::string &pub_key) {

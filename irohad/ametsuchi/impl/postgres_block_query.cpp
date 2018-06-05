@@ -32,6 +32,17 @@ namespace iroha {
           log_(logger::log("PostgresBlockIndex")),
           execute_{makeExecuteOptional(transaction_, log_)} {}
 
+    PostgresBlockQuery::PostgresBlockQuery(
+        std::unique_ptr<pqxx::lazyconnection> connection,
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        FlatFile &file_store)
+        : connection_ptr_(std::move(connection)),
+          transaction_ptr_(std::move(transaction)),
+          block_store_(file_store),
+          transaction_(*transaction_ptr_),
+          log_(logger::log("PostgresBlockIndex")),
+          execute_{makeExecuteOptional(transaction_, log_)} {}
+
     rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {
       shared_model::interface::types::HeightType last_id =
@@ -128,7 +139,7 @@ namespace iroha {
             }),
             [&](const auto &x) {
               subscriber.on_next(PostgresBlockQuery::wTransaction(
-                  clone(*block->transactions().at(x))));
+                  clone(block->transactions()[x])));
             });
       };
     }
@@ -214,10 +225,10 @@ namespace iroha {
       auto it =
           std::find_if(block->transactions().begin(),
                        block->transactions().end(),
-                       [&hash](const auto &tx) { return tx->hash() == hash; });
+                       [&hash](const auto &tx) { return tx.hash() == hash; });
       if (it != block->transactions().end()) {
         result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction(clone(**it)));
+            PostgresBlockQuery::wTransaction(clone(*it)));
       }
       return result;
     }

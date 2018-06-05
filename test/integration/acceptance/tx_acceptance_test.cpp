@@ -15,7 +15,7 @@ class AcceptanceTest : public AcceptanceFixture {
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessValid = [](auto &status) {
         ASSERT_NO_THROW(boost::apply_visitor(
-            shared_model::interface::SpecifiedVisitor<
+            framework::SpecifiedVisitor<
                 shared_model::interface::StatelessValidTxResponse>(),
             status.get()));
       };
@@ -46,7 +46,8 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -69,7 +70,8 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)
@@ -92,7 +94,8 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)
@@ -114,7 +117,8 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)
@@ -135,7 +139,8 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -157,7 +162,8 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
                 .addAssetQuantity(kAdmin, kAsset, "1.0")
                 .quorum(1)
                 .build()
-                .signAndAddSignature(kAdminKeypair);
+                .signAndAddSignature(kAdminKeypair)
+                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)
@@ -272,7 +278,8 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
           .addAssetQuantity(kAdmin, kAsset, "1.0")
           .quorum(1)
           .build()
-          .signAndAddSignature(kAdminKeypair);
+          .signAndAddSignature(kAdminKeypair)
+          .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)

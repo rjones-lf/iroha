@@ -9,7 +9,7 @@ const assetId = 'coin#test'
 const testAccountId = 'test@test'
 
 test('ModelTransactionBuilder tests', function (t) {
-  t.plan(135)
+  t.plan(136)
 
   let crypto = new iroha.ModelCrypto()
   let keypair = crypto.convertFromExisting(publicKey, privateKey)
@@ -29,6 +29,7 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => txBuilder.creatorAccountId('@@@').createdTime(time).build(), /Transaction should contain at least one command(.*)Wrongly formed creator_account_id, passed value: '@@@'/, 'Should throw 0 commands + Wrongly formed creator_account_id')
   t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(futureTime).build(), /Transaction should contain at least one command(.*)bad timestamp: sent from future/, 'Should throw exception about zero commands in transaction, Sent from future')
   t.throws(() => txBuilder.creatorAccountId(adminAccountId).createdTime(time).build(), /Transaction should contain at least one command/, 'Should throw exception about zero commands in transaction')
+  t.throws(() => txBuilder.quorum(0).build(), /(.*)Quorum should be within range \(0, 128\](.*)/, 'Should throw exception about zero quorum')
 
   // Transaction with valid creatorAccountId and createdTime
   let correctTx = txBuilder.creatorAccountId(adminAccountId).createdTime(time)

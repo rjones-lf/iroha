@@ -19,6 +19,7 @@
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
+#include <pqxx/connection>
 #include <pqxx/nontransaction>
 
 #include "ametsuchi/block_query.hpp"
@@ -37,6 +38,9 @@ namespace iroha {
     class PostgresBlockQuery : public BlockQuery {
      public:
       PostgresBlockQuery(pqxx::nontransaction &transaction_,
+                         FlatFile &file_store);
+      PostgresBlockQuery(std::unique_ptr<pqxx::lazyconnection> connection,
+                         std::unique_ptr<pqxx::nontransaction> transaction,
                          FlatFile &file_store);
 
       rxcpp::observable<wTransaction> getAccountTransactions(
@@ -92,6 +96,9 @@ namespace iroha {
        */
       std::function<void(pqxx::result &result)> callback(
           const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
+
+      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
+      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
 
       FlatFile &block_store_;
       pqxx::nontransaction &transaction_;

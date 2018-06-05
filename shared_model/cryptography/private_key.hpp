@@ -20,8 +20,6 @@
 
 #include "cryptography/blob.hpp"
 
-#include "common/types.hpp"  // for iroha::privkey_t
-
 namespace shared_model {
   namespace crypto {
     /**
@@ -32,8 +30,6 @@ namespace shared_model {
       explicit PrivateKey(const std::string &private_key);
 
       explicit PrivateKey(const Blob &blob);
-
-      using OldPrivateKeyType = iroha::privkey_t;
 
       std::string toString() const override;
     };

@@ -101,7 +101,8 @@ TEST_F(ToriiQueriesTest, QueryClient) {
                    .creatorAccountId("accountA")
                    .getAccount("accountB")
                    .build()
-                   .signAndAddSignature(pair);
+                   .signAndAddSignature(pair)
+                   .finish();
 
   auto client1 = torii_utils::QuerySyncClient(ip, port);
   // Copy ctor
@@ -126,7 +127,8 @@ TEST_F(ToriiQueriesTest, FindWhenResponseInvalid) {
                    .creatorAccountId("accountA")
                    .getAccount("accountB")
                    .build()
-                   .signAndAddSignature(pair);
+                   .signAndAddSignature(pair)
+                   .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(query.getTransport(),
                                                           response);
@@ -170,7 +172,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
                          .createdTime(iroha::time::now())
                          .getAccount(account.accountId())
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -217,7 +220,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
                          .createdTime(iroha::time::now())
                          .getAccount(accountB->accountId())
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -229,7 +233,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   ASSERT_NO_THROW({
     const auto &account_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              resp.get());
 
@@ -262,7 +266,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
                          .createdTime(iroha::time::now())
                          .getAccount(creator)
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -273,7 +278,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
 
   ASSERT_NO_THROW({
     const auto &detail_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              resp.get());
 
@@ -312,7 +317,8 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
                          .createdTime(iroha::time::now())
                          .getAccountAssets(accountb_id, "usd#domain")
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -367,7 +373,8 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                          .createdTime(iroha::time::now())
                          .getAccountAssets(creator, "usd#domain")
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -381,7 +388,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     const auto &asset_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
 
@@ -425,7 +432,8 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
                          .createdTime(iroha::time::now())
                          .getSignatories("b@domain")
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -466,14 +474,15 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
                          .createdTime(iroha::time::now())
                          .getSignatories(creator)
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
   auto shared_response = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     auto resp_pubkey = *boost::apply_visitor(
-                            shared_model::interface::SpecifiedVisitor<
+                            framework::SpecifiedVisitor<
                                 shared_model::interface::SignatoriesResponse>(),
                             shared_response.get())
                             .keys()
@@ -484,7 +493,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
     /// valid
     ASSERT_FALSE(response.has_error_response());
     // check if fields in response are valid
-    ASSERT_EQ(*resp_pubkey, signatories.back());
+    ASSERT_EQ(resp_pubkey, signatories.back());
     ASSERT_EQ(model_query.hash(), shared_response.queryHash());
   });
 }
@@ -527,7 +536,8 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
                          .createdTime(iroha::time::now())
                          .getAccountTransactions(creator)
                          .build()
-                         .signAndAddSignature(pair);
+                         .signAndAddSignature(pair)
+                         .finish();
 
   auto stat = torii_utils::QuerySyncClient(ip, port).Find(
       model_query.getTransport(), response);
@@ -537,13 +547,13 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
     const auto &tx_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         resp.get());
 
     const auto &txs = tx_resp.transactions();
-    for (auto i = 0ul; i < txs.size(); i++) {
-      ASSERT_EQ(txs.at(i)->creatorAccountId(), account.accountId());
+    for (const auto &tx : txs) {
+      ASSERT_EQ(tx.creatorAccountId(), account.accountId());
     }
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });

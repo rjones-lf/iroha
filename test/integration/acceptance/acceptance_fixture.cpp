@@ -24,7 +24,7 @@ AcceptanceFixture::AcceptanceFixture()
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       checkStatelessInvalid([](auto &status) {
         ASSERT_NO_THROW(boost::apply_visitor(
-            shared_model::interface::SpecifiedVisitor<
+            framework::SpecifiedVisitor<
                 shared_model::interface::StatelessFailedTxResponse>(),
             status.get()));
       }) {}
@@ -38,7 +38,8 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
           key)
       .creatorAccountId(
           integration_framework::IntegrationTestFramework::kAdminId)
-      .createdTime(iroha::time::now());
+      .createdTime(iroha::time::now())
+      .quorum(1);
 }
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
@@ -59,7 +60,8 @@ shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
     const std::string &role_name, const std::vector<std::string> &perms) {
   return createUserWithPerms(kUser, kUserKeypair.publicKey(), role_name, perms)
       .build()
-      .signAndAddSignature(kAdminKeypair);
+      .signAndAddSignature(kAdminKeypair)
+      .finish();
 }
 
 shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
@@ -84,7 +86,7 @@ template auto AcceptanceFixture::base<TestUnsignedQueryBuilder>(
 
 auto AcceptanceFixture::baseTx()
     -> decltype(base(TestUnsignedTransactionBuilder())) {
-  return base(TestUnsignedTransactionBuilder());
+  return base(TestUnsignedTransactionBuilder()).quorum(1);
 }
 
 auto AcceptanceFixture::baseQry()
@@ -93,17 +95,22 @@ auto AcceptanceFixture::baseQry()
 }
 
 template <typename Builder>
-auto AcceptanceFixture::complete(Builder builder)
-    -> decltype(builder.build().signAndAddSignature(
-        std::declval<shared_model::crypto::Keypair>())) {
-  return builder.build().signAndAddSignature(kUserKeypair);
+auto AcceptanceFixture::complete(Builder builder) -> decltype(
+    builder.build()
+        .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+        .finish()) {
+  return builder.build().signAndAddSignature(kUserKeypair).finish();
 }
 
 template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
     TestUnsignedTransactionBuilder builder)
-    -> decltype(builder.build().signAndAddSignature(
-        std::declval<shared_model::crypto::Keypair>()));
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());
 template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
     TestUnsignedQueryBuilder builder)
-    -> decltype(builder.build().signAndAddSignature(
-        std::declval<shared_model::crypto::Keypair>()));
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());

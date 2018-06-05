@@ -24,7 +24,6 @@
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -55,16 +54,11 @@ namespace shared_model {
       const iroha::protocol::TransactionsResponse &transactionResponse_{
           proto_->transactions_response()};
 
-      const Lazy<interface::types::TransactionsCollectionType> transactions_{
-          [this] {
-            return boost::accumulate(
-                transactionResponse_.transactions(),
-                interface::types::TransactionsCollectionType{},
-                [](auto &&txs, const auto &tx) {
-                  txs.emplace_back(new Transaction(tx));
-                  return std::move(txs);
-                });
-          }};
+      const Lazy<std::vector<proto::Transaction>> transactions_{[this] {
+        return std::vector<proto::Transaction>(
+            transactionResponse_.transactions().begin(),
+            transactionResponse_.transactions().end());
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

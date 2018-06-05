@@ -72,7 +72,7 @@ TEST(QueryResponse, ErrorResponseLoad) {
         ASSERT_NO_THROW({
           ASSERT_EQ(i,
                     boost::apply_visitor(
-                        shared_model::interface::SpecifiedVisitor<
+                        framework::SpecifiedVisitor<
                             shared_model::interface::ErrorQueryResponse>(),
                         shared_response.get())
                         .get()

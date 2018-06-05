@@ -56,6 +56,7 @@ class TransportBuilderTest : public ::testing::Test {
   auto getBaseTransactionBuilder() {
     return TestUnsignedTransactionBuilder()
         .createdTime(created_time)
+        .quorum(quorum)
         .setAccountQuorum(account_id, quorum);
   }
 
@@ -63,14 +64,16 @@ class TransportBuilderTest : public ::testing::Test {
     return getBaseTransactionBuilder<shared_model::proto::TransactionBuilder>()
         .creatorAccountId(account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidTransaction() {
     return getBaseTransactionBuilder<TestTransactionBuilder>()
         .creatorAccountId(invalid_account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   //-------------------------------------Query-------------------------------------
@@ -86,14 +89,16 @@ class TransportBuilderTest : public ::testing::Test {
     return getBaseQueryBuilder<shared_model::proto::QueryBuilder>()
         .creatorAccountId(account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidQuery() {
     return getBaseQueryBuilder<TestUnsignedQueryBuilder>()
         .creatorAccountId(invalid_account_id)
         .build()
-        .signAndAddSignature(keypair);
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   //-------------------------------------Block-------------------------------------

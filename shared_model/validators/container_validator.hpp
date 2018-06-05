@@ -17,11 +17,11 @@
 
 #ifndef IROHA_CONTAINER_VALIDATOR_HPP
 #define IROHA_CONTAINER_VALIDATOR_HPP
+
 #include <boost/format.hpp>
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-837
@@ -30,7 +30,7 @@ namespace shared_model {
   namespace validation {
 
     /**
-     * Class that validates blocks and proposal common fieds
+     * Class that validates blocks and proposal common fields
      */
     template <typename Iface,
               typename FieldValidator,
@@ -51,7 +51,7 @@ namespace shared_model {
           const interface::types::TransactionsCollectionType &transactions)
           const {
         for (const auto &tx : transactions) {
-          validateTransaction(reason, *tx);
+          validateTransaction(reason, tx);
         }
       }
 

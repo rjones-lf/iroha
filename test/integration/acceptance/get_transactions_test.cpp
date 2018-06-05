@@ -86,10 +86,10 @@ TEST_F(GetTransactions, HaveGetAllTx) {
   auto check = [&dummy_tx](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
-          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+      ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
   };
 
@@ -113,10 +113,10 @@ TEST_F(GetTransactions, HaveGetMyTx) {
   auto check = [&dummy_tx](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
-          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
-      ASSERT_EQ(*resp.transactions()[0].operator->(), dummy_tx);
+      ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
   };
 
@@ -150,7 +150,8 @@ TEST_F(GetTransactions, InvalidSignatures) {
                    .getTransactions(std::vector<crypto::Hash>{dummy_tx.hash()})
                    .build()
                    .signAndAddSignature(
-                       crypto::DefaultCryptoAlgorithmType::generateKeypair());
+                       crypto::DefaultCryptoAlgorithmType::generateKeypair())
+                   .finish();
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -169,7 +170,7 @@ TEST_F(GetTransactions, NonexistentHash) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
-          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 0);
     });
@@ -193,7 +194,7 @@ TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
-          interface::SpecifiedVisitor<interface::TransactionsResponse>(),
+          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 0);
     });

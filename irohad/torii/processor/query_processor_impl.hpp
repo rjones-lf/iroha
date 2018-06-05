@@ -58,6 +58,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponse>>
           subject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
+      std::mutex notifier_mutex_;
     };
   }  // namespace torii
 }  // namespace iroha

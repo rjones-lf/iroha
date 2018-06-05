@@ -34,7 +34,7 @@ class MstPipelineTest : public AcceptanceFixture {
    */
   template <typename TxBuilder>
   auto signTx(TxBuilder tx, const crypto::Keypair &key) const {
-    return tx.build().signAndAddSignature(key);
+    return tx.build().signAndAddSignature(key).finish();
   }
 
   /**
@@ -57,7 +57,7 @@ class MstPipelineTest : public AcceptanceFixture {
       tx = tx.addSignatory(kUserId, signatories[i].publicKey());
     }
 
-    return tx.build().signAndAddSignature(kAdminKeypair);
+    return tx.build().signAndAddSignature(kAdminKeypair).finish();
   }
 
   const std::string kNewRole = "rl"s;
@@ -76,7 +76,7 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
       baseTx().setAccountQuorum(kUserId, kSignatories).quorum(kSignatories + 1);
   auto user_tx = makeMstUser();
 
-  IntegrationTestFramework(1, [](auto &i) { i.done(); }, true)
+  IntegrationTestFramework(1, {}, [](auto &i) { i.done(); }, true)
       .setInitialState(kAdminKeypair)
       .sendTx(user_tx)
       .skipBlock()

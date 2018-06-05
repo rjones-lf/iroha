@@ -38,7 +38,6 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
@@ -50,9 +49,9 @@ namespace shared_model {
      */
     class Command : public ModelPrimitive<Command> {
      private:
-      /// PolymorphicWrapper shortcut type
+      /// const reference shortcut type
       template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using wrap = boost::variant<const Value &...>;
 
      public:
       /// Type of variant, that handle concrete command
@@ -83,13 +82,9 @@ namespace shared_model {
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return boost::apply_visitor(detail::ToStringVisitor(), get());
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return this->get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
 
   }  // namespace interface
