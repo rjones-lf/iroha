@@ -3,7 +3,6 @@ FROM ubuntu:16.04
 # number of concurrent threads during build
 # usage: docker build --build-arg PARALLELISM=8 -t name/name .
 ARG PARALLELISM=1
-
 ARG CMAKE_BUILD_TYPE=Release
 
 ENV IROHA_HOME /opt/iroha
@@ -12,6 +11,7 @@ ENV IROHA_BUILD /opt/iroha/build
 RUN apt-get update && \
     apt-get -y --no-install-recommends install apt-utils software-properties-common; \
     apt-get -y clean
+
 
 # add git repository
 RUN add-apt-repository -y ppa:git-core/ppa && \
@@ -212,6 +212,16 @@ RUN set -e; \
     ldconfig; \
     rm -rf /tmp/tbb
 
+# install sonar cli
+ENV SONAR_CLI_VERSION=3.0.3.778
+RUN set -e; \
+    mkdir -p /opt/sonar; \
+    curl -L -o /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
+    unzip -o -d /tmp/sonar-scanner /tmp/sonar.zip; \
+    mv /tmp/sonar-scanner/sonar-scanner-${SONAR_CLI_VERSION}-linux /opt/sonar/scanner; \
+    ln -s -f /opt/sonar/scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner; \
+    rm -rf /tmp/sonar*
+
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
@@ -225,6 +235,40 @@ RUN set -e; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
+
+# fetch lcov reports converter
+RUN set -e; \
+    curl -L -o /tmp/lcov_cobertura.py https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/8c55cd11f80a21e7e46f20f8c81fcde0bf11f5e5/lcov_cobertura/lcov_cobertura.py
+
+RUN set -e; \
+    add-apt-repository -y ppa:webupd8team/java; \
+    apt-get update; \
+    echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections; \
+    apt-get -y install oracle-java8-installer; \
+    java -version
+
+# Build SWIG
+RUN set -e; \
+    curl -L -o /tmp/swig-3.0.12.tar.gz https://github.com/swig/swig/archive/rel-3.0.12.tar.gz; \
+    tar -C /tmp -zxf /tmp/swig-3.0.12.tar.gz; \
+    cd /tmp/swig-rel-3.0.12; \
+    ./autogen.sh && ./configure && make -j${PARALLELISM}; \
+    make install; \
+    rm -rf /tmp/swig-rel-3.0.12
+
+RUN set -e; \
+    add-apt-repository -y ppa:jonathonf/python-3.6; \
+    apt-get update; \
+    apt-get -y install python3.6-dev
+
+# python bindings dependencies
+RUN set -e; \
+    pip install grpcio_tools; \
+    pip3 install grpcio_tools
+
+# install lcov
+RUN set -e; \
+    curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
 
 # non-interactive adduser
 #   -m = create home dir
