@@ -20,9 +20,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
-#include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -36,25 +33,9 @@ namespace shared_model {
        */
       virtual const AccountAsset &accountAsset() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AccountAssetResponse")
-            .append(accountAsset().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right-hand side of AccountAssetResponse object
-       * @return true if they are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return accountAsset() == rhs.accountAsset();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

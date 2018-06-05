@@ -20,7 +20,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -34,23 +33,9 @@ namespace shared_model {
        */
       virtual types::TransactionsCollectionType transactions() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("TransactionsResponse")
-            .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * @return true if the data are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return transactions() == rhs.transactions();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

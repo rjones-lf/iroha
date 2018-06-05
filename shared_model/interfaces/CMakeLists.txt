@@ -31,6 +31,16 @@ add_library(shared_model_interfaces
     commands/impl/set_quorum.cpp
     commands/impl/subtract_asset_quantity.cpp
     commands/impl/transfer_asset.cpp
+    query_responses/impl/account_asset_response.cpp
+    query_responses/impl/account_detail_response.cpp
+    query_responses/impl/account_response.cpp
+    query_responses/impl/asset_response.cpp
+    query_responses/impl/error_query_response.cpp
+    query_responses/impl/query_response.cpp
+    query_responses/impl/role_permissions.cpp
+    query_responses/impl/roles_response.cpp
+    query_responses/impl/signatories_response.cpp
+    query_responses/impl/transactions_response.cpp
     iroha_internal/block_variant.cpp
     )
 
