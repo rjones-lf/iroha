@@ -32,9 +32,6 @@ namespace shared_model {
                                iroha::protocol::BlockQueryResponse,
                                BlockQueryResponse> {
      private:
-      template <typename... Value>
-      using w = boost::variant<const Value &...>;
-
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
@@ -43,7 +40,7 @@ namespace shared_model {
      public:
       /// type of proto variant
       using ProtoQueryResponseVariantType =
-          w<BlockResponse, BlockErrorResponse>;
+          boost::variant<BlockResponse, BlockErrorResponse>;
 
       template <typename QueryResponseType>
       explicit BlockQueryResponse(QueryResponseType &&queryResponse)
@@ -60,16 +57,14 @@ namespace shared_model {
       }
 
      private:
-      const LazyVariantType variant_{[this] {
+      const Lazy<ProtoQueryResponseVariantType> variant_{[this]() {
         auto &&ar = *proto_;
-
         int which =
             ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
         return shared_model::detail::
             variant_impl<ProtoQueryResponseVariantType::types>::template load<
-                shared_model::interface::BlockQueryResponse::
-                    QueryResponseVariantType>(std::forward<decltype(ar)>(ar),
-                                              which);
+                ProtoQueryResponseVariantType>(std::forward<decltype(ar)>(ar),
+                                               which);
       }};
 
       const Lazy<QueryResponseVariantType> ivariant_{
