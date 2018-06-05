@@ -18,7 +18,6 @@
 #include "framework/config_helper.hpp"
 
 #include <sstream>
-#include "logger/logger.hpp"
 
 namespace integration_framework {
 
