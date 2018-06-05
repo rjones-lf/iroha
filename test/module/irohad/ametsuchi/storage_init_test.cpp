@@ -65,7 +65,7 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
  */
 TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt =
-      "host=localhost port=5432 users=nonexistinguser dbname=test";
+      "host=localhost port=5432 users=nonexistinguser dbname=testt";
   StorageImpl::create(block_store_path, pg_opt)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
