@@ -21,26 +21,21 @@ namespace shared_model {
                                BlockResponse> {
      public:
       template <typename QueryResponseType>
-      explicit BlockResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit BlockResponse(QueryResponseType &&queryResponse);
 
-      BlockResponse(const BlockResponse &o) : BlockResponse(o.proto_) {}
+      BlockResponse(const BlockResponse &o);
 
-      BlockResponse(BlockResponse &&o) : BlockResponse(std::move(o.proto_)) {}
+      BlockResponse(BlockResponse &&o);
 
-      const Block &block() const override {
-        return *block_;
-      }
+      const Block &block() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::BlockResponse &blockResponse_{
-          proto_->block_response()};
+      const iroha::protocol::BlockResponse block_response_;
 
-      const Lazy<Block> block_{
-          [this] { return Block(blockResponse_.block()); }};
+      const Lazy<Block> block_;
     };
   }  // namespace proto
 }  // namespace shared_model

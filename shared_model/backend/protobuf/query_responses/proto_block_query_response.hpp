@@ -16,15 +16,6 @@
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
 
-template <typename... T, typename Archive>
-auto loadBlockQueryResponse(Archive &&ar) {
-  int which =
-      ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
-  return shared_model::detail::variant_impl<T...>::template load<
-      shared_model::interface::BlockQueryResponse::QueryResponseVariantType>(
-      std::forward<Archive>(ar), which);
-}
-
 namespace shared_model {
   namespace proto {
     class BlockQueryResponse final
@@ -36,40 +27,23 @@ namespace shared_model {
       using Lazy = detail::LazyInitializer<T>;
 
       using LazyVariantType = Lazy<QueryResponseVariantType>;
-
-     public:
       /// type of proto variant
       using ProtoQueryResponseVariantType =
           boost::variant<BlockResponse, BlockErrorResponse>;
 
+     public:
       template <typename QueryResponseType>
-      explicit BlockQueryResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit BlockQueryResponse(QueryResponseType &&queryResponse);
 
-      BlockQueryResponse(const BlockQueryResponse &o)
-          : BlockQueryResponse(o.proto_) {}
+      BlockQueryResponse(const BlockQueryResponse &o);
 
-      BlockQueryResponse(BlockQueryResponse &&o) noexcept
-          : BlockQueryResponse(std::move(o.proto_)) {}
+      BlockQueryResponse(BlockQueryResponse &&o) noexcept;
 
-      const QueryResponseVariantType &get() const override {
-        return *ivariant_;
-      }
+      const QueryResponseVariantType &get() const override;
 
      private:
-      const Lazy<ProtoQueryResponseVariantType> variant_{[this]() {
-        auto &&ar = *proto_;
-        int which =
-            ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
-        return shared_model::detail::
-            variant_impl<ProtoQueryResponseVariantType::types>::template load<
-                ProtoQueryResponseVariantType>(std::forward<decltype(ar)>(ar),
-                                               which);
-      }};
-
-      const Lazy<QueryResponseVariantType> ivariant_{
-          detail::makeLazyInitializer(
-              [this] { return QueryResponseVariantType(*variant_); })};
+      const Lazy<ProtoQueryResponseVariantType> variant_;
+      const Lazy<QueryResponseVariantType> ivariant_;
     };
   }  // namespace proto
 }  // namespace shared_model
