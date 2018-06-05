@@ -98,7 +98,7 @@ RUN set -e; \
 
 # install grpc 1.11.0
 RUN set -e; \
-    export LD_LIBRARY_PATH=/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH; \
+    export LD_LIBRARY_PATH="/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH"; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bd44e485f69d70ca4095cea92decd98de3892aa6); \
     cmake \
@@ -189,7 +189,7 @@ RUN set -e; \
 
 # install pqxx
 RUN set -e; \
-    export PATH=/opt/dependencies/libpq/bin:$PATH; \
+    export PATH="/opt/dependencies/libpq/bin:$PATH"; \
     git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
     (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
     curl -L -o /tmp/libpqxx/config/config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
