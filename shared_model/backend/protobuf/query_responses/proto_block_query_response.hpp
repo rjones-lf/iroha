@@ -45,9 +45,6 @@ namespace shared_model {
       using ProtoQueryResponseVariantType =
           w<BlockResponse, BlockErrorResponse>;
 
-      /// list of types in variant
-      using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;
-
       template <typename QueryResponseType>
       explicit BlockQueryResponse(QueryResponseType &&queryResponse)
           : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
@@ -59,13 +56,25 @@ namespace shared_model {
           : BlockQueryResponse(std::move(o.proto_)) {}
 
       const QueryResponseVariantType &get() const override {
-        return *variant_;
+        return *ivariant_;
       }
 
      private:
       const LazyVariantType variant_{[this] {
-        return loadBlockQueryResponse<ProtoQueryResponseListType>(*proto_);
+        auto &&ar = *proto_;
+
+        int which =
+            ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
+        return shared_model::detail::
+            variant_impl<ProtoQueryResponseVariantType::types>::template load<
+                shared_model::interface::BlockQueryResponse::
+                    QueryResponseVariantType>(std::forward<decltype(ar)>(ar),
+                                              which);
       }};
+
+      const Lazy<QueryResponseVariantType> ivariant_{
+          detail::makeLazyInitializer(
+              [this] { return QueryResponseVariantType(*variant_); })};
     };
   }  // namespace proto
 }  // namespace shared_model
