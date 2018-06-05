@@ -242,11 +242,11 @@ Transaction status set
 ^^^^^^^^^^^^^^^^^^^^^^
 
  - NOT_RECEIVED: requested peer does not have this transaction.
+ - MST_EXPIRED: this transactions is a part of MST pipeline and has expired.
  - STATELESS_VALIDATION_FAILED: the transaction was formed with some fields, not meeting stateless validation constraints. This status is returned to a client, who formed transaction, right after the transaction was sent. It would also return the reason — what rule was violated.
  - STATELESS_VALIDATION_SUCCESS: the transaction has successfully passed stateless validation. This status is returned to a client, who formed transaction, right after the transaction was sent.
  - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
  - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
- - IN_PROGRESS: the transaction was received, but not yet processed by stateless validator.
  - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
 
 Validator
