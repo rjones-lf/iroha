@@ -23,7 +23,6 @@
 #include "interfaces/query_responses/error_query_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/variant_deserializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -49,18 +48,13 @@ namespace shared_model {
           ProtoQueryErrorResponseVariantType::types;
 
       template <typename QueryResponseType>
-      explicit ErrorQueryResponse(QueryResponseType &&response)
-          : CopyableProto(std::forward<QueryResponseType>(response)) {}
+      explicit ErrorQueryResponse(QueryResponseType &&response);
 
-      ErrorQueryResponse(const ErrorQueryResponse &o)
-          : ErrorQueryResponse(o.proto_) {}
+      ErrorQueryResponse(const ErrorQueryResponse &o);
 
-      ErrorQueryResponse(ErrorQueryResponse &&o) noexcept
-          : ErrorQueryResponse(std::move(o.proto_)) {}
+      ErrorQueryResponse(ErrorQueryResponse &&o) noexcept;
 
-      const QueryErrorResponseVariantType &get() const override {
-        return *ivariant_;
-      }
+      const QueryErrorResponseVariantType &get() const override;
 
      private:
       /// lazy variant shortcut
@@ -69,23 +63,9 @@ namespace shared_model {
 
       using LazyVariantType = Lazy<ProtoQueryErrorResponseVariantType>;
 
-      const LazyVariantType variant_{[this] {
-        auto &&ar = proto_->error_response();
+      const LazyVariantType variant_;
 
-        unsigned which = ar.GetDescriptor()
-                             ->FindFieldByName("reason")
-                             ->enum_type()
-                             ->FindValueByNumber(ar.reason())
-                             ->index();
-        return shared_model::detail::
-            variant_impl<ProtoQueryErrorResponseListType>::template load<
-                ProtoQueryErrorResponseVariantType>(
-                std::forward<decltype(ar)>(ar), which);
-      }};
-
-      const Lazy<QueryErrorResponseVariantType> ivariant_{
-          detail::makeLazyInitializer(
-              [this] { return QueryErrorResponseVariantType(*variant_); })};
+      const Lazy<QueryErrorResponseVariantType> ivariant_;
     };
   }  // namespace proto
 }  // namespace shared_model

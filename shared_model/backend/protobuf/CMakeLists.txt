@@ -17,6 +17,16 @@ add_library(shared_model_proto_backend
     commands/impl/proto_set_quorum.cpp
     commands/impl/proto_subtract_asset_quantity.cpp
     commands/impl/proto_transfer_asset.cpp
+    query_responses/impl/proto_account_asset_response.cpp
+    query_responses/impl/proto_account_detail_response.cpp
+    query_responses/impl/proto_account_response.cpp
+    query_responses/impl/proto_asset_response.cpp
+    query_responses/impl/proto_error_query_response.cpp
+    query_responses/impl/proto_query_response.cpp
+    query_responses/impl/proto_role_permissions_response.cpp
+    query_responses/impl/proto_roles_response.cpp
+    query_responses/impl/proto_signatories_response.cpp
+    query_responses/impl/proto_transaction_response.cpp
     )
 
 target_link_libraries(shared_model_proto_backend

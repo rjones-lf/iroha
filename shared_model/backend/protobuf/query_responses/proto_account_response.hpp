@@ -34,41 +34,25 @@ namespace shared_model {
                                AccountResponse> {
      public:
       template <typename QueryResponseType>
-      explicit AccountResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit AccountResponse(QueryResponseType &&queryResponse);
 
-      AccountResponse(const AccountResponse &o) : AccountResponse(o.proto_) {}
+      AccountResponse(const AccountResponse &o);
 
-      AccountResponse(AccountResponse &&o)
-          : AccountResponse(std::move(o.proto_)) {}
+      AccountResponse(AccountResponse &&o);
 
-      const interface::Account &account() const override {
-        return *account_;
-      }
+      const interface::Account &account() const override;
 
-      const AccountRolesIdType &roles() const override {
-        return *accountRoles_;
-      }
+      const AccountRolesIdType &roles() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AccountResponse &accountResponse_{
-          proto_->account_response()};
+      const iroha::protocol::AccountResponse &accountResponse_;
 
-      const Lazy<AccountRolesIdType> accountRoles_{[this] {
-        return boost::accumulate(
-            accountResponse_.account_roles(),
-            AccountRolesIdType{},
-            [](auto &&roles, const auto &role) {
-              roles.push_back(interface::types::RoleIdType(role));
-              return std::move(roles);
-            });
-      }};
+      const Lazy<AccountRolesIdType> accountRoles_;
 
-      const Lazy<shared_model::proto::Account> account_{
-          [this] { return Account(accountResponse_.account()); }};
+      const Lazy<shared_model::proto::Account> account_;
     };
   }  // namespace proto
 }  // namespace shared_model

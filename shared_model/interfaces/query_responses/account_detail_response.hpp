@@ -19,6 +19,7 @@
 #define IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 
 #include "interfaces/base/model_primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -27,11 +28,10 @@ namespace shared_model {
      */
     class AccountDetailResponse : public ModelPrimitive<AccountDetailResponse> {
      public:
-      using DetailType = std::string;
       /**
        * @return Account has Asset model
        */
-      virtual const DetailType &detail() const = 0;
+      virtual const types::DetailType &detail() const = 0;
 
       std::string toString() const override;
 

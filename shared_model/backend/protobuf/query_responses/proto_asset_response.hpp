@@ -32,26 +32,21 @@ namespace shared_model {
                                AssetResponse> {
      public:
       template <typename QueryResponseType>
-      explicit AssetResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit AssetResponse(QueryResponseType &&queryResponse);
 
-      AssetResponse(const AssetResponse &o) : AssetResponse(o.proto_) {}
+      AssetResponse(const AssetResponse &o);
 
-      AssetResponse(AssetResponse &&o) : AssetResponse(std::move(o.proto_)) {}
+      AssetResponse(AssetResponse &&o);
 
-      const Asset &asset() const override {
-        return *asset_;
-      }
+      const Asset &asset() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AssetResponse &assetResponse_{
-          proto_->asset_response()};
+      const iroha::protocol::AssetResponse &assetResponse_;
 
-      const Lazy<Asset> asset_{
-          [this] { return Asset(assetResponse_.asset()); }};
+      const Lazy<Asset> asset_;
     };
   }  // namespace proto
 }  // namespace shared_model
