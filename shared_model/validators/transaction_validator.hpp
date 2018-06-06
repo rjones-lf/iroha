@@ -117,9 +117,8 @@ namespace shared_model {
         ReasonsGroupType reason;
         addInvalidCommand(reason, "CreateRole");
 
-        auto tmp = proto::permissions::toString(cr.rolePermissions());
         validator_.validateRoleId(reason, cr.roleName());
-        validator_.validatePermissions(reason, {tmp.begin(), tmp.end()});
+        validator_.validateRolePermissions(reason, cr.rolePermissions());
 
         return reason;
       }
@@ -139,8 +138,7 @@ namespace shared_model {
         addInvalidCommand(reason, "GrantPermission");
 
         validator_.validateAccountId(reason, gp.accountId());
-        validator_.validatePermission(
-            reason, proto::permissions::toString(gp.permissionName()));
+        validator_.validateGrantablePermission(reason, gp.permissionName());
 
         return reason;
       }
@@ -159,8 +157,7 @@ namespace shared_model {
         addInvalidCommand(reason, "RevokePermission");
 
         validator_.validateAccountId(reason, rp.accountId());
-        validator_.validatePermission(
-            reason, proto::permissions::toString(rp.permissionName()));
+        validator_.validateGrantablePermission(reason, rp.permissionName());
 
         return reason;
       }

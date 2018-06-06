@@ -6,15 +6,14 @@
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
 
 class CreateAccount : public AcceptanceFixture {
  public:
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             shared_model::permissions::can_create_account}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kCreateAccount}) {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
@@ -50,7 +49,7 @@ TEST_F(CreateAccount, Basic) {
 TEST_F(CreateAccount, NoPermissions) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(

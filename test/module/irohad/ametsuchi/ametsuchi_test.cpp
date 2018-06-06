@@ -29,10 +29,10 @@
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "validators/permissions.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
+using namespace shared_model::interface::permissions;
 
 auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
@@ -196,24 +196,20 @@ TEST_F(AmetsuchiTest, SampleTest) {
   std::string account, src_account, dest_account, asset;
 
   // Block 1
-  // TODO: 26/04/2018 x3medima17 replace string permissions IR-999
-  auto block1 =
-      TestBlockBuilder()
-          .transactions(std::vector<shared_model::proto::Transaction>(
-              {TestTransactionBuilder()
-                   .creatorAccountId("admin1")
-                   .createRole(
-                       "user",
-                       shared_model::interface::types::PermissionSetType{
-                           shared_model::permissions::can_add_peer,
-                           shared_model::permissions::can_create_asset,
-                           shared_model::permissions::can_get_my_account})
-                   .createDomain(domain, "user")
-                   .createAccount(user1name, domain, fake_pubkey)
-                   .build()}))
-          .height(1)
-          .prevHash(fake_hash)
-          .build();
+  auto block1 = TestBlockBuilder()
+                    .transactions(std::vector<shared_model::proto::Transaction>(
+                        {TestTransactionBuilder()
+                             .creatorAccountId("admin1")
+                             .createRole("user",
+                                         {Role::kAddPeer,
+                                          Role::kCreateAsset,
+                                          Role::kGetMyAccount})
+                             .createDomain(domain, "user")
+                             .createAccount(user1name, domain, fake_pubkey)
+                             .build()}))
+                    .height(1)
+                    .prevHash(fake_hash)
+                    .build();
 
   apply(storage, block1);
 
@@ -302,10 +298,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
       TestTransactionBuilder()
           .creatorAccountId(admin)
           .createRole("user",
-                      std::set<std::string>{
-                          shared_model::permissions::can_add_peer,
-                          shared_model::permissions::can_create_asset,
-                          shared_model::permissions::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain(domain, "user")
           .createAccount(user1name, domain, fake_pubkey)
           .createAccount(user2name, domain, fake_pubkey)
@@ -423,10 +416,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
       TestTransactionBuilder()
           .creatorAccountId("adminone")
           .createRole("user",
-                      std::set<std::string>{
-                          shared_model::permissions::can_add_peer,
-                          shared_model::permissions::can_create_asset,
-                          shared_model::permissions::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -713,10 +703,7 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("user",
-                      std::set<std::string>{
-                          shared_model::permissions::can_add_peer,
-                          shared_model::permissions::can_create_asset,
-                          shared_model::permissions::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -725,10 +712,7 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("usertwo",
-                      std::set<std::string>{
-                          shared_model::permissions::can_add_peer,
-                          shared_model::permissions::can_create_asset,
-                          shared_model::permissions::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domaintwo", "user")
           .build();
 
@@ -878,25 +862,23 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   // initialize storage with genesis block
   std::string default_domain = "test";
   std::string default_role = "admin";
-  auto genesis_tx =
-      shared_model::proto::TransactionBuilder()
-          .creatorAccountId("admin@test")
-          .createdTime(iroha::time::now())
-          .quorum(1)
-          .createRole(default_role,
-                      std::vector<std::string>{
-                          shared_model::permissions::can_create_domain,
-                          shared_model::permissions::can_create_account,
-                          shared_model::permissions::can_add_asset_qty,
-                          shared_model::permissions::can_add_peer,
-                          shared_model::permissions::can_receive,
-                          shared_model::permissions::can_transfer})
-          .createDomain(default_domain, default_role)
-          .build()
-          .signAndAddSignature(
-              shared_model::crypto::DefaultCryptoAlgorithmType::
-                  generateKeypair())
-          .finish();
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole(default_role,
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain(default_domain, default_role)
+                        .build()
+                        .signAndAddSignature(
+                            shared_model::crypto::DefaultCryptoAlgorithmType::
+                                generateKeypair())
+                        .finish();
 
   auto genesis_block =
       TestBlockBuilder()

@@ -19,7 +19,6 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "validators/permissions.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -43,13 +42,12 @@ class MstPipelineTest : public AcceptanceFixture {
    * @return built tx and a hash of its payload
    */
   auto makeMstUser(size_t sigs = kSignatories) {
-    auto tx =
-        createUserWithPerms(kUser,
-                            kUserKeypair.publicKey(),
-                            kNewRole,
-                            std::vector<std::string>{
-                                shared_model::permissions::can_add_asset_qty})
-            .setAccountQuorum(kUserId, sigs + 1);
+    auto tx = createUserWithPerms(
+                  kUser,
+                  kUserKeypair.publicKey(),
+                  kNewRole,
+                  {shared_model::interface::permissions::Role::kAddAssetQty})
+                  .setAccountQuorum(kUserId, sigs + 1);
 
     for (size_t i = 0; i < sigs; ++i) {
       signatories.emplace_back(

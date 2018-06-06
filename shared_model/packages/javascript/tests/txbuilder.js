@@ -9,7 +9,7 @@ const assetId = 'coin#test'
 const testAccountId = 'test@test'
 
 test('ModelTransactionBuilder tests', function (t) {
-  t.plan(136)
+  t.plan(133)
 
   let crypto = new iroha.ModelCrypto()
   let keypair = crypto.convertFromExisting(publicKey, privateKey)
@@ -123,19 +123,16 @@ test('ModelTransactionBuilder tests', function (t) {
   t.throws(() => correctTx.createRole(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.createRole(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
 
-  let sv = new iroha.StringVector()
-  sv.add('can_add_peer')
-  sv.add('can_read_assets')
-  let emptySv = new iroha.StringVector()
-  let invalidPermissionSv = new iroha.StringVector()
-  invalidPermissionSv.add('wrong_permission')
+  let emptyPerm = new iroha.RolePermissionSet()
+  let validPermissions = new iroha.RolePermissionSet()
+  validPermissions.set(iroha.Role_kAddPeer)
+  validPermissions.set(iroha.Role_kAddAssetQty)
 
-  t.throws(() => correctTx.createRole('new_user_role', emptySv).build(), /Permission set should contain at least one permission/, 'Should throw Permission set should contain at least one permission')
-  t.throws(() => correctTx.createRole('new_user_role', invalidPermissionSv).build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
-  t.throws(() => correctTx.createRole('', sv).build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
-  t.throws(() => correctTx.createRole('@@@', sv).build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
-  t.throws(() => correctTx.createRole('new_user_role', '').build(), /argument 3 of type 'std::vector< shared_model::interface::types::PermissionNameType >/, 'Should throw ...argument 3 of type...')
-  t.doesNotThrow(() => correctTx.createRole('new_user_role', sv).build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctTx.createRole('new_user_role', emptyPerm).build(), /Permission set should contain at least one permission/, 'Should throw Permission set should contain at least one permission')
+  t.throws(() => correctTx.createRole('', validPermissions).build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
+  t.throws(() => correctTx.createRole('@@@', validPermissions).build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
+  t.throws(() => correctTx.createRole('new_user_role', '').build(), /argument 3 of type 'shared_model::interface::RolePermissionSet/, 'Should throw ...argument 3 of type...')
+  t.doesNotThrow(() => correctTx.createRole('new_user_role', validPermissions).build(), null, 'Should not throw any exceptions')
 
   // detachRole() tests
   t.comment('Testing detachRole()')
@@ -151,21 +148,19 @@ test('ModelTransactionBuilder tests', function (t) {
   t.comment('Testing grantPermission()')
   t.throws(() => correctTx.grantPermission(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.grantPermission(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.grantPermission('', 'can_read_assets').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.grantPermission('@@@', 'can_read_assets').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.grantPermission(adminAccountId, '').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
-  t.throws(() => correctTx.grantPermission(adminAccountId, '@@@').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
-  t.doesNotThrow(() => correctTx.grantPermission(adminAccountId, 'can_read_assets').build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctTx.grantPermission('', iroha.Grantable_kSetMyQuorum).build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.grantPermission('@@@', iroha.Grantable_kSetMyQuorum).build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.grantPermission(adminAccountId, '').build(), /argument 3 of type 'shared_model::interface::permissions::Grantable/, 'Should throw ...argument 3 of type...')
+  t.doesNotThrow(() => correctTx.grantPermission(adminAccountId, iroha.Grantable_kSetMyQuorum).build(), null, 'Should not throw any exceptions')
 
   // revokePermission() tests
   t.comment('Testing revokePermission()')
   t.throws(() => correctTx.revokePermission(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.revokePermission(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.revokePermission('', 'can_read_assets').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.revokePermission('@@@', 'can_read_assets').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.revokePermission(adminAccountId, '').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
-  t.throws(() => correctTx.revokePermission(adminAccountId, '@@@').build(), /Provided permission does not exist/, 'Should throw Provided permission does not exist')
-  t.doesNotThrow(() => correctTx.revokePermission(adminAccountId, 'can_read_assets').build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctTx.revokePermission('', iroha.Grantable_kSetMyQuorum).build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.revokePermission('@@@', iroha.Grantable_kSetMyQuorum).build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
+  t.throws(() => correctTx.revokePermission(adminAccountId, '').build(), /argument 3 of type 'shared_model::interface::permissions::Grantable/, 'Should throw ...argument 3 of type...')
+  t.doesNotThrow(() => correctTx.revokePermission(adminAccountId, iroha.Grantable_kSetMyQuorum).build(), null, 'Should not throw any exceptions')
 
   // setAccountDetail() tests
   t.comment('Testing setAccountDetail()')

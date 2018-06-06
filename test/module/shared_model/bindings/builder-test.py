@@ -522,50 +522,18 @@ class BuilderTest(unittest.TestCase):
   # ====================== CreateRole Tests ======================
 
   def test_create_role(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("can_get_roles")
-    self.assertTrue(permissions.size() == 2)
-
     for name in VALID_NAMES_1:
-      tx = self.builder.createRole(name, permissions).build()
+      tx = self.builder.createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
       self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_create_role_with_invalid_name(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("can_get_roles")
-
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().createRole(name, permissions).build()
+        self.base().createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
 
   def test_create_role_with_empty_permissions(self):
-    permissions = iroha.StringVector()
-    self.assertTrue(permissions.size() == 0)
-
     with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
-
-  # TODO igor-egorov, 11.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_create_role_wrong_permissions(self):
-    permissions = iroha.StringVector()
-    permissions.append("wrong_permission")
-    permissions.append("can_receive")
-
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
-
-  # TODO igor-egorov, 11.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_create_role_wrong_permissions_2(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("wrong_permission")
-
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
+      self.base().createRole("user", iroha.RolePermissionSet([])).build()
 
   # ====================== DetachRole Tests ======================
 
@@ -599,70 +567,44 @@ class BuilderTest(unittest.TestCase):
   def test_grant_permission(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.grantPermission("{}@{}".format(name, domain), "can_set_my_quorum").build()
+        tx = self.builder.grantPermission("{}@{}".format(name, domain), iroha.Grantable_kSetMyQuorum).build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_grant_permission_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().grantPermission("", "can_set_my_quorum").build()
+      self.base().grantPermission("", iroha.Grantable_kSetMyQuorum).build()
 
   def test_grant_permission_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().grantPermission("{}@test".format(name), "can_set_my_quorum").build()
+        self.base().grantPermission("{}@test".format(name), iroha.Grantable_kSetMyQuorum).build()
 
   def test_grant_permission_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().grantPermission("admin@{}".format(domain), "can_set_my_quorum").build()
-
-  # TODO @bakhtin, 30.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_grant_permission_with_invalid_name(self):
-    permissions = [
-      "",
-      "random",
-      "can_read_assets"  # non-grantable permission
-    ]
-
-    for perm in permissions:
-      with self.assertRaises(ValueError):
-        self.base().grantPermission("admin@test", perm).build()
+        self.base().grantPermission("admin@{}".format(domain), iroha.Grantable_kSetMyQuorum).build()
 
   # ====================== RevokePermission Tests ======================
 
   def test_revoke_permission(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.revokePermission("{}@{}".format(name, domain), "can_set_my_quorum").build()
+        tx = self.builder.revokePermission("{}@{}".format(name, domain), iroha.Grantable_kSetMyQuorum).build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_revoke_permission_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().revokePermission("{}@test".format(name), "can_set_my_quorum").build()
+        self.base().revokePermission("{}@test".format(name), iroha.Grantable_kSetMyQuorum).build()
 
   def test_revoke_permission_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().revokePermission("admin@{}".format(domain), "can_set_my_quorum").build()
+        self.base().revokePermission("admin@{}".format(domain), iroha.Grantable_kSetMyQuorum).build()
 
   def test_revoke_permission_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().revokePermission("", "can_set_my_quorum").build()
-
-  # TODO @bakhtin, 30.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_revoke_permission_with_invalid_name(self):
-    permissions = [
-      "",
-      "random",
-      "can_read_assets"  # non-grantable permission
-    ]
-
-    for perm in permissions:
-      with self.assertRaises(ValueError):
-        self.base().revokePermission("admin@test", perm).build()
+      self.base().revokePermission("", iroha.Grantable_kSetMyQuorum).build()
 
   # ====================== SubtractAssetQuantity Tests ======================
 

@@ -10,7 +10,6 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
@@ -22,10 +21,8 @@ class HeavyTransactionTest : public AcceptanceFixture {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeUserWithPerms(
-      const std::vector<std::string> &perms = {
-          shared_model::permissions::role_perm_group.begin(),
-          shared_model::permissions::role_perm_group.end()}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kSetDetail}) {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 

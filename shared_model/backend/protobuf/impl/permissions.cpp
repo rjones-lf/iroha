@@ -9,10 +9,6 @@ namespace shared_model {
   namespace proto {
     namespace permissions {
 
-      bool isValid(iroha::protocol::RolePermission perm) noexcept {
-        return iroha::protocol::RolePermission_IsValid(perm);
-      }
-
       interface::permissions::Role fromTransport(
           iroha::protocol::RolePermission perm) noexcept {
         return static_cast<interface::permissions::Role>(perm);
@@ -25,10 +21,6 @@ namespace shared_model {
 
       std::string toString(interface::permissions::Role r) {
         return iroha::protocol::RolePermission_Name(toTransport(r));
-      }
-
-      bool isValid(iroha::protocol::GrantablePermission perm) noexcept {
-        return iroha::protocol::GrantablePermission_IsValid(perm);
       }
 
       interface::permissions::Grantable fromTransport(

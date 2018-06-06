@@ -11,7 +11,6 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "utils/query_error_response_visitor.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
@@ -25,7 +24,7 @@ class TransferAsset : public AcceptanceFixture {
    */
   auto makeUserWithPerms(const std::string &user,
                          const crypto::Keypair &key,
-                         const std::vector<std::string> &perms,
+                         const interface::RolePermissionSet &perms,
                          const std::string &role) {
     return createUserWithPerms(user, key.publicKey(), role, perms)
         .build()
@@ -85,10 +84,10 @@ class TransferAsset : public AcceptanceFixture {
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  const std::vector<std::string> kPerms{
-      shared_model::permissions::can_add_asset_qty,
-      shared_model::permissions::can_transfer,
-      shared_model::permissions::can_receive};
+  const interface::RolePermissionSet kPerms{
+      interface::permissions::Role::kAddAssetQty,
+      interface::permissions::Role::kTransfer,
+      interface::permissions::Role::kReceive};
 };
 
 /**
@@ -119,7 +118,7 @@ TEST_F(TransferAsset, WithOnlyCanTransferPerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1,
                                 kUser1Keypair,
-                                {shared_model::permissions::can_transfer},
+                                {interface::permissions::Role::kTransfer},
                                 kRole1))
       .skipProposal()
       .skipBlock()
@@ -149,7 +148,7 @@ TEST_F(TransferAsset, WithOnlyCanReceivePerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1,
                                 kUser1Keypair,
-                                {shared_model::permissions::can_receive},
+                                {interface::permissions::Role::kReceive},
                                 kRole1))
       .skipProposal()
       .skipBlock()
@@ -411,9 +410,7 @@ TEST_F(TransferAsset, InterDomain) {
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
               .createdTime(iroha::time::now())
-              .createRole(kNewRole,
-                          std::vector<std::string>{
-                              shared_model::permissions::can_receive})
+              .createRole(kNewRole, {interface::permissions::Role::kReceive})
               .createDomain(kNewDomain, kNewRole)
               .createAccount(
                   kUser2,

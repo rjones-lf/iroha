@@ -11,7 +11,6 @@
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "utils/query_error_response_visitor.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
@@ -23,10 +22,10 @@ class GetTransactions : public AcceptanceFixture {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             shared_model::permissions::can_get_my_txs}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kGetMyTxs}) {
     auto new_perms = perms;
-    new_perms.push_back(shared_model::permissions::can_set_quorum);
+    new_perms.set(interface::permissions::Role::kSetQuorum);
     return AcceptanceFixture::makeUserWithPerms(kNewRole, new_perms);
   }
 
@@ -68,7 +67,7 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
   auto dummy_tx = dummyTx();
   IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({shared_model::permissions::can_read_assets}))
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kReadAssets}))
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
@@ -95,7 +94,7 @@ TEST_F(GetTransactions, HaveGetAllTx) {
 
   IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_all_txs}))
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetAllTxs}))
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })

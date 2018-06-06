@@ -46,7 +46,7 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
     const std::string &user,
     const shared_model::crypto::PublicKey &key,
     const std::string &role_id,
-    std::vector<std::string> perms) {
+    const shared_model::interface::RolePermissionSet &perms) {
   const auto user_id = user + "@"
       + integration_framework::IntegrationTestFramework::kDefaultDomain;
   return createUser(user, key)
@@ -57,7 +57,8 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
 }
 
 shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
-    const std::string &role_name, const std::vector<std::string> &perms) {
+    const std::string &role_name,
+    const shared_model::interface::RolePermissionSet &perms) {
   return createUserWithPerms(kUser, kUserKeypair.publicKey(), role_name, perms)
       .build()
       .signAndAddSignature(kAdminKeypair)
@@ -65,7 +66,7 @@ shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
 }
 
 shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
-    const std::vector<std::string> &perms) {
+    const shared_model::interface::RolePermissionSet &perms) {
   return makeUserWithPerms(kRole, perms);
 }
 
