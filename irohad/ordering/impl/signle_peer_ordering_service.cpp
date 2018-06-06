@@ -4,6 +4,7 @@
  */
 
 #include "ordering/impl/signle_peer_ordering_service.hpp"
+
 #include <algorithm>
 #include <iterator>
 #include "ametsuchi/ordering_service_persistent_state.hpp"

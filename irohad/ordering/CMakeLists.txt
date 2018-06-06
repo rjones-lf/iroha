@@ -14,7 +14,7 @@
 
 add_library(ordering_service
     impl/ordering_gate_impl.cpp
-        impl/signle_peer_ordering_service.cpp
+    impl/signle_peer_ordering_service.cpp
     impl/ordering_gate_transport_grpc.cpp
     impl/ordering_service_transport_grpc.cpp
     )
