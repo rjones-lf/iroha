@@ -146,9 +146,9 @@ int main(int argc, char *argv[]) {
     }
 
     // check if genesis block already existing
-    auto genesis_block_exist = false;
-    irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
-        [&genesis_block_exist](auto block) { genesis_block_exist = true; });
+    auto genesis_block_exist = not (
+        irohad.storage->getBlockQuery()->getTopBlockHeight() == 0
+    )
 
     // Check if force flag to overwrite genesis block specified
     if (genesis_block_exist) {
