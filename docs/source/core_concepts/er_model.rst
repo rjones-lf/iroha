@@ -4,7 +4,7 @@ Entity-relationship model
 Each Hyperledger Iroha peer has a state, called "World State View",
 which is represented by a set of entities and relations between them.
 To explain you more which entities exist in the system and what are the relations,
-this sections includes ER diagram and an explanation for its components.
+this sections includes ER diagram and an explanation of its components.
 
 ER diagram
 ----------
