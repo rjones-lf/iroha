@@ -95,20 +95,22 @@ namespace shared_model {
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {
-          qry.mutable_payload()->set_created_time(created_time);
+          qry.mutable_payload()->mutable_meta()->set_created_time(created_time);
         });
       }
 
       auto creatorAccountId(
           const interface::types::AccountIdType &creator_account_id) const {
         return transform<CreatorAccountId>([&](auto &qry) {
-          qry.mutable_payload()->set_creator_account_id(creator_account_id);
+          qry.mutable_payload()->mutable_meta()->set_creator_account_id(
+              creator_account_id);
         });
       }
 
       auto queryCounter(interface::types::CounterType query_counter) const {
         return transform<QueryCounter>([&](auto &qry) {
-          qry.mutable_payload()->set_query_counter(query_counter);
+          qry.mutable_payload()->mutable_meta()->set_query_counter(
+              query_counter);
         });
       }
 

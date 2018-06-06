@@ -20,6 +20,7 @@
 
 #include "validators/any_block_validator.hpp"
 #include "validators/block_validator.hpp"
+#include "validators/blocks_query_validator.hpp"
 #include "validators/empty_block_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/proposal_validator.hpp"
@@ -34,6 +35,7 @@ namespace shared_model {
                              CommandValidatorVisitor<FieldValidator>>;
     using DefaultQueryValidator =
         QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
+    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
     using DefaultProposalValidator =
         ProposalValidator<FieldValidator, DefaultTransactionValidator>;
 

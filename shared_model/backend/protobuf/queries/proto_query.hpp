@@ -71,11 +71,11 @@ namespace shared_model {
       }
 
       const interface::types::AccountIdType &creatorAccountId() const override {
-        return proto_->payload().creator_account_id();
+        return proto_->payload().meta().creator_account_id();
       }
 
       interface::types::CounterType queryCounter() const override {
-        return proto_->payload().query_counter();
+        return proto_->payload().meta().query_counter();
       }
 
       const interface::types::BlobType &blob() const override {
@@ -104,7 +104,7 @@ namespace shared_model {
       }
 
       interface::types::TimestampType createdTime() const override {
-        return proto_->payload().created_time();
+        return proto_->payload().meta().created_time();
       }
 
      private:
