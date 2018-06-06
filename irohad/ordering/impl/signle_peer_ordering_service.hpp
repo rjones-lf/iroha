@@ -79,7 +79,7 @@ namespace iroha {
        * Collect transactions from queue
        * Passes the generated proposal to publishProposal
        */
-      void generateProposal() override;
+      void generateProposal();
 
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
