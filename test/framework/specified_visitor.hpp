@@ -20,32 +20,30 @@
 
 #include <boost/variant.hpp>
 
-namespace shared_model {
-  namespace interface {
-    template <typename Type>
-    class SpecifiedVisitor : public boost::static_visitor<const Type &> {
-     public:
-      /**
-       * Match template type
-       * @param t const reference to object of specified type
-       * @return const reference to value
-       */
-      const Type &operator()(const Type &t) const {
-        return t;
-      }
+namespace framework {
+  template <typename Type>
+  class SpecifiedVisitor : public boost::static_visitor<const Type &> {
+   public:
+    /**
+     * Match template type
+     * @param t const reference to object of specified type
+     * @return const reference to value
+     */
+    const Type &operator()(const Type &t) const {
+      return t;
+    }
 
-      /**
-       * Match any other type that was not matched by methods above
-       * @tparam T any type not matched by two types above
-       * @param t object of specified type
-       * @return none
-       */
-      template <typename T>
-      const Type &operator()(const T &t) const {
-        throw std::runtime_error("unexpected type provided");
-      }
-    };
-  }  // namespace interface
-}  // namespace shared_model
+    /**
+     * Match any other type that was not matched by methods above
+     * @tparam T any type not matched by two types above
+     * @param t object of specified type
+     * @return none
+     */
+    template <typename T>
+    const Type &operator()(const T &t) const {
+      throw std::runtime_error("unexpected type provided");
+    }
+  };
+}  // namespace framework
 
 #endif  // IROHA_SPECIFIED_VISITOR_HPP

@@ -76,7 +76,7 @@ TYPED_TEST(ProtoTransactionStatusBuilderTest, TestStatusType) {
                       .build();
 
   ASSERT_NO_THROW(boost::apply_visitor(
-      shared_model::interface::SpecifiedVisitor<StatusType>(),
+      framework::SpecifiedVisitor<StatusType>(),
       response.get()));
 
   auto proto_status = response.getTransport();

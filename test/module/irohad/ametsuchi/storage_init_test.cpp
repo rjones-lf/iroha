@@ -8,6 +8,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "framework/config_helper.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::expected;
@@ -15,15 +16,7 @@ using namespace iroha::expected;
 class StorageInitTest : public ::testing::Test {
  public:
   StorageInitTest() {
-    std::string env_var;
-    std::stringstream ss;
-    // clang-format off
-    ss << "host=" << (env_var = std::getenv("IROHA_POSTGRES_HOST")) ? env_var : "localhost";
-    ss << " port=" << (env_var = std::getenv("IROHA_POSTGRES_PORT")) ? env_var : "5432";
-    ss << " user=" << (env_var = std::getenv("IROHA_POSTGRES_USER")) ? env_var : "postgres";
-    ss << " password=" << (env_var = std::getenv("IROHA_POSTGRES_PASSWORD")) ? env_var : "mysecretpassword";
-    // clang-format on
-    pg_opt_without_dbname_ = ss.str();
+    pg_opt_without_dbname_ = integration_framework::getPostgresCredsOrDefault();
     pgopt_ = pg_opt_without_dbname_ + " dbname=" + dbname_;
   }
 

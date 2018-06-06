@@ -73,7 +73,7 @@ TYPED_TEST(TransactionResponseBuilderTest, StatusType) {
 
   // check if type in response is as expected
   ASSERT_NO_THROW(boost::apply_visitor(
-      shared_model::interface::SpecifiedVisitor<StatusType>(),
+      framework::SpecifiedVisitor<StatusType>(),
       response->get()));
 
   ASSERT_EQ(response->transactionHash(), expected_hash);
@@ -98,6 +98,6 @@ TEST(ProtoTransactionStatusBuilderTest, SeveralObjectsFromOneBuilder) {
   ASSERT_EQ(response1->transactionHash(), expected_hash);
 
   ASSERT_NO_THROW(boost::apply_visitor(
-      shared_model::interface::SpecifiedVisitor<NotReceivedStatusType>(),
+      framework::SpecifiedVisitor<NotReceivedStatusType>(),
       response1->get()));
 }

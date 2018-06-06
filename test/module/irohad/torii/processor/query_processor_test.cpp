@@ -103,7 +103,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW(
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get()));
   });
