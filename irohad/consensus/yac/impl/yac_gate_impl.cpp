@@ -84,13 +84,9 @@ namespace iroha {
             if (hash == current_block_.first) {
               // append signatures of other nodes
               this->copySignatures(commit_message);
-              iroha::visit_in_place(
-                  current_block_.second, [this](const auto &any_block) {
-                    log_->info(
-                        "consensus: commit top block: height {}, hash {}",
-                        any_block->height(),
-                        any_block->hash().hex());
-                  });
+              log_->info("consensus: commit top block: height {}, hash {}",
+                         current_block_.second.height(),
+                         current_block_.second.hash().hex());
               subscriber.on_next(current_block_.second);
               subscriber.on_completed();
               return;
