@@ -138,11 +138,12 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](const auto &block_variant) {
-    auto block = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<decltype(expected_block)>(),
-        block_variant);
-    ASSERT_TRUE(block);
-    ASSERT_EQ(*block, *expected_block);
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -216,11 +217,12 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](const auto &block_variant) {
-    auto block = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<decltype(expected_block)>(),
-        block_variant);
-    ASSERT_TRUE(block);
-    ASSERT_EQ(*block, *expected_block);
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -277,11 +279,12 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](const auto &block_variant) {
-    auto block = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<decltype(expected_block)>(),
-        block_variant);
-    ASSERT_TRUE(block);
-    ASSERT_EQ(*block, *expected_block);
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
