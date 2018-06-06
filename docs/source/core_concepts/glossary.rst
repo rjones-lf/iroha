@@ -222,7 +222,8 @@ Transaction structure
 
     - Time of creation (unix time, in milliseconds)
     - Account ID of transaction creator (username@domain)
-    - Repeated commands which are described in details in commands section <../api/commands.html>`__.
+    - Quorum field (indicates required number of signatures)
+    - Repeated commands which are described in details in commands section <../api/commands.html>`__
 
 
 **Signatures** contain one or many signatures (ed25519 public key + signature)
