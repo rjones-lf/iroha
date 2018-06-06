@@ -19,6 +19,7 @@
 
 #include "datetime/time.hpp"
 
+#include "builders/default_builders.hpp"
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
@@ -27,7 +28,6 @@
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
-#include "builders/default_builders.hpp"
 
 const auto account_id = "test@domain";
 const auto asset_id = "bit#domain";
@@ -53,25 +53,24 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
-          .accountAssetResponse(
-              {shared_model::proto::AccountAssetBuilder()
-                         .accountId(account_id)
-                         .assetId(asset_id)
-                         .balance(proto_amount)
-                         .build()})
+          .accountAssetResponse({shared_model::proto::AccountAssetBuilder()
+                                     .accountId(account_id)
+                                     .assetId(asset_id)
+                                     .balance(proto_amount)
+                                     .build()})
           .build();
   ASSERT_NO_THROW({
-  const auto &tmp = boost::apply_visitor(
-      framework::SpecifiedVisitor<
-          shared_model::interface::AccountAssetResponse>(),
-      query_response.get());
-  const auto &asset_response = tmp.accountAssets()[0];
+    const auto &tmp = boost::apply_visitor(
+        framework::SpecifiedVisitor<
+            shared_model::interface::AccountAssetResponse>(),
+        query_response.get());
+    const auto &asset_response = tmp.accountAssets()[0];
 
-  ASSERT_EQ(asset_response.assetId(), asset_id);
-  ASSERT_EQ(asset_response.accountId(), account_id);
-  ASSERT_EQ(asset_response.balance(), proto_amount);
-  ASSERT_EQ(query_response.queryHash(), query_hash);
-                  });
+    ASSERT_EQ(asset_response.assetId(), asset_id);
+    ASSERT_EQ(asset_response.accountId(), account_id);
+    ASSERT_EQ(asset_response.balance(), proto_amount);
+    ASSERT_EQ(query_response.queryHash(), query_hash);
+  });
 }
 
 TEST(QueryResponseBuilderTest, AccountDetailResponse) {
@@ -111,10 +110,9 @@ TEST(QueryResponseBuilderTest, AccountResponse) {
       builder.queryHash(query_hash).accountResponse(account, roles).build();
 
   ASSERT_NO_THROW({
-    const auto &account_response =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             query_response.get());
+    const auto &account_response = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        query_response.get());
 
     ASSERT_EQ(account_response.account(), account);
     ASSERT_EQ(account_response.roles(), roles);
@@ -208,10 +206,9 @@ TEST(QueryResponseBuilderTest, AssetResponse) {
           .build();
 
   ASSERT_NO_THROW({
-    const auto &asset_response =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AssetResponse>(),
-                             query_response.get());
+    const auto &asset_response = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AssetResponse>(),
+        query_response.get());
 
     const auto &asset = asset_response.asset();
     ASSERT_EQ(asset.assetId(), asset_id);
@@ -229,10 +226,9 @@ TEST(QueryResponseBuilderTest, RolesResponse) {
       builder.queryHash(query_hash).rolesResponse(roles).build();
 
   ASSERT_NO_THROW({
-    const auto &roles_response =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::RolesResponse>(),
-                             query_response.get());
+    const auto &roles_response = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
+        query_response.get());
 
     ASSERT_EQ(roles_response.roles(), roles);
     ASSERT_EQ(query_response.queryHash(), query_hash);

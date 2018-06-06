@@ -34,7 +34,7 @@ namespace shared_model {
       /**
        * @return Account has Asset model
        */
-      virtual const interface::types::AccountAssetCollectionType accountAssets() const = 0;
+      virtual const types::AccountAssetCollectionType accountAssets() const = 0;
 
       /**
        * Stringify the data.
@@ -43,7 +43,7 @@ namespace shared_model {
       std::string toString() const override {
         auto response = detail::PrettyStringBuilder()
             .init("AccountAssetResponse");
-        for (auto &asset: accountAssets())
+        for (const auto &asset: accountAssets())
             response.append(asset.toString());
         return response.finalize();
       }

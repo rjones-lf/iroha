@@ -128,7 +128,7 @@ namespace iroha {
       getAsset(const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
       /**
-       *
+       * Get account assets
        * @param account_id
        * @return
        */

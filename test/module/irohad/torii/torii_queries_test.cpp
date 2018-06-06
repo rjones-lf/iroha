@@ -393,7 +393,6 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
         framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
-    std::cout << asset_resp.toString() << std::endl;
     // Check if the fields in account asset response are correct
     ASSERT_EQ(asset_resp.accountAssets()[0].assetId(),
               account_asset->assetId());
