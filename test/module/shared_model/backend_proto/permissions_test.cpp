@@ -172,16 +172,3 @@ TEST(ProtoPermission, PermissionSubset) {
   ASSERT_FALSE(nonsub.isSubsetOf(sub));
   ASSERT_FALSE(nonsub.isSubsetOf(big));
 }
-
-TEST(ProtoPermission, Strings) {
-  using Role = shared_model::interface::permissions::Role;
-  using PermSet = shared_model::interface::PermissionSet<Role>;
-  PermSet set{};
-  for (size_t i = 0; i < set.size(); ++i) {
-    set.set(static_cast<Role>(i));
-  }
-  for (const auto &v : toString(set)) {
-    std::cout << v << " ";
-  }
-  std::cout << std::endl;
-}
