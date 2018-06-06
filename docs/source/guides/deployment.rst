@@ -54,7 +54,7 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 |               | used by peer to sign the blocks                                 |
 +---------------+-----------------------------------------------------------------+
 
-.. Attention:: You have to specify `--overwrite_genesis` to overwrite existing transactions. If flag is not specified and transactions exist the daemon will not start and exit.
+.. Attention:: You have to specify `--overwrite_ledger` to overwrite existing transactions. If flag is not specified and transactions exist the daemon will not start and exit.
 
 An example of shell command, running Iroha daemon is 
 

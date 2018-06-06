@@ -74,9 +74,9 @@ DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
 DEFINE_validator(keypair_name, &validate_keypair_name);
 
 /**
- * Creating boolean flag to overwrite genesis block forcefully
+ * Creating boolean flag to overwrite ledger data if existing
  */
-DEFINE_bool(overwrite_genesis, false, "Overwrite genesis block if existing");
+DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
 std::promise<void> exit_requested;
 
@@ -145,19 +145,19 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
-    // check if genesis block already existing
-    auto genesis_block_exist = not (
+    // check if ledger data already existing
+    auto ledger_empty = not (
         irohad.storage->getBlockQuery()->getTopBlockHeight() == 0
     )
 
-    // Check if force flag to overwrite genesis block specified
-    if (genesis_block_exist) {
-        if (not FLAGS_overwrite_genesis) {
-            log->error("Genesis block already exists in transaction directory. Use
-                    '--overwrite_genesis' to force overwrite it. Shutting down...");
-            return 0;
+    // Check if force flag to overwrite ledger is specified
+    if (ledger_empty) {
+        if (not FLAGS_overwrite_ledger) {
+            log->error("Block store not empty. Use '--overwrite_ledger' to force
+                    overwrite it. Shutting down...");
+            return EXIT_FAILURE;
         } else {
-            log->info("Overwriting existing genesis block");
+            log->info("Overwriting existing ledger");
         }
     }
 
