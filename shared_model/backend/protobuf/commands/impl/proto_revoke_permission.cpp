@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/commands/proto_revoke_permission.hpp"
+#include "backend/protobuf/permissions.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -30,10 +31,16 @@ namespace shared_model {
       return revoke_permission_.account_id();
     }
 
-    const interface::types::PermissionNameType &
-    RevokePermission::permissionName() const {
-      return iroha::protocol::GrantablePermission_Name(
-          revoke_permission_.permission());
+    interface::permissions::Grantable RevokePermission::permissionName() const {
+      return permissions::fromTransport(revoke_permission_.permission());
+    }
+
+    std::string RevokePermission::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("RevokePermission")
+          .append("account_id", accountId())
+          .append("permission", permissions::toString(permissionName()))
+          .finalize();
     }
 
   }  // namespace proto

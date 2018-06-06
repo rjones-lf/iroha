@@ -25,6 +25,7 @@
 #include <pqxx/pqxx>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "common/files.hpp"
+#include "framework/config_helper.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -34,26 +35,12 @@ namespace iroha {
      */
     class AmetsuchiTest : public ::testing::Test {
      public:
-      AmetsuchiTest() {
+      AmetsuchiTest()
+          : pgopt_(integration_framework::getPostgresCredsOrDefault()
+                   + " dbname=" + dbname_) {
         auto log = logger::testLog("AmetsuchiTest");
 
         boost::filesystem::create_directory(block_store_path);
-        auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
-        auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
-        auto pg_user = std::getenv("IROHA_POSTGRES_USER");
-        auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
-        if (not pg_host) {
-          return;
-        }
-        std::stringstream ss;
-        ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-           << " password=" << pg_pass << " dbname=" << dbname_;
-        pgopt_ = ss.str();
-        log->info("host={}, port={}, user={}, password={}",
-                  pg_host,
-                  pg_port,
-                  pg_user,
-                  pg_pass);
       }
 
      protected:
@@ -103,10 +90,8 @@ namespace iroha {
       std::string dbname_ = "d"
           + boost::uuids::to_string(boost::uuids::random_generator()())
                 .substr(0, 8);
-      std::string pgopt_ =
-          "host=localhost port=5432 user=postgres password=mysecretpassword "
-          "dbname="
-          + dbname_;
+
+      std::string pgopt_;
 
       std::string block_store_path = (boost::filesystem::temp_directory_path()
                                       / boost::filesystem::unique_path())

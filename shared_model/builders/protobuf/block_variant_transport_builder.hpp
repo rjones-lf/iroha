@@ -6,10 +6,10 @@
 #ifndef IROHA_BLOCK_VARIANT_TRANSPORT_BUILDER_HPP
 #define IROHA_BLOCK_VARIANT_TRANSPORT_BUILDER_HPP
 
+#include "backend/protobuf/block.hpp"
 #include "backend/protobuf/empty_block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
-#include "backend/protobuf/empty_block.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -19,7 +19,7 @@ namespace shared_model {
      * @tparam SV Stateless validator type
      */
     template <typename SV>
-    class TransportBuilder<interface::BlockVariantType, SV> {
+    class TransportBuilder<interface::BlockVariant, SV> {
      private:
       /**
        * Create container type (i.e. Block or EmptyBlock)
@@ -29,7 +29,7 @@ namespace shared_model {
        * type
        */
       template <typename T>
-      iroha::expected::Result<interface::BlockVariantType, std::string>
+      iroha::expected::Result<interface::BlockVariant, std::string>
       createContainer(const iroha::protocol::Block &transport) {
         auto result = std::make_shared<T>(transport);
         auto answer = stateless_validator_.validate(*result);
@@ -40,7 +40,7 @@ namespace shared_model {
       }
 
      public:
-      TransportBuilder<interface::BlockVariantType, SV>(
+      TransportBuilder<interface::BlockVariant, SV>(
           SV stateless_validator = SV())
           : stateless_validator_(stateless_validator) {}
 
@@ -49,7 +49,7 @@ namespace shared_model {
        * @param transport -- protobuf object from which BlockVariant is built
        * @return Result containing either BlockVariantType or message string
        */
-      iroha::expected::Result<interface::BlockVariantType, std::string> build(
+      iroha::expected::Result<interface::BlockVariant, std::string> build(
           iroha::protocol::Block transport) {
         if (transport.payload().transactions().size() == 0) {
           return createContainer<shared_model::proto::EmptyBlock>(transport);

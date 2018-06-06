@@ -9,7 +9,6 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {

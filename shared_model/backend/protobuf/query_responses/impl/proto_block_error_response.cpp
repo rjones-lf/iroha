@@ -27,7 +27,7 @@ namespace shared_model {
     BlockErrorResponse::BlockErrorResponse(BlockErrorResponse &&o)
         : BlockErrorResponse(std::move(o.proto_)) {}
 
-    const std::string &BlockErrorResponse::message() const {
+    const interface::types::DescriptionType &BlockErrorResponse::message() const {
       return *message_;
     }
 

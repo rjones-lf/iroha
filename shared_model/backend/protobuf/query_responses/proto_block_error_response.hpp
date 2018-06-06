@@ -25,7 +25,7 @@ namespace shared_model {
 
       BlockErrorResponse(BlockErrorResponse &&o);
 
-      const std::string &message() const override ;
+      const interface::types::DescriptionType &message() const override ;
 
      private:
       template <typename T>
@@ -33,7 +33,7 @@ namespace shared_model {
 
       const iroha::protocol::BlockErrorResponse &block_error_response;
 
-      const Lazy<std::string> message_;
+      const Lazy<interface::types::DescriptionType> message_;
     };
   }  // namespace proto
 }  // namespace shared_model

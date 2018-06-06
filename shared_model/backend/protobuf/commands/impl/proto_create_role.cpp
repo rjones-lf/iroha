@@ -6,6 +6,7 @@
 #include "backend/protobuf/commands/proto_create_role.hpp"
 
 #include <boost/range/numeric.hpp>
+#include "backend/protobuf/permissions.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -17,9 +18,9 @@ namespace shared_model {
           role_permissions_{[this] {
             return boost::accumulate(
                 create_role_.permissions(),
-                PermissionsType{},
+                interface::RolePermissionSet{},
                 [](auto &&acc, const auto &perm) {
-                  acc.insert(iroha::protocol::RolePermission_Name(
+                  acc.set(permissions::fromTransport(
                       static_cast<iroha::protocol::RolePermission>(perm)));
                   return std::forward<decltype(acc)>(acc);
                 });
@@ -38,8 +39,17 @@ namespace shared_model {
       return create_role_.role_name();
     }
 
-    const CreateRole::PermissionsType &CreateRole::rolePermissions() const {
+    const interface::RolePermissionSet &CreateRole::rolePermissions() const {
       return *role_permissions_;
+    }
+
+    std::string CreateRole::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("CreateRole")
+          .append("role_name", roleName())
+          .appendAll(permissions::toString(rolePermissions()),
+                     [](auto p) { return p; })
+          .finalize();
     }
 
   }  // namespace proto

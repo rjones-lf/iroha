@@ -5,6 +5,8 @@
 
 #include "interfaces/query_responses/block_error_response.hpp"
 
+#include "utils/string_builder.hpp"
+
 namespace shared_model {
   namespace interface {
 

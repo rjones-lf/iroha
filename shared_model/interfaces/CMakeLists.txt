@@ -34,6 +34,7 @@ add_library(shared_model_interfaces
     query_responses/impl/block_error_response.cpp
     query_responses/impl/block_query_response.cpp
     query_responses/impl/block_response.cpp
+    iroha_internal/block_variant.cpp
     )
 
 target_link_libraries(shared_model_interfaces

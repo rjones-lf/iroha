@@ -26,22 +26,33 @@ namespace shared_model {
   namespace bindings {
     /**
      * Class for proto operations for SWIG
-     * @tparam Unsigned - type of unsigned model proto object
+     * @tparam UnsignedWrapper - type of unsigned model proto object
      */
-    template <typename Unsigned>
+    template <typename UnsignedWrapper>
     class ModelProto {
      public:
+      ModelProto(UnsignedWrapper &&us) : us_(std::move(us)) {}
       /**
-       * Signs unsigned transaction and adds signature to its internal proto
-       * object
-       * @param tx - unsigned transaction
+       * Signs and adds a signature for a proto object
        * @param keypair - keypair to sign
-       * @return blob of signed transaction
+       * @return ModelProto with signed object
        */
-      crypto::Blob signAndAddSignature(Unsigned &us,
-                                       const crypto::Keypair &keypair) {
-        return us.signAndAddSignature(keypair).blob();
+      ModelProto<UnsignedWrapper> signAndAddSignature(
+          const crypto::Keypair &keypair) {
+        UnsignedWrapper wrapper = us_.signAndAddSignature(keypair);
+        return ModelProto<UnsignedWrapper>(std::move(wrapper));
       }
+
+      /**
+       * Finishes object building
+       * @return built object
+       */
+      crypto::Blob finish() {
+        return us_.finish().blob();
+      }
+
+     private:
+      UnsignedWrapper us_;
     };
   }  // namespace bindings
 }  // namespace shared_model

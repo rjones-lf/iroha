@@ -8,15 +8,6 @@
 namespace shared_model {
   namespace interface {
 
-    std::string CreateRole::toString() const {
-      auto roles_set = rolePermissions();
-      return detail::PrettyStringBuilder()
-          .init("CreateRole")
-          .append("role_name", roleName())
-          .appendAll(roles_set, [](auto &role) { return role; })
-          .finalize();
-    }
-
     bool CreateRole::operator==(const ModelType &rhs) const {
       return roleName() == rhs.roleName()
           and rolePermissions() == rhs.rolePermissions();

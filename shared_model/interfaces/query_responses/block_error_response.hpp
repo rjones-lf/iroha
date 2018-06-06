@@ -8,7 +8,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -20,7 +19,7 @@ namespace shared_model {
       /**
        * @return Attached error message
        */
-      virtual const std::string &message() const = 0;
+      virtual const types::DescriptionType &message() const = 0;
 
       /**
        * Give string description of data.
