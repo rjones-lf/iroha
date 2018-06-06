@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 
     // Check if force flag to overwrite genesis block specified
     if (genesis_block_exist) {
-        if (not FLAGS_genesis_block) {
+        if (not FLAGS_overwrite_genesis) {
             log->error("Genesis block already exists in transaction directory. Use
                     '--overwrite_genesis' to force overwrite it. Shutting down...");
             return 0;
