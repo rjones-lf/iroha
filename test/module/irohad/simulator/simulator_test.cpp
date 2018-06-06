@@ -163,12 +163,13 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
   block_wrapper.subscribe([&proposal](const auto &block_variant) {
     ASSERT_EQ(block_variant.height(), proposal->height());
-    auto block = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
-            std::shared_ptr<shared_model::interface::Block>>(),
-        block_variant);
-    ASSERT_TRUE(block);
-    ASSERT_EQ(block->transactions(), proposal->transactions());
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<
+              std::shared_ptr<shared_model::interface::Block>>(),
+          block_variant);
+      ASSERT_EQ(block->transactions(), proposal->transactions());
+    });
   });
 
   simulator->process_proposal(*proposal);
