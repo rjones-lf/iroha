@@ -49,24 +49,22 @@ namespace iroha {
             delay_(delay) {
         log_ = logger::log("YacGate");
         block_creator_->on_block().subscribe(
-            [this](const auto& block) { this->vote(block); });
+            [this](const auto &block) { this->vote(block); });
       }
 
       void YacGateImpl::vote(
           const shared_model::interface::BlockVariant &block) {
         auto hash = hash_provider_->makeHash(block);
-        iroha::visit_in_place(block, [this, &hash](const auto &any_block) {
-          log_->info("vote for block ({}, {})",
-                     hash.proposal_hash,
-                     any_block->hash().toString());
-          auto order = orderer_->getOrdering(hash);
-          if (not order) {
-            log_->error("ordering doesn't provide peers => pass round");
-            return;
-          }
-          current_block_ = std::make_pair(hash, clone(*any_block));
-          hash_gate_->vote(hash, *order);
-        });
+        log_->info("vote for block ({}, {})",
+                   hash.proposal_hash,
+                   block.hash().toString());
+        auto order = orderer_->getOrdering(hash);
+        if (not order) {
+          log_->error("ordering doesn't provide peers => pass round");
+          return;
+        }
+        current_block_ = std::make_pair(hash, block);
+        hash_gate_->vote(hash, *order);
       }
 
       rxcpp::observable<shared_model::interface::BlockVariant>
@@ -75,7 +73,7 @@ namespace iroha {
           // map commit to block if it is present or loaded from other peer
           return rxcpp::observable<>::create<
               shared_model::interface::BlockVariant>([this, commit_message](
-                                                             auto subscriber) {
+                                                         auto subscriber) {
             const auto hash = getHash(commit_message.votes);
             if (not hash) {
               log_->info("Invalid commit message, hashes are different");
@@ -139,9 +137,8 @@ namespace iroha {
       void YacGateImpl::copySignatures(const CommitMessage &commit) {
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          current_block_.second.
-              addSignature(sig->signedData(),
-                                              sig->publicKey());
+          current_block_.second.addSignature(sig->signedData(),
+                                             sig->publicKey());
         }
       }
     }  // namespace yac
