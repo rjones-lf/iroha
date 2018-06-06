@@ -353,17 +353,17 @@ TEST_F(TransportBuilderTest, EmptyBlockCreationTest) {
 
 /**
  * @given Valid block protobuf object with no transactions
- * @when TransportBuilder tries to build BlockVariantType object
+ * @when TransportBuilder tries to build BlockVariant object
  * @then built object contains EmptyBlock shared model object
  * AND it is equal to the original object
  */
 TEST_F(TransportBuilderTest, BlockVariantWithValidEmptyBlock) {
   auto emptyBlock = createEmptyBlock();
-  interface::BlockVariantType orig_model =
+  interface::BlockVariant orig_model =
       std::make_shared<decltype(emptyBlock)>(emptyBlock.getTransport());
 
   auto val = framework::expected::val(
-      TransportBuilder<interface::BlockVariantType,
+      TransportBuilder<interface::BlockVariant,
                        validation::DefaultAnyBlockValidator>()
           .build(emptyBlock.getTransport()));
   ASSERT_TRUE(val);
@@ -380,14 +380,14 @@ TEST_F(TransportBuilderTest, BlockVariantWithValidEmptyBlock) {
 
 /**
  * @given Invalid block protobuf object with no transactions
- * @when TransportBuilder tries to build BlockVariantType object
+ * @when TransportBuilder tries to build BlockVariant object
  * @then build fails
  */
 TEST_F(TransportBuilderTest, BlockVariantWithInvalidEmptyBlock) {
   auto emptyBlock = createInvalidEmptyBlock();
 
   auto error = framework::expected::err(
-      TransportBuilder<interface::BlockVariantType,
+      TransportBuilder<interface::BlockVariant,
                        validation::DefaultAnyBlockValidator>()
           .build(emptyBlock.getTransport()));
   ASSERT_TRUE(error);
@@ -395,13 +395,13 @@ TEST_F(TransportBuilderTest, BlockVariantWithInvalidEmptyBlock) {
 
 /**
  * @given Valid block protobuf object with non empty set of transactions
- * @when TransportBuilder tries to build BlockVariantType object
+ * @when TransportBuilder tries to build BlockVariant object
  * @then built object contains Block shared model object
  * AND it is equal to the original object
  */
 TEST_F(TransportBuilderTest, BlockVariantWithValidBlock) {
   auto block = createBlock();
-  interface::BlockVariantType orig_model =
+  interface::BlockVariant orig_model =
       std::make_shared<decltype(block)>(block.getTransport());
   auto val = framework::expected::val(
       TransportBuilder<decltype(orig_model),
@@ -422,14 +422,14 @@ TEST_F(TransportBuilderTest, BlockVariantWithValidBlock) {
 
 /**
  * @given Invalid block protobuf object with non-empty transactions set
- * @when TransportBuilder tries to build BlockVariantType object
+ * @when TransportBuilder tries to build BlockVariant object
  * @then build fails
  */
 TEST_F(TransportBuilderTest, BlockVariantWithInvalidBlock) {
   auto block = createInvalidBlock();
 
   auto error = framework::expected::err(
-      TransportBuilder<interface::BlockVariantType,
+      TransportBuilder<interface::BlockVariant,
                        validation::DefaultAnyBlockValidator>()
           .build(block.getTransport()));
   ASSERT_TRUE(error);

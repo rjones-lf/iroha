@@ -45,11 +45,17 @@ message GetRolePermissions{
   string role_id = 1;
 }
 
+message QueryPayloadMeta {
+  uint64 created_time = 1;
+  string creator_account_id = 2;
+  // used to prevent replay attacks.
+  uint64 query_counter = 3;
+}
+
 
 message Query {
   message Payload {
-    uint64 created_time = 1;
-    string creator_account_id = 2;
+    QueryPayloadMeta meta = 1;
      oneof query {
        GetAccount get_account = 3;
        GetSignatories get_account_signatories = 4;
@@ -62,10 +68,13 @@ message Query {
        GetRolePermissions get_role_permissions = 11;
        GetAssetInfo get_asset_info = 12;
      }
-     // used to prevent replay attacks.
-     uint64 query_counter = 13;
   }
 
   Payload payload = 1;
+  Signature signature = 2;
+}
+
+message BlocksQuery {
+  QueryPayloadMeta meta = 1;
   Signature signature = 2;
 }

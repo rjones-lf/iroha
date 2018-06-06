@@ -21,8 +21,12 @@
 #include <boost/format.hpp>
 #include <limits>
 
+#include "interfaces/queries/query_payload_meta.hpp"
+
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
 #include "permissions.hpp"
+#include "validators/field_validator.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -238,7 +242,7 @@ namespace shared_model {
 
     void FieldValidator::validatePermissions(
         ReasonsGroupType &reason,
-        const interface::CreateRole::PermissionsType &permissions) const {
+        const interface::types::PermissionSetType &permissions) const {
       if (permissions.empty()) {
         reason.second.push_back(
             "Permission set should contain at least one permission");
@@ -338,6 +342,10 @@ namespace shared_model {
         }
       }
     }
+
+    void FieldValidator::validateQueryPayloadMeta(
+        ReasonsGroupType &reason,
+        const interface::QueryPayloadMeta &meta) const {}
 
     void FieldValidator::validateDescription(
         shared_model::validation::ReasonsGroupType &reason,

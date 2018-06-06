@@ -114,7 +114,7 @@ class BuilderTest(unittest.TestCase):
       .creatorAccountId("admin@test")
 
   def proto(self, query):
-    return iroha.ModelProtoQuery().signAndAddSignature(query, self.keys)
+    return iroha.ModelProtoQuery(query).signAndAddSignature(self.keys).finish()
 
   def check_proto_query(self, blob):
     try:

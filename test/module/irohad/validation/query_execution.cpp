@@ -150,7 +150,7 @@ TEST_F(GetAccountTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get());
     ASSERT_EQ(cast_resp.account().accountId(), admin_id);
@@ -180,7 +180,7 @@ TEST_F(GetAccountTest, AllAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
@@ -210,7 +210,7 @@ TEST_F(GetAccountTest, DomainAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
@@ -245,7 +245,7 @@ TEST_F(GetAccountTest, GrantAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AccountResponse>(),
                              response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
@@ -369,7 +369,7 @@ TEST_F(GetAccountAssetsTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         response->get());
 
@@ -414,7 +414,7 @@ TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         response->get());
 
@@ -459,7 +459,7 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         response->get());
 
@@ -501,7 +501,7 @@ TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         response->get());
 
@@ -628,7 +628,7 @@ TEST_F(GetSignatoriesTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::SignatoriesResponse>(),
         response->get());
 
@@ -658,7 +658,7 @@ TEST_F(GetSignatoriesTest, AllAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::SignatoriesResponse>(),
         response->get());
 
@@ -688,7 +688,7 @@ TEST_F(GetSignatoriesTest, DomainAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::SignatoriesResponse>(),
         response->get());
 
@@ -723,7 +723,7 @@ TEST_F(GetSignatoriesTest, GrantAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::SignatoriesResponse>(),
         response->get());
 
@@ -826,7 +826,7 @@ TEST_F(GetAccountTransactionsTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -861,7 +861,7 @@ TEST_F(GetAccountTransactionsTest, AllAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -896,7 +896,7 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -935,7 +935,7 @@ TEST_F(GetAccountTransactionsTest, GrantAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -999,7 +999,7 @@ TEST_F(GetAccountTransactionsTest, NoAccountExist) {
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+      boost::apply_visitor(framework::SpecifiedVisitor<
                                shared_model::interface::TransactionsResponse>(),
                            response->get()));
 }
@@ -1041,7 +1041,7 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -1076,7 +1076,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -1111,7 +1111,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -1150,7 +1150,7 @@ TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::TransactionsResponse>(),
         response->get());
 
@@ -1214,7 +1214,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+      boost::apply_visitor(framework::SpecifiedVisitor<
                                shared_model::interface::TransactionsResponse>(),
                            response->get()));
 }
@@ -1242,7 +1242,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(
-      boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+      boost::apply_visitor(framework::SpecifiedVisitor<
                                shared_model::interface::TransactionsResponse>(),
                            response->get()));
 }
@@ -1283,7 +1283,7 @@ TEST_F(GetAssetInfoTest, MyAccountValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::AssetResponse>(),
                              response->get());
 
@@ -1369,7 +1369,7 @@ TEST_F(GetRolesTest, ValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp =
-        boost::apply_visitor(shared_model::interface::SpecifiedVisitor<
+        boost::apply_visitor(framework::SpecifiedVisitor<
                                  shared_model::interface::RolesResponse>(),
                              response->get());
 
@@ -1455,7 +1455,7 @@ TEST_F(GetRolePermissionsTest, ValidCase) {
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
     const auto &cast_resp = boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::RolePermissionsResponse>(),
         response->get());
 

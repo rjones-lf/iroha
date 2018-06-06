@@ -124,7 +124,7 @@ public class QueryTest {
     }
 
     Blob proto(UnsignedQuery query) {
-        return new ModelProtoQuery().signAndAddSignature(query, keys);
+        return new ModelProtoQuery(query).signAndAddSignature(keys).finish();
     }
 
     /**

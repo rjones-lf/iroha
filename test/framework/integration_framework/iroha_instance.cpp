@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <sstream>
 #include "cryptography/keypair.hpp"
+#include "framework/config_helper.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 
 using namespace std::chrono_literals;
@@ -76,10 +77,6 @@ namespace integration_framework {
 
   std::string IrohaInstance::getPostgreCredsOrDefault(
       const boost::optional<std::string> &dbname) {
-    auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
-    auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
-    auto pg_user = std::getenv("IROHA_POSTGRES_USER");
-    auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
     std::string db = " dbname=";
     if (dbname) {
       db += dbname.value();
@@ -89,19 +86,7 @@ namespace integration_framework {
                 .substr(0, 8);
     }
 
-    if (not pg_host) {
-      std::string def_conn =
-          "host=localhost port=5432 "
-          "user=postgres "
-          "password=mysecretpassword "
-          + db;
-      return def_conn;
-    } else {
-      std::stringstream ss;
-      ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
-         << " password=" << pg_pass << db;
-      return ss.str();
-    }
+    return integration_framework::getPostgresCredsOrDefault() + db;
   }
 
 }  // namespace integration_framework

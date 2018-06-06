@@ -24,6 +24,7 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/transaction.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -112,7 +113,7 @@ namespace shared_model {
 
       void validatePermissions(
           ReasonsGroupType &reason,
-          const interface::CreateRole::PermissionsType &permissions) const;
+          const interface::types::PermissionSetType &permissions) const;
 
       void validateQuorum(ReasonsGroupType &reason,
                           const interface::types::QuorumType &quorum) const;
@@ -133,13 +134,15 @@ namespace shared_model {
           const interface::types::SignatureRangeType &signatures,
           const crypto::Blob &source) const;
 
+      void validateQueryPayloadMeta(ReasonsGroupType &reason,
+                              const interface::QueryPayloadMeta &meta) const;
+
       void validateDescription(
           ReasonsGroupType &reason,
           const interface::types::DescriptionType &description) const;
 
-      void validateHeight(
-          ReasonsGroupType &reason,
-          const interface::types::HeightType &height) const;
+      void validateHeight(ReasonsGroupType &reason,
+                          const interface::types::HeightType &height) const;
 
      private:
       const static std::string account_name_pattern_;

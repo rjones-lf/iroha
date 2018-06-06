@@ -46,7 +46,7 @@ TEST(RegressionTest, SequentialInitialization) {
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
@@ -109,7 +109,7 @@ TEST(RegressionTest, StateRecovery) {
   auto checkQuery = [&tx](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
-          shared_model::interface::SpecifiedVisitor<
+          framework::SpecifiedVisitor<
               shared_model::interface::TransactionsResponse>(),
           status.get());
       ASSERT_EQ(resp.transactions().size(), 1);

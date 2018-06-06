@@ -19,7 +19,6 @@
 
 #include "execution/command_executor.hpp"
 
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/commands/command.hpp"
@@ -254,8 +253,9 @@ namespace iroha {
       const shared_model::interface::CreateRole &command) {
     std::string command_name = "CreateRole";
     auto result = commands->insertRole(command.roleName()) | [&] {
+      auto tmp = toString(command.rolePermissions());
       return commands->insertRolePermissions(command.roleName(),
-                                             command.rolePermissions());
+                                             {tmp.begin(), tmp.end()});
     };
     return makeExecutionResult(result, command_name);
   }
@@ -269,10 +269,11 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::GrantPermission &command) {
-    return makeExecutionResult(
-        commands->insertAccountGrantablePermission(
-            command.accountId(), creator_account_id, command.permissionName()),
-        "GrantPermission");
+    return makeExecutionResult(commands->insertAccountGrantablePermission(
+                                   command.accountId(),
+                                   creator_account_id,
+                                   toString(command.permissionName())),
+                               "GrantPermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -288,10 +289,11 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::RevokePermission &command) {
-    return makeExecutionResult(
-        commands->deleteAccountGrantablePermission(
-            command.accountId(), creator_account_id, command.permissionName()),
-        "RevokePermission");
+    return makeExecutionResult(commands->deleteAccountGrantablePermission(
+                                   command.accountId(),
+                                   creator_account_id,
+                                   toString(command.permissionName())),
+                               "RevokePermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -590,8 +592,8 @@ namespace iroha {
     return checkAccountRolePermission(
         creator_account_id,
         queries,
-        fromOldR(shared_model::permissions::can_grant
-                 + command.permissionName()));
+        shared_model::interface::permissions::permissionFor(
+            command.permissionName()));
   }
 
   bool CommandValidator::hasPermissions(
@@ -616,7 +618,9 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return queries.hasAccountGrantablePermission(
-        command.accountId(), creator_account_id, command.permissionName());
+        command.accountId(),
+        creator_account_id,
+        toString(command.permissionName()));
   }
 
   bool CommandValidator::hasPermissions(
@@ -753,12 +757,16 @@ namespace iroha {
       const shared_model::interface::CreateRole &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return std::all_of(command.rolePermissions().begin(),
-                       command.rolePermissions().end(),
-                       [&queries, &creator_account_id](auto perm) {
-                         return checkAccountRolePermission(
-                             creator_account_id, queries, fromOldR(perm));
-                       });
+    auto set = command.rolePermissions();
+    for (size_t i = 0; i < set.size(); ++i) {
+      auto perm = static_cast<shared_model::interface::permissions::Role>(i);
+      if (set[perm]
+          && not checkAccountRolePermission(
+                 creator_account_id, queries, perm)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   bool CommandValidator::isValid(

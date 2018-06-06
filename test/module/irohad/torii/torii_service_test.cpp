@@ -209,10 +209,11 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
 
   // create transactions and send them to Torii
   std::string account_id = "some@account";
+  auto now = iroha::time::now();
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     auto shm_tx = shared_model::proto::TransactionBuilder()
                       .creatorAccountId(account_id)
-                      .createdTime(iroha::time::now())
+                      .createdTime(now + i)
                       .setAccountQuorum(account_id, 2)
                       .quorum(1)
                       .build()
@@ -406,7 +407,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   block_notifier_.get_subscriber().on_completed();
   t.join();
 
-  ASSERT_GE(torii_response.size(), 2);
+  // we can be sure only about final status
+  // it can be only one or to follow by some non-final
   ASSERT_EQ(torii_response.back().tx_status(),
             iroha::protocol::TxStatus::COMMITTED);
 }

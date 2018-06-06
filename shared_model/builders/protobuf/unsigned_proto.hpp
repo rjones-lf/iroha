@@ -55,6 +55,10 @@ namespace shared_model {
         return *this;
       }
 
+      /**
+       * Finishes object building
+       * @return built signed object
+       */
       T finish() {
         if (boost::size(object_.signatures()) == 0) {
           throw std::invalid_argument("Cannot get object without signatures");

@@ -25,6 +25,7 @@
 
 #include "datetime/time.hpp"
 #include "primitive.pb.h"
+#include "queries.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -172,6 +173,7 @@ class ValidatorsTest : public ::testing::Test {
   iroha::protocol::Amount amount;
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
+  iroha::protocol::QueryPayloadMeta meta;
 
   // List all used fields in commands
   std::unordered_map<

@@ -81,7 +81,7 @@ TEST(PipelineIntegrationTest, SendTx) {
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
