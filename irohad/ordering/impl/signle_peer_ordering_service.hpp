@@ -30,7 +30,7 @@ namespace iroha {
      * concurrent queue
      * Sends proposal by given timer interval and proposal size
      */
-    class OrderingServiceImpl : public network::OrderingService {
+    class SinglePeerOrderingService : public network::OrderingService {
      public:
       using TimeoutType = long;
       /**
@@ -42,7 +42,7 @@ namespace iroha {
        * @param persistent_state storage for auxiliary information
        * @param is_async whether proposals are generated in a separate thread
        */
-      OrderingServiceImpl(
+      SinglePeerOrderingService(
           std::shared_ptr<ametsuchi::PeerQuery> wsv,
           size_t max_size,
           rxcpp::observable<TimeoutType> proposal_timeout,
@@ -59,7 +59,7 @@ namespace iroha {
       void onTransaction(std::shared_ptr<shared_model::interface::Transaction>
                              transaction) override;
 
-      ~OrderingServiceImpl() override;
+      ~SinglePeerOrderingService() override;
 
      protected:
       /**

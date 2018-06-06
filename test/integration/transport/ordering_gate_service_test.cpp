@@ -27,7 +27,7 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
+#include "ordering/impl/signle_peer_ordering_service.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha;
@@ -60,7 +60,7 @@ class OrderingGateServiceTest : public ::testing::Test {
 
   void initOs(size_t max_proposal) {
     service =
-        std::make_shared<OrderingServiceImpl>(wsv,
+        std::make_shared<SinglePeerOrderingService>(wsv,
                                               max_proposal,
                                               proposal_timeout.get_observable(),
                                               service_transport,
@@ -171,13 +171,13 @@ class OrderingGateServiceTest : public ::testing::Test {
 
  private:
   std::shared_ptr<OrderingGateImpl> gate;
-  std::shared_ptr<OrderingServiceImpl> service;
+  std::shared_ptr<SinglePeerOrderingService> service;
 
   /// Peer Communication Service and commit subject are required to emulate
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;
-  rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
+  rxcpp::subjects::subject<SinglePeerOrderingService::TimeoutType> proposal_timeout;
 
   std::condition_variable cv;
   std::mutex m;

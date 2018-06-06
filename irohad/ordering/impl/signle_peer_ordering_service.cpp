@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ordering/impl/ordering_service_impl.hpp"
+#include "ordering/impl/signle_peer_ordering_service.hpp"
 #include <algorithm>
 #include <iterator>
 #include "ametsuchi/ordering_service_persistent_state.hpp"
@@ -15,7 +15,7 @@
 
 namespace iroha {
   namespace ordering {
-    OrderingServiceImpl::OrderingServiceImpl(
+    SinglePeerOrderingService::SinglePeerOrderingService(
         std::shared_ptr<ametsuchi::PeerQuery> wsv,
         size_t max_size,
         rxcpp::observable<TimeoutType> proposal_timeout,
@@ -64,7 +64,7 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onTransaction(
+    void SinglePeerOrderingService::onTransaction(
         std::shared_ptr<shared_model::interface::Transaction> transaction) {
       queue_.push(transaction);
       log_->info("Queue size is {}", queue_.unsafe_size());
@@ -74,7 +74,7 @@ namespace iroha {
       transactions_.get_subscriber().on_next(ProposalEvent::kTransactionEvent);
     }
 
-    void OrderingServiceImpl::generateProposal() {
+    void SinglePeerOrderingService::generateProposal() {
       // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
       // factories with move semantics
       iroha::protocol::Proposal proto_proposal;
@@ -104,7 +104,7 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::publishProposal(
+    void SinglePeerOrderingService::publishProposal(
         std::unique_ptr<shared_model::interface::Proposal> proposal) {
       auto peers = wsv_->getLedgerPeers();
       if (peers) {
@@ -119,7 +119,7 @@ namespace iroha {
       }
     }
 
-    OrderingServiceImpl::~OrderingServiceImpl() {
+    SinglePeerOrderingService::~SinglePeerOrderingService() {
       handle_.unsubscribe();
     }
   }  // namespace ordering

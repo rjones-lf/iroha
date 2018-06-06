@@ -23,7 +23,7 @@
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
+#include "ordering/impl/signle_peer_ordering_service.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 namespace iroha {
@@ -82,7 +82,7 @@ namespace iroha {
               persistent_state,
           std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
-      std::shared_ptr<ordering::OrderingServiceImpl> ordering_service;
+      std::shared_ptr<ordering::SinglePeerOrderingService> ordering_service;
       std::shared_ptr<ordering::OrderingGateImpl> ordering_gate;
       std::shared_ptr<ordering::OrderingGateTransportGrpc>
           ordering_gate_transport;

@@ -27,7 +27,7 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state) {
-      return std::make_shared<ordering::OrderingServiceImpl>(
+      return std::make_shared<ordering::SinglePeerOrderingService>(
           wsv,
           max_size,
           rxcpp::observable<>::interval(delay_milliseconds,
