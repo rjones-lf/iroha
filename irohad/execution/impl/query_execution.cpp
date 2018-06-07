@@ -218,7 +218,11 @@ QueryProcessingFactory::executeGetRolePermissions(
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
 
-  auto response = QueryResponseBuilder().rolePermissionsResponse(*perm);
+  shared_model::interface::RolePermissionSet set =
+      shared_model::interface::permissions::fromOldR(
+          std::set<std::string>{perm->begin(), perm->end()});
+
+  auto response = QueryResponseBuilder().rolePermissionsResponse(set);
   return response;
 }
 

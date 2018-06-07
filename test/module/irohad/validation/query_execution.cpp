@@ -149,10 +149,9 @@ TEST_F(GetAccountTest, MyAccountValidCase) {
   EXPECT_CALL(*wsv_query, getAccount(admin_id)).WillOnce(Return(creator));
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get());
     ASSERT_EQ(cast_resp.account().accountId(), admin_id);
   });
 }
@@ -179,10 +178,9 @@ TEST_F(GetAccountTest, AllAccountValidCase) {
       .WillOnce(Return(admin_roles));
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
   });
 }
@@ -209,10 +207,9 @@ TEST_F(GetAccountTest, DomainAccountValidCase) {
       .WillOnce(Return(admin_roles));
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
   });
 }
@@ -244,10 +241,9 @@ TEST_F(GetAccountTest, GrantAccountValidCase) {
       .WillOnce(Return(admin_roles));
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get());
     ASSERT_EQ(cast_resp.account().accountId(), account_id);
   });
 }
@@ -1290,10 +1286,9 @@ TEST_F(GetAssetInfoTest, MyAccountValidCase) {
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AssetResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AssetResponse>(),
+        response->get());
 
     ASSERT_EQ(cast_resp.asset().assetId(), asset_id);
   });
@@ -1376,10 +1371,9 @@ TEST_F(GetRolesTest, ValidCase) {
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::RolesResponse>(),
-                             response->get());
+    const auto &cast_resp = boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
+        response->get());
 
     ASSERT_EQ(cast_resp.roles().size(), roles.size());
 
@@ -1437,10 +1431,11 @@ class GetRolePermissionsTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
     role_permissions = {can_get_roles};
-    perms = {can_get_my_account, can_get_my_signatories};
+    perms = {shared_model::interface::permissions::Role::kGetMyAccount,
+             shared_model::interface::permissions::Role::kGetMySignatories};
   }
   std::string role_id = "user";
-  std::vector<std::string> perms;
+  shared_model::interface::RolePermissionSet perms;
 };
 
 /**
@@ -1458,7 +1453,8 @@ TEST_F(GetRolePermissionsTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions(role_id)).WillOnce(Return(perms));
+  EXPECT_CALL(*wsv_query, getRolePermissions(role_id))
+      .WillOnce(Return(shared_model::proto::permissions::toString(perms)));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -1469,7 +1465,7 @@ TEST_F(GetRolePermissionsTest, ValidCase) {
 
     ASSERT_EQ(cast_resp.rolePermissions().size(), perms.size());
     for (size_t i = 0; i < perms.size(); ++i) {
-      ASSERT_EQ(cast_resp.rolePermissions().at(i), perms.at(i));
+      ASSERT_EQ(cast_resp.rolePermissions(), perms);
     }
   });
 }
