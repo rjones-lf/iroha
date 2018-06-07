@@ -37,11 +37,11 @@ TEST(ModelCryptoTest, GenerateKeypair) {
  */
 TEST(ModelCryptoTest, GenerateKeypairInvalidSeed) {
   ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
-      std::string(64, 'g'));, std::runtime_error);
+      std::string(64, 'g'));, std::invalid_argument);
   ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
-      std::string(63, 'a'));, std::runtime_error);
+      std::string(63, 'a'));, std::invalid_argument);
   ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
-      std::string(65, 'a'));, std::runtime_error);
+      std::string(65, 'a'));, std::invalid_argument);
   ASSERT_THROW(shared_model::bindings::ModelCrypto().fromPrivateKey(
       std::string(32, 'a'));, std::invalid_argument);
 }
