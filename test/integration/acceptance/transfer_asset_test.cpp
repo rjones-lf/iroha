@@ -56,12 +56,12 @@ class TransferAsset : public AcceptanceFixture {
    * Create valid base pre-build transaction
    * @return pre-build tx
    */
-    auto baseTx() {
-      return TestUnsignedTransactionBuilder()
-          .creatorAccountId(kUser1 + "@test")
-          .createdTime(getUniqueTime())
-          .quorum(1);
-    }
+  auto baseTx() {
+    return TestUnsignedTransactionBuilder()
+        .creatorAccountId(kUser1 + "@test")
+        .createdTime(getUniqueTime())
+        .quorum(1);
+  }
 
   /**
    * Completes pre-build transaction
@@ -236,10 +236,14 @@ TEST_F(TransferAsset, NonexistentAsset) {
  *       (aka skipProposal throws)
  */
 TEST_F(TransferAsset, NegativeAmount) {
-  IntegrationTestFramework(3)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .skipProposal()
+      .skipBlock()
       .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
+      .skipProposal()
+      .skipBlock()
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
       .skipBlock()
