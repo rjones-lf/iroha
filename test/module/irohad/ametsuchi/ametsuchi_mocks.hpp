@@ -56,6 +56,10 @@ namespace iroha {
           getAsset,
           boost::optional<std::shared_ptr<shared_model::interface::Asset>>(
               const std::string &asset_id));
+      MOCK_METHOD1(getAccountAssets,
+                   boost::optional<std::vector<
+                       std::shared_ptr<shared_model::interface::AccountAsset>>>(
+                       const std::string &account_id));
       MOCK_METHOD2(getAccountAsset,
                    boost::optional<
                        std::shared_ptr<shared_model::interface::AccountAsset>>(

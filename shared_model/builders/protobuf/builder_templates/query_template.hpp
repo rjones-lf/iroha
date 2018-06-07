@@ -148,12 +148,10 @@ namespace shared_model {
       }
 
       auto getAccountAssets(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id) const {
+          const interface::types::AccountIdType &account_id) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_assets();
           query->set_account_id(account_id);
-          query->set_asset_id(asset_id);
         });
       }
 

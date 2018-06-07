@@ -34,17 +34,18 @@ namespace shared_model {
       /**
        * @return Account has Asset model
        */
-      virtual const AccountAsset &accountAsset() const = 0;
+      virtual const types::AccountAssetCollectionType accountAssets() const = 0;
 
       /**
        * Stringify the data.
        * @return string representation of data.
        */
       std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AccountAssetResponse")
-            .append(accountAsset().toString())
-            .finalize();
+        auto response = detail::PrettyStringBuilder()
+            .init("AccountAssetResponse");
+        for (const auto &asset: accountAssets())
+            response.append(asset.toString());
+        return response.finalize();
       }
 
       /**
@@ -53,7 +54,7 @@ namespace shared_model {
        * @return true if they are same.
        */
       bool operator==(const ModelType &rhs) const override {
-        return accountAsset() == rhs.accountAsset();
+        return accountAssets() == rhs.accountAssets();
       }
     };
   }  // namespace interface

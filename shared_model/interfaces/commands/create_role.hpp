@@ -23,6 +23,7 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -35,14 +36,13 @@ namespace shared_model {
        * @return Id of the domain to create
        */
       virtual const types::RoleIdType &roleName() const = 0;
-      /// Set of Permissions to insure the order for consistent hash
-      using PermissionsType = std::set<types::PermissionNameType>;
+
       /**
        * @return permissions associated with the role
        */
-      virtual const PermissionsType &rolePermissions() const = 0;
+      virtual const RolePermissionSet &rolePermissions() const = 0;
 
-      std::string toString() const override;
+      std::string toString() const override = 0;
 
       bool operator==(const ModelType &rhs) const override;
     };

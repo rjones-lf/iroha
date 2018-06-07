@@ -163,22 +163,47 @@ namespace iroha {
       };
     }
 
+    boost::optional<
+        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
+    PostgresWsvQuery::getAccountAssets(const AccountIdType &account_id) {
+      return execute_("SELECT * FROM account_has_asset WHERE account_id = "
+                      + transaction_.quote(account_id) + ";")
+                 | [&](const auto &result)
+                 -> boost::optional<std::vector<
+                     std::shared_ptr<shared_model::interface::AccountAsset>>> {
+        auto results = transform<shared_model::builder::BuilderResult<
+            shared_model::interface::AccountAsset>>(result, makeAccountAsset);
+        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+            assets;
+        for (auto &r : results) {
+          r.match(
+              [&](expected::Value<
+                  std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
+                assets.push_back(v.value);
+              },
+              [&](expected::Error<std::shared_ptr<std::string>> &e) {
+                log_->info(*e.error);
+              });
+        }
+        return assets;
+      };
+    }
     boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
     PostgresWsvQuery::getAccountAsset(const AccountIdType &account_id,
                                       const AssetIdType &asset_id) {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
-                      + transaction_.quote(account_id)
-                      + " AND asset_id = " + transaction_.quote(asset_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     std::shared_ptr<shared_model::interface::AccountAsset>> {
-        if (result.empty()) {
-          log_->info("Account {} does not have asset {}", account_id, asset_id);
-          return boost::none;
-        }
+                          + transaction_.quote(account_id)
+                          + " AND asset_id = " + transaction_.quote(asset_id) + ";")
+          | [&](const auto &result)
+              -> boost::optional<
+                  std::shared_ptr<shared_model::interface::AccountAsset>> {
+            if (result.empty()) {
+              log_->info("Account {} does not have asset {}", account_id, asset_id);
+              return boost::none;
+            }
 
-        return fromResult(makeAccountAsset(result.at(0)));
-      };
+            return fromResult(makeAccountAsset(result.at(0)));
+          };
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>

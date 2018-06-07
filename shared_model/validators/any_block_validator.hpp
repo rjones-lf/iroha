@@ -31,7 +31,7 @@ namespace shared_model {
         return empty_block_validator_.validate(empty_block);
       }
 
-      Answer validate(const interface::BlockVariantType &block_variant) const {
+      Answer validate(const interface::BlockVariant &block_variant) const {
         return iroha::visit_in_place(
             block_variant, [this](auto block) { return validate(*block); });
       }

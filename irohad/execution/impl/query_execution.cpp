@@ -251,18 +251,21 @@ QueryProcessingFactory::executeGetAccount(
 QueryProcessingFactory::QueryResponseBuilderDone
 QueryProcessingFactory::executeGetAccountAssets(
     const shared_model::interface::GetAccountAssets &query) {
-  auto acct_asset =
-      _wsvQuery->getAccountAsset(query.accountId(), query.assetId());
+  auto acct_assets =
+      _wsvQuery->getAccountAssets(query.accountId());
 
-  if (not acct_asset) {
+  if (not acct_assets) {
     return buildError<shared_model::interface::NoAccountAssetsErrorResponse>();
   }
-
-  const auto &account_asset = **acct_asset;
+  std::vector<shared_model::proto::AccountAsset> account_assets;
+  for (auto asset: *acct_assets) {
+    //TODO: IR-1239 remove static cast when query response builder is updated
+    // and accepts interface objects
+    account_assets.push_back(
+        *std::static_pointer_cast<shared_model::proto::AccountAsset>(asset));
+  }
   auto response =
-      QueryResponseBuilder().accountAssetResponse(account_asset.assetId(),
-                                                  account_asset.accountId(),
-                                                  account_asset.balance());
+      QueryResponseBuilder().accountAssetResponse(account_assets);
   return response;
 }
 

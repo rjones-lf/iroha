@@ -18,22 +18,21 @@
 #include "framework/config_helper.hpp"
 
 #include <sstream>
-#include "logger/logger.hpp"
 
 namespace integration_framework {
+
   std::string getPostgresCredsOrDefault(const std::string &default_conn) {
     auto pg_host = std::getenv("IROHA_POSTGRES_HOST");
     auto pg_port = std::getenv("IROHA_POSTGRES_PORT");
     auto pg_user = std::getenv("IROHA_POSTGRES_USER");
     auto pg_pass = std::getenv("IROHA_POSTGRES_PASSWORD");
-    if (not pg_host) {
-      return default_conn;
-    } else {
+
+    if (pg_host and pg_port and pg_user and pg_pass) {
       std::stringstream ss;
       ss << "host=" << pg_host << " port=" << pg_port << " user=" << pg_user
          << " password=" << pg_pass;
-      logger::log("ITF")->info("Postgres credentials: {}", ss.str());
       return ss.str();
     }
+    return default_conn;
   }
 }  // namespace integration_framework

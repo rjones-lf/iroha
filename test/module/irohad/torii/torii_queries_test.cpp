@@ -315,7 +315,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccountAssets(accountb_id, "usd#domain")
+                         .getAccountAssets(accountb_id)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
@@ -362,8 +362,10 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   std::vector<std::string> perm = {
       shared_model::permissions::can_get_my_acc_ast};
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
-  EXPECT_CALL(*wsv_query, getAccountAsset(_, _))
-      .WillOnce(Return(account_asset));
+  EXPECT_CALL(*wsv_query, getAccountAssets(_))
+      .WillOnce(Return(
+          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
+              {account_asset})));
 
   iroha::protocol::QueryResponse response;
 
@@ -371,7 +373,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccountAssets(creator, "usd#domain")
+                         .getAccountAssets(creator)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
@@ -391,12 +393,13 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
         framework::SpecifiedVisitor<
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
-
     // Check if the fields in account asset response are correct
-    ASSERT_EQ(asset_resp.accountAsset().assetId(), account_asset->assetId());
-    ASSERT_EQ(asset_resp.accountAsset().accountId(),
+    ASSERT_EQ(asset_resp.accountAssets()[0].assetId(),
+              account_asset->assetId());
+    ASSERT_EQ(asset_resp.accountAssets()[0].accountId(),
               account_asset->accountId());
-    ASSERT_EQ(asset_resp.accountAsset().balance(), account_asset->balance());
+    ASSERT_EQ(asset_resp.accountAssets()[0].balance(),
+              account_asset->balance());
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
 }

@@ -32,21 +32,16 @@ namespace shared_model {
        * @return account identifier
        */
       virtual const types::AccountIdType &accountId() const = 0;
-      /**
-       * @return asset identifier
-       */
-      virtual const types::AssetIdType &assetId() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("GetAccountAssets")
             .append("account_id", accountId())
-            .append("asset_id", assetId())
             .finalize();
       }
 
       bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and assetId() == rhs.accountId();
+        return accountId() == rhs.accountId();
       }
     };
   }  // namespace interface

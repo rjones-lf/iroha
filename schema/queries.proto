@@ -26,7 +26,6 @@ message GetTransactions {
 
 message GetAccountAssets {
   string account_id = 1;
-  string asset_id = 2;
 }
 
 message GetAccountDetail {

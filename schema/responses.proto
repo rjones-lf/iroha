@@ -30,7 +30,7 @@ message AccountAsset {
 
 // *** Responses *** //
 message AccountAssetResponse {
-  AccountAsset account_asset = 1;
+  repeated AccountAsset account_assets = 1;
 }
 
 message AccountDetailResponse {
@@ -91,4 +91,19 @@ message QueryResponse {
     RolePermissionsResponse role_permissions_response = 9;
   }
   string query_hash = 10;
+}
+
+message BlockResponse {
+  Block block = 1;
+}
+
+message BlockErrorResponse {
+  string message = 1;
+}
+
+message BlockQueryResponse {
+  oneof response {
+    BlockResponse block_response = 1;
+    BlockErrorResponse error_response = 2;
+  }
 }

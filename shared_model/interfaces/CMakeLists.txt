@@ -31,6 +31,10 @@ add_library(shared_model_interfaces
     commands/impl/set_quorum.cpp
     commands/impl/subtract_asset_quantity.cpp
     commands/impl/transfer_asset.cpp
+    query_responses/impl/block_error_response.cpp
+    query_responses/impl/block_query_response.cpp
+    query_responses/impl/block_response.cpp
+    iroha_internal/block_variant.cpp
     )
 
 target_link_libraries(shared_model_interfaces

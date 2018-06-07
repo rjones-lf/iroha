@@ -11,11 +11,12 @@
 namespace iroha {
   namespace ametsuchi {
 
+    // regex to fetch dbname from pg_opt string
+    const static std::regex e("\\bdbname=([^ ]*)");
+
     PostgresOptions::PostgresOptions(const std::string &pg_opt)
         : pg_opt_(pg_opt) {
       std::smatch m;
-      // regex to fetch dbname from pg_opt string
-      std::regex e("\\bdbname=([^ ]*)");
 
       if (std::regex_search(pg_opt_, m, e)) {
         dbname_ = *(m.end() - 1);
