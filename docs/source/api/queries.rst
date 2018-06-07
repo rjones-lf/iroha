@@ -255,7 +255,7 @@ Get Account Assets
 Purpose
 -------
 
-To get the state of an asset in an account (a balance), `GetAccountAssets` query can be used.
+To get the state of all assets in an account (a balance), `GetAccountAssets` query can be used.
 
 Request Schema
 --------------
@@ -264,7 +264,6 @@ Request Schema
 
     message GetAccountAssets {
         string account_id = 1;
-        string asset_id = 2;
     }
 
 Request Structure
@@ -275,12 +274,14 @@ Request Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "account id to request balance from", "<account_name>@<domain_id>", "makoto@soramitsu"
-    "Asset ID", "asset id to know its balance", "<asset_name>#<domain_id>", "jpy#japan"
 
 Response Schema
 ---------------
-
 .. code-block:: proto
+
+    message AccountAssetResponse {
+        repeated AccountAsset acct_assets = 1;
+    }
 
     message AccountAsset {
         string asset_id = 1;
