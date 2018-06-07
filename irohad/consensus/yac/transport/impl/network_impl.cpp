@@ -25,6 +25,7 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
+#include "consensus/yac/storage/yac_common.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -125,6 +126,10 @@ namespace iroha {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           commit.votes.push_back(vote);
         }
+        if (not sameProposals(commit.votes)) {
+          log_->info("Commit is stateless invalid: proposals are different");
+          return grpc::Status::CANCELLED;
+        }
 
         log_->info("Receive commit[size={}] from {}",
                    commit.votes.size(),
@@ -142,6 +147,10 @@ namespace iroha {
         for (const auto &pb_vote : request->votes()) {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           reject.votes.push_back(vote);
+        }
+        if (not sameProposals(reject.votes)) {
+          log_->info("Reject is stateless invalid: proposals are different");
+          return grpc::Status::CANCELLED;
         }
 
         log_->info("Receive reject[size={}] from {}",
