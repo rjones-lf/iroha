@@ -28,6 +28,9 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::fromPrivateKey(
         const std::string &private_key) {
+      if (private_key.length() != 32)  {
+        throw iroha::BadFormatException("blob_t: input string has incorrect length " + std::to_string(private_key.length()));
+      }
       auto byte_string = iroha::hexstringToBytestring(private_key);
       if (not byte_string) {
         throw std::runtime_error("invalid seed");
