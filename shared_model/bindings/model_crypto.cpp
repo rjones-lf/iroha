@@ -28,7 +28,8 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::fromPrivateKey(
         const std::string &private_key) {
-      if (private_key.length() != 64) {
+      // TODO 07/06/18 Akvinikym: remove magic number (64) IR-977
+      if (private_key.size() != 64) {
         throw std::invalid_argument("input string has incorrect length "
                                     + std::to_string(private_key.length()));
       }
