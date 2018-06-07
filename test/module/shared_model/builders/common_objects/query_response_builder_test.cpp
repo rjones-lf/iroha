@@ -239,11 +239,16 @@ TEST(QueryResponseBuilderTest, RolesResponse) {
 }
 
 TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
-  const std::vector<std::string> roles = {"role1", "role2", "role3"};
+  shared_model::interface::RolePermissionSet permissions(
+      {shared_model::interface::permissions::Role::kAppendRole,
+       shared_model::interface::permissions::Role::kAddAssetQty,
+       shared_model::interface::permissions::Role::kAddPeer});
 
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
-      builder.queryHash(query_hash).rolePermissionsResponse(roles).build();
+      builder.queryHash(query_hash)
+          .rolePermissionsResponse(permissions)
+          .build();
 
   ASSERT_NO_THROW({
     const auto &role_permissions_response = boost::apply_visitor(
@@ -251,7 +256,7 @@ TEST(QueryResponseBuilderTest, RolePermissionsResponse) {
             shared_model::interface::RolePermissionsResponse>(),
         query_response.get());
 
-    ASSERT_EQ(role_permissions_response.rolePermissions(), roles);
+    ASSERT_EQ(role_permissions_response.rolePermissions(), permissions);
     ASSERT_EQ(query_response.queryHash(), query_hash);
   });
 }
