@@ -6,7 +6,7 @@ const privateKey = '1d7e0a32ee0affeb4d22acd73c2c6fb6bd58e266c8c2ce4fa0ffe3dd6a25
 const randomKey = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 const incorrectInputLength = 'aaaaaaaaaaaaaaaa'
 const incorrectInputShorter = 'a'
-const incorrectInputLonger = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+const incorrectInputLonger = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
 test('ModelCrypto tests', function (t) {
   t.plan(9)
@@ -24,8 +24,8 @@ test('ModelCrypto tests', function (t) {
   t.equal(newKeypair.publicKey().hex().length, publicKey.length, 'Size of generated public key should be the same as size of predefined public key')
   t.equal(newKeypair.privateKey().hex().length, privateKey.length, 'Size of generated private key should be the same as size of predefined private key')
 
-  t.throws(() => crypto.fromPrivateKey(incorrectInputShorter), /input string has incorrect length/, 'Should throw "input string has incorrect length" for keys shorter then 32')
-  t.throws(() => crypto.fromPrivateKey(incorrectInputLonger), /input string has incorrect length/, 'Should throw "input string has incorrect length" for keys longer then 32')
+  t.throws(() => crypto.fromPrivateKey(incorrectInputShorter), /input string has incorrect length/, 'Should throw "input string has incorrect length" for keys shorter then 64')
+  t.throws(() => crypto.fromPrivateKey(incorrectInputLonger), /input string has incorrect length/, 'Should throw "input string has incorrect length" for keys longer then 64')
   t.equal(crypto.fromPrivateKey(privateKey).publicKey().hex(), publicKey)
 
   t.end()
