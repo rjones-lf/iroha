@@ -1511,21 +1511,3 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoRole) {
                                shared_model::interface::NoRolesErrorResponse>(),
                            response->get()));
 }
-
-class GetBlocksTest : public QueryValidateExecuteTest {
- public:
-  void SetUp() override {
-    QueryValidateExecuteTest::SetUp();
-
-    role_permissions = {can_get_blocks};
-  }
-};
-
-TEST_F(GetBlocksTest, GetBlockValidTest) {
-  auto query = TestBlocksQueryBuilder()
-                   .createdTime(iroha::time::now())
-                   .creatorAccountId(admin_id)
-                   .queryCounter(1)
-                   .build();
-  (void) query;
-}
