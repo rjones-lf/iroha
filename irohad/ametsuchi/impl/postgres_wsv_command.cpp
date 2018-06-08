@@ -18,6 +18,7 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 #include <boost/format.hpp>
+#include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -75,8 +76,7 @@ namespace iroha {
 
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
         const shared_model::interface::types::RoleIdType &role_id,
-        const std::set<shared_model::interface::types::PermissionNameType>
-            &permissions) {
+        const shared_model::interface::RolePermissionSet &permissions) {
       auto entry = [this, &role_id](auto permission) {
         return "(" + transaction_.quote(role_id) + ", "
             + transaction_.quote(permission) + ")";
@@ -85,22 +85,26 @@ namespace iroha {
       // generate string with all permissions,
       // applying transform_func to each permission
       auto generate_perm_string = [&permissions](auto transform_func) {
-        return std::accumulate(std::next(permissions.begin()),
-                               permissions.end(),
-                               transform_func(*permissions.begin()),
-                               [&transform_func](auto &res, auto &perm) {
-                                 return res + ", " + transform_func(perm);
-                               });
+        std::string s;
+        permissions.iterate([&](auto perm) {
+          s += transform_func(shared_model::proto::permissions::toString(perm))
+              + ',';
+        });
+        if (s.size() > 0) {
+          // remove last comma
+          s.resize(s.size() - 1);
+        }
+        return s;
       };
 
       auto result = execute_(
-          "INSERT INTO role_has_permissions(role_id, permission_id) VALUES "
+          "INSERT INTO role_has_permissions(role_id, permission) VALUES "
           + generate_perm_string(entry) + ";");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert role permissions, role "
                               "id: '%s', permissions: [%s]")
-                % role_id % generate_perm_string([](auto &a) { return a; }))
+                % role_id % generate_perm_string([](auto a) { return a; }))
             .str();
       };
 
@@ -111,22 +115,24 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PermissionNameType
-            &permission_id) {
+        shared_model::interface::permissions::Grantable permission) {
       auto result = execute_(
           "INSERT INTO "
           "account_has_grantable_permissions(permittee_account_id, "
-          "account_id, permission_id) VALUES ("
+          "account_id, permission) VALUES ("
           + transaction_.quote(permittee_account_id) + ", "
           + transaction_.quote(account_id) + ", "
-          + transaction_.quote(permission_id) + ");");
+          + transaction_.quote(
+                shared_model::proto::permissions::toString(permission))
+          + ");");
 
       auto message_gen = [&] {
         return (boost::format("failed to insert account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
-                              "permission id: '%s'")
-                % permittee_account_id % account_id % permission_id)
+                              "permission: '%s'")
+                % permittee_account_id % account_id
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
@@ -137,21 +143,23 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PermissionNameType
-            &permission_id) {
+        shared_model::interface::permissions::Grantable permission) {
       auto result = execute_(
           "DELETE FROM public.account_has_grantable_permissions WHERE "
           "permittee_account_id="
-          + transaction_.quote(permittee_account_id)
-          + " AND account_id=" + transaction_.quote(account_id)
-          + " AND permission_id=" + transaction_.quote(permission_id) + " ;");
+          + transaction_.quote(permittee_account_id) + " AND account_id="
+          + transaction_.quote(account_id) + " AND permission="
+          + transaction_.quote(
+                shared_model::proto::permissions::toString(permission))
+          + " ;");
 
       auto message_gen = [&] {
         return (boost::format("failed to delete account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission id: '%s'")
-                % permittee_account_id % account_id % permission_id)
+                % permittee_account_id % account_id
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
@@ -165,8 +173,7 @@ namespace iroha {
           "data) VALUES ("
           + transaction_.quote(account.accountId()) + ", "
           + transaction_.quote(account.domainId()) + ", "
-          + transaction_.quote(account.quorum())
-          + ", "
+          + transaction_.quote(account.quorum()) + ", "
           + transaction_.quote(account.jsonData()) + ");");
 
       auto message_gen = [&] {

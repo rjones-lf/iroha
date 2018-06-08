@@ -7,6 +7,7 @@
 #define IROHA_SHARED_MODEL_PERMISSIONS_HPP
 
 #include <bitset>
+#include <functional>
 #include <initializer_list>
 
 namespace shared_model {
@@ -71,6 +72,7 @@ namespace shared_model {
       };
 
       Role permissionFor(Grantable);
+      Grantable permissionOf(Role);
     }  // namespace permissions
 
     template <typename Perm>
@@ -100,6 +102,8 @@ namespace shared_model {
       PermissionSet<Perm> &operator&=(const PermissionSet<Perm> &r);
       PermissionSet<Perm> &operator|=(const PermissionSet<Perm> &r);
       PermissionSet<Perm> &operator^=(const PermissionSet<Perm> &r);
+
+      void iterate(std::function<void(Perm)> f) const;
 
      private:
       constexpr auto bit(Perm p) const {

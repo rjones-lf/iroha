@@ -67,11 +67,12 @@ bool hasQueryPermission(const std::string &creator,
                         Role all_permission_id,
                         Role domain_permission_id) {
   auto perms_set = iroha::getAccountPermissions(creator, wsv_query);
+  auto grantable = permissionOf(indiv_permission_id);
   return
       // 1. Creator has grant permission from other user
-      (creator != target_account
+      (creator != target_account /*and grantable != Grantable::COUNT*/
        and wsv_query.hasAccountGrantablePermission(
-               creator, target_account, toString(indiv_permission_id)))
+               creator, target_account, grantable))
       or  // ----- Creator has role permission ---------
       (perms_set
        and (
@@ -218,7 +219,8 @@ QueryProcessingFactory::executeGetRolePermissions(
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
 
-  auto response = QueryResponseBuilder().rolePermissionsResponse(*perm);
+  auto response =
+      QueryResponseBuilder().rolePermissionsResponse(toString(*perm));
   return response;
 }
 
@@ -240,21 +242,19 @@ QueryProcessingFactory::executeGetAccount(
 QueryProcessingFactory::QueryResponseBuilderDone
 QueryProcessingFactory::executeGetAccountAssets(
     const shared_model::interface::GetAccountAssets &query) {
-  auto acct_assets =
-      _wsvQuery->getAccountAssets(query.accountId());
+  auto acct_assets = _wsvQuery->getAccountAssets(query.accountId());
 
   if (not acct_assets) {
     return buildError<shared_model::interface::NoAccountAssetsErrorResponse>();
   }
   std::vector<shared_model::proto::AccountAsset> account_assets;
-  for (auto asset: *acct_assets) {
-    //TODO: IR-1239 remove static cast when query response builder is updated
+  for (auto asset : *acct_assets) {
+    // TODO: IR-1239 remove static cast when query response builder is updated
     // and accepts interface objects
     account_assets.push_back(
         *std::static_pointer_cast<shared_model::proto::AccountAsset>(asset));
   }
-  auto response =
-      QueryResponseBuilder().accountAssetResponse(account_assets);
+  auto response = QueryResponseBuilder().accountAssetResponse(account_assets);
   return response;
 }
 

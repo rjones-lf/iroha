@@ -20,8 +20,8 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
 #include "execution/query_execution.hpp"
-#include "framework/test_subscriber.hpp"
 #include "framework/specified_visitor.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -56,6 +56,8 @@ class QueryProcessorTest : public ::testing::Test {
 
   std::vector<shared_model::interface::types::PubkeyType> signatories = {
       keypair.publicKey()};
+  shared_model::interface::RolePermissionSet perms;
+  std::vector<std::string> roles;
 };
 
 /**
@@ -85,9 +87,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
       shared_model::proto::AccountBuilder().accountId(account_id).build());
 
   auto role = "admin";
-  std::vector<std::string> roles = {role};
-  std::vector<std::string> perms = {
-      shared_model::permissions::can_get_my_account};
+  roles = {role};
+  perms.set(shared_model::interface::permissions::Role::kGetMyAccount);
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
@@ -102,10 +103,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    ASSERT_NO_THROW(
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get()));
+    ASSERT_NO_THROW(boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
@@ -140,9 +140,8 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
   auto role = "admin";
-  std::vector<std::string> roles = {role};
-  std::vector<std::string> perms = {
-      shared_model::permissions::can_get_my_account};
+  roles = {role};
+  perms.set(shared_model::interface::permissions::Role::kGetMyAccount);
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));

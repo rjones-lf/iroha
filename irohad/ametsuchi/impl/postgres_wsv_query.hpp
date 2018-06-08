@@ -35,8 +35,7 @@ namespace iroha {
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
 
-      boost::optional<
-          std::vector<shared_model::interface::types::PermissionNameType>>
+      boost::optional<shared_model::interface::RolePermissionSet>
       getRolePermissions(
           const shared_model::interface::types::RoleIdType &role_name) override;
 
@@ -51,9 +50,10 @@ namespace iroha {
                          &account_id) override;
       boost::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
-      boost::optional<std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
-      getAccountAssets(
-          const shared_model::interface::types::AccountIdType &account_id) override;
+      boost::optional<
+          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
+      getAccountAssets(const shared_model::interface::types::AccountIdType
+                           &account_id) override;
       boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
@@ -70,8 +70,7 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType
               &permitee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) override;
+          shared_model::interface::permissions::Grantable permission) override;
 
      private:
       std::unique_ptr<pqxx::lazyconnection> connection_ptr_;

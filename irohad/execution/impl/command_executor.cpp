@@ -253,9 +253,8 @@ namespace iroha {
       const shared_model::interface::CreateRole &command) {
     std::string command_name = "CreateRole";
     auto result = commands->insertRole(command.roleName()) | [&] {
-      auto tmp = toString(command.rolePermissions());
       return commands->insertRolePermissions(command.roleName(),
-                                             {tmp.begin(), tmp.end()});
+                                             command.rolePermissions());
     };
     return makeExecutionResult(result, command_name);
   }
@@ -269,11 +268,10 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::GrantPermission &command) {
-    return makeExecutionResult(commands->insertAccountGrantablePermission(
-                                   command.accountId(),
-                                   creator_account_id,
-                                   toString(command.permissionName())),
-                               "GrantPermission");
+    return makeExecutionResult(
+        commands->insertAccountGrantablePermission(
+            command.accountId(), creator_account_id, command.permissionName()),
+        "GrantPermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -289,11 +287,10 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::RevokePermission &command) {
-    return makeExecutionResult(commands->deleteAccountGrantablePermission(
-                                   command.accountId(),
-                                   creator_account_id,
-                                   toString(command.permissionName())),
-                               "RevokePermission");
+    return makeExecutionResult(
+        commands->deleteAccountGrantablePermission(
+            command.accountId(), creator_account_id, command.permissionName()),
+        "RevokePermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -531,10 +528,9 @@ namespace iroha {
                  creator_account_id, queries, Role::kAddSignatory))
         or
         // Case 2. Creator has granted permission for it
-        (queries.hasAccountGrantablePermission(
-            creator_account_id,
-            command.accountId(),
-            toString(Role::kAddMySignatory)));
+        (queries.hasAccountGrantablePermission(creator_account_id,
+                                               command.accountId(),
+                                               Grantable::kAddMySignatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -610,7 +606,7 @@ namespace iroha {
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               toString(Role::kRemoveMySignatory)));
+               Grantable::kRemoveMySignatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -618,9 +614,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return queries.hasAccountGrantablePermission(
-        command.accountId(),
-        creator_account_id,
-        toString(command.permissionName()));
+        command.accountId(), creator_account_id, command.permissionName());
   }
 
   bool CommandValidator::hasPermissions(
@@ -631,10 +625,9 @@ namespace iroha {
         // Case 1. Creator set details for his account
         creator_account_id == command.accountId() or
         // Case 2. Creator has grantable permission to set account key/value
-        queries.hasAccountGrantablePermission(
-            creator_account_id,
-            command.accountId(),
-            toString(Role::kSetMyAccountDetail));
+        queries.hasAccountGrantablePermission(creator_account_id,
+                                              command.accountId(),
+                                              Grantable::kSetMyAccountDetail);
   }
 
   bool CommandValidator::hasPermissions(
@@ -647,10 +640,9 @@ namespace iroha {
          and checkAccountRolePermission(
                  creator_account_id, queries, Role::kSetQuorum))
         // 2. Creator has granted permission on it
-        or (queries.hasAccountGrantablePermission(
-               creator_account_id,
-               command.accountId(),
-               toString(Role::kSetMyQuorum)));
+        or (queries.hasAccountGrantablePermission(creator_account_id,
+                                                  command.accountId(),
+                                                  Grantable::kSetMyQuorum));
   }
 
   bool CommandValidator::hasPermissions(
@@ -672,7 +664,7 @@ namespace iroha {
                 and queries.hasAccountGrantablePermission(
                         creator_account_id,
                         command.srcAccountId(),
-                        toString(Role::kTransferMyAssets)))
+                        Grantable::kTransferMyAssets))
                or
                // 2. Creator transfer from their account
                (creator_account_id == command.srcAccountId()
@@ -715,21 +707,15 @@ namespace iroha {
       return false;
     }
 
-    std::set<std::string> account_permissions;
+    shared_model::interface::RolePermissionSet account_permissions;
     for (const auto &role : *account_roles) {
       auto permissions = queries.getRolePermissions(role);
       if (not permissions)
         continue;
-      for (const auto &permission : *permissions)
-        account_permissions.insert(permission);
+      account_permissions |= *permissions;
     }
 
-    return std::none_of((*role_permissions).begin(),
-                        (*role_permissions).end(),
-                        [&account_permissions](const auto &perm) {
-                          return account_permissions.find(perm)
-                              == account_permissions.end();
-                        });
+    return role_permissions->isSubsetOf(account_permissions);
   }
 
   bool CommandValidator::isValid(

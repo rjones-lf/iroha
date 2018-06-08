@@ -16,6 +16,8 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/from_old.hpp"
+#include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -24,7 +26,6 @@ namespace iroha {
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::JsonType;
-    using shared_model::interface::types::PermissionNameType;
     using shared_model::interface::types::PubkeyType;
     using shared_model::interface::types::RoleIdType;
 
@@ -52,13 +53,15 @@ namespace iroha {
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const AccountIdType &permitee_account_id,
         const AccountIdType &account_id,
-        const PermissionNameType &permission_id) {
+        shared_model::interface::permissions::Grantable permission) {
       return execute_(
                  "SELECT * FROM account_has_grantable_permissions WHERE "
                  "permittee_account_id = "
                  + transaction_.quote(permitee_account_id)
                  + " AND account_id = " + transaction_.quote(account_id)
-                 + " AND permission_id = " + transaction_.quote(permission_id)
+                 + " AND permission = "
+                 + transaction_.quote(
+                       shared_model::proto::permissions::toString(permission))
                  + ";")
           | [](const auto &result) { return result.size() == 1; };
     }
@@ -75,16 +78,19 @@ namespace iroha {
             };
     }
 
-    boost::optional<std::vector<PermissionNameType>>
+    boost::optional<shared_model::interface::RolePermissionSet>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
       return execute_(
-                 "SELECT permission_id FROM role_has_permissions WHERE role_id "
+                 "SELECT permission FROM role_has_permissions WHERE role_id "
                  "= "
                  + transaction_.quote(role_name) + ";")
           | [&](const auto &result) {
-              return transform<std::string>(result, [](const auto &row) {
-                return row.at("permission_id").c_str();
-              });
+              shared_model::interface::RolePermissionSet set;
+              for (const auto &r : result) {
+                set.set(shared_model::interface::permissions::fromOldR(
+                    r.at("permission").c_str()));
+              }
+              return set;
             };
     }
 
@@ -192,18 +198,18 @@ namespace iroha {
     PostgresWsvQuery::getAccountAsset(const AccountIdType &account_id,
                                       const AssetIdType &asset_id) {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
-                          + transaction_.quote(account_id)
-                          + " AND asset_id = " + transaction_.quote(asset_id) + ";")
-          | [&](const auto &result)
-              -> boost::optional<
-                  std::shared_ptr<shared_model::interface::AccountAsset>> {
-            if (result.empty()) {
-              log_->info("Account {} does not have asset {}", account_id, asset_id);
-              return boost::none;
-            }
+                      + transaction_.quote(account_id)
+                      + " AND asset_id = " + transaction_.quote(asset_id) + ";")
+                 | [&](const auto &result)
+                 -> boost::optional<
+                     std::shared_ptr<shared_model::interface::AccountAsset>> {
+        if (result.empty()) {
+          log_->info("Account {} does not have asset {}", account_id, asset_id);
+          return boost::none;
+        }
 
-            return fromResult(makeAccountAsset(result.at(0)));
-          };
+        return fromResult(makeAccountAsset(result.at(0)));
+      };
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>

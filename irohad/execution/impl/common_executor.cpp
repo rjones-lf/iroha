@@ -39,9 +39,7 @@ namespace iroha {
       if (not perms) {
         return;
       }
-      auto tmp = shared_model::interface::permissions::fromOldR(
-          std::set<std::string>{perms.value().begin(), perms.value().end()});
-      permissions |= tmp;
+      permissions |= *perms;
     });
     return permissions;
   }
@@ -49,8 +47,10 @@ namespace iroha {
   bool checkAccountRolePermission(
       const std::string &account_id,
       ametsuchi::WsvQuery &queries,
-      shared_model::interface::permissions::Role permission_id) {
-    auto permission = shared_model::proto::permissions::toString(permission_id);
+      shared_model::interface::permissions::Role permission) {
+    if (permission >= shared_model::interface::permissions::Role::COUNT) {
+      return false;
+    }
     auto accountRoles = queries.getAccountRoles(account_id);
     if (not accountRoles)
       return false;
@@ -58,9 +58,8 @@ namespace iroha {
       auto rolePerms = queries.getRolePermissions(accountRole);
       if (not rolePerms)
         continue;
-      for (auto rolePerm : *rolePerms) {
-        if (rolePerm == permission)
-          return true;
+      if (rolePerms->test(permission)) {
+        return true;
       }
     }
     return false;
