@@ -24,7 +24,7 @@ namespace shared_model {
 
       BlockResponse(const BlockResponse &o);
 
-      BlockResponse(BlockResponse &&o);
+      BlockResponse(BlockResponse &&o) noexcept;
 
       const Block &block() const override;
 
@@ -32,7 +32,7 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::BlockResponse block_response_;
+      const iroha::protocol::BlockResponse &block_response_;
 
       const Lazy<Block> block_;
     };

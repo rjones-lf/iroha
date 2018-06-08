@@ -18,6 +18,7 @@ add_library(common_execution
 target_link_libraries(common_execution
         rxcpp
         boost
+        shared_model_proto_backend
         )
 
 add_library(command_execution
