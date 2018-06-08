@@ -12,10 +12,6 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/queries/blocks_query.hpp"
-#endif
-
 namespace shared_model {
   namespace interface {
 

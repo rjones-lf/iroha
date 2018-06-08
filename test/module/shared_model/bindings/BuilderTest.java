@@ -133,7 +133,7 @@ public class BuilderTest {
     }
 
     Blob proto(UnsignedTx tx) {
-        return new ModelProtoTransaction().signAndAddSignature(tx, keys);
+        return new ModelProtoTransaction(tx).signAndAddSignature(keys).finish();
     }
 
     /**

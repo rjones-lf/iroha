@@ -242,7 +242,7 @@ namespace shared_model {
 
     void FieldValidator::validatePermissions(
         ReasonsGroupType &reason,
-        const interface::CreateRole::PermissionsType &permissions) const {
+        const interface::types::PermissionSetType &permissions) const {
       if (permissions.empty()) {
         reason.second.push_back(
             "Permission set should contain at least one permission");

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
@@ -25,10 +24,9 @@
 using namespace iroha::network;
 using namespace iroha::model;
 
-using ::testing::AtLeast;
+using ::testing::_;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
-using ::testing::_;
 
 /**
  * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and
@@ -51,30 +49,30 @@ TEST(TransportTest, SendAndReceive) {
       .WillByDefault(
           InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
-  std::shared_ptr<shared_model::interface::Peer> peer =
-      makePeer("localhost:50051", "abcdabcdabcdabcdabcdabcdabcdabcd");
-
   auto state = iroha::MstState::empty();
   state += makeTx(1, iroha::time::now(), makeKey(), 3);
   state += makeTx(1, iroha::time::now(), makeKey(), 4);
   state += makeTx(1, iroha::time::now(), makeKey(), 5);
   state += makeTx(1, iroha::time::now(), makeKey(), 5);
 
-  // we want to ensure that server side will call onNewState()
-  // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onNewState(_, state))
-      .WillOnce(Invoke([&peer](auto &p, auto) { EXPECT_EQ(*p, *peer); }));
-
   std::unique_ptr<grpc::Server> server;
 
   grpc::ServerBuilder builder;
   int port = 0;
+  std::string addr = "localhost:";
   builder.AddListeningPort(
-      peer->address(), grpc::InsecureServerCredentials(), &port);
+      addr + "0", grpc::InsecureServerCredentials(), &port);
   builder.RegisterService(transport.get());
   server = builder.BuildAndStart();
   ASSERT_TRUE(server);
   ASSERT_NE(port, 0);
+
+  std::shared_ptr<shared_model::interface::Peer> peer =
+      makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
+  // we want to ensure that server side will call onNewState()
+  // with same parameters as on the client side
+  EXPECT_CALL(*notifications, onNewState(_, state))
+      .WillOnce(Invoke([&peer](auto &p, auto) { EXPECT_EQ(*p, *peer); }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);

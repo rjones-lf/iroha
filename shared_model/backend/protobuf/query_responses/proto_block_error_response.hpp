@@ -10,7 +10,6 @@
 #include "interfaces/query_responses/block_error_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -20,28 +19,21 @@ namespace shared_model {
                                BlockErrorResponse> {
      public:
       template <typename QueryResponseType>
-      explicit BlockErrorResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit BlockErrorResponse(QueryResponseType &&queryResponse);
 
-      BlockErrorResponse(const BlockErrorResponse &o)
-          : BlockErrorResponse(o.proto_) {}
+      BlockErrorResponse(const BlockErrorResponse &o);
 
-      BlockErrorResponse(BlockErrorResponse &&o)
-          : BlockErrorResponse(std::move(o.proto_)) {}
+      BlockErrorResponse(BlockErrorResponse &&o);
 
-      const std::string &message() const override {
-        return *message_;
-      }
+      const interface::types::DescriptionType &message() const override ;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::BlockErrorResponse &blockErrorResponse_{
-          proto_->error_response()};
+      const iroha::protocol::BlockErrorResponse &block_error_response;
 
-      const Lazy<std::string> message_{
-          [this] { return blockErrorResponse_.message(); }};
+      const Lazy<interface::types::DescriptionType> message_;
     };
   }  // namespace proto
 }  // namespace shared_model

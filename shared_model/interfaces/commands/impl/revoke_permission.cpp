@@ -8,14 +8,6 @@
 namespace shared_model {
   namespace interface {
 
-    std::string RevokePermission::toString() const {
-      return detail::PrettyStringBuilder()
-          .init("RevokePermission")
-          .append("account_id", accountId())
-          .append("permission", permissionName())
-          .finalize();
-    }
-
     bool RevokePermission::operator==(const ModelType &rhs) const {
       return accountId() == rhs.accountId()
           and permissionName() == rhs.permissionName();

@@ -113,7 +113,7 @@ class BuilderTest(unittest.TestCase):
       .creatorAccountId("admin@test")
 
   def proto(self, tx):
-    return iroha.ModelProtoTransaction().signAndAddSignature(tx, self.keys)
+    return iroha.ModelProtoTransaction(tx).signAndAddSignature(self.keys).finish()
 
   def check_proto_tx(self, blob):
     try:

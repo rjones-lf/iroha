@@ -13,8 +13,6 @@ import time
 tx_builder = iroha.ModelTransactionBuilder()
 query_builder = iroha.ModelQueryBuilder()
 crypto = iroha.ModelCrypto()
-proto_tx_helper = iroha.ModelProtoTransaction()
-proto_query_helper = iroha.ModelProtoQuery()
 
 admin_priv = open("../admin@test.priv", "r").read()
 admin_pub = open("../admin@test.pub", "r").read()
@@ -83,7 +81,7 @@ def print_status_streaming(tx):
 
 
 def send_tx(tx, key_pair):
-    tx_blob = proto_tx_helper.signAndAddSignature(tx, key_pair).blob()
+    tx_blob = iroha.ModelProtoTransaction(tx).signAndAddSignature(key_pair).finish().blob()
     proto_tx = block_pb2.Transaction()
 
     if sys.version_info[0] == 2:
@@ -100,7 +98,7 @@ def send_tx(tx, key_pair):
 
 
 def send_query(query, key_pair):
-    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+    query_blob = iroha.ModelProtoQuery(query).signAndAddSignature(key_pair).finish().blob()
 
     proto_query = queries_pb2.Query()
 
