@@ -86,10 +86,6 @@ namespace iroha {
 
       boost::optional<Answer> YacVoteStorage::insert_votes(
           std::vector<VoteMessage> &votes, uint64_t peers_in_round) {
-        if (not sameProposals(votes)) {
-          return boost::none;
-        }
-
         auto storage = findProposalStorage(votes.at(0), peers_in_round);
         return storage->insert(votes);
       }
