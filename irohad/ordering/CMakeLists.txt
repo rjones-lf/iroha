@@ -28,3 +28,16 @@ target_link_libraries(ordering_service
     ordering_grpc
     logger
     )
+
+add_library(on_demand_ordering_service
+        impl/on_demand_ordering_service_impl.cpp
+    )
+
+target_link_libraries(on_demand_ordering_service
+    tbb
+    shared_model_interfaces
+    shared_model_proto_backend
+    shared_model_default_builders
+    logger
+    # transport is missing
+    )
