@@ -195,8 +195,9 @@ TEST_F(AddAssetQuantity, OtherDomain) {
           TestUnsignedTransactionBuilder()
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
-              .createdTime(iroha::time::now())
-              .createRole(kNewRole, {interface::permissions::Role::kGetMyTxs})
+              .createdTime(getUniqueTime())
+              .createRole(kNewRole,
+                          {interface::permissions::Role::kGetMyTxs})
               .createDomain(kNewDomain, kNewRole)
               .createAccount(
                   kNewUser,

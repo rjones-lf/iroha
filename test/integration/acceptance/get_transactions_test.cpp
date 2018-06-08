@@ -65,12 +65,14 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
   };
 
   auto dummy_tx = dummyTx();
-  IntegrationTestFramework(2)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kReadAssets}))
+      .skipProposal()
+      .skipBlock()
       .sendTx(dummy_tx)
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(dummy_tx.hash()), check)
       .done();
 }
@@ -92,12 +94,14 @@ TEST_F(GetTransactions, HaveGetAllTx) {
     });
   };
 
-  IntegrationTestFramework(2)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kGetAllTxs}))
+      .skipProposal()
+      .skipBlock()
       .sendTx(dummy_tx)
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(dummy_tx.hash()), check)
       .done();
 }
@@ -119,12 +123,14 @@ TEST_F(GetTransactions, HaveGetMyTx) {
     });
   };
 
-  IntegrationTestFramework(2)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
       .sendTx(dummy_tx)
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(dummy_tx.hash()), check)
       .done();
 }

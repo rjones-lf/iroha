@@ -109,9 +109,11 @@ TEST_F(SubtractAssetQuantity, NoPermissions) {
  *       (aka skipProposal throws)
  */
 TEST_F(SubtractAssetQuantity, NegativeAmount) {
-  IntegrationTestFramework(2)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
@@ -126,9 +128,11 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
  *       (aka skipProposal throws)
  */
 TEST_F(SubtractAssetQuantity, ZeroAmount) {
-  IntegrationTestFramework(2)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
