@@ -37,7 +37,8 @@ namespace iroha {
        * @param qry arrived query
        * @return true if passes stateful validation
        */
-      bool checkSignatories(const shared_model::interface::Query &qry);
+      template <class Q>
+      bool checkSignatories(const Q &qry);
 
       /**
        * Register client query
@@ -47,16 +48,33 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Query> qry) override;
 
       /**
+       * Register client block query
+       * @param query - client intent
+       */
+      void blocksQueryHandle(
+          std::shared_ptr<shared_model::interface::BlocksQuery> qry) override;
+
+      /**
        * Subscribe for query responses
        * @return observable with query responses
        */
       rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
       queryNotifier() override;
+      /**
+       * Subscribe for query responses
+       * @return observable with blocks query responses
+       */
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryNotifier() override;
 
      private:
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::QueryResponse>>
           subject_;
+      rxcpp::subjects::subject<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+          blocksQuerySubject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
       std::mutex notifier_mutex_;
     };

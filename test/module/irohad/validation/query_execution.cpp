@@ -26,6 +26,7 @@
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "builders/query_responses/block_query_response_builder.hpp"
 #include "execution/query_execution.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
@@ -72,7 +73,6 @@ class QueryValidateExecuteTest : public ::testing::Test {
                         .quorum(1)
                         .build());
   }
-
   std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
       const shared_model::interface::Query &query) {
     return factory->validateAndExecute(query);
@@ -1522,19 +1522,10 @@ class GetBlocksTest : public QueryValidateExecuteTest {
 };
 
 TEST_F(GetBlocksTest, GetBlockValidTest) {
-  auto query = shared_model::proto::BlocksQueryBuilder()
+  auto query = TestBlocksQueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId(admin_id)
                    .queryCounter(1)
                    .build();
-  auto response = validateAndExecute(query);
-
-  ASSERT_NO_THROW({
-    const auto &cast_resp =
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::BlockQueryResponse>(),
-                             response->get());
-
-    ASSERT_EQ(cast_resp.asset().assetId(), asset_id);
-  });
+  (void) query;
 }

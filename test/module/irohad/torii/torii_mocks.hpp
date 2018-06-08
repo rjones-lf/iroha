@@ -29,10 +29,16 @@ namespace iroha {
      public:
       MOCK_METHOD1(queryHandle,
                    void(std::shared_ptr<shared_model::interface::Query>));
+      MOCK_METHOD1(blocksQueryHandle,
+                   void(std::shared_ptr<shared_model::interface::BlocksQuery>));
       MOCK_METHOD0(
           queryNotifier,
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::QueryResponse>>());
+      MOCK_METHOD0(
+          blocksQueryNotifier,
+          rxcpp::observable<
+              std::shared_ptr<shared_model::interface::BlockQueryResponse>>());
     };
   }  // namespace torii
 }  // namespace iroha

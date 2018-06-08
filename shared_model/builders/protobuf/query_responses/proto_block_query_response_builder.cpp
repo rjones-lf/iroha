@@ -33,7 +33,7 @@ namespace shared_model {
     }
 
     BlockQueryResponseBuilder BlockQueryResponseBuilder::errorResponse(
-        std::string &message) {
+        const std::string &message) {
       BlockQueryResponseBuilder copy(*this);
       iroha::protocol::BlockErrorResponse *response =
           copy.query_response_.mutable_error_response();

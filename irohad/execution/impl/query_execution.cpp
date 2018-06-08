@@ -86,7 +86,12 @@ bool hasQueryPermission(const std::string &creator,
                 and iroha::accountHasPermission(perms_set.value(),
                                                 domain_permission_id))));
 }
-
+bool QueryProcessingFactory::validate(
+    const shared_model::interface::BlocksQuery &query) {
+  // TODO: 03.02.2018 grimadas IR-851: check signatures
+  return checkAccountRolePermission(
+      query.creatorAccountId(), *_wsvQuery, can_get_blocks);
+}
 bool QueryProcessingFactory::validate(
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAssetInfo &get_asset_info) {
@@ -342,7 +347,6 @@ QueryProcessingFactory::executeGetSignatories(
   auto response = QueryResponseBuilder().signatoriesResponse(*signs);
   return response;
 }
-
 std::shared_ptr<shared_model::interface::QueryResponse>
 QueryProcessingFactory::validateAndExecute(
     const shared_model::interface::Query &query) {

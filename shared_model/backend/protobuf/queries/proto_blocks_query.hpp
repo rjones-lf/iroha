@@ -8,6 +8,7 @@
 
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "interfaces/queries/blocks_query.hpp"
+#include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {

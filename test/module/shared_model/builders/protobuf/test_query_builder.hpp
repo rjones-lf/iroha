@@ -36,8 +36,8 @@ using TestUnsignedQueryBuilder = shared_model::proto::TemplateQueryBuilder<
     shared_model::validation::AlwaysValidValidator,
     shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
 
-using TestBlocksQueryBuilder = shared_model::proto::TemplateQueryBuilder<
-    (1 << shared_model::proto::TemplateQueryBuilder<>::total) - 1,
+using TestBlocksQueryBuilder = shared_model::proto::TemplateBlocksQueryBuilder<
+    (1 << shared_model::proto::TemplateBlocksQueryBuilder<>::total) - 1,
     shared_model::validation::AlwaysValidValidator,
     shared_model::proto::BlocksQuery>;
 
