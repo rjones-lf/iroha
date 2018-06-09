@@ -11,9 +11,6 @@
 #include <memory>
 #include <vector>
 
-#include "interfaces/iroha_internal/proposal.hpp"
-#include "interfaces/transaction.hpp"
-
 namespace shared_model {
   namespace interface {
     class Transaction;

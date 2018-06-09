@@ -30,7 +30,7 @@ target_link_libraries(ordering_service
     )
 
 add_library(on_demand_ordering_service
-        impl/on_demand_ordering_service_impl.cpp
+    impl/on_demand_ordering_service_impl.cpp
     )
 
 target_link_libraries(on_demand_ordering_service
