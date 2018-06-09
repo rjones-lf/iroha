@@ -18,8 +18,8 @@
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
-#include <memory>
 #include <boost/optional.hpp>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -67,33 +67,13 @@ namespace iroha {
         // --------| public api |--------
 
         /**
-         * Insert vote in storage
-         * @param msg - current vote message
+         * Insert votes in storage
+         * @param state - current message with votes
          * @param peers_in_round - number of peers participated in round
-         * @return structure with result of inserting. Nullopt if mgs not valid.
+         * @return structure with result of inserting. Nullopt if msg not valid.
          */
-        boost::optional<Answer> store(VoteMessage msg,
-                                       uint64_t peers_in_round);
-
-        /**
-         * Insert commit in storage
-         * @param commit - message with votes
-         * @param peers_in_round - number of peers in current consensus round
-         * @return structure with result of inserting.
-         * Nullopt if commit not valid.
-         */
-        boost::optional<Answer> store(CommitMessage commit,
-                                       uint64_t peers_in_round);
-
-        /**
-         * Insert reject message in storage
-         * @param reject - message with votes
-         * @param peers_in_round - number of peers in current consensus round
-         * @return structure with result of inserting.
-         * Nullopt if reject not valid.
-         */
-        boost::optional<Answer> store(RejectMessage reject,
-                                       uint64_t peers_in_round);
+        boost::optional<Answer> store(std::vector<VoteMessage> state,
+                                      uint64_t peers_in_round);
 
         /**
          * Provide status about closing round with parameters hash
@@ -119,17 +99,6 @@ namespace iroha {
         void nextProcessingState(const ProposalHash &hash);
 
        private:
-        // --------| private api |--------
-
-        /**
-         * Insert votes in storage
-         * @param votes - collection for insertion
-         * @param peers_in_round - number of peers in current round
-         * @return answer after insertion collection
-         */
-        boost::optional<Answer> insert_votes(std::vector<VoteMessage> &votes,
-                                              uint64_t peers_in_round);
-
         // --------| fields |--------
 
         /**

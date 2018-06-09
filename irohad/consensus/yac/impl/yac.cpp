@@ -163,8 +163,8 @@ namespace iroha {
       void Yac::applyCommit(
           boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
           const CommitMessage &commit) {
-        auto answer =
-            vote_storage_.store(commit, cluster_order_.getNumberOfPeers());
+        auto answer = vote_storage_.store(commit.votes,
+                                          cluster_order_.getNumberOfPeers());
         answer | [&](const auto &answer) {
           auto proposal_hash = getProposalHash(commit.votes).value();
           auto already_processed =
@@ -188,8 +188,8 @@ namespace iroha {
       void Yac::applyReject(
           boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
           const RejectMessage &reject) {
-        auto answer =
-            vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
+        auto answer = vote_storage_.store(reject.votes,
+                                          cluster_order_.getNumberOfPeers());
         answer | [&](const auto &answer) {
           auto proposal_hash = getProposalHash(reject.votes).value();
           auto already_processed =
@@ -226,7 +226,7 @@ namespace iroha {
         }
 
         auto answer =
-            vote_storage_.store(vote, cluster_order_.getNumberOfPeers());
+            vote_storage_.store({vote}, cluster_order_.getNumberOfPeers());
 
         answer | [&](const auto &answer) {
           auto &proposal_hash = vote.hash.proposal_hash;

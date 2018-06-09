@@ -51,19 +51,10 @@ namespace iroha {
 
       // --------| public api |--------
 
-      boost::optional<Answer> YacVoteStorage::store(VoteMessage vote,
-                                                    uint64_t peers_in_round) {
-        return findProposalStorage(vote, peers_in_round)->insert(vote);
-      }
-
-      boost::optional<Answer> YacVoteStorage::store(CommitMessage commit,
-                                                    uint64_t peers_in_round) {
-        return insert_votes(commit.votes, peers_in_round);
-      }
-
-      boost::optional<Answer> YacVoteStorage::store(RejectMessage reject,
-                                                    uint64_t peers_in_round) {
-        return insert_votes(reject.votes, peers_in_round);
+      boost::optional<Answer> YacVoteStorage::store(
+          std::vector<VoteMessage> state, uint64_t peers_in_round) {
+        auto storage = findProposalStorage(state.at(0), peers_in_round);
+        return storage->insert(state);
       }
 
       bool YacVoteStorage::isHashCommitted(ProposalHash hash) {
@@ -91,14 +82,6 @@ namespace iroha {
           case ProposalState::kSentProcessed:
             break;
         }
-      }
-
-      // --------| private api |--------
-
-      boost::optional<Answer> YacVoteStorage::insert_votes(
-          std::vector<VoteMessage> &votes, uint64_t peers_in_round) {
-        auto storage = findProposalStorage(votes.at(0), peers_in_round);
-        return storage->insert(votes);
       }
 
     }  // namespace yac
