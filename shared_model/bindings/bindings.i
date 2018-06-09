@@ -81,6 +81,7 @@ namespace std {
 
 %template (UnsignedTx) shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>;
 %template (UnsignedQuery) shared_model::proto::UnsignedWrapper<shared_model::proto::Query>;
+%template (UnsignedBlockQuery) shared_model::proto::UnsignedWrapper<shared_model::proto::BlocksQuery>;
 %template (ModelProtoTransaction) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>>;
 %template (ModelProtoQuery) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
 %template (ModelProtoBlocksQuery) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::BlocksQuery>>;
