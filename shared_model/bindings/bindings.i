@@ -54,6 +54,7 @@ namespace std {
 %{
 #include "bindings/model_transaction_builder.hpp"
 #include "bindings/model_query_builder.hpp"
+#include "bindings/model_blocks_query_builder.hpp"
 #include "bindings/model_crypto.hpp"
 #include "bindings/model_proto.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
