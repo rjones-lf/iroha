@@ -70,10 +70,12 @@ namespace std {
 %include "cryptography/signed.hpp"
 %include "backend/protobuf/transaction.hpp"
 %include "backend/protobuf/queries/proto_query.hpp"
+%include "backend/protobuf/queries/proto_blocks_query.hpp"
 
 %include "builders/protobuf/unsigned_proto.hpp"
 %include "bindings/model_transaction_builder.hpp"
 %include "bindings/model_query_builder.hpp"
+%include "bindings/model_blocks_query_builder.hpp"
 %include "bindings/model_crypto.hpp"
 %include "bindings/model_proto.hpp"
 
@@ -81,3 +83,4 @@ namespace std {
 %template (UnsignedQuery) shared_model::proto::UnsignedWrapper<shared_model::proto::Query>;
 %template (ModelProtoTransaction) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>>;
 %template (ModelProtoQuery) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::Query>>;
+%template (ModelProtoBlocksQuery) shared_model::bindings::ModelProto<shared_model::proto::UnsignedWrapper<shared_model::proto::BlocksQuery>>;
