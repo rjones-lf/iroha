@@ -39,26 +39,6 @@ INVALID_NAMES_1 = [
     "assset-01"
 ]
 
-# Symbols of type 2 (format [A-Za-z0-9_]{1,64})
-# are used as key identifier for setAccountDetail command
-VALID_NAMES_2 = [
-    "a",
-    "A",
-    "1",
-    "_",
-    "Key",
-    "Key0_",
-    "verylongAndValidKeyName___1110100010___veryveryveryverylongvalid"
-]
-
-INVALID_NAMES_2 = [
-    "",
-    "Key&",
-    "key-30",
-    "verylongAndValidKeyName___1110100010___veryveryveryverylongvalid1",
-    "@@@"
-]
-
 VALID_DOMAINS = [
     "test",
     "u9EEA432F",
@@ -90,13 +70,6 @@ INVALID_DOMAINS = [
     "domain#domain",
     "asd@asd",
     "ab..cd"
-]
-
-INVALID_KEYS = [
-    "",
-    "a",
-    "1" * 31,
-    "1" * 33
 ]
 
 class BuilderTest(unittest.TestCase):
@@ -137,9 +110,25 @@ class BuilderTest(unittest.TestCase):
                 query = self.builder.creatorAccountId("{}@{}".format(name, domain)).build()
                 self.assertTrue(self.check_proto_query(self.proto(query)))
 
+    def test_invalid_creator_account_id(self):
+        for domain in INVALID_DOMAINS:
+            for name in VALID_NAMES_1:
+                with self.assertRaises(ValueError):
+                    self.builder.creatorAccountId("{}@{}".format(name, domain)).build()
+
+        for domain in VALID_DOMAINS:
+            for name in INVALID_NAMES_1:
+                with self.assertRaises(ValueError):
+                    self.builder.creatorAccountId("{}@{}".format(name, domain)).build()
+
+    def test_valid_created_time(self):
+        query = self.builder.createdTime(int(time.time() * 1000)).build()
+        self.assertTrue(self.check_proto_query(self.proto(query)))
+
+
 
     def test_outdated_created_time(self):
-        for i in [0, int((time.time() - 100000) * 1000), int((time.time() + 1) * 1000)]:
+        for i in [0, int((time.time() - 100000) * 1000), int((time.time() + 100000) * 1000)]:
             with self.assertRaises(ValueError):
                 self.builder.createdTime(i).build()
 
