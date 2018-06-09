@@ -52,17 +52,17 @@ namespace iroha {
       // --------| public api |--------
 
       boost::optional<Answer> YacVoteStorage::store(VoteMessage vote,
-                                                     uint64_t peers_in_round) {
+                                                    uint64_t peers_in_round) {
         return findProposalStorage(vote, peers_in_round)->insert(vote);
       }
 
       boost::optional<Answer> YacVoteStorage::store(CommitMessage commit,
-                                                     uint64_t peers_in_round) {
+                                                    uint64_t peers_in_round) {
         return insert_votes(commit.votes, peers_in_round);
       }
 
       boost::optional<Answer> YacVoteStorage::store(RejectMessage reject,
-                                                     uint64_t peers_in_round) {
+                                                    uint64_t peers_in_round) {
         return insert_votes(reject.votes, peers_in_round);
       }
 
@@ -74,12 +74,23 @@ namespace iroha {
         return bool(iter->getState());
       }
 
-      bool YacVoteStorage::getProcessingState(const ProposalHash &hash) {
-        return processing_state_.count(hash) != 0;
+      ProposalState YacVoteStorage::getProcessingState(
+          const ProposalHash &hash) {
+        return processing_state_[hash];
       }
 
-      void YacVoteStorage::markAsProcessedState(const ProposalHash &hash) {
-        processing_state_.insert(hash);
+      void YacVoteStorage::nextProcessingState(const ProposalHash &hash) {
+        auto &val = processing_state_[hash];
+        switch (val) {
+          case ProposalState::kNotSentNotProcessed:
+            val = ProposalState::kSentNotProcessed;
+            break;
+          case ProposalState::kSentNotProcessed:
+            val = ProposalState::kSentProcessed;
+            break;
+          case ProposalState::kSentProcessed:
+            break;
+        }
       }
 
       // --------| private api |--------

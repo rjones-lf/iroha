@@ -20,7 +20,7 @@
 
 #include <memory>
 #include <boost/optional.hpp>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 #include "consensus/yac/messages.hpp"  // because messages passed by value
@@ -31,6 +31,12 @@ namespace iroha {
   namespace consensus {
     namespace yac {
       class YacProposalStorage;
+
+      enum class ProposalState {
+        kNotSentNotProcessed,
+        kSentNotProcessed,
+        kSentProcessed
+      };
 
       /**
        * Class provide storage for votes and useful methods for it.
@@ -92,7 +98,7 @@ namespace iroha {
         /**
          * Provide status about closing round with parameters hash
          * @param hash - target hash of round
-         * @return true, if rould closed
+         * @return true, if round closed
          */
         bool isHashCommitted(ProposalHash hash);
 
@@ -101,13 +107,16 @@ namespace iroha {
          * @param hash - target tag
          * @return value attached to parameter's hash. Default is false.
          */
-        bool getProcessingState(const ProposalHash &hash);
+        ProposalState getProcessingState(const ProposalHash &hash);
 
         /**
-         * Mark hash as processed.
+         * Mark hash with following transition:
+         * kNotSentNotProcessed -> kSentNotProcessed
+         * kSentNotProcessed -> kSentProcessed
+         * kSentProcessed -> kSentProcessed
          * @param hash - target tag
          */
-        void markAsProcessedState(const ProposalHash &hash);
+        void nextProcessingState(const ProposalHash &hash);
 
        private:
         // --------| private api |--------
@@ -132,7 +141,7 @@ namespace iroha {
          * Processing set provide user flags about processing some hashes.
          * If hash exists <=> processed
          */
-        std::unordered_set<ProposalHash> processing_state_;
+        std::unordered_map<ProposalHash, ProposalState> processing_state_;
       };
 
     }  // namespace yac

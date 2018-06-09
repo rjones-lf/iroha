@@ -169,8 +169,8 @@ namespace iroha {
           auto proposal_hash = getProposalHash(commit.votes).value();
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
+          if (already_processed != ProposalState::kSentNotProcessed) {
+            vote_storage_.nextProcessingState(proposal_hash);
             visit_in_place(answer,
                            [&](const CommitMessage &commit) {
                              notifier_.get_subscriber().on_next(commit);
@@ -195,8 +195,8 @@ namespace iroha {
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
 
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
+          if (already_processed != ProposalState::kSentNotProcessed) {
+            vote_storage_.nextProcessingState(proposal_hash);
             visit_in_place(answer,
                            [&](const RejectMessage &reject) {
                              log_->warn(kRejectMsg);
@@ -233,8 +233,8 @@ namespace iroha {
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
 
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
+          if (already_processed != ProposalState::kSentNotProcessed) {
+            vote_storage_.nextProcessingState(proposal_hash);
             visit_in_place(answer,
                            [&](const CommitMessage &commit) {
                              // propagate for all
