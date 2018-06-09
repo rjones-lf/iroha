@@ -138,8 +138,7 @@ class BuilderTest(unittest.TestCase):
                 self.assertTrue(self.check_proto_query(self.proto(query)))
 
 
-    def test_outdated_get_account(self):
-        self.set_get_account()
+    def test_outdated_created_time(self):
         for i in [0, int((time.time() - 100000) * 1000), int((time.time() + 1) * 1000)]:
             with self.assertRaises(ValueError):
                 self.builder.createdTime(i).build()
