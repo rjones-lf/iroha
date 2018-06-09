@@ -74,9 +74,10 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   initYac(my_order.value());
 
   YacHash my_hash("proposal_hash", "block_hash");
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe(
-      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
+  wrapper.subscribe([my_hash](auto val) {
+    ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
+  });
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -113,9 +114,10 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   initYac(my_order.value());
 
   YacHash my_hash("proposal_hash", "block_hash");
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe(
-      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
+  wrapper.subscribe([my_hash](auto val) {
+    ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
+  });
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
@@ -170,9 +172,10 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   YacHash my_hash("proposal_hash", "block_hash");
 
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe(
-      [my_hash](auto val) { ASSERT_EQ(my_hash, val.votes.at(0).hash); });
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
+  wrapper.subscribe([my_hash](auto val) {
+    ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
+  });
 
   yac->vote(my_hash, my_order.value());
 

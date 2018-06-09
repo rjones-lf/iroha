@@ -86,7 +86,7 @@ namespace iroha {
         votingStep(vote);
       }
 
-      rxcpp::observable<CommitMessage> Yac::on_commit() {
+      rxcpp::observable<Answer> Yac::onOutcome() {
         return notifier_.get_observable();
       }
 

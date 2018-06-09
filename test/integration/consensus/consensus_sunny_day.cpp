@@ -132,7 +132,7 @@ std::vector<std::shared_ptr<shared_model::interface::Peer>>
 
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::condition_variable cv;
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
   wrapper.subscribe(
       [](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; });
 

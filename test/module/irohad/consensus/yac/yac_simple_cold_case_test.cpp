@@ -62,7 +62,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
   cout << "----------|Coldstart - receive one vote|----------" << endl;
 
   // verify that commit not emitted
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 0);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
@@ -93,7 +93,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
        << endl;
 
   // verify that commit not emitted
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 0);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
@@ -123,9 +123,10 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   YacHash propagated_hash("my_proposal", "my_block");
 
   // verify that commit emitted
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
   wrapper.subscribe([propagated_hash](auto commit_hash) {
-    ASSERT_EQ(propagated_hash, commit_hash.votes.at(0).hash);
+    ASSERT_EQ(propagated_hash,
+              boost::get<CommitMessage>(commit_hash).votes.at(0).hash);
   });
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);
@@ -163,10 +164,10 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
-  yac->on_commit().subscribe([&](auto msg) {
+  yac->onOutcome().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
     ASSERT_EQ(default_peers.size(), messages.size());
-    messages.push_back(msg);
+    messages.push_back(boost::get<CommitMessage>(msg));
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
@@ -191,10 +192,10 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
-  yac->on_commit().subscribe([&](auto msg) {
+  yac->onOutcome().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
     ASSERT_EQ(default_peers.size(), messages.size());
-    messages.push_back(msg);
+    messages.push_back(boost::get<CommitMessage>(msg));
   });
 
   RejectMessage reject({});

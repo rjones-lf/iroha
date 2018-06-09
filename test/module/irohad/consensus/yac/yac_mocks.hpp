@@ -161,7 +161,7 @@ namespace iroha {
        public:
         MOCK_METHOD2(vote, void(YacHash, ClusterOrdering));
 
-        MOCK_METHOD0(on_commit, rxcpp::observable<CommitMessage>());
+        MOCK_METHOD0(onOutcome, rxcpp::observable<Answer>());
 
         MockHashGate() = default;
 

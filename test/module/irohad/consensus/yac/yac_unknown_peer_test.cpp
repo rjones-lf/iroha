@@ -35,7 +35,7 @@ using namespace std;
  */
 TEST_F(YacTest, UnknownVoteBeforeCommit) {
   // verify that commit not emitted
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 0);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
   EXPECT_CALL(*network, send_commit(_, _)).Times(0);

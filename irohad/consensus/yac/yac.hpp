@@ -58,17 +58,17 @@ namespace iroha {
 
         // ------|Hash gate|------
 
-        virtual void vote(YacHash hash, ClusterOrdering order);
+        void vote(YacHash hash, ClusterOrdering order) override;
 
-        virtual rxcpp::observable<CommitMessage> on_commit();
+        rxcpp::observable<Answer> onOutcome() override;
 
         // ------|Network notifications|------
 
-        virtual void on_commit(CommitMessage commit);
+        void on_commit(CommitMessage commit) override;
 
-        virtual void on_reject(RejectMessage reject);
+        void on_reject(RejectMessage reject) override;
 
-        virtual void on_vote(VoteMessage vote);
+        void on_vote(VoteMessage vote) override;
 
        private:
         // ------|Private interface|------
@@ -125,7 +125,7 @@ namespace iroha {
         std::shared_ptr<YacNetwork> network_;
         std::shared_ptr<YacCryptoProvider> crypto_;
         std::shared_ptr<Timer> timer_;
-        rxcpp::subjects::subject<CommitMessage> notifier_;
+        rxcpp::subjects::subject<Answer> notifier_;
         std::mutex mutex_;
 
         // ------|One round|------
