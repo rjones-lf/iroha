@@ -68,7 +68,7 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       YacGateImpl::on_commit() {
         return hash_gate_->onOutcome().flat_map([this](auto message) {
-          // TODO IR-497 Work on reject case
+          // TODO 10.06.2018 andrei: IR-497 Work on reject case
           auto commit_message = boost::get<CommitMessage>(message);
           // map commit to block if it is present or loaded from other peer
           return rxcpp::observable<>::create<

@@ -78,6 +78,8 @@ namespace iroha {
 
         cluster_order_ = order;
         auto vote = crypto_->getVote(hash);
+        // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
+        // separate entity
         votingStep(vote);
       }
 
@@ -136,9 +138,15 @@ namespace iroha {
         auto answer =
             vote_storage_.store(state, cluster_order_.getNumberOfPeers());
 
+        // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
+        // separate entity
+
         answer | [&](const auto &answer) {
           auto &proposal_hash = state.at(0).hash.proposal_hash;
 
+          // conditionally mark hash as sent depending on received message
+          // if our state is commited/rejected, but we received an opposite
+          // state, send out a new state to all peers
           if (state.size() > 1) {
             Answer received([&]() -> Answer {
               if (std::all_of(
@@ -160,16 +168,16 @@ namespace iroha {
             }
           }
 
-          auto already_processed =
+          auto processing_state =
               vote_storage_.getProcessingState(proposal_hash);
 
           auto votes = [](const auto &state) { return state.votes; };
 
-          switch (already_processed) {
+          switch (processing_state) {
             case ProposalState::kNotSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_hash);
               log_->info("Propagate state {} to whole network",
-                         state.at(0).hash.block_hash);
+                         state.at(0).hash.proposal_hash);
               this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
@@ -181,7 +189,7 @@ namespace iroha {
               if (state.size() == 1) {
                 findPeer(state.at(0)) | [&](const auto &from) {
                   log_->info("Propagate state {} directly to {}",
-                             state.at(0).hash.block_hash,
+                             state.at(0).hash.proposal_hash,
                              from->address());
                   this->propagateStateDirectly(*from,
                                                visit_in_place(answer, votes));
