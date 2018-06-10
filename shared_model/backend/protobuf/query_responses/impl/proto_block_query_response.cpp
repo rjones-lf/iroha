@@ -29,7 +29,7 @@ namespace shared_model {
     template BlockQueryResponse::BlockQueryResponse(
         const BlockQueryResponse::TransportType &);
     template BlockQueryResponse::BlockQueryResponse(
-        const BlockQueryResponse::TransportType &&);
+        BlockQueryResponse::TransportType &&);
 
     BlockQueryResponse::BlockQueryResponse(const BlockQueryResponse &o)
         : BlockQueryResponse(o.proto_) {}

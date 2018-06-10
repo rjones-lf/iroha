@@ -39,17 +39,9 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &assetId() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("GetAccountAssetTransactions")
-            .append("account_id", accountId())
-            .append("asset_id", assetId())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and assetId() == rhs.assetId();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
 
   }  // namespace interface

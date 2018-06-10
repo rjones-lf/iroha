@@ -31,6 +31,19 @@ add_library(shared_model_interfaces
     commands/impl/set_quorum.cpp
     commands/impl/subtract_asset_quantity.cpp
     commands/impl/transfer_asset.cpp
+    queries/impl/query.cpp
+    queries/impl/get_account.cpp
+    queries/impl/get_account_asset_transactions.cpp
+    queries/impl/get_account_assets.cpp
+    queries/impl/get_account_detail.cpp
+    queries/impl/get_account_transactions.cpp
+    queries/impl/get_asset_info.cpp
+    queries/impl/get_role_permissions.cpp
+    queries/impl/get_roles.cpp
+    queries/impl/get_signatories.cpp
+    queries/impl/get_transactions.cpp
+    queries/impl/blocks_query.cpp
+    queries/impl/query_payload_meta.cpp
     query_responses/impl/block_error_response.cpp
     query_responses/impl/block_query_response.cpp
     query_responses/impl/block_response.cpp

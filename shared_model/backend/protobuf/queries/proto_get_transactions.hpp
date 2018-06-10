@@ -18,12 +18,9 @@
 #ifndef IROHA_PROTO_GET_TRANSACTIONS_HPP
 #define IROHA_PROTO_GET_TRANSACTIONS_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/get_transactions.hpp"
-
-#include <boost/range/numeric.hpp>
-
 #include "queries.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -33,35 +30,23 @@ namespace shared_model {
                                GetTransactions> {
      public:
       template <typename QueryType>
-      explicit GetTransactions(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)) {}
+      explicit GetTransactions(QueryType &&query);
 
-      GetTransactions(const GetTransactions &o) : GetTransactions(o.proto_) {}
+      GetTransactions(const GetTransactions &o);
 
-      GetTransactions(GetTransactions &&o) noexcept
-          : GetTransactions(std::move(o.proto_)) {}
+      GetTransactions(GetTransactions &&o) noexcept;
 
-      const TransactionHashesType &transactionHashes() const override {
-        return *transaction_hashes_;
-      }
+      const TransactionHashesType &transactionHashes() const override;
 
      private:
       // ------------------------------| fields |-------------------------------
 
-      const iroha::protocol::GetTransactions &get_transactions_{
-          proto_->payload().get_transactions()};
+      const iroha::protocol::GetTransactions &get_transactions_;
 
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<TransactionHashesType> transaction_hashes_{[this] {
-        return boost::accumulate(get_transactions_.tx_hashes(),
-                                 TransactionHashesType{},
-                                 [](auto &&acc, const auto &hash) {
-                                   acc.emplace_back(hash);
-                                   return std::forward<decltype(acc)>(acc);
-                                 });
-      }};
+      const Lazy<TransactionHashesType> transaction_hashes_;
     };
 
   }  // namespace proto

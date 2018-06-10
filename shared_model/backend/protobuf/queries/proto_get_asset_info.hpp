@@ -18,10 +18,9 @@
 #ifndef IROHA_PROTO_GET_ASSET_INFO_H
 #define IROHA_PROTO_GET_ASSET_INFO_H
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/get_asset_info.hpp"
-
 #include "queries.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -30,22 +29,17 @@ namespace shared_model {
                                                     GetAssetInfo> {
      public:
       template <typename QueryType>
-      explicit GetAssetInfo(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)) {}
+      explicit GetAssetInfo(QueryType &&query);
 
-      GetAssetInfo(const GetAssetInfo &o) : GetAssetInfo(o.proto_) {}
+      GetAssetInfo(const GetAssetInfo &o);
 
-      GetAssetInfo(GetAssetInfo &&o) noexcept
-          : GetAssetInfo(std::move(o.proto_)) {}
+      GetAssetInfo(GetAssetInfo &&o) noexcept;
 
-      const interface::types::AssetIdType &assetId() const override {
-        return asset_info_.asset_id();
-      }
+      const interface::types::AssetIdType &assetId() const override;
 
      private:
       // ------------------------------| fields |-------------------------------
-      const iroha::protocol::GetAssetInfo &asset_info_{
-          proto_->payload().get_asset_info()};
+      const iroha::protocol::GetAssetInfo &asset_info_;
     };
 
   }  // namespace proto

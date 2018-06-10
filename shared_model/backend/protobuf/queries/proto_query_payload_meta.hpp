@@ -6,6 +6,7 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_QUERY_PAYLOAD_META_HPP
 #define IROHA_SHARED_MODEL_PROTO_QUERY_PAYLOAD_META_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
 #include "queries.pb.h"
 
@@ -17,26 +18,17 @@ namespace shared_model {
                                QueryPayloadMeta> {
      public:
       template <typename QueryPayloadMetaType>
-      explicit QueryPayloadMeta(QueryPayloadMetaType &&query)
-          : CopyableProto(std::forward<QueryPayloadMetaType>(query)) {}
+      explicit QueryPayloadMeta(QueryPayloadMetaType &&query);
 
-      QueryPayloadMeta(const QueryPayloadMeta &o)
-          : QueryPayloadMeta(o.proto_) {}
+      QueryPayloadMeta(const QueryPayloadMeta &o);
 
-      QueryPayloadMeta(QueryPayloadMeta &&o) noexcept
-          : QueryPayloadMeta(std::move(o.proto_)) {}
+      QueryPayloadMeta(QueryPayloadMeta &&o) noexcept;
 
-      const interface::types::AccountIdType &creatorAccountId() const override {
-        return proto_->creator_account_id();
-      }
+      const interface::types::AccountIdType &creatorAccountId() const override;
 
-      interface::types::CounterType queryCounter() const override {
-        return proto_->query_counter();
-      }
+      interface::types::CounterType queryCounter() const override;
 
-      interface::types::TimestampType createdTime() const override {
-        return proto_->created_time();
-      }
+      interface::types::TimestampType createdTime() const override;
     };
   }  // namespace proto
 }  // namespace shared_model

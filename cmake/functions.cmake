@@ -74,7 +74,7 @@ function(compile_proto_to_cpp PROTO)
       OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_PB}
       COMMAND ${GEN_COMMAND}
       ARGS -I${GEN_ARGS} -I. --cpp_out=${IROHA_SCHEMA_DIR} ${PROTO}
-      DEPENDS protoc
+      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()
@@ -88,7 +88,7 @@ function(compile_proto_to_grpc_cpp PROTO)
       OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB}
       COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
       ARGS -I${protobuf_INCLUDE_DIR} -I. --grpc_out=${IROHA_SCHEMA_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
-      DEPENDS grpc_cpp_plugin
+      DEPENDS grpc_cpp_plugin ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()
@@ -107,7 +107,7 @@ function(compile_proto_to_python PROTO)
       OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
       COMMAND ${GEN_COMMAND}
       ARGS -I${GEN_ARGS} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
-      DEPENDS protoc
+      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()

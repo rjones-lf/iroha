@@ -18,10 +18,9 @@
 #ifndef IROHA_PROTO_GET_ACCOUNT_ASSETS_H
 #define IROHA_PROTO_GET_ACCOUNT_ASSETS_H
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/get_account_assets.hpp"
-
 #include "queries.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -31,27 +30,19 @@ namespace shared_model {
                                GetAccountAssets> {
      public:
       template <typename QueryType>
-      explicit GetAccountAssets(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)) {}
+      explicit GetAccountAssets(QueryType &&query);
 
-      GetAccountAssets(const GetAccountAssets &o)
-          : GetAccountAssets(o.proto_) {}
+      GetAccountAssets(const GetAccountAssets &o);
 
-      GetAccountAssets(GetAccountAssets &&o) noexcept
-          : GetAccountAssets(std::move(o.proto_)) {}
+      GetAccountAssets(GetAccountAssets &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return account_assets_.account_id();
-      }
-
+      const interface::types::AccountIdType &accountId() const override;
 
      private:
       // ------------------------------| fields |-------------------------------
 
-      const iroha::protocol::GetAccountAssets &account_assets_{
-          proto_->payload().get_account_assets()};
+      const iroha::protocol::GetAccountAssets &account_assets_;
     };
-
   }  // namespace proto
 }  // namespace shared_model
 
