@@ -187,7 +187,7 @@ namespace iroha {
               break;
             case ProposalState::kSentProcessed:
               if (state.size() == 1) {
-                findPeer(state.at(0)) | [&](const auto &from) {
+                this->findPeer(state.at(0)) | [&](const auto &from) {
                   log_->info("Propagate state {} directly to {}",
                              state.at(0).hash.proposal_hash,
                              from->address());
