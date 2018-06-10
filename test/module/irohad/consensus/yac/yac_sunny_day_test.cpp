@@ -43,9 +43,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(2 * my_peers.size());
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
@@ -77,9 +75,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
     ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
   });
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(my_peers.size());
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
@@ -122,9 +118,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
     ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
   });
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(my_peers.size());
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
@@ -156,9 +150,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(my_peers.size());
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(2 * my_peers.size());
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
@@ -194,9 +186,7 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 

@@ -44,14 +44,12 @@ namespace iroha {
                           network::AsyncGrpcClient<google::protobuf::Empty> {
        public:
         NetworkImpl();
+
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
-        void send_commit(const shared_model::interface::Peer &to,
-                         const CommitMessage &commit) override;
-        void send_reject(const shared_model::interface::Peer &to,
-                         RejectMessage reject) override;
-        void send_vote(const shared_model::interface::Peer &to,
-                       VoteMessage vote) override;
+
+        void sendState(const shared_model::interface::Peer &to,
+                       const std::vector<VoteMessage> &state) override;
 
         /**
          * Receive votes from another peer;

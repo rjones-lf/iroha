@@ -124,14 +124,9 @@ namespace iroha {
           notification.reset();
         }
 
-        MOCK_METHOD2(send_commit,
+        MOCK_METHOD2(sendState,
                      void(const shared_model::interface::Peer &,
-                          const CommitMessage &));
-        MOCK_METHOD2(send_reject,
-                     void(const shared_model::interface::Peer &,
-                          RejectMessage));
-        MOCK_METHOD2(send_vote,
-                     void(const shared_model::interface::Peer &, VoteMessage));
+                          const std::vector<VoteMessage> &));
 
         MockYacNetwork() = default;
 

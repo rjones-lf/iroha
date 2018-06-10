@@ -30,8 +30,6 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      struct CommitMessage;
-      struct RejectMessage;
       struct VoteMessage;
 
       class YacNetworkNotifications {
@@ -51,28 +49,12 @@ namespace iroha {
             std::shared_ptr<YacNetworkNotifications> handler) = 0;
 
         /**
-         * Directly share commit message
+         * Directly share collection of votes
          * @param to - peer recipient
-         * @param commit - message for sending
+         * @param state - message for sending
          */
-        virtual void send_commit(const shared_model::interface::Peer &to,
-                                 const CommitMessage &commit) = 0;
-
-        /**
-         * Directly share reject message
-         * @param to - peer recipient
-         * @param reject - message for sending
-         */
-        virtual void send_reject(const shared_model::interface::Peer &to,
-                                 RejectMessage reject) = 0;
-
-        /**
-         * Directly share vote message
-         * @param to - peer recipient
-         * @param vote - message for sending
-         */
-        virtual void send_vote(const shared_model::interface::Peer &to,
-                               VoteMessage vote) = 0;
+        virtual void sendState(const shared_model::interface::Peer &to,
+                               const std::vector<VoteMessage> &state) = 0;
 
         /**
          * Virtual destructor required for inheritance

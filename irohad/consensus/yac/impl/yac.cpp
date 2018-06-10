@@ -108,7 +108,7 @@ namespace iroha {
                    vote.hash.proposal_hash,
                    vote.hash.block_hash);
 
-        network_->send_vote(cluster_order_.currentLeader(), vote);
+        network_->sendState(cluster_order_.currentLeader(), {vote});
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
           timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
@@ -220,7 +220,7 @@ namespace iroha {
 
       void Yac::propagateCommitDirectly(const shared_model::interface::Peer &to,
                                         const CommitMessage &msg) {
-        network_->send_commit(to, msg);
+        network_->sendState(to, msg.votes);
       }
 
       void Yac::propagateReject(const RejectMessage &msg) {
@@ -231,7 +231,7 @@ namespace iroha {
 
       void Yac::propagateRejectDirectly(const shared_model::interface::Peer &to,
                                         const RejectMessage &msg) {
-        network_->send_reject(std::move(to), std::move(msg));
+        network_->sendState(std::move(to), std::move(msg.votes));
       }
 
     }  // namespace yac

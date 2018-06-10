@@ -38,9 +38,7 @@ TEST_F(YacTest, UnknownVoteBeforeCommit) {
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
@@ -71,9 +69,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 

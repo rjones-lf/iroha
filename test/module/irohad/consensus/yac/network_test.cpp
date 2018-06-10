@@ -84,7 +84,7 @@ namespace iroha {
             .WillRepeatedly(
                 InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
-        network->send_vote(*peer, message);
+        network->sendState(*peer, {message});
 
         // wait for response reader thread
         std::unique_lock<std::mutex> lock(mtx);

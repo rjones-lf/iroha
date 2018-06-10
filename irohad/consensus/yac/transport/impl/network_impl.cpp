@@ -41,30 +41,12 @@ namespace iroha {
         handler_ = handler;
       }
 
-      void NetworkImpl::send_vote(const shared_model::interface::Peer &to,
-                                  VoteMessage vote) {
+      void NetworkImpl::sendState(const shared_model::interface::Peer &to,
+                                  const std::vector<VoteMessage> &state) {
         createPeerConnection(to);
 
         proto::State request;
-        *request.add_votes() = PbConverters::serializeVote(vote);
-
-        auto call = new AsyncClientCall;
-
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendState(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address());
-      }
-
-      void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
-                                    const CommitMessage &commit) {
-        createPeerConnection(to);
-
-        proto::State request;
-        for (const auto &vote : commit.votes) {
+        for (const auto &vote : state) {
           auto pb_vote = request.add_votes();
           *pb_vote = PbConverters::serializeVote(vote);
         }
@@ -77,32 +59,8 @@ namespace iroha {
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
-        log_->info("Send votes bundle[size={}] commit to {}",
-                   commit.votes.size(),
-                   to.address());
-      }
-
-      void NetworkImpl::send_reject(const shared_model::interface::Peer &to,
-                                    RejectMessage reject) {
-        createPeerConnection(to);
-
-        proto::State request;
-        for (const auto &vote : reject.votes) {
-          auto pb_vote = request.add_votes();
-          *pb_vote = PbConverters::serializeVote(vote);
-        }
-
-        auto call = new AsyncClientCall;
-
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendState(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send votes bundle[size={}] reject to {}",
-                   reject.votes.size(),
-                   to.address());
+        log_->info(
+            "Send votes bundle[size={}] to {}", state.size(), to.address());
       }
 
       grpc::Status NetworkImpl::SendState(

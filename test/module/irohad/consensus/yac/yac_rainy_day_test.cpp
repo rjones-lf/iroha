@@ -43,9 +43,7 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(my_peers.size());
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(2 * my_peers.size());
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
@@ -79,7 +77,7 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
@@ -115,12 +113,10 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _))
+  EXPECT_CALL(*network, sendState(_, _))
       .Times(my_peers.size() + 1);  // $(peers.size()) sendings done during
                                     // multicast + 1 for single peer, who votes
                                     // after reject happened
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(1);
 

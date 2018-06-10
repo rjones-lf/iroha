@@ -43,9 +43,7 @@ using namespace std;
 TEST_F(YacTest, YacWhenVoting) {
   cout << "----------|YacWhenAchieveOneVote|----------" << endl;
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(default_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(default_peers.size());
 
   YacHash my_hash("my_proposal_hash", "my_block_hash");
 
@@ -65,9 +63,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
@@ -92,9 +88,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*crypto, verify(_))
       .Times(default_peers.size())
@@ -124,9 +118,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
               boost::get<CommitMessage>(commit_hash).votes.at(0).hash);
   });
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*crypto, verify(_)).WillOnce(Return(true));
 
@@ -151,8 +143,8 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   EXPECT_CALL(*crypto, verify(_))
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
-  std::vector<CommitMessage> messages;
-  EXPECT_CALL(*network, send_commit(_, _))
+  std::vector<std::vector<VoteMessage>> messages;
+  EXPECT_CALL(*network, sendState(_, _))
       .Times(default_peers.size())
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
@@ -160,7 +152,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
   yac->onOutcome().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
     ASSERT_EQ(default_peers.size(), messages.size());
-    messages.push_back(boost::get<CommitMessage>(msg));
+    messages.push_back(boost::get<CommitMessage>(msg).votes);
   });
 
   for (size_t i = 0; i < default_peers.size(); ++i) {
@@ -180,8 +172,8 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
-  std::vector<CommitMessage> messages;
-  EXPECT_CALL(*network, send_commit(_, _))
+  std::vector<std::vector<VoteMessage>> messages;
+  EXPECT_CALL(*network, sendState(_, _))
       .Times(default_peers.size())
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
@@ -189,7 +181,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   yac->onOutcome().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
     ASSERT_EQ(default_peers.size(), messages.size());
-    messages.push_back(boost::get<CommitMessage>(msg));
+    messages.push_back(boost::get<CommitMessage>(msg).votes);
   });
 
   std::vector<VoteMessage> commit;
