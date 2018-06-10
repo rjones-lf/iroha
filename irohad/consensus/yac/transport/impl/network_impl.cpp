@@ -45,13 +45,14 @@ namespace iroha {
                                   VoteMessage vote) {
         createPeerConnection(to);
 
-        auto request = PbConverters::serializeVote(vote);
+        proto::State request;
+        *request.add_votes() = PbConverters::serializeVote(vote);
 
         auto call = new AsyncClientCall;
 
         call->response_reader =
             peers_.at(to.address())
-                ->AsyncSendVote(&call->context, request, &cq_);
+                ->AsyncSendState(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -62,7 +63,7 @@ namespace iroha {
                                     const CommitMessage &commit) {
         createPeerConnection(to);
 
-        proto::Commit request;
+        proto::State request;
         for (const auto &vote : commit.votes) {
           auto pb_vote = request.add_votes();
           *pb_vote = PbConverters::serializeVote(vote);
@@ -72,7 +73,7 @@ namespace iroha {
 
         call->response_reader =
             peers_.at(to.address())
-                ->AsyncSendCommit(&call->context, request, &cq_);
+                ->AsyncSendState(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -85,7 +86,7 @@ namespace iroha {
                                     RejectMessage reject) {
         createPeerConnection(to);
 
-        proto::Reject request;
+        proto::State request;
         for (const auto &vote : reject.votes) {
           auto pb_vote = request.add_votes();
           *pb_vote = PbConverters::serializeVote(vote);
@@ -95,7 +96,7 @@ namespace iroha {
 
         call->response_reader =
             peers_.at(to.address())
-                ->AsyncSendReject(&call->context, request, &cq_);
+                ->AsyncSendState(&call->context, request, &cq_);
 
         call->response_reader->Finish(&call->reply, &call->status, call);
 
@@ -104,60 +105,26 @@ namespace iroha {
                    to.address());
       }
 
-      grpc::Status NetworkImpl::SendVote(
+      grpc::Status NetworkImpl::SendState(
           ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Vote *request,
+          const ::iroha::consensus::yac::proto::State *request,
           ::google::protobuf::Empty *response) {
-        auto vote = *PbConverters::deserializeVote(*request);
+        std::vector<VoteMessage> state;
+        for (const auto &pb_vote : request->votes()) {
+          auto vote = *PbConverters::deserializeVote(pb_vote);
+          state.push_back(vote);
+        }
+        if (not sameProposals(state)) {
+          log_->info(
+              "Votes are stateless invalid: proposals are different, or empty "
+              "collection");
+          return grpc::Status::CANCELLED;
+        }
 
         log_->info(
-            "Receive vote {} from {}", vote.hash.block_hash, context->peer());
+            "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->onState({vote});
-        return grpc::Status::OK;
-      }
-
-      grpc::Status NetworkImpl::SendCommit(
-          ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Commit *request,
-          ::google::protobuf::Empty *response) {
-        CommitMessage commit(std::vector<VoteMessage>{});
-        for (const auto &pb_vote : request->votes()) {
-          auto vote = *PbConverters::deserializeVote(pb_vote);
-          commit.votes.push_back(vote);
-        }
-        if (not sameProposals(commit.votes)) {
-          log_->info("Commit is stateless invalid: proposals are different");
-          return grpc::Status::CANCELLED;
-        }
-
-        log_->info("Receive commit[size={}] from {}",
-                   commit.votes.size(),
-                   context->peer());
-
-        handler_.lock()->onState(commit.votes);
-        return grpc::Status::OK;
-      }
-
-      grpc::Status NetworkImpl::SendReject(
-          ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Reject *request,
-          ::google::protobuf::Empty *response) {
-        RejectMessage reject(std::vector<VoteMessage>{});
-        for (const auto &pb_vote : request->votes()) {
-          auto vote = *PbConverters::deserializeVote(pb_vote);
-          reject.votes.push_back(vote);
-        }
-        if (not sameProposals(reject.votes)) {
-          log_->info("Reject is stateless invalid: proposals are different");
-          return grpc::Status::CANCELLED;
-        }
-
-        log_->info("Receive reject[size={}] from {}",
-                   reject.votes.size(),
-                   context->peer());
-
-        handler_.lock()->onState(reject.votes);
+        handler_.lock()->onState(state);
         return grpc::Status::OK;
       }
 
