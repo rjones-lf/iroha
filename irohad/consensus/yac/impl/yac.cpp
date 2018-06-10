@@ -132,9 +132,6 @@ namespace iroha {
 
       // ------|Apply data|------
 
-      const char *kRejectMsg = "reject case";
-      const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
-
       void Yac::applyState(const std::vector<VoteMessage> &state) {
         auto answer =
             vote_storage_.store(state, cluster_order_.getNumberOfPeers());
@@ -166,22 +163,14 @@ namespace iroha {
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
 
+          auto votes = [](const auto &state) { return state.votes; };
+
           switch (already_processed) {
             case ProposalState::kNotSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_hash);
-              visit_in_place(answer,
-                             [&](const CommitMessage &commit) {
-                               // propagate for all
-                               log_->info(
-                                   "Propagate commit {} to whole network",
-                                   state.at(0).hash.block_hash);
-                               this->propagateCommit(commit);
-                             },
-                             [&](const RejectMessage &reject) {
-                               // propagate reject for all
-                               log_->info(kRejectOnHashMsg, proposal_hash);
-                               this->propagateReject(reject);
-                             });
+              log_->info("Propagate state {} to whole network",
+                         state.at(0).hash.block_hash);
+              this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_hash);
@@ -191,18 +180,11 @@ namespace iroha {
             case ProposalState::kSentProcessed:
               if (state.size() == 1) {
                 findPeer(state.at(0)) | [&](const auto &from) {
-                  visit_in_place(answer,
-                                 [&](const CommitMessage &commit) {
-                                   log_->info(
-                                       "Propagate commit {} directly to {}",
-                                       state.at(0).hash.block_hash,
-                                       from->address());
-                                   this->propagateCommitDirectly(*from, commit);
-                                 },
-                                 [&](const RejectMessage &reject) {
-                                   log_->info(kRejectOnHashMsg, proposal_hash);
-                                   this->propagateRejectDirectly(*from, reject);
-                                 });
+                  log_->info("Propagate state {} directly to {}",
+                             state.at(0).hash.block_hash,
+                             from->address());
+                  this->propagateStateDirectly(*from,
+                                               visit_in_place(answer, votes));
                 };
               }
               break;
@@ -212,26 +194,15 @@ namespace iroha {
 
       // ------|Propagation|------
 
-      void Yac::propagateCommit(const CommitMessage &msg) {
+      void Yac::propagateState(const std::vector<VoteMessage> &msg) {
         for (const auto &peer : cluster_order_.getPeers()) {
-          propagateCommitDirectly(*peer, msg);
+          propagateStateDirectly(*peer, msg);
         }
       }
 
-      void Yac::propagateCommitDirectly(const shared_model::interface::Peer &to,
-                                        const CommitMessage &msg) {
-        network_->sendState(to, msg.votes);
-      }
-
-      void Yac::propagateReject(const RejectMessage &msg) {
-        for (const auto &peer : cluster_order_.getPeers()) {
-          propagateRejectDirectly(*peer, msg);
-        }
-      }
-
-      void Yac::propagateRejectDirectly(const shared_model::interface::Peer &to,
-                                        const RejectMessage &msg) {
-        network_->sendState(std::move(to), std::move(msg.votes));
+      void Yac::propagateStateDirectly(const shared_model::interface::Peer &to,
+                                       const std::vector<VoteMessage> &msg) {
+        network_->sendState(to, msg);
       }
 
     }  // namespace yac
