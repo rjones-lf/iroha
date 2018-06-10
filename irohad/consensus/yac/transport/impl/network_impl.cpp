@@ -21,11 +21,11 @@
 #include <memory>
 
 #include "consensus/yac/messages.hpp"
+#include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
-#include "consensus/yac/storage/yac_common.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -113,7 +113,7 @@ namespace iroha {
         log_->info(
             "Receive vote {} from {}", vote.hash.block_hash, context->peer());
 
-        handler_.lock()->on_vote(vote);
+        handler_.lock()->onState({vote});
         return grpc::Status::OK;
       }
 
@@ -135,7 +135,7 @@ namespace iroha {
                    commit.votes.size(),
                    context->peer());
 
-        handler_.lock()->on_commit(commit);
+        handler_.lock()->onState(commit.votes);
         return grpc::Status::OK;
       }
 
@@ -157,7 +157,7 @@ namespace iroha {
                    reject.votes.size(),
                    context->peer());
 
-        handler_.lock()->on_reject(reject);
+        handler_.lock()->onState(reject.votes);
         return grpc::Status::OK;
       }
 

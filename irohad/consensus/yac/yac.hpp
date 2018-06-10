@@ -64,11 +64,7 @@ namespace iroha {
 
         // ------|Network notifications|------
 
-        void on_commit(CommitMessage commit) override;
-
-        void on_reject(RejectMessage reject) override;
-
-        void on_vote(VoteMessage vote) override;
+        void onState(std::vector<VoteMessage> state) override;
 
        private:
         // ------|Private interface|------

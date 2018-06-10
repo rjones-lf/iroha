@@ -56,10 +56,10 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
-    yac->on_vote(create_vote(hash1, std::to_string(i)));
+    yac->onState({create_vote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->on_vote(create_vote(hash2, std::to_string(i)));
+    yac->onState({create_vote(hash2, std::to_string(i))});
   };
 }
 
@@ -89,10 +89,10 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
   YacHash hash2("proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
-    yac->on_vote(create_vote(hash1, std::to_string(i)));
+    yac->onState({create_vote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->on_vote(create_vote(hash2, std::to_string(i)));
+    yac->onState({create_vote(hash2, std::to_string(i))});
   };
 }
 
@@ -142,11 +142,11 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   };
 
   for (const auto &vote : votes) {
-    yac->on_vote(vote);
+    yac->onState({vote});
   }
 
-  yac->on_reject(RejectMessage(votes));
+  yac->onState(votes);
   auto peer = my_order->getPeers().back();
   auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-  yac->on_vote(create_vote(hash1, pubkey));
+  yac->onState({create_vote(hash1, pubkey)});
 }

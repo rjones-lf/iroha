@@ -50,7 +50,7 @@ TEST_F(YacTest, UnknownVoteBeforeCommit) {
   vote.signature = createSig(unknown);
 
   // assume that our peer receive message
-  network->notification->on_vote(vote);
+  network->notification->onState({vote});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -86,11 +86,11 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
   for (auto i = 0; i < 3; ++i) {
     votes.push_back(create_vote(my_hash, std::to_string(i)));
   };
-  yac->on_commit(CommitMessage(votes));
+  yac->onState(votes);
 
   VoteMessage vote;
   vote.hash = my_hash;
   std::string unknown = "unknown";
   vote.signature = createSig(unknown);
-  yac->on_vote(vote);
+  yac->onState({vote});
 }

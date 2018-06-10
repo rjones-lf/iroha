@@ -46,11 +46,6 @@ namespace iroha {
         return result;
       }
 
-      template <typename T>
-      static std::string cryptoError(const std::initializer_list<T> &votes) {
-        return cryptoError<std::initializer_list<T>>(votes);
-      }
-
       std::shared_ptr<Yac> Yac::create(
           YacVoteStorage vote_storage,
           std::shared_ptr<YacNetwork> network,
@@ -92,30 +87,12 @@ namespace iroha {
 
       // ------|Network notifications|------
 
-      void Yac::on_vote(VoteMessage vote) {
+      void Yac::onState(std::vector<VoteMessage> state) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify({vote})) {
-          applyState({vote});
+        if (crypto_->verify(state)) {
+          applyState(state);
         } else {
-          log_->warn(cryptoError({vote}));
-        }
-      }
-
-      void Yac::on_commit(CommitMessage commit) {
-        std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(commit.votes)) {
-          applyState(commit.votes);
-        } else {
-          log_->warn(cryptoError(commit.votes));
-        }
-      }
-
-      void Yac::on_reject(RejectMessage reject) {
-        std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(reject.votes)) {
-          applyState(reject.votes);
-        } else {
-          log_->warn(cryptoError(reject.votes));
+          log_->warn(cryptoError(state));
         }
       }
 

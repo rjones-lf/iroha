@@ -212,9 +212,7 @@ namespace iroha {
 
       class MockYacNetworkNotifications : public YacNetworkNotifications {
        public:
-        MOCK_METHOD1(on_commit, void(CommitMessage));
-        MOCK_METHOD1(on_reject, void(RejectMessage));
-        MOCK_METHOD1(on_vote, void(VoteMessage));
+        MOCK_METHOD1(onState, void(std::vector<VoteMessage>));
       };
 
       class MockSupermajorityChecker : public SupermajorityChecker {

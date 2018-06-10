@@ -37,22 +37,10 @@ namespace iroha {
       class YacNetworkNotifications {
        public:
         /**
-         * Callback on receiving commit message
-         * @param commit - provided message
+         * Callback on receiving collection of votes
+         * @param state - provided message
          */
-        virtual void on_commit(CommitMessage commit) = 0;
-
-        /**
-         * Callback on receiving reject message
-         * @param reject - provided message
-         */
-        virtual void on_reject(RejectMessage reject) = 0;
-
-        /**
-         * Callback on receiving vote message
-         * @param vote - provided message
-         */
-        virtual void on_vote(VoteMessage vote) = 0;
+        virtual void onState(std::vector<VoteMessage> state) = 0;
 
         virtual ~YacNetworkNotifications() = default;
       };

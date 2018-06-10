@@ -79,7 +79,7 @@ namespace iroha {
        * @then vote handled
        */
       TEST_F(YacNetworkTest, MessageHandledWhenMessageSent) {
-        EXPECT_CALL(*notifications, on_vote(message))
+        EXPECT_CALL(*notifications, onState(std::vector<VoteMessage>{message}))
             .Times(1)
             .WillRepeatedly(
                 InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
