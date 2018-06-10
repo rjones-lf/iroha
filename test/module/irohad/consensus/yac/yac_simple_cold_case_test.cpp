@@ -115,11 +115,12 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
 }
 
 /**
- * Test provide scenario
- * when yac cold started and achieve commit
+ * @given initialized YAC with empty storage
+ * @when receive commit message
+ * @then commit is not broadcasted
+ * AND commit is emitted to observable
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
-  cout << "----------|Start => receive commit|----------" << endl;
   YacHash propagated_hash("my_proposal", "my_block");
 
   // verify that commit emitted
@@ -180,11 +181,14 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
 
 /**
  * @given initialized YAC
- * @when receive reject message which triggers commit
+ * @when receive 2 * f votes for one hash
+ * AND receive reject message which triggers commit
  * @then commit is sent to the network before notifying subscribers
  */
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   EXPECT_CALL(*crypto, verify(An<RejectMessage>())).WillOnce(Return(true));
+  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).WillOnce(Return(true));
+  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
   std::vector<CommitMessage> messages;
   EXPECT_CALL(*network, send_commit(_, _))
@@ -198,12 +202,22 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
     messages.push_back(boost::get<CommitMessage>(msg));
   });
 
-  RejectMessage reject({});
-  for (size_t i = 0; i < default_peers.size(); ++i) {
-    reject.votes.push_back(create_vote(YacHash{}, std::to_string(i)));
+  std::vector<VoteMessage> commit;
+
+  auto f = (default_peers.size() - 1) / 3;
+  for (size_t i = 0; i < 2 * f; ++i) {
+    auto vote = create_vote(YacHash{}, std::to_string(i));
+    yac->on_vote(vote);
+    commit.push_back(vote);
   }
 
+  auto vote = create_vote(YacHash{}, std::to_string(2 * f + 1));
+  RejectMessage reject(
+      {vote, create_vote(YacHash("", "my_block"), std::to_string(2 * f + 2))});
+  commit.push_back(vote);
+
   yac->on_reject(reject);
+  yac->on_commit(CommitMessage(commit));
 
   // verify that on_commit subscribers are notified
   ASSERT_EQ(default_peers.size() + 1, messages.size());

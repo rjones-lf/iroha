@@ -101,6 +101,14 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+/**
+ * @given initialized YAC with empty state
+ * @when vote for hash
+ * AND receive commit for voted hash
+ * AND receive second commit for voted hash
+ * @then commit is emitted once
+ * AND timer is denied once
+ */
 TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   auto my_peers = decltype(default_peers)(
       {default_peers.begin(), default_peers.begin() + 4});
@@ -109,7 +117,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   auto my_order = ClusterOrdering::create(my_peers);
   ASSERT_TRUE(my_order);
 
-  EXPECT_CALL(*timer, deny()).Times(2);
+  EXPECT_CALL(*timer, deny()).Times(1);
 
   initYac(my_order.value());
 

@@ -130,20 +130,22 @@ std::shared_ptr<shared_model::interface::Peer> ConsensusSunnyDayTest::my_peer;
 std::vector<std::shared_ptr<shared_model::interface::Peer>>
     ConsensusSunnyDayTest::default_peers;
 
+/**
+ * @given num_peers peers with initialized YAC
+ * @when peers vote for same hash
+ * @then commit is achieved
+ */
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::condition_variable cv;
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
-  wrapper.subscribe(
-      [](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; });
+  wrapper.subscribe([&cv](auto hash) {
+    std::cout << "^_^ COMMITTED!!!" << std::endl;
+    cv.notify_one();
+  });
 
   EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
       .Times(1)
-      .WillRepeatedly(DoAll(InvokeWithoutArgs([&cv] {
-                              // wake up after commit is received from the
-                              // network so that it is safe to shutdown
-                              cv.notify_one();
-                            }),
-                            Return(true)));
+      .WillRepeatedly(Return(true));
   EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
 
   // Wait for other peers to start

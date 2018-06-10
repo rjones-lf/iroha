@@ -95,7 +95,7 @@ namespace iroha {
       void Yac::on_vote(VoteMessage vote) {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(vote)) {
-          applyVote(findPeer(vote), vote);
+          applyState({vote});
         } else {
           log_->warn(cryptoError({vote}));
         }
@@ -104,8 +104,7 @@ namespace iroha {
       void Yac::on_commit(CommitMessage commit) {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(commit)) {
-          // Commit does not contain data about peer which sent the message
-          applyCommit(boost::none, commit);
+          applyState(commit.votes);
         } else {
           log_->warn(cryptoError(commit.votes));
         }
@@ -114,8 +113,7 @@ namespace iroha {
       void Yac::on_reject(RejectMessage reject) {
         std::lock_guard<std::mutex> guard(mutex_);
         if (crypto_->verify(reject)) {
-          // Reject does not contain data about peer which sent the message
-          applyReject(boost::none, reject);
+          applyState(reject.votes);
         } else {
           log_->warn(cryptoError(reject.votes));
         }
@@ -160,108 +158,77 @@ namespace iroha {
       const char *kRejectMsg = "reject case";
       const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
 
-      void Yac::applyCommit(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const CommitMessage &commit) {
-        auto answer = vote_storage_.store(commit.votes,
-                                          cluster_order_.getNumberOfPeers());
-        answer | [&](const auto &answer) {
-          auto proposal_hash = getProposalHash(commit.votes).value();
-          auto already_processed =
-              vote_storage_.getProcessingState(proposal_hash);
-          if (already_processed != ProposalState::kSentNotProcessed) {
-            vote_storage_.nextProcessingState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const CommitMessage &commit) {
-                             notifier_.get_subscriber().on_next(commit);
-                           },
-                           [&](const RejectMessage &reject) {
-                             log_->warn(kRejectMsg);
-                             // TODO 14/08/17 Muratov: work on reject case
-                             // IR-497
-                           });
-          }
-          this->closeRound();
-        };
-      }
-
-      void Yac::applyReject(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const RejectMessage &reject) {
-        auto answer = vote_storage_.store(reject.votes,
-                                          cluster_order_.getNumberOfPeers());
-        answer | [&](const auto &answer) {
-          auto proposal_hash = getProposalHash(reject.votes).value();
-          auto already_processed =
-              vote_storage_.getProcessingState(proposal_hash);
-
-          if (already_processed != ProposalState::kSentNotProcessed) {
-            vote_storage_.nextProcessingState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const RejectMessage &reject) {
-                             log_->warn(kRejectMsg);
-                             // TODO 14/08/17 Muratov: work on reject case
-                             // IR-497
-                           },
-                           [&](const CommitMessage &commit) {
-                             this->propagateCommit(commit);
-                             notifier_.get_subscriber().on_next(commit);
-                           });
-          }
-          this->closeRound();
-        };
-      }
-
-      void Yac::applyVote(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const VoteMessage &vote) {
-        if (from) {
-          log_->info("Apply vote: {} from ledger peer {}",
-                     vote.hash.block_hash,
-                     (*from)->address());
-        } else {
-          log_->info("Apply vote: {} from unknown peer {}",
-                     vote.hash.block_hash,
-                     vote.signature->publicKey().hex());
-        }
-
+      void Yac::applyState(const std::vector<VoteMessage> &state) {
         auto answer =
-            vote_storage_.store({vote}, cluster_order_.getNumberOfPeers());
+            vote_storage_.store(state, cluster_order_.getNumberOfPeers());
 
         answer | [&](const auto &answer) {
-          auto &proposal_hash = vote.hash.proposal_hash;
+          auto &proposal_hash = state.at(0).hash.proposal_hash;
+
+          if (state.size() > 1) {
+            Answer received([&]() -> Answer {
+              if (std::all_of(
+                      state.begin(), state.end(), [&](const auto &vote) {
+                        return vote.hash.block_hash
+                            == state.at(0).hash.block_hash;
+                      })) {
+                return CommitMessage(state);
+              } else {
+                return RejectMessage(state);
+              }
+            }());
+
+            // some peer has already collected commit/reject, so it is sent
+            if (received.which() == answer.which()
+                and vote_storage_.getProcessingState(proposal_hash)
+                    == ProposalState::kNotSentNotProcessed) {
+              vote_storage_.nextProcessingState(proposal_hash);
+            }
+          }
+
           auto already_processed =
               vote_storage_.getProcessingState(proposal_hash);
 
-          if (already_processed != ProposalState::kSentNotProcessed) {
-            vote_storage_.nextProcessingState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const CommitMessage &commit) {
-                             // propagate for all
-                             log_->info("Propagate commit {} to whole network",
-                                        vote.hash.block_hash);
-                             this->propagateCommit(commit);
-                             notifier_.get_subscriber().on_next(commit);
-                           },
-                           [&](const RejectMessage &reject) {
-                             // propagate reject for all
-                             log_->info(kRejectOnHashMsg, proposal_hash);
-                             this->propagateReject(reject);
-                           });
-          } else {
-            from | [&](const auto &from) {
+          switch (already_processed) {
+            case ProposalState::kNotSentNotProcessed:
+              vote_storage_.nextProcessingState(proposal_hash);
               visit_in_place(answer,
                              [&](const CommitMessage &commit) {
-                               log_->info("Propagate commit {} directly to {}",
-                                          vote.hash.block_hash,
-                                          from->address());
-                               this->propagateCommitDirectly(*from, commit);
+                               // propagate for all
+                               log_->info(
+                                   "Propagate commit {} to whole network",
+                                   state.at(0).hash.block_hash);
+                               this->propagateCommit(commit);
                              },
                              [&](const RejectMessage &reject) {
+                               // propagate reject for all
                                log_->info(kRejectOnHashMsg, proposal_hash);
-                               this->propagateRejectDirectly(*from, reject);
+                               this->propagateReject(reject);
                              });
-            };
+              break;
+            case ProposalState::kSentNotProcessed:
+              vote_storage_.nextProcessingState(proposal_hash);
+              this->closeRound();
+              notifier_.get_subscriber().on_next(answer);
+              break;
+            case ProposalState::kSentProcessed:
+              if (state.size() == 1) {
+                findPeer(state.at(0)) | [&](const auto &from) {
+                  visit_in_place(answer,
+                                 [&](const CommitMessage &commit) {
+                                   log_->info(
+                                       "Propagate commit {} directly to {}",
+                                       state.at(0).hash.block_hash,
+                                       from->address());
+                                   this->propagateCommitDirectly(*from, commit);
+                                 },
+                                 [&](const RejectMessage &reject) {
+                                   log_->info(kRejectOnHashMsg, proposal_hash);
+                                   this->propagateRejectDirectly(*from, reject);
+                                 });
+                };
+              }
+              break;
           }
         };
       }

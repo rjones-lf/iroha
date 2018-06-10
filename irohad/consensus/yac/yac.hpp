@@ -93,24 +93,7 @@ namespace iroha {
         findPeer(const VoteMessage &vote);
 
         // ------|Apply data|------
-
-        /**
-         * Methods take optional peer as argument since peer which sent the
-         * message could be missing from the ledger. This is the case when the
-         * top block in ledger does not correspond to consensus round number
-         */
-
-        void applyCommit(
-            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
-                from,
-            const CommitMessage &commit);
-        void applyReject(
-            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
-                from,
-            const RejectMessage &reject);
-        void applyVote(boost::optional<
-                           std::shared_ptr<shared_model::interface::Peer>> from,
-                       const VoteMessage &vote);
+        void applyState(const std::vector<VoteMessage> &state);
 
         // ------|Propagation|------
         void propagateCommit(const CommitMessage &msg);
