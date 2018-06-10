@@ -25,6 +25,7 @@
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
+using ::testing::_;
 using ::testing::An;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
@@ -143,10 +144,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
     cv.notify_one();
   });
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   // Wait for other peers to start
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));

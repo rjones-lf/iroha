@@ -69,11 +69,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   YacHash received_hash("my_proposal", "my_block");
   auto peer = default_peers.at(0);
@@ -100,9 +96,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
+  EXPECT_CALL(*crypto, verify(_))
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
 
@@ -134,9 +128,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).Times(0);
+  EXPECT_CALL(*crypto, verify(_)).WillOnce(Return(true));
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
@@ -156,7 +148,7 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
  * @then commit is sent to the network before notifying subscribers
  */
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
+  EXPECT_CALL(*crypto, verify(_))
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
   std::vector<CommitMessage> messages;
@@ -186,9 +178,7 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
  * @then commit is sent to the network before notifying subscribers
  */
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
   std::vector<CommitMessage> messages;
   EXPECT_CALL(*network, send_commit(_, _))

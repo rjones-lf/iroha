@@ -49,9 +49,7 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");
@@ -85,10 +83,7 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>()))
-      .WillRepeatedly(Return(false));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(false));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(false));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");
@@ -129,9 +124,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   EXPECT_CALL(*timer, deny()).Times(1);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");

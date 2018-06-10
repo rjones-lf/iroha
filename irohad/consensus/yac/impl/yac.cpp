@@ -94,7 +94,7 @@ namespace iroha {
 
       void Yac::on_vote(VoteMessage vote) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(vote)) {
+        if (crypto_->verify({vote})) {
           applyState({vote});
         } else {
           log_->warn(cryptoError({vote}));
@@ -103,7 +103,7 @@ namespace iroha {
 
       void Yac::on_commit(CommitMessage commit) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(commit)) {
+        if (crypto_->verify(commit.votes)) {
           applyState(commit.votes);
         } else {
           log_->warn(cryptoError(commit.votes));
@@ -112,7 +112,7 @@ namespace iroha {
 
       void Yac::on_reject(RejectMessage reject) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(reject)) {
+        if (crypto_->verify(reject.votes)) {
           applyState(reject.votes);
         } else {
           log_->warn(cryptoError(reject.votes));

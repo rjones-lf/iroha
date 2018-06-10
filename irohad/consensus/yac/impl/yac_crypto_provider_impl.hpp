@@ -29,11 +29,7 @@ namespace iroha {
         explicit CryptoProviderImpl(
             const shared_model::crypto::Keypair &keypair);
 
-        bool verify(CommitMessage msg) override;
-
-        bool verify(RejectMessage msg) override;
-
-        bool verify(VoteMessage msg) override;
+        bool verify(std::vector<VoteMessage> msg) override;
 
         VoteMessage getVote(YacHash hash) override;
 

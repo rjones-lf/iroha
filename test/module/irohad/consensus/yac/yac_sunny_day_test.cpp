@@ -49,9 +49,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   YacHash my_hash("proposal_hash", "block_hash");
   yac->vote(my_hash, my_order.value());
@@ -85,10 +83,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   yac->vote(my_hash, my_order.value());
 
@@ -131,10 +126,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   yac->vote(my_hash, my_order.value());
 
@@ -170,13 +162,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
   YacHash my_hash("proposal_hash", "block_hash");
 
@@ -214,11 +200,7 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).Times(0);
+  EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   YacHash my_hash("proposal_hash", "block_hash");
 

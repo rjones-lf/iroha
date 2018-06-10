@@ -42,11 +42,7 @@ TEST_F(YacTest, UnknownVoteBeforeCommit) {
   EXPECT_CALL(*network, send_reject(_, _)).Times(0);
   EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   VoteMessage vote;
   vote.hash = YacHash("my_proposal", "my_block");
@@ -81,9 +77,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillOnce(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
   YacHash my_hash("proposal_hash", "block_hash");
 
