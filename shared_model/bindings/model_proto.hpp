@@ -31,7 +31,7 @@ namespace shared_model {
     template <typename UnsignedWrapper>
     class ModelProto {
      public:
-      ModelProto(UnsignedWrapper &&us) : us_(std::move(us)) {}
+      ModelProto(UnsignedWrapper &us) : us_(us) {}
       /**
        * Signs and adds a signature for a proto object
        * @param keypair - keypair to sign
@@ -40,7 +40,7 @@ namespace shared_model {
       ModelProto<UnsignedWrapper> signAndAddSignature(
           const crypto::Keypair &keypair) {
         UnsignedWrapper wrapper = us_.signAndAddSignature(keypair);
-        return ModelProto<UnsignedWrapper>(std::move(wrapper));
+        return ModelProto<UnsignedWrapper>(wrapper);
       }
 
       /**

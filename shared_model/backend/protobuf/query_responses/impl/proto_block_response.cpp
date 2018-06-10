@@ -21,7 +21,7 @@ namespace shared_model {
     BlockResponse::BlockResponse(const BlockResponse &o)
         : BlockResponse(o.proto_) {}
 
-    BlockResponse::BlockResponse(BlockResponse &&o)
+    BlockResponse::BlockResponse(BlockResponse &&o) noexcept
         : BlockResponse(std::move(o.proto_)) {}
 
     const Block &BlockResponse::block() const {
