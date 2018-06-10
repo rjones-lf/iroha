@@ -6,9 +6,6 @@
 #ifndef IROHA_SHARED_MODEL_BLOCKS_QUERY_HPP
 #define IROHA_SHARED_MODEL_BLOCKS_QUERY_HPP
 
-#include <boost/variant.hpp>
-
-#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 
@@ -36,21 +33,9 @@ namespace shared_model {
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("BlocksQuery")
-            .append("creatorId", creatorAccountId())
-            .append("queryCounter", std::to_string(queryCounter()))
-            .append(Signable::toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return creatorAccountId() == rhs.creatorAccountId()
-            && queryCounter() == rhs.queryCounter()
-            && createdTime() == rhs.createdTime()
-            && signatures() == rhs.signatures();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

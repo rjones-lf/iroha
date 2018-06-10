@@ -28,9 +28,14 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::fromPrivateKey(
         const std::string &private_key) {
+      // TODO 07/06/18 Akvinikym: remove magic number (64) IR-977
+      if (private_key.size() != 64) {
+        throw std::invalid_argument("input string has incorrect length "
+                                    + std::to_string(private_key.length()));
+      }
       auto byte_string = iroha::hexstringToBytestring(private_key);
       if (not byte_string) {
-        throw std::runtime_error("invalid seed");
+        throw std::invalid_argument("invalid seed");
       }
       return crypto::CryptoProviderEd25519Sha3::generateKeypair(
           crypto::Seed(*byte_string));

@@ -27,7 +27,9 @@ AcceptanceFixture::AcceptanceFixture()
             framework::SpecifiedVisitor<
                 shared_model::interface::StatelessFailedTxResponse>(),
             status.get()));
-      }) {}
+      }),
+      initial_time(iroha::time::now()),
+      tx_counter(0){}
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
     const std::string &user, const shared_model::crypto::PublicKey &key) {
@@ -38,7 +40,7 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
           key)
       .creatorAccountId(
           integration_framework::IntegrationTestFramework::kAdminId)
-      .createdTime(iroha::time::now())
+      .createdTime(getUniqueTime())
       .quorum(1);
 }
 
@@ -72,7 +74,7 @@ shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
 template <typename Builder>
 auto AcceptanceFixture::base(Builder builder) -> decltype(
     builder.creatorAccountId(std::string()).createdTime(uint64_t())) {
-  return builder.creatorAccountId(kUserId).createdTime(iroha::time::now());
+  return builder.creatorAccountId(kUserId).createdTime(getUniqueTime());
 }
 
 template auto AcceptanceFixture::base<TestUnsignedTransactionBuilder>(
@@ -114,3 +116,7 @@ template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
         builder.build()
             .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
             .finish());
+
+iroha::time::time_t AcceptanceFixture::getUniqueTime() {
+  return initial_time + tx_counter++;
+}

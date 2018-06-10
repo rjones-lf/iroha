@@ -34,16 +34,9 @@ namespace shared_model {
        */
       virtual const types::RoleIdType &roleId() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("GetRolePermissions")
-            .append("role_id", roleId())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return roleId() == rhs.roleId();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

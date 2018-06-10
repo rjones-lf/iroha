@@ -21,6 +21,7 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace shared_model {
   namespace interface {

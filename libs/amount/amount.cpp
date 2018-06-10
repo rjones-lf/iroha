@@ -135,9 +135,10 @@ namespace iroha {
 
   std::vector<uint64_t> Amount::to_uint64s() {
     std::vector<uint64_t> array(4);
-    ;
     for (int i = 0; i < 4; i++) {
-      uint64_t res = (value_ >> i * 64).convert_to<uint64_t>();
+      constexpr boost::multiprecision::uint256_t mask_bits =
+          std::numeric_limits<uint64_t>::max();
+      uint64_t res = ((value_ >> (i * 64)) & mask_bits).convert_to<uint64_t>();
       array[3 - i] = res;
     }
     return array;

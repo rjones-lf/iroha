@@ -221,7 +221,7 @@ def get_account_asset():
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
         .queryCounter(query_counter) \
-        .getAccountAssets("userone@domain", "coin#domain") \
+        .getAccountAssets("userone@domain") \
         .build()
 
     query_response = send_query(query, key_pair)

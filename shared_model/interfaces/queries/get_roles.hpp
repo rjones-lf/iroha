@@ -28,13 +28,9 @@ namespace shared_model {
      */
     class GetRoles : public ModelPrimitive<GetRoles> {
      public:
-      std::string toString() const override {
-        return detail::PrettyStringBuilder().init("GetRoles").finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return true;
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
 
   }  // namespace interface
