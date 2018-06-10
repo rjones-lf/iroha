@@ -118,6 +118,8 @@ cp "$DEPS_DIR"/lib/lib${PROTOBUF_LIB_NAME}.a \
  ./iroha/shared_model/build/cryptography/model_impl/libshared_model_cryptography_model.a \
  ./iroha/shared_model/build/validators/libshared_model_stateless_validation.a \
  ./iroha/shared_model/build/schema/libschema.a \
+ ./iroha/shared_model/build/interfaces/libshared_model_interfaces.a \
+ ./iroha/shared_model/build/backend/protobuf/libshared_model_proto_backend.a \
  lib
 cp -R "$DEPS_DIR"/include/* include
 (cd ./iroha/shared_model; find . -name '*.hpp' | cpio -pdm ../../include)
