@@ -101,6 +101,11 @@ class AcceptanceFixture : public ::testing::Test {
           .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
           .finish());
 
+  /**
+   * @return unique time for this fixture
+   */
+  iroha::time::time_t getUniqueTime();
+
   const std::string kUser;
   const std::string kRole;
   const std::string kDomain;
@@ -111,6 +116,11 @@ class AcceptanceFixture : public ::testing::Test {
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessInvalid;
+
+ private:
+  iroha::time::time_t initial_time;
+  /// number of created transactions, used to provide unique time
+  int tx_counter;
 };
 
 #endif  // IROHA_ACCEPTANCE_FIXTURE_HPP

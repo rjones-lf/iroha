@@ -27,6 +27,22 @@ add_library(shared_model_proto_backend
     query_responses/impl/proto_roles_response.cpp
     query_responses/impl/proto_signatories_response.cpp
     query_responses/impl/proto_transaction_response.cpp
+    query_responses/impl/proto_block_query_response.cpp
+    query_responses/impl/proto_block_response.cpp
+    query_responses/impl/proto_block_error_response.cpp
+    queries/impl/proto_query.cpp
+    queries/impl/proto_get_account.cpp
+    queries/impl/proto_get_account_asset_transactions.cpp
+    queries/impl/proto_get_account_assets.cpp
+    queries/impl/proto_get_account_detail.cpp
+    queries/impl/proto_get_account_transactions.cpp
+    queries/impl/proto_get_asset_info.cpp
+    queries/impl/proto_get_role_permissions.cpp
+    queries/impl/proto_get_roles.cpp
+    queries/impl/proto_get_signatories.cpp
+    queries/impl/proto_get_transactions.cpp
+    queries/impl/proto_blocks_query.cpp
+    queries/impl/proto_query_payload_meta.cpp
     )
 
 target_link_libraries(shared_model_proto_backend

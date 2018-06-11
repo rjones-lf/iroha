@@ -85,7 +85,7 @@ def doDebugBuild(coverageEnabled=false) {
       if ( coverageEnabled ) {
         sh "cmake --build build --target coverage.init.info"
       }
-      def testExitCode = sh(script: 'CTEST_OUTPUT_ON_FAILURE=1 cmake --build build --target test', returnStatus: true)
+      def testExitCode = sh(script: """cd build && ctest --output-on-failure""", returnStatus: true)
       if (testExitCode != 0) {
         currentBuild.result = "UNSTABLE"
       }

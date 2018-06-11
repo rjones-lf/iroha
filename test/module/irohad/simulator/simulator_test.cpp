@@ -136,6 +136,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(rxcpp::observable<>::just(block).map(
           [](auto &&x) { return wBlock(clone(x)); })));
 
+  EXPECT_CALL(*query, getTopBlockHeight())
+      .WillOnce(Return(1));
+
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
   EXPECT_CALL(*ordering_gate, on_proposal())

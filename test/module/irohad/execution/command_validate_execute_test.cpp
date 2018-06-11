@@ -1,22 +1,11 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <limits>
 
+#include "backend/protobuf/permissions.hpp"
 #include "builders/default_builders.hpp"
 #include "execution/command_executor.hpp"
 #include "framework/result_fixture.hpp"
@@ -24,7 +13,6 @@
 #include "interfaces/commands/command.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "validators/permissions.hpp"
 
 using ::testing::_;
 using ::testing::Return;
@@ -33,7 +21,8 @@ using ::testing::StrictMock;
 using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace framework::expected;
-using namespace shared_model::permissions;
+using namespace shared_model::proto::permissions;
+using namespace shared_model::interface::permissions;
 
 // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework function with
 // CommandBuilder
@@ -217,7 +206,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_add_asset_qty};
+    role_permissions = {toString(Role::kAddAssetQty)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().addAssetQuantity(
@@ -379,7 +368,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_subtract_asset_qty};
+    role_permissions = {toString(Role::kSubtractAssetQty)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
@@ -534,7 +523,7 @@ class AddSignatoryTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_add_signatory};
+    role_permissions = {toString(Role::kAddSignatory)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -553,8 +542,9 @@ class AddSignatoryTest : public CommandValidateExecuteTest {
  */
 TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, add_signatory->accountId(), can_add_my_signatory))
+              hasAccountGrantablePermission(kAdminId,
+                                            add_signatory->accountId(),
+                                            toString(Role::kAddMySignatory)))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
       .WillOnce(Return(WsvCommandResult()));
@@ -598,8 +588,9 @@ TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
  */
 TEST_F(AddSignatoryTest, InvalidWhenNoPermissions) {
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, add_signatory->accountId(), can_add_my_signatory))
+              hasAccountGrantablePermission(kAdminId,
+                                            add_signatory->accountId(),
+                                            toString(Role::kAddMySignatory)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -618,8 +609,9 @@ TEST_F(AddSignatoryTest, InvalidWhenNoAccount) {
       getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, add_signatory->accountId(), can_add_my_signatory))
+              hasAccountGrantablePermission(kAdminId,
+                                            add_signatory->accountId(),
+                                            toString(Role::kAddMySignatory)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -638,8 +630,9 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
       getConcreteCommand<shared_model::interface::AddSignatory>(command);
 
   EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, add_signatory->accountId(), can_add_my_signatory))
+              hasAccountGrantablePermission(kAdminId,
+                                            add_signatory->accountId(),
+                                            toString(Role::kAddMySignatory)))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
       .WillOnce(Return(makeEmptyError()));
@@ -652,7 +645,7 @@ class CreateAccountTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_create_account};
+    role_permissions = {toString(Role::kCreateAccount)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -729,7 +722,7 @@ class CreateAssetTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_create_asset};
+    role_permissions = {toString(Role::kCreateAsset)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -787,7 +780,7 @@ class CreateDomainTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_create_domain};
+    role_permissions = {toString(Role::kCreateDomain)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -850,7 +843,7 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
 
     many_pubkeys = {creator_key, account_key};
 
-    role_permissions = {can_remove_signatory};
+    role_permissions = {toString(Role::kRemoveSignatory)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -871,10 +864,10 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
  * @then executor will be passed
  */
 TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
@@ -898,10 +891,10 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
  * @then executor will be failed
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
@@ -927,10 +920,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
  * @then executor will be passed
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -954,7 +947,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
       *wsv_query,
       hasAccountGrantablePermission(kAdminId,
                                     wrong_key_remove_signatory->accountId(),
-                                    can_remove_my_signatory))
+                                    toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(wrong_key_remove_signatory->accountId()))
@@ -973,10 +966,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
  * @then execute fails
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
@@ -995,10 +988,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
  * @then execute fails
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
@@ -1017,10 +1010,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
  * @then execute fails
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          kAdminId, remove_signatory->accountId(), can_remove_my_signatory))
+  EXPECT_CALL(*wsv_query,
+              hasAccountGrantablePermission(kAdminId,
+                                            remove_signatory->accountId(),
+                                            toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
@@ -1051,7 +1044,7 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
       .WillOnce(Return(std::vector<std::string>{kAdminRole}));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, kAdminId, can_remove_my_signatory))
+                  kAdminId, kAdminId, toString(Role::kRemoveMySignatory)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -1077,7 +1070,7 @@ class SetQuorumTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     account_pubkeys = {kPubKey1, kPubKey2};
-    role_permissions = {can_set_quorum};
+    role_permissions = {toString(Role::kSetQuorum)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -1105,9 +1098,10 @@ class SetQuorumTest : public CommandValidateExecuteTest {
  * @then execute successes
  */
 TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, set_quorum->accountId(), can_set_my_quorum))
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          kAdminId, set_quorum->accountId(), toString(Role::kSetMyQuorum)))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_query, getAccount(set_quorum->accountId()))
       .WillOnce(Return(account));
@@ -1144,9 +1138,10 @@ TEST_F(SetQuorumTest, ValidWhenSameAccount) {
  * @then execute fails
  */
 TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, set_quorum->accountId(), can_set_my_quorum))
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          kAdminId, set_quorum->accountId(), toString(Role::kSetMyQuorum)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -1162,9 +1157,10 @@ TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
       buildCommand(TestTransactionBuilder().setAccountQuorum(kNoAcountId, 2));
   set_quorum = getConcreteCommand<shared_model::interface::SetQuorum>(command);
 
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, set_quorum->accountId(), can_set_my_quorum))
+  EXPECT_CALL(
+      *wsv_query,
+      hasAccountGrantablePermission(
+          kAdminId, set_quorum->accountId(), toString(Role::kSetMyQuorum)))
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -1245,7 +1241,7 @@ class TransferAssetTest : public CommandValidateExecuteTest {
                            .balance(*balance)
                            .build());
 
-    role_permissions = {can_transfer, can_receive};
+    role_permissions = {toString(Role::kTransfer), toString(Role::kReceive)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().transferAsset(
@@ -1347,7 +1343,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, kAccountId, can_transfer_my_assets))
+                  kAdminId, kAccountId, toString(Role::kTransferMyAssets)))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
@@ -1359,8 +1355,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
       .WillOnce(Return(boost::none));
 
   EXPECT_CALL(*wsv_query,
-              getAccountAsset(transfer_asset->srcAccountId(),
-                              transfer_asset->assetId()))
+              getAccountAsset(transfer_asset->srcAccountId(), _))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
@@ -1676,7 +1671,7 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, kAccountId, can_transfer_my_assets))
+                  kAdminId, kAccountId, toString(Role::kTransferMyAssets)))
       .WillOnce(Return(false));
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -1686,7 +1681,7 @@ class AddPeerTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_add_peer};
+    role_permissions = {toString(Role::kAddPeer)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1740,8 +1735,8 @@ class CreateRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    std::set<std::string> perm = {can_create_role};
-    role_permissions = {can_create_role};
+    std::set<std::string> perm = {toString(Role::kCreateRole)};
+    role_permissions = {toString(Role::kCreateRole)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -1794,7 +1789,8 @@ TEST_F(CreateRoleTest, InvalidCaseWhenNoPermissions) {
  */
 TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  std::set<std::string> master_perms = {can_add_peer, can_append_role};
+  std::set<std::string> master_perms = {toString(Role::kAddPeer),
+                                        toString(Role::kAppendRole)};
   command = buildCommand(
       TestTransactionBuilder().createRole(kMasterRole, master_perms));
 
@@ -1821,7 +1817,7 @@ class AppendRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_append_role};
+    role_permissions = {toString(Role::kAppendRole)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1943,7 +1939,7 @@ class DetachRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions = {can_detach_role};
+    role_permissions = {toString(Role::kDetachRole)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -2002,8 +1998,8 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    expected_permission = can_add_my_signatory;
-    role_permissions = {can_grant + expected_permission};
+    expected_permission = toString(Grantable::kAddMySignatory);
+    role_permissions = {"can_grant_" + expected_permission};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().grantPermission(
@@ -2065,7 +2061,7 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    expected_permission = can_add_my_signatory;
+    expected_permission = toString(Grantable::kAddMySignatory);
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().revokePermission(
@@ -2136,12 +2132,12 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     set_aacount_detail =
         getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
-    role_permissions = {can_set_quorum};
+    role_permissions = {toString(Role::kSetQuorum)};
   }
 
   const std::string kKey = "key";
   const std::string kValue = "val";
-  const std::string kNeededPermission = can_set_my_account_detail;
+  const std::string kNeededPermission = toString(Role::kSetMyAccountDetail);
 
   std::shared_ptr<shared_model::interface::SetAccountDetail> set_aacount_detail;
 };

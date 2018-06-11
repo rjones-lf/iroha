@@ -33,6 +33,7 @@ namespace shared_model {
 
     class Signature;
     class Transaction;
+    class AccountAsset;
 
     namespace types {
       /// Type of hash
@@ -91,6 +92,10 @@ namespace shared_model {
           boost::any_range<Transaction,
                            boost::random_access_traversal_tag,
                            const Transaction &>;
+      using AccountAssetCollectionType =
+          boost::any_range<AccountAsset,
+                           boost::random_access_traversal_tag,
+                           const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
     }  // namespace types

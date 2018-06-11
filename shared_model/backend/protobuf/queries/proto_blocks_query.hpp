@@ -8,6 +8,7 @@
 
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "interfaces/queries/blocks_query.hpp"
+#include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
@@ -21,67 +22,36 @@ namespace shared_model {
 
      public:
       template <typename BlocksQueryType>
-      explicit BlocksQuery(BlocksQueryType &&query)
-          : CopyableProto(std::forward<BlocksQueryType>(query)) {}
+      explicit BlocksQuery(BlocksQueryType &&query);
 
-      BlocksQuery(const BlocksQuery &o) : BlocksQuery(o.proto_) {}
+      BlocksQuery(const BlocksQuery &o);
 
-      BlocksQuery(BlocksQuery &&o) noexcept
-          : BlocksQuery(std::move(o.proto_)) {}
+      BlocksQuery(BlocksQuery &&o) noexcept;
 
-      const interface::types::AccountIdType &creatorAccountId() const override {
-        return proto_->meta().creator_account_id();
-      }
+      const interface::types::AccountIdType &creatorAccountId() const override;
 
-      interface::types::CounterType queryCounter() const override {
-        return proto_->meta().query_counter();
-      }
+      interface::types::CounterType queryCounter() const override;
 
-      const interface::types::BlobType &blob() const override {
-        return *blob_;
-      }
+      const interface::types::BlobType &blob() const override;
 
-      const interface::types::BlobType &payload() const override {
-        return *payload_;
-      }
+      const interface::types::BlobType &payload() const override;
 
       // ------------------------| Signable override  |-------------------------
-      interface::types::SignatureRangeType signatures() const override {
-        return *signatures_;
-      }
+      interface::types::SignatureRangeType signatures() const override;
 
       bool addSignature(const crypto::Signed &signed_blob,
-                        const crypto::PublicKey &public_key) override {
-        if (proto_->has_signature()) {
-          return false;
-        }
+                        const crypto::PublicKey &public_key) override;
 
-        auto sig = proto_->mutable_signature();
-        sig->set_signature(crypto::toBinaryString(signed_blob));
-        sig->set_pubkey(crypto::toBinaryString(public_key));
-        return true;
-      }
-
-      interface::types::TimestampType createdTime() const override {
-        return proto_->meta().created_time();
-      }
+      interface::types::TimestampType createdTime() const override;
 
      private:
       // ------------------------------| fields |-------------------------------
       // lazy
-      const Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(*proto_); }};
+      const Lazy<interface::types::BlobType> blob_;
 
-      const Lazy<interface::types::BlobType> payload_{
-          [this] { return makeBlob(proto_->meta()); }};
+      const Lazy<interface::types::BlobType> payload_;
 
-      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-        SignatureSetType<proto::Signature> set;
-        if (proto_->has_signature()) {
-          set.emplace(proto_->signature());
-        }
-        return set;
-      }};
+      const Lazy<SignatureSetType<proto::Signature>> signatures_;
     };
   }  // namespace proto
 }  // namespace shared_model

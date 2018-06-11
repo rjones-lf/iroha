@@ -31,7 +31,7 @@ namespace shared_model {
       /**
        * @return Account has Asset model
        */
-      virtual const AccountAsset &accountAsset() const = 0;
+      virtual const types::AccountAssetCollectionType accountAssets() const = 0;
 
       std::string toString() const override;
 

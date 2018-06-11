@@ -186,14 +186,18 @@ namespace iroha {
       PbQueryResponseFactory::serializeAccountAssetResponse(
           const model::AccountAssetResponse &accountAssetResponse) const {
         protocol::AccountAssetResponse pb_response;
-        auto pb_account_asset = pb_response.mutable_account_asset();
-        pb_account_asset->set_asset_id(
-            accountAssetResponse.acct_asset.asset_id);
-        pb_account_asset->set_account_id(
-            accountAssetResponse.acct_asset.account_id);
-        auto pb_amount = pb_account_asset->mutable_balance();
-        pb_amount->CopyFrom(
-            serializeAmount(accountAssetResponse.acct_asset.balance));
+        auto pb_account_asset = pb_response.mutable_account_assets();
+        for (auto &asset: accountAssetResponse.acct_assets) {
+          auto pb_asset = new iroha::protocol::AccountAsset();
+          pb_asset->set_asset_id(
+              asset.asset_id);
+          pb_asset->set_account_id(
+              asset.account_id);
+          auto pb_amount = pb_asset->mutable_balance();
+          pb_amount->CopyFrom(
+              serializeAmount(asset.balance));
+          pb_account_asset->AddAllocated(pb_asset);
+        }
         return pb_response;
       }
 
@@ -201,12 +205,16 @@ namespace iroha {
       PbQueryResponseFactory::deserializeAccountAssetResponse(
           const protocol::AccountAssetResponse &account_asset_response) const {
         model::AccountAssetResponse res;
-        res.acct_asset.balance =
-            deserializeAmount(account_asset_response.account_asset().balance());
-        res.acct_asset.account_id =
-            account_asset_response.account_asset().account_id();
-        res.acct_asset.asset_id =
-            account_asset_response.account_asset().asset_id();
+        for (int i = 0; i < account_asset_response.account_assets().size(); i++) {
+          auto model_asset = iroha::model::AccountAsset();
+          model_asset.balance = deserializeAmount(
+              account_asset_response.account_assets(i).balance());
+          model_asset.account_id =
+              account_asset_response.account_assets(i).account_id();
+          model_asset.asset_id =
+              account_asset_response.account_assets(i).asset_id();
+          res.acct_assets.push_back(model_asset);
+        }
         return res;
       }
 

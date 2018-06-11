@@ -19,37 +19,38 @@
 
 #include <algorithm>
 
+#include "backend/protobuf/from_old.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
 
 namespace iroha {
 
-  boost::optional<std::set<std::string>> getAccountPermissions(
-      const std::string &account_id, ametsuchi::WsvQuery &queries) {
+  boost::optional<shared_model::interface::RolePermissionSet>
+  getAccountPermissions(const std::string &account_id,
+                        ametsuchi::WsvQuery &queries) {
     auto roles = queries.getAccountRoles(account_id);
     if (not roles) {
       return boost::none;
     }
-    std::set<std::string> account_permissions;
-    std::for_each(roles.value().begin(),
-                  roles.value().end(),
-                  [&account_permissions, &queries](auto role) {
-                    auto perms = queries.getRolePermissions(role);
-                    if (perms) {
-                      account_permissions.insert(perms.value().begin(),
-                                                 perms.value().end());
-                    }
-                  });
-    return account_permissions;
+    auto r = roles.value();
+    shared_model::interface::RolePermissionSet permissions{};
+    std::for_each(r.begin(), r.end(), [&permissions, &queries](auto &role) {
+      auto perms = queries.getRolePermissions(role);
+      if (not perms) {
+        return;
+      }
+      auto tmp = shared_model::interface::permissions::fromOldR(
+          std::set<std::string>{perms.value().begin(), perms.value().end()});
+      permissions |= tmp;
+    });
+    return permissions;
   }
 
-  bool accountHasPermission(const std::set<std::string> &perms,
-                            const std::string &permission_id) {
-    return perms.count(permission_id) == 1;
-  }
-
-  bool checkAccountRolePermission(const std::string &account_id,
-                                  ametsuchi::WsvQuery &queries,
-                                  const std::string &permission_id) {
+  bool checkAccountRolePermission(
+      const std::string &account_id,
+      ametsuchi::WsvQuery &queries,
+      shared_model::interface::permissions::Role permission_id) {
+    auto permission = shared_model::proto::permissions::toString(permission_id);
     auto accountRoles = queries.getAccountRoles(account_id);
     if (not accountRoles)
       return false;
@@ -58,7 +59,7 @@ namespace iroha {
       if (not rolePerms)
         continue;
       for (auto rolePerm : *rolePerms) {
-        if (rolePerm == permission_id)
+        if (rolePerm == permission)
           return true;
       }
     }

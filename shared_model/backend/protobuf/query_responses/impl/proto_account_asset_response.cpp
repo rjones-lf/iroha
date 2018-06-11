@@ -13,8 +13,10 @@ namespace shared_model {
         QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
           accountAssetResponse_{proto_->account_assets_response()},
-          accountAsset_{[this] {
-            return AccountAsset(accountAssetResponse_.account_asset());
+          accountAssets_{[this] {
+            return std::vector<proto::AccountAsset>(
+                accountAssetResponse_.account_assets().begin(),
+                accountAssetResponse_.account_assets().end());
           }} {}
 
     template AccountAssetResponse::AccountAssetResponse(
@@ -30,8 +32,9 @@ namespace shared_model {
     AccountAssetResponse::AccountAssetResponse(AccountAssetResponse &&o)
         : AccountAssetResponse(std::move(o.proto_)) {}
 
-    const interface::AccountAsset &AccountAssetResponse::accountAsset() const {
-      return *accountAsset_;
+    const interface::types::AccountAssetCollectionType
+    AccountAssetResponse::accountAssets() const {
+      return *accountAssets_;
     }
 
   }  // namespace proto

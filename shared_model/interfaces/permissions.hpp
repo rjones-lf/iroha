@@ -69,6 +69,8 @@ namespace shared_model {
 
         COUNT
       };
+
+      Role permissionFor(Grantable);
     }  // namespace permissions
 
     template <typename Perm>

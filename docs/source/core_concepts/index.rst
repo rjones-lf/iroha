@@ -8,10 +8,12 @@ We will look through the basics of Iroha in this section.
 .. WARNING:: Docs are constantly updated and this section is going to be improved.
     Check glossary page while contents are elaborated.
 
-Glossary
---------
+
+Sections
+========
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     glossary.rst
+    er_model.rst

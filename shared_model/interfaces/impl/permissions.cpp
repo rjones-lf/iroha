@@ -7,6 +7,29 @@
 
 using namespace shared_model::interface;
 
+namespace shared_model {
+  namespace interface {
+    namespace permissions {
+
+      Role permissionFor(Grantable g) {
+        switch (g) {
+          case Grantable::kAddMySignatory:
+            return Role::kAddMySignatory;
+          case Grantable::kRemoveMySignatory:
+            return Role::kRemoveMySignatory;
+          case Grantable::kSetMyQuorum:
+            return Role::kSetMyQuorum;
+          case Grantable::kSetMyAccountDetail:
+            return Role::kSetMyAccountDetail;
+          case Grantable::kTransferMyAssets:
+            return Role::kTransferMyAssets;
+        }
+        return Role::COUNT;
+      }
+    }  // namespace permissions
+  }    // namespace interface
+}  // namespace shared_model
+
 template <typename Perm>
 PermissionSet<Perm>::PermissionSet(std::initializer_list<Perm> list) {
   append(list);

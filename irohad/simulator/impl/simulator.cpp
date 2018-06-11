@@ -108,7 +108,7 @@ namespace iroha {
           });
       auto block = std::make_shared<shared_model::proto::Block>(
           shared_model::proto::UnsignedBlockBuilder()
-              .height(proposal.height())
+              .height(block_queries_->getTopBlockHeight() + 1)
               .prevHash(last_block.value()->hash())
               .transactions(proto_txs)
               .createdTime(proposal.createdTime())

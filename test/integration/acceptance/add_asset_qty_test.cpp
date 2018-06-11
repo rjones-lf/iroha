@@ -196,7 +196,7 @@ TEST_F(AddAssetQuantity, OtherDomain) {
           TestUnsignedTransactionBuilder()
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
-              .createdTime(iroha::time::now())
+              .createdTime(getUniqueTime())
               .createRole(kNewRole,
                           std::vector<std::string>{
                               shared_model::permissions::can_get_my_txs})

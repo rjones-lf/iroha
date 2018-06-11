@@ -9,4 +9,5 @@ add_executable(benchmark_example
     )
 target_link_libraries(benchmark_example
     benchmark
+    shared_model_stateless_validation
     )

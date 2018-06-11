@@ -128,6 +128,15 @@ namespace iroha {
       getAsset(const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
       /**
+       * Get account assets
+       * @param account_id
+       * @return
+       */
+      virtual boost::optional<std::vector<
+          std::shared_ptr<shared_model::interface::AccountAsset>>>
+      getAccountAssets(
+          const shared_model::interface::types::AccountIdType &account_id) = 0;
+      /**
        *
        * @param account_id
        * @param asset_id
@@ -138,7 +147,6 @@ namespace iroha {
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) = 0;
-
       /**
        *
        * @return

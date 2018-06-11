@@ -10,14 +10,15 @@ namespace shared_model {
   namespace interface {
 
     std::string AccountAssetResponse::toString() const {
-      return detail::PrettyStringBuilder()
-          .init("AccountAssetResponse")
-          .append(accountAsset().toString())
-          .finalize();
+      auto response =
+          detail::PrettyStringBuilder().init("AccountAssetResponse");
+      for (const auto &asset : accountAssets())
+        response.append(asset.toString());
+      return response.finalize();
     }
 
     bool AccountAssetResponse::operator==(const ModelType &rhs) const {
-      return accountAsset() == rhs.accountAsset();
+      return accountAssets() == rhs.accountAssets();
     }
 
   }  // namespace interface

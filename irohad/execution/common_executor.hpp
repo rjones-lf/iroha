@@ -21,6 +21,7 @@
 #include <set>
 
 #include "ametsuchi/wsv_query.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace iroha {
 
@@ -34,7 +35,7 @@ namespace iroha {
   bool checkAccountRolePermission(
       const shared_model::interface::types::AccountIdType &account_id,
       iroha::ametsuchi::WsvQuery &queries,
-      const std::string &permission_id);
+      shared_model::interface::permissions::Role permission_id);
 
   /**
    * Accumulate all account's role permissions
@@ -42,18 +43,11 @@ namespace iroha {
    * @param queries - WSVqueries
    * @return set of account's role permissions
    */
-  boost::optional<std::set<std::string>> getAccountPermissions(
+  boost::optional<shared_model::interface::RolePermissionSet>
+  getAccountPermissions(
       const shared_model::interface::types::AccountIdType &account_id,
       iroha::ametsuchi::WsvQuery &queries);
 
-  /**
-   * Check if account has specific permission
-   * @param perms - a set of account's permissions
-   * @param permission_id - specific permission to check
-   * @return true if the set contains permission
-   */
-  bool accountHasPermission(const std::set<std::string> &perms,
-                            const std::string &permission_id);
 }  // namespace iroha
 
 #endif  // IROHA_COMMON_EXECUTOR_HPP

@@ -44,7 +44,7 @@ class TransferAsset : public AcceptanceFixture {
     const std::string kUserId = user + "@test";
     return proto::TransactionBuilder()
         .creatorAccountId(kUserId)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .addAssetQuantity(kUserId, kAsset, amount)
         .quorum(1)
         .build()
@@ -59,7 +59,7 @@ class TransferAsset : public AcceptanceFixture {
   auto baseTx() {
     return TestUnsignedTransactionBuilder()
         .creatorAccountId(kUser1 + "@test")
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .quorum(1);
   }
 
@@ -97,15 +97,21 @@ class TransferAsset : public AcceptanceFixture {
  * @then there is the tx in proposal
  */
 TEST_F(TransferAsset, Basic) {
-  IntegrationTestFramework(4)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .skipProposal()
+      .skipBlock()
       .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
+      .skipProposal()
+      .skipBlock()
       .sendTx(addAssets(kUser1, kUser1Keypair))
+      .skipProposal()
+      .skipBlock()
       .sendTx(completeTx(
           baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)))
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 4); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
 
@@ -230,10 +236,14 @@ TEST_F(TransferAsset, NonexistentAsset) {
  *       (aka skipProposal throws)
  */
 TEST_F(TransferAsset, NegativeAmount) {
-  IntegrationTestFramework(3)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .skipProposal()
+      .skipBlock()
       .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
+      .skipProposal()
+      .skipBlock()
       .sendTx(addAssets(kUser1, kUser1Keypair))
       .skipProposal()
       .skipBlock()
@@ -403,14 +413,16 @@ TEST_F(TransferAsset, InterDomain) {
   const auto kNewRole = "newrl";
   const auto kNewDomain = "newdom";
   const auto kUser2Id = kUser2 + "@" + kNewDomain;
-  IntegrationTestFramework(4)
+  IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .skipProposal()
+      .skipBlock()
       .sendTx(
           shared_model::proto::TransactionBuilder()
               .creatorAccountId(
                   integration_framework::IntegrationTestFramework::kAdminId)
-              .createdTime(iroha::time::now())
+              .createdTime(getUniqueTime())
               .createRole(kNewRole,
                           std::vector<std::string>{
                               shared_model::permissions::can_receive})
@@ -425,10 +437,14 @@ TEST_F(TransferAsset, InterDomain) {
               .build()
               .signAndAddSignature(kAdminKeypair)
               .finish())
+      .skipProposal()
+      .skipBlock()
       .sendTx(addAssets(kUser1, kUser1Keypair, kAmount))
+      .skipProposal()
+      .skipBlock()
       .sendTx(completeTx(
           baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)))
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 4); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }

@@ -29,7 +29,6 @@ namespace iroha {
      */
     struct GetAccountAssets : Query {
       std::string account_id{};
-      std::string asset_id{};
     };
   }  // namespace model
 }  // namespace iroha

@@ -88,8 +88,7 @@ namespace iroha {
    */
   template <typename TVariant, typename... TVisitors>
   constexpr decltype(auto) visit_in_place(TVariant &&variant, TVisitors &&... visitors) {
-    auto visitor = make_visitor(visitors...);
-    return boost::apply_visitor(visitor, std::forward<TVariant>(variant));
+    return boost::apply_visitor(make_visitor(visitors...), std::forward<TVariant>(variant));
   }
 }  // namespace iroha
 

@@ -18,10 +18,9 @@
 #ifndef IROHA_PROTO_GET_ROLES_H
 #define IROHA_PROTO_GET_ROLES_H
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/get_roles.hpp"
-
 #include "queries.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -30,12 +29,11 @@ namespace shared_model {
                                                 GetRoles> {
      public:
       template <typename QueryType>
-      explicit GetRoles(QueryType &&query)
-          : CopyableProto(std::forward<QueryType>(query)) {}
+      explicit GetRoles(QueryType &&query);
 
-      GetRoles(const GetRoles &o) : GetRoles(o.proto_) {}
+      GetRoles(const GetRoles &o);
 
-      GetRoles(GetRoles &&o) noexcept : GetRoles(std::move(o.proto_)) {}
+      GetRoles(GetRoles &&o) noexcept;
     };
 
   }  // namespace proto

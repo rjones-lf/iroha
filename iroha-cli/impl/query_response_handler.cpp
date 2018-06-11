@@ -143,13 +143,15 @@ namespace iroha_cli {
 
   void QueryResponseHandler::handleAccountAssetsResponse(
       const iroha::protocol::QueryResponse &response) {
-    auto acc_assets = response.account_assets_response().account_asset();
+    auto acc_assets = response.account_assets_response().account_assets();
     log_->info("[Account Assets]");
-    log_->info(prefix.at(kAccountId), acc_assets.account_id());
-    log_->info(prefix.at(kAssetId), acc_assets.asset_id());
-    auto balance =
-        iroha::model::converters::deserializeAmount(acc_assets.balance());
-    log_->info(prefix.at(kAmount), balance.to_string());
+    for (auto &acc_asset: acc_assets) {
+      log_->info(prefix.at(kAccountId), acc_asset.account_id());
+      log_->info(prefix.at(kAssetId), acc_asset.asset_id());
+      auto balance =
+          iroha::model::converters::deserializeAmount(acc_asset.balance());
+      log_->info(prefix.at(kAmount), balance.to_string());
+    }
   }
 
   void QueryResponseHandler::handleSignatoriesResponse(
