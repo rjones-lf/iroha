@@ -8,6 +8,7 @@
 
 namespace shared_model {
   namespace interface {
+
     std::string RolesResponse::toString() const {
       return detail::PrettyStringBuilder()
           .init("RolesResponse")
@@ -18,5 +19,6 @@ namespace shared_model {
     bool RolesResponse::operator==(const ModelType &rhs) const {
       return roles() == rhs.roles();
     }
+
   }  // namespace interface
 }  // namespace shared_model

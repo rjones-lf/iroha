@@ -41,7 +41,8 @@ namespace shared_model {
     ErrorQueryResponse::ErrorQueryResponse(ErrorQueryResponse &&o) noexcept
         : ErrorQueryResponse(std::move(o.proto_)) {}
 
-    const ErrorQueryResponse::QueryErrorResponseVariantType &ErrorQueryResponse::get() const {
+    const ErrorQueryResponse::QueryErrorResponseVariantType &
+    ErrorQueryResponse::get() const {
       return *ivariant_;
     }
 

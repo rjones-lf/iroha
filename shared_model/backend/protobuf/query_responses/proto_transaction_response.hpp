@@ -39,7 +39,8 @@ namespace shared_model {
 
       TransactionsResponse(TransactionsResponse &&o);
 
-      interface::types::TransactionsCollectionType transactions() const override;
+      interface::types::TransactionsCollectionType transactions()
+          const override;
 
      private:
       template <typename T>

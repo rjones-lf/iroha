@@ -4,7 +4,6 @@
  */
 
 #include "interfaces/query_responses/account_asset_response.hpp"
-#include "utils/visitor_apply_for_all.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

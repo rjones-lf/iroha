@@ -23,8 +23,7 @@ namespace shared_model {
           }},
           account_{[this] { return Account(accountResponse_.account()); }} {}
 
-    template AccountResponse::AccountResponse(
-        AccountResponse::TransportType &);
+    template AccountResponse::AccountResponse(AccountResponse::TransportType &);
     template AccountResponse::AccountResponse(
         const AccountResponse::TransportType &);
     template AccountResponse::AccountResponse(
