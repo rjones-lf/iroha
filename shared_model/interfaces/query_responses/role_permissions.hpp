@@ -21,7 +21,6 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -42,14 +41,7 @@ namespace shared_model {
        */
       std::string toString() const override = 0;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right hand-side of RolePermissionsResponse
-       * @return true if they have same values.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return rolePermissions() == rhs.rolePermissions();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

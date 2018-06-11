@@ -33,32 +33,22 @@ namespace shared_model {
                                TransactionsResponse> {
      public:
       template <typename QueryResponseType>
-      explicit TransactionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit TransactionsResponse(QueryResponseType &&queryResponse);
 
-      TransactionsResponse(const TransactionsResponse &o)
-          : TransactionsResponse(o.proto_) {}
+      TransactionsResponse(const TransactionsResponse &o);
 
-      TransactionsResponse(TransactionsResponse &&o)
-          : TransactionsResponse(std::move(o.proto_)) {}
+      TransactionsResponse(TransactionsResponse &&o);
 
       interface::types::TransactionsCollectionType transactions()
-          const override {
-        return *transactions_;
-      }
+          const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::TransactionsResponse &transactionResponse_{
-          proto_->transactions_response()};
+      const iroha::protocol::TransactionsResponse &transactionResponse_;
 
-      const Lazy<std::vector<proto::Transaction>> transactions_{[this] {
-        return std::vector<proto::Transaction>(
-            transactionResponse_.transactions().begin(),
-            transactionResponse_.transactions().end());
-      }};
+      const Lazy<std::vector<proto::Transaction>> transactions_;
     };
   }  // namespace proto
 }  // namespace shared_model

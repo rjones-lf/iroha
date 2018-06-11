@@ -10,7 +10,7 @@ We will look through the basics of Iroha in this section.
 
 
 Sections
-========
+--------
 
 .. toctree::
     :maxdepth: 1

@@ -19,8 +19,6 @@
 #define IROHA_SHARED_MODEL_PROTO_ROLE_PERMISSIONS_RESPONSE_HPP
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
-#include "backend/protobuf/from_old.hpp"
-#include "backend/protobuf/permissions.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -33,43 +31,23 @@ namespace shared_model {
                                RolePermissionsResponse> {
      public:
       template <typename QueryResponseType>
-      explicit RolePermissionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit RolePermissionsResponse(QueryResponseType &&queryResponse);
 
-      RolePermissionsResponse(const RolePermissionsResponse &o)
-          : RolePermissionsResponse(o.proto_) {}
+      RolePermissionsResponse(const RolePermissionsResponse &o);
 
-      RolePermissionsResponse(RolePermissionsResponse &&o)
-          : RolePermissionsResponse(std::move(o.proto_)) {}
+      RolePermissionsResponse(RolePermissionsResponse &&o);
 
-      const interface::RolePermissionSet &rolePermissions() const override {
-        return *rolePermissions_;
-      }
+      const interface::RolePermissionSet &rolePermissions() const override;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("RolePermissionsResponse")
-            .appendAll(permissions::toString(rolePermissions()),
-                       [](auto p) { return p; })
-            .finalize();
-      }
+      std::string toString() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_{
-          proto_->role_permissions_response()};
+      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_;
 
-      const Lazy<interface::RolePermissionSet> rolePermissions_{[this] {
-        return boost::accumulate(
-            rolePermissionsResponse_.permissions(),
-            interface::RolePermissionSet{},
-            [](auto &&permissions, const auto &permission) {
-              permissions.set(interface::permissions::fromOldR(permission));
-              return std::forward<decltype(permissions)>(permissions);
-            });
-      }};
+      const Lazy<interface::RolePermissionSet> rolePermissions_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -29,12 +29,9 @@
 #include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
-#include "common/byteutils.hpp"
-#include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/variant_deserializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -59,21 +56,15 @@ namespace shared_model {
       using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;
 
       template <typename QueryResponseType>
-      explicit QueryResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit QueryResponse(QueryResponseType &&queryResponse);
 
-      QueryResponse(const QueryResponse &o) : QueryResponse(o.proto_) {}
+      QueryResponse(const QueryResponse &o);
 
-      QueryResponse(QueryResponse &&o) noexcept
-          : QueryResponse(std::move(o.proto_)) {}
+      QueryResponse(QueryResponse &&o) noexcept;
 
-      const QueryResponseVariantType &get() const override {
-        return *ivariant_;
-      }
+      const QueryResponseVariantType &get() const override;
 
-      const interface::types::HashType &queryHash() const override {
-        return *hash_;
-      }
+      const interface::types::HashType &queryHash() const override;
 
      private:
       template <typename T>
@@ -81,23 +72,11 @@ namespace shared_model {
 
       using LazyVariantType = Lazy<ProtoQueryResponseVariantType>;
 
-      const LazyVariantType variant_{[this] {
-        auto &&ar = *proto_;
-        int which =
-            ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
-        return shared_model::detail::variant_impl<ProtoQueryResponseListType>::
-            template load<ProtoQueryResponseVariantType>(
-                std::forward<decltype(ar)>(ar), which);
-      }};
+      const LazyVariantType variant_;
 
-      const Lazy<QueryResponseVariantType> ivariant_{
-          detail::makeLazyInitializer(
-              [this] { return QueryResponseVariantType(*variant_); })};
+      const Lazy<QueryResponseVariantType> ivariant_;
 
-      const Lazy<interface::types::HashType> hash_{[this] {
-        return interface::types::HashType(
-            iroha::hexstringToBytestring(proto_->query_hash()).get());
-      }};
+      const Lazy<interface::types::HashType> hash_;
     };
   }  // namespace proto
 }  // namespace shared_model
