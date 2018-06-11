@@ -46,8 +46,8 @@ std::unique_ptr<shared_model::interface::Command> buildCommand(
 template <class T>
 std::shared_ptr<T> getConcreteCommand(
     const std::unique_ptr<shared_model::interface::Command> &command) {
-  return clone(boost::apply_visitor(
-      framework::SpecifiedVisitor<T>(), command->get()));
+  return clone(
+      boost::apply_visitor(framework::SpecifiedVisitor<T>(), command->get()));
 }
 
 class CommandValidateExecuteTest : public ::testing::Test {
@@ -1354,8 +1354,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
       .WillOnce(Return(boost::none));
 
-  EXPECT_CALL(*wsv_query,
-              getAccountAsset(transfer_asset->srcAccountId(), _))
+  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->srcAccountId(), _))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
@@ -2132,7 +2131,7 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     set_aacount_detail =
         getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
-    role_permissions = {toString(Role::kSetQuorum)};
+    role_permissions = {toString(Role::kSetDetail)};
   }
 
   const std::string kKey = "key";
@@ -2162,13 +2161,15 @@ TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
  * @when creator is setting details to their account
  * @then execute fails
  */
-TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
+TEST_F(SetAccountDetailTest, InvalidWhenOtherCreator) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
       TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
   set_aacount_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(std::vector<std::string>{}));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   kAdminId, set_aacount_detail->accountId(), kNeededPermission))
@@ -2181,13 +2182,41 @@ TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
  * @when creator is setting details to their account
  * @then successfully execute the command
  */
-TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
+TEST_F(SetAccountDetailTest, ValidWhenHasRolePermission) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
       TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
   set_aacount_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command,
+              setAccountKV(set_aacount_detail->accountId(),
+                           creator->accountId(),
+                           set_aacount_detail->key(),
+                           set_aacount_detail->value()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_TRUE(val(validateAndExecute(command)));
+}
+
+/**
+ * @given SetAccountDetail
+ * @when creator is setting details to their account
+ * @then successfully execute the command
+ */
+TEST_F(SetAccountDetailTest, ValidWhenHasGrantblePermission) {
+  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
+  command = buildCommand(
+      TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
+  set_aacount_detail =
+      getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(std::vector<std::string>{}));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
                   kAdminId, set_aacount_detail->accountId(), kNeededPermission))
