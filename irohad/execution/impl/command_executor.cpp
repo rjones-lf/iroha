@@ -629,7 +629,10 @@ namespace iroha {
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. Creator set details for his account
-        creator_account_id == command.accountId() or
+        creator_account_id == command.accountId()
+        or checkAccountRolePermission(
+               creator_account_id, queries, Role::kSetDetail)
+        or
         // Case 2. Creator has grantable permission to set account key/value
         queries.hasAccountGrantablePermission(
             creator_account_id,
