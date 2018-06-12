@@ -20,7 +20,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -39,25 +38,9 @@ namespace shared_model {
        */
       virtual const PermissionNameCollectionType &rolePermissions() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("RolePermissionsResponse")
-            .appendAll(rolePermissions(), [](auto perm) { return perm; })
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right hand-side of RolePermissionsResponse
-       * @return true if they have same values.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return rolePermissions() == rhs.rolePermissions();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -22,6 +22,7 @@
 #include <boost/range/irange.hpp>
 #include "cryptography/hash.hpp"
 #include "framework/specified_visitor.hpp"
+#include "common/byteutils.hpp"
 
 /**
  * @given protobuf's QueryResponse with different responses and some hash

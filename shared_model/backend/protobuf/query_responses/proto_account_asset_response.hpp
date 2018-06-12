@@ -36,32 +36,21 @@ namespace shared_model {
                                AccountAssetResponse> {
      public:
       template <typename QueryResponseType>
-      explicit AccountAssetResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit AccountAssetResponse(QueryResponseType &&queryResponse);
 
-      AccountAssetResponse(const AccountAssetResponse &o)
-          : AccountAssetResponse(o.proto_) {}
+      AccountAssetResponse(const AccountAssetResponse &o);
 
-      AccountAssetResponse(AccountAssetResponse &&o)
-          : AccountAssetResponse(std::move(o.proto_)) {}
+      AccountAssetResponse(AccountAssetResponse &&o);
 
-      const interface::types::AccountAssetCollectionType accountAssets() const override {
-        return *accountAssets_;
-      }
+      const interface::types::AccountAssetCollectionType accountAssets() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AccountAssetResponse &accountAssetResponse_{
-          proto_->account_assets_response()};
+      const iroha::protocol::AccountAssetResponse &accountAssetResponse_;
 
-      const Lazy<std::vector<AccountAsset>> accountAssets_{
-        [this] {
-          return std::vector<proto::AccountAsset>(
-              accountAssetResponse_.account_assets().begin(),
-              accountAssetResponse_.account_assets().end());
-      }};
+      const Lazy<std::vector<AccountAsset>> accountAssets_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -20,7 +20,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -34,23 +33,9 @@ namespace shared_model {
        */
       virtual const types::PublicKeyCollectionType &keys() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("SignatoriesResponse")
-            .appendAll(keys(), [](auto &key) { return key.toString(); })
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * @return true if the data are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return keys() == rhs.keys();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model
