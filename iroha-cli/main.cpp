@@ -129,17 +129,18 @@ int main(int argc, char *argv[]) {
   else if (FLAGS_new_account) {
     if (FLAGS_account_name.empty()) {
       logger->error("No account name specified");
-    } else {
-      auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
-      if (not(FLAGS_pass_phrase.size() == 0
-                  ? keysManager.createKeys()
-                  : keysManager.createKeys(FLAGS_pass_phrase))) {
-        logger->error("Keys already exist");
-      } else {
-        logger->info(
-            "Public and private key has been generated in current directory");
-      }
+      return EXIT_FAILURE;
     }
+    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
+    if (not(FLAGS_pass_phrase.size() == 0
+                ? keysManager.createKeys()
+                : keysManager.createKeys(FLAGS_pass_phrase))) {
+      logger->error("Keys already exist");
+      return EXIT_FAILURE;
+    }
+    logger->info(
+        "Public and private key has been generated in current directory");
+
   }
   // Send to Iroha Peer json transaction/query
   else if (not FLAGS_json_transaction.empty() or not FLAGS_json_query.empty()) {
@@ -156,10 +157,12 @@ int main(int argc, char *argv[]) {
       auto doc = iroha::model::converters::stringToJson(str);
       if (not doc) {
         logger->error("Json has wrong format.");
+        return EXIT_FAILURE;
       }
       auto tx_opt = serializer.deserialize(doc.value());
       if (not tx_opt) {
         logger->error("Json transaction has wrong format.");
+        return EXIT_FAILURE;
       } else {
         auto tx = shared_model::proto::Transaction(
             iroha::model::converters::PbTransactionFactory().serialize(
@@ -176,6 +179,7 @@ int main(int argc, char *argv[]) {
       auto query_opt = serializer.deserialize(std::move(str));
       if (not query_opt) {
         logger->error("Json has wrong format.");
+        return EXIT_FAILURE;
       } else {
         auto query = shared_model::proto::Query(
             *iroha::model::converters::PbQueryFactory().serialize(*query_opt));
