@@ -127,14 +127,18 @@ int main(int argc, char *argv[]) {
   }
   // Create new pub/priv key, register in Iroha Network
   else if (FLAGS_new_account) {
-    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
-    if (not(FLAGS_pass_phrase.size() == 0
-                ? keysManager.createKeys()
-                : keysManager.createKeys(FLAGS_pass_phrase))) {
-      logger->error("Keys already exist");
+    if (FLAGS_account_name.empty()) {
+      logger->error("No account name specified");
     } else {
-      logger->info(
-          "Public and private key has been generated in current directory");
+      auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
+      if (not(FLAGS_pass_phrase.size() == 0
+                  ? keysManager.createKeys()
+                  : keysManager.createKeys(FLAGS_pass_phrase))) {
+        logger->error("Keys already exist");
+      } else {
+        logger->info(
+            "Public and private key has been generated in current directory");
+      }
     }
   }
   // Send to Iroha Peer json transaction/query
