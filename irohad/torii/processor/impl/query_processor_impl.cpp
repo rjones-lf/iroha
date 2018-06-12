@@ -90,34 +90,35 @@ namespace iroha {
           std::make_shared<shared_model::proto::QueryResponse>(
               qry_resp->getTransport()));
     }
-    void QueryProcessorImpl::blocksQueryHandle(
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+    QueryProcessorImpl::blocksQueryHandle(
         std::shared_ptr<shared_model::interface::BlocksQuery> qry) {
       if (not checkSignatories(*qry)) {
         auto response = buildBlocksQueryError("wrong signatories");
-        blocksQuerySubject_.get_subscriber().on_next(response);
-        return;
+        return rxcpp::observable<>::just(
+            std::shared_ptr<shared_model::interface::BlockQueryResponse>(
+                response));
       }
       const auto &wsv_query = storage_->getWsvQuery();
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       if (not qpf.validate(*qry)) {
         auto response = buildBlocksQueryError("stateful invalid");
         blocksQuerySubject_.get_subscriber().on_next(response);
-        return;
+        return rxcpp::observable<>::just(
+            std::shared_ptr<shared_model::interface::BlockQueryResponse>(
+                response));
       }
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
             auto response = buildBlocksQueryBlock(*block);
             blocksQuerySubject_.get_subscriber().on_next(response);
           });
+      return blocksQuerySubject_.get_observable();
     }
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
       return subject_.get_observable();
-    }
-    rxcpp::observable<
-        std::shared_ptr<shared_model::interface::BlockQueryResponse>>
-    QueryProcessorImpl::blocksQueryNotifier() {
-      return blocksQuerySubject_.get_observable();
     }
 
   }  // namespace torii

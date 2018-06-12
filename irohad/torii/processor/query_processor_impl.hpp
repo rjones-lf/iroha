@@ -51,7 +51,9 @@ namespace iroha {
        * Register client block query
        * @param query - client intent
        */
-      void blocksQueryHandle(
+      rxcpp::observable<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryHandle(
           std::shared_ptr<shared_model::interface::BlocksQuery> qry) override;
 
       /**
@@ -60,13 +62,6 @@ namespace iroha {
        */
       rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
       queryNotifier() override;
-      /**
-       * Subscribe for query responses
-       * @return observable with blocks query responses
-       */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
-      blocksQueryNotifier() override;
 
      private:
       rxcpp::subjects::subject<

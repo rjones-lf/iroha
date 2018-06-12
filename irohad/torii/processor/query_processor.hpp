@@ -20,10 +20,10 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "interfaces/queries/query.hpp"
 #include "interfaces/queries/blocks_query.hpp"
-#include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
+#include "interfaces/query_responses/query_response.hpp"
 
 namespace iroha {
   namespace torii {
@@ -43,7 +43,9 @@ namespace iroha {
        * Register client blocks query
        * @param query - client intent
        */
-      virtual void blocksQueryHandle(
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryHandle(
           std::shared_ptr<shared_model::interface::BlocksQuery> qry) = 0;
       /**
        * Subscribe for query responses
@@ -52,13 +54,6 @@ namespace iroha {
       virtual rxcpp::observable<
           std::shared_ptr<shared_model::interface::QueryResponse>>
       queryNotifier() = 0;
-      /**
-       * Subscribe for query responses
-       * @return observable with blocks query responses
-       */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
-      blocksQueryNotifier() = 0;
 
       virtual ~QueryProcessor(){};
     };

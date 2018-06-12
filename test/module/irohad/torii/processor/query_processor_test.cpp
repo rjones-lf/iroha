@@ -200,7 +200,10 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
   EXPECT_CALL(*wsv_queries, getSignatories(account_id))
       .WillRepeatedly(Return(signatories));
 
-  auto wrapper = make_test_subscriber<CallExact>(qpi.blocksQueryNotifier(), blockNumber);
+  auto wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          blockQuery.getTransport())),
+      blockNumber);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
       boost::apply_visitor(
@@ -208,8 +211,6 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
           response->get());
     });
   });
-  qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-      blockQuery.getTransport()));
   for (int i = 0; i < blockNumber; i++) {
     notifier.get_subscriber().on_next(
         clone(TestBlockBuilder()
@@ -254,7 +255,10 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   EXPECT_CALL(*wsv_queries, getSignatories(account_id))
       .WillRepeatedly(Return(signatories));
 
-  auto wrapper = make_test_subscriber<CallExact>(qpi.blocksQueryNotifier(), 1);
+  auto wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          blockQuery.getTransport())),
+      1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
       boost::apply_visitor(framework::SpecifiedVisitor<
@@ -262,8 +266,6 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
                            response->get());
     });
   });
-  qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-      blockQuery.getTransport()));
   for (int i = 0; i < blockNumber; i++) {
     notifier.get_subscriber().on_next(
         clone(TestBlockBuilder()
