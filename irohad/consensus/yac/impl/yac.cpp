@@ -144,27 +144,21 @@ namespace iroha {
         answer | [&](const auto &answer) {
           auto &proposal_hash = state.at(0).hash.proposal_hash;
 
-          // conditionally mark hash as sent depending on received message
-          // if our state is commited/rejected, but we received an opposite
-          // state, send out a new state to all peers
+          /*
+           * It is possible that a new peer with an outdated peers list may
+           * collect an outcome from a smaller number of peers which are
+           * included in set of `f` peers in the system. The new peer will not
+           * accept our message with valid supermajority because he cannot apply
+           * votes from unknown peers.
+           */
           if (state.size() > 1) {
-            Answer received([&]() -> Answer {
-              if (std::all_of(
-                      state.begin(), state.end(), [&](const auto &vote) {
-                        return vote.hash.block_hash
-                            == state.at(0).hash.block_hash;
-                      })) {
-                return CommitMessage(state);
-              } else {
-                return RejectMessage(state);
-              }
-            }());
-
             // some peer has already collected commit/reject, so it is sent
-            if (received.which() == answer.which()
-                and vote_storage_.getProcessingState(proposal_hash)
-                    == ProposalState::kNotSentNotProcessed) {
+            if (vote_storage_.getProcessingState(proposal_hash)
+                == ProposalState::kNotSentNotProcessed) {
               vote_storage_.nextProcessingState(proposal_hash);
+              log_->info(
+                  "Received supermajority of votes for {}, skip propagation",
+                  proposal_hash);
             }
           }
 
@@ -176,12 +170,12 @@ namespace iroha {
           switch (processing_state) {
             case ProposalState::kNotSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_hash);
-              log_->info("Propagate state {} to whole network",
-                         state.at(0).hash.proposal_hash);
+              log_->info("Propagate state {} to whole network", proposal_hash);
               this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_hash);
+              log_->info("Pass outcome for {} to pipeline", proposal_hash);
               this->closeRound();
               notifier_.get_subscriber().on_next(answer);
               break;
@@ -189,7 +183,7 @@ namespace iroha {
               if (state.size() == 1) {
                 this->findPeer(state.at(0)) | [&](const auto &from) {
                   log_->info("Propagate state {} directly to {}",
-                             state.at(0).hash.proposal_hash,
+                             proposal_hash,
                              from->address());
                   this->propagateStateDirectly(*from,
                                                visit_in_place(answer, votes));

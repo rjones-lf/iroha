@@ -167,20 +167,21 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyVote) {
  * @given initialized YAC
  * @when receive 2 * f votes for one hash
  * AND receive reject message which triggers commit
- * @then commit is sent to the network before notifying subscribers
+ * @then commit is NOT propagated in the network
+ * AND it is passed to pipeline
  */
 TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
   std::vector<std::vector<VoteMessage>> messages;
   EXPECT_CALL(*network, sendState(_, _))
-      .Times(default_peers.size())
+      .Times(0)
       .WillRepeatedly(Invoke(
           [&](const auto &, const auto &msg) { messages.push_back(msg); }));
 
   yac->onOutcome().subscribe([&](auto msg) {
     // verify that commits are already sent to the network
-    ASSERT_EQ(default_peers.size(), messages.size());
+    ASSERT_EQ(0, messages.size());
     messages.push_back(boost::get<CommitMessage>(msg).votes);
   });
 
@@ -202,5 +203,5 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
   yac->onState(commit);
 
   // verify that on_commit subscribers are notified
-  ASSERT_EQ(default_peers.size() + 1, messages.size());
+  ASSERT_EQ(1, messages.size());
 }
