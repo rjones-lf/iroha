@@ -65,7 +65,7 @@ namespace iroha {
          * Try to insert vote to storage
          * @param vote - object for insertion
          * @return result, that contains actual state of storage.
-         * Nullopt if not inserted, possible reasons - duplication,
+         * boost::none if not inserted, possible reasons - duplication,
          * wrong proposal hash.
          */
         boost::optional<Answer> insert(VoteMessage vote);

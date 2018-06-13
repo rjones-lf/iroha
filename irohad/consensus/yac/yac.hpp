@@ -83,7 +83,7 @@ namespace iroha {
         /**
          * Find corresponding peer in the ledger from vote message
          * @param vote message containing peer information
-         * @return peer if it is present in the ledger, nullopt otherwise
+         * @return peer if it is present in the ledger, boost::none otherwise
          */
         boost::optional<std::shared_ptr<shared_model::interface::Peer>>
         findPeer(const VoteMessage &vote);
