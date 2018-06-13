@@ -32,6 +32,27 @@ namespace iroha {
     namespace yac {
       class YacProposalStorage;
 
+      /**
+       * Proposal outcome states for multicast propagation strategy
+       *
+       * kNotSentNotProcessed - outcome was not propagated in the network
+       * AND it was not passed to pipeline. Initial state after receiving an
+       * outcome from storage. Outcome with votes is propagated to the network
+       * in this state.
+       *
+       * kSentNotProcessed - outcome was propagated in the network
+       * AND it was not passed to pipeline. State can be set in two cases:
+       * 1. Outcome is received from the network. Some node has already achieved
+       * an outcome and has propagated it to the network, so the first state is
+       * skipped.
+       * 2. Outcome was propagated to the network
+       * Outcome is passed to pipeline in this state.
+       *
+       * kSentProcessed - outcome was propagated in the network
+       * AND it was passed to pipeline. Set after passing proposal to pipeline.
+       * This state is final. Receiving a network message in this state results
+       * in direct propagation of outcome to message sender.
+       */
       enum class ProposalState {
         kNotSentNotProcessed,
         kSentNotProcessed,
@@ -70,7 +91,8 @@ namespace iroha {
          * Insert votes in storage
          * @param state - current message with votes
          * @param peers_in_round - number of peers participated in round
-         * @return structure with result of inserting. Nullopt if msg not valid.
+         * @return structure with result of inserting.
+         * boost::none if msg not valid.
          */
         boost::optional<Answer> store(std::vector<VoteMessage> state,
                                       uint64_t peers_in_round);
@@ -94,6 +116,7 @@ namespace iroha {
          * kNotSentNotProcessed -> kSentNotProcessed
          * kSentNotProcessed -> kSentProcessed
          * kSentProcessed -> kSentProcessed
+         * @see ProposalState description for transition cases
          * @param hash - target tag
          */
         void nextProcessingState(const ProposalHash &hash);
