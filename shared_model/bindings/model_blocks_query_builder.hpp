@@ -12,6 +12,10 @@
 namespace shared_model {
   namespace bindings {
 
+    /**
+     * Wrapper class for query builder. Designed only for SWIG bindings,
+     * don't use in other cases.
+     */
     class ModelBlocksQueryBuilder {
      private:
       template <int Sp>
@@ -26,15 +30,34 @@ namespace shared_model {
      public:
       ModelBlocksQueryBuilder();
 
+      /**
+       * Sets created time to the blocks query
+       * @param created_time time of creation of query
+       * @return builder with created time
+       */
       ModelBlocksQueryBuilder createdTime(
           interface::types::TimestampType created_time);
 
+      /**
+       * Sets creator account id
+       * @param creator_account_id
+       * @return builder with creator account id
+       */
       ModelBlocksQueryBuilder creatorAccountId(
           const interface::types::AccountIdType &creator_account_id);
 
+      /**
+       * Sets query counter
+       * @param query_counter counter for blocks query
+       * @return BlocksQuery with query counter
+       */
       ModelBlocksQueryBuilder queryCounter(
           interface::types::CounterType query_counter);
 
+      /**
+       * Builds BlocksQuery
+       * @return UnsignedWrapper of proto::BlocksQuery
+       */
       proto::UnsignedWrapper<proto::BlocksQuery> build();
     };
 
