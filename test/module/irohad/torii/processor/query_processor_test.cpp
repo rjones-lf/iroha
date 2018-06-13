@@ -188,10 +188,6 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
   std::vector<std::string> perms = {
       shared_model::permissions::can_get_my_account,
       shared_model::permissions::can_get_blocks};
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
-      notifier;
-  EXPECT_CALL(*storage, on_commit())
-      .WillOnce(Return(notifier.get_observable()));
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
@@ -212,7 +208,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
     });
   });
   for (int i = 0; i < blockNumber; i++) {
-    notifier.get_subscriber().on_next(
+    storage->notifier.get_subscriber().on_next(
         clone(TestBlockBuilder()
                   .height(1)
                   .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
@@ -245,8 +241,6 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   std::vector<std::string> roles = {role};
   std::vector<std::string> perms = {
       shared_model::permissions::can_get_my_account};
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
-      notifier;
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
@@ -267,7 +261,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
     });
   });
   for (int i = 0; i < blockNumber; i++) {
-    notifier.get_subscriber().on_next(
+    storage->notifier.get_subscriber().on_next(
         clone(TestBlockBuilder()
                   .height(1)
                   .prevHash(shared_model::crypto::Hash(std::string(32, '0')))

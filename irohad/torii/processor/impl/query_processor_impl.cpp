@@ -51,7 +51,13 @@ namespace iroha {
 
     QueryProcessorImpl::QueryProcessorImpl(
         std::shared_ptr<ametsuchi::Storage> storage)
-        : storage_(storage) {}
+        : storage_(storage) {
+      storage_->on_commit().subscribe(
+          [this](std::shared_ptr<shared_model::interface::Block> block) {
+            auto response = buildBlocksQueryBlock(*block);
+            blocksQuerySubject_.get_subscriber().on_next(response);
+          });
+    }
     template <class Q>
     bool QueryProcessorImpl::checkSignatories(const Q &qry) {
       const auto &wsv_query = storage_->getWsvQuery();
@@ -109,11 +115,6 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
                 response));
       }
-      storage_->on_commit().subscribe(
-          [this](std::shared_ptr<shared_model::interface::Block> block) {
-            auto response = buildBlocksQueryBlock(*block);
-            blocksQuerySubject_.get_subscriber().on_next(response);
-          });
       return blocksQuerySubject_.get_observable();
     }
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>

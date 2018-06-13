@@ -72,7 +72,6 @@ class ClientServerTest : public testing::Test {
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
         prop_notifier;
     rxcpp::subjects::subject<iroha::Commit> commit_notifier;
-
     EXPECT_CALL(*pcsMock, on_proposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
