@@ -162,6 +162,12 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given account, ametsuchi queries and query processing factory
+ * @when valid block query is send
+ * @then Query Processor should start emitting BlockQueryRespones to the observable
+ */
 TEST_F(QueryProcessorTest, GetBlocksQuery) {
   auto wsv_queries = std::make_shared<MockWsvQuery>();
   auto block_queries = std::make_shared<MockBlockQuery>();
@@ -216,6 +222,12 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
   }
   ASSERT_TRUE(wrapper.validate());
 }
+
+/**
+ * @given account, ametsuchi queries and query processing factory
+ * @when valid block query is invalid (no can_get_blocks permission)
+ * @then Query Processor should return an observable with blockError
+ */
 TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto wsv_queries = std::make_shared<MockWsvQuery>();
   auto block_queries = std::make_shared<MockBlockQuery>();

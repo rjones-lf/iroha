@@ -88,7 +88,6 @@ bool hasQueryPermission(const std::string &creator,
 }
 bool QueryProcessingFactory::validate(
     const shared_model::interface::BlocksQuery &query) {
-  // TODO: 03.02.2018 grimadas IR-851: check signatures
   return checkAccountRolePermission(
       query.creatorAccountId(), *_wsvQuery, can_get_blocks);
 }
