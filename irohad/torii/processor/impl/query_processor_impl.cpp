@@ -96,6 +96,7 @@ namespace iroha {
           std::make_shared<shared_model::proto::QueryResponse>(
               qry_resp->getTransport()));
     }
+
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::BlockQueryResponse>>
     QueryProcessorImpl::blocksQueryHandle(
@@ -117,6 +118,7 @@ namespace iroha {
       }
       return blocksQuerySubject_.get_observable();
     }
+  
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
       return subject_.get_observable();
