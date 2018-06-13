@@ -37,7 +37,7 @@ namespace iroha {
       }
 
       auto YacVoteStorage::findProposalStorage(const VoteMessage &msg,
-                                               uint64_t peers_in_round) {
+                                               PeersNumberType peers_in_round) {
         auto val = getProposalStorage(msg.hash.proposal_hash);
         if (val != proposal_storages_.end()) {
           return val;
@@ -52,7 +52,7 @@ namespace iroha {
       // --------| public api |--------
 
       boost::optional<Answer> YacVoteStorage::store(
-          std::vector<VoteMessage> state, uint64_t peers_in_round) {
+          std::vector<VoteMessage> state, PeersNumberType peers_in_round) {
         auto storage = findProposalStorage(state.at(0), peers_in_round);
         return storage->insert(state);
       }

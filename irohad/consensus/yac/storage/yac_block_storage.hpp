@@ -19,13 +19,14 @@
 #define IROHA_YAC_BLOCK_VOTE_STORAGE_HPP
 
 #include <memory>
-#include <boost/optional.hpp>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
+#include "consensus/yac/yac_types.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -46,7 +47,7 @@ namespace iroha {
        public:
         YacBlockStorage(
             YacHash hash,
-            uint64_t peers_in_round,
+            PeersNumberType peers_in_round,
             std::shared_ptr<SupermajorityChecker> supermajority_checker =
                 std::make_shared<SupermajorityCheckerImpl>());
 
@@ -120,7 +121,7 @@ namespace iroha {
         /**
          * Number of peers in current round
          */
-        uint64_t peers_in_round_;
+        PeersNumberType peers_in_round_;
 
         /**
          * Provide functions to check supermajority

@@ -53,7 +53,9 @@ namespace iroha {
        * @return hash, if collection elements have same hash, otherwise nullopt
        */
       boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_COMMON_HPP

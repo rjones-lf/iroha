@@ -18,14 +18,15 @@
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
-#include <boost/optional.hpp>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "consensus/yac/messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
+#include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -82,7 +83,7 @@ namespace iroha {
          * @return - iter for required proposal storage
          */
         auto findProposalStorage(const VoteMessage &msg,
-                                 uint64_t peers_in_round);
+                                 PeersNumberType peers_in_round);
 
        public:
         // --------| public api |--------
@@ -95,7 +96,7 @@ namespace iroha {
          * boost::none if msg not valid.
          */
         boost::optional<Answer> store(std::vector<VoteMessage> state,
-                                      uint64_t peers_in_round);
+                                      PeersNumberType peers_in_round);
 
         /**
          * Provide status about closing round with parameters hash
@@ -139,4 +140,5 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_VOTE_STORAGE_HPP

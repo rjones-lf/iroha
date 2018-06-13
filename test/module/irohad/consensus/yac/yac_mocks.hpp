@@ -218,7 +218,7 @@ namespace iroha {
                      &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
-        MOCK_CONST_METHOD2(checkSize, bool(uint64_t current, uint64_t all));
+        MOCK_CONST_METHOD2(checkSize, bool(PeersNumberType, PeersNumberType));
         MOCK_CONST_METHOD2(
             peersSubset,
             bool(const shared_model::interface::types::SignatureRangeType
@@ -226,7 +226,7 @@ namespace iroha {
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD3(
-            hasReject, bool(uint64_t frequent, uint64_t voted, uint64_t all));
+            hasReject, bool(PeersNumberType, PeersNumberType, PeersNumberType));
       };
 
       class YacTest : public ::testing::Test {
