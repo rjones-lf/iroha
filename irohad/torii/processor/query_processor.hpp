@@ -42,6 +42,7 @@ namespace iroha {
       /**
        * Register client blocks query
        * @param query - client intent
+       * @return observable with block query responses
        */
       virtual rxcpp::observable<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>

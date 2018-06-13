@@ -42,6 +42,7 @@ namespace iroha {
                        .errorResponse(message)
                        .build());
     }
+
     std::shared_ptr<shared_model::interface::BlockQueryResponse>
     buildBlocksQueryBlock(shared_model::interface::Block &block) {
       return clone(shared_model::proto::BlockQueryResponseBuilder()
@@ -102,7 +103,7 @@ namespace iroha {
     QueryProcessorImpl::blocksQueryHandle(
         std::shared_ptr<shared_model::interface::BlocksQuery> qry) {
       if (not checkSignatories(*qry)) {
-        auto response = buildBlocksQueryError("wrong signatories");
+        auto response = buildBlocksQueryError("Wrong signatories");
         return rxcpp::observable<>::just(
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
                 response));
@@ -110,7 +111,7 @@ namespace iroha {
       const auto &wsv_query = storage_->getWsvQuery();
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       if (not qpf.validate(*qry)) {
-        auto response = buildBlocksQueryError("stateful invalid");
+        auto response = buildBlocksQueryError("Stateful invalid");
         blocksQuerySubject_.get_subscriber().on_next(response);
         return rxcpp::observable<>::just(
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
@@ -118,7 +119,7 @@ namespace iroha {
       }
       return blocksQuerySubject_.get_observable();
     }
-  
+
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
       return subject_.get_observable();
