@@ -100,9 +100,9 @@ class BuilderTest(unittest.TestCase):
 
     def test_empty_query(self):
         with self.assertRaises(ValueError):
-            iroha.ModelQueryBuilder().build()
+            iroha.ModelBlocksQueryBuilder().build()
 
-    # ====================== GetAccountDetail Tests ======================
+    # ====================== BlocksQuery Tests ======================
 
     def test_creator_account_id(self):
         for domain in VALID_DOMAINS:
