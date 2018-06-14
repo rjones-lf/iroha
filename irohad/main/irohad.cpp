@@ -153,8 +153,9 @@ int main(int argc, char *argv[]) {
     // Check if force flag to overwrite ledger is specified
     if (ledger_empty) {
         if (not FLAGS_overwrite_ledger) {
-            log->error("Block store not empty. Use '--overwrite_ledger' to force
-                    overwrite it. Shutting down...");
+            log->error(
+                "Block store not empty. Use '--overwrite_ledger' to force "
+                "overwrite it. Shutting down...");
             return EXIT_FAILURE;
         } else {
             log->info("Overwriting existing ledger");
