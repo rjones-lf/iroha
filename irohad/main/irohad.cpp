@@ -146,12 +146,11 @@ int main(int argc, char *argv[]) {
     }
 
     // check if ledger data already existing
-    auto ledger_empty = not (
-        irohad.storage->getBlockQuery()->getTopBlockHeight() == 0
-    )
+    auto ledger_not_empty =
+        irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
 
     // Check if force flag to overwrite ledger is specified
-    if (ledger_empty) {
+    if (ledger_not_empty) {
         if (not FLAGS_overwrite_ledger) {
             log->error(
                 "Block store not empty. Use '--overwrite_ledger' to force "
