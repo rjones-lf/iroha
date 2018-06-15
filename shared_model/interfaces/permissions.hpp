@@ -101,7 +101,6 @@ namespace shared_model {
       PermissionSet &set(Perm p);
       PermissionSet &unset(Perm p);
 
-      bool operator[](Perm p) const;
       bool test(Perm p) const;
       bool none() const;
 

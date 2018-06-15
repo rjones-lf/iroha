@@ -760,7 +760,7 @@ namespace iroha {
     auto set = command.rolePermissions();
     for (size_t i = 0; i < set.size(); ++i) {
       auto perm = static_cast<shared_model::interface::permissions::Role>(i);
-      if (set[perm]
+      if (set.test(perm)
           && not checkAccountRolePermission(
                  creator_account_id, queries, perm)) {
         return false;

@@ -128,14 +128,14 @@ TEST(ProtoPermission, PermissionSet) {
   using Role = shared_model::interface::permissions::Role;
   using PermSet = shared_model::interface::PermissionSet<Role>;
   PermSet set({Role::kAppendRole, Role::kAddAssetQty, Role::kAddPeer});
-  ASSERT_TRUE(set[Role::kAppendRole]);
-  ASSERT_TRUE(set[Role::kAddAssetQty]);
-  ASSERT_TRUE(set[Role::kAddPeer]);
-  ASSERT_FALSE(set[Role::kTransfer]);
+  ASSERT_TRUE(set.test(Role::kAppendRole));
+  ASSERT_TRUE(set.test(Role::kAddAssetQty));
+  ASSERT_TRUE(set.test(Role::kAddPeer));
+  ASSERT_FALSE(set.test(Role::kTransfer));
   set.set(Role::kTransfer);
-  ASSERT_TRUE(set[Role::kTransfer]);
+  ASSERT_TRUE(set.test(Role::kTransfer));
   set.unset(Role::kAddAssetQty);
-  ASSERT_FALSE(set[Role::kAddAssetQty]);
+  ASSERT_FALSE(set.test(Role::kAddAssetQty));
 }
 
 TEST(ProtoPermission, PermissionSubset) {

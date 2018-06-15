@@ -59,7 +59,6 @@ namespace std {
 %rename(bset_and) shared_model::interface::PermissionSet::operator&=;
 %rename(bset_or) shared_model::interface::PermissionSet::operator|=;
 %rename(bset_xor) shared_model::interface::PermissionSet::operator^=;
-%ignore shared_model::interface::PermissionSet::operator[];
 
 #if defined(SWIGJAVA) || defined(SWIGJAVASCRIPT)
 %rename(equal) shared_model::interface::PermissionSet::operator==;

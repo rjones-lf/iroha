@@ -209,7 +209,7 @@ namespace shared_model {
           command->set_role_name(role_name);
           for (size_t i = 0; i < permissions.size(); ++i) {
             auto perm = static_cast<interface::permissions::Role>(i);
-            if (permissions[perm]) {
+            if (permissions.test(perm)) {
               command->add_permissions(permissions::toTransport(perm));
             }
           }

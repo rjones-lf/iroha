@@ -79,11 +79,6 @@ PermissionSet<Perm> &PermissionSet<Perm>::unset(Perm p) {
 }
 
 template <typename Perm>
-bool PermissionSet<Perm>::operator[](Perm p) const {
-  return Parent::operator[](bit(p));
-}
-
-template <typename Perm>
 bool PermissionSet<Perm>::test(Perm p) const {
   return PermissionSet<Perm>::Parent::test(bit(p));
 }
