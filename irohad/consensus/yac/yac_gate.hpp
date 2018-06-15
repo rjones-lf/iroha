@@ -43,7 +43,7 @@ namespace iroha {
         virtual void vote(YacHash hash, ClusterOrdering order) = 0;
 
         /**
-         * Observable with consensus outcomes in network
+         * Observable with consensus outcomes - commits and rejects - in network
          * @return observable for subscription
          */
         virtual rxcpp::observable<Answer> onOutcome() = 0;

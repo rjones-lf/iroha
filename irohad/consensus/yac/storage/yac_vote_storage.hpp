@@ -36,6 +36,11 @@ namespace iroha {
       /**
        * Proposal outcome states for multicast propagation strategy
        *
+       * Outcome is either CommitMessage, which guarantees that supermajority of
+       * votes for the proposal-block hashes is collected, or RejectMessage,
+       * which states that supermajority of votes for a block hash cannot be
+       * achieved
+       *
        * kNotSentNotProcessed - outcome was not propagated in the network
        * AND it was not passed to pipeline. Initial state after receiving an
        * outcome from storage. Outcome with votes is propagated to the network
