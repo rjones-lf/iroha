@@ -20,7 +20,9 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/block_query_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 
 namespace iroha {
@@ -33,12 +35,19 @@ namespace iroha {
      public:
       /**
        * Register client query
-       * @param client - query emitter
        * @param query - client intent
        */
       virtual void queryHandle(
           std::shared_ptr<shared_model::interface::Query> qry) = 0;
-
+      /**
+       * Register client blocks query
+       * @param query - client intent
+       * @return observable with block query responses
+       */
+      virtual rxcpp::observable<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryHandle(
+          std::shared_ptr<shared_model::interface::BlocksQuery> qry) = 0;
       /**
        * Subscribe for query responses
        * @return observable with query responses

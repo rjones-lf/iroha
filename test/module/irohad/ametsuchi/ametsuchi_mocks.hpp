@@ -237,13 +237,16 @@ namespace iroha {
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
       MOCK_METHOD0(dropStorage, void(void));
-      MOCK_METHOD0(
-          on_commit,
-          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>());
 
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      on_commit() {
+        return notifier.get_observable();
+      }
       void commit(std::unique_ptr<MutableStorage> storage) override {
         doCommit(storage.get());
       }
+      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+          notifier;
     };
 
   }  // namespace ametsuchi

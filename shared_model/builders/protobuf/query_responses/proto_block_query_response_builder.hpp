@@ -19,7 +19,7 @@ namespace shared_model {
       BlockQueryResponseBuilder blockResponse(
           shared_model::interface::Block &block);
 
-      BlockQueryResponseBuilder errorResponse(std::string &message);
+      BlockQueryResponseBuilder errorResponse(const std::string &message);
 
      private:
       iroha::protocol::BlockQueryResponse query_response_;

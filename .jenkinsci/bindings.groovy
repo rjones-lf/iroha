@@ -22,7 +22,7 @@ def doJavaBindings(os, buildType=Release) {
       -DSWIG_JAVA=ON \
       ${cmakeOptions}
   """
-  sh "cmake --build build --target irohajava"
+  sh "cmake --build build --target irohajava -- -j${params.PARALLELISM}"
   // TODO 29.05.18 @bakhtin Java tests never finishes on Windows Server 2016. IR-1380
   sh "zip -j $artifactsPath build/bindings/*.java build/bindings/*.dll build/bindings/libirohajava.so"
   if (os == 'windows') {
@@ -59,7 +59,7 @@ def doPythonBindings(os, buildType=Release) {
       -DSUPPORT_PYTHON2=$supportPython2 \
       ${cmakeOptions}
   """
-  sh "cmake --build build --target irohapy"
+  sh "cmake --build build --target irohapy -- -j${params.PARALLELISM}"
   sh "cmake --build build --target python_tests"
   sh "cd build; ctest -R python --output-on-failure"
   if (os == 'linux') {

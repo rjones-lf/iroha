@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
+#include "backend/protobuf/block.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
 #include "execution/query_execution.hpp"
-#include "framework/test_subscriber.hpp"
 #include "framework/specified_visitor.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "network/ordering_gate.hpp"
@@ -38,6 +40,7 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::A;
+using ::testing::Invoke;
 using ::testing::Return;
 
 class QueryProcessorTest : public ::testing::Test {
@@ -102,10 +105,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
   wrapper.subscribe([](auto response) {
-    ASSERT_NO_THROW(
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 shared_model::interface::AccountResponse>(),
-                             response->get()));
+    ASSERT_NO_THROW(boost::apply_visitor(
+        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        response->get()));
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
@@ -158,5 +160,124 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
   });
   qpi.queryHandle(
       std::make_shared<shared_model::proto::Query>(query.getTransport()));
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given account, ametsuchi queries and query processing factory
+ * @when valid block query is send
+ * @then Query Processor should start emitting BlockQueryRespones to the observable
+ */
+TEST_F(QueryProcessorTest, GetBlocksQuery) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+  auto storage = std::make_shared<MockStorage>();
+  auto blockNumber = 5;
+  auto qpf =
+      std::make_unique<QueryProcessingFactory>(wsv_queries, block_queries);
+
+  iroha::torii::QueryProcessorImpl qpi(storage);
+
+  auto blockQuery = TestUnsignedBlocksQueryBuilder()
+                        .createdTime(created_time)
+                        .creatorAccountId(account_id)
+                        .queryCounter(counter)
+                        .build()
+                        .signAndAddSignature(keypair)
+                        .finish();
+
+  std::shared_ptr<shared_model::interface::Account> shared_account = clone(
+      shared_model::proto::AccountBuilder().accountId(account_id).build());
+
+  auto role = "admin";
+  std::vector<std::string> roles = {role};
+  std::vector<std::string> perms = {
+      shared_model::permissions::can_get_my_account,
+      shared_model::permissions::can_get_blocks};
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
+  EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
+      .WillOnce(Return(roles));
+  EXPECT_CALL(*wsv_queries, getRolePermissions(role)).WillOnce(Return(perms));
+  EXPECT_CALL(*wsv_queries, getSignatories(account_id))
+      .WillRepeatedly(Return(signatories));
+
+  auto wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          blockQuery.getTransport())),
+      blockNumber);
+  wrapper.subscribe([](auto response) {
+    ASSERT_NO_THROW({
+      boost::apply_visitor(
+          framework::SpecifiedVisitor<shared_model::interface::BlockResponse>(),
+          response->get());
+    });
+  });
+  for (int i = 0; i < blockNumber; i++) {
+    storage->notifier.get_subscriber().on_next(
+        clone(TestBlockBuilder()
+                  .height(1)
+                  .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+                  .build()));
+  }
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given account, ametsuchi queries and query processing factory
+ * @when valid block query is invalid (no can_get_blocks permission)
+ * @then Query Processor should return an observable with blockError
+ */
+TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+  auto storage = std::make_shared<MockStorage>();
+  auto blockNumber = 5;
+  auto qpf =
+      std::make_unique<QueryProcessingFactory>(wsv_queries, block_queries);
+
+  iroha::torii::QueryProcessorImpl qpi(storage);
+
+  auto blockQuery = TestUnsignedBlocksQueryBuilder()
+                        .createdTime(created_time)
+                        .creatorAccountId(account_id)
+                        .queryCounter(counter)
+                        .build()
+                        .signAndAddSignature(keypair)
+                        .finish();
+
+  std::shared_ptr<shared_model::interface::Account> shared_account = clone(
+      shared_model::proto::AccountBuilder().accountId(account_id).build());
+
+  auto role = "admin";
+  std::vector<std::string> roles = {role};
+  std::vector<std::string> perms = {
+      shared_model::permissions::can_get_my_account};
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
+  EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
+      .WillOnce(Return(roles));
+  EXPECT_CALL(*wsv_queries, getRolePermissions(role)).WillOnce(Return(perms));
+  EXPECT_CALL(*wsv_queries, getSignatories(account_id))
+      .WillRepeatedly(Return(signatories));
+
+  auto wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          blockQuery.getTransport())),
+      1);
+  wrapper.subscribe([](auto response) {
+    ASSERT_NO_THROW({
+      boost::apply_visitor(framework::SpecifiedVisitor<
+                               shared_model::interface::BlockErrorResponse>(),
+                           response->get());
+    });
+  });
+  for (int i = 0; i < blockNumber; i++) {
+    storage->notifier.get_subscriber().on_next(
+        clone(TestBlockBuilder()
+                  .height(1)
+                  .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+                  .build()));
+  }
   ASSERT_TRUE(wrapper.validate());
 }

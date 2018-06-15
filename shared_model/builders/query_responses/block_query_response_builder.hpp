@@ -6,6 +6,8 @@
 #ifndef IROHA_BLOCK_QUERY_RESPONSE_BUILDER_HPP
 #define IROHA_BLOCK_QUERY_RESPONSE_BUILDER_HPP
 
+#include "interfaces/query_responses/block_query_response.hpp"
+
 namespace shared_model {
   namespace builder {
 

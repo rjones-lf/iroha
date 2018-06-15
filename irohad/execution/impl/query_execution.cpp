@@ -85,7 +85,11 @@ bool hasQueryPermission(const std::string &creator,
                (getDomainFromName(creator) == getDomainFromName(target_account)
                 and perms_set.value()[domain_permission_id])));
 }
-
+bool QueryProcessingFactory::validate(
+    const shared_model::interface::BlocksQuery &query) {
+  return checkAccountRolePermission(
+      query.creatorAccountId(), *_wsvQuery, Role::kGetBlocks);
+}
 bool QueryProcessingFactory::validate(
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAssetInfo &get_asset_info) {
@@ -244,21 +248,19 @@ QueryProcessingFactory::executeGetAccount(
 QueryProcessingFactory::QueryResponseBuilderDone
 QueryProcessingFactory::executeGetAccountAssets(
     const shared_model::interface::GetAccountAssets &query) {
-  auto acct_assets =
-      _wsvQuery->getAccountAssets(query.accountId());
+  auto acct_assets = _wsvQuery->getAccountAssets(query.accountId());
 
   if (not acct_assets) {
     return buildError<shared_model::interface::NoAccountAssetsErrorResponse>();
   }
   std::vector<shared_model::proto::AccountAsset> account_assets;
-  for (auto asset: *acct_assets) {
-    //TODO: IR-1239 remove static cast when query response builder is updated
+  for (auto asset : *acct_assets) {
+    // TODO: IR-1239 remove static cast when query response builder is updated
     // and accepts interface objects
     account_assets.push_back(
         *std::static_pointer_cast<shared_model::proto::AccountAsset>(asset));
   }
-  auto response =
-      QueryResponseBuilder().accountAssetResponse(account_assets);
+  auto response = QueryResponseBuilder().accountAssetResponse(account_assets);
   return response;
 }
 
@@ -338,7 +340,6 @@ QueryProcessingFactory::executeGetSignatories(
   auto response = QueryResponseBuilder().signatoriesResponse(*signs);
   return response;
 }
-
 std::shared_ptr<shared_model::interface::QueryResponse>
 QueryProcessingFactory::validateAndExecute(
     const shared_model::interface::Query &query) {
