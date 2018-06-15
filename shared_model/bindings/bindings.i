@@ -19,7 +19,7 @@
 
 #define DEPRECATED
 #define FINAL
-#pragma SWIG nowarn=325, 401, 509, 516
+#pragma SWIG nowarn=325, 401, 509, 516, 320
 
 %include "std_string.i"
 %include "stdint.i"
@@ -56,6 +56,10 @@ namespace std {
 
 %ignore shared_model::interface::PermissionSet::PermissionSet(std::initializer_list<shared_model::interface::permissions::Role>);
 %ignore shared_model::interface::PermissionSet::PermissionSet(std::initializer_list<shared_model::interface::permissions::Grantable>);
+%rename(bset_and) shared_model::interface::PermissionSet::operator&=;
+%rename(bset_or) shared_model::interface::PermissionSet::operator|=;
+%rename(bset_xor) shared_model::interface::PermissionSet::operator^=;
+%ignore shared_model::interface::PermissionSet::operator[];
 
 %extend shared_model::interface::PermissionSet {
   PermissionSet(const std::vector<int> &perms) {
