@@ -114,9 +114,6 @@ namespace shared_model {
       PermissionSet<Perm> &operator^=(const PermissionSet<Perm> &r);
     };
 
-    extern template class PermissionSet<permissions::Role>;
-    extern template class PermissionSet<permissions::Grantable>;
-
     using RolePermissionSet = PermissionSet<permissions::Role>;
     using GrantablePermissionSet = PermissionSet<permissions::Grantable>;
   }  // namespace interface

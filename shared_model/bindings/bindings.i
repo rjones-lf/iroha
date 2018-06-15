@@ -19,7 +19,7 @@
 
 #define DEPRECATED
 #define FINAL
-#pragma SWIG nowarn=325, 401, 509, 516, 320
+#pragma SWIG nowarn=325, 401, 509, 516
 
 %include "std_string.i"
 %include "stdint.i"
