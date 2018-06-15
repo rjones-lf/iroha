@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "cryptography/keypair.hpp"
+#include "interfaces/permissions.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -49,7 +50,7 @@ class AcceptanceFixture : public ::testing::Test {
       const std::string &user,
       const shared_model::crypto::PublicKey &key,
       const std::string &role_id,
-      std::vector<std::string> perms);
+      const shared_model::interface::RolePermissionSet &perms);
 
   /**
    * Creates the transaction with the user creation commands
@@ -58,7 +59,8 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   shared_model::proto::Transaction makeUserWithPerms(
-      const std::string &role_name, const std::vector<std::string> &perms);
+      const std::string &role_name,
+      const shared_model::interface::RolePermissionSet &perms);
 
   /**
    * Creates the transaction with the user creation commands
@@ -66,7 +68,7 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   shared_model::proto::Transaction makeUserWithPerms(
-      const std::vector<std::string> &perms);
+      const shared_model::interface::RolePermissionSet &perms);
 
   /**
    * Add default user creator account id and current created time to builder

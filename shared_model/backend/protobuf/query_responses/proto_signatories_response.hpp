@@ -32,31 +32,21 @@ namespace shared_model {
                                SignatoriesResponse> {
      public:
       template <typename QueryResponseType>
-      explicit SignatoriesResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit SignatoriesResponse(QueryResponseType &&queryResponse);
 
-      SignatoriesResponse(const SignatoriesResponse &o)
-          : SignatoriesResponse(o.proto_) {}
+      SignatoriesResponse(const SignatoriesResponse &o);
 
-      SignatoriesResponse(SignatoriesResponse &&o)
-          : SignatoriesResponse(std::move(o.proto_)) {}
+      SignatoriesResponse(SignatoriesResponse &&o);
 
-      const interface::types::PublicKeyCollectionType &keys() const override {
-        return *keys_;
-      }
+      const interface::types::PublicKeyCollectionType &keys() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::SignatoriesResponse &signatoriesResponse_{
-          proto_->signatories_response()};
+      const iroha::protocol::SignatoriesResponse &signatoriesResponse_;
 
-      const Lazy<interface::types::PublicKeyCollectionType> keys_{[this] {
-        return interface::types::PublicKeyCollectionType(
-            signatoriesResponse_.keys().begin(),
-            signatoriesResponse_.keys().end());
-      }};
+      const Lazy<interface::types::PublicKeyCollectionType> keys_;
     };
   }  // namespace proto
 }  // namespace shared_model

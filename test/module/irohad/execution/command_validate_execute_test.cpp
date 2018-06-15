@@ -1733,7 +1733,7 @@ class CreateRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    std::set<std::string> perm = {toString(Role::kCreateRole)};
+    shared_model::interface::RolePermissionSet perm = {Role::kCreateRole};
     role_permissions.set(Role::kCreateRole);
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
@@ -1784,8 +1784,8 @@ TEST_F(CreateRoleTest, InvalidCaseWhenNoPermissions) {
  */
 TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  std::set<std::string> master_perms = {toString(Role::kAddPeer),
-                                        toString(Role::kAppendRole)};
+  shared_model::interface::RolePermissionSet master_perms = {Role::kAddPeer,
+                                                             Role::kAppendRole};
   command = buildCommand(
       TestTransactionBuilder().createRole(kMasterRole, master_perms));
 
@@ -1998,7 +1998,7 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with
     // CommandBuilder
     command = buildCommand(TestTransactionBuilder().grantPermission(
-        kAccountId, toString(expected_permission)));
+        kAccountId, expected_permission));
     grant_permission =
         getConcreteCommand<shared_model::interface::GrantPermission>(command);
   }
@@ -2060,7 +2060,7 @@ class RevokePermissionTest : public CommandValidateExecuteTest {
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().revokePermission(
-        kAccountId, toString(expected_permission)));
+        kAccountId, expected_permission));
     revoke_permission =
         getConcreteCommand<shared_model::interface::RevokePermission>(command);
   }

@@ -26,6 +26,8 @@
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
+#include "builders/protobuf/queries.hpp"
+#include "builders/query_responses/block_query_response_builder.hpp"
 #include "execution/query_execution.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
@@ -71,7 +73,6 @@ class QueryValidateExecuteTest : public ::testing::Test {
                         .quorum(1)
                         .build());
   }
-
   std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
       const shared_model::interface::Query &query) {
     return factory->validateAndExecute(query);
@@ -1482,11 +1483,7 @@ TEST_F(GetRolePermissionsTest, ValidCase) {
             shared_model::interface::RolePermissionsResponse>(),
         response->get());
 
-    shared_model::interface::RolePermissionSet set;
-    for (const auto &s : cast_resp.rolePermissions()) {
-      set.set(fromOldR(s));
-    }
-    ASSERT_EQ(set, perms);
+    ASSERT_EQ(cast_resp.rolePermissions(), perms);
   });
 }
 

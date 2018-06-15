@@ -17,13 +17,6 @@
 namespace shared_model {
   namespace proto {
     namespace permissions {
-
-      /**
-       * @param perm protocol object for checking
-       * @return true if valid, false otherwise
-       */
-      bool isValid(iroha::protocol::RolePermission perm) noexcept;
-
       /**
        * Perform deserialization without checks
        * @param perm protocol object for conversion
@@ -44,12 +37,6 @@ namespace shared_model {
        * @return its string representation
        */
       std::string toString(interface::permissions::Role r);
-
-      /**
-       * @param perm protocol object for checking
-       * @return true if valid, false otherwise
-       */
-      bool isValid(iroha::protocol::GrantablePermission perm) noexcept;
 
       /**
        * Perform deserialization without checks

@@ -6,7 +6,6 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
@@ -18,10 +17,10 @@ class QueryAcceptanceTest : public AcceptanceFixture {
    * @param perms are the permissions of the user
    * @return built tx and a hash of its payload
    */
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             shared_model::permissions::can_get_my_txs}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kGetMyTxs}) {
     auto new_perms = perms;
-    new_perms.push_back(shared_model::permissions::can_set_quorum);
+    new_perms.set(interface::permissions::Role::kSetQuorum);
     return AcceptanceFixture::makeUserWithPerms(kNewRole, new_perms);
   }
 

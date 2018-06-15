@@ -31,35 +31,23 @@ namespace shared_model {
                                RolePermissionsResponse> {
      public:
       template <typename QueryResponseType>
-      explicit RolePermissionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit RolePermissionsResponse(QueryResponseType &&queryResponse);
 
-      RolePermissionsResponse(const RolePermissionsResponse &o)
-          : RolePermissionsResponse(o.proto_) {}
+      RolePermissionsResponse(const RolePermissionsResponse &o);
 
-      RolePermissionsResponse(RolePermissionsResponse &&o)
-          : RolePermissionsResponse(std::move(o.proto_)) {}
+      RolePermissionsResponse(RolePermissionsResponse &&o);
 
-      const PermissionNameCollectionType &rolePermissions() const override {
-        return *rolePermissions_;
-      }
+      const interface::RolePermissionSet &rolePermissions() const override;
+
+      std::string toString() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_{
-          proto_->role_permissions_response()};
+      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_;
 
-      const Lazy<PermissionNameCollectionType> rolePermissions_{[this] {
-        return boost::accumulate(
-            rolePermissionsResponse_.permissions(),
-            PermissionNameCollectionType{},
-            [](auto &&permissions, const auto &permission) {
-              permissions.emplace_back(permission);
-              return std::move(permissions);
-            });
-      }};
+      const Lazy<interface::RolePermissionSet> rolePermissions_;
     };
   }  // namespace proto
 }  // namespace shared_model

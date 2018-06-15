@@ -10,6 +10,7 @@
 #include "interfaces/queries/blocks_query.hpp"
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
+#include "backend/protobuf/util.hpp"
 
 namespace shared_model {
   namespace proto {

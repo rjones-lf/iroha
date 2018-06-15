@@ -797,11 +797,9 @@ public class BuilderTest {
 
     @Test
     void createRole() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("can_get_roles");
-        assertTrue(permissions.size() == 2);
-
+        RolePermissionSet permissions = new RolePermissionSet();
+        permissions.set(Role.kReceive);
+        permissions.set(Role.kGetRoles);
         for (String role: validNameSymbols1) {
             UnsignedTx tx = builder.createRole(role, permissions).build();
             assertTrue(checkProtoTx(proto(tx)));
@@ -810,11 +808,9 @@ public class BuilderTest {
 
     @Test
     void createRoleWithInvalidName() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("can_get_roles");
-        assertTrue(permissions.size() == 2);
-
+        RolePermissionSet permissions = new RolePermissionSet();
+        permissions.set(Role.kReceive);
+        permissions.set(Role.kGetRoles);
         for (String role: invalidNameSymbols1) {
             ModelTransactionBuilder mtb = base().createRole(role, permissions);
             assertThrows(IllegalArgumentException.class, mtb::build);
@@ -823,41 +819,10 @@ public class BuilderTest {
 
     @Test
     void createRoleEmptyPermissions() {
-        StringVector permissions = new StringVector();
+        RolePermissionSet permissions = new RolePermissionSet();
 
         ModelTransactionBuilder builder = new ModelTransactionBuilder();
         builder.createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    /* Disabled till IR-1267 will be fixed. */
-    /* Please run this test on mac host after enabling,
-       because the test was passing on Linux host and failing on macOs.
-    */
-    @Disabled
-    @Test
-    void createRoleWrongPermissions() {
-        StringVector permissions = new StringVector();
-        permissions.add("wrong_permission");
-        permissions.add("can_receive");
-
-        ModelTransactionBuilder builder = base().createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-
-    /* Test differs from the previous by the order of permissions' mames in vector.
-     * Test is disabled because there is no exception thrown when it should be.
-     */
-    /* Disabled till IR-1267 will be fixed. */
-    @Disabled
-    @Test
-    void createRoleWrongPermissions2() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("wrong_permission");
-
-        ModelTransactionBuilder builder = base().createRole("new_role", permissions);
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -913,7 +878,7 @@ public class BuilderTest {
         for (String accountName: validNameSymbols1) {
             for (String domain: validDomains) {
                 String accountId = accountName + "@" + domain;
-                UnsignedTx tx = builder.grantPermission(accountId, "can_set_my_quorum").build();
+                UnsignedTx tx = builder.grantPermission(accountId, Grantable.kSetMyQuorum).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -924,7 +889,7 @@ public class BuilderTest {
         for (String accountName: invalidNameSymbols1) {
             for (String domain: validDomains) {
                 String accountId = accountName + "@" + domain;
-                ModelTransactionBuilder builder = base().grantPermission(accountId, "can_set_my_quorum");
+                ModelTransactionBuilder builder = base().grantPermission(accountId, Grantable.kSetMyQuorum);
                 assertThrows(IllegalArgumentException.class, builder::build);
             }
         }
@@ -932,26 +897,8 @@ public class BuilderTest {
 
     @Test
     void grantPermissionEmptyAccount() {
-        ModelTransactionBuilder builder = base().grantPermission("", "can_set_my_quorum");
+        ModelTransactionBuilder builder = base().grantPermission("", Grantable.kSetMyQuorum);
         assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    // TODO igor-egorov, 14.05.2018 IR-1267
-    // Please test using clang on macOS before enabling
-    // This test does not fail on Linux with GCC 5.4.0
-    @Disabled
-    @Test
-    void grantPermissionWithInvalidName() {
-        String permissions[] = {
-            "",
-            "random",
-            "can_read_assets" // non-grantable permission
-        };
-
-        for (String permission: permissions) {
-            ModelTransactionBuilder builder = base().grantPermission("admin@test", permission);
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
     }
 
     /* ====================== RevokePermission Tests ====================== */
@@ -960,7 +907,7 @@ public class BuilderTest {
     void revokePermission() {
         for (String accountName: validNameSymbols1) {
             for (String domain: validDomains) {
-                UnsignedTx tx = builder.revokePermission(accountName + "@" + domain, "can_set_my_quorum").build();
+                UnsignedTx tx = builder.revokePermission(accountName + "@" + domain, Grantable.kSetMyQuorum).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -969,7 +916,7 @@ public class BuilderTest {
     @Test
     void revokePermissionInvalidAccount() {
         for (String accountName: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().revokePermission(accountName + "@test", "can_set_my_quorum");
+            ModelTransactionBuilder builder = base().revokePermission(accountName + "@test", Grantable.kSetMyQuorum);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -977,33 +924,15 @@ public class BuilderTest {
     @Test
     void revokePermissionInvalidDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().revokePermission("admin@" + domain, "can_set_my_quorum");
+            ModelTransactionBuilder builder = base().revokePermission("admin@" + domain, Grantable.kSetMyQuorum);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void revokePermissionEmptyAccount() {
-        ModelTransactionBuilder builder = base().revokePermission("", "can_set_my_quorum");
+        ModelTransactionBuilder builder = base().revokePermission("", Grantable.kSetMyQuorum);
         assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    // TODO igor-egorov, 14.05.2018 IR-1267
-    // Please test using clang on macOS before enabling
-    // This test does not fail on Linux with GCC 5.4.0
-    @Disabled
-    @Test
-    void revokePermissionWithInvalidName() {
-        String permissions[] = {
-            "",
-            "random",
-            "can_read_assets" // non-grantable permission
-        };
-
-        for (String permission: permissions) {
-            ModelTransactionBuilder builder = base().revokePermission("admin@test", permission);
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
     }
 
     /* ====================== SubtractAssetQuantity Tests ====================== */

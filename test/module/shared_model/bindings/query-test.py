@@ -262,36 +262,22 @@ class BuilderTest(unittest.TestCase):
   def test_get_account_assets(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        query = self.builder.getAccountAssets("{}@{}".format(name, domain), "{}#{}".format(name, domain)).build()
+        query = self.builder.getAccountAssets("{}@{}".format(name, domain)).build()
         self.assertTrue(self.check_proto_query(self.proto(query)))
 
   def test_get_account_assets_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().getAccountAssets("{}@test".format(name), "coin#test").build()
+        self.base().getAccountAssets("{}@test".format(name)).build()
 
   def test_get_account_assets_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@{}".format(domain), "coin#test").build()
+        self.base().getAccountAssets("admin@{}".format(domain)).build()
 
   def test_get_account_assets_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().getAccountAssets("", "coin#test").build()
-
-  def test_get_account_assets_invalid_asset_name(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@test", "{}#test".format(name)).build()
-
-  def test_get_account_assets_invalid_asset_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@test", "admin#{}".format(domain)).build()
-
-  def test_get_account_assets_empty_asset(self):
-    with self.assertRaises(ValueError):
-      self.base().getAccountAssets("admin@test", "").build()
+      self.base().getAccountAssets("").build()
 
   # ====================== GetRoles Tests ======================
 

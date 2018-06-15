@@ -79,14 +79,18 @@ bool hasQueryPermission(const std::string &creator,
                // 2. Creator want to query his account, must have role
                // permission
                (creator == target_account
-                and perms_set.value()[indiv_permission_id])
+                and perms_set.value().test(indiv_permission_id))
                or  // 3. Creator has global permission to get any account
-               perms_set.value()[all_permission_id]
+               perms_set.value().test(all_permission_id)
                or  // 4. Creator has domain permission
                (getDomainFromName(creator) == getDomainFromName(target_account)
-                and perms_set.value()[domain_permission_id])));
+                and perms_set.value().test(domain_permission_id))));
 }
-
+bool QueryProcessingFactory::validate(
+    const shared_model::interface::BlocksQuery &query) {
+  return checkAccountRolePermission(
+      query.creatorAccountId(), *_wsvQuery, Role::kGetBlocks);
+}
 bool QueryProcessingFactory::validate(
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAssetInfo &get_asset_info) {
@@ -219,8 +223,7 @@ QueryProcessingFactory::executeGetRolePermissions(
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
 
-  auto response =
-      QueryResponseBuilder().rolePermissionsResponse(toString(*perm));
+  auto response = QueryResponseBuilder().rolePermissionsResponse(*perm);
   return response;
 }
 
@@ -334,7 +337,6 @@ QueryProcessingFactory::executeGetSignatories(
   auto response = QueryResponseBuilder().signatoriesResponse(*signs);
   return response;
 }
-
 std::shared_ptr<shared_model::interface::QueryResponse>
 QueryProcessingFactory::validateAndExecute(
     const shared_model::interface::Query &query) {

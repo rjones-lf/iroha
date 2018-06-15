@@ -24,6 +24,7 @@
 #include <boost/range/irange.hpp>
 
 #include "datetime/time.hpp"
+#include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
 #include "queries.pb.h"
 
@@ -61,7 +62,9 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["asset_name"] = setString(asset_name);
     field_setters["precision"] = setUInt32(precision);
     field_setters["permissions"] = addEnum(role_permission);
-    field_setters["permission"] = setEnum(grantable_permission);
+    field_setters["grantable_permissions"] = addEnum(grantable_permission);
+    field_setters["permission"] = setEnum(role_permission);
+    field_setters["grantable_permission"] = setEnum(grantable_permission);
     field_setters["key"] = setString(detail_key);
     field_setters["detail"] = setString(detail_key);
     field_setters["value"] = setString("");
@@ -165,7 +168,8 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
-  std::string permission;
+  shared_model::interface::permissions::Role model_role_permission;
+  shared_model::interface::permissions::Grantable model_grantable_permission;
   iroha::protocol::RolePermission role_permission;
   iroha::protocol::GrantablePermission grantable_permission;
   uint8_t quorum;

@@ -60,6 +60,11 @@ if (SWIG_PYTHON)
       env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
       ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
     WORKING_DIRECTORY ${SWIG_BUILD_DIR})
+  add_test(NAME python_blocks_query_test
+      COMMAND ${CMAKE_COMMAND} -E
+      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
+      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/blocks-query-test.py
+      WORKING_DIRECTORY ${SWIG_BUILD_DIR})
 
   foreach(item "block" "commands" "primitive" "queries")
     compile_proto_to_python("${item}.proto")
@@ -68,7 +73,7 @@ if (SWIG_PYTHON)
 
   add_custom_target(python_tests
     DEPENDS "${PROTO_SWIG_DEPS}")
-  foreach(test "python_transaction_test" "python_query_test")
+  foreach(test "python_transaction_test" "python_query_test" "python_blocks_query_test")
     set_tests_properties(${test}
       PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
                  DEPENDS python_tests)

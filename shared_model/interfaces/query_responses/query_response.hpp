@@ -71,13 +71,9 @@ namespace shared_model {
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return boost::apply_visitor(detail::ToStringVisitor(), get());
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return queryHash() == rhs.queryHash() and get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

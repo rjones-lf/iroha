@@ -21,7 +21,6 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -43,27 +42,9 @@ namespace shared_model {
        */
       virtual const AccountRolesIdType &roles() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AccountResponse")
-            .append(account().toString())
-            .append("roles")
-            .appendAll(roles(), [](auto s) { return s; })
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right hand-side of GetAccountAssetResponse
-       * @return true if they have same values.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return account() == rhs.account() and roles() == rhs.roles();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

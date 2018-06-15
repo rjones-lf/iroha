@@ -127,10 +127,11 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidatorTest::quorum,
                                           quorum_test_cases));
 
-    field_validators.insert(makeValidator("permission",
-                                          &FieldValidator::validatePermission,
-                                          &FieldValidatorTest::permission,
-                                          permission_test_cases));
+    field_validators.insert(
+        makeValidator("permission",
+                      &FieldValidator::validateGrantablePermission,
+                      &FieldValidatorTest::model_grantable_permission,
+                      grantable_permission_test_cases));
 
     field_validators.insert(makeValidator("precision",
                                           &FieldValidator::validatePrecision,
@@ -138,8 +139,13 @@ class FieldValidatorTest : public ValidatorsTest {
                                           precision_test_cases));
 
     // TODO: add validation to all fields
-    for (const auto &field :
-         {"value", "signature", "commands", "quorum", "tx_hashes"}) {
+    for (const auto &field : {"value",
+                              "signature",
+                              "commands",
+                              "quorum",
+                              "tx_hashes",
+                              // permissions are always valid
+                              "permissions"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
@@ -520,29 +526,30 @@ class FieldValidatorTest : public ValidatorsTest {
       makeTestCase(
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
 
-  std::vector<FieldTestCase> permissionTestCases() {
-    auto valid_cases =
-        shared_model::permissions::role_perm_group
-        | boost::adaptors::transformed([&](const auto &permission) {
-            return this->makeTestCase(permission,
-                                      &FieldValidatorTest::permission,
-                                      permission,
-                                      true,
-                                      "");
-          });
-    std::vector<FieldTestCase> invalid_cases = {
-        makeInvalidCase("non existing permission",
-                        "permission",
-                        &FieldValidatorTest::permission,
-                        "non_existing_permission")};
-    // merge valid and invalid cases
-    std::vector<FieldTestCase> all_cases;
-    all_cases.insert(all_cases.begin(), valid_cases.begin(), valid_cases.end());
-    all_cases.insert(
-        all_cases.begin(), invalid_cases.begin(), invalid_cases.end());
-    return all_cases;
+  template <typename PermType, typename F>
+  std::vector<FieldTestCase> permissionTestCases(F ValidatorsTest::*field) {
+    std::vector<FieldTestCase> cases;
+
+    // using PermType = shared_model::interface::permissions::Role;
+    for (size_t i = 0; i < static_cast<size_t>(PermType::COUNT); ++i) {
+      cases.push_back(makeValidCase(field, static_cast<PermType>(i)));
+    }
+
+    cases.push_back(makeTestCase("non-existing permission",
+                                 field,
+                                 static_cast<PermType>(PermType::COUNT),
+                                 false,
+                                 ""));
+
+    return cases;
   }
-  std::vector<FieldTestCase> permission_test_cases = permissionTestCases();
+
+  std::vector<FieldTestCase> role_permission_test_cases =
+      permissionTestCases<shared_model::interface::permissions::Role>(
+          &FieldValidatorTest::model_role_permission);
+  std::vector<FieldTestCase> grantable_permission_test_cases =
+      permissionTestCases<shared_model::interface::permissions::Grantable>(
+          &FieldValidatorTest::model_grantable_permission);
 
   std::vector<FieldTestCase> meta_test_cases = [&]() {
     iroha::protocol::QueryPayloadMeta meta;
@@ -647,14 +654,6 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
-      makeTransformValidator("permissions",
-                             &FieldValidator::validatePermissions,
-                             &FieldValidatorTest::role_permission,
-                             [](auto &&x) {
-                               return interface::types::PermissionSetType{
-                                   iroha::protocol::RolePermission_Name(x)};
-                             },
-                             permissions_test_cases),
       makeValidator("created_time",
                     &FieldValidator::validateCreatedTime,
                     &FieldValidatorTest::created_time,

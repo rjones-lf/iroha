@@ -6,10 +6,12 @@
 #ifndef IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 #define IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 
+#include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/helpers.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 #include "responses.pb.h"
 
 namespace shared_model {
@@ -82,8 +84,9 @@ namespace shared_model {
           iroha::protocol::AccountAssetResponse *query_response =
               proto_query_response.mutable_account_assets_response();
 
-          for (auto &asset: assets) {
-            query_response->add_account_assets()->CopyFrom(asset.getTransport());
+          for (auto &asset : assets) {
+            query_response->add_account_assets()->CopyFrom(
+                asset.getTransport());
           }
         });
       }
@@ -166,21 +169,33 @@ namespace shared_model {
       }
 
       auto rolePermissionsResponse(
-          const std::vector<interface::types::PermissionNameType>
-              &role_permissions) const {
+          const interface::RolePermissionSet &role_permissions) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::RolePermissionsResponse *query_response =
               proto_query_response.mutable_role_permissions_response();
-          for (const auto &perm : role_permissions) {
-            query_response->add_permissions(perm);
+          for (size_t i = 0; i < role_permissions.size(); ++i) {
+            auto perm = static_cast<interface::permissions::Role>(i);
+            if (role_permissions.test(perm)) {
+              // TODO(@l4l) 05/06/18 IR-1393
+              // replace with toTransport after fixing RolePermissionResponse
+              query_response->add_permissions(permissions::toString(perm));
+            }
           }
+
+          // TODO(@l4l) 05/06/18 IR-1393
+          // uncomment after fixing RolePermissionResponse
+          // for (size_t i = 0; i < role_permissions.size(); ++i) {
+          //   auto perm = static_cast<interface::permissions::Role>(i);
+          //   if (role_permissions[perm]) {
+          //     query_response->add_permissions(permissions::toTransport(perm));
+          //   }
+          // }
         });
       }
 
       auto queryHash(const interface::types::HashType &query_hash) const {
         return transform<QueryHash>([&](auto &proto_query_response) {
-          proto_query_response.set_query_hash(
-              query_hash.hex());
+          proto_query_response.set_query_hash(query_hash.hex());
         });
       }
 

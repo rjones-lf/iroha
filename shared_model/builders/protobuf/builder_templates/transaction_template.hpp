@@ -27,9 +27,11 @@
 #include "primitive.pb.h"
 
 #include "amount/amount.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "builders/protobuf/helpers.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -200,31 +202,18 @@ namespace shared_model {
         });
       }
 
-      template <typename Collection>
       auto createRole(const interface::types::RoleIdType &role_name,
-                      const Collection &permissions) const {
+                      const interface::RolePermissionSet &permissions) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_create_role();
           command->set_role_name(role_name);
-          boost::for_each(permissions, [&command](const auto &perm) {
-            iroha::protocol::RolePermission p;
-            iroha::protocol::RolePermission_Parse(perm, &p);
-            command->add_permissions(p);
-          });
+          for (size_t i = 0; i < permissions.size(); ++i) {
+            auto perm = static_cast<interface::permissions::Role>(i);
+            if (permissions.test(perm)) {
+              command->add_permissions(permissions::toTransport(perm));
+            }
+          }
         });
-      }
-
-      auto createRole(
-          const interface::types::RoleIdType &role_name,
-          std::initializer_list<interface::types::PermissionNameType>
-              permissions) const {
-        return createRole(role_name, permissions);
-      }
-
-      template <typename... Permission>
-      auto createRole(const interface::types::RoleIdType &role_name,
-                      const Permission &... permissions) const {
-        return createRole(role_name, {permissions...});
       }
 
       auto detachRole(const interface::types::AccountIdType &account_id,
@@ -236,27 +225,22 @@ namespace shared_model {
         });
       }
 
-      auto grantPermission(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::PermissionNameType &permission) const {
+      auto grantPermission(const interface::types::AccountIdType &account_id,
+                           interface::permissions::Grantable permission) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_grant_permission();
           command->set_account_id(account_id);
-          iroha::protocol::GrantablePermission p;
-          iroha::protocol::GrantablePermission_Parse(permission, &p);
-          command->set_permission(p);
+          command->set_permission(permissions::toTransport(permission));
         });
       }
 
       auto revokePermission(
           const interface::types::AccountIdType &account_id,
-          const interface::types::PermissionNameType &permission) const {
+          interface::permissions::Grantable permission) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_revoke_permission();
           command->set_account_id(account_id);
-          iroha::protocol::GrantablePermission p;
-          iroha::protocol::GrantablePermission_Parse(permission, &p);
-          command->set_permission(p);
+          command->set_permission(permissions::toTransport(permission));
         });
       }
 

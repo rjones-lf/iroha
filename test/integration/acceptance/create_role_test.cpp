@@ -10,26 +10,25 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
 
 class CreateRole : public AcceptanceFixture {
  public:
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             shared_model::permissions::can_get_my_txs,
-                             shared_model::permissions::can_create_role}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kGetMyTxs,
+                             interface::permissions::Role::kCreateRole}) {
     return AcceptanceFixture::makeUserWithPerms(kNewRole, perms);
   }
 
-  auto baseTx(const std::vector<std::string> &perms,
+  auto baseTx(const interface::RolePermissionSet &perms,
               const std::string &role_name) {
     return AcceptanceFixture::baseTx().createRole(role_name, perms);
   }
 
-  auto baseTx(const std::vector<std::string> &perms = {
-                  shared_model::permissions::can_get_my_txs}) {
+  auto baseTx(const interface::RolePermissionSet &perms = {
+                  interface::permissions::Role::kGetMyTxs}) {
     return baseTx(perms, kRole);
   }
 
@@ -62,7 +61,7 @@ TEST_F(CreateRole, Basic) {
 TEST_F(CreateRole, HaveNoPerms) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({shared_model::permissions::can_get_my_txs}))
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx()))
@@ -83,7 +82,7 @@ TEST_F(CreateRole, EmptyRole) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({shared_model::permissions::can_get_my_txs}, "")),
+      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs}, "")),
               checkStatelessInvalid);
 }
 
@@ -114,7 +113,7 @@ TEST_F(CreateRole, LongRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({shared_model::permissions::can_get_my_txs},
+      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(33, 'a'))),
               checkStatelessInvalid);
 }
@@ -130,7 +129,7 @@ TEST_F(CreateRole, MaxLenRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({shared_model::permissions::can_get_my_txs},
+      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(32, 'a'))))
       .skipProposal()
       .checkBlock(
@@ -152,7 +151,7 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({"this_permission_doesnt_exist"})),
+      .sendTx(complete(baseTx({static_cast<interface::permissions::Role>(-1)})),
               checkStatelessInvalid);
 }
 
@@ -167,8 +166,8 @@ TEST_F(CreateRole, ExistingRole) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(
-          baseTx({shared_model::permissions::can_get_my_txs}, kNewRole)))
+      .sendTx(
+          complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });

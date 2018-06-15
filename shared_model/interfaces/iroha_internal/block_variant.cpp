@@ -14,7 +14,7 @@ namespace shared_model {
     decltype(auto) invoke(const BlockVariant *var, Func &&f, Args &&... args) {
       return iroha::visit_in_place(
           *var, [&](const auto &any_block) -> decltype(auto) {
-            return ((*any_block.*f)(std::forward<Args>(args)...));
+            return ((*any_block.*f)(std::forward<decltype(args)>(args)...));
           });
     }
 

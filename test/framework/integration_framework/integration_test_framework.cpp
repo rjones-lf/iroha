@@ -33,9 +33,7 @@
 #include "datetime/time.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
-// TODO (@l4l) IR-874 create more comfort way for permission-dependent proto
-// building
-#include "validators/permissions.hpp"
+#include "interfaces/permissions.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -72,17 +70,17 @@ namespace integration_framework {
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
       const shared_model::crypto::Keypair &key) {
+    shared_model::interface::RolePermissionSet all_perms{};
+    for (size_t i = 0; i < all_perms.size(); ++i) {
+      auto perm = static_cast<shared_model::interface::permissions::Role>(i);
+      all_perms.set(perm);
+    }
     auto genesis_tx =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(kDefaultRole,
-                        // TODO (@l4l) IR-874 create more comfort way for
-                        // permission-dependent proto building
-                        std::vector<std::string>{
-                            shared_model::permissions::role_perm_group.begin(),
-                            shared_model::permissions::role_perm_group.end()})
+            .createRole(kDefaultRole, all_perms)
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)

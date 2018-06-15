@@ -5,7 +5,7 @@ const accountId = 'admin@test'
 const assetId = 'coin#test'
 
 test('ModelQueryBuilder tests', function (t) {
-  t.plan(50)
+  t.plan(47)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
   const time = (new Date()).getTime()
@@ -57,12 +57,9 @@ test('ModelQueryBuilder tests', function (t) {
   // getAccountAssets() tests
   t.comment('Testing getAccountAssets()')
   t.throws(() => correctQuery.getAccountAssets(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctQuery.getAccountAssets(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctQuery.getAccountAssets('', assetId).build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
-  t.throws(() => correctQuery.getAccountAssets('@@@', assetId).build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
-  t.throws(() => correctQuery.getAccountAssets(accountId, '').build(), /Wrongly formed asset_id, passed value: ''/, 'Should throw Wrongly formed asset_id,')
-  t.throws(() => correctQuery.getAccountAssets(accountId, '@@@').build(), /Wrongly formed asset_id, passed value: '@@@'/, 'Should throw Wrongly formed asset_id,')
-  t.doesNotThrow(() => correctQuery.getAccountAssets(accountId, assetId).build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctQuery.getAccountAssets('').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
+  t.throws(() => correctQuery.getAccountAssets('@@@').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
+  t.doesNotThrow(() => correctQuery.getAccountAssets(accountId).build(), null, 'Should not throw any exceptions')
 
   // getRoles() tests
   t.comment('Testing getRoles()')

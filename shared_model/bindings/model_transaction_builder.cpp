@@ -98,7 +98,7 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::createRole(
         const interface::types::RoleIdType &role_name,
-        const std::vector<interface::types::PermissionNameType> &permissions) {
+        const interface::RolePermissionSet &permissions) {
       return ModelTransactionBuilder(
           builder_.createRole(role_name, permissions));
     }
@@ -112,14 +112,14 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::grantPermission(
         const interface::types::AccountIdType &account_id,
-        const interface::types::PermissionNameType &permission) {
+        interface::permissions::Grantable permission) {
       return ModelTransactionBuilder(
           builder_.grantPermission(account_id, permission));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::revokePermission(
         const interface::types::AccountIdType &account_id,
-        const interface::types::PermissionNameType &permission) {
+        interface::permissions::Grantable permission) {
       return ModelTransactionBuilder(
           builder_.revokePermission(account_id, permission));
     }

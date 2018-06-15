@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#ifndef SHARED_MODEL_PROTOBUF_FROM_OLD
+#define SHARED_MODEL_PROTOBUF_FROM_OLD
+
 #include <map>
 #include <set>
 #include <string>
@@ -47,3 +50,5 @@ namespace shared_model {
     }  // namespace permissions
   }    // namespace interface
 }  // namespace shared_model
+
+#endif  // SHARED_MODEL_PROTOBUF_FROM_OLD

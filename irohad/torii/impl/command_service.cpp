@@ -208,6 +208,7 @@ namespace torii {
     log_->debug("StatusStream waiting finish, hash: {}", request_hash->hex());
 
     if (not *finished) {
+      resp = cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
       if (not resp) {
         log_->warn("StatusStream request processing timeout, hash: {}",
                    request_hash->hex());
@@ -229,21 +230,11 @@ namespace torii {
         /// status can be in the cache if it was finalized before we subscribed
         if (not *finished) {
           log_->debug("Transaction {} still not finished", request_hash->hex());
-
-          auto cache_second_check =
+          resp =
               cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
           log_->debug("Status of tx {} in cache: {}",
                       request_hash->hex(),
-                      cache_second_check->tx_status());
-
-          /// final status means the case from a comment above
-          /// if it's not - let's ignore it for now
-          if (isFinalStatus(cache_second_check->tx_status())) {
-            log_->warn("Transaction {} was finalized before subscription",
-                       request_hash->hex());
-            response_writer.WriteLast(*cache_second_check,
-                                      grpc::WriteOptions());
-          }
+                      resp->tx_status());
         }
       }
     } else {
