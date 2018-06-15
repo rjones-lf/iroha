@@ -707,7 +707,7 @@ namespace iroha {
       return false;
     }
 
-    shared_model::interface::RolePermissionSet account_permissions;
+    shared_model::interface::RolePermissionSet account_permissions{};
     for (const auto &role : *account_roles) {
       auto permissions = queries.getRolePermissions(role);
       if (not permissions)
