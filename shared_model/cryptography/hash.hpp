@@ -40,6 +40,8 @@ namespace shared_model {
 
       explicit Hash(const std::string &hash);
 
+      explicit Hash(const Blob &blob);
+
       std::string toString() const override;
     };
   }  // namespace crypto
