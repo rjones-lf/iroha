@@ -61,6 +61,11 @@ namespace std {
 %rename(bset_xor) shared_model::interface::PermissionSet::operator^=;
 %ignore shared_model::interface::PermissionSet::operator[];
 
+#if defined(SWIGJAVA) || defined(SWIGJAVASCRIPT)
+%rename(equal) shared_model::interface::PermissionSet::operator==;
+%rename(not_equal) shared_model::interface::PermissionSet::operator!=;
+#endif
+
 %extend shared_model::interface::PermissionSet {
   PermissionSet(const std::vector<int> &perms) {
     shared_model::interface::PermissionSet<Perm> *set = new shared_model::interface::PermissionSet<Perm>;
