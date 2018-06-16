@@ -88,7 +88,9 @@ class BlockLoaderTest : public testing::Test {
                shared_model::validation::DefaultBlockValidator,
                shared_model::proto::Block>()
         .height(1)
-        .prevHash(Hash(std::string(32, '0')))
+        .prevHash(Hash(std::string(
+            shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength,
+            '0')))
         .createdTime(iroha::time::now());
   }
 

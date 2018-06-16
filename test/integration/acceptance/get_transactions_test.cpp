@@ -186,7 +186,9 @@ TEST_F(GetTransactions, NonexistentHash) {
       .sendTx(makeUserWithPerms())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(crypto::Hash(std::string(32, '0'))), check)
+      .sendQuery(makeQuery(crypto::Hash(std::string(
+                     crypto::DefaultCryptoAlgorithmType::kHashLength, '0'))),
+                 check)
       .done();
 }
 

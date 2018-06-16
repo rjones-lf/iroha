@@ -182,9 +182,13 @@ class CommandValidateExecuteTest : public ::testing::Test {
   const std::string kMasterRole = "master";
   const std::vector<std::string> admin_roles = {kAdminRole};
   const shared_model::interface::types::PubkeyType kPubKey1 =
-      shared_model::interface::types::PubkeyType(std::string(32, '1'));
+      shared_model::interface::types::PubkeyType(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength,
+          '1'));
   const shared_model::interface::types::PubkeyType kPubKey2 =
-      shared_model::interface::types::PubkeyType(std::string(32, '2'));
+      shared_model::interface::types::PubkeyType(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength,
+          '2'));
 
   std::vector<std::string> role_permissions;
   std::shared_ptr<shared_model::interface::Account> creator, account;
@@ -1354,8 +1358,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
       .WillOnce(Return(boost::none));
 
-  EXPECT_CALL(*wsv_query,
-              getAccountAsset(transfer_asset->srcAccountId(), _))
+  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->srcAccountId(), _))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))

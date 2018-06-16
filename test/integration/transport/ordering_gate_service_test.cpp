@@ -101,11 +101,14 @@ class OrderingGateServiceTest : public ::testing::Test {
     ASSERT_TRUE(gate_server);
 
     // setup peer
-    peer = clone(shared_model::proto::PeerBuilder()
-                     .address(kAddress + ":" + std::to_string(gate_port))
-                     .pubkey(shared_model::interface::types::PubkeyType(
-                         std::string(32, '0')))
-                     .build());
+    peer = clone(
+        shared_model::proto::PeerBuilder()
+            .address(kAddress + ":" + std::to_string(gate_port))
+            .pubkey(shared_model::interface::types::PubkeyType(
+                std::string(shared_model::crypto::DefaultCryptoAlgorithmType::
+                                kPublicKeyLength,
+                            '0')))
+            .build());
   }
 
   void TearDown() override {
