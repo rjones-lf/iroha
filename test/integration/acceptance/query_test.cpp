@@ -63,12 +63,14 @@ TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
     });
   };
 
-  IntegrationTestFramework itf(2);
+  IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(dummy_tx)
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); });
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 
   const auto num_queries = 5;
   const auto hash = dummy_tx.hash();
