@@ -74,7 +74,7 @@ DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
 DEFINE_validator(keypair_name, &validate_keypair_name);
 
 /**
- * Creating boolean flag to overwrite ledger data if existing
+ * Creating boolean flag for overwriting already existing block storage
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
