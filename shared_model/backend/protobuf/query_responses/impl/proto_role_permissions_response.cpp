@@ -22,7 +22,9 @@ namespace shared_model {
                 rolePermissionsResponse_.permissions(),
                 interface::RolePermissionSet{},
                 [](auto &&permissions, const auto &permission) {
-                  permissions.set(interface::permissions::fromOldR(permission));
+                  permissions.set(permissions::fromTransport(
+                      static_cast<iroha::protocol::RolePermission>(
+                          permission)));
                   return std::forward<decltype(permissions)>(permissions);
                 });
           }} {}

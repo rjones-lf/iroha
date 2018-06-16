@@ -176,20 +176,9 @@ namespace shared_model {
           for (size_t i = 0; i < role_permissions.size(); ++i) {
             auto perm = static_cast<interface::permissions::Role>(i);
             if (role_permissions.test(perm)) {
-              // TODO(@l4l) 05/06/18 IR-1393
-              // replace with toTransport after fixing RolePermissionResponse
-              query_response->add_permissions(permissions::toString(perm));
+              query_response->add_permissions(permissions::toTransport(perm));
             }
           }
-
-          // TODO(@l4l) 05/06/18 IR-1393
-          // uncomment after fixing RolePermissionResponse
-          // for (size_t i = 0; i < role_permissions.size(); ++i) {
-          //   auto perm = static_cast<interface::permissions::Role>(i);
-          //   if (role_permissions[perm]) {
-          //     query_response->add_permissions(permissions::toTransport(perm));
-          //   }
-          // }
         });
       }
 

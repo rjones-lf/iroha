@@ -300,7 +300,7 @@ namespace iroha {
           const model::RolePermissionsResponse &response) const {
         protocol::RolePermissionsResponse res;
         for (auto perm : response.role_permissions) {
-          res.add_permissions(perm);
+          res.add_permissions(iroha::protocol::RolePermission(perm));
         }
         return res;
       }
