@@ -53,7 +53,7 @@ class QueryAcceptanceTest : public AcceptanceFixture {
  */
 TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
   auto dummy_tx = dummyTx();
-  auto check = [&dummy_tx](auto &status) {
+  auto check = [dummy_tx = dummy_tx](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp = boost::apply_visitor(
           framework::SpecifiedVisitor<interface::TransactionsResponse>(),
@@ -71,10 +71,11 @@ TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); });
 
   const auto num_queries = 5;
+  const auto hash = dummy_tx.hash();
 
   auto send_query = [&] {
     for (int i = 0; i < num_queries; ++i) {
-      itf.sendQuery(makeQuery(dummy_tx.hash()), check);
+      itf.sendQuery(makeQuery(hash), check);
     }
   };
 
