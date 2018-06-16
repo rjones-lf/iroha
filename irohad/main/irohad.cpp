@@ -150,15 +150,11 @@ int main(int argc, char *argv[]) {
         irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
 
     // Check if force flag to overwrite ledger is specified
-    if (ledger_not_empty) {
-        if (not FLAGS_overwrite_ledger) {
-            log->error(
-                "Block store not empty. Use '--overwrite_ledger' to force "
-                "overwrite it. Shutting down...");
-            return EXIT_FAILURE;
-        } else {
-            log->info("Overwriting existing ledger");
-        }
+    if (ledger_not_empty && not FLAGS_overwrite_ledger) {
+        log->error(
+            "Block store not empty. Use '--overwrite_ledger' to force "
+            "overwrite it. Shutting down...");
+        return EXIT_FAILURE;
     }
 
     // clear previous storage if any
