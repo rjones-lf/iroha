@@ -75,3 +75,8 @@ addtest(tx_heavy_data tx_heavy_data.cpp)
 target_link_libraries(tx_heavy_data
     acceptance_fixture
     )
+
+addtest(get_account_assets_test get_account_assets_test.cpp)
+target_link_libraries(get_account_assets_test
+    acceptance_fixture
+    )
