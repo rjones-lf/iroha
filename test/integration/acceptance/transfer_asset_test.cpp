@@ -10,6 +10,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
@@ -443,5 +444,94 @@ TEST_F(TransferAsset, InterDomain) {
           baseTx().transferAsset(kUser1Id, kUser2Id, kAsset, kDesc, kAmount)))
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .done();
+}
+
+/**
+ * @given a pair of users with all required permissions
+ *        AND asset with big precision
+ * @when asset is added and then TransferAsset is called
+ * @then txes passed commit and the state as intented
+ */
+TEST_F(TransferAsset, BigPrecision) {
+  const std::string kNewAsset = IntegrationTestFramework::kAssetName + "a";
+  const std::string kNewAssetId =
+      kNewAsset + "#" + IntegrationTestFramework::kDefaultDomain;
+  const auto precision = 5;
+  const std::string kInitial = "500";
+  const std::string kForTransfer = "1";
+  const std::string kLeft = "499";
+
+  auto check_balance = [](std::string account_id, std::string val) {
+    return [a = std::move(account_id),
+            v = val + "." + std::string(precision, '0')](auto &resp) {
+      auto &acc_ast = boost::apply_visitor(
+          framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
+          resp.get());
+      for (auto &ast : acc_ast.accountAssets()) {
+        if (ast.accountId() == a) {
+          ASSERT_EQ(v, ast.balance().toStringRepr());
+        }
+      }
+    };
+  };
+  auto make_query = [this](std::string account_id) {
+    return proto::QueryBuilder()
+        .creatorAccountId(IntegrationTestFramework::kAdminId)
+        .createdTime(getUniqueTime())
+        .getAccountAssets(account_id)
+        .queryCounter(1)
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  };
+
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms(kUser1, kUser1Keypair, kPerms, kRole1))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(makeUserWithPerms(kUser2, kUser2Keypair, kPerms, kRole2))
+      .skipProposal()
+      .skipBlock()
+      .sendTx(proto::TransactionBuilder()
+                  .creatorAccountId(
+                      integration_framework::IntegrationTestFramework::kAdminId)
+                  .createdTime(getUniqueTime())
+                  .quorum(1)
+                  .createAsset(kNewAsset,
+                               IntegrationTestFramework::kDefaultDomain,
+                               precision)
+                  .build()
+                  .signAndAddSignature(kAdminKeypair)
+                  .finish())
+      .skipProposal()
+      .checkBlock([](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1) << "Cannot create asset";
+      })
+      .sendTx(proto::TransactionBuilder()
+                  .creatorAccountId(kUser1Id)
+                  .createdTime(getUniqueTime())
+                  .quorum(1)
+                  .addAssetQuantity(kUser1Id, kNewAssetId, kInitial)
+                  .build()
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish())
+      .checkBlock([](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1) << "Cannot add assets";
+      })
+      .sendTx(proto::TransactionBuilder()
+                  .creatorAccountId(kUser1Id)
+                  .createdTime(getUniqueTime())
+                  .quorum(1)
+                  .transferAsset(
+                      kUser1Id, kUser2Id, kNewAssetId, kDesc, kForTransfer)
+                  .build()
+                  .signAndAddSignature(kUser1Keypair)
+                  .finish())
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendQuery(make_query(kUser1Id), check_balance(kUser1Id, kLeft))
+      .sendQuery(make_query(kUser2Id), check_balance(kUser2Id, kForTransfer))
       .done();
 }
