@@ -436,54 +436,54 @@ namespace iroha {
                 .balance(*new_src_balance)
                 .build();
           };
-    return src_account_asset_new.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::AccountAsset>>
-                &src_account_asset_new_val) -> ExecutionResult {
-          expected::PolymorphicResult<shared_model::interface::AccountAsset,
-                                      std::string>
-              dest_account_asset_new;
-          if (not dest_account_asset) {
-            // This assert is new for this account - create new AccountAsset
-            dest_account_asset_new =
-                account_asset_builder_.assetId(command.assetId())
-                    .accountId(command.destAccountId())
-                    .balance(command.amount())
-                    .build();
 
-          } else {
-            dest_account_asset_new =
-                (dest_account_asset.value()->balance() + command.amount()) |
-                [this, &command](const auto &new_dest_balance) {
-                  return account_asset_builder_.assetId(command.assetId())
-                      .accountId(command.destAccountId())
-                      .balance(*new_dest_balance)
-                      .build();
-                };
-          }
-          return dest_account_asset_new.match(
-              [&](const expected::Value<
-                  std::shared_ptr<shared_model::interface::AccountAsset>>
-                      &dest_account_asset_new_val) -> ExecutionResult {
-                auto result = commands->upsertAccountAsset(
-                                  *dest_account_asset_new_val.value)
-                    | [&] {
-                        return commands->upsertAccountAsset(
-                            *src_account_asset_new_val.value);
-                      };
-                return makeExecutionResult(result, command_name);
-              },
-              [&command_name](const auto &error) -> ExecutionResult {
-                return makeExecutionError(
-                    "account asset builder failed. reason " + *error.error,
-                    command_name);
-              });
-        },
-        [&command_name](const auto &error) -> ExecutionResult {
-          return makeExecutionError(
-              "account asset builder failed. reason " + *error.error,
-              command_name);
-        });
+    auto dest_account_asset_new = command_amount | [&](const auto &amount) {
+      const auto kZero = boost::get<
+          expected::Value<std::shared_ptr<shared_model::interface::Amount>>>(
+          amount_builder_.precision(asset.value()->precision())
+              .intValue(0)
+              .build());
+      return ((dest_account_asset | [](const auto &ast)
+                   -> boost::optional<const shared_model::interface::Amount &> {
+                return {ast->balance()};
+              })
+                  .get_value_or(*kZero.value)
+              + command.amount())
+          | [this, &command](const auto &new_dest_balance) {
+              return account_asset_builder_.assetId(command.assetId())
+                  .accountId(command.destAccountId())
+                  .balance(*new_dest_balance)
+                  .build();
+            };
+    };
+
+    auto map_error = [&command_name](auto t) {
+      return expected::map_error<ExecutionError>(
+          t, [&command_name](const auto &error) -> ExecutionError {
+            return {"account asset builder failed. reason " + *error,
+                    command_name};
+          });
+    };
+
+    return (map_error(src_account_asset_new) |
+                [&](std::shared_ptr<shared_model::interface::AccountAsset>
+                        src_amount) -> ExecutionResult {
+             return map_error(dest_account_asset_new) |
+                        [&](std::shared_ptr<
+                            shared_model::interface::AccountAsset> dst_amount)
+                        -> ExecutionResult {
+               return makeExecutionResult(
+                   commands->upsertAccountAsset(*src_amount) |
+                       [&] {
+                         return commands->upsertAccountAsset(*dst_amount);
+                       },
+                   command_name);
+             };
+           })
+        .match([](auto) -> ExecutionResult { return {}; },
+               [](expected::Error<ExecutionError> err) -> ExecutionResult {
+                 return expected::makeError(err.error);
+               });
   }
 
   // ----------------------| Validator |----------------------
