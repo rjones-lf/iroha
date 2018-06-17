@@ -58,6 +58,7 @@ add_library(shared_model_interfaces
     queries/impl/blocks_query.cpp
     queries/impl/query_payload_meta.cpp
     iroha_internal/block_variant.cpp
+    iroha_internal/transaction_sequence.cpp
     )
 
 target_link_libraries(shared_model_interfaces
