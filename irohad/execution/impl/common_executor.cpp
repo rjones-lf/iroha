@@ -48,9 +48,6 @@ namespace iroha {
       const std::string &account_id,
       ametsuchi::WsvQuery &queries,
       shared_model::interface::permissions::Role permission) {
-    if (permission >= shared_model::interface::permissions::Role::COUNT) {
-      return false;
-    }
     auto accountRoles = queries.getAccountRoles(account_id);
     if (not accountRoles)
       return false;
