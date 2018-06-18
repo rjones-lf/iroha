@@ -334,8 +334,6 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       self.base().getTransactions(iroha.HashVector()).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_invalid_hash_sizes(self):
     hashes = [
       "",
@@ -349,8 +347,6 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getTransactions(hv).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_one_valid_and_one_invalid_hash_1(self):
     hv = iroha.HashVector()
     hv.append(iroha.Hash("1" * 32))
@@ -359,8 +355,6 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       self.base().getTransactions(hv).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_one_valid_and_one_invalid_hash_2(self):
     hv = iroha.HashVector()
     hv.append(iroha.Hash("1"))

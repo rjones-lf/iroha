@@ -154,6 +154,9 @@ namespace shared_model {
       void validateHeight(ReasonsGroupType &reason,
                           const interface::types::HeightType &height) const;
 
+      void validateHash(ReasonsGroupType &reason,
+                        const crypto::Hash &hash) const;
+
      private:
       const static std::string account_name_pattern_;
       const static std::string asset_name_pattern_;
@@ -187,6 +190,7 @@ namespace shared_model {
       // size of key
       static const size_t public_key_size;
       static const size_t signature_size;
+      static const size_t hash_size;
       static const size_t value_size;
       static const size_t description_size;
     };

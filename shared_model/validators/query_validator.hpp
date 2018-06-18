@@ -85,6 +85,10 @@ namespace shared_model {
           reason.second.push_back("tx_hashes cannot be empty");
         }
 
+        for (const auto &h : hashes) {
+          validator_.validateHash(reason, h);
+        }
+
         return reason;
       }
 

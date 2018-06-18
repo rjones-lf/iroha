@@ -54,6 +54,8 @@ namespace shared_model {
         crypto::DefaultCryptoAlgorithmType::kPublicKeyLength;
     const size_t FieldValidator::signature_size =
         crypto::DefaultCryptoAlgorithmType::kSignatureLength;
+    const size_t FieldValidator::hash_size =
+        crypto::DefaultCryptoAlgorithmType::kHashLength;
     /// limit for the set account detail size in bytes
     const size_t FieldValidator::value_size = 4 * 1024 * 1024;
     const size_t FieldValidator::description_size = 64;
@@ -375,6 +377,14 @@ namespace shared_model {
             (boost::format("Height should be > 0, passed value: %d") % height)
                 .str();
         reason.second.push_back(message);
+      }
+    }
+
+    void FieldValidator::validateHash(ReasonsGroupType &reason,
+                                      const crypto::Hash &hash) const {
+      if (hash.size() != hash_size) {
+        reason.second.push_back(
+            (boost::format("Hash has invalid size: %d") % hash.size()).str());
       }
     }
   }  // namespace validation
