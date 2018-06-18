@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/bash -e
 cd "$(dirname "$0")"
 
 # folder with bindings and native library
-mkdir dist
+mkdir dist || true
 
 # build native library
 ./prepare.sh
