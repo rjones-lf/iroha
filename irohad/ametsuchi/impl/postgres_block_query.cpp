@@ -26,7 +26,7 @@ namespace iroha {
   namespace ametsuchi {
 
     PostgresBlockQuery::PostgresBlockQuery(pqxx::nontransaction &transaction,
-                                           FlatFile &file_store)
+                                           KeyValueStorage &file_store)
         : block_store_(file_store),
           transaction_(transaction),
           log_(logger::log("PostgresBlockIndex")),
@@ -35,7 +35,7 @@ namespace iroha {
     PostgresBlockQuery::PostgresBlockQuery(
         std::unique_ptr<pqxx::lazyconnection> connection,
         std::unique_ptr<pqxx::nontransaction> transaction,
-        FlatFile &file_store)
+        KeyValueStorage &file_store)
         : connection_ptr_(std::move(connection)),
           transaction_ptr_(std::move(transaction)),
           block_store_(file_store),
