@@ -30,10 +30,7 @@ namespace shared_model {
     Hash::Hash(const Blob &blob) : Blob(blob) {}
 
     Hash Hash::fromHexString(const std::string &hex) {
-      using iroha::operator|;
-      Hash h("");
-      iroha::hexstringToBytestring(hex) | [&](auto &&s) { h = Hash(s); };
-      return h;
+      return Hash(Blob::fromHexString(hex));
     }
 
     std::string Hash::toString() const {
