@@ -443,18 +443,19 @@ namespace iroha {
           amount_builder_.precision(asset.value()->precision())
               .intValue(0)
               .build());
-      return ((dest_account_asset | [](const auto &ast)
-                   -> boost::optional<const shared_model::interface::Amount &> {
-                return {ast->balance()};
-              })
-                  .get_value_or(*kZero.value)
-              + command.amount())
-          | [this, &command](const auto &new_dest_balance) {
-              return account_asset_builder_.assetId(command.assetId())
-                  .accountId(command.destAccountId())
-                  .balance(*new_dest_balance)
-                  .build();
-            };
+      auto new_amount =
+          (dest_account_asset | [](const auto &ast)
+               -> boost::optional<const shared_model::interface::Amount &> {
+            return {ast->balance()};
+          })
+              .get_value_or(*kZero.value)
+          + *amount;
+      return new_amount | [this, &command](const auto &new_dest_balance) {
+        return account_asset_builder_.assetId(command.assetId())
+            .accountId(command.destAccountId())
+            .balance(*new_dest_balance)
+            .build();
+      };
     };
 
     auto map_error = [&command_name](auto t) {
