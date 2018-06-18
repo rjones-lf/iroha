@@ -330,8 +330,6 @@ class BuilderTest(unittest.TestCase):
     query = self.builder.getTransactions(hv).build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
-  # TODO igor-egorov, 11.05.2018, IR-1322
-  @unittest.skip("IR-1322")
   def test_get_transactions_with_empty_vector(self):
     with self.assertRaises(ValueError):
       self.base().getTransactions(iroha.HashVector()).build()

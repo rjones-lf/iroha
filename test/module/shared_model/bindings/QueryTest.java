@@ -471,8 +471,6 @@ public class QueryTest {
 
     // The following four tests are disabled because there is a need to
     // clarify desired behavior.
-    // TODO igor-egorov, 08.05.2018, IR-1322
-    @Disabled
     @Test
     void getTransactionsWithEmptyVector() {
         ModelQueryBuilder builder = base().getTransactions(new HashVector());
