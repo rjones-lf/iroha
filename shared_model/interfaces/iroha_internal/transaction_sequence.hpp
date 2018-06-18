@@ -31,6 +31,12 @@ namespace shared_model {
       createTransactionSequence(
           const types::TransactionForwardCollectionType &transactions);
 
+      /**
+       * Get transactions collection
+       * @return transactions collection
+       */
+      types::TransactionForwardCollectionType transactions();
+
      private:
       explicit TransactionSequence(
           const types::TransactionForwardCollectionType &transactions);

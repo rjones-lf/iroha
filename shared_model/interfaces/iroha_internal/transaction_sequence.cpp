@@ -26,6 +26,11 @@ namespace shared_model {
         validation::TransactionSequenceValidator>(
         const types::TransactionForwardCollectionType &transactions);
 
+    types::TransactionForwardCollectionType
+    TransactionSequence::transactions() {
+      return transactions_;
+    }
+
     TransactionSequence::TransactionSequence(
         const types::TransactionForwardCollectionType &transactions)
         : transactions_(transactions) {}
