@@ -6,25 +6,37 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_HPP
 #define IROHA_TRANSACTION_SEQUENCE_HPP
 
-#include <boost/iterator/iterator_facade.hpp>
-#include <boost/range/any_range.hpp>
-#include <set>
-#include "interfaces/transaction.hpp"
+#include "common/result.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    struct TransactionComparator {
-      bool operator()(const std::shared_ptr<Transaction> &lhs,
-                      const std::shared_ptr<Transaction> &rhs) const;
-    };
-
     /**
-     * Transaction sequence is the collection of transactions, where
-     * transactions from the same batch are placed contiguously
+     * Transaction sequence is the collection of transactions where:
+     * 1. All transactions from the same batch are place contiguously
+     * 2. All batches are full (no transaction from the batch can be outside
+     * sequence)
      */
-    using TransactionSequence =
-        std::set<std::shared_ptr<Transaction>, TransactionComparator>;
+    class TransactionSequence {
+     public:
+      /**
+       * Creator of transaction sequence
+       * @tparam Validator checks validation logic
+       * @param transactions collection of transactions
+       * @return valid transaction sequence
+       */
+      template <typename Validator>
+      iroha::expected::Result<TransactionSequence, std::string>
+      createTransactionSequence(
+          const types::TransactionsCollectionType &transactions);
+
+     private:
+      explicit TransactionSequence(
+          const types::TransactionsCollectionType &transactions);
+
+      boost::any_range<Transaction, boost::forward_traversal_tag> transactions_;
+    };
 
   }  // namespace interface
 }  // namespace shared_model
