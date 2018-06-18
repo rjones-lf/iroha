@@ -23,8 +23,8 @@ namespace shared_model {
        * @param transactions collection of transactions
        * @return Answer containing errors if any
        */
-      Answer validate(
-          const interface::types::TransactionsCollectionType &transactions) {
+      Answer validate(const interface::types::TransactionForwardCollectionType
+                          &transactions) {
         return Answer();
       }
     };

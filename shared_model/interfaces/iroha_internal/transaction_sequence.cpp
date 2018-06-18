@@ -9,15 +9,10 @@
 namespace shared_model {
   namespace interface {
 
-    TransactionSequence::TransactionSequence(
-        const boost::any_range<Transaction, boost::forward_traversal_tag>
-            &transactions)
-        : transactions_(transactions) {}
-
     template <typename Validator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
-        const types::TransactionsCollectionType &transactions) {
+        const types::TransactionForwardCollectionType &transactions) {
       Validator validator{};
       auto answer = validator.validate(transactions);
       if (answer.hasErrors()) {
@@ -29,7 +24,11 @@ namespace shared_model {
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence<
         validation::TransactionSequenceValidator>(
-        const types::TransactionsCollectionType &transactions);
+        const types::TransactionForwardCollectionType &transactions);
+
+    TransactionSequence::TransactionSequence(
+        const types::TransactionForwardCollectionType &transactions)
+        : transactions_(transactions) {}
 
   }  // namespace interface
 }  // namespace shared_model

@@ -29,13 +29,13 @@ namespace shared_model {
       template <typename Validator>
       iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
-          const types::TransactionsCollectionType &transactions);
+          const types::TransactionForwardCollectionType &transactions);
 
      private:
       explicit TransactionSequence(
-          const types::TransactionsCollectionType &transactions);
+          const types::TransactionForwardCollectionType &transactions);
 
-      boost::any_range<Transaction, boost::forward_traversal_tag> transactions_;
+      types::TransactionForwardCollectionType transactions_;
     };
 
   }  // namespace interface
