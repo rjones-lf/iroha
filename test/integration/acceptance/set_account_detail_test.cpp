@@ -8,15 +8,14 @@
 #include "builders/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
-#include "validators/permissions.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
 
 class SetAccountDetail : public AcceptanceFixture {
  public:
-  auto makeUserWithPerms(const std::vector<std::string> &perms = {
-                             permissions::can_add_peer}) {
+  auto makeUserWithPerms(const interface::RolePermissionSet &perms = {
+                             interface::permissions::Role::kAddPeer}) {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
@@ -30,8 +29,8 @@ class SetAccountDetail : public AcceptanceFixture {
     return baseTx(account_id, kKey, kValue);
   }
 
-  auto makeSecondUser(const std::vector<std::string> &perms = {
-                          permissions::can_add_peer}) {
+  auto makeSecondUser(const interface::RolePermissionSet &perms = {
+                          interface::permissions::Role::kAddPeer}) {
     static const std::string kRole2 = "roletwo";
     return AcceptanceFixture::createUserWithPerms(
                kUser2, kUser2Keypair.publicKey(), kRole2, perms)
@@ -101,7 +100,7 @@ TEST_F(SetAccountDetail, WithPerm) {
   auto second_user_tx = makeSecondUser();
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({permissions::can_set_detail}))
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kSetDetail}))
       .skipProposal()
       .skipBlock()
       .sendTx(second_user_tx)
@@ -133,7 +132,7 @@ TEST_F(SetAccountDetail, DISABLED_WithGrantablePerm) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms(
-          {permissions::can_grant + permissions::can_set_my_account_detail}))
+          {interface::permissions::Role::kSetMyAccountDetail}))
       .skipProposal()
       .skipBlock()
       .sendTx(second_user_tx)
@@ -143,7 +142,7 @@ TEST_F(SetAccountDetail, DISABLED_WithGrantablePerm) {
             << "Cannot create second user account";
       })
       .sendTx(complete(AcceptanceFixture::baseTx().grantPermission(
-          kUser2Id, shared_model::permissions::can_set_my_account_detail)))
+          kUser2Id, interface::permissions::Grantable::kSetMyAccountDetail)))
       .skipProposal()
       .checkBlock([](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1) << "Cannot grant permission";
