@@ -182,7 +182,8 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string(32, '9'));
+      invalid_tx_hash_2(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
   wrapper.subscribe(
