@@ -54,6 +54,8 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 |               | used by peer to sign the blocks                                 |
 +---------------+-----------------------------------------------------------------+
 
+.. Attention:: Specifying a new genesis block using `--genesis_block` with blocks already present in ledger requires `--overwrite_ledger` flag to be set. The daemon will fail otherwise.
+
 An example of shell command, running Iroha daemon is 
 
 .. code-block:: shell
