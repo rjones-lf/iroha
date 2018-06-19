@@ -48,10 +48,16 @@ namespace shared_model {
     }
 
     Keypair CryptoProviderEd25519Sha3::generateKeypair(const Seed &seed) {
-      auto keypair =
-          iroha::create_keypair(iroha::blob_t<32>::from_string(toBinaryString(seed)));
+      auto keypair = iroha::create_keypair(
+          iroha::blob_t<32>::from_string(toBinaryString(seed)));
       return Keypair(PublicKey(keypair.pubkey.to_string()),
                      PrivateKey(keypair.privkey.to_string()));
     }
+
+    const size_t CryptoProviderEd25519Sha3::kHashLength = 256 / 8;
+    const size_t CryptoProviderEd25519Sha3::kPublicKeyLength = 256 / 8;
+    const size_t CryptoProviderEd25519Sha3::kPrivateKeyLength = 512 / 8;
+    const size_t CryptoProviderEd25519Sha3::kSignatureLength = 512 / 8;
+    const size_t CryptoProviderEd25519Sha3::kSeedLength = 256 / 8;
   }  // namespace crypto
 }  // namespace shared_model

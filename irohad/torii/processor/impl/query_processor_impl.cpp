@@ -82,6 +82,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::Query> qry) {
       if (not checkSignatories(*qry)) {
         auto response = buildStatefulError(qry->hash());
+        std::lock_guard<std::mutex> lock(notifier_mutex_);
         subject_.get_subscriber().on_next(response);
         return;
       }

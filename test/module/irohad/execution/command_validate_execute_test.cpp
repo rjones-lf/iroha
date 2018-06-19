@@ -182,9 +182,13 @@ class CommandValidateExecuteTest : public ::testing::Test {
   const std::string kMasterRole = "master";
   const std::vector<std::string> admin_roles = {kAdminRole};
   const shared_model::interface::types::PubkeyType kPubKey1 =
-      shared_model::interface::types::PubkeyType(std::string(32, '1'));
+      shared_model::interface::types::PubkeyType(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength,
+          '1'));
   const shared_model::interface::types::PubkeyType kPubKey2 =
-      shared_model::interface::types::PubkeyType(std::string(32, '2'));
+      shared_model::interface::types::PubkeyType(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength,
+          '2'));
 
   std::vector<std::string> role_permissions;
   std::shared_ptr<shared_model::interface::Account> creator, account;
@@ -1354,8 +1358,7 @@ TEST_F(TransferAssetTest, ValidWhenCreatorHasPermission) {
   EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->destAccountId(), _))
       .WillOnce(Return(boost::none));
 
-  EXPECT_CALL(*wsv_query,
-              getAccountAsset(transfer_asset->srcAccountId(), _))
+  EXPECT_CALL(*wsv_query, getAccountAsset(transfer_asset->srcAccountId(), _))
       .Times(2)
       .WillRepeatedly(Return(src_wallet));
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
@@ -2129,17 +2132,17 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
         TestTransactionBuilder().setAccountDetail(kAdminId, kKey, kValue));
-    set_aacount_detail =
+    set_account_detail =
         getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
-    role_permissions = {toString(Role::kSetQuorum)};
+    role_permissions = {toString(Role::kSetDetail)};
   }
 
   const std::string kKey = "key";
   const std::string kValue = "val";
   const std::string kNeededPermission = toString(Role::kSetMyAccountDetail);
 
-  std::shared_ptr<shared_model::interface::SetAccountDetail> set_aacount_detail;
+  std::shared_ptr<shared_model::interface::SetAccountDetail> set_account_detail;
 };
 
 /**
@@ -2149,10 +2152,10 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
  */
 TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
   EXPECT_CALL(*wsv_command,
-              setAccountKV(set_aacount_detail->accountId(),
+              setAccountKV(set_account_detail->accountId(),
                            creator->accountId(),
-                           set_aacount_detail->key(),
-                           set_aacount_detail->value()))
+                           set_account_detail->key(),
+                           set_account_detail->value()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -2162,16 +2165,18 @@ TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
  * @when creator is setting details to their account
  * @then execute fails
  */
-TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
+TEST_F(SetAccountDetailTest, InvalidWhenOtherCreator) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
       TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
-  set_aacount_detail =
+  set_account_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(std::vector<std::string>{}));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, set_aacount_detail->accountId(), kNeededPermission))
+                  kAdminId, set_account_detail->accountId(), kNeededPermission))
       .WillOnce(Return(false));
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -2181,22 +2186,50 @@ TEST_F(SetAccountDetailTest, InValidWhenOtherCreator) {
  * @when creator is setting details to their account
  * @then successfully execute the command
  */
-TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
+TEST_F(SetAccountDetailTest, ValidWhenHasRolePermission) {
   // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
   command = buildCommand(
       TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
-  set_aacount_detail =
+  set_account_detail =
       getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
+      .WillOnce(Return(role_permissions));
+
+  EXPECT_CALL(*wsv_command,
+              setAccountKV(set_account_detail->accountId(),
+                           creator->accountId(),
+                           set_account_detail->key(),
+                           set_account_detail->value()))
+      .WillOnce(Return(WsvCommandResult()));
+  ASSERT_TRUE(val(validateAndExecute(command)));
+}
+
+/**
+ * @given SetAccountDetail
+ * @when creator is setting details to their account
+ * @then successfully execute the command
+ */
+TEST_F(SetAccountDetailTest, ValidWhenHasGrantblePermission) {
+  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
+  command = buildCommand(
+      TestTransactionBuilder().setAccountDetail(kAccountId, kKey, kValue));
+  set_account_detail =
+      getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
+      .WillOnce(Return(std::vector<std::string>{}));
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(
-                  kAdminId, set_aacount_detail->accountId(), kNeededPermission))
+                  kAdminId, set_account_detail->accountId(), kNeededPermission))
       .WillOnce(Return(true));
   EXPECT_CALL(*wsv_command,
-              setAccountKV(set_aacount_detail->accountId(),
+              setAccountKV(set_account_detail->accountId(),
                            creator->accountId(),
-                           set_aacount_detail->key(),
-                           set_aacount_detail->value()))
+                           set_account_detail->key(),
+                           set_account_detail->value()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -2208,10 +2241,10 @@ TEST_F(SetAccountDetailTest, ValidWhenHasPermissions) {
  */
 TEST_F(SetAccountDetailTest, InvalidWhenSetAccountKVFails) {
   EXPECT_CALL(*wsv_command,
-              setAccountKV(set_aacount_detail->accountId(),
+              setAccountKV(set_account_detail->accountId(),
                            creator->accountId(),
-                           set_aacount_detail->key(),
-                           set_aacount_detail->value()))
+                           set_account_detail->key(),
+                           set_account_detail->value()))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_TRUE(err(execute(command)));
 }

@@ -228,8 +228,11 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
           .build();
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
-  tx.addSignature(signedBlob,
-                  shared_model::crypto::PublicKey(std::string(32, 'a')));
+  tx.addSignature(
+      signedBlob,
+      shared_model::crypto::PublicKey(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength,
+          'a')));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessInvalid)

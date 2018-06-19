@@ -72,6 +72,12 @@ namespace shared_model {
        * @return generated keypair
        */
       static Keypair generateKeypair(const Seed &seed);
+
+      static const size_t kHashLength;
+      static const size_t kPublicKeyLength;
+      static const size_t kPrivateKeyLength;
+      static const size_t kSignatureLength;
+      static const size_t kSeedLength;
     };
   }  // namespace crypto
 }  // namespace shared_model
