@@ -458,7 +458,7 @@ namespace iroha {
       };
     };
 
-    auto map_error = [&command_name](auto t) {
+    auto map_error = [&command_name](const auto &t) {
       return expected::map_error<ExecutionError>(
           t, [&command_name](const auto &error) -> ExecutionError {
             return {"account asset builder failed. reason " + *error,
@@ -469,22 +469,15 @@ namespace iroha {
     return (map_error(src_account_asset_new) |
                 [&](std::shared_ptr<shared_model::interface::AccountAsset>
                         src_amount) -> ExecutionResult {
-             return map_error(dest_account_asset_new) |
-                        [&](std::shared_ptr<
-                            shared_model::interface::AccountAsset> dst_amount)
-                        -> ExecutionResult {
-               return makeExecutionResult(
-                   commands->upsertAccountAsset(*src_amount) |
-                       [&] {
-                         return commands->upsertAccountAsset(*dst_amount);
-                       },
-                   command_name);
-             };
-           })
-        .match([](auto) -> ExecutionResult { return {}; },
-               [](expected::Error<ExecutionError> err) -> ExecutionResult {
-                 return expected::makeError(err.error);
-               });
+      return map_error(dest_account_asset_new) |
+                 [&](std::shared_ptr<shared_model::interface::AccountAsset>
+                         dst_amount) -> ExecutionResult {
+        return makeExecutionResult(
+            commands->upsertAccountAsset(*src_amount) |
+                [&] { return commands->upsertAccountAsset(*dst_amount); },
+            command_name);
+      };
+    });
   }
 
   // ----------------------| Validator |----------------------
