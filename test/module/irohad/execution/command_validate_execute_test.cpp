@@ -5,7 +5,6 @@
 
 #include <limits>
 
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "builders/default_builders.hpp"
 #include "execution/command_executor.hpp"
@@ -211,7 +210,7 @@ class AddAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kAddAssetQty);
+    role_permissions = {Role::kAddAssetQty};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().addAssetQuantity(
@@ -373,7 +372,7 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kSubtractAssetQty);
+    role_permissions = {Role::kSubtractAssetQty};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
@@ -528,7 +527,7 @@ class AddSignatoryTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kAddSignatory);
+    role_permissions = {Role::kAddSignatory};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -650,7 +649,7 @@ class CreateAccountTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kCreateAccount);
+    role_permissions = {Role::kCreateAccount};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -727,7 +726,7 @@ class CreateAssetTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kCreateAsset);
+    role_permissions = {Role::kCreateAsset};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -785,7 +784,7 @@ class CreateDomainTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kCreateDomain);
+    role_permissions = {Role::kCreateDomain};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -848,7 +847,7 @@ class RemoveSignatoryTest : public CommandValidateExecuteTest {
 
     many_pubkeys = {creator_key, account_key};
 
-    role_permissions.set(Role::kRemoveSignatory);
+    role_permissions = {Role::kRemoveSignatory};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1075,7 +1074,7 @@ class SetQuorumTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     account_pubkeys = {kPubKey1, kPubKey2};
-    role_permissions.set(Role::kSetQuorum);
+    role_permissions = {Role::kSetQuorum};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -1243,8 +1242,7 @@ class TransferAssetTest : public CommandValidateExecuteTest {
                            .balance(*balance)
                            .build());
 
-    role_permissions.set(Role::kTransfer);
-    role_permissions.set(Role::kReceive);
+    role_permissions = {Role::kTransfer, Role::kReceive};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(TestTransactionBuilder().transferAsset(
@@ -1683,7 +1681,7 @@ class AddPeerTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kAddPeer);
+    role_permissions = {Role::kAddPeer};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1738,7 +1736,7 @@ class CreateRoleTest : public CommandValidateExecuteTest {
     CommandValidateExecuteTest::SetUp();
 
     shared_model::interface::RolePermissionSet perm = {Role::kCreateRole};
-    role_permissions.set(Role::kCreateRole);
+    role_permissions = {Role::kCreateRole};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
@@ -1816,7 +1814,7 @@ class AppendRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kAppendRole);
+    role_permissions = {Role::kAppendRole};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1938,7 +1936,7 @@ class DetachRoleTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kDetachRole);
+    role_permissions = {Role::kDetachRole};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command = buildCommand(
@@ -1997,7 +1995,7 @@ class GrantPermissionTest : public CommandValidateExecuteTest {
   void SetUp() override {
     CommandValidateExecuteTest::SetUp();
 
-    role_permissions.set(permissionFor(expected_permission));
+    role_permissions = {permissionFor(expected_permission)};
 
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with
     // CommandBuilder
@@ -2131,7 +2129,7 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
     set_account_detail =
         getConcreteCommand<shared_model::interface::SetAccountDetail>(command);
 
-    role_permissions.set(Role::kSetDetail);
+    role_permissions = {Role::kSetDetail};
   }
 
   const std::string kKey = "key";

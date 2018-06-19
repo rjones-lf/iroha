@@ -19,7 +19,6 @@
 
 #include <algorithm>
 
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
 

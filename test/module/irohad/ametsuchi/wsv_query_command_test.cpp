@@ -136,7 +136,7 @@ namespace iroha {
 
       auto permissions = query->getRolePermissions(new_role);
       ASSERT_TRUE(permissions);
-      ASSERT_NE(*permissions &= role_permissions, role_permissions);
+      ASSERT_FALSE(role_permissions.isSubsetOf(*permissions));
     }
 
     class AccountTest : public WsvQueryCommandTest {

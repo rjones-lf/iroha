@@ -18,7 +18,6 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
-#include "backend/protobuf/from_old.hpp"
 #include "builders/common_objects/account_asset_builder.hpp"
 #include "builders/common_objects/amount_builder.hpp"
 #include "builders/common_objects/asset_builder.hpp"
@@ -123,7 +122,7 @@ class GetAccountTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
 
-    role_permissions.set(Role::kGetMyAccount);
+    role_permissions = {Role::kGetMyAccount};
   }
 };
 
@@ -168,8 +167,7 @@ TEST_F(GetAccountTest, AllAccountValidCase) {
                    .getAccount(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccounts);
+  role_permissions = {Role::kGetAllAccounts};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -198,8 +196,7 @@ TEST_F(GetAccountTest, DomainAccountValidCase) {
                    .getAccount(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccounts);
+  role_permissions = {Role::kGetDomainAccounts};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -262,8 +259,7 @@ TEST_F(GetAccountTest, DifferentDomainAccountInValidCase) {
                    .getAccount("test@test2")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccounts);
+  role_permissions = {Role::kGetDomainAccounts};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -291,8 +287,7 @@ TEST_F(GetAccountTest, NoAccountExist) {
   auto query =
       TestQueryBuilder().creatorAccountId(admin_id).getAccount("none").build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccounts);
+  role_permissions = {Role::kGetAllAccounts};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -345,7 +340,7 @@ class GetAccountAssetsTest : public QueryValidateExecuteTest {
             },
             [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
 
-    role_permissions.set(Role::kGetMyAccAst);
+    role_permissions = {Role::kGetMyAccAst};
   }
   std::shared_ptr<shared_model::interface::AccountAsset> accountAsset;
 };
@@ -405,8 +400,7 @@ TEST_F(GetAccountAssetsTest, AllAccountValidCase) {
             accountAsset = v.value;
           },
           [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccAst);
+  role_permissions = {Role::kGetAllAccAst};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -453,8 +447,7 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
             accountAsset = v.value;
           },
           [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccAst);
+  role_permissions = {Role::kGetDomainAccAst};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -545,8 +538,7 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
             accountAsset = v.value;
           },
           [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccAst);
+  role_permissions = {Role::kGetDomainAccAst};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -589,8 +581,7 @@ TEST_F(GetAccountAssetsTest, NoAccountExist) {
             accountAsset = v.value;
           },
           [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccAst);
+  role_permissions = {Role::kGetAllAccAst};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -614,7 +605,7 @@ class GetSignatoriesTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
     signs = {shared_model::interface::types::PubkeyType(std::string(32, '0'))};
-    role_permissions.set(Role::kGetMySignatories);
+    role_permissions = {Role::kGetMySignatories};
   }
   std::vector<shared_model::interface::types::PubkeyType> signs;
 };
@@ -658,8 +649,7 @@ TEST_F(GetSignatoriesTest, AllAccountValidCase) {
                    .getSignatories(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllSignatories);
+  role_permissions = {Role::kGetAllSignatories};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -689,8 +679,7 @@ TEST_F(GetSignatoriesTest, DomainAccountValidCase) {
                    .getSignatories(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainSignatories);
+  role_permissions = {Role::kGetDomainSignatories};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -755,8 +744,7 @@ TEST_F(GetSignatoriesTest, DifferentDomainAccountInValidCase) {
                    .getSignatories("test@test2")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainSignatories);
+  role_permissions = {Role::kGetDomainSignatories};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -787,8 +775,7 @@ TEST_F(GetSignatoriesTest, NoAccountExist) {
                    .getSignatories("none")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllSignatories);
+  role_permissions = {Role::kGetAllSignatories};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -810,7 +797,7 @@ class GetAccountTransactionsTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
-    role_permissions.set(Role::kGetMyAccTxs);
+    role_permissions = {Role::kGetMyAccTxs};
     txs_observable = getDefaultTransactions(account_id, N);
   }
 
@@ -864,8 +851,7 @@ TEST_F(GetAccountTransactionsTest, AllAccountValidCase) {
                    .getAccountTransactions(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccTxs);
+  role_permissions = {Role::kGetAllAccTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -900,8 +886,7 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
                    .getAccountTransactions(account_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccTxs);
+  role_permissions = {Role::kGetDomainAccTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -975,8 +960,7 @@ TEST_F(GetAccountTransactionsTest, DifferentDomainAccountInValidCase) {
                    .getAccountTransactions("test@test2")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccAst);
+  role_permissions = {Role::kGetDomainAccAst};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1006,8 +990,7 @@ TEST_F(GetAccountTransactionsTest, NoAccountExist) {
                    .getAccountTransactions("none")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccTxs);
+  role_permissions = {Role::kGetAllAccTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1029,7 +1012,7 @@ class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
-    role_permissions.set(Role::kGetMyAccAstTxs);
+    role_permissions = {Role::kGetMyAccAstTxs};
     txs_observable = getDefaultTransactions(account_id, N);
   }
 
@@ -1083,8 +1066,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
                    .getAccountAssetTransactions(account_id, asset_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccAstTxs);
+  role_permissions = {Role::kGetAllAccAstTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1119,8 +1101,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
                    .getAccountAssetTransactions(account_id, asset_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccAstTxs);
+  role_permissions = {Role::kGetDomainAccAstTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1194,8 +1175,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
                    .getAccountAssetTransactions("test@test2", asset_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetDomainAccAstTxs);
+  role_permissions = {Role::kGetDomainAccAstTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1225,8 +1205,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
                    .getAccountAssetTransactions("none", asset_id)
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccAstTxs);
+  role_permissions = {Role::kGetAllAccAstTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1254,8 +1233,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
                    .getAccountAssetTransactions(account_id, "none")
                    .build();
 
-  role_permissions.reset();
-  role_permissions.set(Role::kGetAllAccAstTxs);
+  role_permissions = {Role::kGetAllAccAstTxs};
 
   EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
       .WillOnce(Return(admin_roles));
@@ -1277,7 +1255,7 @@ class GetAssetInfoTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
-    role_permissions.set(Role::kReadAssets);
+    role_permissions = {Role::kReadAssets};
     asset = clone(shared_model::proto::AssetBuilder()
                       .assetId(asset_id)
                       .domainId("test")
@@ -1370,7 +1348,7 @@ class GetRolesTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
-    role_permissions.set(Role::kGetRoles);
+    role_permissions = {Role::kGetRoles};
     roles = {admin_role, "some_role"};
   }
   std::vector<std::string> roles;
@@ -1451,7 +1429,7 @@ class GetRolePermissionsTest : public QueryValidateExecuteTest {
  public:
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
-    role_permissions.set(Role::kGetRoles);
+    role_permissions = {Role::kGetRoles};
     perms.set(Role::kGetMyAccount);
     perms.set(Role::kGetMySignatories);
   }

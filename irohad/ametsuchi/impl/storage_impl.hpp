@@ -111,9 +111,6 @@ namespace iroha {
           notifier_;
 
      protected:
-      static const std::string &initQuery();
-
-     private:
       static const std::string &init_;
     };
   }  // namespace ametsuchi

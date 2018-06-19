@@ -19,7 +19,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
 
@@ -70,7 +69,7 @@ bool hasQueryPermission(const std::string &creator,
   auto grantable = permissionOf(indiv_permission_id);
   return
       // 1. Creator has grant permission from other user
-      (creator != target_account /*and grantable != Grantable::COUNT*/
+      (creator != target_account
        and wsv_query.hasAccountGrantablePermission(
                creator, target_account, grantable))
       or  // ----- Creator has role permission ---------

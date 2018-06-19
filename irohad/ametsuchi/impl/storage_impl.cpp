@@ -33,7 +33,8 @@ namespace iroha {
     const char *kPsqlBroken = "Connection to PostgreSQL broken: %s";
     const char *kTmpWsv = "TemporaryWsv";
 
-    ConnectionContext::ConnectionContext(std::unique_ptr<KeyValueStorage> block_store)
+    ConnectionContext::ConnectionContext(
+        std::unique_ptr<KeyValueStorage> block_store)
         : block_store(std::move(block_store)) {}
 
     StorageImpl::StorageImpl(std::string block_store_dir,
@@ -407,9 +408,5 @@ CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
     index text
 );
 )";
-
-    const std::string &StorageImpl::initQuery() {
-      return init_;
-    }
   }  // namespace ametsuchi
 }  // namespace iroha

@@ -122,7 +122,7 @@ TEST_F(SetAccountDetail, WithPerm) {
  * @when the first one tries to use SetAccountDetail on the second
  * @then there is no tx in proposal
  */
-TEST_F(SetAccountDetail, DISABLED_WithGrantablePerm) {
+TEST_F(SetAccountDetail, WithGrantablePerm) {
   auto second_user_tx = makeSecondUser();
   auto set_detail_cmd = baseTx(kUserId)
                             .creatorAccountId(kUser2Id)

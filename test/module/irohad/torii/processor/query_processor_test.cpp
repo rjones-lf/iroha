@@ -91,7 +91,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto role = "admin";
   roles = {role};
-  perms.set(shared_model::interface::permissions::Role::kGetMyAccount);
+  perms = {shared_model::interface::permissions::Role::kGetMyAccount};
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
@@ -144,7 +144,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
       shared_model::proto::AccountBuilder().accountId(account_id).build());
   auto role = "admin";
   roles = {role};
-  perms.set(shared_model::interface::permissions::Role::kGetMyAccount);
+  perms = {shared_model::interface::permissions::Role::kGetMyAccount};
 
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
@@ -192,9 +192,8 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
 
   auto role = "admin";
   std::vector<std::string> roles = {role};
-  shared_model::interface::RolePermissionSet perms{
-      shared_model::interface::permissions::Role::kGetMyAccount,
-      shared_model::interface::permissions::Role::kGetBlocks};
+  perms = {shared_model::interface::permissions::Role::kGetMyAccount,
+           shared_model::interface::permissions::Role::kGetBlocks};
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
@@ -252,8 +251,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
 
   auto role = "admin";
   std::vector<std::string> roles = {role};
-  shared_model::interface::RolePermissionSet perms{
-      shared_model::interface::permissions::Role::kGetMyAccount};
+  perms = {shared_model::interface::permissions::Role::kGetMyAccount};
   EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
   EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
   EXPECT_CALL(*wsv_queries, getAccountRoles(account_id))
