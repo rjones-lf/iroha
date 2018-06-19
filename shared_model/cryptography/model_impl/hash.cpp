@@ -28,6 +28,8 @@ namespace shared_model {
 
     Hash::Hash(const std::string &hash) : Blob(hash) {}
 
+    Hash::Hash(const Blob &blob) : Blob(blob) {}
+
     std::string Hash::toString() const {
       return detail::PrettyStringBuilder()
           .init("Hash")
