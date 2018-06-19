@@ -6,7 +6,6 @@
 #ifndef IROHA_BLOCK_VARIANT_HPP
 #define IROHA_BLOCK_VARIANT_HPP
 
-#include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/empty_block.hpp"
 

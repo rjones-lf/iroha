@@ -17,8 +17,6 @@
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 
-#include "common/visitor.hpp"
-
 namespace iroha {
   namespace consensus {
     namespace yac {
