@@ -12,6 +12,13 @@
 namespace shared_model {
   namespace interface {
 
+    namespace types {
+      using TransactionForwardCollectionType =
+          boost::any_range<Transaction,
+                           boost::forward_traversal_tag,
+                           const Transaction &>;
+    }
+
     /**
      * Transaction sequence is the collection of transactions where:
      * 1. All transactions from the same batch are place contiguously
