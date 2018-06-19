@@ -6,7 +6,6 @@
 #ifndef SHARED_MODEL_PROTOBUF_FROM_OLD
 #define SHARED_MODEL_PROTOBUF_FROM_OLD
 
-#include <map>
 #include <set>
 #include <string>
 #include "backend/protobuf/permissions.hpp"
@@ -29,24 +28,6 @@ namespace shared_model {
         }
         return set;
       }
-
-      static inline Grantable fromOldG(const std::string &s) {
-        iroha::protocol::GrantablePermission role;
-        if (not GrantablePermission_Parse(s, &role)) {
-          throw std::invalid_argument(s);
-        }
-        return proto::permissions::fromTransport(role);
-      }
-
-      static inline GrantablePermissionSet fromOldG(
-          const std::set<std::string> &s) {
-        GrantablePermissionSet set{};
-        for (auto &el : s) {
-          set.set(fromOldG(el));
-        }
-        return set;
-      }
-
     }  // namespace permissions
   }    // namespace interface
 }  // namespace shared_model
