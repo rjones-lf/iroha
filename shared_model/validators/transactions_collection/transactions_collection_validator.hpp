@@ -6,7 +6,7 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
 #define IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
 
-#include "interfaces/common_objects/types.hpp"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {

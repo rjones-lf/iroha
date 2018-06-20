@@ -7,7 +7,7 @@
 #define IROHA_TRANSACTION_SEQUENCE_HPP
 
 #include "common/result.hpp"
-#include "interfaces/common_objects/types.hpp"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
