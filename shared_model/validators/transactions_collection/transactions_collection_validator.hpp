@@ -13,20 +13,19 @@ namespace shared_model {
   namespace validation {
 
     /**
-     * Validator of transaction sequence, this is not fair implementation now,
-     * it always returns empty answer
+     * Validator of transaction's collection, this is not fair implementation
+     * now, it always returns empty answer
      */
-    class TransactionSequenceValidator {
+    class TransactionsCollectionValidator {
      public:
       /**
        * Validates collection of transactions
        * @param transactions collection of transactions
        * @return Answer containing errors if any
        */
-      Answer validate(const interface::types::TransactionForwardCollectionType
-                          &transactions) {
-        return Answer();
-      }
+      virtual Answer validate(
+          const interface::types::TransactionForwardCollectionType
+              &transactions) const = 0;
     };
 
   }  // namespace validation

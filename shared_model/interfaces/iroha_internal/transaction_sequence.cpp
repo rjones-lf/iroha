@@ -4,27 +4,20 @@
  */
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
-#include "validators/transaction_sequence_validator.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    template <typename Validator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
-        const types::TransactionForwardCollectionType &transactions) {
-      Validator validator{};
+        const types::TransactionForwardCollectionType &transactions,
+        const validation::TransactionsCollectionValidator &validator) {
       auto answer = validator.validate(transactions);
       if (answer.hasErrors()) {
         return iroha::expected::makeError(answer.reason());
       }
       return iroha::expected::makeValue(TransactionSequence(transactions));
     }
-
-    template iroha::expected::Result<TransactionSequence, std::string>
-    TransactionSequence::createTransactionSequence<
-        validation::TransactionSequenceValidator>(
-        const types::TransactionForwardCollectionType &transactions);
 
     types::TransactionForwardCollectionType
     TransactionSequence::transactions() {

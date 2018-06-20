@@ -8,16 +8,10 @@
 
 #include "common/result.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace interface {
-
-    namespace types {
-      using TransactionForwardCollectionType =
-          boost::any_range<Transaction,
-                           boost::forward_traversal_tag,
-                           const Transaction &>;
-    }
 
     /**
      * Transaction sequence is the collection of transactions where:
@@ -29,14 +23,15 @@ namespace shared_model {
      public:
       /**
        * Creator of transaction sequence
-       * @tparam Validator checks validation logic
        * @param transactions collection of transactions
-       * @return valid transaction sequence
+       * @param validator validator of the collections
+       * @return Result containing transaction sequence if validation successful
+       * and string message containing error otherwise
        */
-      template <typename Validator>
-      iroha::expected::Result<TransactionSequence, std::string>
+      static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
-          const types::TransactionForwardCollectionType &transactions);
+          const types::TransactionForwardCollectionType &transactions,
+          const validation::TransactionsCollectionValidator &validator);
 
       /**
        * Get transactions collection
