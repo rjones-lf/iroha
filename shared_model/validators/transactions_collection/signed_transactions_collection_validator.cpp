@@ -9,7 +9,7 @@ namespace shared_model {
   namespace validation {
 
     Answer SignedTransactionsCollectionValidator::validate(
-        const interface::types::TransactionForwardCollectionType &transactions)
+        const interface::types::TransactionsForwardCollectionType &transactions)
         const {
       return Answer();
     }

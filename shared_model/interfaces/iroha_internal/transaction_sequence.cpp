@@ -10,7 +10,7 @@ namespace shared_model {
 
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
-        const types::TransactionForwardCollectionType &transactions,
+        const types::TransactionsForwardCollectionType &transactions,
         const validation::TransactionsCollectionValidator &validator) {
       auto answer = validator.validate(transactions);
       if (answer.hasErrors()) {
@@ -19,13 +19,13 @@ namespace shared_model {
       return iroha::expected::makeValue(TransactionSequence(transactions));
     }
 
-    types::TransactionForwardCollectionType
+    types::TransactionsForwardCollectionType
     TransactionSequence::transactions() {
       return transactions_;
     }
 
     TransactionSequence::TransactionSequence(
-        const types::TransactionForwardCollectionType &transactions)
+        const types::TransactionsForwardCollectionType &transactions)
         : transactions_(transactions) {}
 
   }  // namespace interface
