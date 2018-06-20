@@ -650,9 +650,10 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
 
   std::unique_ptr<MutableStorage> mutable_storage;
   storage->createMutableStorage().match(
-      [&mutable_storage](
-          const iroha::expected::Value<std::unique_ptr<MutableStorage>>
-              &mut_storage) { mutable_storage.swap(mut_storage.value); },
+      [&mutable_storage](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                             &mut_storage) {
+        mutable_storage = std::move(mut_storage.value);
+      },
       [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
 
   mutable_storage->apply(
