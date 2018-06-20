@@ -24,7 +24,7 @@ namespace shared_model {
        * @return Answer containing errors if any
        */
       virtual Answer validate(
-          const interface::types::TransactionForwardCollectionType
+          const interface::types::TransactionsForwardCollectionType
               &transactions) const = 0;
     };
 

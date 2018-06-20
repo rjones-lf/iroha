@@ -30,20 +30,20 @@ namespace shared_model {
        */
       static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
-          const types::TransactionForwardCollectionType &transactions,
+          const types::TransactionsForwardCollectionType &transactions,
           const validation::TransactionsCollectionValidator &validator);
 
       /**
        * Get transactions collection
        * @return transactions collection
        */
-      types::TransactionForwardCollectionType transactions();
+      types::TransactionsForwardCollectionType transactions();
 
      private:
       explicit TransactionSequence(
-          const types::TransactionForwardCollectionType &transactions);
+          const types::TransactionsForwardCollectionType &transactions);
 
-      types::TransactionForwardCollectionType transactions_;
+      types::TransactionsForwardCollectionType transactions_;
     };
 
   }  // namespace interface

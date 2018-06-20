@@ -15,7 +15,7 @@ namespace shared_model {
 
     namespace types {
 
-      using TransactionForwardCollectionType =
+      using TransactionsForwardCollectionType =
           boost::any_range<Transaction,
                            boost::forward_traversal_tag,
                            const Transaction &>;

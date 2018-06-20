@@ -18,7 +18,7 @@ namespace shared_model {
     class UnsignedTransactionsCollectionValidator
         : public TransactionsCollectionValidator {
      public:
-      Answer validate(const interface::types::TransactionForwardCollectionType
+      Answer validate(const interface::types::TransactionsForwardCollectionType
                           &transactions) const override;
     };
 
