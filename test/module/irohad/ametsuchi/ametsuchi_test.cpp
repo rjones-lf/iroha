@@ -638,7 +638,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
  * @then committed block is emitted to observable
  */
 TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
-  auto log = logger::testLog("TestStorage");
   ASSERT_TRUE(storage);
 
   auto expected_block = getBlock();
@@ -649,14 +648,11 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
     ASSERT_EQ(*block, expected_block);
   });
 
-  log->info("Try commit the block");
-
   std::unique_ptr<MutableStorage> mutable_storage;
   storage->createMutableStorage().match(
       [&mutable_storage](
-          iroha::expected::Value<std::unique_ptr<MutableStorage>> &_storage) {
-        mutable_storage = std::move(_storage.value);
-      },
+          const iroha::expected::Value<std::unique_ptr<MutableStorage>>
+              &mut_storage) { mutable_storage.swap(mut_storage.value); },
       [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
 
   mutable_storage->apply(
@@ -664,8 +660,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
       [](const auto &, const auto &, const auto &) { return true; });
 
   storage->commit(std::move(mutable_storage));
-
-  log->info("Drop ledger");
 
   storage->dropStorage();
 
