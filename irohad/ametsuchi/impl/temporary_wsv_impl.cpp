@@ -60,14 +60,12 @@ namespace iroha {
         if (not validation_result) {
           return false;
         }
-        auto execution_result =
-            boost::apply_visitor(*command_executor_, command.get());
-        return execution_result.match(
-            [](expected::Value<void> &v) { return true; },
-            [this](expected::Error<CommandError> &e) {
-              log_->error(e.error.toString());
-              return false;
-            });
+        auto result = boost::apply_visitor(*command_executor_, command.get());
+        return result.match([](expected::Value<void> &v) { return true; },
+                            [this](expected::Error<ExecutionError> &e) {
+                              log_->error(e.error.toString());
+                              return false;
+                            });
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");

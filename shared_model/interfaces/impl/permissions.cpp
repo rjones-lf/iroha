@@ -37,6 +37,23 @@ namespace shared_model {
         auto p = static_cast<size_t>(perm);
         return p < static_cast<size_t>(Grantable::COUNT);
       }
+
+      std::string grantableToString(Grantable grantable) {
+        switch (grantable) {
+          case Grantable::kAddMySignatory:
+            return "kAddMySignatory";
+          case Grantable::kRemoveMySignatory:
+            return "kRemoveMySignatory";
+          case Grantable::kSetMyQuorum:
+            return "kSetMyQuorum";
+          case Grantable::kSetMyAccountDetail:
+            return "kSetMyAccountDetail";
+          case Grantable::kTransferMyAssets:
+            return "kTransferMyAssets";
+          default:;
+        }
+        return "undefined grantable";
+      }
     }  // namespace permissions
   }    // namespace interface
 }  // namespace shared_model
