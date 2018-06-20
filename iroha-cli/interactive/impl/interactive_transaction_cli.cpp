@@ -177,11 +177,13 @@ namespace iroha_cli {
         const std::string &creator_account,
         const std::string &default_peer_ip,
         int default_port,
+        uint64_t tx_counter,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : current_context_(MAIN),
           creator_(creator_account),
           default_peer_ip_(default_peer_ip),
           default_port_(default_port),
+          tx_counter_(tx_counter),
           provider_(provider) {
       log_ = logger::log("InteractiveTransactionCli");
       createCommandMenu();
@@ -193,7 +195,8 @@ namespace iroha_cli {
       current_context_ = MAIN;
       printMenu("Forming a new transactions, choose command to add: ",
                 commands_menu_);
-      // Creating a new transaction
+      // Creating a new transaction, increment local tx_counter
+      ++tx_counter_;
       while (is_parsing) {
         auto line = promptString("> ");
         if (not line) {
@@ -225,9 +228,8 @@ namespace iroha_cli {
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
           this, line, command_handlers_, command_params_descriptions_);
 
-      if (not res and not *res) {
+      if (not res) {
         // Continue parsing
-        std::cout << "Unable to parse the result" << std::endl;
         return true;
       }
 
@@ -337,7 +339,7 @@ namespace iroha_cli {
         return nullptr;
       }
       if (precision.value() > 255) {
-        std::cout << "Too big precision (should be between 0 and 256)" << std::endl;
+        std::cout << "Too big precision (should be less than 256)" << std::endl;
         return nullptr;
       }
       std::cout << val_int.value() << " " << precision.value() << std::endl;
@@ -472,7 +474,7 @@ namespace iroha_cli {
       // Forming a transaction
 
       auto tx =
-          tx_generator_.generateTransaction(creator_, commands_);
+          tx_generator_.generateTransaction(creator_, tx_counter_, commands_);
       // clear commands so that we can start creating new tx
       commands_.clear();
 
@@ -481,9 +483,10 @@ namespace iroha_cli {
       GrpcResponseHandler response_handler;
 
       if(response_handler.handle(
-          CliClient(address.value().first, address.value().second).sendTx(tx))) {
+          CliClient(address.value().first, address.value().second).sendTx(tx))){
           printTxHash(tx);
       }
+
       printEnd();
       // Stop parsing
       return false;
@@ -501,7 +504,7 @@ namespace iroha_cli {
 
       // Forming a transaction
       auto tx =
-          tx_generator_.generateTransaction(creator_, commands_);
+          tx_generator_.generateTransaction(creator_, tx_counter_, commands_);
 
       // clear commands so that we can start creating new tx
       commands_.clear();
