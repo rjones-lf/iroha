@@ -49,7 +49,7 @@ namespace iroha {
           persistent_state);
     }
 
-    std::shared_ptr<ordering::OrderingGateImpl> OrderingInit::initOrderingGate(
+    std::shared_ptr<OrderingGate> OrderingInit::initOrderingGate(
         std::shared_ptr<ametsuchi::PeerQuery> wsv,
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
