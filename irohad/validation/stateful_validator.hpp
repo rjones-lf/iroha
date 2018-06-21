@@ -36,9 +36,10 @@ namespace iroha {
        * @param wsv  - temporary wsv for validation,
        * this wsv not affected on ledger,
        * all changes after removing wsv will be ignored
-       * @return proposal with valid transactions
+       * @return proposal with valid transactions and errors, which appeared in
+       * a process of validating
        */
-      virtual std::shared_ptr<shared_model::interface::Proposal> validate(
+      virtual shared_model::interface::types::VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) = 0;
     };

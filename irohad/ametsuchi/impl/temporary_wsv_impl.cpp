@@ -45,27 +45,51 @@ namespace iroha {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto execute_command = [this, &tx_creator](auto &command) {
-        auto account = wsv_->getAccount(tx_creator).value();
-
-        // Temporary variant: going to be a chain of results in future pull
-        // requests
-        auto validation_result =
-            boost::apply_visitor(*command_validator_, command.get())
-                .match([](expected::Value<void> &) { return true; },
-                       [this](expected::Error<CommandError> &e) {
-                         log_->error(e.error.toString());
-                         return false;
-                       });
-        if (not validation_result) {
-          return false;
-        }
-        auto result = boost::apply_visitor(*command_executor_, command.get());
-        return result.match([](expected::Value<void> &v) { return true; },
-                            [this](expected::Error<ExecutionError> &e) {
-                              log_->error(e.error.toString());
-                              return false;
-                            });
+      auto execute_command =
+          [this, &tx_creator](
+              auto &command,
+              int command_index) -> expected::Result<void, std::string> {
+        auto account = wsv_->getAccount(tx_creator);
+//        if (not account) {
+//          return expected::makeError(
+//              ((boost::format(
+//                    "stateful validation error: could not fetch account ")
+//                % tx_creator)
+//                   .str()));
+//        }
+        // Validate command
+        return boost::apply_visitor(*command_validator_, command.get())
+                   .match(
+                       [](expected::Value<void> &)
+                           -> expected::Result<void, std::string> {
+                         return {};
+                       },
+                       [command_index](expected::Error<CommandError> &error)
+                           -> expected::Result<void, std::string> {
+                         return expected::makeError(
+                             ((boost::format("stateful validation error: could "
+                                             "not validate "
+                                             "command with index %d: %s")
+                               % command_index % error.error.toString()))
+                                 .str());
+                       })
+            |
+            [this, command_index, &command] {
+              // Execute command
+              return boost::apply_visitor(*command_executor_, command.get())
+                  .match(
+                      [](expected::Value<void> &)
+                          -> expected::Result<void, std::string> { return {}; },
+                      [command_index](expected::Error<CommandError> &e)
+                          -> expected::Result<void, std::string> {
+                        return expected::makeError(
+                            ((boost::format(
+                                  "stateful validation error: could not "
+                                  "execute command with index %d: %s")
+                              % command_index % e.error.toString()))
+                                .str());
+                      });
+            };
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");

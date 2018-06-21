@@ -34,6 +34,7 @@ namespace shared_model {
     class Signature;
     class Transaction;
     class AccountAsset;
+    class Proposal;
 
     namespace types {
       /// Type of hash
@@ -98,6 +99,11 @@ namespace shared_model {
                            const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
+      /// Type of verified proposal and errors appeared in the process; first
+      /// dimension of vector is transaction, second is commands
+      using VerifiedProposalAndErrors =
+          std::pair<std::shared_ptr<shared_model::interface::Proposal>,
+                    std::vector<std::vector<std::string>>>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model
