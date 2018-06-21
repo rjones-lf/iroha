@@ -66,17 +66,16 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      auto block_fetched = false;
       auto top_block_result = block_queries_->getTopBlock();
-      top_block_result.match(
-          [&](
-              expected::Value<std::shared_ptr<shared_model::interface::Block>>
+      auto block_fetched = top_block_result.match(
+          [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
                   &block) {
             last_block = block.value;
-            block_fetched = true;
+            return true;
           },
           [this](expected::Error<std::string> &error) {
             log_->warn("Could not fetch last block: " + error.error);
+            return false;
           });
       if (not block_fetched) {
         return;

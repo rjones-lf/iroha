@@ -411,7 +411,7 @@ TEST_F(BlockQueryTest, GetTopBlockSuccess) {
 }
 
 /**
- * @given block store with mocked flat file
+ * @given empty block store
  * @when getTopBlock is invoked on this block store
  * @then result must be a string error, because no block was fetched
  */
