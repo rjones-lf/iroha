@@ -125,7 +125,7 @@ namespace iroha {
         auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
             shared_model::proto::UnsignedEmptyBlockBuilder()
                 .height(proposal.height())
-                .prevHash(last_block.value()->hash())
+                .prevHash(last_block->hash())
                 .createdTime(proposal.createdTime())
                 .build());
 
