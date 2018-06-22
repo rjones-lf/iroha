@@ -175,6 +175,7 @@ namespace iroha {
                    rxcpp::observable<wBlock>(
                        shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
       MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
     };

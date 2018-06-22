@@ -8,10 +8,10 @@
 
 #include <boost/range/any_range.hpp>
 
+#include "interfaces/transaction.hpp"
+
 namespace shared_model {
   namespace interface {
-
-    class Transaction;
 
     namespace types {
 

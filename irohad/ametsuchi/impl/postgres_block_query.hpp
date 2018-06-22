@@ -70,6 +70,8 @@ namespace iroha {
 
       bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
 
+      expected::Result<wBlock, std::string> getTopBlock() override;
+
      private:
       /**
        * Returns all blocks' ids containing given account id
