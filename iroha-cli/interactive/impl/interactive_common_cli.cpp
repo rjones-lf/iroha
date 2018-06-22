@@ -35,10 +35,10 @@ namespace iroha_cli {
                                  int default_port) {
       return {
           // commonParamsMap
-          {SAVE_CODE, {std::make_pair("Path to save json file", "")}},
+          {SAVE_CODE, makeParamsData({"Path to save json file"})},
           {SEND_CODE, {
-			  std::make_pair("Peer address", default_ip),
-			  std::make_pair("Peer port", std::to_string(default_port))
+			  std::make_shared<param_t>(std::make_pair("Peer address", default_ip)),
+			  std::make_shared<param_t>(std::make_pair("Peer port", std::to_string(default_port)))
 			}
 		  }
           // commonParamsMap
@@ -48,7 +48,7 @@ namespace iroha_cli {
 	ParamsData makeParamsData(std::vector<std::string> params) {
 		ParamsData data;
 		std::for_each(params.begin(), params.end(), [&data](auto el) {
-			data.push_back(std::make_pair(el, ""));
+			data.push_back(std::make_shared<param_t>(std::make_pair(el, "")));
 		});
 		return data;
 	}
@@ -76,7 +76,7 @@ namespace iroha_cli {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(), [](auto el) {
-        std::cout << "  " << std::get<0>(el) << std::endl;
+        std::cout << "  " << std::get<0>(*el) << std::endl;
       });
     }
 
@@ -125,7 +125,7 @@ namespace iroha_cli {
     }
 
     boost::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name, ParamsMap &params_map) {
+        std::string line, std::string command_name, ParamsMap params_map) {
       auto params_data =
           findInHandlerMap(command_name, params_map);
       if (not params_data) {
@@ -141,13 +141,13 @@ namespace iroha_cli {
         std::for_each(params_data.value().begin(),
                       params_data.value().end(),
                       [&params](auto param) {
-                        auto val = promptString(param);
+                        auto val = promptString(*param);
 						if (val) {
 							if (not val.value().empty()) {
-								std::get<1>(param) = val.value();
+								std::get<1>(*param) = val.value();
 								params.push_back(val.value());
-							} else if (not std::get<1>(param).empty()) {
-								params.push_back(std::get<1>(param));
+							} else if (not std::get<1>(*param).empty()) {
+								params.push_back(std::get<1>(*param));
 							}
 						}
                       });
